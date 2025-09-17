@@ -1,207 +1,291 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CT-Merchant - Your Local Marketplace</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        html {
-            scroll-behavior: smooth;
-        }
-        .hero-section-bg {
-            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://picsum.photos/seed/cityscape/1600/900') no-repeat center center;
-            background-size: cover;
-        }
-        .hero-section-bg h1, .hero-section-bg p {
-            color: white;
-        }
-        
-        .brand-pink { color: #EC4899; }
-        .brand-blue { color: #3B82F6; }
-        .btn-primary { background-color: #EC4899; }
-        .btn-primary:hover { background-color: #DB2777; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CT-Merchant - Your Local Marketplace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    html { scroll-behavior: smooth; }
 
-        .animate-on-scroll {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-        }
-        .animate-on-scroll.is-visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    </style>
+    .hero-section-bg {
+      background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+                  url('https://images.unsplash.com/photo-1505761671935-60b3a7427bad') no-repeat center center;
+      background-size: cover;
+    }
+    .hero-section-bg h1, .hero-section-bg p { color: white; }
+
+    .brand-pink { color: #EC4899; }
+    .brand-blue { color: #3B82F6; }
+    .btn-primary { background-color: #EC4899; }
+    .btn-primary:hover { background-color: #DB2777; }
+
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    }
+    .animate-on-scroll.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .service-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .service-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    }
+  </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-    <header class="bg-gray-900 shadow-md sticky top-0 z-50">
-        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="text-2xl font-bold brand-pink">CT-Merchant</div>
-            <div class="text-gray-300">
-                <a href="#features" class="hover:text-white px-4 transition duration-300">Features</a>
-                <a href="#about" class="hover:text-white px-4 transition duration-300">About</a>
-                <a href="#services" class="hover:text-white px-4 transition duration-300">Services</a>
-                <a href="#contact" class="hover:text-white px-4 transition duration-300">Contact</a>
-            </div>
-        </nav>
-    </header>
+  <!-- Header -->
+  <header class="bg-gray-900 shadow-md sticky top-0 z-50">
+    <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="text-2xl font-bold brand-pink">CT-Merchant</div>
+      <div class="text-gray-300">
+        <a href="#features" class="hover:text-white px-4 transition">Features</a>
+        <a href="#about" class="hover:text-white px-4 transition">About</a>
+        <a href="#services" class="hover:text-white px-4 transition">Services</a>
+        <a href="#products" class="hover:text-white px-4 transition">Products</a>
+        <a href="#contact" class="hover:text-white px-4 transition">Contact</a>
+      </div>
+    </nav>
+  </header>
 
-    <main class="hero-section-bg min-h-screen flex items-center"> 
-        <section class="container mx-auto px-6 py-20 md:py-32 text-center md:text-left">
-            <div class="max-w-3xl mx-auto md:mx-0">
-                <h1 class="text-4xl md:text-6xl font-bold leading-tight">The Easiest Way to Buy & Sell in Your City</h1>
-                <p class="mt-6 text-lg text-gray-200">
-                    Discover amazing deals on new and used items, or open your own shop and start earning today. Your local marketplace is now in your pocket.
-                </p>
-                <div class="mt-10 flex justify-center md:justify-start gap-4">
-                    <a href="#" class="bg-white text-gray-800 rounded-lg px-6 py-3 flex items-center gap-2 hover:bg-gray-200 transition font-semibold">
-                         <img src="https://placehold.co/32x32/FFFFFF/000000?text=" alt="Apple Logo" class="w-8 h-8">
-                        <div>
-                            <p class="text-xs">Download on the</p>
-                            <p class="text-xl">App Store</p>
-                        </div>
-                    </a>
-                    <a href="#" class="bg-white text-gray-800 rounded-lg px-6 py-3 flex items-center gap-2 hover:bg-gray-200 transition font-semibold">
-                         <img src="https://placehold.co/32x32/FFFFFF/000000?text=▶" alt="Google Play Logo" class="w-8 h-8">
-                        <div>
-                            <p class="text-xs">GET IT ON</p>
-                            <p class="text-xl">Google Play</p>
-                        </div>
-                    </a>
-                </div>
+  <!-- Hero -->
+  <main class="hero-section-bg min-h-screen flex items-center">
+    <section class="container mx-auto px-6 py-20 md:py-32 text-center md:text-left">
+      <div class="max-w-3xl mx-auto md:mx-0">
+        <h1 id="dynamic-text" class="text-4xl md:text-6xl font-bold leading-tight"></h1>
+        <p class="mt-6 text-lg text-gray-200">
+          Discover amazing deals on new and used items, or open your own shop and start earning today.
+        </p>
+        <div class="mt-10 flex justify-center md:justify-start gap-4">
+          <a href="#" class="bg-white text-gray-800 rounded-lg px-6 py-3 flex items-center gap-2 hover:bg-gray-200 transition font-semibold">
+            <img src="https://placehold.co/32x32/FFFFFF/000000?text=" alt="Apple Logo" class="w-8 h-8">
+            <div>
+              <p class="text-xs">Download on the</p>
+              <p class="text-xl">App Store</p>
             </div>
-        </section>
-    </main>
-
-    <section id="features" class="py-20 bg-white">
-        <div class="container mx-auto px-6">
-            <div class="animate-on-scroll">
-                <h2 class="text-3xl font-bold text-center mb-12">Why You'll Love CT-Merchant</h2>
+          </a>
+          <a href="#" class="bg-white text-gray-800 rounded-lg px-6 py-3 flex items-center gap-2 hover:bg-gray-200 transition font-semibold">
+            <img src="https://placehold.co/32x32/FFFFFF/000000?text=▶" alt="Google Play Logo" class="w-8 h-8">
+            <div>
+              <p class="text-xs">GET IT ON</p>
+              <p class="text-xl">Google Play</p>
             </div>
-            <div class="grid md:grid-cols-3 gap-12">
-                <div class="text-center animate-on-scroll">
-                    <div class="bg-pink-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-10 h-10 brand-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Truly Local</h3>
-                    <p class="text-gray-600">Built for your community. Connect with buyers and sellers right in your neighborhood.</p>
-                </div>
-                <div class="text-center animate-on-scroll" style="transition-delay: 150ms;">
-                    <div class="bg-blue-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-10 h-10 brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Safe & Secure</h3>
-                    <p class="text-gray-600">With our 48-hour reservation system and in-app chat, you can transact with confidence.</p>
-                </div>
-                <div class="text-center animate-on-scroll" style="transition-delay: 300ms;">
-                    <div class="bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Grow Your Business</h3>
-                    <p class="text-gray-600">Open a shop in minutes and access powerful tools like analytics and subscriptions to grow your sales.</p>
-                </div>
-            </div>
+          </a>
         </div>
+      </div>
     </section>
+  </main>
 
-    <section id="about" class="py-20 bg-gray-50">
-        <div class="container mx-auto px-6">
-            <div class="grid md:grid-cols-2 gap-16 items-center">
-                <div class="animate-on-scroll">
-                    <img src="https://picsum.photos/seed/localmarket/600/400" alt="Vibrant local market" class="rounded-lg shadow-xl">
-                </div>
-                <div class="animate-on-scroll" style="transition-delay: 150ms;">
-                    <h2 class="text-3xl font-bold mb-4">About CT-Merchant</h2>
-                    <p class="text-gray-600 mb-4">We started CT-Merchant with a simple mission: to make local commerce easier and more accessible for everyone. We believe in the power of community and aim to connect neighbors through a safe, simple, and enjoyable marketplace experience.</p>
-                    <p class="text-gray-600">Our platform is more than just a place to buy and sell; it's a space for local businesses to thrive and for individuals to discover unique items right in their city.</p>
-                </div>
-            </div>
+  <!-- Features -->
+  <section id="features" class="py-20 bg-white">
+    <div class="container mx-auto px-6">
+      <div class="animate-on-scroll">
+        <h2 class="text-3xl font-bold text-center mb-12">Why You'll Love CT-Merchant</h2>
+      </div>
+      <div class="grid md:grid-cols-3 gap-12">
+        <div class="text-center animate-on-scroll">
+          <div class="bg-pink-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-10 h-10 brand-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Truly Local</h3>
+          <p class="text-gray-600">Connect with buyers and sellers right in your neighborhood.</p>
         </div>
-    </section>
+        <div class="text-center animate-on-scroll" style="transition-delay: 150ms;">
+          <div class="bg-blue-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-10 h-10 brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Safe & Secure</h3>
+          <p class="text-gray-600">Transact with confidence using our reservation system and in-app chat.</p>
+        </div>
+        <div class="text-center animate-on-scroll" style="transition-delay: 300ms;">
+          <div class="bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Grow Your Business</h3>
+          <p class="text-gray-600">Open a shop in minutes and access powerful tools to grow your sales.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <section id="services" class="py-20 bg-white">
-        <div class="container mx-auto px-6">
-            <div class="text-center animate-on-scroll">
-                <h2 class="text-3xl font-bold mb-2">Our Services</h2>
-                <p class="text-gray-600 mb-12">Everything you need to succeed in one place.</p>
-            </div>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-gray-50 p-8 rounded-lg shadow-md animate-on-scroll">
-                    <h3 class="text-xl font-bold brand-pink mb-2">Individual Sellers</h3>
-                    <p>Easily list pre-loved items, declutter your home, and earn extra cash. Our platform makes selling simple with just a few taps.</p>
-                </div>
-                <div class="bg-gray-50 p-8 rounded-lg shadow-md animate-on-scroll" style="transition-delay: 150ms;">
-                    <h3 class="text-xl font-bold brand-blue mb-2">Local Businesses</h3>
-                    <p>Set up a professional storefront, manage your inventory, and reach thousands of local customers looking for products just like yours.</p>
-                </div>
-                <div class="bg-gray-50 p-8 rounded-lg shadow-md animate-on-scroll" style="transition-delay: 300ms;">
-                    <h3 class="text-xl font-bold text-green-500 mb-2">Pro Tools & Analytics</h3>
-                    <p>Upgrade to access powerful features like sales analytics, promotional tools, and customer subscriptions to take your business to the next level.</p>
-                </div>
-            </div>
+    <!-- About -->
+  <section id="about" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-6">
+      <div class="grid md:grid-cols-2 gap-16 items-center">
+        <div class="animate-on-scroll">
+          <img src="https://picsum.photos/seed/localmarket/600/400" alt="Vibrant local market" class="rounded-lg shadow-xl">
         </div>
-    </section>
-    
-    <footer id="contact" class="bg-gray-800 text-white">
-        <div class="container mx-auto px-6 py-10">
-            <div class="text-center">
-                <h3 class="text-2xl font-bold">Ready to get started?</h3>
-                <p class="mt-2">Download the CT-Merchant app today!</p>
-                 <div class="mt-6 flex justify-center gap-4">
-                     <a href="#" class="bg-white text-black rounded-lg px-6 py-3 flex items-center gap-2 hover:bg-gray-200 transition">
-                         <img src="https://placehold.co/32x32/FFFFFF/000000?text=" alt="Apple Logo" class="w-8 h-8">
-                         <div>
-                             <p class="text-xs">Download on the</p>
-                             <p class="text-xl font-semibold">App Store</p>
-                         </div>
-                     </a>
-                     <a href="#" class="bg-white text-black rounded-lg px-6 py-3 flex items-center gap-2 hover:bg-gray-200 transition">
-                          <img src="https://placehold.co/32x32/FFFFFF/000000?text=▶" alt="Google Play Logo" class="w-8 h-8">
-                         <div>
-                             <p class="text-xs">GET IT ON</p>
-                             <p class="text-xl font-semibold">Google Play</p>
-                         </div>
-                     </a>
-                 </div>
-            </div>
-            <hr class="my-10 border-gray-700">
-            <div class="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
-                <p>&copy; 2025 CT-Merchant. All Rights Reserved.</p>
-                <div class="mt-4 md:mt-0">
-                    <a href="#" class="px-2 text-gray-400 hover:text-white">Privacy Policy</a>
-                    <a href="#" class="px-2 text-gray-400 hover:text-white">Terms of Service</a>
-                </div>
-            </div>
+        <div class="animate-on-scroll" style="transition-delay: 150ms;">
+          <h2 class="text-3xl font-bold mb-4">About CT-Merchant</h2>
+          <p class="text-gray-600 mb-4">We started CT-Merchant with a simple mission: to make local commerce easier and more accessible for everyone. We believe in the power of community and aim to connect neighbors through a safe, simple, and enjoyable marketplace experience.</p>
+          <p class="text-gray-600">Our platform is more than just a place to buy and sell; it's a space for local businesses to thrive and for individuals to discover unique items right in their city.</p>
         </div>
-    </footer>
+      </div>
+    </div>
+  </section>
 
-    <script>
-        const scrollElements = document.querySelectorAll(".animate-on-scroll");
-        const elementInView = (el, dividend = 1) => {
-            const elementTop = el.getBoundingClientRect().top;
-            return (
-                elementTop <= (window.innerHeight || document.documentElement.clientHeight) / dividend
-            );
-        };
-        const displayScrollElement = (element) => {
-            element.classList.add("is-visible");
-        };
-        const handleScrollAnimation = () => {
-            scrollElements.forEach((el) => {
-                if (elementInView(el, 1.25)) {
-                    displayScrollElement(el);
-                }
-            });
-        };
-        window.addEventListener("scroll", () => {
-            handleScrollAnimation();
-        });
-        handleScrollAnimation();
-    </script>
+  <!-- Products -->
+  <section id="products" class="py-20 bg-white">
+    <div class="container mx-auto px-6">
+      <h2 class="text-3xl font-bold text-center mb-12">Featured Products</h2>
+      <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div class="bg-gray-50 p-4 rounded-lg shadow hover:shadow-xl transition animate-on-scroll">
+          <img src="https://picsum.photos/seed/product1/300/200" alt="Product 1" class="rounded mb-4">
+          <h3 class="font-semibold text-lg">Wireless Headphones</h3>
+          <p class="text-gray-600">$49.99</p>
+          <button class="mt-3 w-full bg-pink-500 text-white py-2 rounded hover:bg-pink-600">Add to Cart</button>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-lg shadow hover:shadow-xl transition animate-on-scroll" style="transition-delay: 150ms;">
+          <img src="https://picsum.photos/seed/product2/300/200" alt="Product 2" class="rounded mb-4">
+          <h3 class="font-semibold text-lg">Smart Watch</h3>
+          <p class="text-gray-600">$89.99</p>
+          <button class="mt-3 w-full bg-pink-500 text-white py-2 rounded hover:bg-pink-600">Add to Cart</button>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-lg shadow hover:shadow-xl transition animate-on-scroll" style="transition-delay: 300ms;">
+          <img src="https://picsum.photos/seed/product3/300/200" alt="Product 3" class="rounded mb-4">
+          <h3 class="font-semibold text-lg">Eco Tote Bag</h3>
+          <p class="text-gray-600">$19.99</p>
+          <button class="mt-3 w-full bg-pink-500 text-white py-2 rounded hover:bg-pink-600">Add to Cart</button>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-lg shadow hover:shadow-xl transition animate-on-scroll" style="transition-delay: 450ms;">
+          <img src="https://picsum.photos/seed/product4/300/200" alt="Product 4" class="rounded mb-4">
+          <h3 class="font-semibold text-lg">Handmade Mug</h3>
+          <p class="text-gray-600">$14.99</p>
+          <button class="mt-3 w-full bg-pink-500 text-white py-2 rounded hover:bg-pink-600">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services -->
+  <section id="services" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-6">
+      <div class="text-center animate-on-scroll">
+        <h2 class="text-3xl font-bold mb-2">Our Services</h2>
+        <p class="text-gray-600 mb-12">Everything you need to succeed in one place.</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="bg-white p-8 rounded-lg shadow-md animate-on-scroll service-card">
+          <h3 class="text-xl font-bold brand-pink mb-2">Individual Sellers</h3>
+          <p>Easily list pre-loved items, declutter your home, and earn extra cash.</p>
+        </div>
+        <div class="bg-white p-8 rounded-lg shadow-md animate-on-scroll service-card" style="transition-delay: 150ms;">
+          <h3 class="text-xl font-bold brand-blue mb-2">Local Businesses</h3>
+          <p>Set up a professional storefront, manage your inventory, and reach thousands of local customers.</p>
+        </div>
+        <div class="bg-white p-8 rounded-lg shadow-md animate-on-scroll service-card" style="transition-delay: 300ms;">
+          <h3 class="text-xl font-bold text-green-500 mb-2">Pro Tools & Analytics</h3>
+          <p>Upgrade to access powerful features like sales analytics, promotions, and subscriptions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="contact" class="bg-gray-800 text-white">
+    <div class="container mx-auto px-6 py-10">
+      <div class="text-center">
+        <h3 class="text-2xl font-bold">Ready to get started?</h3>
+        <p class="mt-2">Download the CT-Merchant app today!</p>
+        <div class="mt-6 flex justify-center gap-4">
+          <a href="#" class="bg-white text-black rounded-lg px-6 py-3 flex items-center gap-2 hover:bg-gray-200 transition">
+            <img src="https://placehold.co/32x32/FFFFFF/000000?text=" alt="Apple Logo" class="w-8 h-8">
+            <div>
+              <p class="text-xs">Download on the</p>
+              <p class="text-xl font-semibold">App Store</p>
+            </div>
+          </a>
+          <a href="#" class="bg-white text-black rounded-lg px-6 py-3 flex items-center gap-2 hover:bg-gray-200 transition">
+            <img src="https://placehold.co/32x32/FFFFFF/000000?text=▶" alt="Google Play Logo" class="w-8 h-8">
+            <div>
+              <p class="text-xs">GET IT ON</p>
+              <p class="text-xl font-semibold">Google Play</p>
+            </div>
+          </a>
+        </div>
+        <!-- Social icons -->
+        <div class="flex justify-center space-x-6 mt-8">
+          <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+          <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+      <hr class="my-10 border-gray-700">
+      <div class="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+        <p>&copy; 2025 CT-Merchant. All Rights Reserved.</p>
+        <div class="mt-4 md:mt-0">
+          <a href="#" class="px-2 text-gray-400 hover:text-white">Privacy Policy</a>
+          <a href="#" class="px-2 text-gray-400 hover:text-white">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+    <!-- Scripts -->
+  <script>
+    // Typewriter effect
+    const phrases = [
+      "The Easiest Way to Buy & Sell in Your City",
+      "Discover Amazing Local Deals",
+      "Support Small Businesses Near You"
+    ];
+    let i = 0, j = 0, currentPhrase = [], isDeleting = false;
+    const el = document.getElementById("dynamic-text");
+
+    function loop() {
+      el.innerHTML = currentPhrase.join("");
+      if (!isDeleting && j <= phrases[i].length) {
+        currentPhrase.push(phrases[i][j]);
+        j++;
+      }
+      if (isDeleting && j <= phrases[i].length) {
+        currentPhrase.pop();
+        j--;
+      }
+      if (j === phrases[i].length) {
+        isDeleting = true;
+        setTimeout(loop, 1500);
+        return;
+      }
+      if (isDeleting && j === 0) {
+        isDeleting = false;
+        i = (i + 1) % phrases.length;
+      }
+      setTimeout(loop, isDeleting ? 50 : 100);
+    }
+    loop();
+
+    // Scroll animations
+    const scrollElements = document.querySelectorAll(".animate-on-scroll");
+    const elementInView = (el, dividend = 1) => {
+      const elementTop = el.getBoundingClientRect().top;
+      return (
+        elementTop <= (window.innerHeight || document.documentElement.clientHeight) / dividend
+      );
+    };
+    const displayScrollElement = (element) => {
+      element.classList.add("is-visible");
+    };
+    const handleScrollAnimation = () => {
+      scrollElements.forEach((el) => {
+        if (elementInView(el, 1.25)) {
+          displayScrollElement(el);
+        }
+      });
+    };
+    window.addEventListener("scroll", () => {
+      handleScrollAnimation();
+    });
+    handleScrollAnimation();
+  </script>
 </body>
 </html>
