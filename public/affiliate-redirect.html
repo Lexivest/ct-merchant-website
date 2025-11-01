@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CT Merchant Affiliate Campaign</title>
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Join CT Merchant & Earn!" />
+    <meta property="og:description" content="Share this campaign and start earning rewards." />
+    <meta property="og:image" content="https://lijugysubwykcydgnntv.supabase.co/storage/v1/object/public/affiliate-banners/affiliate-banners/9d8a3f1a-9b13-4aea-ae8b-6521fdd0cebe.jpg" />
+    <meta property="og:url" content="https://www.ct-merchant.com.ng/affiliate-redirect.html" />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Join CT Merchant & Earn!" />
+    <meta name="twitter:description" content="Share this campaign and start earning rewards." />
+    <meta name="twitter:image" content="https://lijugysubwykcydgnntv.supabase.co/storage/v1/object/public/affiliate-banners/affiliate-banners/9d8a3f1a-9b13-4aea-ae8b-6521fdd0cebe.jpg" />
+  </head>
+  <body>
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get("ref");
+      if (ref) {
+        window.location.href = `https://lijugysubwykcydgnntv.functions.supabase.co/redirect?ref=${ref}`;
+      } else {
+        window.location.href = "https://www.ct-merchant.com.ng";
+      }
+    </script>
+  </body>
+</html>
