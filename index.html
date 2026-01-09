@@ -52,35 +52,47 @@
 <body class="bg-slate-50 text-slate-600 antialiased selection:bg-brand-pink selection:text-white">
 
 <!-- Navigation -->
-<nav class="fixed top-0 left-0 w-full z-[100] bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+<nav class="fixed top-0 left-0 w-full z-[100] bg-gradient-to-r from-brand-purple via-brand-purpleLight to-brand-pink shadow-lg">
   <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+    <!-- Logo -->
     <a href="#" class="flex items-center gap-3 group">
       <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"
            alt="CT-Merchant Logo"
            class="w-10 h-10 rounded-lg shadow-md object-cover">
-      <span class="text-xl font-extrabold text-brand-purple">CT-MERCHANT LTD.</span>
+      <span class="text-xl font-extrabold text-white group-hover:text-pink-200 transition-colors">
+        CT-MERCHANT LTD.
+      </span>
     </a>
-    <div class="hidden md:flex items-center space-x-6 text-sm font-semibold text-slate-700">
-      <a href="#corporate" class="hover:text-brand-pink transition">About Us</a>
-      <a href="#services" class="hover:text-brand-pink transition">Solutions</a>
-      <a href="#directors" class="hover:text-brand-pink transition">Leadership</a>
-      <a href="#contact" class="px-5 py-2 bg-brand-purple text-white rounded-full hover:bg-brand-purpleLight transition shadow">
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:flex items-center space-x-8 text-sm font-semibold text-white">
+      <a href="#corporate" class="hover:text-pink-200 transition">About Us</a>
+      <a href="#services" class="hover:text-pink-200 transition">Solutions</a>
+      <a href="#directors" class="hover:text-pink-200 transition">Leadership</a>
+      <a href="#contact" class="px-6 py-2.5 bg-white text-brand-purple rounded-full hover:bg-pink-200 hover:text-brand-dark transition shadow">
         Contact Us
       </a>
     </div>
-    <button class="md:hidden text-brand-purple" id="menu-btn">☰</button>
+
+    <!-- Mobile Hamburger -->
+    <button class="md:hidden text-white focus:outline-none" id="menu-btn">
+      ☰
+    </button>
   </div>
-  <div class="hidden absolute left-0 right-0 top-full bg-white shadow border-t border-slate-200" id="mobile-menu">
-    <div class="px-6 py-4 space-y-3 text-base font-semibold text-slate-800">
-      <a href="#corporate" class="block hover:text-brand-pink">About Us</a>
-      <a href="#services" class="block hover:text-brand-pink">Solutions</a>
-      <a href="#directors" class="block hover:text-brand-pink">Leadership</a>
-      <a href="#contact" class="block bg-brand-purple text-white rounded-lg px-4 py-2 text-center hover:bg-brand-purpleLight">
+
+  <!-- Mobile Menu -->
+  <div class="hidden absolute left-0 right-0 top-full bg-gradient-to-r from-brand-purple via-brand-purpleLight to-brand-pink shadow-lg" id="mobile-menu">
+    <div class="px-6 py-4 space-y-3 text-base font-semibold text-white">
+      <a href="#corporate" class="block hover:text-pink-200">About Us</a>
+      <a href="#services" class="block hover:text-pink-200">Solutions</a>
+      <a href="#directors" class="block hover:text-pink-200">Leadership</a>
+      <a href="#contact" class="block bg-white text-brand-purple rounded-lg px-4 py-2 text-center hover:bg-pink-200 hover:text-brand-dark">
         Contact Us
       </a>
     </div>
   </div>
 </nav>
+
 
 <!-- Hero -->
 <section class="hero-bg min-h-[85vh] flex items-center relative overflow-hidden border-b-8 border-brand-pink">
@@ -266,6 +278,7 @@
 </script>
 </body>
 </html>
+
 
 
 
