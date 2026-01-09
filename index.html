@@ -9,18 +9,16 @@
   <style>
     body { font-family: 'Inter', sans-serif; }
     html { scroll-behavior: smooth; }
-
     .hero-section-bg {
-  background: 
-    linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)),
-    url('https://www.westend61.de/en/photo/AAEF43487/aerial-view-of-the-beautiful-skyline-with-the-lekki-ikoyi-link-bridge-over-water-and-urban-buildings-lagos-nigeria')
-    no-repeat center center;
-  background-size: cover;
-  color: white;
-}
+      background:
+        linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)),
+        url('https://www.westend61.de/en/photo/AAEF43487/aerial-view-of-the-beautiful-skyline-with-the-lekki-ikoyi-link-bridge-over-water-and-urban-buildings-lagos-nigeria')
+        no-repeat center center;
+      background-size: cover;
+      color: white;
+    }
     .brand-pink { color: #EC4899; }
-    .brand-blue { color: #3B82F6; }
-
+    .brand-purple { color: #5B21B6; }
     .animate-on-scroll {
       opacity: 0;
       transform: translateY(30px);
@@ -30,7 +28,6 @@
       opacity: 1;
       transform: translateY(0);
     }
-
     .service-card {
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
@@ -41,7 +38,6 @@
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
-
   <!-- Header -->
   <header class="bg-gray-900 shadow-md sticky top-0 z-50">
     <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
@@ -49,6 +45,7 @@
       <div class="text-gray-300">
         <a href="#features" class="hover:text-white px-4 transition">Features</a>
         <a href="#about" class="hover:text-white px-4 transition">About</a>
+        <a href="#company" class="hover:text-white px-4 transition">Company</a>
         <a href="#services" class="hover:text-white px-4 transition">Services</a>
         <a href="#contact" class="hover:text-white px-4 transition">Contact</a>
       </div>
@@ -76,35 +73,33 @@
           <div class="bg-pink-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
             <svg class="w-10 h-10 brand-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 
-                   0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10
+                   0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3
                    3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857
-                   m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 
+                   m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0
                    11-6 0 3 3 0 016 0z"/>
             </svg>
           </div>
           <h3 class="text-xl font-semibold mb-2">Truly Local</h3>
           <p class="text-gray-600">Connect with buyers and sellers right in your neighborhood.</p>
         </div>
-
         <div class="text-center animate-on-scroll" style="transition-delay: 150ms;">
-          <div class="bg-blue-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-            <svg class="w-10 h-10 brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-purple-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-10 h-10 brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 12l2 2 4-4m5.618-4.016A11.955 
-                   11.955 0 0112 2.944a11.955 11.955 0 
-                   01-8.618 3.04A12.02 12.02 0 003 9c0 
-                   5.591 3.824 10.29 9 11.622 5.176-1.332 
+                d="M9 12l2 2 4-4m5.618-4.016A11.955
+                   11.955 0 0112 2.944a11.955 11.955 0
+                   01-8.618 3.04A12.02 12.02 0 003 9c0
+                   5.591 3.824 10.29 9 11.622 5.176-1.332
                    9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
             </svg>
           </div>
           <h3 class="text-xl font-semibold mb-2">Safe & Secure</h3>
           <p class="text-gray-600">Transact with confidence using our reservation system and in-app chat.</p>
         </div>
-
         <div class="text-center animate-on-scroll" style="transition-delay: 300ms;">
-          <div class="bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-            <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-pink-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-10 h-10 brand-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
             </svg>
@@ -120,20 +115,56 @@
     <div class="container mx-auto px-6">
       <div class="grid md:grid-cols-2 gap-16 items-center">
         <div class="animate-on-scroll">
-          <img src="https://picsum.photos/seed/localmarket/600/400" 
-               alt="Vibrant local market" 
+          <img src="https://picsum.photos/seed/localmarket/600/400"
+               alt="Vibrant local market"
                class="rounded-lg shadow-xl">
         </div>
         <div class="animate-on-scroll" style="transition-delay: 150ms;">
           <h2 class="text-3xl font-bold mb-4">About CT-Merchant</h2>
           <p class="text-gray-600 mb-4">
-            We started CT-Merchant with a simple mission: to make local commerce easier and more accessible for everyone. 
+            We started CT-Merchant with a simple mission: to make local commerce easier and more accessible for everyone.
             We believe in the power of community and aim to connect neighbors through a safe, simple, and enjoyable marketplace experience.
           </p>
           <p class="text-gray-600">
-            Our platform is more than just a place to buy and sell; it's a space for local businesses to thrive and for individuals 
+            Our platform is more than just a place to buy and sell; it's a space for local businesses to thrive and for individuals
             to discover unique items right in their city.
           </p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- Company -->
+  <section id="company" class="py-20 bg-white">
+    <div class="container mx-auto px-6">
+      <div class="animate-on-scroll">
+        <h2 class="text-3xl font-bold text-center mb-12">Company Information</h2>
+      </div>
+      <div class="grid md:grid-cols-3 gap-12">
+        <div class="animate-on-scroll">
+          <h3 class="text-xl font-semibold brand-purple mb-4">Company Structure</h3>
+          <p class="text-gray-600 mb-4">CT-Merchant is structured as a private limited company focused on technology-driven local commerce solutions.</p>
+          <ul class="list-disc pl-5 text-gray-600">
+            <li>Board of Directors: Oversees strategic decisions and governance.</li>
+            <li>Executive Team: Manages day-to-day operations, including product development, marketing, and customer support.</li>
+            <li>Departments: Technology, Operations, Finance, and Customer Service.</li>
+          </ul>
+        </div>
+        <div class="animate-on-scroll" style="transition-delay: 150ms;">
+          <h3 class="text-xl font-semibold brand-pink mb-4">Head Office Address</h3>
+          <p class="text-gray-600">CT-Merchant Headquarters</p>
+          <p class="text-gray-600">123 Lekki-Ikoyi Link Bridge Road</p>
+          <p class="text-gray-600">Lagos, Nigeria</p>
+          <p class="text-gray-600 mt-4">Phone: +234 123 456 7890</p>
+          <p class="text-gray-600">Email: info@ct-merchant.com</p>
+        </div>
+        <div class="animate-on-scroll" style="transition-delay: 300ms;">
+          <h3 class="text-xl font-semibold brand-purple mb-4">Directors</h3>
+          <ul class="list-none text-gray-600">
+            <li class="mb-2"><strong>John Doe</strong> - Chief Executive Officer (CEO)</li>
+            <li class="mb-2"><strong>Jane Smith</strong> - Chief Operating Officer (COO)</li>
+            <li class="mb-2"><strong>Michael Johnson</strong> - Chief Technology Officer (CTO)</li>
+            <li><strong>Sarah Lee</strong> - Chief Financial Officer (CFO)</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -151,11 +182,11 @@
           <p>Easily list pre-loved items, declutter your home, and earn extra cash. Our platform makes selling simple with just a few taps.</p>
         </div>
         <div class="bg-white p-8 rounded-lg shadow-md animate-on-scroll service-card" style="transition-delay: 150ms;">
-          <h3 class="text-xl font-bold brand-blue mb-2">Local Businesses</h3>
+          <h3 class="text-xl font-bold brand-purple mb-2">Local Businesses</h3>
           <p>Set up a professional storefront, manage your inventory, and reach thousands of local customers looking for products just like yours.</p>
         </div>
         <div class="bg-white p-8 rounded-lg shadow-md animate-on-scroll service-card" style="transition-delay: 300ms;">
-          <h3 class="text-xl font-bold text-green-500 mb-2">Pro Tools & Analytics</h3>
+          <h3 class="text-xl font-bold brand-pink mb-2">Pro Tools & Analytics</h3>
           <p>Upgrade to access powerful features like sales analytics, promotional tools, and customer subscriptions to take your business to the next level.</p>
         </div>
       </div>
@@ -188,7 +219,6 @@
     ];
     let i = 0, j = 0, currentPhrase = [], isDeleting = false;
     const el = document.getElementById("dynamic-text");
-
     function loop() {
       el.innerHTML = currentPhrase.join("");
       if (!isDeleting && j <= phrases[i].length) {
@@ -211,7 +241,6 @@
       setTimeout(loop, isDeleting ? 50 : 100);
     }
     loop();
-
     // Scroll animations
     const scrollElements = document.querySelectorAll(".animate-on-scroll");
     const elementInView = (el, dividend = 1) => {
@@ -237,5 +266,3 @@
   </script>
 </body>
 </html>
-
-
