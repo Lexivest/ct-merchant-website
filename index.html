@@ -26,6 +26,7 @@
     }
   </script>
   <style>
+    /* Hero Background with Overlay */
     .hero-bg {
       background: linear-gradient(135deg, rgba(46, 16, 101, 0.95) 0%, rgba(88, 28, 135, 0.9) 100%),
                   url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
@@ -40,6 +41,7 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
+    /* Scroll Animation Utility */
     .animate-up {
       opacity: 0;
       transform: translateY(20px);
@@ -55,25 +57,29 @@
 <body class="bg-slate-50 text-slate-600 antialiased selection:bg-brand-pink selection:text-white">
 
   <!-- Navigation -->
-  <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 transition-all duration-300">
+  <nav class="fixed w-full z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm transition-all duration-300">
     <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-      <!-- Placeholder Logo -->
-      <a href="#" class="flex items-center gap-2 group">
-        <div class="w-10 h-10 bg-gradient-to-br from-brand-purple to-brand-pink rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg group-hover:shadow-brand-pink/30 transition-all">
-          CT
-        </div>
-        <div class="flex flex-col">
-          <span class="text-xl font-bold text-brand-purple leading-none">CT-Merchant</span>
-          <span class="text-xs text-slate-400 font-medium tracking-widest uppercase">LTD.</span>
-        </div>
+      
+      <!-- Brand / Logo Area -->
+      <a href="#" class="flex items-center gap-3 group">
+        <!-- HOW TO ADD LOGO: Replace the src below with your actual logo file path -->
+        <img 
+          src="https://placehold.co/100x100/2E1065/ffffff?text=CT&font=roboto" 
+          alt="CT-Merchant Logo" 
+          class="w-10 h-10 rounded-lg shadow-md group-hover:shadow-brand-pink/30 transition-all object-cover"
+        >
+        <!-- One Line Text -->
+        <span class="text-xl font-extrabold text-brand-purple tracking-tight group-hover:text-brand-pink transition-colors">
+          CT-MERCHANT LTD.
+        </span>
       </a>
 
       <!-- Desktop Menu -->
       <div class="hidden md:flex items-center space-x-8 text-sm font-semibold text-slate-600">
+        <a href="#corporate" class="hover:text-brand-pink transition">About Us</a>
         <a href="#services" class="hover:text-brand-pink transition">Solutions</a>
-        <a href="#corporate" class="hover:text-brand-pink transition">Corporate</a>
         <a href="#directors" class="hover:text-brand-pink transition">Leadership</a>
-        <a href="#contact" class="px-5 py-2.5 bg-brand-purple text-white rounded-full hover:bg-brand-purpleLight transition shadow-lg shadow-brand-purple/30">
+        <a href="#contact" class="px-6 py-2.5 bg-brand-purple text-white rounded-full hover:bg-brand-purpleLight transition shadow-lg shadow-brand-purple/20">
           Contact Us
         </a>
       </div>
@@ -81,13 +87,14 @@
   </nav>
 
   <!-- Hero Section -->
-  <section class="hero-bg min-h-[85vh] flex items-center relative overflow-hidden">
-    <!-- Abstract Shapes -->
-    <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-brand-pink/20 to-transparent"></div>
-    
+  <section class="hero-bg min-h-[85vh] flex items-center relative overflow-hidden border-b-8 border-brand-pink">
+    <!-- Decorative Element -->
+    <div class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-slate-50 to-transparent z-10"></div>
+
     <div class="container mx-auto px-6 relative z-10 pt-20">
       <div class="max-w-4xl">
-        <div class="inline-block px-4 py-1.5 rounded-full border border-brand-pink/30 bg-brand-pink/10 text-brand-pink text-xs font-bold tracking-wider mb-6 animate-up">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-pink/30 bg-brand-pink/10 text-brand-pink text-xs font-bold tracking-wider mb-6 animate-up">
+          <span class="w-2 h-2 rounded-full bg-brand-pink animate-pulse"></span>
           REDEFINING LOCAL COMMERCE
         </div>
         <h1 class="text-5xl md:text-7xl font-bold text-white leading-tight mb-6 animate-up" style="transition-delay: 100ms;">
@@ -102,7 +109,7 @@
             Company Profile
           </a>
           <a href="#services" class="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-semibold rounded-lg hover:bg-white/20 transition text-center">
-            Explore Services
+            Our Services
           </a>
         </div>
       </div>
@@ -110,97 +117,121 @@
   </section>
 
   <!-- Corporate Structure & Address -->
-  <section id="corporate" class="py-24 relative">
+  <!-- Added border-b for separation -->
+  <section id="corporate" class="py-24 bg-white border-b border-slate-200">
     <div class="container mx-auto px-6">
-      <div class="grid lg:grid-cols-2 gap-16 items-center">
-        <!-- Info Column -->
+      <div class="grid lg:grid-cols-2 gap-16 items-start">
+        
+        <!-- Corporate Info -->
         <div class="animate-up">
-          <h2 class="text-3xl font-bold text-brand-purple mb-6">Corporate Structure</h2>
-          <p class="text-slate-600 mb-8 leading-relaxed">
-            CT-Merchant Ltd is structured to deliver efficiency and trust. Operating from our headquarters in Kaduna, we manage a network of verified merchants and logistics partners to ensure seamless transactions across the state.
+          <div class="flex items-center gap-3 mb-6">
+            <div class="h-px w-8 bg-brand-pink"></div>
+            <h2 class="text-sm font-bold text-brand-pink uppercase tracking-widest">Who We Are</h2>
+          </div>
+          <h3 class="text-4xl font-bold text-brand-purple mb-6">Structuring Trust & Efficiency</h3>
+          <p class="text-slate-600 mb-8 leading-relaxed text-lg">
+            CT-Merchant Ltd is a registered corporate entity dedicated to streamlining local commerce. Operating from our headquarters in Kaduna, we manage a robust network of verified merchants, logistics partners, and digital infrastructure.
           </p>
           
           <!-- Head Office Card -->
-          <div class="glass-card p-8 rounded-2xl shadow-xl border-l-4 border-brand-pink relative overflow-hidden">
-            <div class="absolute top-0 right-0 p-4 opacity-10">
-              <svg class="w-24 h-24 text-brand-purple" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+          <div class="glass-card p-8 rounded-2xl shadow-xl bg-gradient-to-br from-white to-slate-50 border border-slate-100 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+               <!-- Icon background -->
+              <svg class="w-32 h-32 text-brand-purple" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
             </div>
-            <h3 class="text-sm font-bold text-brand-pink uppercase tracking-wider mb-2">Head Office</h3>
-            <p class="text-brand-purple font-semibold text-lg mb-1">No. 110, Gidan Gomna Tsphon Bagado</p>
-            <p class="text-slate-600">Kamazou, Kaduna State.</p>
-            <p class="text-slate-600 mt-4 flex items-center gap-2">
-              <svg class="w-4 h-4 text-brand-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-              admin@ct-merchant.com.ng
-            </p>
+            <h4 class="text-xs font-bold text-brand-purple uppercase tracking-wider mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-brand-pink"></span> Head Office
+            </h4>
+            <p class="text-slate-900 font-bold text-xl mb-1">No. 110, Gidan Gomna Tsphon Bagado</p>
+            <p class="text-slate-600 mb-6">Kamazou, Kaduna State.</p>
+            
+            <div class="flex items-center gap-3 pt-6 border-t border-slate-200">
+               <div class="w-8 h-8 rounded-full bg-brand-purple/10 flex items-center justify-center text-brand-purple">
+                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+               </div>
+               <span class="text-brand-purple font-medium">admin@ct-merchant.com.ng</span>
+            </div>
           </div>
         </div>
 
         <!-- Directors Grid -->
-        <div id="directors" class="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-up" style="transition-delay: 200ms;">
+        <div id="directors" class="grid grid-cols-1 gap-6 animate-up" style="transition-delay: 200ms;">
+          <h2 class="text-2xl font-bold text-brand-purple mb-2">Leadership</h2>
+          
           <!-- Director 1 -->
-          <div class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-xl transition border border-slate-100 group">
-            <div class="w-16 h-16 bg-slate-200 rounded-full mb-4 overflow-hidden group-hover:ring-2 ring-brand-pink transition">
-              <!-- Placeholder Avatar -->
-              <svg class="w-full h-full text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          <div class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition border border-slate-200 flex items-center gap-6">
+            <!-- HOW TO ADD IMAGE: Replace src with director's photo URL -->
+            <img 
+              src="https://placehold.co/100x100/e2e8f0/94a3b8?text=MD" 
+              alt="Managing Director" 
+              class="w-20 h-20 rounded-full object-cover border-2 border-brand-pink"
+            >
+            <div>
+              <h4 class="font-bold text-brand-purple text-lg">Name Here</h4>
+              <p class="text-brand-pink text-sm font-semibold">Managing Director</p>
+              <p class="text-xs text-slate-500 mt-1">Strategic oversight & operational leadership.</p>
             </div>
-            <h4 class="font-bold text-brand-purple text-lg">Name Here</h4>
-            <p class="text-brand-pink text-sm font-medium mb-2">Managing Director</p>
-            <p class="text-xs text-slate-500">Strategic oversight and operational leadership.</p>
           </div>
 
           <!-- Director 2 -->
-          <div class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-xl transition border border-slate-100 group">
-            <div class="w-16 h-16 bg-slate-200 rounded-full mb-4 overflow-hidden group-hover:ring-2 ring-brand-pink transition">
-              <svg class="w-full h-full text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          <div class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition border border-slate-200 flex items-center gap-6">
+             <!-- HOW TO ADD IMAGE: Replace src with director's photo URL -->
+            <img 
+              src="https://placehold.co/100x100/e2e8f0/94a3b8?text=Dir" 
+              alt="Director Ops" 
+              class="w-20 h-20 rounded-full object-cover border-2 border-brand-pink"
+            >
+            <div>
+              <h4 class="font-bold text-brand-purple text-lg">Name Here</h4>
+              <p class="text-brand-pink text-sm font-semibold">Director of Operations</p>
+              <p class="text-xs text-slate-500 mt-1">Logistics coordination & merchant relations.</p>
             </div>
-            <h4 class="font-bold text-brand-purple text-lg">Name Here</h4>
-            <p class="text-brand-pink text-sm font-medium mb-2">Director of Operations</p>
-            <p class="text-xs text-slate-500">Logistics coordination and merchant relations.</p>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Services Compact Grid -->
-  <section id="services" class="py-24 bg-slate-100">
+  <!-- Services Grid -->
+  <!-- Separated with background color and top border -->
+  <section id="services" class="py-24 bg-slate-50 border-b border-slate-200">
     <div class="container mx-auto px-6">
       <div class="text-center max-w-2xl mx-auto mb-16 animate-up">
-        <h2 class="text-3xl font-bold text-brand-purple mb-4">Core Services</h2>
-        <div class="h-1 w-20 bg-brand-pink mx-auto rounded-full"></div>
+        <h2 class="text-sm font-bold text-brand-pink uppercase tracking-widest mb-2">What We Do</h2>
+        <h3 class="text-3xl font-bold text-brand-purple">Comprehensive Solutions</h3>
       </div>
 
       <div class="grid md:grid-cols-3 gap-8">
-        <!-- Card 1 -->
-        <div class="bg-white p-8 rounded-2xl shadow-sm hover:-translate-y-2 transition duration-300 animate-up">
-          <div class="w-12 h-12 bg-brand-purple/10 rounded-lg flex items-center justify-center mb-6 text-brand-purple">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <!-- Service 1 -->
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:border-brand-purple/30 hover:shadow-xl hover:-translate-y-1 transition duration-300 animate-up">
+          <div class="w-14 h-14 bg-brand-purple/5 rounded-xl flex items-center justify-center mb-6 text-brand-purple">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
           </div>
-          <h3 class="text-xl font-bold text-brand-purple mb-3">Marketplace</h3>
+          <h4 class="text-xl font-bold text-brand-purple mb-3">Local Marketplace</h4>
           <p class="text-slate-600 text-sm leading-relaxed">
-            A centralized platform for buying and selling new or fairly used items within the community.
+            A centralized, verified platform for buying and selling new or fairly used items within the community.
           </p>
         </div>
 
-        <!-- Card 2 -->
-        <div class="bg-white p-8 rounded-2xl shadow-sm hover:-translate-y-2 transition duration-300 animate-up" style="transition-delay: 100ms;">
-          <div class="w-12 h-12 bg-brand-pink/10 rounded-lg flex items-center justify-center mb-6 text-brand-pink">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        <!-- Service 2 -->
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:border-brand-pink/30 hover:shadow-xl hover:-translate-y-1 transition duration-300 animate-up" style="transition-delay: 100ms;">
+          <div class="w-14 h-14 bg-brand-pink/5 rounded-xl flex items-center justify-center mb-6 text-brand-pink">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
           </div>
-          <h3 class="text-xl font-bold text-brand-purple mb-3">Merchant Hosting</h3>
+          <h4 class="text-xl font-bold text-brand-purple mb-3">Merchant Hosting</h4>
           <p class="text-slate-600 text-sm leading-relaxed">
-            Digital storefronts for local businesses with inventory management and analytics.
+            Digital storefronts for local businesses equipped with inventory management and performance analytics.
           </p>
         </div>
 
-        <!-- Card 3 -->
-        <div class="bg-white p-8 rounded-2xl shadow-sm hover:-translate-y-2 transition duration-300 animate-up" style="transition-delay: 200ms;">
-          <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-6 text-blue-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <!-- Service 3 -->
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:border-blue-500/30 hover:shadow-xl hover:-translate-y-1 transition duration-300 animate-up" style="transition-delay: 200ms;">
+          <div class="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center mb-6 text-blue-600">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           </div>
-          <h3 class="text-xl font-bold text-brand-purple mb-3">Verification</h3>
+          <h4 class="text-xl font-bold text-brand-purple mb-3">Identity Verification</h4>
           <p class="text-slate-600 text-sm leading-relaxed">
-            Rigorous KYC and merchant verification to ensure a safe trading environment.
+            Rigorous KYC and merchant verification processes to ensure a safe and trustworthy trading environment.
           </p>
         </div>
       </div>
@@ -208,29 +239,32 @@
   </section>
 
   <!-- Footer -->
-  <footer id="contact" class="bg-brand-dark text-slate-400 py-12 border-t border-slate-800">
+  <footer id="contact" class="bg-brand-dark text-slate-400 py-16">
     <div class="container mx-auto px-6">
-      <div class="flex flex-col md:flex-row justify-between items-center">
-        <div class="flex items-center gap-2 mb-4 md:mb-0">
-          <div class="w-8 h-8 bg-gradient-to-br from-brand-purple to-brand-pink rounded flex items-center justify-center text-white font-bold text-sm">CT</div>
-          <span class="text-white font-bold tracking-wide">CT-MERCHANT LTD.</span>
+      <div class="flex flex-col md:flex-row justify-between items-center border-b border-slate-800 pb-8 mb-8">
+        <div class="flex items-center gap-3 mb-6 md:mb-0">
+          <!-- Small Footer Logo -->
+          <img src="https://placehold.co/50x50/2E1065/ffffff?text=CT" alt="Logo" class="w-8 h-8 rounded shadow-sm">
+          <span class="text-white font-bold tracking-wide text-lg">CT-MERCHANT LTD.</span>
         </div>
-        <div class="flex gap-8 text-sm">
-          <a href="#" class="hover:text-white transition">Privacy</a>
-          <a href="#" class="hover:text-white transition">Terms</a>
-          <a href="#" class="hover:text-white transition">Support</a>
+        <div class="flex gap-8 text-sm font-medium">
+          <a href="#" class="hover:text-brand-pink transition">Privacy Policy</a>
+          <a href="#" class="hover:text-brand-pink transition">Terms of Service</a>
+          <a href="#" class="hover:text-brand-pink transition">Support</a>
         </div>
       </div>
-      <div class="mt-8 text-center md:text-left text-xs text-slate-600">
-        &copy; 2025 CT-Merchant Ltd. All rights reserved.
+      <div class="flex flex-col md:flex-row justify-between items-center text-xs text-slate-600">
+        <p>&copy; 2025 CT-Merchant Ltd. All rights reserved.</p>
+        <p class="mt-2 md:mt-0">Designed for Kaduna.</p>
       </div>
     </div>
   </footer>
 
+  <!-- Scripts -->
   <script>
     // --- Typewriter Logic ---
     const textElement = document.getElementById("typewriter");
-    const phrases = ["Connecting Kaduna.", "Empowering Merchants.", "Safe Transactions."];
+    const phrases = ["Connecting Kaduna.", "Empowering Merchants.", "Secure Transactions."];
     let phraseIndex = 0;
     let charIndex = 0;
     let isDeleting = false;
@@ -248,11 +282,11 @@
 
       if (!isDeleting && charIndex === currentPhrase.length) {
         isDeleting = true;
-        setTimeout(type, 2000); // Wait before deleting
+        setTimeout(type, 2000); 
       } else if (isDeleting && charIndex === 0) {
         isDeleting = false;
         phraseIndex = (phraseIndex + 1) % phrases.length;
-        setTimeout(type, 500); // Wait before typing next
+        setTimeout(type, 500); 
       } else {
         setTimeout(type, isDeleting ? 50 : 100);
       }
