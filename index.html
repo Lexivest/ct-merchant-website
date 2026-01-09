@@ -73,25 +73,38 @@
     </div>
   </nav>
 
-  <!-- Hero Section -->
+ <!-- Hero Section -->
 <section class="hero-bg min-h-[85vh] flex items-center relative overflow-hidden border-b-8 border-brand-pink">
+  <!-- Decorative gradient at bottom -->
   <div class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-slate-50 to-transparent z-10"></div>
-  <div class="container mx-auto px-6 relative z-10 pt-20 flex items-center justify-between">
-    
-    <!-- Left: Text -->
-    <div class="max-w-2xl animate-up">
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-pink/30 bg-brand-pink/10 text-brand-pink text-xs font-bold tracking-wider mb-6">
+
+  <!-- Right: Splash image pinned to screen edge -->
+  <div class="absolute right-0 top-1/2 -translate-y-1/2 pr-0 z-0 hidden md:block">
+    <img
+      src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/full_splash.jpg"
+      alt="App Splash"
+      class="h-[60vh] max-h-[700px] rounded-l-xl shadow-lg border border-slate-200 object-contain"
+    />
+  </div>
+
+  <!-- Content container (left) -->
+  <div class="container mx-auto px-6 relative z-10 pt-20">
+    <div class="max-w-4xl">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-pink/30 bg-brand-pink/10 text-brand-pink text-xs font-bold tracking-wider mb-6 animate-up">
         <span class="w-2 h-2 rounded-full bg-brand-pink animate-pulse"></span>
         REDEFINING LOCAL COMMERCE
       </div>
-      <h1 class="text-5xl md:text-6xl font-bold text-white leading-tight mb-6">
+
+      <h1 class="text-5xl md:text-7xl font-bold text-white leading-tight mb-6 animate-up" style="transition-delay: 100ms;">
         <span id="typewriter" class="text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300"></span>
         <span class="animate-pulse text-brand-pink">|</span>
       </h1>
-      <p class="text-lg md:text-xl text-slate-300 mb-10 leading-relaxed">
+
+      <p class="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl leading-relaxed animate-up" style="transition-delay: 200ms;">
         CT-Merchant Ltd bridges the gap between digital convenience and local availability. We empower neighborhoods with professional-grade commerce tools.
       </p>
-      <div class="flex flex-col sm:flex-row gap-4">
+
+      <div class="flex flex-col sm:flex-row gap-4 animate-up" style="transition-delay: 300ms;">
         <a href="#corporate" class="px-8 py-4 bg-brand-pink text-white font-semibold rounded-lg hover:bg-pink-600 transition shadow-lg shadow-brand-pink/30 text-center">
           Company Profile
         </a>
@@ -99,13 +112,6 @@
           Our Services
         </a>
       </div>
-    </div>
-
-    <!-- Right: Splash Image -->
-    <div class="animate-up ml-auto">
-      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/full_splash.jpg" 
-           alt="App Splash"
-           class="max-w-xs md:max-w-sm rounded-xl shadow-lg border border-slate-200" />
     </div>
   </div>
 </section>
@@ -198,5 +204,6 @@
 </html>
 
         setTimeout(type
+
 
 
