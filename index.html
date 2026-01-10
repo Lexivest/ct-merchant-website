@@ -53,181 +53,203 @@
 
 <!-- Navigation -->
 <nav class="fixed top-0 left-0 w-full z-[100] bg-gradient-to-r from-brand-purple via-brand-purpleLight to-brand-pink shadow-lg">
-  <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-    <!-- Logo -->
+  <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+    <!-- Logo & Text Wrapper -->
     <a href="#" class="flex items-center gap-3 group">
-      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"
-           alt="CT-Merchant Logo"
-           class="w-10 h-10 rounded-lg shadow-md object-cover">
-      <span class="text-xl font-extrabold text-white group-hover:text-pink-200 transition-colors">
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" 
+           alt="CT-Merchant Logo" 
+           class="w-10 h-10 rounded-lg shadow-md object-cover border border-white/20">
+      <span class="text-lg md:text-xl font-extrabold text-white tracking-wide group-hover:text-pink-100 transition-colors">
         CT-MERCHANT LTD.
       </span>
     </a>
 
     <!-- Desktop Menu -->
-    <div class="hidden md:flex items-center space-x-8 text-sm font-semibold text-white">
-      <a href="#corporate" class="hover:text-pink-200 transition">About Us</a>
-      <a href="#services" class="hover:text-pink-200 transition">Solutions</a>
-      <a href="#directors" class="hover:text-pink-200 transition">Leadership</a>
-      <a href="#contact" class="px-6 py-2.5 bg-white text-brand-purple rounded-full hover:bg-pink-200 hover:text-brand-dark transition shadow">
+    <div class="hidden md:flex items-center space-x-6 text-sm font-semibold text-white/90">
+      <a href="#corporate" class="hover:text-white transition">About</a>
+      <a href="#services" class="hover:text-white transition">Solutions</a>
+      <a href="#directors" class="hover:text-white transition">Leadership</a>
+      <a href="#contact" class="px-5 py-2 bg-white text-brand-purple rounded-full hover:bg-pink-100 hover:text-brand-dark transition shadow font-bold">
         Contact Us
       </a>
     </div>
 
     <!-- Mobile Hamburger -->
-    <button class="md:hidden text-white focus:outline-none" id="menu-btn">
-      ☰
+    <button class="md:hidden text-white focus:outline-none p-2" id="menu-btn">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
     </button>
   </div>
 
   <!-- Mobile Menu -->
-  <div class="hidden absolute left-0 right-0 top-full bg-gradient-to-r from-brand-purple via-brand-purpleLight to-brand-pink shadow-lg" id="mobile-menu">
-    <div class="px-6 py-4 space-y-3 text-base font-semibold text-white">
-      <a href="#corporate" class="block hover:text-pink-200">About Us</a>
-      <a href="#services" class="block hover:text-pink-200">Solutions</a>
-      <a href="#directors" class="block hover:text-pink-200">Leadership</a>
-      <a href="#contact" class="block bg-white text-brand-purple rounded-lg px-4 py-2 text-center hover:bg-pink-200 hover:text-brand-dark">
+  <div class="hidden absolute left-0 right-0 top-full bg-brand-purple shadow-xl border-t border-white/10" id="mobile-menu">
+    <div class="px-4 py-4 space-y-3 text-sm font-semibold text-white">
+      <a href="#corporate" class="block hover:text-pink-200 py-2 border-b border-white/5">About Us</a>
+      <a href="#services" class="block hover:text-pink-200 py-2 border-b border-white/5">Solutions</a>
+      <a href="#directors" class="block hover:text-pink-200 py-2 border-b border-white/5">Leadership</a>
+      <a href="#contact" class="block bg-white text-brand-purple rounded-lg px-4 py-3 text-center font-bold mt-4 hover:bg-gray-100">
         Contact Us
       </a>
     </div>
   </div>
 </nav>
 
-
-<!-- Hero -->
-<section class="hero-bg min-h-[85vh] flex items-center relative overflow-hidden border-b-8 border-brand-pink">
-  <div class="container mx-auto px-6 pt-28 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+<!-- Hero Section (Compacted) -->
+<section class="hero-bg min-h-[60vh] flex items-center relative overflow-hidden border-b-4 border-brand-pink pt-20">
+  <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-8 items-center py-12">
     <div class="animate-up">
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-pink/30 bg-brand-pink/10 text-brand-pink text-xs font-bold mb-4">
-        <span class="w-2 h-2 rounded-full bg-brand-pink animate-pulse"></span>
-        REDEFINING LOCAL COMMERCE
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-pink-400/30 bg-pink-500/10 text-pink-300 text-[10px] font-bold tracking-widest mb-4">
+        <span class="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse"></span>
+        REDEFINING COMMERCE
       </div>
-      <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
-        <span id="typewriter" class="text-lg sm:text-xl md:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300"></span>
-        <span class="animate-pulse text-brand-pink">|</span>
+      <h1 class="text-3xl md:text-5xl font-bold text-white mb-3 leading-tight">
+        <span id="typewriter"></span><span class="animate-pulse text-brand-pink">|</span>
       </h1>
-      <p class="text-base sm:text-lg text-slate-300 mb-6">
-        CT-Merchant Ltd bridges the gap between digital convenience and local availability. We empower neighborhoods with professional-grade commerce tools.
+      <p class="text-sm md:text-base text-slate-300 mb-6 max-w-lg leading-relaxed">
+        Bridging the gap between digital convenience and local availability. We empower neighborhoods with professional-grade tools.
       </p>
-      <div class="flex flex-col sm:flex-row gap-3">
-        <a href="#corporate" class="px-6 py-3 bg-brand-pink text-white rounded-lg hover:bg-pink-600 transition shadow text-center">
+      <div class="flex flex-wrap gap-3">
+        <a href="#corporate" class="px-6 py-2.5 bg-brand-pink text-white text-sm font-bold rounded-lg hover:bg-pink-600 transition shadow-lg hover:shadow-pink-500/20">
           Company Profile
         </a>
-        <a href="#services" class="px-6 py-3 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition text-center">
+        <a href="#services" class="px-6 py-2.5 bg-white/10 border border-white/20 text-white text-sm font-bold rounded-lg hover:bg-white/20 transition backdrop-blur-sm">
           Our Services
         </a>
       </div>
     </div>
-    <div class="animate-up flex md:justify-end">
-      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/full_splash.jpg"
-           alt="App Splash"
-           class="w-full max-w-xs sm:max-w-sm md:max-w-md h-[25vh] md:h-[60vh] object-contain rounded-xl shadow border md:self-end" />
+    <!-- Splash Image - Right Aligned & Contained -->
+    <div class="animate-up flex justify-center md:justify-end">
+      <div class="relative group">
+        <div class="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+        <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/full_splash.jpg" 
+             alt="App Interface" 
+             class="relative w-auto h-[300px] md:h-[400px] object-contain rounded-xl shadow-2xl border border-white/10 bg-black">
+      </div>
     </div>
   </div>
 </section>
 
-<!-- Corporate Section -->
-<section id="corporate" class="py-12 bg-gradient-to-r from-pink-100 via-white to-purple-100">
-  <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="glass-card rounded-xl p-6 animate-up">
-      <h2 class="text-2xl font-bold text-brand-purple mb-3">About CT-Merchant Ltd.</h2>
-      <p class="text-slate-800">
-        We build commerce infrastructure tailored for local communities—bridging digital convenience with real-world availability. Our solutions help merchants manage inventory, payments, and customer relationships with ease.
-      </p>
-    </div>
-    <div class="glass-card rounded-xl p-6 animate-up">
-      <h3 class="text-xl font-semibold text-brand-purple mb-2">Our Mission</h3>
-      <p class="text-slate-800">
-        Empower neighborhoods with professional-grade tools, enabling secure transactions, transparent operations, and sustainable growth.
-      </p>
-    </div>
-  </div>
-</section>
-
-<!-- Services Section -->
-<section id="services" class="py-12 bg-gradient-to-r from-purple-100 via-white to-pink-100 border-t border-slate-200">
-  <div class="container mx-auto px-6">
-    <h2 class="text-2xl font-bold text-brand-purple mb-6 text-center">Our Services</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-      <div class="glass-card rounded-xl shadow p-5 flex flex-col">
-        <div class="flex items-center justify-center w-14 h-14 rounded-full bg-brand-pink/10 text-brand-pink mb-3">
-          <span class="text-xl">🛒</span>
+<!-- Corporate Section (Compact Grid) -->
+<section id="corporate" class="py-16 bg-white border-b border-slate-200">
+  <div class="container mx-auto px-4">
+    <div class="grid md:grid-cols-2 gap-10 items-start">
+      <!-- About Text -->
+      <div class="animate-up space-y-4">
+        <h2 class="text-2xl font-bold text-brand-purple flex items-center gap-2">
+          <span class="w-8 h-1 bg-brand-pink rounded-full"></span>
+          Corporate Profile
+        </h2>
+        <p class="text-slate-600 text-sm leading-relaxed">
+          CT-Merchant Ltd is a registered corporate entity tailored for local communities. From our headquarters in Kaduna, we manage a robust network of verified merchants, ensuring seamless, secure, and transparent transactions.
+        </p>
+        <div class="bg-purple-50 p-4 rounded-lg border-l-4 border-brand-purple">
+          <h3 class="text-sm font-bold text-brand-purple mb-1">Our Mission</h3>
+          <p class="text-xs text-slate-700">To empower neighborhoods with professional-grade tools for sustainable economic growth.</p>
         </div>
-        <h3 class="text-lg font-semibold text-brand-purple mb-1">Merchant Tools</h3>
-        <p class="text-sm text-slate-800 flex-grow">Inventory, invoicing, and customer management built for local businesses.</p>
       </div>
-      <div class="glass-card rounded-xl shadow p-5 flex flex-col">
-        <div class="flex items-center justify-center w-14 h-14 rounded-full bg-brand-pink/10 text-brand-pink mb-3">
-          <span class="text-xl">🔐</span>
+
+      <!-- Head Office Card (Compact) -->
+      <div class="animate-up" style="transition-delay: 100ms;">
+        <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100 hover:border-brand-purple/30 transition relative overflow-hidden">
+          <div class="absolute top-0 right-0 p-4 opacity-[0.03]">
+            <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+          </div>
+          <h4 class="text-xs font-bold text-brand-pink uppercase tracking-widest mb-3">Head Office</h4>
+          <p class="text-slate-900 font-bold text-base mb-1">No. 110, Gidan Gomna Tsphon Bagado</p>
+          <p class="text-sm text-slate-500 mb-4">Kamazou, Kaduna State.</p>
+          <div class="flex items-center gap-2 pt-4 border-t border-slate-100 text-xs font-medium text-brand-purple">
+            <span class="bg-purple-100 p-1 rounded">✉️</span> admin@ct-merchant.com.ng
+          </div>
         </div>
-        <h3 class="text-lg font-semibold text-brand-purple mb-1">Secure Payments</h3>
-        <p class="text-sm text-slate-800 flex-grow">Seamless, secure transactions with transparent reporting.</p>
-      </div>
-      <div class="glass-card rounded-xl shadow p-5 flex flex-col">
-        <div class="flex items-center justify-center w-14 h-14 rounded-full bg-brand-pink/10 text-brand-pink mb-3">
-          <span class="text-xl">📊</span>
-        </div>
-        <h3 class="text-lg font-semibold text-brand-purple mb-1">Analytics</h3>
-        <p class="text-sm text-slate-800 flex-grow">Actionable insights to grow revenue and improve operations.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Leadership Section -->
-<section id="directors" class="py-12 bg-gradient-to-r from-pink-100 via-white to-purple-100 border-t border-slate-200">
-  <div class="container mx-auto px-6">
-    <h2 class="text-2xl font-bold text-brand-purple mb-6 text-center">Leadership</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-      <div class="glass-card rounded-xl shadow p-5 flex flex-col items-center text-center">
-        <img src="director1.jpg" alt="Director One"
-             class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow mb-3">
-        <h3 class="text-base sm:text-lg font-semibold text-brand-purple">Director One</h3>
-        <p class="text-sm text-slate-800 mt-1">Chief Executive Officer</p>
-        <p class="text-xs text-slate-600 mt-2">Provides strategic vision and leadership for CT-Merchant Ltd.</p>
+<!-- Services (Dense 3-Col Grid) -->
+<section id="services" class="py-16 bg-slate-50 border-b border-slate-200">
+  <div class="container mx-auto px-4 text-center max-w-5xl">
+    <div class="mb-10 animate-up">
+      <h2 class="text-2xl font-bold text-brand-purple">Core Solutions</h2>
+      <div class="w-12 h-1 bg-brand-pink mx-auto mt-2 rounded-full"></div>
+    </div>
+    
+    <div class="grid sm:grid-cols-3 gap-6">
+      <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition border border-slate-100 animate-up text-left group">
+        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center text-brand-purple mb-4 group-hover:scale-110 transition">🛒</div>
+        <h3 class="text-base font-bold text-brand-purple mb-2">Local Marketplace</h3>
+        <p class="text-xs text-slate-600 leading-relaxed">Centralized platform for buying & selling new or used items within the community.</p>
       </div>
-      <div class="glass-card rounded-xl shadow p-5 flex flex-col items-center text-center">
-        <img src="director2.jpg" alt="Director Two"
-             class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow mb-3">
-        <h3 class="text-base sm:text-lg font-semibold text-brand-purple">Director Two</h3>
-        <p class="text-sm text-slate-800 mt-1">Chief Operations Officer</p>
-        <p class="text-xs text-slate-600 mt-2">Oversees daily operations and ensures efficiency across departments.</p>
+      
+      <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition border border-slate-100 animate-up text-left group" style="transition-delay: 100ms;">
+        <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center text-brand-pink mb-4 group-hover:scale-110 transition">🏪</div>
+        <h3 class="text-base font-bold text-brand-purple mb-2">Merchant Hosting</h3>
+        <p class="text-xs text-slate-600 leading-relaxed">Digital storefronts for local businesses with full inventory management tools.</p>
       </div>
-      <div class="glass-card rounded-xl shadow p-5 flex flex-col items-center text-center">
-        <img src="director3.jpg" alt="Director Three"
-             class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow mb-3">
-        <h3 class="text-base sm:text-lg font-semibold text-brand-purple">Director Three</h3>
-        <p class="text-sm text-slate-800 mt-1">Chief Technology Officer</p>
-        <p class="text-xs text-slate-600 mt-2">Leads innovation and technology development for merchant solutions.</p>
+      
+      <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition border border-slate-100 animate-up text-left group" style="transition-delay: 200ms;">
+        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition">🛡️</div>
+        <h3 class="text-base font-bold text-brand-purple mb-2">Verification</h3>
+        <p class="text-xs text-slate-600 leading-relaxed">Rigorous KYC processes to ensure a safe, trustworthy trading environment.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Footer -->
-<footer id="contact" class="bg-gradient-to-r from-purple-900 via-brand-purple to-pink-700 text-white py-12">
-  <div class="container mx-auto px-6">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-      <div class="flex items-center gap-3">
-        <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"
-             alt="CT-Merchant Logo"
-             class="w-10 h-10 rounded-lg shadow object-cover">
-        <span class="text-lg font-extrabold">CT-MERCHANT LTD.</span>
+<!-- Leadership (Compact Rows) -->
+<section id="directors" class="py-16 bg-white border-b border-slate-200">
+  <div class="container mx-auto px-4 max-w-4xl">
+    <h2 class="text-2xl font-bold text-brand-purple mb-10 text-center animate-up">Leadership Team</h2>
+    
+    <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <!-- Director 1 -->
+      <div class="animate-up flex flex-col items-center text-center p-4 rounded-xl hover:bg-slate-50 transition">
+        <img src="director1.jpg" alt="CEO" class="w-20 h-20 rounded-full object-cover shadow-md border-2 border-brand-purple mb-3 bg-slate-200">
+        <h4 class="font-bold text-slate-900 text-sm">Name Here</h4>
+        <p class="text-xs font-bold text-brand-pink uppercase tracking-wide mb-1">Managing Director</p>
+        <p class="text-[10px] text-slate-500">Strategic Vision & Growth</p>
       </div>
-      <div class="text-sm">
-        <p>Abuja, Federal Capital Territory, Nigeria</p>
-        <p>© <span id="year"></span> CT-Merchant Ltd. All rights reserved.</p>
+
+      <!-- Director 2 -->
+      <div class="animate-up flex flex-col items-center text-center p-4 rounded-xl hover:bg-slate-50 transition" style="transition-delay: 100ms;">
+        <img src="director2.jpg" alt="COO" class="w-20 h-20 rounded-full object-cover shadow-md border-2 border-brand-purple mb-3 bg-slate-200">
+        <h4 class="font-bold text-slate-900 text-sm">Name Here</h4>
+        <p class="text-xs font-bold text-brand-pink uppercase tracking-wide mb-1">Operations Director</p>
+        <p class="text-[10px] text-slate-500">Logistics & Merchant Relations</p>
       </div>
-      <div class="flex gap-4">
-        <a href="#corporate" class="hover:text-pink-200">About</a>
-        <a href="#services" class="hover:text-pink-200">Services</a>
-        <a href="#directors" class="hover:text-pink-200">Leadership</a>
+
+      <!-- Director 3 -->
+      <div class="animate-up flex flex-col items-center text-center p-4 rounded-xl hover:bg-slate-50 transition" style="transition-delay: 200ms;">
+        <img src="director3.jpg" alt="CTO" class="w-20 h-20 rounded-full object-cover shadow-md border-2 border-brand-purple mb-3 bg-slate-200">
+        <h4 class="font-bold text-slate-900 text-sm">Name Here</h4>
+        <p class="text-xs font-bold text-brand-pink uppercase tracking-wide mb-1">Technical Director</p>
+        <p class="text-[10px] text-slate-500">Innovation & Development</p>
       </div>
     </div>
   </div>
+</section>
+
+<!-- Compact Footer -->
+<footer id="contact" class="bg-brand-dark text-slate-400 py-8 border-t-4 border-brand-pink">
+  <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-medium">
+    <div class="flex items-center gap-2">
+      <div class="w-6 h-6 bg-white/10 rounded flex items-center justify-center text-white">C</div>
+      <span class="text-white tracking-wide">© 2025 CT-MERCHANT LTD.</span>
+    </div>
+    
+    <div class="flex gap-6">
+      <a href="#" class="hover:text-white transition">Privacy</a>
+      <a href="#" class="hover:text-white transition">Terms</a>
+      <a href="#" class="hover:text-white transition">Support</a>
+    </div>
+    
+    <div class="text-slate-600">
+      RC: 1234567 | Kaduna, NG
+    </div>
+  </div>
+</footer>
 
 <script>
-  // Mobile menu toggle
+  // Mobile Menu Toggle
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
   if (menuBtn && mobileMenu) {
@@ -236,19 +258,16 @@
     });
   }
 
-  // Typewriter effect
+  // Typewriter
   const textElement = document.getElementById("typewriter");
   const phrases = ["Connecting Kaduna.", "Empowering Merchants.", "Secure Transactions."];
   let phraseIndex = 0, charIndex = 0, isDeleting = false;
+
   function type() {
     const currentPhrase = phrases[phraseIndex];
-    if (isDeleting) {
-      textElement.textContent = currentPhrase.substring(0, charIndex - 1);
-      charIndex--;
-    } else {
-      textElement.textContent = currentPhrase.substring(0, charIndex + 1);
-      charIndex++;
-    }
+    textElement.textContent = currentPhrase.substring(0, isDeleting ? charIndex - 1 : charIndex + 1);
+    charIndex += isDeleting ? -1 : 1;
+
     if (!isDeleting && charIndex === currentPhrase.length) {
       isDeleting = true;
       setTimeout(type, 2000);
@@ -262,23 +281,13 @@
   }
   type();
 
-  // Scroll animation
+  // Scroll Animation
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-      }
+      if (entry.isIntersecting) entry.target.classList.add('visible');
     });
   }, { threshold: 0.1 });
   document.querySelectorAll('.animate-up').forEach((el) => observer.observe(el));
-
-  // Footer year
-  const yearEl = document.getElementById('year');
-  if (yearEl) yearEl.textContent = new Date().getFullYear();
 </script>
 </body>
 </html>
-
-
-
-
