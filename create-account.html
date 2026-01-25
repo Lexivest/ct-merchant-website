@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account | CT‑Merchant</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+          colors: {
+            brand: {
+              purple: '#2E1065',
+              purpleLight: '#5B21B6',
+              pink: '#DB2777',
+              dark: '#0F172A'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-attachment: fixed; }
+    .auth-card { backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.95); }
+    .input-focus:focus { outline: none; border-color: #DB2777; box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); }
+    .loader {
+      border: 2px solid #f3f3f3; border-top: 2px solid #DB2777;
+      border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: none;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-brand-purple via-purple-800 to-brand-pink min-h-screen flex flex-col items-center justify-center p-4 font-sans">
+
+  <a href="index.html" class="fixed top-6 left-6 flex items-center gap-2 text-white transition-all group bg-brand-pink px-5 py-2.5 rounded-full shadow-lg hover:bg-pink-600 border border-white/20 z-50">
+    <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+    <span class="text-sm font-bold uppercase tracking-tight">Home</span>
+  </a>
+
+  <div class="auth-card w-full max-w-md rounded-3xl shadow-2xl p-8 md:p-10">
+    <div class="text-center mb-8">
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" 
+           alt="CTM Logo" class="w-20 h-20 mx-auto rounded-2xl shadow-lg border-2 border-slate-50 mb-4 object-cover">
+      <h2 class="text-2xl font-extrabold text-brand-purple tracking-tight">Join CT‑Merchant</h2>
+      <p class="text-slate-500 text-sm mt-1">Experience the future of merchant management.</p>
+    </div>
+
+    <form id="signup-form" class="space-y-5">
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Work Email</label>
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><i class="fa-solid fa-envelope"></i></span>
+          <input type="email" id="signup-email" placeholder="name@company.com" required 
+                 class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 input-focus transition-all">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Password</label>
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><i class="fa-solid fa-lock"></i></span>
+          <input type="password" id="signup-password" placeholder="••••••••" required 
+                 class="w-full pl-11 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 input-focus transition-all">
+          <button type="button" onclick="togglePasswordVisibility('signup-password', 'eye-icon-signup')" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-pink transition-colors">
+            <i id="eye-icon-signup" class="fa-solid fa-eye text-sm"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="button" onclick="openTermsModal()" class="w-full bg-brand-purple hover:bg-brand-pink text-white font-bold py-4 rounded-2xl transition-all shadow-lg hover:shadow-brand-pink/25 active:scale-[0.98] flex items-center justify-center gap-2 uppercase text-sm tracking-widest">
+        Create Account
+      </button>
+    </form>
+
+    <div id="message-container" class="mt-6 hidden p-4 rounded-2xl text-sm font-medium flex items-center gap-3">
+        <span id="message-icon"></span>
+        <p id="message"></p>
+    </div>
+
+    <div class="mt-8 text-center pt-6 border-t border-slate-100">
+        <p class="text-slate-500 text-sm">Already have an account? 
+            <button onclick="toggleLoginModal()" class="text-brand-pink font-bold hover:underline">Sign In</button>
+        </p>
+    </div>
+  </div>
+
+  <div id="terms-modal" class="hidden fixed inset-0 z-[300] flex items-center justify-center p-4 bg-brand-dark/90 backdrop-blur-md">
+    <div class="bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden relative border border-white/20">
+        <div class="p-8 text-center">
+            <div class="w-16 h-16 bg-brand-pink/10 text-brand-pink rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h2 class="text-xl font-bold text-brand-purple mb-3">Legal Agreement</h2>
+            <p class="text-sm text-slate-600 leading-relaxed mb-6">
+                By clicking "Agree & Create Account", you acknowledge that you have read, understood, and agreed to our 
+                <a href="terms.html" class="text-brand-pink font-bold hover:underline">Terms of Use</a> and 
+                <a href="privacy.html" class="text-brand-pink font-bold hover:underline">Privacy Policy</a>.
+            </p>
+            <div class="flex flex-col gap-3">
+                <button onclick="processFinalSignup()" class="w-full py-4 bg-brand-purple text-white font-bold rounded-2xl shadow-lg hover:bg-brand-dark transition-all">
+                    Agree & Create Account
+                </button>
+                <button onclick="closeTermsModal()" class="w-full py-3 text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-slate-600">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div id="login-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+    <div class="bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden relative">
+      <button onclick="toggleLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-brand-pink transition z-10">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <div class="p-8 pb-4 border-b border-slate-100 text-center flex flex-col items-center bg-gradient-to-b from-slate-50 to-white">
+        <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="w-16 h-16 rounded-xl shadow-sm mb-4">
+        <h2 class="text-2xl font-bold text-brand-purple mb-1">Welcome Back</h2>
+        <p class="text-xs text-slate-500">Access your merchant dashboard</p>
+      </div>
+      <form class="p-8 space-y-5" onsubmit="event.preventDefault(); handleLogin();">
+        <input type="email" id="login-email" required class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none" placeholder="Email">
+        <input type="password" id="login-password" required class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none" placeholder="Password">
+        <button type="submit" id="login-btn" class="w-full bg-brand-purple hover:bg-brand-dark text-white font-bold py-4 rounded-2xl transition">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://goodtvrhszsnhcyigfoi.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdvb2R0dnJoc3pzbmhjeWlnZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function toggleLoginModal() { document.getElementById('login-modal').classList.toggle('hidden'); }
+    function openTermsModal() { document.getElementById('terms-modal').classList.toggle('hidden'); }
+    function closeTermsModal() { document.getElementById('terms-modal').classList.add('hidden'); }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      input.type = input.type === 'password' ? 'text' : 'password';
+      icon.classList.toggle('text-brand-pink');
+    }
+
+    // This handles the actual Supabase Signup after agreement
+    async function processFinalSignup() {
+        closeTermsModal();
+        const email = document.getElementById("signup-email").value;
+        const password = document.getElementById("signup-password").value;
+        const container = document.getElementById("message-container");
+        const btn = document.querySelector("#signup-form button");
+
+        if(!email || !password) return alert("Please fill in all fields first.");
+
+        btn.disabled = true;
+        btn.textContent = "Processing...";
+
+        const { error } = await client.auth.signUp({ email, password });
+
+        btn.disabled = false;
+        btn.textContent = "Create Account";
+        container.classList.remove('hidden');
+
+        if (error) {
+            container.className = "mt-6 p-4 bg-red-50 text-red-600 rounded-2xl text-sm border border-red-100";
+            document.getElementById("message").textContent = error.message;
+        } else {
+            container.className = "mt-6 p-4 bg-green-50 text-green-700 rounded-2xl text-sm border border-green-100";
+            document.getElementById("message").textContent = "Success! Please check your email or Sign In.";
+        }
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const { error } = await client.auth.signInWithPassword({ email, password });
+      if (error) alert(error.message);
+      else window.location.href = "user-dashboard.html";
+    }
+  </script>
+</body>
+</html>

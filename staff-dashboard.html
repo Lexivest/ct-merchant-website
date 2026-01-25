@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CT‑Merchant Staff Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              purple: '#2E1065',
+              purpleLight: '#5B21B6',
+              pink: '#DB2777',
+              dark: '#0F172A',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gradient-to-br from-brand-purple via-brand-purpleLight to-brand-pink min-h-screen font-sans">
+
+  <!-- Top Navigation -->
+  <nav class="bg-brand-purple text-white px-6 py-4 flex justify-between items-center shadow">
+    <h1 class="text-lg font-bold">CT‑Merchant Staff Dashboard</h1>
+    <button id="logout" class="bg-brand-pink hover:bg-pink-600 px-4 py-2 rounded">Logout</button>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="max-w-5xl mx-auto mt-10 p-6">
+
+    <!-- Staff Profile Card -->
+    <div id="profile-card" class="bg-white rounded-lg shadow p-6 flex items-center gap-6 mb-8 hidden">
+      <img id="avatar" src="" alt="Staff Avatar" class="w-24 h-24 rounded-full object-cover border border-gray-300">
+      <div>
+        <h2 id="full_name" class="text-2xl font-bold text-brand-purple mb-1"></h2>
+        <p id="email" class="text-gray-600"></p>
+        <p id="phone_number" class="text-gray-600"></p>
+        <p id="ct_merchant_id" class="text-gray-600"></p>
+        <p id="city" class="text-gray-600"></p>
+        <p id="area" class="text-gray-600"></p>
+        <span id="role" class="inline-block mt-2 px-3 py-1 bg-brand-pink text-white rounded text-sm">Staff</span>
+      </div>
+    </div>
+
+    <!-- Dashboard Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold text-brand-purple mb-2">📦 Inventory</h3>
+        <p class="text-gray-600">Track and update product stock levels.</p>
+        <button class="mt-4 px-3 py-2 bg-brand-purple text-white rounded">Manage</button>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold text-brand-purple mb-2">👥 Staff Records</h3>
+        <p class="text-gray-600">View and update staff profiles and roles.</p>
+        <button class="mt-4 px-3 py-2 bg-brand-purple text-white rounded">View</button>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold text-brand-purple mb-2">📊 Reports</h3>
+        <p class="text-gray-600">Generate and download performance reports.</p>
+        <button class="mt-4 px-3 py-2 bg-brand-purple text-white rounded">Generate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://goodtvrhszsnhcyigfoi.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdvb2R0dnJoc3pzbmhjeWlnZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadProfile() {
+      const { data: { user } } = await client.auth.getUser();
+      if (!user) {
+        window.location.href = "staff-portal.html";
+        return;
+      }
+
+      // Get profile record (match by email if IDs differ)
+      const { data: profile } = await client
+        .from("profiles")
+        .select("*")
+        .eq("email", user.email)   // safer if ids don’t match
+        .single();
+
+      if (!profile) {
+        console.error("No profile found for:", user.email);
+        return;
+      }
+
+      // Lookup city
+      let cityName = "";
+      if (profile.selected_location_city) {
+        const { data: city } = await client
+          .from("cities")
+          .select("name")
+          .eq("id", profile.selected_location_city)
+          .single();
+        if (city) cityName = city.name;
+      }
+
+      // Lookup area
+      let areaName = "";
+      if (profile.selected_location_area) {
+        const { data: area } = await client
+          .from("areas")
+          .select("name")
+          .eq("id", profile.selected_location_area)
+          .single();
+        if (area) areaName = area.name;
+      }
+
+      // Populate card
+      document.getElementById("full_name").textContent = profile.full_name;
+      document.getElementById("email").textContent = "Email: " + profile.email;
+      document.getElementById("phone_number").textContent = "Phone: " + profile.phone_number;
+      document.getElementById("ct_merchant_id").textContent = "Merchant ID: " + profile.ct_merchant_id;
+      document.getElementById("city").textContent = cityName ? "City: " + cityName : "";
+      document.getElementById("area").textContent = areaName ? "Area: " + areaName : "";
+
+      const avatar = document.getElementById("avatar");
+      avatar.src = profile.avatar_url || "https://via.placeholder.com/150?text=No+Avatar";
+
+      document.getElementById("profile-card").classList.remove("hidden");
+    }
+
+    document.getElementById("logout").addEventListener("click", async () => {
+      const { error } = await client.auth.signOut();
+      if (error) {
+        console.error("Logout error:", error);
+        return;
+      }
+      window.location.href = "staff-portal.html";
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

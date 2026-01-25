@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personnel Dashboard | CT‑Merchant</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+          colors: {
+            brand: {
+              purple: '#2E1065',
+              purpleLight: '#5B21B6',
+              pink: '#DB2777',
+              dark: '#0F172A',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-card {
+      background: #ffffff;
+      border-radius: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+      color: #1e293b;
+    }
+    .animate-up {
+      opacity: 0;
+      transform: translateY(15px);
+      transition: all 0.5s ease-out;
+    }
+    .animate-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    @media (max-width: 1024px) {
+      #sidebar.closed { transform: translateX(-100%); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-brand-purple via-brand-purpleLight to-brand-pink min-h-screen font-sans flex flex-col lg:flex-row">
+
+  <!-- Mobile Top Bar -->
+  <div class="lg:hidden flex items-center justify-between p-4 bg-brand-purple/30 backdrop-blur-md sticky top-0 z-[60] border-b border-white/10">
+    <div class="flex items-center gap-2 text-white">
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="w-8 h-8 rounded-lg shadow-lg">
+      <span class="font-bold text-sm tracking-tight">CT‑MERCHANT</span>
+    </div>
+    <button id="menu-toggle" class="p-2 text-white bg-white/10 rounded-lg active:scale-95 transition-transform">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="closed lg:transform-none fixed inset-y-0 left-0 w-64 bg-brand-dark lg:bg-white/10 backdrop-blur-2xl text-white flex flex-col p-6 shadow-2xl z-[100] lg:z-50 overflow-y-auto">
+    <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-3">
+        <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="w-10 h-10 rounded-lg border border-white/20">
+        <span class="font-bold text-lg tracking-tight">Portal</span>
+      </div>
+      <button id="close-menu" class="lg:hidden p-2 text-white/50">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    
+    <nav class="flex flex-col gap-1.5 flex-1">
+      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-pink text-white font-bold">🏠 Dashboard</a>
+      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-white/70">📦 Orders</a>
+      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition text-white/70">👤 Profile</a>
+      
+      <div class="mt-auto pt-6 border-t border-white/10">
+        <button onclick="logout()" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 transition text-red-400 font-bold w-full">
+          🚪 Logout
+        </button>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Mobile Overlay -->
+  <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] lg:hidden"></div>
+
+  <!-- Main Content -->
+  <main class="flex-1 lg:ml-64 p-4 md:p-8 lg:p-10 text-white min-h-screen">
+    
+    <!-- Stats Row -->
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8 animate-up">
+      <div class="glass-card p-4 flex flex-col justify-center border-l-4 border-brand-purple">
+        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Live Orders</span>
+        <p id="orders-count" class="text-xl font-extrabold text-brand-purple">--</p>
+      </div>
+      <div class="glass-card p-4 flex flex-col justify-center border-l-4 border-brand-pink">
+        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Merchants</span>
+        <p id="merchants-count" class="text-xl font-extrabold text-brand-pink">--</p>
+      </div>
+      <div class="glass-card p-4 flex flex-col justify-center border-l-4 border-blue-500 col-span-2 md:col-span-1">
+        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sync Health</span>
+        <p id="profiles-complete" class="text-xl font-extrabold text-blue-600">--</p>
+      </div>
+    </div>
+
+    <!-- Profiles List -->
+    <div id="profiles-list" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div id="loading-spinner" class="col-span-full py-20 text-center">
+        <div class="inline-block w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://goodtvrhszsnhcyigfoi.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdvb2R0dnJoc3pzbmhjeWlnZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI";
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Sidebar Mobile Logic
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const toggle = document.getElementById('menu-toggle');
+    const close = document.getElementById('close-menu');
+
+    const toggleSidebar = () => {
+      sidebar.classList.toggle('closed');
+      overlay.classList.toggle('hidden');
+      document.body.classList.toggle('overflow-hidden');
+    };
+
+    toggle.onclick = toggleSidebar;
+    close.onclick = toggleSidebar;
+    overlay.onclick = toggleSidebar;
+
+    const animationObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          animationObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    async function logout() {
+      await client.auth.signOut();
+      window.location.href = "index.html";
+    }
+
+    async function loadProfiles() {
+      const container = document.getElementById('profiles-list');
+      
+      try {
+        // 1. Fetch profiles
+        const { data: profiles, error } = await client.from('profiles').select('*');
+        if (error) throw error;
+
+        document.getElementById('orders-count').textContent = "1.2k"; 
+        
+        // 2. Friendly Empty State
+        if (!profiles || profiles.length === 0) {
+          document.getElementById('merchants-count').textContent = "0";
+          document.getElementById('profiles-complete').textContent = "0%";
+          container.innerHTML = `
+            <div class="col-span-full animate-up visible">
+              <div class="glass-card p-12 text-center border-t-8 border-brand-pink">
+                <div class="mb-6 inline-flex p-4 rounded-full bg-pink-50">
+                  <svg class="w-12 h-12 text-brand-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <h2 class="text-2xl font-extrabold text-brand-purple mb-3">Complete Your Setup</h2>
+                <p class="text-slate-500 max-w-md mx-auto mb-8">
+                  Profile creation is managed through our Android application. Install the app to unlock the full market experience.
+                </p>
+                <a href="#" class="inline-flex items-center gap-2 px-8 py-3 bg-brand-purple text-white rounded-xl font-bold shadow-lg hover:bg-brand-dark transition">
+                  Download Android App
+                </a>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        // 3. Populate Stats
+        document.getElementById('merchants-count').textContent = profiles.length;
+        const completeCount = profiles.filter(p => p.is_profile_complete).length;
+        document.getElementById('profiles-complete').textContent = Math.round((completeCount / profiles.length) * 100) + "%";
+
+        // 4. Fetch Cities & Areas for lookup table
+        const [{data: cities}, {data: areas}] = await Promise.all([
+          client.from('cities').select('id, name'),
+          client.from('areas').select('id, name')
+        ]);
+
+        const cityMap = Object.fromEntries(cities?.map(c => [c.id, c.name]) || []);
+        const areaMap = Object.fromEntries(areas?.map(a => [a.id, a.name]) || []);
+
+        // 5. Build Cards
+        container.innerHTML = "";
+        profiles.forEach((profile, index) => {
+          const card = document.createElement('div');
+          card.className = "glass-card p-4 animate-up group border border-white/10";
+          card.style.transitionDelay = `${index * 30}ms`;
+          
+          const cityName = cityMap[profile.selected_location_city] || "Unknown City";
+          const areaName = areaMap[profile.selected_location_area] || "Unknown Area";
+
+          card.innerHTML = `
+            <div class="flex items-center gap-4">
+              <div class="relative flex-shrink-0">
+                <img src="${profile.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(profile.full_name || 'U')}" 
+                     class="w-16 h-16 rounded-2xl object-cover border-2 border-slate-50">
+                <span class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${profile.is_profile_complete ? 'bg-green-500' : 'bg-slate-300'}"></span>
+              </div>
+              <div class="overflow-hidden flex-1">
+                <h3 class="font-extrabold text-brand-purple text-base truncate leading-none">${profile.full_name || 'Merchant'}</h3>
+                <p class="text-[10px] font-bold text-brand-pink font-mono uppercase mt-1">${profile.ct_merchant_id || 'ID Pending'}</p>
+              </div>
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-slate-50 space-y-2">
+              <div class="flex items-center justify-between">
+                 <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Location</span>
+                 <span class="text-[10px] text-brand-purple font-bold truncate">${cityName}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                 <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Area</span>
+                 <span class="text-[10px] text-slate-700 font-semibold truncate">${areaName}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                 <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Contact</span>
+                 <span class="text-[10px] text-slate-700 font-semibold truncate max-w-[120px]">${profile.phone_number || 'N/A'}</span>
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                 <span class="text-[9px] font-bold py-1 px-2 rounded bg-purple-50 text-brand-purple uppercase">${profile.role || 'Member'}</span>
+                 <button class="text-brand-pink text-[10px] font-bold hover:underline">View Store →</button>
+              </div>
+            </div>
+          `;
+          container.appendChild(card);
+          animationObserver.observe(card);
+        });
+
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = `<div class="col-span-full py-20 text-center text-red-100 opacity-80">Failed to load profiles. Please try again.</div>`;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadProfiles();
+      document.querySelectorAll('.animate-up').forEach(el => animationObserver.observe(el));
+    });
+  </script>
+</body>
+</html>

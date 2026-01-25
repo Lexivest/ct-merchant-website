@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Merchant Discovery | CT-MERCHANT LTD.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: { 
+                        brand: { purple: '#2E1065', pink: '#DB2777', dark: '#0F172A' },
+                        surface: '#F8FAFC'
+                    },
+                    boxShadow: { 'soft': '0 20px 40px -10px rgba(46, 16, 101, 0.15)' }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .bg-pattern {
+            background-image: radial-gradient(rgba(255,255,255,0.2) 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans min-h-screen flex items-center justify-center p-4">
+
+    <div id="popup-overlay" class="fixed inset-0 z-[100] bg-brand-dark/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300">
+        
+        <div id="merchant-card" class="bg-white w-full max-w-[360px] max-h-[85vh] rounded-[32px] shadow-soft overflow-hidden relative flex flex-col transform transition-all duration-300 ring-1 ring-white/50">
+            
+            <div class="absolute top-4 left-5 z-[110] flex items-center gap-2">
+                <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" 
+                     alt="CT-Merchant Logo" 
+                     class="w-7 h-7 rounded border border-white/20 shadow-sm">
+                <span class="text-[9px] font-bold text-white/90 uppercase tracking-[0.15em]">Repository</span>
+            </div>
+
+            <a href="index.html" class="absolute top-3 right-3 z-[110] bg-black/10 hover:bg-black/20 backdrop-blur-md text-white p-2 rounded-full transition-all duration-200 flex items-center justify-center group">
+                <svg class="w-5 h-5 group-hover:scale-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </a>
+
+            <div class="overflow-y-auto no-scrollbar flex-1">
+                
+                <div id="loading-state" class="h-full min-h-[400px] flex flex-col items-center justify-center space-y-4">
+                    <div class="animate-spin rounded-full h-10 w-10 border-4 border-brand-purple/20 border-t-brand-pink"></div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">Accessing Repository...</p>
+                </div>
+
+                <div id="error-state" class="hidden h-full min-h-[400px] flex flex-col items-center justify-center p-8 text-center">
+                    <div class="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-store-slash text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-brand-dark tracking-tight">Business Not Found</h3>
+                    <p class="text-xs text-slate-500 mt-2 leading-relaxed">The Merchant ID provided does not exist in our repository. Please verify the ID and try again.</p>
+                    <a href="index.html" class="mt-6 px-6 py-2 bg-brand-dark text-white text-[10px] font-bold rounded-xl uppercase tracking-wider hover:bg-brand-purple transition-all">Go Back</a>
+                </div>
+
+                <div id="merchant-content" class="hidden pb-6">
+                    <div class="h-28 bg-gradient-to-br from-brand-purple via-[#4c1d95] to-brand-pink bg-pattern relative"></div>
+
+                    <div class="px-6 -mt-14 relative flex flex-col items-center text-center">
+                        <div class="relative group">
+                            <div class="p-1 bg-white rounded-[26px] shadow-lg">
+                                <img id="shop-logo" src="" class="w-24 h-24 rounded-[22px] object-cover bg-slate-50 border border-slate-100">
+                            </div>
+                            <div id="shop-status-container" class="absolute bottom-2 -right-1 bg-white p-[3px] rounded-full shadow-sm">
+                                <div id="shop-status-dot" class="w-5 h-5 rounded-full border-2 border-white"></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 w-full">
+                            <h2 class="text-2xl font-extrabold text-brand-dark leading-tight flex items-center justify-center gap-2">
+                                <span id="biz-name"></span>
+                                <i class="fa-solid fa-circle-check text-blue-500 text-[16px]" title="Verified Merchant"></i>
+                            </h2>
+                            <p id="owner-name" class="text-xs font-semibold text-slate-400 mt-1"></p>
+                        </div>
+                        
+                        <div class="mt-4 flex flex-wrap justify-center gap-2">
+                            <span id="ct-id-badge" class="px-3 py-1 bg-brand-purple/10 text-brand-purple text-[10px] font-bold rounded-full uppercase tracking-wide border border-brand-purple/10"></span>
+                            <span class="px-3 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-full uppercase tracking-wide border border-slate-200 flex items-center gap-1.5">
+                                <i class="fa-solid fa-location-dot text-brand-pink"></i>
+                                <span id="city-text"></span>
+                            </span>
+                        </div>
+
+                        <div class="w-full mt-6 bg-surface rounded-2xl p-4 border border-slate-100 grid grid-cols-2 gap-4">
+                            <div class="text-left space-y-1">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Location Hub</span>
+                                <span id="biz-loc" class="text-xs font-bold text-brand-dark line-clamp-2 leading-snug"></span>
+                            </div>
+                            <div class="text-left space-y-1 pl-4 border-l border-slate-200">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Member Since</span>
+                                <span id="biz-created" class="text-xs font-bold text-brand-dark"></span>
+                            </div>
+                        </div>
+
+                        <div class="w-full mt-6 space-y-3">
+                            <a id="whatsapp-btn" href="#" target="_blank" class="group flex items-center justify-center gap-3 w-full py-3.5 bg-[#25D366] text-white text-sm font-bold rounded-2xl shadow-lg shadow-green-200 hover:shadow-green-300 hover:-translate-y-0.5 transition-all duration-200">
+                                <i class="fa-brands fa-whatsapp text-xl group-hover:scale-110 transition-transform"></i>
+                                Order via WhatsApp
+                            </a>
+                            <a id="facebook-btn" href="#" target="_blank" class="group flex items-center justify-center gap-3 w-full py-3.5 bg-[#1877F2] text-white text-sm font-bold rounded-2xl shadow-lg shadow-blue-200 hover:shadow-blue-300 hover:-translate-y-0.5 transition-all duration-200">
+                                <i class="fa-brands fa-facebook text-xl group-hover:scale-110 transition-transform"></i>
+                                View Facebook Shop
+                            </a>
+                        </div>
+
+                        <div class="w-full mt-6 mb-2">
+                            <div class="bg-gradient-to-r from-brand-purple/5 to-brand-pink/5 rounded-xl p-3 border border-brand-purple/10 flex items-start gap-3 text-left">
+                                <div class="bg-white p-1.5 rounded-lg shadow-sm text-brand-purple">
+                                    <i class="fa-solid fa-mobile-screen"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-brand-dark">Get the Full Experience</p>
+                                    <p class="text-[9px] text-slate-500 leading-tight mt-0.5">Install the <span class="text-brand-pink font-bold">CT-Merchant App</span> for live inventory & details.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> 
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SB_URL = 'https://goodtvrhszsnhcyigfoi.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdvb2R0dnJoc3pzbmhjeWlnZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI'; 
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+        window.onload = async () => {
+            const params = new URLSearchParams(window.location.search);
+            const mid = params.get('merchantId')?.trim();
+            if (mid) await fetchCompleteData(mid);
+            else renderErrorUI();
+        };
+
+        async function fetchCompleteData(ctID) {
+            try {
+                // INVOKE THE EDGE FUNCTION
+                const { data, error } = await _supabase.functions.invoke('repo-search', {
+                    body: { merchantId: ctID }
+                });
+
+                if (error || !data) throw new Error("ID not found.");
+                
+                // If the function returned an error message in the payload
+                if(data.error) throw new Error(data.error);
+
+                renderPopup(data.profile, data.shop);
+
+            } catch (e) {
+                console.error("Search Error:", e);
+                renderErrorUI();
+            }
+        }
+
+        function renderErrorUI() {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('merchant-content').classList.add('hidden');
+            document.getElementById('error-state').classList.remove('hidden');
+        }
+
+        function renderPopup(profile, shop) {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('error-state').classList.add('hidden');
+            document.getElementById('merchant-content').classList.remove('hidden');
+
+            // Set dynamic text fields
+            document.getElementById('biz-name').innerText = shop.business_name;
+            document.getElementById('owner-name').innerText = `Proprietor: ${profile.full_name}`;
+            document.getElementById('ct-id-badge').innerText = profile.ct_merchant_id;
+            document.getElementById('city-text').innerText = shop.cities?.name || 'Kaduna'; 
+            document.getElementById('biz-loc').innerText = shop.location_description;
+            
+            // Format Date
+            const date = new Date(shop.created_at);
+            document.getElementById('biz-created').innerText = date.toLocaleDateString('en-NG', {month: 'short', year: 'numeric'});
+
+            // Logo with Fallback
+            document.getElementById('shop-logo').src = shop.logo_url || 'https://via.placeholder.com/200';
+            
+            // Status Indicator (Open/Closed)
+            const dot = document.getElementById('shop-status-dot');
+            const isOpen = shop.status === 'open';
+            dot.className = `w-4 h-4 rounded-full border-2 border-white ${isOpen ? 'bg-emerald-500' : 'bg-rose-500'}`;
+
+            // Clean social links
+            const waNumber = shop.whatsapp_number ? shop.whatsapp_number.replace(/\D/g,'') : '';
+            document.getElementById('whatsapp-btn').href = `https://wa.me/${waNumber}`;
+            
+            const fbLink = shop.facebook_link || '#';
+            document.getElementById('facebook-btn').href = fbLink.startsWith('http') ? fbLink : `https://facebook.com/${fbLink}`;
+        }
+    </script>
+</body>
+</html>
