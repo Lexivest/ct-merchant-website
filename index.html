@@ -18,29 +18,38 @@
   <meta property="og:description" content="Empowering cities with professional-grade commerce tools. Explore our digital shops repository.">
   <meta property="og:image" content="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
 
+  <!-- Compiled Tailwind CSS -->
   <link rel="stylesheet" href="dist/output.css">
+
+  <!-- Supabase client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
-          colors: {
-            brand: {
-              purple: '#2E1065',
-              purpleLight: '#5B21B6',
-              pink: '#DB2777',
-              dark: '#0F172A',
-              light: '#F8FAFC',
-            }
-          }
-        }
-      }
-    }
-  </script>
+</head>
+<body class="font-sans bg-brand-light text-brand-dark">
+  <header class="p-6 bg-brand-purple text-white">
+    <h1 class="text-3xl font-bold">CT-Merchant Ltd.</h1>
+    <p class="mt-2">Digital Shops Repository</p>
+  </header>
+
+  <main class="p-10">
+    <h2 class="text-2xl font-semibold text-brand-pink">Welcome to CT-Merchant</h2>
+    <p class="mt-4">Discover verified merchants, local shops, and products in your city.</p>
+    <button class="mt-6 px-6 py-2 bg-brand-purpleLight text-white rounded-lg hover:bg-brand-pink">
+      Explore Now
+    </button>
+  </main>
+
+  <footer class="p-6 bg-brand-dark text-brand-light text-center">
+    <p>&copy; 2026 CT-Merchant Ltd. All rights reserved.</p>
+  </footer>
+</body>
+</html>
+
   
   <style>
     .hero-text-bg { background: linear-gradient(135deg, rgba(46, 16, 101, 1) 0%, rgba(88, 28, 135, 1) 100%); }
