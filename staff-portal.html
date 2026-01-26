@@ -1,117 +1,118 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CT-Merchant Ltd. | Staff Portal</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-          },
-          colors: {
-            brand: {
-              purple: '#2E1065',
-              purpleLight: '#5B21B6',
-              pink: '#DB2777',
-              dark: '#0F172A',
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    .glass-card {
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-  </style>
+  
+  <link rel="stylesheet" href="styles.css">
+  
+  <link rel="stylesheet" href="staff-portal.css">
 </head>
-<body class="bg-gradient-to-br from-brand-purple via-brand-purpleLight to-brand-pink min-h-screen flex items-center justify-center">
 
-  <!-- Login Card -->
-  <div class="glass-card rounded-xl shadow-xl p-8 w-full max-w-md text-slate-700">
-    <!-- Logo + Title -->
-    <div class="flex items-center gap-3 mb-6">
+<body class="staff-login-body">
+
+  <div class="login-card">
+    
+    <div class="login-header">
       <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"
            alt="CT-Merchant Logo"
-           class="w-10 h-10 rounded-lg shadow object-cover">
-      <h2 class="text-xl font-bold text-brand-purple">Staff Portal</h2>
+           class="login-logo">
+      <h2 class="login-title">Staff Portal</h2>
     </div>
 
-    <!-- Login Form -->
-    <form id="login-form" class="flex flex-col gap-4">
-      <input type="email" placeholder="Email" required class="border p-2 rounded" />
-      <input type="password" placeholder="Password" required class="border p-2 rounded" />
-      <button type="submit" class="bg-brand-purple text-white py-2 rounded">Login</button>
+    <form id="login-form" class="login-form">
+      <input type="email" placeholder="Email" required class="login-input" />
+      <input type="password" placeholder="Password" required class="login-input" />
+      <button type="submit" class="btn-login">Login</button>
     </form>
 
-    <!-- Error Message Placeholder -->
-    <p id="error-message" class="text-sm text-red-600 mt-4 hidden"></p>
+    <p id="error-message" class="error-message"></p>
 
-    <!-- Footer -->
-    <div class="flex justify-between items-center mt-6">
-      <p class="text-xs text-slate-600">Powered by CT-MERCHANT LTD.</p>
-      <!-- ✅ Home Button -->
-      <a href="https://ct-merchant.com.ng" 
-         class="bg-brand-pink hover:bg-pink-600 text-white text-xs px-3 py-1 rounded">
+    <div class="login-footer">
+      <p class="footer-text">Powered by CT-MERCHANT LTD.</p>
+      <a href="index.html" class="btn-home">
         Home
       </a>
     </div>
   </div>
 
-  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://goodtvrhszsnhcyigfoi.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdvb2R0dnJoc3pzbmhjeWlnZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI";
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Check if Supabase library loaded correctly
+    let client;
+    if (window.supabase) {
+        client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } else {
+        console.error("Supabase library not loaded");
+    }
 
     const loginForm = document.getElementById("login-form");
     const errorMessage = document.getElementById("error-message");
 
-    loginForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
+    if (loginForm) {
+        loginForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          
+          if (!client) {
+              errorMessage.textContent = "System Error: Database connection failed.";
+              errorMessage.classList.add("visible");
+              return;
+          }
 
-      const email = loginForm.querySelector("input[type='email']").value;
-      const password = loginForm.querySelector("input[type='password']").value;
+          // Reset Error
+          errorMessage.classList.remove("visible");
+          errorMessage.textContent = "";
 
-      const { data, error } = await client.auth.signInWithPassword({ email, password });
+          const email = loginForm.querySelector("input[type='email']").value;
+          const password = loginForm.querySelector("input[type='password']").value;
+          const btn = loginForm.querySelector("button");
+          
+          // Simple loading state
+          const originalText = btn.textContent;
+          btn.textContent = "Verifying...";
+          btn.disabled = true;
 
-      if (error) {
-        errorMessage.textContent = "Login failed: " + error.message;
-        errorMessage.classList.remove("hidden");
-        return;
-      }
+          try {
+              const { data, error } = await client.auth.signInWithPassword({ email, password });
 
-      if (!data.user) {
-        errorMessage.textContent = "No user returned from Supabase.";
-        errorMessage.classList.remove("hidden");
-        return;
-      }
+              if (error) {
+                throw new Error(error.message);
+              }
 
-      // Staff membership check
-      const { data: staff, error: staffError } = await client
-        .from("staff_profiles")
-        .select("*")
-        .eq("id", data.user.id)
-        .single();
+              if (!data.user) {
+                throw new Error("No user returned from system.");
+              }
 
-      if (staffError || !staff) {
-        errorMessage.textContent = "Access denied: not a staff account.";
-        errorMessage.classList.remove("hidden");
-        await client.auth.signOut();
-        return;
-      }
+              // Staff membership check
+              const { data: staff, error: staffError } = await client
+                .from("staff_profiles")
+                .select("*")
+                .eq("id", data.user.id)
+                .single();
 
-      window.location.href = "staff-dashboard.html";
-    });
+              if (staffError || !staff) {
+                // If not staff, sign them out immediately
+                await client.auth.signOut();
+                throw new Error("Access denied: Restricted to staff accounts only.");
+              }
+
+              // Success redirect
+              window.location.href = "staff-dashboard.html";
+
+          } catch (err) {
+              errorMessage.textContent = "Login failed: " + err.message;
+              errorMessage.classList.add("visible");
+              btn.textContent = originalText;
+              btn.disabled = false;
+          }
+        });
+    }
   </script>
 
 </body>
