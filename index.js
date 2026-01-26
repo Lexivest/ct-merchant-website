@@ -3,6 +3,8 @@
  */
 
 // 1. Supabase Configuration
+// PRO TIP: In a production Cloudflare environment, consider using Environment Variables 
+// instead of hardcoding keys here.
 const SB_URL = 'https://goodtvrhszsnhcyigfoi.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdvb2R0dnJoc3pzbmhjeWlnZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI'; 
 
@@ -25,22 +27,38 @@ const searchInput = document.getElementById('repo-search-input');
 const searchBtnManual = document.getElementById('search-btn-manual');
 
 // 3. Modal & Menu Toggles
-function toggleLoginModal() { modal.classList.toggle('hidden'); }
+// Note: We are toggling the '.hidden' utility class defined in styles.css
+function toggleLoginModal() { 
+    modal.classList.toggle('hidden'); 
+}
 
-if (menuBtn) menuBtn.onclick = () => menu.classList.toggle('hidden');
+if (menuBtn) {
+    menuBtn.onclick = () => menu.classList.toggle('hidden');
+}
+
 if (getStartedBtn) getStartedBtn.onclick = toggleLoginModal;
 if (closeModalBtn) closeModalBtn.onclick = toggleLoginModal;
+
+// Close modal if clicking outside the content box
+if (modal) {
+    modal.onclick = (e) => {
+        if (e.target === modal) toggleLoginModal();
+    }
+}
 
 if (togglePassBtn) {
   togglePassBtn.onclick = () => {
     const passInput = document.getElementById("password");
     const eyeIcon = document.getElementById("eyeIcon");
+    
     if (passInput.type === "password") {
       passInput.type = "text";
-      eyeIcon.classList.add("text-brand-purple");
+      // Manually set color using our CSS variable
+      eyeIcon.style.color = "var(--color-purple)";
     } else {
       passInput.type = "password";
-      eyeIcon.classList.remove("text-brand-purple");
+      // Reset color to inherit/default
+      eyeIcon.style.color = "";
     }
   };
 }
@@ -87,6 +105,7 @@ function type() {
 type();
 
 // 6. Intersection Observer (Scroll Animations)
+// This works with the .animate-up.visible CSS rule
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => { 
     if(entry.isIntersecting) entry.target.classList.add('visible'); 
