@@ -1,0 +1,174 @@
+/* about.css - Specific styles for About Us page */
+
+/* Page Layout */
+.page-content {
+    padding: 5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5rem;
+}
+
+/* Vision/Mission Grid */
+.about-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+}
+@media (min-width: 768px) {
+    .about-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.about-card {
+    background-color: white;
+    border-radius: 1rem;
+    padding: 2.5rem;
+    box-shadow: var(--shadow-lg);
+}
+.border-top-purple { border-top: 4px solid var(--color-purple); }
+.border-top-pink { border-top: 4px solid var(--color-pink); }
+
+.card-label {
+    font-size: 0.75rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+.text-purple { color: var(--color-purple); }
+.text-pink { color: var(--color-pink); }
+
+.card-text {
+    color: #334155;
+    font-size: 1.125rem;
+    line-height: 1.6;
+    font-weight: 600;
+}
+
+/* Profile Section (Watermark Card) */
+.profile-card {
+    background-color: white;
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    border: 1px solid var(--color-light);
+    box-shadow: var(--shadow-2xl);
+    position: relative;
+    overflow: hidden;
+}
+@media (min-width: 768px) { .profile-card { padding: 4rem; } }
+
+.watermark {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 2rem;
+    opacity: 0.05;
+    color: var(--color-purple);
+    font-size: 6rem;
+    font-weight: 900;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+@media (min-width: 768px) { .watermark { font-size: 8rem; } }
+
+.profile-content { position: relative; z-index: 10; max-width: 56rem; }
+.profile-heading {
+    font-size: 1.875rem;
+    font-weight: 900;
+    color: var(--color-purple);
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    letter-spacing: -0.025em;
+}
+
+.profile-body p { margin-bottom: 1.5rem; color: #475569; line-height: 1.6; }
+.profile-footer {
+    padding-top: 2rem;
+    margin-top: 2rem;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+.profile-meta { display: flex; flex-direction: column; }
+.meta-label { font-size: 10px; font-weight: 900; text-transform: uppercase; color: #94a3b8; }
+.meta-value { font-weight: 700; color: var(--color-purple); }
+
+/* Executive List */
+.section-header { text-align: center; margin-bottom: 4rem; }
+.section-sublabel {
+    font-size: 0.75rem;
+    font-weight: 900;
+    color: var(--color-pink);
+    text-transform: uppercase;
+    letter-spacing: 0.4em;
+    display: block;
+    margin-bottom: 1rem;
+}
+.section-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: var(--color-purple);
+    text-transform: uppercase;
+}
+.divider-line {
+    height: 4px;
+    width: 5rem;
+    background-color: var(--color-pink);
+    margin: 1.5rem 0;
+}
+.divider-center { margin: 1.5rem auto; }
+
+.exec-list-container {
+    max-width: 56rem;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 1.5rem;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.exec-item {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 2.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    gap: 1rem;
+    transition: var(--transition);
+}
+@media (min-width: 768px) {
+    .exec-item {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+.exec-item:last-child { border-bottom: none; }
+.exec-item:hover { background-color: #f8fafc; }
+
+.exec-name { font-size: 1.125rem; font-weight: 900; color: var(--color-purple); text-transform: uppercase; display: block; }
+.exec-role { font-size: 10px; font-weight: 700; color: var(--color-pink); text-transform: uppercase; letter-spacing: 0.1em; }
+.exec-email {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+.exec-email:hover { color: var(--color-pink); }
+
+.disclaimer-text {
+    text-align: center;
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 2.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    max-width: 42rem;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 2;
+}
