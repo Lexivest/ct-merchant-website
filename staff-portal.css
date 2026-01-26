@@ -1,0 +1,117 @@
+/* staff-portal.css */
+
+/* Special Body Styling for Centered Login */
+.staff-login-body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-purple), var(--color-purple-light), var(--color-pink));
+    font-family: var(--font-primary);
+    padding: 1rem;
+}
+
+/* Glass Card */
+.login-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-2xl);
+    padding: 2rem;
+    width: 100%;
+    max-width: 28rem; /* Matches max-w-md */
+    color: var(--color-slate-800);
+}
+
+/* Header Section */
+.login-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.login-logo {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-lg);
+    object-fit: cover;
+}
+
+.login-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-purple);
+}
+
+/* Form Styling */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.login-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    outline: none;
+    transition: border-color 0.3s;
+    font-size: 0.875rem;
+}
+.login-input:focus {
+    border-color: var(--color-purple);
+    box-shadow: 0 0 0 1px var(--color-purple);
+}
+
+.btn-login {
+    background-color: var(--color-purple);
+    color: white;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 0.875rem;
+}
+.btn-login:hover { background-color: var(--color-purple-light); }
+
+/* Feedback & Footer */
+.error-message {
+    font-size: 0.875rem;
+    color: #dc2626;
+    margin-top: 1rem;
+    display: none; /* Hidden by default */
+}
+.error-message.visible { display: block; }
+
+.login-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    padding-top: 1rem;
+}
+
+.footer-text {
+    font-size: 0.75rem;
+    color: #475569;
+}
+
+.btn-home {
+    background-color: var(--color-pink);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.btn-home:hover { background-color: #be185d; }
