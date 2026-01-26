@@ -1,339 +1,206 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  
-  <title>CT-Merchant Ltd. | Digital Shops Repository</title>
-  <meta name="description" content="Discover verified merchants, local shops and products in your city. Bridging the gap between digital convenience and local availability in Nigeria.">
-  <meta name="keywords" content="Merchant, Nigeria, Shops Repository, Local Business, CT-Merchant, Business Identifier">
-  <meta name="author" content="CT-Merchant Ltd.">
-
-  <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
-  <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
-
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://ct-merchant.com.ng/">
-  <meta property="og:title" content="CT-Merchant Ltd. | Official Website">
-  <meta property="og:description" content="Empowering cities with professional-grade commerce tools. Explore our digital shops repository.">
-  <meta property="og:image" content="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
-
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
-          colors: {
-            brand: {
-              purple: '#2E1065',
-              purpleLight: '#5B21B6',
-              pink: '#DB2777',
-              dark: '#0F172A',
-              light: '#F8FAFC',
-            }
-          }
-        }
-      }
-    }
-  </script>
-  
-  <style>
-    .hero-text-bg { background: linear-gradient(135deg, rgba(46, 16, 101, 1) 0%, rgba(88, 28, 135, 1) 100%); }
-    .animate-up { opacity: 0; transform: translateY(20px); transition: all 0.6s ease-out; }
-    .animate-up.visible { opacity: 1; transform: translateY(0); }
-    #login-modal { transition: opacity 0.3s ease, visibility 0.3s ease; }
-    #login-modal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-    .loader {
-      border: 2px solid #f3f3f3; border-top: 2px solid #DB2777;
-      border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: none;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .nav-active { border-bottom: 2px solid white !important; color: white !important; padding-bottom: 2px; }
-
-    /* --- NEW DYNAMIC SCROLL STYLES --- */
-    .marquee-container {
-        overflow: hidden;
-        white-space: nowrap;
-        position: relative;
-        mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-        -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-    }
-    .marquee-content {
-        display: inline-flex;
-        align-items: center;
-        will-change: transform;
-    }
-    .animate-brand-scroll { animation: marquee-brand 10s linear infinite; }
-    .animate-city-scroll { animation: marquee-city 15s linear infinite; }
-
-    @keyframes marquee-brand {
-        0% { transform: translate3d(0, 0, 0); }
-        100% { transform: translate3d(-50%, 0, 0); }
-    }
-    @keyframes marquee-city {
-        0% { transform: translate3d(0, 0, 0); }
-        100% { transform: translate3d(-50%, 0, 0); }
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>CT-Merchant Ltd. | Digital Shops Repository</title>
+    
+    <!-- Metadata -->
+    <meta name="description" content="Official repository of verified merchants and shops in Nigeria.">
+    
+    <!-- Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-white text-slate-800 antialiased relative">
+<body>
 
-<!-- Navigation -->
-<nav class="fixed top-0 left-0 w-full z-[50] bg-gradient-to-r from-brand-purple via-brand-purpleLight to-brand-pink shadow-2xl border-b border-white/10">
-  <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-    <a href="index.html" class="flex items-center gap-3 overflow-hidden">
-      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="w-8 h-8 rounded border border-white/20 shrink-0">
-      <div class="marquee-container w-40 md:w-60">
-         <div class="marquee-content animate-brand-scroll text-lg md:text-xl font-extrabold text-white tracking-wide whitespace-nowrap">
-            <!-- Duplicated content for seamless loop -->
-            <div class="flex items-center mr-10">
-                <span>CT-MERCHANT LTD.</span>
-                <div class="ml-2.5 flex w-8 h-[0.9em] rounded-sm overflow-hidden border border-white/20">
-                    <div class="bg-[#008751] w-1/3 h-full"></div>
-                    <div class="bg-white w-1/3 h-full"></div>
-                    <div class="bg-[#008751] w-1/3 h-full"></div>
+    <!-- Navigation with Repository Ticker -->
+    <nav class="main-nav">
+        <div class="container nav-container">
+            <a href="index.html" class="nav-brand">
+                <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="nav-logo">
+                
+                <!-- City Repository Ticker -->
+                <div class="marquee-wrapper">
+                    <div class="marquee-content">
+                        <!-- Content duplicated for seamless scrolling -->
+                        <div class="marquee-item">KADUNA <span class="marquee-badge">HQ</span></div>
+                        <div class="marquee-item">ZARIA</div>
+                        <div class="marquee-item">KANO</div>
+                        <div class="marquee-item">JOS</div>
+                        <div class="marquee-item">ABUJA</div>
+                        <div class="marquee-item">LAGOS</div>
+                        <div class="marquee-item">IBADAN</div>
+                        <div class="marquee-item">ENUGU</div>
+                        <!-- Duplicate -->
+                        <div class="marquee-item">KADUNA <span class="marquee-badge">HQ</span></div>
+                        <div class="marquee-item">ZARIA</div>
+                        <div class="marquee-item">KANO</div>
+                        <div class="marquee-item">JOS</div>
+                        <div class="marquee-item">ABUJA</div>
+                    </div>
                 </div>
+            </a>
+
+            <!-- Menu -->
+            <div class="nav-links">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="services.html" class="nav-link">Services</a>
+                <a href="affiliate.html" class="nav-link">Affiliates</a>
+                <a href="careers.html" class="nav-link">Careers</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+                <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
             </div>
-            <div class="flex items-center mr-10">
-                <span>CT-MERCHANT LTD.</span>
-                <div class="ml-2.5 flex w-8 h-[0.9em] rounded-sm overflow-hidden border border-white/20">
-                    <div class="bg-[#008751] w-1/3 h-full"></div>
-                    <div class="bg-white w-1/3 h-full"></div>
-                    <div class="bg-[#008751] w-1/3 h-full"></div>
-                </div>
-            </div>
-         </div>
-      </div>
-    </a>
 
-    <!-- Desktop Menu -->
-    <div class="hidden md:flex items-center space-x-6 text-xs font-bold text-white/90 uppercase tracking-wide">
-      <a href="index.html" class="nav-active hover:text-white transition py-1">Home</a>
-      <a href="about.html" class="nav-link hover:text-white transition py-1">About</a>
-      <a href="services.html" class="nav-link hover:text-white transition py-1">Services</a>
-      <a href="affiliate.html" class="nav-link hover:text-white transition py-1">Affiliate</a>
-      <a href="careers.html" class="nav-link hover:text-white transition py-1">Careers</a>
-      <a href="contact.html" class="nav-link hover:text-white transition py-1">Contact</a>
-      <a href="staff-portal.html" class="px-5 py-2 bg-white text-brand-purple rounded-full hover:bg-pink-100 transition shadow font-bold">
-        Staff Portal
-      </a>
-    </div>
-
-    <!-- Mobile Menu Button -->
-    <button class="md:hidden text-white focus:outline-none p-1" id="menu-btn">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
-      </svg>
-    </button>
-  </div>
-
-  <!-- Mobile Dropdown -->
-  <div class="hidden absolute left-0 right-0 top-full bg-brand-purple border-t border-white/10 shadow-xl" id="mobile-menu">
-    <div class="flex flex-col p-4 space-y-4 text-sm font-semibold text-white">
-      <a href="index.html" class="nav-link w-fit border-b border-white">Home</a>
-      <a href="about.html" class="w-fit">About</a>
-      <a href="services.html" class="w-fit">Services</a>
-      <a href="affiliate.html" class="w-fit">Affiliate</a>
-      <a href="careers.html" class="w-fit">Careers</a>
-      <a href="contact.html" class="w-fit">Contact</a>
-      <a href="staff-portal.html" class="bg-white text-brand-purple text-center py-2 rounded font-bold w-full mt-2 shadow">Staff Portal</a>
-    </div>
-  </div>
-</nav>
-
-<!-- Hero Section -->
-<section class="min-h-[calc(100vh-64px)] flex flex-col md:flex-row border-b-4 border-brand-pink mt-[64px]">
-
-  <!-- LEFT: Splash Image (Full Height, No Space) -->
-  <div class="w-full md:w-1/2 relative h-[50vh] md:h-auto overflow-hidden group">
-    <div class="absolute inset-0 bg-brand-purple/20 group-hover:bg-transparent transition duration-700 z-10"></div>
-    <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" 
-         alt="CT Merchant Banner" 
-         class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-1000">
-  </div>
-
-  <!-- RIGHT: Text Content & Search Repository -->
-  <div class="w-full md:w-1/2 hero-text-bg text-white flex flex-col justify-center px-8 md:px-16 py-12 md:py-0">
-    <div class="animate-up">
-      
-      <!-- New Top Label -->
-      <div class="mb-6 max-w-md">
-        <span class="inline-block bg-yellow-400/10 text-yellow-400 text-[10px] font-extrabold px-2 py-1 rounded mb-3 uppercase tracking-widest border border-yellow-400/30">
-          Digital Shops Repository
-        </span>
-        <p class="text-sm md:text-base font-medium text-white leading-relaxed mb-4">
-          We provide a digital repository of physical shops, their products and locations within a city, making it easier for people to find nearby businesses.
-        </p>
+            <button class="menu-btn" id="menu-btn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
         
-        <!-- Scrolling City List -->
-        <div class="w-full border-y border-white/10 py-3 overflow-hidden mb-6 bg-brand-purple/20 backdrop-blur-sm">
-            <div class="marquee-container w-full overflow-hidden">
-                <div class="animate-city-scroll text-[11px] uppercase font-bold tracking-widest text-slate-300 whitespace-nowrap flex items-center">
-                    <!-- Cities Content (Duplicated for smooth loop) -->
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Bauchi</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Gombe</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Jos</span>
-                    <span class="flex items-center mx-6 px-3 py-1 bg-white/5 rounded-full border border-white/10">
-                        <i class="fa-solid fa-location-dot text-brand-pink mr-2"></i> 
-                        Kaduna <span class="ml-2 text-[9px] px-1.5 py-0.5 bg-brand-pink text-white rounded font-extrabold">HEAD OFFICE</span>
-                    </span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Kafanchan</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Kano</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Lafia</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Lokoja</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Makurdi</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Minna</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Saminaka</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Zaria</span>
-                    
-                    <!-- Duplicate -->
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Bauchi</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Gombe</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Jos</span>
-                    <span class="flex items-center mx-6 px-3 py-1 bg-white/5 rounded-full border border-white/10">
-                        <i class="fa-solid fa-location-dot text-brand-pink mr-2"></i> 
-                        Kaduna <span class="ml-2 text-[9px] px-1.5 py-0.5 bg-brand-pink text-white rounded font-extrabold">HEAD OFFICE</span>
-                    </span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Kafanchan</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Kano</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Lafia</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Lokoja</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Makurdi</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Minna</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Saminaka</span>
-                    <span class="flex items-center mx-6"><span class="text-brand-pink mr-2 text-lg">&bull;</span>Zaria</span>
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobile-menu">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="services.html">Services</a>
+            <a href="affiliate.html">Affiliates</a>
+            <a href="careers.html">Careers</a>
+            <a href="contact.html">Contact</a>
+            <a href="staff-portal.html" style="color: var(--color-pink);">Staff Portal</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section (Search Repository Focused) -->
+    <header class="hero-section">
+        <!-- Left: Image -->
+        <div class="hero-image">
+            <div class="hero-overlay"></div>
+            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" 
+                 alt="CT Merchant Banner" class="hero-img-bg">
+        </div>
+
+        <!-- Right: Content -->
+        <div class="hero-content">
+            <div class="animate-up">
+                
+                <!-- 1. Search Repository (At the Top) -->
+                <div class="search-box">
+                    <input type="text" id="repo-search" class="search-input" placeholder="SEARCH REPOSITORY..." inputmode="text">
+                    <button id="search-btn" type="button" style="background:none; border:none; position: absolute; right: 1rem; top: 0.8rem; cursor: pointer;">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    </button>
+                    <p class="search-helper">
+                        <i class="fa-solid fa-database"></i> Enter Shop ID (e.g. CT-3945)
+                    </p>
+                </div>
+
+                <!-- 2. Official Portal Badge -->
+                <div class="hero-tag">
+                    <span style="width: 8px; height: 8px; background: currentColor; border-radius: 50%; display: inline-block;"></span>
+                    OFFICIAL PORTAL
+                </div>
+
+                <!-- 3. Title & Subtitle -->
+                <h1 class="hero-title">
+                    <span id="typewriter"></span><span style="color: var(--color-pink)">|</span>
+                </h1>
+
+                <p class="hero-subtitle">
+                    The central digital registry for verified merchants. Bridging the gap between digital convenience and local availability.
+                </p>
+
+                <!-- 4. CTA -->
+                <button onclick="openModal()" class="btn-primary">
+                    GET STARTED <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+                <div class="features-list">
+                    <span><i class="fa-solid fa-shield-halved"></i> Verified</span>
+                    <span><i class="fa-solid fa-bolt"></i> Real-time</span>
+                    <span><i class="fa-solid fa-globe"></i> Online</span>
                 </div>
             </div>
         </div>
-      </div>
+    </header>
 
-      <!-- Search Input -->
-      <div class="relative max-w-sm mb-6">
-        <div class="relative">
-          <input type="text" id="repo-search-input" placeholder="Search repository..." 
-                 inputmode="text" enterkeyhint="search"
-                 class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-brand-pink transition uppercase tracking-wide font-medium">
-          <svg id="search-btn-manual" class="w-4 h-4 absolute right-3 top-2.5 text-white/50 cursor-pointer hover:text-brand-pink transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal-overlay">
+        <div class="modal-card animate-up">
+            <div class="modal-header">
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+                <div class="modal-logo-area">
+                    <div class="modal-logo-glow"></div>
+                    <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo">
+                </div>
+                <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--color-purple);">Merchant Login</h2>
+                <p style="font-size: 0.8rem; color: #64748b;">Access your dashboard</p>
+            </div>
+
+            <div class="modal-body">
+                <div id="error-msg" class="error-msg"></div>
+                
+                <form id="login-form">
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <div class="input-wrapper">
+                            <i class="fa-regular fa-envelope input-icon"></i>
+                            <input type="email" id="email" class="form-input" placeholder="name@company.com" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 0.5rem;">
+                            <label class="form-label" style="margin:0;">Password</label>
+                            <a href="#" class="link-pink" style="font-size: 0.75rem;">Forgot Password?</a>
+                        </div>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-lock input-icon"></i>
+                            <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                            <button type="button" class="toggle-password" onclick="togglePass()">
+                                <i class="fa-regular fa-eye" id="eye-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-footer">
+                        <label class="checkbox-group">
+                            <input type="checkbox"> Remember me
+                        </label>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="btn-submit">
+                        <span>Sign In</span>
+                        <div class="loader" id="loader"></div>
+                    </button>
+                </form>
+
+                <div class="modal-footer">
+                    New Merchant? <a href="create-account.html" class="link-pink">Create Account →</a>
+                </div>
+            </div>
         </div>
-        <p class="mt-2 ml-1 text-[10px] font-bold text-yellow-400 italic tracking-wide flex items-center gap-1">
-          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
-          Use your unique identifier (e.g., <span class="uppercase font-mono ml-1">CT-3945BOGD</span>)
-        </p>
-      </div>
-      
-      <!-- Animated Tagline -->
-      <h1 class="text-2xl md:text-4xl font-extrabold mb-4 leading-tight">
-        <span id="typewriter"></span><span class="animate-pulse text-brand-pink">|</span>
-      </h1>
-      
-      <p class="text-xs text-slate-300 mb-8 leading-relaxed max-w-md italic border-l-2 border-brand-pink pl-3">
-        Bridging the gap between digital convenience and local availability. We empower cities and communities in Nigeria with professional-grade commerce tools.
-      </p>
-
-      <!-- Get Started Button -->
-      <button id="get-started-btn" 
-              class="group px-8 py-3 bg-brand-pink hover:bg-pink-600 text-white font-bold text-sm rounded-full shadow-xl transition transform hover:translate-x-1 flex items-center gap-2 w-fit">
-        GET STARTED
-        <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-        </svg>
-      </button>
-
-      <div class="mt-10 flex gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-        <span class="flex items-center gap-1"><i class="fa-solid fa-store text-brand-pink"></i> Shops Repository</span>
-        <span class="flex items-center gap-1"><i class="fa-solid fa-magnifying-glass-location text-brand-pink"></i> Discover</span>
-        <span class="flex items-center gap-1"><i class="fa-solid fa-id-card text-brand-pink"></i> Unique ID</span>
-      </div>
     </div>
-  </div>
-</section>
 
-<!-- Auth Modal (Popup) -->
-<div id="login-modal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative">
-    
-    <button id="close-modal-btn" class="absolute top-4 right-4 text-slate-400 hover:text-brand-pink transition z-10">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-    </button>
-
-    <div class="p-8 pb-4 border-b border-slate-100 text-center flex flex-col items-center">
-      <div class="mb-4 relative">
-         <div class="absolute inset-0 bg-brand-purple/10 blur-xl rounded-full"></div>
-         <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" 
-              alt="Logo" 
-              class="w-16 h-16 rounded-xl border border-slate-100 shadow-sm relative z-10">
-      </div>
-      <h2 class="text-2xl font-bold text-brand-purple mb-1">Merchant Login</h2>
-      <p class="text-xs text-slate-500">Enter your credentials to continue.</p>
-    </div>
-    
-    <form id="loginForm" class="p-8 space-y-5">
-      <div id="errorMsg" class="hidden text-xs text-red-600 bg-red-50 p-3 rounded border border-red-100"></div>
-      
-      <div>
-        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1 ml-1">Email</label>
-        <input type="email" id="email" required 
-               class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand-pink focus:bg-white outline-none transition text-sm">
-      </div>
-      
-      <div>
-        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Password</label>
-        <div class="relative">
-          <input type="password" id="password" required 
-                 class="w-full px-4 py-3 pr-10 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand-pink focus:bg-white outline-none transition text-sm">
-          <button type="button" id="toggle-pass-btn" 
-                  class="absolute right-3 top-3 text-slate-400 hover:text-brand-purple transition">
-            <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-            </svg>
-          </button>
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container footer-content">
+            <div>
+                <span style="color: white; margin-right: 0.5rem;">© 2026 CT-MERCHANT LTD.</span>
+                <span>Kaduna, Nigeria</span>
+            </div>
+            <div class="footer-links">
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+                <span style="color: var(--color-pink)">RC: 7203494</span>
+            </div>
         </div>
-        <div class="flex justify-end mt-2">
-          <a href="#" class="text-xs text-brand-pink font-bold hover:underline">Forgot Password?</a>
-        </div>
-      </div>
+    </footer>
 
-      <div class="flex items-center">
-        <input id="remember" type="checkbox" 
-               class="w-4 h-4 text-brand-pink border-slate-300 rounded focus:ring-brand-pink">
-        <label for="remember" class="ml-2 block text-xs text-slate-600 font-medium">Remember me for 30 days</label>
-      </div>
-      
-      <button type="submit" id="loginBtn" 
-              class="w-full bg-brand-purple text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-purple-900 transition flex items-center justify-center gap-2">
-        <span>Secure Sign In</span>
-        <div class="loader" id="loginLoader"></div>
-      </button>
-      
-      <div class="mt-6 pt-6 border-t border-slate-100 text-center">
-        <p class="text-xs text-slate-500">Don't have a merchant account?</p>
-        <a href="create-account.html" class="inline-block mt-2 text-sm font-bold text-brand-pink hover:underline">Create New Account →</a>
-      </div>
-    </form>
-  </div>
-</div>
-
-<footer class="bg-brand-dark text-slate-400 py-8 border-t-4 border-brand-pink">
-  <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-xs">
-    <span class="text-white font-bold">© 2026 CT-MERCHANT LTD.</span>
-    <div class="flex gap-6 font-medium mt-4 md:mt-0">
-      <a href="privacy.html" class="hover:text-white">Privacy Policy</a>
-      <a href="terms.html" class="hover:text-white">Terms of Use</a>
-      <span>RC: 7203494</span>
-    </div>
-  </div>
-</footer>
-
-<script src="index.js"></script>
+    <!-- Logic Script -->
+    <script src="index.js"></script>
 </body>
 </html>
