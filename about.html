@@ -1,166 +1,163 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>About CTM | Corporate Profile</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script>tailwind.config={theme:{extend:{fontFamily:{sans:['"Plus Jakarta Sans"','sans-serif']},colors:{brand:{purple:'#2E1065',purpleLight:'#5B21B6',pink:'#DB2777',dark:'#0F172A',light:'#F8FAFC'}}}}}</script>
-<style>.nav-active{border-bottom:2px solid #fff!important;color:#fff!important;padding-bottom:2px}</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>About CTM | Corporate Profile</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="stylesheet" href="styles.css">
 </head>
 
-<body class="bg-brand-light text-slate-800 antialiased relative">
+<body>
 
-<nav class="fixed top-0 left-0 w-full z-[100] bg-gradient-to-r from-brand-purple via-brand-purpleLight to-brand-pink shadow-2xl border-b border-white/10">
-<div class="container mx-auto px-4 py-3 flex justify-between items-center">
-<a href="index.html" class="flex items-center gap-3">
-<img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="w-8 h-8 rounded border border-white/20">
-<span class="text-lg md:text-xl font-extrabold text-white tracking-wide whitespace-nowrap uppercase">CT-Merchant Ltd.</span>
-</a>
-<div class="hidden md:flex items-center space-x-6 text-xs font-bold text-white/90 uppercase tracking-widest">
-<a href="index.html" class="hover:text-white transition py-1">Home</a>
-<a href="about.html" class="text-white border-b-2 border-white transition py-1">About</a>
-<a href="services.html" class="hover:text-white transition py-1">Services</a>
-<a href="affiliate.html" class="hover:text-white transition py-1">Affiliate</a>
-<a href="careers.html" class="hover:text-white transition py-1">Careers</a>
-<a href="contact.html" class="hover:text-white transition py-1">Contact</a>
-<a href="staff-portal.html" class="text-white hover:text-pink-200 transition font-bold">Staff Login</a>
-</div>
-<button class="md:hidden text-white p-2" id="menu-btn">
-<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
-</svg>
-</button>
-</div>
+<nav class="main-header">
+  <div class="container nav-container">
+    <a href="index.html" class="brand-wrapper">
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
+      <span style="font-size: 1.125rem; font-weight: 800; color: white; letter-spacing: 0.05em; text-transform: uppercase;">CT-Merchant Ltd.</span>
+    </a>
 
-<div class="hidden absolute left-0 right-0 top-full bg-brand-purple border-t border-white/10 shadow-xl" id="mobile-menu">
-<div class="flex flex-col p-6 space-y-4 text-sm font-semibold text-white uppercase tracking-widest">
-<a href="index.html" class="w-fit">Home</a>
-<a href="about.html" class="w-fit border-b-2 border-white">About</a>
-<a href="services.html" class="w-fit">Services</a>
-<a href="affiliate.html" class="w-fit">Affiliate</a>
-<a href="careers.html" class="w-fit">Careers</a>
-<a href="contact.html" class="w-fit">Contact</a>
-<a href="staff-portal.html" class="text-white font-bold w-fit">Staff Login</a>
-</div>
-</div>
+    <div class="desktop-menu">
+      <a href="index.html">Home</a>
+      <a href="about.html" class="nav-active">About</a>
+      <a href="services.html">Services</a>
+      <a href="affiliate.html">Affiliate</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
+    </div>
+
+    <button class="mobile-menu-btn" id="menu-btn">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="mobile-dropdown hidden" id="mobile-menu">
+      <a href="index.html">Home</a>
+      <a href="about.html" style="border-bottom: 1px solid white;">About</a>
+      <a href="services.html">Services</a>
+      <a href="affiliate.html">Affiliate</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
+  </div>
 </nav>
 
-<section class="min-h-[calc(100vh-64px)] flex flex-col md:flex-row mt-[64px] overflow-hidden">
-<div class="w-full md:w-1/2 relative h-[40vh] md:h-auto overflow-hidden group">
-<div class="absolute inset-0 bg-brand-purple/20 group-hover:bg-transparent transition duration-700 z-10"></div>
-<img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" alt="Corporate Banner" class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-1000">
-</div>
+<section class="hero-section">
+  <div class="hero-image-wrapper" style="height: 40vh;">
+    <div class="hero-overlay"></div>
+    <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" 
+         alt="Corporate Banner" 
+         class="hero-img">
+  </div>
 
-<div class="w-full md:w-1/2 bg-gradient-to-br from-brand-purple to-brand-purpleLight text-white flex flex-col justify-center px-8 md:px-16 py-16 md:py-0 border-b-8 border-brand-purple">
-<h1 class="text-3xl md:text-5xl font-extrabold mb-4 uppercase tracking-tighter leading-tight">Corporate Identity</h1>
-<div class="h-1 w-20 bg-brand-pink mb-6"></div>
-<p class="text-slate-200 text-sm md:text-base leading-relaxed max-w-md">
-Bridging the gap between localized commerce and digital accessibility across Nigeria’s urban centers.
-</p>
-</div>
+  <div class="hero-content" style="border-bottom: 8px solid var(--color-purple);">
+    <h1 class="hero-title" style="text-transform: uppercase; letter-spacing: -0.05em; font-size: 2.5rem;">Corporate Identity</h1>
+    <div class="divider-line"></div>
+    <p class="hero-desc" style="border:none; padding:0; color: #e2e8f0; font-style: normal; font-size: 0.95rem;">
+      Bridging the gap between localized commerce and digital accessibility across Nigeria’s urban centers.
+    </p>
+  </div>
 </section>
 
-<div class="container mx-auto px-6 py-20 space-y-20">
+<div class="container page-content">
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-<section class="bg-white rounded-2xl shadow-sm p-10 border-t-4 border-brand-purple">
-<h2 class="text-xs font-black text-brand-pink mb-2 uppercase tracking-[0.3em]">Vision Statement</h2>
-<p class="text-slate-700 text-lg leading-relaxed font-semibold">
-To serve as the definitive digital architecture for urban commercial discovery, ensuring every physical storefront is accessible to the modern digital consumer.
-</p>
-</section>
+  <div class="about-grid">
+    <section class="about-card border-top-purple">
+      <h2 class="card-label text-pink">Vision Statement</h2>
+      <p class="card-text">
+        To serve as the definitive digital architecture for urban commercial discovery, ensuring every physical storefront is accessible to the modern digital consumer.
+      </p>
+    </section>
 
-<section class="bg-white rounded-2xl shadow-sm p-10 border-t-4 border-brand-pink">
-<h2 class="text-xs font-black text-brand-purple mb-2 uppercase tracking-[0.3em]">Mission Mandate</h2>
-<p class="text-slate-700 text-lg leading-relaxed font-semibold">
-Deploying a comprehensive, location-aware repository that empowers physical merchants with institutional-grade visibility and structured data integrity.
-</p>
-</section>
-</div>
+    <section class="about-card border-top-pink">
+      <h2 class="card-label text-purple">Mission Mandate</h2>
+      <p class="card-text">
+        Deploying a comprehensive, location-aware repository that empowers physical merchants with institutional-grade visibility and structured data integrity.
+      </p>
+    </section>
+  </div>
 
-<section class="bg-white rounded-3xl shadow-xl p-10 md:p-16 border border-slate-100 relative overflow-hidden">
-<div class="absolute top-0 right-0 p-8 opacity-5 text-brand-purple font-black text-9xl select-none">CTM</div>
-<div class="max-w-4xl relative z-10">
-<h2 class="text-3xl font-black text-brand-purple mb-8 uppercase tracking-tight">Institutional Profile</h2>
-<div class="space-y-6 text-slate-600 text-base leading-relaxed">
-<p>CT-Merchant Ltd. (CTM) is a specialized information technology firm providing critical data infrastructure for Nigeria’s local trade ecosystems. We facilitate the digital translation of physical inventory and merchant locations, providing a structured ecosystem for consumer exploration.</p>
-<p>Our operational framework prioritizes <strong>Data Accuracy</strong> and <strong>Discovery Optimization</strong>, reducing friction in local commerce while preserving the traditional merchant–customer relationship.</p>
-<p>CTM operates strictly as a neutral information repository. We remain independent of financial settlements and logistics to maintain data integrity and search excellence.</p>
+  <section class="profile-card">
+    <div class="watermark">CTM</div>
+    <div class="profile-content">
+      <h2 class="profile-heading">Institutional Profile</h2>
+      <div class="profile-body">
+        <p>CT-Merchant Ltd. (CTM) is a specialized information technology firm providing critical data infrastructure for Nigeria’s local trade ecosystems. We facilitate the digital translation of physical inventory and merchant locations, providing a structured ecosystem for consumer exploration.</p>
+        <p>Our operational framework prioritizes <strong>Data Accuracy</strong> and <strong>Discovery Optimization</strong>, reducing friction in local commerce while preserving the traditional merchant–customer relationship.</p>
+        <p>CTM operates strictly as a neutral information repository. We remain independent of financial settlements and logistics to maintain data integrity and search excellence.</p>
+      </div>
 
-<div class="pt-8 mt-8 border-t border-slate-100 flex flex-wrap gap-8">
-<div class="flex flex-col">
-<span class="text-[10px] font-black uppercase text-slate-400">Jurisdiction</span>
-<span class="font-bold text-brand-purple">Corporate Affairs Commission (CAC), Nigeria</span>
-</div>
-<div class="flex flex-col">
-<span class="text-[10px] font-black uppercase text-slate-400">RC Number</span>
-<span class="font-bold text-brand-purple">8879163</span>
-</div>
-</div>
-</div>
-</div>
-</section>
+      <div class="profile-footer">
+        <div class="profile-meta">
+          <span class="meta-label">Jurisdiction</span>
+          <span class="meta-value">Corporate Affairs Commission (CAC), Nigeria</span>
+        </div>
+        <div class="profile-meta">
+          <span class="meta-label">RC Number</span>
+          <span class="meta-value">8879163</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<section class="py-12">
-<div class="text-center mb-16">
-<h2 class="text-xs font-black text-brand-pink uppercase tracking-[0.4em] mb-4">Governance</h2>
-<h3 class="text-4xl font-extrabold text-brand-purple uppercase">Executive Management</h3>
-<div class="h-1 w-20 bg-brand-pink mx-auto mt-6"></div>
-</div>
+  <section>
+    <div class="section-header">
+      <span class="section-sublabel">Governance</span>
+      <h3 class="section-title">Executive Management</h3>
+      <div class="divider-line divider-center"></div>
+    </div>
 
-<div class="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-<div class="grid divide-y divide-slate-100">
+    <div class="exec-list-container">
+      <div class="exec-item">
+        <div style="display: flex; flex-direction: column;">
+          <span class="exec-name">Amos Alex</span>
+          <span class="exec-role">Managing Director</span>
+        </div>
+        <a href="mailto:ajialexvo@gmail.com" class="exec-email">ajialexvo@gmail.com</a>
+      </div>
 
-<div class="flex flex-col md:flex-row justify-between items-start md:items-center px-10 py-8 hover:bg-slate-50 transition gap-4">
-<div class="flex flex-col">
-<span class="font-black text-brand-purple text-lg uppercase">Amos Alex</span>
-<span class="text-[10px] font-bold text-brand-pink uppercase tracking-widest">Managing Director</span>
-</div>
-<a href="mailto:ajialexvo@gmail.com" class="text-xs font-bold text-slate-500 hover:text-brand-pink underline underline-offset-4">ajialexvo@gmail.com</a>
-</div>
+      <div class="exec-item">
+        <div style="display: flex; flex-direction: column;">
+          <span class="exec-name">Emmanuel D. Amos</span>
+          <span class="exec-role">Chief Operating Officer</span>
+        </div>
+        <a href="mailto:admin@ct-merchant.com.ng" class="exec-email">admin@ct-merchant.com.ng</a>
+      </div>
 
-<div class="flex flex-col md:flex-row justify-between items-start md:items-center px-10 py-8 hover:bg-slate-50 transition gap-4">
-<div class="flex flex-col">
-<span class="font-black text-brand-purple text-lg uppercase">Emmanuel D. Amos</span>
-<span class="text-[10px] font-bold text-brand-pink uppercase tracking-widest">Chief Operating Officer</span>
-</div>
-<a href="mailto:admin@ct-merchant.com.ng" class="text-xs font-bold text-slate-500 hover:text-brand-pink underline underline-offset-4">admin@ct-merchant.com.ng</a>
-</div>
+      <div class="exec-item">
+        <div style="display: flex; flex-direction: column;">
+          <span class="exec-name">Esther Elisha</span>
+          <span class="exec-role">Head of Accounts</span>
+        </div>
+        <a href="mailto:EstherE@ct-merchant.com.ng" class="exec-email">EstherE@ct-merchant.com.ng</a>
+      </div>
+    </div>
 
-<div class="flex flex-col md:flex-row justify-between items-start md:items-center px-10 py-8 hover:bg-slate-50 transition gap-4">
-<div class="flex flex-col">
-<span class="font-black text-brand-purple text-lg uppercase">Esther Elisha</span>
-<span class="text-[10px] font-bold text-brand-pink uppercase tracking-widest">Head of Accounts</span>
-</div>
-<a href="mailto:EstherE@ct-merchant.com.ng" class="text-xs font-bold text-slate-500 hover:text-brand-pink underline underline-offset-4">EstherE@ct-merchant.com.ng</a>
-</div>
+    <p class="disclaimer-text">
+      Communications are prioritized strictly on institutional relevance and maintained in line with corporate privacy protocols.
+    </p>
+  </section>
 
-</div>
-</div>
-
-<p class="text-[10px] text-center text-slate-400 mt-10 max-w-2xl mx-auto leading-loose uppercase tracking-widest font-bold">
-Communications are prioritized strictly on institutional relevance and maintained in line with corporate privacy protocols.
-</p>
-</section>
 </div>
 
-<footer class="bg-brand-dark text-slate-400 py-8 border-t-4 border-brand-pink">
-  <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-xs">
-    <span class="text-white font-bold">© 2025 CT-MERCHANT LTD.</span>
-    <div class="flex gap-6 font-medium mt-4 md:mt-0">
-      <a href="privacy.html" class="hover:text-white">Privacy Policy</a>
-      <a href="terms.html" class="hover:text-white">Terms of Use</a>
+<footer class="footer">
+  <div class="container footer-container">
+    <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Use</a>
       <span>RC: 7203494</span>
     </div>
   </div>
 </footer>
 
-<script>
-const menuBtn=document.getElementById('menu-btn'),mobileMenu=document.getElementById('mobile-menu');
-if(menuBtn&&mobileMenu){menuBtn.onclick=()=>mobileMenu.classList.toggle('hidden');}
-</script>
+<script src="index.js"></script>
 
 </body>
 </html>
-
