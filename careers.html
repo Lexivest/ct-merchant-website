@@ -1,203 +1,181 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Careers at CTM | Join the Team</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
-          colors: {
-            brand: {
-              purple: '#2E1065',
-              purpleLight: '#5B21B6',
-              pink: '#DB2777',
-              dark: '#0F172A',
-              light: '#F8FAFC',
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    .animate-up { opacity: 0; transform: translateY(20px); transition: all 0.6s ease-out; }
-    .animate-up.visible { opacity: 1; transform: translateY(0); }
-    #apply-modal { transition: opacity 0.3s ease, visibility 0.3s ease; }
-    #apply-modal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-  </style>
+  
+  <link rel="stylesheet" href="styles.css">
+  
+  <link rel="stylesheet" href="careers.css">
 </head>
-<body class="bg-brand-light text-slate-800 antialiased relative">
 
-<nav class="fixed top-0 left-0 w-full z-[50] bg-gradient-to-r from-brand-purple via-brand-purpleLight to-brand-pink shadow-2xl border-b border-white/10">
-  <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-    <a href="index.html" class="flex items-center gap-3">
-      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="w-8 h-8 rounded border border-white/20">
-      <span class="text-lg md:text-xl font-extrabold text-white tracking-wide whitespace-nowrap">CT-MERCHANT LTD.</span>
+<body>
+
+<nav class="main-header">
+  <div class="container nav-container">
+    <a href="index.html" class="brand-wrapper">
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
+      <span style="font-size: 1.125rem; font-weight: 800; color: white; letter-spacing: 0.05em; text-transform: uppercase;">CT-Merchant Ltd.</span>
     </a>
 
-    <div class="hidden md:flex items-center space-x-6 text-xs font-bold text-white/90 uppercase tracking-wide">
-      <a href="index.html" class="hover:text-white transition py-1">Home</a>
-      <a href="about.html" class="hover:text-white transition py-1">About</a>
-      <a href="services.html" class="hover:text-white transition py-1">Services</a>
-      <a href="affiliate.html" class="hover:text-white transition py-1">Affiliate</a>
-      <a href="careers.html" class="text-white border-b-2 border-white transition py-1">Careers</a>
-      <a href="contact.html" class="hover:text-white transition py-1">Contact</a>
-      <a href="staff-portal.html" class="text-white hover:text-pink-200 transition font-bold">STAFF LOGIN</a>
+    <div class="desktop-menu">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="affiliate.html">Affiliate</a>
+      <a href="careers.html" class="nav-active">Careers</a>
+      <a href="contact.html">Contact</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
     </div>
 
-    <button class="md:hidden text-white focus:outline-none p-1" id="menu-btn">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M4 6h16M4 12h16m-7 6h7"/>
+    <button class="mobile-menu-btn" id="menu-btn">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
       </svg>
     </button>
   </div>
 
-  <div class="hidden absolute left-0 right-0 top-full bg-brand-purple border-t border-white/10 shadow-xl" id="mobile-menu">
-    <div class="flex flex-col p-4 space-y-4 text-sm font-semibold text-white">
-      <a href="index.html" class="w-fit">Home</a>
-      <a href="about.html" class="w-fit">About</a>
-      <a href="services.html" class="w-fit">Services</a>
-      <a href="affiliate.html" class="w-fit">Affiliate</a>
-      <a href="careers.html" class="w-fit border-b-2 border-white">Careers</a>
-      <a href="contact.html" class="w-fit">Contact</a>
-      <a href="staff-portal.html" class="text-white font-bold w-fit">STAFF LOGIN</a>
-    </div>
+  <div class="mobile-dropdown hidden" id="mobile-menu">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="affiliate.html">Affiliate</a>
+      <a href="careers.html" style="border-bottom: 1px solid white;">Careers</a>
+      <a href="contact.html">Contact</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
   </div>
 </nav>
 
-<section class="min-h-[60vh] flex flex-col md:flex-row mt-[64px]">
-  <div class="w-full md:w-1/2 relative h-[40vh] md:h-auto overflow-hidden group">
-    <div class="absolute inset-0 bg-brand-purple/20 group-hover:bg-transparent transition duration-700 z-10"></div>
-    <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg"
-         alt="CTM Team"
-         class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-1000">
+<section class="hero-section" style="min-height: 60vh;">
+  <div class="hero-image-wrapper">
+    <div class="hero-overlay"></div>
+    <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" 
+         alt="CTM Team" 
+         class="hero-img">
   </div>
 
-  <div class="w-full md:w-1/2 bg-gradient-to-br from-brand-purple to-brand-purpleLight text-white flex flex-col justify-center px-8 md:px-16 py-16 md:py-0 border-b-8 border-brand-purple">
-    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-pink-400/30 bg-pink-500/10 text-pink-300 text-[10px] font-bold tracking-widest mb-4">
+  <div class="hero-content" style="border-bottom: 8px solid var(--color-purple);">
+    
+    <div class="hero-badge">
       JOIN THE MISSION
     </div>
-    <h1 class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight uppercase tracking-tight">
+    
+    <h1 class="hero-title" style="text-transform: uppercase; letter-spacing: -0.05em; font-size: 2.5rem;">
       Build Digital Infrastructure
     </h1>
-    <div class="h-1 w-20 bg-brand-pink mb-6"></div>
-    <p class="text-sm md:text-base text-slate-200 mb-8 leading-relaxed max-w-md">
-      At CTM, we are building a trusted digital repository of real physical businesses within cities.
-      Join a team focused on mapping, structuring, and maintaining accurate commercial data that serves
-      communities, merchants, and institutions.
+    <div class="divider-line"></div>
+    
+    <p class="hero-desc" style="border:none; padding:0; color: #e2e8f0; font-style: normal; font-size: 0.95rem;">
+      At CTM, we are building a trusted digital repository of real physical businesses within cities. Join a team focused on mapping, structuring, and maintaining accurate commercial data that serves communities, merchants, and institutions.
     </p>
-    <a href="#openings"
-       class="w-fit px-8 py-3 bg-white text-brand-purple font-bold rounded-xl shadow-lg hover:bg-brand-pink hover:text-white transition flex items-center gap-2">
-      View Openings <span class="text-lg">↓</span>
+    
+    <a href="#openings" class="hero-btn">
+      View Openings <span style="font-size: 1.125rem;">↓</span>
     </a>
   </div>
 </section>
 
-<section id="openings" class="py-16 bg-brand-light">
-  <div class="container mx-auto px-6 max-w-4xl">
-    <h2 class="text-2xl font-extrabold text-brand-purple mb-8 uppercase tracking-wide">
-      Current Openings
-    </h2>
+<section id="openings" class="careers-container">
+  
+  <h2 class="section-heading">Current Openings</h2>
 
-    <div class="space-y-4">
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center hover:shadow-md transition animate-up">
-        <div>
-          <h3 class="font-bold text-brand-purple text-lg">City Merchant Growth Lead</h3>
-          <div class="flex gap-3 mt-2 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-            <span class="flex items-center gap-1">
-              <span class="w-2 h-2 bg-green-500 rounded-full"></span> Full Time
-            </span>
-            <span>• Kaduna (Hybrid)</span>
-            <span>• Platform Operations</span>
-          </div>
+  <div class="job-list">
+    
+    <div class="job-card animate-up">
+      <div class="job-info">
+        <h3 class="job-title">City Merchant Growth Lead</h3>
+        <div class="job-meta">
+          <span class="meta-item">
+            <span class="dot-full bg-green"></span> Full Time
+          </span>
+          <span>• Kaduna (Hybrid)</span>
+          <span>• Platform Operations</span>
         </div>
-        <button onclick="openApply('City Merchant Growth Lead')"
-          class="mt-4 md:mt-0 px-6 py-2 border-2 border-brand-purple text-brand-purple font-bold rounded-lg text-xs hover:bg-brand-purple hover:text-white transition">
-          Apply Now
-        </button>
       </div>
-
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center hover:shadow-md transition animate-up">
-        <div>
-          <h3 class="font-bold text-brand-purple text-lg">Flutter Application Engineer</h3>
-          <div class="flex gap-3 mt-2 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-            <span class="flex items-center gap-1">
-              <span class="w-2 h-2 bg-blue-500 rounded-full"></span> Contract
-            </span>
-            <span>• Remote</span>
-            <span>• Platform Engineering</span>
-          </div>
-        </div>
-        <button onclick="openApply('Flutter Application Engineer')"
-          class="mt-4 md:mt-0 px-6 py-2 border-2 border-brand-purple text-brand-purple font-bold rounded-lg text-xs hover:bg-brand-purple hover:text-white transition">
-          Apply Now
-        </button>
-      </div>
+      <button onclick="openApply('City Merchant Growth Lead')" class="btn-apply">
+        Apply Now
+      </button>
     </div>
+
+    <div class="job-card animate-up">
+      <div class="job-info">
+        <h3 class="job-title">Flutter Application Engineer</h3>
+        <div class="job-meta">
+          <span class="meta-item">
+            <span class="dot-full bg-blue"></span> Contract
+          </span>
+          <span>• Remote</span>
+          <span>• Platform Engineering</span>
+        </div>
+      </div>
+      <button onclick="openApply('Flutter Application Engineer')" class="btn-apply">
+        Apply Now
+      </button>
+    </div>
+
   </div>
 </section>
 
-<div id="apply-modal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-  <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl relative">
-    <button onclick="closeApply()" class="absolute top-4 right-4 text-slate-400 hover:text-brand-pink transition">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M6 18L18 6M6 6l12 12"/>
+<div id="apply-modal" class="apply-modal-wrapper hidden">
+  <div class="apply-modal-content">
+    
+    <button onclick="closeApply()" class="close-modal-btn">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
       </svg>
     </button>
 
-    <div class="p-8 border-b border-slate-100">
-      <h3 class="text-xl font-bold text-brand-purple">
-        Apply for <span id="job-title-placeholder" class="text-brand-pink">Role</span>
+    <div class="apply-header">
+      <h3 class="apply-title">
+        Apply for <span id="job-title-placeholder" class="text-highlight">Role</span>
       </h3>
     </div>
 
-    <form class="p-8 space-y-4">
-      <div class="grid grid-cols-2 gap-4">
-        <input type="text" placeholder="First Name" required
-          class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-brand-pink focus:outline-none">
-        <input type="text" placeholder="Last Name" required
-          class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-brand-pink focus:outline-none">
+    <form class="apply-form">
+      <div class="form-grid">
+        <input type="text" placeholder="First Name" required class="apply-input">
+        <input type="text" placeholder="Last Name" required class="apply-input">
       </div>
-      <input type="email" placeholder="Email Address" required
-        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-brand-pink focus:outline-none">
-      <button type="submit"
-        class="w-full bg-brand-purple text-white py-3 rounded-xl font-bold hover:bg-brand-dark transition">
+      <input type="email" placeholder="Email Address" required class="apply-input">
+      <button type="submit" class="btn-submit-app">
         Submit Application
       </button>
     </form>
   </div>
 </div>
 
-<footer class="bg-brand-dark text-slate-400 py-8 border-t-4 border-brand-pink">
-  <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-xs">
-    <span class="text-white font-bold">© 2025 CT-MERCHANT LTD.</span>
-    <div class="flex gap-6 font-medium mt-4 md:mt-0">
-      <a href="privacy.html" class="hover:text-white">Privacy Policy</a>
-      <a href="terms.html" class="hover:text-white">Terms of Use</a>
+<footer class="footer">
+  <div class="container footer-container">
+    <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Use</a>
       <span>RC: 7203494</span>
     </div>
   </div>
 </footer>
 
 <script>
+  // Mobile Menu Logic (Copied from Global Script)
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
-  menuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+  if(menuBtn) {
+      menuBtn.onclick = () => mobileMenu.classList.toggle('hidden');
+  }
 
+  // Scroll Animation Observer
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) entry.target.classList.add('visible');
     });
   }, { threshold: 0.1 });
+  
   document.querySelectorAll('.animate-up').forEach(el => observer.observe(el));
 
+  // Modal Logic
   const modal = document.getElementById('apply-modal');
   const jobPlaceholder = document.getElementById('job-title-placeholder');
 
@@ -208,6 +186,13 @@
 
   function closeApply() {
     modal.classList.add('hidden');
+  }
+
+  // Close modal when clicking outside
+  if(modal) {
+      modal.onclick = (e) => {
+          if(e.target === modal) closeApply();
+      }
   }
 </script>
 
