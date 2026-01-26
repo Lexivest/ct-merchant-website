@@ -1,153 +1,133 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Affiliates & Partners | CT-MERCHANT LTD.</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
-          colors: {
-            brand: {
-              purple: '#2E1065',
-              purpleLight: '#5B21B6',
-              pink: '#DB2777',
-              dark: '#0F172A',
-              light: '#F8FAFC',
-            }
-          }
-        }
-      }
-    }
-  </script>
+  
+  <link rel="stylesheet" href="styles.css">
+  
+  <link rel="stylesheet" href="affiliate.css">
 </head>
-<body class="bg-brand-light text-slate-800 antialiased relative">
 
-<nav class="fixed top-0 left-0 w-full z-[50] bg-gradient-to-r from-brand-purple via-brand-purpleLight to-brand-pink shadow-2xl border-b border-white/10">
-  <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-    <a href="index.html" class="flex items-center gap-3">
-      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="w-8 h-8 rounded border border-white/20">
-      <span class="text-lg md:text-xl font-extrabold text-white tracking-wide whitespace-nowrap">CT-MERCHANT LTD.</span>
+<body>
+
+<nav class="main-header">
+  <div class="container nav-container">
+    <a href="index.html" class="brand-wrapper">
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
+      <span style="font-size: 1.125rem; font-weight: 800; color: white; letter-spacing: 0.05em; text-transform: uppercase;">CT-Merchant Ltd.</span>
     </a>
 
-    <div class="hidden md:flex items-center space-x-6 text-xs font-bold text-white/90 uppercase tracking-wide">
-      <a href="index.html" class="hover:text-white transition py-1">Home</a>
-      <a href="about.html" class="hover:text-white transition py-1">About</a>
-      <a href="services.html" class="hover:text-white transition py-1">Services</a>
-      <a href="affiliate.html" class="text-white border-b-2 border-white transition py-1">Affiliate</a>
-      <a href="careers.html" class="hover:text-white transition py-1">Careers</a>
-      <a href="contact.html" class="hover:text-white transition py-1">Contact</a>
-      <a href="staff-portal.html" class="text-white hover:text-pink-200 transition font-bold">STAFF LOGIN</a>
+    <div class="desktop-menu">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="affiliate.html" class="nav-active">Affiliate</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
     </div>
 
-    <button class="md:hidden text-white focus:outline-none p-1" id="menu-btn">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
+    <button class="mobile-menu-btn" id="menu-btn">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+      </svg>
     </button>
   </div>
 
-  <div class="hidden absolute left-0 right-0 top-full bg-brand-purple border-t border-white/10 shadow-xl" id="mobile-menu">
-    <div class="flex flex-col p-4 space-y-4 text-sm font-semibold text-white">
-      <a href="index.html" class="w-fit">Home</a>
-      <a href="about.html" class="w-fit">About</a>
-      <a href="services.html" class="w-fit">Services</a>
-      <a href="affiliate.html" class="w-fit border-b-2 border-white">Affiliate</a>
-      <a href="careers.html" class="w-fit">Careers</a>
-      <a href="contact.html" class="w-fit">Contact</a>
-      <a href="staff-portal.html" class="text-white font-bold w-fit">STAFF LOGIN</a>
-    </div>
+  <div class="mobile-dropdown hidden" id="mobile-menu">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="affiliate.html" style="border-bottom: 1px solid white;">Affiliate</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
   </div>
 </nav>
 
-<section class="min-h-[calc(100vh-64px)] flex flex-col md:flex-row mt-[64px]">
-  <div class="w-full md:w-1/2 relative h-[40vh] md:h-auto overflow-hidden group">
-    <div class="absolute inset-0 bg-brand-purple/20 group-hover:bg-transparent transition duration-700 z-10"></div>
+<section class="hero-section">
+  <div class="hero-image-wrapper">
+    <div class="hero-overlay"></div>
     <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" 
          alt="Affiliates Banner" 
-         class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-1000">
+         class="hero-img">
   </div>
 
-  <div class="w-full md:w-1/2 bg-gradient-to-br from-brand-purple to-brand-purpleLight text-white flex flex-col justify-center px-8 md:px-16 py-16 md:py-0 border-b-8 border-brand-purple">
-    <h1 class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight uppercase tracking-tight">Affiliates & Partners</h1>
-    <div class="h-1 w-20 bg-brand-pink mb-6"></div>
-    <p class="text-sm md:text-base text-slate-200 mb-6 leading-relaxed max-w-md">
+  <div class="hero-content" style="border-bottom: 8px solid var(--color-purple);">
+    <h1 class="hero-title" style="text-transform: uppercase; letter-spacing: -0.05em; font-size: 2.5rem;">Affiliates & Partners</h1>
+    <div class="divider-line"></div>
+    <p class="hero-desc" style="border:none; padding:0; color: #e2e8f0; font-style: normal; font-size: 0.95rem;">
       We work with aligned organizations and individuals to strengthen the accuracy, reach, and usefulness of local commercial data.
     </p>
   </div>
 </section>
 
-<div class="container mx-auto px-6 py-16 space-y-12">
+<div class="affiliate-container">
   
-  <div class="grid md:grid-cols-2 gap-8">
-    <section class="bg-white rounded-2xl shadow-sm p-8 border-t-4 border-brand-purple hover:shadow-md transition">
-      <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mb-6 text-brand-purple">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+  <div class="affiliate-grid">
+    
+    <section class="affiliate-card border-top-purple">
+      <div class="icon-box bg-purple-light">
+        <svg style="width: 1.5rem; height: 1.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
       </div>
-      <h2 class="text-xl font-extrabold text-brand-purple mb-4 uppercase tracking-wider">Strategic Affiliations</h2>
-      <p class="text-slate-600 text-sm leading-relaxed">
+      <h2 class="card-title">Strategic Affiliations</h2>
+      <p class="card-desc">
         CT-Merchant engages with data contributors, local associations, technology providers, and ecosystem partners whose activities complement our discovery-focused mandate.
       </p>
     </section>
 
-    <section class="bg-white rounded-2xl shadow-sm p-8 border-t-4 border-brand-pink hover:shadow-md transition">
-      <div class="w-12 h-12 bg-pink-50 rounded-xl flex items-center justify-center mb-6 text-brand-pink">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+    <section class="affiliate-card border-top-pink">
+      <div class="icon-box bg-pink-light">
+        <svg style="width: 1.5rem; height: 1.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
       </div>
-      <h2 class="text-xl font-extrabold text-brand-purple mb-4 uppercase tracking-wider">Why Affiliate With CTM?</h2>
-      <ul class="space-y-3 text-sm text-slate-600">
-        <li class="flex items-center gap-3">
-          <span class="w-1.5 h-1.5 rounded-full bg-brand-pink"></span> Expanded visibility for local commercial data
+      <h2 class="card-title">Why Affiliate With CTM?</h2>
+      <ul class="benefit-list">
+        <li class="benefit-item">
+          <span class="bullet-point"></span> Expanded visibility for local commercial data
         </li>
-        <li class="flex items-center gap-3">
-          <span class="w-1.5 h-1.5 rounded-full bg-brand-pink"></span> Participation in a neutral discovery infrastructure
+        <li class="benefit-item">
+          <span class="bullet-point"></span> Participation in a neutral discovery infrastructure
         </li>
-        <li class="flex items-center gap-3">
-          <span class="w-1.5 h-1.5 rounded-full bg-brand-pink"></span> Alignment with city-scale digital economy initiatives
+        <li class="benefit-item">
+          <span class="bullet-point"></span> Alignment with city-scale digital economy initiatives
         </li>
       </ul>
     </section>
+
   </div>
 
-  <section class="bg-brand-purple rounded-3xl p-10 text-center text-white relative overflow-hidden">
-    <div class="relative z-10">
-      <h2 class="text-2xl font-black uppercase mb-4 tracking-tight">Become an Affiliate</h2>
-      <p class="text-sm text-slate-300 mb-8 max-w-xl mx-auto">
+  <section class="cta-section">
+    <div class="cta-content">
+      <h2 class="cta-heading">Become an Affiliate</h2>
+      <p class="cta-subtext">
         If your organization or initiative aligns with structured commerce discovery and data integrity, we welcome a formal engagement.
       </p>
-      <div class="flex flex-col sm:flex-row justify-center gap-4">
-        <a href="contact.html" class="px-8 py-3 bg-brand-pink hover:bg-pink-600 text-white font-bold rounded-xl shadow-lg transition">Contact Us</a>
-        <a href="mailto:admin@ct-merchant.com.ng" class="px-8 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold rounded-xl transition">Email Admin</a>
+      <div class="cta-actions">
+        <a href="contact.html" class="btn-primary">Contact Us</a>
+        <a href="mailto:admin@ct-merchant.com.ng" class="btn-secondary">Email Admin</a>
       </div>
     </div>
-    <div class="absolute -right-10 -bottom-20 w-64 h-64 bg-brand-pink/20 rounded-full blur-2xl"></div>
+    <div class="cta-glow"></div>
   </section>
 
 </div>
 
-<footer class="bg-brand-dark text-slate-400 py-8 border-t-4 border-brand-pink">
-  <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-xs">
-    <span class="text-white font-bold">© 2025 CT-MERCHANT LTD.</span>
-    <div class="flex gap-6 font-medium mt-4 md:mt-0">
-      <a href="privacy.html" class="hover:text-white">Privacy Policy</a>
-      <a href="terms.html" class="hover:text-white">Terms of Use</a>
+<footer class="footer">
+  <div class="container footer-container">
+    <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Use</a>
       <span>RC: 7203494</span>
     </div>
   </div>
 </footer>
 
-<script>
-  const menuBtn = document.getElementById('menu-btn');
-  const mobileMenu = document.getElementById('mobile-menu');
-
-  if(menuBtn && mobileMenu) {
-    menuBtn.onclick = () => {
-      mobileMenu.classList.toggle('hidden');
-    };
-  }
-</script>
+<script src="index.js"></script>
 
 </body>
 </html>
