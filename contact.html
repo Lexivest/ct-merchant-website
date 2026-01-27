@@ -167,14 +167,16 @@
 <script src="index.js"></script>
 
 <script>
-  const SUPABASE_URL = "https://goodtvrhszsnhcyigfoi.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdvb2R0dnJoc3pzbmhjeWlnZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI";
+// We wrap this in a block/event listener to avoid variable name conflicts with index.js
+document.addEventListener('DOMContentLoaded', () => {
+  const CONTACT_SUPABASE_URL = "https://goodtvrhszsnhcyigfoi.supabase.co";
+  const CONTACT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdvb2R0dnJoc3pzbmhjeWlnZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI";
   
-  let supabaseClient = null;
+  let contactClient = null;
 
   try {
     if (window.supabase) {
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      contactClient = window.supabase.createClient(CONTACT_SUPABASE_URL, CONTACT_SUPABASE_KEY);
     }
   } catch(e) { console.error("Initial load failed", e); }
 
@@ -186,11 +188,12 @@
     contactForm.onsubmit = async function(e) {
       e.preventDefault(); 
       
-      if (!supabaseClient && window.supabase) {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      // Re-check client in case it loaded late
+      if (!contactClient && window.supabase) {
+        contactClient = window.supabase.createClient(CONTACT_SUPABASE_URL, CONTACT_SUPABASE_KEY);
       }
 
-      if (!supabaseClient) {
+      if (!contactClient) {
         statusDiv.className = "status-msg status-warning active";
         statusDiv.textContent = "Error: Database library not loaded. Please check your internet connection and refresh.";
         return false;
@@ -209,7 +212,7 @@
       };
 
       try {
-        const { error } = await supabaseClient
+        const { error } = await contactClient
           .from('contact-us-web')
           .insert([payload]);
 
@@ -233,6 +236,7 @@
       return false; 
     };
   }
+});
 </script>
 
 </body>
