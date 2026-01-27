@@ -95,8 +95,8 @@
           <span>• Platform Operations</span>
         </div>
       </div>
-      <button onclick="openApply('City Merchant Growth Lead')" class="btn-apply">
-        Apply Now
+      <button onclick="openClosedNotice('City Merchant Growth Lead')" class="btn-apply" style="opacity: 0.7;">
+        Application Closed
       </button>
     </div>
 
@@ -111,8 +111,8 @@
           <span>• Platform Engineering</span>
         </div>
       </div>
-      <button onclick="openApply('Flutter Application Engineer')" class="btn-apply">
-        Apply Now
+      <button onclick="openClosedNotice('Flutter Application Engineer')" class="btn-apply" style="opacity: 0.7;">
+        Application Closed
       </button>
     </div>
 
@@ -130,20 +130,29 @@
 
     <div class="apply-header">
       <h3 class="apply-title">
-        Apply for <span id="job-title-placeholder" class="text-highlight">Role</span>
+        Status: <span id="job-title-placeholder" class="text-highlight">Role</span>
       </h3>
     </div>
 
-    <form class="apply-form">
-      <div class="form-grid">
-        <input type="text" placeholder="First Name" required class="apply-input">
-        <input type="text" placeholder="Last Name" required class="apply-input">
+    <div class="apply-form" style="text-align: center;">
+      <div style="margin-bottom: 1.5rem; display: flex; justify-content: center;">
+        <div style="width: 3rem; height: 3rem; background-color: #fdf2f8; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--color-pink);">
+           <i class="fa-solid fa-hourglass-half" style="font-size: 1.25rem;"></i>
+        </div>
       </div>
-      <input type="email" placeholder="Email Address" required class="apply-input">
-      <button type="submit" class="btn-submit-app">
-        Submit Application
+      
+      <p style="font-size: 0.95rem; color: #334155; font-weight: 700; margin-bottom: 0.5rem;">
+        Applications for this role are currently paused.
+      </p>
+      
+      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.6; margin-bottom: 2rem;">
+        Thank you for your interest in joining CT-Merchant. We have reached our current intake capacity for this position. Please check back soon or follow our updates for future opportunities.
+      </p>
+
+      <button onclick="closeApply()" class="btn-submit-app">
+        Close
       </button>
-    </form>
+    </div>
   </div>
 </div>
 
@@ -153,13 +162,13 @@
     <div class="footer-links">
       <a href="privacy.html">Privacy Policy</a>
       <a href="terms.html">Terms of Use</a>
-      <span>RC: 8879163</span>
+      <span>RC: 7203494</span>
     </div>
   </div>
 </footer>
 
 <script>
-  // Mobile Menu Logic (Copied from Global Script)
+  // Mobile Menu Logic
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
   if(menuBtn) {
@@ -179,7 +188,7 @@
   const modal = document.getElementById('apply-modal');
   const jobPlaceholder = document.getElementById('job-title-placeholder');
 
-  function openApply(role) {
+  function openClosedNotice(role) {
     jobPlaceholder.textContent = role;
     modal.classList.remove('hidden');
   }
