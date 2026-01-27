@@ -1,0 +1,159 @@
+/* staff-dashboard.css */
+
+/* --- PAGE LAYOUT --- */
+.dashboard-body {
+    background: linear-gradient(135deg, var(--color-purple), var(--color-purple-light), var(--color-pink));
+    min-height: 100vh;
+    font-family: var(--font-primary);
+    color: var(--color-slate-800);
+}
+
+/* --- NAVIGATION --- */
+.dashboard-nav {
+    background-color: var(--color-purple);
+    color: white;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-lg);
+}
+
+.nav-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.btn-logout {
+    background-color: var(--color-pink);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: background-color 0.3s;
+}
+.btn-logout:hover { background-color: #be185d; }
+
+/* --- MAIN CONTAINER --- */
+.dashboard-container {
+    max-width: 64rem; /* max-w-5xl */
+    margin: 2.5rem auto;
+    padding: 0 1.5rem;
+}
+
+/* --- PROFILE CARD --- */
+.profile-card {
+    background-color: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    transition: opacity 0.3s ease;
+}
+
+@media (min-width: 640px) {
+    .profile-card {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+}
+
+.profile-avatar {
+    width: 6rem;
+    height: 6rem;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
+}
+
+.profile-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    text-align: center;
+}
+@media (min-width: 640px) { .profile-info { text-align: left; } }
+
+.profile-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-purple);
+    margin-bottom: 0.25rem;
+}
+
+.profile-detail {
+    color: #475569;
+    font-size: 0.875rem;
+}
+
+.badge-role {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background-color: var(--color-pink);
+    color: white;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    width: fit-content;
+    align-self: center;
+}
+@media (min-width: 640px) { .badge-role { align-self: flex-start; } }
+
+/* --- DASHBOARD GRID --- */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+@media (min-width: 768px) {
+    .dashboard-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* --- ACTION CARDS --- */
+.action-card {
+    background-color: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-2xl);
+}
+
+.card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-purple);
+    margin-bottom: 0.5rem;
+}
+
+.card-desc {
+    color: #475569;
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+    flex: 1;
+}
+
+.btn-action {
+    background-color: var(--color-purple);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: background-color 0.3s;
+}
+.btn-action:hover { background-color: var(--color-purple-light); }
