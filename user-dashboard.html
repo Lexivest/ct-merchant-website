@@ -65,7 +65,7 @@
         .main-content { margin-left: 260px; flex-grow: 1; padding: 1.5rem 2rem; width: calc(100% - 260px); }
 
         /* Top Bar */
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
         .welcome-text h1 { font-size: 1.5rem; font-weight: 800; color: var(--color-purple); margin-bottom: 2px; }
         .location-badge { 
             display: inline-flex; align-items: center; gap: 6px; 
@@ -83,18 +83,19 @@
 
         /* --- MARKET STYLES --- */
         
-        /* Ticker (Slower & tighter spacing) */
+        /* Ticker */
         .ticker-wrap { 
             width: 100%; overflow: hidden; background: #FFF7ED; color: #C2410C;
             padding: 8px 0; margin-bottom: 1rem; border-radius: 8px; border: 1px solid #FFEDD5;
             display: none; 
         }
-        .ticker { display: inline-block; white-space: nowrap; animation: ticker 60s linear infinite; font-size: 0.85rem; font-weight: 600; padding-left: 100%; }
+        /* Adjusted speed to 80s for slower scroll */
+        .ticker { display: inline-block; white-space: nowrap; animation: ticker 80s linear infinite; font-size: 0.85rem; font-weight: 600; padding-left: 100%; }
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
         /* Sections */
         .section { margin-bottom: 1.2rem; }
-        .section-header { display: flex; align-items: center; margin-bottom: 0.8rem; }
+        .section-header { display: flex; align-items: center; margin-bottom: 0.6rem; }
         .bar { width: 4px; height: 20px; border-radius: 2px; margin-right: 10px; }
         .section-title { font-size: 1.1rem; font-weight: 800; color: var(--color-text-main); }
         
@@ -113,10 +114,17 @@
             cursor: pointer; transition: transform 0.2s;
         }
         .featured-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-        .featured-img { width: 100%; height: 130px; object-fit: cover; }
         .featured-info { padding: 10px; }
         .shop-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .shop-meta { font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; }
+
+        /* Featured Collage (New) */
+        .featured-collage {
+            width: 100%; height: 140px; 
+            display: flex; flex-wrap: wrap; background: #F1F5F9;
+        }
+        .featured-collage img { width: 50%; height: 50%; object-fit: cover; }
+        .featured-collage.single img { width: 100%; height: 100%; }
 
         /* Collage Pills (Category/Area) */
         .collage-pill {
@@ -156,7 +164,7 @@
         }
         .shop-card:hover { border-color: var(--color-purple); }
         
-        /* 4-Product Collage for Shops */
+        /* 4-Product Collage for All Shops */
         .shop-collage {
             width: 64px; height: 64px; border-radius: 8px; overflow: hidden;
             display: flex; flex-wrap: wrap; flex-shrink: 0; background: #F1F5F9;
@@ -168,7 +176,7 @@
         .shop-cat { font-size: 0.7rem; color: var(--color-purple); font-weight: 700; background: #F3E8FF; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
         .shop-addr { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* Profile Styles (Preserved) */
+        /* Profile Styles */
         .profile-card { background: white; border-radius: 24px; padding: 3rem; box-shadow: var(--shadow-md); max-width: 800px; margin: 0 auto; }
         .profile-hero { display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--color-border); }
         .avatar-uploader { position: relative; width: 120px; height: 120px; }
@@ -177,13 +185,6 @@
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         .form-control { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid var(--color-border); font-size: 0.9rem; }
         .btn-save { background: var(--color-purple); color: white; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; margin-top: 1.5rem; }
-
-        /* Stats Card (Overview) */
-        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
-        .stat-card { background: white; padding: 1.5rem; border-radius: 20px; border-left: 5px solid var(--color-purple); box-shadow: var(--shadow-sm); }
-        .stat-card.pink { border-left-color: var(--color-pink); }
-        .stat-label { font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; }
-        .stat-val { font-size: 1.5rem; font-weight: 800; color: var(--color-purple); margin-top: 5px; }
 
         /* Utils */
         .screen { display: none; animation: fadeIn 0.3s ease; }
@@ -197,7 +198,6 @@
             .sidebar.open { transform: translateX(0); }
             .main-content { margin-left: 0; padding: 1.5rem; width: 100%; }
             .form-grid, .shop-list { grid-template-columns: 1fr; }
-            .stats-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -250,15 +250,15 @@
             </div>
         </div>
 
-        <!-- TAB 1: MARKET OVERVIEW (Refined) -->
+        <!-- TAB 1: MARKET OVERVIEW -->
         <div id="market" class="screen active">
             
-            <!-- Announcements -->
+            <!-- Announcements (Slower Speed) -->
             <div id="announcement-box" class="ticker-wrap">
                 <div id="announcement-text" class="ticker"></div>
             </div>
 
-            <!-- Featured Shops -->
+            <!-- Featured Shops (Grid Layout) -->
             <div id="section-featured" class="section hidden">
                 <div class="section-header">
                     <div class="bar" style="background: orange;"></div>
@@ -290,14 +290,13 @@
                 <div id="area-list" class="scroll-row"></div>
             </div>
 
-            <!-- All Shops Grid (Updated 4-Product Collage) -->
+            <!-- All Shops Grid -->
             <div class="section">
                 <div class="section-header">
                     <div class="bar" style="background: #1E293B;"></div>
                     <div class="section-title">All Shops <span id="shop-count" style="font-size: 0.9rem; color: var(--color-text-muted); font-weight: 500;"></span></div>
                 </div>
                 <div id="shop-list" class="shop-list">
-                    <!-- Loading Skeleton -->
                     <p style="color: grey;">Loading marketplace data...</p>
                 </div>
             </div>
@@ -380,7 +379,6 @@
 
     async function fetchFullData() {
         try {
-            // A. Parallel Requests
             const [profileRes, citiesRes, announceRes, promoRes, catRes] = await Promise.all([
                 client.from('profiles').select('*, cities(name), areas(name)').eq('id', currentUser.id).maybeSingle(),
                 client.from('cities').select('id, name').order('name'),
@@ -393,13 +391,11 @@
 
             const cityId = profileRes.data.city_id;
 
-            // B. Dependent Requests (Shops & Areas in user's city)
             const [areaRes, shopRes] = await Promise.all([
                 client.from('areas').select().eq('city_id', cityId).order('name'),
                 client.from('shops').select().eq('city_id', cityId).order('is_verified', { ascending: false })
             ]);
 
-            // C. Product Images for Collage
             let products = [];
             if (shopRes.data && shopRes.data.length > 0) {
                 const shopIds = shopRes.data.map(s => s.id);
@@ -411,7 +407,6 @@
                 products = prodRes.data || [];
             }
 
-            // D. Populate City Dropdown
             populateCityDropdown(citiesRes.data, profileRes.data);
 
             const dashboardData = {
@@ -436,7 +431,6 @@
 
     // --- RENDER LOGIC ---
     function renderDashboard(data) {
-        // 1. Header Info
         const p = data.profile;
         const avatar = p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name)}`;
         
@@ -445,46 +439,44 @@
         document.getElementById('top-name').textContent = p.full_name;
         document.getElementById('top-avatar').src = avatar;
 
-        // 2. Announcements
         if (data.announcements.length > 0) {
             const text = data.announcements.map(a => a.message).join("  |  ");
             document.getElementById('announcement-text').textContent = text;
             document.getElementById('announcement-box').style.display = 'block';
         }
 
-        // 3. Featured
+        // FEATURED SHOPS (Updated Grid)
         const featured = data.shops.filter(s => s.is_featured);
         if (featured.length > 0) {
             document.getElementById('section-featured').classList.remove('hidden');
-            document.getElementById('featured-list').innerHTML = featured.map(s => `
-                <div class="featured-card">
-                    <img src="${s.image_url || s.store_front_url || 'https://via.placeholder.com/300'}" class="featured-img">
-                    <div class="featured-info">
-                        <div class="shop-name">${s.name} ${s.is_verified ? '<i class="fa-solid fa-circle-check" style="color:#3B82F6"></i>' : ''}</div>
-                        <div class="shop-meta"><span>${s.category}</span></div>
+            document.getElementById('featured-list').innerHTML = featured.map(s => {
+                const collageHtml = buildFeaturedThumbnail(s, data.products);
+                return `
+                    <div class="featured-card">
+                        ${collageHtml}
+                        <div class="featured-info">
+                            <div class="shop-name">${s.name} ${s.is_verified ? '<i class="fa-solid fa-circle-check" style="color:#3B82F6"></i>' : ''}</div>
+                            <div class="shop-meta"><span>${s.category}</span></div>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        // 4. Categories Collage
         renderCollageRow('category-list', data.categories, data.shops, data.products, 'category', null);
 
-        // 5. Promos
         if (data.promos.length > 0) {
             document.getElementById('section-promos').classList.remove('hidden');
             document.getElementById('promo-list').innerHTML = data.promos.map(p => `<div class="promo-card"><img src="${p.image_url}" class="promo-img"></div>`).join('');
         }
 
-        // 6. Areas Collage
         const activeAreas = data.areas.filter(a => data.shops.some(s => s.area_id === a.id));
         renderCollageRow('area-list', activeAreas, data.shops, data.products, 'area', data.profile.area_id);
 
-        // 7. All Shops Grid (UPDATED)
+        // ALL SHOPS
         document.getElementById('shop-count').textContent = `${data.shops.length} Found`;
         document.getElementById('shop-list').innerHTML = data.shops.map(s => {
             const collageHtml = buildShopThumbnail(s, data.products);
-            
             return `
                 <div class="shop-card">
                     ${collageHtml}
@@ -501,21 +493,39 @@
         }).join('');
     }
 
+    // Helper: Featured Thumbnail (Wide 4-grid)
+    function buildFeaturedThumbnail(shop, allProducts) {
+        const shopProducts = allProducts.filter(p => p.shop_id === shop.id && p.image_url).slice(0, 4);
+        const images = shopProducts.map(p => p.image_url);
+
+        if (images.length === 0) {
+            const fallback = shop.image_url || shop.store_front_url || 'https://via.placeholder.com/300';
+            return `<div class="featured-collage single"><img src="${fallback}"></div>`;
+        }
+
+        let innerHtml = '';
+        for (let i = 0; i < 4; i++) {
+            if (images[i]) {
+                innerHtml += `<img src="${images[i]}">`;
+            } else {
+                innerHtml += `<div style="width:50%;height:50%;background:#e2e8f0;"></div>`;
+            }
+        }
+        return `<div class="featured-collage">${innerHtml}</div>`;
+    }
+
+    // Helper: Shop Thumbnail (Square 4-grid)
     function buildShopThumbnail(shop, allProducts) {
         const shopProducts = allProducts.filter(p => p.shop_id === shop.id && p.image_url).slice(0, 4);
         const images = shopProducts.map(p => p.image_url);
 
-        // Fallback if no products
         if (images.length === 0) {
             const fallback = shop.image_url || shop.store_front_url || 'https://via.placeholder.com/60';
             return `<img src="${fallback}" class="shop-collage single" style="width:64px;height:64px;border-radius:8px;object-fit:cover;">`;
         }
 
-        // Generate 4 slots
         let innerHtml = '';
         for (let i = 0; i < 4; i++) {
-            // If less than 4 images, reuse the first one to fill grid or leave grey? 
-            // Better to show what we have. If index exists use it, else grey box.
             if (images[i]) {
                 innerHtml += `<img src="${images[i]}">`;
             } else {
@@ -548,13 +558,11 @@
         return `<div class="collage-circle collage-3"><img src="${images[0]}"><div><img src="${images[1]}"><img src="${images[2]}"></div></div>`;
     }
 
-    // --- PROFILE TAB LOGIC ---
     function renderProfileForms(p) {
         const avatar = p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name)}`;
         document.getElementById('edit-display-name').textContent = p.full_name;
         document.getElementById('edit-display-email').textContent = currentUser.email;
         document.getElementById('edit-avatar').src = avatar;
-        
         document.getElementById('form-name').value = p.full_name;
         document.getElementById('form-phone').value = p.phone || "";
     }
@@ -590,7 +598,6 @@
 
     document.getElementById('form-city').addEventListener('change', (e) => fetchAreasForProfile(e.target.value));
 
-    // --- ACTIONS ---
     function switchTab(screenId, btn) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
