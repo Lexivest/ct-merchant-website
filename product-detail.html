@@ -22,7 +22,7 @@
         body { background-color: var(--color-bg); color: var(--color-text); padding-bottom: 90px; }
 
         /* --- HEADER & IMAGE --- */
-        .image-container { position: relative; height: 350px; width: 100%; background: #ddd; overflow: hidden; }
+        .image-container { position: relative; height: 350px; width: 100%; background: #E2E8F0; overflow: hidden; }
         .product-img { width: 100%; height: 100%; object-fit: cover; }
 
         .top-btn {
@@ -98,18 +98,33 @@
         }
         .toast.visible { opacity: 1; }
 
-        .hidden { display: none; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 100px auto; }
+        .hidden { display: none !important; }
+        
+        /* Error State */
+        .error-container { text-align: center; padding: 2rem; color: #64748B; }
+        .error-icon { font-size: 3rem; color: #E2E8F0; margin-bottom: 1rem; }
+
+        .spinner { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <!-- Loading State -->
-    <div id="loader" style="height: 100vh; display: flex; align-items: center; justify-content: center;">
+    <div id="loader" style="height: 100vh; display: flex; flex-direction:column; align-items: center; justify-content: center;">
         <div class="spinner"></div>
+        <p id="loading-text" style="margin-top:16px; color:#64748B; font-size:0.9rem;">Loading Product...</p>
     </div>
 
+    <!-- Error State (Hidden by default) -->
+    <div id="error-screen" class="error-container hidden" style="height: 100vh; display: flex; flex-direction:column; align-items: center; justify-content: center;">
+        <i class="fa-solid fa-triangle-exclamation error-icon"></i>
+        <h3 id="error-title" style="margin-bottom: 8px;">Product Not Found</h3>
+        <p id="error-desc" style="margin-bottom: 24px;">The product link might be broken or the item was removed.</p>
+        <button onclick="window.history.back()" style="padding:10px 20px; background:var(--color-primary); color:white; border:none; border-radius:8px; cursor:pointer;">Go Back</button>
+    </div>
+
+    <!-- Main Content -->
     <div id="main-content" class="hidden">
         <!-- Header Image -->
         <div class="image-container">
@@ -133,7 +148,7 @@
         <div class="content-card">
             <span id="condition-badge" class="condition-badge cond-new">New</span>
             
-            <h1 id="prod-name" class="prod-title">Loading Product...</h1>
+            <h1 id="prod-name" class="prod-title">--</h1>
             
             <div class="price-row">
                 <span id="old-price" class="old-price hidden"></span>
@@ -143,9 +158,7 @@
             <hr style="border:0; border-top:1px solid #E2E8F0; margin-bottom: 24px;">
 
             <div class="section-header">Description</div>
-            <p id="prod-desc" class="description-text">
-                Loading description...
-            </p>
+            <p id="prod-desc" class="description-text">--</p>
             
             <div style="height: 60px;"></div> <!-- Spacer -->
         </div>
@@ -182,55 +195,74 @@
     <script>
         const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
-        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // Get ID
-        const params = new URLSearchParams(window.location.search);
-        const productId = params.get('id');
-
-        // State
+        
+        let client;
         let currentProduct = null;
         let currentShop = null;
         let currentUser = null;
         let isInWishlist = false;
 
-        // --- INIT ---
+        // Get ID
+        const params = new URLSearchParams(window.location.search);
+        const productId = params.get('id');
+
         window.onload = async () => {
-            if (!productId) { window.history.back(); return; }
+            // 1. Check Dependencies
+            if (typeof supabase === 'undefined') {
+                showError("Connection Error", "Failed to load database. Please check your internet.");
+                return;
+            }
+            client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            const { data: { session } } = await client.auth.getSession();
-            if (session) currentUser = session.user;
+            // 2. Validate ID
+            if (!productId) {
+                showError("Invalid Link", "No product ID provided in URL.");
+                return;
+            }
 
-            await fetchProductData();
-            if (currentUser) checkWishlistStatus();
+            try {
+                // 3. Auth Check (Silent)
+                const { data: { session } } = await client.auth.getSession();
+                if (session) currentUser = session.user;
+
+                // 4. Fetch Data
+                await fetchProductData();
+                
+                if (currentUser) checkWishlistStatus();
+
+            } catch (err) {
+                console.error("Init Error:", err);
+                showError("Error", "Something went wrong loading the product.");
+            }
         };
 
         async function fetchProductData() {
             try {
-                // 1. Fetch Product
-                const { data: product, error } = await client
+                // Fetch Product
+                const { data: product, error: prodError } = await client
                     .from('products')
                     .select('*')
                     .eq('id', productId)
                     .single();
 
-                if (error || !product) throw error;
+                if (prodError || !product) throw new Error("Product not found");
                 currentProduct = product;
 
-                // 2. Fetch Associated Shop (Need whatsapp number)
-                const { data: shop } = await client
-                    .from('shops')
-                    .select('id, name, whatsapp')
-                    .eq('id', product.shop_id)
-                    .single();
-                
-                currentShop = shop;
+                // Fetch Shop (for WhatsApp info)
+                if (product.shop_id) {
+                    const { data: shop } = await client
+                        .from('shops')
+                        .select('id, name, whatsapp')
+                        .eq('id', product.shop_id)
+                        .single();
+                    currentShop = shop;
+                }
 
                 renderUI();
+
             } catch (e) {
-                console.error("Error loading product:", e);
-                alert("Product not found");
-                window.history.back();
+                console.error(e);
+                showError("Product Unavailable", "This product may have been removed or deleted.");
             }
         }
 
@@ -241,11 +273,12 @@
             const p = currentProduct;
             
             // Image
-            document.getElementById('prod-img').src = p.image_url || 'https://via.placeholder.com/600x400';
-
+            const imgEl = document.getElementById('prod-img');
+            imgEl.src = p.image_url || 'https://via.placeholder.com/600x400?text=No+Image';
+            
             // Badge
             const badge = document.getElementById('condition-badge');
-            badge.textContent = p.condition;
+            badge.textContent = p.condition || 'New';
             if (p.condition === 'Fairly Used') {
                 badge.className = 'condition-badge cond-used';
             } else {
@@ -256,11 +289,11 @@
             document.getElementById('prod-name').textContent = p.name;
             document.getElementById('prod-desc').textContent = p.description || "No description provided.";
 
-            // Price
+            // Price Formatting
             const priceEl = document.getElementById('current-price');
             const oldEl = document.getElementById('old-price');
             
-            const formatPrice = (val) => "₦" + val.toLocaleString();
+            const formatPrice = (val) => "₦" + Number(val).toLocaleString();
 
             if (p.discount_price && p.discount_price < p.price) {
                 priceEl.textContent = formatPrice(p.discount_price);
@@ -272,7 +305,15 @@
             }
         }
 
-        // --- WISHLIST LOGIC ---
+        function showError(title, desc) {
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('main-content').classList.add('hidden');
+            document.getElementById('error-screen').classList.remove('hidden');
+            document.getElementById('error-title').textContent = title;
+            document.getElementById('error-desc').textContent = desc;
+        }
+
+        // --- WISHLIST ---
         async function checkWishlistStatus() {
             const { data } = await client
                 .from('wishlist')
@@ -302,7 +343,6 @@
         async function toggleWishlist() {
             if (!currentUser) return alert("Please login to add to wishlist");
 
-            // Optimistic
             isInWishlist = !isInWishlist;
             updateWishlistIcon();
             showToast(isInWishlist ? "Added to Wishlist" : "Removed from Wishlist");
@@ -321,10 +361,10 @@
             }
         }
 
-        // --- WHATSAPP LOGIC ---
+        // --- WHATSAPP ---
         function showSecurityModal() {
             if (!currentShop || !currentShop.whatsapp) {
-                return alert("This shop has not provided a WhatsApp number.");
+                return alert("This shop hasn't provided a WhatsApp number.");
             }
             document.getElementById('security-modal').classList.add('active');
         }
@@ -336,7 +376,7 @@
         async function launchWhatsApp() {
             hideSecurityModal();
             
-            // 1. Log click
+            // Log click (Fire and forget)
             if (currentUser) {
                 client.from('whatsapp_clicks').insert({
                     clicker_id: currentUser.id,
@@ -345,22 +385,20 @@
                 });
             }
 
-            // 2. Format Message
             let phone = currentShop.whatsapp.replace(/\D/g, '');
             if (phone.startsWith('0')) phone = '234' + phone.substring(1);
 
             const price = currentProduct.discount_price || currentProduct.price;
             const msg = `Hello *${currentShop.name}*, I found this item on *Naija Digital Shops*:\n\n` +
                         `📦 *${currentProduct.name}*\n` +
-                        `💰 Price: ₦${price.toLocaleString()}\n` +
+                        `💰 Price: ₦${Number(price).toLocaleString()}\n` +
                         `🏷 Condition: ${currentProduct.condition}\n` +
                         `---------------------------------\n` +
-                        `Is it still available?`;
+                        `Is it available?`;
 
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // --- UTILS ---
         function shareProduct() {
             const url = window.location.href;
             if (navigator.share) {
