@@ -133,7 +133,6 @@
             transition: border-color 0.2s;
         }
         .form-control:focus { outline: none; border-color: var(--color-purple); }
-        .form-control:disabled { background: #F1F5F9; cursor: not-allowed; }
 
         .btn-save {
             background: var(--color-purple); color: white;
@@ -143,14 +142,15 @@
         }
         .btn-save:hover { background: var(--color-pink); transform: translateY(-2px); }
 
-        /* Stats Card (Overview) */
         .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
         .stat-card { background: white; padding: 1.5rem; border-radius: 20px; border-left: 5px solid var(--color-purple); box-shadow: var(--shadow-sm); }
         .stat-card.pink { border-left-color: var(--color-pink); }
         .stat-label { font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; }
         .stat-val { font-size: 1.5rem; font-weight: 800; color: var(--color-purple); margin-top: 5px; }
 
-        /* Mobile Adjustments */
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         @media (max-width: 1024px) {
             .sidebar { transform: translateX(-100%); }
             .sidebar.open { transform: translateX(0); }
@@ -158,9 +158,6 @@
             .form-grid { grid-template-columns: 1fr; }
             .stats-row { grid-template-columns: 1fr; }
         }
-
-        .loader { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -232,7 +229,7 @@
             </div>
         </div>
 
-        <!-- TAB: PROFILE (The Edit Profile Logic) -->
+        <!-- TAB: PROFILE -->
         <div id="profile" class="screen">
             <div class="profile-card">
                 <div class="profile-hero">
@@ -274,7 +271,7 @@
                     </div>
 
                     <button type="submit" id="btn-submit" class="btn-save">
-                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                        <span>Save Changes</span>
                     </button>
                 </form>
             </div>
@@ -291,9 +288,7 @@
     let currentUser = null;
     let selectedFile = null;
 
-    // --- 1. INITIAL LOAD (Hybrid Strategy) ---
     async function init() {
-        // Auth check
         const { data: { session } } = await client.auth.getSession();
         if (!session) {
             window.location.href = "login.html";
@@ -301,31 +296,26 @@
         }
         currentUser = session.user;
 
-        // Display current date
         document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-        // A. Load from Cache (Instant UI)
         const cached = localStorage.getItem('user_profile_cache');
         if (cached) {
             renderProfile(JSON.parse(cached));
         }
 
-        // B. Fetch Fresh Data
         fetchProfile();
         fetchCities();
     }
 
-    // --- 2. DATA FETCHING ---
     async function fetchProfile() {
         try {
             const { data, error } = await client
                 .from('profiles')
-                .select(`*, cities(name), areas(name)`)
+                .select(`*`)
                 .eq('id', currentUser.id)
                 .maybeSingle();
 
             if (data) {
-                // Update Cache
                 localStorage.setItem('user_profile_cache', JSON.stringify(data));
                 renderProfile(data);
             }
@@ -339,7 +329,6 @@
             cityDropdown.innerHTML = '<option value="" disabled selected>Select City</option>';
             data.forEach(c => cityDropdown.innerHTML += `<option value="${c.id}">${c.name}</option>`);
             
-            // If we have a cached city, set it
             const cached = JSON.parse(localStorage.getItem('user_profile_cache'));
             if (cached?.city_id) {
                 cityDropdown.value = cached.city_id;
@@ -363,24 +352,20 @@
 
     document.getElementById('form-city').addEventListener('change', (e) => fetchAreas(e.target.value));
 
-    // --- 3. UI RENDERING ---
     function renderProfile(profile) {
-        const avatar = profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile.full_name}`;
+        const avatar = profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.full_name || 'U')}`;
         
-        // Top Bar
-        document.getElementById('greeting-name').textContent = `Hello, ${profile.full_name.split(' ')[0]}!`;
-        document.getElementById('top-name').textContent = profile.full_name;
+        document.getElementById('greeting-name').textContent = `Hello, ${(profile.full_name || 'User').split(' ')[0]}!`;
+        document.getElementById('top-name').textContent = profile.full_name || 'User';
         document.getElementById('top-avatar').src = avatar;
 
-        // Stats
         document.getElementById('join-date').textContent = new Date(currentUser.created_at).toLocaleDateString();
         document.getElementById('status-text').textContent = profile.is_verified ? "Verified" : "Pending";
 
-        // Form Fields
-        document.getElementById('edit-display-name').textContent = profile.full_name;
+        document.getElementById('edit-display-name').textContent = profile.full_name || 'Merchant';
         document.getElementById('edit-display-email').textContent = currentUser.email;
         document.getElementById('edit-avatar').src = avatar;
-        document.getElementById('form-name').value = profile.full_name;
+        document.getElementById('form-name').value = profile.full_name || "";
         document.getElementById('form-phone').value = profile.phone || "";
     }
 
@@ -391,7 +376,6 @@
         el.classList.add('active');
     }
 
-    // --- 4. PROFILE UPDATES ---
     function previewImage(input) {
         if (input.files && input.files[0]) {
             selectedFile = input.files[0];
@@ -410,20 +394,27 @@
         try {
             let avatarUrl = document.getElementById('edit-avatar').src;
 
-            // 1. Upload Image if selected
+            // --- CORRECTED BUCKET NAME: 'avatars' ---
             if (selectedFile) {
                 const fileExt = selectedFile.name.split('.').pop();
-                const fileName = `${currentUser.id}_${Math.random()}.${fileExt}`;
+                const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+                
                 const { data, error: uploadError } = await client.storage
-                    .from('profiles')
-                    .upload(fileName, selectedFile);
+                    .from('avatars')
+                    .upload(fileName, selectedFile, {
+                        cacheControl: '3600',
+                        upsert: true
+                    });
 
                 if (uploadError) throw uploadError;
-                const { data: { publicUrl } } = client.storage.from('profiles').getPublicUrl(fileName);
+
+                const { data: { publicUrl } } = client.storage
+                    .from('avatars')
+                    .getPublicUrl(fileName);
+                    
                 avatarUrl = publicUrl;
             }
 
-            // 2. Update Database
             const updates = {
                 full_name: document.getElementById('form-name').value.trim(),
                 phone: document.getElementById('form-phone').value.trim(),
@@ -437,19 +428,18 @@
             if (error) throw error;
 
             alert("Profile updated successfully!");
-            fetchProfile(); // Refresh cache and UI
+            selectedFile = null;
+            fetchProfile(); 
         } catch (err) {
-            alert(err.message);
+            alert(err.message || "Upload failed. Please check if bucket 'avatars' exists.");
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+            btn.innerHTML = 'Save Changes';
         }
     }
 
-    // --- 5. ROBUST LOGOUT ---
     async function handleLogout() {
         if (confirm("Are you sure you want to log out?")) {
-            // Clear local storage (Matches app's LocalStorageService.clearCache)
             localStorage.clear();
             await client.auth.signOut();
             window.location.href = "index.html";
