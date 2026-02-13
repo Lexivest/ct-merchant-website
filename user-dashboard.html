@@ -97,7 +97,7 @@
         .ticker-wrap { 
             width: 100%; overflow: hidden; background: #FFF7ED; color: #C2410C;
             padding: 10px 0; margin-bottom: 1.5rem; border-radius: 8px; border: 1px solid #FFEDD5;
-            display: none; /* Hidden until data loads */
+            display: none; 
         }
         .ticker { display: inline-block; white-space: nowrap; animation: ticker 80s linear infinite; font-size: 0.85rem; font-weight: 600; padding-left: 100%; }
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
@@ -123,7 +123,7 @@
             box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
             cursor: pointer; transition: transform 0.2s;
         }
-        .featured-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .featured-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--color-purple); }
         .featured-info { padding: 12px; }
         .shop-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .shop-meta { font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; }
@@ -172,7 +172,7 @@
             border: 1px solid var(--color-border); cursor: pointer;
             transition: border-color 0.2s; align-items: center;
         }
-        .shop-card:hover { border-color: var(--color-purple); }
+        .shop-card:hover { border-color: var(--color-purple); transform: translateY(-2px); box-shadow: var(--shadow-md); }
         
         /* Shop 4-Grid Collage */
         .shop-collage {
@@ -333,21 +333,21 @@
 
                 <form id="profile-form" onsubmit="saveProfile(event)">
                     <div class="form-grid">
-                        <div class="input-group">
+                        <div>
                             <label>FULL NAME</label>
                             <input type="text" id="form-name" class="form-control" required>
                         </div>
-                        <div class="input-group">
+                        <div>
                             <label>PHONE NUMBER</label>
                             <input type="tel" id="form-phone" class="form-control">
                         </div>
-                        <div class="input-group">
+                        <div>
                             <label>CITY</label>
                             <select id="form-city" class="form-control" required>
                                 <option value="" disabled selected>Loading...</option>
                             </select>
                         </div>
-                        <div class="input-group">
+                        <div>
                             <label>AREA</label>
                             <select id="form-area" class="form-control" required disabled>
                                 <option value="" disabled selected>Select city first</option>
@@ -458,7 +458,7 @@
             document.getElementById('featured-list').innerHTML = featured.map(s => {
                 const collageHtml = buildFeaturedThumbnail(s, data.products);
                 return `
-                    <div class="featured-card">
+                    <div class="featured-card" onclick="window.location.href='shop-detail.html?id=${s.id}'">
                         ${collageHtml}
                         <div class="featured-info">
                             <div class="shop-name">${s.name} ${s.is_verified ? '<i class="fa-solid fa-circle-check" style="color:#3B82F6"></i>' : ''}</div>
@@ -484,7 +484,7 @@
         document.getElementById('shop-list').innerHTML = data.shops.map(s => {
             const collageHtml = buildShopThumbnail(s, data.products);
             return `
-                <div class="shop-card">
+                <div class="shop-card" onclick="window.location.href='shop-detail.html?id=${s.id}'">
                     ${collageHtml}
                     <div class="shop-details">
                         <div style="display:flex; justify-content:space-between;">
@@ -499,7 +499,7 @@
         }).join('');
     }
 
-    // Helper: Featured Thumbnail (Wide 4-grid)
+    // Featured Grid Builder
     function buildFeaturedThumbnail(shop, allProducts) {
         const shopProducts = allProducts.filter(p => p.shop_id === shop.id && p.image_url).slice(0, 4);
         const images = shopProducts.map(p => p.image_url);
@@ -511,16 +511,13 @@
 
         let innerHtml = '';
         for (let i = 0; i < 4; i++) {
-            if (images[i]) {
-                innerHtml += `<img src="${images[i]}">`;
-            } else {
-                innerHtml += `<div style="width:50%;height:50%;background:#e2e8f0;"></div>`;
-            }
+            if (images[i]) innerHtml += `<img src="${images[i]}">`;
+            else innerHtml += `<div style="width:50%;height:50%;background:#e2e8f0;"></div>`;
         }
         return `<div class="featured-collage">${innerHtml}</div>`;
     }
 
-    // Helper: Shop Thumbnail (Square 4-grid)
+    // Shop Grid Builder
     function buildShopThumbnail(shop, allProducts) {
         const shopProducts = allProducts.filter(p => p.shop_id === shop.id && p.image_url).slice(0, 4);
         const images = shopProducts.map(p => p.image_url);
@@ -532,11 +529,8 @@
 
         let innerHtml = '';
         for (let i = 0; i < 4; i++) {
-            if (images[i]) {
-                innerHtml += `<img src="${images[i]}">`;
-            } else {
-                innerHtml += `<div style="width:50%;height:50%;background:#e2e8f0;"></div>`;
-            }
+            if (images[i]) innerHtml += `<img src="${images[i]}">`;
+            else innerHtml += `<div style="width:50%;height:50%;background:#e2e8f0;"></div>`;
         }
         return `<div class="shop-collage">${innerHtml}</div>`;
     }
