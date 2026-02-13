@@ -271,7 +271,7 @@
                     </div>
 
                     <button type="submit" id="btn-submit" class="btn-save">
-                        <span>Save Changes</span>
+                        Save Changes
                     </button>
                 </form>
             </div>
@@ -394,7 +394,7 @@
         try {
             let avatarUrl = document.getElementById('edit-avatar').src;
 
-            // --- CORRECTED BUCKET NAME: 'avatars' ---
+            // --- USE 'avatars' BUCKET ---
             if (selectedFile) {
                 const fileExt = selectedFile.name.split('.').pop();
                 const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
@@ -420,8 +420,8 @@
                 phone: document.getElementById('form-phone').value.trim(),
                 city_id: parseInt(document.getElementById('form-city').value),
                 area_id: parseInt(document.getElementById('form-area').value),
-                avatar_url: avatarUrl,
-                updated_at: new Date()
+                avatar_url: avatarUrl
+                // Removed updated_at
             };
 
             const { error } = await client.from('profiles').update(updates).eq('id', currentUser.id);
@@ -431,7 +431,7 @@
             selectedFile = null;
             fetchProfile(); 
         } catch (err) {
-            alert(err.message || "Upload failed. Please check if bucket 'avatars' exists.");
+            alert(err.message || "Update failed.");
         } finally {
             btn.disabled = false;
             btn.innerHTML = 'Save Changes';
