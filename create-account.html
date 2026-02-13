@@ -8,9 +8,143 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <link rel="stylesheet" href="styles.css">
-  
-  <link rel="stylesheet" href="create-account.css">
+  <style>
+    :root {
+      --color-primary: #6B21A8; /* App Purple */
+      --color-pink: #EC4899;    /* App Accent */
+      --color-purple: #7C3AED;
+      --color-bg: #F9FAFB;
+      --color-error: #EF4444;
+      --color-success: #10B981;
+    }
+
+    body.auth-body {
+      background: var(--color-bg);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .home-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--color-primary);
+      font-weight: 600;
+      background: white;
+      padding: 10px 16px;
+      border-radius: 50px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      transition: all 0.2s;
+    }
+
+    .auth-card {
+      background: white;
+      width: 100%;
+      max-width: 450px;
+      padding: 40px;
+      border-radius: 24px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+
+    .auth-header { text-align: center; margin-bottom: 30px; }
+    .auth-logo { width: 64px; height: 64px; border-radius: 12px; margin-bottom: 16px; }
+    .auth-title { margin: 0; font-size: 24px; color: var(--color-primary); }
+    .auth-subtitle { color: #6B7280; font-size: 14px; margin-top: 8px; }
+
+    .form-stack { display: flex; flex-direction: column; gap: 16px; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-label { font-size: 13px; font-weight: 600; color: #374151; }
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    .input-icon { position: absolute; left: 14px; color: #9CA3AF; }
+    
+    .auth-input {
+      width: 100%;
+      padding: 12px 16px 12px 42px;
+      border: 1.5px solid #E5E7EB;
+      border-radius: 12px;
+      font-size: 15px;
+      transition: border-color 0.2s;
+    }
+    .auth-input:focus { outline: none; border-color: var(--color-primary); }
+    
+    select.auth-input { padding-left: 42px; cursor: pointer; }
+
+    .pass-toggle {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #9CA3AF;
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .btn-cancel {
+      background: #F3F4F6;
+      color: #374151;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .status-box {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 12px;
+      display: none;
+      text-align: center;
+      font-size: 14px;
+    }
+    .status-box.active { display: block; }
+    .status-error { background: #FEE2E2; color: #B91C1C; }
+    .status-success { background: #D1FAE5; color: #065F46; }
+
+    .footer-link { text-align: center; margin-top: 24px; font-size: 14px; color: #6B7280; }
+    .link-highlight { color: var(--color-primary); font-weight: 700; background: none; border: none; cursor: pointer; padding: 0; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    .modal-card { background: white; padding: 30px; border-radius: 20px; max-width: 400px; width: 90%; text-align: center; }
+    .hidden { display: none !important; }
+    .terms-text { font-size: 14px; color: #4B5563; line-height: 1.6; margin: 15px 0; }
+    
+    .spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 
 <body class="auth-body">
@@ -22,19 +156,53 @@
 
   <div class="auth-card">
     <div class="auth-header">
-      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" 
-           alt="CTM Logo" class="auth-logo">
-      <h2 class="auth-title">Join CT‑Merchant</h2>
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="auth-logo">
+      <h2 class="auth-title">Create Account</h2>
       <p class="auth-subtitle">Experience the future of merchant management.</p>
     </div>
 
     <form id="signup-form" class="form-stack">
       <div class="input-group">
+        <label class="input-label">Full Name</label>
+        <div class="input-wrapper">
+          <span class="input-icon"><i class="fa-solid fa-user"></i></span>
+          <input type="text" id="signup-name" placeholder="Enter your full name" required class="auth-input">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Phone Number</label>
+        <div class="input-wrapper">
+          <span class="input-icon"><i class="fa-solid fa-phone"></i></span>
+          <input type="tel" id="signup-phone" placeholder="08012345678" required class="auth-input">
+        </div>
+      </div>
+
+      <div class="input-group">
         <label class="input-label">Work Email</label>
         <div class="input-wrapper">
           <span class="input-icon"><i class="fa-solid fa-envelope"></i></span>
-          <input type="email" id="signup-email" placeholder="name@company.com" required 
-                 class="auth-input">
+          <input type="email" id="signup-email" placeholder="name@company.com" required class="auth-input">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">City</label>
+        <div class="input-wrapper">
+          <span class="input-icon"><i class="fa-solid fa-city"></i></span>
+          <select id="signup-city" class="auth-input" required>
+            <option value="" disabled selected>Loading cities...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Area</label>
+        <div class="input-wrapper">
+          <span class="input-icon"><i class="fa-solid fa-map-pin"></i></span>
+          <select id="signup-area" class="auth-input" required disabled>
+            <option value="" disabled selected>Select city first</option>
+          </select>
         </div>
       </div>
 
@@ -42,8 +210,7 @@
         <label class="input-label">Password</label>
         <div class="input-wrapper">
           <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
-          <input type="password" id="signup-password" placeholder="••••••••" required 
-                 class="auth-input" style="padding-right: 3rem;">
+          <input type="password" id="signup-password" placeholder="••••••••" required class="auth-input">
           <button type="button" onclick="togglePasswordVisibility('signup-password', 'eye-icon-signup')" class="pass-toggle">
             <i id="eye-icon-signup" class="fa-solid fa-eye"></i>
           </button>
@@ -56,7 +223,6 @@
     </form>
 
     <div id="message-container" class="status-box">
-        <span id="message-icon"></span>
         <p id="message"></p>
     </div>
 
@@ -67,46 +233,37 @@
     </div>
   </div>
 
-  <div id="terms-modal" class="modal-overlay modal-terms-bg hidden">
+  <!-- Terms Modal -->
+  <div id="terms-modal" class="modal-overlay hidden">
     <div class="modal-card">
-        <div class="terms-content">
-            <div class="terms-icon">
-                <i class="fa-solid fa-shield-halved"></i>
-            </div>
-            <h2 class="auth-title" style="font-size: 1.25rem; margin-bottom: 0.75rem;">Legal Agreement</h2>
-            <p class="terms-text">
-                By clicking "Agree & Create Account", you acknowledge that you have read, understood, and agreed to our 
-                <a href="terms.html" class="link-highlight">Terms of Use</a> and 
-                <a href="privacy.html" class="link-highlight">Privacy Policy</a>.
-            </p>
-            <div class="form-stack">
-                <button onclick="processFinalSignup()" class="btn-primary">
-                    Agree & Create Account
-                </button>
-                <button onclick="closeTermsModal()" class="btn-cancel">
-                    Cancel
-                </button>
-            </div>
+        <div class="terms-icon" style="font-size: 40px; color: var(--color-primary); margin-bottom: 10px;">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h2 style="font-size: 20px; margin: 0;">Legal Agreement</h2>
+        <p class="terms-text">
+            By clicking "Agree & Create Account", you acknowledge that you have read and agreed to our 
+            <a href="terms.html" class="link-highlight">Terms of Use</a> and 
+            <a href="privacy.html" class="link-highlight">Privacy Policy</a>.
+        </p>
+        <div class="form-stack">
+            <button id="final-signup-btn" onclick="processFinalSignup()" class="btn-primary">
+                Agree & Create Account
+            </button>
+            <button onclick="closeTermsModal()" class="btn-cancel">Cancel</button>
         </div>
     </div>
   </div>
 
-  <div id="login-modal" class="modal-overlay modal-login-bg hidden">
+  <!-- Sign In Modal (Mini) -->
+  <div id="login-modal" class="modal-overlay hidden">
     <div class="modal-card">
-      <button onclick="toggleLoginModal()" class="close-modal-btn">
-        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-      
-      <div class="login-header-mini">
-        <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="auth-logo" style="width: 4rem; height: 4rem;">
-        <h2 class="auth-title" style="font-size: 1.25rem;">Welcome Back</h2>
-        <p class="auth-subtitle" style="font-size: 0.75rem;">Access your merchant dashboard</p>
-      </div>
-      
-      <form class="form-stack" style="padding: 2rem;" onsubmit="event.preventDefault(); handleLogin();">
-        <input type="email" id="login-email" required class="auth-input" placeholder="Email" style="padding-left: 1rem;">
-        <input type="password" id="login-password" required class="auth-input" placeholder="Password" style="padding-left: 1rem;">
-        <button type="submit" id="login-btn" class="btn-primary" style="background-color: var(--color-purple);">Sign In</button>
+      <h2 class="auth-title">Welcome Back</h2>
+      <p class="auth-subtitle">Access your merchant dashboard</p>
+      <form class="form-stack" style="margin-top: 20px;" onsubmit="event.preventDefault(); handleLogin();">
+        <input type="email" id="login-email" required class="auth-input" placeholder="Email" style="padding-left: 16px;">
+        <input type="password" id="login-password" required class="auth-input" placeholder="Password" style="padding-left: 16px;">
+        <button type="submit" class="btn-primary">Sign In</button>
+        <button type="button" onclick="toggleLoginModal()" class="btn-cancel">Close</button>
       </form>
     </div>
   </div>
@@ -114,54 +271,125 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <script>
-    const SUPABASE_URL = "https://goodtvrhszsnhcyigfoi.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdvb2R0dnJoc3pzbmhjeWlnZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI";
+    // Config matches the app exactly
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    const citySelect = document.getElementById('signup-city');
+    const areaSelect = document.getElementById('signup-area');
+
+    // Fetch Cities on Load
+    window.onload = async () => {
+      try {
+        const { data, error } = await client.from('cities').select('id, name').order('name');
+        if (error) throw error;
+        citySelect.innerHTML = '<option value="" disabled selected>Select your city</option>';
+        data.forEach(city => {
+          citySelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
+        });
+      } catch (e) {
+        citySelect.innerHTML = '<option value="" disabled>Error loading cities</option>';
+      }
+    };
+
+    // Fetch Areas when City is selected
+    citySelect.addEventListener('change', async (e) => {
+      areaSelect.disabled = true;
+      areaSelect.innerHTML = '<option value="" disabled selected>Loading areas...</option>';
+      try {
+        const { data, error } = await client.from('areas').select('id, name').eq('city_id', e.target.value).order('name');
+        if (error) throw error;
+        areaSelect.innerHTML = '<option value="" disabled selected>Select your area</option>';
+        data.forEach(area => {
+          areaSelect.innerHTML += `<option value="${area.id}">${area.name}</option>`;
+        });
+        areaSelect.disabled = false;
+      } catch (e) {
+        areaSelect.innerHTML = '<option value="" disabled>Error loading areas</option>';
+      }
+    });
+
     function toggleLoginModal() { document.getElementById('login-modal').classList.toggle('hidden'); }
-    function openTermsModal() { document.getElementById('terms-modal').classList.toggle('hidden'); }
+    function openTermsModal() { 
+        if(!validateInitialForm()) return;
+        document.getElementById('terms-modal').classList.remove('hidden'); 
+    }
     function closeTermsModal() { document.getElementById('terms-modal').classList.add('hidden'); }
+
+    function validateInitialForm() {
+        const email = document.getElementById("signup-email").value;
+        const name = document.getElementById("signup-name").value;
+        const phone = document.getElementById("signup-phone").value;
+        const pass = document.getElementById("signup-password").value;
+        const city = citySelect.value;
+        const area = areaSelect.value;
+
+        if(!email || !name || !phone || !pass || !city || !area) {
+            showMsg("Please fill all fields before proceeding.", "error");
+            return false;
+        }
+        if(pass.length < 6) {
+            showMsg("Password must be at least 6 characters.", "error");
+            return false;
+        }
+        return true;
+    }
 
     function togglePasswordVisibility(inputId, iconId) {
       const input = document.getElementById(inputId);
       const icon = document.getElementById(iconId);
       input.type = input.type === 'password' ? 'text' : 'password';
-      icon.classList.toggle('text-pink'); // Note: Make sure .text-pink is defined in global styles.css or use inline style for simple toggles
-      if(input.type === 'text') {
-          icon.style.color = 'var(--color-pink)';
-      } else {
-          icon.style.color = '';
-      }
+      icon.classList.toggle('fa-eye-slash');
+      icon.style.color = input.type === 'text' ? 'var(--color-pink)' : '';
     }
 
-    // Handles the actual Supabase Signup
     async function processFinalSignup() {
-        closeTermsModal();
-        const email = document.getElementById("signup-email").value;
-        const password = document.getElementById("signup-password").value;
-        const container = document.getElementById("message-container");
-        const btn = document.querySelector("#signup-form button");
-
-        if(!email || !password) return alert("Please fill in all fields first.");
-
+        const btn = document.getElementById("final-signup-btn");
         btn.disabled = true;
-        btn.textContent = "Processing...";
+        btn.innerHTML = '<div class="spinner"></div> Processing...';
 
-        const { error } = await client.auth.signUp({ email, password });
+        const email = document.getElementById("signup-email").value.trim();
+        const password = document.getElementById("signup-password").value;
+        const name = document.getElementById("signup-name").value.trim();
+        const phone = document.getElementById("signup-phone").value.trim();
+        const cityId = parseInt(citySelect.value);
+        const areaId = parseInt(areaSelect.value);
 
-        btn.disabled = false;
-        btn.textContent = "Create Account";
-        
-        container.classList.remove('status-error', 'status-success');
-        container.classList.add('active');
+        try {
+            // 1. Auth Sign Up
+            const { data, error: authError } = await client.auth.signUp({ email, password });
+            if (authError) throw authError;
 
-        if (error) {
-            container.classList.add('status-error');
-            document.getElementById("message").textContent = error.message;
-        } else {
-            container.classList.add('status-success');
-            document.getElementById("message").textContent = "Success! Please Sign In.";
+            if (data.user) {
+                // 2. Create Profile
+                const { error: profileError } = await client.from('profiles').insert({
+                    id: data.user.id,
+                    full_name: name,
+                    phone: phone,
+                    city_id: cityId,
+                    area_id: areaId
+                });
+                if (profileError) throw profileError;
+
+                showMsg("Account created! Please Sign In.", "success");
+                closeTermsModal();
+            }
+        } catch (error) {
+            showMsg(error.message, "error");
+            closeTermsModal();
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Agree & Create Account';
         }
+    }
+
+    function showMsg(txt, type) {
+        const container = document.getElementById("message-container");
+        const msg = document.getElementById("message");
+        container.className = `status-box active status-${type}`;
+        msg.textContent = txt;
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
 
     async function handleLogin() {
