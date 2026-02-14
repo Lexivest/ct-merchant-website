@@ -5,216 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | CT‑Merchant</title>
     
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <style>
-        :root {
-            --color-purple: #2E1065;
-            --color-purple-light: #5B21B6;
-            --color-pink: #DB2777;
-            --color-bg: #F8FAFC;
-            --color-card: #FFFFFF;
-            --color-border: #E2E8F0;
-            --color-text-main: #1E293B;
-            --color-text-muted: #64748B;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-
-        body { 
-            background-color: var(--color-bg); 
-            color: var(--color-text-main); 
-            overflow-x: hidden; 
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: 260px;
-            background: var(--color-purple);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            padding: 2rem 1.5rem;
-            position: fixed;
-            top: 0; left: 0; bottom: 0;
-            z-index: 1000;
-            overflow-y: auto;
-        }
-
-        .sidebar-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 2.5rem; }
-        .sidebar-logo { width: 32px; height: 32px; border-radius: 8px; }
-        .brand-name { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px; }
-
-        .nav-menu { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; }
-        .nav-item {
-            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-            border-radius: 12px; color: rgba(255,255,255,0.7); text-decoration: none;
-            font-weight: 600; font-size: 0.9rem; transition: all 0.2s;
-            cursor: pointer; border: none; background: none; width: 100%; text-align: left;
-        }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: white; }
-        .nav-item.active { background: var(--color-pink); }
-        .nav-item i { width: 20px; text-align: center; font-size: 1.1rem; }
-
-        .sidebar-footer { margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); }
-        .btn-logout { color: #FDA4AF; }
-        .btn-logout:hover { background: rgba(253, 164, 175, 0.1); color: #FFF1F2; }
-
-        /* --- MAIN CONTENT --- */
-        .main-content {
-            margin-left: 260px;
-            flex-grow: 1;
-            padding: 2rem;
-            width: calc(100% - 260px);
-            min-height: 100vh;
-        }
-
-        /* Top Bar */
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-        .welcome-text h1 { font-size: 1.5rem; font-weight: 800; color: var(--color-purple); margin-bottom: 4px; }
-        .location-badge { 
-            display: inline-flex; align-items: center; gap: 6px; 
-            background: #EDE9FE; color: var(--color-purple-light); 
-            padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;
-        }
-
-        .user-pill {
-            display: flex; align-items: center; gap: 12px;
-            background: white; padding: 6px 16px 6px 6px;
-            border-radius: 50px; box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
-        }
-        .pill-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #E2E8F0; }
-        .pill-name { font-weight: 700; font-size: 0.85rem; }
-
-        /* --- MARKET OVERVIEW --- */
-        
-        /* Ticker */
-        .ticker-wrap { 
-            width: 100%; overflow: hidden; background: #FFF7ED; color: #C2410C;
-            padding: 10px 0; margin-bottom: 1.5rem; border-radius: 8px; border: 1px solid #FFEDD5;
-            display: none; 
-        }
-        .ticker { display: inline-block; white-space: nowrap; animation: ticker 80s linear infinite; font-size: 0.85rem; font-weight: 600; padding-left: 100%; }
-        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
-
-        /* Section Headers */
-        .section { margin-bottom: 2rem; }
-        .section-header { display: flex; align-items: center; margin-bottom: 1rem; }
-        .bar { width: 4px; height: 24px; border-radius: 2px; margin-right: 12px; }
-        .section-title { font-size: 1.1rem; font-weight: 800; color: var(--color-text-main); }
-
-        /* Horizontal Scroll Containers */
-        .scroll-row {
-            display: flex; overflow-x: auto; gap: 16px; padding-bottom: 8px;
-            scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
-        }
-        .scroll-row::-webkit-scrollbar { height: 6px; }
-        .scroll-row::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 10px; }
-
-        /* Featured Shop Card */
-        .featured-card {
-            min-width: 280px; width: 280px;
-            background: white; border-radius: 16px; overflow: hidden;
-            box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
-            cursor: pointer; transition: transform 0.2s;
-        }
-        .featured-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--color-purple); }
-        .featured-info { padding: 12px; }
-        .shop-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .shop-meta { font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; }
-
-        /* Featured 4-Grid Collage */
-        .featured-collage {
-            width: 100%; height: 140px; 
-            display: flex; flex-wrap: wrap; background: #F1F5F9;
-        }
-        .featured-collage img { width: 50%; height: 50%; object-fit: cover; border: 0.5px solid white; }
-        .featured-collage.single img { width: 100%; height: 100%; border: none; }
-
-        /* Collage Pills (Category/Area) */
-        .collage-pill {
-            display: flex; align-items: center; gap: 10px;
-            background: white; border: 1px solid var(--color-border);
-            border-radius: 50px; padding: 6px 16px 6px 6px;
-            min-width: max-content; cursor: pointer; transition: all 0.2s;
-        }
-        .collage-pill:hover { border-color: var(--color-purple); }
-        .collage-pill.active { background: #F0FDF4; border-color: #10B981; }
-        
-        .collage-circle {
-            width: 44px; height: 44px; border-radius: 50%; overflow: hidden;
-            background: #F1F5F9; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .collage-1 img { width: 100%; height: 100%; object-fit: cover; }
-        .collage-2 { display: flex; }
-        .collage-2 img { width: 50%; height: 100%; object-fit: cover; }
-        .collage-3 { display: flex; flex-wrap: wrap; }
-        .collage-3 img:first-child { width: 50%; height: 100%; object-fit: cover; }
-        .collage-3 div { width: 50%; height: 100%; display: flex; flex-direction: column; }
-        .collage-3 div img { width: 100%; height: 50%; object-fit: cover; }
-        .pill-text { font-weight: 700; font-size: 0.85rem; color: var(--color-text-main); }
-
-        /* Promo Slider */
-        .promo-slider { display: flex; overflow-x: auto; gap: 1rem; margin-bottom: 2rem; }
-        .promo-card { min-width: 320px; height: 150px; border-radius: 16px; overflow: hidden; flex-shrink: 0; }
-        .promo-img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* All Shops List */
-        .shop-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
-        .shop-card {
-            background: white; border-radius: 16px; padding: 12px;
-            display: flex; gap: 16px; box-shadow: var(--shadow-sm);
-            border: 1px solid var(--color-border); cursor: pointer;
-            transition: border-color 0.2s; align-items: center;
-        }
-        .shop-card:hover { border-color: var(--color-purple); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        
-        /* Shop 4-Grid Collage */
-        .shop-collage {
-            width: 72px; height: 72px; border-radius: 12px; overflow: hidden;
-            display: flex; flex-wrap: wrap; flex-shrink: 0; background: #F1F5F9;
-        }
-        .shop-collage img { width: 50%; height: 50%; object-fit: cover; border: 0.5px solid white; }
-        .shop-collage.single img { width: 100%; height: 100%; border: none; }
-
-        .shop-details { flex: 1; overflow: hidden; }
-        .shop-cat { font-size: 0.75rem; color: var(--color-purple); font-weight: 700; background: #F3E8FF; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-bottom: 6px; }
-        .shop-addr { font-size: 0.85rem; color: var(--color-text-muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
-
-        /* --- PROFILE --- */
-        .profile-card { background: white; border-radius: 24px; padding: 3rem; box-shadow: var(--shadow-md); max-width: 800px; margin: 0 auto; }
-        .profile-hero { display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--color-border); }
-        .avatar-uploader { position: relative; width: 120px; height: 120px; }
-        .main-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 0 0 2px var(--color-purple); }
-        .btn-cam { position: absolute; bottom: 0; right: 0; background: var(--color-purple); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; cursor: pointer; }
-        
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .input-group label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px; }
-        .form-control { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid var(--color-border); font-size: 0.95rem; }
-        .btn-save { background: var(--color-purple); color: white; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; margin-top: 1.5rem; transition: background 0.2s; }
-        .btn-save:hover { background: var(--color-pink); }
-
-        /* Utils */
-        .screen { display: none; animation: fadeIn 0.3s ease; }
-        .screen.active { display: block; }
-        .hidden { display: none !important; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Mobile Responsive */
-        @media (max-width: 1024px) {
-            .sidebar { transform: translateX(-100%); }
-            .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0; padding: 1.5rem; width: 100%; }
-            .form-grid, .shop-list { grid-template-columns: 1fr; }
-        }
-    </style>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="user-dashboard.css">
 </head>
 <body>
+
+<div class="dashboard-container">
+    
+    <!-- Mobile Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
@@ -249,13 +52,21 @@
     <main class="main-content">
         <!-- Top Bar -->
         <div class="top-bar">
-            <div class="welcome-text">
-                <h1 id="greeting-name">Welcome User</h1>
-                <div class="location-badge">
-                    <i class="fa-solid fa-location-dot"></i>
-                    <span id="current-city">Loading Location...</span>
+            <!-- Left Side: Menu Btn + Welcome -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="menu-btn" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="welcome-text">
+                    <h1 id="greeting-name">Welcome</h1>
+                    <div class="location-badge">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span id="current-city">Loading...</span>
+                    </div>
                 </div>
             </div>
+
+            <!-- Right Side: User Pill -->
             <div class="user-pill">
                 <img id="top-avatar" src="" class="pill-avatar" alt="">
                 <span id="top-name" class="pill-name">User</span>
@@ -333,21 +144,21 @@
 
                 <form id="profile-form" onsubmit="saveProfile(event)">
                     <div class="form-grid">
-                        <div>
+                        <div class="input-group">
                             <label>FULL NAME</label>
                             <input type="text" id="form-name" class="form-control" required>
                         </div>
-                        <div>
+                        <div class="input-group">
                             <label>PHONE NUMBER</label>
                             <input type="tel" id="form-phone" class="form-control">
                         </div>
-                        <div>
+                        <div class="input-group">
                             <label>CITY</label>
                             <select id="form-city" class="form-control" required>
                                 <option value="" disabled selected>Loading...</option>
                             </select>
                         </div>
-                        <div>
+                        <div class="input-group">
                             <label>AREA</label>
                             <select id="form-area" class="form-control" required disabled>
                                 <option value="" disabled selected>Select city first</option>
@@ -360,9 +171,11 @@
         </div>
 
     </main>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+    // --- SUPABASE CONFIG ---
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -370,6 +183,13 @@
     let currentUser = null;
     let selectedFile = null;
 
+    // --- MOBILE SIDEBAR TOGGLE ---
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebar-overlay').classList.toggle('active');
+    }
+
+    // --- INITIALIZATION ---
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "login.html"; return; }
@@ -436,6 +256,7 @@
         }
     }
 
+    // --- RENDER LOGIC ---
     function renderDashboard(data) {
         const p = data.profile;
         const avatar = p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name)}`;
@@ -499,7 +320,6 @@
         }).join('');
     }
 
-    // Featured Grid Builder
     function buildFeaturedThumbnail(shop, allProducts) {
         const shopProducts = allProducts.filter(p => p.shop_id === shop.id && p.image_url).slice(0, 4);
         const images = shopProducts.map(p => p.image_url);
@@ -517,7 +337,6 @@
         return `<div class="featured-collage">${innerHtml}</div>`;
     }
 
-    // Shop Grid Builder
     function buildShopThumbnail(shop, allProducts) {
         const shopProducts = allProducts.filter(p => p.shop_id === shop.id && p.image_url).slice(0, 4);
         const images = shopProducts.map(p => p.image_url);
@@ -600,6 +419,7 @@
     document.getElementById('form-city').addEventListener('change', (e) => fetchAreasForProfile(e.target.value));
 
     function switchTab(screenId, btn) {
+        if(window.innerWidth <= 1024) toggleSidebar(); // Auto-close on mobile
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
