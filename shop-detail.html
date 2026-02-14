@@ -54,7 +54,7 @@
 
         .page-title { font-weight: 800; font-size: 1.1rem; color: var(--color-text); }
 
-        /* --- SHOP HERO LAYOUT (Split) --- */
+        /* --- SPLIT HERO LAYOUT --- */
         .info-card { padding: 24px; }
 
         .shop-hero-split {
@@ -63,12 +63,12 @@
             gap: 24px;
         }
 
-        /* Desktop Grid Layout */
+        /* Desktop Layout */
         @media (min-width: 900px) {
             .shop-hero-split {
                 display: grid;
-                grid-template-columns: 1.2fr 0.8fr; /* Text gets slightly more space */
-                gap: 40px;
+                grid-template-columns: 1fr 1fr; /* 50/50 Split */
+                gap: 30px;
                 align-items: start;
                 margin-bottom: 40px;
             }
@@ -77,6 +77,9 @@
                 padding: 16px;
                 border-radius: 16px;
                 border: 1px solid #E2E8F0;
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
             }
         }
 
@@ -110,15 +113,33 @@
         .news-ticker {
             background: #FFF7ED; border: 1px solid #FFEDD5; color: #C2410C;
             padding: 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
-            display: flex; align-items: center; gap: 8px;
+            display: flex; align-items: center; gap: 8px; margin-bottom: 20px;
         }
 
-        /* Right Side: Visuals (Map/Storefront) */
+        /* --- BANNER CAROUSEL (Left Column) --- */
+        .banner-carousel {
+            display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+            height: 220px; width: 100%; border-radius: 16px;
+            scrollbar-width: none; border: 1px solid #E2E8F0;
+            position: relative; background: #F1F5F9;
+        }
+        .banner-carousel::-webkit-scrollbar { display: none; }
+        .banner-slide { min-width: 100%; height: 100%; scroll-snap-align: center; position: relative; }
+        .banner-img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Count Pill on Banner */
+        .banner-count {
+            position: absolute; bottom: 10px; right: 10px;
+            background: rgba(0,0,0,0.6); color: white;
+            padding: 4px 10px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 700; pointer-events: none;
+        }
+
+        /* Right Side: Visuals */
         .storefront-img { 
             width: 100%; height: 200px; 
             border-radius: 12px; object-fit: cover; 
-            margin-bottom: 12px; display: none; 
-            border: 1px solid #E2E8F0;
+            border: 1px solid #E2E8F0; display: none;
         }
         #map { 
             height: 200px; width: 100%; 
@@ -127,7 +148,7 @@
         .map-btn {
             background:white; border:1px solid #ccc; padding:8px 16px; 
             border-radius:8px; cursor:pointer; font-weight:600; font-size:0.8rem;
-            margin-top: 8px; float: right;
+            width: 100%; margin-top: 4px;
         }
 
         /* --- PRODUCTS GRID --- */
@@ -216,7 +237,7 @@
         <div id="content-area" class="hidden">
             
             <div class="shop-hero-split">
-                <!-- LEFT COLUMN: INFO -->
+                <!-- LEFT COLUMN: INFO & BANNER -->
                 <div class="shop-info-side">
                     <div class="shop-header-row">
                         <div id="shop-name" class="shop-name">Loading...</div>
@@ -242,9 +263,15 @@
                         <i class="fa-solid fa-bullhorn"></i>
                         <span id="news-text"></span>
                     </div>
+
+                    <!-- BANNER CAROUSEL (Fills empty space on Desktop Left) -->
+                    <div id="banner-wrapper" class="hidden">
+                        <div class="section-title" style="margin: 0 0 10px 0; font-size: 0.9rem; color: #64748B;">Shop Gallery</div>
+                        <div id="banner-carousel" class="banner-carousel"></div>
+                    </div>
                 </div>
 
-                <!-- RIGHT COLUMN: VISUALS (Storefront + Map) -->
+                <!-- RIGHT COLUMN: STOREFRONT & MAP -->
                 <div id="location-panel" class="shop-visual-side hidden">
                     <img id="storefront-img" class="storefront-img">
                     <div id="map"></div>
@@ -396,10 +423,26 @@
             document.getElementById('news-ticker').classList.remove('hidden');
         }
 
-        // Populate Visuals (Right Column)
+        // --- BANNER LOGIC (Left Column) ---
+        let bannerImages = [];
+        if (s.banners && s.banners.length > 0) bannerImages = s.banners;
+        else if (s.image_url) bannerImages = [s.image_url];
+        
+        if (bannerImages.length > 0) {
+            document.getElementById('banner-wrapper').classList.remove('hidden');
+            document.getElementById('banner-carousel').innerHTML = bannerImages.map((url, index) => `
+                <div class="banner-slide">
+                    <img src="${url}" class="banner-img">
+                    <div class="banner-count">${index + 1}/${bannerImages.length}</div>
+                </div>
+            `).join('');
+        }
+
+        // --- VISUALS (Right Column) ---
         if (s.is_verified && (s.storefront_url || s.latitude)) {
             document.getElementById('location-panel').classList.remove('hidden');
             
+            // Fix: Use correct DB column 'storefront_url'
             if (s.storefront_url) {
                 const imgEl = document.getElementById('storefront-img');
                 imgEl.src = s.storefront_url;
