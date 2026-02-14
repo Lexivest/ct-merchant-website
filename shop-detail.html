@@ -28,58 +28,38 @@
             padding-bottom: 90px;
         }
 
-        /* --- RESPONSIVE CONTAINER --- */
+        /* --- CONTAINER --- */
         .app-container {
             width: 100%;
-            max-width: 1200px; /* Wide container for desktop */
-            margin: 0 auto;    /* Center on ultra-wide screens */
+            max-width: 1200px; /* Wide container */
+            margin: 0 auto;
             min-height: 100vh;
             position: relative;
             background-color: var(--color-bg);
         }
 
-        /* --- HEADER & CAROUSEL --- */
-        .header-container { 
-            position: relative; 
-            height: 240px; 
-            width: 100%; 
-            background: #cbd5e1; 
-            overflow: hidden; 
+        /* --- NEW TOP BAR (Replaces Banner) --- */
+        .top-bar {
+            position: sticky; top: 0; z-index: 50;
+            background: white; border-bottom: 1px solid #E2E8F0;
+            padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        /* Taller header on desktop */
-        @media(min-width: 768px) { .header-container { height: 350px; border-radius: 0 0 24px 24px; } }
         
-        .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100%; width: 100%; scrollbar-width: none; }
-        .carousel::-webkit-scrollbar { display: none; }
-        .carousel-slide { min-width: 100%; height: 100%; scroll-snap-align: center; }
-        .carousel-img { width: 100%; height: 100%; object-fit: cover; }
-
-        .back-btn {
-            position: absolute; top: 16px; left: 16px;
-            width: 40px; height: 40px; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 1.2rem; cursor: pointer; text-decoration: none; border: none; z-index: 10;
-            transition: background 0.3s;
+        .nav-btn {
+            width: 40px; height: 40px; border-radius: 50%; border: none; background: #F1F5F9;
+            color: var(--color-text); font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.2s;
         }
-        .back-btn:hover { background: rgba(0,0,0,0.7); }
+        .nav-btn:hover { background: #E2E8F0; }
 
-        .share-btn {
-            position: absolute; top: 16px; right: 16px;
-            width: 40px; height: 40px; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 1.1rem; cursor: pointer; border: none; z-index: 10;
-            transition: background 0.3s;
-        }
-        .share-btn:hover { background: rgba(0,0,0,0.7); }
+        .page-title { font-weight: 800; font-size: 1.1rem; color: var(--color-text); }
 
         /* --- SHOP INFO --- */
         .info-card {
-            background: white; border-radius: 24px; 
-            margin-top: -24px; position: relative; padding: 24px;
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.05); z-index: 5;
-            /* Reset margin on desktop since header has radius */
+            padding: 24px;
+            /* Removed negative margins and border-radius tricks */
         }
-        @media(min-width: 768px) { .info-card { margin-top: 20px; box-shadow: var(--shadow-md); } }
 
         .shop-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
         .shop-name { font-size: 1.5rem; font-weight: 800; width: 85%; line-height: 1.2; color: var(--color-text); }
@@ -93,16 +73,16 @@
         
         .status-badge {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
+            padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700;
             background: #EFF6FF; color: #1E40AF; border: 1px solid #DBEAFE;
         }
         .status-badge.pending { background: #FEF2F2; color: #B91C1C; border-color: #FEE2E2; }
-        .status-badge img { width: 16px; height: 16px; border-radius: 50%; }
+        .status-badge img { width: 14px; height: 14px; border-radius: 50%; }
 
         .like-btn {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 16px; border-radius: 8px; font-size: 0.9rem; font-weight: 700;
-            background: #F3F4F6; color: var(--color-text); border: 1px solid #E5E7EB;
+            padding: 6px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
+            background: white; color: var(--color-text); border: 1px solid #E2E8F0;
             cursor: pointer; transition: all 0.2s;
         }
         .like-btn.liked { background: #FDF2F8; color: var(--color-pink); border-color: #FBCFE8; }
@@ -113,17 +93,17 @@
             display: flex; align-items: center; gap: 8px; margin-bottom: 24px;
         }
 
-        /* --- RESPONSIVE PRODUCT GRID --- */
+        /* --- PRODUCTS GRID --- */
         .section-title { 
             display: flex; align-items: center; gap: 10px; 
             font-size: 1.1rem; font-weight: 800; margin: 30px 0 16px 0; color: #334155;
         }
         .bar { width: 4px; height: 24px; border-radius: 2px; }
 
-        /* The Magic: Auto-Fill Grid */
+        /* Responsive Grid */
         .product-grid {
             display: grid;
-            /* Min width 160px on mobile, but fills available space */
+            /* Adaptive width */
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 16px;
         }
@@ -155,14 +135,15 @@
 
         /* --- BOTTOM BAR --- */
         .bottom-bar {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: white; padding: 16px 24px;
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 1200px; /* Match container */
+            background: white; padding: 12px 20px;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.05); z-index: 100;
             border-top: 1px solid #E2E8F0;
             display: flex; justify-content: center;
         }
         .btn-whatsapp {
-            width: 100%; max-width: 600px; /* Constrain button width on desktop */
+            width: 100%; max-width: 600px; 
             background: #22C55E; color: white;
             padding: 14px; border-radius: 12px; border: none;
             font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -191,16 +172,14 @@
 <body>
 
 <div class="app-container">
-    <!-- Header -->
-    <div class="header-container">
-        <a href="javascript:history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
-        <button class="share-btn" onclick="shareShop()"><i class="fa-solid fa-share-nodes"></i></button>
-        <div id="carousel" class="carousel">
-            <!-- JS Populated -->
-        </div>
+    <!-- NEW: Simple Top Bar -->
+    <div class="top-bar">
+        <button onclick="history.back()" class="nav-btn"><i class="fa-solid fa-arrow-left"></i></button>
+        <span class="page-title">Shop Details</span>
+        <button onclick="shareShop()" class="nav-btn"><i class="fa-solid fa-share-nodes"></i></button>
     </div>
 
-    <!-- Info Card -->
+    <!-- Info Section -->
     <div class="info-card">
         <div id="loading-spinner" class="spinner"></div>
         <div id="content-area" class="hidden">
@@ -248,8 +227,8 @@
                 <div id="grid-new" class="product-grid"></div>
             </div>
 
-            <div id="empty-state" class="hidden" style="text-align:center; padding: 60px 0; color:grey;">
-                <i class="fa-solid fa-box-open" style="font-size: 40px; margin-bottom:10px;"></i>
+            <div id="empty-state" class="hidden" style="text-align:center; padding: 40px 0; color:grey;">
+                <i class="fa-solid fa-box-open" style="font-size: 32px; margin-bottom:10px;"></i>
                 <p>No products listed yet.</p>
             </div>
 
@@ -274,7 +253,7 @@
     <!-- Bottom Bar -->
     <div class="bottom-bar">
         <button onclick="showSecurityModal()" class="btn-whatsapp">
-            <i class="fa-brands fa-whatsapp" style="font-size:1.3rem;"></i> Chat on WhatsApp
+            <i class="fa-brands fa-whatsapp" style="font-size:1.2rem;"></i> Chat on WhatsApp
         </button>
     </div>
 </div>
@@ -284,7 +263,7 @@
     <div class="modal-card">
         <i class="fa-solid fa-shield-halved" style="font-size: 2.5rem; color: var(--color-primary); margin-bottom: 16px;"></i>
         <h3 style="margin-bottom: 8px;">Security Notice</h3>
-        <p style="font-size: 0.9rem; color: #64748B; line-height: 1.5;">
+        <p style="font-size: 0.85rem; color: #64748B; line-height: 1.5;">
             To protect merchants from spam, your User ID will be recorded. Please ensure this inquiry is business-related.
         </p>
         <div class="modal-actions">
@@ -366,21 +345,7 @@
         hasLiked = data.hasLiked;
         likeCount = data.likeCount;
 
-        const carousel = document.getElementById('carousel');
-        let images = [];
-        if (s.banners && s.banners.length > 0) images = s.banners;
-        else if (s.image_url) images = [s.image_url];
-        else {
-            images = data.products.slice(0, 5).map(p => p.image_url).filter(url => url);
-        }
-        if (images.length === 0) images = ['https://via.placeholder.com/400x300?text=No+Images'];
-
-        carousel.innerHTML = images.map(url => `
-            <div class="carousel-slide">
-                <img src="${url}" class="carousel-img">
-            </div>
-        `).join('');
-
+        // Info
         document.getElementById('shop-name').textContent = s.name;
         document.getElementById('shop-category').textContent = s.category;
         document.getElementById('shop-address').textContent = s.address;
