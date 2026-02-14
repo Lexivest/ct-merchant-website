@@ -7,7 +7,6 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Leaflet Map CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
     <style>
@@ -19,13 +18,32 @@
             --color-text: #1E293B;
             --color-text-muted: #64748B;
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --max-width: 500px; /* Constrains the UI to a mobile-like width */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--color-bg); color: var(--color-text); padding-bottom: 90px; }
+        
+        body { 
+            background-color: #e2e8f0; /* Darker background for desktop */
+            color: var(--color-text); 
+            display: flex; 
+            justify-content: center; 
+            min-height: 100vh;
+        }
+
+        /* --- MOBILE CONTAINER --- */
+        .app-container {
+            width: 100%;
+            max-width: var(--max-width);
+            background-color: var(--color-bg);
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding-bottom: 90px; /* Space for bottom bar */
+        }
 
         /* --- HEADER & CAROUSEL --- */
-        .header-container { position: relative; height: 280px; width: 100%; background: #ddd; overflow: hidden; }
+        .header-container { position: relative; height: 240px; width: 100%; background: #cbd5e1; overflow: hidden; }
         
         .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100%; width: 100%; scrollbar-width: none; }
         .carousel::-webkit-scrollbar { display: none; }
@@ -33,47 +51,47 @@
         .carousel-img { width: 100%; height: 100%; object-fit: cover; }
 
         .back-btn {
-            position: absolute; top: 20px; left: 20px;
-            width: 40px; height: 40px; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+            position: absolute; top: 16px; left: 16px;
+            width: 36px; height: 36px; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 1.2rem; cursor: pointer; text-decoration: none; border: none; z-index: 10;
+            color: white; font-size: 1.1rem; cursor: pointer; text-decoration: none; border: none; z-index: 10;
         }
         .share-btn {
-            position: absolute; top: 20px; right: 20px;
-            width: 40px; height: 40px; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+            position: absolute; top: 16px; right: 16px;
+            width: 36px; height: 36px; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 1.1rem; cursor: pointer; border: none; z-index: 10;
+            color: white; font-size: 1rem; cursor: pointer; border: none; z-index: 10;
         }
 
         /* --- SHOP INFO --- */
         .info-card {
-            background: white; border-radius: 24px 24px 0 0; 
-            margin-top: -24px; position: relative; padding: 24px;
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+            background: white; border-radius: 20px 20px 0 0; 
+            margin-top: -20px; position: relative; padding: 20px;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.05); z-index: 5;
         }
 
         .shop-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-        .shop-name { font-size: 1.5rem; font-weight: 800; width: 80%; line-height: 1.2; }
-        .verified-seal { width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; box-shadow: var(--shadow-md); }
+        .shop-name { font-size: 1.35rem; font-weight: 800; width: 85%; line-height: 1.2; color: var(--color-text); }
+        .verified-seal { width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: var(--shadow-md); }
 
-        .category-tag { font-weight: 700; color: var(--color-primary); font-size: 0.9rem; margin-bottom: 12px; }
+        .category-tag { font-weight: 700; color: var(--color-primary); font-size: 0.85rem; margin-bottom: 12px; }
 
-        .address-row { display: flex; gap: 8px; color: var(--color-text-muted); font-size: 0.9rem; align-items: center; margin-bottom: 16px; }
+        .address-row { display: flex; gap: 8px; color: var(--color-text-muted); font-size: 0.85rem; align-items: flex-start; margin-bottom: 16px; line-height: 1.4; }
 
         /* Status & Like Row */
-        .status-row { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+        .status-row { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
         
         .status-badge {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
+            padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700;
             background: #EFF6FF; color: #1E40AF; border: 1px solid #DBEAFE;
         }
         .status-badge.pending { background: #FEF2F2; color: #B91C1C; border-color: #FEE2E2; }
-        .status-badge img { width: 16px; height: 16px; border-radius: 50%; }
+        .status-badge img { width: 14px; height: 14px; border-radius: 50%; }
 
         .like-btn {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 16px; border-radius: 8px; font-size: 0.9rem; font-weight: 700;
+            padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
             background: #F3F4F6; color: var(--color-text); border: 1px solid #E5E7EB;
             cursor: pointer; transition: all 0.2s;
         }
@@ -82,55 +100,57 @@
         /* News Ticker */
         .news-ticker {
             background: #FFF7ED; border: 1px solid #FFEDD5; color: #C2410C;
-            padding: 10px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+            padding: 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
             display: flex; align-items: center; gap: 8px; margin-bottom: 24px;
         }
 
         /* --- PRODUCTS GRID --- */
         .section-title { 
             display: flex; align-items: center; gap: 10px; 
-            font-size: 1.1rem; font-weight: 800; margin: 24px 0 16px 0; 
+            font-size: 1rem; font-weight: 800; margin: 24px 0 16px 0; color: #334155;
         }
-        .bar { width: 4px; height: 24px; border-radius: 2px; }
+        .bar { width: 4px; height: 20px; border-radius: 2px; }
 
         .product-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
         }
         
         .product-card {
             background: white; border-radius: 12px; overflow: hidden;
-            box-shadow: var(--shadow-md); border: 1px solid #E2E8F0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #E2E8F0;
             cursor: pointer; position: relative;
         }
-        .prod-img { width: 100%; height: 160px; object-fit: cover; }
-        .prod-info { padding: 12px; }
-        .prod-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .prod-price { color: var(--color-primary); font-weight: 800; font-size: 1rem; }
-        .prod-price.discounted { color: red; }
-        .prod-old-price { text-decoration: line-through; color: #94A3B8; font-size: 0.8rem; margin-right: 6px; }
+        .prod-img { width: 100%; height: 140px; object-fit: cover; }
+        .prod-info { padding: 10px; }
+        .prod-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #334155; }
+        .prod-price { color: var(--color-primary); font-weight: 800; font-size: 0.95rem; }
+        .prod-price.discounted { color: #DC2626; }
+        .prod-old-price { text-decoration: line-through; color: #94A3B8; font-size: 0.75rem; margin-right: 4px; }
         
         .badge {
-            position: absolute; top: 8px; padding: 2px 6px; border-radius: 4px; 
-            font-size: 0.7rem; font-weight: 700; color: white;
+            position: absolute; top: 6px; padding: 2px 6px; border-radius: 4px; 
+            font-size: 0.65rem; font-weight: 700; color: white;
         }
-        .badge-discount { left: 8px; background: red; }
-        .badge-used { right: 8px; background: orange; }
+        .badge-discount { left: 6px; background: #DC2626; }
+        .badge-used { right: 6px; background: #EA580C; }
 
         /* --- MAP & STOREFRONT --- */
-        .storefront-img { width: 100%; height: 200px; border-radius: 12px; object-fit: cover; margin-bottom: 16px; }
-        #map { height: 200px; width: 100%; border-radius: 12px; border: 1px solid #E2E8F0; z-index: 1; }
+        .storefront-img { width: 100%; height: 180px; border-radius: 12px; object-fit: cover; margin-bottom: 12px; }
+        #map { height: 180px; width: 100%; border-radius: 12px; border: 1px solid #E2E8F0; z-index: 1; }
 
-        /* --- BOTTOM NAV --- */
+        /* --- BOTTOM BAR --- */
         .bottom-bar {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: white; padding: 16px 24px;
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: var(--max-width);
+            background: white; padding: 12px 20px;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.05); z-index: 100;
+            border-top: 1px solid #E2E8F0;
         }
         .btn-whatsapp {
             width: 100%; background: #22C55E; color: white;
-            padding: 14px; border-radius: 12px; border: none;
-            font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
-            cursor: pointer;
+            padding: 12px; border-radius: 10px; border: none;
+            font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px;
+            cursor: pointer; transition: background 0.2s;
         }
         .btn-whatsapp:hover { background: #16A34A; }
 
@@ -141,19 +161,20 @@
             opacity: 0; visibility: hidden; transition: all 0.3s;
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-card { background: white; padding: 24px; border-radius: 16px; width: 90%; max-width: 350px; text-align: center; }
+        .modal-card { background: white; padding: 24px; border-radius: 16px; width: 90%; max-width: 320px; text-align: center; }
         .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
-        .btn-modal { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; }
+        .btn-modal { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; }
         .btn-cancel { background: #F1F5F9; color: #475569; }
         .btn-confirm { background: var(--color-primary); color: white; }
 
         .hidden { display: none; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 50px auto; }
+        .spinner { width: 32px; height: 32px; border: 3px solid #E2E8F0; border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 50px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
+<div class="app-container">
     <!-- Header -->
     <div class="header-container">
         <a href="javascript:history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
@@ -176,7 +197,7 @@
             <div id="shop-category" class="category-tag"></div>
             
             <div class="address-row">
-                <i class="fa-solid fa-location-dot"></i>
+                <i class="fa-solid fa-location-dot" style="margin-top:2px;"></i>
                 <span id="shop-address"></span>
             </div>
 
@@ -212,7 +233,7 @@
             </div>
 
             <div id="empty-state" class="hidden" style="text-align:center; padding: 40px 0; color:grey;">
-                <i class="fa-solid fa-box-open" style="font-size: 40px; margin-bottom:10px;"></i>
+                <i class="fa-solid fa-box-open" style="font-size: 32px; margin-bottom:10px;"></i>
                 <p>No products listed yet.</p>
             </div>
 
@@ -225,7 +246,7 @@
                 <div class="section-title">Location Map</div>
                 <div id="map"></div>
                 <div style="text-align:right; margin-top:8px;">
-                    <button onclick="openGoogleMaps()" style="background:white; border:1px solid #ccc; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem;">
+                    <button onclick="openGoogleMaps()" style="background:white; border:1px solid #ccc; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.75rem;">
                         Open in Google Maps <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     </button>
                 </div>
@@ -240,273 +261,259 @@
             <i class="fa-brands fa-whatsapp" style="font-size:1.2rem;"></i> Chat on WhatsApp
         </button>
     </div>
+</div>
 
-    <!-- Security Modal -->
-    <div id="security-modal" class="modal-overlay">
-        <div class="modal-card">
-            <i class="fa-solid fa-shield-halved" style="font-size: 3rem; color: var(--color-primary); margin-bottom: 16px;"></i>
-            <h3 style="margin-bottom: 8px;">Security Notice</h3>
-            <p style="font-size: 0.9rem; color: #64748B; line-height: 1.5;">
-                To protect merchants from spam, your User ID will be recorded when you contact a shop. Please ensure this inquiry is for business purposes.
-            </p>
-            <div class="modal-actions">
-                <button class="btn-modal btn-cancel" onclick="hideSecurityModal()">Cancel</button>
-                <button class="btn-modal btn-confirm" onclick="launchWhatsApp()">I Understand</button>
-            </div>
+<!-- Security Modal -->
+<div id="security-modal" class="modal-overlay">
+    <div class="modal-card">
+        <i class="fa-solid fa-shield-halved" style="font-size: 2.5rem; color: var(--color-primary); margin-bottom: 16px;"></i>
+        <h3 style="margin-bottom: 8px;">Security Notice</h3>
+        <p style="font-size: 0.85rem; color: #64748B; line-height: 1.5;">
+            To protect merchants from spam, your User ID will be recorded. Please ensure this inquiry is business-related.
+        </p>
+        <div class="modal-actions">
+            <button class="btn-modal btn-cancel" onclick="hideSecurityModal()">Cancel</button>
+            <button class="btn-modal btn-confirm" onclick="launchWhatsApp()">I Understand</button>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    
-    <script>
-        const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
-        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-        // Get ID from URL
-        const params = new URLSearchParams(window.location.search);
-        const shopId = params.get('id');
+<script>
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let currentShop = null;
-        let currentUser = null;
-        let hasLiked = false;
-        let likeCount = 0;
+    const params = new URLSearchParams(window.location.search);
+    const shopId = params.get('id');
 
-        // Init
-        window.onload = async () => {
-            if (!shopId) { window.history.back(); return; }
+    let currentShop = null;
+    let currentUser = null;
+    let hasLiked = false;
+    let likeCount = 0;
 
-            const { data: { session } } = await client.auth.getSession();
-            if (session) currentUser = session.user;
+    window.onload = async () => {
+        if (!shopId) { window.history.back(); return; }
 
-            // Cache First
-            const cached = localStorage.getItem(`shop_cache_${shopId}`);
-            if (cached) {
-                renderShopData(JSON.parse(cached));
-            }
+        const { data: { session } } = await client.auth.getSession();
+        if (session) currentUser = session.user;
 
-            fetchShopData();
-        };
-
-        async function fetchShopData() {
-            try {
-                // Parallel Fetch
-                const [shopRes, prodRes, likeRes] = await Promise.all([
-                    client.from('shops').select().eq('id', shopId).maybeSingle(),
-                    client.from('products').select().eq('shop_id', shopId).eq('is_available', true).order('created_at', { ascending: false }),
-                    client.from('shop_likes').select('id', { count: 'exact' }).eq('shop_id', shopId)
-                ]);
-
-                if (!shopRes.data) return; // Handle removed shop
-
-                let userLiked = false;
-                if (currentUser) {
-                    const { data } = await client.from('shop_likes').select('id').eq('shop_id', shopId).eq('user_id', currentUser.id).maybeSingle();
-                    if (data) userLiked = true;
-                }
-
-                const data = {
-                    shop: shopRes.data,
-                    products: prodRes.data || [],
-                    likeCount: likeRes.count || 0,
-                    hasLiked: userLiked
-                };
-
-                localStorage.setItem(`shop_cache_${shopId}`, JSON.stringify(data));
-                renderShopData(data);
-                logView();
-
-            } catch (e) {
-                console.error("Fetch error:", e);
-                document.getElementById('loading-spinner').style.display = 'none';
-            }
+        const cached = localStorage.getItem(`shop_cache_${shopId}`);
+        if (cached) {
+            renderShopData(JSON.parse(cached));
         }
 
-        function renderShopData(data) {
+        fetchShopData();
+    };
+
+    async function fetchShopData() {
+        try {
+            const [shopRes, prodRes, likeRes] = await Promise.all([
+                client.from('shops').select().eq('id', shopId).maybeSingle(),
+                client.from('products').select().eq('shop_id', shopId).eq('is_available', true).order('created_at', { ascending: false }),
+                client.from('shop_likes').select('id', { count: 'exact' }).eq('shop_id', shopId)
+            ]);
+
+            if (!shopRes.data) return;
+
+            let userLiked = false;
+            if (currentUser) {
+                const { data } = await client.from('shop_likes').select('id').eq('shop_id', shopId).eq('user_id', currentUser.id).maybeSingle();
+                if (data) userLiked = true;
+            }
+
+            const data = {
+                shop: shopRes.data,
+                products: prodRes.data || [],
+                likeCount: likeRes.count || 0,
+                hasLiked: userLiked
+            };
+
+            localStorage.setItem(`shop_cache_${shopId}`, JSON.stringify(data));
+            renderShopData(data);
+            logView();
+
+        } catch (e) {
+            console.error("Fetch error:", e);
             document.getElementById('loading-spinner').style.display = 'none';
-            document.getElementById('content-area').classList.remove('hidden');
+        }
+    }
 
-            const s = data.shop;
-            currentShop = s;
-            hasLiked = data.hasLiked;
-            likeCount = data.likeCount;
+    function renderShopData(data) {
+        document.getElementById('loading-spinner').style.display = 'none';
+        document.getElementById('content-area').classList.remove('hidden');
 
-            // 1. Carousel Logic
-            const carousel = document.getElementById('carousel');
-            let images = [];
-            if (s.banners && s.banners.length > 0) images = s.banners;
-            else if (s.image_url) images = [s.image_url];
-            else {
-                // Fallback to product images
-                images = data.products.slice(0, 5).map(p => p.image_url).filter(url => url);
-            }
-            if (images.length === 0) images = ['https://via.placeholder.com/400x300?text=No+Images'];
+        const s = data.shop;
+        currentShop = s;
+        hasLiked = data.hasLiked;
+        likeCount = data.likeCount;
 
-            carousel.innerHTML = images.map(url => `
-                <div class="carousel-slide">
-                    <img src="${url}" class="carousel-img">
-                </div>
-            `).join('');
+        const carousel = document.getElementById('carousel');
+        let images = [];
+        if (s.banners && s.banners.length > 0) images = s.banners;
+        else if (s.image_url) images = [s.image_url];
+        else {
+            images = data.products.slice(0, 5).map(p => p.image_url).filter(url => url);
+        }
+        if (images.length === 0) images = ['https://via.placeholder.com/400x300?text=No+Images'];
 
-            // 2. Info
-            document.getElementById('shop-name').textContent = s.name;
-            document.getElementById('shop-category').textContent = s.category;
-            document.getElementById('shop-address').textContent = s.address;
-            
-            if (s.is_verified) {
-                document.getElementById('verified-seal').classList.remove('hidden');
-                document.getElementById('status-badge').className = "status-badge";
-                document.getElementById('status-badge').innerHTML = `<img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"> ${s.unique_id || 'Verified'}`;
-            } else {
-                document.getElementById('status-badge').className = "status-badge pending";
-                document.getElementById('status-badge').textContent = "Pending Verification";
-            }
+        carousel.innerHTML = images.map(url => `
+            <div class="carousel-slide">
+                <img src="${url}" class="carousel-img">
+            </div>
+        `).join('');
 
-            updateLikeUI();
-
-            if (s.news) {
-                document.getElementById('news-text').textContent = s.news;
-                document.getElementById('news-ticker').classList.remove('hidden');
-            }
-
-            // 3. Products
-            const special = data.products.filter(p => p.discount_price && p.discount_price < p.price);
-            const used = data.products.filter(p => p.condition === 'Fairly Used');
-            const fresh = data.products.filter(p => !p.discount_price && p.condition !== 'Fairly Used'); // Simplified
-
-            renderGrid('grid-special', 'section-special', special);
-            renderGrid('grid-used', 'section-used', used);
-            renderGrid('grid-new', 'section-new', fresh);
-
-            if (data.products.length === 0) document.getElementById('empty-state').classList.remove('hidden');
-
-            // 4. Map & Storefront
-            if (s.is_verified && (s.store_front_url || s.latitude)) {
-                document.getElementById('location-section').classList.remove('hidden');
-                if (s.store_front_url) document.getElementById('storefront-img').src = s.store_front_url;
-                if (s.latitude && s.longitude) initMap(s.latitude, s.longitude);
-            }
+        document.getElementById('shop-name').textContent = s.name;
+        document.getElementById('shop-category').textContent = s.category;
+        document.getElementById('shop-address').textContent = s.address;
+        
+        if (s.is_verified) {
+            document.getElementById('verified-seal').classList.remove('hidden');
+            document.getElementById('status-badge').className = "status-badge";
+            document.getElementById('status-badge').innerHTML = `<img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"> ${s.unique_id || 'Verified'}`;
+        } else {
+            document.getElementById('status-badge').className = "status-badge pending";
+            document.getElementById('status-badge').textContent = "Pending Verification";
         }
 
-        function renderGrid(gridId, sectionId, products) {
-            if (products.length === 0) return;
-            document.getElementById(sectionId).classList.remove('hidden');
-            document.getElementById(gridId).innerHTML = products.map(p => {
-                const hasDiscount = p.discount_price && p.discount_price < p.price;
-                const percent = hasDiscount ? Math.round(((p.price - p.discount_price)/p.price)*100) : 0;
-                
-                return `
-                <div class="product-card" onclick="window.location.href='product-detail.html?id=${p.id}'">
-                    <img src="${p.image_url || 'https://via.placeholder.com/150'}" class="prod-img">
-                    ${hasDiscount ? `<span class="badge badge-discount">-${percent}%</span>` : ''}
-                    ${p.condition === 'Fairly Used' ? `<span class="badge badge-used">Used</span>` : ''}
-                    <div class="prod-info">
-                        <div class="prod-name">${p.name}</div>
-                        <div class="prod-price ${hasDiscount ? 'discounted' : ''}">
-                            ${hasDiscount ? `<span class="prod-old-price">₦${p.price.toLocaleString()}</span>` : ''}
-                            ₦${(p.discount_price || p.price).toLocaleString()}
-                        </div>
+        updateLikeUI();
+
+        if (s.news) {
+            document.getElementById('news-text').textContent = s.news;
+            document.getElementById('news-ticker').classList.remove('hidden');
+        }
+
+        const special = data.products.filter(p => p.discount_price && p.discount_price < p.price);
+        const used = data.products.filter(p => p.condition === 'Fairly Used');
+        const fresh = data.products.filter(p => !p.discount_price && p.condition !== 'Fairly Used');
+
+        renderGrid('grid-special', 'section-special', special);
+        renderGrid('grid-used', 'section-used', used);
+        renderGrid('grid-new', 'section-new', fresh);
+
+        if (data.products.length === 0) document.getElementById('empty-state').classList.remove('hidden');
+
+        if (s.is_verified && (s.store_front_url || s.latitude)) {
+            document.getElementById('location-section').classList.remove('hidden');
+            if (s.store_front_url) document.getElementById('storefront-img').src = s.store_front_url;
+            if (s.latitude && s.longitude) initMap(s.latitude, s.longitude);
+        }
+    }
+
+    function renderGrid(gridId, sectionId, products) {
+        if (products.length === 0) return;
+        document.getElementById(sectionId).classList.remove('hidden');
+        document.getElementById(gridId).innerHTML = products.map(p => {
+            const hasDiscount = p.discount_price && p.discount_price < p.price;
+            const percent = hasDiscount ? Math.round(((p.price - p.discount_price)/p.price)*100) : 0;
+            
+            return `
+            <div class="product-card" onclick="window.location.href='product-detail.html?id=${p.id}'">
+                <img src="${p.image_url || 'https://via.placeholder.com/150'}" class="prod-img">
+                ${hasDiscount ? `<span class="badge badge-discount">-${percent}%</span>` : ''}
+                ${p.condition === 'Fairly Used' ? `<span class="badge badge-used">Used</span>` : ''}
+                <div class="prod-info">
+                    <div class="prod-name">${p.name}</div>
+                    <div class="prod-price ${hasDiscount ? 'discounted' : ''}">
+                        ${hasDiscount ? `<span class="prod-old-price">₦${p.price.toLocaleString()}</span>` : ''}
+                        ₦${(p.discount_price || p.price).toLocaleString()}
                     </div>
                 </div>
-                `;
-            }).join('');
-        }
+            </div>
+            `;
+        }).join('');
+    }
 
-        // --- MAP LOGIC ---
-        let map;
-        function initMap(lat, lng) {
-            if (map) return; // Already init
-            setTimeout(() => {
-                map = L.map('map').setView([lat, lng], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap'
-                }).addTo(map);
-                L.marker([lat, lng]).addTo(map).bindPopup("Shop Location").openPopup();
-            }, 500); // Small delay to ensure container exists
-        }
+    let map;
+    function initMap(lat, lng) {
+        if (map) return;
+        setTimeout(() => {
+            map = L.map('map').setView([lat, lng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+            L.marker([lat, lng]).addTo(map).bindPopup("Shop Location").openPopup();
+        }, 500);
+    }
 
-        function openGoogleMaps() {
-            if (!currentShop?.latitude) return;
-            window.open(`https://www.google.com/maps/search/?api=1&query=${currentShop.latitude},${currentShop.longitude}`, '_blank');
-        }
+    function openGoogleMaps() {
+        if (!currentShop?.latitude) return;
+        window.open(`https://www.google.com/maps/search/?api=1&query=${currentShop.latitude},${currentShop.longitude}`, '_blank');
+    }
 
-        // --- ACTIONS ---
-        function updateLikeUI() {
-            const btn = document.getElementById('like-btn');
-            const txt = document.getElementById('like-count');
-            txt.textContent = likeCount;
+    function updateLikeUI() {
+        const btn = document.getElementById('like-btn');
+        const txt = document.getElementById('like-count');
+        txt.textContent = likeCount;
+        if (hasLiked) {
+            btn.classList.add('liked');
+            btn.querySelector('i').classList.replace('fa-regular', 'fa-solid');
+        } else {
+            btn.classList.remove('liked');
+            btn.querySelector('i').classList.replace('fa-solid', 'fa-regular');
+        }
+    }
+
+    async function toggleLike() {
+        if (!currentUser) return alert("Please sign in to like shops.");
+        hasLiked = !hasLiked;
+        likeCount += hasLiked ? 1 : -1;
+        updateLikeUI();
+
+        try {
             if (hasLiked) {
-                btn.classList.add('liked');
-                btn.querySelector('i').classList.replace('fa-regular', 'fa-solid');
+                await client.from('shop_likes').insert({ shop_id: shopId, user_id: currentUser.id });
             } else {
-                btn.classList.remove('liked');
-                btn.querySelector('i').classList.replace('fa-solid', 'fa-regular');
+                await client.from('shop_likes').delete().eq('shop_id', shopId).eq('user_id', currentUser.id);
             }
-        }
-
-        async function toggleLike() {
-            if (!currentUser) return alert("Please sign in to like shops.");
-            
-            // Optimistic
+        } catch (e) {
             hasLiked = !hasLiked;
             likeCount += hasLiked ? 1 : -1;
             updateLikeUI();
-
-            try {
-                if (hasLiked) {
-                    await client.from('shop_likes').insert({ shop_id: shopId, user_id: currentUser.id });
-                } else {
-                    await client.from('shop_likes').delete().eq('shop_id', shopId).eq('user_id', currentUser.id);
-                }
-            } catch (e) {
-                // Revert
-                hasLiked = !hasLiked;
-                likeCount += hasLiked ? 1 : -1;
-                updateLikeUI();
-            }
         }
+    }
 
-        function showSecurityModal() {
-            if (!currentShop?.whatsapp) return alert("This shop hasn't provided a WhatsApp number.");
-            document.getElementById('security-modal').classList.add('active');
-        }
-        function hideSecurityModal() {
-            document.getElementById('security-modal').classList.remove('active');
-        }
+    function showSecurityModal() {
+        if (!currentShop?.whatsapp) return alert("This shop hasn't provided a WhatsApp number.");
+        document.getElementById('security-modal').classList.add('active');
+    }
+    function hideSecurityModal() {
+        document.getElementById('security-modal').classList.remove('active');
+    }
 
-        async function launchWhatsApp() {
-            hideSecurityModal();
-            let phone = currentShop.whatsapp.replace(/\D/g, '');
-            if (phone.startsWith('0')) phone = '234' + phone.substring(1);
-            
-            const msg = `Hello ${currentShop.name}, I found your shop on CT-Merchant.`;
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    async function launchWhatsApp() {
+        hideSecurityModal();
+        let phone = currentShop.whatsapp.replace(/\D/g, '');
+        if (phone.startsWith('0')) phone = '234' + phone.substring(1);
+        
+        const msg = `Hello ${currentShop.name}, I found your shop on CT-Merchant.`;
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
 
-            if (currentUser) {
-                await client.from('whatsapp_clicks').insert({ clicker_id: currentUser.id, shop_id: shopId });
-            }
+        if (currentUser) {
+            await client.from('whatsapp_clicks').insert({ clicker_id: currentUser.id, shop_id: shopId });
         }
+    }
 
-        async function logView() {
-            if (currentUser && currentUser.id !== currentShop.owner_id) {
-                await client.from('shop_views').insert({ shop_id: shopId, viewer_id: currentUser.id });
-            }
+    async function logView() {
+        if (currentUser && currentUser.id !== currentShop.owner_id) {
+            await client.from('shop_views').insert({ shop_id: shopId, viewer_id: currentUser.id });
         }
+    }
 
-        function shareShop() {
-            if (navigator.share) {
-                navigator.share({
-                    title: currentShop.name,
-                    text: `Check out ${currentShop.name} on CT-Merchant!`,
-                    url: window.location.href
-                });
-            } else {
-                navigator.clipboard.writeText(window.location.href);
-                alert("Link copied to clipboard!");
-            }
+    function shareShop() {
+        if (navigator.share) {
+            navigator.share({
+                title: currentShop.name,
+                text: `Check out ${currentShop.name} on CT-Merchant!`,
+                url: window.location.href
+            });
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            alert("Link copied to clipboard!");
         }
-    </script>
+    }
+</script>
 </body>
-
 </html>
