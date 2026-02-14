@@ -54,30 +54,54 @@
 
         .page-title { font-weight: 800; font-size: 1.1rem; color: var(--color-text); }
 
-        /* --- SHOP INFO --- */
+        /* --- SHOP HERO LAYOUT (Split) --- */
         .info-card { padding: 24px; }
 
+        .shop-hero-split {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Desktop Grid Layout */
+        @media (min-width: 900px) {
+            .shop-hero-split {
+                display: grid;
+                grid-template-columns: 1.2fr 0.8fr; /* Text gets slightly more space */
+                gap: 40px;
+                align-items: start;
+                margin-bottom: 40px;
+            }
+            .shop-visual-side {
+                background: white;
+                padding: 16px;
+                border-radius: 16px;
+                border: 1px solid #E2E8F0;
+            }
+        }
+
+        /* Left Side: Info */
         .shop-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-        .shop-name { font-size: 1.5rem; font-weight: 800; width: 85%; line-height: 1.2; color: var(--color-text); }
+        .shop-name { font-size: 1.75rem; font-weight: 800; width: 85%; line-height: 1.2; color: var(--color-text); }
         .verified-seal { width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; box-shadow: var(--shadow-md); }
 
-        .category-tag { font-weight: 700; color: var(--color-primary); font-size: 0.9rem; margin-bottom: 12px; }
+        .category-tag { font-weight: 700; color: var(--color-primary); font-size: 0.95rem; margin-bottom: 16px; display: inline-block; background: #F3E8FF; padding: 4px 12px; border-radius: 6px; }
 
-        .address-row { display: flex; gap: 8px; color: var(--color-text-muted); font-size: 0.9rem; align-items: flex-start; margin-bottom: 16px; line-height: 1.4; }
+        .address-row { display: flex; gap: 8px; color: var(--color-text-muted); font-size: 0.95rem; align-items: flex-start; margin-bottom: 20px; line-height: 1.5; }
 
-        .status-row { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+        .status-row { display: flex; gap: 10px; align-items: center; margin-bottom: 24px; }
         
         .status-badge {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700;
+            padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
             background: #EFF6FF; color: #1E40AF; border: 1px solid #DBEAFE;
         }
         .status-badge.pending { background: #FEF2F2; color: #B91C1C; border-color: #FEE2E2; }
-        .status-badge img { width: 14px; height: 14px; border-radius: 50%; }
+        .status-badge img { width: 16px; height: 16px; border-radius: 50%; }
 
         .like-btn {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
+            padding: 8px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 700;
             background: white; color: var(--color-text); border: 1px solid #E2E8F0;
             cursor: pointer; transition: all 0.2s;
         }
@@ -86,13 +110,30 @@
         .news-ticker {
             background: #FFF7ED; border: 1px solid #FFEDD5; color: #C2410C;
             padding: 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
-            display: flex; align-items: center; gap: 8px; margin-bottom: 24px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        /* Right Side: Visuals (Map/Storefront) */
+        .storefront-img { 
+            width: 100%; height: 200px; 
+            border-radius: 12px; object-fit: cover; 
+            margin-bottom: 12px; display: none; 
+            border: 1px solid #E2E8F0;
+        }
+        #map { 
+            height: 200px; width: 100%; 
+            border-radius: 12px; border: 1px solid #E2E8F0; z-index: 1; 
+        }
+        .map-btn {
+            background:white; border:1px solid #ccc; padding:8px 16px; 
+            border-radius:8px; cursor:pointer; font-weight:600; font-size:0.8rem;
+            margin-top: 8px; float: right;
         }
 
         /* --- PRODUCTS GRID --- */
         .section-title { 
             display: flex; align-items: center; gap: 10px; 
-            font-size: 1.1rem; font-weight: 800; margin: 30px 0 16px 0; color: #334155;
+            font-size: 1.2rem; font-weight: 800; margin: 30px 0 16px 0; color: #334155;
         }
         .bar { width: 4px; height: 24px; border-radius: 2px; }
 
@@ -103,7 +144,7 @@
         }
         
         .product-card {
-            background: white; border-radius: 12px; overflow: hidden;
+            background: white; border-radius: 16px; overflow: hidden;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #E2E8F0;
             cursor: pointer; position: relative; transition: transform 0.2s;
         }
@@ -122,10 +163,6 @@
         }
         .badge-discount { left: 8px; background: #DC2626; }
         .badge-used { right: 8px; background: #EA580C; }
-
-        /* --- MAP & STOREFRONT --- */
-        .storefront-img { width: 100%; height: 250px; border-radius: 12px; object-fit: cover; margin-bottom: 12px; display: none; }
-        #map { height: 250px; width: 100%; border-radius: 12px; border: 1px solid #E2E8F0; z-index: 1; }
 
         /* --- BOTTOM BAR --- */
         .bottom-bar {
@@ -178,32 +215,46 @@
         <div id="loading-spinner" class="spinner"></div>
         <div id="content-area" class="hidden">
             
-            <div class="shop-header-row">
-                <div id="shop-name" class="shop-name">Loading...</div>
-                <img id="verified-seal" src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="verified-seal hidden">
-            </div>
-            
-            <div id="shop-category" class="category-tag"></div>
-            
-            <div class="address-row">
-                <i class="fa-solid fa-location-dot" style="margin-top:2px;"></i>
-                <span id="shop-address"></span>
+            <div class="shop-hero-split">
+                <!-- LEFT COLUMN: INFO -->
+                <div class="shop-info-side">
+                    <div class="shop-header-row">
+                        <div id="shop-name" class="shop-name">Loading...</div>
+                        <img id="verified-seal" src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="verified-seal hidden">
+                    </div>
+                    
+                    <div id="shop-category" class="category-tag"></div>
+                    
+                    <div class="address-row">
+                        <i class="fa-solid fa-location-dot" style="margin-top:2px;"></i>
+                        <span id="shop-address"></span>
+                    </div>
+
+                    <div class="status-row">
+                        <div id="status-badge" class="status-badge"></div>
+                        <button id="like-btn" class="like-btn" onclick="toggleLike()">
+                            <i class="fa-regular fa-thumbs-up"></i>
+                            <span id="like-count">0</span>
+                        </button>
+                    </div>
+
+                    <div id="news-ticker" class="news-ticker hidden">
+                        <i class="fa-solid fa-bullhorn"></i>
+                        <span id="news-text"></span>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: VISUALS (Storefront + Map) -->
+                <div id="location-panel" class="shop-visual-side hidden">
+                    <img id="storefront-img" class="storefront-img">
+                    <div id="map"></div>
+                    <button onclick="openGoogleMaps()" class="map-btn">
+                        Open in Google Maps <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </button>
+                </div>
             </div>
 
-            <div class="status-row">
-                <div id="status-badge" class="status-badge"></div>
-                <button id="like-btn" class="like-btn" onclick="toggleLike()">
-                    <i class="fa-regular fa-thumbs-up"></i>
-                    <span id="like-count">0</span>
-                </button>
-            </div>
-
-            <div id="news-ticker" class="news-ticker hidden">
-                <i class="fa-solid fa-bullhorn"></i>
-                <span id="news-text"></span>
-            </div>
-
-            <hr style="border:0; border-top:1px solid #E2E8F0; margin: 24px 0;">
+            <hr style="border:0; border-top:1px solid #E2E8F0; margin: 30px 0;">
 
             <!-- Product Sections -->
             <div id="section-special" class="hidden">
@@ -224,22 +275,6 @@
             <div id="empty-state" class="hidden" style="text-align:center; padding: 40px 0; color:grey;">
                 <i class="fa-solid fa-box-open" style="font-size: 32px; margin-bottom:10px;"></i>
                 <p>No products listed yet.</p>
-            </div>
-
-            <!-- Storefront & Map -->
-            <div id="location-section" class="hidden">
-                <hr style="border:0; border-top:1px solid #E2E8F0; margin: 30px 0;">
-                
-                <div class="section-title">Physical Store</div>
-                <img id="storefront-img" class="storefront-img">
-                
-                <div class="section-title">Location Map</div>
-                <div id="map"></div>
-                <div style="text-align:right; margin-top:8px;">
-                    <button onclick="openGoogleMaps()" style="background:white; border:1px solid #ccc; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">
-                        Open in Google Maps <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                    </button>
-                </div>
             </div>
 
         </div>
@@ -340,6 +375,7 @@
         hasLiked = data.hasLiked;
         likeCount = data.likeCount;
 
+        // Populate Info
         document.getElementById('shop-name').textContent = s.name;
         document.getElementById('shop-category').textContent = s.category;
         document.getElementById('shop-address').textContent = s.address;
@@ -360,6 +396,19 @@
             document.getElementById('news-ticker').classList.remove('hidden');
         }
 
+        // Populate Visuals (Right Column)
+        if (s.is_verified && (s.storefront_url || s.latitude)) {
+            document.getElementById('location-panel').classList.remove('hidden');
+            
+            if (s.storefront_url) {
+                const imgEl = document.getElementById('storefront-img');
+                imgEl.src = s.storefront_url;
+                imgEl.style.display = 'block';
+            }
+            if (s.latitude && s.longitude) initMap(s.latitude, s.longitude);
+        }
+
+        // Products
         const special = data.products.filter(p => p.discount_price && p.discount_price < p.price);
         const used = data.products.filter(p => p.condition === 'Fairly Used');
         const fresh = data.products.filter(p => !p.discount_price && p.condition !== 'Fairly Used');
@@ -369,20 +418,6 @@
         renderGrid('grid-new', 'section-new', fresh);
 
         if (data.products.length === 0) document.getElementById('empty-state').classList.remove('hidden');
-
-        // Location & Storefront Logic
-        if (s.is_verified && (s.storefront_url || s.latitude)) {
-            document.getElementById('location-section').classList.remove('hidden');
-            
-            // Fix: Use correct 'storefront_url' property
-            if (s.storefront_url) {
-                const imgEl = document.getElementById('storefront-img');
-                imgEl.src = s.storefront_url;
-                imgEl.style.display = 'block';
-            }
-            
-            if (s.latitude && s.longitude) initMap(s.latitude, s.longitude);
-        }
     }
 
     function renderGrid(gridId, sectionId, products) {
