@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Merchant Dashboard | CT‑Merchant</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
 
         body { 
             background-color: var(--color-bg); 
@@ -27,7 +27,6 @@
             min-height: 100vh;
             display: flex; 
             justify-content: center;
-            overflow-x: hidden;
         }
 
         .container {
@@ -77,13 +76,10 @@
             box-shadow: var(--shadow-sm);
             cursor: pointer; transition: all 0.2s;
             height: 150px;
-            text-decoration: none;
+            text-decoration: none; /* For links */
             color: inherit;
-            position: relative;
-            overflow: hidden;
         }
         .dash-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--color-purple); }
-        .dash-card:active { transform: scale(0.98); }
 
         .icon-box {
             width: 50px; height: 50px; border-radius: 50%;
@@ -132,44 +128,44 @@
             <!-- Grid -->
             <div class="dashboard-grid">
                 
-                <!-- 1. Add Product (LINKED) -->
+                <!-- 1. Add Product -->
                 <div onclick="navTo('merchant-add-product.html')" class="dash-card card-green">
                     <div class="icon-box"><i class="fa-regular fa-square-plus"></i></div>
                     <div class="card-title">Add Product</div>
                 </div>
 
-                <!-- 2. Edit Products -->
-                <div onclick="alert('Edit Products Screen coming soon!')" class="dash-card card-blue">
+                <!-- 2. Edit Products (Linked to List) -->
+                <div onclick="navTo('merchant-products.html')" class="dash-card card-blue">
                     <div class="icon-box"><i class="fa-solid fa-pen-to-square"></i></div>
                     <div class="card-title">Edit Products</div>
                 </div>
 
                 <!-- 3. Shop Banner -->
-                <div onclick="alert('Banner Screen coming soon!')" class="dash-card card-purple">
+                <div onclick="navTo('merchant-banner.html')" class="dash-card card-purple">
                     <div class="icon-box"><i class="fa-solid fa-camera"></i></div>
                     <div class="card-title">Shop Banner</div>
                 </div>
 
                 <!-- 4. Shop Settings -->
-                <div onclick="alert('Settings Screen coming soon!')" class="dash-card card-orange">
+                <div onclick="navTo('merchant-settings.html')" class="dash-card card-orange">
                     <div class="icon-box"><i class="fa-solid fa-gear"></i></div>
                     <div class="card-title">Shop Settings</div>
                 </div>
 
                 <!-- 5. Post News -->
-                <div onclick="alert('News Screen coming soon!')" class="dash-card card-red">
+                <div onclick="navTo('merchant-news.html')" class="dash-card card-red">
                     <div class="icon-box"><i class="fa-solid fa-bullhorn"></i></div>
                     <div class="card-title">Post News</div>
                 </div>
 
-                <!-- 6. View Public Shop (LINKED) -->
+                <!-- 6. View Public Shop -->
                 <div onclick="viewPublicShop()" class="dash-card card-indigo">
                     <div class="icon-box"><i class="fa-regular fa-eye"></i></div>
                     <div class="card-title">View Shop</div>
                 </div>
 
                 <!-- 7. Analytics -->
-                <div onclick="alert('Analytics Screen coming soon!')" class="dash-card card-teal">
+                <div onclick="navTo('merchant-analytics.html')" class="dash-card card-teal">
                     <div class="icon-box"><i class="fa-solid fa-chart-line"></i></div>
                     <div class="card-title">Analytics</div>
                 </div>
@@ -225,10 +221,9 @@
             }
         }
 
-        // NAVIGATION LOGIC
+        // Helper to pass Shop ID to next pages
         function navTo(page) {
             if (!myShop) return;
-            // Pass shop_id in URL so next page knows which shop to update
             window.location.href = `${page}?shop_id=${myShop.id}`;
         }
 
