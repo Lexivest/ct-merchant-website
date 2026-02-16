@@ -670,7 +670,7 @@
         } else if (myShop.status === 'pending') {
             alert("Application Under Review\n\nYour shop application is currently being reviewed by our team. Please check back later.");
         } else if (myShop.status === 'approved') {
-            alert("Merchant Dashboard coming soon!");
+            window.location.href = "merchant-dashboard.html";
         } else if (myShop.status === 'rejected') {
             if(confirm("Your application was rejected. Would you like to view the reason and update it?")) {
                 window.location.href = `shop-registration.html?edit=true&id=${myShop.id}`;
