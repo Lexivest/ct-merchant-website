@@ -5,24 +5,122 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   
   <title>CT-Merchant Ltd. | Digital Shops Repository</title>
-  <meta name="description" content="Discover verified merchants, local shops and products in your city. Bridging the gap between digital convenience and local availability in Nigeria.">
-  <meta name="keywords" content="Merchant, Nigeria, Shops Repository, Local Business, CT-Merchant, Business Identifier">
-  <meta name="author" content="CT-Merchant Ltd.">
-
-  <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
-  <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
-
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://ct-merchant.com.ng/">
-  <meta property="og:title" content="CT-Merchant Ltd. | Official Website">
-  <meta property="og:description" content="Empowering cities with professional-grade commerce tools. Explore our digital shops repository.">
-  <meta property="og:image" content="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
-
+  <meta name="description" content="Discover verified merchants, local shops and products in your city.">
+  
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   
   <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* Hero Input Styles */
+    .hero-form-container {
+        margin-bottom: 2rem;
+        width: 100%;
+        max-width: 400px;
+    }
+    
+    .hero-input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .hero-input {
+        width: 100%;
+        padding: 14px 16px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        color: white;
+        font-size: 1rem;
+        outline: none;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+    }
+
+    .hero-input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .hero-input:focus {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: var(--color-pink);
+        box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.2);
+    }
+
+    .hero-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .btn-login-hero {
+        background: white;
+        color: var(--color-purple);
+        font-weight: 800;
+        padding: 14px;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .btn-login-hero:hover {
+        background: #f1f5f9;
+        transform: translateY(-2px);
+    }
+
+    .divider-text {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .divider-text::before, .divider-text::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-cta-outline {
+        background: transparent;
+        border: 2px solid var(--color-pink);
+        color: white;
+        padding: 14px;
+        border-radius: 12px;
+        font-weight: 700;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .btn-cta-outline:hover {
+        background: var(--color-pink);
+        box-shadow: 0 0 15px var(--color-pink);
+    }
+
+    @media (min-width: 768px) {
+        .hero-input-group { flex-direction: row; }
+        .hero-actions { flex-direction: row; align-items: center; }
+        .btn-login-hero { flex: 1; }
+        .btn-cta-outline { flex: 1.5; }
+        .divider-text { display: none; } /* Hide divider on desktop layout if side-by-side */
+    }
+  </style>
 </head>
 <body>
 
@@ -41,14 +139,6 @@
                     <div class="flag-stripe flag-green"></div>
                 </div>
             </div>
-            <div class="flex items-center" style="display:flex; align-items:center; margin-right: 2.5rem;">
-                <span>CT-MERCHANT LTD.</span>
-                <div class="flag-icon">
-                    <div class="flag-stripe flag-green"></div>
-                    <div class="flag-stripe flag-white"></div>
-                    <div class="flag-stripe flag-green"></div>
-                </div>
-            </div>
          </div>
       </div>
     </a>
@@ -57,27 +147,22 @@
       <a href="index.html" class="nav-active">Home</a>
       <a href="about.html">About</a>
       <a href="services.html">Services</a>
-      <a href="affiliate.html">Affiliate</a>
-      <a href="careers.html">Careers</a>
       <a href="contact.html">Contact</a>
       <a href="staff-portal.html" class="btn-staff">
         Staff Portal
       </a>
     </div>
 
-    <button class="mobile-menu-btn" id="menu-btn">
-      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
-      </svg>
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+      <i class="fa-solid fa-bars"></i>
     </button>
   </div>
 
   <div class="mobile-dropdown hidden" id="mobile-menu">
-      <a href="index.html" style="border-bottom: 1px solid white;">Home</a>
+      <a href="index.html">Home</a>
       <a href="about.html">About</a>
       <a href="services.html">Services</a>
-      <a href="affiliate.html">Affiliate</a>
-      <a href="careers.html">Careers</a>
       <a href="contact.html">Contact</a>
       <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
   </div>
@@ -93,79 +178,43 @@
   </div>
 
   <div class="hero-content">
-    <div class="animate-up">
+    <div class="animate-up visible">
       
       <div style="margin-bottom: 1.5rem;">
         <span class="repo-badge">
           Repository of Shops, Products and Services
         </span>
-        <p style="margin-bottom: 1rem; font-weight: 500; font-size: 0.95rem;">
-          We provide a digital repository of physical shops, their products and locations within a city, making it easier for people to find nearby businesses.
+        <h1 class="hero-title">
+            Your City's Digital Marketplace
+        </h1>
+        <p class="hero-desc">
+          We provide a digital repository of physical shops, their products, and locations within a city. Manage your business or find what you need instantly.
         </p>
-        
-        <div class="city-scroll-wrapper">
-            <div class="marquee-container" style="width: 100%;">
-                <div class="animate-city-scroll" style="display: flex; align-items: center; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; color: #cbd5e1;">
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Bauchi</span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Gombe</span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Jos</span>
-                    <span class="city-item" style="padding: 4px 12px; background: rgba(255,255,255,0.05); border-radius: 99px; border: 1px solid rgba(255,255,255,0.1);">
-                        <i class="fa-solid fa-location-dot" style="color:var(--color-pink); margin-right: 0.5rem;"></i> 
-                        Kaduna <span class="head-office-badge">HEAD OFFICE</span>
-                    </span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Kafanchan</span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Kano</span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Lafia</span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Lokoja</span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Makurdi</span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Minna</span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Saminaka</span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Zaria</span>
-                    
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Bauchi</span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Gombe</span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Jos</span>
-                    <span class="city-item" style="padding: 4px 12px; background: rgba(255,255,255,0.05); border-radius: 99px; border: 1px solid rgba(255,255,255,0.1);">
-                        <i class="fa-solid fa-location-dot" style="color:var(--color-pink); margin-right: 0.5rem;"></i> 
-                        Kaduna <span class="head-office-badge">HEAD OFFICE</span>
-                    </span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Kafanchan</span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Kano</span>
-                    <span class="city-item"><span class="city-bullet">&bull;</span>Lafia</span>
+
+        <!-- LOGIN / REGISTER SECTION -->
+        <div class="hero-form-container">
+            <form onsubmit="event.preventDefault(); handleHeroLogin();">
+                <div class="hero-input-group">
+                    <input type="email" id="hero-email" class="hero-input" placeholder="Email Address" required>
+                    <input type="password" id="hero-password" class="hero-input" placeholder="Password" required>
                 </div>
-            </div>
+                
+                <div class="hero-actions">
+                    <button type="submit" id="hero-login-btn" class="btn-login-hero">
+                        <span>Secure Sign In</span>
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </button>
+                    
+                    <div class="divider-text">OR</div>
+
+                    <a href="register.html" class="btn-cta-outline">
+                        <span>Create Account</span>
+                        <i class="fa-solid fa-user-plus"></i>
+                    </a>
+                </div>
+            </form>
         </div>
       </div>
-
-      <div class="search-wrapper">
-        <div class="search-input-box">
-          <input type="text" id="repo-search-input" placeholder="Search repository..." 
-                 inputmode="text" enterkeyhint="search"
-                 class="repo-input">
-          <svg id="search-btn-manual" class="search-icon-btn" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-        </div>
-        <p class="id-hint">
-          <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
-          Use your unique identifier (e.g., <span style="font-family: monospace; text-transform: uppercase;">CT-3945BOGD</span>)
-        </p>
-      </div>
-      
-      <h1 class="hero-title">
-        <span id="typewriter"></span><span style="color: var(--color-pink); animation: pulse 2s infinite;">|</span>
-      </h1>
-      
-      <p class="hero-desc">
-        Bridging the gap between digital convenience and local availability. We empower cities and communities in Nigeria with professional-grade commerce tools.
-      </p>
-
-      <button id="get-started-btn" class="btn-cta">
-        GET STARTED
-        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-        </svg>
-      </button>
 
       <div class="features-list">
         <span style="display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-store"></i> Shops Repository</span>
@@ -175,67 +224,6 @@
     </div>
   </div>
 </section>
-
-<div id="login-modal" class="modal-overlay hidden">
-  <div class="modal-content">
-    
-    <button id="close-modal-btn" class="close-modal-btn">
-      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-    </button>
-
-    <div class="modal-header">
-      <div class="modal-logo-wrapper">
-         <div class="glow-effect"></div>
-         <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" 
-              alt="Logo" class="modal-logo">
-      </div>
-      <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--color-purple);">Merchant Login</h2>
-      <p style="font-size: 0.75rem; color: var(--color-slate-400);">Enter your credentials to continue.</p>
-    </div>
-    
-    <form id="loginForm" class="modal-form">
-      <div id="errorMsg" class="error-msg hidden"></div>
-      
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="email" required class="form-input">
-      </div>
-      
-      <div class="form-group">
-        <label>Password</label>
-        <div class="pass-wrapper">
-          <input type="password" id="password" required class="form-input" style="padding-right: 2.5rem;">
-          <button type="button" id="toggle-pass-btn" class="toggle-pass-btn">
-            <svg id="eyeIcon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-            </svg>
-          </button>
-        </div>
-        <div class="form-options" style="justify-content: flex-end; margin-top: 0.5rem;">
-          <a href="#" class="forgot-pass">Forgot Password?</a>
-        </div>
-      </div>
-
-      <div class="checkbox-group">
-        <input id="remember" type="checkbox" style="width: 1rem; height: 1rem; margin-right: 0.5rem;">
-        <label for="remember" style="margin: 0; font-size: 0.75rem; color: #475569; font-weight: 500;">Remember me for 30 days</label>
-      </div>
-      
-      <button type="submit" id="loginBtn" class="btn-submit">
-        <span>Secure Sign In</span>
-        <div class="loader" id="loginLoader"></div>
-      </button>
-      
-      <div class="modal-footer">
-        <p>Don't have a merchant account?</p>
-        <a href="create-account.html" class="create-account-link">Create New Account →</a>
-      </div>
-    </form>
-  </div>
-</div>
 
 <footer class="footer">
   <div class="container footer-container">
@@ -248,6 +236,29 @@
   </div>
 </footer>
 
-<script src="index.js"></script>
+<script>
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function handleHeroLogin() {
+        const email = document.getElementById('hero-email').value;
+        const password = document.getElementById('hero-password').value;
+        const btn = document.getElementById('hero-login-btn');
+
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+
+        try {
+            const { error } = await client.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            window.location.href = "user-dashboard.html";
+        } catch (err) {
+            alert(err.message);
+            btn.innerHTML = '<span>Secure Sign In</span><i class="fa-solid fa-arrow-right-to-bracket"></i>';
+            btn.disabled = false;
+        }
+    }
+</script>
 </body>
 </html>
