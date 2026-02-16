@@ -117,7 +117,7 @@
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
         }
 
-        /* Notification Icon in Top Bar */
+        /* NOTIFICATION ICON */
         .notif-btn-top {
             position: relative; background: none; border: none; 
             font-size: 1.2rem; color: var(--color-text-muted); cursor: pointer;
@@ -125,16 +125,15 @@
         }
         .notif-btn-top:hover { color: var(--color-purple); }
         .notif-badge {
-            position: absolute; top: 0; right: 0;
+            position: absolute; top: -2px; right: -2px;
             background: #EF4444; color: white;
-            font-size: 0.6rem; font-weight: 700;
-            width: 16px; height: 16px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            border: 2px solid white;
+            font-size: 0.65rem; font-weight: 700;
+            width: 18px; height: 18px; border-radius: 50%;
             display: none; /* Hidden if 0 */
+            align-items: center; justify-content: center;
+            border: 2px solid white;
         }
         .notif-badge.active { display: flex; }
-
 
         .ticker-container {
             flex-grow: 1; background: #FFF7ED; border-radius: 6px;
@@ -177,6 +176,7 @@
         .scroll-row::-webkit-scrollbar { height: 4px; }
         .scroll-row::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 10px; }
 
+        /* Featured Card */
         .featured-card {
             min-width: 280px; width: 280px;
             background: white; border-radius: 12px; padding: 10px;
@@ -191,6 +191,7 @@
         .shop-cat { font-size: 0.7rem; color: var(--color-purple); font-weight: 700; background: #F3E8FF; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
         .shop-addr { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
 
+        /* Collage Pills */
         .collage-pill {
             display: flex; align-items: center; gap: 10px;
             background: white; border: 1px solid var(--color-border);
@@ -208,10 +209,12 @@
         .collage-3 div img { width: 100%; height: 50%; object-fit: cover; }
         .pill-text { font-weight: 700; font-size: 0.85rem; color: var(--color-text-main); }
 
+        /* Promo */
         .promo-slider { display: flex; overflow-x: auto; gap: 1rem; margin-bottom: 2rem; width: 100%; }
         .promo-card { min-width: 320px; height: 140px; border-radius: 16px; overflow: hidden; flex-shrink: 0; }
         .promo-img { width: 100%; height: 100%; object-fit: cover; }
 
+        /* Shop Grid */
         .shop-list { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
@@ -335,6 +338,9 @@
             <button class="nav-item" onclick="switchTab('profile', this)">
                 <i class="fa-solid fa-user-gear"></i> My Profile
             </button>
+            <button class="nav-item">
+                <i class="fa-solid fa-box"></i> My Orders
+            </button>
             <button class="nav-item" onclick="switchTab('notifications', this)">
                 <i class="fa-solid fa-bell"></i> Notifications
             </button>
@@ -357,8 +363,8 @@
                 </button>
                 <h1 id="greeting-name" class="greeting-text">Hello User</h1>
                 
-                <!-- Notification Bell (Mobile/Desktop) -->
-                <button class="notif-btn-top" onclick="switchTab('notifications', document.querySelectorAll('.nav-item')[3])">
+                <!-- Notification Bell -->
+                <button class="notif-btn-top" onclick="switchTab('notifications', document.querySelectorAll('.nav-item')[4])">
                     <i class="fa-solid fa-bell"></i>
                     <span id="unread-badge" class="notif-badge">0</span>
                 </button>
@@ -639,12 +645,12 @@
             box.classList.add('bg-blue-light');
             box.innerHTML = '<i class="fa-solid fa-store"></i>';
             title.textContent = 'Register Shop';
-            sub.textContent = 'Start selling';
+            sub.textContent = 'Start selling today';
         } else if (shop.status === 'pending') {
             box.classList.add('bg-orange-light');
             box.innerHTML = '<i class="fa-solid fa-hourglass-half"></i>';
             title.textContent = 'Pending Approval';
-            sub.textContent = 'Under review';
+            sub.textContent = 'Application under review';
         } else if (shop.status === 'approved') {
             box.classList.add('bg-green-light');
             box.innerHTML = '<i class="fa-solid fa-shop"></i>';
@@ -675,7 +681,6 @@
     // --- NOTIFICATIONS ---
     async function fetchNotifications() {
         try {
-            // 1. Get List
             const { data } = await client.from('notifications')
                 .select('*')
                 .eq('user_id', currentUser.id)
@@ -684,7 +689,6 @@
             if(data) {
                 renderNotificationList(data);
                 
-                // 2. Count Unread
                 const unread = data.filter(n => !n.is_read).length;
                 const badge = document.getElementById('unread-badge');
                 badge.textContent = unread;
@@ -714,8 +718,24 @@
     }
 
     async function markAsRead(id) {
-        // UI Update logic should be here (refreshing list or finding element)
         await client.from('notifications').update({is_read: true}).eq('id', id);
+        fetchNotifications();
+    }
+    
+    // --- NEW: Mark All as Read Logic ---
+    async function markAllAsRead() {
+        const badge = document.getElementById('unread-badge');
+        badge.style.display = 'none'; // Visual reset
+        
+        // Remove unread style immediately
+        document.querySelectorAll('.notif-card.unread').forEach(card => card.classList.remove('unread'));
+
+        await client.from('notifications')
+            .update({ is_read: true })
+            .eq('user_id', currentUser.id)
+            .eq('is_read', false);
+        
+        // Refresh to be sure
         fetchNotifications();
     }
 
@@ -733,7 +753,7 @@
         }
     }
 
-    // --- RENDER DASHBOARD ---
+    // --- RENDER LOGIC ---
     function renderDashboard(data) {
         const p = data.profile;
         document.getElementById('greeting-name').textContent = `Hello, ${p.full_name.split(' ')[0]}`;
@@ -747,7 +767,7 @@
             document.getElementById('announcement-box').style.display = 'flex';
         }
 
-        // Featured
+        // FEATURED SHOPS
         const featured = data.shops.filter(s => s.is_featured);
         if (featured.length > 0) {
             document.getElementById('section-featured').classList.remove('hidden');
@@ -777,7 +797,7 @@
         const activeAreas = data.areas.filter(a => data.shops.some(s => s.area_id === a.id));
         renderCollageRow('area-list', activeAreas, data.shops, data.products, 'area', data.profile.area_id);
 
-        // All Shops
+        // ALL SHOPS
         document.getElementById('shop-count').textContent = `${data.shops.length} Found`;
         document.getElementById('shop-list').innerHTML = data.shops.map(s => {
             const collageHtml = buildShopThumbnail(s, data.products, 'shop');
@@ -893,6 +913,11 @@
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
         btn.classList.add('active');
+        
+        // Mark as read when switching to notifications
+        if (screenId === 'notifications') {
+            markAllAsRead();
+        }
     }
 
     function previewImage(input) {
