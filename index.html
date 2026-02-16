@@ -130,10 +130,15 @@
         border-color: white;
     }
 
-    /* Mobile tweak */
+    /* Typewriter Cursor */
+    @keyframes blink { 50% { opacity: 0; } }
+    .cursor {
+        animation: blink 1s step-end infinite;
+        color: var(--color-pink);
+    }
+
     @media (max-width: 768px) {
         .hero-auth-widget { max-width: 100%; }
-        .hero-title { font-size: 2rem; } /* Ensure title isn't too huge above form */
     }
   </style>
 </head>
@@ -168,7 +173,6 @@
       </a>
     </div>
 
-    <!-- Mobile Menu Button -->
     <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
       <i class="fa-solid fa-bars"></i>
     </button>
@@ -199,9 +203,12 @@
         <span class="repo-badge">
           Repository of Shops, Products and Services
         </span>
-        <h1 class="hero-title">
-            Your City's Digital Marketplace
+        
+        <!-- DYNAMIC TYPEWRITER HEADING -->
+        <h1 class="hero-title" style="min-height: 80px;">
+           <span id="typewriter"></span><span class="cursor">|</span>
         </h1>
+
         <p class="hero-desc">
           We provide a digital repository of physical shops, their products, and locations within a city.
         </p>
@@ -262,13 +269,54 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // --- TYPEWRITER LOGIC ---
+    const textElement = document.getElementById('typewriter');
+    const phrases = [
+        "Your City's Digital Marketplace",
+        "Find Verified Merchants",
+        "Connect with Local Shops",
+        "Boost Your Business"
+    ];
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let typeSpeed = 100;
+
+    function typeEffect() {
+        const currentPhrase = phrases[phraseIndex];
+        
+        if (isDeleting) {
+            textElement.textContent = currentPhrase.substring(0, charIndex - 1);
+            charIndex--;
+            typeSpeed = 50; 
+        } else {
+            textElement.textContent = currentPhrase.substring(0, charIndex + 1);
+            charIndex++;
+            typeSpeed = 100;
+        }
+
+        if (!isDeleting && charIndex === currentPhrase.length) {
+            isDeleting = true;
+            typeSpeed = 2000; // Pause at end
+        } else if (isDeleting && charIndex === 0) {
+            isDeleting = false;
+            phraseIndex = (phraseIndex + 1) % phrases.length;
+            typeSpeed = 500; // Pause before new word
+        }
+
+        setTimeout(typeEffect, typeSpeed);
+    }
+
+    // Start Animation
+    document.addEventListener('DOMContentLoaded', typeEffect);
+
+    // --- LOGIN LOGIC ---
     async function handleHeroLogin() {
         const email = document.getElementById('hero-email').value;
         const password = document.getElementById('hero-password').value;
         const btn = document.getElementById('hero-login-btn');
-
-        // Loading State
         const originalText = btn.innerHTML;
+
         btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
         btn.disabled = true;
 
