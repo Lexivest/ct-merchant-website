@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard | CT‑Merchant</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -117,6 +117,25 @@
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
         }
 
+        /* Notification Icon in Top Bar */
+        .notif-btn-top {
+            position: relative; background: none; border: none; 
+            font-size: 1.2rem; color: var(--color-text-muted); cursor: pointer;
+            padding: 4px; display: flex; align-items: center;
+        }
+        .notif-btn-top:hover { color: var(--color-purple); }
+        .notif-badge {
+            position: absolute; top: 0; right: 0;
+            background: #EF4444; color: white;
+            font-size: 0.6rem; font-weight: 700;
+            width: 16px; height: 16px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid white;
+            display: none; /* Hidden if 0 */
+        }
+        .notif-badge.active { display: flex; }
+
+
         .ticker-container {
             flex-grow: 1; background: #FFF7ED; border-radius: 6px;
             height: 36px; display: flex; align-items: center; overflow: hidden;
@@ -144,7 +163,7 @@
         .pill-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: #E2E8F0; }
         .pill-name { font-weight: 700; font-size: 0.8rem; }
 
-        /* --- MARKET OVERVIEW --- */
+        /* --- MARKET / HOME STYLES --- */
         .section { margin-bottom: 2rem; width: 100%; }
         .section-header { display: flex; align-items: center; margin-bottom: 1rem; }
         .bar { width: 4px; height: 24px; border-radius: 2px; margin-right: 12px; }
@@ -158,7 +177,6 @@
         .scroll-row::-webkit-scrollbar { height: 4px; }
         .scroll-row::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 10px; }
 
-        /* Featured Card */
         .featured-card {
             min-width: 280px; width: 280px;
             background: white; border-radius: 12px; padding: 10px;
@@ -173,7 +191,6 @@
         .shop-cat { font-size: 0.7rem; color: var(--color-purple); font-weight: 700; background: #F3E8FF; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
         .shop-addr { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
 
-        /* Collage Pills */
         .collage-pill {
             display: flex; align-items: center; gap: 10px;
             background: white; border: 1px solid var(--color-border);
@@ -191,12 +208,10 @@
         .collage-3 div img { width: 100%; height: 50%; object-fit: cover; }
         .pill-text { font-weight: 700; font-size: 0.85rem; color: var(--color-text-main); }
 
-        /* Promo */
         .promo-slider { display: flex; overflow-x: auto; gap: 1rem; margin-bottom: 2rem; width: 100%; }
         .promo-card { min-width: 320px; height: 140px; border-radius: 16px; overflow: hidden; flex-shrink: 0; }
         .promo-img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Shop Grid */
         .shop-list { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
@@ -214,7 +229,7 @@
         .shop-collage.single img { width: 100%; height: 100%; border: none; }
         .shop-details { flex: 1; overflow: hidden; min-width: 0; }
 
-        /* --- SERVICES (New) --- */
+        /* --- SERVICES GRID --- */
         .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
         .service-card {
             background: white; border-radius: 16px; padding: 20px 12px;
@@ -237,6 +252,33 @@
         .bg-pink-light { background: #FCE7F3; color: #BE185D; }
         .bg-teal-light { background: #CCFBF1; color: #0F766E; }
         .bg-grey-light { background: #F1F5F9; color: #475569; }
+
+        /* --- NOTIFICATIONS --- */
+        .notif-list { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 600px; margin: 0 auto; }
+        .notif-card {
+            background: white; padding: 16px; border-radius: 12px;
+            border: 1px solid var(--color-border); box-shadow: var(--shadow-sm);
+            cursor: pointer; transition: background 0.2s; position: relative;
+        }
+        .notif-card.unread { background: #F0F9FF; border-color: #BAE6FD; }
+        .notif-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .notif-title { font-weight: 700; font-size: 0.95rem; color: var(--color-text-main); }
+        .notif-time { font-size: 0.75rem; color: var(--color-text-muted); }
+        .notif-body { font-size: 0.85rem; color: #475569; line-height: 1.4; padding-right: 20px; }
+        
+        .btn-notif-delete {
+            position: absolute; bottom: 12px; right: 12px;
+            background: none; border: none; color: #94A3B8;
+            cursor: pointer; font-size: 1rem; padding: 4px;
+        }
+        .btn-notif-delete:hover { color: #EF4444; }
+
+        .btn-clear-all {
+            display: flex; align-items: center; gap: 6px; 
+            color: #EF4444; font-weight: 700; font-size: 0.85rem; 
+            background: #FEF2F2; padding: 6px 12px; border-radius: 8px; 
+            border: none; cursor: pointer; margin-left: auto;
+        }
 
         /* --- PROFILE --- */
         .profile-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: var(--shadow-sm); max-width: 600px; margin: 0 auto; width: 100%; }
@@ -288,15 +330,12 @@
                 <i class="fa-solid fa-store"></i> Market Overview
             </button>
             <button class="nav-item" onclick="switchTab('services', this)">
-                <i class="fa-solid fa-grid"></i> Services
+                <i class="fa-solid fa-grid-2"></i> Services
             </button>
             <button class="nav-item" onclick="switchTab('profile', this)">
                 <i class="fa-solid fa-user-gear"></i> My Profile
             </button>
-            <button class="nav-item">
-                <i class="fa-solid fa-box"></i> My Orders
-            </button>
-            <button class="nav-item">
+            <button class="nav-item" onclick="switchTab('notifications', this)">
                 <i class="fa-solid fa-bell"></i> Notifications
             </button>
         </nav>
@@ -317,9 +356,15 @@
                     <i class="fa-solid fa-bars"></i>
                 </button>
                 <h1 id="greeting-name" class="greeting-text">Hello User</h1>
+                
+                <!-- Notification Bell (Mobile/Desktop) -->
+                <button class="notif-btn-top" onclick="switchTab('notifications', document.querySelectorAll('.nav-item')[3])">
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="unread-badge" class="notif-badge">0</span>
+                </button>
             </div>
 
-            <!-- Integrated Announcement Ticker -->
+            <!-- Ticker -->
             <div id="announcement-box" class="ticker-container">
                 <div id="announcement-text" class="ticker"></div>
             </div>
@@ -382,12 +427,11 @@
             </div>
         </div>
 
-        <!-- TAB 2: SERVICES (NEW) -->
+        <!-- TAB 2: SERVICES -->
         <div id="services" class="screen">
             <h2 class="section-title" style="margin-bottom: 20px;">Services & Tools</h2>
             <div class="services-grid">
-                
-                <!-- 1. Shop Card (Dynamic) -->
+                <!-- Shop Card -->
                 <div class="service-card" onclick="handleShopAction()">
                     <div id="shop-icon-box" class="service-icon-box bg-grey-light">
                         <i class="fa-solid fa-store"></i>
@@ -396,32 +440,32 @@
                     <div id="shop-card-sub" class="service-subtitle">Checking status</div>
                 </div>
 
-                <!-- 2. Wishlist -->
+                <!-- Wishlist -->
                 <div class="service-card" onclick="alert('Wishlist Page Coming Soon')">
                     <div class="service-icon-box bg-pink-light"><i class="fa-solid fa-heart"></i></div>
                     <div class="service-title">Wishlist</div>
                     <div id="wishlist-count" class="service-subtitle">...</div>
                 </div>
 
-                <!-- 3. Help -->
+                <!-- Help -->
                 <div class="service-card" onclick="alert('Help Page Coming Soon')">
                     <div class="service-icon-box bg-green-light"><i class="fa-solid fa-headset"></i></div>
                     <div class="service-title">Help & Support</div>
                 </div>
 
-                <!-- 4. FAQ -->
+                <!-- FAQ -->
                 <div class="service-card" onclick="alert('FAQ Page Coming Soon')">
                     <div class="service-icon-box bg-teal-light"><i class="fa-solid fa-circle-question"></i></div>
                     <div class="service-title">FAQ</div>
                 </div>
 
-                <!-- 5. Settings -->
+                <!-- Settings -->
                 <div class="service-card" onclick="switchTab('profile', document.querySelectorAll('.nav-item')[2])">
                     <div class="service-icon-box bg-grey-light"><i class="fa-solid fa-gear"></i></div>
                     <div class="service-title">Settings</div>
                 </div>
 
-                <!-- 6. Report -->
+                <!-- Report -->
                 <div class="service-card" onclick="alert('Report Page Coming Soon')">
                     <div class="service-icon-box bg-red-light"><i class="fa-solid fa-triangle-exclamation"></i></div>
                     <div class="service-title">Report Abuse</div>
@@ -435,9 +479,7 @@
                 <div class="profile-hero">
                     <div class="avatar-uploader">
                         <img id="edit-avatar" src="" class="main-avatar" alt="Avatar">
-                        <label for="file-input" class="btn-cam">
-                            <i class="fa-solid fa-camera"></i>
-                        </label>
+                        <label for="file-input" class="btn-cam"><i class="fa-solid fa-camera"></i></label>
                         <input type="file" id="file-input" style="display: none;" accept="image/*" onchange="previewImage(this)">
                     </div>
                     <div class="hero-info">
@@ -445,7 +487,6 @@
                         <p id="edit-display-email">user@email.com</p>
                     </div>
                 </div>
-
                 <form id="profile-form" onsubmit="saveProfile(event)">
                     <div class="form-grid">
                         <div>
@@ -471,6 +512,17 @@
                     </div>
                     <button type="submit" id="btn-submit" class="btn-save">Save Changes</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- TAB 4: NOTIFICATIONS -->
+        <div id="notifications" class="screen">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; max-width:600px; margin:0 auto 1rem auto;">
+                <h2 class="section-title">Notifications</h2>
+                <button onclick="clearAllNotifications()" class="btn-clear-all"><i class="fa-solid fa-trash"></i> Clear All</button>
+            </div>
+            <div id="notif-list" class="notif-list">
+                <!-- JS populated -->
             </div>
         </div>
 
@@ -507,6 +559,7 @@
         fetchFullData();
         fetchShopStatus();
         fetchWishlistCount();
+        fetchNotifications();
     };
 
     // --- MARKET FETCH ---
@@ -580,7 +633,7 @@
         const box = document.getElementById('shop-icon-box');
         const title = document.getElementById('shop-card-title');
         const sub = document.getElementById('shop-card-sub');
-        box.className = 'service-icon-box'; // Reset classes
+        box.className = 'service-icon-box'; 
 
         if (!shop) {
             box.classList.add('bg-blue-light');
@@ -609,16 +662,78 @@
         if (!myShop) {
             window.location.href = "shop-registration.html";
         } else if (myShop.status === 'pending') {
-            alert("Your shop application is currently being reviewed.");
+            alert("Application Under Review\n\nYour shop application is currently being reviewed by our team. Please check back later.");
         } else if (myShop.status === 'approved') {
-            // window.location.href = "merchant-dashboard.html"; // Coming soon
             alert("Merchant Dashboard coming soon!");
         } else if (myShop.status === 'rejected') {
-            window.location.href = `shop-registration.html?edit=true&id=${myShop.id}`;
+            if(confirm("Your application was rejected. Would you like to view the reason and update it?")) {
+                window.location.href = `shop-registration.html?edit=true&id=${myShop.id}`;
+            }
         }
     }
 
-    // --- RENDER LOGIC ---
+    // --- NOTIFICATIONS ---
+    async function fetchNotifications() {
+        try {
+            // 1. Get List
+            const { data } = await client.from('notifications')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+            
+            if(data) {
+                renderNotificationList(data);
+                
+                // 2. Count Unread
+                const unread = data.filter(n => !n.is_read).length;
+                const badge = document.getElementById('unread-badge');
+                badge.textContent = unread;
+                if(unread > 0) badge.classList.add('active');
+                else badge.classList.remove('active');
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    function renderNotificationList(items) {
+        const container = document.getElementById('notif-list');
+        if(items.length === 0) {
+            container.innerHTML = `<div style="text-align:center; padding:40px; color:#64748B;"><i class="fa-regular fa-bell-slash" style="font-size:40px;"></i><p style="margin-top:10px;">No notifications</p></div>`;
+            return;
+        }
+
+        container.innerHTML = items.map(n => `
+            <div class="notif-card ${!n.is_read ? 'unread' : ''}" onclick="markAsRead(${n.id})">
+                <div class="notif-header">
+                    <span class="notif-title">${n.title}</span>
+                    <span class="notif-time">${new Date(n.created_at).toLocaleDateString()}</span>
+                </div>
+                <div class="notif-body">${n.message}</div>
+                <button class="btn-notif-delete" onclick="event.stopPropagation(); deleteNotif(${n.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        `).join('');
+    }
+
+    async function markAsRead(id) {
+        // UI Update logic should be here (refreshing list or finding element)
+        await client.from('notifications').update({is_read: true}).eq('id', id);
+        fetchNotifications();
+    }
+
+    async function deleteNotif(id) {
+        if(confirm("Delete this notification?")) {
+            await client.from('notifications').delete().eq('id', id);
+            fetchNotifications();
+        }
+    }
+
+    async function clearAllNotifications() {
+        if(confirm("Delete ALL notifications? This cannot be undone.")) {
+            await client.from('notifications').delete().eq('user_id', currentUser.id);
+            fetchNotifications();
+        }
+    }
+
+    // --- RENDER DASHBOARD ---
     function renderDashboard(data) {
         const p = data.profile;
         document.getElementById('greeting-name').textContent = `Hello, ${p.full_name.split(' ')[0]}`;
@@ -632,7 +747,7 @@
             document.getElementById('announcement-box').style.display = 'flex';
         }
 
-        // FEATURED SHOPS
+        // Featured
         const featured = data.shops.filter(s => s.is_featured);
         if (featured.length > 0) {
             document.getElementById('section-featured').classList.remove('hidden');
@@ -662,7 +777,7 @@
         const activeAreas = data.areas.filter(a => data.shops.some(s => s.area_id === a.id));
         renderCollageRow('area-list', activeAreas, data.shops, data.products, 'area', data.profile.area_id);
 
-        // ALL SHOPS
+        // All Shops
         document.getElementById('shop-count').textContent = `${data.shops.length} Found`;
         document.getElementById('shop-list').innerHTML = data.shops.map(s => {
             const collageHtml = buildShopThumbnail(s, data.products, 'shop');
