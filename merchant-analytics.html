@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Analytics | CT‑Merchant</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-purple: #2E1065;
+            --color-bg: #F8FAFC;
+            --color-text: #1E293B;
+            --color-text-muted: #64748B;
+            --color-border: #E2E8F0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--color-bg); color: var(--color-text); min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+
+        .container { width: 100%; max-width: 600px; }
+
+        /* Header */
+        .app-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+        .back-btn { background: white; border: 1px solid var(--color-border); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-text); font-size: 1.1rem; transition: background 0.2s; }
+        .back-btn:hover { background: #E2E8F0; }
+        .page-title { font-size: 1.25rem; font-weight: 800; }
+
+        /* Content */
+        .section-header { margin-bottom: 24px; }
+        .section-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; }
+        .section-desc { color: var(--color-text-muted); font-size: 0.95rem; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        /* Stat Card */
+        .stat-card {
+            background: white; border-radius: 16px; padding: 20px;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
+            display: flex; flex-direction: column; align-items: flex-start;
+        }
+
+        .icon-box {
+            width: 48px; height: 48px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; margin-bottom: 16px;
+        }
+
+        .stat-value { font-size: 2rem; font-weight: 800; line-height: 1.1; margin-bottom: 4px; }
+        .stat-title { font-size: 1rem; font-weight: 700; color: var(--color-text); }
+        .stat-sub { font-size: 0.75rem; color: var(--color-text-muted); }
+
+        /* Colors */
+        .theme-blue .icon-box { background: #DBEAFE; color: #1D4ED8; }
+        .theme-green .icon-box { background: #DCFCE7; color: #15803D; }
+        .theme-pink .icon-box { background: #FCE7F3; color: #BE185D; }
+        .theme-grey .icon-box { background: #F1F5F9; color: #64748B; } /* Placeholder */
+
+        .spinner { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: var(--color-purple); border-radius: 50%; animation: spin 1s linear infinite; margin: 100px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none; }
+        
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="app-bar">
+        <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+        <div class="page-title">Shop Analytics</div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loader" class="spinner"></div>
+
+    <div id="content" class="hidden">
+        <div class="section-header">
+            <h2 class="section-title">Performance Overview</h2>
+            <p class="section-desc">Track how customers are interacting with your shop.</p>
+        </div>
+
+        <div class="stats-grid">
+            
+            <!-- 1. Visits -->
+            <div class="stat-card theme-blue">
+                <div class="icon-box"><i class="fa-solid fa-eye"></i></div>
+                <div class="stat-value" id="val-views">0</div>
+                <div class="stat-title">Visits</div>
+                <div class="stat-sub">Profile Views</div>
+            </div>
+
+            <!-- 2. Contacts -->
+            <div class="stat-card theme-green">
+                <div class="icon-box"><i class="fa-solid fa-touch-app"></i></div>
+                <div class="stat-value" id="val-clicks">0</div>
+                <div class="stat-title">Contacts</div>
+                <div class="stat-sub">WhatsApp Clicks</div>
+            </div>
+
+            <!-- 3. Likes -->
+            <div class="stat-card theme-pink">
+                <div class="icon-box"><i class="fa-solid fa-thumbs-up"></i></div>
+                <div class="stat-value" id="val-likes">0</div>
+                <div class="stat-title">Likes</div>
+                <div class="stat-sub">Shop Favorites</div>
+            </div>
+
+            <!-- 4. Placeholder (Future Metric) -->
+            <div class="stat-card theme-grey" style="opacity: 0.5;">
+                <div class="icon-box"><i class="fa-solid fa-chart-pie"></i></div>
+                <div class="stat-value">--</div>
+                <div class="stat-title">Conversion</div>
+                <div class="stat-sub">Coming Soon</div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const params = new URLSearchParams(window.location.search);
+    const shopId = params.get('shop_id');
+
+    window.onload = async () => {
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) { window.location.href = "login.html"; return; }
+        
+        if (!shopId) {
+            alert("Shop ID missing");
+            window.history.back();
+            return;
+        }
+
+        fetchStats();
+    };
+
+    async function fetchStats() {
+        try {
+            // Parallel Fetch using count aggregation
+            const [viewsRes, clicksRes, likesRes] = await Promise.all([
+                client.from('shop_views').select('*', { count: 'exact', head: true }).eq('shop_id', shopId),
+                client.from('whatsapp_clicks').select('*', { count: 'exact', head: true }).eq('shop_id', shopId),
+                client.from('shop_likes').select('*', { count: 'exact', head: true }).eq('shop_id', shopId)
+            ]);
+
+            document.getElementById('val-views').textContent = formatNumber(viewsRes.count || 0);
+            document.getElementById('val-clicks').textContent = formatNumber(clicksRes.count || 0);
+            document.getElementById('val-likes').textContent = formatNumber(likesRes.count || 0);
+
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+
+        } catch (e) {
+            console.error("Stats error", e);
+            alert("Failed to load statistics.");
+        }
+    }
+
+    function formatNumber(num) {
+        if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'k';
+        }
+        return num;
+    }
+</script>
+
+</body>
+</html>
