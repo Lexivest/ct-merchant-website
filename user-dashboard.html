@@ -27,13 +27,15 @@
         body { 
             background-color: var(--color-bg); 
             color: var(--color-text-main); 
-            overflow-x: hidden; 
+            /* FIX 1: Restore Horizontal Scrolling */
+            overflow-x: auto; 
+            overflow-y: auto;
             display: flex;
             min-height: 100vh;
             width: 100%;
         }
 
-        /* --- SIDEBAR --- */
+        /* --- SIDEBAR (Hidden by Default) --- */
         .sidebar {
             width: var(--sidebar-width);
             background: var(--color-purple);
@@ -44,14 +46,15 @@
             position: fixed;
             top: 0; left: 0; bottom: 0;
             z-index: 1000;
+            /* FIX 2: Start Hidden on ALL screens */
+            transform: translateX(-100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            /* Desktop Default: Visible (0) */
-            transform: translateX(0);
+            overflow-y: auto;
         }
 
-        /* Desktop Closed State */
-        .sidebar.closed {
-            transform: translateX(-100%);
+        /* Open State */
+        .sidebar.open {
+            transform: translateX(0);
         }
 
         .sidebar-overlay {
@@ -81,21 +84,16 @@
         .sidebar-footer { margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); }
         .btn-logout { color: #FDA4AF; width: 100%; text-align: left; }
 
-        /* --- MAIN CONTENT --- */
+        /* --- MAIN CONTENT (Full Width Default) --- */
         .main-content {
-            margin-left: var(--sidebar-width);
-            flex-grow: 1;
-            padding: 2rem;
-            min-width: 0;
-            width: calc(100% - var(--sidebar-width));
-            min-height: 100vh;
-            transition: margin-left 0.3s ease, width 0.3s ease;
-        }
-
-        /* Desktop Expanded State */
-        .main-content.expanded {
+            /* FIX 2: No margin, Full width initially */
             margin-left: 0;
             width: 100%;
+            flex-grow: 1;
+            padding: 2rem;
+            min-width: 0; /* Prevent flex overflow */
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
         }
 
         /* --- TOP BAR --- */
@@ -114,16 +112,15 @@
 
         .top-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
         
+        /* Menu Button - Visible Everywhere */
         .menu-btn {
-            display: flex; /* Always visible now */
+            display: flex; /* Always visible */
             background: #F1F5F9; border: none;
             width: 36px; height: 36px; border-radius: 8px;
             color: var(--color-text-main); font-size: 1.1rem;
             align-items: center; justify-content: center;
             cursor: pointer; flex-shrink: 0;
-            transition: background 0.2s;
         }
-        .menu-btn:hover { background: #E2E8F0; }
 
         .greeting-text { 
             font-size: 1.1rem; font-weight: 800; color: var(--color-purple); margin: 0;
@@ -218,7 +215,7 @@
         .promo-card { min-width: 320px; height: 150px; border-radius: 16px; overflow: hidden; flex-shrink: 0; }
         .promo-img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Shop Grid */
+        /* Shop List */
         .shop-list { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
@@ -257,24 +254,17 @@
 
         /* --- MOBILE RESPONSIVE --- */
         @media (max-width: 1024px) {
-            /* Mobile: Sidebar Hidden Default (Left -100%) */
-            .sidebar { transform: translateX(-100%); width: 280px; }
-            /* Mobile: Open State (Left 0) */
-            .sidebar.open { transform: translateX(0); }
+            /* Sidebar hidden (Handled by defaults now) */
             
-            /* Mobile Content: Full width, no margin */
-            .main-content { margin-left: 0; width: 100%; padding: 1rem; }
+            .main-content { padding: 1rem; }
             
-            /* Header */
             .top-bar { padding: 10px 14px; gap: 8px; }
             .greeting-text { font-size: 0.95rem; }
             .location-badge { padding: 4px 10px; font-size: 0.75rem; max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
             
-            /* Profile Stack */
             .profile-card { padding: 1.5rem; }
             .profile-hero { flex-direction: column; text-align: center; gap: 1rem; }
             
-            /* Card Widths */
             .shop-list { grid-template-columns: 1fr; }
             .featured-card { min-width: 85vw; width: 85vw; } 
             .promo-card { min-width: 85vw; }
@@ -285,7 +275,7 @@
 
 <div class="dashboard-container">
     
-    <!-- Mobile Overlay -->
+    <!-- Sidebar Overlay -->
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <!-- Sidebar -->
@@ -443,21 +433,10 @@
     let currentUser = null;
     let selectedFile = null;
 
+    // --- SIDEBAR TOGGLE ---
     function toggleSidebar() {
-        const isMobile = window.innerWidth <= 1024;
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        const content = document.querySelector('.main-content');
-
-        if (isMobile) {
-            // Mobile: Use Overlay logic
-            sidebar.classList.toggle('open');
-            overlay.classList.toggle('active');
-        } else {
-            // Desktop: Use Push/Collapse logic
-            sidebar.classList.toggle('closed');
-            content.classList.toggle('expanded');
-        }
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebar-overlay').classList.toggle('active');
     }
 
     // --- INITIALIZATION ---
