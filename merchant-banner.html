@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Banners | CT‑Merchant</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-purple: #2E1065;
+            --color-bg: #F8FAFC;
+            --color-text: #1E293B;
+            --color-border: #E2E8F0;
+            --color-red: #EF4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--color-bg); color: var(--color-text); min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+
+        .container { width: 100%; max-width: 500px; }
+
+        /* Header */
+        .app-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+        .back-btn { background: white; border: 1px solid var(--color-border); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-text); font-size: 1.1rem; }
+        .page-title { font-size: 1.25rem; font-weight: 800; }
+        
+        /* Save Button */
+        .save-btn {
+            margin-left: auto; background: none; border: none; color: var(--color-purple);
+            font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 6px;
+        }
+        .save-btn:disabled { color: #94A3B8; cursor: not-allowed; }
+
+        /* Instructions */
+        .info-box { margin-bottom: 24px; }
+        .info-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+        .info-desc { color: #64748B; font-size: 0.9rem; }
+
+        /* Banner List */
+        .banner-list { display: flex; flex-direction: column; gap: 16px; }
+
+        .banner-item {
+            position: relative; width: 100%; height: 180px;
+            border-radius: 16px; overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .banner-img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .delete-btn {
+            position: absolute; top: 10px; right: 10px;
+            background: white; color: var(--color-red);
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .delete-btn:hover { transform: scale(1.1); background: #FEF2F2; }
+
+        /* Add Button */
+        .add-card {
+            width: 100%; height: 180px; background: #F1F5F9;
+            border: 2px dashed #CBD5E1; border-radius: 16px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; color: #64748B;
+        }
+        .add-card:hover { border-color: var(--color-purple); background: #F3E8FF; color: var(--color-purple); }
+        .add-icon { font-size: 2rem; margin-bottom: 8px; }
+        .add-text { font-weight: 600; font-size: 0.9rem; }
+
+        .spinner { width: 20px; height: 20px; border: 2px solid rgba(46, 16, 101, 0.2); border-top-color: var(--color-purple); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="app-bar">
+        <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+        <div class="page-title">Shop Banners</div>
+        <button id="save-btn" onclick="saveBanners()" class="save-btn">
+            <i class="fa-solid fa-check"></i> Save
+        </button>
+    </div>
+
+    <div class="info-box">
+        <div class="info-title">Upload up to 2 Banners</div>
+        <div class="info-desc">High quality landscape images work best.</div>
+    </div>
+
+    <div id="banner-container" class="banner-list">
+        <!-- JS Populated -->
+    </div>
+
+    <input type="file" id="file-input" hidden accept="image/*" onchange="handleFileSelect(this)">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const params = new URLSearchParams(window.location.search);
+    const shopId = params.get('shop_id');
+    
+    let bannerSlots = []; // Mixed: Strings (URL) or Files
+    let originalBanners = []; // To track deletions
+
+    window.onload = async () => {
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) { window.location.href = "login.html"; return; }
+        
+        if (!shopId) { alert("Shop ID missing"); window.history.back(); return; }
+
+        // Fetch current banners
+        const { data, error } = await client.from('shops').select('banners').eq('id', shopId).single();
+        
+        if (data && data.banners) {
+            bannerSlots = [...data.banners];
+            originalBanners = [...data.banners];
+            renderBanners();
+        }
+    };
+
+    function renderBanners() {
+        const container = document.getElementById('banner-container');
+        container.innerHTML = '';
+
+        // Render existing slots
+        bannerSlots.forEach((item, index) => {
+            const url = (item instanceof File) ? URL.createObjectURL(item) : item;
+            
+            const div = document.createElement('div');
+            div.className = 'banner-item';
+            div.innerHTML = `
+                <img src="${url}" class="banner-img">
+                <button class="delete-btn" onclick="removeBanner(${index})">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+            container.appendChild(div);
+        });
+
+        // Render Add Button if < 2
+        if (bannerSlots.length < 2) {
+            const addBtn = document.createElement('div');
+            addBtn.className = 'add-card';
+            addBtn.onclick = () => document.getElementById('file-input').click();
+            addBtn.innerHTML = `
+                <i class="fa-solid fa-images add-icon"></i>
+                <div class="add-text">Tap to add banner</div>
+            `;
+            container.appendChild(addBtn);
+        }
+    }
+
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            bannerSlots.push(input.files[0]);
+            renderBanners();
+            input.value = ''; // Reset input
+        }
+    }
+
+    function removeBanner(index) {
+        bannerSlots.splice(index, 1);
+        renderBanners();
+    }
+
+    async function saveBanners() {
+        const btn = document.getElementById('save-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div>';
+
+        try {
+            // 1. Delete removed banners from Storage
+            // Find items in original that are NOT in current slots (strings only)
+            const currentUrls = bannerSlots.filter(i => typeof i === 'string');
+            const toDelete = originalBanners.filter(url => !currentUrls.includes(url));
+
+            if (toDelete.length > 0) {
+                // Extract paths from URLs
+                const paths = toDelete.map(url => {
+                    // Assuming URL format: .../banner-storage/path/to/file.jpg
+                    const parts = url.split('/banner-storage/');
+                    return parts.length > 1 ? parts[1] : null;
+                }).filter(p => p);
+
+                if (paths.length > 0) {
+                    await client.storage.from('banner-storage').remove(paths);
+                }
+            }
+
+            // 2. Upload new files and build final list
+            let finalUrls = [];
+            
+            for (let item of bannerSlots) {
+                if (item instanceof File) {
+                    const ext = item.name.split('.').pop();
+                    const fileName = `${shopId}/${Date.now()}_${Math.random()}.${ext}`;
+                    
+                    const { error: uploadError } = await client.storage
+                        .from('banner-storage')
+                        .upload(fileName, item);
+
+                    if (uploadError) throw uploadError;
+
+                    const { data } = client.storage.from('banner-storage').getPublicUrl(fileName);
+                    finalUrls.push(data.publicUrl);
+                } else {
+                    finalUrls.push(item); // Keep existing URL
+                }
+            }
+
+            // 3. Update Database
+            const firstImage = finalUrls.length > 0 ? finalUrls[0] : null;
+            
+            const { error } = await client.from('shops').update({
+                banners: finalUrls,
+                image_url: firstImage // Update primary image too
+            }).eq('id', shopId);
+
+            if (error) throw error;
+
+            alert("Banners updated successfully!");
+            window.history.back();
+
+        } catch (err) {
+            console.error(err);
+            alert("Error: " + err.message);
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Save';
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
