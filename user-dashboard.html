@@ -338,9 +338,6 @@
             <button class="nav-item" onclick="switchTab('profile', this)">
                 <i class="fa-solid fa-user-gear"></i> My Profile
             </button>
-            <button class="nav-item">
-                <i class="fa-solid fa-box"></i> My Orders
-            </button>
             <button class="nav-item" onclick="switchTab('notifications', this)">
                 <i class="fa-solid fa-bell"></i> Notifications
             </button>
@@ -364,7 +361,7 @@
                 <h1 id="greeting-name" class="greeting-text">Hello User</h1>
                 
                 <!-- Notification Bell -->
-                <button class="notif-btn-top" onclick="switchTab('notifications', document.querySelectorAll('.nav-item')[4])">
+                <button class="notif-btn-top" onclick="switchTab('notifications', document.querySelectorAll('.nav-item')[3])">
                     <i class="fa-solid fa-bell"></i>
                     <span id="unread-badge" class="notif-badge">0</span>
                 </button>
@@ -437,7 +434,8 @@
         <div id="services" class="screen">
             <h2 class="section-title" style="margin-bottom: 20px;">Services & Tools</h2>
             <div class="services-grid">
-                <!-- Shop Card -->
+                
+                <!-- 1. Shop Card (Dynamic) -->
                 <div class="service-card" onclick="handleShopAction()">
                     <div id="shop-icon-box" class="service-icon-box bg-grey-light">
                         <i class="fa-solid fa-store"></i>
@@ -446,32 +444,32 @@
                     <div id="shop-card-sub" class="service-subtitle">Checking status</div>
                 </div>
 
-                <!-- Wishlist -->
+                <!-- 2. Wishlist -->
                 <div class="service-card" onclick="alert('Wishlist Page Coming Soon')">
                     <div class="service-icon-box bg-pink-light"><i class="fa-solid fa-heart"></i></div>
                     <div class="service-title">Wishlist</div>
                     <div id="wishlist-count" class="service-subtitle">...</div>
                 </div>
 
-                <!-- Help -->
+                <!-- 3. Help -->
                 <div class="service-card" onclick="alert('Help Page Coming Soon')">
                     <div class="service-icon-box bg-green-light"><i class="fa-solid fa-headset"></i></div>
                     <div class="service-title">Help & Support</div>
                 </div>
 
-                <!-- FAQ -->
+                <!-- 4. FAQ -->
                 <div class="service-card" onclick="alert('FAQ Page Coming Soon')">
                     <div class="service-icon-box bg-teal-light"><i class="fa-solid fa-circle-question"></i></div>
                     <div class="service-title">FAQ</div>
                 </div>
 
-                <!-- Settings -->
+                <!-- 5. Settings -->
                 <div class="service-card" onclick="switchTab('profile', document.querySelectorAll('.nav-item')[2])">
                     <div class="service-icon-box bg-grey-light"><i class="fa-solid fa-gear"></i></div>
                     <div class="service-title">Settings</div>
                 </div>
 
-                <!-- Report -->
+                <!-- 6. Report -->
                 <div class="service-card" onclick="alert('Report Page Coming Soon')">
                     <div class="service-icon-box bg-red-light"><i class="fa-solid fa-triangle-exclamation"></i></div>
                     <div class="service-title">Report Abuse</div>
