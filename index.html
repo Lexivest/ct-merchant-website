@@ -14,50 +14,67 @@
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    /* Hero Input Styles */
-    .hero-form-container {
-        margin-bottom: 2rem;
+    /* --- HERO AUTH WIDGET --- */
+    .hero-auth-widget {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 24px;
+        border-radius: 20px;
         width: 100%;
-        max-width: 400px;
+        max-width: 380px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        margin-top: 1rem;
     }
-    
-    .hero-input-group {
+
+    .widget-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 16px;
         display: flex;
-        flex-direction: column;
-        gap: 12px;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .input-group-hero {
+        position: relative;
         margin-bottom: 12px;
+    }
+
+    .input-group-hero i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.9rem;
+        pointer-events: none;
     }
 
     .hero-input {
         width: 100%;
-        padding: 14px 16px;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 14px 16px 14px 44px; /* Space for icon */
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 12px;
         color: white;
-        font-size: 1rem;
+        font-size: 0.95rem;
         outline: none;
         transition: all 0.3s ease;
-        backdrop-filter: blur(5px);
     }
 
-    .hero-input::placeholder {
-        color: rgba(255, 255, 255, 0.7);
-    }
-
+    .hero-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+    
     .hero-input:focus {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(0, 0, 0, 0.4);
         border-color: var(--color-pink);
-        box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.2);
-    }
-
-    .hero-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
+        box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.25);
     }
 
     .btn-login-hero {
+        width: 100%;
         background: white;
         color: var(--color-purple);
         font-weight: 800;
@@ -65,60 +82,58 @@
         border-radius: 12px;
         border: none;
         cursor: pointer;
-        transition: transform 0.2s;
+        font-size: 1rem;
+        transition: transform 0.2s, background-color 0.2s;
+        margin-top: 4px;
         display: flex;
-        align-items: center;
         justify-content: center;
+        align-items: center;
         gap: 8px;
     }
     .btn-login-hero:hover {
-        background: #f1f5f9;
+        background: #f8fafc;
         transform: translateY(-2px);
     }
 
-    .divider-text {
+    .widget-divider {
+        display: flex;
+        align-items: center;
         text-align: center;
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 0.85rem;
+        margin: 20px 0;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.8rem;
         font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 10px;
     }
-    .divider-text::before, .divider-text::after {
-        content: "";
+    .widget-divider::before, .widget-divider::after {
+        content: '';
         flex: 1;
-        height: 1px;
-        background: rgba(255, 255, 255, 0.2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     }
+    .widget-divider::before { margin-right: 10px; }
+    .widget-divider::after { margin-left: 10px; }
 
-    .btn-cta-outline {
-        background: transparent;
-        border: 2px solid var(--color-pink);
-        color: white;
-        padding: 14px;
-        border-radius: 12px;
-        font-weight: 700;
+    .btn-create-account {
+        display: block;
+        width: 100%;
         text-align: center;
-        cursor: pointer;
-        transition: all 0.3s;
+        padding: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        color: white;
+        font-weight: 700;
         text-decoration: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
     }
-    .btn-cta-outline:hover {
-        background: var(--color-pink);
-        box-shadow: 0 0 15px var(--color-pink);
+    .btn-create-account:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: white;
     }
 
-    @media (min-width: 768px) {
-        .hero-input-group { flex-direction: row; }
-        .hero-actions { flex-direction: row; align-items: center; }
-        .btn-login-hero { flex: 1; }
-        .btn-cta-outline { flex: 1.5; }
-        .divider-text { display: none; } /* Hide divider on desktop layout if side-by-side */
+    /* Mobile tweak */
+    @media (max-width: 768px) {
+        .hero-auth-widget { max-width: 100%; }
+        .hero-title { font-size: 2rem; } /* Ensure title isn't too huge above form */
     }
   </style>
 </head>
@@ -188,32 +203,38 @@
             Your City's Digital Marketplace
         </h1>
         <p class="hero-desc">
-          We provide a digital repository of physical shops, their products, and locations within a city. Manage your business or find what you need instantly.
+          We provide a digital repository of physical shops, their products, and locations within a city.
         </p>
 
-        <!-- LOGIN / REGISTER SECTION -->
-        <div class="hero-form-container">
+        <!-- PROFESSIONAL AUTH WIDGET -->
+        <div class="hero-auth-widget">
+            <div class="widget-title">
+                <i class="fa-solid fa-lock"></i> Merchant Access
+            </div>
+            
             <form onsubmit="event.preventDefault(); handleHeroLogin();">
-                <div class="hero-input-group">
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-envelope"></i>
                     <input type="email" id="hero-email" class="hero-input" placeholder="Email Address" required>
+                </div>
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-key"></i>
                     <input type="password" id="hero-password" class="hero-input" placeholder="Password" required>
                 </div>
                 
-                <div class="hero-actions">
-                    <button type="submit" id="hero-login-btn" class="btn-login-hero">
-                        <span>Secure Sign In</span>
-                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                    </button>
-                    
-                    <div class="divider-text">OR</div>
-
-                    <a href="register.html" class="btn-cta-outline">
-                        <span>Create Account</span>
-                        <i class="fa-solid fa-user-plus"></i>
-                    </a>
-                </div>
+                <button type="submit" id="hero-login-btn" class="btn-login-hero">
+                    Secure Sign In <i class="fa-solid fa-arrow-right"></i>
+                </button>
             </form>
+
+            <div class="widget-divider">New to CT-Merchant?</div>
+
+            <a href="create-account.html" class="btn-create-account">
+                Create Free Account
+            </a>
         </div>
+        <!-- END WIDGET -->
+
       </div>
 
       <div class="features-list">
@@ -246,7 +267,9 @@
         const password = document.getElementById('hero-password').value;
         const btn = document.getElementById('hero-login-btn');
 
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        // Loading State
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
         btn.disabled = true;
 
         try {
@@ -255,7 +278,7 @@
             window.location.href = "user-dashboard.html";
         } catch (err) {
             alert(err.message);
-            btn.innerHTML = '<span>Secure Sign In</span><i class="fa-solid fa-arrow-right-to-bracket"></i>';
+            btn.innerHTML = originalText;
             btn.disabled = false;
         }
     }
