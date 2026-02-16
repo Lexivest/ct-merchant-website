@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shop Registration | CT‑Merchant</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-purple: #2E1065;
+            --color-pink: #DB2777;
+            --color-bg: #F8FAFC;
+            --color-text: #1E293B;
+            --color-border: #E2E8F0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--color-bg); 
+            color: var(--color-text); 
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px 16px;
+        }
+
+        .container { width: 100%; max-width: 600px; }
+
+        /* Header */
+        .header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+        .back-btn { 
+            background: white; border: 1px solid var(--color-border); 
+            width: 40px; height: 40px; border-radius: 12px; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; color: var(--color-text); font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+        .back-btn:hover { border-color: var(--color-purple); color: var(--color-purple); }
+        .page-title { font-size: 1.25rem; font-weight: 800; color: var(--color-purple); }
+
+        /* Form Card */
+        .card { background: white; padding: 24px; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--color-border); }
+
+        /* Sections */
+        .section-title { 
+            font-size: 0.85rem; font-weight: 700; color: #64748B; 
+            text-transform: uppercase; letter-spacing: 0.5px; 
+            margin: 24px 0 16px 0; border-bottom: 1px solid #E2E8F0; 
+            padding-bottom: 8px; 
+        }
+        .section-title:first-child { margin-top: 0; }
+
+        /* Inputs */
+        .form-grid { display: grid; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .label { font-size: 0.9rem; font-weight: 600; color: #334155; }
+        
+        .input { 
+            width: 100%; padding: 12px 16px; border-radius: 10px; 
+            border: 1px solid var(--color-border); font-size: 0.95rem; 
+            background: #F8FAFC; transition: border 0.2s;
+        }
+        .input:focus { outline: none; border-color: var(--color-purple); background: white; }
+        .input:disabled { background: #E2E8F0; color: #94A3B8; cursor: not-allowed; }
+        
+        textarea.input { resize: vertical; min-height: 80px; }
+
+        /* Upload Boxes */
+        .upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .upload-box {
+            border: 2px dashed var(--color-border); border-radius: 12px;
+            height: 140px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; cursor: pointer;
+            background: #FAFAFA; position: relative; overflow: hidden;
+            transition: all 0.2s;
+        }
+        .upload-box:hover { border-color: var(--color-purple); background: #F3E8FF; }
+        .upload-icon { font-size: 1.5rem; color: #94A3B8; margin-bottom: 8px; }
+        .upload-text { font-size: 0.75rem; font-weight: 600; color: #64748B; text-align: center; }
+        
+        .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; }
+        .edit-badge { 
+            position: absolute; top: 8px; right: 8px; 
+            background: white; border-radius: 50%; padding: 6px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; color: var(--color-purple);
+        }
+
+        /* Buttons */
+        .btn-submit {
+            width: 100%; background: var(--color-purple); color: white;
+            padding: 16px; border-radius: 12px; border: none;
+            font-size: 1rem; font-weight: 700; cursor: pointer;
+            margin-top: 30px; transition: background 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-submit:hover { background: #4C1D95; }
+        .btn-submit:disabled { background: #94A3B8; cursor: not-allowed; }
+
+        /* Alerts */
+        .alert-box {
+            padding: 16px; border-radius: 12px; margin-bottom: 20px;
+            display: none; align-items: flex-start; gap: 12px;
+        }
+        .alert-error { background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; }
+        .alert-info { background: #EFF6FF; border: 1px solid #DBEAFE; color: #1E40AF; }
+
+        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 480px) {
+            .upload-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <a href="user-dashboard.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="page-title" id="header-title">Register Shop</div>
+    </div>
+
+    <!-- Rejection Notice -->
+    <div id="rejection-box" class="alert-box alert-error">
+        <i class="fa-solid fa-circle-exclamation" style="margin-top: 2px;"></i>
+        <div>
+            <h4 style="margin-bottom: 4px; font-weight: 700;">Application Rejected</h4>
+            <p id="rejection-reason" style="font-size: 0.9rem; line-height: 1.4;"></p>
+        </div>
+    </div>
+
+    <form id="shop-form" class="card" onsubmit="handleSubmit(event)">
+        
+        <!-- 1. Basic Info -->
+        <div class="section-title">Basic Information</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="label">Business Name</label>
+                <input type="text" id="name" class="input" placeholder="e.g. Ade & Sons Enterprise" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="label">Description</label>
+                <textarea id="desc" class="input" placeholder="What do you sell or offer?" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Business Type</label>
+                <select id="business-type" class="input" onchange="toggleCacRequirement()">
+                    <option value="Individual/Enterprise">Individual/Enterprise</option>
+                    <option value="Limited Liability (Ltd)">Limited Liability (Ltd)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Category</label>
+                <select id="category" class="input" required>
+                    <option value="" disabled selected>Loading Categories...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 2. Location -->
+        <div class="section-title">Location & Contact</div>
+        <div class="form-grid">
+            <div class="upload-row">
+                <div class="form-group">
+                    <label class="label">City (Fixed)</label>
+                    <input type="text" id="city-display" class="input" disabled>
+                    <input type="hidden" id="city-id">
+                </div>
+                <div class="form-group">
+                    <label class="label">Area</label>
+                    <select id="area" class="input" required>
+                        <option value="" disabled selected>Loading...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Street Address</label>
+                <input type="text" id="address" class="input" placeholder="Shop 4, Main Market..." required>
+            </div>
+
+            <div class="upload-row">
+                <div class="form-group">
+                    <label class="label">Phone</label>
+                    <input type="tel" id="phone" class="input" required>
+                </div>
+                <div class="form-group">
+                    <label class="label">WhatsApp</label>
+                    <input type="tel" id="whatsapp" class="input" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Coordinates (Optional)</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="lat" class="input" placeholder="Latitude (e.g. 9.08)">
+                    <input type="text" id="lng" class="input" placeholder="Longitude (e.g. 7.49)">
+                </div>
+                <small style="color: #64748B; font-size: 0.75rem; margin-top: 4px;">Found on Google Maps by long-pressing a location.</small>
+            </div>
+        </div>
+
+        <!-- 3. Visuals -->
+        <div class="section-title">Shop Visuals</div>
+        <div class="upload-row">
+            <div class="form-group">
+                <label class="label">Shop Logo</label>
+                <div class="upload-box" onclick="triggerUpload('file-logo')">
+                    <input type="file" id="file-logo" hidden accept="image/*" onchange="previewFile(this, 'prev-logo')">
+                    <img id="prev-logo" class="preview-img">
+                    <i class="fa-regular fa-image upload-icon"></i>
+                    <span class="upload-text">Tap to Upload</span>
+                    <i class="fa-solid fa-pen edit-badge" id="badge-logo" style="display:none;"></i>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="label">Storefront (Required)</label>
+                <div class="upload-box" onclick="triggerUpload('file-front')">
+                    <input type="file" id="file-front" hidden accept="image/*" onchange="previewFile(this, 'prev-front')">
+                    <img id="prev-front" class="preview-img">
+                    <i class="fa-solid fa-store upload-icon"></i>
+                    <span class="upload-text">Tap to Upload</span>
+                    <i class="fa-solid fa-pen edit-badge" id="badge-front" style="display:none;"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Documents -->
+        <div class="section-title">Verification Documents <small style="text-transform:none; font-weight:400;">(Private)</small></div>
+        
+        <div class="form-group">
+            <label class="label">ID Type</label>
+            <select id="id-type" class="input">
+                <option>National ID Card</option>
+                <option>Voters Card</option>
+                <option>Drivers License</option>
+                <option>International Passport</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="label">ID Number</label>
+            <input type="text" id="id-number" class="input" required>
+        </div>
+
+        <div class="upload-row" style="margin-bottom: 16px;">
+            <div class="form-group">
+                <label class="label">ID Card Image</label>
+                <div class="upload-box" onclick="triggerUpload('file-id')">
+                    <input type="file" id="file-id" hidden accept="image/*" onchange="previewFile(this, 'prev-id')">
+                    <img id="prev-id" class="preview-img">
+                    <i class="fa-solid fa-id-card upload-icon"></i>
+                    <span class="upload-text">Required</span>
+                    <i class="fa-solid fa-pen edit-badge" id="badge-id" style="display:none;"></i>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="label" id="cac-label">CAC Cert (Optional)</label>
+                <div class="upload-box" onclick="triggerUpload('file-cac')">
+                    <input type="file" id="file-cac" hidden accept="image/*" onchange="previewFile(this, 'prev-cac')">
+                    <img id="prev-cac" class="preview-img">
+                    <i class="fa-solid fa-file-contract upload-icon"></i>
+                    <span class="upload-text">Tap to Upload</span>
+                    <i class="fa-solid fa-pen edit-badge" id="badge-cac" style="display:none;"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="label">RC/BN Number</label>
+            <input type="text" id="cac-number" class="input" placeholder="If applicable">
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn-submit">Submit Application</button>
+
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    // --- CONFIG ---
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // --- STATE ---
+    let currentUser = null;
+    let existingShop = null;
+    const params = new URLSearchParams(window.location.search);
+    const isEdit = params.get('edit') === 'true';
+    const shopId = params.get('id');
+
+    // --- INIT ---
+    window.onload = async () => {
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) { window.location.href = "login.html"; return; }
+        currentUser = session.user;
+
+        await Promise.all([
+            fetchCategories(),
+            fetchUserLocation()
+        ]);
+
+        if (isEdit && shopId) {
+            loadShopData();
+        }
+    };
+
+    // --- FETCHERS ---
+    async function fetchCategories() {
+        const { data } = await client.from('categories').select('name').order('name');
+        const sel = document.getElementById('category');
+        sel.innerHTML = '<option value="" disabled selected>Select Category</option>';
+        data.forEach(c => {
+            sel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+        });
+    }
+
+    async function fetchUserLocation() {
+        const { data } = await client.from('profiles').select('city_id, cities(name)').eq('id', currentUser.id).single();
+        if (data) {
+            document.getElementById('city-id').value = data.city_id;
+            document.getElementById('city-display').value = data.cities.name;
+            fetchAreas(data.city_id);
+        }
+    }
+
+    async function fetchAreas(cityId, preselectId = null) {
+        const sel = document.getElementById('area');
+        sel.disabled = true;
+        sel.innerHTML = '<option>Loading...</option>';
+        
+        const { data } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+        sel.innerHTML = '<option value="" disabled selected>Select Area</option>';
+        sel.disabled = false;
+
+        data.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.id;
+            opt.textContent = a.name;
+            if (a.id === preselectId) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    }
+
+    // --- EDIT MODE LOGIC ---
+    async function loadShopData() {
+        document.getElementById('header-title').textContent = "Update Shop";
+        document.getElementById('submit-btn').textContent = "Update & Resubmit";
+
+        const { data } = await client.from('shops').select('*').eq('id', shopId).single();
+        if (!data) return alert("Shop not found");
+        existingShop = data;
+
+        // Populate Fields
+        document.getElementById('name').value = data.name;
+        document.getElementById('desc').value = data.description || '';
+        document.getElementById('business-type').value = data.business_type || 'Individual/Enterprise';
+        document.getElementById('category').value = data.category;
+        document.getElementById('address').value = data.address;
+        document.getElementById('phone').value = data.phone;
+        document.getElementById('whatsapp').value = data.whatsapp || '';
+        document.getElementById('lat').value = data.latitude || '';
+        document.getElementById('lng').value = data.longitude || '';
+        document.getElementById('id-type').value = data.id_type || 'National ID Card';
+        document.getElementById('id-number').value = data.id_number || '';
+        document.getElementById('cac-number').value = data.cac_number || '';
+
+        // Handle Area Preselect (City is already set by profile)
+        fetchAreas(data.city_id, data.area_id);
+
+        // Populate Images
+        setPreview('prev-logo', data.image_url);
+        setPreview('prev-front', data.storefront_url);
+        setPreview('prev-id', data.id_card_url);
+        setPreview('prev-cac', data.cac_certificate_url);
+
+        // Rejection Notice
+        if (data.status === 'rejected' && data.rejection_reason) {
+            document.getElementById('rejection-box').style.display = 'flex';
+            document.getElementById('rejection-reason').textContent = data.rejection_reason;
+        }
+
+        toggleCacRequirement(); // Run check
+    }
+
+    function setPreview(id, url) {
+        if (url) {
+            const img = document.getElementById(id);
+            img.src = url;
+            img.style.display = 'block';
+            document.getElementById(id.replace('prev', 'badge')).style.display = 'block';
+        }
+    }
+
+    // --- UI HELPERS ---
+    function triggerUpload(id) { document.getElementById(id).click(); }
+
+    function previewFile(input, imgId) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.getElementById(imgId);
+                img.src = e.target.result;
+                img.style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function toggleCacRequirement() {
+        const type = document.getElementById('business-type').value;
+        const label = document.getElementById('cac-label');
+        if (type === 'Limited Liability (Ltd)') {
+            label.textContent = 'CAC Cert (Required)';
+        } else {
+            label.textContent = 'CAC Cert (Optional)';
+        }
+    }
+
+    // --- SUBMIT ---
+    async function handleSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Processing...';
+
+        try {
+            // Validation
+            const type = document.getElementById('business-type').value;
+            const cacFile = document.getElementById('file-cac').files[0];
+            const frontFile = document.getElementById('file-front').files[0];
+            const idFile = document.getElementById('file-id').files[0];
+
+            if (!existingShop) {
+                if (!frontFile) throw new Error("Storefront image is required.");
+                if (!idFile) throw new Error("ID Card image is required.");
+                if (type === 'Limited Liability (Ltd)' && !cacFile) throw new Error("CAC Certificate is required for Ltd.");
+            }
+
+            // Uploads
+            const logoUrl = await handleFileUpload('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
+            const frontUrl = await handleFileUpload('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
+            const idUrl = await handleFileUpload('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
+            const cacUrl = await handleFileUpload('file-cac', 'cac-documents', 'cac', existingShop?.cac_certificate_url);
+
+            const payload = {
+                owner_id: currentUser.id,
+                name: document.getElementById('name').value,
+                description: document.getElementById('desc').value,
+                business_type: type,
+                category: document.getElementById('category').value,
+                city_id: parseInt(document.getElementById('city-id').value),
+                area_id: parseInt(document.getElementById('area').value),
+                address: document.getElementById('address').value,
+                phone: document.getElementById('phone').value,
+                whatsapp: document.getElementById('whatsapp').value,
+                latitude: parseFloat(document.getElementById('lat').value) || null,
+                longitude: parseFloat(document.getElementById('lng').value) || null,
+                id_type: document.getElementById('id-type').value,
+                id_number: document.getElementById('id-number').value,
+                cac_number: document.getElementById('cac-number').value,
+                image_url: logoUrl,
+                storefront_url: frontUrl,
+                id_card_url: idUrl,
+                cac_certificate_url: cacUrl,
+                status: 'pending', // Always reset to pending
+                rejection_reason: null
+            };
+
+            if (isEdit) {
+                const { error } = await client.from('shops').update(payload).eq('id', shopId);
+                if (error) throw error;
+            } else {
+                payload.banners = []; // Init empty array
+                const { error } = await client.from('shops').insert(payload);
+                if (error) throw error;
+            }
+
+            alert("Application Submitted! You will be notified once approved.");
+            window.location.href = "user-dashboard.html";
+
+        } catch (err) {
+            console.error(err);
+            alert("Error: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = isEdit ? "Update & Resubmit" : "Submit Application";
+        }
+    }
+
+    async function handleFileUpload(inputId, bucket, folder, existingUrl) {
+        const file = document.getElementById(inputId).files[0];
+        if (!file) return existingUrl || null;
+
+        const ext = file.name.split('.').pop();
+        const fileName = `${folder}/${currentUser.id}_${Date.now()}.${ext}`;
+        
+        const { error: uploadError } = await client.storage.from(bucket).upload(fileName, file);
+        if (uploadError) throw uploadError;
+        
+        const { data } = client.storage.from(bucket).getPublicUrl(fileName);
+        return data.publicUrl;
+    }
+</script>
+
+</body>
+</html>
