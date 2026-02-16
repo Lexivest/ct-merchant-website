@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post News | CT‑Merchant</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-purple: #2E1065;
+            --color-bg: #F8FAFC;
+            --color-text: #1E293B;
+            --color-border: #E2E8F0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--color-bg); color: var(--color-text); min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+
+        .container { width: 100%; max-width: 500px; }
+
+        /* Header */
+        .app-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+        .back-btn { background: white; border: 1px solid var(--color-border); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-text); font-size: 1.1rem; }
+        .page-title { font-size: 1.25rem; font-weight: 800; }
+
+        /* Card */
+        .card { background: white; padding: 24px; border-radius: 20px; border: 1px solid var(--color-border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+
+        .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+        .section-desc { font-size: 0.9rem; color: #64748B; margin-bottom: 24px; line-height: 1.5; }
+
+        /* Input */
+        .input-wrapper { position: relative; }
+        textarea.input {
+            width: 100%; padding: 16px; border-radius: 12px;
+            border: 1px solid var(--color-border); font-size: 1rem;
+            background: #F8FAFC; resize: none; height: 140px;
+            transition: border 0.2s; font-family: inherit;
+        }
+        textarea.input:focus { outline: none; border-color: var(--color-purple); background: white; }
+        
+        .char-count {
+            position: absolute; bottom: 12px; right: 12px;
+            font-size: 0.75rem; color: #94A3B8; font-weight: 600;
+        }
+
+        .helper-text { font-size: 0.8rem; color: #64748B; margin-top: 8px; display: flex; gap: 6px; align-items: center; }
+
+        /* Button */
+        .btn-submit {
+            width: 100%; background: var(--color-purple); color: white;
+            padding: 16px; border-radius: 12px; border: none;
+            font-size: 1rem; font-weight: 700; cursor: pointer;
+            margin-top: 30px; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background 0.2s;
+        }
+        .btn-submit:hover { background: #4C1D95; }
+        .btn-submit:disabled { background: #94A3B8; cursor: not-allowed; }
+
+        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="app-bar">
+        <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+        <div class="page-title">Post Shop News</div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Latest Updates</div>
+        <p class="section-desc">
+            Write a short update for your customers. It will appear as a scrolling ticker on your shop page.
+        </p>
+
+        <form id="news-form" onsubmit="saveNews(event)">
+            <div class="input-wrapper">
+                <textarea id="news-text" class="input" maxlength="150" 
+                    placeholder="e.g. Flash Sale! 50% off iPhones this weekend only."
+                    oninput="updateCount(this)"></textarea>
+                <div class="char-count"><span id="count">0</span>/150</div>
+            </div>
+            
+            <div class="helper-text">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Leave empty to remove existing news.</span>
+            </div>
+
+            <button type="submit" id="btn-submit" class="btn-submit">
+                <i class="fa-solid fa-paper-plane"></i> Publish News
+            </button>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const params = new URLSearchParams(window.location.search);
+    const shopId = params.get('shop_id');
+    let currentUser = null;
+
+    window.onload = async () => {
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) { window.location.href = "login.html"; return; }
+        currentUser = session.user;
+
+        if (!shopId) {
+            alert("Shop ID missing");
+            window.history.back();
+            return;
+        }
+
+        // Fetch existing news
+        const { data } = await client.from('shops').select('news').eq('id', shopId).single();
+        if (data && data.news) {
+            const input = document.getElementById('news-text');
+            input.value = data.news;
+            updateCount(input);
+        }
+    };
+
+    function updateCount(el) {
+        document.getElementById('count').textContent = el.value.length;
+    }
+
+    async function saveNews(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-submit');
+        const text = document.getElementById('news-text').value.trim();
+
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Publishing...';
+
+        try {
+            const updateValue = text.length > 0 ? text : null;
+
+            const { error } = await client
+                .from('shops')
+                .update({ news: updateValue })
+                .eq('id', shopId);
+
+            if (error) throw error;
+
+            alert("News updated successfully!");
+            window.history.back();
+
+        } catch (err) {
+            alert("Error: " + err.message);
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Publish News';
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
