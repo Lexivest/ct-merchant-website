@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Dashboard | CT‑Merchant</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --color-purple: #2E1065;
+            --color-bg: #F8FAFC;
+            --color-text: #1E293B;
+            --color-text-muted: #64748B;
+            --color-border: #E2E8F0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        body { 
+            background-color: var(--color-bg); 
+            color: var(--color-text); 
+            min-height: 100vh;
+            display: flex; 
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            padding: 20px;
+        }
+
+        /* --- HEADER --- */
+        .app-bar {
+            display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+            background: var(--color-purple); color: white;
+            padding: 16px; border-radius: 16px;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .back-btn {
+            background: rgba(255,255,255,0.2); border: none;
+            width: 40px; height: 40px; border-radius: 10px;
+            color: white; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.2s; font-size: 1.1rem;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.3); }
+
+        .page-title { font-size: 1.25rem; font-weight: 700; }
+
+        /* --- WELCOME --- */
+        .welcome-section { margin-bottom: 30px; padding: 0 8px; }
+        .shop-title { font-size: 1.75rem; font-weight: 800; color: var(--color-purple); margin-bottom: 4px; }
+        .shop-subtitle { color: var(--color-text-muted); font-size: 0.95rem; }
+
+        /* --- GRID LAYOUT --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+        }
+
+        .dash-card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px 16px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center;
+            border: 1px solid var(--color-border);
+            box-shadow: var(--shadow-sm);
+            cursor: pointer; transition: all 0.2s;
+            height: 160px;
+            text-decoration: none; /* For links */
+            color: inherit;
+        }
+        .dash-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--color-purple); }
+
+        .icon-box {
+            width: 56px; height: 56px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; margin-bottom: 16px;
+        }
+
+        .card-title { font-weight: 700; font-size: 1rem; color: var(--color-text); }
+
+        /* Colors */
+        .card-green .icon-box { background: #DCFCE7; color: #16A34A; }
+        .card-blue .icon-box { background: #DBEAFE; color: #2563EB; }
+        .card-purple .icon-box { background: #F3E8FF; color: #9333EA; }
+        .card-orange .icon-box { background: #FFEDD5; color: #EA580C; }
+        .card-red .icon-box { background: #FEE2E2; color: #DC2626; }
+        .card-indigo .icon-box { background: #E0E7FF; color: #4F46E5; }
+        .card-teal .icon-box { background: #CCFBF1; color: #0D9488; }
+
+        .spinner { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: var(--color-purple); border-radius: 50%; animation: spin 1s linear infinite; margin: 100px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- Loading State -->
+        <div id="loader" class="spinner"></div>
+
+        <div id="content" class="hidden">
+            <!-- App Bar -->
+            <div class="app-bar">
+                <button onclick="window.location.href='user-dashboard.html'" class="back-btn">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div class="page-title">Merchant Dashboard</div>
+            </div>
+
+            <!-- Welcome -->
+            <div class="welcome-section">
+                <div id="shop-name" class="shop-title">Loading...</div>
+                <div class="shop-subtitle">Control your inventory and shop presence.</div>
+            </div>
+
+            <!-- Grid -->
+            <div class="dashboard-grid">
+                
+                <!-- 1. Add Product -->
+                <a onclick="navTo('merchant-add-product.html')" class="dash-card card-green">
+                    <div class="icon-box"><i class="fa-regular fa-square-plus"></i></div>
+                    <div class="card-title">Add Product</div>
+                </a>
+
+                <!-- 2. Edit Products -->
+                <a onclick="navTo('merchant-products.html')" class="dash-card card-blue">
+                    <div class="icon-box"><i class="fa-solid fa-pen-to-square"></i></div>
+                    <div class="card-title">Edit Products</div>
+                </a>
+
+                <!-- 3. Shop Banner -->
+                <a onclick="navTo('merchant-banner.html')" class="dash-card card-purple">
+                    <div class="icon-box"><i class="fa-solid fa-camera"></i></div>
+                    <div class="card-title">Shop Banner</div>
+                </a>
+
+                <!-- 4. Shop Settings -->
+                <a onclick="navTo('merchant-settings.html')" class="dash-card card-orange">
+                    <div class="icon-box"><i class="fa-solid fa-gear"></i></div>
+                    <div class="card-title">Shop Settings</div>
+                </a>
+
+                <!-- 5. Post News -->
+                <a onclick="navTo('merchant-news.html')" class="dash-card card-red">
+                    <div class="icon-box"><i class="fa-solid fa-bullhorn"></i></div>
+                    <div class="card-title">Post News</div>
+                </a>
+
+                <!-- 6. View Public Shop -->
+                <a onclick="viewPublicShop()" class="dash-card card-indigo">
+                    <div class="icon-box"><i class="fa-regular fa-eye"></i></div>
+                    <div class="card-title">View Shop</div>
+                </a>
+
+                <!-- 7. Analytics -->
+                <a onclick="navTo('merchant-analytics.html')" class="dash-card card-teal">
+                    <div class="icon-box"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="card-title">Analytics</div>
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let myShop = null;
+
+        window.onload = async () => {
+            const { data: { session } } = await client.auth.getSession();
+            if (!session) { window.location.href = "login.html"; return; }
+
+            await fetchShop(session.user.id);
+        };
+
+        async function fetchShop(userId) {
+            try {
+                const { data, error } = await client
+                    .from('shops')
+                    .select('*')
+                    .eq('owner_id', userId)
+                    .single();
+
+                if (error || !data) {
+                    alert("Shop data not found. Please register a shop first.");
+                    window.location.href = "user-dashboard.html";
+                    return;
+                }
+
+                if (data.status !== 'approved') {
+                    alert("Your shop is not approved yet.");
+                    window.location.href = "user-dashboard.html";
+                    return;
+                }
+
+                myShop = data;
+                document.getElementById('shop-name').textContent = `Manage ${data.name}`;
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('content').classList.remove('hidden');
+
+            } catch (e) {
+                console.error(e);
+                alert("Error loading dashboard");
+            }
+        }
+
+        // Helper to pass Shop ID to next pages
+        function navTo(page) {
+            if (!myShop) return;
+            window.location.href = `${page}?shop_id=${myShop.id}`;
+        }
+
+        function viewPublicShop() {
+            if (!myShop) return;
+            window.location.href = `shop-detail.html?id=${myShop.id}`;
+        }
+    </script>
+</body>
+</html>
