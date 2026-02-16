@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Merchant Dashboard | CT‑Merchant</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
 
         body { 
             background-color: var(--color-bg); 
@@ -27,6 +27,7 @@
             min-height: 100vh;
             display: flex; 
             justify-content: center;
+            overflow-x: hidden;
         }
 
         .container {
@@ -61,8 +62,8 @@
         /* --- GRID LAYOUT --- */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 16px;
         }
 
         .dash-card {
@@ -75,19 +76,22 @@
             border: 1px solid var(--color-border);
             box-shadow: var(--shadow-sm);
             cursor: pointer; transition: all 0.2s;
-            height: 160px;
-            text-decoration: none; /* For links */
+            height: 150px;
+            text-decoration: none;
             color: inherit;
+            position: relative;
+            overflow: hidden;
         }
         .dash-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--color-purple); }
+        .dash-card:active { transform: scale(0.98); }
 
         .icon-box {
-            width: 56px; height: 56px; border-radius: 50%;
+            width: 50px; height: 50px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.6rem; margin-bottom: 16px;
+            font-size: 1.5rem; margin-bottom: 12px;
         }
 
-        .card-title { font-weight: 700; font-size: 1rem; color: var(--color-text); }
+        .card-title { font-weight: 700; font-size: 0.95rem; color: var(--color-text); }
 
         /* Colors */
         .card-green .icon-box { background: #DCFCE7; color: #16A34A; }
@@ -128,47 +132,47 @@
             <!-- Grid -->
             <div class="dashboard-grid">
                 
-                <!-- 1. Add Product -->
-                <a onclick="navTo('merchant-add-product.html')" class="dash-card card-green">
+                <!-- 1. Add Product (LINKED) -->
+                <div onclick="navTo('merchant-add-product.html')" class="dash-card card-green">
                     <div class="icon-box"><i class="fa-regular fa-square-plus"></i></div>
                     <div class="card-title">Add Product</div>
-                </a>
+                </div>
 
                 <!-- 2. Edit Products -->
-                <a onclick="navTo('merchant-products.html')" class="dash-card card-blue">
+                <div onclick="alert('Edit Products Screen coming soon!')" class="dash-card card-blue">
                     <div class="icon-box"><i class="fa-solid fa-pen-to-square"></i></div>
                     <div class="card-title">Edit Products</div>
-                </a>
+                </div>
 
                 <!-- 3. Shop Banner -->
-                <a onclick="navTo('merchant-banner.html')" class="dash-card card-purple">
+                <div onclick="alert('Banner Screen coming soon!')" class="dash-card card-purple">
                     <div class="icon-box"><i class="fa-solid fa-camera"></i></div>
                     <div class="card-title">Shop Banner</div>
-                </a>
+                </div>
 
                 <!-- 4. Shop Settings -->
-                <a onclick="navTo('merchant-settings.html')" class="dash-card card-orange">
+                <div onclick="alert('Settings Screen coming soon!')" class="dash-card card-orange">
                     <div class="icon-box"><i class="fa-solid fa-gear"></i></div>
                     <div class="card-title">Shop Settings</div>
-                </a>
+                </div>
 
                 <!-- 5. Post News -->
-                <a onclick="navTo('merchant-news.html')" class="dash-card card-red">
+                <div onclick="alert('News Screen coming soon!')" class="dash-card card-red">
                     <div class="icon-box"><i class="fa-solid fa-bullhorn"></i></div>
                     <div class="card-title">Post News</div>
-                </a>
+                </div>
 
-                <!-- 6. View Public Shop -->
-                <a onclick="viewPublicShop()" class="dash-card card-indigo">
+                <!-- 6. View Public Shop (LINKED) -->
+                <div onclick="viewPublicShop()" class="dash-card card-indigo">
                     <div class="icon-box"><i class="fa-regular fa-eye"></i></div>
                     <div class="card-title">View Shop</div>
-                </a>
+                </div>
 
                 <!-- 7. Analytics -->
-                <a onclick="navTo('merchant-analytics.html')" class="dash-card card-teal">
+                <div onclick="alert('Analytics Screen coming soon!')" class="dash-card card-teal">
                     <div class="icon-box"><i class="fa-solid fa-chart-line"></i></div>
                     <div class="card-title">Analytics</div>
-                </a>
+                </div>
 
             </div>
         </div>
@@ -217,12 +221,14 @@
             } catch (e) {
                 console.error(e);
                 alert("Error loading dashboard");
+                window.location.href = "user-dashboard.html";
             }
         }
 
-        // Helper to pass Shop ID to next pages
+        // NAVIGATION LOGIC
         function navTo(page) {
             if (!myShop) return;
+            // Pass shop_id in URL so next page knows which shop to update
             window.location.href = `${page}?shop_id=${myShop.id}`;
         }
 
