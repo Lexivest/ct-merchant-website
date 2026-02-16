@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport settings allowing scaling and scrolling -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard | CT‑Merchant</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -28,9 +27,7 @@
         body { 
             background-color: var(--color-bg); 
             color: var(--color-text-main); 
-            /* CHANGE: Allowed horizontal scrolling */
-            overflow-x: auto; 
-            overflow-y: auto;
+            overflow-x: hidden; 
             display: flex;
             min-height: 100vh;
             width: 100%;
@@ -48,6 +45,13 @@
             top: 0; left: 0; bottom: 0;
             z-index: 1000;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Desktop Default: Visible (0) */
+            transform: translateX(0);
+        }
+
+        /* Desktop Closed State */
+        .sidebar.closed {
+            transform: translateX(-100%);
         }
 
         .sidebar-overlay {
@@ -82,11 +86,16 @@
             margin-left: var(--sidebar-width);
             flex-grow: 1;
             padding: 2rem;
+            min-width: 0;
             width: calc(100% - var(--sidebar-width));
             min-height: 100vh;
-            transition: margin-left 0.3s ease;
-            /* CHANGE: Allow content to overflow horizontally if needed */
-            overflow-x: visible; 
+            transition: margin-left 0.3s ease, width 0.3s ease;
+        }
+
+        /* Desktop Expanded State */
+        .main-content.expanded {
+            margin-left: 0;
+            width: 100%;
         }
 
         /* --- TOP BAR --- */
@@ -101,19 +110,20 @@
             border: 1px solid var(--color-border);
             box-shadow: var(--shadow-sm);
             gap: 10px;
-            min-width: 300px; /* Ensure bar doesn't crush too small */
         }
 
         .top-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
         
         .menu-btn {
-            display: none; 
+            display: flex; /* Always visible now */
             background: #F1F5F9; border: none;
             width: 36px; height: 36px; border-radius: 8px;
             color: var(--color-text-main); font-size: 1.1rem;
             align-items: center; justify-content: center;
             cursor: pointer; flex-shrink: 0;
+            transition: background 0.2s;
         }
+        .menu-btn:hover { background: #E2E8F0; }
 
         .greeting-text { 
             font-size: 1.1rem; font-weight: 800; color: var(--color-purple); margin: 0;
@@ -152,7 +162,7 @@
 
         .scroll-row {
             display: flex; overflow-x: auto; gap: 16px; padding-bottom: 8px;
-            width: 100%; 
+            width: 100%; max-width: 100%;
             scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
             -webkit-overflow-scrolling: touch; 
         }
@@ -203,7 +213,7 @@
 
         .promo-slider { 
             display: flex; overflow-x: auto; gap: 1rem; margin-bottom: 2rem; 
-            width: 100%;
+            width: 100%; max-width: 100%;
         }
         .promo-card { min-width: 320px; height: 150px; border-radius: 16px; overflow: hidden; flex-shrink: 0; }
         .promo-img { width: 100%; height: 100%; object-fit: cover; }
@@ -247,14 +257,15 @@
 
         /* --- MOBILE RESPONSIVE --- */
         @media (max-width: 1024px) {
+            /* Mobile: Sidebar Hidden Default (Left -100%) */
             .sidebar { transform: translateX(-100%); width: 280px; }
+            /* Mobile: Open State (Left 0) */
             .sidebar.open { transform: translateX(0); }
             
+            /* Mobile Content: Full width, no margin */
             .main-content { margin-left: 0; width: 100%; padding: 1rem; }
             
-            .menu-btn { display: flex; } 
-            
-            /* Top Bar Wrap */
+            /* Header */
             .top-bar { padding: 10px 14px; gap: 8px; }
             .greeting-text { font-size: 0.95rem; }
             .location-badge { padding: 4px 10px; font-size: 0.75rem; max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
@@ -263,8 +274,10 @@
             .profile-card { padding: 1.5rem; }
             .profile-hero { flex-direction: column; text-align: center; gap: 1rem; }
             
-            /* Allow Horizontal Scroll */
+            /* Card Widths */
             .shop-list { grid-template-columns: 1fr; }
+            .featured-card { min-width: 85vw; width: 85vw; } 
+            .promo-card { min-width: 85vw; }
         }
     </style>
 </head>
@@ -431,10 +444,23 @@
     let selectedFile = null;
 
     function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.getElementById('sidebar-overlay').classList.toggle('active');
+        const isMobile = window.innerWidth <= 1024;
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const content = document.querySelector('.main-content');
+
+        if (isMobile) {
+            // Mobile: Use Overlay logic
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        } else {
+            // Desktop: Use Push/Collapse logic
+            sidebar.classList.toggle('closed');
+            content.classList.toggle('expanded');
+        }
     }
 
+    // --- INITIALIZATION ---
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "login.html"; return; }
@@ -513,7 +539,7 @@
             document.getElementById('announcement-box').style.display = 'block';
         }
 
-        // FEATURED SHOPS (Horizontal 4-Grid Card)
+        // FEATURED SHOPS
         const featured = data.shops.filter(s => s.is_featured);
         if (featured.length > 0) {
             document.getElementById('section-featured').classList.remove('hidden');
@@ -543,7 +569,7 @@
         const activeAreas = data.areas.filter(a => data.shops.some(s => s.area_id === a.id));
         renderCollageRow('area-list', activeAreas, data.shops, data.products, 'area', data.profile.area_id);
 
-        // ALL SHOPS (Horizontal 4-Grid Card)
+        // ALL SHOPS
         document.getElementById('shop-count').textContent = `${data.shops.length} Found`;
         document.getElementById('shop-list').innerHTML = data.shops.map(s => {
             const collageHtml = buildShopThumbnail(s, data.products, 'shop');
@@ -652,7 +678,10 @@
     document.getElementById('form-city').addEventListener('change', (e) => fetchAreasForProfile(e.target.value));
 
     function switchTab(screenId, btn) {
-        if(window.innerWidth <= 1024) toggleSidebar(); 
+        if(window.innerWidth <= 1024) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-overlay').classList.remove('active');
+        }
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
