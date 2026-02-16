@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport fix for mobile scaling -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Viewport settings allowing scaling and scrolling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
     <title>Dashboard | CT‑Merchant</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -28,7 +28,9 @@
         body { 
             background-color: var(--color-bg); 
             color: var(--color-text-main); 
-            overflow-x: hidden; /* Prevent body scroll */
+            /* CHANGE: Allowed horizontal scrolling */
+            overflow-x: auto; 
+            overflow-y: auto;
             display: flex;
             min-height: 100vh;
             width: 100%;
@@ -75,16 +77,16 @@
         .sidebar-footer { margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); }
         .btn-logout { color: #FDA4AF; width: 100%; text-align: left; }
 
-        /* --- MAIN CONTENT (Layout Fixes) --- */
+        /* --- MAIN CONTENT --- */
         .main-content {
             margin-left: var(--sidebar-width);
             flex-grow: 1;
             padding: 2rem;
-            /* CRITICAL FIX: min-width: 0 prevents flex child from overflowing parent */
-            min-width: 0; 
             width: calc(100% - var(--sidebar-width));
             min-height: 100vh;
             transition: margin-left 0.3s ease;
+            /* CHANGE: Allow content to overflow horizontally if needed */
+            overflow-x: visible; 
         }
 
         /* --- TOP BAR --- */
@@ -99,14 +101,10 @@
             border: 1px solid var(--color-border);
             box-shadow: var(--shadow-sm);
             gap: 10px;
+            min-width: 300px; /* Ensure bar doesn't crush too small */
         }
 
-        .top-left { 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            overflow: hidden; /* Prevent text overflow */
-        }
+        .top-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
         
         .menu-btn {
             display: none; 
@@ -129,6 +127,15 @@
             white-space: nowrap;
         }
 
+        .user-pill {
+            display: flex; align-items: center; gap: 12px;
+            background: white; padding: 6px 16px 6px 6px;
+            border-radius: 50px; box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
+            flex-shrink: 0;
+        }
+        .pill-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #E2E8F0; }
+        .pill-name { font-weight: 700; font-size: 0.85rem; }
+
         /* --- MARKET OVERVIEW --- */
         .ticker-wrap { 
             width: 100%; overflow: hidden; background: #FFF7ED; color: #C2410C;
@@ -143,22 +150,21 @@
         .bar { width: 4px; height: 24px; border-radius: 2px; margin-right: 12px; }
         .section-title { font-size: 1.1rem; font-weight: 800; color: var(--color-text-main); }
 
-        /* SCROLL ROW FIX: Max Width 100% */
         .scroll-row {
             display: flex; overflow-x: auto; gap: 16px; padding-bottom: 8px;
-            width: 100%; max-width: 100%;
+            width: 100%; 
             scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
             -webkit-overflow-scrolling: touch; 
         }
         .scroll-row::-webkit-scrollbar { height: 4px; }
         .scroll-row::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 10px; }
 
-        /* --- CARDS --- */
+        /* Featured Card */
         .featured-card {
             min-width: 280px; width: 280px;
             background: white; border-radius: 16px; padding: 10px;
             box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
-            cursor: pointer; display: flex; gap: 12px; align-items: center;
+            cursor: pointer; display: flex; gap: 12px; align-items: center; flex-shrink: 0;
         }
         
         .featured-collage {
@@ -173,11 +179,12 @@
         .shop-cat { font-size: 0.7rem; color: var(--color-purple); font-weight: 700; background: #F3E8FF; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
         .shop-addr { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
 
+        /* Collage Pills */
         .collage-pill {
             display: flex; align-items: center; gap: 10px;
             background: white; border: 1px solid var(--color-border);
             border-radius: 50px; padding: 6px 16px 6px 6px;
-            min-width: max-content; cursor: pointer;
+            min-width: max-content; cursor: pointer; flex-shrink: 0;
         }
         .collage-pill.active { background: #F0FDF4; border-color: #10B981; }
         
@@ -196,7 +203,7 @@
 
         .promo-slider { 
             display: flex; overflow-x: auto; gap: 1rem; margin-bottom: 2rem; 
-            width: 100%; max-width: 100%;
+            width: 100%;
         }
         .promo-card { min-width: 320px; height: 150px; border-radius: 16px; overflow: hidden; flex-shrink: 0; }
         .promo-img { width: 100%; height: 100%; object-fit: cover; }
@@ -243,7 +250,6 @@
             .sidebar { transform: translateX(-100%); width: 280px; }
             .sidebar.open { transform: translateX(0); }
             
-            /* CONTENT WIDTH FIX */
             .main-content { margin-left: 0; width: 100%; padding: 1rem; }
             
             .menu-btn { display: flex; } 
@@ -257,10 +263,8 @@
             .profile-card { padding: 1.5rem; }
             .profile-hero { flex-direction: column; text-align: center; gap: 1rem; }
             
-            /* Card Widths */
+            /* Allow Horizontal Scroll */
             .shop-list { grid-template-columns: 1fr; }
-            .featured-card { min-width: 85vw; width: 85vw; } 
-            .promo-card { min-width: 85vw; }
         }
     </style>
 </head>
@@ -497,6 +501,7 @@
         }
     }
 
+    // --- RENDER LOGIC ---
     function renderDashboard(data) {
         const p = data.profile;
         document.getElementById('greeting-name').textContent = `Hello, ${p.full_name.split(' ')[0]}`;
