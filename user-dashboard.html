@@ -20,100 +20,117 @@
             --color-text-muted: #64748B;
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --sidebar-width: 260px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
 
-        body { background-color: var(--color-bg); color: var(--color-text-main); overflow-x: hidden; }
+        body { 
+            background-color: var(--color-bg); 
+            color: var(--color-text-main); 
+            overflow-x: hidden; 
+            display: flex;
+            min-height: 100vh;
+        }
 
-        /* --- LAYOUT --- */
-        .dashboard-container { display: flex; min-height: 100vh; }
-
-        /* Sidebar */
+        /* --- SIDEBAR (Mobile Responsive) --- */
         .sidebar {
-            width: 260px;
+            width: var(--sidebar-width);
             background: var(--color-purple);
             color: white;
             display: flex;
             flex-direction: column;
             padding: 2rem 1.5rem;
             position: fixed;
-            height: 100vh;
+            top: 0; left: 0; bottom: 0;
             z-index: 1000;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
         }
 
-        .sidebar-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 3rem; }
-        .sidebar-logo { width: 35px; height: 35px; border-radius: 8px; }
-        .brand-name { font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; }
+        .sidebar-overlay {
+            position: fixed; inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 999;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .sidebar-overlay.active { opacity: 1; visibility: visible; }
+
+        .sidebar-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 2.5rem; }
+        .sidebar-logo { width: 32px; height: 32px; border-radius: 8px; }
+        .brand-name { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px; }
 
         .nav-menu { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; }
         .nav-item {
             display: flex; align-items: center; gap: 12px; padding: 12px 16px;
             border-radius: 12px; color: rgba(255,255,255,0.7); text-decoration: none;
-            font-weight: 600; font-size: 0.95rem; transition: all 0.2s;
+            font-weight: 600; font-size: 0.9rem; transition: all 0.2s;
             cursor: pointer; border: none; background: none; width: 100%; text-align: left;
         }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: white; }
         .nav-item.active { background: var(--color-pink); }
-        .nav-item i { width: 20px; text-align: center; }
+        .nav-item i { width: 24px; text-align: center; font-size: 1.1rem; }
 
         .sidebar-footer { margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); }
-        .btn-logout { color: #FDA4AF; }
+        .btn-logout { color: #FDA4AF; width: 100%; text-align: left; }
+        .btn-logout:hover { background: rgba(253, 164, 175, 0.1); color: #FFF1F2; }
 
-        /* Main Content */
-        .main-content { margin-left: 260px; flex-grow: 1; padding: 2rem 3rem; width: calc(100% - 260px); }
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex-grow: 1;
+            padding: 2rem;
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
 
         /* Top Bar */
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .welcome-text h1 { font-size: 1.5rem; font-weight: 800; color: var(--color-purple); }
+        .top-bar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; gap: 1rem; }
+
+        .menu-btn {
+            display: none; /* Hidden on desktop */
+            background: white; border: 1px solid var(--color-border);
+            width: 40px; height: 40px; border-radius: 10px;
+            color: var(--color-text-main); font-size: 1.2rem;
+            align-items: center; justify-content: center;
+            cursor: pointer; flex-shrink: 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .welcome-text h1 { font-size: 1.5rem; font-weight: 800; color: var(--color-purple); margin-bottom: 4px; line-height: 1.2; }
         .location-badge { 
             display: inline-flex; align-items: center; gap: 6px; 
             background: #EDE9FE; color: var(--color-purple-light); 
             padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;
-            margin-top: 4px;
         }
 
         .user-pill {
             display: flex; align-items: center; gap: 12px;
             background: white; padding: 6px 16px 6px 6px;
             border-radius: 50px; box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
+            flex-shrink: 0;
         }
         .pill-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #E2E8F0; }
         .pill-name { font-weight: 700; font-size: 0.85rem; }
 
-        /* --- MARKET STYLES (Merged from App Home) --- */
-        
-        /* Search Box */
-        .search-container { margin-bottom: 1.5rem; }
-        .search-box {
-            background: white;
-            border: 2px solid var(--color-purple);
-            border-radius: 12px;
-            padding: 0.8rem 1rem;
-            display: flex; align-items: center; gap: 10px;
-            box-shadow: var(--shadow-sm);
-        }
-        .search-box input { border: none; width: 100%; font-size: 1rem; outline: none; color: var(--color-text-main); }
-        .search-box i { color: var(--color-purple); }
-
-        /* Ticker */
+        /* --- MARKET OVERVIEW --- */
         .ticker-wrap { 
             width: 100%; overflow: hidden; background: #FFF7ED; color: #C2410C;
-            padding: 8px 0; margin-bottom: 1.5rem; border-radius: 8px; border: 1px solid #FFEDD5;
+            padding: 10px 0; margin-bottom: 1.5rem; border-radius: 8px; border: 1px solid #FFEDD5;
             display: none; 
         }
-        .ticker { display: inline-block; white-space: nowrap; animation: ticker 25s linear infinite; font-size: 0.85rem; font-weight: 600; padding-left: 100%; }
+        .ticker { display: inline-block; white-space: nowrap; animation: ticker 80s linear infinite; font-size: 0.85rem; font-weight: 600; padding-left: 100%; }
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
-        /* Sections */
         .section { margin-bottom: 2rem; }
         .section-header { display: flex; align-items: center; margin-bottom: 1rem; }
-        .bar { width: 4px; height: 20px; border-radius: 2px; margin-right: 10px; }
+        .bar { width: 4px; height: 24px; border-radius: 2px; margin-right: 12px; }
         .section-title { font-size: 1.1rem; font-weight: 800; color: var(--color-text-main); }
-        
+
         .scroll-row {
-            display: flex; overflow-x: auto; gap: 16px; padding-bottom: 10px;
+            display: flex; overflow-x: auto; gap: 16px; padding-bottom: 8px;
             scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
         }
         .scroll-row::-webkit-scrollbar { height: 6px; }
@@ -121,22 +138,28 @@
 
         /* Featured Card */
         .featured-card {
-            min-width: 260px; width: 260px;
+            min-width: 280px; width: 280px;
             background: white; border-radius: 16px; overflow: hidden;
             box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
             cursor: pointer; transition: transform 0.2s;
         }
-        .featured-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-        .featured-img { width: 100%; height: 140px; object-fit: cover; }
+        .featured-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--color-purple); }
         .featured-info { padding: 12px; }
         .shop-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .shop-meta { font-size: 0.75rem; color: var(--color-text-muted); display: flex; justify-content: space-between; }
+
+        .featured-collage {
+            width: 100%; height: 140px; 
+            display: flex; flex-wrap: wrap; background: #F1F5F9;
+        }
+        .featured-collage img { width: 50%; height: 50%; object-fit: cover; border: 0.5px solid white; }
+        .featured-collage.single img { width: 100%; height: 100%; border: none; }
 
         /* Collage Pills */
         .collage-pill {
             display: flex; align-items: center; gap: 10px;
             background: white; border: 1px solid var(--color-border);
-            border-radius: 50px; padding: 5px 16px 5px 5px;
+            border-radius: 50px; padding: 6px 16px 6px 6px;
             min-width: max-content; cursor: pointer; transition: all 0.2s;
         }
         .collage-pill:hover { border-color: var(--color-purple); }
@@ -156,51 +179,80 @@
 
         /* Promo Slider */
         .promo-slider { display: flex; overflow-x: auto; gap: 1rem; margin-bottom: 2rem; }
-        .promo-card { min-width: 300px; height: 140px; border-radius: 16px; overflow: hidden; flex-shrink: 0; }
+        .promo-card { min-width: 320px; height: 150px; border-radius: 16px; overflow: hidden; flex-shrink: 0; }
         .promo-img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Shop List */
-        .shop-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+        /* Shop List & Grid */
+        .shop-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+        
         .shop-card {
-            background: white; border-radius: 12px; padding: 12px;
-            display: flex; gap: 12px; box-shadow: var(--shadow-sm);
+            background: white; border-radius: 16px; padding: 12px;
+            display: flex; gap: 16px; box-shadow: var(--shadow-sm);
             border: 1px solid var(--color-border); cursor: pointer;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s; align-items: center;
         }
-        .shop-card:hover { border-color: var(--color-purple); }
-        .shop-avatar { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; background: #F1F5F9; }
-        .shop-details { flex: 1; overflow: hidden; }
-        .shop-cat { font-size: 0.7rem; color: var(--color-purple); font-weight: 700; background: #F3E8FF; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
-        .shop-addr { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .shop-card:hover { border-color: var(--color-purple); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        
+        /* 4-Product Collage for Shops */
+        .shop-collage {
+            width: 72px; height: 72px; border-radius: 12px; overflow: hidden;
+            display: flex; flex-wrap: wrap; flex-shrink: 0; background: #F1F5F9;
+        }
+        .shop-collage img { width: 50%; height: 50%; object-fit: cover; border: 0.5px solid white; }
+        .shop-collage.single img { width: 100%; height: 100%; border: none; }
 
-        /* Profile Styles (Preserved) */
+        .shop-details { flex: 1; overflow: hidden; }
+        .shop-cat { font-size: 0.75rem; color: var(--color-purple); font-weight: 700; background: #F3E8FF; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-bottom: 6px; }
+        .shop-addr { font-size: 0.85rem; color: var(--color-text-muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+
+        /* --- PROFILE --- */
         .profile-card { background: white; border-radius: 24px; padding: 3rem; box-shadow: var(--shadow-md); max-width: 800px; margin: 0 auto; }
         .profile-hero { display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--color-border); }
         .avatar-uploader { position: relative; width: 120px; height: 120px; }
         .main-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 0 0 2px var(--color-purple); }
         .btn-cam { position: absolute; bottom: 0; right: 0; background: var(--color-purple); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; cursor: pointer; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .form-control { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid var(--color-border); font-size: 0.9rem; }
-        .btn-save { background: var(--color-purple); color: white; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; margin-top: 1.5rem; }
+        .input-group label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px; }
+        .form-control { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid var(--color-border); font-size: 0.95rem; }
+        .btn-save { background: var(--color-purple); color: white; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; margin-top: 1.5rem; transition: background 0.2s; }
+        .btn-save:hover { background: var(--color-pink); }
 
-        /* Utils */
         .screen { display: none; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
         .hidden { display: none !important; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Mobile */
+
+        /* --- MOBILE RESPONSIVE MEDIA QUERIES --- */
         @media (max-width: 1024px) {
-            .sidebar { transform: translateX(-100%); }
+            /* Layout */
+            .sidebar { transform: translateX(-100%); width: 280px; }
             .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0; padding: 1.5rem; width: 100%; }
-            .form-grid, .shop-list { grid-template-columns: 1fr; }
+            .main-content { margin-left: 0; width: 100%; padding: 1.5rem 1rem; }
+            
+            /* Header */
+            .menu-btn { display: flex; } /* Show hamburger */
+            .welcome-text h1 { font-size: 1.25rem; }
+            .pill-name { display: none; } /* Hide name on mobile */
+            .user-pill { padding: 4px; gap: 0; border: none; box-shadow: none; background: transparent; }
+            
+            /* Profile */
+            .profile-card { padding: 1.5rem; }
+            .profile-hero { flex-direction: column; text-align: center; gap: 1rem; }
+            .form-grid { grid-template-columns: 1fr; gap: 1rem; }
+            
+            /* Grids */
+            .shop-list { grid-template-columns: 1fr; }
+            .shop-card { padding: 10px; }
         }
     </style>
 </head>
 <body>
 
 <div class="dashboard-container">
+    
+    <!-- Mobile Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
@@ -234,30 +286,30 @@
     <main class="main-content">
         <!-- Top Bar -->
         <div class="top-bar">
-            <div class="welcome-text">
-                <h1 id="greeting-name">Welcome User</h1>
-                <div class="location-badge">
-                    <i class="fa-solid fa-location-dot"></i>
-                    <span id="current-city">Loading Location...</span>
+            <!-- Left Side: Menu Btn + Welcome -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="menu-btn" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="welcome-text">
+                    <h1 id="greeting-name">Welcome</h1>
+                    <div class="location-badge">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span id="current-city">Loading...</span>
+                    </div>
                 </div>
             </div>
+
+            <!-- Right Side: User Pill -->
             <div class="user-pill">
                 <img id="top-avatar" src="" class="pill-avatar" alt="">
                 <span id="top-name" class="pill-name">User</span>
             </div>
         </div>
 
-        <!-- TAB 1: MARKET OVERVIEW (The App Home) -->
+        <!-- TAB 1: MARKET OVERVIEW -->
         <div id="market" class="screen active">
             
-            <!-- Search -->
-            <div class="search-container">
-                <div class="search-box">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Search mechanics, artisans, spare parts...">
-                </div>
-            </div>
-
             <!-- Announcements -->
             <div id="announcement-box" class="ticker-wrap">
                 <div id="announcement-text" class="ticker"></div>
@@ -302,7 +354,6 @@
                     <div class="section-title">All Shops <span id="shop-count" style="font-size: 0.9rem; color: var(--color-text-muted); font-weight: 500;"></span></div>
                 </div>
                 <div id="shop-list" class="shop-list">
-                    <!-- Loading Skeleton -->
                     <p style="color: grey;">Loading marketplace data...</p>
                 </div>
             </div>
@@ -328,22 +379,22 @@
                 <form id="profile-form" onsubmit="saveProfile(event)">
                     <div class="form-grid">
                         <div>
-                            <label style="font-size:0.8rem; font-weight:700; color:grey;">FULL NAME</label>
-                            <input type="text" id="form-name" class="form-control" required style="margin-top:5px;">
+                            <label>FULL NAME</label>
+                            <input type="text" id="form-name" class="form-control" required>
                         </div>
                         <div>
-                            <label style="font-size:0.8rem; font-weight:700; color:grey;">PHONE NUMBER</label>
-                            <input type="tel" id="form-phone" class="form-control" style="margin-top:5px;">
+                            <label>PHONE NUMBER</label>
+                            <input type="tel" id="form-phone" class="form-control">
                         </div>
                         <div>
-                            <label style="font-size:0.8rem; font-weight:700; color:grey;">CITY</label>
-                            <select id="form-city" class="form-control" required style="margin-top:5px;">
+                            <label>CITY</label>
+                            <select id="form-city" class="form-control" required>
                                 <option value="" disabled selected>Loading...</option>
                             </select>
                         </div>
                         <div>
-                            <label style="font-size:0.8rem; font-weight:700; color:grey;">AREA</label>
-                            <select id="form-area" class="form-control" required disabled style="margin-top:5px;">
+                            <label>AREA</label>
+                            <select id="form-area" class="form-control" required disabled>
                                 <option value="" disabled selected>Select city first</option>
                             </select>
                         </div>
@@ -365,27 +416,29 @@
     let currentUser = null;
     let selectedFile = null;
 
+    // --- MOBILE SIDEBAR TOGGLE ---
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebar-overlay').classList.toggle('active');
+    }
+
     // --- INITIALIZATION ---
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "login.html"; return; }
         currentUser = session.user;
 
-        // 1. Try Cache
         const cached = localStorage.getItem('dashboard_data_cache');
         if (cached) {
             const data = JSON.parse(cached);
             renderDashboard(data);
-            renderProfileForms(data.profile); // Pre-fill profile tab too
+            renderProfileForms(data.profile); 
         }
-
-        // 2. Fetch Fresh Data (Parallel)
         fetchFullData();
     };
 
     async function fetchFullData() {
         try {
-            // A. Parallel Requests
             const [profileRes, citiesRes, announceRes, promoRes, catRes] = await Promise.all([
                 client.from('profiles').select('*, cities(name), areas(name)').eq('id', currentUser.id).maybeSingle(),
                 client.from('cities').select('id, name').order('name'),
@@ -398,13 +451,11 @@
 
             const cityId = profileRes.data.city_id;
 
-            // B. Dependent Requests (Shops & Areas in user's city)
             const [areaRes, shopRes] = await Promise.all([
                 client.from('areas').select().eq('city_id', cityId).order('name'),
                 client.from('shops').select().eq('city_id', cityId).order('is_verified', { ascending: false })
             ]);
 
-            // C. Product Images for Collage
             let products = [];
             if (shopRes.data && shopRes.data.length > 0) {
                 const shopIds = shopRes.data.map(s => s.id);
@@ -416,7 +467,6 @@
                 products = prodRes.data || [];
             }
 
-            // D. Populate City Dropdown (for Profile Tab)
             populateCityDropdown(citiesRes.data, profileRes.data);
 
             const dashboardData = {
@@ -427,7 +477,7 @@
                 areas: areaRes.data || [],
                 shops: shopRes.data || [],
                 products: products,
-                allCities: citiesRes.data // Cache this too for profile editing
+                allCities: citiesRes.data
             };
 
             localStorage.setItem('dashboard_data_cache', JSON.stringify(dashboardData));
@@ -441,7 +491,6 @@
 
     // --- RENDER LOGIC ---
     function renderDashboard(data) {
-        // 1. Header Info
         const p = data.profile;
         const avatar = p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name)}`;
         
@@ -450,112 +499,107 @@
         document.getElementById('top-name').textContent = p.full_name;
         document.getElementById('top-avatar').src = avatar;
 
-        // 2. Announcements
         if (data.announcements.length > 0) {
             const text = data.announcements.map(a => a.message).join("  |  ");
             document.getElementById('announcement-text').textContent = text;
             document.getElementById('announcement-box').style.display = 'block';
         }
 
-        // 3. Featured
+        // FEATURED SHOPS
         const featured = data.shops.filter(s => s.is_featured);
         if (featured.length > 0) {
             document.getElementById('section-featured').classList.remove('hidden');
-            document.getElementById('featured-list').innerHTML = featured.map(s => `
-                <div class="featured-card">
-                    <img src="${s.image_url || s.store_front_url || 'https://via.placeholder.com/300'}" class="featured-img">
-                    <div class="featured-info">
-                        <div class="shop-name">
-                            ${s.name} ${s.is_verified ? '<i class="fa-solid fa-circle-check" style="color:#3B82F6"></i>' : ''}
-                        </div>
-                        <div class="shop-meta">
-                            <span>${s.category}</span>
-                            <span><i class="fa-solid fa-location-dot"></i> ${data.areas.find(a => a.id === s.area_id)?.name || 'Local'}</span>
+            document.getElementById('featured-list').innerHTML = featured.map(s => {
+                const collageHtml = buildShopThumbnail(s, data.products); // REUSED GRID LOGIC
+                return `
+                    <div class="featured-card" onclick="window.location.href='shop-detail.html?id=${s.id}'">
+                        ${collageHtml}
+                        <div class="featured-info">
+                            <div class="shop-name">${s.name} ${s.is_verified ? '<i class="fa-solid fa-circle-check" style="color:#3B82F6"></i>' : ''}</div>
+                            <div class="shop-meta"><span>${s.category}</span></div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        // 4. Categories & Collage Logic
-        renderCollageRow('category-list', data.categories, data.shops, data.products, 'category');
+        renderCollageRow('category-list', data.categories, data.shops, data.products, 'category', null);
 
-        // 5. Promos
         if (data.promos.length > 0) {
             document.getElementById('section-promos').classList.remove('hidden');
-            document.getElementById('promo-list').innerHTML = data.promos.map(p => `
-                <div class="promo-card">
-                    <img src="${p.image_url}" class="promo-img">
-                </div>
-            `).join('');
+            document.getElementById('promo-list').innerHTML = data.promos.map(p => `<div class="promo-card"><img src="${p.image_url}" class="promo-img"></div>`).join('');
         }
 
-        // 6. Areas & Collage Logic
-        const areaWithShops = data.areas.filter(a => data.shops.some(s => s.area_id === a.id));
-        renderCollageRow('area-list', areaWithShops, data.shops, data.products, 'area', data.profile.area_id);
+        const activeAreas = data.areas.filter(a => data.shops.some(s => s.area_id === a.id));
+        renderCollageRow('area-list', activeAreas, data.shops, data.products, 'area', data.profile.area_id);
 
-        // 7. All Shops
+        // ALL SHOPS
         document.getElementById('shop-count').textContent = `${data.shops.length} Found`;
-        document.getElementById('shop-list').innerHTML = data.shops.map(s => `
-            <div class="shop-card">
-                <img src="${s.image_url || s.store_front_url || s.banners?.[0] || 'https://via.placeholder.com/60'}" class="shop-avatar">
-                <div class="shop-details">
-                    <div style="display:flex; justify-content:space-between;">
-                        <span style="font-weight:700; font-size:1rem;">${s.name}</span>
-                        ${s.is_verified ? '<i class="fa-solid fa-certificate" style="color:orange;"></i>' : ''}
+        document.getElementById('shop-list').innerHTML = data.shops.map(s => {
+            const collageHtml = buildShopThumbnail(s, data.products);
+            return `
+                <div class="shop-card" onclick="window.location.href='shop-detail.html?id=${s.id}'">
+                    ${collageHtml}
+                    <div class="shop-details">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="font-weight:700; font-size:0.95rem;">${s.name}</span>
+                            ${s.is_verified ? '<i class="fa-solid fa-certificate" style="color:orange; font-size:0.8rem;"></i>' : ''}
+                        </div>
+                        <span class="shop-cat">${s.category}</span>
+                        <div class="shop-addr"><i class="fa-solid fa-location-dot" style="font-size:0.7rem; color:grey;"></i> ${s.address}</div>
                     </div>
-                    <span class="shop-cat">${s.category}</span>
-                    <div class="shop-addr"><i class="fa-solid fa-location-dot" style="font-size:0.7rem; color:grey;"></i> ${s.address}</div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+    }
+
+    // Helper: Shop Thumbnail (4-Grid)
+    function buildShopThumbnail(shop, allProducts) {
+        // Find products for THIS shop
+        const shopProducts = allProducts.filter(p => p.shop_id === shop.id && p.image_url).slice(0, 4);
+        const images = shopProducts.map(p => p.image_url);
+
+        // If no products, fallback to shop image
+        if (images.length === 0) {
+            const fallback = shop.image_url || shop.store_front_url || 'https://via.placeholder.com/60';
+            return `<img src="${fallback}" class="shop-collage single" style="width:72px;height:72px;border-radius:12px;object-fit:cover;">`;
+        }
+
+        // Build 2x2 Grid
+        let innerHtml = '';
+        for (let i = 0; i < 4; i++) {
+            if (images[i]) {
+                innerHtml += `<img src="${images[i]}">`;
+            } else {
+                innerHtml += `<div style="width:50%;height:50%;background:#e2e8f0;"></div>`;
+            }
+        }
+        return `<div class="shop-collage" style="width:72px;height:72px;">${innerHtml}</div>`;
     }
 
     function renderCollageRow(elementId, items, shops, products, type, activeId) {
         const container = document.getElementById(elementId);
         container.innerHTML = items.map(item => {
-            // Find up to 3 images for this category/area
             let imageUrls = [];
-            if (type === 'category') {
-                const shopIds = shops.filter(s => s.category === item.name).map(s => s.id);
-                imageUrls = products.filter(p => shopIds.includes(p.shop_id) && p.image_url).map(p => p.image_url).slice(0, 3);
-            } else {
-                const shopIds = shops.filter(s => s.area_id === item.id).map(s => s.id);
-                imageUrls = products.filter(p => shopIds.includes(p.shop_id) && p.image_url).map(p => p.image_url).slice(0, 3);
-            }
-
-            const isActive = (type === 'area' && item.id === activeId);
+            const shopIds = shops.filter(s => type === 'category' ? s.category === item.name : s.area_id === item.id).map(s => s.id);
+            imageUrls = products.filter(p => shopIds.includes(p.shop_id) && p.image_url).map(p => p.image_url).slice(0, 3);
 
             return `
-                <div class="collage-pill ${isActive ? 'active' : ''}">
-                    ${buildCollageCircle(imageUrls)}
+                <div class="collage-pill ${item.id === activeId ? 'active' : ''}">
+                    ${buildCollage(imageUrls)}
                     <span class="pill-text">${item.name}</span>
                 </div>
             `;
         }).join('');
     }
 
-    function buildCollageCircle(images) {
+    function buildCollage(images) {
         if (images.length === 0) return `<div class="collage-circle" style="display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#cbd5e1;"></i></div>`;
-        
-        if (images.length === 1) {
-            return `<div class="collage-circle collage-1"><img src="${images[0]}"></div>`;
-        } else if (images.length === 2) {
-            return `<div class="collage-circle collage-2"><img src="${images[0]}"><img src="${images[1]}"></div>`;
-        } else {
-            return `
-                <div class="collage-circle collage-3">
-                    <img src="${images[0]}">
-                    <div>
-                        <img src="${images[1]}">
-                        <img src="${images[2]}">
-                    </div>
-                </div>
-            `;
-        }
+        if (images.length === 1) return `<div class="collage-circle collage-1"><img src="${images[0]}"></div>`;
+        if (images.length === 2) return `<div class="collage-circle collage-2"><img src="${images[0]}"><img src="${images[1]}"></div>`;
+        return `<div class="collage-circle collage-3"><img src="${images[0]}"><div><img src="${images[1]}"><img src="${images[2]}"></div></div>`;
     }
 
-    // --- PROFILE TAB LOGIC ---
     function renderProfileForms(p) {
         const avatar = p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name)}`;
         document.getElementById('edit-display-name').textContent = p.full_name;
@@ -576,8 +620,6 @@
             if (c.id === profile.city_id) opt.selected = true;
             sel.appendChild(opt);
         });
-        
-        // Trigger area fetch for selected city
         if (profile.city_id) fetchAreasForProfile(profile.city_id, profile.area_id);
     }
 
@@ -599,8 +641,8 @@
 
     document.getElementById('form-city').addEventListener('change', (e) => fetchAreasForProfile(e.target.value));
 
-    // --- ACTIONS ---
     function switchTab(screenId, btn) {
+        if(window.innerWidth <= 1024) toggleSidebar(); 
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
@@ -619,66 +661,44 @@
     async function saveProfile(e) {
         e.preventDefault();
         const btn = document.getElementById('btn-submit');
-        btn.disabled = true;
-        btn.innerHTML = '<div class="spinner"></div> Saving...';
+        btn.disabled = true; btn.textContent = 'Saving...';
 
         try {
             let avatarUrl = document.getElementById('edit-avatar').src;
-
-            // --- CORRECTED BUCKET NAME: 'avatars' ---
             if (selectedFile) {
-                const fileExt = selectedFile.name.split('.').pop();
-                const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
-                
-                const { data, error: uploadError } = await client.storage
-                    .from('avatars')
-                    .upload(fileName, selectedFile, {
-                        cacheControl: '3600',
-                        upsert: true
-                    });
-
-                if (uploadError) throw uploadError;
-
-                const { data: { publicUrl } } = client.storage
-                    .from('avatars')
-                    .getPublicUrl(fileName);
-                    
-                avatarUrl = publicUrl;
+                const fileName = `${currentUser.id}_${Date.now()}.${selectedFile.name.split('.').pop()}`;
+                await client.storage.from('avatars').upload(fileName, selectedFile, { upsert: true });
+                const { data } = client.storage.from('avatars').getPublicUrl(fileName);
+                avatarUrl = data.publicUrl;
             }
 
             const updates = {
-                full_name: document.getElementById('form-name').value.trim(),
-                phone: document.getElementById('form-phone').value.trim(),
-                city_id: parseInt(document.getElementById('form-city').value),
-                area_id: parseInt(document.getElementById('form-area').value),
-                avatar_url: avatarUrl,
-                updated_at: new Date()
+                full_name: document.getElementById('form-name').value,
+                phone: document.getElementById('form-phone').value,
+                city_id: document.getElementById('form-city').value,
+                area_id: document.getElementById('form-area').value,
+                avatar_url: avatarUrl
             };
 
             const { error } = await client.from('profiles').update(updates).eq('id', currentUser.id);
             if (error) throw error;
 
-            alert("Profile updated successfully!");
-            selectedFile = null;
-            fetchProfile(); 
+            alert("Saved!");
+            fetchFullData();
         } catch (err) {
-            alert(err.message || "Upload failed. Please check if bucket 'avatars' exists.");
+            alert("Error: " + err.message);
         } finally {
-            btn.disabled = false;
-            btn.innerHTML = 'Save Changes';
+            btn.disabled = false; btn.textContent = 'Save Changes';
         }
     }
 
-    // --- 5. ROBUST LOGOUT ---
     async function handleLogout() {
-        if (confirm("Are you sure you want to log out?")) {
-            // Clear local storage (Matches app's LocalStorageService.clearCache)
+        if (confirm("Log out?")) {
             localStorage.clear();
             await client.auth.signOut();
             window.location.href = "index.html";
         }
     }
 </script>
-
 </body>
 </html>
