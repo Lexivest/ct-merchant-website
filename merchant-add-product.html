@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product | CT‑Merchant</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-purple: #2E1065;
+            --color-pink: #DB2777;
+            --color-bg: #F8FAFC;
+            --color-text: #1E293B;
+            --color-border: #E2E8F0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--color-bg); color: var(--color-text); min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+
+        .container { width: 100%; max-width: 500px; }
+
+        /* Header */
+        .app-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+        .back-btn { background: white; border: 1px solid var(--color-border); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-text); font-size: 1.1rem; }
+        .page-title { font-size: 1.25rem; font-weight: 800; }
+
+        /* Card */
+        .card { background: white; padding: 24px; border-radius: 20px; border: 1px solid var(--color-border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+
+        /* Image Picker */
+        .image-picker {
+            width: 100%; height: 200px; background: #F1F5F9;
+            border-radius: 16px; border: 2px dashed #CBD5E1;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; position: relative; overflow: hidden;
+            margin-bottom: 24px; transition: all 0.2s;
+        }
+        .image-picker:hover { border-color: var(--color-purple); background: #F3E8FF; }
+        .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; }
+        
+        /* Form */
+        .form-group { margin-bottom: 16px; }
+        .label { display: block; font-size: 0.85rem; font-weight: 700; color: #64748B; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--color-border); font-size: 1rem; }
+        .input:focus { outline: none; border-color: var(--color-purple); }
+        
+        /* Discount Switch */
+        .discount-box {
+            background: #F8FAFC; border: 1px solid var(--color-border);
+            padding: 16px; border-radius: 12px; margin-bottom: 16px;
+        }
+        .switch-row { display: flex; justify-content: space-between; align-items: center; }
+        .switch-label { font-weight: 700; font-size: 0.95rem; }
+        .switch-sub { font-size: 0.8rem; color: #64748B; }
+        
+        /* Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #22C55E; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .hidden-input { display: none; margin-top: 12px; }
+        .hidden-input.visible { display: block; animation: slideDown 0.3s ease; }
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Button */
+        .btn-submit {
+            width: 100%; background: var(--color-purple); color: white;
+            padding: 16px; border-radius: 12px; border: none;
+            font-size: 1rem; font-weight: 700; cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn-submit:disabled { background: #94A3B8; cursor: not-allowed; }
+
+        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; margin-right: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="app-bar">
+        <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+        <div class="page-title">Add Product</div>
+    </div>
+
+    <form class="card" onsubmit="handleSubmit(event)">
+        <!-- Image -->
+        <div class="image-picker" onclick="document.getElementById('file-input').click()">
+            <input type="file" id="file-input" hidden accept="image/*" onchange="previewImage(this)">
+            <img id="preview" class="preview-img">
+            <i class="fa-solid fa-camera" style="font-size: 2rem; color: #94A3B8; margin-bottom: 8px;"></i>
+            <span style="font-size: 0.9rem; font-weight: 600; color: #64748B;">Tap to upload image</span>
+        </div>
+
+        <!-- Name -->
+        <div class="form-group">
+            <label class="label">Product Name</label>
+            <input type="text" id="name" class="input" required>
+        </div>
+
+        <!-- Price -->
+        <div class="form-group">
+            <label class="label">Original Price (₦)</label>
+            <input type="number" id="price" class="input" required>
+        </div>
+
+        <!-- Condition -->
+        <div class="form-group">
+            <label class="label">Condition</label>
+            <select id="condition" class="input">
+                <option value="New">New</option>
+                <option value="Fairly Used">Fairly Used</option>
+            </select>
+        </div>
+
+        <!-- Discount -->
+        <div class="discount-box">
+            <div class="switch-row">
+                <div>
+                    <div class="switch-label">Special Offer?</div>
+                    <div class="switch-sub">Apply a 0-20% discount</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="discount-switch" onchange="toggleDiscount(this)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div id="discount-input-box" class="hidden-input">
+                <input type="number" id="discount-percent" class="input" placeholder="Enter Percentage (e.g. 10)" max="20">
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+            <label class="label">Description</label>
+            <textarea id="desc" class="input" style="min-height: 100px;" required></textarea>
+        </div>
+
+        <button type="submit" id="btn-submit" class="btn-submit">Upload Product</button>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const params = new URLSearchParams(window.location.search);
+    const shopId = params.get('shop_id');
+    let currentUser = null;
+
+    window.onload = async () => {
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) { window.location.href = "login.html"; return; }
+        currentUser = session.user;
+        
+        if (!shopId) {
+            alert("No shop ID provided.");
+            window.location.href = "merchant-dashboard.html";
+        }
+    };
+
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.getElementById('preview');
+                img.src = e.target.result;
+                img.style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function toggleDiscount(el) {
+        const box = document.getElementById('discount-input-box');
+        if (el.checked) {
+            box.classList.add('visible');
+            box.style.display = 'block';
+        } else {
+            box.classList.remove('visible');
+            box.style.display = 'none';
+            document.getElementById('discount-percent').value = '';
+        }
+    }
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-submit');
+        
+        // Validation
+        const file = document.getElementById('file-input').files[0];
+        if (!file) return alert("Please upload a product image.");
+
+        const price = parseFloat(document.getElementById('price').value);
+        let discountPrice = null;
+
+        if (document.getElementById('discount-switch').checked) {
+            const percent = parseFloat(document.getElementById('discount-percent').value);
+            if (!percent || percent <= 0 || percent > 20) return alert("Discount must be between 1% and 20%");
+            discountPrice = price - (price * (percent / 100));
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Uploading...';
+
+        try {
+            // 1. Upload Image (Bucket: 'products')
+            const ext = file.name.split('.').pop();
+            const fileName = `${currentUser.id}_${Date.now()}.${ext}`;
+            const { error: uploadError } = await client.storage
+                .from('products')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = client.storage.from('products').getPublicUrl(fileName);
+
+            // 2. Insert Record
+            const { error: insertError } = await client.from('products').insert({
+                shop_id: parseInt(shopId),
+                name: document.getElementById('name').value.trim(),
+                description: document.getElementById('desc').value.trim(),
+                price: price,
+                discount_price: discountPrice,
+                condition: document.getElementById('condition').value,
+                image_url: publicUrl,
+                is_available: true
+            });
+
+            if (insertError) throw insertError;
+
+            alert("Product uploaded successfully!");
+            window.location.href = `merchant-dashboard.html`; // Go back to dash
+
+        } catch (err) {
+            console.error(err);
+            alert("Upload failed: " + err.message);
+            btn.disabled = false;
+            btn.innerHTML = 'Upload Product';
+        }
+    }
+</script>
+
+</body>
+</html>
