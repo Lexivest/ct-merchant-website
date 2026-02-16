@@ -105,7 +105,6 @@
         }
 
         .top-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-        
         .menu-btn {
             display: flex; background: #F1F5F9; border: none;
             width: 36px; height: 36px; border-radius: 8px;
@@ -113,7 +112,6 @@
             align-items: center; justify-content: center;
             cursor: pointer; flex-shrink: 0;
         }
-
         .greeting-text { 
             font-size: 1rem; font-weight: 800; color: var(--color-purple); margin: 0;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
@@ -146,7 +144,7 @@
         .pill-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: #E2E8F0; }
         .pill-name { font-weight: 700; font-size: 0.8rem; }
 
-        /* --- MARKET / HOME STYLES --- */
+        /* --- MARKET OVERVIEW --- */
         .section { margin-bottom: 2rem; width: 100%; }
         .section-header { display: flex; align-items: center; margin-bottom: 1rem; }
         .bar { width: 4px; height: 24px; border-radius: 2px; margin-right: 12px; }
@@ -216,28 +214,22 @@
         .shop-collage.single img { width: 100%; height: 100%; border: none; }
         .shop-details { flex: 1; overflow: hidden; min-width: 0; }
 
-        /* --- SERVICES GRID (NEW) --- */
-        .services-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
-            gap: 1rem; 
-            margin-top: 1rem;
-        }
+        /* --- SERVICES (New) --- */
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
         .service-card {
             background: white; border-radius: 16px; padding: 20px 12px;
             display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
             box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
-            cursor: pointer; transition: all 0.2s; height: 150px;
+            cursor: pointer; transition: all 0.2s; height: 140px;
         }
         .service-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--color-purple); }
         .service-icon-box {
-            width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
             margin-bottom: 12px; font-size: 1.4rem;
         }
         .service-title { font-weight: 700; font-size: 0.95rem; color: var(--color-text-main); margin-bottom: 2px; }
         .service-subtitle { font-size: 0.7rem; color: var(--color-text-muted); }
 
-        /* Service Colors */
         .bg-blue-light { background: #DBEAFE; color: #1D4ED8; }
         .bg-green-light { background: #DCFCE7; color: #15803D; }
         .bg-orange-light { background: #FFEDD5; color: #C2410C; }
@@ -260,22 +252,18 @@
         .screen { display: none; animation: fadeIn 0.3s ease; width: 100%; }
         .screen.active { display: block; }
         .hidden { display: none !important; }
-        .spinner { width: 24px; height: 24px; border: 2px solid rgba(0,0,0,0.1); border-top-color: #333; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- MOBILE RESPONSIVE --- */
         @media (max-width: 768px) {
             .main-content { padding: 1rem; }
-            .greeting-text { display: none; } /* Hide greeting to fit ticker */
+            .greeting-text { display: none; }
             .location-badge { padding: 4px 8px; font-size: 0.7rem; max-width: 80px; }
             .pill-name { display: none; }
             .user-pill { border: none; box-shadow: none; padding: 0; }
             .ticker-container { margin: 0 8px; }
-            
             .shop-list { grid-template-columns: 1fr; }
             .services-grid { grid-template-columns: 1fr 1fr; gap: 0.8rem; }
-            
             .profile-card { padding: 1.5rem; }
             .profile-hero { flex-direction: column; text-align: center; gap: 1rem; }
         }
@@ -300,7 +288,7 @@
                 <i class="fa-solid fa-store"></i> Market Overview
             </button>
             <button class="nav-item" onclick="switchTab('services', this)">
-                <i class="fa-solid fa-grid-2"></i> Services
+                <i class="fa-solid fa-grid"></i> Services
             </button>
             <button class="nav-item" onclick="switchTab('profile', this)">
                 <i class="fa-solid fa-user-gear"></i> My Profile
@@ -350,7 +338,6 @@
 
         <!-- TAB 1: MARKET OVERVIEW -->
         <div id="market" class="screen active">
-            
             <!-- Featured Shops -->
             <div id="section-featured" class="section hidden">
                 <div class="section-header">
@@ -522,6 +509,7 @@
         fetchWishlistCount();
     };
 
+    // --- MARKET FETCH ---
     async function fetchFullData() {
         try {
             const [profileRes, citiesRes, announceRes, promoRes, catRes] = await Promise.all([
