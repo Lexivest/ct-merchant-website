@@ -106,7 +106,7 @@
         }
         .ticker-content {
             white-space: nowrap; 
-            animation: ticker 25s linear infinite;
+            animation: ticker 60s linear infinite; /* Slowed down to 60s */
             color: white; 
             font-weight: 600; 
             font-size: 0.9rem; 
@@ -373,7 +373,7 @@
     let currentUser = null;
     let userCityId = null;
     let userAreaId = null;
-    const CACHE_KEY = 'ctm_dash_v7';
+    const CACHE_KEY = 'ctm_dash_v8'; // Bumped cache key
 
     // --- NAVIGATION ---
     function toggleSidebar() {
