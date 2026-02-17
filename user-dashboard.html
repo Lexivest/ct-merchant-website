@@ -1,468 +1,259 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard | CT‑Merchant</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  
+  <title>CT-Merchant Ltd. | Digital Shops Repository</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* --- REPO SEARCH (Restored) --- */
+    .repo-search-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 380px;
+        margin-bottom: 1.5rem;
+    }
+
+    .repo-input {
+        width: 100%;
+        padding: 12px 40px 12px 20px;
+        background-color: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50px;
+        font-size: 0.9rem;
+        color: white;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        outline: none;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(8px);
+    }
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    .repo-input::placeholder { 
+        color: rgba(255, 255, 255, 0.7); 
+        text-transform: none; 
+        letter-spacing: normal; 
+        font-weight: 400;
+    }
     
-    <style>
-        :root {
-            --color-primary: #059669; 
-            --color-primary-dark: #064E3B;
-            --color-accent: #F59E0B;
-            --color-area-bg: #FEF3C7; 
-            --color-near-you-bg: #DCFCE7;
-            --color-bg: #F8FAFC;
-            --color-card: #FFFFFF;
-            --color-border: #E2E8F0;
-            --color-text-main: #1E293B;
-            --color-text-muted: #64748B;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --sidebar-width: 260px;
-        }
+    .repo-input:focus {
+        background-color: rgba(255, 255, 255, 0.25);
+        border-color: var(--color-pink);
+        box-shadow: 0 0 15px rgba(219, 39, 119, 0.3);
+    }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background-color: var(--color-bg); color: var(--color-text-main); min-height: 100vh; overflow-x: hidden; }
+    .search-icon-btn {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+        width: 18px;
+        transition: color 0.2s;
+    }
+    .search-icon-btn:hover { color: var(--color-pink); }
 
-        /* --- LAYOUT --- */
-        .dashboard-container { display: flex; min-height: 100vh; transition: all 0.3s ease; }
-        .dashboard-container.sidebar-collapsed { --sidebar-width: 0px; }
+    .id-hint {
+        margin-top: 6px;
+        margin-left: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #facc15; /* Yellow */
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
 
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--color-primary-dark);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            padding: 2rem 1.2rem;
-            position: fixed;
-            top: 0; left: 0; bottom: 0;
-            z-index: 1000;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow-y: auto;
-        }
-        .sidebar-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 2.5rem; }
-        .sidebar-logo { width: 34px; height: 34px; border-radius: 10px; }
-        
-        .nav-menu { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; }
-        .nav-item {
-            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-            border-radius: 12px; color: rgba(255,255,255,0.7); text-decoration: none;
-            font-weight: 600; font-size: 0.9rem; transition: all 0.2s;
-            cursor: pointer; border: none; background: none; width: 100%; text-align: left;
-        }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: white; }
-        .nav-item.active { background: var(--color-primary); }
-        .nav-item i { width: 20px; text-align: center; }
+    /* --- LOGIN WIDGET --- */
+    .hero-auth-widget {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 24px;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 380px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        margin-top: 1rem;
+    }
 
-        .sidebar-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-            z-index: 999; opacity: 0; visibility: hidden; transition: 0.3s;
-        }
+    .widget-title { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 
-        /* --- MAIN CONTENT --- */
-        .main-content {
-            flex-grow: 1;
-            margin-left: var(--sidebar-width);
-            width: calc(100% - var(--sidebar-width));
-            min-height: 100vh;
-            transition: margin 0.3s ease, width 0.3s ease;
-        }
+    .hero-input-login {
+        width: 100%; padding: 12px 16px; margin-bottom: 10px;
+        background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px; color: white; font-size: 0.95rem; outline: none; transition: 0.3s;
+    }
+    .hero-input-login:focus { background: rgba(0, 0, 0, 0.4); border-color: var(--color-pink); }
 
-        /* --- HEADER (GREEN) --- */
-        .header-top { background: var(--color-primary); padding: 12px 16px; color: white; position: sticky; top: 0; z-index: 900; box-shadow: var(--shadow-md); }
-        .header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1400px; margin: 0 auto; }
-        .menu-btn { background: rgba(255,255,255,0.2); border: none; color: white; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        .header-title { font-size: 1.1rem; font-weight: 800; flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        
-        /* Ticker */
-        .ticker-bar { background: #064E3B; color: #A7F3D0; height: 36px; display: flex; align-items: center; overflow: hidden; font-size: 0.8rem; font-weight: 600; }
-        .ticker-content { white-space: nowrap; animation: ticker 40s linear infinite; padding-left: 100%; }
-        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+    .btn-login-hero {
+        width: 100%; background: white; color: var(--color-purple);
+        font-weight: 800; padding: 12px; border-radius: 12px; border: none;
+        cursor: pointer; font-size: 1rem; margin-top: 4px; display: flex; justify-content: center; gap: 8px;
+    }
 
-        /* --- SCREENS --- */
-        .screen { display: none; padding: 1.5rem; max-width: 1400px; margin: 0 auto; animation: fadeIn 0.3s ease; }
-        .screen.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .widget-divider { text-align: center; margin: 16px 0; color: rgba(255,255,255,0.5); font-size: 0.8rem; font-weight: 600; }
+    
+    .btn-create-account {
+        display: block; width: 100%; text-align: center; padding: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 12px;
+        color: white; font-weight: 700; text-decoration: none; font-size: 0.95rem;
+    }
+    .btn-create-account:hover { background: rgba(255,255,255,0.1); border-color: white; }
 
-        /* Marketplace Elements */
-        .section { margin-bottom: 2rem; }
-        .section-header { display: flex; align-items: center; margin-bottom: 12px; }
-        .section-bar { width: 4px; height: 20px; border-radius: 2px; margin-right: 10px; }
-        .section-title { font-weight: 800; font-size: 1.1rem; }
+    /* Typewriter Cursor */
+    .cursor { display: inline-block; width: 3px; background-color: var(--color-pink); animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
 
-        .area-bar { background: var(--color-area-bg); padding: 10px 14px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-        .area-bar.near-you { background: var(--color-near-you-bg); }
-        .area-info { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #92400E; }
-        .area-bar.near-you .area-info { color: #166534; }
-        .see-all-link { color: var(--color-primary); font-weight: 800; font-size: 0.85rem; cursor: pointer; text-decoration: none; }
-
-        .scroll-row { display: flex; overflow-x: auto; gap: 16px; padding: 8px 4px 16px 4px; scrollbar-width: none; }
-        .scroll-row::-webkit-scrollbar { display: none; }
-
-        /* Shop Card Replica */
-        .shop-card {
-            min-width: 280px; width: 280px; background: white; border-radius: 16px; padding: 12px;
-            border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); flex-shrink: 0; cursor: pointer; transition: 0.2s;
-        }
-        .shop-card:hover { transform: translateY(-3px); border-color: var(--color-primary); }
-        .card-image { width: 100%; height: 140px; border-radius: 12px; background: #F1F5F9; margin-bottom: 12px; overflow: hidden; position: relative; }
-        .card-image img { width: 100%; height: 100%; object-fit: cover; }
-        .verified-badge { position: absolute; top: 8px; left: 8px; background: white; color: var(--color-primary); padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; border: 1px solid var(--color-border); }
-        .card-name { font-weight: 800; font-size: 1.05rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
-        .mini-products { display: flex; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F1F5F9; }
-        .mini-prod { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: #F8FAFC; border: 1px solid #F1F5F9; }
-
-        /* Category Wrap */
-        .category-wrap { display: flex; flex-wrap: wrap; gap: 12px; }
-        .cat-pill { background: white; border: 1px solid var(--color-border); padding: 10px 16px; border-radius: 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: var(--shadow-sm); }
-
-        /* Mobile Adjustments */
-        @media (max-width: 1024px) {
-            .sidebar { transform: translateX(-100%); width: 260px !important; }
-            .sidebar.mobile-open { transform: translateX(0); }
-            .main-content { margin-left: 0; width: 100%; }
-            .sidebar-overlay.active { opacity: 1; visibility: visible; }
-        }
-
-        #loading-overlay { position: fixed; inset: 0; background: white; z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+    @media (max-width: 768px) { .hero-auth-widget { max-width: 100%; } }
+  </style>
 </head>
 <body>
 
-<div id="loading-overlay">
-    <div class="spinner"></div>
-    <p id="loading-msg" style="font-weight: 700; color: #64748B;">Loading Marketplace...</p>
-</div>
-
-<div class="dashboard-container" id="container">
-    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="sidebar-logo">
-            <span style="font-weight:800; font-size:1.1rem; letter-spacing:-0.5px;">CT‑MERCHANT</span>
-        </div>
-
-        <nav class="nav-menu">
-            <button class="nav-item active" onclick="switchTab('market', this)">
-                <i class="fa-solid fa-store"></i> Market Overview
-            </button>
-            <button class="nav-item" onclick="switchTab('services', this)">
-                <i class="fa-solid fa-table-cells-large"></i> Services
-            </button>
-            <button class="nav-item" onclick="switchTab('profile', this)">
-                <i class="fa-solid fa-user-gear"></i> My Profile
-            </button>
-            <button class="nav-item" onclick="switchTab('notifications', this)">
-                <i class="fa-solid fa-bell"></i> Notifications
-            </button>
-        </nav>
-
-        <div style="margin-top:auto; padding-top:20px; border-top:1px solid rgba(255,255,255,0.1);">
-            <button class="nav-item" style="color:#FDA4AF" onclick="handleLogout()">
-                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
-            </button>
-        </div>
-    </aside>
-
-    <main class="main-content">
-        <header class="header-top">
-            <div class="header-row">
-                <button class="menu-btn" onclick="toggleSidebar()">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <div class="header-title" id="display-city">Loading Marketplace...</div>
-                <div class="header-actions">
-                    <div style="position:relative; cursor:pointer;" onclick="switchTab('notifications', document.querySelectorAll('.nav-item')[3])">
-                        <i class="fa-solid fa-bell" style="font-size:1.2rem;"></i>
-                        <span style="position:absolute; top:-5px; right:-5px; background:#EF4444; color:white; font-size:0.6rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid var(--color-primary);" id="notif-badge">0</span>
-                    </div>
-                    <img id="user-avatar" src="" style="width:36px; height:36px; border-radius:50%; background:white; object-fit: cover; cursor:pointer;" onclick="switchTab('profile', document.querySelectorAll('.nav-item')[2])">
+<nav class="main-header">
+  <div class="container nav-container">
+    <a href="index.html" class="brand-wrapper">
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
+      <div class="marquee-container header-marquee-box">
+         <div class="marquee-content animate-brand-scroll desktop-menu">
+            <div class="flex items-center" style="display:flex; align-items:center; margin-right: 2.5rem;">
+                <span>CT-MERCHANT LTD.</span>
+                <div class="flag-icon">
+                    <div class="flag-stripe flag-green"></div><div class="flag-stripe flag-white"></div><div class="flag-stripe flag-green"></div>
                 </div>
             </div>
-        </header>
+         </div>
+      </div>
+    </a>
 
-        <div class="ticker-bar">
-            <div class="ticker-content" id="ticker-text">Welcome to the CT-Merchant digital marketplace.</div>
-        </div>
+    <div class="desktop-menu">
+      <a href="index.html" class="nav-active">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="contact.html">Contact</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
+    </div>
 
-        <!-- SCREEN: MARKET -->
-        <div id="market" class="screen active">
-            <section class="section" id="section-featured" style="display:none;">
-                <div class="section-header">
-                    <div class="section-bar" style="background: var(--color-accent);"></div>
-                    <h2 class="section-title">Featured Shops</h2>
-                </div>
-                <div class="scroll-row" id="featured-list"></div>
-            </section>
+    <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </div>
+  <div class="mobile-dropdown hidden" id="mobile-menu">
+      <a href="index.html">Home</a><a href="services.html">Services</a><a href="contact.html">Contact</a><a href="staff-portal.html" class="btn-staff">Staff Portal</a>
+  </div>
+</nav>
 
-            <div id="area-container"></div>
+<section class="hero-section">
+  <div class="hero-image-wrapper">
+    <div class="hero-overlay"></div>
+    <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" class="hero-img">
+  </div>
 
-            <section class="section">
-                <div class="section-header">
-                    <div class="section-bar" style="background: var(--color-primary);"></div>
-                    <h2 class="section-title">Browse Categories</h2>
-                </div>
-                <div class="category-wrap" id="category-list"></div>
-            </section>
-        </div>
-
-        <!-- SCREEN: SERVICES -->
-        <div id="services" class="screen">
-            <h2 class="section-title" style="margin-bottom: 20px;">Services & Tools</h2>
-            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:16px;">
-                <div class="cat-pill" style="height:120px; flex-direction:column; justify-content:center; text-align:center;">
-                    <i class="fa-solid fa-shop" style="font-size:1.5rem; color:var(--color-primary);"></i>
-                    <div style="font-weight:800; margin-top:10px;">Register Shop</div>
-                </div>
-                <div class="cat-pill" style="height:120px; flex-direction:column; justify-content:center; text-align:center;">
-                    <i class="fa-solid fa-heart" style="font-size:1.5rem; color:#DB2777;"></i>
-                    <div style="font-weight:800; margin-top:10px;">Wishlist</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SCREEN: PROFILE -->
-        <div id="profile" class="screen">
-            <div style="max-width:600px; background:white; padding:2rem; border-radius:20px; box-shadow:var(--shadow-sm); border:1px solid var(--color-border);">
-                <h2 style="margin-bottom:20px;">Edit Profile</h2>
-                <div style="display:flex; flex-direction:column; gap:15px;">
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:700; color:var(--color-text-muted);">FULL NAME</label>
-                        <input type="text" id="prof-name" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--color-border); margin-top:5px;">
-                    </div>
-                    <button style="background:var(--color-primary); color:white; border:none; padding:14px; border-radius:10px; font-weight:800; cursor:pointer;">Save Changes</button>
+  <div class="hero-content">
+    <div class="animate-up visible">
+      
+      <div style="margin-bottom: 1.5rem;">
+        <span class="repo-badge">Repository of Shops, Products and Services</span>
+        
+        <!-- RESTORED: REPO SEARCH BOX -->
+        <div class="repo-search-wrapper">
+            <div style="position: relative;">
+                <input type="text" id="repo-search-input" placeholder="Enter Merchant ID..." class="repo-input"
+                       onkeypress="if(event.key === 'Enter') handleRepoSearch()">
+                <div class="search-icon-btn" onclick="handleRepoSearch()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </div>
             </div>
+            <p class="id-hint">
+                <i class="fa-solid fa-circle-info"></i> Search by ID (e.g., CT-3945BOGD)
+            </p>
         </div>
 
-        <!-- SCREEN: NOTIFICATIONS -->
-        <div id="notifications" class="screen">
-            <h2 class="section-title" style="margin-bottom:20px;">Notifications</h2>
-            <div id="notif-list" style="display:flex; flex-direction:column; gap:12px;">
-                <div style="padding:40px; text-align:center; color:var(--color-text-muted);">No new notifications.</div>
-            </div>
-        </div>
-    </main>
-</div>
+        <h1 class="hero-title" style="min-height: 80px;">
+           <span id="typewriter"></span><span class="cursor">|</span>
+        </h1>
+        <p class="hero-desc">We provide a digital repository of physical shops, their products, and locations within a city.</p>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <!-- AUTH WIDGET -->
+        <div class="hero-auth-widget">
+            <div class="widget-title"><i class="fa-solid fa-lock"></i> Merchant Access</div>
+            <form onsubmit="event.preventDefault(); handleHeroLogin();">
+                <input type="email" id="hero-email" class="hero-input-login" placeholder="Email Address" required>
+                <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
+                <button type="submit" id="hero-login-btn" class="btn-login-hero">Secure Sign In <i class="fa-solid fa-arrow-right"></i></button>
+            </form>
+            <div class="widget-divider">New to CT-Merchant?</div>
+            <a href="create-account.html" class="btn-create-account">Create Free Account</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer-container">
+    <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Use</a>
+      <span>RC: 8879163</span>
+    </div>
+  </div>
+</footer>
+
 <script>
-    // --- SAFE GUARD: MOCK DATA ---
-    const MOCK_DATA = {
-        city: "Demo City",
-        announcements: [{message: "Welcome to CT-Merchant! This is a demo view."}],
-        categories: [{name: "Automotive"}, {name: "Beauty"}, {name: "Electronics"}, {name: "Fashion"}],
-        areas: [
-            {id: 1, name: "Malali"}, 
-            {id: 2, name: "Barnawa"}, 
-            {id: 3, name: "Unguwan Rimi"}
-        ],
-        shops: [
-            {id: 101, name: "FixIt Pro Mechanics", areaId: 1, isFeatured: true, isVerified: true, category: "Automotive", address: "12 Kaduna Road", imageUrl: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=400"},
-            {id: 102, name: "Beauty Lounge", areaId: 1, isFeatured: false, isVerified: true, category: "Beauty", address: "Plot 4 Malali", imageUrl: "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400"},
-            {id: 103, name: "Tech Hub", areaId: 2, isFeatured: false, isVerified: false, category: "Electronics", address: "Barnawa Complex", imageUrl: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=400"},
-            {id: 104, name: "Style House", areaId: 3, isFeatured: true, isVerified: true, category: "Fashion", address: "Rimi Drive", imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400"}
-        ],
-        products: []
-    };
-
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
-    let supabase = null;
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- TOGGLE LOGIC ---
-    function toggleSidebar() {
-        if (window.innerWidth > 1024) {
-            document.getElementById('container').classList.toggle('sidebar-collapsed');
+    // Typewriter
+    const textElement = document.getElementById('typewriter');
+    const phrases = ["Your City's Digital Marketplace", "Find Verified Merchants", "Connect with Local Shops"];
+    let phraseIndex = 0; let charIndex = 0; let isDeleting = false;
+
+    function typeEffect() {
+        const currentPhrase = phrases[phraseIndex];
+        if (isDeleting) {
+            textElement.textContent = currentPhrase.substring(0, charIndex - 1); charIndex--;
         } else {
-            document.getElementById('sidebar').classList.toggle('mobile-open');
-            document.getElementById('sidebar-overlay').classList.toggle('active');
+            textElement.textContent = currentPhrase.substring(0, charIndex + 1); charIndex++;
         }
+        if (!isDeleting && charIndex === currentPhrase.length) { isDeleting = true; setTimeout(typeEffect, 2000); return; }
+        if (isDeleting && charIndex === 0) { isDeleting = false; phraseIndex = (phraseIndex + 1) % phrases.length; }
+        setTimeout(typeEffect, isDeleting ? 50 : 100);
+    }
+    document.addEventListener('DOMContentLoaded', typeEffect);
+
+    // Repo Search
+    function handleRepoSearch() {
+        const query = document.getElementById('repo-search-input').value.trim();
+        if(query) window.location.href = `reposearch.html?merchantId=${query}`;
     }
 
-    function switchTab(tabId, btn) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        btn.classList.add('active');
-        if (window.innerWidth <= 1024) {
-            document.getElementById('sidebar').classList.remove('mobile-open');
-            document.getElementById('sidebar-overlay').classList.remove('active');
-        }
-    }
-
-    async function init() {
-        console.log("Initializing Dashboard...");
-        
-        // 1. Try Initialize Supabase
-        if (window.supabase) {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } else {
-            console.warn("Supabase SDK not loaded. Using mock data.");
-            useMockData();
-            return;
-        }
-
-        // 2. Set timeout race to prevent infinite loading
-        const timeout = new Promise((_, reject) => setTimeout(() => reject("Timeout"), 5000));
-        
+    // Login
+    async function handleHeroLogin() {
+        const email = document.getElementById('hero-email').value;
+        const password = document.getElementById('hero-password').value;
+        const btn = document.getElementById('hero-login-btn');
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...'; btn.disabled = true;
         try {
-            await Promise.race([fetchRealData(), timeout]);
-        } catch (error) {
-            console.error("Fetch failed or timed out:", error);
-            document.getElementById('loading-msg').innerText = "Network slow. Loading Demo Data...";
-            setTimeout(useMockData, 1000); // Slight delay to show message
+            const { error } = await client.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            window.location.href = "user-dashboard.html";
+        } catch (err) {
+            alert(err.message);
+            btn.innerHTML = 'Secure Sign In <i class="fa-solid fa-arrow-right"></i>'; btn.disabled = false;
         }
     }
-
-    async function fetchRealData() {
-        const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user?.id;
-
-        // Fetch Metadata
-        const [annRes, catRes] = await Promise.all([
-            supabase.from('announcements').select().order('created_at', {ascending: false}),
-            supabase.from('categories').select().order('name')
-        ]);
-
-        let profile = null;
-        if (userId) {
-            const { data } = await supabase.from('profiles').select('*, cities(name)').eq('id', userId).maybeSingle();
-            profile = data;
-        }
-
-        const cityId = profile?.city_id || 1; 
-        const cityName = profile?.cities?.name || "Global Market";
-
-        const [shopRes, areaRes, prodRes] = await Promise.all([
-            supabase.from('shops').select().eq('city_id', cityId),
-            supabase.from('areas').select().eq('city_id', cityId).order('name'),
-            supabase.from('products').select().eq('is_available', true).order('created_at', {ascending: false})
-        ]);
-
-        if (shopRes.error) throw new Error("DB Error");
-
-        // Map snake_case to app structure if needed
-        const shops = (shopRes.data || []).map(s => ({
-            ...s,
-            areaId: s.area_id || s.areaId,
-            isFeatured: s.is_featured || s.isFeatured,
-            isVerified: s.is_verified || s.isVerified,
-            imageUrl: s.image_url || s.imageUrl,
-            storeFrontUrl: s.store_front_url || s.storeFrontUrl
-        }));
-
-        const areas = (areaRes.data || []).map(a => ({...a, id: a.id})); // ensure ID exists
-        const products = (prodRes.data || []).map(p => ({...p, shopId: p.shop_id, imageUrl: p.image_url}));
-
-        renderUI(profile, cityName, annRes.data || [], catRes.data || [], areas, shops, products);
-        document.getElementById('loading-overlay').style.display = 'none';
-    }
-
-    function useMockData() {
-        renderUI(
-            { full_name: "Guest User", avatar_url: null, area_id: 1 },
-            MOCK_DATA.city,
-            MOCK_DATA.announcements,
-            MOCK_DATA.categories,
-            MOCK_DATA.areas,
-            MOCK_DATA.shops,
-            MOCK_DATA.products
-        );
-        document.getElementById('loading-overlay').style.display = 'none';
-    }
-
-    function renderUI(user, cityName, ann, cats, areas, shops, products) {
-        document.getElementById('display-city').textContent = cityName;
-        document.getElementById('user-avatar').src = user?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user?.full_name || 'Guest'}`;
-        
-        if (ann.length > 0) document.getElementById('ticker-text').textContent = ann.map(a => a.message).join("  |  ");
-
-        // Featured
-        const featured = shops.filter(s => s.isFeatured);
-        if (featured.length > 0) {
-            document.getElementById('section-featured').style.display = 'block';
-            document.getElementById('featured-list').innerHTML = featured.map(s => createShopCard(s, products)).join('');
-        }
-
-        // Areas
-        const areaContainer = document.getElementById('area-container');
-        areaContainer.innerHTML = areas.map(area => {
-            const areaShops = shops.filter(s => s.areaId === area.id);
-            if (areaShops.length === 0) return '';
-            
-            const isNearYou = user && area.id === user.area_id;
-
-            return `
-                <div class="section" style="margin-bottom:12px;">
-                    <div class="area-bar ${isNearYou ? 'near-you' : ''}">
-                        <div class="area-info">
-                            <i class="fa-solid ${isNearYou ? 'fa-location-crosshairs' : 'fa-location-dot'}"></i>
-                            Merchants in ${area.name} ${isNearYou ? '• Near You' : ''}
-                        </div>
-                        <a class="see-all-link">See All</a>
-                    </div>
-                    <div class="scroll-row">
-                        ${areaShops.map(s => createShopCard(s, products)).join('')}
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        // Categories
-        document.getElementById('category-list').innerHTML = cats.map(c => `
-            <div class="cat-pill">
-                <i class="fa-solid fa-tag" style="color:var(--color-primary)"></i>
-                <div style="font-weight:800; font-size:0.85rem;">${c.name}</div>
-            </div>
-        `).join('');
-    }
-
-    function createShopCard(shop, allProducts) {
-        const miniProds = allProducts.filter(p => p.shopId === shop.id).slice(0, 4);
-        const img = shop.imageUrl || shop.storeFrontUrl || 'https://via.placeholder.com/400x200?text=No+Image';
-        
-        return `
-            <div class="shop-card" onclick="location.href='shop-detail.html?id=${shop.id}'">
-                <div class="card-image">
-                    <img src="${img}">
-                    ${shop.isVerified ? '<div class="verified-badge">Verified</div>' : ''}
-                </div>
-                <div style="font-weight:800; font-size:1.05rem; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
-                    ${shop.name}
-                    ${shop.isVerified ? '<i class="fa-solid fa-certificate" style="color:var(--color-accent); font-size:0.9rem;"></i>' : ''}
-                </div>
-                <div style="font-size:0.75rem; color:var(--color-text-muted); font-weight:600; margin-bottom:4px;">${shop.category}</div>
-                <div style="font-size:0.75rem; color:var(--color-text-muted); display:flex; align-items:center; gap:4px;">
-                    <i class="fa-solid fa-location-dot" style="font-size:0.7rem;"></i>
-                    ${shop.address || 'Address hidden'}
-                </div>
-                <div class="mini-products">
-                    ${miniProds.map(p => `<img src="${p.imageUrl}" class="mini-prod">`).join('')}
-                    ${miniProds.length === 0 ? '<span style="font-size:0.6rem; color:#94A3B8;">No items</span>' : ''}
-                </div>
-            </div>
-        `;
-    }
-
-    async function handleLogout() {
-        if(confirm("Sign out of CT‑Merchant?")) {
-            if(supabase) await supabase.auth.signOut();
-            location.href = "login.html";
-        }
-    }
-
-    init();
 </script>
-
 </body>
 </html>
