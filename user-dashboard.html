@@ -10,18 +10,16 @@
     
     <style>
         :root {
-            /* --- THEME CONSTANTS --- */
+            /* --- THEME --- */
             --color-primary: #059669; /* Emerald Green */
             --color-primary-dark: #047857;
-            --color-accent: #FCD34D; /* Yellow Text */
+            --color-accent: #FCD34D; /* Yellow */
             --color-bg: #F3F4F6;
             --color-text-main: #1F2937;
-            --color-text-sub: #6B7280;
             
             --sidebar-width: 280px;
             --header-height: 60px;
             --ticker-height: 40px;
-            --trans-speed: 0.3s;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -32,19 +30,22 @@
             overflow-x: hidden;
         }
 
-        /* --- 1. SIDEBAR (Fixed Left) --- */
+        /* --- 1. SIDEBAR (Universal Overlay) --- */
+        /* It sits ON TOP of everything, never pushing content */
         .sidebar {
             position: fixed; top: 0; left: 0; bottom: 0;
             width: var(--sidebar-width);
             background: white;
-            z-index: 1000;
-            border-right: 1px solid #E5E7EB;
+            z-index: 2000; /* Highest layer */
             display: flex; flex-direction: column;
-            transform: translateX(-100%); /* Closed by default */
-            transition: transform var(--trans-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* Hidden by default on ALL screens */
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
         }
 
-        /* Open State (Controlled by JS via Body Class) */
+        /* Open State */
         body.sb-open .sidebar { transform: translateX(0); }
 
         .sidebar-header {
@@ -53,6 +54,8 @@
             color: white;
             display: flex; align-items: center; gap: 12px; padding: 0 20px;
         }
+        
+        .sidebar-logo { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: white; border: 2px solid white; }
 
         .nav-scroll { flex: 1; padding: 16px; overflow-y: auto; }
         .nav-btn {
@@ -61,37 +64,44 @@
             color: #4B5563; font-weight: 600; font-size: 0.95rem;
             border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: left; margin-bottom: 4px;
         }
-        .nav-btn i { width: 24px; text-align: center; font-size: 1.1rem; }
         .nav-btn:hover { background: #F3F4F6; color: var(--color-primary); }
         .nav-btn.active { background: #ECFDF5; color: var(--color-primary); }
+        .nav-btn i { width: 24px; text-align: center; }
 
         .sidebar-footer { padding: 16px; border-top: 1px solid #E5E7EB; }
 
-        /* --- 2. MAIN LAYOUT & HEADER --- */
-        .main-layout {
-            display: flex; flex-direction: column;
-            min-height: 100vh;
-            transition: margin-left var(--trans-speed) cubic-bezier(0.4, 0, 0.2, 1);
-            margin-left: 0;
+        /* --- 2. BACKDROP OVERLAY --- */
+        /* Visible when sidebar is open */
+        .overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1500;
+            opacity: 0; visibility: hidden; transition: 0.3s;
         }
+        body.sb-open .overlay { opacity: 1; visibility: visible; }
 
+        /* --- 3. MAIN CONTENT (Static) --- */
+        /* Does NOT move or shrink */
+        .main-layout { width: 100%; min-height: 100vh; }
+
+        /* --- 4. HEADER (Fixed) --- */
         .top-header {
-            position: fixed; top: 0; right: 0; left: 0;
-            z-index: 500;
-            transition: left var(--trans-speed) cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            position: fixed; top: 0; left: 0; right: 0;
+            z-index: 1000;
+            background: var(--color-primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .header-main {
             height: var(--header-height);
-            background: var(--color-primary);
-            color: white;
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 16px;
         }
-
-        .menu-toggle { background: none; border: none; color: white; font-size: 1.4rem; padding: 8px; cursor: pointer; }
         
+        /* Menu Toggle Button */
+        .menu-toggle { 
+            background: none; border: none; color: white; 
+            font-size: 1.4rem; padding: 8px; cursor: pointer; 
+        }
+
         .header-actions { display: flex; align-items: center; gap: 16px; }
         .notif-wrap { position: relative; cursor: pointer; }
         .notif-badge {
@@ -100,7 +110,7 @@
             padding: 2px 5px; border-radius: 10px; border: 2px solid var(--color-primary);
             display: none;
         }
-        
+
         .ticker-wrap {
             height: var(--ticker-height);
             background: var(--color-primary-dark);
@@ -113,35 +123,15 @@
         }
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
-        /* --- 3. RESPONSIVE BEHAVIOR (The Fix) --- */
-        
-        /* DESKTOP (Push Content) */
-        @media (min-width: 1024px) {
-            body.sb-open .main-layout { margin-left: var(--sidebar-width); }
-            body.sb-open .top-header { left: var(--sidebar-width); }
-            
-            /* Hide overlay on desktop */
-            .overlay { display: none !important; }
-        }
-
-        /* MOBILE (Overlay Sidebar) */
-        .overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 900;
-            opacity: 0; visibility: hidden; transition: 0.3s;
-        }
-        body.sb-open .overlay { opacity: 1; visibility: visible; }
-        @media (min-width: 1024px) { body.sb-open .overlay { display: none; } }
-
-        /* --- 4. CONTENT BODY --- */
+        /* --- 5. CONTENT BODY --- */
         .content-body {
-            margin-top: calc(var(--header-height) + var(--ticker-height)); 
+            margin-top: calc(var(--header-height) + var(--ticker-height));
             padding: 24px 16px 40px 16px;
-            width: 100%;
-            max-width: 1400px; /* Prevent huge stretching on 4k screens */
+            max-width: 1400px; margin-left: auto; margin-right: auto;
         }
         @media (min-width: 1024px) { .content-body { padding: 32px; } }
 
-        /* --- COMPONENTS --- */
+        /* --- UTILS --- */
         .screen { display: none; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -219,15 +209,16 @@
         .svc-icon { width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
     </style>
 </head>
-<body class="">
+<body>
 
-    <!-- OVERLAY (Mobile only) -->
+    <!-- OVERLAY (Universal) -->
     <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <img src="https://via.placeholder.com/40" style="width:36px; height:36px; border-radius:8px; background:white;">
+            <!-- Correct Logo URL -->
+            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="sidebar-logo" alt="Logo">
             <span style="font-weight: 800; font-size: 1.1rem; margin-left: 10px;">CT-MERCHANT</span>
         </div>
         
@@ -258,7 +249,7 @@
         
         <header class="top-header">
             <div class="header-main">
-                <!-- Toggle Button (Visible on ALL screens now) -->
+                <!-- Toggle Button (Always visible) -->
                 <div style="display:flex; align-items:center; gap:8px;">
                     <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
                     <div id="header-city" style="font-weight:700; font-size:1.1rem;">Loading...</div>
@@ -287,10 +278,8 @@
             
             <!-- MARKET -->
             <div id="market" class="screen active">
-                <!-- Promos -->
                 <div id="promo-list" class="h-scroll" style="display:none; margin-bottom:16px;"></div>
                 
-                <!-- Featured -->
                 <div id="featured-section" style="display:none;">
                     <div class="sec-header">
                         <div class="sec-bar" style="background: orange;"></div>
@@ -299,22 +288,18 @@
                     <div id="featured-list" class="h-scroll"></div>
                 </div>
 
-                <!-- Areas -->
                 <div id="areas-container" style="margin-top:24px;">
-                    <!-- Default loading state (removed if cache exists) -->
                     <div id="initial-loader" style="text-align:center; padding:40px; color:#9CA3AF;">
                         <i class="fa-solid fa-circle-notch fa-spin"></i> Checking local data...
                     </div>
                 </div>
 
-                <!-- Categories -->
                 <div class="sec-header">
                     <div class="sec-bar" style="background: var(--color-primary);"></div>
                     <div class="sec-title">Browse Categories</div>
                 </div>
                 <div id="category-list" class="cat-grid"></div>
 
-                <!-- All Shops -->
                 <div class="sec-header" style="margin-top:32px;">
                     <div class="sec-bar" style="background: #374151;"></div>
                     <div class="sec-title">All Shops</div>
@@ -375,9 +360,7 @@
     let currentUser = null;
     let userCityId = null;
     let userAreaId = null;
-    
-    // Use a fresh cache key to ensure we don't load old/broken data structure
-    const CACHE_KEY = 'ctm_dashboard_cache_v5';
+    const CACHE_KEY = 'ctm_dash_v6';
 
     // --- NAVIGATION ---
     function toggleSidebar() {
@@ -394,37 +377,25 @@
         const target = document.getElementById(id);
         if (target) target.classList.add('active');
 
-        // On mobile, close sidebar after clicking
-        if (window.innerWidth < 1024) {
-            document.body.classList.remove('sb-open');
-        }
+        // Always close sidebar on switch
+        document.body.classList.remove('sb-open');
 
         if(id === 'notifications') markRead();
     }
 
     // --- INIT ---
     window.onload = async () => {
-        // 1. Set Desktop Sidebar Open by default
-        if (window.innerWidth >= 1024) {
-            document.body.classList.add('sb-open');
-        }
-
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "login.html"; return; }
         currentUser = session.user;
 
-        // 2. CHECK CACHE FIRST (Fast Render)
         const cache = localStorage.getItem(CACHE_KEY);
         if (cache) {
-            console.log("Rendering from cache...");
-            try {
-                renderData(JSON.parse(cache));
-            } catch(e) { console.error("Cache error", e); }
+            renderData(JSON.parse(cache));
         } else {
-            document.getElementById('initial-loader').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Downloading market data...';
+            document.getElementById('initial-loader').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Loading...';
         }
 
-        // 3. FETCH FRESH DATA (Background Update)
         fetchData();
     };
 
@@ -444,7 +415,6 @@
                 client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false})
             ]);
 
-            // Optimized Product Fetch: Get only needed fields
             let products = [];
             const shopIds = shops.data.map(s => s.id);
             if(shopIds.length > 0) {
@@ -452,7 +422,7 @@
                     .select('shop_id, image_url')
                     .in('shop_id', shopIds)
                     .eq('is_available', true)
-                    .limit(500); // 500 thumbnails max
+                    .limit(500);
                 products = data || [];
             }
             
@@ -469,19 +439,9 @@
                 unread: count
             };
 
-            // Save to cache
             localStorage.setItem(CACHE_KEY, JSON.stringify(dashboardData));
-            
-            // Re-render with fresh data
             renderData(dashboardData);
-
-        } catch (e) { 
-            console.error("Fetch error:", e); 
-            // If cache was empty and fetch failed, show error
-            if(!localStorage.getItem(CACHE_KEY)) {
-                document.getElementById('initial-loader').innerHTML = 'Error loading data. Check connection.';
-            }
-        }
+        } catch (e) { console.error("Fetch error:", e); }
     }
 
     function renderData(data) {
@@ -489,7 +449,6 @@
         const areaContainer = document.getElementById('areas-container');
         if(areaContainer.innerHTML.includes('fa-spin')) areaContainer.innerHTML = '';
 
-        // Profile & Header
         document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
         document.getElementById('header-avatar').src = avatar;
@@ -497,38 +456,33 @@
         document.getElementById('profile-name').textContent = data.profile.full_name;
         document.getElementById('profile-email').textContent = currentUser.email;
 
-        // Badge
         if (data.unread > 0) {
             const b = document.getElementById('badge-count');
             b.textContent = data.unread > 9 ? '9+' : data.unread;
             b.style.display = 'block';
         }
 
-        // Ticker
         if (data.announcements && data.announcements.length > 0) {
             document.getElementById('ticker-wrap').style.display = 'flex';
             document.getElementById('ticker-text').textContent = data.announcements.map(a => a.message).join("  •  ");
         }
 
-        // Promos
         const pList = document.getElementById('promo-list');
         if (data.promos.length > 0) {
             pList.style.display = 'flex';
             pList.innerHTML = data.promos.map(p => 
-                `<div class="promo-card" style="min-width:300px; height:160px; border-radius:12px; overflow:hidden; flex-shrink:0;">
+                `<div style="min-width:300px; height:160px; border-radius:12px; overflow:hidden; flex-shrink:0;">
                     <img src="${p.image_url}" style="width:100%; height:100%; object-fit:cover;">
                  </div>`
             ).join('');
         }
 
-        // Featured
         const featured = data.shops.filter(s => s.is_featured);
         if (featured.length > 0) {
             document.getElementById('featured-section').style.display = 'block';
             document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
         }
 
-        // Areas (Key Rendering Logic)
         areaContainer.innerHTML = '';
         const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
 
@@ -558,7 +512,6 @@
             `;
         });
 
-        // Categories
         document.getElementById('category-list').innerHTML = data.categories.map(cat => {
             const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
             const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
@@ -570,13 +523,11 @@
             `;
         }).join('');
 
-        // All Shops Grid
         document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
     }
 
     function buildShopCard(shop, allProducts) {
         const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url).slice(0, 4);
-        
         let collage = '';
         if(p.length === 0) {
             const fallback = shop.image_url || 'https://via.placeholder.com/240x150?text=No+Image';
