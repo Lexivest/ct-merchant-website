@@ -26,228 +26,128 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-
-        body {
-            background-color: var(--color-bg); 
-            color: var(--color-text-main);
-            min-height: 100vh;
-            line-height: 1.5;
-        }
+        body { background-color: var(--color-bg); color: var(--color-text-main); min-height: 100vh; line-height: 1.5; }
 
         /* --- SIDEBAR --- */
         .sidebar {
-            width: var(--sidebar-width);
-            background: var(--color-primary-dark);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            padding: 2rem 1.5rem;
-            position: fixed;
-            top: 0; left: 0; bottom: 0;
-            z-index: 1000;
-            transform: translateX(-100%);
+            width: var(--sidebar-width); background: var(--color-primary-dark); color: white;
+            display: flex; flex-direction: column; padding: 2rem 1.5rem; position: fixed;
+            top: 0; left: 0; bottom: 0; z-index: 1000; transform: translateX(-100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .sidebar.open { transform: translateX(0); }
-        .sidebar-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-            z-index: 999; opacity: 0; visibility: hidden; transition: 0.3s;
-        }
+        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; opacity: 0; visibility: hidden; transition: 0.3s; }
         .sidebar-overlay.active { opacity: 1; visibility: visible; }
 
         /* --- MAIN CONTENT --- */
-        .main-content { flex-grow: 1; width: 100%; min-height: 100vh; transition: padding 0.3s; }
+        .main-content { flex-grow: 1; width: 100%; min-height: 100vh; }
 
         /* --- TOP HEADER (GREEN) --- */
-        .header-top {
-            background: var(--color-primary);
-            padding: 12px 16px;
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 900;
-            box-shadow: var(--shadow-md);
-        }
+        .header-top { background: var(--color-primary); padding: 12px 16px; color: white; position: sticky; top: 0; z-index: 900; box-shadow: var(--shadow-md); }
         .header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1400px; margin: 0 auto; }
         .menu-btn { background: rgba(255,255,255,0.2); border: none; color: white; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
         .header-title { font-size: 1.1rem; font-weight: 800; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .header-actions { display: flex; align-items: center; gap: 12px; }
 
-        /* --- ANNOUNCEMENT TICKER --- */
-        .ticker-bar {
-            background: #064E3B;
-            color: #A7F3D0;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
+        /* --- TICKER --- */
+        .ticker-bar { background: #064E3B; color: #A7F3D0; height: 36px; display: flex; align-items: center; overflow: hidden; font-size: 0.8rem; font-weight: 600; }
         .ticker-content { white-space: nowrap; animation: ticker 40s linear infinite; padding-left: 100%; }
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
         /* --- MARKET CONTENT --- */
         .market-body { max-width: 1400px; margin: 0 auto; padding: 16px; }
-
-        .section { margin-bottom: 24px; width: 100%; }
+        .section { margin-bottom: 24px; }
         .section-header { display: flex; align-items: center; margin-bottom: 12px; }
         .section-bar { width: 4px; height: 20px; border-radius: 2px; margin-right: 10px; }
-        .section-title { font-weight: 800; font-size: 1.1rem; color: var(--color-text-main); }
+        .section-title { font-weight: 800; font-size: 1.1rem; }
 
-        /* Area Bar Logic (Yellow Bar) */
-        .area-bar {
-            background: var(--color-area-bg);
-            padding: 10px 14px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 4px; /* Tight against cards */
-        }
+        /* Area Bar (Compact Bar Style) */
+        .area-bar { background: var(--color-area-bg); padding: 10px 14px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
         .area-bar.near-you { background: var(--color-near-you-bg); }
         .area-info { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #92400E; }
         .area-bar.near-you .area-info { color: #166534; }
-        .see-all-link { color: var(--color-primary); font-weight: 800; font-size: 0.85rem; text-decoration: none; cursor: pointer; }
+        .see-all-link { color: var(--color-primary); font-weight: 800; font-size: 0.85rem; cursor: pointer; }
 
-        /* Horizontal Scrolling */
-        .scroll-row {
-            display: flex;
-            overflow-x: auto;
-            gap: 16px;
-            padding: 8px 4px 16px 4px;
-            scrollbar-width: none;
-            -webkit-overflow-scrolling: touch;
-        }
+        /* Horizontal Scrolling Row */
+        .scroll-row { display: flex; overflow-x: auto; gap: 16px; padding: 8px 4px 16px 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .scroll-row::-webkit-scrollbar { display: none; }
 
-        /* Shop Cards (Exact App Style) */
+        /* Shop Card (Exact App Replica) */
         .shop-card {
-            min-width: 280px; width: 280px;
-            background: white; border-radius: 16px; padding: 12px;
-            border: 1px solid var(--color-border);
-            box-shadow: var(--shadow-sm);
-            flex-shrink: 0;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            min-width: 280px; width: 280px; background: white; border-radius: 16px; padding: 12px;
+            border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); flex-shrink: 0; cursor: pointer; transition: 0.2s;
         }
-        .shop-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--color-primary); }
-        
-        .card-image {
-            width: 100%; height: 140px; border-radius: 12px;
-            background: #F1F5F9; margin-bottom: 12px;
-            overflow: hidden; position: relative;
-        }
+        .shop-card:hover { transform: translateY(-3px); border-color: var(--color-primary); }
+        .card-image { width: 100%; height: 140px; border-radius: 12px; background: #F1F5F9; margin-bottom: 12px; overflow: hidden; position: relative; }
         .card-image img { width: 100%; height: 100%; object-fit: cover; }
-        .verified-badge {
-            position: absolute; top: 8px; left: 8px;
-            background: white; color: var(--color-primary);
-            padding: 3px 8px; border-radius: 6px; font-size: 0.65rem;
-            font-weight: 800; border: 1px solid var(--color-border);
-        }
-
+        .verified-badge { position: absolute; top: 8px; left: 8px; background: white; color: var(--color-primary); padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; border: 1px solid var(--color-border); }
         .card-name { font-weight: 800; font-size: 1.05rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
         .card-cat { font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600; margin-bottom: 4px; }
         .card-addr { font-size: 0.75rem; color: var(--color-text-muted); display: flex; align-items: center; gap: 4px; }
-        
-        /* Mini Product Collage (Matches App) */
         .mini-products { display: flex; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F1F5F9; }
         .mini-prod { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: #F8FAFC; border: 1px solid #F1F5F9; }
 
-        /* Category Wrap at Bottom */
+        /* Category Wrap */
         .category-wrap { display: flex; flex-wrap: wrap; gap: 12px; }
-        .cat-pill {
-            background: white; border: 1px solid var(--color-border);
-            padding: 10px 16px; border-radius: 14px;
-            display: flex; align-items: center; gap: 10px; cursor: pointer;
-            box-shadow: var(--shadow-sm);
-        }
+        .cat-pill { background: white; border: 1px solid var(--color-border); padding: 10px 16px; border-radius: 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
         .cat-icon { width: 32px; height: 32px; border-radius: 50%; background: #F1F5F9; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
 
-        /* Responsive */
-        @media (min-width: 1024px) {
-            .main-content { padding-left: var(--sidebar-width); }
-            .sidebar { transform: translateX(0); }
-            .menu-btn { display: none; }
-        }
-
-        #loading-overlay {
-            position: fixed; inset: 0; background: white; z-index: 2000;
-            display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
-        }
+        /* Loading & Errors */
+        #loading-overlay { position: fixed; inset: 0; background: white; z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
         .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media (min-width: 1024px) { .main-content { padding-left: var(--sidebar-width); } .sidebar { transform: translateX(0); } .menu-btn { display: none; } }
     </style>
 </head>
 <body>
 
 <div id="loading-overlay">
     <div class="spinner"></div>
-    <p style="font-weight: 700; color: #64748B;">Loading Marketplace...</p>
+    <p id="loading-text" style="font-weight: 700; color: #64748B;">Connecting to Supabase...</p>
 </div>
 
 <div class="dashboard-container">
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-    <!-- Sidebar (Green Theme) -->
     <aside class="sidebar" id="sidebar">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:2.5rem;">
             <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" style="width:36px; height:36px; border-radius:10px;">
-            <span style="font-weight:800; font-size:1.2rem; letter-spacing: -0.5px;">CT‑MERCHANT</span>
+            <span style="font-weight:800; font-size:1.2rem;">CT‑MERCHANT</span>
         </div>
-        <nav style="display:flex; flex-direction:column; gap:8px; flex-grow:1;">
-            <a href="#" style="background:rgba(255,255,255,0.15); color:white; text-decoration:none; padding:14px; border-radius:12px; font-weight:700; display:flex; align-items:center; gap:12px;">
-                <i class="fa-solid fa-house"></i> Marketplace
-            </a>
-            <a href="#" style="color:rgba(255,255,255,0.6); text-decoration:none; padding:14px; font-weight:700; display:flex; align-items:center; gap:12px;">
-                <i class="fa-solid fa-briefcase"></i> Services
-            </a>
-            <a href="#" style="color:rgba(255,255,255,0.6); text-decoration:none; padding:14px; font-weight:700; display:flex; align-items:center; gap:12px;">
-                <i class="fa-solid fa-user"></i> My Profile
-            </a>
+        <nav style="display:flex; flex-direction:column; gap:8px;">
+            <a href="#" style="background:rgba(255,255,255,0.15); color:white; text-decoration:none; padding:14px; border-radius:12px; font-weight:700;">Marketplace</a>
+            <a href="#" style="color:rgba(255,255,255,0.6); text-decoration:none; padding:14px; font-weight:700;">Services</a>
+            <a href="#" style="color:rgba(255,255,255,0.6); text-decoration:none; padding:14px; font-weight:700;">Profile</a>
         </nav>
-        <button onclick="handleLogout()" style="margin-top:auto; background:none; border:none; color:#FDA4AF; font-weight:700; display:flex; align-items:center; gap:12px; padding:14px; cursor:pointer; text-align:left;">
-            <i class="fa-solid fa-right-from-bracket"></i> Sign Out
-        </button>
     </aside>
 
     <main class="main-content">
-        <!-- Top Green Bar -->
         <header class="header-top">
             <div class="header-row">
                 <button class="menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-                <div class="header-title" id="display-city">Locating City...</div>
+                <div class="header-title" id="display-city">Loading...</div>
                 <div class="header-actions">
-                    <div style="position:relative; width:40px; height:40px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.2); border-radius:12px; cursor:pointer;">
-                        <i class="fa-solid fa-bell"></i>
-                        <span style="position:absolute; top:-2px; right:-2px; background:#EF4444; color:white; font-size:0.6rem; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid var(--color-primary);" id="notif-count">0</span>
-                    </div>
-                    <img id="user-avatar" src="" style="width:38px; height:38px; border-radius:50%; background:white; border:2px solid rgba(255,255,255,0.4); object-fit: cover;">
+                    <img id="user-avatar" src="" style="width:38px; height:38px; border-radius:50%; background:white; object-fit: cover;">
                 </div>
             </div>
         </header>
 
-        <!-- Ticker -->
         <div class="ticker-bar">
-            <div class="ticker-content" id="ticker-text">Loading latest announcements...</div>
+            <div class="ticker-content" id="ticker-text">Stay tuned for the latest updates from our merchants.</div>
         </div>
 
         <div class="market-body">
             <!-- Featured -->
-            <section class="section" id="section-featured">
+            <section class="section" id="section-featured" style="display: none;">
                 <div class="section-header">
                     <div class="section-bar" style="background: var(--color-accent);"></div>
                     <h2 class="section-title">Featured Shops</h2>
                 </div>
-                <div class="scroll-row" id="featured-list">
-                    <!-- Dynamic -->
-                </div>
+                <div class="scroll-row" id="featured-list"></div>
             </section>
 
             <!-- Areas Container -->
-            <div id="area-container">
-                <!-- Merchants in [Area] lists will be injected here -->
-            </div>
+            <div id="area-container"></div>
 
             <!-- Categories -->
             <section class="section">
@@ -255,9 +155,7 @@
                     <div class="section-bar" style="background: var(--color-primary);"></div>
                     <h2 class="section-title">Browse Categories</h2>
                 </div>
-                <div class="category-wrap" id="category-list">
-                    <!-- Dynamic -->
-                </div>
+                <div class="category-wrap" id="category-list"></div>
             </section>
         </div>
     </main>
@@ -267,9 +165,7 @@
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let profile = null;
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('open');
@@ -277,73 +173,78 @@
     }
 
     async function start() {
+        const loadingText = document.getElementById('loading-text');
         try {
-            const { data: { session } } = await supabase.auth.getSession();
+            loadingText.innerText = "Checking Authentication...";
+            const { data: { session } } = await supabaseClient.auth.getSession();
             const userId = session?.user?.id;
 
-            // Parallel fetch all metadata
-            const [annRes, catRes, cityRes] = await Promise.all([
-                supabase.from('announcements').select().order('created_at', {ascending: false}),
-                supabase.from('categories').select().order('name'),
-                supabase.from('cities').select()
+            loadingText.innerText = "Fetching Market Data...";
+            
+            // Parallel fetch metadata
+            const [annRes, catRes] = await Promise.all([
+                supabaseClient.from('announcements').select().order('created_at', {ascending: false}),
+                supabaseClient.from('categories').select().order('name')
             ]);
 
-            // If logged in, get specific profile data
+            let profile = null;
             if (userId) {
-                const { data } = await supabase.from('profiles').select('*, cities(name)').eq('id', userId).maybeSingle();
+                const { data } = await supabaseClient.from('profiles').select('*, cities(name)').eq('id', userId).maybeSingle();
                 profile = data;
             }
 
-            // Default City fallback if Guest
             const cityId = profile?.city_id || 1; 
-            const cityName = profile?.cities?.name || "Marketplace";
+            const cityName = profile?.cities?.name || "Global Market";
 
-            // Fetch Shops and Products for this city
+            loadingText.innerText = `Loading Shops in ${cityName}...`;
+
             const [shopRes, areaRes, prodRes] = await Promise.all([
-                supabase.from('shops').select().eq('cityId', cityId).order('isVerified', {ascending: false}),
-                supabase.from('areas').select().eq('cityId', cityId).order('name'),
-                supabase.from('products').select().eq('isAvailable', true).order('created_at', {ascending: false})
+                supabaseClient.from('shops').select().eq('city_id', cityId),
+                supabaseClient.from('areas').select().eq('city_id', cityId).order('name'),
+                supabaseClient.from('products').select().eq('is_available', true).order('created_at', {ascending: false})
             ]);
 
-            render(
-                profile, 
-                cityName, 
-                annRes.data || [], 
-                catRes.data || [], 
-                areaRes.data || [], 
-                shopRes.data || [], 
-                prodRes.data || []
-            );
+            if (shopRes.error) throw shopRes.error;
+
+            renderMarketplace(profile, cityName, annRes.data || [], catRes.data || [], areaRes.data || [], shopRes.data || [], prodRes.data || []);
 
         } catch (e) {
             console.error(e);
-            document.body.innerHTML = `<div style="padding:40px; text-align:center;"><h2>Connection Error</h2><p>${e.message}</p><button onclick="location.reload()">Retry</button></div>`;
+            document.getElementById('loading-overlay').innerHTML = `
+                <div style="padding: 20px; text-align: center;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #EF4444;"></i>
+                    <h2 style="margin-top: 16px;">Marketplace Error</h2>
+                    <p style="color: #64748B; margin: 8px 0;">${e.message || 'Unknown error occurred'}</p>
+                    <button onclick="location.reload()" style="background: var(--color-primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer;">Try Again</button>
+                </div>
+            `;
         } finally {
             document.getElementById('loading-overlay').style.display = 'none';
         }
     }
 
-    function render(user, cityName, ann, cats, areas, shops, products) {
-        // 1. Setup Header & Ticker
+    function renderMarketplace(user, cityName, ann, cats, areas, shops, products) {
         document.getElementById('display-city').textContent = cityName;
         document.getElementById('user-avatar').src = user?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user?.full_name || 'Guest'}`;
-        if (ann.length > 0) document.getElementById('ticker-text').textContent = ann.map(a => a.message).join("  |  ");
-
-        // 2. Featured Section
-        const featured = shops.filter(s => s.isFeatured);
-        if (featured.length === 0) {
-            document.getElementById('section-featured').style.display = 'none';
-        } else {
-            document.getElementById('featured-list').innerHTML = featured.map(s => createCard(s, products)).join('');
+        
+        if (ann.length > 0) {
+            document.getElementById('ticker-text').textContent = ann.map(a => a.message).join("  |  ");
         }
 
-        // 3. Area Loop (Merchants in [Area])
+        // Featured (Defensive field checking)
+        const featured = shops.filter(s => (s.is_featured === true || s.isFeatured === true));
+        if (featured.length > 0) {
+            document.getElementById('section-featured').style.display = 'block';
+            document.getElementById('featured-list').innerHTML = featured.map(s => createShopCard(s, products)).join('');
+        }
+
+        // Area Loop
         const areaContainer = document.getElementById('area-container');
         areaContainer.innerHTML = areas.map(area => {
-            const areaShops = shops.filter(s => s.areaId === area.id);
+            const areaShops = shops.filter(s => s.area_id === area.id || s.areaId === area.id);
             if (areaShops.length === 0) return '';
             
-            const isNearYou = user && area.id === user.areaId;
+            const isNearYou = user && area.id === user.area_id;
 
             return `
                 <div class="section">
@@ -355,13 +256,13 @@
                         <a class="see-all-link">See All</a>
                     </div>
                     <div class="scroll-row">
-                        ${areaShops.map(s => createCard(s, products)).join('')}
+                        ${areaShops.map(s => createShopCard(s, products)).join('')}
                     </div>
                 </div>
             `;
         }).join('');
 
-        // 4. Categories Wrap
+        // Categories
         document.getElementById('category-list').innerHTML = cats.map(c => `
             <div class="cat-pill">
                 <div class="cat-icon"><i class="fa-solid fa-tag"></i></div>
@@ -370,36 +271,32 @@
         `).join('');
     }
 
-    function createCard(shop, allProducts) {
-        const miniProds = allProducts.filter(p => p.shopId === shop.id).slice(0, 4);
-        const img = shop.imageUrl || shop.storeFrontUrl || 'https://via.placeholder.com/400x200?text=No+Shop+Image';
-        
+    function createShopCard(shop, allProducts) {
+        const miniProds = allProducts.filter(p => (p.shop_id === shop.id || p.shopId === shop.id)).slice(0, 4);
+        const img = shop.image_url || shop.imageUrl || shop.storeFrontUrl || 'https://via.placeholder.com/400x200?text=No+Image';
+        const isVer = (shop.is_verified === true || shop.isVerified === true);
+
         return `
             <div class="shop-card" onclick="location.href='shop-detail.html?id=${shop.id}'">
                 <div class="card-image">
                     <img src="${img}">
-                    ${shop.isVerified ? '<div class="verified-badge">Verified</div>' : ''}
+                    ${isVer ? '<div class="verified-badge">Verified</div>' : ''}
                 </div>
                 <div class="card-name">
                     ${shop.name}
-                    ${shop.isVerified ? '<i class="fa-solid fa-certificate" style="color:var(--color-accent); font-size:0.9rem;"></i>' : ''}
+                    ${isVer ? '<i class="fa-solid fa-certificate" style="color:var(--color-accent); font-size:0.9rem;"></i>' : ''}
                 </div>
                 <div class="card-cat">${shop.category}</div>
                 <div class="card-addr">
-                    <i class="fa-solid fa-location-dot" style="font-size:0.7rem;"></i>
-                    ${shop.address || 'No address provided'}
+                    <i class="fa-solid fa-location-dot" style="font-size:0.75rem;"></i>
+                    ${shop.address || 'Address hidden'}
                 </div>
                 <div class="mini-products">
-                    ${miniProds.map(p => `<img src="${p.imageUrl}" class="mini-prod">`).join('')}
-                    ${miniProds.length === 0 ? '<span style="font-size:0.6rem; color:#94A3B8;">No products listed</span>' : ''}
+                    ${miniProds.map(p => `<img src="${p.image_url || p.imageUrl}" class="mini-prod">`).join('')}
+                    ${miniProds.length === 0 ? '<span style="font-size:0.6rem; color:#94A3B8;">No items</span>' : ''}
                 </div>
             </div>
         `;
-    }
-
-    async function handleLogout() {
-        await supabase.auth.signOut();
-        location.href = "login.html";
     }
 
     start();
