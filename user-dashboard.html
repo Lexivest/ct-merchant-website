@@ -3,579 +3,521 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard | CT‑Merchant</title>
+    <title>Marketplace | CT-Merchant</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         :root {
-            --color-primary: #059669; 
-            --color-primary-dark: #064E3B;
-            --color-accent: #F59E0B;
-            --color-area-bg: #FEF3C7; 
-            --color-near-you-bg: #DCFCE7;
-            --color-bg: #F8FAFC;
+            /* Matches AppColors.primary (approximate Deep Purple) */
+            --color-primary: #4A148C; 
+            --color-primary-dark: #311B92;
+            --color-accent: #FFC107; /* Amber for non-user areas */
+            --color-success: #4CAF50; /* Green for user area */
+            --color-bg: #F3F4F6;
             --color-card: #FFFFFF;
-            --color-border: #E2E8F0;
-            --color-text-main: #1E293B;
-            --color-text-muted: #64748B;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --sidebar-width: 260px;
-            --sidebar-collapsed-width: 70px;
+            --color-text-main: #1F2937;
+            --color-text-sub: #6B7280;
+            --shadow-card: 0 2px 4px rgba(0,0,0,0.05);
+            --radius-card: 12px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--color-bg); color: var(--color-text-main); min-height: 100vh; overflow-x: hidden; }
 
-        /* --- LAYOUT --- */
-        .dashboard-container { display: flex; min-height: 100vh; transition: all 0.3s ease; }
+        body { background-color: var(--color-bg); color: var(--color-text-main); padding-top: 100px; /* Space for fixed App Bar */ }
+
+        /* --- FLUTTER-STYLE APP BAR --- */
+        .app-bar {
+            position: fixed; top: 0; left: 0; right: 0;
+            background-color: var(--color-primary);
+            color: white; z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .app-bar-top {
+            display: flex; align-items: center; justify-content: space-between;
+            height: 56px; padding: 0 16px;
+        }
+
+        .app-title { font-size: 16px; font-weight: 700; }
+
+        .app-actions { display: flex; align-items: center; gap: 16px; }
         
-        /* Desktop Collapsed State */
-        .dashboard-container.collapsed .sidebar { width: var(--sidebar-collapsed-width); }
-        .dashboard-container.collapsed .brand-text, 
-        .dashboard-container.collapsed .nav-text,
-        .dashboard-container.collapsed .sidebar-footer span { display: none; }
-        .dashboard-container.collapsed .sidebar-logo { width: 30px; height: 30px; margin: 0 auto; }
-        .dashboard-container.collapsed .nav-item { justify-content: center; padding: 12px; }
-        .dashboard-container.collapsed .nav-item i { margin: 0; font-size: 1.2rem; }
-        .dashboard-container.collapsed .main-content { margin-left: var(--sidebar-collapsed-width); width: calc(100% - var(--sidebar-collapsed-width)); }
-
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--color-primary-dark);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            padding: 1.5rem 1rem;
-            position: fixed;
-            top: 0; left: 0; bottom: 0;
-            z-index: 1000;
-            transition: width 0.3s ease, transform 0.3s ease;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-        .sidebar-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; padding: 0 8px; white-space: nowrap; }
-        .sidebar-logo { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; }
-        
-        .nav-menu { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; }
-        .nav-item {
-            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-            border-radius: 10px; color: rgba(255,255,255,0.7); text-decoration: none;
-            font-weight: 600; font-size: 0.9rem; transition: all 0.2s;
-            cursor: pointer; border: none; background: none; width: 100%; text-align: left;
-            white-space: nowrap;
-        }
-        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
-        .nav-item.active { background: var(--color-primary); color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .nav-item i { width: 20px; text-align: center; font-size: 1rem; }
-
-        .sidebar-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-            z-index: 999; opacity: 0; visibility: hidden; transition: 0.3s;
+        .icon-btn { 
+            background: none; border: none; color: white; 
+            font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
 
-        /* --- MAIN CONTENT --- */
-        .main-content {
-            flex-grow: 1;
-            margin-left: var(--sidebar-width);
-            width: calc(100% - var(--sidebar-width));
-            min-height: 100vh;
-            transition: margin 0.3s ease, width 0.3s ease;
-            padding-bottom: 40px;
+        .text-action-btn {
+            background: none; border: none; color: white; font-weight: 700;
+            font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 4px;
         }
 
-        /* --- HEADER --- */
-        .header-top { background: var(--color-primary); padding: 10px 20px; color: white; position: sticky; top: 0; z-index: 900; box-shadow: var(--shadow-md); }
-        .header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1400px; margin: 0 auto; }
-        .menu-btn { background: rgba(255,255,255,0.2); border: none; color: white; width: 38px; height: 38px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        .header-title { font-size: 1.1rem; font-weight: 800; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .header-actions { display: flex; align-items: center; gap: 16px; }
+        .notif-wrapper { position: relative; }
+        .notif-badge {
+            position: absolute; top: -2px; right: -2px;
+            background: #FF0000; color: white; font-size: 9px; font-weight: 700;
+            padding: 2px 4px; border-radius: 4px; min-width: 14px; text-align: center;
+            display: none;
+        }
 
-        /* --- TICKER --- */
-        .ticker-bar { background: #064E3B; color: #A7F3D0; height: 36px; display: flex; align-items: center; overflow: hidden; font-size: 0.8rem; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .ticker-content { white-space: nowrap; animation: ticker 40s linear infinite; padding-left: 100%; }
+        .app-bar-ticker {
+            background: rgba(0,0,0,0.2);
+            height: 36px; overflow: hidden; display: flex; align-items: center;
+        }
+        .ticker-text {
+            white-space: nowrap; animation: ticker 30s linear infinite;
+            font-size: 13px; font-weight: 500; padding-left: 100%;
+        }
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        /* --- SCREENS --- */
-        .screen { display: none; padding: 20px; max-width: 1400px; margin: 0 auto; animation: fadeIn 0.3s ease; }
-        .screen.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* --- MARKETPLACE UI --- */
-        .section { margin-bottom: 24px; }
-        .section-header { display: flex; align-items: center; margin-bottom: 12px; }
-        .section-bar { width: 4px; height: 20px; border-radius: 2px; margin-right: 10px; }
-        .section-title { font-weight: 800; font-size: 1.1rem; color: var(--color-text-main); }
-
-        .area-bar {
-            background: var(--color-area-bg);
-            padding: 10px 16px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 8px;
+        /* --- SIDEBAR (Hidden by default, toggled via Menu Icon) --- */
+        .sidebar-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100;
+            opacity: 0; visibility: hidden; transition: 0.3s;
         }
-        .area-bar.near-you { background: var(--color-near-you-bg); }
-        .area-info { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #92400E; }
-        .area-bar.near-you .area-info { color: #166534; }
-        .see-all-link { color: var(--color-primary); font-weight: 800; font-size: 0.85rem; cursor: pointer; text-decoration: none; }
+        .sidebar-overlay.active { opacity: 1; visibility: visible; }
 
-        .scroll-row {
-            display: flex; overflow-x: auto; gap: 16px; padding: 4px 4px 16px 4px;
-            scrollbar-width: none; -webkit-overflow-scrolling: touch;
+        .sidebar {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 280px;
+            background: white; z-index: 1200; transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 20px; display: flex; flex-direction: column;
         }
-        .scroll-row::-webkit-scrollbar { display: none; }
-
-        /* SHOP CARD (Compact App Style) */
-        .shop-card {
-            min-width: 260px; width: 260px;
-            background: white; border-radius: 16px; padding: 10px;
-            border: 1px solid var(--color-border); box-shadow: var(--shadow-sm);
-            flex-shrink: 0; cursor: pointer; transition: transform 0.2s;
-        }
-        .shop-card:hover { transform: translateY(-3px); border-color: var(--color-primary); }
-        
-        .card-image {
-            width: 100%; height: 130px; border-radius: 12px;
-            background: #F1F5F9; margin-bottom: 10px;
-            overflow: hidden; position: relative;
-        }
-        .card-image img { width: 100%; height: 100%; object-fit: cover; }
-        .verified-badge {
-            position: absolute; top: 8px; left: 8px;
-            background: white; color: var(--color-primary);
-            padding: 3px 8px; border-radius: 6px; font-size: 0.65rem;
-            font-weight: 800; border: 1px solid var(--color-border);
-        }
-
-        .card-name { font-weight: 800; font-size: 1rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
-        .card-cat { font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600; margin-bottom: 4px; }
-        .card-addr { font-size: 0.75rem; color: var(--color-text-muted); display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        .mini-products { display: flex; gap: 4px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F1F5F9; }
-        .mini-prod { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: #F8FAFC; border: 1px solid #F1F5F9; flex-shrink: 0; }
-
-        /* --- SERVICES GRID --- */
-        .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
-        .service-card {
-            background: white; border: 1px solid var(--color-border); border-radius: 16px;
-            padding: 24px 16px; text-align: center; cursor: pointer; transition: 0.2s;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 160px;
-        }
-        .service-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--color-primary); }
-        .service-icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 12px; }
-        
-        /* --- CATEGORIES --- */
-        .category-wrap { display: flex; flex-wrap: wrap; gap: 10px; }
-        .cat-pill {
-            background: white; border: 1px solid var(--color-border);
-            padding: 8px 16px; border-radius: 20px;
-            display: flex; align-items: center; gap: 8px; cursor: pointer;
+        .sidebar.open { transform: translateX(0); }
+        .sidebar-item {
+            padding: 12px; margin-bottom: 8px; border-radius: 8px;
+            color: var(--color-text-main); font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; gap: 12px;
             transition: 0.2s;
         }
-        .cat-pill:hover { border-color: var(--color-primary); background: #F0FDF4; }
-        .cat-icon { width: 28px; height: 28px; border-radius: 50%; background: #F1F5F9; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
+        .sidebar-item:hover, .sidebar-item.active { background: #F3E8FF; color: var(--color-primary); }
+
+        /* --- MAIN CONTENT LAYOUT --- */
+        .content-container { padding-bottom: 40px; }
+        
+        .section-header {
+            padding: 16px 16px 8px 16px; display: flex; align-items: center; gap: 8px;
+        }
+        .header-bar { width: 4px; height: 20px; border-radius: 2px; }
+        .header-title { font-size: 18px; font-weight: 700; color: #374151; }
+        
+        .horizontal-scroll {
+            display: flex; overflow-x: auto; gap: 12px; padding: 4px 16px 16px 16px;
+            scrollbar-width: none; /* Firefox */
+        }
+        .horizontal-scroll::-webkit-scrollbar { display: none; }
+
+        /* --- WIDGETS --- */
+        
+        /* Promo Slider */
+        .promo-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 16px; padding: 16px; }
+        .promo-card { 
+            min-width: 90%; height: 160px; border-radius: 16px; overflow: hidden; 
+            scroll-snap-align: center; background: #ddd; flex-shrink: 0;
+        }
+        .promo-card img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Shop Card (Vertical - Flutter Style) */
+        .shop-card {
+            width: 200px; background: white; border-radius: 12px;
+            box-shadow: var(--shadow-card); overflow: hidden; flex-shrink: 0;
+            display: flex; flex-direction: column; cursor: pointer; border: 1px solid #E5E7EB;
+        }
+        .shop-card-img-box {
+            height: 110px; background: #F3F4F6; position: relative;
+        }
+        /* Collage logic for image box */
+        .collage-container { width: 100%; height: 100%; display: flex; }
+        .collage-container img { object-fit: cover; }
+        .collage-1 img { width: 100%; height: 100%; }
+        .collage-2 img { width: 50%; height: 100%; }
+        
+        .shop-card-content { padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+        .shop-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .shop-cat { font-size: 11px; color: var(--color-primary); background: #F3E8FF; padding: 2px 6px; border-radius: 4px; align-self: flex-start; font-weight: 600; }
+        .shop-location { font-size: 11px; color: var(--color-text-sub); display: flex; align-items: center; gap: 4px; }
+
+        /* Area Header Pill (The specific Flutter design) */
+        .area-pill-container { padding: 0 16px; margin-bottom: 10px; }
+        .area-pill {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 12px; border-radius: 8px;
+        }
+        .area-pill.user-loc { background: rgba(76, 175, 80, 0.1); }
+        .area-pill.other-loc { background: rgba(255, 193, 7, 0.1); }
+        
+        .area-pill-left { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+        .area-pill-text { font-size: 13px; font-weight: 700; color: #1F2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .btn-see-all { font-size: 12px; font-weight: 700; color: var(--color-primary); background: none; border: none; cursor: pointer; }
+
+        /* Category Chip (Collage Avatar) */
+        .category-grid { padding: 0 16px; display: flex; flex-wrap: wrap; gap: 12px; }
+        .category-chip {
+            background: white; border: 1px solid #E5E7EB;
+            border-radius: 12px; padding: 8px 12px 8px 8px;
+            display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;
+        }
+        .cat-avatar {
+            width: 36px; height: 36px; border-radius: 50%; overflow: hidden;
+            background: #F3F4F6; border: 2px solid white; display: flex;
+        }
+        .cat-avatar img { object-fit: cover; }
+        .cat-name { font-size: 13px; font-weight: 700; color: #374151; }
 
         /* --- UTILS --- */
-        .hidden { display: none !important; }
-        #loading-overlay { position: fixed; inset: 0; background: white; z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        
+        /* Loading/Error */
+        .state-msg { text-align: center; padding: 40px; color: var(--color-text-sub); }
 
-        /* --- MOBILE --- */
-        @media (max-width: 1024px) {
-            .sidebar { transform: translateX(-100%); }
-            .sidebar.mobile-open { transform: translateX(0); }
-            .main-content { margin-left: 0; width: 100%; }
-            .sidebar-overlay.active { opacity: 1; visibility: visible; }
-            .header-title { font-size: 1rem; }
+        /* Desktop Adjustments */
+        @media(min-width: 768px) {
+            .shop-card { width: 240px; }
+            .shop-card-img-box { height: 140px; }
+            body { max-width: 800px; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.05); min-height: 100vh; }
+            .app-bar { max-width: 800px; left: 50%; transform: translateX(-50%); }
+            .sidebar { left: 50%; margin-left: -400px; } 
         }
     </style>
 </head>
 <body>
 
-<div id="loading-overlay">
-    <div class="spinner"></div>
-    <p id="loading-msg" style="font-weight: 700; color: #64748B;">Connecting to Marketplace...</p>
-</div>
-
-<div class="dashboard-container" id="container">
-    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="sidebar-logo">
-            <span class="brand-text" style="font-weight:800; font-size:1.1rem; letter-spacing:-0.5px;">CT‑MERCHANT</span>
-        </div>
-
-        <nav class="nav-menu">
-            <button class="nav-item active" onclick="switchTab('market', this)">
-                <i class="fa-solid fa-store"></i> <span class="nav-text">Market Overview</span>
-            </button>
-            <button class="nav-item" onclick="switchTab('services', this)">
-                <i class="fa-solid fa-table-cells-large"></i> <span class="nav-text">Services</span>
-            </button>
-            <button class="nav-item" onclick="switchTab('profile', this)">
-                <i class="fa-solid fa-user-gear"></i> <span class="nav-text">My Profile</span>
-            </button>
-            <button class="nav-item" onclick="switchTab('notifications', this)">
-                <i class="fa-solid fa-bell"></i> <span class="nav-text">Notifications</span>
-            </button>
-        </nav>
-
-        <div class="sidebar-footer" style="margin-top:auto; padding-top:20px; border-top:1px solid rgba(255,255,255,0.1);">
-            <button class="nav-item" style="color:#FDA4AF" onclick="handleLogout()">
-                <i class="fa-solid fa-right-from-bracket"></i> <span class="nav-text">Sign Out</span>
-            </button>
-        </div>
-    </aside>
-
-    <main class="main-content">
-        <header class="header-top">
-            <div class="header-row">
-                <button class="menu-btn" onclick="toggleSidebar()">
-                    <i class="fa-solid fa-bars"></i>
+    <header class="app-bar">
+        <div class="app-bar-top">
+            <button class="icon-btn" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars"></i> </button>
+            
+            <div id="city-name" class="app-title">Loading...</div>
+            
+            <div class="app-actions">
+                <button class="text-action-btn" onclick="window.location.href='shop-index.html'">
+                    <i class="fa-solid fa-arrow-down-a-z"></i> Index
                 </button>
-                <div class="header-title" id="display-city">Locating...</div>
-                <div class="header-actions">
-                    <div style="position:relative; cursor:pointer;" onclick="switchTab('notifications', document.querySelectorAll('.nav-item')[3])">
-                        <i class="fa-solid fa-bell" style="font-size:1.2rem;"></i>
-                        <span id="notif-badge" style="position:absolute; top:-5px; right:-5px; background:#EF4444; color:white; font-size:0.6rem; width:18px; height:18px; border-radius:50%; display:none; align-items:center; justify-content:center; border:2px solid var(--color-primary);">0</span>
-                    </div>
-                    <img id="user-avatar" src="" style="width:36px; height:36px; border-radius:50%; background:white; object-fit: cover; cursor:pointer;" onclick="switchTab('profile', document.querySelectorAll('.nav-item')[2])">
+                
+                <div class="notif-wrapper" onclick="switchScreen('notifications')">
+                    <button class="icon-btn"><i class="fa-regular fa-bell"></i></button>
+                    <div id="badge-count" class="notif-badge">0</div>
+                </div>
+
+                <div onclick="switchScreen('profile')" style="cursor: pointer;">
+                    <img id="header-avatar" src="https://via.placeholder.com/30" style="width:28px; height:28px; border-radius:50%; border: 1px solid white;">
                 </div>
             </div>
-        </header>
-
-        <div class="ticker-bar">
-            <div class="ticker-content" id="ticker-text">Welcome to CT-Merchant. Connecting you with verified artisans and mechanics.</div>
         </div>
 
-        <!-- 1. MARKET OVERVIEW -->
-        <div id="market" class="screen active">
-            <!-- Promo Banner -->
-            <section class="section hidden" id="section-promo">
-                <div class="scroll-row" id="promo-list"></div>
-            </section>
+        <div class="app-bar-ticker" id="ticker-container" style="display:none;">
+            <div id="ticker-text" class="ticker-text"></div>
+        </div>
+    </header>
 
-            <!-- Featured Shops -->
-            <section class="section hidden" id="section-featured">
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div id="sidebar" class="sidebar">
+        <h2 style="margin-bottom: 20px; color: var(--color-primary);">Menu</h2>
+        <div class="sidebar-item active" onclick="switchScreen('home')"><i class="fa-solid fa-store"></i> Market Home</div>
+        <div class="sidebar-item" onclick="switchScreen('services')"><i class="fa-solid fa-grid-2"></i> Services</div>
+        <div class="sidebar-item" onclick="switchScreen('profile')"><i class="fa-solid fa-user"></i> Profile</div>
+        <div class="sidebar-item" onclick="switchScreen('notifications')"><i class="fa-solid fa-bell"></i> Notifications</div>
+        <div style="margin-top: auto;">
+            <div class="sidebar-item" style="color: #EF4444;" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</div>
+        </div>
+    </div>
+
+    <div class="content-container">
+        
+        <div id="home-screen" class="screen active">
+            
+            <div id="promo-container" class="promo-slider" style="display:none;"></div>
+
+            <div id="featured-section" style="display:none;">
                 <div class="section-header">
-                    <div class="section-bar" style="background: var(--color-accent);"></div>
-                    <h2 class="section-title">Featured Shops</h2>
+                    <div class="header-bar" style="background: orange;"></div>
+                    <div class="header-title">Featured Shops</div>
                 </div>
-                <div class="scroll-row" id="featured-list"></div>
-            </section>
+                <div id="featured-list" class="horizontal-scroll"></div>
+            </div>
 
-            <!-- Dynamic Areas -->
-            <div id="area-container"></div>
+            <div style="height: 16px;"></div>
 
-            <!-- Categories -->
-            <section class="section">
-                <div class="section-header">
-                    <div class="section-bar" style="background: var(--color-primary);"></div>
-                    <h2 class="section-title">Browse Categories</h2>
-                </div>
-                <div class="category-wrap" id="category-list"></div>
-            </section>
+            <div id="area-sections-container">
+                <div class="state-msg">Loading marketplace data...</div>
+            </div>
+
+            <div style="height: 16px;"></div>
+
+            <div class="section-header">
+                <div class="header-bar" style="background: var(--color-primary);"></div>
+                <div class="header-title">Browse Categories</div>
+            </div>
+            <div id="categories-list" class="category-grid"></div>
+
         </div>
 
-        <!-- 2. SERVICES GRID -->
-        <div id="services" class="screen">
-            <h2 class="section-title" style="margin-bottom: 20px;">Services & Tools</h2>
-            <div class="services-grid">
-                <div class="service-card" onclick="alert('Shop Registration coming soon')">
-                    <div class="service-icon" style="background:#F1F5F9; color:#475569;"><i class="fa-solid fa-store"></i></div>
-                    <div style="font-weight:700;">My Shop</div>
-                    <div style="font-size:0.8rem; color:#64748B;">Manage inventory</div>
-                </div>
-                <div class="service-card" onclick="alert('Wishlist coming soon')">
-                    <div class="service-icon" style="background:#FCE7F3; color:#DB2777;"><i class="fa-solid fa-heart"></i></div>
-                    <div style="font-weight:700;">Wishlist</div>
-                    <div style="font-size:0.8rem; color:#64748B;">Saved items</div>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon" style="background:#DBEAFE; color:#2563EB;"><i class="fa-solid fa-headset"></i></div>
-                    <div style="font-weight:700;">Support</div>
-                    <div style="font-size:0.8rem; color:#64748B;">Get help</div>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon" style="background:#CCFBF1; color:#0F766E;"><i class="fa-solid fa-circle-question"></i></div>
-                    <div style="font-weight:700;">FAQ</div>
-                    <div style="font-size:0.8rem; color:#64748B;">Common questions</div>
-                </div>
+        <div id="services-screen" class="screen">
+            <div class="state-msg">
+                <h2>Services</h2>
+                <p>Services grid content goes here...</p>
+                <button onclick="window.location.href='merchant-dashboard.html'" style="margin-top:10px; padding:8px 16px;">Go to Merchant Dashboard</button>
             </div>
         </div>
 
-        <!-- 3. PROFILE EDITOR -->
-        <div id="profile" class="screen">
-            <div style="max-width:600px; background:white; padding:2rem; border-radius:20px; box-shadow:var(--shadow-sm); border:1px solid var(--color-border); margin:0 auto;">
-                <h2 style="margin-bottom:20px;">Edit Profile</h2>
-                <div style="display:flex; flex-direction:column; gap:15px;">
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:700; color:var(--color-text-muted);">FULL NAME</label>
-                        <input type="text" id="prof-name" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--color-border); margin-top:5px;">
-                    </div>
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:700; color:var(--color-text-muted);">PHONE</label>
-                        <input type="tel" id="prof-phone" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--color-border); margin-top:5px;">
-                    </div>
-                    <button style="background:var(--color-primary); color:white; border:none; padding:14px; border-radius:10px; font-weight:800; cursor:pointer;" onclick="alert('Profile Saved!')">Save Changes</button>
+        <div id="profile-screen" class="screen">
+            <div class="state-msg">
+                <h2>My Profile</h2>
+                <div id="profile-details"></div>
                 </div>
-            </div>
         </div>
 
-        <!-- 4. NOTIFICATIONS -->
-        <div id="notifications" class="screen">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; max-width:600px; margin:0 auto 20px auto;">
-                <h2 class="section-title">Notifications</h2>
-                <button style="background:#FEF2F2; color:#B91C1C; border:none; padding:8px 16px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-trash"></i> Clear</button>
+        <div id="notifications-screen" class="screen">
+             <div class="section-header">
+                <div class="header-title">Notifications</div>
             </div>
-            <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:600px; margin:0 auto;">
-                <!-- JS Populated -->
-            </div>
+            <div id="notif-list" style="padding: 16px;"></div>
         </div>
-    </main>
-</div>
+
+    </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // --- MOCK DATA FALLBACK (Guarantees UI loads if DB fails) ---
-    const MOCK = {
-        city: "Demo City",
-        announcements: [{message: "Welcome! This is a preview mode. Connect Supabase to see live data."}],
-        categories: [{name: "Automotive"}, {name: "Beauty"}, {name: "Electronics"}, {name: "Fashion"}, {name: "Plumbing"}, {name: "Carpentry"}],
-        areas: [{id: 1, name: "Malali"}, {id: 2, name: "Barnawa"}, {id: 3, name: "Unguwan Rimi"}],
-        shops: [
-            {id: 101, name: "FixIt Pro", areaId: 1, isFeatured: true, isVerified: true, category: "Automotive", address: "12 Kaduna Rd", imageUrl: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=400"},
-            {id: 102, name: "Glamour Spa", areaId: 1, isFeatured: false, isVerified: true, category: "Beauty", address: "Plot 4 Malali", imageUrl: "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400"},
-            {id: 103, name: "Tech Zone", areaId: 2, isFeatured: false, isVerified: false, category: "Electronics", address: "Barnawa Complex", imageUrl: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=400"},
-            {id: 104, name: "City Tailors", areaId: 3, isFeatured: true, isVerified: true, category: "Fashion", address: "Rimi Drive", imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400"}
-        ],
-        products: []
-    };
-
+    // --- SUPABASE CONFIG ---
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
-    let supabase = null;
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- NAVIGATION LOGIC ---
+    let currentUser = null;
+    let userCityId = null;
+    let userAreaId = null;
+
+    // --- UI LOGIC ---
     function toggleSidebar() {
-        if (window.innerWidth > 1024) {
-            document.getElementById('container').classList.toggle('collapsed');
-        } else {
-            document.getElementById('sidebar').classList.toggle('mobile-open');
-            document.getElementById('sidebar-overlay').classList.toggle('active');
-        }
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebar-overlay').classList.toggle('active');
     }
 
-    function switchTab(tabId, btn) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        btn.classList.add('active');
-        
-        // Auto-close on mobile
-        if (window.innerWidth <= 1024) {
-            document.getElementById('sidebar').classList.remove('mobile-open');
-            document.getElementById('sidebar-overlay').classList.remove('active');
+    function switchScreen(id) {
+        // Close sidebar if open
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebar-overlay').classList.remove('active');
+
+        // Hide all screens
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+
+        // Show target
+        if(document.getElementById(id + '-screen')) {
+            document.getElementById(id + '-screen').classList.add('active');
+        } else {
+            // Mapping for sidebar clicks that might not have ID matches exactly in this example
+            if(id === 'home') document.getElementById('home-screen').classList.add('active');
         }
+
+        // Logic triggers
+        if(id === 'notifications') markNotificationsRead();
     }
 
-    // --- INIT ---
-    async function init() {
-        if (window.supabase) {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } else {
-            useMockData(); return;
-        }
+    // --- DATA LOADING ---
+    window.onload = async () => {
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) { window.location.href = "login.html"; return; }
+        currentUser = session.user;
 
-        // 5-second race to prevent infinite loading
-        const timeout = new Promise((_, reject) => setTimeout(() => reject("Timeout"), 5000));
-        
+        // Try load cache
+        const cache = localStorage.getItem('dash_cache');
+        if(cache) renderDashboard(JSON.parse(cache));
+
+        fetchDashboardData();
+    };
+
+    async function fetchDashboardData() {
         try {
-            await Promise.race([fetchRealData(), timeout]);
-        } catch (error) {
-            console.warn("Using Mock Data due to:", error);
-            useMockData();
-        }
-    }
+            // 1. Fetch Profile
+            const { data: profile } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).single();
+            if(!profile) return;
+            
+            userCityId = profile.city_id;
+            userAreaId = profile.area_id;
 
-    // --- DATA FETCHING (MATCHING DART LOGIC) ---
-    async function fetchRealData() {
-        const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user?.id;
+            // 2. Parallel Fetch
+            const [promos, announcements, categories, areas, shops] = await Promise.all([
+                client.from('promo_banners').select().order('created_at', {ascending: false}),
+                client.from('announcements').select().order('created_at', {ascending: false}),
+                client.from('categories').select().order('name'),
+                client.from('areas').select().eq('city_id', userCityId).order('name'),
+                client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false})
+            ]);
 
-        // 1. Fetch Metadata
-        const [annRes, catRes] = await Promise.all([
-            supabase.from('announcements').select().order('created_at', {ascending: false}),
-            supabase.from('categories').select().order('name')
-        ]);
-
-        let profile = null;
-        if (userId) {
-            const { data } = await supabase.from('profiles').select('*, cities(name)').eq('id', userId).maybeSingle();
-            profile = data;
-            if(profile) {
-                document.getElementById('prof-name').value = profile.full_name || '';
-                document.getElementById('prof-phone').value = profile.phone || '';
+            // 3. Fetch Products (for Collages)
+            const shopIds = shops.data.map(s => s.id);
+            let products = [];
+            if(shopIds.length > 0) {
+                const pRes = await client.from('products').select('shop_id, image_url').in('shop_id', shopIds).eq('is_available', true).limit(200);
+                products = pRes.data || [];
             }
+            
+            // 4. Notifications Count
+            const { count } = await client.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id).eq('is_read', false);
+
+            const dashboardData = {
+                profile, 
+                promos: promos.data, 
+                announcements: announcements.data, 
+                categories: categories.data, 
+                areas: areas.data, 
+                shops: shops.data, 
+                products,
+                unreadCount: count
+            };
+
+            localStorage.setItem('dash_cache', JSON.stringify(dashboardData));
+            renderDashboard(dashboardData);
+
+        } catch (e) {
+            console.error(e);
         }
-
-        const cityId = profile?.city_id || 1; 
-        const cityName = profile?.cities?.name || "Global Market";
-
-        // 2. Fetch Shops & Areas
-        const [shopRes, areaRes, prodRes] = await Promise.all([
-            supabase.from('shops').select().eq('city_id', cityId),
-            supabase.from('areas').select().eq('city_id', cityId).order('name'),
-            supabase.from('products').select().eq('is_available', true).order('created_at', {ascending: false})
-        ]);
-
-        if (shopRes.error) throw new Error("DB Error");
-
-        // 3. Normalize Data (Handle snake_case vs camelCase)
-        const shops = (shopRes.data || []).map(s => ({
-            ...s,
-            areaId: s.area_id || s.areaId,
-            isFeatured: s.is_featured || s.isFeatured,
-            isVerified: s.is_verified || s.isVerified,
-            imageUrl: s.image_url || s.imageUrl,
-            storeFrontUrl: s.store_front_url || s.storeFrontUrl
-        }));
-
-        const areas = (areaRes.data || []).map(a => ({...a, id: a.id})); 
-        const products = (prodRes.data || []).map(p => ({...p, shopId: p.shop_id, imageUrl: p.image_url}));
-
-        // 4. Render
-        renderUI(profile, cityName, annRes.data || [], catRes.data || [], areas, shops, products);
-        
-        // 5. Notifications
-        if(userId) fetchNotifications(userId);
     }
 
-    function useMockData() {
-        renderUI(
-            { full_name: "Guest", avatar_url: null, area_id: 1 },
-            MOCK.city, MOCK.announcements, MOCK.categories, MOCK.areas, MOCK.shops, MOCK.products
-        );
-    }
-
-    // --- UI RENDERING (MATCHING FLUTTER LOGIC) ---
-    function renderUI(user, cityName, ann, cats, areas, shops, products) {
-        document.getElementById('loading-overlay').style.display = 'none';
-        document.getElementById('display-city').textContent = cityName;
-        document.getElementById('user-avatar').src = user?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user?.full_name || 'User'}`;
+    // --- RENDERING ---
+    function renderDashboard(data) {
+        // App Bar Info
+        document.getElementById('city-name').textContent = data.profile.cities?.name || "Unknown City";
+        document.getElementById('header-avatar').src = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
         
-        if (ann.length > 0) document.getElementById('ticker-text').textContent = ann.map(a => a.message).join("  |  ");
-
-        // 1. Featured Section
-        const featured = shops.filter(s => s.isFeatured);
-        if (featured.length > 0) {
-            document.getElementById('section-featured').classList.remove('hidden');
-            document.getElementById('featured-list').innerHTML = featured.map(s => createShopCard(s, products)).join('');
+        if(data.unreadCount > 0) {
+            const badge = document.getElementById('badge-count');
+            badge.textContent = data.unreadCount > 9 ? '9+' : data.unreadCount;
+            badge.style.display = 'block';
         }
 
-        // 2. Sort Areas (User area first, then mostly populated)
-        const areaCounts = {};
-        shops.forEach(s => { areaCounts[s.areaId] = (areaCounts[s.areaId] || 0) + 1; });
-        
-        areas.sort((a, b) => {
-            if (user && a.id === user.area_id) return -1;
-            if (user && b.id === user.area_id) return 1;
-            return (areaCounts[b.id] || 0) - (areaCounts[a.id] || 0);
+        // Ticker
+        if(data.announcements && data.announcements.length > 0) {
+            document.getElementById('ticker-container').style.display = 'flex';
+            document.getElementById('ticker-text').textContent = data.announcements.map(a => a.message).join("  |  ");
+        }
+
+        // Promos
+        if(data.promos && data.promos.length > 0) {
+            document.getElementById('promo-container').style.display = 'flex';
+            document.getElementById('promo-container').innerHTML = data.promos.map(p => 
+                `<div class="promo-card"><img src="${p.image_url}"></div>`
+            ).join('');
+        }
+
+        // Featured Shops
+        const featured = data.shops.filter(s => s.is_featured);
+        if(featured.length > 0) {
+            document.getElementById('featured-section').style.display = 'block';
+            document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
+        }
+
+        // --- AREA LOGIC (The Core Feature) ---
+        const areaContainer = document.getElementById('area-sections-container');
+        areaContainer.innerHTML = '';
+
+        // Sort areas: User's area first
+        const sortedAreas = data.areas.sort((a, b) => {
+            if(a.id === userAreaId) return -1;
+            if(b.id === userAreaId) return 1;
+            return a.name.localeCompare(b.name);
         });
 
-        // 3. Render Area Sections (Merchants in [Area])
-        const areaContainer = document.getElementById('area-container');
-        areaContainer.innerHTML = areas.map(area => {
-            const areaShops = shops.filter(s => s.areaId === area.id);
-            if (areaShops.length === 0) return '';
+        sortedAreas.forEach(area => {
+            const shopsInArea = data.shops.filter(s => s.area_id === area.id);
+            if(shopsInArea.length === 0) return;
+
+            const isUserArea = area.id === userAreaId;
+            const icon = isUserArea ? '<i class="fa-solid fa-location-crosshairs"></i>' : '<i class="fa-solid fa-location-dot"></i>';
+            const colorClass = isUserArea ? 'user-loc' : 'other-loc';
+            const iconColor = isUserArea ? 'var(--color-success)' : '#F59E0B';
+            const titleText = isUserArea ? `Merchants in ${area.name} • Near You` : `Merchants in ${area.name}`;
+
+            const html = `
+                <div class="area-pill-container">
+                    <div class="area-pill ${colorClass}">
+                        <div class="area-pill-left">
+                            <span style="color:${iconColor}">${icon}</span>
+                            <span class="area-pill-text">${titleText}</span>
+                        </div>
+                        <button class="btn-see-all" onclick="window.location.href='area-filter.html?id=${area.id}'">See All</button>
+                    </div>
+                </div>
+                <div class="horizontal-scroll">
+                    ${shopsInArea.map(s => buildShopCard(s, data.products)).join('')}
+                </div>
+                <div style="height: 16px;"></div>
+            `;
+            areaContainer.innerHTML += html;
+        });
+
+        // Categories
+        // Logic to get images for categories from products
+        const catList = document.getElementById('categories-list');
+        catList.innerHTML = data.categories.map(cat => {
+            // Find up to 2 images for this category
+            const relevantShops = data.shops.filter(s => s.category === cat.name).map(s => s.id);
+            const catImages = data.products.filter(p => relevantShops.includes(p.shop_id) && p.image_url).slice(0, 2).map(p => p.image_url);
             
-            const isNearYou = user && area.id === user.area_id;
+            let avatarHtml = '';
+            if(catImages.length === 0) avatarHtml = '<i class="fa-solid fa-tag" style="margin:auto; color:#ccc;"></i>';
+            else if(catImages.length === 1) avatarHtml = `<img src="${catImages[0]}" style="width:100%; height:100%; object-fit:cover;">`;
+            else avatarHtml = `<img src="${catImages[0]}" style="width:50%; height:100%; object-fit:cover;"><img src="${catImages[1]}" style="width:50%; height:100%; object-fit:cover;">`;
 
             return `
-                <div class="section" style="margin-bottom:12px;">
-                    <div class="area-bar ${isNearYou ? 'near-you' : ''}">
-                        <div class="area-info">
-                            <i class="fa-solid ${isNearYou ? 'fa-location-crosshairs' : 'fa-location-dot'}"></i>
-                            ${isNearYou ? `Merchants in ${area.name} • Near You` : `Merchants in ${area.name}`}
-                        </div>
-                        <a class="see-all-link">See All</a>
-                    </div>
-                    <div class="scroll-row">
-                        ${areaShops.map(s => createShopCard(s, products)).join('')}
-                    </div>
+                <div class="category-chip" onclick="window.location.href='category-filter.html?cat=${encodeURIComponent(cat.name)}'">
+                    <div class="cat-avatar">${avatarHtml}</div>
+                    <span class="cat-name">${cat.name}</span>
                 </div>
             `;
         }).join('');
-
-        // 4. Categories
-        document.getElementById('category-list').innerHTML = cats.map(c => `
-            <div class="cat-pill">
-                <div class="cat-icon"><i class="fa-solid fa-tag"></i></div>
-                <div style="font-weight:800; font-size:0.85rem;">${c.name}</div>
-            </div>
-        `).join('');
     }
 
-    function createShopCard(shop, allProducts) {
-        const miniProds = allProducts.filter(p => p.shopId === shop.id).slice(0, 4);
-        const img = shop.imageUrl || shop.storeFrontUrl || 'https://via.placeholder.com/400x200?text=No+Image';
-        const isVer = shop.isVerified;
+    function buildShopCard(shop, allProducts) {
+        const products = allProducts.filter(p => p.shop_id === shop.id).slice(0, 2);
+        let imgHtml = '';
+        
+        // Collage logic
+        if(products.length >= 2) {
+             imgHtml = `<div class="collage-container collage-2"><img src="${products[0].image_url}"><img src="${products[1].image_url}"></div>`;
+        } else if (products.length === 1) {
+            imgHtml = `<div class="collage-container collage-1"><img src="${products[0].image_url}"></div>`;
+        } else {
+             // Fallback to shop image or placeholder
+             const fallback = shop.image_url || 'https://via.placeholder.com/150?text=Shop';
+             imgHtml = `<div class="collage-container collage-1"><img src="${fallback}"></div>`;
+        }
 
         return `
-            <div class="shop-card" onclick="location.href='shop-detail.html?id=${shop.id}'">
-                <div class="card-image">
-                    <img src="${img}">
-                    ${isVer ? '<div class="verified-badge">Verified</div>' : ''}
+            <div class="shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
+                <div class="shop-card-img-box">
+                    ${imgHtml}
                 </div>
-                <div class="card-name">
-                    ${shop.name}
-                    ${isVer ? '<i class="fa-solid fa-certificate" style="color:var(--color-accent); font-size:0.9rem;"></i>' : ''}
-                </div>
-                <div class="card-cat">${shop.category}</div>
-                <div class="card-addr">
-                    <i class="fa-solid fa-location-dot" style="font-size:0.7rem;"></i>
-                    ${shop.address || 'Address hidden'}
-                </div>
-                <div class="mini-products">
-                    ${miniProds.map(p => `<img src="${p.imageUrl}" class="mini-prod">`).join('')}
-                    ${miniProds.length === 0 ? '<span style="font-size:0.6rem; color:#94A3B8;">No items</span>' : ''}
+                <div class="shop-card-content">
+                    <div class="shop-name">${shop.name}</div>
+                    <span class="shop-cat">${shop.category}</span>
+                    <div class="shop-location">
+                        <i class="fa-solid fa-location-dot" style="font-size:10px;"></i> ${shop.address}
+                    </div>
                 </div>
             </div>
         `;
     }
 
-    async function fetchNotifications(uid) {
-        const { data, count } = await supabase.from('notifications').select('*', {count:'exact'}).eq('user_id', uid).eq('is_read', false);
-        if(count > 0) {
-            const badge = document.getElementById('notif-badge');
-            badge.textContent = count;
-            badge.style.display = 'flex';
-        }
-        // Render list if on notifications tab...
-        const { data: allNotifs } = await supabase.from('notifications').select('*').eq('user_id', uid).order('created_at', {ascending:false});
-        if(allNotifs && allNotifs.length > 0) {
-            document.getElementById('notif-list').innerHTML = allNotifs.map(n => `
-                <div style="background:white; padding:16px; border-radius:12px; border:1px solid var(--color-border); box-shadow:var(--shadow-sm);">
-                    <div style="font-weight:700; margin-bottom:4px;">${n.title}</div>
-                    <div style="font-size:0.9rem; color:#475569;">${n.message}</div>
-                </div>
-            `).join('');
-        }
-    }
-
     async function handleLogout() {
-        if(confirm("Sign out of CT‑Merchant?")) {
-            if(supabase) await supabase.auth.signOut();
-            location.href = "login.html";
+        if(confirm('Log out?')) {
+            await client.auth.signOut();
+            window.location.href = 'index.html';
         }
     }
 
-    init();
-</script>
+    async function markNotificationsRead() {
+        // Visual clear
+        document.getElementById('badge-count').style.display = 'none';
+        // Backend clear
+        await client.from('notifications').update({is_read: true}).eq('user_id', currentUser.id);
+    }
 
+</script>
 </body>
 </html>
