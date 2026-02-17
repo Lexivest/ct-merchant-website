@@ -21,6 +21,7 @@
 
         body {
             background-color: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(5px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -217,46 +218,57 @@
         };
 
         async function fetchMerchant(uniqueId) {
+            console.log("Searching for:", uniqueId);
+
+            // STRATEGY 1: Try Edge Function (Preferred)
             try {
-                // Calling the Edge Function
                 const { data, error } = await _supabase.functions.invoke('repo-search', {
                     body: { merchantId: uniqueId }
                 });
 
                 if (error) {
-                    // Check for 404 vs 401/500
-                    const msg = error.message || "Search failed";
-                    throw new Error(msg);
+                    console.warn("Function failed (401/500), attempting Direct DB Fallback...", error);
+                    throw error; // Trigger fallback
                 }
 
-                if (data.error) {
-                    throw new Error(data.error);
+                if (data.error || data.not_found) {
+                    renderError("Merchant not found in repository.");
+                    return;
                 }
 
-                renderUI(data);
+                renderUI(data.shop, data.profile);
+                return;
 
             } catch (e) {
-                console.error("Search Error:", e);
-                renderError(e.message === "Merchant not found" ? "Merchant ID not found." : "Connection failed. Please try again.");
+                // STRATEGY 2: Direct DB Fallback (Backup)
+                console.log("Using Direct DB Fallback...");
+                try {
+                    const { data, error } = await _supabase
+                        .from('shops')
+                        .select('*, cities(name), profiles(full_name)')
+                        .ilike('unique_id', `%${uniqueId}%`) 
+                        .maybeSingle();
+                    
+                    if (error || !data) {
+                        renderError("Merchant ID not found.");
+                        return;
+                    }
+
+                    renderUI(data, data.profiles);
+                } catch (dbError) {
+                    renderError("Connection failed. Please try again.");
+                }
             }
         }
 
-        function renderUI(shop) {
+        function renderUI(shop, profile) {
             document.getElementById('loading-state').classList.add('hidden');
             document.getElementById('merchant-content').classList.remove('hidden');
 
             document.getElementById('biz-name').innerText = shop.name;
-            
-            // Handle Profile relation safely
-            const owner = shop.profiles ? shop.profiles.full_name : 'Verified Merchant';
-            document.getElementById('owner-name').innerText = `Proprietor: ${owner}`;
-            
+            document.getElementById('owner-name').innerText = `Proprietor: ${profile ? profile.full_name : 'Verified Merchant'}`;
             document.getElementById('ct-id-badge').innerText = shop.unique_id || 'ID Pending';
-            
-            // Handle City relation safely
-            const city = shop.cities ? shop.cities.name : 'Local';
-            document.getElementById('city-text').innerText = city;
-            
+            document.getElementById('city-text').innerText = shop.cities?.name || 'Local';
             document.getElementById('biz-loc').innerText = shop.address;
             
             const logo = shop.image_url || 'https://via.placeholder.com/150';
@@ -280,7 +292,7 @@
                 document.querySelector('.social-actions').style.gridTemplateColumns = '1fr';
             }
 
-            // Link to Detail Page
+            // View Shop Link
             document.getElementById('view-shop-btn').href = `shop-detail.html?id=${shop.id}`;
         }
 
