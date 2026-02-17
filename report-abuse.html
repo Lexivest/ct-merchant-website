@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Abuse | CT‑Merchant</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-red: #B91C1C;
+            --color-red-light: #FEF2F2;
+            --color-red-border: #FCA5A5;
+            --color-bg: #F8FAFC;
+            --color-text: #1E293B;
+            --color-text-muted: #64748B;
+            --color-border: #E2E8F0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--color-bg); color: var(--color-text); min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+
+        .container { width: 100%; max-width: 600px; }
+
+        /* Header */
+        .app-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; background: var(--color-red); color: white; padding: 16px; border-radius: 16px; box-shadow: var(--shadow-sm); }
+        .back-btn { background: rgba(255,255,255,0.2); border: none; width: 40px; height: 40px; border-radius: 10px; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s; font-size: 1.1rem; }
+        .back-btn:hover { background: rgba(255,255,255,0.3); }
+        .page-title { font-size: 1.25rem; font-weight: 700; }
+
+        /* Alert Box */
+        .alert-box {
+            background: var(--color-red-light); border: 1px solid var(--color-red-border);
+            padding: 16px; border-radius: 12px; margin-bottom: 30px;
+            display: flex; gap: 16px; align-items: flex-start;
+        }
+        .alert-icon { font-size: 1.5rem; color: var(--color-red); margin-top: 2px; }
+        .alert-text { color: #7F1D1D; font-size: 0.95rem; line-height: 1.5; font-weight: 500; }
+
+        /* Form */
+        .form-card { background: white; padding: 24px; border-radius: 16px; border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); }
+        
+        .form-group { margin-bottom: 24px; }
+        .label { display: block; font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; }
+        .sub-label { display: block; font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 8px; margin-top: -4px; }
+        
+        .input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--color-border); font-size: 1rem; background: #F8FAFC; transition: border 0.2s; }
+        .input:focus { outline: none; border-color: var(--color-red); background: white; }
+        select.input { cursor: pointer; }
+        textarea.input { min-height: 120px; resize: vertical; font-family: inherit; }
+
+        .btn-submit {
+            width: 100%; background: var(--color-red); color: white;
+            padding: 16px; border-radius: 12px; border: none;
+            font-size: 1rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background 0.2s; margin-top: 16px;
+        }
+        .btn-submit:hover { background: #991B1B; }
+        .btn-submit:disabled { background: #94A3B8; cursor: not-allowed; }
+
+        /* Success Modal */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-card { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .modal-icon { font-size: 3rem; color: #16A34A; margin-bottom: 16px; }
+        .modal-title { font-size: 1.25rem; font-weight: 800; margin-bottom: 8px; }
+        .modal-desc { color: var(--color-text-muted); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.5; }
+        .modal-btn { background: #F1F5F9; color: var(--color-text); width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
+
+        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="app-bar">
+        <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+        <div class="page-title">Report Abuse</div>
+    </div>
+
+    <div class="alert-box">
+        <i class="fa-solid fa-shield-halved alert-icon"></i>
+        <div class="alert-text">
+            We take safety seriously. Please provide details about the shop or user violating our policies so we can investigate.
+        </div>
+    </div>
+
+    <form class="form-card" onsubmit="submitReport(event)">
+        <div class="form-group">
+            <label class="label">What type of issue is this?</label>
+            <select id="category" class="input">
+                <option value="Scam / Fraud">Scam / Fraud</option>
+                <option value="Fake Products">Fake Products</option>
+                <option value="Harassment">Harassment</option>
+                <option value="Inappropriate Content">Inappropriate Content</option>
+                <option value="Impersonation">Impersonation</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="label">Who are you reporting?</label>
+            <div class="sub-label">Enter the Shop Name or Business Name</div>
+            <input type="text" id="target" class="input" placeholder="e.g. Divine Electronics" required>
+        </div>
+
+        <div class="form-group">
+            <label class="label">Details</label>
+            <textarea id="details" class="input" placeholder="Please describe what happened..." required></textarea>
+        </div>
+
+        <button type="submit" id="btn-submit" class="btn-submit">
+            <i class="fa-solid fa-triangle-exclamation"></i> Submit Report
+        </button>
+    </form>
+</div>
+
+<!-- Success Modal -->
+<div id="success-modal" class="modal-overlay">
+    <div class="modal-card">
+        <i class="fa-solid fa-circle-check modal-icon"></i>
+        <div class="modal-title">Report Received</div>
+        <div class="modal-desc">Thank you for keeping our community safe. We will investigate this matter immediately.</div>
+        <button onclick="window.history.back()" class="modal-btn">Close</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+
+    window.onload = async () => {
+        const { data: { session } } = await client.auth.getSession();
+        if (session) currentUser = session.user;
+        else {
+            alert("Please login to submit a report.");
+            window.location.href = "login.html";
+        }
+    };
+
+    async function submitReport(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-submit');
+        const category = document.getElementById('category').value;
+        const target = document.getElementById('target').value.trim();
+        const details = document.getElementById('details').value.trim();
+
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Submitting...';
+
+        try {
+            const { error } = await client.from('abuse_reports').insert({
+                reporter_id: currentUser.id,
+                category: category,
+                target_name: target,
+                details: details,
+                status: 'pending'
+            });
+
+            if (error) throw error;
+
+            document.getElementById('success-modal').classList.add('active');
+
+        } catch (err) {
+            alert("Error: " + err.message);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Submit Report';
+        }
+    }
+</script>
+
+</body>
+</html>
