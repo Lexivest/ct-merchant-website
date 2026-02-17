@@ -10,13 +10,10 @@
     
     <style>
         :root {
-            /* --- APP THEME (Matches Dart Code) --- */
+            /* --- THEME CONSTANTS --- */
             --color-primary: #059669; /* Emerald Green */
             --color-primary-dark: #047857;
             --color-accent: #FCD34D; /* Yellow Text */
-            --color-user-area: #DCFCE7; /* Light Green BG */
-            --color-other-area: #FEF3C7; /* Light Amber BG */
-            
             --color-bg: #F3F4F6;
             --color-text-main: #1F2937;
             --color-text-sub: #6B7280;
@@ -24,14 +21,15 @@
             --sidebar-width: 280px;
             --header-height: 60px;
             --ticker-height: 40px;
+            --trans-speed: 0.3s;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
 
         body { 
             background-color: var(--color-bg); 
-            color: var(--color-text-main); 
-            overflow-x: hidden; /* Prevent horizontal scroll on body */
+            color: var(--color-text-main);
+            overflow-x: hidden;
         }
 
         /* --- 1. SIDEBAR (Fixed Left) --- */
@@ -42,27 +40,26 @@
             z-index: 1000;
             border-right: 1px solid #E5E7EB;
             display: flex; flex-direction: column;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            
-            /* Mobile State: Hidden by default */
-            transform: translateX(-100%);
+            transform: translateX(-100%); /* Closed by default */
+            transition: transform var(--trans-speed) cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        /* Open State (Controlled by JS via Body Class) */
+        body.sb-open .sidebar { transform: translateX(0); }
 
         .sidebar-header {
-            height: calc(var(--header-height) + var(--ticker-height)); /* Align with header height */
+            height: calc(var(--header-height) + var(--ticker-height));
             background: var(--color-primary);
             color: white;
-            display: flex; align-items: center; gap: 12px;
-            padding: 0 24px;
+            display: flex; align-items: center; gap: 12px; padding: 0 20px;
         }
 
-        .nav-scroll { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        
+        .nav-scroll { flex: 1; padding: 16px; overflow-y: auto; }
         .nav-btn {
-            display: flex; align-items: center; gap: 16px;
+            display: flex; align-items: center; gap: 12px;
             padding: 12px 16px; width: 100%; border: none; background: none;
             color: #4B5563; font-weight: 600; font-size: 0.95rem;
-            border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: left;
+            border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: left; margin-bottom: 4px;
         }
         .nav-btn i { width: 24px; text-align: center; font-size: 1.1rem; }
         .nav-btn:hover { background: #F3F4F6; color: var(--color-primary); }
@@ -70,18 +67,18 @@
 
         .sidebar-footer { padding: 16px; border-top: 1px solid #E5E7EB; }
 
-        /* --- 2. MAIN LAYOUT WRAPPER --- */
+        /* --- 2. MAIN LAYOUT & HEADER --- */
         .main-layout {
-            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            min-height: 100vh;
             display: flex; flex-direction: column;
+            min-height: 100vh;
+            transition: margin-left var(--trans-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            margin-left: 0;
         }
 
-        /* --- 3. TOP HEADER (Green Bar) --- */
         .top-header {
             position: fixed; top: 0; right: 0; left: 0;
             z-index: 500;
-            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: left var(--trans-speed) cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
 
@@ -93,16 +90,10 @@
             padding: 0 16px;
         }
 
-        .menu-toggle { background: none; border: none; color: white; font-size: 1.3rem; padding: 8px; cursor: pointer; }
-        .header-title { font-weight: 700; font-size: 1.1rem; }
+        .menu-toggle { background: none; border: none; color: white; font-size: 1.4rem; padding: 8px; cursor: pointer; }
         
         .header-actions { display: flex; align-items: center; gap: 16px; }
-        .action-link { 
-            color: white; text-decoration: none; font-weight: 700; font-size: 0.9rem; 
-            display: flex; align-items: center; gap: 6px; cursor: pointer;
-        }
-        
-        .notif-wrapper { position: relative; cursor: pointer; }
+        .notif-wrap { position: relative; cursor: pointer; }
         .notif-badge {
             position: absolute; top: -5px; right: -5px;
             background: #EF4444; color: white; font-size: 0.7rem; font-weight: 800;
@@ -110,9 +101,6 @@
             display: none;
         }
         
-        .user-avatar-sm { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); object-fit: cover; cursor: pointer; background: #ddd; }
-
-        /* --- 4. TICKER BAR --- */
         .ticker-wrap {
             height: var(--ticker-height);
             background: var(--color-primary-dark);
@@ -121,44 +109,39 @@
         }
         .ticker-content {
             white-space: nowrap; animation: ticker 30s linear infinite;
-            color: var(--color-accent); font-weight: 600; font-size: 0.85rem;
-            padding-left: 100%;
+            color: var(--color-accent); font-weight: 600; font-size: 0.85rem; padding-left: 100%;
         }
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
-        /* --- 5. CONTENT BODY --- */
-        .content-body {
-            /* Margin top = Header + Ticker + Padding */
-            margin-top: calc(var(--header-height) + var(--ticker-height)); 
-            padding: 24px 16px 40px 16px;
-            width: 100%;
-        }
-
-        /* --- DESKTOP BREAKPOINT (>= 1024px) --- */
+        /* --- 3. RESPONSIVE BEHAVIOR (The Fix) --- */
+        
+        /* DESKTOP (Push Content) */
         @media (min-width: 1024px) {
-            /* Show Sidebar permanently */
-            .sidebar { transform: translateX(0); box-shadow: 1px 0 0 #E5E7EB; }
+            body.sb-open .main-layout { margin-left: var(--sidebar-width); }
+            body.sb-open .top-header { left: var(--sidebar-width); }
             
-            /* Hide Mobile Toggle */
-            .menu-toggle { display: none; }
-            
-            /* Push Header & Content to the right */
-            .top-header { left: var(--sidebar-width); }
-            .main-layout { margin-left: var(--sidebar-width); }
-            
-            /* Content Padding adjustments */
-            .content-body { padding: 32px; max-width: 1400px; }
+            /* Hide overlay on desktop */
+            .overlay { display: none !important; }
         }
 
-        /* --- OVERLAY (Mobile Only) --- */
+        /* MOBILE (Overlay Sidebar) */
         .overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 900;
             opacity: 0; visibility: hidden; transition: 0.3s;
         }
-        .overlay.active { opacity: 1; visibility: visible; }
-        @media (min-width: 1024px) { .overlay.active { display: none; } }
+        body.sb-open .overlay { opacity: 1; visibility: visible; }
+        @media (min-width: 1024px) { body.sb-open .overlay { display: none; } }
 
-        /* --- UTILS --- */
+        /* --- 4. CONTENT BODY --- */
+        .content-body {
+            margin-top: calc(var(--header-height) + var(--ticker-height)); 
+            padding: 24px 16px 40px 16px;
+            width: 100%;
+            max-width: 1400px; /* Prevent huge stretching on 4k screens */
+        }
+        @media (min-width: 1024px) { .content-body { padding: 32px; } }
+
+        /* --- COMPONENTS --- */
         .screen { display: none; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -167,7 +150,7 @@
         .sec-bar { width: 5px; height: 24px; border-radius: 4px; }
         .sec-title { font-size: 1.15rem; font-weight: 800; color: #111827; }
 
-        /* --- HORIZONTAL SCROLL CONTAINERS --- */
+        /* Horizontal Scroll */
         .h-scroll {
             display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px;
             scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
@@ -175,33 +158,28 @@
         .h-scroll::-webkit-scrollbar { height: 6px; }
         .h-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
 
-        /* --- SHOP CARD & GRID LOGIC --- */
+        /* Shop Card & Grids */
         .shop-card {
             min-width: 240px; width: 240px;
             background: white; border-radius: 12px;
             border: 1px solid #E5E7EB; overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer;
             display: flex; flex-direction: column; flex-shrink: 0;
+            transition: transform 0.2s;
         }
-        .shop-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .shop-card:active { transform: scale(0.98); }
 
         .img-box { height: 150px; width: 100%; background: #F1F5F9; }
         
-        /* 4-Image Grid System */
+        /* 4-Image Grid Logic */
         .collage { width: 100%; height: 100%; display: flex; flex-wrap: wrap; }
         .collage img { object-fit: cover; display: block; box-sizing: border-box; border: 0.5px solid white; }
-
-        /* 1 Image */
         .c-1 img { width: 100%; height: 100%; border: none; }
-        /* 2 Images (Vertical Split) */
         .c-2 img { width: 50%; height: 100%; }
-        /* 3 Images (1 Big Left, 2 Small Right) */
         .c-3 { display: flex; }
         .c-3 > img:first-child { width: 50%; height: 100%; }
         .c-3 > div { width: 50%; height: 100%; display: flex; flex-direction: column; }
         .c-3 > div img { width: 100%; height: 50%; }
-        /* 4 Images (2x2) */
         .c-4 img { width: 50%; height: 50%; }
 
         .info-box { padding: 12px; }
@@ -209,56 +187,45 @@
         .s-cat { display: inline-block; font-size: 0.75rem; font-weight: 700; color: var(--color-primary); background: #ECFDF5; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; }
         .s-loc { font-size: 0.8rem; color: #6B7280; display: flex; align-items: center; gap: 6px; }
 
-        /* --- AREA SECTIONS --- */
+        /* Areas */
         .area-container { margin-bottom: 24px; }
         .area-pill { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 8px 12px; border-radius: 8px; margin-bottom: 12px;
         }
-        .area-pill.user { background: var(--color-user-area); }
-        .area-pill.other { background: var(--color-other-area); }
+        .area-pill.user { background: #DCFCE7; }
+        .area-pill.other { background: #FEF3C7; }
         .pill-left { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #1F2937; }
 
-        /* --- CATEGORY CHIPS --- */
+        /* Categories */
         .cat-grid { display: flex; flex-wrap: wrap; gap: 12px; }
         .cat-chip {
             background: white; border: 1px solid #E5E7EB; border-radius: 50px;
             padding: 6px 16px 6px 6px; display: flex; align-items: center; gap: 10px;
             cursor: pointer; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .cat-chip:hover { border-color: var(--color-primary); }
         .cat-chip img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; }
 
-        /* --- PROMOS --- */
-        .promo-row { display: flex; overflow-x: auto; gap: 16px; padding-bottom: 8px; scroll-snap-type: x mandatory; }
-        .promo-card { min-width: 300px; height: 160px; border-radius: 12px; overflow: hidden; scroll-snap-align: center; flex-shrink: 0; background: #E5E7EB; }
-        .promo-card img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* --- RESPONSIVE SHOP GRID --- */
+        /* Grids */
         .shop-grid-view { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); 
-            gap: 16px; 
-            padding-bottom: 20px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); 
+            gap: 16px; padding-bottom: 20px;
         }
-
-        /* --- SERVICES GRID --- */
         .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
         .svc-card {
             background: white; padding: 24px 16px; border-radius: 12px; text-align: center;
-            border: 1px solid #E5E7EB; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s;
+            border: 1px solid #E5E7EB; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;
         }
-        .svc-card:hover { border-color: var(--color-primary); transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .svc-icon { width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
     </style>
 </head>
-<body>
+<body class="">
 
-    <!-- OVERLAY (Mobile) -->
+    <!-- OVERLAY (Mobile only) -->
     <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
 
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="sidebar">
+    <aside class="sidebar">
         <div class="sidebar-header">
             <img src="https://via.placeholder.com/40" style="width:36px; height:36px; border-radius:8px; background:white;">
             <span style="font-weight: 800; font-size: 1.1rem; margin-left: 10px;">CT-MERCHANT</span>
@@ -289,42 +256,39 @@
     <!-- MAIN CONTENT -->
     <div class="main-layout">
         
-        <!-- TOP HEADER -->
         <header class="top-header">
             <div class="header-main">
+                <!-- Toggle Button (Visible on ALL screens now) -->
                 <div style="display:flex; align-items:center; gap:8px;">
                     <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-                    <div id="header-city" class="header-title">Loading...</div>
+                    <div id="header-city" style="font-weight:700; font-size:1.1rem;">Loading...</div>
                 </div>
                 
                 <div class="header-actions">
-                    <a class="action-link" href="shop-index.html">
-                        <i class="fa-solid fa-arrow-down-a-z"></i> <span style="display:none; display:md-block;">Index</span>
-                    </a>
+                    <button class="menu-toggle" style="font-size:0.9rem; width:auto; font-weight:700;" onclick="window.location.href='shop-index.html'">
+                        <i class="fa-solid fa-arrow-down-a-z"></i>
+                    </button>
                     
-                    <div class="notif-wrapper" onclick="switchScreen('notifications', document.querySelectorAll('.nav-btn')[3])">
-                        <i class="fa-regular fa-bell" style="font-size:1.2rem;"></i>
+                    <div class="notif-wrap" onclick="switchScreen('notifications', document.querySelectorAll('.nav-btn')[3])">
+                        <i class="fa-regular fa-bell" style="font-size:1.3rem;"></i>
                         <div id="badge-count" class="notif-badge">0</div>
                     </div>
                     
-                    <img id="header-avatar" src="" class="user-avatar-sm" onclick="switchScreen('profile', document.querySelectorAll('.nav-btn')[2])">
+                    <img id="header-avatar" src="" style="width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,0.5); object-fit:cover; background:#ccc;" onclick="switchScreen('profile', document.querySelectorAll('.nav-btn')[2])">
                 </div>
             </div>
             
-            <!-- TICKER -->
             <div id="ticker-wrap" class="ticker-wrap" style="display:none;">
                 <div id="ticker-text" class="ticker-content"></div>
             </div>
         </header>
 
-        <!-- BODY -->
         <main class="content-body">
             
-            <!-- 1. MARKET SCREEN -->
+            <!-- MARKET -->
             <div id="market" class="screen active">
-                
                 <!-- Promos -->
-                <div id="promo-list" class="promo-row" style="display:none;"></div>
+                <div id="promo-list" class="h-scroll" style="display:none; margin-bottom:16px;"></div>
                 
                 <!-- Featured -->
                 <div id="featured-section" style="display:none;">
@@ -337,7 +301,10 @@
 
                 <!-- Areas -->
                 <div id="areas-container" style="margin-top:24px;">
-                    <div style="text-align:center; padding:40px; color:#9CA3AF;">Loading shops...</div>
+                    <!-- Default loading state (removed if cache exists) -->
+                    <div id="initial-loader" style="text-align:center; padding:40px; color:#9CA3AF;">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i> Checking local data...
+                    </div>
                 </div>
 
                 <!-- Categories -->
@@ -347,16 +314,15 @@
                 </div>
                 <div id="category-list" class="cat-grid"></div>
 
-                <!-- All Shops Grid -->
+                <!-- All Shops -->
                 <div class="sec-header" style="margin-top:32px;">
                     <div class="sec-bar" style="background: #374151;"></div>
                     <div class="sec-title">All Shops</div>
                 </div>
                 <div id="all-shops-grid" class="shop-grid-view"></div>
-
             </div>
 
-            <!-- 2. SERVICES SCREEN -->
+            <!-- SERVICES -->
             <div id="services" class="screen">
                 <h2 class="sec-title" style="margin-bottom:20px;">Services & Tools</h2>
                 <div class="svc-grid">
@@ -379,17 +345,17 @@
                 </div>
             </div>
 
-            <!-- 3. PROFILE SCREEN -->
+            <!-- PROFILE -->
             <div id="profile" class="screen">
                 <div style="max-width:600px; margin:0 auto; background:white; padding:40px; border-radius:16px; border:1px solid #E5E7EB; text-align:center;">
                     <img id="profile-avatar-lg" src="" style="width:100px; height:100px; border-radius:50%; margin-bottom:16px; border:4px solid var(--color-primary);">
                     <h2 id="profile-name" style="font-size:1.5rem; color:#111827;">Loading...</h2>
-                    <p id="profile-email" style="color:#6B7280; margin-bottom:20px;">user@example.com</p>
+                    <p id="profile-email" style="color:#6B7280; margin-bottom:20px;">...</p>
                     <button style="background:var(--color-primary); color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:700; cursor:pointer;">Edit Profile</button>
                 </div>
             </div>
 
-            <!-- 4. NOTIFICATIONS SCREEN -->
+            <!-- NOTIFICATIONS -->
             <div id="notifications" class="screen">
                 <h2 class="sec-title" style="margin-bottom:20px;">Notifications</h2>
                 <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:600px;">
@@ -409,20 +375,13 @@
     let currentUser = null;
     let userCityId = null;
     let userAreaId = null;
+    
+    // Use a fresh cache key to ensure we don't load old/broken data structure
+    const CACHE_KEY = 'ctm_dashboard_cache_v5';
 
     // --- NAVIGATION ---
     function toggleSidebar() {
-        const sb = document.getElementById('sidebar');
-        const ov = document.getElementById('overlay');
-        
-        // Mobile Toggle Logic
-        if (sb.style.transform === 'translateX(0%)') {
-            sb.style.transform = ''; // Revert to CSS default (hidden on mobile)
-            ov.classList.remove('active');
-        } else {
-            sb.style.transform = 'translateX(0%)';
-            ov.classList.add('active');
-        }
+        document.body.classList.toggle('sb-open');
     }
 
     function switchScreen(id, btn) {
@@ -435,24 +394,37 @@
         const target = document.getElementById(id);
         if (target) target.classList.add('active');
 
-        // Close sidebar if on mobile
+        // On mobile, close sidebar after clicking
         if (window.innerWidth < 1024) {
-            document.getElementById('sidebar').style.transform = '';
-            document.getElementById('overlay').classList.remove('active');
+            document.body.classList.remove('sb-open');
         }
 
         if(id === 'notifications') markRead();
     }
 
-    // --- DATA HANDLING ---
+    // --- INIT ---
     window.onload = async () => {
+        // 1. Set Desktop Sidebar Open by default
+        if (window.innerWidth >= 1024) {
+            document.body.classList.add('sb-open');
+        }
+
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "login.html"; return; }
         currentUser = session.user;
 
-        const cache = localStorage.getItem('dash_v4_cache');
-        if (cache) renderData(JSON.parse(cache));
+        // 2. CHECK CACHE FIRST (Fast Render)
+        const cache = localStorage.getItem(CACHE_KEY);
+        if (cache) {
+            console.log("Rendering from cache...");
+            try {
+                renderData(JSON.parse(cache));
+            } catch(e) { console.error("Cache error", e); }
+        } else {
+            document.getElementById('initial-loader').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Downloading market data...';
+        }
 
+        // 3. FETCH FRESH DATA (Background Update)
         fetchData();
     };
 
@@ -472,7 +444,7 @@
                 client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false})
             ]);
 
-            // Products for Thumbnails
+            // Optimized Product Fetch: Get only needed fields
             let products = [];
             const shopIds = shops.data.map(s => s.id);
             if(shopIds.length > 0) {
@@ -480,7 +452,7 @@
                     .select('shop_id, image_url')
                     .in('shop_id', shopIds)
                     .eq('is_available', true)
-                    .limit(400); 
+                    .limit(500); // 500 thumbnails max
                 products = data || [];
             }
             
@@ -497,37 +469,55 @@
                 unread: count
             };
 
-            localStorage.setItem('dash_v4_cache', JSON.stringify(dashboardData));
+            // Save to cache
+            localStorage.setItem(CACHE_KEY, JSON.stringify(dashboardData));
+            
+            // Re-render with fresh data
             renderData(dashboardData);
 
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error("Fetch error:", e); 
+            // If cache was empty and fetch failed, show error
+            if(!localStorage.getItem(CACHE_KEY)) {
+                document.getElementById('initial-loader').innerHTML = 'Error loading data. Check connection.';
+            }
+        }
     }
 
     function renderData(data) {
-        // Header
-        document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown City";
+        // Clear loader
+        const areaContainer = document.getElementById('areas-container');
+        if(areaContainer.innerHTML.includes('fa-spin')) areaContainer.innerHTML = '';
+
+        // Profile & Header
+        document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
         document.getElementById('header-avatar').src = avatar;
         document.getElementById('profile-avatar-lg').src = avatar;
         document.getElementById('profile-name').textContent = data.profile.full_name;
         document.getElementById('profile-email').textContent = currentUser.email;
 
+        // Badge
         if (data.unread > 0) {
             const b = document.getElementById('badge-count');
             b.textContent = data.unread > 9 ? '9+' : data.unread;
             b.style.display = 'block';
         }
 
+        // Ticker
         if (data.announcements && data.announcements.length > 0) {
             document.getElementById('ticker-wrap').style.display = 'flex';
             document.getElementById('ticker-text').textContent = data.announcements.map(a => a.message).join("  •  ");
         }
 
         // Promos
+        const pList = document.getElementById('promo-list');
         if (data.promos.length > 0) {
-            document.getElementById('promo-list').style.display = 'flex';
-            document.getElementById('promo-list').innerHTML = data.promos.map(p => 
-                `<div class="promo-card"><img src="${p.image_url}"></div>`
+            pList.style.display = 'flex';
+            pList.innerHTML = data.promos.map(p => 
+                `<div class="promo-card" style="min-width:300px; height:160px; border-radius:12px; overflow:hidden; flex-shrink:0;">
+                    <img src="${p.image_url}" style="width:100%; height:100%; object-fit:cover;">
+                 </div>`
             ).join('');
         }
 
@@ -538,8 +528,7 @@
             document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
         }
 
-        // Areas Logic
-        const areaContainer = document.getElementById('areas-container');
+        // Areas (Key Rendering Logic)
         areaContainer.innerHTML = '';
         const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
 
@@ -581,7 +570,7 @@
             `;
         }).join('');
 
-        // Grid
+        // All Shops Grid
         document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
     }
 
