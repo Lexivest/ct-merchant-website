@@ -13,13 +13,12 @@
             /* --- THEME --- */
             --color-primary: #059669; /* Emerald Green */
             --color-primary-dark: #047857;
-            --color-accent: #FCD34D; /* Yellow */
+            --color-accent: #FFFFFF; /* White for header text */
             --color-bg: #F3F4F6;
             --color-text-main: #1F2937;
             
             --sidebar-width: 280px;
             --header-height: 60px;
-            --ticker-height: 40px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -31,31 +30,27 @@
         }
 
         /* --- 1. SIDEBAR (Universal Overlay) --- */
-        /* It sits ON TOP of everything, never pushing content */
         .sidebar {
             position: fixed; top: 0; left: 0; bottom: 0;
             width: var(--sidebar-width);
             background: white;
-            z-index: 2000; /* Highest layer */
+            z-index: 2000;
             display: flex; flex-direction: column;
-            
-            /* Hidden by default on ALL screens */
             transform: translateX(-100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 2px 0 8px rgba(0,0,0,0.1);
         }
 
-        /* Open State */
         body.sb-open .sidebar { transform: translateX(0); }
 
         .sidebar-header {
-            height: calc(var(--header-height) + var(--ticker-height));
+            height: var(--header-height);
             background: var(--color-primary);
             color: white;
             display: flex; align-items: center; gap: 12px; padding: 0 20px;
         }
         
-        .sidebar-logo { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: white; border: 2px solid white; }
+        .sidebar-logo { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; background: white; border: 2px solid white; }
 
         .nav-scroll { flex: 1; padding: 16px; overflow-y: auto; }
         .nav-btn {
@@ -71,97 +66,110 @@
         .sidebar-footer { padding: 16px; border-top: 1px solid #E5E7EB; }
 
         /* --- 2. BACKDROP OVERLAY --- */
-        /* Visible when sidebar is open */
         .overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1500;
             opacity: 0; visibility: hidden; transition: 0.3s;
         }
         body.sb-open .overlay { opacity: 1; visibility: visible; }
 
-        /* --- 3. MAIN CONTENT (Static) --- */
-        /* Does NOT move or shrink */
-        .main-layout { width: 100%; min-height: 100vh; }
-
-        /* --- 4. HEADER (Fixed) --- */
+        /* --- 3. HEADER (Fixed, Single Row) --- */
         .top-header {
             position: fixed; top: 0; left: 0; right: 0;
             z-index: 1000;
             background: var(--color-primary);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: var(--header-height);
         }
 
         .header-main {
-            height: var(--header-height);
+            height: 100%;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 16px;
+            padding: 0 12px;
+            max-width: 1400px; margin: 0 auto;
         }
         
-        /* Menu Toggle Button */
-        .menu-toggle { 
-            background: none; border: none; color: white; 
-            font-size: 1.4rem; padding: 8px; cursor: pointer; 
-        }
+        /* Left Section */
+        .header-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .menu-toggle { background: none; border: none; color: white; font-size: 1.4rem; padding: 8px; cursor: pointer; }
+        .header-city { font-weight: 700; font-size: 1rem; color: white; white-space: nowrap; }
 
-        .header-actions { display: flex; align-items: center; gap: 16px; }
-        .notif-wrap { position: relative; cursor: pointer; }
-        .notif-badge {
-            position: absolute; top: -5px; right: -5px;
-            background: #EF4444; color: white; font-size: 0.7rem; font-weight: 800;
-            padding: 2px 5px; border-radius: 10px; border: 2px solid var(--color-primary);
-            display: none;
-        }
-
-        .ticker-wrap {
-            height: var(--ticker-height);
-            background: var(--color-primary-dark);
-            overflow: hidden; display: flex; align-items: center;
-            border-top: 1px solid rgba(255,255,255,0.1);
+        /* Center Section (Ticker) */
+        .header-ticker {
+            flex: 1;
+            margin: 0 16px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
         }
         .ticker-content {
-            white-space: nowrap; animation: ticker 30s linear infinite;
-            color: var(--color-accent); font-weight: 600; font-size: 0.85rem; padding-left: 100%;
+            white-space: nowrap; 
+            animation: ticker 25s linear infinite;
+            color: white; 
+            font-weight: 600; 
+            font-size: 0.9rem; 
+            padding-left: 100%;
         }
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
-        /* --- 5. CONTENT BODY --- */
-        .content-body {
-            margin-top: calc(var(--header-height) + var(--ticker-height));
-            padding: 24px 16px 40px 16px;
-            max-width: 1400px; margin-left: auto; margin-right: auto;
+        /* Right Section */
+        .header-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+        
+        .action-btn { background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; }
+        .notif-wrap { position: relative; cursor: pointer; color: white; }
+        .notif-badge {
+            position: absolute; top: -4px; right: -4px;
+            background: #EF4444; color: white; font-size: 0.65rem; font-weight: 800;
+            padding: 2px 4px; border-radius: 10px; border: 1.5px solid var(--color-primary);
+            display: none;
         }
-        @media (min-width: 1024px) { .content-body { padding: 32px; } }
+
+        /* --- 4. CONTENT BODY --- */
+        .content-body {
+            margin-top: var(--header-height);
+            padding: 12px 0 40px 0; /* Reduced top padding, full width flow */
+            max-width: 1400px; margin-left: auto; margin-right: auto;
+            width: 100%;
+        }
+        @media (min-width: 1024px) { .content-body { padding: 20px; } }
 
         /* --- UTILS --- */
         .screen { display: none; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .sec-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; margin-top: 24px; }
-        .sec-bar { width: 5px; height: 24px; border-radius: 4px; }
-        .sec-title { font-size: 1.15rem; font-weight: 800; color: #111827; }
+        /* Tighter Vertical Spacing */
+        .sec-header { 
+            display: flex; align-items: center; gap: 10px; 
+            margin-bottom: 8px; /* Reduced from 12px */
+            margin-top: 16px;   /* Reduced from 24px */
+            padding: 0 16px;
+        }
+        .sec-bar { width: 4px; height: 20px; border-radius: 4px; }
+        .sec-title { font-size: 1.1rem; font-weight: 800; color: #111827; }
 
         /* Horizontal Scroll */
         .h-scroll {
-            display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px;
+            display: flex; overflow-x: auto; gap: 12px; padding: 4px 16px 12px 16px;
             scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
         }
-        .h-scroll::-webkit-scrollbar { height: 6px; }
-        .h-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        .h-scroll::-webkit-scrollbar { height: 0px; } /* Hidden scrollbar for cleaner look */
 
         /* Shop Card & Grids */
         .shop-card {
-            min-width: 240px; width: 240px;
+            min-width: 220px; width: 220px;
             background: white; border-radius: 12px;
             border: 1px solid #E5E7EB; overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer;
             display: flex; flex-direction: column; flex-shrink: 0;
             transition: transform 0.2s;
         }
         .shop-card:active { transform: scale(0.98); }
 
-        .img-box { height: 150px; width: 100%; background: #F1F5F9; }
+        .img-box { height: 140px; width: 100%; background: #F1F5F9; }
         
-        /* 4-Image Grid Logic */
         .collage { width: 100%; height: 100%; display: flex; flex-wrap: wrap; }
         .collage img { object-fit: cover; display: block; box-sizing: border-box; border: 0.5px solid white; }
         .c-1 img { width: 100%; height: 100%; border: none; }
@@ -172,41 +180,42 @@
         .c-3 > div img { width: 100%; height: 50%; }
         .c-4 img { width: 50%; height: 50%; }
 
-        .info-box { padding: 12px; }
-        .s-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .s-cat { display: inline-block; font-size: 0.75rem; font-weight: 700; color: var(--color-primary); background: #ECFDF5; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; }
-        .s-loc { font-size: 0.8rem; color: #6B7280; display: flex; align-items: center; gap: 6px; }
+        .info-box { padding: 10px; }
+        .s-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .s-cat { display: inline-block; font-size: 0.7rem; font-weight: 700; color: var(--color-primary); background: #ECFDF5; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; }
+        .s-loc { font-size: 0.75rem; color: #6B7280; display: flex; align-items: center; gap: 4px; }
 
         /* Areas */
-        .area-container { margin-bottom: 24px; }
+        .area-container { margin-bottom: 12px; /* Reduced vertical gap */ }
         .area-pill { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 8px 12px; border-radius: 8px; margin-bottom: 12px;
+            padding: 8px 12px; border-radius: 8px; margin: 0 16px 8px 16px;
         }
         .area-pill.user { background: #DCFCE7; }
         .area-pill.other { background: #FEF3C7; }
         .pill-left { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #1F2937; }
 
         /* Categories */
-        .cat-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+        .cat-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px; }
         .cat-chip {
             background: white; border: 1px solid #E5E7EB; border-radius: 50px;
-            padding: 6px 16px 6px 6px; display: flex; align-items: center; gap: 10px;
+            padding: 6px 14px 6px 6px; display: flex; align-items: center; gap: 8px;
             cursor: pointer; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .cat-chip img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; }
+        .cat-chip img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; }
+        .cat-chip span { font-size: 0.85rem; font-weight: 700; color: #374151; }
 
         /* Grids */
         .shop-grid-view { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); 
-            gap: 16px; padding-bottom: 20px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 12px; padding: 0 16px 20px 16px;
         }
-        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding: 0 16px; }
         .svc-card {
-            background: white; padding: 24px 16px; border-radius: 12px; text-align: center;
+            background: white; padding: 20px 16px; border-radius: 12px; text-align: center;
             border: 1px solid #E5E7EB; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;
         }
-        .svc-icon { width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .svc-icon { width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -217,7 +226,6 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <!-- Correct Logo URL -->
             <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="sidebar-logo" alt="Logo">
             <span style="font-weight: 800; font-size: 1.1rem; margin-left: 10px;">CT-MERCHANT</span>
         </div>
@@ -244,112 +252,117 @@
         </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
-    <div class="main-layout">
-        
-        <header class="top-header">
-            <div class="header-main">
-                <!-- Toggle Button (Always visible) -->
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-                    <div id="header-city" style="font-weight:700; font-size:1.1rem;">Loading...</div>
-                </div>
-                
-                <div class="header-actions">
-                    <button class="menu-toggle" style="font-size:0.9rem; width:auto; font-weight:700;" onclick="window.location.href='shop-index.html'">
-                        <i class="fa-solid fa-arrow-down-a-z"></i>
-                    </button>
-                    
-                    <div class="notif-wrap" onclick="switchScreen('notifications', document.querySelectorAll('.nav-btn')[3])">
-                        <i class="fa-regular fa-bell" style="font-size:1.3rem;"></i>
-                        <div id="badge-count" class="notif-badge">0</div>
-                    </div>
-                    
-                    <img id="header-avatar" src="" style="width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,0.5); object-fit:cover; background:#ccc;" onclick="switchScreen('profile', document.querySelectorAll('.nav-btn')[2])">
-                </div>
+    <!-- HEADER (Single Row) -->
+    <header class="top-header">
+        <div class="header-main">
+            <!-- Left: Toggle & City -->
+            <div class="header-left">
+                <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                <div id="header-city" class="header-city">Loading...</div>
             </div>
             
-            <div id="ticker-wrap" class="ticker-wrap" style="display:none;">
+            <!-- Middle: Ticker (White Text) -->
+            <div id="header-ticker" class="header-ticker" style="display:none;">
                 <div id="ticker-text" class="ticker-content"></div>
             </div>
-        </header>
-
-        <main class="content-body">
             
-            <!-- MARKET -->
-            <div id="market" class="screen active">
-                <div id="promo-list" class="h-scroll" style="display:none; margin-bottom:16px;"></div>
+            <!-- Right: Actions -->
+            <div class="header-actions">
+                <button class="action-btn" onclick="window.location.href='shop-index.html'" title="Shop Index">
+                    <i class="fa-solid fa-arrow-down-a-z" style="font-size: 1.1rem;"></i>
+                </button>
                 
-                <div id="featured-section" style="display:none;">
-                    <div class="sec-header">
-                        <div class="sec-bar" style="background: orange;"></div>
-                        <div class="sec-title">Featured Shops</div>
-                    </div>
-                    <div id="featured-list" class="h-scroll"></div>
+                <div class="notif-wrap" onclick="switchScreen('notifications', document.querySelectorAll('.nav-btn')[3])">
+                    <i class="fa-regular fa-bell" style="font-size:1.3rem;"></i>
+                    <div id="badge-count" class="notif-badge">0</div>
                 </div>
+                
+                <img id="header-avatar" src="" style="width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,0.5); object-fit:cover; background:#ccc; cursor:pointer;" onclick="switchScreen('profile', document.querySelectorAll('.nav-btn')[2])">
+            </div>
+        </div>
+    </header>
 
-                <div id="areas-container" style="margin-top:24px;">
-                    <div id="initial-loader" style="text-align:center; padding:40px; color:#9CA3AF;">
-                        <i class="fa-solid fa-circle-notch fa-spin"></i> Checking local data...
-                    </div>
-                </div>
-
+    <!-- CONTENT BODY -->
+    <main class="content-body">
+        
+        <!-- MARKET -->
+        <div id="market" class="screen active">
+            <!-- Promos -->
+            <div id="promo-list" class="h-scroll" style="display:none; padding-top:4px;"></div>
+            
+            <!-- Featured -->
+            <div id="featured-section" style="display:none;">
                 <div class="sec-header">
-                    <div class="sec-bar" style="background: var(--color-primary);"></div>
-                    <div class="sec-title">Browse Categories</div>
+                    <div class="sec-bar" style="background: orange;"></div>
+                    <div class="sec-title">Featured Shops</div>
                 </div>
-                <div id="category-list" class="cat-grid"></div>
-
-                <div class="sec-header" style="margin-top:32px;">
-                    <div class="sec-bar" style="background: #374151;"></div>
-                    <div class="sec-title">All Shops</div>
-                </div>
-                <div id="all-shops-grid" class="shop-grid-view"></div>
+                <div id="featured-list" class="h-scroll"></div>
             </div>
 
-            <!-- SERVICES -->
-            <div id="services" class="screen">
-                <h2 class="sec-title" style="margin-bottom:20px;">Services & Tools</h2>
-                <div class="svc-grid">
-                    <div class="svc-card" onclick="window.location.href='wishlist.html'">
-                        <div class="svc-icon" style="background:#FCE7F3; color:#DB2777;"><i class="fa-solid fa-heart"></i></div>
-                        <strong>Wishlist</strong>
-                    </div>
-                    <div class="svc-card" onclick="window.location.href='help.html'">
-                        <div class="svc-icon" style="background:#DCFCE7; color:#10B981;"><i class="fa-solid fa-headset"></i></div>
-                        <strong>Support</strong>
-                    </div>
-                    <div class="svc-card" onclick="window.location.href='merchant-dashboard.html'">
-                        <div class="svc-icon" style="background:#DBEAFE; color:#2563EB;"><i class="fa-solid fa-store"></i></div>
-                        <strong>My Shop</strong>
-                    </div>
-                    <div class="svc-card" onclick="switchScreen('profile', null)">
-                        <div class="svc-icon" style="background:#F3F4F6; color:#4B5563;"><i class="fa-solid fa-gear"></i></div>
-                        <strong>Settings</strong>
-                    </div>
+            <!-- Areas -->
+            <div id="areas-container" style="margin-top:16px;">
+                <div id="initial-loader" style="text-align:center; padding:40px; color:#9CA3AF;">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Checking local data...
                 </div>
             </div>
 
-            <!-- PROFILE -->
-            <div id="profile" class="screen">
-                <div style="max-width:600px; margin:0 auto; background:white; padding:40px; border-radius:16px; border:1px solid #E5E7EB; text-align:center;">
-                    <img id="profile-avatar-lg" src="" style="width:100px; height:100px; border-radius:50%; margin-bottom:16px; border:4px solid var(--color-primary);">
-                    <h2 id="profile-name" style="font-size:1.5rem; color:#111827;">Loading...</h2>
-                    <p id="profile-email" style="color:#6B7280; margin-bottom:20px;">...</p>
-                    <button style="background:var(--color-primary); color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:700; cursor:pointer;">Edit Profile</button>
+            <!-- Categories -->
+            <div class="sec-header">
+                <div class="sec-bar" style="background: var(--color-primary);"></div>
+                <div class="sec-title">Browse Categories</div>
+            </div>
+            <div id="category-list" class="cat-grid"></div>
+
+            <!-- All Shops -->
+            <div class="sec-header" style="margin-top:24px;">
+                <div class="sec-bar" style="background: #374151;"></div>
+                <div class="sec-title">All Shops</div>
+            </div>
+            <div id="all-shops-grid" class="shop-grid-view"></div>
+        </div>
+
+        <!-- SERVICES -->
+        <div id="services" class="screen">
+            <h2 class="sec-title" style="margin: 0 16px 20px 16px;">Services & Tools</h2>
+            <div class="svc-grid">
+                <div class="svc-card" onclick="window.location.href='wishlist.html'">
+                    <div class="svc-icon" style="background:#FCE7F3; color:#DB2777;"><i class="fa-solid fa-heart"></i></div>
+                    <strong>Wishlist</strong>
+                </div>
+                <div class="svc-card" onclick="window.location.href='help.html'">
+                    <div class="svc-icon" style="background:#DCFCE7; color:#10B981;"><i class="fa-solid fa-headset"></i></div>
+                    <strong>Support</strong>
+                </div>
+                <div class="svc-card" onclick="window.location.href='merchant-dashboard.html'">
+                    <div class="svc-icon" style="background:#DBEAFE; color:#2563EB;"><i class="fa-solid fa-store"></i></div>
+                    <strong>My Shop</strong>
+                </div>
+                <div class="svc-card" onclick="switchScreen('profile', null)">
+                    <div class="svc-icon" style="background:#F3F4F6; color:#4B5563;"><i class="fa-solid fa-gear"></i></div>
+                    <strong>Settings</strong>
                 </div>
             </div>
+        </div>
 
-            <!-- NOTIFICATIONS -->
-            <div id="notifications" class="screen">
-                <h2 class="sec-title" style="margin-bottom:20px;">Notifications</h2>
-                <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:600px;">
-                    <p style="color:#9CA3AF;">No new notifications</p>
-                </div>
+        <!-- PROFILE -->
+        <div id="profile" class="screen">
+            <div style="max-width:600px; margin:20px auto; background:white; padding:40px; border-radius:16px; border:1px solid #E5E7EB; text-align:center;">
+                <img id="profile-avatar-lg" src="" style="width:100px; height:100px; border-radius:50%; margin-bottom:16px; border:4px solid var(--color-primary);">
+                <h2 id="profile-name" style="font-size:1.5rem; color:#111827;">Loading...</h2>
+                <p id="profile-email" style="color:#6B7280; margin-bottom:20px;">...</p>
+                <button style="background:var(--color-primary); color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:700; cursor:pointer;">Edit Profile</button>
             </div>
+        </div>
 
-        </main>
-    </div>
+        <!-- NOTIFICATIONS -->
+        <div id="notifications" class="screen">
+            <h2 class="sec-title" style="margin: 0 16px 20px 16px;">Notifications</h2>
+            <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:600px; margin: 0 16px;">
+                <p style="color:#9CA3AF;">No new notifications</p>
+            </div>
+        </div>
+
+    </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -360,7 +373,7 @@
     let currentUser = null;
     let userCityId = null;
     let userAreaId = null;
-    const CACHE_KEY = 'ctm_dash_v6';
+    const CACHE_KEY = 'ctm_dash_v7';
 
     // --- NAVIGATION ---
     function toggleSidebar() {
@@ -377,9 +390,7 @@
         const target = document.getElementById(id);
         if (target) target.classList.add('active');
 
-        // Always close sidebar on switch
-        document.body.classList.remove('sb-open');
-
+        document.body.classList.remove('sb-open'); // Always close on switch
         if(id === 'notifications') markRead();
     }
 
@@ -462,9 +473,12 @@
             b.style.display = 'block';
         }
 
+        // --- NEW TICKER LOGIC (Inline) ---
         if (data.announcements && data.announcements.length > 0) {
-            document.getElementById('ticker-wrap').style.display = 'flex';
+            document.getElementById('header-ticker').style.display = 'flex';
             document.getElementById('ticker-text').textContent = data.announcements.map(a => a.message).join("  •  ");
+        } else {
+            document.getElementById('header-ticker').style.display = 'none';
         }
 
         const pList = document.getElementById('promo-list');
