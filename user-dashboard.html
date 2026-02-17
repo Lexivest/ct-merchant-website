@@ -10,69 +10,73 @@
     
     <style>
         :root {
-            /* Matches AppColors.primary (approximate Deep Purple) */
-            --color-primary: #4A148C; 
-            --color-primary-dark: #311B92;
-            --color-accent: #FFC107; /* Amber for non-user areas */
-            --color-success: #4CAF50; /* Green for user area */
+            /* APP THEME: Green Primary, Yellow Accents */
+            --color-primary: #059669; /* Emerald Green */
+            --color-primary-dark: #047857;
+            --color-accent: #FCD34D; /* Yellow/Amber for text/accents */
+            --color-user-area: #DCFCE7; /* Light Green background */
+            --color-other-area: #FEF3C7; /* Light Amber background */
+            
             --color-bg: #F3F4F6;
             --color-card: #FFFFFF;
             --color-text-main: #1F2937;
             --color-text-sub: #6B7280;
-            --shadow-card: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --radius-card: 12px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
 
-        body { background-color: var(--color-bg); color: var(--color-text-main); padding-top: 100px; /* Space for fixed App Bar */ }
+        body { 
+            background-color: var(--color-bg); 
+            color: var(--color-text-main); 
+            padding-top: 96px; /* Space for fixed App Bar + Ticker */
+            padding-bottom: 20px;
+        }
 
-        /* --- FLUTTER-STYLE APP BAR --- */
-        .app-bar {
-            position: fixed; top: 0; left: 0; right: 0;
+        /* --- APP BAR (Fixed) --- */
+        .app-bar-fixed {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .app-bar-main {
             background-color: var(--color-primary);
-            color: white; z-index: 1000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .app-bar-top {
+            color: white;
+            height: 56px;
             display: flex; align-items: center; justify-content: space-between;
-            height: 56px; padding: 0 16px;
-        }
-
-        .app-title { font-size: 16px; font-weight: 700; }
-
-        .app-actions { display: flex; align-items: center; gap: 16px; }
-        
-        .icon-btn { 
-            background: none; border: none; color: white; 
-            font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
-
-        .text-action-btn {
-            background: none; border: none; color: white; font-weight: 700;
-            font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 4px;
-        }
-
-        .notif-wrapper { position: relative; }
-        .notif-badge {
-            position: absolute; top: -2px; right: -2px;
-            background: #FF0000; color: white; font-size: 9px; font-weight: 700;
-            padding: 2px 4px; border-radius: 4px; min-width: 14px; text-align: center;
-            display: none;
+            padding: 0 16px;
         }
 
         .app-bar-ticker {
-            background: rgba(0,0,0,0.2);
-            height: 36px; overflow: hidden; display: flex; align-items: center;
+            background-color: var(--color-primary-dark);
+            height: 40px;
+            display: flex; align-items: center;
+            overflow: hidden;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
+
         .ticker-text {
-            white-space: nowrap; animation: ticker 30s linear infinite;
-            font-size: 13px; font-weight: 500; padding-left: 100%;
+            white-space: nowrap;
+            animation: ticker 30s linear infinite;
+            font-size: 13px; font-weight: 600; 
+            color: var(--color-accent); /* Yellow Text */
+            padding-left: 100%;
         }
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        /* --- SIDEBAR (Hidden by default, toggled via Menu Icon) --- */
+        .app-title { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+        .icon-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 8px; }
+        .action-btn { background: none; border: none; color: white; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        
+        .notif-badge {
+            position: absolute; top: 4px; right: 4px;
+            background: #EF4444; color: white; font-size: 9px; font-weight: 800;
+            padding: 2px 5px; border-radius: 10px; border: 1px solid white;
+            display: none;
+        }
+
+        /* --- SIDEBAR NAVIGATION --- */
         .sidebar-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100;
             opacity: 0; visibility: hidden; transition: 0.3s;
@@ -83,206 +87,297 @@
             position: fixed; top: 0; left: 0; bottom: 0; width: 280px;
             background: white; z-index: 1200; transform: translateX(-100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 20px; display: flex; flex-direction: column;
+            display: flex; flex-direction: column;
         }
         .sidebar.open { transform: translateX(0); }
-        .sidebar-item {
-            padding: 12px; margin-bottom: 8px; border-radius: 8px;
-            color: var(--color-text-main); font-weight: 600; cursor: pointer;
-            display: flex; align-items: center; gap: 12px;
-            transition: 0.2s;
-        }
-        .sidebar-item:hover, .sidebar-item.active { background: #F3E8FF; color: var(--color-primary); }
-
-        /* --- MAIN CONTENT LAYOUT --- */
-        .content-container { padding-bottom: 40px; }
         
-        .section-header {
-            padding: 16px 16px 8px 16px; display: flex; align-items: center; gap: 8px;
+        .sidebar-header {
+            padding: 24px 20px;
+            background: var(--color-primary);
+            color: white;
+            display: flex; align-items: center; gap: 12px;
         }
+        .sidebar-logo { width: 40px; height: 40px; border-radius: 8px; background: white; }
+        
+        .nav-menu { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+        .nav-item {
+            padding: 12px 16px; border-radius: 8px;
+            color: var(--color-text-main); font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; gap: 16px;
+            transition: 0.2s; border: none; background: none; width: 100%; text-align: left; font-size: 15px;
+        }
+        .nav-item i { width: 24px; text-align: center; }
+        .nav-item:hover { background: #F3F4F6; }
+        .nav-item.active { background: #ECFDF5; color: var(--color-primary); }
+
+        /* --- LAYOUT UTILS --- */
+        .screen { display: none; padding-bottom: 40px; }
+        .screen.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .section-header { padding: 16px 16px 8px 16px; display: flex; align-items: center; gap: 8px; }
         .header-bar { width: 4px; height: 20px; border-radius: 2px; }
-        .header-title { font-size: 18px; font-weight: 700; color: #374151; }
+        .header-title { font-size: 18px; font-weight: 800; color: var(--color-text-main); }
         
         .horizontal-scroll {
             display: flex; overflow-x: auto; gap: 12px; padding: 4px 16px 16px 16px;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none; -webkit-overflow-scrolling: touch;
         }
         .horizontal-scroll::-webkit-scrollbar { display: none; }
 
-        /* --- WIDGETS --- */
-        
-        /* Promo Slider */
-        .promo-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 16px; padding: 16px; }
-        .promo-card { 
-            min-width: 90%; height: 160px; border-radius: 16px; overflow: hidden; 
-            scroll-snap-align: center; background: #ddd; flex-shrink: 0;
-        }
-        .promo-card img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* Shop Card (Vertical - Flutter Style) */
+        /* --- SHOP CARD (GRID LAYOUT) --- */
         .shop-card {
-            width: 200px; background: white; border-radius: 12px;
+            width: 220px; background: white; border-radius: var(--radius-card);
             box-shadow: var(--shadow-card); overflow: hidden; flex-shrink: 0;
             display: flex; flex-direction: column; cursor: pointer; border: 1px solid #E5E7EB;
+            transition: transform 0.2s;
         }
-        .shop-card-img-box {
-            height: 110px; background: #F3F4F6; position: relative;
-        }
-        /* Collage logic for image box */
-        .collage-container { width: 100%; height: 100%; display: flex; }
-        .collage-container img { object-fit: cover; }
-        .collage-1 img { width: 100%; height: 100%; }
-        .collage-2 img { width: 50%; height: 100%; }
+        .shop-card:active { transform: scale(0.98); }
         
-        .shop-card-content { padding: 10px; display: flex; flex-direction: column; gap: 4px; }
-        .shop-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .shop-cat { font-size: 11px; color: var(--color-primary); background: #F3E8FF; padding: 2px 6px; border-radius: 4px; align-self: flex-start; font-weight: 600; }
-        .shop-location { font-size: 11px; color: var(--color-text-sub); display: flex; align-items: center; gap: 4px; }
+        .shop-img-box {
+            height: 140px; width: 100%; background: #F3F4F6;
+            position: relative; overflow: hidden;
+        }
+        
+        /* Grid Logic for 1, 2, 3, 4 images */
+        .collage-grid { width: 100%; height: 100%; display: flex; flex-wrap: wrap; }
+        .collage-grid img { object-fit: cover; border: 0.5px solid white; box-sizing: border-box; }
+        
+        /* 1 Image */
+        .c-1 img { width: 100%; height: 100%; border: none; }
+        
+        /* 2 Images (Split Vertical) */
+        .c-2 img { width: 50%; height: 100%; }
+        
+        /* 3 Images (1 Big Left, 2 Small Right) */
+        .c-3 { display: flex; }
+        .c-3 > img:first-child { width: 50%; height: 100%; }
+        .c-3 > div { width: 50%; height: 100%; display: flex; flex-direction: column; }
+        .c-3 > div img { width: 100%; height: 50%; }
 
-        /* Area Header Pill (The specific Flutter design) */
-        .area-pill-container { padding: 0 16px; margin-bottom: 10px; }
+        /* 4 Images (2x2 Grid) */
+        .c-4 img { width: 50%; height: 50%; }
+
+        .shop-info { padding: 10px 12px; }
+        .shop-name { font-weight: 700; font-size: 14px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .shop-cat-badge { 
+            display: inline-block; font-size: 10px; font-weight: 700; 
+            color: var(--color-primary); background: #ECFDF5; 
+            padding: 2px 6px; border-radius: 4px; margin-bottom: 6px;
+        }
+        .shop-loc { font-size: 11px; color: var(--color-text-sub); display: flex; align-items: center; gap: 4px; }
+
+        /* --- AREA PILLS (Dart Style) --- */
+        .area-header { padding: 0 16px; margin-bottom: 10px; }
         .area-pill {
             display: flex; justify-content: space-between; align-items: center;
             padding: 6px 12px; border-radius: 8px;
         }
-        .area-pill.user-loc { background: rgba(76, 175, 80, 0.1); }
-        .area-pill.other-loc { background: rgba(255, 193, 7, 0.1); }
+        .area-pill.user { background: var(--color-user-area); }
+        .area-pill.other { background: var(--color-other-area); }
         
-        .area-pill-left { display: flex; align-items: center; gap: 8px; overflow: hidden; }
-        .area-pill-text { font-size: 13px; font-weight: 700; color: #1F2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .btn-see-all { font-size: 12px; font-weight: 700; color: var(--color-primary); background: none; border: none; cursor: pointer; }
+        .area-left { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+        .area-title { font-size: 13px; font-weight: 700; color: #1F2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .link-see-all { font-size: 12px; font-weight: 700; color: var(--color-primary); background: none; border: none; cursor: pointer; }
 
-        /* Category Chip (Collage Avatar) */
-        .category-grid { padding: 0 16px; display: flex; flex-wrap: wrap; gap: 12px; }
-        .category-chip {
+        /* --- CATEGORIES --- */
+        .cat-wrap { padding: 0 16px; display: flex; flex-wrap: wrap; gap: 10px; }
+        .cat-chip {
             background: white; border: 1px solid #E5E7EB;
-            border-radius: 12px; padding: 8px 12px 8px 8px;
+            border-radius: 12px; padding: 6px 12px 6px 6px;
             display: flex; align-items: center; gap: 8px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;
         }
-        .cat-avatar {
-            width: 36px; height: 36px; border-radius: 50%; overflow: hidden;
-            background: #F3F4F6; border: 2px solid white; display: flex;
-        }
-        .cat-avatar img { object-fit: cover; }
+        .cat-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: #E5E7EB; border: 1px solid white; }
         .cat-name { font-size: 13px; font-weight: 700; color: #374151; }
 
-        /* --- UTILS --- */
-        .screen { display: none; }
-        .screen.active { display: block; }
-        
-        /* Loading/Error */
-        .state-msg { text-align: center; padding: 40px; color: var(--color-text-sub); }
+        /* --- PROMOS --- */
+        .promo-scroll { display: flex; overflow-x: auto; gap: 16px; padding: 16px; scroll-snap-type: x mandatory; }
+        .promo-item { min-width: 90%; height: 150px; border-radius: 12px; overflow: hidden; scroll-snap-align: center; background: #E5E7EB; }
+        .promo-item img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Desktop Adjustments */
+        /* --- SERVICES GRID --- */
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; padding: 16px; }
+        .svc-card {
+            background: white; border-radius: 12px; padding: 16px 8px;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            box-shadow: var(--shadow-card); border: 1px solid #F3F4F6; cursor: pointer;
+        }
+        .svc-icon { width: 40px; height: 40px; border-radius: 50%; background: #F3F4F6; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; color: var(--color-primary); font-size: 18px; }
+        .svc-title { font-size: 12px; font-weight: 700; color: var(--color-text-main); }
+
+        /* --- NOTIFICATIONS --- */
+        .notif-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+        .notif-item {
+            background: white; padding: 12px; border-radius: 12px;
+            box-shadow: var(--shadow-card); border-left: 4px solid transparent;
+        }
+        .notif-item.unread { border-left-color: var(--color-primary); background: #F0FDF4; }
+
         @media(min-width: 768px) {
-            .shop-card { width: 240px; }
-            .shop-card-img-box { height: 140px; }
-            body { max-width: 800px; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.05); min-height: 100vh; }
-            .app-bar { max-width: 800px; left: 50%; transform: translateX(-50%); }
-            .sidebar { left: 50%; margin-left: -400px; } 
+            .shop-card { width: 260px; }
+            body { max-width: 600px; margin: 0 auto; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.1); border-left: 1px solid #e5e5e5; border-right: 1px solid #e5e5e5; }
+            .app-bar-fixed { max-width: 600px; left: 50%; transform: translateX(-50%); }
+            .sidebar { left: 50%; margin-left: -300px; } 
         }
     </style>
 </head>
 <body>
 
-    <header class="app-bar">
-        <div class="app-bar-top">
+    <!-- APP BAR & TICKER -->
+    <div class="app-bar-fixed">
+        <div class="app-bar-main">
+            <!-- Menu Button -->
             <button class="icon-btn" onclick="toggleSidebar()">
-                <i class="fa-solid fa-bars"></i> </button>
+                <i class="fa-solid fa-bars"></i>
+            </button>
             
-            <div id="city-name" class="app-title">Loading...</div>
+            <!-- City Name -->
+            <div id="header-city" class="app-title">Loading...</div>
             
-            <div class="app-actions">
-                <button class="text-action-btn" onclick="window.location.href='shop-index.html'">
+            <!-- Right Actions -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="action-btn" onclick="window.location.href='shop-index.html'">
                     <i class="fa-solid fa-arrow-down-a-z"></i> Index
                 </button>
                 
-                <div class="notif-wrapper" onclick="switchScreen('notifications')">
-                    <button class="icon-btn"><i class="fa-regular fa-bell"></i></button>
+                <div style="position: relative;" onclick="switchScreen('notifications')">
+                    <button class="icon-btn" style="padding:0;"><i class="fa-regular fa-bell"></i></button>
                     <div id="badge-count" class="notif-badge">0</div>
                 </div>
 
-                <div onclick="switchScreen('profile')" style="cursor: pointer;">
-                    <img id="header-avatar" src="https://via.placeholder.com/30" style="width:28px; height:28px; border-radius:50%; border: 1px solid white;">
+                <div onclick="switchScreen('profile')" style="cursor: pointer; display: flex;">
+                    <img id="header-avatar" src="" style="width:28px; height:28px; border-radius:50%; border: 1px solid white; background:#ccc;">
                 </div>
             </div>
         </div>
 
-        <div class="app-bar-ticker" id="ticker-container" style="display:none;">
+        <!-- Announcement Ticker (Inside App Bar like Flutter) -->
+        <div class="app-bar-ticker" id="ticker-box" style="display: none;">
             <div id="ticker-text" class="ticker-text"></div>
-        </div>
-    </header>
-
-    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <div id="sidebar" class="sidebar">
-        <h2 style="margin-bottom: 20px; color: var(--color-primary);">Menu</h2>
-        <div class="sidebar-item active" onclick="switchScreen('home')"><i class="fa-solid fa-store"></i> Market Home</div>
-        <div class="sidebar-item" onclick="switchScreen('services')"><i class="fa-solid fa-grid-2"></i> Services</div>
-        <div class="sidebar-item" onclick="switchScreen('profile')"><i class="fa-solid fa-user"></i> Profile</div>
-        <div class="sidebar-item" onclick="switchScreen('notifications')"><i class="fa-solid fa-bell"></i> Notifications</div>
-        <div style="margin-top: auto;">
-            <div class="sidebar-item" style="color: #EF4444;" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</div>
         </div>
     </div>
 
-    <div class="content-container">
+    <!-- SIDEBAR -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <img src="https://via.placeholder.com/40" class="sidebar-logo" alt="Logo">
+            <span style="font-weight: 800; font-size: 1.1rem;">CT-MERCHANT</span>
+        </div>
         
-        <div id="home-screen" class="screen active">
-            
-            <div id="promo-container" class="promo-slider" style="display:none;"></div>
+        <nav class="nav-menu">
+            <button class="nav-item active" onclick="switchScreen('market', this)">
+                <i class="fa-solid fa-store"></i> Market Overview
+            </button>
+            <button class="nav-item" onclick="switchScreen('services', this)">
+                <i class="fa-solid fa-table-cells-large"></i> Services
+            </button>
+            <button class="nav-item" onclick="switchScreen('profile', this)">
+                <i class="fa-solid fa-user-gear"></i> My Profile
+            </button>
+            <button class="nav-item" onclick="switchScreen('notifications', this)">
+                <i class="fa-solid fa-bell"></i> Notifications
+            </button>
+        </nav>
+        
+        <div style="padding: 16px; margin-top: auto;">
+            <button class="nav-item" style="color: #EF4444;" onclick="handleLogout()">
+                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+            </button>
+        </div>
+    </div>
 
-            <div id="featured-section" style="display:none;">
-                <div class="section-header">
-                    <div class="header-bar" style="background: orange;"></div>
-                    <div class="header-title">Featured Shops</div>
-                </div>
-                <div id="featured-list" class="horizontal-scroll"></div>
-            </div>
+    <!-- MAIN CONTENT -->
+    
+    <!-- 1. MARKET SCREEN -->
+    <div id="market" class="screen active">
+        <!-- Promos -->
+        <div id="promo-list" class="promo-scroll" style="display:none;"></div>
 
-            <div style="height: 16px;"></div>
-
-            <div id="area-sections-container">
-                <div class="state-msg">Loading marketplace data...</div>
-            </div>
-
-            <div style="height: 16px;"></div>
-
+        <!-- Featured Shops -->
+        <div id="featured-section" style="display:none;">
             <div class="section-header">
-                <div class="header-bar" style="background: var(--color-primary);"></div>
-                <div class="header-title">Browse Categories</div>
+                <div class="header-bar" style="background: orange;"></div>
+                <div class="header-title">Featured Shops</div>
             </div>
-            <div id="categories-list" class="category-grid"></div>
+            <div id="featured-list" class="horizontal-scroll"></div>
+        </div>
+        
+        <div style="height: 12px;"></div>
 
+        <!-- Areas Dynamic List -->
+        <div id="areas-container">
+            <p style="text-align:center; padding:20px; color:#6B7280;">Loading shops...</p>
         </div>
 
-        <div id="services-screen" class="screen">
-            <div class="state-msg">
-                <h2>Services</h2>
-                <p>Services grid content goes here...</p>
-                <button onclick="window.location.href='merchant-dashboard.html'" style="margin-top:10px; padding:8px 16px;">Go to Merchant Dashboard</button>
+        <div style="height: 12px;"></div>
+
+        <!-- Categories -->
+        <div class="section-header">
+            <div class="header-bar" style="background: var(--color-primary);"></div>
+            <div class="header-title">Browse Categories</div>
+        </div>
+        <div id="category-list" class="cat-wrap"></div>
+        
+        <div style="height: 24px;"></div>
+        
+        <!-- All Shops Grid (Web Feature Retention) -->
+        <div class="section-header">
+             <div class="header-bar" style="background: #374151;"></div>
+             <div class="header-title">All Shops</div>
+        </div>
+        <div id="all-shops-grid" style="display: flex; flex-wrap:wrap; gap:12px; padding:0 16px; justify-content: center;"></div>
+    </div>
+
+    <!-- 2. SERVICES SCREEN -->
+    <div id="services" class="screen">
+        <div class="section-header">
+            <div class="header-title">Services & Tools</div>
+        </div>
+        <div class="services-grid">
+            <div class="svc-card" onclick="window.location.href='wishlist.html'">
+                <div class="svc-icon" style="color:#DB2777; background:#FCE7F3;"><i class="fa-solid fa-heart"></i></div>
+                <div class="svc-title">Wishlist</div>
+            </div>
+            <div class="svc-card" onclick="window.location.href='help.html'">
+                <div class="svc-icon" style="color:#10B981; background:#D1FAE5;"><i class="fa-solid fa-headset"></i></div>
+                <div class="svc-title">Support</div>
+            </div>
+             <div class="svc-card" onclick="window.location.href='merchant-dashboard.html'">
+                <div class="svc-icon" style="color:#2563EB; background:#DBEAFE;"><i class="fa-solid fa-store"></i></div>
+                <div class="svc-title">My Shop</div>
+            </div>
+            <div class="svc-card" onclick="switchScreen('profile', null)">
+                <div class="svc-icon" style="color:#4B5563; background:#F3F4F6;"><i class="fa-solid fa-gear"></i></div>
+                <div class="svc-title">Settings</div>
             </div>
         </div>
+    </div>
 
-        <div id="profile-screen" class="screen">
-            <div class="state-msg">
-                <h2>My Profile</h2>
-                <div id="profile-details"></div>
-                </div>
-        </div>
-
-        <div id="notifications-screen" class="screen">
-             <div class="section-header">
-                <div class="header-title">Notifications</div>
+    <!-- 3. PROFILE SCREEN -->
+    <div id="profile" class="screen">
+        <div class="section-header"><div class="header-title">My Profile</div></div>
+        <div style="padding: 16px;">
+            <div style="background:white; padding:20px; border-radius:12px; text-align:center; box-shadow:var(--shadow-card);">
+                <img id="profile-avatar-lg" src="" style="width:80px; height:80px; border-radius:50%; margin-bottom:10px; border:2px solid var(--color-primary);">
+                <h2 id="profile-name" style="font-size:18px; margin-bottom:4px;">User</h2>
+                <p id="profile-email" style="color:#6B7280; font-size:14px;">...</p>
+                <button style="margin-top:16px; background:var(--color-primary); color:white; border:none; padding:8px 24px; border-radius:20px; font-weight:600;">Edit Profile</button>
             </div>
-            <div id="notif-list" style="padding: 16px;"></div>
         </div>
+    </div>
 
+    <!-- 4. NOTIFICATIONS SCREEN -->
+    <div id="notifications" class="screen">
+        <div class="section-header"><div class="header-title">Notifications</div></div>
+        <div id="notif-list" class="notif-list">
+             <div style="text-align:center; color:#9CA3AF; padding:20px;">No notifications</div>
+        </div>
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // --- SUPABASE CONFIG ---
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -291,56 +386,51 @@
     let userCityId = null;
     let userAreaId = null;
 
-    // --- UI LOGIC ---
+    // --- NAVIGATION LOGIC ---
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('open');
         document.getElementById('sidebar-overlay').classList.toggle('active');
     }
 
-    function switchScreen(id) {
-        // Close sidebar if open
+    function switchScreen(screenId, btn) {
+        // Update Sidebar UI
+        if (btn) {
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        
+        // Hide/Show Screens
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById(screenId);
+        if (target) target.classList.add('active');
+
+        // Close sidebar on mobile
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('sidebar-overlay').classList.remove('active');
 
-        // Hide all screens
-        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
-
-        // Show target
-        if(document.getElementById(id + '-screen')) {
-            document.getElementById(id + '-screen').classList.add('active');
-        } else {
-            // Mapping for sidebar clicks that might not have ID matches exactly in this example
-            if(id === 'home') document.getElementById('home-screen').classList.add('active');
-        }
-
-        // Logic triggers
-        if(id === 'notifications') markNotificationsRead();
+        if (screenId === 'notifications') markRead();
     }
 
-    // --- DATA LOADING ---
+    // --- MAIN LOGIC ---
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "login.html"; return; }
         currentUser = session.user;
 
-        // Try load cache
-        const cache = localStorage.getItem('dash_cache');
-        if(cache) renderDashboard(JSON.parse(cache));
+        // Load Cache
+        const cache = localStorage.getItem('dash_v2_cache');
+        if (cache) renderData(JSON.parse(cache));
 
-        fetchDashboardData();
+        fetchData();
     };
 
-    async function fetchDashboardData() {
+    async function fetchData() {
         try {
-            // 1. Fetch Profile
             const { data: profile } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).single();
-            if(!profile) return;
-            
+            if (!profile) return;
             userCityId = profile.city_id;
             userAreaId = profile.area_id;
 
-            // 2. Parallel Fetch
             const [promos, announcements, categories, areas, shops] = await Promise.all([
                 client.from('promo_banners').select().order('created_at', {ascending: false}),
                 client.from('announcements').select().order('created_at', {ascending: false}),
@@ -349,175 +439,178 @@
                 client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false})
             ]);
 
-            // 3. Fetch Products (for Collages)
-            const shopIds = shops.data.map(s => s.id);
+            // Get Products for Collages (Top 4 per shop)
             let products = [];
-            if(shopIds.length > 0) {
-                const pRes = await client.from('products').select('shop_id, image_url').in('shop_id', shopIds).eq('is_available', true).limit(200);
-                products = pRes.data || [];
+            const shopIds = shops.data.map(s => s.id);
+            if (shopIds.length > 0) {
+                const { data } = await client.from('products')
+                    .select('shop_id, image_url')
+                    .in('shop_id', shopIds)
+                    .eq('is_available', true)
+                    .limit(500); // Fetch enough to cover thumbnails
+                products = data || [];
             }
             
-            // 4. Notifications Count
             const { count } = await client.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id).eq('is_read', false);
 
             const dashboardData = {
-                profile, 
-                promos: promos.data, 
-                announcements: announcements.data, 
-                categories: categories.data, 
-                areas: areas.data, 
-                shops: shops.data, 
+                profile,
+                promos: promos.data,
+                announcements: announcements.data,
+                categories: categories.data,
+                areas: areas.data,
+                shops: shops.data,
                 products,
-                unreadCount: count
+                unread: count
             };
 
-            localStorage.setItem('dash_cache', JSON.stringify(dashboardData));
-            renderDashboard(dashboardData);
+            localStorage.setItem('dash_v2_cache', JSON.stringify(dashboardData));
+            renderData(dashboardData);
 
-        } catch (e) {
-            console.error(e);
-        }
+        } catch (e) { console.error(e); }
     }
 
-    // --- RENDERING ---
-    function renderDashboard(data) {
-        // App Bar Info
-        document.getElementById('city-name').textContent = data.profile.cities?.name || "Unknown City";
-        document.getElementById('header-avatar').src = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
-        
-        if(data.unreadCount > 0) {
-            const badge = document.getElementById('badge-count');
-            badge.textContent = data.unreadCount > 9 ? '9+' : data.unreadCount;
-            badge.style.display = 'block';
+    function renderData(data) {
+        // 1. Header Info
+        document.getElementById('header-city').textContent = data.profile.cities?.name || "Locating...";
+        const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
+        document.getElementById('header-avatar').src = avatar;
+        document.getElementById('profile-avatar-lg').src = avatar;
+        document.getElementById('profile-name').textContent = data.profile.full_name;
+        document.getElementById('profile-email').textContent = currentUser.email;
+
+        // Badge
+        if (data.unread > 0) {
+            document.getElementById('badge-count').textContent = data.unread;
+            document.getElementById('badge-count').style.display = 'block';
         }
 
         // Ticker
-        if(data.announcements && data.announcements.length > 0) {
-            document.getElementById('ticker-container').style.display = 'flex';
-            document.getElementById('ticker-text').textContent = data.announcements.map(a => a.message).join("  |  ");
+        if (data.announcements && data.announcements.length > 0) {
+            document.getElementById('ticker-box').style.display = 'flex';
+            document.getElementById('ticker-text').textContent = data.announcements.map(a => a.message).join("  •  ");
         }
 
         // Promos
-        if(data.promos && data.promos.length > 0) {
-            document.getElementById('promo-container').style.display = 'flex';
-            document.getElementById('promo-container').innerHTML = data.promos.map(p => 
-                `<div class="promo-card"><img src="${p.image_url}"></div>`
+        if (data.promos.length > 0) {
+            document.getElementById('promo-list').style.display = 'flex';
+            document.getElementById('promo-list').innerHTML = data.promos.map(p => 
+                `<div class="promo-item"><img src="${p.image_url}"></div>`
             ).join('');
         }
 
         // Featured Shops
         const featured = data.shops.filter(s => s.is_featured);
-        if(featured.length > 0) {
+        if (featured.length > 0) {
             document.getElementById('featured-section').style.display = 'block';
             document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
         }
 
-        // --- AREA LOGIC (The Core Feature) ---
-        const areaContainer = document.getElementById('area-sections-container');
-        areaContainer.innerHTML = '';
-
-        // Sort areas: User's area first
-        const sortedAreas = data.areas.sort((a, b) => {
-            if(a.id === userAreaId) return -1;
-            if(b.id === userAreaId) return 1;
-            return a.name.localeCompare(b.name);
-        });
-
+        // --- AREAS LIST ---
+        const areasDiv = document.getElementById('areas-container');
+        areasDiv.innerHTML = '';
+        const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
+        
         sortedAreas.forEach(area => {
-            const shopsInArea = data.shops.filter(s => s.area_id === area.id);
-            if(shopsInArea.length === 0) return;
+            const areaShops = data.shops.filter(s => s.area_id === area.id);
+            if (areaShops.length === 0) return;
 
-            const isUserArea = area.id === userAreaId;
-            const icon = isUserArea ? '<i class="fa-solid fa-location-crosshairs"></i>' : '<i class="fa-solid fa-location-dot"></i>';
-            const colorClass = isUserArea ? 'user-loc' : 'other-loc';
-            const iconColor = isUserArea ? 'var(--color-success)' : '#F59E0B';
-            const titleText = isUserArea ? `Merchants in ${area.name} • Near You` : `Merchants in ${area.name}`;
+            const isUser = area.id === userAreaId;
+            const pillClass = isUser ? 'user' : 'other';
+            const iconColor = isUser ? 'var(--color-primary)' : '#F59E0B'; // Green vs Amber
+            const icon = isUser ? '<i class="fa-solid fa-location-crosshairs"></i>' : '<i class="fa-solid fa-location-dot"></i>';
+            const title = isUser ? `Merchants in ${area.name} • Near You` : `Merchants in ${area.name}`;
 
-            const html = `
-                <div class="area-pill-container">
-                    <div class="area-pill ${colorClass}">
-                        <div class="area-pill-left">
+            areasDiv.innerHTML += `
+                <div class="area-header">
+                    <div class="area-pill ${pillClass}">
+                        <div class="area-left">
                             <span style="color:${iconColor}">${icon}</span>
-                            <span class="area-pill-text">${titleText}</span>
+                            <span class="area-title">${title}</span>
                         </div>
-                        <button class="btn-see-all" onclick="window.location.href='area-filter.html?id=${area.id}'">See All</button>
+                        <button class="link-see-all" onclick="window.location.href='area.html?id=${area.id}'">See All</button>
                     </div>
                 </div>
                 <div class="horizontal-scroll">
-                    ${shopsInArea.map(s => buildShopCard(s, data.products)).join('')}
+                    ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
                 </div>
                 <div style="height: 16px;"></div>
             `;
-            areaContainer.innerHTML += html;
         });
 
         // Categories
-        // Logic to get images for categories from products
-        const catList = document.getElementById('categories-list');
-        catList.innerHTML = data.categories.map(cat => {
-            // Find up to 2 images for this category
-            const relevantShops = data.shops.filter(s => s.category === cat.name).map(s => s.id);
-            const catImages = data.products.filter(p => relevantShops.includes(p.shop_id) && p.image_url).slice(0, 2).map(p => p.image_url);
+        document.getElementById('category-list').innerHTML = data.categories.map(cat => {
+            // Logic to find an image for category
+            const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
+            const prod = data.products.find(p => shopIds.includes(p.shop_id) && p.image_url);
+            const imgUrl = prod ? prod.image_url : `https://via.placeholder.com/32?text=${cat.name.charAt(0)}`;
             
-            let avatarHtml = '';
-            if(catImages.length === 0) avatarHtml = '<i class="fa-solid fa-tag" style="margin:auto; color:#ccc;"></i>';
-            else if(catImages.length === 1) avatarHtml = `<img src="${catImages[0]}" style="width:100%; height:100%; object-fit:cover;">`;
-            else avatarHtml = `<img src="${catImages[0]}" style="width:50%; height:100%; object-fit:cover;"><img src="${catImages[1]}" style="width:50%; height:100%; object-fit:cover;">`;
-
             return `
-                <div class="category-chip" onclick="window.location.href='category-filter.html?cat=${encodeURIComponent(cat.name)}'">
-                    <div class="cat-avatar">${avatarHtml}</div>
+                <div class="cat-chip" onclick="window.location.href='cat.html?name=${cat.name}'">
+                    <img src="${imgUrl}" class="cat-img">
                     <span class="cat-name">${cat.name}</span>
                 </div>
             `;
         }).join('');
+        
+        // All Shops (Grid)
+        document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
     }
 
+    // --- SHOP CARD BUILDER (With Grid Logic) ---
     function buildShopCard(shop, allProducts) {
-        const products = allProducts.filter(p => p.shop_id === shop.id).slice(0, 2);
-        let imgHtml = '';
+        // 1. Filter products for this shop
+        const shopProds = allProducts.filter(p => p.shop_id === shop.id && p.image_url).slice(0, 4);
         
-        // Collage logic
-        if(products.length >= 2) {
-             imgHtml = `<div class="collage-container collage-2"><img src="${products[0].image_url}"><img src="${products[1].image_url}"></div>`;
-        } else if (products.length === 1) {
-            imgHtml = `<div class="collage-container collage-1"><img src="${products[0].image_url}"></div>`;
+        // 2. Build Collage HTML
+        let collageHtml = '';
+        if (shopProds.length === 0) {
+            const fallback = shop.image_url || 'https://via.placeholder.com/200x140?text=No+Image';
+            collageHtml = `<div class="collage-grid c-1"><img src="${fallback}"></div>`;
+        } else if (shopProds.length === 1) {
+            collageHtml = `<div class="collage-grid c-1"><img src="${shopProds[0].image_url}"></div>`;
+        } else if (shopProds.length === 2) {
+            collageHtml = `<div class="collage-grid c-2"><img src="${shopProds[0].image_url}"><img src="${shopProds[1].image_url}"></div>`;
+        } else if (shopProds.length === 3) {
+            collageHtml = `
+                <div class="collage-grid c-3">
+                    <img src="${shopProds[0].image_url}">
+                    <div>
+                        <img src="${shopProds[1].image_url}">
+                        <img src="${shopProds[2].image_url}">
+                    </div>
+                </div>`;
         } else {
-             // Fallback to shop image or placeholder
-             const fallback = shop.image_url || 'https://via.placeholder.com/150?text=Shop';
-             imgHtml = `<div class="collage-container collage-1"><img src="${fallback}"></div>`;
+            collageHtml = `
+                <div class="collage-grid c-4">
+                    <img src="${shopProds[0].image_url}"><img src="${shopProds[1].image_url}">
+                    <img src="${shopProds[2].image_url}"><img src="${shopProds[3].image_url}">
+                </div>`;
         }
 
         return `
             <div class="shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
-                <div class="shop-card-img-box">
-                    ${imgHtml}
-                </div>
-                <div class="shop-card-content">
+                <div class="shop-img-box">${collageHtml}</div>
+                <div class="shop-info">
                     <div class="shop-name">${shop.name}</div>
-                    <span class="shop-cat">${shop.category}</span>
-                    <div class="shop-location">
-                        <i class="fa-solid fa-location-dot" style="font-size:10px;"></i> ${shop.address}
-                    </div>
+                    <span class="shop-cat-badge">${shop.category}</span>
+                    <div class="shop-loc"><i class="fa-solid fa-location-dot"></i> ${shop.address}</div>
                 </div>
             </div>
         `;
     }
 
     async function handleLogout() {
-        if(confirm('Log out?')) {
+        if(confirm("Log out?")) {
             await client.auth.signOut();
-            window.location.href = 'index.html';
+            window.location.href = "index.html";
         }
     }
-
-    async function markNotificationsRead() {
-        // Visual clear
+    
+    async function markRead() {
         document.getElementById('badge-count').style.display = 'none';
-        // Backend clear
         await client.from('notifications').update({is_read: true}).eq('user_id', currentUser.id);
     }
-
 </script>
 </body>
 </html>
