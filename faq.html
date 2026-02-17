@@ -18,7 +18,7 @@
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--color-bg); color: var(--color-text); min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
 
         .container { width: 100%; max-width: 600px; display: flex; flex-direction: column; height: calc(100vh - 40px); }
@@ -31,38 +31,52 @@
 
         /* FAQ List */
         .faq-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-bottom: 20px; }
+        
         .faq-item {
             background: white; border-radius: 12px; border: 1px solid var(--color-border);
-            box-shadow: var(--shadow-sm); overflow: hidden;
+            box-shadow: var(--shadow-sm); overflow: hidden; transition: border-color 0.2s;
         }
+        .faq-item:hover { border-color: var(--color-primary); }
 
-        /* Native Accordion */
+        /* Accordion Logic */
         details { width: 100%; }
+        
         summary {
             padding: 16px; cursor: pointer; list-style: none;
             display: flex; justify-content: space-between; align-items: center;
             font-weight: 700; font-size: 0.95rem; color: var(--color-text);
+            outline: none;
         }
-        /* Custom Arrow Icon */
+
+        /* Hide default arrow in Webkit/Firefox */
         summary::-webkit-details-marker { display: none; }
+        summary::marker { display: none; }
+
+        /* Custom Arrow */
         summary::after {
             content: '\f078'; /* fa-chevron-down */
             font-family: "Font Awesome 6 Free"; font-weight: 900;
-            color: var(--color-primary); transition: transform 0.3s;
+            color: var(--color-primary); transition: transform 0.3s ease;
+            font-size: 0.8rem;
         }
+
         details[open] summary::after { transform: rotate(180deg); }
+        details[open] summary { border-bottom: 1px solid #F1F5F9; }
 
         .answer {
-            padding: 0 16px 16px 16px;
-            color: var(--color-text-muted); font-size: 0.9rem; line-height: 1.5;
-            border-top: 1px solid transparent; /* Prevents jump */
+            padding: 16px;
+            color: var(--color-text-muted); font-size: 0.9rem; line-height: 1.6;
+            background-color: #FAFAFA;
+            animation: fadeIn 0.3s ease;
         }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* Bottom Action */
         .bottom-action {
-            margin-top: auto; padding: 20px; background: #F1F5F9;
+            margin-top: auto; padding: 20px; background: white;
             border-radius: 16px; text-align: center; border: 1px solid var(--color-border);
-            flex-shrink: 0;
+            flex-shrink: 0; box-shadow: var(--shadow-sm);
         }
         .help-text { color: var(--color-text-muted); margin-bottom: 12px; font-size: 0.9rem; }
         
@@ -84,7 +98,7 @@
 <div class="container">
     <div class="app-bar">
         <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
-        <div class="page-title">Frequently Asked Questions</div>
+        <div class="page-title">FAQ</div>
     </div>
 
     <div class="faq-list">
@@ -111,7 +125,7 @@
         <!-- 3 -->
         <div class="faq-item">
             <details>
-                <summary>Why is my shop 'Pending Physical Verification'?</summary>
+                <summary>Why is my shop 'Pending Verification'?</summary>
                 <div class="answer">
                     After your online application is approved, your shop becomes visible but marked as 'Unverified'. To get the Blue Badge and remove the warning, our field agents must visit your physical address to confirm its existence.
                 </div>
@@ -175,6 +189,22 @@
         <a href="help-support.html" class="btn-support">Contact Support</a>
     </div>
 </div>
+
+<script>
+    // --- ACCORDION LOGIC ---
+    // Closes other items when one opens
+    const details = document.querySelectorAll("details");
+
+    details.forEach((targetDetail) => {
+        targetDetail.addEventListener("click", () => {
+            details.forEach((detail) => {
+                if (detail !== targetDetail) {
+                    detail.removeAttribute("open");
+                }
+            });
+        });
+    });
+</script>
 
 </body>
 </html>
