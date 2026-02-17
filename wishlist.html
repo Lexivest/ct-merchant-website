@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist | CT‑Merchant</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-purple: #2E1065;
+            --color-bg: #F8FAFC;
+            --color-text: #1E293B;
+            --color-text-muted: #64748B;
+            --color-border: #E2E8F0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--color-bg); color: var(--color-text); min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+
+        .container { width: 100%; max-width: 800px; }
+
+        /* Header */
+        .app-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; background: var(--color-purple); color: white; padding: 16px; border-radius: 16px; box-shadow: var(--shadow-md); }
+        .back-btn { background: rgba(255,255,255,0.2); border: none; width: 40px; height: 40px; border-radius: 10px; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s; font-size: 1.1rem; }
+        .back-btn:hover { background: rgba(255,255,255,0.3); }
+        .page-title { font-size: 1.25rem; font-weight: 700; }
+
+        /* Grid */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        .product-card {
+            background: white; border-radius: 16px; overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #E2E8F0;
+            cursor: pointer; position: relative; transition: transform 0.2s;
+        }
+        .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: var(--color-purple); }
+
+        .prod-img { width: 100%; height: 160px; object-fit: cover; }
+        .prod-info { padding: 12px; }
+        .prod-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #334155; }
+        .prod-price { color: var(--color-purple); font-weight: 800; font-size: 1rem; }
+        .prod-price.discounted { color: #DC2626; }
+        .prod-old-price { text-decoration: line-through; color: #94A3B8; font-size: 0.8rem; margin-right: 4px; }
+        
+        .badge { position: absolute; top: 8px; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; color: white; }
+        .badge-discount { left: 8px; background: #DC2626; }
+        .badge-used { right: 8px; background: #EA580C; }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 60px 0; color: var(--color-text-muted); display: none; }
+        .empty-icon { font-size: 4rem; color: #E2E8F0; margin-bottom: 16px; }
+
+        .spinner { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: var(--color-purple); border-radius: 50%; animation: spin 1s linear infinite; margin: 100px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="app-bar">
+        <button onclick="window.history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+        <div class="page-title">My Wishlist</div>
+    </div>
+
+    <div id="loader" class="spinner"></div>
+
+    <div id="content" class="hidden">
+        <div id="product-grid" class="product-grid"></div>
+        
+        <div id="empty-state" class="empty-state">
+            <i class="fa-regular fa-heart empty-icon"></i>
+            <p>Your wishlist is empty.</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+
+    window.onload = async () => {
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) { window.location.href = "login.html"; return; }
+        currentUser = session.user;
+        fetchWishlist();
+    };
+
+    async function fetchWishlist() {
+        try {
+            // Join wishlist -> products
+            const { data, error } = await client
+                .from('wishlist')
+                .select('product_id, products(*)')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            if (data.length === 0) {
+                document.getElementById('empty-state').style.display = 'block';
+            } else {
+                renderList(data);
+            }
+
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('content').classList.remove('hidden');
+
+        } catch (e) {
+            console.error("Error fetching wishlist:", e);
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'block';
+        }
+    }
+
+    function renderList(items) {
+        const container = document.getElementById('product-grid');
+        container.innerHTML = items.map(item => {
+            const p = item.products;
+            if (!p) return ''; // Handle deleted products
+
+            const hasDiscount = p.discount_price && p.discount_price < p.price;
+            const percent = hasDiscount ? Math.round(((p.price - p.discount_price)/p.price)*100) : 0;
+            
+            return `
+            <div class="product-card" onclick="window.location.href='product-detail.html?id=${p.id}'">
+                <img src="${p.image_url || 'https://via.placeholder.com/150'}" class="prod-img">
+                ${hasDiscount ? `<span class="badge badge-discount">-${percent}%</span>` : ''}
+                ${p.condition === 'Fairly Used' ? `<span class="badge badge-used">Used</span>` : ''}
+                <div class="prod-info">
+                    <div class="prod-name">${p.name}</div>
+                    <div class="prod-price ${hasDiscount ? 'discounted' : ''}">
+                        ${hasDiscount ? `<span class="prod-old-price">₦${p.price.toLocaleString()}</span>` : ''}
+                        ₦${(p.discount_price || p.price).toLocaleString()}
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+</script>
+
+</body>
+</html>
