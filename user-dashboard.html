@@ -1,257 +1,971 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  
-  <title>CT-Merchant Ltd. | Digital Shops Repository</title>
-  
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
-  <link rel="stylesheet" href="styles.css">
-
-  <style>
-    /* --- REPO SEARCH (Restored) --- */
-    .repo-search-wrapper {
-        position: relative;
-        width: 100%;
-        max-width: 380px;
-        margin-bottom: 1.5rem;
-    }
-
-    .repo-input {
-        width: 100%;
-        padding: 12px 40px 12px 20px;
-        background-color: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 50px;
-        font-size: 0.9rem;
-        color: white;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 600;
-        outline: none;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(8px);
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard | CT‑Merchant</title>
     
-    .repo-input::placeholder { 
-        color: rgba(255, 255, 255, 0.7); 
-        text-transform: none; 
-        letter-spacing: normal; 
-        font-weight: 400;
-    }
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    .repo-input:focus {
-        background-color: rgba(255, 255, 255, 0.25);
-        border-color: var(--color-pink);
-        box-shadow: 0 0 15px rgba(219, 39, 119, 0.3);
-    }
+    <style>
+        :root {
+            --color-purple: #2E1065;
+            --color-purple-light: #5B21B6;
+            --color-pink: #DB2777;
+            --color-bg: #F8FAFC;
+            --color-card: #FFFFFF;
+            --color-border: #E2E8F0;
+            --color-text-main: #1E293B;
+            --color-text-muted: #64748B;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --sidebar-width: 260px;
+        }
 
-    .search-icon-btn {
-        position: absolute;
-        right: 16px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.6);
-        cursor: pointer;
-        width: 18px;
-        transition: color 0.2s;
-    }
-    .search-icon-btn:hover { color: var(--color-pink); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
 
-    .id-hint {
-        margin-top: 6px;
-        margin-left: 12px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #facc15; /* Yellow */
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
+        html, body {
+            background-color: var(--color-bg); 
+            color: var(--color-text-main);
+            overflow: auto; 
+            height: auto;
+            min-height: 100vh;
+            width: 100%;
+        }
 
-    /* --- LOGIN WIDGET --- */
-    .hero-auth-widget {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 24px;
-        border-radius: 20px;
-        width: 100%;
-        max-width: 380px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-        margin-top: 1rem;
-    }
+        /* --- LAYOUT --- */
+        .dashboard-container { 
+            display: flex; 
+            min-height: 100vh;
+            position: relative;
+            min-width: 320px; 
+        }
 
-    .widget-title { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--color-purple);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1.5rem;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+        }
+        .sidebar.open { transform: translateX(0); }
 
-    .hero-input-login {
-        width: 100%; padding: 12px 16px; margin-bottom: 10px;
-        background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px; color: white; font-size: 0.95rem; outline: none; transition: 0.3s;
-    }
-    .hero-input-login:focus { background: rgba(0, 0, 0, 0.4); border-color: var(--color-pink); }
+        .sidebar-overlay {
+            position: fixed; inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 999;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .sidebar-overlay.active { opacity: 1; visibility: visible; }
 
-    .btn-login-hero {
-        width: 100%; background: white; color: var(--color-purple);
-        font-weight: 800; padding: 12px; border-radius: 12px; border: none;
-        cursor: pointer; font-size: 1rem; margin-top: 4px; display: flex; justify-content: center; gap: 8px;
-    }
+        .sidebar-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 2.5rem; }
+        .sidebar-logo { width: 32px; height: 32px; border-radius: 8px; }
+        .brand-name { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px; }
 
-    .widget-divider { text-align: center; margin: 16px 0; color: rgba(255,255,255,0.5); font-size: 0.8rem; font-weight: 600; }
-    
-    .btn-create-account {
-        display: block; width: 100%; text-align: center; padding: 12px;
-        border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 12px;
-        color: white; font-weight: 700; text-decoration: none; font-size: 0.95rem;
-    }
-    .btn-create-account:hover { background: rgba(255,255,255,0.1); border-color: white; }
+        .nav-menu { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            border-radius: 12px; color: rgba(255,255,255,0.7); text-decoration: none;
+            font-weight: 600; font-size: 0.9rem; transition: all 0.2s;
+            cursor: pointer; border: none; background: none; width: 100%; text-align: left;
+        }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: white; }
+        .nav-item.active { background: var(--color-pink); }
+        .nav-item i { width: 24px; text-align: center; font-size: 1.1rem; }
 
-    /* Typewriter Cursor */
-    .cursor { display: inline-block; width: 3px; background-color: var(--color-pink); animation: blink 1s step-end infinite; }
-    @keyframes blink { 50% { opacity: 0; } }
+        .sidebar-footer { margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); }
+        .btn-logout { color: #FDA4AF; width: 100%; text-align: left; }
+        .btn-logout:hover { background: rgba(253, 164, 175, 0.1); color: #FFF1F2; }
 
-    @media (max-width: 768px) { .hero-auth-widget { max-width: 100%; } }
-  </style>
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            margin-left: 0;
+            width: 100%;
+            flex-grow: 1;
+            padding: 1.5rem;
+            min-height: 100vh;
+        }
+
+        /* --- TOP BAR --- */
+        .top-bar { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 1.5rem; background: white; padding: 8px 12px;
+            border-radius: 16px; border: 1px solid var(--color-border);
+            box-shadow: var(--shadow-sm); gap: 10px; height: 56px;
+            position: sticky; top: 10px; z-index: 900;
+        }
+
+        .top-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .menu-btn {
+            display: flex; background: #F1F5F9; border: none;
+            width: 36px; height: 36px; border-radius: 8px;
+            color: var(--color-text-main); font-size: 1.1rem;
+            align-items: center; justify-content: center;
+            cursor: pointer; flex-shrink: 0;
+        }
+        .greeting-text { 
+            font-size: 1rem; font-weight: 800; color: var(--color-purple); margin: 0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+        }
+
+        /* NOTIFICATION ICON */
+        .notif-btn-top {
+            position: relative; background: none; border: none; 
+            font-size: 1.2rem; color: var(--color-text-muted); cursor: pointer;
+            padding: 4px; display: flex; align-items: center;
+        }
+        .notif-btn-top:hover { color: var(--color-purple); }
+        .notif-badge {
+            position: absolute; top: -2px; right: -2px;
+            background: #EF4444; color: white;
+            font-size: 0.65rem; font-weight: 700;
+            width: 18px; height: 18px; border-radius: 50%;
+            display: none; /* Hidden if 0 */
+            align-items: center; justify-content: center;
+            border: 2px solid white;
+        }
+        .notif-badge.active { display: flex; }
+
+        .ticker-container {
+            flex-grow: 1; background: #FFF7ED; border-radius: 6px;
+            height: 36px; display: flex; align-items: center; overflow: hidden;
+            position: relative; padding: 0 10px; border: 1px solid #FFEDD5; display: none;
+        }
+        .ticker { 
+            display: inline-block; white-space: nowrap; animation: ticker 60s linear infinite; 
+            font-size: 0.8rem; font-weight: 600; color: #C2410C; padding-left: 100%; 
+        }
+        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+
+        .top-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .location-badge { 
+            display: inline-flex; align-items: center; gap: 4px; 
+            background: #EDE9FE; color: var(--color-purple-light); 
+            padding: 6px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+            white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis;
+        }
+        .user-pill {
+            display: flex; align-items: center; gap: 8px;
+            background: white; padding: 4px 10px 4px 4px;
+            border-radius: 50px; box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
+            flex-shrink: 0;
+        }
+        .pill-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: #E2E8F0; }
+        .pill-name { font-weight: 700; font-size: 0.8rem; }
+
+        /* --- MARKET / HOME STYLES --- */
+        .section { margin-bottom: 2rem; width: 100%; }
+        .section-header { display: flex; align-items: center; margin-bottom: 1rem; }
+        .bar { width: 4px; height: 24px; border-radius: 2px; margin-right: 12px; }
+        .section-title { font-size: 1.1rem; font-weight: 800; color: var(--color-text-main); }
+
+        .scroll-row {
+            display: flex; overflow-x: auto; gap: 16px; padding-bottom: 8px;
+            width: 100%; scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
+            -webkit-overflow-scrolling: touch; 
+        }
+        .scroll-row::-webkit-scrollbar { height: 4px; }
+        .scroll-row::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 10px; }
+
+        /* Featured Card */
+        .featured-card {
+            min-width: 280px; width: 280px;
+            background: white; border-radius: 12px; padding: 10px;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
+            cursor: pointer; display: flex; gap: 12px; align-items: center; flex-shrink: 0;
+        }
+        .featured-collage { width: 72px; height: 72px; border-radius: 8px; overflow: hidden; display: flex; flex-wrap: wrap; flex-shrink: 0; background: #F1F5F9; }
+        .featured-collage img { width: 50%; height: 50%; object-fit: cover; border: 0.5px solid white; }
+        .featured-collage.single img { width: 100%; height: 100%; border: none; }
+        .featured-info { flex: 1; overflow: hidden; }
+        .shop-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .shop-cat { font-size: 0.7rem; color: var(--color-purple); font-weight: 700; background: #F3E8FF; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
+        .shop-addr { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+
+        /* Collage Pills */
+        .collage-pill {
+            display: flex; align-items: center; gap: 10px;
+            background: white; border: 1px solid var(--color-border);
+            border-radius: 50px; padding: 6px 16px 6px 6px;
+            min-width: max-content; cursor: pointer; flex-shrink: 0;
+        }
+        .collage-pill.active { background: #F0FDF4; border-color: #10B981; }
+        .collage-circle { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: #F1F5F9; border: 2px solid white; flex-shrink: 0; }
+        .collage-1 img { width: 100%; height: 100%; object-fit: cover; }
+        .collage-2 { display: flex; }
+        .collage-2 img { width: 50%; height: 100%; object-fit: cover; }
+        .collage-3 { display: flex; flex-wrap: wrap; }
+        .collage-3 img:first-child { width: 50%; height: 100%; object-fit: cover; }
+        .collage-3 div { width: 50%; height: 100%; display: flex; flex-direction: column; }
+        .collage-3 div img { width: 100%; height: 50%; object-fit: cover; }
+        .pill-text { font-weight: 700; font-size: 0.85rem; color: var(--color-text-main); }
+
+        /* Promo */
+        .promo-slider { display: flex; overflow-x: auto; gap: 1rem; margin-bottom: 2rem; width: 100%; }
+        .promo-card { min-width: 320px; height: 140px; border-radius: 16px; overflow: hidden; flex-shrink: 0; }
+        .promo-img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Shop Grid */
+        .shop-list { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 1rem; 
+            width: 100%;
+        }
+        .shop-card {
+            background: white; border-radius: 16px; padding: 12px;
+            display: flex; gap: 12px; box-shadow: var(--shadow-sm);
+            border: 1px solid var(--color-border); cursor: pointer;
+            align-items: center; overflow: hidden;
+        }
+        .shop-collage { width: 64px; height: 64px; border-radius: 12px; overflow: hidden; display: flex; flex-wrap: wrap; flex-shrink: 0; background: #F1F5F9; }
+        .shop-collage img { width: 50%; height: 50%; object-fit: cover; border: 0.5px solid white; }
+        .shop-collage.single img { width: 100%; height: 100%; border: none; }
+        .shop-details { flex: 1; overflow: hidden; min-width: 0; }
+
+        /* --- SERVICES GRID --- */
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+        .service-card {
+            background: white; border-radius: 16px; padding: 20px 12px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
+            cursor: pointer; transition: all 0.2s; height: 140px;
+        }
+        .service-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--color-purple); }
+        .service-icon-box {
+            width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin-bottom: 12px; font-size: 1.4rem;
+        }
+        .service-title { font-weight: 700; font-size: 0.95rem; color: var(--color-text-main); margin-bottom: 2px; }
+        .service-subtitle { font-size: 0.7rem; color: var(--color-text-muted); }
+
+        .bg-blue-light { background: #DBEAFE; color: #1D4ED8; }
+        .bg-green-light { background: #DCFCE7; color: #15803D; }
+        .bg-orange-light { background: #FFEDD5; color: #C2410C; }
+        .bg-red-light { background: #FEE2E2; color: #B91C1C; }
+        .bg-pink-light { background: #FCE7F3; color: #BE185D; }
+        .bg-teal-light { background: #CCFBF1; color: #0F766E; }
+        .bg-grey-light { background: #F1F5F9; color: #475569; }
+
+        /* --- NOTIFICATIONS --- */
+        .notif-list { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 600px; margin: 0 auto; }
+        .notif-card {
+            background: white; padding: 16px; border-radius: 12px;
+            border: 1px solid var(--color-border); box-shadow: var(--shadow-sm);
+            cursor: pointer; transition: background 0.2s; position: relative;
+        }
+        .notif-card.unread { background: #F0F9FF; border-color: #BAE6FD; }
+        .notif-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .notif-title { font-weight: 700; font-size: 0.95rem; color: var(--color-text-main); }
+        .notif-time { font-size: 0.75rem; color: var(--color-text-muted); }
+        .notif-body { font-size: 0.85rem; color: #475569; line-height: 1.4; padding-right: 20px; }
+        
+        .btn-notif-delete {
+            position: absolute; bottom: 12px; right: 12px;
+            background: none; border: none; color: #94A3B8;
+            cursor: pointer; font-size: 1rem; padding: 4px;
+        }
+        .btn-notif-delete:hover { color: #EF4444; }
+
+        .btn-clear-all {
+            display: flex; align-items: center; gap: 6px; 
+            color: #EF4444; font-weight: 700; font-size: 0.85rem; 
+            background: #FEF2F2; padding: 6px 12px; border-radius: 8px; 
+            border: none; cursor: pointer; margin-left: auto;
+        }
+
+        /* --- PROFILE --- */
+        .profile-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: var(--shadow-sm); max-width: 600px; margin: 0 auto; width: 100%; }
+        .profile-hero { display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem; }
+        .avatar-uploader { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
+        .main-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 0 0 2px var(--color-purple); }
+        .btn-cam { position: absolute; bottom: 0; right: 0; background: var(--color-purple); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; cursor: pointer; }
+        .form-grid { display: grid; gap: 1rem; width: 100%; }
+        .form-control { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid var(--color-border); font-size: 0.95rem; }
+        .btn-save { background: var(--color-purple); color: white; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; width: 100%; margin-top: 1rem; }
+
+        /* Utils */
+        .screen { display: none; animation: fadeIn 0.3s ease; width: 100%; }
+        .screen.active { display: block; }
+        .hidden { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- MOBILE RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .main-content { padding: 1rem; }
+            .greeting-text { display: none; }
+            .location-badge { padding: 4px 8px; font-size: 0.7rem; max-width: 80px; }
+            .pill-name { display: none; }
+            .user-pill { border: none; box-shadow: none; padding: 0; }
+            .ticker-container { margin: 0 8px; }
+            .shop-list { grid-template-columns: 1fr; }
+            .services-grid { grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+            .profile-card { padding: 1.5rem; }
+            .profile-hero { flex-direction: column; text-align: center; gap: 1rem; }
+        }
+    </style>
 </head>
 <body>
 
-<nav class="main-header">
-  <div class="container nav-container">
-    <a href="index.html" class="brand-wrapper">
-      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
-      <div class="marquee-container header-marquee-box">
-         <div class="marquee-content animate-brand-scroll desktop-menu">
-            <div class="flex items-center" style="display:flex; align-items:center; margin-right: 2.5rem;">
-                <span>CT-MERCHANT LTD.</span>
-                <div class="flag-icon">
-                    <div class="flag-stripe flag-green"></div><div class="flag-stripe flag-white"></div><div class="flag-stripe flag-green"></div>
-                </div>
-            </div>
-         </div>
-      </div>
-    </a>
+<div class="dashboard-container">
+    
+    <!-- Mobile Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-    <div class="desktop-menu">
-      <a href="index.html" class="nav-active">Home</a>
-      <a href="about.html">About</a>
-      <a href="services.html">Services</a>
-      <a href="contact.html">Contact</a>
-      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
-    </div>
-
-    <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
-      <i class="fa-solid fa-bars"></i>
-    </button>
-  </div>
-  <div class="mobile-dropdown hidden" id="mobile-menu">
-      <a href="index.html">Home</a><a href="services.html">Services</a><a href="contact.html">Contact</a><a href="staff-portal.html" class="btn-staff">Staff Portal</a>
-  </div>
-</nav>
-
-<section class="hero-section">
-  <div class="hero-image-wrapper">
-    <div class="hero-overlay"></div>
-    <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" class="hero-img">
-  </div>
-
-  <div class="hero-content">
-    <div class="animate-up visible">
-      
-      <div style="margin-bottom: 1.5rem;">
-        <span class="repo-badge">Repository of Shops, Products and Services</span>
-        
-        <!-- RESTORED: REPO SEARCH BOX -->
-        <div class="repo-search-wrapper">
-            <div style="position: relative;">
-                <input type="text" id="repo-search-input" placeholder="Enter Merchant ID..." class="repo-input"
-                       onkeypress="if(event.key === 'Enter') handleRepoSearch()">
-                <div class="search-icon-btn" onclick="handleRepoSearch()">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                </div>
-            </div>
-            <p class="id-hint">
-                <i class="fa-solid fa-circle-info"></i> Search by ID (e.g., CT-3945BOGD)
-            </p>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="sidebar-logo" alt="Logo">
+            <span class="brand-name">CT‑MERCHANT</span>
         </div>
 
-        <h1 class="hero-title" style="min-height: 80px;">
-           <span id="typewriter"></span><span class="cursor">|</span>
-        </h1>
-        <p class="hero-desc">We provide a digital repository of physical shops, their products, and locations within a city.</p>
+        <nav class="nav-menu">
+            <button class="nav-item active" onclick="switchTab('market', this)">
+                <i class="fa-solid fa-store"></i> Market Overview
+            </button>
+            <button class="nav-item" onclick="switchTab('services', this)">
+                <i class="fa-solid fa-table-cells-large"></i> Services
+            </button>
+            <button class="nav-item" onclick="switchTab('profile', this)">
+                <i class="fa-solid fa-user-gear"></i> My Profile
+            </button>
+            <button class="nav-item" onclick="switchTab('notifications', this)">
+                <i class="fa-solid fa-bell"></i> Notifications
+            </button>
+        </nav>
 
-        <!-- AUTH WIDGET -->
-        <div class="hero-auth-widget">
-            <div class="widget-title"><i class="fa-solid fa-lock"></i> Merchant Access</div>
-            <form onsubmit="event.preventDefault(); handleHeroLogin();">
-                <input type="email" id="hero-email" class="hero-input-login" placeholder="Email Address" required>
-                <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
-                <button type="submit" id="hero-login-btn" class="btn-login-hero">Secure Sign In <i class="fa-solid fa-arrow-right"></i></button>
-            </form>
-            <div class="widget-divider">New to CT-Merchant?</div>
-            <a href="create-account.html" class="btn-create-account">Create Free Account</a>
+        <div class="sidebar-footer">
+            <button class="nav-item btn-logout" onclick="handleLogout()">
+                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+            </button>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
+    </aside>
 
-<footer class="footer">
-  <div class="container footer-container">
-    <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
-    <div class="footer-links">
-      <a href="privacy.html">Privacy Policy</a>
-      <a href="terms.html">Terms of Use</a>
-      <span>RC: 8879163</span>
-    </div>
-  </div>
-</footer>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-left">
+                <button class="menu-btn" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h1 id="greeting-name" class="greeting-text">Hello User</h1>
+                
+                <!-- Notification Bell -->
+                <button class="notif-btn-top" onclick="switchTab('notifications', document.querySelectorAll('.nav-item')[3])">
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="unread-badge" class="notif-badge">0</span>
+                </button>
+            </div>
 
+            <!-- Ticker -->
+            <div id="announcement-box" class="ticker-container">
+                <div id="announcement-text" class="ticker"></div>
+            </div>
+            
+            <div class="top-right">
+                <div class="location-badge">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span id="current-city">...</span>
+                </div>
+                <div class="user-pill">
+                    <img id="top-avatar" src="" class="pill-avatar" alt="">
+                    <span id="top-name" class="pill-name">User</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 1: MARKET OVERVIEW -->
+        <div id="market" class="screen active">
+            <!-- Featured Shops -->
+            <div id="section-featured" class="section hidden">
+                <div class="section-header">
+                    <div class="bar" style="background: orange;"></div>
+                    <div class="section-title">Featured Shops</div>
+                </div>
+                <div id="featured-list" class="scroll-row"></div>
+            </div>
+
+            <!-- Categories -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="bar" style="background: var(--color-purple);"></div>
+                    <div class="section-title">Categories</div>
+                </div>
+                <div id="category-list" class="scroll-row"></div>
+            </div>
+
+            <!-- Promo Banners -->
+            <div id="section-promos" class="section hidden">
+                <div id="promo-list" class="promo-slider"></div>
+            </div>
+
+            <!-- Areas Near You -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="bar" style="background: #3B82F6;"></div>
+                    <div class="section-title">Areas Near You</div>
+                </div>
+                <div id="area-list" class="scroll-row"></div>
+            </div>
+
+            <!-- All Shops Grid -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="bar" style="background: #1E293B;"></div>
+                    <div class="section-title">All Shops <span id="shop-count" style="font-size: 0.9rem; color: var(--color-text-muted); font-weight: 500;"></span></div>
+                </div>
+                <div id="shop-list" class="shop-list">
+                    <p style="color: grey;">Loading marketplace data...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: SERVICES -->
+        <div id="services" class="screen">
+            <h2 class="section-title" style="margin-bottom: 20px;">Services & Tools</h2>
+            <div class="services-grid">
+                <!-- Shop Card -->
+                <div class="service-card" onclick="handleShopAction()">
+                    <div id="shop-icon-box" class="service-icon-box bg-grey-light">
+                        <i class="fa-solid fa-store"></i>
+                    </div>
+                    <div id="shop-card-title" class="service-title">Loading...</div>
+                    <div id="shop-card-sub" class="service-subtitle">Checking status</div>
+                </div>
+
+                <!-- Wishlist -->
+                <div class="service-card" onclick="window.location.href='wishlist.html'">
+                    <div class="service-icon-box bg-pink-light"><i class="fa-solid fa-heart"></i></div>
+                    <div class="service-title">Wishlist</div>
+                    <div id="wishlist-count" class="service-subtitle">...</div>
+                </div>
+
+                <!-- Help -->
+                <div class="service-card" onclick="window.location.href='help-support.html'">
+                    <div class="service-icon-box bg-green-light"><i class="fa-solid fa-headset"></i></div>
+                    <div class="service-title">Help & Support</div>
+                </div>
+
+                <!-- FAQ -->
+                <div class="service-card" onclick="window.location.href='faq.html'">
+                    <div class="service-icon-box bg-teal-light"><i class="fa-solid fa-circle-question"></i></div>
+                    <div class="service-title">FAQ</div>
+                </div>
+
+                <!-- Settings -->
+                <div class="service-card" onclick="switchTab('profile', document.querySelectorAll('.nav-item')[2])">
+                    <div class="service-icon-box bg-grey-light"><i class="fa-solid fa-gear"></i></div>
+                    <div class="service-title">Settings</div>
+                </div>
+
+                <!-- Report -->
+                <div class="service-card" onclick="window.location.href='report-abuse.html'">
+                    <div class="service-icon-box bg-red-light"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="service-title">Report Abuse</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: PROFILE EDITOR -->
+        <div id="profile" class="screen">
+            <div class="profile-card">
+                <div class="profile-hero">
+                    <div class="avatar-uploader">
+                        <img id="edit-avatar" src="" class="main-avatar" alt="Avatar">
+                        <label for="file-input" class="btn-cam"><i class="fa-solid fa-camera"></i></label>
+                        <input type="file" id="file-input" style="display: none;" accept="image/*" onchange="previewImage(this)">
+                    </div>
+                    <div class="hero-info">
+                        <h2 id="edit-display-name">User Profile</h2>
+                        <p id="edit-display-email">user@email.com</p>
+                    </div>
+                </div>
+                <form id="profile-form" onsubmit="saveProfile(event)">
+                    <div class="form-grid">
+                        <div>
+                            <label style="font-size:0.7rem; font-weight:700; color:#64748B;">FULL NAME</label>
+                            <input type="text" id="form-name" class="form-control" required style="margin-top:4px;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; font-weight:700; color:#64748B;">PHONE NUMBER</label>
+                            <input type="tel" id="form-phone" class="form-control" style="margin-top:4px;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; font-weight:700; color:#64748B;">CITY</label>
+                            <select id="form-city" class="form-control" required style="margin-top:4px;">
+                                <option value="" disabled selected>Loading...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; font-weight:700; color:#64748B;">AREA</label>
+                            <select id="form-area" class="form-control" required disabled style="margin-top:4px;">
+                                <option value="" disabled selected>Select city first</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" id="btn-submit" class="btn-save">Save Changes</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB 4: NOTIFICATIONS -->
+        <div id="notifications" class="screen">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; max-width:600px; margin:0 auto 1rem auto;">
+                <h2 class="section-title">Notifications</h2>
+                <button onclick="clearAllNotifications()" class="btn-clear-all"><i class="fa-solid fa-trash"></i> Clear All</button>
+            </div>
+            <div id="notif-list" class="notif-list">
+                <!-- JS populated -->
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Typewriter
-    const textElement = document.getElementById('typewriter');
-    const phrases = ["Your City's Digital Marketplace", "Find Verified Merchants", "Connect with Local Shops"];
-    let phraseIndex = 0; let charIndex = 0; let isDeleting = false;
+    let currentUser = null;
+    let selectedFile = null;
+    let myShop = null;
 
-    function typeEffect() {
-        const currentPhrase = phrases[phraseIndex];
-        if (isDeleting) {
-            textElement.textContent = currentPhrase.substring(0, charIndex - 1); charIndex--;
-        } else {
-            textElement.textContent = currentPhrase.substring(0, charIndex + 1); charIndex++;
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebar-overlay').classList.toggle('active');
+    }
+
+    window.onload = async () => {
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) { window.location.href = "login.html"; return; }
+        currentUser = session.user;
+
+        const cached = localStorage.getItem('dashboard_data_cache');
+        if (cached) {
+            const data = JSON.parse(cached);
+            renderDashboard(data);
+            renderProfileForms(data.profile); 
         }
-        if (!isDeleting && charIndex === currentPhrase.length) { isDeleting = true; setTimeout(typeEffect, 2000); return; }
-        if (isDeleting && charIndex === 0) { isDeleting = false; phraseIndex = (phraseIndex + 1) % phrases.length; }
-        setTimeout(typeEffect, isDeleting ? 50 : 100);
-    }
-    document.addEventListener('DOMContentLoaded', typeEffect);
+        
+        fetchFullData();
+        fetchShopStatus();
+        fetchWishlistCount();
+        fetchNotifications();
+    };
 
-    // Repo Search
-    function handleRepoSearch() {
-        const query = document.getElementById('repo-search-input').value.trim();
-        if(query) window.location.href = `reposearch.html?merchantId=${query}`;
-    }
-
-    // Login
-    async function handleHeroLogin() {
-        const email = document.getElementById('hero-email').value;
-        const password = document.getElementById('hero-password').value;
-        const btn = document.getElementById('hero-login-btn');
-        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...'; btn.disabled = true;
+    // --- MARKET FETCH ---
+    async function fetchFullData() {
         try {
-            const { error } = await client.auth.signInWithPassword({ email, password });
+            const [profileRes, citiesRes, announceRes, promoRes, catRes] = await Promise.all([
+                client.from('profiles').select('*, cities(name), areas(name)').eq('id', currentUser.id).maybeSingle(),
+                client.from('cities').select('id, name').order('name'),
+                client.from('announcements').select().order('created_at', { ascending: false }),
+                client.from('promo_banners').select().order('created_at', { ascending: false }),
+                client.from('categories').select().order('name')
+            ]);
+
+            if (!profileRes.data) return;
+
+            const cityId = profileRes.data.city_id;
+
+            const [areaRes, shopRes] = await Promise.all([
+                client.from('areas').select().eq('city_id', cityId).order('name'),
+                client.from('shops').select().eq('city_id', cityId).order('is_verified', { ascending: false })
+            ]);
+
+            let products = [];
+            if (shopRes.data && shopRes.data.length > 0) {
+                const shopIds = shopRes.data.map(s => s.id);
+                const prodRes = await client.from('products')
+                    .select('shop_id, image_url')
+                    .in('shop_id', shopIds)
+                    .eq('is_available', true)
+                    .order('created_at', { ascending: false });
+                products = prodRes.data || [];
+            }
+
+            populateCityDropdown(citiesRes.data, profileRes.data);
+
+            const dashboardData = {
+                profile: profileRes.data,
+                announcements: announceRes.data || [],
+                promos: promoRes.data || [],
+                categories: catRes.data || [],
+                areas: areaRes.data || [],
+                shops: shopRes.data || [],
+                products: products,
+                allCities: citiesRes.data
+            };
+
+            localStorage.setItem('dashboard_data_cache', JSON.stringify(dashboardData));
+            renderDashboard(dashboardData);
+            renderProfileForms(dashboardData.profile);
+
+        } catch (e) {
+            console.error("Fetch error", e);
+        }
+    }
+
+    // --- SERVICES FETCH ---
+    async function fetchShopStatus() {
+        try {
+            const { data } = await client.from('shops').select('*').eq('owner_id', currentUser.id).maybeSingle();
+            myShop = data;
+            renderShopCard(data);
+        } catch (e) { console.error(e); renderShopCard(null); }
+    }
+
+    async function fetchWishlistCount() {
+        const { count } = await client.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id);
+        document.getElementById('wishlist-count').textContent = `${count || 0} items`;
+    }
+
+    function renderShopCard(shop) {
+        const box = document.getElementById('shop-icon-box');
+        const title = document.getElementById('shop-card-title');
+        const sub = document.getElementById('shop-card-sub');
+        box.className = 'service-icon-box'; 
+
+        if (!shop) {
+            box.classList.add('bg-blue-light');
+            box.innerHTML = '<i class="fa-solid fa-store"></i>';
+            title.textContent = 'Register Shop';
+            sub.textContent = 'Start selling today';
+        } else if (shop.status === 'pending') {
+            box.classList.add('bg-orange-light');
+            box.innerHTML = '<i class="fa-solid fa-hourglass-half"></i>';
+            title.textContent = 'Pending Approval';
+            sub.textContent = 'Under review';
+        } else if (shop.status === 'approved') {
+            box.classList.add('bg-green-light');
+            box.innerHTML = '<i class="fa-solid fa-shop"></i>';
+            title.textContent = 'My Shop';
+            sub.textContent = 'Manage inventory';
+        } else if (shop.status === 'rejected') {
+            box.classList.add('bg-red-light');
+            box.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+            title.textContent = 'Action Required';
+            sub.textContent = 'Application rejected';
+        }
+    }
+
+    function handleShopAction() {
+        if (!myShop) {
+            window.location.href = "shop-registration.html";
+        } else if (myShop.status === 'pending') {
+            alert("Application Under Review\n\nYour shop application is currently being reviewed by our team. Please check back later.");
+        } else if (myShop.status === 'approved') {
+            window.location.href = "merchant-dashboard.html";
+        } else if (myShop.status === 'rejected') {
+            if(confirm("Your application was rejected. Would you like to view the reason and update it?")) {
+                window.location.href = `shop-registration.html?edit=true&id=${myShop.id}`;
+            }
+        }
+    }
+
+    // --- NOTIFICATIONS ---
+    async function fetchNotifications() {
+        try {
+            const { data } = await client.from('notifications')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+            
+            if(data) {
+                renderNotificationList(data);
+                
+                const unread = data.filter(n => !n.is_read).length;
+                const badge = document.getElementById('unread-badge');
+                badge.textContent = unread;
+                if(unread > 0) badge.classList.add('active');
+                else badge.classList.remove('active');
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    function renderNotificationList(items) {
+        const container = document.getElementById('notif-list');
+        if(items.length === 0) {
+            container.innerHTML = `<div style="text-align:center; padding:40px; color:#64748B;"><i class="fa-regular fa-bell-slash" style="font-size:40px;"></i><p style="margin-top:10px;">No notifications</p></div>`;
+            return;
+        }
+
+        container.innerHTML = items.map(n => `
+            <div class="notif-card ${!n.is_read ? 'unread' : ''}" onclick="markAsRead(${n.id})">
+                <div class="notif-header">
+                    <span class="notif-title">${n.title}</span>
+                    <span class="notif-time">${new Date(n.created_at).toLocaleDateString()}</span>
+                </div>
+                <div class="notif-body">${n.message}</div>
+                <button class="btn-notif-delete" onclick="event.stopPropagation(); deleteNotif(${n.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        `).join('');
+    }
+
+    async function markAsRead(id) {
+        await client.from('notifications').update({is_read: true}).eq('id', id);
+        fetchNotifications();
+    }
+    
+    // --- NEW: Mark All as Read Logic ---
+    async function markAllAsRead() {
+        const badge = document.getElementById('unread-badge');
+        badge.style.display = 'none'; // Visual reset
+        
+        // Remove unread style immediately
+        document.querySelectorAll('.notif-card.unread').forEach(card => card.classList.remove('unread'));
+
+        await client.from('notifications')
+            .update({ is_read: true })
+            .eq('user_id', currentUser.id)
+            .eq('is_read', false);
+        
+        // Refresh to be sure
+        fetchNotifications();
+    }
+
+    async function deleteNotif(id) {
+        if(confirm("Delete this notification?")) {
+            await client.from('notifications').delete().eq('id', id);
+            fetchNotifications();
+        }
+    }
+
+    async function clearAllNotifications() {
+        if(confirm("Delete ALL notifications? This cannot be undone.")) {
+            await client.from('notifications').delete().eq('user_id', currentUser.id);
+            fetchNotifications();
+        }
+    }
+
+    // --- RENDER LOGIC ---
+    function renderDashboard(data) {
+        const p = data.profile;
+        document.getElementById('greeting-name').textContent = `Hello, ${p.full_name.split(' ')[0]}`;
+        document.getElementById('current-city').textContent = p.cities?.name || "Locating...";
+        document.getElementById('top-name').textContent = p.full_name;
+        document.getElementById('top-avatar').src = p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name)}`;
+
+        if (data.announcements.length > 0) {
+            const text = data.announcements.map(a => a.message).join("  |  ");
+            document.getElementById('announcement-text').textContent = text;
+            document.getElementById('announcement-box').style.display = 'flex';
+        }
+
+        // FEATURED SHOPS
+        const featured = data.shops.filter(s => s.is_featured);
+        if (featured.length > 0) {
+            document.getElementById('section-featured').classList.remove('hidden');
+            document.getElementById('featured-list').innerHTML = featured.map(s => {
+                const collageHtml = buildShopThumbnail(s, data.products, 'featured'); 
+                return `
+                    <div class="featured-card" onclick="window.location.href='shop-detail.html?id=${s.id}'">
+                        ${collageHtml}
+                        <div class="featured-info">
+                            <div class="shop-name">${s.name} ${s.is_verified ? '<i class="fa-solid fa-circle-check" style="color:#3B82F6"></i>' : ''}</div>
+                            <div class="shop-meta"><span>${s.category}</span></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        renderCollageRow('category-list', data.categories, data.shops, data.products, 'category', null);
+
+        if (data.promos.length > 0) {
+            document.getElementById('section-promos').classList.remove('hidden');
+            document.getElementById('promo-list').innerHTML = data.promos.map(p => `
+                <div class="promo-card"><img src="${p.image_url}" class="promo-img"></div>
+            `).join('');
+        }
+
+        const activeAreas = data.areas.filter(a => data.shops.some(s => s.area_id === a.id));
+        renderCollageRow('area-list', activeAreas, data.shops, data.products, 'area', data.profile.area_id);
+
+        // ALL SHOPS
+        document.getElementById('shop-count').textContent = `${data.shops.length} Found`;
+        document.getElementById('shop-list').innerHTML = data.shops.map(s => {
+            const collageHtml = buildShopThumbnail(s, data.products, 'shop');
+            return `
+                <div class="shop-card" onclick="window.location.href='shop-detail.html?id=${s.id}'">
+                    ${collageHtml}
+                    <div class="shop-details">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="font-weight:700; font-size:0.95rem;">${s.name}</span>
+                            ${s.is_verified ? '<i class="fa-solid fa-certificate" style="color:orange; font-size:0.8rem;"></i>' : ''}
+                        </div>
+                        <span class="shop-cat">${s.category}</span>
+                        <div class="shop-addr"><i class="fa-solid fa-location-dot" style="font-size:0.7rem; color:grey;"></i> ${s.address}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function buildShopThumbnail(shop, allProducts, type) {
+        const shopProducts = allProducts.filter(p => p.shop_id === shop.id && p.image_url).slice(0, 4);
+        const images = shopProducts.map(p => p.image_url);
+
+        const className = type === 'featured' ? 'featured-collage' : 'shop-collage';
+        const style = type === 'shop' ? 'width:64px;height:64px;' : ''; 
+
+        if (images.length === 0) {
+            const fallback = shop.image_url || shop.store_front_url || 'https://via.placeholder.com/60';
+            return `<img src="${fallback}" class="${className} single" style="${style}border-radius:12px;object-fit:cover;">`;
+        }
+
+        let innerHtml = '';
+        for (let i = 0; i < 4; i++) {
+            if (images[i]) {
+                innerHtml += `<img src="${images[i]}">`;
+            } else {
+                innerHtml += `<div style="width:50%;height:50%;background:#e2e8f0;"></div>`;
+            }
+        }
+        return `<div class="${className}" style="${style}">${innerHtml}</div>`;
+    }
+
+    function renderCollageRow(elementId, items, shops, products, type, activeId) {
+        const container = document.getElementById(elementId);
+        container.innerHTML = items.map(item => {
+            let imageUrls = [];
+            const shopIds = shops.filter(s => type === 'category' ? s.category === item.name : s.area_id === item.id).map(s => s.id);
+            imageUrls = products.filter(p => shopIds.includes(p.shop_id) && p.image_url).map(p => p.image_url).slice(0, 3);
+
+            return `
+                <div class="collage-pill ${item.id === activeId ? 'active' : ''}">
+                    ${buildCollage(imageUrls)}
+                    <span class="pill-text">${item.name}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function buildCollage(images) {
+        if (images.length === 0) return `<div class="collage-circle" style="display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#cbd5e1;"></i></div>`;
+        if (images.length === 1) return `<div class="collage-circle collage-1"><img src="${images[0]}"></div>`;
+        if (images.length === 2) return `<div class="collage-circle collage-2"><img src="${images[0]}"><img src="${images[1]}"></div>`;
+        return `<div class="collage-circle collage-3"><img src="${images[0]}"><div><img src="${images[1]}"><img src="${images[2]}"></div></div>`;
+    }
+
+    function renderProfileForms(p) {
+        const avatar = p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name)}`;
+        document.getElementById('edit-display-name').textContent = p.full_name;
+        document.getElementById('edit-display-email').textContent = currentUser.email;
+        document.getElementById('edit-avatar').src = avatar;
+        
+        document.getElementById('form-name').value = p.full_name;
+        document.getElementById('form-phone').value = p.phone || "";
+    }
+
+    function populateCityDropdown(cities, profile) {
+        const sel = document.getElementById('form-city');
+        sel.innerHTML = '<option value="" disabled>Select City</option>';
+        cities.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.name;
+            if (c.id === profile.city_id) opt.selected = true;
+            sel.appendChild(opt);
+        });
+        if (profile.city_id) fetchAreasForProfile(profile.city_id, profile.area_id);
+    }
+
+    async function fetchAreasForProfile(cityId, preselectId = null) {
+        const sel = document.getElementById('form-area');
+        sel.disabled = false;
+        sel.innerHTML = '<option>Loading...</option>';
+        const { data } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+        
+        sel.innerHTML = '<option value="" disabled selected>Select Area</option>';
+        data.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.id;
+            opt.textContent = a.name;
+            if (a.id === preselectId) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    }
+
+    document.getElementById('form-city').addEventListener('change', (e) => fetchAreasForProfile(e.target.value));
+
+    function switchTab(screenId, btn) {
+        if(window.innerWidth <= 1024) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-overlay').classList.remove('active');
+        }
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        btn.classList.add('active');
+        
+        // Mark as read when switching to notifications
+        if (screenId === 'notifications') {
+            markAllAsRead();
+        }
+    }
+
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            selectedFile = input.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => document.getElementById('edit-avatar').src = e.target.result;
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function saveProfile(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-submit');
+        btn.disabled = true; btn.textContent = 'Saving...';
+
+        try {
+            let avatarUrl = document.getElementById('edit-avatar').src;
+            if (selectedFile) {
+                const fileName = `${currentUser.id}_${Date.now()}.${selectedFile.name.split('.').pop()}`;
+                await client.storage.from('avatars').upload(fileName, selectedFile, { upsert: true });
+                const { data } = client.storage.from('avatars').getPublicUrl(fileName);
+                avatarUrl = data.publicUrl;
+            }
+
+            const updates = {
+                full_name: document.getElementById('form-name').value,
+                phone: document.getElementById('form-phone').value,
+                city_id: document.getElementById('form-city').value,
+                area_id: document.getElementById('form-area').value,
+                avatar_url: avatarUrl
+            };
+
+            const { error } = await client.from('profiles').update(updates).eq('id', currentUser.id);
             if (error) throw error;
-            window.location.href = "user-dashboard.html";
+
+            alert("Saved!");
+            fetchFullData();
         } catch (err) {
-            alert(err.message);
-            btn.innerHTML = 'Secure Sign In <i class="fa-solid fa-arrow-right"></i>'; btn.disabled = false;
+            alert("Error: " + err.message);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Save Changes';
+        }
+    }
+
+    async function handleLogout() {
+        if (confirm("Log out?")) {
+            localStorage.clear();
+            await client.auth.signOut();
+            window.location.href = "index.html";
         }
     }
 </script>
