@@ -10,385 +10,357 @@
     
     <style>
         :root {
-            --color-purple: #2E1065;
-            --color-purple-light: #5B21B6;
+            /* Theme Colors matching AppColors */
+            --color-primary: #2E1065; /* App Primary */
             --color-pink: #DB2777;
             --color-bg: #F8FAFC;
-            --color-card: #FFFFFF;
-            --color-border: #E2E8F0;
+            --color-white: #FFFFFF;
             --color-text-main: #1E293B;
             --color-text-muted: #64748B;
-            --sidebar-width: 260px;
+            --color-border: #E2E8F0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
 
-        html, body {
+        body { 
             background-color: var(--color-bg); 
-            color: var(--color-text-main);
+            color: var(--color-text-main); 
             overflow-x: hidden; 
-            overflow-y: auto;
             min-height: 100vh;
-            width: 100%;
         }
 
-        body { display: flex; }
-
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--color-purple);
+        /* --- 1. APP BAR (Matches Flutter Scaffold AppBar) --- */
+        .app-bar {
+            background-color: var(--color-primary);
             color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-bar-content {
             display: flex;
-            flex-direction: column;
-            padding: 2rem 1.5rem;
-            position: fixed;
-            top: 0; left: 0; bottom: 0;
-            z-index: 2000;
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow-y: auto;
-        }
-        .sidebar.open { transform: translateX(0); }
-
-        .sidebar-overlay {
-            position: fixed; inset: 0;
-            background: rgba(15, 23, 42, 0.6);
-            z-index: 1500;
-            opacity: 0; visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .sidebar-overlay.active { opacity: 1; visibility: visible; }
-
-        .sidebar-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 2.5rem; }
-        .sidebar-logo { width: 32px; height: 32px; border-radius: 8px; }
-        .brand-name { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px; }
-
-        .nav-menu { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; }
-        .nav-item {
-            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-            border-radius: 12px; color: rgba(255,255,255,0.7); text-decoration: none;
-            font-weight: 600; font-size: 0.9rem; transition: all 0.2s;
-            cursor: pointer; border: none; background: none; width: 100%; text-align: left;
-        }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: white; }
-        .nav-item.active { background: var(--color-pink); }
-        .nav-item i { width: 24px; text-align: center; font-size: 1.1rem; }
-
-        .sidebar-footer { margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); }
-        .btn-logout { color: #FDA4AF; width: 100%; text-align: left; }
-
-        /* --- MAIN CONTENT --- */
-        .main-content {
-            margin-left: 0;
-            width: 100%;
-            flex-grow: 1;
-            padding-bottom: 2rem;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* --- APP LIKE TOP BAR --- */
-        .app-bar-container {
-            position: sticky; top: 0; z-index: 900;
-            background: var(--color-purple);
-            color: white;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
-
-        .top-row {
-            display: flex; align-items: center; justify-content: space-between;
+            align-items: center;
+            justify-content: space-between;
             padding: 12px 16px;
             height: 60px;
         }
 
-        .left-actions { display: flex; align-items: center; gap: 16px; }
-        .right-actions { display: flex; align-items: center; gap: 4px; }
+        .app-bar-title {
+            font-weight: 800;
+            font-size: 1.1rem;
+            flex-grow: 1;
+            margin-left: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
         .icon-btn {
-            background: transparent; border: none; color: white;
-            width: 40px; height: 40px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; cursor: pointer; transition: background 0.2s;
+            background: none; border: none; color: white;
+            font-size: 1.25rem; cursor: pointer; padding: 8px;
+            position: relative; display: flex; align-items: center; justify-content: center;
         }
-        .icon-btn:hover { background: rgba(255,255,255,0.1); }
-
-        .city-title { font-weight: 700; font-size: 1.1rem; letter-spacing: 0.5px; }
+        
+        .profile-avatar-small {
+            width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; object-fit: cover;
+        }
 
         .notif-badge {
-            position: absolute; top: 8px; right: 8px;
-            background: #EF4444; color: white; font-size: 0.6rem;
-            width: 14px; height: 14px; border-radius: 50%;
+            position: absolute; top: 4px; right: 4px;
+            background: #EF4444; color: white;
+            font-size: 0.6rem; font-weight: 800;
+            width: 16px; height: 16px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 800; border: 1px solid var(--color-purple);
-            display: none;
+            border: 1px solid white; display: none;
         }
-        .notif-badge.active { display: flex; }
 
-        .profile-img-header { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.5); }
-
-        /* Announcement Bar */
+        /* --- 2. ANNOUNCEMENT TICKER --- */
         .ticker-wrap {
-            background: white; color: var(--color-purple);
-            padding: 8px 0; overflow: hidden; white-space: nowrap;
-            border-bottom: 1px solid var(--color-border);
-            display: none; font-size: 0.85rem; font-weight: 600;
+            background: #FFF7ED; color: #C2410C;
+            border-bottom: 1px solid #FFEDD5;
+            overflow: hidden; white-space: nowrap;
+            height: 36px; display: none; /* Hidden if empty */
+            align-items: center;
         }
-        .ticker { display: inline-block; animation: ticker 40s linear infinite; padding-left: 100%; }
+        .ticker-content {
+            display: inline-block;
+            padding-left: 100%;
+            animation: ticker 40s linear infinite;
+            font-size: 0.85rem; font-weight: 600;
+        }
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
-        /* --- CONTENT PADDING --- */
-        .content-scroll { padding: 12px 16px; }
+        /* --- 3. MAIN CONTENT LAYOUT --- */
+        .content-container {
+            padding: 16px;
+            padding-bottom: 80px;
+        }
 
-        /* --- SCROLL ROWS --- */
-        .section-header { display: flex; align-items: center; margin: 20px 0 10px 0; }
-        .bar { width: 4px; height: 20px; border-radius: 2px; margin-right: 10px; }
+        .section-header {
+            display: flex; align-items: center; margin: 20px 0 10px 0;
+        }
+        .bar { width: 4px; height: 24px; margin-right: 8px; border-radius: 2px; }
         .section-title { font-size: 1.1rem; font-weight: 800; color: var(--color-text-main); }
 
-        .scroll-row {
-            display: flex; overflow-x: auto; gap: 12px; padding-bottom: 8px;
+        /* Horizontal Scroll Wrapper */
+        .h-scroll {
+            display: flex; overflow-x: auto; gap: 12px; padding-bottom: 4px;
             scrollbar-width: none; -webkit-overflow-scrolling: touch;
         }
 
-        /* --- LARGE SHOP CARD (APP STYLE) --- */
-        .shop-card-large {
-            background: white; border-radius: 16px; overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        /* --- 4. SHOP CARD (The "Phone Grid Layout") --- */
+        /* Used for both Featured and All Shops */
+        .shop-card {
+            background: white; border-radius: 12px;
             border: 1px solid var(--color-border);
-            margin-bottom: 16px; cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            flex-shrink: 0;
+            cursor: pointer;
             transition: transform 0.2s;
         }
-        .shop-card-large:hover { transform: translateY(-4px); border-color: var(--color-purple); }
+        /* Featured is horizontal scroll */
+        .shop-card.featured { width: 300px; } 
+        /* All Shops is vertical list */
+        .shop-card.vertical { width: 100%; margin-bottom: 16px; }
 
-        .card-header {
-            padding: 12px; display: flex; align-items: center; gap: 12px;
-            border-bottom: 1px solid #F1F5F9;
+        .sc-header {
+            padding: 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #F1F5F9;
         }
-        .header-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #F1F5F9; }
-        .header-info { flex: 1; }
-        .header-name { font-weight: 700; font-size: 1rem; color: var(--color-text-main); display: flex; align-items: center; gap: 4px; }
-        .header-id { font-size: 0.75rem; color: var(--color-purple); background: #F3E8FF; padding: 2px 6px; border-radius: 4px; display: inline-block; font-weight: 700; }
-        
-        /* 2x2 Grid */
-        .card-grid {
+        .sc-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #F1F5F9; }
+        .sc-info { flex: 1; overflow: hidden; }
+        .sc-name { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sc-badges { display: flex; gap: 4px; align-items: center; margin-top: 2px; }
+        .badge-verified { color: #3B82F6; font-size: 0.8rem; }
+        .badge-id { background: #F3E8FF; color: var(--color-purple); font-size: 0.65rem; padding: 1px 6px; border-radius: 4px; font-weight: 700; }
+
+        /* THE 4-PRODUCT GRID */
+        .sc-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
-            height: 240px; background: #F1F5F9;
+            height: 220px; background: #E2E8F0;
         }
-        .card-grid img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .card-footer {
-            padding: 12px; display: flex; justify-content: space-between; align-items: center;
-            background: white;
-        }
-        .footer-addr { font-size: 0.8rem; color: var(--color-text-muted); display: flex; align-items: center; gap: 6px; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .footer-btn { font-size: 0.85rem; font-weight: 700; color: var(--color-purple); }
+        .sc-grid img { width: 100%; height: 100%; object-fit: cover; }
+        .sc-grid.single img { object-fit: cover; } /* For single banner fallback */
 
-        /* Featured Card (Horizontal) */
-        .featured-card {
-            min-width: 280px; background: white; border-radius: 12px; padding: 10px;
-            box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
-            cursor: pointer; display: flex; gap: 10px; align-items: center; flex-shrink: 0;
+        .sc-footer {
+            padding: 10px; display: flex; justify-content: space-between; align-items: center;
         }
-        .featured-collage { width: 60px; height: 60px; border-radius: 8px; overflow: hidden; display: flex; flex-wrap: wrap; flex-shrink: 0; background: #F1F5F9; }
-        .featured-collage img { width: 50%; height: 50%; object-fit: cover; border: 0.5px solid white; }
-        .featured-info { flex: 1; overflow: hidden; }
-        .f-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .f-cat { font-size: 0.7rem; color: var(--color-text-muted); }
+        .sc-address { font-size: 0.75rem; color: var(--color-text-muted); display: flex; align-items: center; gap: 4px; max-width: 65%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sc-visit { font-size: 0.8rem; font-weight: 700; color: var(--color-primary); }
 
-        /* Collage Pills (Categories/Areas) */
-        .collage-pill {
-            display: flex; align-items: center; gap: 10px;
+        /* --- 5. CATEGORY & AREA PILLS (Collage Avatar) --- */
+        .pill-card {
             background: white; border: 1px solid var(--color-border);
-            border-radius: 50px; padding: 5px 16px 5px 5px;
-            min-width: max-content; cursor: pointer; flex-shrink: 0;
+            border-radius: 50px; padding: 4px 16px 4px 4px;
+            display: flex; align-items: center; gap: 10px;
+            min-width: max-content; cursor: pointer;
         }
-        .collage-pill:hover { border-color: var(--color-purple); }
-        .c-circle { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #F1F5F9; flex-shrink: 0; }
-        .c-circle img { width: 100%; height: 100%; object-fit: cover; }
-        .c-text { font-weight: 700; font-size: 0.85rem; color: var(--color-text-main); }
-
-        /* Services Grid */
-        .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem; }
-        .service-card {
-            background: white; border-radius: 16px; padding: 20px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-            box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
-            cursor: pointer; transition: all 0.2s; height: 140px;
-        }
-        .service-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-        .service-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 12px; }
         
-        .bg-blue-light { background: #DBEAFE; color: #1D4ED8; }
-        .bg-green-light { background: #DCFCE7; color: #15803D; }
-        .bg-orange-light { background: #FFEDD5; color: #C2410C; }
-        .bg-red-light { background: #FEE2E2; color: #B91C1C; }
-        .bg-pink-light { background: #FCE7F3; color: #BE185D; }
-        .bg-teal-light { background: #CCFBF1; color: #0F766E; }
-        .bg-grey-light { background: #F1F5F9; color: #475569; }
-
-        /* Notification List */
-        .notif-list { max-width: 600px; margin: 0 auto; }
-        .notif-card { background: white; padding: 16px; border-radius: 12px; border: 1px solid var(--color-border); margin-bottom: 12px; cursor: pointer; }
-        .notif-card.unread { background: #F0F9FF; border-color: #BAE6FD; }
-
-        /* Profile Styles */
-        .profile-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: var(--shadow-sm); max-width: 600px; margin: 0 auto; }
-        .avatar-uploader { position: relative; width: 100px; height: 100px; margin: 0 auto 20px auto; }
-        .main-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-        .form-control { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--color-border); margin-bottom: 16px; }
-        .btn-save { width: 100%; padding: 14px; background: var(--color-purple); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
-
-        /* Utility */
-        .screen { display: none; animation: fadeIn 0.3s ease; }
-        .screen.active { display: block; }
-        .hidden { display: none !important; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Desktop Grid for Shops */
-        @media (min-width: 1024px) {
-            .shop-grid-container {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                gap: 20px;
-            }
+        .collage-avatar {
+            width: 48px; height: 48px; border-radius: 50%; overflow: hidden;
+            background: #F1F5F9; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
+        /* CSS Collage Logic */
+        .c-1 img { width: 100%; height: 100%; object-fit: cover; }
+        .c-2 { display: flex; }
+        .c-2 img { width: 50%; height: 100%; object-fit: cover; }
+        .c-3 { display: flex; flex-wrap: wrap; }
+        .c-3 img:first-child { width: 50%; height: 100%; object-fit: cover; }
+        .c-3 div { width: 50%; height: 100%; display: flex; flex-direction: column; }
+        .c-3 div img { width: 100%; height: 50%; object-fit: cover; }
+
+        .pill-text { font-weight: 700; font-size: 0.9rem; color: var(--color-text-main); }
+
+        /* --- 6. PROMO SLIDER --- */
+        .promo-card {
+            min-width: 300px; height: 150px; border-radius: 12px; overflow: hidden;
+            flex-shrink: 0; box-shadow: var(--shadow-sm);
+        }
+        .promo-img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* --- 7. SERVICES GRID (Menu Screen) --- */
+        .services-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; }
+        .svc-card {
+            background: white; border-radius: 16px; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
+            aspect-ratio: 1.3; justify-content: center; cursor: pointer;
+        }
+        .svc-icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 12px; }
+        .svc-title { font-weight: 700; font-size: 0.95rem; color: var(--color-text-main); }
+        .svc-sub { font-size: 0.7rem; color: var(--color-text-muted); margin-top: 4px; }
+        
+        .bg-blue-soft { background: #DBEAFE; color: #1D4ED8; }
+        .bg-orange-soft { background: #FFEDD5; color: #C2410C; }
+        .bg-green-soft { background: #DCFCE7; color: #15803D; }
+        .bg-red-soft { background: #FEE2E2; color: #B91C1C; }
+        .bg-pink-soft { background: #FCE7F3; color: #BE185D; }
+        .bg-grey-soft { background: #F1F5F9; color: #475569; }
+
+        /* --- UTILS --- */
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .hidden { display: none !important; }
+        .loading-container { display: flex; justify-content: center; padding: 40px; color: #94A3B8; }
+
+        /* --- PROFILE --- */
+        .profile-container { padding: 20px; max-width: 600px; margin: 0 auto; }
+        .form-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--color-border); margin-bottom: 16px; display: block; }
+        .btn-primary { width: 100%; padding: 14px; background: var(--color-primary); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="dashboard-container">
-    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<!-- APP BAR -->
+<div class="app-bar">
+    <div class="app-bar-content">
+        <!-- Menu Toggle (Left) -->
+        <button class="icon-btn" onclick="switchTab('services')">
+            <i class="fa-solid fa-grid-2"></i> <!-- Services Icon -->
+        </button>
 
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="sidebar-logo" alt="Logo">
-            <span class="brand-name">CT‑MERCHANT</span>
-        </div>
-        <nav class="nav-menu">
-            <button class="nav-item active" onclick="switchTab('market', this)"><i class="fa-solid fa-store"></i> Market Overview</button>
-            <button class="nav-item" onclick="switchTab('services', this)"><i class="fa-solid fa-grid"></i> Services</button>
-            <button class="nav-item" onclick="switchTab('profile', this)"><i class="fa-solid fa-user-gear"></i> My Profile</button>
-            <button class="nav-item" onclick="switchTab('notifications', this)"><i class="fa-solid fa-bell"></i> Notifications</button>
-        </nav>
-        <div class="sidebar-footer">
-            <button class="nav-item btn-logout" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
-        </div>
-    </aside>
+        <!-- City Name (Center) -->
+        <span class="app-bar-title" id="app-bar-city">Loading...</span>
 
-    <div class="main-content">
-        
-        <!-- App Bar -->
-        <div class="app-bar-container">
-            <div class="top-row">
-                <div class="left-actions">
-                    <button class="icon-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-                    <span class="city-title" id="current-city">Loading...</span>
-                </div>
-                <div class="right-actions">
-                    <button class="icon-btn" onclick="openShopIndex()"><i class="fa-solid fa-arrow-down-a-z"></i></button>
-                    <button class="icon-btn" style="position: relative;" onclick="switchTab('notifications', document.querySelectorAll('.nav-item')[3])">
-                        <i class="fa-solid fa-bell"></i>
-                        <span id="unread-badge" class="notif-badge">0</span>
-                    </button>
-                    <button class="icon-btn" onclick="switchTab('profile', document.querySelectorAll('.nav-item')[2])">
-                        <img id="top-avatar" class="profile-img-header" src="">
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Announcement Ticker -->
-            <div id="announcement-box" class="ticker-wrap">
-                <div id="announcement-text" class="ticker"></div>
-            </div>
-        </div>
-
-        <div class="content-scroll">
-
-            <!-- TAB 1: MARKET -->
-            <div id="market" class="screen active">
-                
-                <!-- Featured -->
-                <div id="section-featured" class="hidden">
-                    <div class="section-header"><div class="bar" style="background: orange;"></div><div class="section-title">Featured Shops</div></div>
-                    <div id="featured-list" class="scroll-row"></div>
-                </div>
-
-                <!-- Categories -->
-                <div class="section-header"><div class="bar" style="background: var(--color-purple);"></div><div class="section-title">Categories</div></div>
-                <div id="category-list" class="scroll-row"></div>
-
-                <!-- Promo -->
-                <div id="section-promos" class="hidden" style="margin-top:20px;">
-                    <div id="promo-list" class="promo-slider"></div>
-                </div>
-
-                <!-- Areas -->
-                <div class="section-header" style="margin-top:20px;"><div class="bar" style="background: #3B82F6;"></div><div class="section-title">Areas Near You</div></div>
-                <div id="area-list" class="scroll-row"></div>
-
-                <!-- All Shops (Large Cards) -->
-                <div class="section-header" style="margin-top:20px;">
-                    <div class="bar" style="background: #1E293B;"></div>
-                    <div class="section-title">All Shops <span id="shop-count" style="font-size:0.9rem; color:#64748B;"></span></div>
-                </div>
-                
-                <div id="shop-list" class="shop-grid-container">
-                    <p style="color: grey;">Loading shops...</p>
-                </div>
-
-            </div>
-
-            <!-- TAB 2: SERVICES -->
-            <div id="services" class="screen">
-                <h2 class="section-title" style="margin-bottom: 20px;">Services & Tools</h2>
-                <div class="services-grid">
-                    <div class="service-card" onclick="handleShopAction()">
-                        <div id="shop-icon-box" class="service-icon bg-grey-light"><i class="fa-solid fa-store"></i></div>
-                        <div id="shop-card-title" class="service-title">Loading...</div>
-                    </div>
-                    <div class="service-card" onclick="alert('Coming Soon')">
-                        <div class="service-icon bg-pink-light"><i class="fa-solid fa-heart"></i></div>
-                        <div class="service-title">Wishlist <span id="wishlist-count" style="font-size:0.7rem; display:block; font-weight:400;">...</span></div>
-                    </div>
-                    <div class="service-card" onclick="alert('Coming Soon')"><div class="service-icon bg-green-light"><i class="fa-solid fa-headset"></i></div><div class="service-title">Help</div></div>
-                    <div class="service-card" onclick="alert('Coming Soon')"><div class="service-icon bg-teal-light"><i class="fa-solid fa-circle-question"></i></div><div class="service-title">FAQ</div></div>
-                    <div class="service-card" onclick="switchTab('profile', document.querySelectorAll('.nav-item')[2])"><div class="service-icon bg-grey-light"><i class="fa-solid fa-gear"></i></div><div class="service-title">Settings</div></div>
-                    <div class="service-card" onclick="alert('Coming Soon')"><div class="service-icon bg-red-light"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="service-title">Report</div></div>
-                </div>
-            </div>
-
-            <!-- TAB 3: PROFILE -->
-            <div id="profile" class="screen">
-                <div class="profile-card">
-                    <div class="avatar-uploader">
-                        <img id="edit-avatar" src="" class="main-avatar">
-                        <label for="file-input" class="btn-cam"><i class="fa-solid fa-camera"></i></label>
-                        <input type="file" id="file-input" style="display: none;" onchange="previewImage(this)">
-                    </div>
-                    <h2 style="text-align:center; margin-bottom:20px;" id="edit-display-name">User</h2>
-                    <form onsubmit="saveProfile(event)">
-                        <input type="text" id="form-name" class="form-control" placeholder="Full Name" required>
-                        <input type="tel" id="form-phone" class="form-control" placeholder="Phone">
-                        <select id="form-city" class="form-control" required></select>
-                        <select id="form-area" class="form-control" required disabled></select>
-                        <button type="submit" id="btn-submit" class="btn-save">Save Changes</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- TAB 4: NOTIFICATIONS -->
-            <div id="notifications" class="screen">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; max-width:600px; margin:0 auto;">
-                    <h2 class="section-title">Notifications</h2>
-                    <button onclick="clearAllNotifications()" style="color:#EF4444; background:none; border:none; font-weight:700; cursor:pointer;">Clear All</button>
-                </div>
-                <div id="notif-list" class="notif-list"></div>
-            </div>
-
+        <!-- Actions (Right) -->
+        <div style="display: flex; align-items: center; gap: 4px;">
+            <button class="icon-btn" onclick="openShopIndex()">
+                <i class="fa-solid fa-arrow-down-a-z"></i>
+            </button>
+            <button class="icon-btn" onclick="switchTab('notifications')">
+                <i class="fa-regular fa-bell"></i>
+                <span id="notif-badge" class="notif-badge">0</span>
+            </button>
+            <button class="icon-btn" onclick="switchTab('profile')">
+                <img id="header-avatar" class="profile-avatar-small" src="">
+            </button>
         </div>
     </div>
+</div>
+
+<!-- ANNOUNCEMENT TICKER -->
+<div id="ticker-wrap" class="ticker-wrap">
+    <div id="ticker-text" class="ticker-content"></div>
+</div>
+
+<!-- CONTENT AREA -->
+<div class="content-container">
+
+    <!-- 1. HOME SCREEN -->
+    <div id="screen-home" class="screen active">
+        
+        <!-- Featured Shops -->
+        <div id="section-featured" class="hidden">
+            <div class="section-header">
+                <div class="bar" style="background: orange;"></div>
+                <div class="section-title">Featured Shops</div>
+            </div>
+            <div id="list-featured" class="h-scroll"></div>
+        </div>
+
+        <!-- Categories -->
+        <div class="section-header">
+            <div class="bar" style="background: var(--color-primary);"></div>
+            <div class="section-title">Categories</div>
+        </div>
+        <div id="list-categories" class="h-scroll"></div>
+
+        <!-- Promos -->
+        <div id="section-promos" class="hidden" style="margin-top:20px;">
+            <div id="list-promos" class="h-scroll"></div>
+        </div>
+
+        <!-- Areas -->
+        <div class="section-header" style="margin-top:20px;">
+            <div class="bar" style="background: #3B82F6;"></div>
+            <div class="section-title">Areas Near You</div>
+        </div>
+        <div id="list-areas" class="h-scroll"></div>
+
+        <!-- All Shops -->
+        <div class="section-header" style="margin-top:20px;">
+            <div class="bar" style="background: #1E293B;"></div>
+            <div class="section-title">All Shops <span id="shop-count" style="font-size:0.9rem; color:#64748B; font-weight:400;"></span></div>
+        </div>
+        <div id="list-shops" style="display: flex; flex-direction: column; gap: 16px;">
+            <div class="loading-container"><i class="fa-solid fa-spinner fa-spin"></i></div>
+        </div>
+    </div>
+
+    <!-- 2. SERVICES (MENU) SCREEN -->
+    <div id="screen-services" class="screen">
+        <h2 style="margin: 0 0 16px 8px; font-size: 1.2rem; color: var(--color-text-main);">Services & Tools</h2>
+        <div class="services-grid">
+            <!-- Shop Status Card -->
+            <div class="svc-card" onclick="handleShopAction()">
+                <div id="svc-shop-icon" class="svc-icon bg-grey-soft"><i class="fa-solid fa-store"></i></div>
+                <div id="svc-shop-title" class="svc-title">Loading...</div>
+                <div id="svc-shop-sub" class="svc-sub">Checking status</div>
+            </div>
+
+            <!-- Wishlist -->
+            <div class="svc-card" onclick="alert('Wishlist Page Coming Soon')">
+                <div class="svc-icon bg-pink-soft"><i class="fa-solid fa-heart"></i></div>
+                <div class="svc-title">Wishlist</div>
+                <div id="svc-wishlist-count" class="svc-sub">0 items</div>
+            </div>
+
+            <!-- Help -->
+            <div class="svc-card"><div class="svc-icon bg-green-soft"><i class="fa-solid fa-headset"></i></div><div class="svc-title">Help</div></div>
+            
+            <!-- FAQ -->
+            <div class="svc-card"><div class="svc-icon bg-teal-soft"><i class="fa-solid fa-circle-question"></i></div><div class="svc-title">FAQ</div></div>
+            
+            <!-- Settings -->
+            <div class="svc-card" onclick="switchTab('profile')"><div class="svc-icon bg-grey-soft"><i class="fa-solid fa-gear"></i></div><div class="svc-title">Settings</div></div>
+            
+            <!-- Report -->
+            <div class="svc-card"><div class="svc-icon bg-red-soft"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="svc-title">Report</div></div>
+        </div>
+    </div>
+
+    <!-- 3. PROFILE SCREEN -->
+    <div id="screen-profile" class="screen">
+        <div class="profile-container" style="background:white; border-radius:16px; box-shadow:var(--shadow-sm);">
+            <div style="text-align:center; margin-bottom:24px;">
+                <img id="profile-avatar-large" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:4px solid var(--color-primary); margin-bottom:12px;">
+                <h2 id="profile-name">User</h2>
+                <p id="profile-email" style="color:#64748B; font-size:0.9rem;"></p>
+            </div>
+            
+            <form onsubmit="saveProfile(event)">
+                <label style="font-size:0.8rem; font-weight:700; color:#64748B;">FULL NAME</label>
+                <input id="inp-name" class="form-input" required>
+                
+                <label style="font-size:0.8rem; font-weight:700; color:#64748B;">PHONE</label>
+                <input id="inp-phone" class="form-input">
+
+                <label style="font-size:0.8rem; font-weight:700; color:#64748B;">CITY</label>
+                <select id="inp-city" class="form-input" onchange="fetchAreasForProfile(this.value)"></select>
+
+                <label style="font-size:0.8rem; font-weight:700; color:#64748B;">AREA</label>
+                <select id="inp-area" class="form-input" disabled></select>
+
+                <button type="submit" id="btn-save" class="btn-primary">Save Changes</button>
+            </form>
+
+            <button onclick="handleLogout()" style="width:100%; margin-top:16px; padding:14px; background:#FEE2E2; color:#B91C1C; border:none; border-radius:10px; font-weight:700;">Log Out</button>
+        </div>
+    </div>
+
+    <!-- 4. NOTIFICATIONS -->
+    <div id="screen-notifications" class="screen">
+        <div style="display:flex; justify-content:space-between; margin-bottom:16px;">
+            <h2 class="section-title">Notifications</h2>
+            <button onclick="clearAllNotifications()" style="color:#EF4444; background:none; border:none; font-weight:700;">Clear All</button>
+        </div>
+        <div id="list-notifs" style="display:flex; flex-direction:column; gap:12px;"></div>
+    </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -398,33 +370,45 @@
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentUser = null;
-    let selectedFile = null;
     let myShop = null;
 
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.getElementById('sidebar-overlay').classList.toggle('active');
-    }
-
+    // --- INIT ---
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "login.html"; return; }
         currentUser = session.user;
 
+        // Try Cache
         const cached = localStorage.getItem('dashboard_data_cache');
         if (cached) {
             const data = JSON.parse(cached);
             renderDashboard(data);
-            renderProfileForms(data.profile); 
+            populateProfile(data.profile, data.allCities);
         }
-        
+
         fetchFullData();
         fetchShopStatus();
-        fetchWishlistCount();
+        fetchWishlist();
         fetchNotifications();
     };
 
-    // --- DATA ---
+    // --- NAVIGATION ---
+    function switchTab(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(`screen-${screenId}`).classList.add('active');
+        window.scrollTo(0,0);
+
+        if(screenId === 'notifications') markAllRead();
+        if(screenId === 'home') document.querySelector('.app-bar-title').textContent = document.getElementById('current-city').textContent || "Home";
+        else document.querySelector('.app-bar-title').textContent = screenId.charAt(0).toUpperCase() + screenId.slice(1);
+    }
+
+    function openIndex() {
+        const cityId = JSON.parse(localStorage.getItem('dashboard_data_cache'))?.profile?.city_id;
+        if(cityId) window.location.href = `shop-index.html?city_id=${cityId}`;
+    }
+
+    // --- DATA FETCHING ---
     async function fetchFullData() {
         try {
             const [profileRes, citiesRes, announceRes, promoRes, catRes] = await Promise.all([
@@ -436,6 +420,7 @@
             ]);
 
             if (!profileRes.data) return;
+
             const cityId = profileRes.data.city_id;
 
             const [areaRes, shopRes] = await Promise.all([
@@ -443,16 +428,19 @@
                 client.from('shops').select().eq('city_id', cityId).order('is_verified', { ascending: false })
             ]);
 
+            // Fetch Products for all shops to build collages
             let products = [];
             if (shopRes.data && shopRes.data.length > 0) {
                 const shopIds = shopRes.data.map(s => s.id);
-                const prodRes = await client.from('products').select('shop_id, image_url').in('shop_id', shopIds).eq('is_available', true).order('created_at', { ascending: false });
+                const prodRes = await client.from('products')
+                    .select('shop_id, image_url')
+                    .in('shop_id', shopIds)
+                    .eq('is_available', true)
+                    .order('created_at', { ascending: false });
                 products = prodRes.data || [];
             }
 
-            populateCityDropdown(citiesRes.data, profileRes.data);
-
-            const dashboardData = {
+            const data = {
                 profile: profileRes.data,
                 announcements: announceRes.data || [],
                 promos: promoRes.data || [],
@@ -463,264 +451,217 @@
                 allCities: citiesRes.data
             };
 
-            localStorage.setItem('dashboard_data_cache', JSON.stringify(dashboardData));
-            renderDashboard(dashboardData);
-            renderProfileForms(dashboardData.profile);
+            localStorage.setItem('dashboard_data_cache', JSON.stringify(data));
+            renderDashboard(data);
+            populateProfile(data.profile, data.allCities);
+
         } catch (e) { console.error(e); }
     }
 
-    // --- RENDER ---
+    // --- RENDER HOME ---
     function renderDashboard(data) {
         const p = data.profile;
-        document.getElementById('current-city').textContent = p.cities?.name || "Locating...";
-        document.getElementById('top-avatar').src = p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${p.full_name}`;
+        const avatar = p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${p.full_name}`;
+        
+        document.getElementById('app-bar-city').textContent = p.cities?.name || "Locating...";
+        document.getElementById('header-avatar').src = avatar;
 
+        // Announcements
         if (data.announcements.length > 0) {
-            document.getElementById('announcement-text').textContent = data.announcements.map(a => a.message).join("  |  ");
-            document.getElementById('announcement-box').style.display = 'block';
+            const text = data.announcements.map(a => a.message).join("  |  ");
+            document.getElementById('ticker-text').textContent = text;
+            document.getElementById('ticker-wrap').style.display = 'block';
         }
 
-        // Featured
+        // Featured Shops
         const featured = data.shops.filter(s => s.is_featured);
         if (featured.length > 0) {
             document.getElementById('section-featured').classList.remove('hidden');
-            document.getElementById('featured-list').innerHTML = featured.map(s => buildFeaturedCard(s, data.products)).join('');
+            document.getElementById('list-featured').innerHTML = featured.map(s => renderShopCard(s, data.products, 'featured')).join('');
         }
 
         // Categories & Areas
-        renderPills('category-list', data.categories);
-        renderPills('area-list', data.areas);
+        renderCollagePills('list-categories', data.categories, data.shops, data.products, 'category');
+        renderCollagePills('list-areas', data.areas.filter(a => data.shops.some(s=>s.area_id===a.id)), data.shops, data.products, 'area');
 
         // Promos
-        if (data.promos.length > 0) {
+        if(data.promos.length > 0) {
             document.getElementById('section-promos').classList.remove('hidden');
-            document.getElementById('promo-list').innerHTML = data.promos.map(pr => `<div class="promo-card"><img src="${pr.image_url}" class="promo-img"></div>`).join('');
+            document.getElementById('list-promos').innerHTML = data.promos.map(pr => `<div class="shop-card featured"><img src="${pr.image_url}" style="width:100%;height:100%;object-fit:cover;"></div>`).join('');
         }
 
-        // All Shops (Large Card Style)
+        // All Shops
         document.getElementById('shop-count').textContent = `${data.shops.length} Found`;
-        document.getElementById('shop-list').innerHTML = data.shops.map(s => buildLargeShopCard(s, data.products)).join('');
+        document.getElementById('list-shops').innerHTML = data.shops.map(s => renderShopCard(s, data.products, 'vertical')).join('');
     }
 
-    // --- CARD BUILDERS ---
-    function buildLargeShopCard(s, allProducts) {
-        const shopProducts = allProducts.filter(p => p.shop_id === s.id && p.image_url).slice(0, 4);
-        const images = shopProducts.map(p => p.image_url);
-        
+    // --- CARD RENDERING LOGIC ---
+    function renderShopCard(shop, allProducts, type) {
+        // Logic: Get up to 4 images
+        const shopProds = allProducts.filter(p => p.shop_id === shop.id && p.image_url).slice(0, 4);
+        const images = shopProds.map(p => p.image_url);
+
+        // Fallback Logic
         let gridHtml = '';
-        // If no products, show big logo
         if(images.length === 0) {
-            const fallback = s.image_url || s.store_front_url || 'https://via.placeholder.com/300';
-            gridHtml = `<img src="${fallback}" style="width:100%; height:100%; object-fit:cover;">`;
+            const fb = shop.image_url || shop.store_front_url || 'https://via.placeholder.com/300';
+            gridHtml = `<div class="sc-grid single"><img src="${fb}"></div>`;
         } else {
-            // 2x2 Grid
+            gridHtml = `<div class="sc-grid">`;
             for(let i=0; i<4; i++) {
-                gridHtml += images[i] ? `<img src="${images[i]}">` : `<div style="background:#e2e8f0;"></div>`;
+                gridHtml += images[i] ? `<img src="${images[i]}">` : `<div style="background:#F1F5F9"></div>`;
             }
+            gridHtml += `</div>`;
         }
 
+        const className = type === 'featured' ? 'shop-card featured' : 'shop-card vertical';
+
         return `
-        <div class="shop-card-large" onclick="window.location.href='shop-detail.html?id=${s.id}'">
-            <div class="card-header">
-                <img src="${s.image_url || 'https://via.placeholder.com/40'}" class="header-avatar">
-                <div class="header-info">
-                    <div class="header-name">${s.name} ${s.is_verified ? '<i class="fa-solid fa-circle-check" style="color:#3B82F6"></i>' : ''}</div>
-                    <div class="header-id">${s.unique_id || 'ID Pending'}</div>
+        <div class="${className}" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
+            <div class="sc-header">
+                <img src="${shop.image_url || 'https://via.placeholder.com/40'}" class="sc-avatar">
+                <div class="sc-info">
+                    <div class="sc-name">${shop.name}</div>
+                    <div class="sc-badges">
+                        ${shop.is_verified ? '<i class="fa-solid fa-circle-check badge-verified"></i>' : ''}
+                        ${shop.unique_id ? `<span class="badge-id">${shop.unique_id.split('-').pop()}</span>` : ''}
+                    </div>
                 </div>
             </div>
-            <div class="card-grid ${images.length === 0 ? 'single' : ''}">
-                ${gridHtml}
-            </div>
-            <div class="card-footer">
-                <div class="footer-addr"><i class="fa-solid fa-location-dot"></i> ${s.address}</div>
-                <div class="footer-btn">Visit Shop ></div>
+            ${gridHtml}
+            <div class="sc-footer">
+                <div class="sc-address"><i class="fa-solid fa-location-dot"></i> ${shop.address}</div>
+                <div class="sc-visit">Visit Shop ></div>
             </div>
         </div>
         `;
     }
 
-    function buildFeaturedCard(s, allProducts) {
-        const images = allProducts.filter(p => p.shop_id === s.id && p.image_url).slice(0, 4).map(p => p.image_url);
-        // Reuse same grid logic or simplified for horizontal scroll
-        return `
-            <div class="featured-card" onclick="window.location.href='shop-detail.html?id=${s.id}'">
-                <div class="featured-collage" style="width:60px; height:60px;">
-                    ${images.length > 0 ? `<img src="${images[0]}" style="width:100%;height:100%;object-fit:cover;">` : `<img src="${s.image_url}" style="width:100%;height:100%;object-fit:cover;">`}
-                </div>
-                <div class="featured-info">
-                    <div class="f-name">${s.name}</div>
-                    <div class="f-cat">${s.category}</div>
-                </div>
+    function renderCollagePills(elId, items, shops, products, type) {
+        document.getElementById(elId).innerHTML = items.map(item => {
+            // Find products matching logic
+            let imgs = [];
+            const shopIds = shops.filter(s => type === 'category' ? s.category === item.name : s.area_id === item.id).map(s => s.id);
+            imgs = products.filter(p => shopIds.includes(p.shop_id)).slice(0,3).map(p => p.image_url);
+
+            return `
+            <div class="pill-card">
+                ${buildCollage(imgs)}
+                <span class="pill-text">${item.name}</span>
             </div>
-        `;
+            `;
+        }).join('');
     }
 
-    function renderPills(id, items) {
-        document.getElementById(id).innerHTML = items.map(i => `
-            <div class="collage-pill">
-                <div class="c-circle"><div style="background:${stringToColor(i.name)};width:100%;height:100%;"></div></div>
-                <span class="pill-name" style="font-size:0.9rem;">${i.name}</span>
-            </div>
-        `).join('');
-    }
-    
-    function stringToColor(str) {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
-        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-        return '#' + "00000".substring(0, 6 - c.length) + c;
+    function buildCollage(imgs) {
+        if(imgs.length === 0) return `<div class="collage-avatar" style="display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#ccc"></i></div>`;
+        if(imgs.length === 1) return `<div class="collage-avatar c-1"><img src="${imgs[0]}"></div>`;
+        if(imgs.length === 2) return `<div class="collage-avatar c-2"><img src="${imgs[0]}"><img src="${imgs[1]}"></div>`;
+        return `<div class="collage-avatar c-3"><img src="${imgs[0]}"><div><img src="${imgs[1]}"><img src="${imgs[2]}"></div></div>`;
     }
 
-    // --- LOGIC: SERVICES, PROFILE, NOTIFS ---
+    // --- SERVICES ---
     async function fetchShopStatus() {
         const { data } = await client.from('shops').select('*').eq('owner_id', currentUser.id).maybeSingle();
         myShop = data;
-        renderShopCard(data);
-    }
-    
-    function renderShopCard(shop) {
-        const box = document.getElementById('shop-icon-box');
-        const title = document.getElementById('shop-card-title');
-        
-        box.className = 'service-icon-box';
-        if (!shop) {
-            box.classList.add('bg-blue-light'); box.innerHTML = '<i class="fa-solid fa-store"></i>'; title.textContent = 'Register Shop';
-        } else if (shop.status === 'pending') {
-            box.classList.add('bg-orange-light'); box.innerHTML = '<i class="fa-solid fa-hourglass"></i>'; title.textContent = 'Pending Approval';
-        } else if (shop.status === 'approved') {
-            box.classList.add('bg-green-light'); box.innerHTML = '<i class="fa-solid fa-shop"></i>'; title.textContent = 'My Shop';
+        const box = document.getElementById('svc-shop-icon');
+        const title = document.getElementById('svc-shop-title');
+        const sub = document.getElementById('svc-shop-sub');
+
+        if(!data) {
+            box.className = 'svc-icon bg-blue-soft'; box.innerHTML='<i class="fa-solid fa-store"></i>';
+            title.textContent = 'Register Shop'; sub.textContent = 'Start selling';
+        } else if(data.status === 'approved') {
+            box.className = 'svc-icon bg-green-soft'; box.innerHTML='<i class="fa-solid fa-shop"></i>';
+            title.textContent = 'My Shop'; sub.textContent = 'Manage inventory';
+        } else if(data.status === 'pending') {
+            box.className = 'svc-icon bg-orange-soft'; box.innerHTML='<i class="fa-solid fa-hourglass"></i>';
+            title.textContent = 'Pending'; sub.textContent = 'Under review';
         } else {
-            box.classList.add('bg-red-light'); box.innerHTML = '<i class="fa-solid fa-ban"></i>'; title.textContent = 'Rejected';
+            box.className = 'svc-icon bg-red-soft'; box.innerHTML='<i class="fa-solid fa-ban"></i>';
+            title.textContent = 'Rejected'; sub.textContent = 'Action required';
         }
     }
 
     function handleShopAction() {
         if(!myShop) window.location.href = "shop-registration.html";
-        else if(myShop.status === 'pending') alert("Application under review.");
         else if(myShop.status === 'approved') window.location.href = "merchant-dashboard.html";
+        else if(myShop.status === 'pending') alert("Application under review.");
         else window.location.href = `shop-registration.html?edit=true&id=${myShop.id}`;
     }
 
-    async function fetchWishlistCount() {
-        const { count } = await client.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id);
-        document.getElementById('wishlist-count').textContent = `${count} items`;
+    async function fetchWishlist() {
+        const { count } = await client.from('wishlist').select('*', {count:'exact', head:true}).eq('user_id', currentUser.id);
+        document.getElementById('svc-wishlist-count').textContent = `${count} items`;
     }
 
+    // --- PROFILE ---
+    function populateProfile(p, allCities) {
+        document.getElementById('profile-name').textContent = p.full_name;
+        document.getElementById('profile-email').textContent = currentUser.email;
+        document.getElementById('profile-avatar-large').src = p.avatar_url || document.getElementById('top-avatar').src;
+        
+        document.getElementById('inp-name').value = p.full_name;
+        document.getElementById('inp-phone').value = p.phone || '';
+        
+        const cSel = document.getElementById('inp-city');
+        allCities.forEach(c => cSel.innerHTML += `<option value="${c.id}" ${c.id === p.city_id ? 'selected' : ''}>${c.name}</option>`);
+        if(p.city_id) fetchAreasForProfile(p.city_id, p.area_id);
+    }
+
+    async function fetchAreasForProfile(cityId, preselect) {
+        const sel = document.getElementById('inp-area');
+        sel.disabled = false; sel.innerHTML = '<option>Loading...</option>';
+        const { data } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+        sel.innerHTML = '';
+        data.forEach(a => sel.innerHTML += `<option value="${a.id}" ${a.id === preselect ? 'selected' : ''}>${a.name}</option>`);
+    }
+
+    async function saveProfile(e) {
+        e.preventDefault();
+        document.getElementById('btn-save').textContent = "Saving...";
+        await client.from('profiles').update({
+            full_name: document.getElementById('inp-name').value,
+            phone: document.getElementById('inp-phone').value,
+            city_id: document.getElementById('inp-city').value,
+            area_id: document.getElementById('inp-area').value
+        }).eq('id', currentUser.id);
+        alert("Saved!");
+        location.reload();
+    }
+
+    async function handleLogout() {
+        localStorage.clear(); await client.auth.signOut(); window.location.href="index.html";
+    }
+
+    // --- NOTIFICATIONS ---
     async function fetchNotifications() {
         const { data } = await client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false});
         if(data) {
             const unread = data.filter(n => !n.is_read).length;
-            const badge = document.getElementById('unread-badge');
-            badge.textContent = unread;
-            if(unread > 0) badge.classList.add('active');
-            
-            document.getElementById('notif-list').innerHTML = data.map(n => `
-                <div class="notif-card ${!n.is_read ? 'unread' : ''}" onclick="markRead(${n.id})">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                        <span style="font-weight:700;">${n.title}</span>
-                        <span style="font-size:0.75rem;color:grey;">${new Date(n.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <div style="font-size:0.85rem; color:#475569;">${n.message}</div>
+            if(unread > 0) {
+                document.getElementById('notif-badge').textContent = unread;
+                document.getElementById('notif-badge').style.display = 'flex';
+            }
+            document.getElementById('list-notifs').innerHTML = data.map(n => `
+                <div class="notif-card ${!n.is_read ? 'unread' : ''}" style="background:white; padding:12px; border-radius:12px; border:1px solid #E2E8F0; position:relative;">
+                    <div style="font-weight:700;">${n.title}</div>
+                    <div style="font-size:0.85rem; color:#64748B;">${n.message}</div>
+                    ${!n.is_read ? '<div style="position:absolute; top:12px; right:12px; width:8px; height:8px; background:red; border-radius:50%;"></div>' : ''}
                 </div>
             `).join('');
         }
     }
 
-    async function markRead(id) {
-        await client.from('notifications').update({is_read: true}).eq('id', id);
-        fetchNotifications();
-    }
-
-    function switchTab(id, btn) {
-        if(window.innerWidth <= 1024) toggleSidebar();
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        btn.classList.add('active');
-        if(id === 'notifications') markAllRead();
-    }
-
     async function markAllRead() {
-        document.getElementById('unread-badge').style.display = 'none';
-        await client.from('notifications').update({is_read: true}).eq('user_id', currentUser.id).eq('is_read', false);
+        document.getElementById('notif-badge').style.display = 'none';
+        await client.from('notifications').update({is_read: true}).eq('user_id', currentUser.id);
     }
     
-    // --- PROFILE ---
-    function renderProfileForms(p) {
-        document.getElementById('edit-display-name').textContent = p.full_name;
-        document.getElementById('edit-avatar').src = p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${p.full_name}`;
-        document.getElementById('form-name').value = p.full_name;
-        document.getElementById('form-phone').value = p.phone || '';
-        populateCityDropdown(JSON.parse(localStorage.getItem('dashboard_data_cache')).allCities, p);
+    async function clearAllNotifications() {
+        await client.from('notifications').delete().eq('user_id', currentUser.id);
+        document.getElementById('list-notifs').innerHTML = '';
     }
-
-    function populateCityDropdown(cities, profile) {
-        const sel = document.getElementById('form-city');
-        cities.forEach(c => sel.innerHTML += `<option value="${c.id}" ${c.id === profile.city_id ? 'selected' : ''}>${c.name}</option>`);
-        if(profile.city_id) fetchAreasForProfile(profile.city_id, profile.area_id);
-    }
-
-    async function fetchAreasForProfile(cityId, preselectId) {
-        const sel = document.getElementById('form-area');
-        sel.disabled = false;
-        const { data } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
-        sel.innerHTML = '<option value="" disabled>Select Area</option>';
-        data.forEach(a => sel.innerHTML += `<option value="${a.id}" ${a.id === preselectId ? 'selected' : ''}>${a.name}</option>`);
-    }
-
-    document.getElementById('form-city').addEventListener('change', (e) => fetchAreasForProfile(e.target.value));
-
-    function previewImage(input) {
-        if (input.files && input.files[0]) {
-            selectedFile = input.files[0];
-            const reader = new FileReader();
-            reader.onload = (e) => document.getElementById('edit-avatar').src = e.target.result;
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    async function saveProfile(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btn-submit');
-        btn.textContent = "Saving..."; btn.disabled = true;
-        
-        try {
-            let avatarUrl = document.getElementById('edit-avatar').src;
-            if(selectedFile) {
-                const fileName = `${currentUser.id}_${Date.now()}.${selectedFile.name.split('.').pop()}`;
-                await client.storage.from('avatars').upload(fileName, selectedFile, { upsert: true });
-                const { data } = client.storage.from('avatars').getPublicUrl(fileName);
-                avatarUrl = data.publicUrl;
-            }
-            
-            await client.from('profiles').update({
-                full_name: document.getElementById('form-name').value,
-                phone: document.getElementById('form-phone').value,
-                city_id: document.getElementById('form-city').value,
-                area_id: document.getElementById('form-area').value,
-                avatar_url: avatarUrl
-            }).eq('id', currentUser.id);
-            
-            alert("Profile Updated!");
-            fetchFullData();
-        } catch(err) { alert(err.message); }
-        finally { btn.textContent = "Save Changes"; btn.disabled = false; }
-    }
-
-    async function handleLogout() {
-        if(confirm("Log out?")) {
-            localStorage.clear();
-            await client.auth.signOut();
-            window.location.href = "index.html";
-        }
-    }
-    
-    function openIndex() {
-        const cityId = JSON.parse(localStorage.getItem('dashboard_data_cache')).profile.city_id;
-        window.location.href = `shop-index.html?city_id=${cityId}`;
-    }
-    function openProfile() { switchTab('profile', document.querySelectorAll('.nav-item')[2]); }
-    function openNotifs() { switchTab('notifications', document.querySelectorAll('.nav-item')[4]); }
 
 </script>
 </body>
