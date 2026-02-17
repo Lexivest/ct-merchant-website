@@ -10,21 +10,19 @@
     
     <style>
         :root {
-            /* APP THEME */
+            /* --- APP THEME (Matches Dart Code) --- */
             --color-primary: #059669; /* Emerald Green */
             --color-primary-dark: #047857;
-            --color-accent: #FCD34D; /* Yellow */
-            --color-user-area: #DCFCE7;
-            --color-other-area: #FEF3C7;
+            --color-accent: #FCD34D; /* Yellow Text */
+            --color-user-area: #DCFCE7; /* Light Green BG */
+            --color-other-area: #FEF3C7; /* Light Amber BG */
             
             --color-bg: #F3F4F6;
             --color-text-main: #1F2937;
             --color-text-sub: #6B7280;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             
-            --sidebar-width: 260px;
-            --header-height: 56px;
+            --sidebar-width: 280px;
+            --header-height: 60px;
             --ticker-height: 40px;
         }
 
@@ -33,377 +31,360 @@
         body { 
             background-color: var(--color-bg); 
             color: var(--color-text-main); 
-            min-height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scroll on body */
         }
 
-        /* --- LAYOUT STRUCTURE --- */
-        .app-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* --- SIDEBAR --- */
+        /* --- 1. SIDEBAR (Fixed Left) --- */
         .sidebar {
+            position: fixed; top: 0; left: 0; bottom: 0;
             width: var(--sidebar-width);
             background: white;
-            position: fixed; top: 0; bottom: 0; left: 0;
-            z-index: 100;
+            z-index: 1000;
             border-right: 1px solid #E5E7EB;
             display: flex; flex-direction: column;
-            transform: translateX(-100%); /* Hidden on mobile by default */
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* Mobile State: Hidden by default */
+            transform: translateX(-100%);
         }
 
-        .sidebar.open { transform: translateX(0); } /* Mobile Open State */
-
         .sidebar-header {
-            height: calc(var(--header-height) + var(--ticker-height));
+            height: calc(var(--header-height) + var(--ticker-height)); /* Align with header height */
             background: var(--color-primary);
             color: white;
             display: flex; align-items: center; gap: 12px;
-            padding: 0 20px;
+            padding: 0 24px;
         }
+
+        .nav-scroll { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
         
-        .nav-menu { padding: 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; }
-        
-        .nav-item {
-            padding: 12px 16px; border-radius: 8px;
-            color: #4B5563; font-weight: 600; cursor: pointer;
-            display: flex; align-items: center; gap: 12px;
-            transition: all 0.2s; border: none; background: none; width: 100%; text-align: left; font-size: 0.95rem;
+        .nav-btn {
+            display: flex; align-items: center; gap: 16px;
+            padding: 12px 16px; width: 100%; border: none; background: none;
+            color: #4B5563; font-weight: 600; font-size: 0.95rem;
+            border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: left;
         }
-        .nav-item i { width: 24px; text-align: center; font-size: 1.1rem; }
-        .nav-item:hover { background: #F3F4F6; color: var(--color-primary); }
-        .nav-item.active { background: #ECFDF5; color: var(--color-primary); }
+        .nav-btn i { width: 24px; text-align: center; font-size: 1.1rem; }
+        .nav-btn:hover { background: #F3F4F6; color: var(--color-primary); }
+        .nav-btn.active { background: #ECFDF5; color: var(--color-primary); }
 
         .sidebar-footer { padding: 16px; border-top: 1px solid #E5E7EB; }
 
-        /* --- MAIN CONTENT WRAPPER --- */
-        .main-wrapper {
-            flex: 1;
-            width: 100%;
-            margin-left: 0; /* Mobile default */
-            transition: margin-left 0.3s ease;
+        /* --- 2. MAIN LAYOUT WRAPPER --- */
+        .main-layout {
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 100vh;
             display: flex; flex-direction: column;
         }
 
-        /* --- APP BAR --- */
-        .app-header {
-            position: fixed; top: 0; right: 0; left: 0; /* Mobile default */
-            z-index: 90;
-            background: var(--color-primary);
-            color: white;
-            box-shadow: var(--shadow-md);
-            transition: left 0.3s ease;
+        /* --- 3. TOP HEADER (Green Bar) --- */
+        .top-header {
+            position: fixed; top: 0; right: 0; left: 0;
+            z-index: 500;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
 
-        .header-top {
+        .header-main {
             height: var(--header-height);
+            background: var(--color-primary);
+            color: white;
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 16px;
         }
 
-        .menu-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 8px; display: block; }
+        .menu-toggle { background: none; border: none; color: white; font-size: 1.3rem; padding: 8px; cursor: pointer; }
+        .header-title { font-weight: 700; font-size: 1.1rem; }
         
-        .header-title { font-size: 1.1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-        .header-actions { display: flex; align-items: center; gap: 12px; }
-        .action-icon { position: relative; cursor: pointer; padding: 4px; }
-        .notif-badge {
-            position: absolute; top: 0; right: 0;
-            background: #EF4444; color: white;
-            font-size: 10px; font-weight: 800;
-            height: 16px; min-width: 16px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            border: 1px solid white; display: none;
+        .header-actions { display: flex; align-items: center; gap: 16px; }
+        .action-link { 
+            color: white; text-decoration: none; font-weight: 700; font-size: 0.9rem; 
+            display: flex; align-items: center; gap: 6px; cursor: pointer;
         }
+        
+        .notif-wrapper { position: relative; cursor: pointer; }
+        .notif-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: #EF4444; color: white; font-size: 0.7rem; font-weight: 800;
+            padding: 2px 5px; border-radius: 10px; border: 2px solid var(--color-primary);
+            display: none;
+        }
+        
+        .user-avatar-sm { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); object-fit: cover; cursor: pointer; background: #ddd; }
 
-        .header-avatar { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.8); cursor: pointer; object-fit: cover; background: #ddd; }
-
-        /* --- TICKER --- */
-        .ticker-bar {
+        /* --- 4. TICKER BAR --- */
+        .ticker-wrap {
             height: var(--ticker-height);
             background: var(--color-primary-dark);
-            border-top: 1px solid rgba(255,255,255,0.1);
             overflow: hidden; display: flex; align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
-        .ticker-text {
+        .ticker-content {
             white-space: nowrap; animation: ticker 30s linear infinite;
-            font-size: 0.85rem; font-weight: 600; color: var(--color-accent);
+            color: var(--color-accent); font-weight: 600; font-size: 0.85rem;
             padding-left: 100%;
         }
-        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
-        /* --- CONTENT AREA --- */
+        /* --- 5. CONTENT BODY --- */
         .content-body {
-            padding-top: calc(var(--header-height) + var(--ticker-height) + 20px); /* Clear fixed header */
-            padding-left: 16px; padding-right: 16px; padding-bottom: 40px;
-            max-width: 1200px; margin: 0 auto; width: 100%;
+            /* Margin top = Header + Ticker + Padding */
+            margin-top: calc(var(--header-height) + var(--ticker-height)); 
+            padding: 24px 16px 40px 16px;
+            width: 100%;
         }
 
-        /* --- UI COMPONENTS --- */
+        /* --- DESKTOP BREAKPOINT (>= 1024px) --- */
+        @media (min-width: 1024px) {
+            /* Show Sidebar permanently */
+            .sidebar { transform: translateX(0); box-shadow: 1px 0 0 #E5E7EB; }
+            
+            /* Hide Mobile Toggle */
+            .menu-toggle { display: none; }
+            
+            /* Push Header & Content to the right */
+            .top-header { left: var(--sidebar-width); }
+            .main-layout { margin-left: var(--sidebar-width); }
+            
+            /* Content Padding adjustments */
+            .content-body { padding: 32px; max-width: 1400px; }
+        }
+
+        /* --- OVERLAY (Mobile Only) --- */
+        .overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 900;
+            opacity: 0; visibility: hidden; transition: 0.3s;
+        }
+        .overlay.active { opacity: 1; visibility: visible; }
+        @media (min-width: 1024px) { .overlay.active { display: none; } }
+
+        /* --- UTILS --- */
         .screen { display: none; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .section-header { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; margin-top: 24px; }
-        .sec-title-wrap { display: flex; align-items: center; gap: 8px; }
-        .sec-bar { width: 4px; height: 24px; border-radius: 4px; }
-        .sec-title { font-size: 1.15rem; font-weight: 800; color: var(--color-text-main); }
+        .sec-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; margin-top: 24px; }
+        .sec-bar { width: 5px; height: 24px; border-radius: 4px; }
+        .sec-title { font-size: 1.15rem; font-weight: 800; color: #111827; }
 
-        /* --- HORIZONTAL SCROLLS --- */
+        /* --- HORIZONTAL SCROLL CONTAINERS --- */
         .h-scroll {
-            display: flex; overflow-x: auto; gap: 16px; padding-bottom: 16px;
+            display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px;
             scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
-            -webkit-overflow-scrolling: touch;
         }
         .h-scroll::-webkit-scrollbar { height: 6px; }
         .h-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
 
-        /* --- SHOP CARDS --- */
+        /* --- SHOP CARD & GRID LOGIC --- */
         .shop-card {
-            min-width: 220px; width: 220px;
+            min-width: 240px; width: 240px;
             background: white; border-radius: 12px;
-            box-shadow: var(--shadow-sm); border: 1px solid #E5E7EB;
-            overflow: hidden; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #E5E7EB; overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
             display: flex; flex-direction: column; flex-shrink: 0;
         }
-        .shop-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .shop-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
 
-        .card-img-box { height: 140px; width: 100%; background: #F1F5F9; position: relative; overflow: hidden; }
+        .img-box { height: 150px; width: 100%; background: #F1F5F9; }
         
-        /* Collage Grid System */
-        .c-grid { width: 100%; height: 100%; display: flex; flex-wrap: wrap; }
-        .c-grid img { object-fit: cover; border: 0.5px solid white; box-sizing: border-box; }
-        
+        /* 4-Image Grid System */
+        .collage { width: 100%; height: 100%; display: flex; flex-wrap: wrap; }
+        .collage img { object-fit: cover; display: block; box-sizing: border-box; border: 0.5px solid white; }
+
+        /* 1 Image */
         .c-1 img { width: 100%; height: 100%; border: none; }
+        /* 2 Images (Vertical Split) */
         .c-2 img { width: 50%; height: 100%; }
+        /* 3 Images (1 Big Left, 2 Small Right) */
+        .c-3 { display: flex; }
         .c-3 > img:first-child { width: 50%; height: 100%; }
         .c-3 > div { width: 50%; height: 100%; display: flex; flex-direction: column; }
         .c-3 > div img { width: 100%; height: 50%; }
+        /* 4 Images (2x2) */
         .c-4 img { width: 50%; height: 50%; }
 
-        .card-info { padding: 12px; }
-        .card-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #111827; }
-        .card-tag { 
-            display: inline-block; font-size: 0.7rem; font-weight: 700; 
-            color: var(--color-primary); background: #ECFDF5; 
-            padding: 3px 8px; border-radius: 4px; margin-bottom: 8px;
-        }
-        .card-loc { font-size: 0.75rem; color: #6B7280; display: flex; align-items: center; gap: 4px; }
+        .info-box { padding: 12px; }
+        .s-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .s-cat { display: inline-block; font-size: 0.75rem; font-weight: 700; color: var(--color-primary); background: #ECFDF5; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; }
+        .s-loc { font-size: 0.8rem; color: #6B7280; display: flex; align-items: center; gap: 6px; }
 
-        /* --- AREA PILLS --- */
-        .area-block { margin-bottom: 24px; }
-        .area-header { 
+        /* --- AREA SECTIONS --- */
+        .area-container { margin-bottom: 24px; }
+        .area-pill { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 8px 12px; border-radius: 8px; margin-bottom: 12px;
         }
-        .area-header.user { background: var(--color-user-area); }
-        .area-header.other { background: var(--color-other-area); }
-        
-        .area-info { display: flex; align-items: center; gap: 8px; }
-        .area-name { font-weight: 700; font-size: 0.9rem; color: #1F2937; }
-        .btn-link { background: none; border: none; color: var(--color-primary); font-weight: 700; font-size: 0.85rem; cursor: pointer; }
+        .area-pill.user { background: var(--color-user-area); }
+        .area-pill.other { background: var(--color-other-area); }
+        .pill-left { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #1F2937; }
 
-        /* --- CATEGORIES --- */
+        /* --- CATEGORY CHIPS --- */
         .cat-grid { display: flex; flex-wrap: wrap; gap: 12px; }
-        .cat-pill {
+        .cat-chip {
             background: white; border: 1px solid #E5E7EB; border-radius: 50px;
             padding: 6px 16px 6px 6px; display: flex; align-items: center; gap: 10px;
-            cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow-sm);
+            cursor: pointer; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .cat-pill:hover { border-color: var(--color-primary); }
-        .cat-img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; background: #F8FAFC; }
-        .cat-text { font-weight: 700; font-size: 0.85rem; color: #374151; }
+        .cat-chip:hover { border-color: var(--color-primary); }
+        .cat-chip img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; }
 
         /* --- PROMOS --- */
-        .promo-scroll { display: flex; overflow-x: auto; gap: 16px; padding-bottom: 16px; scroll-snap-type: x mandatory; }
-        .promo-card { min-width: 300px; height: 150px; border-radius: 12px; overflow: hidden; scroll-snap-align: center; flex-shrink: 0; }
+        .promo-row { display: flex; overflow-x: auto; gap: 16px; padding-bottom: 8px; scroll-snap-type: x mandatory; }
+        .promo-card { min-width: 300px; height: 160px; border-radius: 12px; overflow: hidden; scroll-snap-align: center; flex-shrink: 0; background: #E5E7EB; }
         .promo-card img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* --- RESPONSIVE GRIDS --- */
-        .grid-shops { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+        /* --- RESPONSIVE SHOP GRID --- */
+        .shop-grid-view { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); 
+            gap: 16px; 
+            padding-bottom: 20px;
+        }
 
-        .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
+        /* --- SERVICES GRID --- */
+        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
         .svc-card {
-            background: white; border-radius: 16px; padding: 24px 16px;
-            display: flex; flex-direction: column; align-items: center; text-align: center;
-            box-shadow: var(--shadow-sm); border: 1px solid #E5E7EB; cursor: pointer; transition: 0.2s;
+            background: white; padding: 24px 16px; border-radius: 12px; text-align: center;
+            border: 1px solid #E5E7EB; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s;
         }
-        .svc-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--color-primary); }
-        .svc-icon { width: 50px; height: 50px; border-radius: 50%; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-
-        /* --- DESKTOP STYLES (>= 768px) --- */
-        @media (min-width: 768px) {
-            /* Sidebar becomes visible fixed column */
-            .sidebar { transform: translateX(0); box-shadow: 1px 0 0 #E5E7EB; }
-            .menu-btn { display: none; } /* Hide hamburger */
-            
-            /* Main content moves right */
-            .main-wrapper { margin-left: var(--sidebar-width); }
-            
-            /* Header moves right */
-            .app-header { left: var(--sidebar-width); }
-            
-            /* Adjust padding */
-            .content-body { padding-left: 32px; padding-right: 32px; padding-top: calc(var(--header-height) + var(--ticker-height) + 32px); }
-
-            /* Better Scrollbars for Desktop */
-            .h-scroll::-webkit-scrollbar { height: 8px; }
-            .h-scroll::-webkit-scrollbar-thumb { background: #94A3B8; }
-            .h-scroll::-webkit-scrollbar-track { background: #F1F5F9; }
-        }
-        
-        /* Mobile Overlay */
-        .sidebar-overlay { display: block; }
-        @media (min-width: 768px) { .sidebar-overlay { display: none !important; } }
+        .svc-card:hover { border-color: var(--color-primary); transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .svc-icon { width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
-<div class="app-layout">
-    
-    <!-- MOBILE OVERLAY -->
-    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <!-- OVERLAY (Mobile) -->
+    <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
 
-    <!-- SIDEBAR (Left Navigation) -->
+    <!-- SIDEBAR -->
     <aside id="sidebar" class="sidebar">
         <div class="sidebar-header">
-            <img src="https://via.placeholder.com/40" style="width:36px;height:36px;border-radius:8px;background:white;">
-            <span style="font-weight: 800; font-size: 1.2rem; margin-left: 10px;">CT-MERCHANT</span>
+            <img src="https://via.placeholder.com/40" style="width:36px; height:36px; border-radius:8px; background:white;">
+            <span style="font-weight: 800; font-size: 1.1rem; margin-left: 10px;">CT-MERCHANT</span>
         </div>
         
-        <nav class="nav-menu">
-            <button class="nav-item active" onclick="switchScreen('market', this)">
+        <div class="nav-scroll">
+            <button class="nav-btn active" onclick="switchScreen('market', this)">
                 <i class="fa-solid fa-store"></i> Market Overview
             </button>
-            <button class="nav-item" onclick="switchScreen('services', this)">
+            <button class="nav-btn" onclick="switchScreen('services', this)">
                 <i class="fa-solid fa-table-cells-large"></i> Services
             </button>
-            <button class="nav-item" onclick="switchScreen('profile', this)">
+            <button class="nav-btn" onclick="switchScreen('profile', this)">
                 <i class="fa-solid fa-user-gear"></i> My Profile
             </button>
-            <button class="nav-item" onclick="switchScreen('notifications', this)">
+            <button class="nav-btn" onclick="switchScreen('notifications', this)">
                 <i class="fa-solid fa-bell"></i> Notifications
             </button>
-        </nav>
+        </div>
         
         <div class="sidebar-footer">
-            <button class="nav-item" style="color: #EF4444;" onclick="handleLogout()">
+            <button class="nav-btn" style="color: #EF4444;" onclick="handleLogout()">
                 <i class="fa-solid fa-right-from-bracket"></i> Sign Out
             </button>
         </div>
     </aside>
 
-    <!-- MAIN CONTENT WRAPPER -->
-    <div class="main-wrapper">
+    <!-- MAIN CONTENT -->
+    <div class="main-layout">
         
-        <!-- FIXED TOP BAR -->
-        <header class="app-header">
-            <div class="header-top">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <button class="menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-                    <div id="header-city" class="header-title">Loading Location...</div>
+        <!-- TOP HEADER -->
+        <header class="top-header">
+            <div class="header-main">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                    <div id="header-city" class="header-title">Loading...</div>
                 </div>
                 
                 <div class="header-actions">
-                    <button class="menu-btn" style="font-size:0.9rem; font-weight:700; width:auto;" onclick="window.location.href='shop-index.html'">
-                        <i class="fa-solid fa-arrow-down-a-z"></i> Index
-                    </button>
+                    <a class="action-link" href="shop-index.html">
+                        <i class="fa-solid fa-arrow-down-a-z"></i> <span style="display:none; display:md-block;">Index</span>
+                    </a>
                     
-                    <div class="action-icon" onclick="switchScreen('notifications', document.querySelectorAll('.nav-item')[3])">
+                    <div class="notif-wrapper" onclick="switchScreen('notifications', document.querySelectorAll('.nav-btn')[3])">
                         <i class="fa-regular fa-bell" style="font-size:1.2rem;"></i>
                         <div id="badge-count" class="notif-badge">0</div>
                     </div>
                     
-                    <img id="header-avatar" src="" class="header-avatar" onclick="switchScreen('profile', document.querySelectorAll('.nav-item')[2])">
+                    <img id="header-avatar" src="" class="user-avatar-sm" onclick="switchScreen('profile', document.querySelectorAll('.nav-btn')[2])">
                 </div>
             </div>
             
             <!-- TICKER -->
-            <div id="ticker-box" class="ticker-bar" style="display:none;">
-                <div id="ticker-text" class="ticker-text"></div>
+            <div id="ticker-wrap" class="ticker-wrap" style="display:none;">
+                <div id="ticker-text" class="ticker-content"></div>
             </div>
         </header>
 
-        <!-- SCROLLABLE CONTENT -->
+        <!-- BODY -->
         <main class="content-body">
             
             <!-- 1. MARKET SCREEN -->
             <div id="market" class="screen active">
                 
-                <!-- Promo Banners -->
-                <div id="promo-list" class="promo-scroll" style="display:none;"></div>
+                <!-- Promos -->
+                <div id="promo-list" class="promo-row" style="display:none;"></div>
                 
-                <div style="height: 10px;"></div>
-
-                <!-- Featured Shops -->
+                <!-- Featured -->
                 <div id="featured-section" style="display:none;">
-                    <div class="section-header">
-                        <div class="sec-title-wrap">
-                            <div class="sec-bar" style="background: orange;"></div>
-                            <div class="sec-title">Featured Shops</div>
-                        </div>
+                    <div class="sec-header">
+                        <div class="sec-bar" style="background: orange;"></div>
+                        <div class="sec-title">Featured Shops</div>
                     </div>
                     <div id="featured-list" class="h-scroll"></div>
                 </div>
 
-                <!-- Dynamic Areas -->
-                <div id="areas-container" style="margin-top: 24px;">
-                    <div style="padding:40px; text-align:center; color:#9CA3AF;">
-                        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading marketplace...
-                    </div>
+                <!-- Areas -->
+                <div id="areas-container" style="margin-top:24px;">
+                    <div style="text-align:center; padding:40px; color:#9CA3AF;">Loading shops...</div>
                 </div>
 
                 <!-- Categories -->
-                <div class="section-header">
-                    <div class="sec-title-wrap">
-                        <div class="sec-bar" style="background: var(--color-primary);"></div>
-                        <div class="sec-title">Browse Categories</div>
-                    </div>
+                <div class="sec-header">
+                    <div class="sec-bar" style="background: var(--color-primary);"></div>
+                    <div class="sec-title">Browse Categories</div>
                 </div>
                 <div id="category-list" class="cat-grid"></div>
 
                 <!-- All Shops Grid -->
-                <div class="section-header" style="margin-top: 32px;">
-                    <div class="sec-title-wrap">
-                        <div class="sec-bar" style="background: #374151;"></div>
-                        <div class="sec-title">All Shops</div>
-                    </div>
+                <div class="sec-header" style="margin-top:32px;">
+                    <div class="sec-bar" style="background: #374151;"></div>
+                    <div class="sec-title">All Shops</div>
                 </div>
-                <div id="all-shops-grid" class="grid-shops"></div>
+                <div id="all-shops-grid" class="shop-grid-view"></div>
 
             </div>
 
             <!-- 2. SERVICES SCREEN -->
             <div id="services" class="screen">
                 <h2 class="sec-title" style="margin-bottom:20px;">Services & Tools</h2>
-                <div class="services-grid">
+                <div class="svc-grid">
                     <div class="svc-card" onclick="window.location.href='wishlist.html'">
                         <div class="svc-icon" style="background:#FCE7F3; color:#DB2777;"><i class="fa-solid fa-heart"></i></div>
-                        <div class="svc-title">Wishlist</div>
+                        <strong>Wishlist</strong>
                     </div>
                     <div class="svc-card" onclick="window.location.href='help.html'">
                         <div class="svc-icon" style="background:#DCFCE7; color:#10B981;"><i class="fa-solid fa-headset"></i></div>
-                        <div class="svc-title">Support</div>
+                        <strong>Support</strong>
                     </div>
                     <div class="svc-card" onclick="window.location.href='merchant-dashboard.html'">
                         <div class="svc-icon" style="background:#DBEAFE; color:#2563EB;"><i class="fa-solid fa-store"></i></div>
-                        <div class="svc-title">My Shop</div>
+                        <strong>My Shop</strong>
                     </div>
                     <div class="svc-card" onclick="switchScreen('profile', null)">
                         <div class="svc-icon" style="background:#F3F4F6; color:#4B5563;"><i class="fa-solid fa-gear"></i></div>
-                        <div class="svc-title">Settings</div>
+                        <strong>Settings</strong>
                     </div>
                 </div>
             </div>
 
             <!-- 3. PROFILE SCREEN -->
             <div id="profile" class="screen">
-                <div style="max-width:600px; margin:0 auto; background:white; padding:30px; border-radius:16px; box-shadow:var(--shadow-sm); text-align:center;">
+                <div style="max-width:600px; margin:0 auto; background:white; padding:40px; border-radius:16px; border:1px solid #E5E7EB; text-align:center;">
                     <img id="profile-avatar-lg" src="" style="width:100px; height:100px; border-radius:50%; margin-bottom:16px; border:4px solid var(--color-primary);">
-                    <h2 id="profile-name" style="font-size:1.5rem; color:#1F2937;">User</h2>
-                    <p id="profile-email" style="color:#6B7280; margin-bottom:20px;">...</p>
+                    <h2 id="profile-name" style="font-size:1.5rem; color:#111827;">Loading...</h2>
+                    <p id="profile-email" style="color:#6B7280; margin-bottom:20px;">user@example.com</p>
                     <button style="background:var(--color-primary); color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:700; cursor:pointer;">Edit Profile</button>
                 </div>
             </div>
@@ -412,13 +393,12 @@
             <div id="notifications" class="screen">
                 <h2 class="sec-title" style="margin-bottom:20px;">Notifications</h2>
                 <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:600px;">
-                    <div style="text-align:center; padding:30px; color:#9CA3AF;">No notifications</div>
+                    <p style="color:#9CA3AF;">No new notifications</p>
                 </div>
             </div>
 
         </main>
     </div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -430,45 +410,48 @@
     let userCityId = null;
     let userAreaId = null;
 
-    // UI & Navigation
+    // --- NAVIGATION ---
     function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.getElementById('sidebar-overlay').classList.toggle('active');
+        const sb = document.getElementById('sidebar');
+        const ov = document.getElementById('overlay');
+        
+        // Mobile Toggle Logic
+        if (sb.style.transform === 'translateX(0%)') {
+            sb.style.transform = ''; // Revert to CSS default (hidden on mobile)
+            ov.classList.remove('active');
+        } else {
+            sb.style.transform = 'translateX(0%)';
+            ov.classList.add('active');
+        }
     }
 
     function switchScreen(id, btn) {
-        // Nav highlight
-        if(btn) {
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        if (btn) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-        } else {
-            // If switched programmatically without btn ref
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            // simple mapping logic could go here
-        }
-
-        // Screen switching
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        const target = document.getElementById(id);
-        if(target) target.classList.add('active');
-
-        // Mobile close drawer
-        if(window.innerWidth < 768) {
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('sidebar-overlay').classList.remove('active');
         }
         
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById(id);
+        if (target) target.classList.add('active');
+
+        // Close sidebar if on mobile
+        if (window.innerWidth < 1024) {
+            document.getElementById('sidebar').style.transform = '';
+            document.getElementById('overlay').classList.remove('active');
+        }
+
         if(id === 'notifications') markRead();
     }
 
-    // Data Loading
+    // --- DATA HANDLING ---
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "login.html"; return; }
         currentUser = session.user;
 
-        const cache = localStorage.getItem('dash_v3_cache');
-        if(cache) renderData(JSON.parse(cache));
+        const cache = localStorage.getItem('dash_v4_cache');
+        if (cache) renderData(JSON.parse(cache));
 
         fetchData();
     };
@@ -477,6 +460,7 @@
         try {
             const { data: profile } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).single();
             if(!profile) return;
+            
             userCityId = profile.city_id;
             userAreaId = profile.area_id;
 
@@ -489,8 +473,8 @@
             ]);
 
             // Products for Thumbnails
-            const shopIds = shops.data.map(s => s.id);
             let products = [];
+            const shopIds = shops.data.map(s => s.id);
             if(shopIds.length > 0) {
                 const { data } = await client.from('products')
                     .select('shop_id, image_url')
@@ -513,10 +497,10 @@
                 unread: count
             };
 
-            localStorage.setItem('dash_v3_cache', JSON.stringify(dashboardData));
+            localStorage.setItem('dash_v4_cache', JSON.stringify(dashboardData));
             renderData(dashboardData);
 
-        } catch(e) { console.error(e); }
+        } catch (e) { console.error(e); }
     }
 
     function renderData(data) {
@@ -528,21 +512,19 @@
         document.getElementById('profile-name').textContent = data.profile.full_name;
         document.getElementById('profile-email').textContent = currentUser.email;
 
-        // Badge
-        if(data.unread > 0) {
+        if (data.unread > 0) {
             const b = document.getElementById('badge-count');
             b.textContent = data.unread > 9 ? '9+' : data.unread;
-            b.style.display = 'flex';
+            b.style.display = 'block';
         }
 
-        // Ticker
-        if(data.announcements && data.announcements.length > 0) {
-            document.getElementById('ticker-box').style.display = 'flex';
+        if (data.announcements && data.announcements.length > 0) {
+            document.getElementById('ticker-wrap').style.display = 'flex';
             document.getElementById('ticker-text').textContent = data.announcements.map(a => a.message).join("  •  ");
         }
 
         // Promos
-        if(data.promos.length > 0) {
+        if (data.promos.length > 0) {
             document.getElementById('promo-list').style.display = 'flex';
             document.getElementById('promo-list').innerHTML = data.promos.map(p => 
                 `<div class="promo-card"><img src="${p.image_url}"></div>`
@@ -551,37 +533,37 @@
 
         // Featured
         const featured = data.shops.filter(s => s.is_featured);
-        if(featured.length > 0) {
+        if (featured.length > 0) {
             document.getElementById('featured-section').style.display = 'block';
             document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
         }
 
-        // Areas (Horizontal Scrolls)
+        // Areas Logic
         const areaContainer = document.getElementById('areas-container');
         areaContainer.innerHTML = '';
         const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
 
         sortedAreas.forEach(area => {
-            const shopsInArea = data.shops.filter(s => s.area_id === area.id);
-            if(shopsInArea.length === 0) return;
+            const areaShops = data.shops.filter(s => s.area_id === area.id);
+            if(areaShops.length === 0) return;
 
             const isUser = area.id === userAreaId;
-            const headerClass = isUser ? 'user' : 'other';
+            const pillClass = isUser ? 'user' : 'other';
             const iconColor = isUser ? 'var(--color-primary)' : '#F59E0B';
             const icon = isUser ? '<i class="fa-solid fa-location-crosshairs"></i>' : '<i class="fa-solid fa-location-dot"></i>';
             const title = isUser ? `Merchants in ${area.name} • Near You` : `Merchants in ${area.name}`;
 
             areaContainer.innerHTML += `
-                <div class="area-block">
-                    <div class="area-header ${headerClass}">
-                        <div class="area-info">
+                <div class="area-container">
+                    <div class="area-pill ${pillClass}">
+                        <div class="pill-left">
                             <span style="color:${iconColor}; font-size:1.1rem;">${icon}</span>
-                            <span class="area-name">${title}</span>
+                            <span>${title}</span>
                         </div>
-                        <button class="btn-link" onclick="window.location.href='area.html?id=${area.id}'">See All</button>
+                        <button onclick="window.location.href='area.html?id=${area.id}'" style="border:none; background:none; color:var(--color-primary); font-weight:700; cursor:pointer;">See All</button>
                     </div>
                     <div class="h-scroll">
-                        ${shopsInArea.map(s => buildShopCard(s, data.products)).join('')}
+                        ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
                     </div>
                 </div>
             `;
@@ -589,20 +571,17 @@
 
         // Categories
         document.getElementById('category-list').innerHTML = data.categories.map(cat => {
-            // Find 1 image
             const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
             const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
-            const url = p ? p.image_url : `https://via.placeholder.com/36?text=${cat.name.charAt(0)}`;
-
+            const url = p ? p.image_url : `https://via.placeholder.com/32?text=${cat.name.charAt(0)}`;
             return `
-                <div class="cat-pill" onclick="window.location.href='cat.html?name=${cat.name}'">
-                    <img src="${url}" class="cat-img">
-                    <div class="cat-text">${cat.name}</div>
+                <div class="cat-chip" onclick="window.location.href='cat.html?name=${cat.name}'">
+                    <img src="${url}"> <span>${cat.name}</span>
                 </div>
             `;
         }).join('');
 
-        // All Shops (Responsive Grid)
+        // Grid
         document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
     }
 
@@ -611,21 +590,21 @@
         
         let collage = '';
         if(p.length === 0) {
-            const fallback = shop.image_url || 'https://via.placeholder.com/220x140?text=Shop';
-            collage = `<div class="c-grid c-1"><img src="${fallback}"></div>`;
+            const fallback = shop.image_url || 'https://via.placeholder.com/240x150?text=No+Image';
+            collage = `<div class="collage c-1"><img src="${fallback}"></div>`;
         } else if(p.length === 1) {
-            collage = `<div class="c-grid c-1"><img src="${p[0].image_url}"></div>`;
+            collage = `<div class="collage c-1"><img src="${p[0].image_url}"></div>`;
         } else if(p.length === 2) {
-            collage = `<div class="c-grid c-2"><img src="${p[0].image_url}"><img src="${p[1].image_url}"></div>`;
+            collage = `<div class="collage c-2"><img src="${p[0].image_url}"><img src="${p[1].image_url}"></div>`;
         } else if(p.length === 3) {
             collage = `
-                <div class="c-grid c-3">
+                <div class="collage c-3">
                     <img src="${p[0].image_url}">
                     <div><img src="${p[1].image_url}"><img src="${p[2].image_url}"></div>
                 </div>`;
         } else {
             collage = `
-                <div class="c-grid c-4">
+                <div class="collage c-4">
                     <img src="${p[0].image_url}"><img src="${p[1].image_url}">
                     <img src="${p[2].image_url}"><img src="${p[3].image_url}">
                 </div>`;
@@ -633,11 +612,11 @@
 
         return `
             <div class="shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
-                <div class="card-img-box">${collage}</div>
-                <div class="card-info">
-                    <div class="card-name">${shop.name}</div>
-                    <span class="card-tag">${shop.category}</span>
-                    <div class="card-loc"><i class="fa-solid fa-location-dot" style="color:#9CA3AF;"></i> ${shop.address}</div>
+                <div class="img-box">${collage}</div>
+                <div class="info-box">
+                    <div class="s-name">${shop.name}</div>
+                    <span class="s-cat">${shop.category}</span>
+                    <div class="s-loc"><i class="fa-solid fa-location-dot"></i> ${shop.address}</div>
                 </div>
             </div>
         `;
@@ -649,7 +628,6 @@
             window.location.href = "index.html";
         }
     }
-
     async function markRead() {
         document.getElementById('badge-count').style.display = 'none';
         await client.from('notifications').update({is_read: true}).eq('user_id', currentUser.id);
