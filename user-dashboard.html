@@ -424,7 +424,7 @@
         <div id="notifications" class="screen">
             <h2 class="sec-title" style="margin: 16px 16px 10px 16px;">Notifications</h2>
             <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:600px; margin: 0 16px;">
-                <p style="color:#9CA3AF;">No new notifications</p>
+                <p style="color:#9CA3AF; text-align:center; padding-top:20px;">Loading notifications...</p>
             </div>
         </div>
 
@@ -441,7 +441,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v12'; // Version bump for ID badge change
+    const CACHE_KEY = 'ctm_dash_v13';
 
     // --- NAVIGATION ---
     function toggleSidebar() {
@@ -488,12 +488,14 @@
             userAreaId = profile.area_id;
 
             // Fetch Dashboard Data
-            const [promos, announcements, categories, areas, shops] = await Promise.all([
+            const [promos, announcements, categories, areas, shops, notifs] = await Promise.all([
                 client.from('promo_banners').select().order('created_at', {ascending: false}),
                 client.from('announcements').select().order('created_at', {ascending: false}),
                 client.from('categories').select().order('name'),
                 client.from('areas').select().eq('city_id', userCityId).order('name'),
-                client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false})
+                client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}),
+                // ADDED: Actually fetch the list of notifications
+                client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20)
             ]);
 
             // Fetch Products
@@ -508,8 +510,8 @@
                 products = data || [];
             }
             
-            // Notifications
-            const { count } = await client.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id).eq('is_read', false);
+            // Notification Count
+            const unreadCount = notifs.data ? notifs.data.filter(n => !n.is_read).length : 0;
 
             const dashboardData = {
                 profile,
@@ -518,8 +520,9 @@
                 categories: categories.data,
                 areas: areas.data,
                 shops: shops.data,
+                notifications: notifs.data || [],
                 products,
-                unread: count
+                unread: unreadCount
             };
 
             localStorage.setItem(CACHE_KEY, JSON.stringify(dashboardData));
@@ -622,6 +625,30 @@
 
         // All Shops
         document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
+
+        // ADDED: Render Notifications List
+        const notifListEl = document.getElementById('notif-list');
+        if (data.notifications && data.notifications.length > 0) {
+            notifListEl.innerHTML = data.notifications.map(n => {
+                const date = new Date(n.created_at).toLocaleDateString() + ' ' + new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                // Styles similar to Flutter: White if read, Blue tint if unread
+                const bg = n.is_read ? 'white' : '#EFF6FF'; 
+                const border = n.is_read ? '#E5E7EB' : '#BFDBFE'; 
+                const titleColor = n.is_read ? '#1F2937' : '#1E3A8A';
+
+                return `
+                    <div style="background:${bg}; padding:16px; border-radius:12px; border:1px solid ${border}; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="font-weight:700; color:${titleColor}; font-size:0.95rem;">${n.title}</span>
+                            <span style="font-size:0.75rem; color:#6B7280;">${date}</span>
+                        </div>
+                        <div style="color:#374151; font-size:0.9rem; line-height:1.4;">${n.message || ''}</div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            notifListEl.innerHTML = '<p style="color:#9CA3AF; text-align:center; margin-top:20px;">No notifications yet</p>';
+        }
     }
 
     // --- PROFILE EDIT LOGIC ---
