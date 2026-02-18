@@ -106,7 +106,7 @@
         }
         .ticker-content {
             white-space: nowrap; 
-            animation: ticker 60s linear infinite; /* Slowed down to 60s */
+            animation: ticker 60s linear infinite;
             color: white; 
             font-weight: 600; 
             font-size: 0.9rem; 
@@ -129,7 +129,7 @@
         /* --- 4. CONTENT BODY --- */
         .content-body {
             margin-top: var(--header-height);
-            padding: 0 0 40px 0; /* Zero top padding for continuity */
+            padding: 0 0 40px 0;
             max-width: 1400px; margin-left: auto; margin-right: auto;
             width: 100%;
         }
@@ -140,24 +140,21 @@
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Smooth Vertical Spacing (No Gaps) */
         .sec-header { 
             display: flex; align-items: center; gap: 10px; 
-            padding: 12px 16px 8px 16px; /* Optimized padding */
-            margin: 0; /* Remove margin */
-            background: var(--color-bg); /* Match background for seamless look */
+            padding: 12px 16px 8px 16px; 
+            margin: 0; 
+            background: var(--color-bg); 
         }
         .sec-bar { width: 4px; height: 20px; border-radius: 4px; }
         .sec-title { font-size: 1.1rem; font-weight: 800; color: #111827; }
 
-        /* Horizontal Scroll */
         .h-scroll {
             display: flex; overflow-x: auto; gap: 12px; padding: 0 16px 12px 16px;
             scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
         }
-        .h-scroll::-webkit-scrollbar { height: 0px; } /* Hidden scrollbar for cleaner look */
+        .h-scroll::-webkit-scrollbar { height: 0px; }
 
-        /* Shop Card & Grids */
         .shop-card {
             min-width: 220px; width: 220px;
             background: white; border-radius: 12px;
@@ -185,21 +182,16 @@
         .s-cat { display: inline-block; font-size: 0.7rem; font-weight: 700; color: var(--color-primary); background: #ECFDF5; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; }
         .s-loc { font-size: 0.75rem; color: #6B7280; display: flex; align-items: center; gap: 4px; }
 
-        /* Areas (Continuous Flow) */
-        .area-container { 
-            margin-bottom: 0; /* Remove gap */
-            padding-bottom: 8px; /* Slight padding for visual separation within the flow */
-        }
+        .area-container { margin-bottom: 0; padding-bottom: 8px; }
         .area-pill { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 8px 12px; border-radius: 8px; 
-            margin: 8px 16px; /* Tight margins */
+            margin: 8px 16px; 
         }
         .area-pill.user { background: #DCFCE7; }
         .area-pill.other { background: #FEF3C7; }
         .pill-left { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #1F2937; }
 
-        /* Categories */
         .cat-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 12px 16px; }
         .cat-chip {
             background: white; border: 1px solid #E5E7EB; border-radius: 50px;
@@ -209,7 +201,6 @@
         .cat-chip img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; }
         .cat-chip span { font-size: 0.85rem; font-weight: 700; color: #374151; }
 
-        /* Grids */
         .shop-grid-view { 
             display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
             gap: 12px; padding: 0 16px 20px 16px;
@@ -222,6 +213,12 @@
         }
         .svc-card:active { transform: scale(0.96); }
         .svc-icon { width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+
+        /* Form Styles */
+        .form-group { margin-bottom: 16px; text-align: left; }
+        .form-label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #374151; }
+        .form-input { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 1rem; }
+        .form-input:focus { outline: none; border-color: var(--color-primary); ring: 2px solid #A7F3D0; }
     </style>
 </head>
 <body>
@@ -267,7 +264,7 @@
                 <div id="header-city" class="header-city">...</div>
             </div>
             
-            <!-- Middle: Ticker (White Text) -->
+            <!-- Middle: Ticker -->
             <div id="header-ticker" class="header-ticker" style="display:none;">
                 <div id="ticker-text" class="ticker-content"></div>
             </div>
@@ -305,7 +302,7 @@
                 <div id="featured-list" class="h-scroll"></div>
             </div>
 
-            <!-- Areas (Loader without text) -->
+            <!-- Areas -->
             <div id="areas-container" style="margin-top:0;">
                 <div id="initial-loader" style="text-align:center; padding:60px 0; color:#CBD5E1;">
                     <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem;"></i>
@@ -343,16 +340,11 @@
                     <div class="svc-icon" style="background:#DBEAFE; color:#2563EB;"><i class="fa-solid fa-store"></i></div>
                     <strong>My Shop</strong>
                 </div>
-                <div class="svc-card" onclick="switchScreen('profile', null)">
-                    <div class="svc-icon" style="background:#F3F4F6; color:#4B5563;"><i class="fa-solid fa-gear"></i></div>
-                    <strong>Settings</strong>
-                </div>
-                <!-- FAQ CARD -->
+                <!-- REMOVED SETTINGS CARD -->
                 <div class="svc-card" onclick="window.location.href='faq.html'">
                     <div class="svc-icon" style="background:#E0E7FF; color:#4338CA;"><i class="fa-solid fa-circle-question"></i></div>
                     <strong>FAQ</strong>
                 </div>
-                <!-- REPORT ABUSE CARD -->
                 <div class="svc-card" onclick="window.location.href='report-abuse.html'">
                     <div class="svc-icon" style="background:#FEE2E2; color:#DC2626;"><i class="fa-solid fa-triangle-exclamation"></i></div>
                     <strong>Report Abuse</strong>
@@ -362,11 +354,54 @@
 
         <!-- PROFILE -->
         <div id="profile" class="screen">
-            <div style="max-width:600px; margin:20px auto; background:white; padding:40px; border-radius:16px; border:1px solid #E5E7EB; text-align:center;">
-                <img id="profile-avatar-lg" src="" style="width:100px; height:100px; border-radius:50%; margin-bottom:16px; border:4px solid var(--color-primary);">
+            <!-- View Mode -->
+            <div id="profile-view" style="max-width:600px; margin:20px auto; background:white; padding:40px; border-radius:16px; border:1px solid #E5E7EB; text-align:center;">
+                <img id="profile-avatar-lg" src="" style="width:100px; height:100px; border-radius:50%; margin-bottom:16px; border:4px solid var(--color-primary); object-fit: cover;">
                 <h2 id="profile-name" style="font-size:1.5rem; color:#111827;">Loading...</h2>
-                <p id="profile-email" style="color:#6B7280; margin-bottom:20px;">...</p>
-                <button style="background:var(--color-primary); color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:700; cursor:pointer;">Edit Profile</button>
+                <p id="profile-phone" style="color:#6B7280; font-weight:500; margin-bottom:4px;"></p>
+                <p id="profile-email" style="color:#9CA3AF; margin-bottom:20px; font-size:0.9rem;">...</p>
+                
+                <div style="display:flex; justify-content:center; gap:10px;">
+                    <button onclick="openEditProfile()" style="background:var(--color-primary); color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:700; cursor:pointer;">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+                    </button>
+                </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <div id="profile-edit" style="display:none; max-width:600px; margin:20px auto; background:white; padding:30px; border-radius:16px; border:1px solid #E5E7EB;">
+                <h3 style="margin-bottom:20px; font-size:1.2rem; border-bottom:1px solid #E5E7EB; padding-bottom:10px;">Edit Profile</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="edit-name" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" id="edit-phone" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">City</label>
+                    <select id="edit-city" onchange="handleCityChange(this.value)" class="form-input" style="background:white;">
+                        <option value="">Select City</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom:24px;">
+                    <label class="form-label">Area</label>
+                    <select id="edit-area" class="form-input" style="background:white;">
+                        <option value="">Select Area</option>
+                    </select>
+                </div>
+                
+                <p id="edit-error" style="color:#EF4444; font-size:0.9rem; margin-bottom:16px; display:none;"></p>
+
+                <div style="display:flex; gap:12px;">
+                    <button id="btn-save" onclick="saveProfile()" style="flex:1; background:var(--color-primary); color:white; border:none; padding:12px; border-radius:8px; font-weight:700; cursor:pointer;">Save Changes</button>
+                    <button onclick="cancelEdit()" style="flex:1; background:#F3F4F6; color:#374151; border:1px solid #D1D5DB; padding:12px; border-radius:8px; font-weight:700; cursor:pointer;">Cancel</button>
+                </div>
             </div>
         </div>
 
@@ -387,9 +422,11 @@
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentUser = null;
+    let userProfile = null; // Store full profile object
     let userCityId = null;
     let userAreaId = null;
-    const CACHE_KEY = 'ctm_dash_v9'; // Version bumped for new layout
+    let allCities = []; // Store cities for edit dropdown
+    const CACHE_KEY = 'ctm_dash_v10';
 
     // --- NAVIGATION ---
     function toggleSidebar() {
@@ -406,7 +443,7 @@
         const target = document.getElementById(id);
         if (target) target.classList.add('active');
 
-        document.body.classList.remove('sb-open'); // Always close on switch
+        document.body.classList.remove('sb-open');
         if(id === 'notifications') markRead();
     }
 
@@ -416,27 +453,26 @@
         if (!session) { window.location.href = "login.html"; return; }
         currentUser = session.user;
 
-        // FAST LOAD: Check cache first
         const cache = localStorage.getItem(CACHE_KEY);
         if (cache) {
-            // Render immediately from cache
             renderData(JSON.parse(cache));
-            // Fetch silently in background to update
             fetchData(); 
         } else {
-            // First time load, show spinner (already in HTML)
             fetchData();
         }
     };
 
     async function fetchData() {
         try {
+            // Fetch Profile
             const { data: profile } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).single();
             if(!profile) return;
             
+            userProfile = profile;
             userCityId = profile.city_id;
             userAreaId = profile.area_id;
 
+            // Fetch Dashboard Data
             const [promos, announcements, categories, areas, shops] = await Promise.all([
                 client.from('promo_banners').select().order('created_at', {ascending: false}),
                 client.from('announcements').select().order('created_at', {ascending: false}),
@@ -445,6 +481,7 @@
                 client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false})
             ]);
 
+            // Fetch Products
             let products = [];
             const shopIds = shops.data.map(s => s.id);
             if(shopIds.length > 0) {
@@ -456,6 +493,7 @@
                 products = data || [];
             }
             
+            // Notifications
             const { count } = await client.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id).eq('is_read', false);
 
             const dashboardData = {
@@ -469,25 +507,30 @@
                 unread: count
             };
 
-            // Cache and Render
             localStorage.setItem(CACHE_KEY, JSON.stringify(dashboardData));
             renderData(dashboardData);
         } catch (e) { console.error("Fetch error:", e); }
     }
 
     function renderData(data) {
-        // Clear loader if it exists in DOM (only needed if coming from non-cached state)
+        // Clear loader if active
         const areaContainer = document.getElementById('areas-container');
-        // Only clear if it contains the spinner
         if(areaContainer.querySelector('.fa-spin')) areaContainer.innerHTML = '';
 
+        // Profile UI
         document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
+        
+        // Header Avatar
         document.getElementById('header-avatar').src = avatar;
+        
+        // Profile Section
         document.getElementById('profile-avatar-lg').src = avatar;
         document.getElementById('profile-name').textContent = data.profile.full_name;
+        document.getElementById('profile-phone').textContent = data.profile.phone || "No phone number added";
         document.getElementById('profile-email').textContent = currentUser.email;
 
+        // Badge
         if (data.unread > 0) {
             const b = document.getElementById('badge-count');
             b.textContent = data.unread > 9 ? '9+' : data.unread;
@@ -520,11 +563,8 @@
             document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
         }
 
-        // Areas logic - Ensure we don't wipe container if we are just re-rendering same data
-        // But for simplicity and to ensure order is correct, we rebuild. 
-        // Note: To prevent flicker, we could diff, but direct rewrite is usually fast enough for this size.
+        // Areas logic
         areaContainer.innerHTML = '';
-        
         const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
 
         sortedAreas.forEach(area => {
@@ -567,6 +607,116 @@
 
         // All Shops
         document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
+    }
+
+    // --- PROFILE EDIT LOGIC ---
+
+    async function openEditProfile() {
+        if(!userProfile) return;
+
+        // Toggle Views
+        document.getElementById('profile-view').style.display = 'none';
+        document.getElementById('profile-edit').style.display = 'block';
+
+        // Pre-fill Data
+        document.getElementById('edit-name').value = userProfile.full_name || '';
+        document.getElementById('edit-phone').value = userProfile.phone || '';
+
+        // Load Cities if not loaded
+        if(allCities.length === 0) {
+            const { data } = await client.from('cities').select('id, name').order('name');
+            allCities = data || [];
+            
+            const citySelect = document.getElementById('edit-city');
+            citySelect.innerHTML = '<option value="">Select City</option>';
+            allCities.forEach(c => {
+                citySelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            });
+        }
+
+        // Set City and Trigger Area Load
+        if(userProfile.city_id) {
+            document.getElementById('edit-city').value = userProfile.city_id;
+            await handleCityChange(userProfile.city_id, userProfile.area_id);
+        }
+    }
+
+    async function handleCityChange(cityId, preSelectAreaId = null) {
+        const areaSelect = document.getElementById('edit-area');
+        areaSelect.innerHTML = '<option value="">Loading...</option>';
+        areaSelect.disabled = true;
+
+        if(!cityId) {
+            areaSelect.innerHTML = '<option value="">Select Area</option>';
+            return;
+        }
+
+        const { data: areas } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+        
+        areaSelect.innerHTML = '<option value="">Select Area</option>';
+        if(areas) {
+            areas.forEach(a => {
+                areaSelect.innerHTML += `<option value="${a.id}">${a.name}</option>`;
+            });
+        }
+        areaSelect.disabled = false;
+
+        if(preSelectAreaId) {
+            areaSelect.value = preSelectAreaId;
+        }
+    }
+
+    function cancelEdit() {
+        document.getElementById('profile-edit').style.display = 'none';
+        document.getElementById('profile-view').style.display = 'block';
+        document.getElementById('edit-error').style.display = 'none';
+    }
+
+    async function saveProfile() {
+        const name = document.getElementById('edit-name').value.trim();
+        const phone = document.getElementById('edit-phone').value.trim();
+        const cityId = document.getElementById('edit-city').value;
+        const areaId = document.getElementById('edit-area').value;
+        const btn = document.getElementById('btn-save');
+        const err = document.getElementById('edit-error');
+
+        if(!name) {
+            err.textContent = "Full Name is required.";
+            err.style.display = 'block';
+            return;
+        }
+        if(!cityId || !areaId) {
+            err.textContent = "Please select both City and Area.";
+            err.style.display = 'block';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "Saving...";
+        err.style.display = 'none';
+
+        try {
+            const { error } = await client.from('profiles').update({
+                full_name: name,
+                phone: phone,
+                city_id: parseInt(cityId),
+                area_id: parseInt(areaId)
+            }).eq('id', currentUser.id);
+
+            if(error) throw error;
+
+            // Success: reload data to update global UI (areas, header city, etc)
+            await fetchData();
+            cancelEdit(); // Close form
+            alert("Profile updated successfully!");
+
+        } catch (e) {
+            err.textContent = e.message || "Error updating profile";
+            err.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Save Changes";
+        }
     }
 
     function buildShopCard(shop, allProducts) {
