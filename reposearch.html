@@ -221,22 +221,20 @@
             console.log("Searching for:", searchTerm);
 
             try {
-                // EXCLUSIVE STRATEGY: Edge Function
-                // This bypasses RLS using the Service Role Key on the server.
+                // STRATEGY: Edge Function Only (Bypasses RLS)
                 const { data, error } = await _supabase.functions.invoke('repo-search', {
                     body: { merchantId: searchTerm }
                 });
 
                 if (error) {
-                    // This catches network errors or 500s from the function
                     console.error("Function Invocation Error:", error);
                     renderError("Repository Service Unavailable.");
                     return;
                 }
 
-                // Check specific logic errors returned by the function
                 if (data.error || data.not_found) {
-                    renderError(data.error || "Merchant not found.");
+                    console.log("API returned not found");
+                    renderError("Merchant not found in repository.");
                     return;
                 }
 
@@ -258,11 +256,11 @@
             document.getElementById('city-text').innerText = shop.cities?.name || 'Local';
             document.getElementById('biz-loc').innerText = shop.address;
             
-            // Image Logic
+            // Image handling (Schema: storefront_url)
             const logo = shop.storefront_url || shop.image_url || 'https://via.placeholder.com/150';
             document.getElementById('shop-logo').src = logo;
 
-            // Status Logic
+            // Status Dot
             const dot = document.getElementById('shop-status-dot');
             if (shop.is_verified) {
                 dot.className = 'status-dot status-open';
@@ -270,7 +268,7 @@
                 dot.className = 'status-dot status-closed';
             }
 
-            // WhatsApp Logic
+            // WhatsApp
             if(shop.whatsapp) {
                 let num = shop.whatsapp.replace(/\D/g, '');
                 if(num.startsWith('0')) num = '234' + num.substring(1);
@@ -281,7 +279,7 @@
                 document.querySelector('.social-actions').style.gridTemplateColumns = '1fr';
             }
 
-            // Link Logic
+            // View Shop Link
             document.getElementById('view-shop-btn').href = `shop-detail.html?id=${shop.id}`;
         }
 
