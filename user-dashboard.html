@@ -129,7 +129,7 @@
         /* --- 4. CONTENT BODY --- */
         .content-body {
             margin-top: var(--header-height);
-            padding: 12px 0 40px 0; /* Reduced top padding, full width flow */
+            padding: 0 0 40px 0; /* Zero top padding for continuity */
             max-width: 1400px; margin-left: auto; margin-right: auto;
             width: 100%;
         }
@@ -140,19 +140,19 @@
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Tighter Vertical Spacing */
+        /* Smooth Vertical Spacing (No Gaps) */
         .sec-header { 
             display: flex; align-items: center; gap: 10px; 
-            margin-bottom: 8px; /* Reduced from 12px */
-            margin-top: 16px;   /* Reduced from 24px */
-            padding: 0 16px;
+            padding: 12px 16px 8px 16px; /* Optimized padding */
+            margin: 0; /* Remove margin */
+            background: var(--color-bg); /* Match background for seamless look */
         }
         .sec-bar { width: 4px; height: 20px; border-radius: 4px; }
         .sec-title { font-size: 1.1rem; font-weight: 800; color: #111827; }
 
         /* Horizontal Scroll */
         .h-scroll {
-            display: flex; overflow-x: auto; gap: 12px; padding: 4px 16px 12px 16px;
+            display: flex; overflow-x: auto; gap: 12px; padding: 0 16px 12px 16px;
             scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
         }
         .h-scroll::-webkit-scrollbar { height: 0px; } /* Hidden scrollbar for cleaner look */
@@ -185,18 +185,22 @@
         .s-cat { display: inline-block; font-size: 0.7rem; font-weight: 700; color: var(--color-primary); background: #ECFDF5; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; }
         .s-loc { font-size: 0.75rem; color: #6B7280; display: flex; align-items: center; gap: 4px; }
 
-        /* Areas */
-        .area-container { margin-bottom: 12px; /* Reduced vertical gap */ }
+        /* Areas (Continuous Flow) */
+        .area-container { 
+            margin-bottom: 0; /* Remove gap */
+            padding-bottom: 8px; /* Slight padding for visual separation within the flow */
+        }
         .area-pill { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 8px 12px; border-radius: 8px; margin: 0 16px 8px 16px;
+            padding: 8px 12px; border-radius: 8px; 
+            margin: 8px 16px; /* Tight margins */
         }
         .area-pill.user { background: #DCFCE7; }
         .area-pill.other { background: #FEF3C7; }
         .pill-left { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #1F2937; }
 
         /* Categories */
-        .cat-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px; }
+        .cat-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 12px 16px; }
         .cat-chip {
             background: white; border: 1px solid #E5E7EB; border-radius: 50px;
             padding: 6px 14px 6px 6px; display: flex; align-items: center; gap: 8px;
@@ -210,11 +214,13 @@
             display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
             gap: 12px; padding: 0 16px 20px 16px;
         }
-        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding: 0 16px; }
+        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding: 20px 16px; }
         .svc-card {
             background: white; padding: 20px 16px; border-radius: 12px; text-align: center;
             border: 1px solid #E5E7EB; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;
+            transition: transform 0.2s;
         }
+        .svc-card:active { transform: scale(0.96); }
         .svc-icon { width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
     </style>
 </head>
@@ -258,7 +264,7 @@
             <!-- Left: Toggle & City -->
             <div class="header-left">
                 <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-                <div id="header-city" class="header-city">Loading...</div>
+                <div id="header-city" class="header-city">...</div>
             </div>
             
             <!-- Middle: Ticker (White Text) -->
@@ -288,7 +294,7 @@
         <!-- MARKET -->
         <div id="market" class="screen active">
             <!-- Promos -->
-            <div id="promo-list" class="h-scroll" style="display:none; padding-top:4px;"></div>
+            <div id="promo-list" class="h-scroll" style="display:none; padding-top:12px;"></div>
             
             <!-- Featured -->
             <div id="featured-section" style="display:none;">
@@ -299,10 +305,10 @@
                 <div id="featured-list" class="h-scroll"></div>
             </div>
 
-            <!-- Areas -->
-            <div id="areas-container" style="margin-top:16px;">
-                <div id="initial-loader" style="text-align:center; padding:40px; color:#9CA3AF;">
-                    <i class="fa-solid fa-circle-notch fa-spin"></i> Checking local data...
+            <!-- Areas (Loader without text) -->
+            <div id="areas-container" style="margin-top:0;">
+                <div id="initial-loader" style="text-align:center; padding:60px 0; color:#CBD5E1;">
+                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem;"></i>
                 </div>
             </div>
 
@@ -314,7 +320,7 @@
             <div id="category-list" class="cat-grid"></div>
 
             <!-- All Shops -->
-            <div class="sec-header" style="margin-top:24px;">
+            <div class="sec-header">
                 <div class="sec-bar" style="background: #374151;"></div>
                 <div class="sec-title">All Shops</div>
             </div>
@@ -323,7 +329,7 @@
 
         <!-- SERVICES -->
         <div id="services" class="screen">
-            <h2 class="sec-title" style="margin: 0 16px 20px 16px;">Services & Tools</h2>
+            <h2 class="sec-title" style="margin: 16px 16px 0 16px;">Services & Tools</h2>
             <div class="svc-grid">
                 <div class="svc-card" onclick="window.location.href='wishlist.html'">
                     <div class="svc-icon" style="background:#FCE7F3; color:#DB2777;"><i class="fa-solid fa-heart"></i></div>
@@ -341,6 +347,16 @@
                     <div class="svc-icon" style="background:#F3F4F6; color:#4B5563;"><i class="fa-solid fa-gear"></i></div>
                     <strong>Settings</strong>
                 </div>
+                <!-- FAQ CARD -->
+                <div class="svc-card" onclick="window.location.href='faq.html'">
+                    <div class="svc-icon" style="background:#E0E7FF; color:#4338CA;"><i class="fa-solid fa-circle-question"></i></div>
+                    <strong>FAQ</strong>
+                </div>
+                <!-- REPORT ABUSE CARD -->
+                <div class="svc-card" onclick="window.location.href='report-abuse.html'">
+                    <div class="svc-icon" style="background:#FEE2E2; color:#DC2626;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <strong>Report Abuse</strong>
+                </div>
             </div>
         </div>
 
@@ -356,7 +372,7 @@
 
         <!-- NOTIFICATIONS -->
         <div id="notifications" class="screen">
-            <h2 class="sec-title" style="margin: 0 16px 20px 16px;">Notifications</h2>
+            <h2 class="sec-title" style="margin: 16px 16px 10px 16px;">Notifications</h2>
             <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:600px; margin: 0 16px;">
                 <p style="color:#9CA3AF;">No new notifications</p>
             </div>
@@ -373,7 +389,7 @@
     let currentUser = null;
     let userCityId = null;
     let userAreaId = null;
-    const CACHE_KEY = 'ctm_dash_v8'; // Bumped cache key
+    const CACHE_KEY = 'ctm_dash_v9'; // Version bumped for new layout
 
     // --- NAVIGATION ---
     function toggleSidebar() {
@@ -400,14 +416,17 @@
         if (!session) { window.location.href = "login.html"; return; }
         currentUser = session.user;
 
+        // FAST LOAD: Check cache first
         const cache = localStorage.getItem(CACHE_KEY);
         if (cache) {
+            // Render immediately from cache
             renderData(JSON.parse(cache));
+            // Fetch silently in background to update
+            fetchData(); 
         } else {
-            document.getElementById('initial-loader').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Loading...';
+            // First time load, show spinner (already in HTML)
+            fetchData();
         }
-
-        fetchData();
     };
 
     async function fetchData() {
@@ -450,15 +469,17 @@
                 unread: count
             };
 
+            // Cache and Render
             localStorage.setItem(CACHE_KEY, JSON.stringify(dashboardData));
             renderData(dashboardData);
         } catch (e) { console.error("Fetch error:", e); }
     }
 
     function renderData(data) {
-        // Clear loader
+        // Clear loader if it exists in DOM (only needed if coming from non-cached state)
         const areaContainer = document.getElementById('areas-container');
-        if(areaContainer.innerHTML.includes('fa-spin')) areaContainer.innerHTML = '';
+        // Only clear if it contains the spinner
+        if(areaContainer.querySelector('.fa-spin')) areaContainer.innerHTML = '';
 
         document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
@@ -473,7 +494,7 @@
             b.style.display = 'block';
         }
 
-        // --- NEW TICKER LOGIC (Inline) ---
+        // Ticker
         if (data.announcements && data.announcements.length > 0) {
             document.getElementById('header-ticker').style.display = 'flex';
             document.getElementById('ticker-text').textContent = data.announcements.map(a => a.message).join("  •  ");
@@ -481,6 +502,7 @@
             document.getElementById('header-ticker').style.display = 'none';
         }
 
+        // Promos
         const pList = document.getElementById('promo-list');
         if (data.promos.length > 0) {
             pList.style.display = 'flex';
@@ -491,13 +513,18 @@
             ).join('');
         }
 
+        // Featured
         const featured = data.shops.filter(s => s.is_featured);
         if (featured.length > 0) {
             document.getElementById('featured-section').style.display = 'block';
             document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
         }
 
+        // Areas logic - Ensure we don't wipe container if we are just re-rendering same data
+        // But for simplicity and to ensure order is correct, we rebuild. 
+        // Note: To prevent flicker, we could diff, but direct rewrite is usually fast enough for this size.
         areaContainer.innerHTML = '';
+        
         const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
 
         sortedAreas.forEach(area => {
@@ -526,6 +553,7 @@
             `;
         });
 
+        // Categories
         document.getElementById('category-list').innerHTML = data.categories.map(cat => {
             const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
             const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
@@ -537,6 +565,7 @@
             `;
         }).join('');
 
+        // All Shops
         document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
     }
 
