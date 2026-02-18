@@ -221,19 +221,18 @@
             console.log("Searching for:", searchTerm);
 
             try {
-                // STRATEGY: Edge Function Only (Bypasses RLS)
+                // STRATEGY: Edge Function Only
                 const { data, error } = await _supabase.functions.invoke('repo-search', {
                     body: { merchantId: searchTerm }
                 });
 
                 if (error) {
-                    console.error("Function Invocation Error:", error);
-                    renderError("Repository Service Unavailable.");
+                    console.error("Function Error:", error);
+                    renderError("Service Unavailable. Please try again.");
                     return;
                 }
 
                 if (data.error || data.not_found) {
-                    console.log("API returned not found");
                     renderError("Merchant not found in repository.");
                     return;
                 }
@@ -241,7 +240,7 @@
                 renderUI(data.shop, data.profile);
 
             } catch (e) {
-                console.error("Unexpected Client Error:", e);
+                console.error("Search Failed:", e);
                 renderError("An unexpected error occurred.");
             }
         }
@@ -251,16 +250,16 @@
             document.getElementById('merchant-content').classList.remove('hidden');
 
             document.getElementById('biz-name').innerText = shop.name;
-            document.getElementById('owner-name').innerText = `Proprietor: ${profile ? profile.full_name : 'Verified Merchant'}`;
+            document.getElementById('owner-name').innerText = `Proprietor: ${profile && profile.full_name ? profile.full_name : 'Verified Merchant'}`;
             document.getElementById('ct-id-badge').innerText = shop.unique_id || 'ID Pending';
             document.getElementById('city-text').innerText = shop.cities?.name || 'Local';
-            document.getElementById('biz-loc').innerText = shop.address;
+            document.getElementById('biz-loc').innerText = shop.address || 'Address not listed';
             
-            // Image handling (Schema: storefront_url)
+            // Image Logic (Matching Schema)
             const logo = shop.storefront_url || shop.image_url || 'https://via.placeholder.com/150';
             document.getElementById('shop-logo').src = logo;
 
-            // Status Dot
+            // Status Logic
             const dot = document.getElementById('shop-status-dot');
             if (shop.is_verified) {
                 dot.className = 'status-dot status-open';
@@ -268,7 +267,7 @@
                 dot.className = 'status-dot status-closed';
             }
 
-            // WhatsApp
+            // WhatsApp Logic
             if(shop.whatsapp) {
                 let num = shop.whatsapp.replace(/\D/g, '');
                 if(num.startsWith('0')) num = '234' + num.substring(1);
@@ -279,7 +278,7 @@
                 document.querySelector('.social-actions').style.gridTemplateColumns = '1fr';
             }
 
-            // View Shop Link
+            // Link Logic
             document.getElementById('view-shop-btn').href = `shop-detail.html?id=${shop.id}`;
         }
 
