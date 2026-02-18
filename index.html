@@ -19,82 +19,108 @@
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    /* --- REPO SEARCH --- */
-    .repo-search-wrapper {
-        position: relative;
-        width: 100%;
-        max-width: 380px;
-        margin-bottom: 1.5rem;
+    :root {
+        --color-purple: #2E1065;
+        --color-pink: #DB2777;
     }
 
-    .repo-input {
-        width: 100%;
-        padding: 12px 40px 12px 20px;
-        background-color: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 50px;
-        font-size: 0.9rem;
-        color: white;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 600;
-        outline: none;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(8px);
-    }
-    
-    .repo-input::placeholder { 
-        color: rgba(255, 255, 255, 0.7); 
-        text-transform: none; 
-        letter-spacing: normal; 
-        font-weight: 400;
-    }
-    
-    .repo-input:focus {
-        background-color: rgba(255, 255, 255, 0.25);
-        border-color: var(--color-pink);
-        box-shadow: 0 0 15px rgba(219, 39, 119, 0.3);
+    /* --- LAYOUT FIXES --- */
+    body {
+        overflow-x: hidden;
+        margin: 0;
+        font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
-    .search-icon-btn {
-        position: absolute;
-        right: 16px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.6);
-        cursor: pointer;
-        width: 18px;
-        transition: color 0.2s;
-    }
-    .search-icon-btn:hover { color: var(--color-pink); }
-
-    .id-hint {
-        margin-top: 6px;
-        margin-left: 12px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #facc15;
+    /* Hero Section Layout */
+    .hero-section {
         display: flex;
-        align-items: center;
-        gap: 6px;
+        flex-direction: column;
+        min-height: 100vh;
+        position: relative;
+        background: #0F172A; /* Fallback bg */
+    }
+
+    /* Image Wrapper - Mobile */
+    .hero-image-wrapper {
+        width: 100%;
+        height: 35vh;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    .hero-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(to bottom, transparent, #0F172A);
+        pointer-events: none;
+    }
+
+    /* Content - Mobile */
+    .hero-content {
+        width: 100%;
+        padding: 24px;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        /* Tighten vertical spacing */
+        gap: 16px; 
+    }
+
+    /* --- DESKTOP LAYOUT (Fixing the Left Image Issue) --- */
+    @media (min-width: 992px) {
+        .hero-section {
+            flex-direction: row;
+            align-items: stretch;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .hero-image-wrapper {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 50vw; /* Exact half width */
+            height: 100%;
+            z-index: 1;
+        }
+
+        .hero-overlay {
+            background: linear-gradient(to right, transparent 60%, #0F172A 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            margin-left: 50vw; /* Push content to right half */
+            width: 50vw;
+            height: 100%;
+            padding: 4rem 6rem;
+            z-index: 2;
+            background: #0F172A; /* Solid background for text area */
+            overflow-y: auto;
+        }
     }
 
     /* --- HERO AUTH WIDGET --- */
     .hero-auth-widget {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         padding: 24px;
         border-radius: 20px;
         width: 100%;
-        max-width: 380px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-        margin-top: 1rem;
+        max-width: 400px;
+        margin-top: 0; /* Remove top margin */
     }
 
     .widget-title {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         font-weight: 700;
         color: white;
         margin-bottom: 16px;
@@ -135,7 +161,7 @@
     .hero-input-login:focus {
         background: rgba(0, 0, 0, 0.4);
         border-color: var(--color-pink);
-        box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.25);
+        box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.2);
     }
 
     .btn-login-hero {
@@ -149,7 +175,7 @@
         cursor: pointer;
         font-size: 1rem;
         transition: transform 0.2s, background-color 0.2s;
-        margin-top: 4px;
+        margin-top: 8px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -164,7 +190,7 @@
         display: flex;
         align-items: center;
         text-align: center;
-        margin: 20px 0;
+        margin: 16px 0;
         color: rgba(255, 255, 255, 0.5);
         font-size: 0.8rem;
         font-weight: 600;
@@ -204,43 +230,60 @@
     }
     @keyframes blink { 50% { opacity: 0; } }
 
-    @media (max-width: 768px) {
-        .hero-auth-widget { max-width: 100%; }
+    /* Navigation Override for transparent absolute positioning */
+    .main-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 50;
+        padding: 16px 0;
+        background: linear-gradient(to bottom, rgba(15,23,42,0.9), transparent);
     }
+    .nav-container {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0 24px;
+    }
+    .brand-logo { width: 40px; height: 40px; border-radius: 8px; margin-right: 10px; }
+    .brand-wrapper { display: flex; align-items: center; text-decoration: none; color: white; font-weight: 800; font-size: 1.1rem; }
+    .desktop-menu a { color: rgba(255,255,255,0.8); text-decoration: none; margin-left: 20px; font-weight: 600; font-size: 0.9rem; transition: color 0.2s; }
+    .desktop-menu a:hover, .desktop-menu a.nav-active { color: white; }
+    .btn-staff { border: 1px solid rgba(255,255,255,0.3); padding: 8px 16px; border-radius: 8px; }
+    .mobile-menu-btn { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+    .mobile-dropdown { position: absolute; top: 100%; left:0; right:0; background: #1E293B; padding: 20px; display: flex; flexDirection: column; gap: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .mobile-dropdown a { color: white; text-decoration: none; display: block; font-weight: 600; padding: 8px 0; }
+    .hidden { display: none; }
+
+    @media (max-width: 991px) {
+        .main-header { position: relative; background: #0F172A; }
+        .desktop-menu { display: none; }
+        .mobile-menu-btn { display: block; }
+        .hero-title { font-size: 2rem; }
+    }
+    
+    .hero-title { font-size: 3rem; font-weight: 800; margin: 0; line-height: 1.1; }
+    .hero-desc { font-size: 1.1rem; opacity: 0.8; line-height: 1.6; max-width: 500px; margin-top: 0; }
+    
+    .features-list { display: flex; gap: 16px; flex-wrap: wrap; opacity: 0.7; font-size: 0.85rem; font-weight: 600; margin-top: 1rem; }
   </style>
 </head>
 <body>
 
 <nav class="main-header">
-  <div class="container nav-container">
+  <div class="nav-container">
     <a href="index.html" class="brand-wrapper">
       <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
-      
-      <div class="marquee-container header-marquee-box">
-         <div class="marquee-content animate-brand-scroll desktop-menu">
-            <div class="flex items-center" style="display:flex; align-items:center; margin-right: 2.5rem;">
-                <span>CT-MERCHANT LTD.</span>
-                <div class="flag-icon">
-                    <div class="flag-stripe flag-green"></div>
-                    <div class="flag-stripe flag-white"></div>
-                    <div class="flag-stripe flag-green"></div>
-                </div>
-            </div>
-         </div>
-      </div>
+      <span>CT-MERCHANT LTD.</span>
     </a>
 
-    <!-- Updated Menu Items -->
+    <!-- Desktop Menu -->
     <div class="desktop-menu">
       <a href="index.html" class="nav-active">Home</a>
       <a href="about.html">About</a>
       <a href="services.html">Services</a>
       <a href="affiliate.html">Affiliate</a>
-      <a href="careers.html">Careers</a>
       <a href="contact.html">Contact</a>
-      <a href="staff-portal.html" class="btn-staff">
-        Staff Portal
-      </a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
     </div>
 
     <!-- Mobile Menu Button -->
@@ -250,18 +293,18 @@
   </div>
 
   <div class="mobile-dropdown hidden" id="mobile-menu">
-      <a href="index.html" style="border-bottom: 1px solid white;">Home</a>
+      <a href="index.html">Home</a>
       <a href="about.html">About</a>
       <a href="services.html">Services</a>
       <a href="affiliate.html">Affiliate</a>
-      <a href="careers.html">Careers</a>
       <a href="contact.html">Contact</a>
-      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
+      <a href="staff-portal.html">Staff Portal</a>
   </div>
 </nav>
 
 <section class="hero-section">
 
+  <!-- Left Side: Image -->
   <div class="hero-image-wrapper">
     <div class="hero-overlay"></div>
     <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" 
@@ -269,84 +312,63 @@
          class="hero-img">
   </div>
 
+  <!-- Right Side: Content -->
   <div class="hero-content">
     <div class="animate-up visible">
       
-      <div style="margin-bottom: 1.5rem;">
-        <span class="repo-badge">
-          Repository of Shops, Products and Services
-        </span>
-        
-        <!-- REPO SEARCH BOX -->
-        <div class="repo-search-wrapper">
-            <div style="position: relative;">
-                <input type="text" id="repo-search-input" placeholder="Enter Merchant ID..." class="repo-input"
-                       onkeypress="if(event.key === 'Enter') handleRepoSearch()">
-                <div class="search-icon-btn" onclick="handleRepoSearch()">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                </div>
-            </div>
-            <p class="id-hint">
-                <i class="fa-solid fa-circle-info"></i> Search by ID (e.g., CT-3945BOGD)
-            </p>
-        </div>
-
-        <h1 class="hero-title" style="min-height: 80px;">
+      <!-- Typewriter Heading -->
+      <h1 class="hero-title" style="min-height: 80px; margin-bottom: 8px;">
            <span id="typewriter"></span><span class="cursor">|</span>
-        </h1>
-        
-        <p class="hero-desc">
-          We provide a digital repository of physical shops, their products, and locations within a city.
-        </p>
+      </h1>
+      
+      <p class="hero-desc">
+         We provide a digital repository of physical shops, their products, and locations within a city.
+      </p>
 
-        <!-- PROFESSIONAL AUTH WIDGET -->
-        <div class="hero-auth-widget">
-            <div class="widget-title">
-                <i class="fa-solid fa-lock"></i> Merchant Access
-            </div>
-            
-            <form onsubmit="event.preventDefault(); handleHeroLogin();">
-                <div class="input-group-hero">
-                    <i class="fa-solid fa-envelope"></i>
-                    <input type="email" id="hero-email" class="hero-input-login" placeholder="Email Address" required>
-                </div>
-                <div class="input-group-hero">
-                    <i class="fa-solid fa-key"></i>
-                    <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
-                </div>
-                
-                <button type="submit" id="hero-login-btn" class="btn-login-hero">
-                    Secure Sign In <i class="fa-solid fa-arrow-right"></i>
-                </button>
-            </form>
+      <!-- AUTH WIDGET -->
+      <div class="hero-auth-widget">
+          <div class="widget-title">
+              <i class="fa-solid fa-right-to-bracket"></i> Sign In
+          </div>
+          
+          <form onsubmit="event.preventDefault(); handleHeroLogin();">
+              <div class="input-group-hero">
+                  <i class="fa-solid fa-envelope"></i>
+                  <input type="email" id="hero-email" class="hero-input-login" placeholder="Email Address" required>
+              </div>
+              <div class="input-group-hero">
+                  <i class="fa-solid fa-key"></i>
+                  <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
+              </div>
+              
+              <button type="submit" id="hero-login-btn" class="btn-login-hero">
+                  Secure Sign In <i class="fa-solid fa-arrow-right"></i>
+              </button>
+          </form>
 
-            <div class="widget-divider">New to CT-Merchant?</div>
+          <div class="widget-divider">New to CT-Merchant?</div>
 
-            <a href="create-account.html" class="btn-create-account">
-                Create Free Account
-            </a>
-        </div>
-        <!-- END WIDGET -->
-
+          <a href="create-account.html" class="btn-create-account">
+              Create Free Account
+          </a>
       </div>
+      <!-- END WIDGET -->
 
+      <!-- Features Footer -->
       <div class="features-list">
         <span style="display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-store"></i> Shops Repository</span>
         <span style="display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-magnifying-glass-location"></i> Discover</span>
         <span style="display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-id-card"></i> Unique ID</span>
       </div>
+
     </div>
   </div>
 </section>
 
-<footer class="footer">
-  <div class="container footer-container">
-    <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
-    <div class="footer-links">
-      <a href="privacy.html">Privacy Policy</a>
-      <a href="terms.html">Terms of Use</a>
-      <span>RC: 8879163</span>
-    </div>
+<footer class="footer" style="position: absolute; bottom: 0; right: 0; width: 50%; padding: 10px 24px; font-size: 0.75rem; color: rgba(255,255,255,0.4); z-index: 10;">
+  <div style="display: flex; justify-content: space-between;">
+    <span>© 2026 CT-MERCHANT LTD.</span>
+    <span>RC: 8879163</span>
   </div>
 </footer>
 
@@ -394,12 +416,6 @@
     
     // Start Animation
     document.addEventListener('DOMContentLoaded', typeEffect);
-
-    // --- REPO SEARCH ---
-    function handleRepoSearch() {
-        const query = document.getElementById('repo-search-input').value.trim();
-        if(query) window.location.href = `reposearch.html?merchantId=${query}`;
-    }
 
     // --- LOGIN LOGIC ---
     async function handleHeroLogin() {
