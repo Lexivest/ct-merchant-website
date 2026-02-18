@@ -5,8 +5,8 @@
 // 1. Supabase Configuration
 // PRO TIP: In a production Cloudflare environment, consider using Environment Variables 
 // instead of hardcoding keys here.
-const SB_URL = 'https://goodtvrhszsnhcyigfoi.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdvb2R0dnJoc3pzbmhjeWlnZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI'; 
+const SB_URL = 'https://xdchacdjcgazyckacbpc.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow'; 
 
 let supabaseClient;
 try {
