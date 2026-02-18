@@ -287,6 +287,7 @@
             
             <!-- Right: Actions -->
             <div class="header-actions">
+                <!-- SHOP INDEX ICON -->
                 <button class="action-btn" onclick="window.location.href='shop-index.html'" title="Shop Index">
                     <i class="fa-solid fa-arrow-down-a-z" style="font-size: 1.1rem;"></i>
                 </button>
@@ -445,7 +446,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v14'; // Version bump for dynamic shop card
+    const CACHE_KEY = 'ctm_dash_v15'; // Version bump for encoded links
 
     // --- NAVIGATION ---
     function toggleSidebar() {
@@ -615,13 +616,13 @@
             `;
         });
 
-        // Categories
+        // Categories - FIXED: ENCODING URL COMPONENT
         document.getElementById('category-list').innerHTML = data.categories.map(cat => {
             const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
             const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
             const url = p ? p.image_url : `https://via.placeholder.com/32?text=${cat.name.charAt(0)}`;
             return `
-                <div class="cat-chip" onclick="window.location.href='cat.html?name=${cat.name}'">
+                <div class="cat-chip" onclick="window.location.href='cat.html?name=${encodeURIComponent(cat.name)}'">
                     <img src="${url}"> <span>${cat.name}</span>
                 </div>
             `;
