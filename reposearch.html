@@ -220,18 +220,19 @@
         async function fetchMerchant(searchTerm) {
             console.log("Searching for:", searchTerm);
 
-            // STRATEGY 1: Try Edge Function (Uses Service Role to bypass RLS)
+            // STRATEGY 1: Try Edge Function (Preferred - Bypasses RLS)
             try {
                 const { data, error } = await _supabase.functions.invoke('repo-search', {
                     body: { merchantId: searchTerm }
                 });
 
-                // If function fails (likely 500/401 due to missing secrets), throw to catch block
-                if (error) throw error;
+                if (error) {
+                    console.warn("Edge Function failed (Likely missing secret), attempting DB fallback...", error);
+                    throw error;
+                }
 
-                // If function runs but returns 404 (Not Found)
                 if (data.error || data.not_found) {
-                    // Don't give up yet, try local DB just in case name format differs
+                    // Try DB Fallback just in case
                     throw new Error("Function returned not found"); 
                 }
 
@@ -240,21 +241,20 @@
 
             } catch (e) {
                 // STRATEGY 2: Direct DB Fallback
-                // IMPORTANT: This requires RLS Policies on 'shops' to be public!
-                console.warn("Edge Function failed or returned empty. Attempting Direct DB Fallback...", e);
+                console.log("Attempting Direct DB Fallback...");
                 
                 try {
                     const q = `%${searchTerm}%`;
                     const { data, error } = await _supabase
                         .from('shops')
                         .select('*, cities(name), profiles(full_name)')
-                        // FIX: Search ALL fields (ID, Name, Phone), not just ID
+                        // Search ID, Name, Phone
                         .or(`unique_id.ilike.${q},name.ilike.${q},phone.ilike.${q}`) 
                         .limit(1)
                         .maybeSingle();
                     
                     if (error || !data) {
-                        console.error("DB Search Error:", error);
+                        console.error("DB Search Error or Not Found:", error);
                         renderError("Merchant not found in repository.");
                         return;
                     }
@@ -276,7 +276,7 @@
             document.getElementById('city-text').innerText = shop.cities?.name || 'Local';
             document.getElementById('biz-loc').innerText = shop.address;
             
-            // FIX: Match schema column name "storefront_url" (not store_front_url)
+            // CORRECTED: Uses 'storefront_url' matching schema
             const logo = shop.storefront_url || shop.image_url || 'https://via.placeholder.com/150';
             document.getElementById('shop-logo').src = logo;
 
