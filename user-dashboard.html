@@ -143,7 +143,6 @@
         /* COMPACT SPACING STYLES */
         .sec-header { 
             display: flex; align-items: center; gap: 10px; 
-            /* Drastically reduced vertical padding */
             padding: 6px 16px 2px 16px; 
             margin: 0; 
             background: var(--color-bg); 
@@ -153,7 +152,6 @@
 
         .h-scroll {
             display: flex; overflow-x: auto; gap: 12px; 
-            /* Reduced bottom padding to minimum needed for shadow */
             padding: 0 16px 4px 16px;
             scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
         }
@@ -183,15 +181,27 @@
 
         .info-box { padding: 10px; }
         .s-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .s-cat { display: inline-block; font-size: 0.7rem; font-weight: 700; color: var(--color-primary); background: #ECFDF5; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; }
+        
+        /* UPDATED: CT ID Style */
+        .s-id-badge { 
+            display: inline-block; 
+            font-size: 0.7rem; 
+            font-weight: 700; 
+            color: #1E40AF; /* Dark Blue */
+            background: #EFF6FF; /* Light Blue */
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            border: 1px solid #DBEAFE;
+            margin-bottom: 6px; 
+        }
+
         .s-loc { font-size: 0.75rem; color: #6B7280; display: flex; align-items: center; gap: 4px; }
 
-        /* Areas - removed all bottom padding/margins */
+        /* Areas */
         .area-container { margin-bottom: 0; padding-bottom: 0; }
         .area-pill { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 8px 12px; border-radius: 8px; 
-            /* Tighter margins */
             margin: 4px 16px 4px 16px; 
         }
         .area-pill.user { background: #DCFCE7; }
@@ -346,12 +356,10 @@
                     <div class="svc-icon" style="background:#DBEAFE; color:#2563EB;"><i class="fa-solid fa-store"></i></div>
                     <strong>My Shop</strong>
                 </div>
-                <!-- FAQ CARD -->
                 <div class="svc-card" onclick="window.location.href='faq.html'">
                     <div class="svc-icon" style="background:#E0E7FF; color:#4338CA;"><i class="fa-solid fa-circle-question"></i></div>
                     <strong>FAQ</strong>
                 </div>
-                <!-- REPORT ABUSE CARD -->
                 <div class="svc-card" onclick="window.location.href='report-abuse.html'">
                     <div class="svc-icon" style="background:#FEE2E2; color:#DC2626;"><i class="fa-solid fa-triangle-exclamation"></i></div>
                     <strong>Report Abuse</strong>
@@ -433,7 +441,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v11'; // Version bump for style changes
+    const CACHE_KEY = 'ctm_dash_v12'; // Version bump for ID badge change
 
     // --- NAVIGATION ---
     function toggleSidebar() {
@@ -750,12 +758,19 @@
                 </div>`;
         }
 
+        // Extract ID Badge Logic
+        const rawId = shop.unique_id || 'N/A';
+        const displayId = rawId.includes('-') ? rawId.split('-').pop() : rawId;
+
         return `
             <div class="shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
                 <div class="img-box">${collage}</div>
                 <div class="info-box">
                     <div class="s-name">${shop.name}</div>
-                    <span class="s-cat">${shop.category}</span>
+                    
+                    <!-- REPLACED CATEGORY WITH CT ID -->
+                    <span class="s-id-badge">ID: ${displayId}</span>
+                    
                     <div class="s-loc"><i class="fa-solid fa-location-dot"></i> ${shop.address}</div>
                 </div>
             </div>
