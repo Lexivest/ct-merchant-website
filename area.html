@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Area Shops | CT-Merchant</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-primary: #059669;
+            --color-bg: #F3F4F6;
+            --color-text-main: #1F2937;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body { 
+            background-color: var(--color-bg); 
+            color: var(--color-text-main);
+            overflow-x: hidden;
+            display: flex; flex-direction: column; height: 100vh;
+        }
+
+        /* HEADER */
+        .app-header {
+            background: var(--color-primary);
+            color: white;
+            padding: 0 16px;
+            height: 60px;
+            display: flex; align-items: center; gap: 16px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky; top: 0; z-index: 50;
+        }
+        .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 8px; margin-left: -8px; }
+        .page-title { font-weight: 700; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* SEARCH BAR */
+        .search-container {
+            padding: 16px;
+            background: white;
+            border-bottom: 1px solid #E5E7EB;
+            flex-shrink: 0;
+        }
+        .search-wrapper {
+            position: relative;
+            background: #F3F4F6;
+            border-radius: 12px;
+            display: flex; align-items: center;
+        }
+        .search-icon { padding: 0 12px; color: #9CA3AF; }
+        .search-input {
+            width: 100%;
+            padding: 12px 12px 12px 0;
+            border: none;
+            background: transparent;
+            font-size: 0.95rem;
+            outline: none;
+            color: #374151;
+        }
+
+        /* LIST */
+        .shop-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 16px;
+        }
+        
+        .shop-tile {
+            background: white;
+            padding: 12px;
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #F3F4F6;
+        }
+        .shop-tile:last-child { border-bottom: none; }
+        .shop-tile:active { background: #F9FAFB; }
+
+        /* IMAGE */
+        .tile-img {
+            width: 60px; height: 60px;
+            border-radius: 8px;
+            background: #E5E7EB;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .tile-placeholder {
+            width: 60px; height: 60px;
+            border-radius: 8px;
+            background: #ECFDF5;
+            color: var(--color-primary);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        /* TEXT */
+        .tile-info { flex: 1; overflow: hidden; }
+        .t-row-1 { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+        .t-name { font-weight: 700; font-size: 1rem; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .t-row-2 { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .t-cat { 
+            font-size: 0.7rem; font-weight: 700; 
+            color: var(--color-primary); 
+            background: #ECFDF5; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+        }
+        /* CT ID Badge Style */
+        .t-id { 
+            display: inline-block; 
+            font-size: 0.65rem; 
+            font-weight: 700; 
+            color: #1E40AF; 
+            background: #EFF6FF; 
+            padding: 2px 4px; 
+            border-radius: 4px; 
+            border: 1px solid #DBEAFE; 
+        }
+
+        .t-addr { font-size: 0.8rem; color: #6B7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* STATES */
+        .state-box { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            height: 100%; color: #9CA3AF; text-align: center; padding: 40px 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="app-header">
+        <button class="back-btn" onclick="window.history.back()"><i class="fa-solid fa-arrow-left"></i></button>
+        <div id="header-title" class="page-title">Loading...</div>
+    </header>
+
+    <!-- SEARCH -->
+    <div class="search-container">
+        <div class="search-wrapper">
+            <i class="fa-solid fa-filter search-icon"></i>
+            <input type="text" id="search-input" class="search-input" placeholder="Search in this area..." onkeyup="handleSearch()">
+        </div>
+    </div>
+
+    <!-- LIST -->
+    <div id="content-area" class="shop-list">
+        <div class="state-box">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; margin-bottom: 12px;"></i>
+            <span>Loading Shops...</span>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let areaShops = [];
+    const params = new URLSearchParams(window.location.search);
+    const areaId = params.get('id');
+
+    // --- INIT ---
+    window.onload = async () => {
+        if (!areaId) {
+            renderError("Area ID missing.");
+            return;
+        }
+        await fetchAreaShops();
+    };
+
+    async function fetchAreaShops() {
+        try {
+            // 1. Fetch Area Name & Shops in parallel
+            const [areaRes, shopsRes] = await Promise.all([
+                client.from('areas').select('name').eq('id', areaId).single(),
+                client.from('shops').select('*').eq('area_id', areaId).order('name', { ascending: true })
+            ]);
+
+            if (areaRes.error) throw areaRes.error;
+            
+            // Set Title
+            const areaName = areaRes.data.name;
+            document.getElementById('header-title').textContent = `Merchants in ${areaName}`;
+            document.title = `${areaName} | CT-Merchant`;
+
+            // Process Shops
+            if (shopsRes.error) throw shopsRes.error;
+            areaShops = shopsRes.data || [];
+            renderList(areaShops);
+
+        } catch (e) {
+            console.error(e);
+            renderError("Failed to load shops.");
+        }
+    }
+
+    function renderList(shops) {
+        const container = document.getElementById('content-area');
+        
+        if (shops.length === 0) {
+            container.innerHTML = `
+                <div class="state-box">
+                    <i class="fa-solid fa-store-slash" style="font-size: 3rem; margin-bottom: 12px; opacity: 0.5;"></i>
+                    <span>No shops found in this area yet.</span>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = shops.map(shop => {
+            // Smart Image Logic
+            let imgHtml = '';
+            let displayImg = null;
+
+            if (shop.store_front_url) displayImg = shop.store_front_url;
+            else if (shop.image_url) displayImg = shop.image_url;
+            else if (shop.banners && shop.banners.length > 0) displayImg = shop.banners[0];
+
+            if (displayImg) {
+                imgHtml = `<img src="${displayImg}" class="tile-img" loading="lazy">`;
+            } else {
+                const initial = shop.name ? shop.name.charAt(0).toUpperCase() : 'S';
+                imgHtml = `<div class="tile-placeholder">${initial}</div>`;
+            }
+
+            // ID Logic
+            const rawId = shop.unique_id || 'N/A';
+            const displayId = rawId.includes('-') ? rawId.split('-').pop() : rawId;
+
+            return `
+                <div class="shop-tile" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
+                    ${imgHtml}
+                    <div class="tile-info">
+                        <div class="t-row-1">
+                            <span class="t-name">${shop.name}</span>
+                            ${shop.is_verified ? '<i class="fa-solid fa-certificate" style="color:#3B82F6; font-size:0.8rem;"></i>' : ''}
+                        </div>
+                        <div class="t-row-2">
+                            <span class="t-cat">${shop.category}</span>
+                            ${shop.is_verified ? `<span class="t-id">ID: ${displayId}</span>` : ''}
+                        </div>
+                        <div class="t-addr">${shop.address}</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color: #D1D5DB;"></i>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function handleSearch() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        
+        if (!query) {
+            renderList(areaShops);
+            return;
+        }
+
+        const filtered = areaShops.filter(s => {
+            const name = s.name.toLowerCase();
+            const cat = s.category.toLowerCase();
+            const id = (s.unique_id || '').toLowerCase();
+            
+            return name.includes(query) || cat.includes(query) || id.includes(query);
+        });
+
+        renderList(filtered);
+    }
+
+    function renderError(msg) {
+        document.getElementById('content-area').innerHTML = `
+            <div class="state-box">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; margin-bottom: 12px; color: #EF4444;"></i>
+                <span>${msg}</span>
+                <button onclick="location.reload()" style="margin-top:12px; color:var(--color-primary); border:none; background:none; font-weight:700;">Tap to Retry</button>
+            </div>`;
+    }
+</script>
+</body>
+</html>
