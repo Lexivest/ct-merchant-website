@@ -287,6 +287,7 @@
             
             <!-- Right: Actions -->
             <div class="header-actions">
+                <!-- SHOP INDEX ICON -->
                 <button class="action-btn" onclick="window.location.href='shop-index.html'" title="Shop Index">
                     <i class="fa-solid fa-arrow-down-a-z" style="font-size: 1.1rem;"></i>
                 </button>
@@ -494,7 +495,6 @@
                 client.from('categories').select().order('name'),
                 client.from('areas').select().eq('city_id', userCityId).order('name'),
                 client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}),
-                // ADDED: Actually fetch the list of notifications
                 client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20)
             ]);
 
@@ -626,12 +626,11 @@
         // All Shops
         document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
 
-        // ADDED: Render Notifications List
+        // Notifications List
         const notifListEl = document.getElementById('notif-list');
         if (data.notifications && data.notifications.length > 0) {
             notifListEl.innerHTML = data.notifications.map(n => {
                 const date = new Date(n.created_at).toLocaleDateString() + ' ' + new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                // Styles similar to Flutter: White if read, Blue tint if unread
                 const bg = n.is_read ? 'white' : '#EFF6FF'; 
                 const border = n.is_read ? '#E5E7EB' : '#BFDBFE'; 
                 const titleColor = n.is_read ? '#1F2937' : '#1E3A8A';
@@ -747,9 +746,8 @@
 
             if(error) throw error;
 
-            // Success: reload data to update global UI (areas, header city, etc)
             await fetchData();
-            cancelEdit(); // Close form
+            cancelEdit();
             alert("Profile updated successfully!");
 
         } catch (e) {
@@ -785,7 +783,6 @@
                 </div>`;
         }
 
-        // Extract ID Badge Logic
         const rawId = shop.unique_id || 'N/A';
         const displayId = rawId.includes('-') ? rawId.split('-').pop() : rawId;
 
@@ -794,10 +791,7 @@
                 <div class="img-box">${collage}</div>
                 <div class="info-box">
                     <div class="s-name">${shop.name}</div>
-                    
-                    <!-- REPLACED CATEGORY WITH CT ID -->
                     <span class="s-id-badge">ID: ${displayId}</span>
-                    
                     <div class="s-loc"><i class="fa-solid fa-location-dot"></i> ${shop.address}</div>
                 </div>
             </div>
