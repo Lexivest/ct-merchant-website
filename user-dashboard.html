@@ -287,7 +287,6 @@
             
             <!-- Right: Actions -->
             <div class="header-actions">
-                <!-- SHOP INDEX ICON -->
                 <button class="action-btn" onclick="window.location.href='shop-index.html'" title="Shop Index">
                     <i class="fa-solid fa-arrow-down-a-z" style="font-size: 1.1rem;"></i>
                 </button>
@@ -345,6 +344,13 @@
         <div id="services" class="screen">
             <h2 class="sec-title" style="margin: 16px 16px 0 16px;">Services & Tools</h2>
             <div class="svc-grid">
+                
+                <!-- MY SHOP DYNAMIC CARD -->
+                <div id="myshop-card" class="svc-card" onclick="handleShopClick()">
+                    <div class="svc-icon" style="background:#F3F4F6; color:#9CA3AF;"><i class="fa-solid fa-store"></i></div>
+                    <strong>Loading...</strong>
+                </div>
+
                 <div class="svc-card" onclick="window.location.href='wishlist.html'">
                     <div class="svc-icon" style="background:#FCE7F3; color:#DB2777;"><i class="fa-solid fa-heart"></i></div>
                     <strong>Wishlist</strong>
@@ -352,10 +358,6 @@
                 <div class="svc-card" onclick="window.location.href='help-support.html'">
                     <div class="svc-icon" style="background:#DCFCE7; color:#10B981;"><i class="fa-solid fa-headset"></i></div>
                     <strong>Support</strong>
-                </div>
-                <div class="svc-card" onclick="window.location.href='merchant-dashboard.html'">
-                    <div class="svc-icon" style="background:#DBEAFE; color:#2563EB;"><i class="fa-solid fa-store"></i></div>
-                    <strong>My Shop</strong>
                 </div>
                 <div class="svc-card" onclick="window.location.href='faq.html'">
                     <div class="svc-icon" style="background:#E0E7FF; color:#4338CA;"><i class="fa-solid fa-circle-question"></i></div>
@@ -439,10 +441,11 @@
 
     let currentUser = null;
     let userProfile = null;
+    let currentUserShop = null; // Store user shop data
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v13';
+    const CACHE_KEY = 'ctm_dash_v14'; // Version bump for dynamic shop card
 
     // --- NAVIGATION ---
     function toggleSidebar() {
@@ -489,14 +492,18 @@
             userAreaId = profile.area_id;
 
             // Fetch Dashboard Data
-            const [promos, announcements, categories, areas, shops, notifs] = await Promise.all([
+            const [promos, announcements, categories, areas, shops, notifs, myShop] = await Promise.all([
                 client.from('promo_banners').select().order('created_at', {ascending: false}),
                 client.from('announcements').select().order('created_at', {ascending: false}),
                 client.from('categories').select().order('name'),
                 client.from('areas').select().eq('city_id', userCityId).order('name'),
                 client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}),
-                client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20)
+                client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20),
+                // ADDED: Fetch current user's shop status
+                client.from('shops').select('id, status, rejection_reason').eq('owner_id', currentUser.id).maybeSingle()
             ]);
+
+            currentUserShop = myShop.data;
 
             // Fetch Products
             let products = [];
@@ -521,6 +528,7 @@
                 areas: areas.data,
                 shops: shops.data,
                 notifications: notifs.data || [],
+                myShop: myShop.data,
                 products,
                 unread: unreadCount
             };
@@ -531,18 +539,14 @@
     }
 
     function renderData(data) {
-        // Clear loader if active
+        // Clear loader
         const areaContainer = document.getElementById('areas-container');
         if(areaContainer.querySelector('.fa-spin')) areaContainer.innerHTML = '';
 
         // Profile UI
         document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
-        
-        // Header Avatar
         document.getElementById('header-avatar').src = avatar;
-        
-        // Profile Section
         document.getElementById('profile-avatar-lg').src = avatar;
         document.getElementById('profile-name').textContent = data.profile.full_name;
         document.getElementById('profile-phone').textContent = data.profile.phone || "No phone number added";
@@ -626,7 +630,7 @@
         // All Shops
         document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
 
-        // Notifications List
+        // Notifications
         const notifListEl = document.getElementById('notif-list');
         if (data.notifications && data.notifications.length > 0) {
             notifListEl.innerHTML = data.notifications.map(n => {
@@ -647,6 +651,64 @@
             }).join('');
         } else {
             notifListEl.innerHTML = '<p style="color:#9CA3AF; text-align:center; margin-top:20px;">No notifications yet</p>';
+        }
+
+        // UPDATE MY SHOP CARD UI
+        updateMyShopCardUI(data.myShop);
+        currentUserShop = data.myShop;
+    }
+
+    // --- MY SHOP CARD LOGIC ---
+    function updateMyShopCardUI(shop) {
+        const card = document.getElementById('myshop-card');
+        const iconContainer = card.querySelector('.svc-icon');
+        const textLabel = card.querySelector('strong');
+        
+        // Defaults (No Shop)
+        let icon = 'fa-store';
+        let bg = '#DBEAFE'; // Blue-100
+        let color = '#2563EB'; // Blue-600
+        let label = 'Register Shop';
+        
+        if (shop) {
+            if (shop.status === 'pending') {
+                icon = 'fa-hourglass-half';
+                bg = '#FFEDD5'; // Orange-100
+                color = '#EA580C'; // Orange-600
+                label = 'Pending';
+            } else if (shop.status === 'approved') {
+                icon = 'fa-store';
+                bg = '#DCFCE7'; // Green-100
+                color = '#16A34A'; // Green-600
+                label = 'My Shop';
+            } else if (shop.status === 'rejected') {
+                icon = 'fa-circle-exclamation';
+                bg = '#FEE2E2'; // Red-100
+                color = '#DC2626'; // Red-600
+                label = 'Rejected';
+            }
+        }
+        
+        iconContainer.style.background = bg;
+        iconContainer.style.color = color;
+        iconContainer.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+        textLabel.textContent = label;
+    }
+
+    function handleShopClick() {
+        if (!currentUserShop) {
+            // 1. Register
+            window.location.href = 'shop-registration.html';
+        } else if (currentUserShop.status === 'pending') {
+            // 2. Pending
+            alert('Your shop application is currently being reviewed. Please check back later.');
+        } else if (currentUserShop.status === 'approved') {
+            // 3. Dashboard
+            window.location.href = 'merchant-dashboard.html';
+        } else if (currentUserShop.status === 'rejected') {
+            // 4. Rejected
+            alert(`Application Rejected: ${currentUserShop.rejection_reason || 'Please update your details.'}`);
+            window.location.href = `shop-registration.html?id=${currentUserShop.id}`; 
         }
     }
 
@@ -746,8 +808,9 @@
 
             if(error) throw error;
 
+            // Success: reload data to update global UI (areas, header city, etc)
             await fetchData();
-            cancelEdit();
+            cancelEdit(); // Close form
             alert("Profile updated successfully!");
 
         } catch (e) {
@@ -783,6 +846,7 @@
                 </div>`;
         }
 
+        // Extract ID Badge Logic
         const rawId = shop.unique_id || 'N/A';
         const displayId = rawId.includes('-') ? rawId.split('-').pop() : rawId;
 
@@ -791,7 +855,10 @@
                 <div class="img-box">${collage}</div>
                 <div class="info-box">
                     <div class="s-name">${shop.name}</div>
+                    
+                    <!-- REPLACED CATEGORY WITH CT ID -->
                     <span class="s-id-badge">ID: ${displayId}</span>
+                    
                     <div class="s-loc"><i class="fa-solid fa-location-dot"></i> ${shop.address}</div>
                 </div>
             </div>
