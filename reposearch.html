@@ -133,7 +133,7 @@
     <!-- Loading -->
     <div id="loading-state" class="state-container">
         <div class="spinner"></div>
-        <h3>Accessing Repository...</h3>
+        <h3>Scanning Repository...</h3>
     </div>
 
     <!-- Error -->
@@ -158,6 +158,7 @@
             <div class="logo-wrapper">
                 <img id="shop-logo" src="" class="repo-logo">
             </div>
+            <!-- Status Dot -->
             <div id="shop-status-dot" class="status-dot status-closed"></div>
 
             <div class="biz-info">
@@ -220,28 +221,30 @@
             console.log("Searching for:", searchTerm);
 
             try {
-                // STRATEGY: Try Edge Function
+                // EXCLUSIVE STRATEGY: Edge Function
+                // This bypasses RLS using the Service Role Key on the server.
                 const { data, error } = await _supabase.functions.invoke('repo-search', {
                     body: { merchantId: searchTerm }
                 });
 
                 if (error) {
-                    // Function error (server issue, missing secret, etc)
-                    console.warn("Function Error:", error);
-                    throw error;
+                    // This catches network errors or 500s from the function
+                    console.error("Function Invocation Error:", error);
+                    renderError("Repository Service Unavailable.");
+                    return;
                 }
 
+                // Check specific logic errors returned by the function
                 if (data.error || data.not_found) {
-                    // Business logic error (not found)
-                    throw new Error("Merchant Not Found");
+                    renderError(data.error || "Merchant not found.");
+                    return;
                 }
 
                 renderUI(data.shop, data.profile);
 
             } catch (e) {
-                // Fallback / Error Handler
-                console.error("Search Failed:", e);
-                renderError("Merchant not found in repository.");
+                console.error("Unexpected Client Error:", e);
+                renderError("An unexpected error occurred.");
             }
         }
 
@@ -255,11 +258,11 @@
             document.getElementById('city-text').innerText = shop.cities?.name || 'Local';
             document.getElementById('biz-loc').innerText = shop.address;
             
-            // Correct column name matching schema
+            // Image Logic
             const logo = shop.storefront_url || shop.image_url || 'https://via.placeholder.com/150';
             document.getElementById('shop-logo').src = logo;
 
-            // Status
+            // Status Logic
             const dot = document.getElementById('shop-status-dot');
             if (shop.is_verified) {
                 dot.className = 'status-dot status-open';
@@ -267,7 +270,7 @@
                 dot.className = 'status-dot status-closed';
             }
 
-            // WhatsApp
+            // WhatsApp Logic
             if(shop.whatsapp) {
                 let num = shop.whatsapp.replace(/\D/g, '');
                 if(num.startsWith('0')) num = '234' + num.substring(1);
@@ -278,6 +281,7 @@
                 document.querySelector('.social-actions').style.gridTemplateColumns = '1fr';
             }
 
+            // Link Logic
             document.getElementById('view-shop-btn').href = `shop-detail.html?id=${shop.id}`;
         }
 
