@@ -158,7 +158,6 @@
             <div class="logo-wrapper">
                 <img id="shop-logo" src="" class="repo-logo">
             </div>
-            <!-- Status Dot -->
             <div id="shop-status-dot" class="status-dot status-closed"></div>
 
             <div class="biz-info">
@@ -220,49 +219,29 @@
         async function fetchMerchant(searchTerm) {
             console.log("Searching for:", searchTerm);
 
-            // STRATEGY 1: Try Edge Function (Preferred - Bypasses RLS)
             try {
+                // STRATEGY: Try Edge Function
                 const { data, error } = await _supabase.functions.invoke('repo-search', {
                     body: { merchantId: searchTerm }
                 });
 
                 if (error) {
-                    console.warn("Edge Function failed (Likely missing secret), attempting DB fallback...", error);
+                    // Function error (server issue, missing secret, etc)
+                    console.warn("Function Error:", error);
                     throw error;
                 }
 
                 if (data.error || data.not_found) {
-                    // Try DB Fallback just in case
-                    throw new Error("Function returned not found"); 
+                    // Business logic error (not found)
+                    throw new Error("Merchant Not Found");
                 }
 
                 renderUI(data.shop, data.profile);
-                return;
 
             } catch (e) {
-                // STRATEGY 2: Direct DB Fallback
-                console.log("Attempting Direct DB Fallback...");
-                
-                try {
-                    const q = `%${searchTerm}%`;
-                    const { data, error } = await _supabase
-                        .from('shops')
-                        .select('*, cities(name), profiles(full_name)')
-                        // Search ID, Name, Phone
-                        .or(`unique_id.ilike.${q},name.ilike.${q},phone.ilike.${q}`) 
-                        .limit(1)
-                        .maybeSingle();
-                    
-                    if (error || !data) {
-                        console.error("DB Search Error or Not Found:", error);
-                        renderError("Merchant not found in repository.");
-                        return;
-                    }
-
-                    renderUI(data, data.profiles);
-                } catch (dbError) {
-                    renderError("Connection failed. Please try again.");
-                }
+                // Fallback / Error Handler
+                console.error("Search Failed:", e);
+                renderError("Merchant not found in repository.");
             }
         }
 
@@ -276,11 +255,11 @@
             document.getElementById('city-text').innerText = shop.cities?.name || 'Local';
             document.getElementById('biz-loc').innerText = shop.address;
             
-            // CORRECTED: Uses 'storefront_url' matching schema
+            // Correct column name matching schema
             const logo = shop.storefront_url || shop.image_url || 'https://via.placeholder.com/150';
             document.getElementById('shop-logo').src = logo;
 
-            // Status Dot
+            // Status
             const dot = document.getElementById('shop-status-dot');
             if (shop.is_verified) {
                 dot.className = 'status-dot status-open';
@@ -299,7 +278,6 @@
                 document.querySelector('.social-actions').style.gridTemplateColumns = '1fr';
             }
 
-            // View Shop Link
             document.getElementById('view-shop-btn').href = `shop-detail.html?id=${shop.id}`;
         }
 
