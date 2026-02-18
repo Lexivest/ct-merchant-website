@@ -182,7 +182,7 @@
         .info-box { padding: 10px; }
         .s-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* UPDATED: CT ID Style */
+        /* CT ID Style */
         .s-id-badge { 
             display: inline-block; 
             font-size: 0.7rem; 
@@ -355,6 +355,8 @@
                 <div class="svc-card" onclick="window.location.href='wishlist.html'">
                     <div class="svc-icon" style="background:#FCE7F3; color:#DB2777;"><i class="fa-solid fa-heart"></i></div>
                     <strong>Wishlist</strong>
+                    <!-- ADDED: Wishlist Count -->
+                    <div id="wishlist-count" style="font-size:0.8rem; color:#6B7280; margin-top:4px;">...</div>
                 </div>
                 <div class="svc-card" onclick="window.location.href='help-support.html'">
                     <div class="svc-icon" style="background:#DCFCE7; color:#10B981;"><i class="fa-solid fa-headset"></i></div>
@@ -446,7 +448,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v15'; // Version bump for encoded links
+    const CACHE_KEY = 'ctm_dash_v16'; // Version bump for wishlist
 
     // --- NAVIGATION ---
     function toggleSidebar() {
@@ -493,15 +495,16 @@
             userAreaId = profile.area_id;
 
             // Fetch Dashboard Data
-            const [promos, announcements, categories, areas, shops, notifs, myShop] = await Promise.all([
+            const [promos, announcements, categories, areas, shops, notifs, myShop, wishlist] = await Promise.all([
                 client.from('promo_banners').select().order('created_at', {ascending: false}),
                 client.from('announcements').select().order('created_at', {ascending: false}),
                 client.from('categories').select().order('name'),
                 client.from('areas').select().eq('city_id', userCityId).order('name'),
                 client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}),
                 client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20),
-                // ADDED: Fetch current user's shop status
-                client.from('shops').select('id, status, rejection_reason').eq('owner_id', currentUser.id).maybeSingle()
+                client.from('shops').select('id, status, rejection_reason').eq('owner_id', currentUser.id).maybeSingle(),
+                // ADDED: Wishlist Count
+                client.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id)
             ]);
 
             currentUserShop = myShop.data;
@@ -530,6 +533,7 @@
                 shops: shops.data,
                 notifications: notifs.data || [],
                 myShop: myShop.data,
+                wishlistCount: wishlist.count || 0, // Store wishlist count
                 products,
                 unread: unreadCount
             };
@@ -616,7 +620,7 @@
             `;
         });
 
-        // Categories - FIXED: ENCODING URL COMPONENT
+        // Categories
         document.getElementById('category-list').innerHTML = data.categories.map(cat => {
             const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
             const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
@@ -657,6 +661,10 @@
         // UPDATE MY SHOP CARD UI
         updateMyShopCardUI(data.myShop);
         currentUserShop = data.myShop;
+
+        // UPDATE WISHLIST UI
+        const wishlistCount = data.wishlistCount || 0;
+        document.getElementById('wishlist-count').textContent = `${wishlistCount} items`;
     }
 
     // --- MY SHOP CARD LOGIC ---
