@@ -235,6 +235,70 @@
         .form-label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #374151; }
         .form-input { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 1rem; }
         .form-input:focus { outline: none; border-color: var(--color-primary); ring: 2px solid #A7F3D0; }
+
+        /* --- AI CHAT WIDGET STYLES --- */
+        .ai-fab-container {
+            position: fixed; bottom: 20px; right: 20px; z-index: 5000;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+        }
+        .ai-fab {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: var(--color-primary); color: white;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; transition: transform 0.2s; border: none;
+        }
+        .ai-fab:active { transform: scale(0.95); }
+        .ai-label {
+            background: white; color: var(--color-primary);
+            font-size: 0.7rem; font-weight: 800;
+            padding: 4px 8px; border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB;
+            white-space: nowrap; pointer-events: none;
+        }
+
+        .chat-window {
+            position: fixed; bottom: 90px; right: 20px;
+            width: 350px; height: 500px;
+            background: white; border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 5000;
+            display: flex; flex-direction: column;
+            overflow: hidden; opacity: 0; pointer-events: none;
+            transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #E5E7EB;
+        }
+        .chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+        .chat-header {
+            background: var(--color-primary); color: white;
+            padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
+        .chat-msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; }
+        .msg-ai { align-self: flex-start; background: white; border: 1px solid #E2E8F0; color: #1E293B; border-bottom-left-radius: 2px; }
+        .msg-user { align-self: flex-end; background: var(--color-primary); color: white; border-bottom-right-radius: 2px; }
+        
+        .chat-input-area {
+            padding: 12px; background: white; border-top: 1px solid #E2E8F0;
+            display: flex; gap: 8px;
+        }
+        .chat-input {
+            flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #E2E8F0;
+            outline: none; font-size: 0.9rem; background: #F1F5F9;
+        }
+        .btn-send {
+            background: var(--color-primary); color: white; border: none;
+            width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Mobile Chat overrides */
+        @media (max-width: 480px) {
+            .chat-window {
+                right: 0; left: 0; bottom: 0; width: 100%; height: 85vh;
+                border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -436,6 +500,28 @@
 
     </main>
 
+    <!-- AI ASSISTANT (ADDED HERE) -->
+    <div class="ai-fab-container">
+        <button class="ai-fab" onclick="toggleChat()">
+            <i class="fa-solid fa-comments"></i>
+        </button>
+        <span class="ai-label">AI Assistant</span>
+    </div>
+
+    <div id="chat-window" class="chat-window">
+        <div class="chat-header">
+            <span style="font-weight:700;"><i class="fa-solid fa-robot"></i> Assistant</span>
+            <button onclick="toggleChat()" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="chat-messages" class="chat-body">
+            <div class="chat-msg msg-ai">Hello! I'm here to help you navigate the marketplace.</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMsg()">
+            <button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
@@ -444,11 +530,11 @@
 
     let currentUser = null;
     let userProfile = null;
-    let currentUserShop = null; // Store user shop data
+    let currentUserShop = null; 
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v16'; // Version bump for wishlist
+    const CACHE_KEY = 'ctm_dash_v16'; 
 
     // --- NAVIGATION ---
     function toggleSidebar() {
@@ -469,6 +555,27 @@
         if(id === 'notifications') markRead();
     }
 
+    // --- AI CHAT LOGIC ---
+    function toggleChat() {
+        document.getElementById('chat-window').classList.toggle('open');
+    }
+
+    function sendMsg() {
+        const inp = document.getElementById('chat-input');
+        const txt = inp.value.trim();
+        if(!txt) return;
+
+        const body = document.getElementById('chat-messages');
+        body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
+        inp.value = '';
+        body.scrollTop = body.scrollHeight;
+
+        setTimeout(() => {
+            body.innerHTML += `<div class="chat-msg msg-ai">This is a mock AI response. Backend connection coming soon!</div>`;
+            body.scrollTop = body.scrollHeight;
+        }, 800);
+    }
+
     // --- INIT ---
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
@@ -486,7 +593,6 @@
 
     async function fetchData() {
         try {
-            // Fetch Profile
             const { data: profile } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).single();
             if(!profile) return;
             
@@ -494,7 +600,6 @@
             userCityId = profile.city_id;
             userAreaId = profile.area_id;
 
-            // Fetch Dashboard Data
             const [promos, announcements, categories, areas, shops, notifs, myShop, wishlist] = await Promise.all([
                 client.from('promo_banners').select().order('created_at', {ascending: false}),
                 client.from('announcements').select().order('created_at', {ascending: false}),
@@ -503,13 +608,11 @@
                 client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}),
                 client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20),
                 client.from('shops').select('id, status, rejection_reason').eq('owner_id', currentUser.id).maybeSingle(),
-                // ADDED: Wishlist Count
                 client.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id)
             ]);
 
             currentUserShop = myShop.data;
 
-            // Fetch Products
             let products = [];
             const shopIds = shops.data.map(s => s.id);
             if(shopIds.length > 0) {
@@ -521,7 +624,6 @@
                 products = data || [];
             }
             
-            // Notification Count
             const unreadCount = notifs.data ? notifs.data.filter(n => !n.is_read).length : 0;
 
             const dashboardData = {
@@ -533,7 +635,7 @@
                 shops: shops.data,
                 notifications: notifs.data || [],
                 myShop: myShop.data,
-                wishlistCount: wishlist.count || 0, // Store wishlist count
+                wishlistCount: wishlist.count || 0,
                 products,
                 unread: unreadCount
             };
@@ -544,11 +646,9 @@
     }
 
     function renderData(data) {
-        // Clear loader
         const areaContainer = document.getElementById('areas-container');
         if(areaContainer.querySelector('.fa-spin')) areaContainer.innerHTML = '';
 
-        // Profile UI
         document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
         document.getElementById('header-avatar').src = avatar;
@@ -557,14 +657,12 @@
         document.getElementById('profile-phone').textContent = data.profile.phone || "No phone number added";
         document.getElementById('profile-email').textContent = currentUser.email;
 
-        // Badge
         if (data.unread > 0) {
             const b = document.getElementById('badge-count');
             b.textContent = data.unread > 9 ? '9+' : data.unread;
             b.style.display = 'block';
         }
 
-        // Ticker
         if (data.announcements && data.announcements.length > 0) {
             document.getElementById('header-ticker').style.display = 'flex';
             document.getElementById('ticker-text').textContent = data.announcements.map(a => a.message).join("  •  ");
@@ -572,7 +670,6 @@
             document.getElementById('header-ticker').style.display = 'none';
         }
 
-        // Promos
         const pList = document.getElementById('promo-list');
         if (data.promos.length > 0) {
             pList.style.display = 'flex';
@@ -583,14 +680,12 @@
             ).join('');
         }
 
-        // Featured
         const featured = data.shops.filter(s => s.is_featured);
         if (featured.length > 0) {
             document.getElementById('featured-section').style.display = 'block';
             document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
         }
 
-        // Areas logic
         areaContainer.innerHTML = '';
         const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
 
@@ -620,7 +715,6 @@
             `;
         });
 
-        // Categories
         document.getElementById('category-list').innerHTML = data.categories.map(cat => {
             const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
             const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
@@ -632,22 +726,17 @@
             `;
         }).join('');
 
-        // All Shops
         document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
 
-        // Notifications
         const notifListEl = document.getElementById('notif-list');
         if (data.notifications && data.notifications.length > 0) {
             notifListEl.innerHTML = data.notifications.map(n => {
-                const date = new Date(n.created_at).toLocaleDateString() + ' ' + new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const date = new Date(n.created_at).toLocaleDateString();
                 const bg = n.is_read ? 'white' : '#EFF6FF'; 
-                const border = n.is_read ? '#E5E7EB' : '#BFDBFE'; 
-                const titleColor = n.is_read ? '#1F2937' : '#1E3A8A';
-
                 return `
-                    <div style="background:${bg}; padding:16px; border-radius:12px; border:1px solid ${border}; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                    <div style="background:${bg}; padding:16px; border-radius:12px; border:1px solid #E5E7EB; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
                         <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                            <span style="font-weight:700; color:${titleColor}; font-size:0.95rem;">${n.title}</span>
+                            <span style="font-weight:700; font-size:0.95rem;">${n.title}</span>
                             <span style="font-size:0.75rem; color:#6B7280;">${date}</span>
                         </div>
                         <div style="color:#374151; font-size:0.9rem; line-height:1.4;">${n.message || ''}</div>
@@ -658,43 +747,27 @@
             notifListEl.innerHTML = '<p style="color:#9CA3AF; text-align:center; margin-top:20px;">No notifications yet</p>';
         }
 
-        // UPDATE MY SHOP CARD UI
         updateMyShopCardUI(data.myShop);
-        currentUserShop = data.myShop;
-
-        // UPDATE WISHLIST UI
-        const wishlistCount = data.wishlistCount || 0;
-        document.getElementById('wishlist-count').textContent = `${wishlistCount} items`;
+        document.getElementById('wishlist-count').textContent = `${data.wishlistCount || 0} items`;
     }
 
-    // --- MY SHOP CARD LOGIC ---
     function updateMyShopCardUI(shop) {
         const card = document.getElementById('myshop-card');
         const iconContainer = card.querySelector('.svc-icon');
         const textLabel = card.querySelector('strong');
         
-        // Defaults (No Shop)
         let icon = 'fa-store';
-        let bg = '#DBEAFE'; // Blue-100
-        let color = '#2563EB'; // Blue-600
+        let bg = '#DBEAFE'; 
+        let color = '#2563EB';
         let label = 'Register Shop';
         
         if (shop) {
             if (shop.status === 'pending') {
-                icon = 'fa-hourglass-half';
-                bg = '#FFEDD5'; // Orange-100
-                color = '#EA580C'; // Orange-600
-                label = 'Pending';
+                icon = 'fa-hourglass-half'; bg = '#FFEDD5'; color = '#EA580C'; label = 'Pending';
             } else if (shop.status === 'approved') {
-                icon = 'fa-store';
-                bg = '#DCFCE7'; // Green-100
-                color = '#16A34A'; // Green-600
-                label = 'My Shop';
+                icon = 'fa-store'; bg = '#DCFCE7'; color = '#16A34A'; label = 'My Shop';
             } else if (shop.status === 'rejected') {
-                icon = 'fa-circle-exclamation';
-                bg = '#FEE2E2'; // Red-100
-                color = '#DC2626'; // Red-600
-                label = 'Rejected';
+                icon = 'fa-circle-exclamation'; bg = '#FEE2E2'; color = '#DC2626'; label = 'Rejected';
             }
         }
         
@@ -705,48 +778,30 @@
     }
 
     function handleShopClick() {
-        if (!currentUserShop) {
-            // 1. Register
-            window.location.href = 'shop-registration.html';
-        } else if (currentUserShop.status === 'pending') {
-            // 2. Pending
-            alert('Your shop application is currently being reviewed. Please check back later.');
-        } else if (currentUserShop.status === 'approved') {
-            // 3. Dashboard
-            window.location.href = 'merchant-dashboard.html';
-        } else if (currentUserShop.status === 'rejected') {
-            // 4. Rejected
-            alert(`Application Rejected: ${currentUserShop.rejection_reason || 'Please update your details.'}`);
+        if (!currentUserShop) window.location.href = 'shop-registration.html';
+        else if (currentUserShop.status === 'pending') alert('Your shop application is currently being reviewed.');
+        else if (currentUserShop.status === 'approved') window.location.href = 'merchant-dashboard.html';
+        else if (currentUserShop.status === 'rejected') {
+            alert(`Application Rejected: ${currentUserShop.rejection_reason || 'Update your details.'}`);
             window.location.href = `shop-registration.html?id=${currentUserShop.id}`; 
         }
     }
 
-    // --- PROFILE EDIT LOGIC ---
-
     async function openEditProfile() {
         if(!userProfile) return;
-
-        // Toggle Views
         document.getElementById('profile-view').style.display = 'none';
         document.getElementById('profile-edit').style.display = 'block';
-
-        // Pre-fill Data
         document.getElementById('edit-name').value = userProfile.full_name || '';
         document.getElementById('edit-phone').value = userProfile.phone || '';
 
-        // Load Cities if not loaded
         if(allCities.length === 0) {
             const { data } = await client.from('cities').select('id, name').order('name');
             allCities = data || [];
-            
             const citySelect = document.getElementById('edit-city');
             citySelect.innerHTML = '<option value="">Select City</option>';
-            allCities.forEach(c => {
-                citySelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-            });
+            allCities.forEach(c => { citySelect.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
         }
 
-        // Set City and Trigger Area Load
         if(userProfile.city_id) {
             document.getElementById('edit-city').value = userProfile.city_id;
             await handleCityChange(userProfile.city_id, userProfile.area_id);
@@ -757,25 +812,13 @@
         const areaSelect = document.getElementById('edit-area');
         areaSelect.innerHTML = '<option value="">Loading...</option>';
         areaSelect.disabled = true;
-
-        if(!cityId) {
-            areaSelect.innerHTML = '<option value="">Select Area</option>';
-            return;
-        }
+        if(!cityId) return;
 
         const { data: areas } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
-        
         areaSelect.innerHTML = '<option value="">Select Area</option>';
-        if(areas) {
-            areas.forEach(a => {
-                areaSelect.innerHTML += `<option value="${a.id}">${a.name}</option>`;
-            });
-        }
+        if(areas) areas.forEach(a => { areaSelect.innerHTML += `<option value="${a.id}">${a.name}</option>`; });
         areaSelect.disabled = false;
-
-        if(preSelectAreaId) {
-            areaSelect.value = preSelectAreaId;
-        }
+        if(preSelectAreaId) areaSelect.value = preSelectAreaId;
     }
 
     function cancelEdit() {
@@ -792,42 +835,29 @@
         const btn = document.getElementById('btn-save');
         const err = document.getElementById('edit-error');
 
-        if(!name) {
-            err.textContent = "Full Name is required.";
-            err.style.display = 'block';
-            return;
-        }
-        if(!cityId || !areaId) {
-            err.textContent = "Please select both City and Area.";
+        if(!name || !cityId || !areaId) {
+            err.textContent = "Please fill all required fields.";
             err.style.display = 'block';
             return;
         }
 
-        btn.disabled = true;
-        btn.textContent = "Saving...";
+        btn.disabled = true; btn.textContent = "Saving...";
         err.style.display = 'none';
 
         try {
             const { error } = await client.from('profiles').update({
-                full_name: name,
-                phone: phone,
-                city_id: parseInt(cityId),
-                area_id: parseInt(areaId)
+                full_name: name, phone: phone, city_id: parseInt(cityId), area_id: parseInt(areaId)
             }).eq('id', currentUser.id);
 
             if(error) throw error;
-
-            // Success: reload data to update global UI (areas, header city, etc)
             await fetchData();
-            cancelEdit(); // Close form
-            alert("Profile updated successfully!");
-
+            cancelEdit();
+            alert("Profile updated!");
         } catch (e) {
-            err.textContent = e.message || "Error updating profile";
+            err.textContent = e.message;
             err.style.display = 'block';
         } finally {
-            btn.disabled = false;
-            btn.textContent = "Save Changes";
+            btn.disabled = false; btn.textContent = "Save Changes";
         }
     }
 
@@ -842,20 +872,11 @@
         } else if(p.length === 2) {
             collage = `<div class="collage c-2"><img src="${p[0].image_url}"><img src="${p[1].image_url}"></div>`;
         } else if(p.length === 3) {
-            collage = `
-                <div class="collage c-3">
-                    <img src="${p[0].image_url}">
-                    <div><img src="${p[1].image_url}"><img src="${p[2].image_url}"></div>
-                </div>`;
+            collage = `<div class="collage c-3"><img src="${p[0].image_url}"><div><img src="${p[1].image_url}"><img src="${p[2].image_url}"></div></div>`;
         } else {
-            collage = `
-                <div class="collage c-4">
-                    <img src="${p[0].image_url}"><img src="${p[1].image_url}">
-                    <img src="${p[2].image_url}"><img src="${p[3].image_url}">
-                </div>`;
+            collage = `<div class="collage c-4"><img src="${p[0].image_url}"><img src="${p[1].image_url}"><img src="${p[2].image_url}"><img src="${p[3].image_url}"></div>`;
         }
 
-        // Extract ID Badge Logic
         const rawId = shop.unique_id || 'N/A';
         const displayId = rawId.includes('-') ? rawId.split('-').pop() : rawId;
 
@@ -864,10 +885,7 @@
                 <div class="img-box">${collage}</div>
                 <div class="info-box">
                     <div class="s-name">${shop.name}</div>
-                    
-                    <!-- REPLACED CATEGORY WITH CT ID -->
                     <span class="s-id-badge">ID: ${displayId}</span>
-                    
                     <div class="s-loc"><i class="fa-solid fa-location-dot"></i> ${shop.address}</div>
                 </div>
             </div>
