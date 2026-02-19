@@ -236,9 +236,7 @@
         .form-input { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 1rem; }
         .form-input:focus { outline: none; border-color: var(--color-primary); ring: 2px solid #A7F3D0; }
 
-        /* =========================================
-           AI CHAT WIDGET STYLES (ADDED HERE)
-           ========================================= */
+        /* --- AI CHAT WIDGET STYLES --- */
         .ai-fab-container {
             position: fixed; bottom: 20px; right: 20px; z-index: 5000;
             display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -295,6 +293,7 @@
             display: flex; align-items: center; justify-content: center;
         }
 
+        /* Mobile Chat overrides */
         @media (max-width: 480px) {
             .chat-window {
                 right: 0; left: 0; bottom: 0; width: 100%; height: 85vh;
@@ -526,6 +525,8 @@
         </div>
     </div>
 
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
@@ -534,11 +535,11 @@
 
     let currentUser = null;
     let userProfile = null;
-    let currentUserShop = null; // Store user shop data
+    let currentUserShop = null; 
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v16'; // Version bump for wishlist
+    const CACHE_KEY = 'ctm_dash_v16'; 
 
     // --- NAVIGATION ---
     function toggleSidebar() {
@@ -560,7 +561,7 @@
     }
 
     // =========================================
-    // AI CHAT LOGIC (ADDED HERE)
+    // AI CHAT LOGIC (FIXED FETCH VERSION)
     // =========================================
     function toggleChat() {
         document.getElementById('chat-window').classList.toggle('open');
@@ -584,26 +585,34 @@
             const { data: { session } } = await client.auth.getSession();
             if(!session) throw new Error("Please log in to use AI.");
 
-            const { data, error } = await client.functions.invoke('ai-assistant', {
-                body: { query: txt },
-                headers: { Authorization: `Bearer ${session.access_token}` }
+            // FIX: Use standard fetch to force BOTH the apikey and auth headers
+            // This prevents the "No API key found in request" error from the Supabase Gateway
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'apikey': SUPABASE_ANON_KEY 
+                },
+                body: JSON.stringify({ query: txt })
             });
 
             document.getElementById(loadId)?.remove();
 
-            if (error) {
-                console.error("Edge Function Error Details:", error);
-                throw error;
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Server returned ${response.status}: ${errText}`);
             }
 
+            const data = await response.json();
             const reply = data.reply || "No response received.";
-            const msgClass = (reply.startsWith("Error:") || reply.startsWith("System Error:") || reply.startsWith("Configuration Error:")) ? "msg-error" : "msg-ai";
+            const msgClass = (reply.startsWith("Error:") || reply.startsWith("System") || reply.startsWith("Config")) ? "msg-error" : "msg-ai";
             
             body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
             
         } catch (err) {
             document.getElementById(loadId)?.remove();
-            body.innerHTML += `<div class="chat-msg msg-error">Connection Error: ${err.message}. Check browser console for details.</div>`;
+            body.innerHTML += `<div class="chat-msg msg-error">Connection Error: ${err.message}</div>`;
         }
         body.scrollTop = body.scrollHeight;
     }
@@ -625,7 +634,6 @@
 
     async function fetchData() {
         try {
-            // Fetch Profile
             const { data: profile } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).single();
             if(!profile) return;
             
@@ -633,7 +641,6 @@
             userCityId = profile.city_id;
             userAreaId = profile.area_id;
 
-            // Fetch Dashboard Data
             const [promos, announcements, categories, areas, shops, notifs, myShop, wishlist] = await Promise.all([
                 client.from('promo_banners').select().order('created_at', {ascending: false}),
                 client.from('announcements').select().order('created_at', {ascending: false}),
@@ -642,13 +649,11 @@
                 client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}),
                 client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20),
                 client.from('shops').select('id, status, rejection_reason').eq('owner_id', currentUser.id).maybeSingle(),
-                // ADDED: Wishlist Count
                 client.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id)
             ]);
 
             currentUserShop = myShop.data;
 
-            // Fetch Products
             let products = [];
             const shopIds = shops.data.map(s => s.id);
             if(shopIds.length > 0) {
@@ -660,7 +665,6 @@
                 products = data || [];
             }
             
-            // Notification Count
             const unreadCount = notifs.data ? notifs.data.filter(n => !n.is_read).length : 0;
 
             const dashboardData = {
@@ -672,7 +676,7 @@
                 shops: shops.data,
                 notifications: notifs.data || [],
                 myShop: myShop.data,
-                wishlistCount: wishlist.count || 0, // Store wishlist count
+                wishlistCount: wishlist.count || 0,
                 products,
                 unread: unreadCount
             };
@@ -683,11 +687,9 @@
     }
 
     function renderData(data) {
-        // Clear loader
         const areaContainer = document.getElementById('areas-container');
         if(areaContainer.querySelector('.fa-spin')) areaContainer.innerHTML = '';
 
-        // Profile UI
         document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
         document.getElementById('header-avatar').src = avatar;
@@ -696,14 +698,12 @@
         document.getElementById('profile-phone').textContent = data.profile.phone || "No phone number added";
         document.getElementById('profile-email').textContent = currentUser.email;
 
-        // Badge
         if (data.unread > 0) {
             const b = document.getElementById('badge-count');
             b.textContent = data.unread > 9 ? '9+' : data.unread;
             b.style.display = 'block';
         }
 
-        // Ticker
         if (data.announcements && data.announcements.length > 0) {
             document.getElementById('header-ticker').style.display = 'flex';
             document.getElementById('ticker-text').textContent = data.announcements.map(a => a.message).join("  •  ");
@@ -711,7 +711,6 @@
             document.getElementById('header-ticker').style.display = 'none';
         }
 
-        // Promos
         const pList = document.getElementById('promo-list');
         if (data.promos.length > 0) {
             pList.style.display = 'flex';
@@ -722,14 +721,12 @@
             ).join('');
         }
 
-        // Featured
         const featured = data.shops.filter(s => s.is_featured);
         if (featured.length > 0) {
             document.getElementById('featured-section').style.display = 'block';
             document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
         }
 
-        // Areas logic
         areaContainer.innerHTML = '';
         const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
 
@@ -759,7 +756,6 @@
             `;
         });
 
-        // Categories
         document.getElementById('category-list').innerHTML = data.categories.map(cat => {
             const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
             const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
@@ -771,10 +767,8 @@
             `;
         }).join('');
 
-        // All Shops
         document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
 
-        // Notifications
         const notifListEl = document.getElementById('notif-list');
         if (data.notifications && data.notifications.length > 0) {
             notifListEl.innerHTML = data.notifications.map(n => {
@@ -797,43 +791,30 @@
             notifListEl.innerHTML = '<p style="color:#9CA3AF; text-align:center; margin-top:20px;">No notifications yet</p>';
         }
 
-        // UPDATE MY SHOP CARD UI
         updateMyShopCardUI(data.myShop);
         currentUserShop = data.myShop;
 
-        // UPDATE WISHLIST UI
         const wishlistCount = data.wishlistCount || 0;
         document.getElementById('wishlist-count').textContent = `${wishlistCount} items`;
     }
 
-    // --- MY SHOP CARD LOGIC ---
     function updateMyShopCardUI(shop) {
         const card = document.getElementById('myshop-card');
         const iconContainer = card.querySelector('.svc-icon');
         const textLabel = card.querySelector('strong');
         
-        // Defaults (No Shop)
         let icon = 'fa-store';
-        let bg = '#DBEAFE'; // Blue-100
-        let color = '#2563EB'; // Blue-600
+        let bg = '#DBEAFE'; 
+        let color = '#2563EB';
         let label = 'Register Shop';
         
         if (shop) {
             if (shop.status === 'pending') {
-                icon = 'fa-hourglass-half';
-                bg = '#FFEDD5'; // Orange-100
-                color = '#EA580C'; // Orange-600
-                label = 'Pending';
+                icon = 'fa-hourglass-half'; bg = '#FFEDD5'; color = '#EA580C'; label = 'Pending';
             } else if (shop.status === 'approved') {
-                icon = 'fa-store';
-                bg = '#DCFCE7'; // Green-100
-                color = '#16A34A'; // Green-600
-                label = 'My Shop';
+                icon = 'fa-store'; bg = '#DCFCE7'; color = '#16A34A'; label = 'My Shop';
             } else if (shop.status === 'rejected') {
-                icon = 'fa-circle-exclamation';
-                bg = '#FEE2E2'; // Red-100
-                color = '#DC2626'; // Red-600
-                label = 'Rejected';
+                icon = 'fa-circle-exclamation'; bg = '#FEE2E2'; color = '#DC2626'; label = 'Rejected';
             }
         }
         
@@ -844,48 +825,30 @@
     }
 
     function handleShopClick() {
-        if (!currentUserShop) {
-            // 1. Register
-            window.location.href = 'shop-registration.html';
-        } else if (currentUserShop.status === 'pending') {
-            // 2. Pending
-            alert('Your shop application is currently being reviewed. Please check back later.');
-        } else if (currentUserShop.status === 'approved') {
-            // 3. Dashboard
-            window.location.href = 'merchant-dashboard.html';
-        } else if (currentUserShop.status === 'rejected') {
-            // 4. Rejected
+        if (!currentUserShop) window.location.href = 'shop-registration.html';
+        else if (currentUserShop.status === 'pending') alert('Your shop application is currently being reviewed. Please check back later.');
+        else if (currentUserShop.status === 'approved') window.location.href = 'merchant-dashboard.html';
+        else if (currentUserShop.status === 'rejected') {
             alert(`Application Rejected: ${currentUserShop.rejection_reason || 'Please update your details.'}`);
             window.location.href = `shop-registration.html?id=${currentUserShop.id}`; 
         }
     }
 
-    // --- PROFILE EDIT LOGIC ---
-
     async function openEditProfile() {
         if(!userProfile) return;
-
-        // Toggle Views
         document.getElementById('profile-view').style.display = 'none';
         document.getElementById('profile-edit').style.display = 'block';
-
-        // Pre-fill Data
         document.getElementById('edit-name').value = userProfile.full_name || '';
         document.getElementById('edit-phone').value = userProfile.phone || '';
 
-        // Load Cities if not loaded
         if(allCities.length === 0) {
             const { data } = await client.from('cities').select('id, name').order('name');
             allCities = data || [];
-            
             const citySelect = document.getElementById('edit-city');
             citySelect.innerHTML = '<option value="">Select City</option>';
-            allCities.forEach(c => {
-                citySelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-            });
+            allCities.forEach(c => { citySelect.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
         }
 
-        // Set City and Trigger Area Load
         if(userProfile.city_id) {
             document.getElementById('edit-city').value = userProfile.city_id;
             await handleCityChange(userProfile.city_id, userProfile.area_id);
@@ -931,16 +894,8 @@
         const btn = document.getElementById('btn-save');
         const err = document.getElementById('edit-error');
 
-        if(!name) {
-            err.textContent = "Full Name is required.";
-            err.style.display = 'block';
-            return;
-        }
-        if(!cityId || !areaId) {
-            err.textContent = "Please select both City and Area.";
-            err.style.display = 'block';
-            return;
-        }
+        if(!name) { err.textContent = "Full Name is required."; err.style.display = 'block'; return; }
+        if(!cityId || !areaId) { err.textContent = "Please select both City and Area."; err.style.display = 'block'; return; }
 
         btn.disabled = true;
         btn.textContent = "Saving...";
@@ -955,10 +910,8 @@
             }).eq('id', currentUser.id);
 
             if(error) throw error;
-
-            // Success: reload data to update global UI (areas, header city, etc)
             await fetchData();
-            cancelEdit(); // Close form
+            cancelEdit();
             alert("Profile updated successfully!");
 
         } catch (e) {
@@ -994,7 +947,6 @@
                 </div>`;
         }
 
-        // Extract ID Badge Logic
         const rawId = shop.unique_id || 'N/A';
         const displayId = rawId.includes('-') ? rawId.split('-').pop() : rawId;
 
@@ -1003,10 +955,7 @@
                 <div class="img-box">${collage}</div>
                 <div class="info-box">
                     <div class="s-name">${shop.name}</div>
-                    
-                    <!-- REPLACED CATEGORY WITH CT ID -->
                     <span class="s-id-badge">ID: ${displayId}</span>
-                    
                     <div class="s-loc"><i class="fa-solid fa-location-dot"></i> ${shop.address}</div>
                 </div>
             </div>
