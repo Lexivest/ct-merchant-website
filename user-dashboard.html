@@ -182,6 +182,7 @@
         .info-box { padding: 10px; }
         .s-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
+        /* CT ID Style */
         .s-id-badge { 
             display: inline-block; 
             font-size: 0.7rem; 
@@ -276,6 +277,7 @@
         .chat-msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; }
         .msg-ai { align-self: flex-start; background: white; border: 1px solid #E2E8F0; color: #1E293B; border-bottom-left-radius: 2px; }
         .msg-user { align-self: flex-end; background: var(--color-primary); color: white; border-bottom-right-radius: 2px; }
+        .msg-error { align-self: center; background: #FEE2E2; color: #DC2626; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
         
         .chat-input-area {
             padding: 12px; background: white; border-top: 1px solid #E2E8F0;
@@ -518,7 +520,7 @@
         if(id === 'notifications') markRead();
     }
 
-    // --- AI CHAT LOGIC ---
+    // --- AI CHAT LOGIC (ROBUST DEBUGGING VERSION) ---
     function toggleChat() {
         document.getElementById('chat-window').classList.toggle('open');
     }
@@ -539,26 +541,40 @@
         body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic;">Thinking...</div>`;
         body.scrollTop = body.scrollHeight;
 
-        // 3. Call Backend with Service Role (Authenticated)
         try {
+            // Get current session explicitly
             const { data: { session } } = await client.auth.getSession();
-            if(!session) throw new Error("Please log in.");
+            
+            // Check if user is logged in
+            if(!session) throw new Error("You must be logged in to use AI.");
 
+            // Call function with EXPLICIT Authorization header
             const { data, error } = await client.functions.invoke('ai-assistant', {
                 body: { query: txt },
-                headers: { Authorization: `Bearer ${session.access_token}` }
+                headers: { 
+                    Authorization: `Bearer ${session.access_token}` 
+                }
             });
 
             document.getElementById(loadId).remove();
 
-            if (error) throw error;
+            if (error) {
+                console.error("Function Error:", error);
+                throw error;
+            }
 
-            body.innerHTML += `<div class="chat-msg msg-ai">${data.reply || "No answer found."}</div>`;
+            // Check if backend sent an error inside the JSON
+            if (data && data.reply && data.reply.startsWith("Error:")) {
+                 body.innerHTML += `<div class="chat-msg msg-error">${data.reply}</div>`;
+            } else {
+                 body.innerHTML += `<div class="chat-msg msg-ai">${data.reply || "No response."}</div>`;
+            }
             body.scrollTop = body.scrollHeight;
 
         } catch (err) {
             document.getElementById(loadId)?.remove();
-            body.innerHTML += `<div class="chat-msg msg-ai" style="color:red;">Error: ${err.message}</div>`;
+            body.innerHTML += `<div class="chat-msg msg-error">Connection Failed: ${err.message}</div>`;
+            body.scrollTop = body.scrollHeight;
         }
     }
 
