@@ -3,27 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard | CT‑Merchant</title>
+    <title>Dashboard | CT-Merchant</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         :root {
-            /* --- APP THEME (Green/Yellow Match) --- */
+            /* --- THEME --- */
             --color-primary: #059669; /* Emerald Green */
             --color-primary-dark: #047857;
-            --color-accent: #FCD34D; /* Yellow */
-            
+            --color-accent: #FFFFFF; /* White for header text */
             --color-bg: #F3F4F6;
-            --color-card: #FFFFFF;
-            --color-border: #E2E8F0;
-            --color-text-main: #1E293B;
-            --color-text-muted: #64748B;
-            
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --color-text-main: #1F2937;
             
             --sidebar-width: 280px;
             --header-height: 60px;
@@ -31,161 +23,154 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
 
-        html, body {
+        body { 
             background-color: var(--color-bg); 
             color: var(--color-text-main);
             overflow-x: hidden;
-            min-height: 100vh;
-            width: 100%;
         }
 
-        /* --- LAYOUT --- */
-        .dashboard-container { 
-            display: flex; 
-            min-height: 100vh; 
-            flex-direction: column;
-        }
-
-        /* --- SIDEBAR --- */
+        /* --- 1. SIDEBAR (Universal Overlay) --- */
         .sidebar {
+            position: fixed; top: 0; left: 0; bottom: 0;
             width: var(--sidebar-width);
             background: white;
-            border-right: 1px solid var(--color-border);
-            display: flex; flex-direction: column;
-            position: fixed; top: 0; left: 0; bottom: 0;
             z-index: 2000;
+            display: flex; flex-direction: column;
             transform: translateX(-100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
         }
-        .sidebar.open { transform: translateX(0); }
 
-        .sidebar-overlay {
-            position: fixed; inset: 0;
-            background: rgba(15, 23, 42, 0.6);
-            z-index: 1500;
-            opacity: 0; visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .sidebar-overlay.active { opacity: 1; visibility: visible; }
+        body.sb-open .sidebar { transform: translateX(0); }
 
-        .sidebar-brand { 
-            display: flex; align-items: center; gap: 12px; 
-            padding: 0 20px; 
-            background: var(--color-primary); 
+        .sidebar-header {
+            height: var(--header-height);
+            background: var(--color-primary);
             color: white;
-            height: var(--header-height);
-        }
-        .sidebar-logo { width: 32px; height: 32px; border-radius: 8px; border: 2px solid white; }
-        .brand-name { font-weight: 800; font-size: 1.1rem; }
-
-        .nav-menu { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; padding: 16px; overflow-y: auto; }
-        .nav-item {
-            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-            border-radius: 8px; color: var(--color-text-muted); 
-            font-weight: 600; font-size: 0.95rem; transition: all 0.2s;
-            cursor: pointer; border: none; background: none; width: 100%; text-align: left;
-        }
-        .nav-item:hover, .nav-item.active { background: #ECFDF5; color: var(--color-primary); }
-        .nav-item i { width: 24px; text-align: center; font-size: 1.1rem; }
-
-        .sidebar-footer { margin-top: auto; padding: 16px; border-top: 1px solid var(--color-border); }
-        .btn-logout { color: #EF4444; width: 100%; text-align: left; }
-
-        /* --- MAIN CONTENT --- */
-        .main-content {
-            width: 100%;
-            flex-grow: 1;
-            padding-top: var(--header-height);
-            padding-bottom: 80px; /* Space for FAB */
-        }
-
-        /* --- TOP BAR --- */
-        .top-bar { 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: var(--color-primary); 
-            height: var(--header-height);
-            padding: 0 12px;
-            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-            box-shadow: var(--shadow-md);
-        }
-
-        .top-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-        .menu-btn {
-            background: rgba(255,255,255,0.2); border: none;
-            width: 36px; height: 36px; border-radius: 8px;
-            color: white; font-size: 1.1rem; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            display: flex; align-items: center; gap: 12px; padding: 0 20px;
         }
         
-        .header-info { display: flex; flex-direction: column; }
-        .greeting-text { font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.9); margin: 0; }
-        .current-location { font-size: 0.9rem; font-weight: 800; color: white; margin: 0; display: flex; align-items: center; gap: 4px;}
+        .sidebar-logo { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; background: white; border: 2px solid white; }
 
-        /* TICKER */
-        .ticker-wrapper {
-            flex: 1; margin: 0 16px; overflow: hidden; height: 100%; display: flex; align-items: center;
-            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-            -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        .nav-scroll { flex: 1; padding: 16px; overflow-y: auto; }
+        .nav-btn {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px; width: 100%; border: none; background: none;
+            color: #4B5563; font-weight: 600; font-size: 0.95rem;
+            border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: left; margin-bottom: 4px;
+        }
+        .nav-btn:hover { background: #F3F4F6; color: var(--color-primary); }
+        .nav-btn.active { background: #ECFDF5; color: var(--color-primary); }
+        .nav-btn i { width: 24px; text-align: center; }
+
+        .sidebar-footer { padding: 16px; border-top: 1px solid #E5E7EB; }
+
+        /* --- 2. BACKDROP OVERLAY --- */
+        .overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1500;
+            opacity: 0; visibility: hidden; transition: 0.3s;
+        }
+        body.sb-open .overlay { opacity: 1; visibility: visible; }
+
+        /* --- 3. HEADER (Fixed, Single Row) --- */
+        .top-header {
+            position: fixed; top: 0; left: 0; right: 0;
+            z-index: 1000;
+            background: var(--color-primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: var(--header-height);
+        }
+
+        .header-main {
+            height: 100%;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 12px;
+            max-width: 1400px; margin: 0 auto;
+        }
+        
+        /* Left Section */
+        .header-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .menu-toggle { background: none; border: none; color: white; font-size: 1.4rem; padding: 8px; cursor: pointer; }
+        .header-city { font-weight: 700; font-size: 1rem; color: white; white-space: nowrap; }
+
+        /* Center Section (Ticker) */
+        .header-ticker {
+            flex: 1;
+            margin: 0 16px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
         }
         .ticker-content {
-            white-space: nowrap; animation: ticker 60s linear infinite;
-            font-size: 0.9rem; font-weight: 600; color: white; padding-left: 100%;
+            white-space: nowrap; 
+            animation: ticker 60s linear infinite;
+            color: white; 
+            font-weight: 600; 
+            font-size: 0.9rem; 
+            padding-left: 100%;
         }
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
-        /* RIGHT ACTIONS */
-        .top-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+        /* Right Section */
+        .header-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
         
-        .icon-btn { 
-            background: none; border: none; color: white; cursor: pointer; 
-            font-size: 1.2rem; position: relative; display: flex; align-items: center;
-        }
+        .action-btn { background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; }
+        .notif-wrap { position: relative; cursor: pointer; color: white; }
         .notif-badge {
             position: absolute; top: -4px; right: -4px;
-            background: #EF4444; color: white; font-size: 0.65rem; font-weight: 700;
-            width: 16px; height: 16px; border-radius: 50%;
-            display: none; align-items: center; justify-content: center;
-            border: 2px solid var(--color-primary);
+            background: #EF4444; color: white; font-size: 0.65rem; font-weight: 800;
+            padding: 2px 4px; border-radius: 10px; border: 1.5px solid var(--color-primary);
+            display: none;
         }
-        .notif-badge.active { display: flex; }
 
-        .user-pill {
-            width: 36px; height: 36px; border-radius: 50%; 
-            border: 2px solid rgba(255,255,255,0.5); 
-            overflow: hidden; cursor: pointer; background: #E2E8F0;
+        /* --- 4. CONTENT BODY --- */
+        .content-body {
+            margin-top: var(--header-height);
+            padding: 0 0 40px 0;
+            max-width: 1400px; margin-left: auto; margin-right: auto;
+            width: 100%;
         }
-        .user-pill img { width: 100%; height: 100%; object-fit: cover; }
+        @media (min-width: 1024px) { .content-body { padding: 20px; } }
 
-        /* --- CONTENT STYLES --- */
-        .content-padding { padding: 16px; max-width: 1200px; margin: 0 auto; }
-        
-        .section-header { display: flex; align-items: center; margin-bottom: 1rem; margin-top: 1.5rem; }
-        .bar { width: 4px; height: 20px; border-radius: 2px; margin-right: 10px; }
-        .section-title { font-size: 1.1rem; font-weight: 800; color: var(--color-text-main); }
+        /* --- UTILS --- */
+        .screen { display: none; animation: fadeIn 0.3s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .scroll-row {
-            display: flex; overflow-x: auto; gap: 16px; padding-bottom: 8px;
-            width: 100%; scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
+        /* COMPACT SPACING STYLES */
+        .sec-header { 
+            display: flex; align-items: center; gap: 10px; 
+            padding: 6px 16px 2px 16px; 
+            margin: 0; 
+            background: var(--color-bg); 
         }
-        .scroll-row::-webkit-scrollbar { height: 0; }
+        .sec-bar { width: 4px; height: 18px; border-radius: 4px; }
+        .sec-title { font-size: 1.05rem; font-weight: 800; color: #111827; }
 
-        /* Shop Card */
+        .h-scroll {
+            display: flex; overflow-x: auto; gap: 12px; 
+            padding: 0 16px 4px 16px;
+            scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
+        }
+        .h-scroll::-webkit-scrollbar { height: 0px; }
+
         .shop-card {
-            min-width: 260px; width: 260px;
+            min-width: 220px; width: 220px;
             background: white; border-radius: 12px;
-            box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
-            cursor: pointer; display: flex; flex-direction: column; overflow: hidden;
+            border: 1px solid #E5E7EB; overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer;
+            display: flex; flex-direction: column; flex-shrink: 0;
+            transition: transform 0.2s;
         }
-        .shop-img-box { height: 140px; width: 100%; background: #F1F5F9; }
-        .shop-info { padding: 12px; }
-        .shop-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .shop-cat { font-size: 0.7rem; color: var(--color-primary); font-weight: 700; background: #ECFDF5; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
-        .shop-addr { font-size: 0.8rem; color: var(--color-text-muted); display: flex; align-items: center; gap: 4px; }
+        .shop-card:active { transform: scale(0.98); }
 
-        /* Collage Grid */
+        .img-box { height: 140px; width: 100%; background: #F1F5F9; }
+        
         .collage { width: 100%; height: 100%; display: flex; flex-wrap: wrap; }
-        .collage img { object-fit: cover; border: 0.5px solid white; box-sizing: border-box; }
+        .collage img { object-fit: cover; display: block; box-sizing: border-box; border: 0.5px solid white; }
         .c-1 img { width: 100%; height: 100%; border: none; }
         .c-2 img { width: 50%; height: 100%; }
         .c-3 { display: flex; }
@@ -194,102 +179,125 @@
         .c-3 > div img { width: 100%; height: 50%; }
         .c-4 img { width: 50%; height: 50%; }
 
-        /* Collage Pills */
-        .collage-pill {
-            display: flex; align-items: center; gap: 10px;
-            background: white; border: 1px solid var(--color-border);
-            border-radius: 50px; padding: 6px 16px 6px 6px;
-            min-width: max-content; cursor: pointer;
-        }
-        .collage-pill.active { background: #ECFDF5; border-color: var(--color-primary); }
-        .collage-circle { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: #F1F5F9; border: 2px solid white; }
+        .info-box { padding: 10px; }
+        .s-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* Area Pill */
-        .area-pill {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 8px 12px; border-radius: 8px; margin-bottom: 12px;
+        .s-id-badge { 
+            display: inline-block; 
+            font-size: 0.7rem; 
+            font-weight: 700; 
+            color: #1E40AF; /* Dark Blue */
+            background: #EFF6FF; /* Light Blue */
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            border: 1px solid #DBEAFE;
+            margin-bottom: 6px; 
+        }
+
+        .s-loc { font-size: 0.75rem; color: #6B7280; display: flex; align-items: center; gap: 4px; }
+
+        /* Areas */
+        .area-container { margin-bottom: 0; padding-bottom: 0; }
+        .area-pill { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 8px 12px; border-radius: 8px; 
+            margin: 4px 16px 4px 16px; 
         }
         .area-pill.user { background: #DCFCE7; }
         .area-pill.other { background: #FEF3C7; }
-        .pill-content { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; }
+        .pill-left { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #1F2937; }
 
-        /* Shop List Grid */
-        .shop-list-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
-            gap: 1rem; 
+        .cat-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 8px 16px; }
+        .cat-chip {
+            background: white; border: 1px solid #E5E7EB; border-radius: 50px;
+            padding: 6px 14px 6px 6px; display: flex; align-items: center; gap: 8px;
+            cursor: pointer; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
+        .cat-chip img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; }
+        .cat-chip span { font-size: 0.85rem; font-weight: 700; color: #374151; }
 
-        /* Services Grid */
-        .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
-        .service-card {
-            background: white; border-radius: 16px; padding: 20px 12px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-            box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
-            cursor: pointer; height: 140px;
+        .shop-grid-view { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 12px; padding: 0 16px 20px 16px;
         }
-        .service-icon-box {
-            width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            margin-bottom: 12px; font-size: 1.4rem;
+        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding: 20px 16px; }
+        .svc-card {
+            background: white; padding: 20px 16px; border-radius: 12px; text-align: center;
+            border: 1px solid #E5E7EB; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;
+            transition: transform 0.2s;
         }
+        .svc-card:active { transform: scale(0.96); }
+        .svc-icon { width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
 
-        /* Utils */
-        .screen { display: none; animation: fadeIn 0.3s ease; width: 100%; }
-        .screen.active { display: block; }
-        .hidden { display: none !important; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Form Styles */
+        .form-group { margin-bottom: 16px; text-align: left; }
+        .form-label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #374151; }
+        .form-input { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 1rem; }
+        .form-input:focus { outline: none; border-color: var(--color-primary); ring: 2px solid #A7F3D0; }
 
-        /* --- AI ASSISTANT FAB --- */
+        /* --- AI CHAT WIDGET STYLES --- */
         .ai-fab-container {
-            position: fixed; bottom: 24px; right: 24px; z-index: 5000;
+            position: fixed; bottom: 20px; right: 20px; z-index: 5000;
             display: flex; flex-direction: column; align-items: center; gap: 6px;
         }
         .ai-fab {
-            width: 60px; height: 60px; border-radius: 50%;
+            width: 56px; height: 56px; border-radius: 50%;
             background: var(--color-primary); color: white;
-            box-shadow: var(--shadow-lg); cursor: pointer;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4); cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.6rem; transition: transform 0.2s;
-            border: none;
+            font-size: 1.5rem; transition: transform 0.2s; border: none;
         }
-        .ai-fab:hover { transform: scale(1.05); background: var(--color-primary-dark); }
-        
+        .ai-fab:active { transform: scale(0.95); }
         .ai-label {
             background: white; color: var(--color-primary);
             font-size: 0.7rem; font-weight: 800;
             padding: 4px 8px; border-radius: 12px;
-            box-shadow: var(--shadow-md); border: 1px solid var(--color-border);
-            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB;
+            white-space: nowrap; pointer-events: none;
         }
 
-        /* Chat Window */
         .chat-window {
-            position: fixed; bottom: 100px; right: 24px;
+            position: fixed; bottom: 90px; right: 20px;
             width: 350px; height: 500px;
             background: white; border-radius: 16px;
-            box-shadow: var(--shadow-lg); z-index: 5000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 5000;
             display: flex; flex-direction: column;
             overflow: hidden; opacity: 0; pointer-events: none;
             transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid var(--color-border);
+            border: 1px solid #E5E7EB;
         }
         .chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+        .chat-header {
+            background: var(--color-primary); color: white;
+            padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
+        .chat-msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; }
+        .msg-ai { align-self: flex-start; background: white; border: 1px solid #E2E8F0; color: #1E293B; border-bottom-left-radius: 2px; }
+        .msg-user { align-self: flex-end; background: var(--color-primary); color: white; border-bottom-right-radius: 2px; }
         
-        /* Mobile Chat */
+        .chat-input-area {
+            padding: 12px; background: white; border-top: 1px solid #E2E8F0;
+            display: flex; gap: 8px;
+        }
+        .chat-input {
+            flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #E2E8F0;
+            outline: none; font-size: 0.9rem; background: #F1F5F9;
+        }
+        .btn-send {
+            background: var(--color-primary); color: white; border: none;
+            width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Mobile Chat overrides */
         @media (max-width: 480px) {
             .chat-window {
-                right: 0; left: 0; bottom: 0; width: 100%; height: 80vh;
+                right: 0; left: 0; bottom: 0; width: 100%; height: 85vh;
                 border-bottom-left-radius: 0; border-bottom-right-radius: 0;
             }
         }
-
-        .chat-header { background: var(--color-primary); color: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; }
-        .chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
-        .chat-msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; }
-        .msg-ai { align-self: flex-start; background: white; border: 1px solid var(--color-border); color: #1E293B; border-bottom-left-radius: 2px; }
-        .msg-user { align-self: flex-end; background: var(--color-primary); color: white; border-bottom-right-radius: 2px; }
-        .chat-input-area { padding: 12px; background: white; border-top: 1px solid var(--color-border); display: flex; gap: 8px; }
-        .chat-input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid var(--color-border); outline: none; background: #F1F5F9; }
     </style>
 </head>
 <body>
@@ -299,7 +307,7 @@
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
+        <div class="sidebar-header">
             <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="sidebar-logo" alt="Logo">
             <span class="brand-name">CT‑MERCHANT</span>
         </div>
@@ -319,7 +327,7 @@
         <!-- HEADER -->
         <div class="top-bar">
             <div class="top-left">
-                <button class="menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
                 <div class="header-info">
                     <div id="greeting-name" class="greeting-text">Hello User</div>
                     <div class="current-location">
@@ -329,123 +337,120 @@
                 </div>
             </div>
 
-            <div id="announcement-box" class="ticker-wrapper" style="display:none;">
-                <div id="announcement-text" class="ticker-content"></div>
+            <div id="announcement-box" class="header-ticker" style="display:none;">
+                <div id="ticker-text" class="ticker-content"></div>
             </div>
             
-            <div class="top-right">
-                <button class="icon-btn" onclick="window.location.href='shop-index.html'"><i class="fa-solid fa-arrow-down-a-z"></i></button>
-                <button class="icon-btn" onclick="switchTab('notifications', document.querySelectorAll('.nav-item')[3])">
-                    <i class="fa-regular fa-bell"></i>
-                    <span id="unread-badge" class="notif-badge">0</span>
+            <div class="header-actions">
+                <button class="action-btn" onclick="window.location.href='shop-index.html'" title="Shop Index">
+                    <i class="fa-solid fa-arrow-down-a-z" style="font-size: 1.1rem;"></i>
                 </button>
-                <div class="user-pill" onclick="switchTab('profile', document.querySelectorAll('.nav-item')[2])">
-                    <img id="top-avatar" src="" alt="Profile">
+                
+                <div class="notif-wrap" onclick="switchTab('notifications', document.querySelectorAll('.nav-item')[3])">
+                    <i class="fa-regular fa-bell" style="font-size:1.3rem;"></i>
+                    <div id="badge-count" class="notif-badge">0</div>
                 </div>
+                
+                <img id="header-avatar" src="" style="width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,0.5); object-fit:cover; background:#ccc; cursor:pointer;" onclick="switchTab('profile', document.querySelectorAll('.nav-item')[2])">
             </div>
         </div>
 
-        <div class="content-padding">
+        <div class="content-body">
 
             <!-- MARKET -->
             <div id="market" class="screen active">
-                <div id="section-promos" class="section hidden">
-                    <div id="promo-list" class="promo-slider"></div>
+                <div id="promo-list" class="h-scroll" style="display:none; padding-top:8px;"></div>
+                
+                <div id="featured-section" style="display:none;">
+                    <div class="sec-header">
+                        <div class="sec-bar" style="background: orange;"></div>
+                        <div class="sec-title">Featured Shops</div>
+                    </div>
+                    <div id="featured-list" class="h-scroll"></div>
                 </div>
 
-                <div id="section-featured" class="section hidden">
-                    <div class="section-header">
-                        <div class="bar" style="background: orange;"></div>
-                        <div class="section-title">Featured Shops</div>
+                <div id="areas-container" style="margin-top:0;">
+                    <div id="initial-loader" style="text-align:center; padding:60px 0; color:#CBD5E1;">
+                        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem;"></i>
                     </div>
-                    <div id="featured-list" class="scroll-row"></div>
                 </div>
 
-                <div class="section">
-                    <div class="section-header">
-                        <div class="bar" style="background: var(--color-primary);"></div>
-                        <div class="section-title">Categories</div>
-                    </div>
-                    <div id="category-list" class="scroll-row"></div>
+                <div class="sec-header">
+                    <div class="sec-bar" style="background: var(--color-primary);"></div>
+                    <div class="sec-title">Browse Categories</div>
                 </div>
+                <div id="category-list" class="cat-grid"></div>
 
-                <div class="section">
-                    <div id="area-list"></div> <!-- Dynamic Areas -->
+                <div class="sec-header">
+                    <div class="sec-bar" style="background: #374151;"></div>
+                    <div class="sec-title">All Shops</div>
                 </div>
-
-                <div class="section">
-                    <div class="section-header">
-                        <div class="bar" style="background: #1E293B;"></div>
-                        <div class="section-title">All Shops <span id="shop-count" style="font-size:0.9rem; color:#64748B;"></span></div>
-                    </div>
-                    <div id="shop-list" class="shop-list-grid">
-                        <p style="color: grey;">Loading...</p>
-                    </div>
-                </div>
+                <div id="all-shops-grid" class="shop-grid-view"></div>
             </div>
 
             <!-- SERVICES -->
             <div id="services" class="screen">
-                <h2 class="section-title" style="margin-bottom: 20px;">Services & Tools</h2>
-                <div class="services-grid">
-                    <div class="service-card" onclick="handleShopAction()">
-                        <div id="shop-icon-box" class="service-icon-box" style="background:#F3F4F6; color:#6B7280;"><i class="fa-solid fa-store"></i></div>
-                        <div id="shop-card-title" class="service-title">Loading...</div>
-                        <div id="shop-card-sub" class="service-subtitle">Checking status</div>
+                <h2 class="sec-title" style="margin: 16px 16px 0 16px;">Services & Tools</h2>
+                <div class="svc-grid">
+                    <div id="myshop-card" class="svc-card" onclick="handleShopClick()">
+                        <div class="svc-icon" style="background:#F3F4F6; color:#9CA3AF;"><i class="fa-solid fa-store"></i></div>
+                        <strong>Loading...</strong>
                     </div>
-                    <div class="service-card" onclick="window.location.href='wishlist.html'">
-                        <div class="service-icon-box" style="background:#FCE7F3; color:#DB2777;"><i class="fa-solid fa-heart"></i></div>
-                        <div class="service-title">Wishlist</div>
-                        <div id="wishlist-count" class="service-subtitle">...</div>
+                    <div class="svc-card" onclick="window.location.href='wishlist.html'">
+                        <div class="svc-icon" style="background:#FCE7F3; color:#DB2777;"><i class="fa-solid fa-heart"></i></div>
+                        <strong>Wishlist</strong>
+                        <div id="wishlist-count" style="font-size:0.8rem; color:#6B7280; margin-top:4px;">...</div>
                     </div>
-                    <div class="service-card" onclick="window.location.href='help-support.html'">
-                        <div class="service-icon-box" style="background:#DCFCE7; color:#10B981;"><i class="fa-solid fa-headset"></i></div>
-                        <div class="service-title">Support</div>
+                    <div class="svc-card" onclick="window.location.href='help-support.html'">
+                        <div class="svc-icon" style="background:#DCFCE7; color:#10B981;"><i class="fa-solid fa-headset"></i></div>
+                        <strong>Support</strong>
                     </div>
-                    <div class="service-card" onclick="window.location.href='faq.html'">
-                        <div class="service-icon-box" style="background:#E0E7FF; color:#4338CA;"><i class="fa-solid fa-circle-question"></i></div>
-                        <div class="service-title">FAQ</div>
+                    <div class="svc-card" onclick="window.location.href='faq.html'">
+                        <div class="svc-icon" style="background:#E0E7FF; color:#4338CA;"><i class="fa-solid fa-circle-question"></i></div>
+                        <strong>FAQ</strong>
                     </div>
-                    <div class="service-card" onclick="switchTab('profile', document.querySelectorAll('.nav-item')[2])">
-                        <div class="service-icon-box" style="background:#F3F4F6; color:#4B5563;"><i class="fa-solid fa-gear"></i></div>
-                        <div class="service-title">Settings</div>
+                    <div class="svc-card" onclick="window.location.href='report-abuse.html'">
+                        <div class="svc-icon" style="background:#FEE2E2; color:#DC2626;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <strong>Report Abuse</strong>
                     </div>
                 </div>
             </div>
 
             <!-- PROFILE -->
             <div id="profile" class="screen">
-                <div class="profile-card">
-                    <div class="profile-hero">
-                        <div class="avatar-uploader">
-                            <img id="edit-avatar" src="" class="main-avatar">
-                            <label for="file-input" class="btn-cam"><i class="fa-solid fa-camera"></i></label>
-                            <input type="file" id="file-input" style="display:none;" accept="image/*" onchange="previewImage(this)">
-                        </div>
-                        <div class="hero-info">
-                            <h2 id="edit-display-name">User</h2>
-                            <p id="edit-display-email">...</p>
-                        </div>
+                <div id="profile-view" style="max-width:600px; margin:20px auto; background:white; padding:40px; border-radius:16px; border:1px solid #E5E7EB; text-align:center;">
+                    <img id="profile-avatar-lg" src="" style="width:100px; height:100px; border-radius:50%; margin-bottom:16px; border:4px solid var(--color-primary); object-fit: cover;">
+                    <h2 id="profile-name" style="font-size:1.5rem; color:#111827;">Loading...</h2>
+                    <p id="profile-phone" style="color:#6B7280; font-weight:500; margin-bottom:4px;"></p>
+                    <p id="profile-email" style="color:#9CA3AF; margin-bottom:20px; font-size:0.9rem;">...</p>
+                    <div style="display:flex; justify-content:center; gap:10px;">
+                        <button onclick="openEditProfile()" style="background:var(--color-primary); color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:700; cursor:pointer;">
+                            <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+                        </button>
                     </div>
-                    <form id="profile-form" onsubmit="saveProfile(event)">
-                        <div class="form-grid">
-                            <input type="text" id="form-name" class="form-control" placeholder="Full Name" required>
-                            <input type="tel" id="form-phone" class="form-control" placeholder="Phone Number">
-                            <select id="form-city" class="form-control" required><option disabled selected>Loading Cities...</option></select>
-                            <select id="form-area" class="form-control" required disabled><option disabled selected>Select City First</option></select>
-                        </div>
-                        <button type="submit" id="btn-submit" class="btn-save">Save Changes</button>
-                    </form>
+                </div>
+
+                <div id="profile-edit" style="display:none; max-width:600px; margin:20px auto; background:white; padding:30px; border-radius:16px; border:1px solid #E5E7EB;">
+                    <h3 style="margin-bottom:20px; font-size:1.2rem; border-bottom:1px solid #E5E7EB; padding-bottom:10px;">Edit Profile</h3>
+                    <div class="form-group"><label class="form-label">Full Name</label><input type="text" id="edit-name" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Phone Number</label><input type="tel" id="edit-phone" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">City</label><select id="edit-city" onchange="handleCityChange(this.value)" class="form-input" style="background:white;"><option value="">Select City</option></select></div>
+                    <div class="form-group" style="margin-bottom:24px;"><label class="form-label">Area</label><select id="edit-area" class="form-input" style="background:white;"><option value="">Select Area</option></select></div>
+                    <p id="edit-error" style="color:#EF4444; font-size:0.9rem; margin-bottom:16px; display:none;"></p>
+                    <div style="display:flex; gap:12px;">
+                        <button id="btn-save" onclick="saveProfile()" style="flex:1; background:var(--color-primary); color:white; border:none; padding:12px; border-radius:8px; font-weight:700; cursor:pointer;">Save Changes</button>
+                        <button onclick="cancelEdit()" style="flex:1; background:#F3F4F6; color:#374151; border:1px solid #D1D5DB; padding:12px; border-radius:8px; font-weight:700; cursor:pointer;">Cancel</button>
+                    </div>
                 </div>
             </div>
 
             <!-- NOTIFICATIONS -->
             <div id="notifications" class="screen">
-                <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
-                    <h2 class="section-title">Notifications</h2>
+                <div style="display:flex; justify-content:space-between; margin-bottom:1rem; padding: 0 16px;">
+                    <h2 class="sec-title">Notifications</h2>
                     <button onclick="clearAllNotifications()" style="color:#EF4444; background:none; border:none; cursor:pointer;">Clear All</button>
                 </div>
-                <div id="notif-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+                <div id="notif-list" style="display:flex; flex-direction:column; gap:10px; margin: 0 16px;"></div>
             </div>
 
         </div>
@@ -482,225 +487,42 @@
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentUser = null;
-    let selectedFile = null;
-    let myShop = null;
+    let userProfile = null;
+    let currentUserShop = null; 
+    let userCityId = null;
+    let userAreaId = null;
+    let allCities = [];
+    const CACHE_KEY = 'ctm_dash_v16'; 
 
-    // --- TOGGLES ---
+    // --- NAVIGATION ---
     function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.getElementById('sidebar-overlay').classList.toggle('active');
+        document.body.classList.toggle('sb-open');
     }
-    
+
+    function switchScreen(id, btn) {
+        if (btn) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById(id);
+        if (target) target.classList.add('active');
+
+        document.body.classList.remove('sb-open');
+        if(id === 'notifications') markRead();
+    }
+
+    // --- AI CHAT LOGIC (REAL BACKEND FIX) ---
     function toggleChat() {
         document.getElementById('chat-window').classList.toggle('open');
     }
 
-    function switchTab(screenId, btn) {
-        if(btn) {
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(screenId).classList.add('active');
-        
-        document.getElementById('sidebar').classList.remove('open');
-        document.getElementById('sidebar-overlay').classList.remove('active');
-
-        if(screenId === 'notifications') markAllAsRead();
-    }
-
-    // --- INIT ---
-    window.onload = async () => {
-        const { data: { session } } = await client.auth.getSession();
-        if (!session) { window.location.href = "login.html"; return; }
-        currentUser = session.user;
-
-        const cached = localStorage.getItem('dash_v18');
-        if(cached) {
-            const d = JSON.parse(cached);
-            renderDashboard(d);
-            renderProfileForms(d.profile);
-        }
-        
-        fetchData();
-        fetchShopStatus();
-        fetchWishlistCount();
-        fetchNotifications();
-    };
-
-    // --- DATA ---
-    async function fetchData() {
-        try {
-            const [profile, cities, announcements, promos, categories] = await Promise.all([
-                client.from('profiles').select('*, cities(name), areas(name)').eq('id', currentUser.id).single(),
-                client.from('cities').select('id, name').order('name'),
-                client.from('announcements').select().order('created_at', {ascending:false}),
-                client.from('promo_banners').select().order('created_at', {ascending:false}),
-                client.from('categories').select().order('name')
-            ]);
-
-            if(!profile.data) return;
-            const cityId = profile.data.city_id;
-
-            const [areas, shops] = await Promise.all([
-                client.from('areas').select().eq('city_id', cityId).order('name'),
-                client.from('shops').select().eq('city_id', cityId).order('is_verified', {ascending:false})
-            ]);
-
-            let products = [];
-            const shopIds = shops.data.map(s => s.id);
-            if(shopIds.length > 0) {
-                const pRes = await client.from('products').select('shop_id, image_url').in('shop_id', shopIds).eq('is_available', true).order('created_at', {ascending:false});
-                products = pRes.data || [];
-            }
-
-            populateCityDropdown(cities.data, profile.data);
-
-            const data = {
-                profile: profile.data,
-                announcements: announcements.data || [],
-                promos: promos.data || [],
-                categories: categories.data || [],
-                areas: areas.data || [],
-                shops: shops.data || [],
-                products,
-                allCities: cities.data
-            };
-
-            localStorage.setItem('dash_v18', JSON.stringify(data));
-            renderDashboard(data);
-            renderProfileForms(data.profile);
-
-        } catch(e) { console.error(e); }
-    }
-
-    function renderDashboard(data) {
-        const p = data.profile;
-        document.getElementById('greeting-name').textContent = `Hello, ${p.full_name.split(' ')[0]}`;
-        document.getElementById('current-city').textContent = p.cities?.name || "Locating...";
-        document.getElementById('top-avatar').src = p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${p.full_name}`;
-
-        if(data.announcements.length > 0) {
-            document.getElementById('announcement-box').style.display = 'flex';
-            document.getElementById('announcement-text').textContent = data.announcements.map(a => a.message).join("  •  ");
-        }
-
-        if(data.promos.length > 0) {
-            document.getElementById('section-promos').classList.remove('hidden');
-            document.getElementById('promo-list').innerHTML = data.promos.map(pr => `<div class="promo-card"><img src="${pr.image_url}" class="promo-img"></div>`).join('');
-        }
-
-        const featured = data.shops.filter(s => s.is_featured);
-        if(featured.length > 0) {
-            document.getElementById('section-featured').classList.remove('hidden');
-            document.getElementById('featured-list').innerHTML = featured.map(s => buildShopHTML(s, data.products, 'featured')).join('');
-        }
-
-        renderCollageRow('category-list', data.categories, data.shops, data.products);
-
-        // Areas Logic
-        const areaContainer = document.getElementById('area-list');
-        areaContainer.innerHTML = '';
-        const userAreaId = p.area_id;
-        const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
-
-        sortedAreas.forEach(area => {
-            const areaShops = data.shops.filter(s => s.area_id === area.id);
-            if(areaShops.length === 0) return;
-            
-            const isUser = area.id === userAreaId;
-            const cls = isUser ? 'user' : 'other';
-            const icon = isUser ? '<i class="fa-solid fa-location-crosshairs"></i>' : '<i class="fa-solid fa-location-dot"></i>';
-            const clr = isUser ? 'var(--color-primary)' : '#F59E0B';
-            
-            areaContainer.innerHTML += `
-                <div class="area-pill ${cls}">
-                    <div class="pill-content">
-                        <span style="color:${clr};font-size:1.1rem;">${icon}</span>
-                        <span>Merchants in ${area.name} ${isUser ? '• Near You' : ''}</span>
-                    </div>
-                    <button onclick="window.location.href='area.html?id=${area.id}'" style="border:none;background:none;color:var(--color-primary);font-weight:700;">See All</button>
-                </div>
-                <div class="scroll-row">
-                    ${areaShops.map(s => buildShopHTML(s, data.products, 'shop')).join('')}
-                </div>
-                <div style="height:16px;"></div>
-            `;
-        });
-
-        document.getElementById('shop-count').textContent = `${data.shops.length} Found`;
-        document.getElementById('shop-list').innerHTML = data.shops.map(s => buildShopHTML(s, data.products, 'shop')).join('');
-    }
-
-    function buildShopHTML(shop, allProds, type) {
-        const prods = allProds.filter(p => p.shop_id === shop.id).slice(0, 4);
-        const imgs = prods.map(p => p.image_url);
-        
-        let collage = '';
-        if(imgs.length === 0) {
-            const fb = shop.image_url || 'https://via.placeholder.com/150';
-            collage = `<img src="${fb}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`;
-        } else if(imgs.length === 1) {
-            collage = `<div class="collage c-1"><img src="${imgs[0]}"></div>`;
-        } else if(imgs.length === 2) {
-            collage = `<div class="collage c-2"><img src="${imgs[0]}"><img src="${imgs[1]}"></div>`;
-        } else if(imgs.length === 3) {
-            collage = `<div class="collage c-3"><img src="${imgs[0]}"><div><img src="${imgs[1]}"><img src="${imgs[2]}"></div></div>`;
-        } else {
-            collage = `<div class="collage c-4"><img src="${imgs[0]}"><img src="${imgs[1]}"><img src="${imgs[2]}"><img src="${imgs[3]}"></div>`;
-        }
-
-        if(type === 'featured') {
-            // Horizontal Featured Card
-            return `
-                <div class="featured-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
-                    <div style="width:72px;height:72px;border-radius:8px;overflow:hidden;flex-shrink:0;">${collage}</div>
-                    <div class="featured-info">
-                        <div class="shop-name">${shop.name}</div>
-                        <span class="shop-cat">${shop.category}</span>
-                    </div>
-                </div>
-            `;
-        } else {
-            // Vertical Shop Card
-            return `
-                <div class="shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
-                    <div class="shop-img-box">${collage}</div>
-                    <div class="shop-info">
-                        <div class="shop-name">${shop.name}</div>
-                        <span class="shop-cat">${shop.category}</span>
-                        <div class="shop-addr"><i class="fa-solid fa-location-dot"></i> ${shop.address}</div>
-                    </div>
-                </div>
-            `;
-        }
-    }
-
-    function renderCollageRow(elemId, cats, shops, prods) {
-        document.getElementById(elemId).innerHTML = cats.map(c => {
-            const sIds = shops.filter(s => s.category === c.name).map(s => s.id);
-            const p = prods.filter(x => sIds.includes(x.shop_id)).slice(0, 3).map(x => x.image_url);
-            
-            let html = '';
-            if(p.length === 0) html = `<div class="collage-circle" style="background:#ddd;"></div>`;
-            else if(p.length === 1) html = `<div class="collage-circle collage-1"><img src="${p[0]}"></div>`;
-            else if(p.length === 2) html = `<div class="collage-circle collage-2"><img src="${p[0]}"><img src="${p[1]}"></div>`;
-            else html = `<div class="collage-circle collage-3"><img src="${p[0]}"><div><img src="${p[1]}"><img src="${p[2]}"></div></div>`;
-
-            return `
-                <div class="collage-pill">
-                    ${html} <span class="pill-text">${c.name}</span>
-                </div>
-            `;
-        }).join('');
-    }
-
-    // --- CHAT LOGIC (Phase 3: REAL BACKEND) ---
     async function sendMsg() {
         const inp = document.getElementById('chat-input');
         const txt = inp.value.trim();
         if(!txt) return;
-        
+
         // 1. Show User Msg
         const body = document.getElementById('chat-messages');
         body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
@@ -712,10 +534,14 @@
         body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic;">Thinking...</div>`;
         body.scrollTop = body.scrollHeight;
 
-        // 3. Call Supabase Edge Function
+        // 3. Get Session & Call Backend
         try {
+            const { data: { session } } = await client.auth.getSession();
+            if(!session) throw new Error("Please log in again.");
+
             const { data, error } = await client.functions.invoke('ai-assistant', {
-                body: { query: txt }
+                body: { query: txt },
+                headers: { Authorization: `Bearer ${session.access_token}` }
             });
 
             document.getElementById(loadId).remove();
@@ -727,129 +553,325 @@
             body.scrollTop = body.scrollHeight;
 
         } catch (err) {
-            document.getElementById(loadId).remove();
+            document.getElementById(loadId)?.remove();
             body.innerHTML += `<div class="chat-msg msg-ai" style="color:red;">Error: ${err.message}</div>`;
         }
     }
 
-    // --- SHOP STATUS ---
-    async function fetchShopStatus() {
-        const { data } = await client.from('shops').select('*').eq('owner_id', currentUser.id).maybeSingle();
-        myShop = data;
-        const box = document.getElementById('shop-icon-box');
-        const title = document.getElementById('shop-card-title');
-        const sub = document.getElementById('shop-card-sub');
-        
-        box.style.color = '#2563EB'; box.style.background = '#DBEAFE'; // Default Blue
-        
-        if(!data) {
-            title.textContent = "Register Shop"; sub.textContent = "Start selling";
-        } else if (data.status === 'pending') {
-            box.style.color = '#EA580C'; box.style.background = '#FFEDD5';
-            title.textContent = "Pending"; sub.textContent = "Under Review";
-        } else if (data.status === 'approved') {
-            box.style.color = '#16A34A'; box.style.background = '#DCFCE7';
-            title.textContent = "My Shop"; sub.textContent = "Manage";
+    // --- INIT ---
+    window.onload = async () => {
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) { window.location.href = "login.html"; return; }
+        currentUser = session.user;
+
+        const cache = localStorage.getItem(CACHE_KEY);
+        if (cache) {
+            renderData(JSON.parse(cache));
+            fetchData(); 
         } else {
-            box.style.color = '#DC2626'; box.style.background = '#FEE2E2';
-            title.textContent = "Rejected"; sub.textContent = "Action needed";
+            fetchData();
         }
-    }
+    };
 
-    function handleShopAction() {
-        if(!myShop) window.location.href = "shop-registration.html";
-        else if(myShop.status === 'approved') window.location.href = "merchant-dashboard.html";
-        else if(myShop.status === 'rejected') window.location.href = `shop-registration.html?edit=true&id=${myShop.id}`;
-        else alert("Shop application is pending.");
-    }
-
-    // --- UTILS ---
-    async function fetchWishlistCount() {
-        const { count } = await client.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id);
-        document.getElementById('wishlist-count').textContent = `${count || 0} items`;
-    }
-
-    async function fetchNotifications() {
-        const { data } = await client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending:false});
-        const list = document.getElementById('notif-list');
-        list.innerHTML = '';
-        if(data && data.length > 0) {
-            const unread = data.filter(n => !n.is_read).length;
-            const badge = document.getElementById('unread-badge');
-            if(unread > 0) { badge.textContent = unread; badge.classList.add('active'); }
+    async function fetchData() {
+        try {
+            const { data: profile } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).single();
+            if(!profile) return;
             
-            data.forEach(n => {
-                const bg = n.is_read ? 'white' : '#EFF6FF';
-                list.innerHTML += `
-                    <div style="background:${bg}; padding:12px; border-radius:12px; border:1px solid #E5E7EB; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-                        <div style="font-weight:700; font-size:0.9rem;">${n.title}</div>
-                        <div style="font-size:0.85rem; color:#4B5563;">${n.message}</div>
-                    </div>`;
-            });
+            userProfile = profile;
+            userCityId = profile.city_id;
+            userAreaId = profile.area_id;
+
+            const [promos, announcements, categories, areas, shops, notifs, myShop, wishlist] = await Promise.all([
+                client.from('promo_banners').select().order('created_at', {ascending: false}),
+                client.from('announcements').select().order('created_at', {ascending: false}),
+                client.from('categories').select().order('name'),
+                client.from('areas').select().eq('city_id', userCityId).order('name'),
+                client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}),
+                client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20),
+                client.from('shops').select('id, status, rejection_reason').eq('owner_id', currentUser.id).maybeSingle(),
+                client.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id)
+            ]);
+
+            currentUserShop = myShop.data;
+
+            let products = [];
+            const shopIds = shops.data.map(s => s.id);
+            if(shopIds.length > 0) {
+                const { data } = await client.from('products')
+                    .select('shop_id, image_url')
+                    .in('shop_id', shopIds)
+                    .eq('is_available', true)
+                    .limit(500);
+                products = data || [];
+            }
+            
+            const unreadCount = notifs.data ? notifs.data.filter(n => !n.is_read).length : 0;
+
+            const dashboardData = {
+                profile,
+                promos: promos.data,
+                announcements: announcements.data,
+                categories: categories.data,
+                areas: areas.data,
+                shops: shops.data,
+                notifications: notifs.data || [],
+                myShop: myShop.data,
+                wishlistCount: wishlist.count || 0,
+                products,
+                unread: unreadCount
+            };
+
+            localStorage.setItem(CACHE_KEY, JSON.stringify(dashboardData));
+            renderData(dashboardData);
+        } catch (e) { console.error("Fetch error:", e); }
+    }
+
+    function renderData(data) {
+        const areaContainer = document.getElementById('areas-container');
+        if(areaContainer.querySelector('.fa-spin')) areaContainer.innerHTML = '';
+
+        document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
+        const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
+        document.getElementById('header-avatar').src = avatar;
+        document.getElementById('profile-avatar-lg').src = avatar;
+        document.getElementById('profile-name').textContent = data.profile.full_name;
+        document.getElementById('profile-phone').textContent = data.profile.phone || "No phone number added";
+        document.getElementById('profile-email').textContent = currentUser.email;
+
+        if (data.unread > 0) {
+            const b = document.getElementById('badge-count');
+            b.textContent = data.unread > 9 ? '9+' : data.unread;
+            b.style.display = 'block';
+        }
+
+        if (data.announcements && data.announcements.length > 0) {
+            document.getElementById('header-ticker').style.display = 'flex';
+            document.getElementById('ticker-text').textContent = data.announcements.map(a => a.message).join("  •  ");
         } else {
-            list.innerHTML = '<p style="text-align:center; color:#9CA3AF; padding:20px;">No notifications</p>';
+            document.getElementById('header-ticker').style.display = 'none';
         }
+
+        const pList = document.getElementById('promo-list');
+        if (data.promos.length > 0) {
+            pList.style.display = 'flex';
+            pList.innerHTML = data.promos.map(p => 
+                `<div style="min-width:300px; height:160px; border-radius:12px; overflow:hidden; flex-shrink:0;">
+                    <img src="${p.image_url}" style="width:100%; height:100%; object-fit:cover;">
+                 </div>`
+            ).join('');
+        }
+
+        const featured = data.shops.filter(s => s.is_featured);
+        if (featured.length > 0) {
+            document.getElementById('featured-section').style.display = 'block';
+            document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
+        }
+
+        areaContainer.innerHTML = '';
+        const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
+
+        sortedAreas.forEach(area => {
+            const areaShops = data.shops.filter(s => s.area_id === area.id);
+            if(areaShops.length === 0) return;
+
+            const isUser = area.id === userAreaId;
+            const pillClass = isUser ? 'user' : 'other';
+            const iconColor = isUser ? 'var(--color-primary)' : '#F59E0B';
+            const icon = isUser ? '<i class="fa-solid fa-location-crosshairs"></i>' : '<i class="fa-solid fa-location-dot"></i>';
+            const title = isUser ? `Merchants in ${area.name} • Near You` : `Merchants in ${area.name}`;
+
+            areaContainer.innerHTML += `
+                <div class="area-container">
+                    <div class="area-pill ${pillClass}">
+                        <div class="pill-left">
+                            <span style="color:${iconColor}; font-size:1.1rem;">${icon}</span>
+                            <span>${title}</span>
+                        </div>
+                        <button onclick="window.location.href='area.html?id=${area.id}'" style="border:none; background:none; color:var(--color-primary); font-weight:700; cursor:pointer;">See All</button>
+                    </div>
+                    <div class="h-scroll">
+                        ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
+                    </div>
+                </div>
+            `;
+        });
+
+        document.getElementById('category-list').innerHTML = data.categories.map(cat => {
+            const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
+            const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
+            const url = p ? p.image_url : `https://via.placeholder.com/32?text=${cat.name.charAt(0)}`;
+            return `
+                <div class="cat-chip" onclick="window.location.href='cat.html?name=${encodeURIComponent(cat.name)}'">
+                    <img src="${url}"> <span>${cat.name}</span>
+                </div>
+            `;
+        }).join('');
+
+        document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
+
+        const notifListEl = document.getElementById('notif-list');
+        if (data.notifications && data.notifications.length > 0) {
+            notifListEl.innerHTML = data.notifications.map(n => {
+                const date = new Date(n.created_at).toLocaleDateString();
+                const bg = n.is_read ? 'white' : '#EFF6FF'; 
+                return `
+                    <div style="background:${bg}; padding:16px; border-radius:12px; border:1px solid #E5E7EB; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="font-weight:700; font-size:0.95rem;">${n.title}</span>
+                            <span style="font-size:0.75rem; color:#6B7280;">${date}</span>
+                        </div>
+                        <div style="color:#374151; font-size:0.9rem; line-height:1.4;">${n.message || ''}</div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            notifListEl.innerHTML = '<p style="color:#9CA3AF; text-align:center; margin-top:20px;">No notifications yet</p>';
+        }
+
+        updateMyShopCardUI(data.myShop);
+        document.getElementById('wishlist-count').textContent = `${data.wishlistCount || 0} items`;
     }
 
-    async function markAllAsRead() {
-        document.getElementById('unread-badge').classList.remove('active');
-        await client.from('notifications').update({is_read: true}).eq('user_id', currentUser.id);
-    }
-
-    async function saveProfile(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btn-submit');
-        btn.disabled = true; btn.textContent = "Saving...";
+    function updateMyShopCardUI(shop) {
+        const card = document.getElementById('myshop-card');
+        const iconContainer = card.querySelector('.svc-icon');
+        const textLabel = card.querySelector('strong');
         
-        // Mock save logic for UI demo - replace with actual update
-        setTimeout(() => {
-            alert("Profile Saved!");
-            btn.disabled = false; btn.textContent = "Save Changes";
-        }, 1000);
-    }
-
-    // Profile Helpers
-    function renderProfileForms(p) {
-        document.getElementById('edit-display-name').textContent = p.full_name;
-        document.getElementById('edit-display-email').textContent = currentUser.email;
-        document.getElementById('edit-avatar').src = p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${p.full_name}`;
-        document.getElementById('form-name').value = p.full_name;
-        document.getElementById('form-phone').value = p.phone || '';
-    }
-
-    function populateCityDropdown(cities, profile) {
-        const sel = document.getElementById('form-city');
-        sel.innerHTML = '<option disabled>Select City</option>';
-        cities.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.id; opt.textContent = c.name;
-            if(c.id === profile.city_id) opt.selected = true;
-            sel.appendChild(opt);
-        });
-        if(profile.city_id) fetchAreasForProfile(profile.city_id, profile.area_id);
-    }
-
-    async function fetchAreasForProfile(cid, aid) {
-        const sel = document.getElementById('form-area');
-        sel.disabled = false;
-        const { data } = await client.from('areas').select('id, name').eq('city_id', cid).order('name');
-        sel.innerHTML = '<option disabled>Select Area</option>';
-        data.forEach(a => {
-            const opt = document.createElement('option');
-            opt.value = a.id; opt.textContent = a.name;
-            if(a.id === aid) opt.selected = true;
-            sel.appendChild(opt);
-        });
-    }
-    
-    document.getElementById('form-city').addEventListener('change', (e) => fetchAreasForProfile(e.target.value));
-
-    function previewImage(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (e) => document.getElementById('edit-avatar').src = e.target.result;
-            reader.readAsDataURL(input.files[0]);
+        let icon = 'fa-store';
+        let bg = '#DBEAFE'; 
+        let color = '#2563EB';
+        let label = 'Register Shop';
+        
+        if (shop) {
+            if (shop.status === 'pending') {
+                icon = 'fa-hourglass-half'; bg = '#FFEDD5'; color = '#EA580C'; label = 'Pending';
+            } else if (shop.status === 'approved') {
+                icon = 'fa-store'; bg = '#DCFCE7'; color = '#16A34A'; label = 'My Shop';
+            } else if (shop.status === 'rejected') {
+                icon = 'fa-circle-exclamation'; bg = '#FEE2E2'; color = '#DC2626'; label = 'Rejected';
+            }
         }
+        
+        iconContainer.style.background = bg;
+        iconContainer.style.color = color;
+        iconContainer.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+        textLabel.textContent = label;
+    }
+
+    function handleShopClick() {
+        if (!currentUserShop) window.location.href = 'shop-registration.html';
+        else if (currentUserShop.status === 'pending') alert('Your shop application is currently being reviewed.');
+        else if (currentUserShop.status === 'approved') window.location.href = 'merchant-dashboard.html';
+        else if (currentUserShop.status === 'rejected') {
+            alert(`Application Rejected: ${currentUserShop.rejection_reason || 'Update your details.'}`);
+            window.location.href = `shop-registration.html?id=${currentUserShop.id}`; 
+        }
+    }
+
+    async function openEditProfile() {
+        if(!userProfile) return;
+        document.getElementById('profile-view').style.display = 'none';
+        document.getElementById('profile-edit').style.display = 'block';
+        document.getElementById('edit-name').value = userProfile.full_name || '';
+        document.getElementById('edit-phone').value = userProfile.phone || '';
+
+        if(allCities.length === 0) {
+            const { data } = await client.from('cities').select('id, name').order('name');
+            allCities = data || [];
+            const citySelect = document.getElementById('edit-city');
+            citySelect.innerHTML = '<option value="">Select City</option>';
+            allCities.forEach(c => { citySelect.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
+        }
+
+        if(userProfile.city_id) {
+            document.getElementById('edit-city').value = userProfile.city_id;
+            await handleCityChange(userProfile.city_id, userProfile.area_id);
+        }
+    }
+
+    async function handleCityChange(cityId, preSelectAreaId = null) {
+        const areaSelect = document.getElementById('edit-area');
+        areaSelect.innerHTML = '<option value="">Loading...</option>';
+        areaSelect.disabled = true;
+        if(!cityId) return;
+
+        const { data: areas } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+        areaSelect.innerHTML = '<option value="">Select Area</option>';
+        if(areas) areas.forEach(a => { areaSelect.innerHTML += `<option value="${a.id}">${a.name}</option>`; });
+        areaSelect.disabled = false;
+        if(preSelectAreaId) areaSelect.value = preSelectAreaId;
+    }
+
+    function cancelEdit() {
+        document.getElementById('profile-edit').style.display = 'none';
+        document.getElementById('profile-view').style.display = 'block';
+        document.getElementById('edit-error').style.display = 'none';
+    }
+
+    async function saveProfile() {
+        const name = document.getElementById('edit-name').value.trim();
+        const phone = document.getElementById('edit-phone').value.trim();
+        const cityId = document.getElementById('edit-city').value;
+        const areaId = document.getElementById('edit-area').value;
+        const btn = document.getElementById('btn-save');
+        const err = document.getElementById('edit-error');
+
+        if(!name || !cityId || !areaId) {
+            err.textContent = "Please fill all required fields.";
+            err.style.display = 'block';
+            return;
+        }
+
+        btn.disabled = true; btn.textContent = "Saving...";
+        err.style.display = 'none';
+
+        try {
+            const { error } = await client.from('profiles').update({
+                full_name: name, phone: phone, city_id: parseInt(cityId), area_id: parseInt(areaId)
+            }).eq('id', currentUser.id);
+
+            if(error) throw error;
+            await fetchData();
+            cancelEdit();
+            alert("Profile updated!");
+        } catch (e) {
+            err.textContent = e.message;
+            err.style.display = 'block';
+        } finally {
+            btn.disabled = false; btn.textContent = "Save Changes";
+        }
+    }
+
+    function buildShopCard(shop, allProducts) {
+        const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url).slice(0, 4);
+        let collage = '';
+        if(p.length === 0) {
+            const fallback = shop.image_url || 'https://via.placeholder.com/240x150?text=No+Image';
+            collage = `<div class="collage c-1"><img src="${fallback}"></div>`;
+        } else if(p.length === 1) {
+            collage = `<div class="collage c-1"><img src="${p[0].image_url}"></div>`;
+        } else if(p.length === 2) {
+            collage = `<div class="collage c-2"><img src="${p[0].image_url}"><img src="${p[1].image_url}"></div>`;
+        } else if(p.length === 3) {
+            collage = `<div class="collage c-3"><img src="${p[0].image_url}"><div><img src="${p[1].image_url}"><img src="${p[2].image_url}"></div></div>`;
+        } else {
+            collage = `<div class="collage c-4"><img src="${p[0].image_url}"><img src="${p[1].image_url}"><img src="${p[2].image_url}"><img src="${p[3].image_url}"></div>`;
+        }
+
+        const rawId = shop.unique_id || 'N/A';
+        const displayId = rawId.includes('-') ? rawId.split('-').pop() : rawId;
+
+        return `
+            <div class="shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
+                <div class="img-box">${collage}</div>
+                <div class="info-box">
+                    <div class="s-name">${shop.name}</div>
+                    <span class="s-id-badge">ID: ${displayId}</span>
+                    <div class="s-loc"><i class="fa-solid fa-location-dot"></i> ${shop.address}</div>
+                </div>
+            </div>
+        `;
     }
 
     async function handleLogout() {
@@ -857,6 +879,10 @@
             await client.auth.signOut();
             window.location.href = "index.html";
         }
+    }
+    async function markRead() {
+        document.getElementById('badge-count').style.display = 'none';
+        await client.from('notifications').update({is_read: true}).eq('user_id', currentUser.id);
     }
 </script>
 </body>
