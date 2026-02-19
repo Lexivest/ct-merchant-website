@@ -8,201 +8,28 @@
   <meta name="description" content="Discover verified merchants, local shops and products in your city. Bridging the gap between digital convenience and local availability in Nigeria.">
   <meta name="keywords" content="Merchant, Nigeria, Shops Repository, Local Business, CT-Merchant, Business Identifier">
   <meta name="author" content="CT-Merchant Ltd.">
-
   <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
   <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   
   <link rel="stylesheet" href="styles.css">
-
   <style>
-    /* --- ROOT & BASE --- */
-    :root {
-        --color-pink: #db2777; /* Fallback based on your shadow values */
-        --color-purple: #6b21a8; 
-        --text-light: rgba(255, 255, 255, 0.85);
-    }
-    
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
-
-    body {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        background-color: #0f172a; /* Dark fallback */
-        color: white;
-        overflow-x: hidden;
-    }
-
-    /* --- NAVIGATION --- */
-    .main-header {
-        position: fixed;
-        top: 0;
-        width: 100%;
-        background: rgba(15, 23, 42, 0.7);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        z-index: 1000;
-    }
-
-    .nav-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        max-width: 1280px;
-        margin: 0 auto;
-        padding: 1rem 2rem;
-    }
-
-    .brand-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        text-decoration: none;
-        color: white;
-    }
-
-    .brand-logo {
-        height: 40px;
-        width: 40px;
-        border-radius: 8px;
-        object-fit: cover;
-    }
-
-    .desktop-menu {
-        display: flex;
-        align-items: center;
-        gap: 2rem;
-    }
-
-    .desktop-menu a {
-        color: var(--text-light);
-        text-decoration: none;
-        font-size: 0.95rem;
-        font-weight: 600;
-        transition: color 0.3s;
-    }
-
-    .desktop-menu a:hover, .desktop-menu a.nav-active {
-        color: white;
-    }
-
-    .btn-staff {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 8px 16px;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .btn-staff:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    .mobile-menu-btn {
-        display: none;
-        background: none;
-        border: none;
-        color: white;
-        font-size: 1.5rem;
-        cursor: pointer;
-    }
-
-    /* --- HERO SECTION LAYOUT --- */
-    .hero-section {
-        position: relative;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        padding: 100px 2rem 4rem; /* Top padding accounts for fixed header */
-    }
-
-    .hero-image-wrapper {
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        z-index: -1;
-    }
-
-    .hero-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .hero-overlay {
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.7) 100%);
-    }
-
-    .hero-content {
-        max-width: 1280px;
-        margin: 0 auto;
-        width: 100%;
-    }
-
-    /* CSS Grid for Desktop Split Layout */
-    .hero-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 4rem;
-        align-items: center;
-    }
-
-    .hero-text-content {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .repo-badge {
-        display: inline-block;
-        padding: 6px 16px;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 50px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        color: var(--text-light);
-        margin-bottom: 1rem;
-    }
-
-    .hero-title {
-        font-size: 3.5rem;
-        font-weight: 800;
-        line-height: 1.2;
-        min-height: 120px; /* Prevents layout shift during typing */
-    }
-
-    .hero-desc {
-        font-size: 1.15rem;
-        color: var(--text-light);
-        line-height: 1.6;
-        max-width: 500px;
-    }
-
     /* --- REPO SEARCH --- */
     .repo-search-wrapper {
         position: relative;
         width: 100%;
-        max-width: 450px;
-        margin-top: 1rem;
+        max-width: 380px;
+        margin-bottom: 1.5rem;
     }
-
     .repo-input {
         width: 100%;
-        padding: 16px 50px 16px 24px;
-        background-color: rgba(255, 255, 255, 0.1);
+        padding: 12px 40px 12px 20px;
+        background-color: rgba(255, 255, 255, 0.15);
         border: 1px solid rgba(255, 255, 255, 0.3);
         border-radius: 50px;
-        font-size: 1rem;
+        font-size: 0.9rem;
         color: white;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -213,271 +40,202 @@
     }
     
     .repo-input::placeholder { 
-        color: rgba(255, 255, 255, 0.6); 
+        color: rgba(255, 255, 255, 0.7); 
         text-transform: none; 
         letter-spacing: normal; 
         font-weight: 400;
     }
     
     .repo-input:focus {
-        background-color: rgba(255, 255, 255, 0.15);
+        background-color: rgba(255, 255, 255, 0.25);
         border-color: var(--color-pink);
-        box-shadow: 0 0 20px rgba(219, 39, 119, 0.3);
+        box-shadow: 0 0 15px rgba(219, 39, 119, 0.3);
     }
-
     .search-icon-btn {
         position: absolute;
-        right: 20px;
+        right: 16px;
         top: 50%;
         transform: translateY(-50%);
         color: rgba(255, 255, 255, 0.6);
         cursor: pointer;
-        width: 20px;
+        width: 18px;
         transition: color 0.2s;
     }
     .search-icon-btn:hover { color: var(--color-pink); }
-
     .id-hint {
-        margin-top: 10px;
-        margin-left: 16px;
-        font-size: 0.8rem;
+        margin-top: 6px;
+        margin-left: 12px;
+        font-size: 0.75rem;
         font-weight: 600;
         color: #facc15;
         display: flex;
         align-items: center;
         gap: 6px;
     }
-
-    .features-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1.5rem;
-        margin-top: 1.5rem;
-        font-size: 0.95rem;
-        color: var(--text-light);
-        font-weight: 500;
-    }
-
     /* --- HERO AUTH WIDGET --- */
     .hero-auth-widget {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        padding: 40px;
-        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 24px;
+        border-radius: 20px;
         width: 100%;
-        max-width: 420px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        margin-left: auto;
+        max-width: 380px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        margin-top: 1rem;
     }
-
     .widget-title {
-        font-size: 1.4rem;
+        font-size: 1.1rem;
         font-weight: 700;
         color: white;
-        margin-bottom: 24px;
+        margin-bottom: 16px;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
     }
-
     .input-group-hero {
         position: relative;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
     }
-
     .input-group-hero i {
         position: absolute;
-        left: 18px;
+        left: 16px;
         top: 50%;
         transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.5);
-        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.9rem;
         pointer-events: none;
     }
-
     .hero-input-login {
         width: 100%;
-        padding: 16px 16px 16px 48px;
-        background: rgba(0, 0, 0, 0.25);
+        padding: 14px 16px 14px 44px;
+        background: rgba(0, 0, 0, 0.2);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 14px;
+        border-radius: 12px;
         color: white;
-        font-size: 1rem;
+        font-size: 0.95rem;
         outline: none;
         transition: all 0.3s ease;
     }
-
-    .hero-input-login::placeholder { color: rgba(255, 255, 255, 0.4); }
+    .hero-input-login::placeholder { color: rgba(255, 255, 255, 0.5); }
     
     .hero-input-login:focus {
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.4);
         border-color: var(--color-pink);
-        box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.15);
+        box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.25);
     }
-
     .btn-login-hero {
         width: 100%;
         background: white;
-        color: #0f172a;
+        color: var(--color-purple);
         font-weight: 800;
-        padding: 16px;
-        border-radius: 14px;
+        padding: 14px;
+        border-radius: 12px;
         border: none;
         cursor: pointer;
-        font-size: 1.05rem;
-        transition: transform 0.2s, box-shadow 0.2s;
-        margin-top: 8px;
+        font-size: 1rem;
+        transition: transform 0.2s, background-color 0.2s;
+        margin-top: 4px;
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 8px;
     }
-    
     .btn-login-hero:hover {
         background: #f8fafc;
         transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
     }
-
     .widget-divider {
         display: flex;
         align-items: center;
         text-align: center;
-        margin: 24px 0;
-        color: rgba(255, 255, 255, 0.4);
-        font-size: 0.85rem;
+        margin: 20px 0;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.8rem;
         font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
     }
     .widget-divider::before, .widget-divider::after {
         content: '';
         flex: 1;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     }
-    .widget-divider::before { margin-right: 12px; }
-    .widget-divider::after { margin-left: 12px; }
-
+    .widget-divider::before { margin-right: 10px; }
+    .widget-divider::after { margin-left: 10px; }
     .btn-create-account {
         display: block;
         width: 100%;
         text-align: center;
-        padding: 14px;
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        border-radius: 14px;
+        padding: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
         color: white;
         font-weight: 700;
         text-decoration: none;
         transition: all 0.3s ease;
-        font-size: 1rem;
+        font-size: 0.95rem;
     }
     .btn-create-account:hover {
         background: rgba(255, 255, 255, 0.1);
         border-color: white;
     }
-
-    /* --- FOOTER --- */
-    .footer {
-        background: #0f172a;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 2rem;
-    }
-    .footer-container {
-        max-width: 1280px;
-        margin: 0 auto;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-    .footer-links {
-        display: flex;
-        gap: 1.5rem;
-    }
-    .footer-links a, .footer-links span {
-        color: var(--text-light);
-        text-decoration: none;
-        font-size: 0.9rem;
-    }
-    .footer-links a:hover {
-        color: white;
-    }
-
     /* Typewriter Cursor */
     .cursor {
         display: inline-block;
-        width: 4px;
-        height: 1em;
-        vertical-align: text-bottom;
+        width: 3px;
         background-color: var(--color-pink);
         animation: blink 1s step-end infinite;
-        margin-left: 4px;
     }
     @keyframes blink { 50% { opacity: 0; } }
-
-    /* --- RESPONSIVE DESIGN --- */
-    @media (max-width: 992px) {
-        .hero-grid {
-            grid-template-columns: 1fr;
-            text-align: center;
-        }
-        .hero-text-content {
-            align-items: center;
-        }
-        .hero-title {
-            font-size: 2.8rem;
-            min-height: 100px;
-        }
-        .features-list {
-            justify-content: center;
-        }
-        .hero-auth-widget {
-            margin: 0 auto;
-        }
-        .repo-search-wrapper {
-            margin: 1rem auto;
-        }
+    /* New Layout Styles */
+    .hero-content-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        max-width: 1200px;
+        margin: 0 auto;
+        gap: 2rem;
+        padding: 2rem;
     }
-
+    .hero-left {
+        flex: 1;
+    }
+    .hero-right {
+        flex: 1;
+        max-width: 380px;
+    }
     @media (max-width: 768px) {
-        .desktop-menu { display: none; }
-        .mobile-menu-btn { display: block; }
-        
-        .mobile-dropdown {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(16px);
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            display: flex;
+        .hero-content-container {
             flex-direction: column;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem;
         }
-        .mobile-dropdown a {
-            padding: 1rem 2rem;
-            color: white;
-            text-decoration: none;
-            border-top: 1px solid rgba(255,255,255,0.05);
+        .hero-auth-widget { max-width: 100%; }
+        .hero-right {
+            max-width: 100%;
         }
-        .mobile-dropdown.hidden { display: none; }
-        .hero-title { font-size: 2.2rem; min-height: 80px; }
-        .footer-container { flex-direction: column; text-align: center; }
     }
   </style>
 </head>
 <body>
-
 <nav class="main-header">
   <div class="container nav-container">
     <a href="index.html" class="brand-wrapper">
       <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
-      <div style="font-weight: 700; letter-spacing: 0.5px;">CT-MERCHANT LTD.</div>
+      
+      <div class="marquee-container header-marquee-box">
+         <div class="marquee-content animate-brand-scroll desktop-menu">
+            <div class="flex items-center" style="display:flex; align-items:center; margin-right: 2.5rem;">
+                <span>CT-MERCHANT LTD.</span>
+                <div class="flag-icon">
+                    <div class="flag-stripe flag-green"></div>
+                    <div class="flag-stripe flag-white"></div>
+                    <div class="flag-stripe flag-green"></div>
+                </div>
+            </div>
+         </div>
+      </div>
     </a>
-
+    <!-- Updated Menu Items -->
     <div class="desktop-menu">
       <a href="index.html" class="nav-active">Home</a>
       <a href="about.html">About</a>
@@ -485,25 +243,25 @@
       <a href="affiliate.html">Affiliate</a>
       <a href="careers.html">Careers</a>
       <a href="contact.html">Contact</a>
-      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
+      <a href="staff-portal.html" class="btn-staff">
+        Staff Portal
+      </a>
     </div>
-
+    <!-- Mobile Menu Button -->
     <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
       <i class="fa-solid fa-bars"></i>
     </button>
   </div>
-
   <div class="mobile-dropdown hidden" id="mobile-menu">
-      <a href="index.html" style="font-weight: bold; color: var(--color-pink);">Home</a>
+      <a href="index.html" style="border-bottom: 1px solid white;">Home</a>
       <a href="about.html">About</a>
       <a href="services.html">Services</a>
       <a href="affiliate.html">Affiliate</a>
       <a href="careers.html">Careers</a>
       <a href="contact.html">Contact</a>
-      <a href="staff-portal.html">Staff Portal</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
   </div>
 </nav>
-
 <section class="hero-section">
   <div class="hero-image-wrapper">
     <div class="hero-overlay"></div>
@@ -511,25 +269,14 @@
          alt="CT Merchant Banner" 
          class="hero-img">
   </div>
-
-  <div class="container hero-content">
-    <div class="hero-grid">
-      
-      <div class="hero-text-content">
-        <div>
-          <span class="repo-badge">
-            Repository of Shops, Products & Services
-          </span>
-        </div>
-
-        <h1 class="hero-title">
-           <span id="typewriter"></span><span class="cursor"></span>
-        </h1>
+  <div class="hero-content">
+    <div class="hero-content-container">
+      <div class="hero-left animate-up visible">
+        <span class="repo-badge">
+          Repository of Shops, Products and Services
+        </span>
         
-        <p class="hero-desc">
-          We provide a digital repository of physical shops, their products, and locations within a city. Bridging the gap between digital convenience and local availability.
-        </p>
-
+        <!-- REPO SEARCH BOX -->
         <div class="repo-search-wrapper">
             <div style="position: relative;">
                 <input type="text" id="repo-search-input" placeholder="Enter Merchant ID..." class="repo-input"
@@ -542,18 +289,24 @@
                 <i class="fa-solid fa-circle-info"></i> Search by ID (e.g., CT-3945BOGD)
             </p>
         </div>
-
+        <h1 class="hero-title" style="min-height: 80px;">
+           <span id="typewriter"></span><span class="cursor">|</span>
+        </h1>
+        
+        <p class="hero-desc">
+          We provide a digital repository of physical shops, their products, and locations within a city.
+        </p>
         <div class="features-list">
-          <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-store" style="color: var(--color-pink);"></i> Shops Repository</span>
-          <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-magnifying-glass-location" style="color: var(--color-pink);"></i> Discover Local</span>
-          <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-id-card" style="color: var(--color-pink);"></i> Unique Identifiers</span>
+          <span style="display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-store"></i> Shops Repository</span>
+          <span style="display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-magnifying-glass-location"></i> Discover</span>
+          <span style="display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-id-card"></i> Unique ID</span>
         </div>
       </div>
-
-      <div class="hero-widget-container">
+      <div class="hero-right">
+        <!-- PROFESSIONAL AUTH WIDGET -->
         <div class="hero-auth-widget">
             <div class="widget-title">
-                <i class="fa-solid fa-lock" style="color: var(--color-pink);"></i> Merchant Access
+                <i class="fa-solid fa-lock"></i> Merchant Access
             </div>
             
             <form onsubmit="event.preventDefault(); handleHeroLogin();">
@@ -570,19 +323,16 @@
                     Secure Sign In <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
-
             <div class="widget-divider">New to CT-Merchant?</div>
-
             <a href="create-account.html" class="btn-create-account">
                 Create Free Account
             </a>
         </div>
+        <!-- END WIDGET -->
       </div>
-
     </div>
   </div>
 </section>
-
 <footer class="footer">
   <div class="container footer-container">
     <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
@@ -593,12 +343,10 @@
     </div>
   </div>
 </footer>
-
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     // --- TYPEWRITER LOGIC ---
     const textElement = document.getElementById('typewriter');
     const phrases = [
@@ -610,7 +358,6 @@
     let charIndex = 0;
     let isDeleting = false;
     let typeSpeed = 100;
-
     function typeEffect() {
         const currentPhrase = phrases[phraseIndex];
         
@@ -623,7 +370,6 @@
             charIndex++;
             typeSpeed = 100;
         }
-
         if (!isDeleting && charIndex === currentPhrase.length) {
             isDeleting = true;
             typeSpeed = 2000; // Pause at end
@@ -632,29 +378,24 @@
             phraseIndex = (phraseIndex + 1) % phrases.length;
             typeSpeed = 500; // Pause before new word
         }
-
         setTimeout(typeEffect, typeSpeed);
     }
     
     // Start Animation
     document.addEventListener('DOMContentLoaded', typeEffect);
-
     // --- REPO SEARCH ---
     function handleRepoSearch() {
         const query = document.getElementById('repo-search-input').value.trim();
         if(query) window.location.href = `reposearch.html?merchantId=${query}`;
     }
-
     // --- LOGIN LOGIC ---
     async function handleHeroLogin() {
         const email = document.getElementById('hero-email').value;
         const password = document.getElementById('hero-password').value;
         const btn = document.getElementById('hero-login-btn');
         const originalHtml = btn.innerHTML;
-
         btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
         btn.disabled = true;
-
         try {
             const { error } = await client.auth.signInWithPassword({ email, password });
             if (error) throw error;
