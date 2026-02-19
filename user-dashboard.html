@@ -541,6 +541,9 @@
     let allCities = [];
     const CACHE_KEY = 'ctm_dash_v16'; 
 
+    // --- NEW: CHAT HISTORY ARRAY ---
+    let chatHistory = [];
+
     // --- NAVIGATION ---
     function toggleSidebar() {
         document.body.classList.toggle('sb-open');
@@ -561,7 +564,7 @@
     }
 
     // =========================================
-    // AI CHAT LOGIC (FIXED FETCH VERSION)
+    // AI CHAT LOGIC (SMART MEMORY VERSION)
     // =========================================
     function toggleChat() {
         document.getElementById('chat-window').classList.toggle('open');
@@ -577,6 +580,9 @@
         inp.value = '';
         body.scrollTop = body.scrollHeight;
 
+        // Push User Message to History
+        chatHistory.push({ role: 'user', content: txt });
+
         const loadId = 'loading-' + Date.now();
         body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic; color:#6B7280;">Thinking...</div>`;
         body.scrollTop = body.scrollHeight;
@@ -585,8 +591,11 @@
             const { data: { session } } = await client.auth.getSession();
             if(!session) throw new Error("Please log in to use AI.");
 
-            // FIX: Use standard fetch to force BOTH the apikey and auth headers
-            // This prevents the "No API key found in request" error from the Supabase Gateway
+            // Extract the last 6 messages to send to the backend
+            const recentHistory = chatHistory.length > 6 
+                ? chatHistory.slice(chatHistory.length - 6) 
+                : chatHistory;
+
             const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
                 method: 'POST',
                 headers: {
@@ -594,7 +603,10 @@
                     'Authorization': `Bearer ${session.access_token}`,
                     'apikey': SUPABASE_ANON_KEY 
                 },
-                body: JSON.stringify({ query: txt })
+                body: JSON.stringify({ 
+                    query: txt,
+                    history: recentHistory // Sending Memory to AI!
+                })
             });
 
             document.getElementById(loadId)?.remove();
@@ -606,9 +618,15 @@
 
             const data = await response.json();
             const reply = data.reply || "No response received.";
-            const msgClass = (reply.startsWith("Error:") || reply.startsWith("System") || reply.startsWith("Config")) ? "msg-error" : "msg-ai";
+            const isError = (reply.startsWith("Error:") || reply.startsWith("System") || reply.startsWith("Config"));
+            const msgClass = isError ? "msg-error" : "msg-ai";
             
             body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
+
+            // Push AI Response to History (only if it wasn't a system crash)
+            if (!isError) {
+                chatHistory.push({ role: 'assistant', content: reply });
+            }
             
         } catch (err) {
             document.getElementById(loadId)?.remove();
