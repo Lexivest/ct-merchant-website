@@ -281,7 +281,10 @@
         
         .chat-input-area {
             padding: 12px; background: white; border-top: 1px solid #E2E8F0;
-            display: flex; gap: 8px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .chat-input-row {
+            display: flex; gap: 8px; width: 100%;
         }
         .chat-input {
             flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #E2E8F0;
@@ -291,6 +294,11 @@
             background: var(--color-primary); color: white; border: none;
             width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .chat-disclaimer {
+            font-size: 0.65rem; color: #9CA3AF; text-align: center;
+            line-height: 1.2;
         }
 
         /* Mobile Chat overrides */
@@ -502,7 +510,7 @@
     </main>
 
     <!-- =========================================
-         AI CHAT WIDGET (ADDED HERE)
+         AI CHAT WIDGET
          ========================================= -->
     <div class="ai-fab-container">
         <button class="ai-fab" onclick="toggleChat()">
@@ -520,8 +528,14 @@
             <div class="chat-msg msg-ai">Hello! I am your AI assistant. How can I help you today?</div>
         </div>
         <div class="chat-input-area">
-            <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMsg()">
-            <button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+            <div class="chat-input-row">
+                <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMsg()">
+                <button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+            <!-- THE NEW UI DISCLAIMER -->
+            <div class="chat-disclaimer">
+                AI can make mistakes. Please verify prices on the merchant's profile before buying.
+            </div>
         </div>
     </div>
 
@@ -541,7 +555,6 @@
     let allCities = [];
     const CACHE_KEY = 'ctm_dash_v16'; 
 
-    // --- NEW: CHAT HISTORY ARRAY ---
     let chatHistory = [];
 
     // --- NAVIGATION ---
@@ -564,7 +577,7 @@
     }
 
     // =========================================
-    // AI CHAT LOGIC (SMART MEMORY VERSION)
+    // AI CHAT LOGIC
     // =========================================
     function toggleChat() {
         document.getElementById('chat-window').classList.toggle('open');
@@ -580,7 +593,6 @@
         inp.value = '';
         body.scrollTop = body.scrollHeight;
 
-        // Push User Message to History
         chatHistory.push({ role: 'user', content: txt });
 
         const loadId = 'loading-' + Date.now();
@@ -591,7 +603,6 @@
             const { data: { session } } = await client.auth.getSession();
             if(!session) throw new Error("Please log in to use AI.");
 
-            // Extract the last 6 messages to send to the backend
             const recentHistory = chatHistory.length > 6 
                 ? chatHistory.slice(chatHistory.length - 6) 
                 : chatHistory;
@@ -605,7 +616,7 @@
                 },
                 body: JSON.stringify({ 
                     query: txt,
-                    history: recentHistory // Sending Memory to AI!
+                    history: recentHistory
                 })
             });
 
@@ -623,7 +634,6 @@
             
             body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
 
-            // Push AI Response to History (only if it wasn't a system crash)
             if (!isError) {
                 chatHistory.push({ role: 'assistant', content: reply });
             }
