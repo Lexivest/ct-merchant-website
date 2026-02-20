@@ -346,6 +346,53 @@
         border-color: #cbd5e1;
     }
 
+    /* Overrides for text content in light pane */
+    .pane-white .repo-badge {
+        background: rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        color: #1e293b;
+    }
+
+    .pane-white .hero-pro-text {
+        color: #475569;
+    }
+
+    .pane-white .hero-desc {
+        color: #64748b;
+    }
+
+    .pane-white .hero-title {
+        color: #0f172a;
+    }
+
+    .pane-white .repo-input {
+        background-color: rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        color: #0f172a;
+    }
+
+    .pane-white .repo-input::placeholder {
+        color: rgba(0, 0, 0, 0.5);
+    }
+
+    .pane-white .repo-input:focus {
+        background-color: rgba(0, 0, 0, 0.1);
+        border-color: #db2777;
+        box-shadow: 0 0 15px rgba(219, 39, 119, 0.4);
+    }
+
+    .pane-white .search-icon-btn {
+        color: rgba(0, 0, 0, 0.6);
+    }
+
+    .pane-white .search-icon-btn:hover {
+        color: #db2777;
+    }
+
+    .pane-white .id-hint {
+        color: #d97706;
+    }
+
     /* =========================================
        RESPONSIVE DESIGN (Stacks to 1 column)
        ========================================= */
@@ -450,8 +497,50 @@
         </div>
     </div>
 
-    <!-- TOP RIGHT: DARK TEXT PANE -->
+    <!-- TOP RIGHT: NOW AUTH PORTAL -->
     <div class="split-pane pane-dark">
+        <div class="hero-auth-widget">
+            <div class="widget-title">
+                <i class="fa-solid fa-lock"></i> Merchant Portal
+            </div>
+            
+            <form onsubmit="event.preventDefault(); handleHeroLogin();">
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="hero-email" class="hero-input-login" placeholder="Email Address" required>
+                </div>
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
+                </div>
+                
+                <button type="submit" id="hero-login-btn" class="btn-login-hero">
+                    Secure Sign In <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="widget-divider">New to CT-Merchant?</div>
+
+            <a href="create-account.html" class="btn-create-account">
+                Create Free Account
+            </a>
+        </div>
+    </div>
+
+    <!-- BOTTOM LEFT: VALUE PROP PANE -->
+    <div class="split-pane pane-light">
+        <h2 class="value-title">Grow Your Physical Shop Digitally</h2>
+        <p class="value-desc">Join thousands of verified local merchants. Create your profile, upload your products, and let our AI-powered repository connect you with buyers in your exact city area.</p>
+        
+        <ul class="value-bullets">
+            <li><i class="fa-solid fa-circle-check"></i> Get a verified digital storefront</li>
+            <li><i class="fa-solid fa-circle-check"></i> Unique CT-Merchant ID to share</li>
+            <li><i class="fa-solid fa-circle-check"></i> Be discovered in local AI searches</li>
+        </ul>
+    </div>
+
+    <!-- BOTTOM RIGHT: NOW TEXT & SEARCH PANE -->
+    <div class="split-pane pane-white">
         <span class="repo-badge">
           Repository of Shops, Products and Services
         </span>
@@ -480,48 +569,6 @@
         <p class="hero-desc">
           We provide a digital repository of physical shops, their products, and locations within a city.
         </p>
-    </div>
-
-    <!-- BOTTOM LEFT: VALUE PROP PANE -->
-    <div class="split-pane pane-light">
-        <h2 class="value-title">Grow Your Physical Shop Digitally</h2>
-        <p class="value-desc">Join thousands of verified local merchants. Create your profile, upload your products, and let our AI-powered repository connect you with buyers in your exact city area.</p>
-        
-        <ul class="value-bullets">
-            <li><i class="fa-solid fa-circle-check"></i> Get a verified digital storefront</li>
-            <li><i class="fa-solid fa-circle-check"></i> Unique CT-Merchant ID to share</li>
-            <li><i class="fa-solid fa-circle-check"></i> Be discovered in local AI searches</li>
-        </ul>
-    </div>
-
-    <!-- BOTTOM RIGHT: AUTH PORTAL PANE -->
-    <div class="split-pane pane-white">
-        <div class="hero-auth-widget">
-            <div class="widget-title">
-                <i class="fa-solid fa-lock"></i> Merchant Portal
-            </div>
-            
-            <form onsubmit="event.preventDefault(); handleHeroLogin();">
-                <div class="input-group-hero">
-                    <i class="fa-solid fa-envelope"></i>
-                    <input type="email" id="hero-email" class="hero-input-login" placeholder="Email Address" required>
-                </div>
-                <div class="input-group-hero">
-                    <i class="fa-solid fa-key"></i>
-                    <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
-                </div>
-                
-                <button type="submit" id="hero-login-btn" class="btn-login-hero">
-                    Secure Sign In <i class="fa-solid fa-arrow-right"></i>
-                </button>
-            </form>
-
-            <div class="widget-divider">New to CT-Merchant?</div>
-
-            <a href="create-account.html" class="btn-create-account">
-                Create Free Account
-            </a>
-        </div>
     </div>
 
 </main>
