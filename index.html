@@ -153,6 +153,13 @@
         gap: 4px;
     }
 
+    .search-label {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #facc15;
+        margin-bottom: 8px;
+    }
+
     .hero-title {
         font-size: 2.2rem;
         font-weight: 800;
@@ -407,7 +414,7 @@
             box-shadow: none;
         }
         .pane-dark { padding-top: 40px; }
-        .pane-img { min-height: 300px; }
+        .pane-img { min-height: 50vh; }
 
         .hero-auth-widget {
             margin: 0 auto;
@@ -500,6 +507,7 @@
     <!-- TOP RIGHT: NOW AUTH PORTAL -->
     <div class="split-pane pane-dark">
         <div class="repo-search-wrapper">
+            <p class="search-label">Search Repository</p>
             <div style="position: relative;">
                 <input type="text" id="repo-search-input" placeholder="Enter Merchant ID..." class="repo-input"
                        onkeypress="if(event.key === 'Enter') handleRepoSearch()">
