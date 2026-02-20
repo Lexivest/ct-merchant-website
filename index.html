@@ -188,7 +188,9 @@
 
     /* BOTTOM LEFT: VALUE PROPOSITION */
     .pane-light {
-        background: #f8fafc;
+        background: rgba(248, 250, 252, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         padding: 40px 10%;
         border-top: 1px solid #e2e8f0;
     }
@@ -230,7 +232,9 @@
 
     /* BOTTOM RIGHT: AUTH PORTAL */
     .pane-white {
-        background: #ffffff;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         padding: 40px 10%;
         border-top: 1px solid #e2e8f0;
         /* Professional Demarcation */
@@ -240,11 +244,13 @@
     }
 
     .hero-auth-widget {
-        background: white;
+        background: rgba(219, 39, 119, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         padding: 30px 24px;
         border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 40px rgba(219, 39, 119, 0.2);
+        border: 1px solid rgba(219, 39, 119, 0.3);
         width: 100%;
         max-width: 450px;
         margin: 0; /* Left aligned within the pane, naturally balances */
@@ -278,8 +284,8 @@
     .hero-input-login {
         width: 100%;
         padding: 12px 14px 12px 40px;
-        background: #f1f5f9;
-        border: 1px solid #cbd5e1;
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
         border-radius: 12px;
         color: #0f172a;
         font-size: 1rem;
@@ -290,14 +296,14 @@
     .hero-input-login::placeholder { color: #94a3b8; }
     
     .hero-input-login:focus {
-        background: white;
-        border-color: #059669; 
-        box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.15);
+        background: rgba(255, 255, 255, 0.3);
+        border-color: #db2777; 
+        box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.15);
     }
 
     .btn-login-hero {
         width: 100%;
-        background: #0f172a;
+        background: #db2777;
         color: white;
         font-weight: 800;
         padding: 12px;
@@ -313,7 +319,7 @@
         margin-top: 6px;
     }
     .btn-login-hero:hover {
-        background: #1e293b;
+        background: #c0266a;
         transform: translateY(-2px);
     }
 
@@ -329,7 +335,7 @@
     .widget-divider::before, .widget-divider::after {
         content: '';
         flex: 1;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     }
     .widget-divider::before { margin-right: 10px; }
     .widget-divider::after { margin-left: 10px; }
@@ -339,18 +345,18 @@
         width: 100%;
         text-align: center;
         padding: 12px;
-        border: 2px solid #e2e8f0;
-        background: white;
+        border: 2px solid rgba(219, 39, 119, 0.3);
+        background: rgba(255, 255, 255, 0.1);
         border-radius: 12px;
-        color: #0f172a;
+        color: #db2777;
         font-weight: 700;
         text-decoration: none;
         transition: all 0.3s ease;
         font-size: 1rem;
     }
     .btn-create-account:hover {
-        background: #f8fafc;
-        border-color: #cbd5e1;
+        background: rgba(219, 39, 119, 0.2);
+        border-color: #db2777;
     }
 
     /* Overrides for text content in light pane */
@@ -531,7 +537,7 @@
 
         <div class="hero-auth-widget">
             <div class="widget-title">
-                <i class="fa-solid fa-lock"></i> Users Login
+                <i class="fa-solid fa-lock"></i> Merchant Portal
             </div>
             
             <form onsubmit="event.preventDefault(); handleHeroLogin();">
@@ -552,7 +558,7 @@
             <div class="widget-divider">New to CT-Merchant?</div>
 
             <a href="create-account.html" class="btn-create-account">
-                Create Account
+                Create Free Account
             </a>
         </div>
     </div>
