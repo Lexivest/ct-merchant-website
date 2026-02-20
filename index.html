@@ -256,52 +256,52 @@
         margin: 0; /* Left aligned within the pane, naturally balances */
     }
 
-    .widget-title {
+    .hero-auth-widget .widget-title {
         font-size: 1.2rem;
         font-weight: 800;
-        color: #0f172a;
+        color: white;
         margin-bottom: 16px;
         display: flex;
         align-items: center;
         gap: 6px;
     }
 
-    .input-group-hero {
+    .hero-auth-widget .input-group-hero {
         position: relative;
         margin-bottom: 12px;
     }
 
-    .input-group-hero i {
+    .hero-auth-widget .input-group-hero i {
         position: absolute;
         left: 14px;
         top: 50%;
         transform: translateY(-50%);
-        color: #94a3b8;
+        color: rgba(255, 255, 255, 0.6);
         font-size: 1rem;
         pointer-events: none;
     }
 
-    .hero-input-login {
+    .hero-auth-widget .hero-input-login {
         width: 100%;
         padding: 12px 14px 12px 40px;
         background: rgba(255, 255, 255, 0.2);
         border: 1px solid rgba(255, 255, 255, 0.3);
         border-radius: 12px;
-        color: #0f172a;
+        color: white;
         font-size: 1rem;
         outline: none;
         transition: all 0.3s ease;
     }
 
-    .hero-input-login::placeholder { color: #94a3b8; }
+    .hero-auth-widget .hero-input-login::placeholder { color: rgba(255, 255, 255, 0.6); }
     
-    .hero-input-login:focus {
+    .hero-auth-widget .hero-input-login:focus {
         background: rgba(255, 255, 255, 0.3);
         border-color: #db2777; 
         box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.15);
     }
 
-    .btn-login-hero {
+    .hero-auth-widget .btn-login-hero {
         width: 100%;
         background: #db2777;
         color: white;
@@ -318,29 +318,29 @@
         gap: 6px;
         margin-top: 6px;
     }
-    .btn-login-hero:hover {
+    .hero-auth-widget .btn-login-hero:hover {
         background: #c0266a;
         transform: translateY(-2px);
     }
 
-    .widget-divider {
+    .hero-auth-widget .widget-divider {
         display: flex;
         align-items: center;
         text-align: center;
         margin: 16px 0;
-        color: #94a3b8;
+        color: rgba(255, 255, 255, 0.7);
         font-size: 0.85rem;
         font-weight: 600;
     }
-    .widget-divider::before, .widget-divider::after {
+    .hero-auth-widget .widget-divider::before, .hero-auth-widget .widget-divider::after {
         content: '';
         flex: 1;
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     }
-    .widget-divider::before { margin-right: 10px; }
-    .widget-divider::after { margin-left: 10px; }
+    .hero-auth-widget .widget-divider::before { margin-right: 10px; }
+    .hero-auth-widget .widget-divider::after { margin-left: 10px; }
 
-    .btn-create-account {
+    .hero-auth-widget .btn-create-account {
         display: block;
         width: 100%;
         text-align: center;
@@ -348,13 +348,13 @@
         border: 2px solid rgba(219, 39, 119, 0.3);
         background: rgba(255, 255, 255, 0.1);
         border-radius: 12px;
-        color: #db2777;
+        color: white;
         font-weight: 700;
         text-decoration: none;
         transition: all 0.3s ease;
         font-size: 1rem;
     }
-    .btn-create-account:hover {
+    .hero-auth-widget .btn-create-account:hover {
         background: rgba(219, 39, 119, 0.2);
         border-color: #db2777;
     }
