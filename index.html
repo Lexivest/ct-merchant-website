@@ -20,28 +20,59 @@
 
   <style>
     /* =========================================
-       2x2 DESKTOP SPLIT LAYOUT STYLES
+       STRICT 2x2 ENTERPRISE SPLIT LAYOUT
        ========================================= */
 
-    /* --- TOP ROW: HERO (Dark) --- */
-    .top-row-section {
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-        padding: 140px 20px 80px;
-        color: white;
-    }
-    
-    .top-grid {
-        max-width: 1200px;
-        margin: 0 auto;
+    .split-layout-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 60px;
-        align-items: center;
+        grid-template-columns: 50% 50%;
+        width: 100%;
+        background: #ffffff;
     }
 
-    /* Top Left: Text & Search */
-    .hero-text-col {
-        text-align: left;
+    /* --- COMMON PANE STYLES --- */
+    .split-pane {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+    }
+
+    /* =========================================
+       TOP ROW
+       ========================================= */
+       
+    /* TOP LEFT: IMAGE PANEL */
+    .pane-img {
+        background: url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg') center/cover no-repeat;
+        justify-content: flex-end; /* Push features bar to bottom */
+        min-height: 100vh; /* Fills screen on load */
+    }
+
+    .features-glass-bar {
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        padding: 24px 20px;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 24px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    /* TOP RIGHT: TEXT & SEARCH PANEL */
+    .pane-dark {
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        color: white;
+        padding: 120px 10% 80px 10%;
+        /* Professional Demarcation */
+        border-left: 1px solid rgba(255,255,255,0.1);
+        box-shadow: -15px 0 40px rgba(0,0,0,0.6); 
+        z-index: 2; /* Ensures shadow overlaps image */
     }
 
     .repo-badge {
@@ -53,7 +84,7 @@
         font-weight: 700;
         letter-spacing: 0.5px;
         color: #e2e8f0;
-        display: inline-block;
+        display: inline-table;
         margin-bottom: 24px;
     }
 
@@ -143,57 +174,16 @@
         font-weight: 500;
     }
 
-    /* Top Right: Image Container */
-    .hero-image-col {
-        text-align: center;
-    }
 
-    .contained-image-wrapper {
-        width: 100%;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-        border: 2px solid rgba(255,255,255,0.1);
-    }
+    /* =========================================
+       BOTTOM ROW
+       ========================================= */
 
-    .contained-image-wrapper img {
-        width: 100%;
-        height: auto;
-        display: block;
-        object-fit: cover;
-    }
-
-    .features-list {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 16px;
-        margin-top: 24px;
-        color: #cbd5e1;
-        font-weight: 600;
-        font-size: 0.95rem;
-    }
-
-
-    /* --- BOTTOM ROW: VALUE PROP & AUTH (Light) --- */
-    .bottom-row-section {
+    /* BOTTOM LEFT: VALUE PROPOSITION */
+    .pane-light {
         background: #f8fafc;
-        padding: 80px 20px;
+        padding: 80px 10%;
         border-top: 1px solid #e2e8f0;
-    }
-
-    .bottom-grid {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 60px;
-        align-items: center;
-    }
-
-    /* Bottom Left: Value Text */
-    .value-text-col {
-        text-align: left;
     }
 
     .value-title {
@@ -230,16 +220,27 @@
         font-size: 1.2rem;
     }
 
-    /* Bottom Right: Auth Widget */
+
+    /* BOTTOM RIGHT: AUTH PORTAL */
+    .pane-white {
+        background: #ffffff;
+        padding: 80px 10%;
+        border-top: 1px solid #e2e8f0;
+        /* Professional Demarcation */
+        border-left: 1px solid #e2e8f0;
+        box-shadow: -15px 0 40px rgba(0,0,0,0.03); 
+        z-index: 2;
+    }
+
     .hero-auth-widget {
         background: white;
-        padding: 32px;
+        padding: 40px 32px;
         border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
         border: 1px solid #e2e8f0;
         width: 100%;
         max-width: 450px;
-        margin: 0 auto;
+        margin: 0; /* Left aligned within the pane, naturally balances */
     }
 
     .widget-title {
@@ -346,36 +347,23 @@
     }
 
     /* =========================================
-       RESPONSIVE DESIGN (Stack to 1 Column)
+       RESPONSIVE DESIGN (Stacks to 1 column)
        ========================================= */
     @media (max-width: 900px) {
-        .top-grid, .bottom-grid {
+        .split-layout-grid {
             grid-template-columns: 1fr;
-            text-align: center;
-            gap: 40px;
         }
         
-        .hero-text-col, .value-text-col {
-            text-align: center;
+        /* Reset Demarcations for mobile */
+        .pane-dark, .pane-white {
+            border-left: none;
+            box-shadow: none;
         }
+        .pane-dark { padding-top: 60px; }
+        .pane-img { min-height: 400px; }
 
-        .repo-search-wrapper {
-            margin: 0 auto 32px auto;
-        }
-
-        .id-hint {
-            justify-content: center;
-        }
-
-        .value-bullets {
-            align-items: center;
-            text-align: left;
+        .hero-auth-widget {
             margin: 0 auto;
-            max-width: 300px;
-        }
-
-        .widget-title {
-            justify-content: center;
         }
     }
 
@@ -383,6 +371,7 @@
         .hero-title { font-size: 1.8rem; }
         .value-title { font-size: 1.8rem; }
         .hero-pro-text { font-size: 0.95rem; }
+        .features-glass-bar { flex-direction: column; align-items: center; gap: 12px; }
     }
   </style>
 </head>
@@ -438,12 +427,20 @@
   </div>
 </nav>
 
-<!-- TOP ROW: DARK HERO SECTION -->
-<section class="top-row-section">
-  <div class="top-grid">
-    
-    <!-- Left Column: Text & Search -->
-    <div class="hero-text-col">
+<!-- MAIN GRID WRAPPER -->
+<main class="split-layout-grid">
+
+    <!-- TOP LEFT: IMAGE PANE -->
+    <div class="split-pane pane-img">
+        <div class="features-glass-bar">
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-store" style="color:#10b981;"></i> Shops Repository</span>
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-magnifying-glass-location" style="color:#f472b6;"></i> Discover Locally</span>
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-id-card" style="color:#60a5fa;"></i> Unique Business ID</span>
+        </div>
+    </div>
+
+    <!-- TOP RIGHT: DARK TEXT PANE -->
+    <div class="split-pane pane-dark">
         <span class="repo-badge">
           Repository of Shops, Products and Services
         </span>
@@ -474,70 +471,49 @@
         </p>
     </div>
 
-    <!-- Right Column: Image & Features -->
-    <div class="hero-image-col">
-        <div class="contained-image-wrapper">
-            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" alt="CT Merchant Platform Preview">
-        </div>
+    <!-- BOTTOM LEFT: VALUE PROP PANE -->
+    <div class="split-pane pane-light">
+        <h2 class="value-title">Grow Your Physical Shop Digitally</h2>
+        <p class="value-desc">Join thousands of verified local merchants. Create your profile, upload your products, and let our AI-powered repository connect you with buyers in your exact city area.</p>
         
-        <div class="features-list">
-            <span style="display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-store" style="color:#10b981;"></i> Shops Repository</span>
-            <span style="display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-magnifying-glass-location" style="color:#f472b6;"></i> Discover Locally</span>
-            <span style="display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-id-card" style="color:#60a5fa;"></i> Unique Business ID</span>
-        </div>
+        <ul class="value-bullets">
+            <li><i class="fa-solid fa-circle-check"></i> Get a verified digital storefront</li>
+            <li><i class="fa-solid fa-circle-check"></i> Unique CT-Merchant ID to share</li>
+            <li><i class="fa-solid fa-circle-check"></i> Be discovered in local AI searches</li>
+        </ul>
     </div>
 
-  </div>
-</section>
-
-<!-- BOTTOM ROW: LIGHT AUTH SECTION -->
-<section class="bottom-row-section">
-    <div class="bottom-grid">
-        
-        <!-- Left Column: Value Proposition -->
-        <div class="value-text-col">
-            <h2 class="value-title">Grow Your Physical Shop Digitally</h2>
-            <p class="value-desc">Join thousands of verified local merchants. Create your profile, upload your products, and let our AI-powered repository connect you with buyers in your exact city area.</p>
+    <!-- BOTTOM RIGHT: AUTH PORTAL PANE -->
+    <div class="split-pane pane-white">
+        <div class="hero-auth-widget">
+            <div class="widget-title">
+                <i class="fa-solid fa-lock"></i> Merchant Portal
+            </div>
             
-            <ul class="value-bullets">
-                <li><i class="fa-solid fa-circle-check"></i> Get a verified digital storefront</li>
-                <li><i class="fa-solid fa-circle-check"></i> Unique CT-Merchant ID to share</li>
-                <li><i class="fa-solid fa-circle-check"></i> Be discovered in local AI searches</li>
-            </ul>
-        </div>
-
-        <!-- Right Column: Login Portal -->
-        <div class="auth-widget-col">
-            <div class="hero-auth-widget">
-                <div class="widget-title">
-                    <i class="fa-solid fa-lock"></i> Merchant Portal
+            <form onsubmit="event.preventDefault(); handleHeroLogin();">
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="hero-email" class="hero-input-login" placeholder="Email Address" required>
+                </div>
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
                 </div>
                 
-                <form onsubmit="event.preventDefault(); handleHeroLogin();">
-                    <div class="input-group-hero">
-                        <i class="fa-solid fa-envelope"></i>
-                        <input type="email" id="hero-email" class="hero-input-login" placeholder="Email Address" required>
-                    </div>
-                    <div class="input-group-hero">
-                        <i class="fa-solid fa-key"></i>
-                        <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
-                    </div>
-                    
-                    <button type="submit" id="hero-login-btn" class="btn-login-hero">
-                        Secure Sign In <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                </form>
+                <button type="submit" id="hero-login-btn" class="btn-login-hero">
+                    Secure Sign In <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
 
-                <div class="widget-divider">New to CT-Merchant?</div>
+            <div class="widget-divider">New to CT-Merchant?</div>
 
-                <a href="create-account.html" class="btn-create-account">
-                    Create Free Account
-                </a>
-            </div>
+            <a href="create-account.html" class="btn-create-account">
+                Create Free Account
+            </a>
         </div>
-
     </div>
-</section>
+
+</main>
 
 <footer class="footer">
   <div class="container footer-container">
