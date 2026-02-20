@@ -499,6 +499,27 @@
 
     <!-- TOP RIGHT: NOW AUTH PORTAL -->
     <div class="split-pane pane-dark">
+        <div class="repo-search-wrapper">
+            <div style="position: relative;">
+                <input type="text" id="repo-search-input" placeholder="Enter Merchant ID..." class="repo-input"
+                       onkeypress="if(event.key === 'Enter') handleRepoSearch()">
+                <div class="search-icon-btn" onclick="handleRepoSearch()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+            </div>
+            <p class="id-hint">
+                <i class="fa-solid fa-circle-info"></i> Search by ID (e.g., CT-3945BOGD)
+            </p>
+        </div>
+
+        <h1 class="hero-title">
+           <span id="typewriter"></span><span class="cursor">|</span>
+        </h1>
+        
+        <p class="hero-desc">
+          We provide a digital repository of physical shops, their products, and locations within a city.
+        </p>
+
         <div class="hero-auth-widget">
             <div class="widget-title">
                 <i class="fa-solid fa-lock"></i> Merchant Portal
@@ -549,26 +570,6 @@
           CT-Merchant is a verified repository of shops, products, and services within your city. We serve as a single source of truth for real, physically verified merchants to prevent fake online claims. We index physical shops so you can easily compare the best deals before you go shopping. We boost the local digital economy by providing merchants with a strong, AI-powered presence, unique business IDs, and shareable profiles at a low cost.
         </p>
         
-        <div class="repo-search-wrapper">
-            <div style="position: relative;">
-                <input type="text" id="repo-search-input" placeholder="Enter Merchant ID..." class="repo-input"
-                       onkeypress="if(event.key === 'Enter') handleRepoSearch()">
-                <div class="search-icon-btn" onclick="handleRepoSearch()">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                </div>
-            </div>
-            <p class="id-hint">
-                <i class="fa-solid fa-circle-info"></i> Search by ID (e.g., CT-3945BOGD)
-            </p>
-        </div>
-
-        <h1 class="hero-title">
-           <span id="typewriter"></span><span class="cursor">|</span>
-        </h1>
-        
-        <p class="hero-desc">
-          We provide a digital repository of physical shops, their products, and locations within a city.
-        </p>
     </div>
 
 </main>
