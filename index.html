@@ -20,16 +20,21 @@
 
   <style>
     /* =========================================
-       NEW MULTI-SECTION LAYOUT STYLES
+       NEW HERO & AUTH SECTION STYLES
        ========================================= */
 
-    /* --- SECTION 1: HERO --- */
+    /* --- SECTION 1: HERO (Image Background) --- */
     .new-hero-section {
-        /* Deep brand gradient to make the white text and nav pop */
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-        padding: 140px 20px 80px;
+        position: relative;
+        padding: 160px 20px 100px;
         text-align: center;
         color: white;
+        /* Image with a deep dark gradient overlay to make text pop */
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 27, 75, 0.9) 100%), 
+                    url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
     }
     
     .hero-container {
@@ -41,25 +46,27 @@
     }
 
     .repo-badge {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
         padding: 8px 18px;
         border-radius: 50px;
         font-size: 0.85rem;
         font-weight: 700;
         letter-spacing: 0.5px;
-        color: #e2e8f0;
+        color: #ffffff;
         display: inline-block;
         margin-bottom: 20px;
+        backdrop-filter: blur(4px);
     }
 
     .hero-pro-text {
         font-size: 1.05rem;
         line-height: 1.8;
-        color: #cbd5e1;
+        color: #e2e8f0;
         max-width: 800px;
         margin: 0 auto 32px auto;
         font-weight: 400;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
     /* --- REPO SEARCH --- */
@@ -67,14 +74,14 @@
         position: relative;
         width: 100%;
         max-width: 450px;
-        margin: 0 auto 40px auto; /* Centered with spacing below */
+        margin: 0 auto 40px auto; 
     }
 
     .repo-input {
         width: 100%;
         padding: 16px 50px 16px 24px;
-        background-color: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        background-color: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.4);
         border-radius: 50px;
         font-size: 1rem;
         color: white;
@@ -83,20 +90,20 @@
         font-weight: 600;
         outline: none;
         transition: all 0.3s ease;
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(12px);
     }
     
     .repo-input::placeholder { 
-        color: rgba(255, 255, 255, 0.6); 
+        color: rgba(255, 255, 255, 0.7); 
         text-transform: none; 
         letter-spacing: normal; 
-        font-weight: 400;
+        font-weight: 500;
     }
     
     .repo-input:focus {
-        background-color: rgba(255, 255, 255, 0.2);
-        border-color: #db2777; /* var(--color-pink) */
-        box-shadow: 0 0 15px rgba(219, 39, 119, 0.4);
+        background-color: rgba(255, 255, 255, 0.25);
+        border-color: #db2777; 
+        box-shadow: 0 0 15px rgba(219, 39, 119, 0.5);
     }
 
     .search-icon-btn {
@@ -104,7 +111,7 @@
         right: 20px;
         top: 50%;
         transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(255, 255, 255, 0.9);
         cursor: pointer;
         width: 22px;
         transition: color 0.2s;
@@ -120,14 +127,16 @@
         align-items: center;
         justify-content: center;
         gap: 6px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8);
     }
 
-    /* Typewriter spacing tight as requested */
+    /* --- TYPEWRITER & DESC --- */
     .hero-title {
         font-size: 2.5rem;
         font-weight: 800;
-        margin-bottom: 0px; /* Removed vertical space */
+        margin-bottom: 0px; 
         min-height: 48px;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
     .cursor {
         display: inline-block;
@@ -139,47 +148,29 @@
 
     .hero-desc {
         font-size: 1.1rem;
-        color: #94a3b8;
-        margin-top: 5px; /* Tight space */
+        color: #cbd5e1;
+        margin-top: 5px; 
         font-weight: 500;
-    }
-
-
-    /* --- SECTION 2: IMAGE & FEATURES --- */
-    .image-section {
-        padding: 80px 20px;
-        background: white;
-        text-align: center;
-    }
-    
-    .img-container {
-        max-width: 1000px;
-        margin: 0 auto;
-        border-radius: 24px;
-        overflow: hidden;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-        border: 1px solid #f1f5f9;
-    }
-    
-    .img-container img {
-        width: 100%;
-        height: auto;
-        display: block;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
     }
 
     .features-list {
         display: flex;
         justify-content: center;
         flex-wrap: wrap;
-        gap: 30px;
+        gap: 24px;
         margin-top: 40px;
-        color: #475569;
-        font-weight: 700;
-        font-size: 1.1rem;
+        color: #f8fafc;
+        font-weight: 600;
+        font-size: 1.05rem;
+    }
+    .features-list i {
+        /* Brighter icons to pop on dark background */
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
     }
 
 
-    /* --- SECTION 3: MERCHANT ACCESS (AUTH) --- */
+    /* --- SECTION 2: MERCHANT ACCESS (AUTH) --- */
     .auth-section {
         padding: 80px 20px;
         background: #f8fafc;
@@ -258,7 +249,7 @@
     
     .hero-input-login:focus {
         background: white;
-        border-color: #059669; /* var(--color-primary) */
+        border-color: #059669; 
         box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.15);
     }
 
@@ -329,13 +320,13 @@
         .hero-title { font-size: 2rem; }
     }
     @media (max-width: 600px) {
-        .features-list { gap: 16px; font-size: 0.95rem; flex-direction: column; }
+        .features-list { gap: 16px; font-size: 0.95rem; flex-direction: column; align-items: center; }
     }
   </style>
 </head>
 <body>
 
-<!-- NAVIGATION REMAINS UNTOUCHED -->
+<!-- NAVIGATION -->
 <nav class="main-header">
   <div class="container nav-container">
     <a href="index.html" class="brand-wrapper">
@@ -355,7 +346,7 @@
       </div>
     </a>
 
-    <!-- Updated Menu Items -->
+    <!-- Menu Items -->
     <div class="desktop-menu">
       <a href="index.html" class="nav-active">Home</a>
       <a href="about.html">About</a>
@@ -385,7 +376,7 @@
   </div>
 </nav>
 
-<!-- SECTION 1: HERO -->
+<!-- SECTION 1: HERO (With Image Background) -->
 <section class="new-hero-section">
   <div class="hero-container">
     
@@ -418,23 +409,17 @@
       We provide a digital repository of physical shops, their products, and locations within a city.
     </p>
 
+    <!-- Features embedded below the hero text -->
+    <div class="features-list">
+        <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-store" style="color:#10b981;"></i> Shops Repository</span>
+        <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-magnifying-glass-location" style="color:#f472b6;"></i> Discover Locally</span>
+        <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-id-card" style="color:#60a5fa;"></i> Unique Business ID</span>
+    </div>
+
   </div>
 </section>
 
-<!-- SECTION 2: IMAGE & FEATURES -->
-<section class="image-section">
-    <div class="img-container">
-        <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" alt="CT Merchant Dashboard Preview">
-    </div>
-    
-    <div class="features-list">
-        <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-store" style="color:#059669;"></i> Shops Repository</span>
-        <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-magnifying-glass-location" style="color:#db2777;"></i> Discover Locally</span>
-        <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-id-card" style="color:#2563eb;"></i> Unique Business ID</span>
-    </div>
-</section>
-
-<!-- SECTION 3: MERCHANT ACCESS -->
+<!-- SECTION 2: MERCHANT ACCESS PORTAL -->
 <section class="auth-section">
     <div class="auth-container">
         <div class="auth-text-content">
