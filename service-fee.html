@@ -1,0 +1,92 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+
+  try {
+    const { transactionId, shopId, plan, amount } = await req.json()
+    
+    if (!transactionId || !shopId || !plan || !amount) {
+        throw new Error("Missing payment metadata.");
+    }
+
+    const authHeader = req.headers.get('Authorization')
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    if (!authHeader || !supabaseUrl || !serviceRoleKey) throw new Error("Missing auth/config")
+    
+    const adminClient = createClient(supabaseUrl, serviceRoleKey)
+    const authClient = createClient(supabaseUrl, serviceRoleKey, { global: { headers: { Authorization: authHeader } } })
+    const { data: { user } } = await authClient.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    // ==========================================
+    // 🚧 DEVELOPER TEST BYPASS 🚧
+    // ==========================================
+    let isSuccess = false;
+    if (transactionId.startsWith("DEV-TEST")) {
+        isSuccess = true; // Bypass Remita for developer testing
+    } else {
+        // Real Remita Verification
+        const merchantId = Deno.env.get('REMITA_MERCHANT_ID') || "2547916"; 
+        const secretKey = Deno.env.get('REMITA_SECRET_KEY') || "1946"; 
+        const hashString = merchantId + transactionId + secretKey;
+        const encoder = new TextEncoder();
+        const data = encoder.encode(hashString);
+        const hashBuffer = await crypto.subtle.digest("SHA-512", data);
+        const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+        const remitaRes = await fetch(`https://remitademo.net/payment/v1/payment/query/${transactionId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json', 'publicKey': Deno.env.get('REMITA_PUBLIC_KEY') || "", 'TXN_HASH': hashHex }
+        });
+        const remitaData = await remitaRes.json();
+        if (remitaData.status === "00" || remitaData.status === "01") isSuccess = true;
+    }
+    // ==========================================
+
+    if (isSuccess) {
+        // 1. Get current shop expiry date
+        const { data: shop } = await adminClient.from('shops').select('subscription_end_date').eq('id', shopId).single();
+        
+        // 2. Calculate new Expiry Date safely
+        let newEndDate = new Date();
+        if (shop?.subscription_end_date) {
+            const existingEnd = new Date(shop.subscription_end_date);
+            if (existingEnd > newEndDate) newEndDate = existingEnd; // Extend existing time
+        }
+
+        if (plan === '6_Months') newEndDate.setMonth(newEndDate.getMonth() + 6);
+        else if (plan === '1_Year') newEndDate.setFullYear(newEndDate.getFullYear() + 1);
+
+        // 3. Update Shop
+        await adminClient.from('shops').update({ 
+            subscription_end_date: newEndDate.toISOString(),
+            subscription_plan: plan
+        }).eq('id', shopId);
+
+        // 4. Save Receipt
+        await adminClient.from('service_fee_payments').insert({
+            merchant_id: user.id,
+            shop_id: shopId,
+            plan: plan,
+            amount: amount,
+            payment_ref: transactionId,
+            status: 'success'
+        });
+
+        return new Response(JSON.stringify({ success: true, newEndDate: newEndDate.toISOString() }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    } else {
+        throw new Error("Payment verification failed at Remita.");
+    }
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
+})
