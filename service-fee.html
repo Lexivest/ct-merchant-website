@@ -77,6 +77,7 @@
         }
         .badge-active { background: #DCFCE7; color: #16A34A; }
         .badge-expired { background: #FEE2E2; color: #DC2626; }
+        .badge-free { background: #F1F5F9; color: #64748B; } /* New Free Tier Badge */
 
         .time-box { text-align: right; }
         .days-left { font-size: 2.5rem; font-weight: 800; color: #0F172A; line-height: 1; }
@@ -321,6 +322,7 @@
             document.getElementById('ui-expiry').textContent = `Valid Until: ${endDate.toLocaleDateString(undefined, options)}`;
 
             if (daysLeft > 0) {
+                // --- ACTIVE SUBSCRIPTION ---
                 document.getElementById('ui-days').textContent = `${daysLeft} Days Left`;
                 document.getElementById('ui-days').style.color = '#0F172A';
                 badge.className = 'badge badge-active';
@@ -346,10 +348,21 @@
                     card6mo.style.borderColor = '#E2E8F0';
                 }
             } else {
-                document.getElementById('ui-days').textContent = `0 Days Left`;
-                document.getElementById('ui-days').style.color = '#DC2626';
-                badge.className = 'badge badge-expired';
-                badge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> EXPIRED';
+                // --- EXPIRED OR NEW (FREE TRIAL) ---
+                if (currentPlan === 'Free Trial') {
+                    // Friendly Free Trial Mode
+                    document.getElementById('ui-days').textContent = `Not Subscribed`;
+                    document.getElementById('ui-days').style.color = 'var(--color-text-muted)';
+                    document.getElementById('ui-expiry').textContent = 'Please choose a plan below.';
+                    badge.className = 'badge badge-free';
+                    badge.innerHTML = '<i class="fa-solid fa-circle-info"></i> FREE TIER';
+                } else {
+                    // Actual Expired Plan Mode
+                    document.getElementById('ui-days').textContent = `0 Days Left`;
+                    document.getElementById('ui-days').style.color = '#DC2626';
+                    badge.className = 'badge badge-expired';
+                    badge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> EXPIRED';
+                }
 
                 btn6mo.disabled = false;
                 btn6mo.textContent = "Subscribe 6 Months";
@@ -362,7 +375,6 @@
 
         // --- BULLETPROOF MODAL LOGIC ---
         function openGatewayModal(planType, amount) {
-            // Update the buttons in the modal to physically hold the exact values
             const psBtn = document.getElementById('btn-paystack');
             const rmBtn = document.getElementById('btn-remita');
             
@@ -379,19 +391,16 @@
         // --- PAYSTACK FLOW ---
         function payWithPaystack(planType, amount) {
             closeGatewayModal();
-            
-            // Convert to Number to be perfectly safe, then multiply by 100 for Kobo
             const amountInKobo = Number(amount) * 100;
             
-            // Double check that the amount is valid before calling Paystack
             if (!amountInKobo || isNaN(amountInKobo) || amountInKobo <= 0) {
                 alert("Invalid amount detected. Please refresh the page.");
                 return;
             }
             
             let handler = PaystackPop.setup({
-                // REPLACE THIS WITH YOUR REAL TEST KEY
-                key: 'pk_test_f681256d9c1bc10964457c68fb2381e6451ed2b9', 
+                // REPLACE THIS WITH YOUR REAL PAYSTACK PUBLIC KEY
+                key: 'pk_test_dummypaystackkey1234567890', 
                 email: userEmail,
                 amount: amountInKobo,
                 currency: 'NGN',
@@ -400,9 +409,7 @@
                     document.getElementById('processing-overlay').classList.remove('hidden');
                     verifySubscription(response.reference, planType, amount, 'paystack');
                 },
-                onClose: function() {
-                    console.log('Paystack window closed.');
-                }
+                onClose: function() { console.log('Paystack window closed.'); }
             });
             handler.openIframe();
         }
@@ -410,7 +417,6 @@
         // --- REMITA FLOW ---
         function payWithRemita(planType, amount) {
             closeGatewayModal();
-            
             const transactionId = "CTM-" + Date.now(); 
 
             var paymentEngine = RmPaymentEngine.init({
@@ -470,4 +476,3 @@
     </script>
 </body>
 </html>
-
