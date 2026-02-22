@@ -127,7 +127,17 @@
             font-weight: 800; font-size: 1rem; cursor: pointer;
             transition: 0.2s;
         }
-        .price-card:hover .btn-subscribe { background: var(--color-purple); color: white; }
+        
+        /* Hover effect only works if NOT disabled */
+        .price-card:hover .btn-subscribe:not(:disabled) { background: var(--color-purple); color: white; }
+        
+        /* Disabled State styling */
+        .btn-subscribe:disabled {
+            background: #E2E8F0 !important;
+            color: #94A3B8 !important;
+            cursor: not-allowed;
+            transform: none !important;
+        }
 
         .overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; color: white; }
         .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
@@ -165,12 +175,12 @@
             </div>
         </div>
 
-        <h2 class="pricing-title">Extend Your Subscription</h2>
+        <h2 class="pricing-title">Subscription Plans</h2>
 
         <div class="pricing-grid">
             
             <!-- 6 MONTHS PLAN -->
-            <div class="price-card">
+            <div class="price-card" id="card-6mo">
                 <div class="plan-name">Standard Tier</div>
                 <div class="plan-price">₦6,000</div>
                 <div class="plan-month">Works out to ₦1,000 / month</div>
@@ -181,11 +191,12 @@
                     <li><i class="fa-solid fa-check" style="color:#16A34A; margin-right:8px;"></i> 6 Months Validity</li>
                 </ul>
 
-                <button class="btn-subscribe" onclick="initiateSubscription('6_Months', 6000)">Subscribe 6 Months</button>
+                <!-- Added ID to target in JS -->
+                <button id="btn-6mo" class="btn-subscribe" onclick="initiateSubscription('6_Months', 6000)">Subscribe 6 Months</button>
             </div>
 
             <!-- 1 YEAR PLAN -->
-            <div class="price-card" style="border-color: var(--color-purple);">
+            <div class="price-card" id="card-1yr" style="border-color: var(--color-purple);">
                 <div class="popular-tag">BEST VALUE</div>
                 <div class="plan-name" style="color: var(--color-purple);">Professional Tier</div>
                 <div class="plan-price">₦10,000</div>
@@ -197,7 +208,8 @@
                     <li><i class="fa-solid fa-check" style="color:#16A34A; margin-right:8px;"></i> <strong>1 Full Year Validity</strong></li>
                 </ul>
 
-                <button class="btn-subscribe" style="background: var(--color-purple); color: white;" onclick="initiateSubscription('1_Year', 10000)">Subscribe 1 Year</button>
+                <!-- Added ID to target in JS -->
+                <button id="btn-1yr" class="btn-subscribe" style="background: var(--color-purple); color: white;" onclick="initiateSubscription('1_Year', 10000)">Subscribe 1 Year</button>
             </div>
 
         </div>
@@ -248,6 +260,8 @@
             const { data: shop, error } = await client.from('shops').select('subscription_end_date, subscription_plan').eq('id', shopId).single();
             
             const badge = document.getElementById('ui-badge');
+            const btn6mo = document.getElementById('btn-6mo');
+            const btn1yr = document.getElementById('btn-1yr');
             
             if (error || !shop) {
                 badge.className = 'badge badge-expired';
@@ -268,14 +282,36 @@
             document.getElementById('ui-expiry').textContent = `Valid Until: ${endDate.toLocaleDateString(undefined, options)}`;
 
             if (daysLeft > 0) {
+                // ACTIVE SUBSCRIPTION
                 document.getElementById('ui-days').textContent = `${daysLeft} Days Left`;
+                document.getElementById('ui-days').style.color = '#0F172A';
                 badge.className = 'badge badge-active';
                 badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> ACTIVE';
+
+                // DEACTIVATE BUTTONS
+                btn6mo.disabled = true;
+                btn6mo.textContent = "Plan Active";
+                
+                btn1yr.disabled = true;
+                btn1yr.textContent = "Plan Active";
+                
+                // Remove purple border from 1-year card to make it look "completed"
+                document.getElementById('card-1yr').style.borderColor = '#E2E8F0';
+
             } else {
+                // EXPIRED OR NEW
                 document.getElementById('ui-days').textContent = `0 Days Left`;
                 document.getElementById('ui-days').style.color = '#DC2626';
                 badge.className = 'badge badge-expired';
                 badge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> EXPIRED';
+
+                // ENABLE BUTTONS
+                btn6mo.disabled = false;
+                btn6mo.textContent = "Subscribe 6 Months";
+                
+                btn1yr.disabled = false;
+                btn1yr.textContent = "Subscribe 1 Year";
+                document.getElementById('card-1yr').style.borderColor = 'var(--color-purple)';
             }
         }
 
@@ -329,9 +365,11 @@
 
                 if (!response.ok) throw new Error(result.error || "Verification failed");
 
-                // Reload the status card to show the new dates!
+                // Reload the status card to show the new dates and deactivate buttons!
                 document.getElementById('processing-overlay').classList.add('hidden');
                 alert("✅ Subscription Successful! Your plan has been extended.");
+                
+                // Re-run the load function so it recalculates days and disables the buttons
                 loadSubscriptionStatus();
 
             } catch (error) {
