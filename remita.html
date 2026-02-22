@@ -94,43 +94,16 @@
         .detail-label { color: var(--color-text-muted); font-weight: 600; }
         .detail-value { font-weight: 700; color: #0F172A; text-align: right; }
 
-        .btn-pay { 
-            background: var(--color-purple); 
-            color: white; 
-            border: none; 
-            padding: 16px; 
-            width: 100%; 
-            border-radius: 12px; 
-            font-size: 1.05rem; 
-            font-weight: 800; 
-            cursor: pointer; 
-            transition: 0.2s; 
-            display: flex; align-items: center; justify-content: center; gap: 8px;
+        /* Gateway Buttons */
+        .gateway-section {
+            border-top: 1px dashed #E2E8F0;
+            padding-top: 20px;
+            margin-bottom: 15px;
         }
-        .btn-pay:hover { background: #1E1B4B; transform: translateY(-2px); }
-        .btn-pay:disabled { background: #9CA3AF; cursor: not-allowed; transform: none; }
-        
-        .btn-cancel {
-            background: none; border: none; color: var(--color-text-muted);
-            font-weight: 600; font-size: 0.95rem; margin-top: 16px; cursor: pointer;
+        .gateway-label {
+            font-size: 0.85rem; font-weight: 700; color: var(--color-text-muted); 
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;
         }
-        .btn-cancel:hover { color: #0F172A; text-decoration: underline; }
-
-        #status-msg { margin-top: 16px; font-size: 0.95rem; font-weight: 700; color: #059669; }
-        
-        /* --- GATEWAY MODAL & OVERLAY --- */
-        .overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .hidden { display: none !important; }
-        
-        .gateway-modal {
-            background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            animation: slideUp 0.3s ease-out;
-        }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .gateway-title { font-size: 1.3rem; font-weight: 800; color: #0F172A; margin-bottom: 8px; }
-        .gateway-subtitle { color: var(--color-text-muted); font-size: 0.95rem; margin-bottom: 24px; }
 
         .btn-gateway {
             width: 100%; padding: 16px; border: 2px solid #E2E8F0; border-radius: 12px; background: white;
@@ -141,22 +114,28 @@
         
         .paystack-color { color: #0BA4DB; font-size: 1.2rem; }
         .remita-color { color: #E15B26; font-size: 1.2rem; }
-
-        .btn-cancel-modal {
+        
+        .btn-cancel {
             background: none; border: none; color: var(--color-text-muted);
-            font-weight: 600; font-size: 0.95rem; margin-top: 10px; cursor: pointer;
+            font-weight: 600; font-size: 0.95rem; margin-top: 16px; cursor: pointer;
         }
-        .btn-cancel-modal:hover { color: #0F172A; text-decoration: underline; }
+        .btn-cancel:hover { color: #0F172A; text-decoration: underline; }
 
-        .processing-overlay { flex-direction: column; color: white; }
+        #status-msg { margin-top: 16px; font-size: 0.95rem; font-weight: 700; color: #059669; }
+
+        /* Processing Overlay */
+        .overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; color: white; backdrop-filter: blur(4px); }
+        .hidden { display: none !important; }
         .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .loader-standalone { border-top-color: var(--color-purple); margin: 40px auto; }
     </style>
 </head>
 <body>
 
     <!-- Loading State -->
-    <div id="loader" class="spinner" style="border-top-color: var(--color-purple);"></div>
+    <div id="loader" class="spinner loader-standalone"></div>
 
     <!-- Main Checkout Card -->
     <div id="checkout-content" class="checkout-card hidden">
@@ -187,21 +166,9 @@
             </div>
         </div>
 
-        <!-- Triggers the Modal instead of direct payment -->
-        <button id="pay-btn" class="btn-pay" onclick="openGatewayModal()">
-            Pay Securely <i class="fa-solid fa-lock"></i>
-        </button>
-        <div id="status-msg"></div>
-
-        <button class="btn-cancel" onclick="window.location.href='merchant-dashboard.html'">Cancel and Return</button>
-    </div>
-
-    <!-- GATEWAY SELECTION MODAL -->
-    <div id="gateway-modal" class="overlay hidden">
-        <div class="gateway-modal">
-            <h2 class="gateway-title">Select Payment Method</h2>
-            <p class="gateway-subtitle">Choose how you want to securely pay the verification fee.</p>
-
+        <div class="gateway-section" id="gateway-buttons">
+            <div class="gateway-label">Select Payment Gateway</div>
+            
             <button class="btn-gateway" onclick="payWithPaystack()">
                 <i class="fa-solid fa-credit-card paystack-color"></i> Pay with Paystack
             </button>
@@ -209,13 +176,15 @@
             <button class="btn-gateway" onclick="payWithRemita()">
                 <i class="fa-solid fa-building-columns remita-color"></i> Pay with Remita
             </button>
-
-            <button class="btn-cancel-modal" onclick="closeGatewayModal()">Cancel</button>
         </div>
+
+        <div id="status-msg"></div>
+
+        <button class="btn-cancel" onclick="window.location.href='merchant-dashboard.html'">Cancel and Return</button>
     </div>
 
     <!-- Processing Overlay -->
-    <div id="processing-overlay" class="overlay processing-overlay hidden">
+    <div id="processing-overlay" class="overlay hidden">
         <div class="spinner"></div>
         <h2 style="margin-bottom: 10px;">Verifying Securely...</h2>
         <p>Please do not close this window.</p>
@@ -282,23 +251,13 @@
             }
         }
 
-        // --- GATEWAY UI LOGIC ---
-        function openGatewayModal() {
-            if (!dynamicShopDetails) return;
-            document.getElementById('gateway-modal').classList.remove('hidden');
-        }
-
-        function closeGatewayModal() {
-            document.getElementById('gateway-modal').classList.add('hidden');
-        }
-
         // --- PAYSTACK FLOW ---
         function payWithPaystack() {
-            closeGatewayModal();
+            if (!dynamicShopDetails) return;
             const amountInKobo = FEE_AMOUNT * 100;
             
             let handler = PaystackPop.setup({
-                // 🛑 REPLACE THIS WITH YOUR PAYSTACK PUBLIC KEY
+                // 🛑 REPLACE THIS WITH YOUR REAL PAYSTACK PUBLIC KEY
                 key: 'pk_test_f681256d9c1bc10964457c68fb2381e6451ed2b9', 
                 email: dynamicShopDetails.email,
                 amount: amountInKobo,
@@ -317,7 +276,7 @@
 
         // --- REMITA FLOW ---
         function payWithRemita() {
-            closeGatewayModal();
+            if (!dynamicShopDetails) return;
             
             const transactionId = "CTM-VERIFY-" + Date.now(); 
             const names = dynamicShopDetails.merchantName.split(' ');
@@ -348,6 +307,9 @@
         // --- SECURE BACKEND VERIFICATION ---
         async function verifyPaymentOnBackend(txId, gateway) {
             try {
+                // Hide the buttons so user doesn't double click
+                document.getElementById('gateway-buttons').style.display = 'none';
+
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-remita`, {
                     method: 'POST',
                     headers: {
@@ -360,7 +322,7 @@
                         merchantName: dynamicShopDetails.merchantName,
                         shopName: dynamicShopDetails.shopName,
                         cityName: dynamicShopDetails.cityName,
-                        gateway: gateway // Tell the edge function which API to hit!
+                        gateway: gateway
                     })
                 });
 
@@ -369,8 +331,6 @@
                 if (!response.ok) throw new Error(result.error || "Verification failed");
 
                 document.getElementById('processing-overlay').classList.add('hidden');
-                
-                document.getElementById('pay-btn').style.display = 'none';
                 document.getElementById('status-msg').innerHTML = `✅ Payment Verified via ${gateway.toUpperCase()}! Generating receipt...`;
                 
                 setTimeout(() => {
@@ -382,6 +342,7 @@
                 document.getElementById('processing-overlay').classList.add('hidden');
                 document.getElementById('status-msg').innerHTML = "⚠️ " + error.message;
                 document.getElementById('status-msg').style.color = "#DC2626";
+                document.getElementById('gateway-buttons').style.display = 'block'; // Show buttons again if failed
             }
         }
     </script>
