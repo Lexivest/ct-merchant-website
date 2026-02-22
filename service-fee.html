@@ -106,7 +106,7 @@
             position: relative;
             overflow: hidden;
         }
-        .price-card:hover { border-color: var(--color-purple); transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .price-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
 
         .popular-tag {
             position: absolute; top: 12px; right: -30px;
@@ -191,7 +191,6 @@
                     <li><i class="fa-solid fa-check" style="color:#16A34A; margin-right:8px;"></i> 6 Months Validity</li>
                 </ul>
 
-                <!-- Added ID to target in JS -->
                 <button id="btn-6mo" class="btn-subscribe" onclick="initiateSubscription('6_Months', 6000)">Subscribe 6 Months</button>
             </div>
 
@@ -208,7 +207,6 @@
                     <li><i class="fa-solid fa-check" style="color:#16A34A; margin-right:8px;"></i> <strong>1 Full Year Validity</strong></li>
                 </ul>
 
-                <!-- Added ID to target in JS -->
                 <button id="btn-1yr" class="btn-subscribe" style="background: var(--color-purple); color: white;" onclick="initiateSubscription('1_Year', 10000)">Subscribe 1 Year</button>
             </div>
 
@@ -262,6 +260,8 @@
             const badge = document.getElementById('ui-badge');
             const btn6mo = document.getElementById('btn-6mo');
             const btn1yr = document.getElementById('btn-1yr');
+            const card6mo = document.getElementById('card-6mo');
+            const card1yr = document.getElementById('card-1yr');
             
             if (error || !shop) {
                 badge.className = 'badge badge-expired';
@@ -269,7 +269,8 @@
                 return;
             }
 
-            document.getElementById('ui-plan-name').textContent = (shop.subscription_plan || 'Free Trial').replace('_', ' ');
+            const currentPlan = shop.subscription_plan || 'Free Trial';
+            document.getElementById('ui-plan-name').textContent = currentPlan.replace('_', ' ');
 
             const endDate = new Date(shop.subscription_end_date);
             const today = new Date();
@@ -282,36 +283,51 @@
             document.getElementById('ui-expiry').textContent = `Valid Until: ${endDate.toLocaleDateString(undefined, options)}`;
 
             if (daysLeft > 0) {
-                // ACTIVE SUBSCRIPTION
+                // --- ACTIVE SUBSCRIPTION ---
                 document.getElementById('ui-days').textContent = `${daysLeft} Days Left`;
                 document.getElementById('ui-days').style.color = '#0F172A';
                 badge.className = 'badge badge-active';
                 badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> ACTIVE';
 
-                // DEACTIVATE BUTTONS
+                // Deactivate both buttons initially
                 btn6mo.disabled = true;
-                btn6mo.textContent = "Plan Active";
-                
                 btn1yr.disabled = true;
-                btn1yr.textContent = "Plan Active";
-                
-                // Remove purple border from 1-year card to make it look "completed"
-                document.getElementById('card-1yr').style.borderColor = '#E2E8F0';
+
+                // Highlight specifically what plan they are on
+                if (currentPlan === '6_Months') {
+                    btn6mo.innerHTML = '<i class="fa-solid fa-check"></i> Active Plan';
+                    btn1yr.textContent = 'Deactivated';
+                    card6mo.style.borderColor = 'var(--color-purple)';
+                    card1yr.style.borderColor = '#E2E8F0';
+                } else if (currentPlan === '1_Year') {
+                    btn1yr.innerHTML = '<i class="fa-solid fa-check"></i> Active Plan';
+                    btn6mo.textContent = 'Deactivated';
+                    card1yr.style.borderColor = 'var(--color-purple)';
+                    card6mo.style.borderColor = '#E2E8F0';
+                } else {
+                    btn6mo.textContent = 'Deactivated';
+                    btn1yr.textContent = 'Deactivated';
+                    card1yr.style.borderColor = '#E2E8F0';
+                    card6mo.style.borderColor = '#E2E8F0';
+                }
 
             } else {
-                // EXPIRED OR NEW
+                // --- EXPIRED OR NEW ---
                 document.getElementById('ui-days').textContent = `0 Days Left`;
                 document.getElementById('ui-days').style.color = '#DC2626';
                 badge.className = 'badge badge-expired';
                 badge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> EXPIRED';
 
-                // ENABLE BUTTONS
+                // Enable both buttons
                 btn6mo.disabled = false;
                 btn6mo.textContent = "Subscribe 6 Months";
                 
                 btn1yr.disabled = false;
                 btn1yr.textContent = "Subscribe 1 Year";
-                document.getElementById('card-1yr').style.borderColor = 'var(--color-purple)';
+                
+                // Reset styling
+                card1yr.style.borderColor = 'var(--color-purple)';
+                card6mo.style.borderColor = '#E2E8F0';
             }
         }
 
@@ -365,11 +381,10 @@
 
                 if (!response.ok) throw new Error(result.error || "Verification failed");
 
-                // Reload the status card to show the new dates and deactivate buttons!
                 document.getElementById('processing-overlay').classList.add('hidden');
                 alert("✅ Subscription Successful! Your plan has been extended.");
                 
-                // Re-run the load function so it recalculates days and disables the buttons
+                // Re-run the load function so it highlights the newly bought plan!
                 loadSubscriptionStatus();
 
             } catch (error) {
