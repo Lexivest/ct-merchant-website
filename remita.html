@@ -8,7 +8,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
+    <!-- Both Payment Gateway Scripts -->
     <script src="https://remitademo.net/payment/v1/remita-pay-inline.bundle.js"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -115,15 +118,45 @@
 
         #status-msg { margin-top: 16px; font-size: 0.95rem; font-weight: 700; color: #059669; }
         
-        .spinner { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: var(--color-purple); border-radius: 50%; animation: spin 1s linear infinite; margin: 40px auto; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* --- GATEWAY MODAL & OVERLAY --- */
+        .overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .hidden { display: none !important; }
+        
+        .gateway-modal {
+            background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .gateway-title { font-size: 1.3rem; font-weight: 800; color: #0F172A; margin-bottom: 8px; }
+        .gateway-subtitle { color: var(--color-text-muted); font-size: 0.95rem; margin-bottom: 24px; }
+
+        .btn-gateway {
+            width: 100%; padding: 16px; border: 2px solid #E2E8F0; border-radius: 12px; background: white;
+            font-size: 1.05rem; font-weight: 700; color: #0F172A; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px;
+        }
+        .btn-gateway:hover { border-color: var(--color-purple); background: #F8FAFC; transform: translateY(-2px); }
+        
+        .paystack-color { color: #0BA4DB; font-size: 1.2rem; }
+        .remita-color { color: #E15B26; font-size: 1.2rem; }
+
+        .btn-cancel-modal {
+            background: none; border: none; color: var(--color-text-muted);
+            font-weight: 600; font-size: 0.95rem; margin-top: 10px; cursor: pointer;
+        }
+        .btn-cancel-modal:hover { color: #0F172A; text-decoration: underline; }
+
+        .processing-overlay { flex-direction: column; color: white; }
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <!-- Loading State -->
-    <div id="loader" class="spinner"></div>
+    <div id="loader" class="spinner" style="border-top-color: var(--color-purple);"></div>
 
     <!-- Main Checkout Card -->
     <div id="checkout-content" class="checkout-card hidden">
@@ -154,12 +187,38 @@
             </div>
         </div>
 
-        <button id="pay-btn" class="btn-pay" onclick="makePayment()">
+        <!-- Triggers the Modal instead of direct payment -->
+        <button id="pay-btn" class="btn-pay" onclick="openGatewayModal()">
             Pay Securely <i class="fa-solid fa-lock"></i>
         </button>
         <div id="status-msg"></div>
 
         <button class="btn-cancel" onclick="window.location.href='merchant-dashboard.html'">Cancel and Return</button>
+    </div>
+
+    <!-- GATEWAY SELECTION MODAL -->
+    <div id="gateway-modal" class="overlay hidden">
+        <div class="gateway-modal">
+            <h2 class="gateway-title">Select Payment Method</h2>
+            <p class="gateway-subtitle">Choose how you want to securely pay the verification fee.</p>
+
+            <button class="btn-gateway" onclick="payWithPaystack()">
+                <i class="fa-solid fa-credit-card paystack-color"></i> Pay with Paystack
+            </button>
+            
+            <button class="btn-gateway" onclick="payWithRemita()">
+                <i class="fa-solid fa-building-columns remita-color"></i> Pay with Remita
+            </button>
+
+            <button class="btn-cancel-modal" onclick="closeGatewayModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Processing Overlay -->
+    <div id="processing-overlay" class="overlay processing-overlay hidden">
+        <div class="spinner"></div>
+        <h2 style="margin-bottom: 10px;">Verifying Securely...</h2>
+        <p>Please do not close this window.</p>
     </div>
 
     <script>
@@ -169,6 +228,7 @@
 
         let dynamicShopDetails = null;
         let currentUserSession = null;
+        const FEE_AMOUNT = 5000;
 
         window.onload = async () => {
             const { data: { session } } = await client.auth.getSession();
@@ -189,15 +249,12 @@
 
         async function fetchDetails(shopId, userId) {
             try {
-                // Fetch Shop details
                 const { data: shop, error: shopErr } = await client.from('shops').select('*').eq('id', shopId).single();
                 if (shopErr || !shop) throw new Error("Shop not found");
 
-                // Fetch User Profile details
                 const { data: profile, error: profErr } = await client.from('profiles').select('*, cities(name)').eq('id', userId).single();
                 if (profErr || !profile) throw new Error("Profile not found");
 
-                // CORRECTED LOGIC: Check if physically verified
                 if (shop.is_verified) {
                     alert("Your shop is already physically verified!");
                     window.location.href = "merchant-dashboard.html";
@@ -211,12 +268,10 @@
                     email: currentUserSession.user.email
                 };
 
-                // Populate UI
                 document.getElementById('lbl-merchant').textContent = dynamicShopDetails.merchantName;
                 document.getElementById('lbl-shop').textContent = dynamicShopDetails.shopName;
                 document.getElementById('lbl-city').textContent = dynamicShopDetails.cityName;
 
-                // Show Content
                 document.getElementById('loader').classList.add('hidden');
                 document.getElementById('checkout-content').classList.remove('hidden');
 
@@ -227,13 +282,44 @@
             }
         }
 
-        function makePayment() {
+        // --- GATEWAY UI LOGIC ---
+        function openGatewayModal() {
             if (!dynamicShopDetails) return;
+            document.getElementById('gateway-modal').classList.remove('hidden');
+        }
 
-            const amount = 5000;
-            const transactionId = "CTM-" + Date.now(); 
+        function closeGatewayModal() {
+            document.getElementById('gateway-modal').classList.add('hidden');
+        }
 
-            // Parse names for Remita
+        // --- PAYSTACK FLOW ---
+        function payWithPaystack() {
+            closeGatewayModal();
+            const amountInKobo = FEE_AMOUNT * 100;
+            
+            let handler = PaystackPop.setup({
+                // 🛑 REPLACE THIS WITH YOUR PAYSTACK PUBLIC KEY
+                key: 'pk_test_f681256d9c1bc10964457c68fb2381e6451ed2b9', 
+                email: dynamicShopDetails.email,
+                amount: amountInKobo,
+                currency: 'NGN',
+                ref: "CTM-VERIFY-" + Date.now(),
+                callback: function(response) {
+                    document.getElementById('processing-overlay').classList.remove('hidden');
+                    verifyPaymentOnBackend(response.reference, 'paystack');
+                },
+                onClose: function() {
+                    console.log('Paystack window closed.');
+                }
+            });
+            handler.openIframe();
+        }
+
+        // --- REMITA FLOW ---
+        function payWithRemita() {
+            closeGatewayModal();
+            
+            const transactionId = "CTM-VERIFY-" + Date.now(); 
             const names = dynamicShopDetails.merchantName.split(' ');
             const firstName = names[0];
             const lastName = names.slice(1).join(' ') || "Merchant";
@@ -244,37 +330,24 @@
                 firstName: firstName,
                 lastName: lastName,
                 email: dynamicShopDetails.email,
-                amount: amount,
+                amount: FEE_AMOUNT,
                 narration: "CT-Merchant Physical Verification",
                 transactionId: transactionId,
                 
                 onSuccess: function (response) {
-                    console.log('Payment successful locally: ', response);
-                    
-                    const btn = document.getElementById('pay-btn');
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
-                    
-                    document.getElementById('status-msg').innerHTML = 'Verifying payment securely with server... Please wait.';
-                    
-                    verifyPaymentOnBackend(response.transactionId);
+                    document.getElementById('processing-overlay').classList.remove('hidden');
+                    verifyPaymentOnBackend(response.transactionId, 'remita');
                 },
-                
-                onError: function (response) {
-                    console.log('Payment failed: ', response);
-                    alert("Payment failed or was cancelled.");
-                },
-                onClose: function () {
-                    console.log("Widget closed by user");
-                }
+                onError: function (response) { alert("Payment failed or cancelled."); },
+                onClose: function () { console.log("Remita window closed"); }
             });
 
             paymentEngine.showPaymentWidget();
         }
 
-        async function verifyPaymentOnBackend(txId) {
+        // --- SECURE BACKEND VERIFICATION ---
+        async function verifyPaymentOnBackend(txId, gateway) {
             try {
-                // Call our Secure Edge Function
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-remita`, {
                     method: 'POST',
                     headers: {
@@ -286,7 +359,8 @@
                         transactionId: txId,
                         merchantName: dynamicShopDetails.merchantName,
                         shopName: dynamicShopDetails.shopName,
-                        cityName: dynamicShopDetails.cityName
+                        cityName: dynamicShopDetails.cityName,
+                        gateway: gateway // Tell the edge function which API to hit!
                     })
                 });
 
@@ -294,20 +368,20 @@
 
                 if (!response.ok) throw new Error(result.error || "Verification failed");
 
-                document.getElementById('pay-btn').style.display = 'none';
-                document.getElementById('status-msg').innerHTML = '✅ Payment Verified! Generating receipt...';
+                document.getElementById('processing-overlay').classList.add('hidden');
                 
-                // Redirect back to dashboard after 3 seconds
+                document.getElementById('pay-btn').style.display = 'none';
+                document.getElementById('status-msg').innerHTML = `✅ Payment Verified via ${gateway.toUpperCase()}! Generating receipt...`;
+                
                 setTimeout(() => {
                     window.location.href = "merchant-dashboard.html";
                 }, 3000);
 
             } catch (error) {
                 console.error(error);
-                document.getElementById('status-msg').innerHTML = "⚠️ " + error.message + "<br><small>If you were debited, contact support with your transaction ID.</small>";
+                document.getElementById('processing-overlay').classList.add('hidden');
+                document.getElementById('status-msg').innerHTML = "⚠️ " + error.message;
                 document.getElementById('status-msg').style.color = "#DC2626";
-                document.getElementById('pay-btn').disabled = false;
-                document.getElementById('pay-btn').innerHTML = 'Try Verification Again';
             }
         }
     </script>
