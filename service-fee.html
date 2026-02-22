@@ -242,11 +242,11 @@
             <h2 class="gateway-title">Select Payment Method</h2>
             <p class="gateway-subtitle">Choose how you want to securely pay for your subscription.</p>
 
-            <button class="btn-gateway" onclick="payWithPaystack()">
+            <button id="btn-paystack" class="btn-gateway">
                 <i class="fa-solid fa-credit-card paystack-color"></i> Pay with Paystack
             </button>
             
-            <button class="btn-gateway" onclick="payWithRemita()">
+            <button id="btn-remita" class="btn-gateway">
                 <i class="fa-solid fa-building-columns remita-color"></i> Pay with Remita
             </button>
 
@@ -262,7 +262,7 @@
     </div>
 
     <script>
-       const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+        const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -419,7 +419,7 @@
                 firstName: firstName,
                 lastName: "",
                 email: userEmail,
-                amount: Number(amount), // Ensure it is a number
+                amount: Number(amount),
                 narration: `CT-Merchant ${planType.replace('_', ' ')}`,
                 transactionId: transactionId,
                 
@@ -467,9 +467,6 @@
                 alert("⚠️ Error: " + error.message);
             }
         }
-       
     </script>
 </body>
 </html>
-
-
