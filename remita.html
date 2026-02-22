@@ -3,75 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remita Payment | CT-Merchant</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Verification Payment | CT-Merchant</title>
     
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- REMITA INLINE SCRIPT (TEST ENVIRONMENT) -->
+    <!-- Swap 'remitademo.net' for 'login.remita.net' when going live -->
     <script src="https://remitademo.net/payment/v1/remita-pay-inline.bundle.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F3F4F6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .checkout-card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
-        .price { font-size: 2.5rem; font-weight: 800; color: #0F172A; margin: 10px 0; }
-        .btn-pay { background: #059669; color: white; border: none; padding: 16px; width: 100%; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.2s; margin-top: 20px; }
-        .btn-pay:hover { background: #047857; }
-        .btn-pay:disabled { background: #9CA3AF; cursor: not-allowed; }
-        #status-msg { margin-top: 15px; font-size: 0.9rem; font-weight: 600; color: #059669; }
+        :root {
+            --color-purple: #2E1065;
+            --color-amber: #D97706;
+            --color-bg: #F8FAFC;
+            --color-text: #1E293B;
+            --color-text-muted: #64748B;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        body { 
+            background-color: var(--color-bg); 
+            color: var(--color-text); 
+            min-height: 100vh;
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .checkout-card {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            border: 1px solid #E2E8F0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Top decorative line */
+        .checkout-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 6px;
+            background: var(--color-amber);
+        }
+
+        .icon-circle {
+            width: 64px; height: 64px;
+            background: #FEF3C7;
+            color: var(--color-amber);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+            margin: 0 auto 20px auto;
+        }
+
+        .title { font-size: 1.3rem; font-weight: 800; color: var(--color-purple); margin-bottom: 8px; }
+        .subtitle { color: var(--color-text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 24px; }
+        
+        .price-box {
+            background: #F1F5F9;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+        .price { font-size: 2.5rem; font-weight: 800; color: #0F172A; }
+        .price-label { font-size: 0.85rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;}
+
+        .details-list {
+            text-align: left;
+            margin-bottom: 30px;
+            background: white;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .detail-item {
+            display: flex; justify-content: space-between;
+            font-size: 0.9rem; margin-bottom: 12px;
+        }
+        .detail-item:last-child { margin-bottom: 0; }
+        .detail-label { color: var(--color-text-muted); font-weight: 600; }
+        .detail-value { font-weight: 700; color: #0F172A; text-align: right; }
+
+        .btn-pay { 
+            background: var(--color-purple); 
+            color: white; 
+            border: none; 
+            padding: 16px; 
+            width: 100%; 
+            border-radius: 12px; 
+            font-size: 1.05rem; 
+            font-weight: 800; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-pay:hover { background: #1E1B4B; transform: translateY(-2px); }
+        .btn-pay:disabled { background: #9CA3AF; cursor: not-allowed; transform: none; }
+        
+        .btn-cancel {
+            background: none; border: none; color: var(--color-text-muted);
+            font-weight: 600; font-size: 0.95rem; margin-top: 16px; cursor: pointer;
+        }
+        .btn-cancel:hover { color: #0F172A; text-decoration: underline; }
+
+        #status-msg { margin-top: 16px; font-size: 0.95rem; font-weight: 700; color: #059669; }
+        
+        .spinner { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: var(--color-purple); border-radius: 50%; animation: spin 1s linear infinite; margin: 40px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="checkout-card">
-        <h2 style="margin-top: 0; color: #475569; font-size: 1.2rem;">Physical Verification Fee</h2>
-        <div class="price">₦5,000</div>
-        <p style="color: #64748b; font-size: 0.95rem;">One-time payment to dispatch an agent to verify your shop.</p>
+    <!-- Loading State -->
+    <div id="loader" class="spinner"></div>
 
-        <button id="pay-btn" class="btn-pay" onclick="makePayment()">Pay with Remita</button>
+    <!-- Main Checkout Card -->
+    <div id="checkout-content" class="checkout-card hidden">
+        <div class="icon-circle">
+            <i class="fa-solid fa-building-circle-check"></i>
+        </div>
+        
+        <h2 class="title">Physical Verification</h2>
+        <p class="subtitle">A one-time fee to dispatch an agent to verify your physical shop location.</p>
+
+        <div class="price-box">
+            <div class="price-label">Total Amount</div>
+            <div class="price">₦5,000</div>
+        </div>
+
+        <div class="details-list">
+            <div class="detail-item">
+                <span class="detail-label">Merchant</span>
+                <span id="lbl-merchant" class="detail-value">Loading...</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Shop Name</span>
+                <span id="lbl-shop" class="detail-value">Loading...</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">City</span>
+                <span id="lbl-city" class="detail-value">Loading...</span>
+            </div>
+        </div>
+
+        <button id="pay-btn" class="btn-pay" onclick="makePayment()">
+            Pay Securely <i class="fa-solid fa-lock"></i>
+        </button>
         <div id="status-msg"></div>
+
+        <button class="btn-cancel" onclick="window.location.href='merchant-dashboard.html'">Cancel and Return</button>
     </div>
 
     <script>
-        // Setup Supabase (Replace with your actual keys)
+        // Setup Supabase
         const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Dummy data for testing. In production, pull this from local storage or URL params
-        const shopDetails = {
-            merchantName: "Alex Doe",
-            shopName: "Alex Electronics",
-            cityName: "Kaduna",
-            email: "merchant@example.com"
+        let dynamicShopDetails = null;
+        let currentUserSession = null;
+
+        window.onload = async () => {
+            const { data: { session } } = await client.auth.getSession();
+            if (!session) { window.location.href = "login.html"; return; }
+            currentUserSession = session;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const shopId = urlParams.get('shop_id');
+
+            if (!shopId) {
+                alert("Shop ID is missing.");
+                window.location.href = "merchant-dashboard.html";
+                return;
+            }
+
+            await fetchDetails(shopId, session.user.id);
         };
 
+        async function fetchDetails(shopId, userId) {
+            try {
+                // Fetch Shop details
+                const { data: shop, error: shopErr } = await client.from('shops').select('*').eq('id', shopId).single();
+                if (shopErr || !shop) throw new Error("Shop not found");
+
+                // Fetch User Profile details (for name and city)
+                const { data: profile, error: profErr } = await client.from('profiles').select('*, cities(name)').eq('id', userId).single();
+                if (profErr || !profile) throw new Error("Profile not found");
+
+                // Check if already approved
+                if (shop.status === 'approved') {
+                    alert("Your shop is already verified and approved!");
+                    window.location.href = "merchant-dashboard.html";
+                    return;
+                }
+
+                dynamicShopDetails = {
+                    merchantName: profile.full_name || "Merchant",
+                    shopName: shop.name,
+                    cityName: profile.cities?.name || "Unknown City",
+                    email: currentUserSession.user.email
+                };
+
+                // Populate UI
+                document.getElementById('lbl-merchant').textContent = dynamicShopDetails.merchantName;
+                document.getElementById('lbl-shop').textContent = dynamicShopDetails.shopName;
+                document.getElementById('lbl-city').textContent = dynamicShopDetails.cityName;
+
+                // Show Content
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('checkout-content').classList.remove('hidden');
+
+            } catch (err) {
+                console.error(err);
+                alert("Error loading payment details: " + err.message);
+                window.location.href = "merchant-dashboard.html";
+            }
+        }
+
         function makePayment() {
+            if (!dynamicShopDetails) return;
+
             const amount = 5000;
             const transactionId = "CTM-" + Date.now(); 
 
+            // Parse names for Remita
+            const names = dynamicShopDetails.merchantName.split(' ');
+            const firstName = names[0];
+            const lastName = names.slice(1).join(' ') || "Merchant";
+
             var paymentEngine = RmPaymentEngine.init({
                 key: "QzAwMDAyNzEyNTl8MTEwNjE4Njc3NzR8M2RjY2NlYTg4YzhjNWQzMTc4ZTA1NTZkYmViYzhmOTQzM2I0ZTU2Y2Q5Y2E4OWM1ZGI0MjI1YTUzYTNhZjJhMzk1YjcwZWQ3N2ZhMWQwZWM4M2IwZDMyZDUxZTZhNTBiZjZiYTgxMGI1MGEyZTIwMWQxZDRhZDFhMTU4MjZhNTc=", 
-                customerId: shopDetails.email,
-                firstName: shopDetails.merchantName.split(' ')[0],
-                lastName: shopDetails.merchantName.split(' ')[1] || "",
-                email: shopDetails.email,
+                customerId: dynamicShopDetails.email,
+                firstName: firstName,
+                lastName: lastName,
+                email: dynamicShopDetails.email,
                 amount: amount,
                 narration: "CT-Merchant Physical Verification",
                 transactionId: transactionId,
                 
                 onSuccess: function (response) {
-                    console.log('Payment successful: ', response);
-                    document.getElementById('pay-btn').style.display = 'none';
-                    document.getElementById('status-msg').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying payment securely...';
+                    console.log('Payment successful locally: ', response);
+                    
+                    const btn = document.getElementById('pay-btn');
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+                    
+                    document.getElementById('status-msg').innerHTML = 'Verifying payment securely with server... Please wait.';
                     
                     verifyPaymentOnBackend(response.transactionId);
                 },
                 
                 onError: function (response) {
                     console.log('Payment failed: ', response);
-                    alert("Payment failed. Please try again.");
+                    alert("Payment failed or was cancelled.");
                 },
                 onClose: function () {
-                    console.log("Widget closed");
+                    console.log("Widget closed by user");
                 }
             });
 
@@ -80,22 +278,19 @@
 
         async function verifyPaymentOnBackend(txId) {
             try {
-                const { data: { session } } = await client.auth.getSession();
-                if (!session) throw new Error("You must be logged in.");
-
-                // Call our Edge Function and pass the shop details!
+                // Call our Secure Edge Function
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-remita`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`,
+                        'Authorization': `Bearer ${currentUserSession.access_token}`,
                         'apikey': SUPABASE_ANON_KEY 
                     },
                     body: JSON.stringify({ 
                         transactionId: txId,
-                        merchantName: shopDetails.merchantName,
-                        shopName: shopDetails.shopName,
-                        cityName: shopDetails.cityName
+                        merchantName: dynamicShopDetails.merchantName,
+                        shopName: dynamicShopDetails.shopName,
+                        cityName: dynamicShopDetails.cityName
                     })
                 });
 
@@ -103,17 +298,20 @@
 
                 if (!response.ok) throw new Error(result.error || "Verification failed");
 
-                document.getElementById('status-msg').innerHTML = "✅ Payment verified! Receipt generated.";
-                document.getElementById('status-msg').style.color = "#059669";
+                document.getElementById('pay-btn').style.display = 'none';
+                document.getElementById('status-msg').innerHTML = '✅ Payment Verified! Generating receipt...';
                 
-                // Optional: Redirect to a success page after 2 seconds
-                // setTimeout(() => window.location.href = "merchant-dashboard.html", 2000);
+                // Redirect back to dashboard after 3 seconds
+                setTimeout(() => {
+                    window.location.href = "merchant-dashboard.html";
+                }, 3000);
 
             } catch (error) {
                 console.error(error);
-                document.getElementById('status-msg').innerHTML = "⚠️ " + error.message;
+                document.getElementById('status-msg').innerHTML = "⚠️ " + error.message + "<br><small>If you were debited, contact support with your transaction ID.</small>";
                 document.getElementById('status-msg').style.color = "#DC2626";
-                document.getElementById('pay-btn').style.display = 'block';
+                document.getElementById('pay-btn').disabled = false;
+                document.getElementById('pay-btn').innerHTML = 'Try Verification Again';
             }
         }
     </script>
