@@ -8,7 +8,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
+    <!-- Both Payment Gateway Scripts -->
     <script src="https://remitademo.net/payment/v1/remita-pay-inline.bundle.js"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -75,9 +78,7 @@
         .badge-active { background: #DCFCE7; color: #16A34A; }
         .badge-expired { background: #FEE2E2; color: #DC2626; }
 
-        .time-box {
-            text-align: right;
-        }
+        .time-box { text-align: right; }
         .days-left { font-size: 2.5rem; font-weight: 800; color: #0F172A; line-height: 1; }
         .expiry-date { color: var(--color-text-muted); font-size: 0.9rem; font-weight: 600; margin-top: 4px; }
 
@@ -127,22 +128,43 @@
             font-weight: 800; font-size: 1rem; cursor: pointer;
             transition: 0.2s;
         }
-        
-        /* Hover effect only works if NOT disabled */
         .price-card:hover .btn-subscribe:not(:disabled) { background: var(--color-purple); color: white; }
-        
-        /* Disabled State styling */
-        .btn-subscribe:disabled {
-            background: #E2E8F0 !important;
-            color: #94A3B8 !important;
-            cursor: not-allowed;
-            transform: none !important;
-        }
+        .btn-subscribe:disabled { background: #E2E8F0 !important; color: #94A3B8 !important; cursor: not-allowed; transform: none !important; }
 
-        .overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; color: white; }
+        /* --- GATEWAY MODAL --- */
+        .overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .hidden { display: none !important; }
+        
+        .gateway-modal {
+            background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .gateway-title { font-size: 1.3rem; font-weight: 800; color: #0F172A; margin-bottom: 8px; }
+        .gateway-subtitle { color: var(--color-text-muted); font-size: 0.95rem; margin-bottom: 24px; }
+
+        .btn-gateway {
+            width: 100%; padding: 16px; border: 2px solid #E2E8F0; border-radius: 12px; background: white;
+            font-size: 1.05rem; font-weight: 700; color: #0F172A; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px;
+        }
+        .btn-gateway:hover { border-color: var(--color-purple); background: #F8FAFC; transform: translateY(-2px); }
+        
+        .paystack-color { color: #0BA4DB; font-size: 1.2rem; }
+        .remita-color { color: #E15B26; font-size: 1.2rem; }
+
+        .btn-cancel-modal {
+            background: none; border: none; color: var(--color-text-muted);
+            font-weight: 600; font-size: 0.95rem; margin-top: 10px; cursor: pointer;
+        }
+        .btn-cancel-modal:hover { color: #0F172A; text-decoration: underline; }
+
+        /* Processing Spinner Overlay */
+        .processing-overlay { flex-direction: column; color: white; }
         .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .hidden { display: none !important; }
 
         @media (max-width: 600px) {
             .pricing-grid { grid-template-columns: 1fr; }
@@ -191,7 +213,7 @@
                     <li><i class="fa-solid fa-check" style="color:#16A34A; margin-right:8px;"></i> 6 Months Validity</li>
                 </ul>
 
-                <button id="btn-6mo" class="btn-subscribe" onclick="initiateSubscription('6_Months', 6000)">Subscribe 6 Months</button>
+                <button id="btn-6mo" class="btn-subscribe" onclick="openGatewayModal('6_Months', 6000)">Subscribe 6 Months</button>
             </div>
 
             <!-- 1 YEAR PLAN -->
@@ -207,15 +229,33 @@
                     <li><i class="fa-solid fa-check" style="color:#16A34A; margin-right:8px;"></i> <strong>1 Full Year Validity</strong></li>
                 </ul>
 
-                <button id="btn-1yr" class="btn-subscribe" style="background: var(--color-purple); color: white;" onclick="initiateSubscription('1_Year', 10000)">Subscribe 1 Year</button>
+                <button id="btn-1yr" class="btn-subscribe" style="background: var(--color-purple); color: white;" onclick="openGatewayModal('1_Year', 10000)">Subscribe 1 Year</button>
             </div>
 
         </div>
 
     </div>
 
+    <!-- GATEWAY SELECTION MODAL -->
+    <div id="gateway-modal" class="overlay hidden">
+        <div class="gateway-modal">
+            <h2 class="gateway-title">Select Payment Method</h2>
+            <p class="gateway-subtitle">Choose how you want to securely pay for your subscription.</p>
+
+            <button class="btn-gateway" onclick="payWithPaystack()">
+                <i class="fa-solid fa-credit-card paystack-color"></i> Pay with Paystack
+            </button>
+            
+            <button class="btn-gateway" onclick="payWithRemita()">
+                <i class="fa-solid fa-building-columns remita-color"></i> Pay with Remita
+            </button>
+
+            <button class="btn-cancel-modal" onclick="closeGatewayModal()">Cancel</button>
+        </div>
+    </div>
+
     <!-- Processing Overlay -->
-    <div id="processing-overlay" class="overlay hidden">
+    <div id="processing-overlay" class="overlay processing-overlay hidden">
         <div class="spinner"></div>
         <h2 style="margin-bottom: 10px;">Processing Securely...</h2>
         <p>Please do not close this window.</p>
@@ -230,6 +270,10 @@
         let userEmail = null;
         let userToken = null;
         let firstName = "Merchant";
+
+        // Variables to hold the plan they clicked while they choose a gateway
+        let pendingPlan = null;
+        let pendingAmount = null;
 
         window.onload = async () => {
             const { data: { session } } = await client.auth.getSession();
@@ -247,7 +291,6 @@
                 return;
             }
 
-            // Fetch Name
             const { data: profile } = await client.from('profiles').select('full_name').eq('id', session.user.id).single();
             if (profile && profile.full_name) firstName = profile.full_name.split(' ')[0];
 
@@ -275,7 +318,6 @@
             const endDate = new Date(shop.subscription_end_date);
             const today = new Date();
             
-            // Calculate remaining days
             const timeDiff = endDate.getTime() - today.getTime();
             const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
@@ -283,17 +325,14 @@
             document.getElementById('ui-expiry').textContent = `Valid Until: ${endDate.toLocaleDateString(undefined, options)}`;
 
             if (daysLeft > 0) {
-                // --- ACTIVE SUBSCRIPTION ---
                 document.getElementById('ui-days').textContent = `${daysLeft} Days Left`;
                 document.getElementById('ui-days').style.color = '#0F172A';
                 badge.className = 'badge badge-active';
                 badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> ACTIVE';
 
-                // Deactivate both buttons initially
                 btn6mo.disabled = true;
                 btn1yr.disabled = true;
 
-                // Highlight specifically what plan they are on
                 if (currentPlan === '6_Months') {
                     btn6mo.innerHTML = '<i class="fa-solid fa-check"></i> Active Plan';
                     btn1yr.textContent = 'Deactivated';
@@ -310,28 +349,62 @@
                     card1yr.style.borderColor = '#E2E8F0';
                     card6mo.style.borderColor = '#E2E8F0';
                 }
-
             } else {
-                // --- EXPIRED OR NEW ---
                 document.getElementById('ui-days').textContent = `0 Days Left`;
                 document.getElementById('ui-days').style.color = '#DC2626';
                 badge.className = 'badge badge-expired';
                 badge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> EXPIRED';
 
-                // Enable both buttons
                 btn6mo.disabled = false;
                 btn6mo.textContent = "Subscribe 6 Months";
-                
                 btn1yr.disabled = false;
                 btn1yr.textContent = "Subscribe 1 Year";
-                
-                // Reset styling
                 card1yr.style.borderColor = 'var(--color-purple)';
                 card6mo.style.borderColor = '#E2E8F0';
             }
         }
 
-        function initiateSubscription(planType, amount) {
+        // --- GATEWAY UI LOGIC ---
+        function openGatewayModal(planType, amount) {
+            pendingPlan = planType;
+            pendingAmount = amount;
+            document.getElementById('gateway-modal').classList.remove('hidden');
+        }
+
+        function closeGatewayModal() {
+            document.getElementById('gateway-modal').classList.add('hidden');
+            pendingPlan = null;
+            pendingAmount = null;
+        }
+
+        // --- PAYSTACK FLOW ---
+        function payWithPaystack() {
+            closeGatewayModal();
+            
+            // NOTE: Paystack uses KOBO, so multiply amount by 100
+            const amountInKobo = pendingAmount * 100;
+            
+            let handler = PaystackPop.setup({
+                key: 'pk_test_dummypaystackkey1234567890', // Replace with your Paystack Public Key
+                email: userEmail,
+                amount: amountInKobo,
+                currency: 'NGN',
+                ref: "CTM-SUB-" + Date.now(),
+                callback: function(response) {
+                    document.getElementById('processing-overlay').classList.remove('hidden');
+                    verifySubscription(response.reference, pendingPlan, pendingAmount, 'paystack');
+                },
+                onClose: function() {
+                    console.log('Paystack window closed.');
+                }
+            });
+            handler.openIframe();
+        }
+
+        // --- REMITA FLOW ---
+        function payWithRemita() {
+            closeGatewayModal();
+            
             const transactionId = "CTM-SUB-" + Date.now(); 
 
             var paymentEngine = RmPaymentEngine.init({
@@ -340,27 +413,23 @@
                 firstName: firstName,
                 lastName: "",
                 email: userEmail,
-                amount: amount,
-                narration: `CT-Merchant ${planType.replace('_', ' ')} Subscription`,
+                amount: pendingAmount,
+                narration: `CT-Merchant ${pendingPlan.replace('_', ' ')}`,
                 transactionId: transactionId,
                 
                 onSuccess: function (response) {
                     document.getElementById('processing-overlay').classList.remove('hidden');
-                    verifySubscription(response.transactionId, planType, amount);
+                    verifySubscription(response.transactionId, pendingPlan, pendingAmount, 'remita');
                 },
-                
-                onError: function (response) {
-                    alert("Payment failed or cancelled.");
-                },
-                onClose: function () {
-                    console.log("Widget closed by user");
-                }
+                onError: function (response) { alert("Payment failed."); },
+                onClose: function () { console.log("Remita window closed."); }
             });
 
             paymentEngine.showPaymentWidget();
         }
 
-        async function verifySubscription(txId, plan, amount) {
+        // --- SECURE BACKEND VERIFICATION ---
+        async function verifySubscription(txId, plan, amount, gateway) {
             try {
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-service-fee`, {
                     method: 'POST',
@@ -373,7 +442,8 @@
                         transactionId: txId,
                         shopId: shopId,
                         plan: plan,
-                        amount: amount
+                        amount: amount,
+                        gateway: gateway // Tells the backend which API to verify against!
                     })
                 });
 
@@ -382,9 +452,8 @@
                 if (!response.ok) throw new Error(result.error || "Verification failed");
 
                 document.getElementById('processing-overlay').classList.add('hidden');
-                alert("✅ Subscription Successful! Your plan has been extended.");
+                alert(`✅ Subscription Successful via ${gateway.toUpperCase()}!`);
                 
-                // Re-run the load function so it highlights the newly bought plan!
                 loadSubscriptionStatus();
 
             } catch (error) {
