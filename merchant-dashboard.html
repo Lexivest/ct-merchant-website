@@ -97,6 +97,8 @@
         .card-red .icon-box { background: #FEE2E2; color: #DC2626; }
         .card-indigo .icon-box { background: #E0E7FF; color: #4F46E5; }
         .card-teal .icon-box { background: #CCFBF1; color: #0D9488; }
+        .card-amber .icon-box { background: #FEF3C7; color: #D97706; } /* New Amber for Verification */
+        .card-rose .icon-box { background: #FFE4E6; color: #E11D48; }  /* New Rose for Service Fee */
 
         .spinner { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: var(--color-purple); border-radius: 50%; animation: spin 1s linear infinite; margin: 100px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -123,6 +125,11 @@
             <div class="welcome-section">
                 <div id="shop-name" class="shop-title">Loading...</div>
                 <div class="shop-subtitle">Control your inventory and shop presence.</div>
+                
+                <!-- Notice for pending shops -->
+                <div id="pending-notice" class="hidden" style="margin-top: 10px; background: #FEF3C7; border-left: 4px solid #D97706; padding: 12px; border-radius: 8px; font-size: 0.9rem; color: #92400E;">
+                    <i class="fa-solid fa-circle-exclamation"></i> Your shop is pending. Please pay the Verification Fee to get approved.
+                </div>
             </div>
 
             <!-- Grid -->
@@ -170,6 +177,18 @@
                     <div class="card-title">Analytics</div>
                 </div>
 
+                <!-- 8. Physical Verification Fee (NEW) -->
+                <div onclick="navTo('remita.html')" class="dash-card card-amber">
+                    <div class="icon-box"><i class="fa-solid fa-building-circle-check"></i></div>
+                    <div class="card-title">Verification Fee</div>
+                </div>
+
+                <!-- 9. Service Fee (NEW) -->
+                <div onclick="navTo('service-fee.html')" class="dash-card card-rose">
+                    <div class="icon-box"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                    <div class="card-title">Service Fee</div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -203,14 +222,21 @@
                     return;
                 }
 
-                if (data.status !== 'approved') {
-                    alert("Your shop is not approved yet.");
+                // CHANGED: We now allow 'pending' shops so they can pay the fee!
+                if (data.status === 'rejected') {
+                    alert("Your shop application was rejected. Please contact support or re-register.");
                     window.location.href = "user-dashboard.html";
                     return;
                 }
 
                 myShop = data;
                 document.getElementById('shop-name').textContent = `Manage ${data.name}`;
+                
+                // Show a notice if they still need to pay
+                if (data.status === 'pending') {
+                    document.getElementById('pending-notice').classList.remove('hidden');
+                }
+
                 document.getElementById('loader').classList.add('hidden');
                 document.getElementById('content').classList.remove('hidden');
 
