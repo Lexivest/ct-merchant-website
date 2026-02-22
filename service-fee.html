@@ -1,92 +1,344 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
-
-  try {
-    const { transactionId, shopId, plan, amount } = await req.json()
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Fee Subscription | CT-Merchant</title>
     
-    if (!transactionId || !shopId || !plan || !amount) {
-        throw new Error("Missing payment metadata.");
-    }
-
-    const authHeader = req.headers.get('Authorization')
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    if (!authHeader || !supabaseUrl || !serviceRoleKey) throw new Error("Missing auth/config")
-    
-    const adminClient = createClient(supabaseUrl, serviceRoleKey)
-    const authClient = createClient(supabaseUrl, serviceRoleKey, { global: { headers: { Authorization: authHeader } } })
-    const { data: { user } } = await authClient.auth.getUser()
-    if (!user) throw new Error("Unauthorized")
+    <script src="https://remitademo.net/payment/v1/remita-pay-inline.bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    // ==========================================
-    // 🚧 DEVELOPER TEST BYPASS 🚧
-    // ==========================================
-    let isSuccess = false;
-    if (transactionId.startsWith("DEV-TEST")) {
-        isSuccess = true; // Bypass Remita for developer testing
-    } else {
-        // Real Remita Verification
-        const merchantId = Deno.env.get('REMITA_MERCHANT_ID') || "2547916"; 
-        const secretKey = Deno.env.get('REMITA_SECRET_KEY') || "1946"; 
-        const hashString = merchantId + transactionId + secretKey;
-        const encoder = new TextEncoder();
-        const data = encoder.encode(hashString);
-        const hashBuffer = await crypto.subtle.digest("SHA-512", data);
-        const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-        const remitaRes = await fetch(`https://remitademo.net/payment/v1/payment/query/${transactionId}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json', 'publicKey': Deno.env.get('REMITA_PUBLIC_KEY') || "", 'TXN_HASH': hashHex }
-        });
-        const remitaData = await remitaRes.json();
-        if (remitaData.status === "00" || remitaData.status === "01") isSuccess = true;
-    }
-    // ==========================================
-
-    if (isSuccess) {
-        // 1. Get current shop expiry date
-        const { data: shop } = await adminClient.from('shops').select('subscription_end_date').eq('id', shopId).single();
-        
-        // 2. Calculate new Expiry Date safely
-        let newEndDate = new Date();
-        if (shop?.subscription_end_date) {
-            const existingEnd = new Date(shop.subscription_end_date);
-            if (existingEnd > newEndDate) newEndDate = existingEnd; // Extend existing time
+    <style>
+        :root {
+            --color-purple: #2E1065;
+            --color-rose: #E11D48;
+            --color-bg: #F8FAFC;
+            --color-text: #1E293B;
+            --color-text-muted: #64748B;
         }
 
-        if (plan === '6_Months') newEndDate.setMonth(newEndDate.getMonth() + 6);
-        else if (plan === '1_Year') newEndDate.setFullYear(newEndDate.getFullYear() + 1);
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
 
-        // 3. Update Shop
-        await adminClient.from('shops').update({ 
-            subscription_end_date: newEndDate.toISOString(),
-            subscription_plan: plan
-        }).eq('id', shopId);
+        body { 
+            background-color: var(--color-bg); 
+            color: var(--color-text); 
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-        // 4. Save Receipt
-        await adminClient.from('service_fee_payments').insert({
-            merchant_id: user.id,
-            shop_id: shopId,
-            plan: plan,
-            amount: amount,
-            payment_ref: transactionId,
-            status: 'success'
-        });
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
 
-        return new Response(JSON.stringify({ success: true, newEndDate: newEndDate.toISOString() }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-    } else {
-        throw new Error("Payment verification failed at Remita.");
-    }
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-  }
-})
+        /* --- HEADER --- */
+        .app-bar {
+            display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+            background: var(--color-purple); color: white;
+            padding: 16px; border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.2); border: none;
+            width: 40px; height: 40px; border-radius: 10px;
+            color: white; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; font-size: 1.1rem;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.3); }
+        .page-title { font-size: 1.25rem; font-weight: 700; }
+
+        /* --- STATUS CARD --- */
+        .status-card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .status-info h3 { font-size: 1.1rem; color: var(--color-text-muted); margin-bottom: 4px; }
+        .status-info h2 { font-size: 1.8rem; font-weight: 800; color: var(--color-purple); }
+        
+        .badge {
+            padding: 8px 16px; border-radius: 50px; font-weight: 700; font-size: 0.9rem;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .badge-active { background: #DCFCE7; color: #16A34A; }
+        .badge-expired { background: #FEE2E2; color: #DC2626; }
+
+        .time-box {
+            text-align: right;
+        }
+        .days-left { font-size: 2.5rem; font-weight: 800; color: #0F172A; line-height: 1; }
+        .expiry-date { color: var(--color-text-muted); font-size: 0.9rem; font-weight: 600; margin-top: 4px; }
+
+        /* --- PRICING GRID --- */
+        .pricing-title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            color: #0F172A;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .price-card {
+            background: white;
+            border: 2px solid #E2E8F0;
+            border-radius: 20px;
+            padding: 30px 24px;
+            text-align: center;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .price-card:hover { border-color: var(--color-purple); transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+
+        .popular-tag {
+            position: absolute; top: 12px; right: -30px;
+            background: var(--color-rose); color: white;
+            font-size: 0.75rem; font-weight: 800;
+            padding: 4px 30px; transform: rotate(45deg);
+            letter-spacing: 1px;
+        }
+
+        .plan-name { font-size: 1.2rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 12px; }
+        .plan-price { font-size: 2.5rem; font-weight: 800; color: #0F172A; margin-bottom: 8px; }
+        .plan-month { color: #16A34A; font-weight: 700; font-size: 0.9rem; margin-bottom: 24px; }
+
+        .btn-subscribe {
+            width: 100%; padding: 14px;
+            background: #F1F5F9; color: var(--color-text);
+            border: none; border-radius: 12px;
+            font-weight: 800; font-size: 1rem; cursor: pointer;
+            transition: 0.2s;
+        }
+        .price-card:hover .btn-subscribe { background: var(--color-purple); color: white; }
+
+        .overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; color: white; }
+        .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+
+        @media (max-width: 600px) {
+            .pricing-grid { grid-template-columns: 1fr; }
+            .status-card { flex-direction: column; align-items: flex-start; text-align: left; }
+            .time-box { text-align: left; margin-top: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div class="app-bar">
+            <button onclick="window.location.href='merchant-dashboard.html'" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="page-title">Service Fee Portal</div>
+        </div>
+
+        <!-- Dynamic Status Card -->
+        <div class="status-card" id="status-card">
+            <div class="status-info">
+                <h3>Current Plan</h3>
+                <h2 id="ui-plan-name">Loading...</h2>
+                <div id="ui-badge" class="badge"><i class="fa-solid fa-spinner fa-spin"></i> Checking...</div>
+            </div>
+            <div class="time-box">
+                <div id="ui-days" class="days-left">-</div>
+                <div id="ui-expiry" class="expiry-date">Valid Until: -</div>
+            </div>
+        </div>
+
+        <h2 class="pricing-title">Extend Your Subscription</h2>
+
+        <div class="pricing-grid">
+            
+            <!-- 6 MONTHS PLAN -->
+            <div class="price-card">
+                <div class="plan-name">Standard Tier</div>
+                <div class="plan-price">₦6,000</div>
+                <div class="plan-month">Works out to ₦1,000 / month</div>
+                
+                <ul style="list-style:none; text-align:left; margin-bottom: 24px; font-size: 0.95rem; color: var(--color-text-muted); line-height: 1.8;">
+                    <li><i class="fa-solid fa-check" style="color:#16A34A; margin-right:8px;"></i> Continuous AI Indexing</li>
+                    <li><i class="fa-solid fa-check" style="color:#16A34A; margin-right:8px;"></i> Unlimited Product Updates</li>
+                    <li><i class="fa-solid fa-check" style="color:#16A34A; margin-right:8px;"></i> 6 Months Validity</li>
+                </ul>
+
+                <button class="btn-subscribe" onclick="initiateSubscription('6_Months', 6000)">Subscribe 6 Months</button>
+            </div>
+
+            <!-- 1 YEAR PLAN -->
+            <div class="price-card" style="border-color: var(--color-purple);">
+                <div class="popular-tag">BEST VALUE</div>
+                <div class="plan-name" style="color: var(--color-purple);">Professional Tier</div>
+                <div class="plan-price">₦10,000</div>
+                <div class="plan-month">Works out to ₦833 / month</div>
+                
+                <ul style="list-style:none; text-align:left; margin-bottom: 24px; font-size: 0.95rem; color: var(--color-text-muted); line-height: 1.8;">
+                    <li><i class="fa-solid fa-check" style="color:#16A34A; margin-right:8px;"></i> Continuous AI Indexing</li>
+                    <li><i class="fa-solid fa-check" style="color:#16A34A; margin-right:8px;"></i> Unlimited Product Updates</li>
+                    <li><i class="fa-solid fa-check" style="color:#16A34A; margin-right:8px;"></i> <strong>1 Full Year Validity</strong></li>
+                </ul>
+
+                <button class="btn-subscribe" style="background: var(--color-purple); color: white;" onclick="initiateSubscription('1_Year', 10000)">Subscribe 1 Year</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Processing Overlay -->
+    <div id="processing-overlay" class="overlay hidden">
+        <div class="spinner"></div>
+        <h2 style="margin-bottom: 10px;">Processing Securely...</h2>
+        <p>Please do not close this window.</p>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let shopId = null;
+        let userEmail = null;
+        let userToken = null;
+        let firstName = "Merchant";
+
+        window.onload = async () => {
+            const { data: { session } } = await client.auth.getSession();
+            if (!session) { window.location.href = "login.html"; return; }
+            
+            userToken = session.access_token;
+            userEmail = session.user.email;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            shopId = urlParams.get('shop_id');
+
+            if (!shopId) {
+                alert("Shop ID missing.");
+                window.location.href = "merchant-dashboard.html";
+                return;
+            }
+
+            // Fetch Name
+            const { data: profile } = await client.from('profiles').select('full_name').eq('id', session.user.id).single();
+            if (profile && profile.full_name) firstName = profile.full_name.split(' ')[0];
+
+            loadSubscriptionStatus();
+        };
+
+        async function loadSubscriptionStatus() {
+            const { data: shop, error } = await client.from('shops').select('subscription_end_date, subscription_plan').eq('id', shopId).single();
+            
+            const badge = document.getElementById('ui-badge');
+            
+            if (error || !shop) {
+                badge.className = 'badge badge-expired';
+                badge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Error Loading Data';
+                return;
+            }
+
+            document.getElementById('ui-plan-name').textContent = (shop.subscription_plan || 'Free Trial').replace('_', ' ');
+
+            const endDate = new Date(shop.subscription_end_date);
+            const today = new Date();
+            
+            // Calculate remaining days
+            const timeDiff = endDate.getTime() - today.getTime();
+            const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('ui-expiry').textContent = `Valid Until: ${endDate.toLocaleDateString(undefined, options)}`;
+
+            if (daysLeft > 0) {
+                document.getElementById('ui-days').textContent = `${daysLeft} Days Left`;
+                badge.className = 'badge badge-active';
+                badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> ACTIVE';
+            } else {
+                document.getElementById('ui-days').textContent = `0 Days Left`;
+                document.getElementById('ui-days').style.color = '#DC2626';
+                badge.className = 'badge badge-expired';
+                badge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> EXPIRED';
+            }
+        }
+
+        function initiateSubscription(planType, amount) {
+            const transactionId = "CTM-SUB-" + Date.now(); 
+
+            var paymentEngine = RmPaymentEngine.init({
+                key: "QzAwMDAyNzEyNTl8MTEwNjE4Njc3NzR8M2RjY2NlYTg4YzhjNWQzMTc4ZTA1NTZkYmViYzhmOTQzM2I0ZTU2Y2Q5Y2E4OWM1ZGI0MjI1YTUzYTNhZjJhMzk1YjcwZWQ3N2ZhMWQwZWM4M2IwZDMyZDUxZTZhNTBiZjZiYTgxMGI1MGEyZTIwMWQxZDRhZDFhMTU4MjZhNTc=", 
+                customerId: userEmail,
+                firstName: firstName,
+                lastName: "",
+                email: userEmail,
+                amount: amount,
+                narration: `CT-Merchant ${planType.replace('_', ' ')} Subscription`,
+                transactionId: transactionId,
+                
+                onSuccess: function (response) {
+                    document.getElementById('processing-overlay').classList.remove('hidden');
+                    verifySubscription(response.transactionId, planType, amount);
+                },
+                
+                onError: function (response) {
+                    alert("Payment failed or cancelled.");
+                },
+                onClose: function () {
+                    console.log("Widget closed by user");
+                }
+            });
+
+            paymentEngine.showPaymentWidget();
+        }
+
+        async function verifySubscription(txId, plan, amount) {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-service-fee`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userToken}`,
+                        'apikey': SUPABASE_ANON_KEY 
+                    },
+                    body: JSON.stringify({ 
+                        transactionId: txId,
+                        shopId: shopId,
+                        plan: plan,
+                        amount: amount
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) throw new Error(result.error || "Verification failed");
+
+                // Reload the status card to show the new dates!
+                document.getElementById('processing-overlay').classList.add('hidden');
+                alert("✅ Subscription Successful! Your plan has been extended.");
+                loadSubscriptionStatus();
+
+            } catch (error) {
+                document.getElementById('processing-overlay').classList.add('hidden');
+                alert("⚠️ Error: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
