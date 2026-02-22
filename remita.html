@@ -8,8 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- REMITA INLINE SCRIPT (TEST ENVIRONMENT) -->
-    <!-- Swap 'remitademo.net' for 'login.remita.net' when going live -->
     <script src="https://remitademo.net/payment/v1/remita-pay-inline.bundle.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -47,7 +45,6 @@
             overflow: hidden;
         }
 
-        /* Top decorative line */
         .checkout-card::before {
             content: '';
             position: absolute;
@@ -166,7 +163,6 @@
     </div>
 
     <script>
-        // Setup Supabase
         const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -197,13 +193,13 @@
                 const { data: shop, error: shopErr } = await client.from('shops').select('*').eq('id', shopId).single();
                 if (shopErr || !shop) throw new Error("Shop not found");
 
-                // Fetch User Profile details (for name and city)
+                // Fetch User Profile details
                 const { data: profile, error: profErr } = await client.from('profiles').select('*, cities(name)').eq('id', userId).single();
                 if (profErr || !profile) throw new Error("Profile not found");
 
-                // Check if already approved
-                if (shop.status === 'approved') {
-                    alert("Your shop is already verified and approved!");
+                // CORRECTED LOGIC: Check if physically verified
+                if (shop.is_verified) {
+                    alert("Your shop is already physically verified!");
                     window.location.href = "merchant-dashboard.html";
                     return;
                 }
