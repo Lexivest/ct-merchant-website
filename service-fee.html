@@ -262,7 +262,7 @@
     </div>
 
     <script>
-        const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+       const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -270,10 +270,6 @@
         let userEmail = null;
         let userToken = null;
         let firstName = "Merchant";
-
-        // Variables to hold the plan they clicked while they choose a gateway
-        let pendingPlan = null;
-        let pendingAmount = null;
 
         window.onload = async () => {
             const { data: { session } } = await client.auth.getSession();
@@ -364,35 +360,45 @@
             }
         }
 
-        // --- GATEWAY UI LOGIC ---
+        // --- BULLETPROOF MODAL LOGIC ---
         function openGatewayModal(planType, amount) {
-            pendingPlan = planType;
-            pendingAmount = amount;
+            // Update the buttons in the modal to physically hold the exact values
+            const psBtn = document.getElementById('btn-paystack');
+            const rmBtn = document.getElementById('btn-remita');
+            
+            psBtn.onclick = () => payWithPaystack(planType, amount);
+            rmBtn.onclick = () => payWithRemita(planType, amount);
+            
             document.getElementById('gateway-modal').classList.remove('hidden');
         }
 
         function closeGatewayModal() {
             document.getElementById('gateway-modal').classList.add('hidden');
-            pendingPlan = null;
-            pendingAmount = null;
         }
 
         // --- PAYSTACK FLOW ---
-        function payWithPaystack() {
+        function payWithPaystack(planType, amount) {
             closeGatewayModal();
             
-            // NOTE: Paystack uses KOBO, so multiply amount by 100
-            const amountInKobo = pendingAmount * 100;
+            // Convert to Number to be perfectly safe, then multiply by 100 for Kobo
+            const amountInKobo = Number(amount) * 100;
+            
+            // Double check that the amount is valid before calling Paystack
+            if (!amountInKobo || isNaN(amountInKobo) || amountInKobo <= 0) {
+                alert("Invalid amount detected. Please refresh the page.");
+                return;
+            }
             
             let handler = PaystackPop.setup({
-                key: 'pk_test_f681256d9c1bc10964457c68fb2381e6451ed2b9', // Replace with your Paystack Public Key
+                // REPLACE THIS WITH YOUR REAL TEST KEY
+                key: 'pk_test_dummypaystackkey1234567890', 
                 email: userEmail,
                 amount: amountInKobo,
                 currency: 'NGN',
-                ref: "CTM-SUB-" + Date.now(),
+                ref: "CTM-" + Date.now(),
                 callback: function(response) {
                     document.getElementById('processing-overlay').classList.remove('hidden');
-                    verifySubscription(response.reference, pendingPlan, pendingAmount, 'paystack');
+                    verifySubscription(response.reference, planType, amount, 'paystack');
                 },
                 onClose: function() {
                     console.log('Paystack window closed.');
@@ -402,10 +408,10 @@
         }
 
         // --- REMITA FLOW ---
-        function payWithRemita() {
+        function payWithRemita(planType, amount) {
             closeGatewayModal();
             
-            const transactionId = "CTM-SUB-" + Date.now(); 
+            const transactionId = "CTM-" + Date.now(); 
 
             var paymentEngine = RmPaymentEngine.init({
                 key: "QzAwMDAyNzEyNTl8MTEwNjE4Njc3NzR8M2RjY2NlYTg4YzhjNWQzMTc4ZTA1NTZkYmViYzhmOTQzM2I0ZTU2Y2Q5Y2E4OWM1ZGI0MjI1YTUzYTNhZjJhMzk1YjcwZWQ3N2ZhMWQwZWM4M2IwZDMyZDUxZTZhNTBiZjZiYTgxMGI1MGEyZTIwMWQxZDRhZDFhMTU4MjZhNTc=", 
@@ -413,13 +419,13 @@
                 firstName: firstName,
                 lastName: "",
                 email: userEmail,
-                amount: pendingAmount,
-                narration: `CT-Merchant ${pendingPlan.replace('_', ' ')}`,
+                amount: Number(amount), // Ensure it is a number
+                narration: `CT-Merchant ${planType.replace('_', ' ')}`,
                 transactionId: transactionId,
                 
                 onSuccess: function (response) {
                     document.getElementById('processing-overlay').classList.remove('hidden');
-                    verifySubscription(response.transactionId, pendingPlan, pendingAmount, 'remita');
+                    verifySubscription(response.transactionId, planType, amount, 'remita');
                 },
                 onError: function (response) { alert("Payment failed."); },
                 onClose: function () { console.log("Remita window closed."); }
@@ -443,7 +449,7 @@
                         shopId: shopId,
                         plan: plan,
                         amount: amount,
-                        gateway: gateway // Tells the backend which API to verify against!
+                        gateway: gateway 
                     })
                 });
 
@@ -461,7 +467,9 @@
                 alert("⚠️ Error: " + error.message);
             }
         }
+       
     </script>
 </body>
 </html>
+
 
