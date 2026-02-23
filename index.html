@@ -422,6 +422,33 @@
       align-items: center;
       margin-right: 2.5rem;
     }
+    /* Password toggle styles */
+    .toggle-password {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 1rem;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .toggle-password:hover {
+        color: #db2777;
+    }
+    /* Forgot password styles */
+    .forgot-password {
+        display: block;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        margin-top: 8px;
+        margin-bottom: 12px;
+        cursor: pointer;
+    }
+    .forgot-password:hover {
+        color: #db2777;
+    }
   </style>
 </head>
 <body>
@@ -526,8 +553,9 @@
                 <div class="input-group-hero">
                     <i class="fa-solid fa-key"></i>
                     <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
+                    <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePassword()"></i>
                 </div>
-               
+                <a class="forgot-password" onclick="showForgotPopup()">Forgot password?</a>
                 <button type="submit" id="hero-login-btn" class="btn-login-hero">
                     Secure Sign In <i class="fa-solid fa-arrow-right"></i>
                 </button>
@@ -633,6 +661,24 @@
             btn.innerHTML = originalHtml;
             btn.disabled = false;
         }
+    }
+    // --- PASSWORD TOGGLE ---
+    function togglePassword() {
+        const password = document.getElementById('hero-password');
+        const icon = document.querySelector('.toggle-password');
+        if (password.type === 'password') {
+            password.type = 'text';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        } else {
+            password.type = 'password';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    }
+    // --- FORGOT PASSWORD POPUP ---
+    function showForgotPopup() {
+        alert('Password reset is available in mobile app');
     }
 </script>
 </body>
