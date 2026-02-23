@@ -100,6 +100,12 @@
         .card-teal .icon-box { background: #CCFBF1; color: #0D9488; }
         .card-amber .icon-box { background: #FEF3C7; color: #D97706; } 
         .card-rose .icon-box { background: #FFE4E6; color: #E11D48; }  
+        
+        /* Locked Card Styling */
+        .card-locked { background: #F1F5F9; border-color: #E2E8F0; color: #94A3B8; }
+        .card-locked .icon-box { background: #E2E8F0; color: #94A3B8; }
+        .card-locked .card-title { color: #94A3B8; }
+        .card-locked:hover { transform: none; box-shadow: var(--shadow-sm); border-color: #E2E8F0; }
 
         .spinner { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: var(--color-purple); border-radius: 50%; animation: spin 1s linear infinite; margin: 100px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -173,10 +179,11 @@
                     <div id="verify-subtitle" class="card-subtitle hidden"></div>
                 </div>
 
-                <!-- 9. Service Fee -->
-                <div onclick="navTo('service-fee.html')" class="dash-card card-rose">
-                    <div class="icon-box"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                <!-- 9. Service Fee (Dynamic) -->
+                <div id="service-fee-card" class="dash-card card-rose">
+                    <div class="icon-box" id="service-fee-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                     <div class="card-title">Service Fee</div>
+                    <div id="service-fee-subtitle" class="card-subtitle hidden"></div>
                 </div>
 
             </div>
@@ -228,38 +235,55 @@
                     .select('id')
                     .eq('merchant_id', userId)
                     .eq('status', 'success')
-                    .maybeSingle(); // Prevents error if no record found
+                    .maybeSingle();
 
                 const hasPaid = !!paymentRecord;
 
-                // --- DYNAMIC VERIFICATION CARD LOGIC ---
+                // Elements
                 const verifyCard = document.getElementById('verify-card');
                 const verifySubtitle = document.getElementById('verify-subtitle');
+                const serviceFeeCard = document.getElementById('service-fee-card');
+                const serviceFeeSubtitle = document.getElementById('service-fee-subtitle');
 
                 if (data.is_verified) {
-                    // Fully verified by Admin
+                    // --- FULLY VERIFIED ---
+                    // 1. Verification Card (Green)
                     verifyCard.className = 'dash-card card-green';
                     verifyCard.querySelector('.card-title').textContent = 'Verified Shop';
                     verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-check-double"></i>';
                     verifySubtitle.textContent = 'Active';
                     verifySubtitle.classList.remove('hidden');
                     verifyCard.onclick = () => alert('Your shop is already physically verified!');
-                } 
-                else if (hasPaid) {
-                    // Paid, but waiting for admin to verify
-                    verifyCard.className = 'dash-card card-blue';
-                    verifyCard.querySelector('.card-title').textContent = 'Dispatching Agent';
-                    verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-person-walking-luggage"></i>';
-                    verifySubtitle.textContent = 'Fee Paid';
-                    verifySubtitle.classList.remove('hidden');
-                    verifyCard.onclick = () => alert('We have received your payment! Our agent will visit your shop soon to complete the verification.');
-                } 
-                else {
-                    // Not paid, not verified
-                    verifyCard.className = 'dash-card card-amber';
-                    verifyCard.querySelector('.card-title').textContent = 'Verification Fee';
-                    verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-building-circle-check"></i>';
-                    verifyCard.onclick = () => navTo('remita.html');
+
+                    // 2. Unlock Service Fee
+                    serviceFeeCard.onclick = () => navTo('service-fee.html');
+
+                } else {
+                    // --- NOT VERIFIED YET ---
+                    
+                    // 1. Manage Verification Card
+                    if (hasPaid) {
+                        verifyCard.className = 'dash-card card-blue';
+                        verifyCard.querySelector('.card-title').textContent = 'Dispatching Agent';
+                        verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-person-walking-luggage"></i>';
+                        verifySubtitle.textContent = 'Fee Paid';
+                        verifySubtitle.classList.remove('hidden');
+                        verifyCard.onclick = () => alert('We have received your payment! Our agent will visit your shop soon to complete the verification.');
+                    } else {
+                        verifyCard.className = 'dash-card card-amber';
+                        verifyCard.querySelector('.card-title').textContent = 'Verification Fee';
+                        verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-building-circle-check"></i>';
+                        verifyCard.onclick = () => navTo('remita.html');
+                    }
+
+                    // 2. Lock the Service Fee Card (Greyed out)
+                    serviceFeeCard.className = 'dash-card card-locked';
+                    document.getElementById('service-fee-icon').innerHTML = '<i class="fa-solid fa-lock"></i>';
+                    serviceFeeSubtitle.textContent = 'Verification Req.';
+                    serviceFeeSubtitle.classList.remove('hidden');
+                    serviceFeeCard.onclick = () => {
+                        alert("🔒 You cannot subscribe to a service plan until your shop is Physically Verified by an agent. Please process your Verification Fee first.");
+                    };
                 }
 
                 document.getElementById('loader').classList.add('hidden');
