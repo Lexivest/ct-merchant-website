@@ -28,7 +28,7 @@
             padding: 20px 16px;
         }
 
-        .container { width: 100%; max-width: 600px; }
+        .container { width: 100%; max-width: 600px; position: relative; }
 
         /* Header */
         .header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
@@ -65,7 +65,7 @@
             background: #F8FAFC; transition: border 0.2s;
         }
         .input:focus { outline: none; border-color: var(--color-purple); background: white; }
-        .input:disabled { background: #E2E8F0; color: #94A3B8; cursor: not-allowed; }
+        .input:disabled { background: #E2E8F0; color: #94A3B8; cursor: not-allowed; opacity: 1; -webkit-text-fill-color: #64748B; }
         
         textarea.input { resize: vertical; min-height: 80px; }
 
@@ -78,6 +78,7 @@
             background: #FAFAFA; position: relative; overflow: hidden;
             transition: all 0.2s;
         }
+        .upload-box.wide { grid-column: 1 / -1; height: 180px; }
         .upload-box:hover { border-color: var(--color-purple); background: #F3E8FF; }
         .upload-icon { font-size: 1.5rem; color: #94A3B8; margin-bottom: 8px; }
         .upload-text { font-size: 0.75rem; font-weight: 600; color: #64748B; text-align: center; }
@@ -93,12 +94,13 @@
         .btn-submit {
             width: 100%; background: var(--color-purple); color: white;
             padding: 16px; border-radius: 12px; border: none;
-            font-size: 1rem; font-weight: 700; cursor: pointer;
+            font-size: 1.05rem; font-weight: 700; cursor: pointer;
             margin-top: 30px; transition: background 0.2s;
             display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 4px 12px rgba(46, 16, 101, 0.2);
         }
-        .btn-submit:hover { background: #4C1D95; }
-        .btn-submit:disabled { background: #94A3B8; cursor: not-allowed; }
+        .btn-submit:hover { background: #4C1D95; transform: translateY(-2px); }
+        .btn-submit:disabled { background: #94A3B8; cursor: not-allowed; transform: none; box-shadow: none; }
 
         /* Alerts */
         .alert-box {
@@ -106,10 +108,47 @@
             display: none; align-items: flex-start; gap: 12px;
         }
         .alert-error { background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; }
-        .alert-info { background: #EFF6FF; border: 1px solid #DBEAFE; color: #1E40AF; }
+
+        /* --- REVIEW MODAL (Mirrors Flutter Bottom Sheet) --- */
+        .overlay { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
+            z-index: 1000; display: flex; align-items: flex-end; justify-content: center;
+            opacity: 0; visibility: hidden; transition: 0.3s;
+        }
+        .overlay.active { opacity: 1; visibility: visible; }
+        
+        .review-sheet {
+            background: white; width: 100%; max-width: 600px;
+            border-radius: 24px 24px 0 0; padding: 30px 24px;
+            transform: translateY(100%); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .overlay.active .review-sheet { transform: translateY(0); }
+
+        .review-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; color: #0F172A; }
+        .review-subtitle { color: #64748B; font-size: 0.9rem; margin-bottom: 24px; }
+        
+        .thumb-row { display: flex; gap: 12px; margin-bottom: 24px; }
+        .thumb-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .thumb-box { 
+            width: 100%; height: 80px; border-radius: 8px; background: #F1F5F9; 
+            border: 1px solid #E2E8F0; overflow: hidden; display: flex; align-items: center; justify-content: center;
+        }
+        .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
+        .thumb-label { font-size: 0.65rem; font-weight: 700; color: #475569; text-transform: uppercase; }
+
+        .detail-row { display: flex; padding: 8px 0; border-bottom: 1px dashed #E2E8F0; }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { width: 120px; color: #64748B; font-size: 0.9rem; font-weight: 500; }
+        .detail-value { flex: 1; font-weight: 600; color: #0F172A; font-size: 0.95rem; }
+
+        .btn-confirm { background: var(--color-primary, #059669); color: white; width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 800; font-size: 1.05rem; margin-top: 24px; cursor: pointer; }
+        .btn-edit { background: transparent; color: #64748B; width: 100%; padding: 12px; border: none; font-weight: 600; cursor: pointer; margin-top: 8px; }
 
         .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        #main-loader { text-align: center; padding: 50px; color: var(--color-purple); display: none; }
 
         @media (max-width: 480px) {
             .upload-row { grid-template-columns: 1fr; }
@@ -120,7 +159,7 @@
 
 <div class="container">
     <div class="header">
-        <a href="user-dashboard.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <button onclick="window.location.href='user-dashboard.html'" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
         <div class="page-title" id="header-title">Register Shop</div>
     </div>
 
@@ -128,26 +167,32 @@
     <div id="rejection-box" class="alert-box alert-error">
         <i class="fa-solid fa-circle-exclamation" style="margin-top: 2px;"></i>
         <div>
-            <h4 style="margin-bottom: 4px; font-weight: 700;">Application Rejected</h4>
-            <p id="rejection-reason" style="font-size: 0.9rem; line-height: 1.4;"></p>
+            <h4 style="margin-bottom: 4px; font-weight: 700;">Attention Required</h4>
+            <p id="rejection-reason" style="font-size: 0.9rem; line-height: 1.4; color: #111827;"></p>
         </div>
     </div>
 
-    <form id="shop-form" class="card" onsubmit="handleSubmit(event)">
+    <div id="main-loader"><i class="fa-solid fa-circle-notch fa-spin fa-2x"></i></div>
+
+    <form id="shop-form" class="card" onsubmit="showPreviewDialog(event)">
         
         <!-- 1. Basic Info -->
-        <div class="section-title">Basic Information</div>
+        <div class="section-title">Store Front Image</div>
+        <div class="upload-box wide" onclick="triggerUpload('file-front')">
+            <input type="file" id="file-front" hidden accept="image/*" onchange="previewFile(this, 'prev-front')">
+            <img id="prev-front" class="preview-img">
+            <i class="fa-solid fa-store upload-icon"></i>
+            <span class="upload-text">Upload Cover Photo (Required)</span>
+            <i class="fa-solid fa-pen edit-badge" id="badge-front" style="display:none;"></i>
+        </div>
+
+        <div class="section-title">Business Details</div>
         <div class="form-grid">
             <div class="form-group">
                 <label class="label">Business Name</label>
                 <input type="text" id="name" class="input" placeholder="e.g. Ade & Sons Enterprise" required>
             </div>
             
-            <div class="form-group">
-                <label class="label">Description</label>
-                <textarea id="desc" class="input" placeholder="What do you sell or offer?" required></textarea>
-            </div>
-
             <div class="form-group">
                 <label class="label">Business Type</label>
                 <select id="business-type" class="input" onchange="toggleCacRequirement()">
@@ -162,10 +207,15 @@
                     <option value="" disabled selected>Loading Categories...</option>
                 </select>
             </div>
+
+            <div class="form-group">
+                <label class="label">Description</label>
+                <textarea id="desc" class="input" placeholder="What do you sell or offer?" required></textarea>
+            </div>
         </div>
 
         <!-- 2. Location -->
-        <div class="section-title">Location & Contact</div>
+        <div class="section-title">Location</div>
         <div class="form-grid">
             <div class="upload-row">
                 <div class="form-group">
@@ -186,73 +236,54 @@
                 <input type="text" id="address" class="input" placeholder="Shop 4, Main Market..." required>
             </div>
 
-            <div class="upload-row">
-                <div class="form-group">
-                    <label class="label">Phone</label>
-                    <input type="tel" id="phone" class="input" required>
-                </div>
-                <div class="form-group">
-                    <label class="label">WhatsApp</label>
-                    <input type="tel" id="whatsapp" class="input" required>
-                </div>
-            </div>
-
             <div class="form-group">
                 <label class="label">Coordinates (Optional)</label>
                 <div style="display: flex; gap: 10px;">
-                    <input type="text" id="lat" class="input" placeholder="Latitude (e.g. 9.08)">
-                    <input type="text" id="lng" class="input" placeholder="Longitude (e.g. 7.49)">
-                </div>
-                <small style="color: #64748B; font-size: 0.75rem; margin-top: 4px;">Found on Google Maps by long-pressing a location.</small>
-            </div>
-        </div>
-
-        <!-- 3. Visuals -->
-        <div class="section-title">Shop Visuals</div>
-        <div class="upload-row">
-            <div class="form-group">
-                <label class="label">Shop Logo</label>
-                <div class="upload-box" onclick="triggerUpload('file-logo')">
-                    <input type="file" id="file-logo" hidden accept="image/*" onchange="previewFile(this, 'prev-logo')">
-                    <img id="prev-logo" class="preview-img">
-                    <i class="fa-regular fa-image upload-icon"></i>
-                    <span class="upload-text">Tap to Upload</span>
-                    <i class="fa-solid fa-pen edit-badge" id="badge-logo" style="display:none;"></i>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="label">Storefront (Required)</label>
-                <div class="upload-box" onclick="triggerUpload('file-front')">
-                    <input type="file" id="file-front" hidden accept="image/*" onchange="previewFile(this, 'prev-front')">
-                    <img id="prev-front" class="preview-img">
-                    <i class="fa-solid fa-store upload-icon"></i>
-                    <span class="upload-text">Tap to Upload</span>
-                    <i class="fa-solid fa-pen edit-badge" id="badge-front" style="display:none;"></i>
+                    <input type="text" id="lat" class="input" placeholder="Lat (e.g. 9.08)">
+                    <input type="text" id="lng" class="input" placeholder="Lng (e.g. 7.49)">
                 </div>
             </div>
         </div>
 
-        <!-- 4. Documents -->
-        <div class="section-title">Verification Documents <small style="text-transform:none; font-weight:400;">(Private)</small></div>
-        
-        <div class="form-group">
-            <label class="label">ID Type</label>
-            <select id="id-type" class="input">
-                <option>National ID Card</option>
-                <option>Voters Card</option>
-                <option>Drivers License</option>
-                <option>International Passport</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label class="label">ID Number</label>
-            <input type="text" id="id-number" class="input" required>
-        </div>
-
-        <div class="upload-row" style="margin-bottom: 16px;">
+        <!-- 3. Identity -->
+        <div class="section-title">Identity & Legal <small style="text-transform:none; font-weight:400; color:#94A3B8;">(Private)</small></div>
+        <div class="form-grid">
+            
             <div class="form-group">
-                <label class="label">ID Card Image</label>
+                <label class="label" id="cac-num-label">BN Number (Optional)</label>
+                <input type="text" id="cac-number" class="input" placeholder="If applicable">
+            </div>
+
+            <div class="form-group">
+                <label class="label" id="cac-label">Upload CAC (Optional)</label>
+                <div class="upload-box" onclick="triggerUpload('file-cac')">
+                    <input type="file" id="file-cac" hidden accept="image/*" onchange="previewFile(this, 'prev-cac')">
+                    <img id="prev-cac" class="preview-img">
+                    <i class="fa-solid fa-file-contract upload-icon"></i>
+                    <span class="upload-text" id="cac-sub">Tap to Upload</span>
+                    <i class="fa-solid fa-pen edit-badge" id="badge-cac" style="display:none;"></i>
+                </div>
+            </div>
+
+            <hr style="border:0; border-top:1px solid #E2E8F0; margin:8px 0;">
+
+            <div class="form-group">
+                <label class="label">ID Type</label>
+                <select id="id-type" class="input">
+                    <option>National ID Card</option>
+                    <option>Voters Card</option>
+                    <option>Drivers License</option>
+                    <option>International Passport</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="label">ID Number</label>
+                <input type="text" id="id-number" class="input" required>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Upload ID Card (Required)</label>
                 <div class="upload-box" onclick="triggerUpload('file-id')">
                     <input type="file" id="file-id" hidden accept="image/*" onchange="previewFile(this, 'prev-id')">
                     <img id="prev-id" class="preview-img">
@@ -261,26 +292,71 @@
                     <i class="fa-solid fa-pen edit-badge" id="badge-id" style="display:none;"></i>
                 </div>
             </div>
+
+        </div>
+
+        <!-- 4. Contacts -->
+        <div class="section-title">Contacts</div>
+        <div class="form-grid">
             <div class="form-group">
-                <label class="label" id="cac-label">CAC Cert (Optional)</label>
-                <div class="upload-box" onclick="triggerUpload('file-cac')">
-                    <input type="file" id="file-cac" hidden accept="image/*" onchange="previewFile(this, 'prev-cac')">
-                    <img id="prev-cac" class="preview-img">
-                    <i class="fa-solid fa-file-contract upload-icon"></i>
-                    <span class="upload-text">Tap to Upload</span>
-                    <i class="fa-solid fa-pen edit-badge" id="badge-cac" style="display:none;"></i>
-                </div>
+                <label class="label">Business Phone</label>
+                <input type="tel" id="phone" class="input" required>
+            </div>
+            <div class="form-group">
+                <label class="label">WhatsApp Number (Optional)</label>
+                <input type="tel" id="whatsapp" class="input">
             </div>
         </div>
 
-        <div class="form-group">
-            <label class="label">RC/BN Number</label>
-            <input type="text" id="cac-number" class="input" placeholder="If applicable">
+        <button type="submit" id="submit-btn" class="btn-submit">Review Application</button>
+    </form>
+</div>
+
+<!-- RICH REVIEW MODAL -->
+<div id="review-modal" class="overlay">
+    <div class="review-sheet">
+        <h2 class="review-title">Review Application</h2>
+        <p class="review-subtitle">Please ensure all details are correct before submitting.</p>
+        
+        <div class="thumb-row">
+            <div class="thumb-col">
+                <div class="thumb-box"><img id="rv-img-front" src="" onerror="this.style.display='none'"></div>
+                <span class="thumb-label">Store Front</span>
+            </div>
+            <div class="thumb-col">
+                <div class="thumb-box"><img id="rv-img-id" src="" onerror="this.style.display='none'"></div>
+                <span class="thumb-label">ID Card</span>
+            </div>
+            <div class="thumb-col" id="rv-cac-col">
+                <div class="thumb-box"><img id="rv-img-cac" src="" onerror="this.style.display='none'"></div>
+                <span class="thumb-label">CAC Cert</span>
+            </div>
         </div>
 
-        <button type="submit" id="submit-btn" class="btn-submit">Submit Application</button>
+        <div class="detail-row">
+            <div class="detail-label">Business Name</div>
+            <div class="detail-value" id="rv-name"></div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Type</div>
+            <div class="detail-value" id="rv-type"></div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Category</div>
+            <div class="detail-value" id="rv-cat"></div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Location</div>
+            <div class="detail-value" id="rv-loc"></div>
+        </div>
+        <div class="detail-row" id="rv-coord-row">
+            <div class="detail-label">Coords</div>
+            <div class="detail-value" id="rv-coords"></div>
+        </div>
 
-    </form>
+        <button class="btn-confirm" id="confirm-btn" onclick="submitApplication()">Confirm & Submit</button>
+        <button class="btn-edit" onclick="closePreviewDialog()">Edit Details</button>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -293,9 +369,10 @@
     // --- STATE ---
     let currentUser = null;
     let existingShop = null;
+    // CRITICAL FIX: Look for 'id' directly from the dashboard URL
     const params = new URLSearchParams(window.location.search);
-    const isEdit = params.get('edit') === 'true';
-    const shopId = params.get('id');
+    const shopId = params.get('id') || params.get('shop_id');
+    const isEdit = !!shopId;
 
     // --- INIT ---
     window.onload = async () => {
@@ -303,14 +380,20 @@
         if (!session) { window.location.href = "login.html"; return; }
         currentUser = session.user;
 
-        await Promise.all([
-            fetchCategories(),
-            fetchUserLocation()
-        ]);
+        document.getElementById('shop-form').style.display = 'none';
+        document.getElementById('main-loader').style.display = 'block';
 
-        if (isEdit && shopId) {
-            loadShopData();
+        // Load base data first
+        await fetchCategories();
+        await fetchUserLocation();
+
+        // If editing/resubmitting, populate existing data
+        if (isEdit) {
+            await loadShopData();
         }
+
+        document.getElementById('main-loader').style.display = 'none';
+        document.getElementById('shop-form').style.display = 'block';
     };
 
     // --- FETCHERS ---
@@ -328,14 +411,13 @@
         if (data) {
             document.getElementById('city-id').value = data.city_id;
             document.getElementById('city-display').value = data.cities.name;
-            fetchAreas(data.city_id);
+            await fetchAreas(data.city_id); // Wait for areas to load before continuing
         }
     }
 
-    async function fetchAreas(cityId, preselectId = null) {
+    async function fetchAreas(cityId) {
         const sel = document.getElementById('area');
         sel.disabled = true;
-        sel.innerHTML = '<option>Loading...</option>';
         
         const { data } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
         sel.innerHTML = '<option value="" disabled selected>Select Area</option>';
@@ -345,25 +427,27 @@
             const opt = document.createElement('option');
             opt.value = a.id;
             opt.textContent = a.name;
-            if (a.id === preselectId) opt.selected = true;
             sel.appendChild(opt);
         });
     }
 
-    // --- EDIT MODE LOGIC ---
+    // --- EDIT / RESUBMIT LOGIC ---
     async function loadShopData() {
-        document.getElementById('header-title').textContent = "Update Shop";
-        document.getElementById('submit-btn').textContent = "Confirm & Resubmit";
+        document.getElementById('header-title').textContent = "Correct & Resubmit";
 
         const { data } = await client.from('shops').select('*').eq('id', shopId).single();
-        if (!data) return alert("Shop not found");
+        if (!data) return;
         existingShop = data;
 
-        // Populate Fields
+        // Populate Text/Dropdown Fields
         document.getElementById('name').value = data.name;
         document.getElementById('desc').value = data.description || '';
         document.getElementById('business-type').value = data.business_type || 'Individual/Enterprise';
         document.getElementById('category').value = data.category;
+        
+        // Area is already populated by fetchUserLocation, we just set the value
+        document.getElementById('area').value = data.area_id;
+
         document.getElementById('address').value = data.address;
         document.getElementById('phone').value = data.phone;
         document.getElementById('whatsapp').value = data.whatsapp || '';
@@ -373,11 +457,7 @@
         document.getElementById('id-number').value = data.id_number || '';
         document.getElementById('cac-number').value = data.cac_number || '';
 
-        // Handle Area Preselect (City is already set by profile)
-        fetchAreas(data.city_id, data.area_id);
-
         // Populate Images
-        setPreview('prev-logo', data.image_url);
         setPreview('prev-front', data.storefront_url);
         setPreview('prev-id', data.id_card_url);
         setPreview('prev-cac', data.cac_certificate_url);
@@ -388,7 +468,7 @@
             document.getElementById('rejection-reason').textContent = data.rejection_reason;
         }
 
-        toggleCacRequirement(); // Run check
+        toggleCacRequirement(); 
     }
 
     function setPreview(id, url) {
@@ -410,6 +490,7 @@
                 const img = document.getElementById(imgId);
                 img.src = e.target.result;
                 img.style.display = 'block';
+                document.getElementById(imgId.replace('prev', 'badge')).style.display = 'block';
             };
             reader.readAsDataURL(input.files[0]);
         }
@@ -418,51 +499,85 @@
     function toggleCacRequirement() {
         const type = document.getElementById('business-type').value;
         const label = document.getElementById('cac-label');
+        const numLabel = document.getElementById('cac-num-label');
+        
         if (type === 'Limited Liability (Ltd)') {
-            label.textContent = 'CAC Cert (Required)';
+            label.textContent = 'Upload CAC Cert (Required)';
+            numLabel.textContent = 'RC Number (Required)';
+            document.getElementById('cac-number').setAttribute('required', 'true');
         } else {
-            label.textContent = 'CAC Cert (Optional)';
+            label.textContent = 'Upload CAC (Optional)';
+            numLabel.textContent = 'BN Number (Optional)';
+            document.getElementById('cac-number').removeAttribute('required');
         }
     }
 
-    // --- SUBMIT ---
-    async function handleSubmit(e) {
+    // --- REVIEW & SUBMIT ---
+    function showPreviewDialog(e) {
         e.preventDefault();
 
-        // Replicate Mobile App "Review" step visually before heavy lifting
-        if (!confirm("Please ensure all details are correct. Do you want to submit your application now?")) {
-            return;
+        // 1. Validation Logic
+        const type = document.getElementById('business-type').value;
+        const frontImg = document.getElementById('prev-front').src;
+        const idImg = document.getElementById('prev-id').src;
+        const cacImg = document.getElementById('prev-cac').src;
+
+        if (!frontImg || frontImg === window.location.href) return alert("Storefront image is required.");
+        if (!idImg || idImg === window.location.href) return alert("ID Card image is required.");
+        
+        if (type === 'Limited Liability (Ltd)') {
+            if (!cacImg || cacImg === window.location.href) {
+                return alert("CAC Certificate is required for Limited Liability companies.");
+            }
         }
 
-        const btn = document.getElementById('submit-btn');
-        const originalText = btn.textContent;
+        // 2. Populate Modal
+        document.getElementById('rv-img-front').src = frontImg;
+        document.getElementById('rv-img-id').src = idImg;
+        
+        if (cacImg && cacImg !== window.location.href) {
+            document.getElementById('rv-cac-col').style.display = 'flex';
+            document.getElementById('rv-img-cac').src = cacImg;
+        } else {
+            document.getElementById('rv-cac-col').style.display = 'none';
+        }
+
+        const areaText = document.getElementById('area').options[document.getElementById('area').selectedIndex].text;
+        const cityText = document.getElementById('city-display').value;
+
+        document.getElementById('rv-name').textContent = document.getElementById('name').value;
+        document.getElementById('rv-type').textContent = type;
+        document.getElementById('rv-cat').textContent = document.getElementById('category').value;
+        document.getElementById('rv-loc').textContent = `${areaText}, ${cityText}`;
+        
+        const lat = document.getElementById('lat').value;
+        const lng = document.getElementById('lng').value;
+        if (lat && lng) {
+            document.getElementById('rv-coord-row').style.display = 'flex';
+            document.getElementById('rv-coords').textContent = `${lat}, ${lng}`;
+        } else {
+            document.getElementById('rv-coord-row').style.display = 'none';
+        }
+
+        document.getElementById('confirm-btn').textContent = isEdit ? "Confirm & Resubmit" : "Confirm & Submit";
+
+        // 3. Show Modal
+        document.getElementById('review-modal').classList.add('active');
+    }
+
+    function closePreviewDialog() {
+        document.getElementById('review-modal').classList.remove('active');
+    }
+
+    async function submitApplication() {
+        const btn = document.getElementById('confirm-btn');
         btn.disabled = true;
-        btn.innerHTML = '<div class="spinner"></div> Processing...';
+        btn.innerHTML = '<div class="spinner" style="margin: 0 auto;"></div>';
 
         try {
-            // ROBUST VALIDATION (Matching Mobile App Logic)
             const type = document.getElementById('business-type').value;
-            const cacFile = document.getElementById('file-cac').files[0];
-            const frontFile = document.getElementById('file-front').files[0];
-            const idFile = document.getElementById('file-id').files[0];
 
-            // 1. Storefront is required (file or existing URL)
-            if (!frontFile && (!existingShop || !existingShop.storefront_url)) {
-                throw new Error("Storefront image is required.");
-            }
-            // 2. ID Card is required (file or existing URL)
-            if (!idFile && (!existingShop || !existingShop.id_card_url)) {
-                throw new Error("ID Card image is required.");
-            }
-            // 3. CAC is required if LTD (file or existing URL)
-            if (type === 'Limited Liability (Ltd)') {
-                if (!cacFile && (!existingShop || !existingShop.cac_certificate_url)) {
-                    throw new Error("CAC Certificate is required for Limited Liability companies.");
-                }
-            }
-
-            // Uploads (Only uploads if a new file is actually selected)
-            const logoUrl = await handleFileUpload('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
+            // Uploads (Only uploads if a new file is actually selected in the DOM input)
             const frontUrl = await handleFileUpload('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
             const idUrl = await handleFileUpload('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
             const cacUrl = await handleFileUpload('file-cac', 'cac-documents', 'cac', existingShop?.cac_certificate_url);
@@ -483,12 +598,11 @@
                 id_type: document.getElementById('id-type').value,
                 id_number: document.getElementById('id-number').value,
                 cac_number: document.getElementById('cac-number').value,
-                image_url: logoUrl,
                 storefront_url: frontUrl,
                 id_card_url: idUrl,
                 cac_certificate_url: cacUrl,
                 
-                // CRITICAL RESUBMISSION LOGIC: Always push back to Pending and clear errors
+                // CRITICAL RESUBMISSION LOGIC
                 status: 'pending', 
                 rejection_reason: null
             };
@@ -498,7 +612,8 @@
                 if (error) throw error;
                 alert("Correction Submitted! Your shop is pending approval again.");
             } else {
-                payload.banners = []; // Init empty array
+                payload.image_url = null;
+                payload.banners = [];
                 const { error } = await client.from('shops').insert(payload);
                 if (error) throw error;
                 alert("Application Submitted! You will be notified once approved.");
@@ -510,13 +625,14 @@
             console.error(err);
             alert("Error: " + err.message);
             btn.disabled = false;
-            btn.innerHTML = originalText;
+            btn.textContent = isEdit ? "Confirm & Resubmit" : "Confirm & Submit";
+            closePreviewDialog();
         } 
     }
 
     async function handleFileUpload(inputId, bucket, folder, existingUrl) {
         const file = document.getElementById(inputId).files[0];
-        if (!file) return existingUrl || null;
+        if (!file) return existingUrl || null; // Returns existing URL if no new file picked
 
         const ext = file.name.split('.').pop();
         const fileName = `${folder}/${currentUser.id}_${Date.now()}.${ext}`;
