@@ -553,7 +553,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v16'; 
+    const CACHE_KEY = 'ctm_dash_v17'; // Bumped cache key to v17 to force fresh fetch for is_open
 
     let chatHistory = [];
 
@@ -669,6 +669,7 @@
             userCityId = profile.city_id;
             userAreaId = profile.area_id;
 
+            // Updated myShop query to include `is_open`
             const [promos, announcements, categories, areas, shops, notifs, myShop, wishlist] = await Promise.all([
                 client.from('promo_banners').select().order('created_at', {ascending: false}),
                 client.from('announcements').select().order('created_at', {ascending: false}),
@@ -676,7 +677,7 @@
                 client.from('areas').select().eq('city_id', userCityId).order('name'),
                 client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}),
                 client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20),
-                client.from('shops').select('id, status, rejection_reason').eq('owner_id', currentUser.id).maybeSingle(),
+                client.from('shops').select('id, status, rejection_reason, is_open').eq('owner_id', currentUser.id).maybeSingle(),
                 client.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id)
             ]);
 
@@ -837,11 +838,17 @@
         let label = 'Register Shop';
         
         if (shop) {
-            if (shop.status === 'pending') {
+            // NEW LOGIC: Lock card if shop is suspended
+            if (shop.is_open === false) {
+                icon = 'fa-lock'; bg = '#F3F4F6'; color = '#9CA3AF'; label = 'Locked';
+            } 
+            else if (shop.status === 'pending') {
                 icon = 'fa-hourglass-half'; bg = '#FFEDD5'; color = '#EA580C'; label = 'Pending';
-            } else if (shop.status === 'approved') {
+            } 
+            else if (shop.status === 'approved') {
                 icon = 'fa-store'; bg = '#DCFCE7'; color = '#16A34A'; label = 'My Shop';
-            } else if (shop.status === 'rejected') {
+            } 
+            else if (shop.status === 'rejected') {
                 icon = 'fa-circle-exclamation'; bg = '#FEE2E2'; color = '#DC2626'; label = 'Rejected';
             }
         }
@@ -853,9 +860,19 @@
     }
 
     function handleShopClick() {
-        if (!currentUserShop) window.location.href = 'shop-registration.html';
-        else if (currentUserShop.status === 'pending') alert('Your shop application is currently being reviewed. Please check back later.');
-        else if (currentUserShop.status === 'approved') window.location.href = 'merchant-dashboard.html';
+        if (!currentUserShop) {
+            window.location.href = 'shop-registration.html';
+        }
+        else if (currentUserShop.is_open === false) {
+            // NEW LOGIC: Intercept click if locked
+            alert("🔒 Your shop access has been restricted by administration. Please contact support via support@ct-merchant.com to resolve your account status.");
+        }
+        else if (currentUserShop.status === 'pending') {
+            alert('Your shop application is currently being reviewed. Please check back later.');
+        }
+        else if (currentUserShop.status === 'approved') {
+            window.location.href = 'merchant-dashboard.html';
+        }
         else if (currentUserShop.status === 'rejected') {
             alert(`Application Rejected: ${currentUserShop.rejection_reason || 'Please update your details.'}`);
             window.location.href = `shop-registration.html?id=${currentUserShop.id}`; 
