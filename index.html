@@ -251,6 +251,19 @@
         font-size: 1rem;
         pointer-events: none;
     }
+    
+    /* OVERRIDE FOR PASSWORD TOGGLE */
+    .hero-auth-widget .input-group-hero i.toggle-password {
+        left: auto; /* Removes the left alignment applied to the padlock */
+        right: 14px; /* Pins it perfectly to the right */
+        cursor: pointer;
+        pointer-events: auto; /* Makes it clickable */
+        transition: color 0.2s;
+    }
+    .hero-auth-widget .input-group-hero i.toggle-password:hover {
+        color: #db2777;
+    }
+
     .hero-auth-widget .hero-input-login {
         width: 100%;
         padding: 12px 40px 12px 40px;
@@ -421,21 +434,7 @@
       align-items: center;
       margin-right: 2.5rem;
     }
-    /* Password toggle styles */
-    .toggle-password {
-        position: absolute;
-        right: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 1rem;
-        cursor: pointer;
-        transition: color 0.2s;
-        pointer-events: auto !important;
-    }
-    .toggle-password:hover {
-        color: #db2777;
-    }
+    
     /* Forgot password styles */
     .forgot-password {
         display: block;
