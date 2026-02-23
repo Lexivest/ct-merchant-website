@@ -133,6 +133,11 @@
                 <div id="pending-notice" class="hidden" style="margin-top: 10px; background: #FEF3C7; border-left: 4px solid #D97706; padding: 12px; border-radius: 8px; font-size: 0.9rem; color: #92400E;">
                     <i class="fa-solid fa-circle-exclamation"></i> Your shop is pending digital approval.
                 </div>
+
+                <!-- New Notice for Suspended Shops -->
+                <div id="suspended-notice" class="hidden" style="margin-top: 10px; background: #FEE2E2; border-left: 4px solid #DC2626; padding: 12px; border-radius: 8px; font-size: 0.9rem; color: #991B1B;">
+                    <i class="fa-solid fa-lock"></i> Your shop has been locked by administration. It is no longer visible to the public. Please contact support.
+                </div>
             </div>
 
             <div class="dashboard-grid">
@@ -162,9 +167,11 @@
                     <div class="card-title">Post News</div>
                 </div>
 
-                <div onclick="viewPublicShop()" class="dash-card card-indigo">
-                    <div class="icon-box"><i class="fa-regular fa-eye"></i></div>
+                <!-- 6. View Shop (Now Dynamic for Locking) -->
+                <div id="view-shop-card" class="dash-card card-indigo">
+                    <div class="icon-box" id="view-shop-icon"><i class="fa-regular fa-eye"></i></div>
                     <div class="card-title">View Shop</div>
+                    <div id="view-shop-subtitle" class="card-subtitle hidden"></div>
                 </div>
 
                 <div onclick="navTo('merchant-analytics.html')" class="dash-card card-teal">
@@ -244,10 +251,32 @@
                 const verifySubtitle = document.getElementById('verify-subtitle');
                 const serviceFeeCard = document.getElementById('service-fee-card');
                 const serviceFeeSubtitle = document.getElementById('service-fee-subtitle');
+                
+                // NEW: View Shop Elements
+                const viewShopCard = document.getElementById('view-shop-card');
+                const viewShopSubtitle = document.getElementById('view-shop-subtitle');
+                const viewShopIcon = document.getElementById('view-shop-icon');
 
+                // --- 1. SHOP LOCK LOGIC (IS_OPEN) ---
+                if (data.is_open === false) {
+                    document.getElementById('suspended-notice').classList.remove('hidden');
+                    
+                    // Lock the View Shop Card
+                    viewShopCard.className = 'dash-card card-locked';
+                    viewShopIcon.innerHTML = '<i class="fa-solid fa-store-slash"></i>';
+                    viewShopSubtitle.textContent = 'Suspended';
+                    viewShopSubtitle.classList.remove('hidden');
+                    viewShopCard.onclick = () => {
+                        alert("🔒 Your shop access has been restricted by administration. Please contact support via support@ct-merchant.com to resolve your account status.");
+                    };
+                } else {
+                    // Shop is open, normal behavior
+                    viewShopCard.onclick = () => viewPublicShop();
+                }
+
+                // --- 2. VERIFICATION AND SERVICE FEE LOGIC ---
                 if (data.is_verified) {
-                    // --- FULLY VERIFIED ---
-                    // 1. Verification Card (Green)
+                    // Fully verified by Admin
                     verifyCard.className = 'dash-card card-green';
                     verifyCard.querySelector('.card-title').textContent = 'Verified Shop';
                     verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-check-double"></i>';
@@ -255,13 +284,11 @@
                     verifySubtitle.classList.remove('hidden');
                     verifyCard.onclick = () => alert('Your shop is already physically verified!');
 
-                    // 2. Unlock Service Fee
+                    // Unlock Service Fee
                     serviceFeeCard.onclick = () => navTo('service-fee.html');
 
                 } else {
-                    // --- NOT VERIFIED YET ---
-                    
-                    // 1. Manage Verification Card
+                    // Not verified yet
                     if (hasPaid) {
                         verifyCard.className = 'dash-card card-blue';
                         verifyCard.querySelector('.card-title').textContent = 'Dispatching Agent';
@@ -276,7 +303,7 @@
                         verifyCard.onclick = () => navTo('remita.html');
                     }
 
-                    // 2. Lock the Service Fee Card (Greyed out)
+                    // Lock the Service Fee Card (Greyed out)
                     serviceFeeCard.className = 'dash-card card-locked';
                     document.getElementById('service-fee-icon').innerHTML = '<i class="fa-solid fa-lock"></i>';
                     serviceFeeSubtitle.textContent = 'Verification Req.';
