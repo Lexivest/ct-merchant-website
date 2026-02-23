@@ -104,6 +104,18 @@
             margin-bottom: 24px;
             border: 1px solid #FECACA;
         }
+        .address-box {
+            background: white;
+            border: 1px dashed #FCA5A5;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            color: #7F1D1D;
+            font-weight: 600;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
 
         /* Gateway Buttons */
         .gateway-section {
@@ -175,10 +187,17 @@
             </div>
         </div>
 
-        <!-- NEW: Important Non-Refundable Warning -->
+        <!-- NEW: Industry Standard Non-Refundable Warning with Address -->
         <div class="warning-note">
             <strong><i class="fa-solid fa-triangle-exclamation"></i> Important:</strong> 
-            Ensure your shop is physically located within the selected city and can be easily reached by our agent. 
+            Our field agent will visit the exact address provided below. 
+            
+            <div class="address-box">
+                <i class="fa-solid fa-location-dot" style="margin-top: 3px;"></i>
+                <span id="lbl-address">Loading registered address...</span>
+            </div>
+
+            Ensure your shop is actively operating at this location. 
             <strong>This verification fee is strictly non-refundable.</strong>
         </div>
 
@@ -265,12 +284,17 @@
                     merchantName: profile.full_name || "Merchant",
                     shopName: shop.name,
                     cityName: profile.cities?.name || "Unknown City",
+                    shopAddress: shop.address || "Address not provided", // Extracted Address
                     email: currentUserSession.user.email
                 };
 
+                // Populate UI Elements
                 document.getElementById('lbl-merchant').textContent = dynamicShopDetails.merchantName;
                 document.getElementById('lbl-shop').textContent = dynamicShopDetails.shopName;
                 document.getElementById('lbl-city').textContent = dynamicShopDetails.cityName;
+                
+                // Populate the new Address Warning box
+                document.getElementById('lbl-address').textContent = dynamicShopDetails.shopAddress;
 
                 document.getElementById('loader').classList.add('hidden');
                 document.getElementById('checkout-content').classList.remove('hidden');
@@ -289,7 +313,7 @@
             
             let handler = PaystackPop.setup({
                 // 🛑 REPLACE THIS WITH YOUR PAYSTACK PUBLIC KEY
-                key: 'pk_test_f681256d9c1bc10964457c68fb2381e6451ed2b9', 
+                key: 'pk_test_dummypaystackkey1234567890', 
                 email: dynamicShopDetails.email,
                 amount: amountInKobo,
                 currency: 'NGN',
