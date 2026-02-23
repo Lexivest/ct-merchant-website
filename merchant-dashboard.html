@@ -76,7 +76,7 @@
             box-shadow: var(--shadow-sm);
             cursor: pointer; transition: all 0.2s;
             height: 150px;
-            text-decoration: none; /* For links */
+            text-decoration: none;
             color: inherit;
         }
         .dash-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--color-purple); }
@@ -87,7 +87,8 @@
             font-size: 1.5rem; margin-bottom: 12px;
         }
 
-        .card-title { font-weight: 700; font-size: 0.95rem; color: var(--color-text); }
+        .card-title { font-weight: 700; font-size: 0.95rem; color: var(--color-text); margin-bottom: 4px;}
+        .card-subtitle { font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600; }
 
         /* Colors */
         .card-green .icon-box { background: #DCFCE7; color: #16A34A; }
@@ -109,11 +110,9 @@
 
     <div class="container">
         
-        <!-- Loading State -->
         <div id="loader" class="spinner"></div>
 
         <div id="content" class="hidden">
-            <!-- App Bar -->
             <div class="app-bar">
                 <button onclick="window.location.href='user-dashboard.html'" class="back-btn">
                     <i class="fa-solid fa-arrow-left"></i>
@@ -121,57 +120,47 @@
                 <div class="page-title">Merchant Dashboard</div>
             </div>
 
-            <!-- Welcome -->
             <div class="welcome-section">
                 <div id="shop-name" class="shop-title">Loading...</div>
                 <div class="shop-subtitle">Control your inventory and shop presence.</div>
                 
-                <!-- Notice for pending shops -->
                 <div id="pending-notice" class="hidden" style="margin-top: 10px; background: #FEF3C7; border-left: 4px solid #D97706; padding: 12px; border-radius: 8px; font-size: 0.9rem; color: #92400E;">
                     <i class="fa-solid fa-circle-exclamation"></i> Your shop is pending digital approval.
                 </div>
             </div>
 
-            <!-- Grid -->
             <div class="dashboard-grid">
                 
-                <!-- 1. Add Product -->
                 <div onclick="navTo('merchant-add-product.html')" class="dash-card card-green">
                     <div class="icon-box"><i class="fa-regular fa-square-plus"></i></div>
                     <div class="card-title">Add Product</div>
                 </div>
 
-                <!-- 2. Edit Products (Linked to List) -->
                 <div onclick="navTo('merchant-products.html')" class="dash-card card-blue">
                     <div class="icon-box"><i class="fa-solid fa-pen-to-square"></i></div>
                     <div class="card-title">Edit Products</div>
                 </div>
 
-                <!-- 3. Shop Banner -->
                 <div onclick="navTo('merchant-banner.html')" class="dash-card card-purple">
                     <div class="icon-box"><i class="fa-solid fa-camera"></i></div>
                     <div class="card-title">Shop Banner</div>
                 </div>
 
-                <!-- 4. Shop Settings -->
                 <div onclick="navTo('merchant-settings.html')" class="dash-card card-orange">
                     <div class="icon-box"><i class="fa-solid fa-gear"></i></div>
                     <div class="card-title">Shop Settings</div>
                 </div>
 
-                <!-- 5. Post News -->
                 <div onclick="navTo('merchant-news.html')" class="dash-card card-red">
                     <div class="icon-box"><i class="fa-solid fa-bullhorn"></i></div>
                     <div class="card-title">Post News</div>
                 </div>
 
-                <!-- 6. View Public Shop -->
                 <div onclick="viewPublicShop()" class="dash-card card-indigo">
                     <div class="icon-box"><i class="fa-regular fa-eye"></i></div>
                     <div class="card-title">View Shop</div>
                 </div>
 
-                <!-- 7. Analytics -->
                 <div onclick="navTo('merchant-analytics.html')" class="dash-card card-teal">
                     <div class="icon-box"><i class="fa-solid fa-chart-line"></i></div>
                     <div class="card-title">Analytics</div>
@@ -181,6 +170,7 @@
                 <div id="verify-card" class="dash-card card-amber">
                     <div class="icon-box"><i class="fa-solid fa-building-circle-check"></i></div>
                     <div class="card-title">Verification Fee</div>
+                    <div id="verify-subtitle" class="card-subtitle hidden"></div>
                 </div>
 
                 <!-- 9. Service Fee -->
@@ -210,11 +200,8 @@
 
         async function fetchShop(userId) {
             try {
-                const { data, error } = await client
-                    .from('shops')
-                    .select('*')
-                    .eq('owner_id', userId)
-                    .single();
+                // Fetch shop
+                const { data, error } = await client.from('shops').select('*').eq('owner_id', userId).single();
 
                 if (error || !data) {
                     alert("Shop data not found. Please register a shop first.");
@@ -223,7 +210,7 @@
                 }
 
                 if (data.status === 'rejected') {
-                    alert("Your shop application was rejected. Please contact support or re-register.");
+                    alert("Your shop application was rejected. Please contact support.");
                     window.location.href = "user-dashboard.html";
                     return;
                 }
@@ -235,16 +222,40 @@
                     document.getElementById('pending-notice').classList.remove('hidden');
                 }
 
+                // Check if they have paid the verification fee
+                const { data: paymentRecord } = await client
+                    .from('physical_verification_payments')
+                    .select('id')
+                    .eq('merchant_id', userId)
+                    .eq('status', 'success')
+                    .maybeSingle(); // Prevents error if no record found
+
+                const hasPaid = !!paymentRecord;
+
                 // --- DYNAMIC VERIFICATION CARD LOGIC ---
                 const verifyCard = document.getElementById('verify-card');
+                const verifySubtitle = document.getElementById('verify-subtitle');
+
                 if (data.is_verified) {
-                    // Turn it Green and disable payment flow
+                    // Fully verified by Admin
                     verifyCard.className = 'dash-card card-green';
-                    verifyCard.querySelector('.card-title').textContent = 'Physically Verified';
+                    verifyCard.querySelector('.card-title').textContent = 'Verified Shop';
                     verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-check-double"></i>';
+                    verifySubtitle.textContent = 'Active';
+                    verifySubtitle.classList.remove('hidden');
                     verifyCard.onclick = () => alert('Your shop is already physically verified!');
-                } else {
-                    // Keep it Amber and link to Remita
+                } 
+                else if (hasPaid) {
+                    // Paid, but waiting for admin to verify
+                    verifyCard.className = 'dash-card card-blue';
+                    verifyCard.querySelector('.card-title').textContent = 'Dispatching Agent';
+                    verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-person-walking-luggage"></i>';
+                    verifySubtitle.textContent = 'Fee Paid';
+                    verifySubtitle.classList.remove('hidden');
+                    verifyCard.onclick = () => alert('We have received your payment! Our agent will visit your shop soon to complete the verification.');
+                } 
+                else {
+                    // Not paid, not verified
                     verifyCard.className = 'dash-card card-amber';
                     verifyCard.querySelector('.card-title').textContent = 'Verification Fee';
                     verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-building-circle-check"></i>';
@@ -261,7 +272,6 @@
             }
         }
 
-        // Helper to pass Shop ID to next pages
         function navTo(page) {
             if (!myShop) return;
             window.location.href = `${page}?shop_id=${myShop.id}`;
