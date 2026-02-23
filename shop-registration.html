@@ -353,7 +353,7 @@
     // --- EDIT MODE LOGIC ---
     async function loadShopData() {
         document.getElementById('header-title').textContent = "Update Shop";
-        document.getElementById('submit-btn').textContent = "Update & Resubmit";
+        document.getElementById('submit-btn').textContent = "Confirm & Resubmit";
 
         const { data } = await client.from('shops').select('*').eq('id', shopId).single();
         if (!data) return alert("Shop not found");
@@ -428,24 +428,40 @@
     // --- SUBMIT ---
     async function handleSubmit(e) {
         e.preventDefault();
+
+        // Replicate Mobile App "Review" step visually before heavy lifting
+        if (!confirm("Please ensure all details are correct. Do you want to submit your application now?")) {
+            return;
+        }
+
         const btn = document.getElementById('submit-btn');
+        const originalText = btn.textContent;
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Processing...';
 
         try {
-            // Validation
+            // ROBUST VALIDATION (Matching Mobile App Logic)
             const type = document.getElementById('business-type').value;
             const cacFile = document.getElementById('file-cac').files[0];
             const frontFile = document.getElementById('file-front').files[0];
             const idFile = document.getElementById('file-id').files[0];
 
-            if (!existingShop) {
-                if (!frontFile) throw new Error("Storefront image is required.");
-                if (!idFile) throw new Error("ID Card image is required.");
-                if (type === 'Limited Liability (Ltd)' && !cacFile) throw new Error("CAC Certificate is required for Ltd.");
+            // 1. Storefront is required (file or existing URL)
+            if (!frontFile && (!existingShop || !existingShop.storefront_url)) {
+                throw new Error("Storefront image is required.");
+            }
+            // 2. ID Card is required (file or existing URL)
+            if (!idFile && (!existingShop || !existingShop.id_card_url)) {
+                throw new Error("ID Card image is required.");
+            }
+            // 3. CAC is required if LTD (file or existing URL)
+            if (type === 'Limited Liability (Ltd)') {
+                if (!cacFile && (!existingShop || !existingShop.cac_certificate_url)) {
+                    throw new Error("CAC Certificate is required for Limited Liability companies.");
+                }
             }
 
-            // Uploads
+            // Uploads (Only uploads if a new file is actually selected)
             const logoUrl = await handleFileUpload('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
             const frontUrl = await handleFileUpload('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
             const idUrl = await handleFileUpload('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
@@ -471,29 +487,31 @@
                 storefront_url: frontUrl,
                 id_card_url: idUrl,
                 cac_certificate_url: cacUrl,
-                status: 'pending', // Always reset to pending
+                
+                // CRITICAL RESUBMISSION LOGIC: Always push back to Pending and clear errors
+                status: 'pending', 
                 rejection_reason: null
             };
 
-            if (isEdit) {
+            if (isEdit && existingShop) {
                 const { error } = await client.from('shops').update(payload).eq('id', shopId);
                 if (error) throw error;
+                alert("Correction Submitted! Your shop is pending approval again.");
             } else {
                 payload.banners = []; // Init empty array
                 const { error } = await client.from('shops').insert(payload);
                 if (error) throw error;
+                alert("Application Submitted! You will be notified once approved.");
             }
 
-            alert("Application Submitted! You will be notified once approved.");
             window.location.href = "user-dashboard.html";
 
         } catch (err) {
             console.error(err);
             alert("Error: " + err.message);
-        } finally {
             btn.disabled = false;
-            btn.textContent = isEdit ? "Update & Resubmit" : "Submit Application";
-        }
+            btn.innerHTML = originalText;
+        } 
     }
 
     async function handleFileUpload(inputId, bucket, folder, existingUrl) {
