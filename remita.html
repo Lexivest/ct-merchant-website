@@ -8,10 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- Both Payment Gateway Scripts -->
     <script src="https://remitademo.net/payment/v1/remita-pay-inline.bundle.js"></script>
     <script src="https://js.paystack.co/v1/inline.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -80,7 +78,7 @@
 
         .details-list {
             text-align: left;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             background: white;
             border: 1px solid #E2E8F0;
             border-radius: 12px;
@@ -93,6 +91,19 @@
         .detail-item:last-child { margin-bottom: 0; }
         .detail-label { color: var(--color-text-muted); font-weight: 600; }
         .detail-value { font-weight: 700; color: #0F172A; text-align: right; }
+
+        /* WARNING NOTE */
+        .warning-note {
+            background: #FEF2F2;
+            color: #991B1B;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            text-align: left;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            border: 1px solid #FECACA;
+        }
 
         /* Gateway Buttons */
         .gateway-section {
@@ -134,10 +145,8 @@
 </head>
 <body>
 
-    <!-- Loading State -->
     <div id="loader" class="spinner loader-standalone"></div>
 
-    <!-- Main Checkout Card -->
     <div id="checkout-content" class="checkout-card hidden">
         <div class="icon-circle">
             <i class="fa-solid fa-building-circle-check"></i>
@@ -164,6 +173,13 @@
                 <span class="detail-label">City</span>
                 <span id="lbl-city" class="detail-value">Loading...</span>
             </div>
+        </div>
+
+        <!-- NEW: Important Non-Refundable Warning -->
+        <div class="warning-note">
+            <strong><i class="fa-solid fa-triangle-exclamation"></i> Important:</strong> 
+            Ensure your shop is physically located within the selected city and can be easily reached by our agent. 
+            <strong>This verification fee is strictly non-refundable.</strong>
         </div>
 
         <div class="gateway-section" id="gateway-buttons">
@@ -218,17 +234,32 @@
 
         async function fetchDetails(shopId, userId) {
             try {
+                // Check if they are already verified
                 const { data: shop, error: shopErr } = await client.from('shops').select('*').eq('id', shopId).single();
                 if (shopErr || !shop) throw new Error("Shop not found");
-
-                const { data: profile, error: profErr } = await client.from('profiles').select('*, cities(name)').eq('id', userId).single();
-                if (profErr || !profile) throw new Error("Profile not found");
 
                 if (shop.is_verified) {
                     alert("Your shop is already physically verified!");
                     window.location.href = "merchant-dashboard.html";
                     return;
                 }
+
+                // Check if they have already PAID the fee (but agent hasn't arrived yet)
+                const { data: paymentRecord } = await client
+                    .from('physical_verification_payments')
+                    .select('id')
+                    .eq('merchant_id', userId)
+                    .eq('status', 'success')
+                    .maybeSingle();
+
+                if (paymentRecord) {
+                    alert("You have already paid the verification fee! Our agent will contact you soon.");
+                    window.location.href = "merchant-dashboard.html";
+                    return;
+                }
+
+                const { data: profile, error: profErr } = await client.from('profiles').select('*, cities(name)').eq('id', userId).single();
+                if (profErr || !profile) throw new Error("Profile not found");
 
                 dynamicShopDetails = {
                     merchantName: profile.full_name || "Merchant",
@@ -257,7 +288,7 @@
             const amountInKobo = FEE_AMOUNT * 100;
             
             let handler = PaystackPop.setup({
-                // 🛑 REPLACE THIS WITH YOUR REAL PAYSTACK PUBLIC KEY
+                // 🛑 REPLACE THIS WITH YOUR PAYSTACK PUBLIC KEY
                 key: 'pk_test_f681256d9c1bc10964457c68fb2381e6451ed2b9', 
                 email: dynamicShopDetails.email,
                 amount: amountInKobo,
@@ -267,9 +298,7 @@
                     document.getElementById('processing-overlay').classList.remove('hidden');
                     verifyPaymentOnBackend(response.reference, 'paystack');
                 },
-                onClose: function() {
-                    console.log('Paystack window closed.');
-                }
+                onClose: function() { console.log('Paystack window closed.'); }
             });
             handler.openIframe();
         }
@@ -307,7 +336,6 @@
         // --- SECURE BACKEND VERIFICATION ---
         async function verifyPaymentOnBackend(txId, gateway) {
             try {
-                // Hide the buttons so user doesn't double click
                 document.getElementById('gateway-buttons').style.display = 'none';
 
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-remita`, {
@@ -322,7 +350,7 @@
                         merchantName: dynamicShopDetails.merchantName,
                         shopName: dynamicShopDetails.shopName,
                         cityName: dynamicShopDetails.cityName,
-                        gateway: gateway
+                        gateway: gateway 
                     })
                 });
 
@@ -331,18 +359,20 @@
                 if (!response.ok) throw new Error(result.error || "Verification failed");
 
                 document.getElementById('processing-overlay').classList.add('hidden');
-                document.getElementById('status-msg').innerHTML = `✅ Payment Verified via ${gateway.toUpperCase()}! Generating receipt...`;
+                
+                // NEW SUCCESS MESSAGE
+                document.getElementById('status-msg').innerHTML = `✅ Payment Successful! Generating receipt and dispatching agent...`;
                 
                 setTimeout(() => {
                     window.location.href = "merchant-dashboard.html";
-                }, 3000);
+                }, 3500);
 
             } catch (error) {
                 console.error(error);
                 document.getElementById('processing-overlay').classList.add('hidden');
                 document.getElementById('status-msg').innerHTML = "⚠️ " + error.message;
                 document.getElementById('status-msg').style.color = "#DC2626";
-                document.getElementById('gateway-buttons').style.display = 'block'; // Show buttons again if failed
+                document.getElementById('gateway-buttons').style.display = 'block'; 
             }
         }
     </script>
