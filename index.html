@@ -398,6 +398,29 @@
             text-align: center;
         }
     }
+    /* Marquee fixes for smoother animation in Firefox */
+    .marquee-container {
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .marquee-content {
+      display: flex;
+      width: max-content;
+      animation: scroll 20s linear infinite;
+    }
+    @keyframes scroll {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+    .marquee-item {
+      display: flex;
+      align-items: center;
+      margin-right: 2.5rem;
+    }
   </style>
 </head>
 <body>
@@ -409,7 +432,7 @@
      
       <div class="marquee-container header-marquee-box">
          <div class="marquee-content animate-brand-scroll desktop-menu">
-            <div class="flex items-center" style="display:flex; align-items:center; margin-right: 2.5rem;">
+            <div class="marquee-item">
                 <span>CT-MERCHANT LTD.</span>
                 <div class="flag-icon">
                     <div class="flag-stripe flag-green"></div>
@@ -417,12 +440,15 @@
                     <div class="flag-stripe flag-green"></div>
                 </div>
                 <span>Repository of Shops, Products and Services.</span>
-                <ul style="list-style: none; display: flex; gap: 10px; margin: 0; padding: 0;">
-                  <li>Jos</li>
-                  <li>Kaduna</li>
-                  <li>Minna</li>
-                  <li>Lokoja</li>
-                </ul>
+            </div>
+            <div class="marquee-item">
+                <span>CT-MERCHANT LTD.</span>
+                <div class="flag-icon">
+                    <div class="flag-stripe flag-green"></div>
+                    <div class="flag-stripe flag-white"></div>
+                    <div class="flag-stripe flag-green"></div>
+                </div>
+                <span>Repository of Shops, Products and Services.</span>
             </div>
          </div>
       </div>
