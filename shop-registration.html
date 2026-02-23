@@ -109,7 +109,7 @@
         }
         .alert-error { background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; }
 
-        /* --- REVIEW MODAL (Mirrors Flutter Bottom Sheet) --- */
+        /* --- REVIEW MODAL --- */
         .overlay { 
             position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
             z-index: 1000; display: flex; align-items: flex-end; justify-content: center;
@@ -134,7 +134,8 @@
             width: 100%; height: 80px; border-radius: 8px; background: #F1F5F9; 
             border: 1px solid #E2E8F0; overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
-        .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
+        /* Fixed review images displaying */
+        .thumb-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
         .thumb-label { font-size: 0.65rem; font-weight: 700; color: #475569; text-transform: uppercase; }
 
         .detail-row { display: flex; padding: 8px 0; border-bottom: 1px dashed #E2E8F0; }
@@ -293,6 +294,17 @@
                 </div>
             </div>
 
+            <div class="form-group">
+                <label class="label">Shop Logo (Optional)</label>
+                <div class="upload-box" onclick="triggerUpload('file-logo')">
+                    <input type="file" id="file-logo" hidden accept="image/*" onchange="previewFile(this, 'prev-logo')">
+                    <img id="prev-logo" class="preview-img">
+                    <i class="fa-regular fa-image upload-icon"></i>
+                    <span class="upload-text">Tap to Upload</span>
+                    <i class="fa-solid fa-pen edit-badge" id="badge-logo" style="display:none;"></i>
+                </div>
+            </div>
+
         </div>
 
         <!-- 4. Contacts -->
@@ -320,15 +332,15 @@
         
         <div class="thumb-row">
             <div class="thumb-col">
-                <div class="thumb-box"><img id="rv-img-front" src="" onerror="this.style.display='none'"></div>
+                <div class="thumb-box"><img id="rv-img-front"></div>
                 <span class="thumb-label">Store Front</span>
             </div>
             <div class="thumb-col">
-                <div class="thumb-box"><img id="rv-img-id" src="" onerror="this.style.display='none'"></div>
+                <div class="thumb-box"><img id="rv-img-id"></div>
                 <span class="thumb-label">ID Card</span>
             </div>
-            <div class="thumb-col" id="rv-cac-col">
-                <div class="thumb-box"><img id="rv-img-cac" src="" onerror="this.style.display='none'"></div>
+            <div class="thumb-col" id="rv-cac-col" style="display: none;">
+                <div class="thumb-box"><img id="rv-img-cac"></div>
                 <span class="thumb-label">CAC Cert</span>
             </div>
         </div>
@@ -369,7 +381,6 @@
     // --- STATE ---
     let currentUser = null;
     let existingShop = null;
-    // CRITICAL FIX: Look for 'id' directly from the dashboard URL
     const params = new URLSearchParams(window.location.search);
     const shopId = params.get('id') || params.get('shop_id');
     const isEdit = !!shopId;
@@ -383,11 +394,9 @@
         document.getElementById('shop-form').style.display = 'none';
         document.getElementById('main-loader').style.display = 'block';
 
-        // Load base data first
         await fetchCategories();
         await fetchUserLocation();
 
-        // If editing/resubmitting, populate existing data
         if (isEdit) {
             await loadShopData();
         }
@@ -411,7 +420,7 @@
         if (data) {
             document.getElementById('city-id').value = data.city_id;
             document.getElementById('city-display').value = data.cities.name;
-            await fetchAreas(data.city_id); // Wait for areas to load before continuing
+            await fetchAreas(data.city_id); 
         }
     }
 
@@ -439,15 +448,11 @@
         if (!data) return;
         existingShop = data;
 
-        // Populate Text/Dropdown Fields
         document.getElementById('name').value = data.name;
         document.getElementById('desc').value = data.description || '';
         document.getElementById('business-type').value = data.business_type || 'Individual/Enterprise';
         document.getElementById('category').value = data.category;
-        
-        // Area is already populated by fetchUserLocation, we just set the value
         document.getElementById('area').value = data.area_id;
-
         document.getElementById('address').value = data.address;
         document.getElementById('phone').value = data.phone;
         document.getElementById('whatsapp').value = data.whatsapp || '';
@@ -457,12 +462,12 @@
         document.getElementById('id-number').value = data.id_number || '';
         document.getElementById('cac-number').value = data.cac_number || '';
 
-        // Populate Images
+        // Safely load all images
         setPreview('prev-front', data.storefront_url);
         setPreview('prev-id', data.id_card_url);
         setPreview('prev-cac', data.cac_certificate_url);
+        setPreview('prev-logo', data.image_url);
 
-        // Rejection Notice
         if (data.status === 'rejected' && data.rejection_reason) {
             document.getElementById('rejection-box').style.display = 'flex';
             document.getElementById('rejection-reason').textContent = data.rejection_reason;
@@ -472,11 +477,12 @@
     }
 
     function setPreview(id, url) {
-        if (url) {
+        if (url && url.trim() !== '') {
             const img = document.getElementById(id);
-            img.src = url;
+            img.src = url; // Directly assigns valid URL
             img.style.display = 'block';
-            document.getElementById(id.replace('prev', 'badge')).style.display = 'block';
+            const badge = document.getElementById(id.replace('prev', 'badge'));
+            if (badge) badge.style.display = 'block';
         }
     }
 
@@ -490,7 +496,8 @@
                 const img = document.getElementById(imgId);
                 img.src = e.target.result;
                 img.style.display = 'block';
-                document.getElementById(imgId.replace('prev', 'badge')).style.display = 'block';
+                const badge = document.getElementById(imgId.replace('prev', 'badge'));
+                if (badge) badge.style.display = 'block';
             };
             reader.readAsDataURL(input.files[0]);
         }
@@ -512,37 +519,56 @@
         }
     }
 
+    // --- SAFE IMAGE VALIDATOR ---
+    function getSafeImageSource(imgId) {
+        const img = document.getElementById(imgId);
+        // Only return true URL if it has been explicitly set (has src attribute)
+        if (img.hasAttribute('src') && img.getAttribute('src').trim() !== '') {
+            return img.src; 
+        }
+        return null;
+    }
+
     // --- REVIEW & SUBMIT ---
     function showPreviewDialog(e) {
         e.preventDefault();
 
         // 1. Validation Logic
         const type = document.getElementById('business-type').value;
-        const frontImg = document.getElementById('prev-front').src;
-        const idImg = document.getElementById('prev-id').src;
-        const cacImg = document.getElementById('prev-cac').src;
-
-        if (!frontImg || frontImg === window.location.href) return alert("Storefront image is required.");
-        if (!idImg || idImg === window.location.href) return alert("ID Card image is required.");
         
-        if (type === 'Limited Liability (Ltd)') {
-            if (!cacImg || cacImg === window.location.href) {
-                return alert("CAC Certificate is required for Limited Liability companies.");
-            }
+        const frontImgSrc = getSafeImageSource('prev-front');
+        const idImgSrc = getSafeImageSource('prev-id');
+        const cacImgSrc = getSafeImageSource('prev-cac');
+
+        if (!frontImgSrc) return alert("Storefront image is required.");
+        if (!idImgSrc) return alert("ID Card image is required.");
+        
+        if (type === 'Limited Liability (Ltd)' && !cacImgSrc) {
+            return alert("CAC Certificate is required for Limited Liability companies.");
         }
 
-        // 2. Populate Modal
-        document.getElementById('rv-img-front').src = frontImg;
-        document.getElementById('rv-img-id').src = idImg;
+        // 2. Populate Modal Images Safely
+        const rvFront = document.getElementById('rv-img-front');
+        rvFront.src = frontImgSrc;
+        rvFront.style.display = 'block';
+
+        const rvId = document.getElementById('rv-img-id');
+        rvId.src = idImgSrc;
+        rvId.style.display = 'block';
         
-        if (cacImg && cacImg !== window.location.href) {
-            document.getElementById('rv-cac-col').style.display = 'flex';
-            document.getElementById('rv-img-cac').src = cacImg;
+        const cacCol = document.getElementById('rv-cac-col');
+        if (cacImgSrc) {
+            cacCol.style.display = 'flex';
+            const rvCac = document.getElementById('rv-img-cac');
+            rvCac.src = cacImgSrc;
+            rvCac.style.display = 'block';
         } else {
-            document.getElementById('rv-cac-col').style.display = 'none';
+            cacCol.style.display = 'none';
         }
 
-        const areaText = document.getElementById('area').options[document.getElementById('area').selectedIndex].text;
+        // 3. Populate Modal Text
+        const areaSelect = document.getElementById('area');
+        const areaText = areaSelect.options[areaSelect.selectedIndex]?.text || '';
         const cityText = document.getElementById('city-display').value;
 
         document.getElementById('rv-name').textContent = document.getElementById('name').value;
@@ -561,7 +587,7 @@
 
         document.getElementById('confirm-btn').textContent = isEdit ? "Confirm & Resubmit" : "Confirm & Submit";
 
-        // 3. Show Modal
+        // Show Modal
         document.getElementById('review-modal').classList.add('active');
     }
 
@@ -571,13 +597,15 @@
 
     async function submitApplication() {
         const btn = document.getElementById('confirm-btn');
+        const originalText = btn.textContent;
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner" style="margin: 0 auto;"></div>';
 
         try {
             const type = document.getElementById('business-type').value;
 
-            // Uploads (Only uploads if a new file is actually selected in the DOM input)
+            // Uploads (Only uploads if a new file is explicitly selected)
+            const logoUrl = await handleFileUpload('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
             const frontUrl = await handleFileUpload('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
             const idUrl = await handleFileUpload('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
             const cacUrl = await handleFileUpload('file-cac', 'cac-documents', 'cac', existingShop?.cac_certificate_url);
@@ -598,6 +626,8 @@
                 id_type: document.getElementById('id-type').value,
                 id_number: document.getElementById('id-number').value,
                 cac_number: document.getElementById('cac-number').value,
+                
+                image_url: logoUrl,
                 storefront_url: frontUrl,
                 id_card_url: idUrl,
                 cac_certificate_url: cacUrl,
@@ -612,8 +642,7 @@
                 if (error) throw error;
                 alert("Correction Submitted! Your shop is pending approval again.");
             } else {
-                payload.image_url = null;
-                payload.banners = [];
+                payload.banners = []; // Init empty array
                 const { error } = await client.from('shops').insert(payload);
                 if (error) throw error;
                 alert("Application Submitted! You will be notified once approved.");
@@ -625,7 +654,7 @@
             console.error(err);
             alert("Error: " + err.message);
             btn.disabled = false;
-            btn.textContent = isEdit ? "Confirm & Resubmit" : "Confirm & Submit";
+            btn.textContent = originalText;
             closePreviewDialog();
         } 
     }
