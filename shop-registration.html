@@ -83,11 +83,12 @@
         .upload-icon { font-size: 1.5rem; color: #94A3B8; margin-bottom: 8px; }
         .upload-text { font-size: 0.75rem; font-weight: 600; color: #64748B; text-align: center; }
         
-        .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; }
+        .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; z-index: 5; }
         .edit-badge { 
             position: absolute; top: 8px; right: 8px; 
             background: white; border-radius: 50%; padding: 6px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; color: var(--color-purple);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 12px; color: var(--color-purple);
+            z-index: 10; display: none;
         }
 
         /* Buttons */
@@ -133,9 +134,11 @@
         .thumb-box { 
             width: 100%; height: 80px; border-radius: 8px; background: #F1F5F9; 
             border: 1px solid #E2E8F0; overflow: hidden; display: flex; align-items: center; justify-content: center;
+            position: relative;
         }
-        /* Fixed review images displaying */
-        .thumb-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .thumb-box i { font-size: 1.5rem; color: #CBD5E1; }
+        .thumb-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+        
         .thumb-label { font-size: 0.65rem; font-weight: 700; color: #475569; text-transform: uppercase; }
 
         .detail-row { display: flex; padding: 8px 0; border-bottom: 1px dashed #E2E8F0; }
@@ -181,10 +184,10 @@
         <div class="section-title">Store Front Image</div>
         <div class="upload-box wide" onclick="triggerUpload('file-front')">
             <input type="file" id="file-front" hidden accept="image/*" onchange="previewFile(this, 'prev-front')">
-            <img id="prev-front" class="preview-img">
             <i class="fa-solid fa-store upload-icon"></i>
             <span class="upload-text">Upload Cover Photo (Required)</span>
-            <i class="fa-solid fa-pen edit-badge" id="badge-front" style="display:none;"></i>
+            <img id="prev-front" class="preview-img">
+            <i class="fa-solid fa-pen edit-badge" id="badge-front"></i>
         </div>
 
         <div class="section-title">Business Details</div>
@@ -259,10 +262,10 @@
                 <label class="label" id="cac-label">Upload CAC (Optional)</label>
                 <div class="upload-box" onclick="triggerUpload('file-cac')">
                     <input type="file" id="file-cac" hidden accept="image/*" onchange="previewFile(this, 'prev-cac')">
-                    <img id="prev-cac" class="preview-img">
                     <i class="fa-solid fa-file-contract upload-icon"></i>
-                    <span class="upload-text" id="cac-sub">Tap to Upload</span>
-                    <i class="fa-solid fa-pen edit-badge" id="badge-cac" style="display:none;"></i>
+                    <span class="upload-text">Tap to Upload</span>
+                    <img id="prev-cac" class="preview-img">
+                    <i class="fa-solid fa-pen edit-badge" id="badge-cac"></i>
                 </div>
             </div>
 
@@ -287,10 +290,10 @@
                 <label class="label">Upload ID Card (Required)</label>
                 <div class="upload-box" onclick="triggerUpload('file-id')">
                     <input type="file" id="file-id" hidden accept="image/*" onchange="previewFile(this, 'prev-id')">
-                    <img id="prev-id" class="preview-img">
                     <i class="fa-solid fa-id-card upload-icon"></i>
                     <span class="upload-text">Required</span>
-                    <i class="fa-solid fa-pen edit-badge" id="badge-id" style="display:none;"></i>
+                    <img id="prev-id" class="preview-img">
+                    <i class="fa-solid fa-pen edit-badge" id="badge-id"></i>
                 </div>
             </div>
 
@@ -298,10 +301,10 @@
                 <label class="label">Shop Logo (Optional)</label>
                 <div class="upload-box" onclick="triggerUpload('file-logo')">
                     <input type="file" id="file-logo" hidden accept="image/*" onchange="previewFile(this, 'prev-logo')">
-                    <img id="prev-logo" class="preview-img">
                     <i class="fa-regular fa-image upload-icon"></i>
                     <span class="upload-text">Tap to Upload</span>
-                    <i class="fa-solid fa-pen edit-badge" id="badge-logo" style="display:none;"></i>
+                    <img id="prev-logo" class="preview-img">
+                    <i class="fa-solid fa-pen edit-badge" id="badge-logo"></i>
                 </div>
             </div>
 
@@ -332,15 +335,24 @@
         
         <div class="thumb-row">
             <div class="thumb-col">
-                <div class="thumb-box"><img id="rv-img-front"></div>
+                <div class="thumb-box">
+                    <i class="fa-solid fa-store" id="rv-icon-front"></i>
+                    <img id="rv-img-front">
+                </div>
                 <span class="thumb-label">Store Front</span>
             </div>
             <div class="thumb-col">
-                <div class="thumb-box"><img id="rv-img-id"></div>
+                <div class="thumb-box">
+                    <i class="fa-solid fa-id-card" id="rv-icon-id"></i>
+                    <img id="rv-img-id">
+                </div>
                 <span class="thumb-label">ID Card</span>
             </div>
             <div class="thumb-col" id="rv-cac-col" style="display: none;">
-                <div class="thumb-box"><img id="rv-img-cac"></div>
+                <div class="thumb-box">
+                    <i class="fa-solid fa-file-contract" id="rv-icon-cac"></i>
+                    <img id="rv-img-cac">
+                </div>
                 <span class="thumb-label">CAC Cert</span>
             </div>
         </div>
@@ -462,7 +474,7 @@
         document.getElementById('id-number').value = data.id_number || '';
         document.getElementById('cac-number').value = data.cac_number || '';
 
-        // Safely load all images
+        // Safe robust image loading
         setPreview('prev-front', data.storefront_url);
         setPreview('prev-id', data.id_card_url);
         setPreview('prev-cac', data.cac_certificate_url);
@@ -476,13 +488,23 @@
         toggleCacRequirement(); 
     }
 
+    // BULLETPROOF IMAGE SETTER
     function setPreview(id, url) {
-        if (url && url.trim() !== '') {
+        if (url && typeof url === 'string' && url.trim() !== '') {
             const img = document.getElementById(id);
-            img.src = url; // Directly assigns valid URL
+            img.src = url; 
             img.style.display = 'block';
+            
+            // Show the edit pencil badge
             const badge = document.getElementById(id.replace('prev', 'badge'));
             if (badge) badge.style.display = 'block';
+
+            // Hide the default icons and text to make it look clean
+            const box = img.parentElement;
+            const icon = box.querySelector('.upload-icon');
+            const text = box.querySelector('.upload-text');
+            if (icon) icon.style.display = 'none';
+            if (text) text.style.display = 'none';
         }
     }
 
@@ -496,8 +518,15 @@
                 const img = document.getElementById(imgId);
                 img.src = e.target.result;
                 img.style.display = 'block';
+                
                 const badge = document.getElementById(imgId.replace('prev', 'badge'));
                 if (badge) badge.style.display = 'block';
+
+                const box = img.parentElement;
+                const icon = box.querySelector('.upload-icon');
+                const text = box.querySelector('.upload-text');
+                if (icon) icon.style.display = 'none';
+                if (text) text.style.display = 'none';
             };
             reader.readAsDataURL(input.files[0]);
         }
@@ -519,11 +548,11 @@
         }
     }
 
-    // --- SAFE IMAGE VALIDATOR ---
+    // --- BULLETPROOF IMAGE VALIDATOR ---
     function getSafeImageSource(imgId) {
         const img = document.getElementById(imgId);
-        // Only return true URL if it has been explicitly set (has src attribute)
-        if (img.hasAttribute('src') && img.getAttribute('src').trim() !== '') {
+        // If the display is 'block', it means our JS specifically loaded a valid image into it!
+        if (img.style.display === 'block' && img.src && img.src.trim() !== '') {
             return img.src; 
         }
         return null;
@@ -547,21 +576,25 @@
             return alert("CAC Certificate is required for Limited Liability companies.");
         }
 
-        // 2. Populate Modal Images Safely
-        const rvFront = document.getElementById('rv-img-front');
-        rvFront.src = frontImgSrc;
-        rvFront.style.display = 'block';
+        // 2. Populate Modal Images Forcefully
+        if (frontImgSrc) {
+            document.getElementById('rv-img-front').src = frontImgSrc;
+            document.getElementById('rv-img-front').style.display = 'block';
+            document.getElementById('rv-icon-front').style.display = 'none';
+        }
 
-        const rvId = document.getElementById('rv-img-id');
-        rvId.src = idImgSrc;
-        rvId.style.display = 'block';
+        if (idImgSrc) {
+            document.getElementById('rv-img-id').src = idImgSrc;
+            document.getElementById('rv-img-id').style.display = 'block';
+            document.getElementById('rv-icon-id').style.display = 'none';
+        }
         
         const cacCol = document.getElementById('rv-cac-col');
         if (cacImgSrc) {
             cacCol.style.display = 'flex';
-            const rvCac = document.getElementById('rv-img-cac');
-            rvCac.src = cacImgSrc;
-            rvCac.style.display = 'block';
+            document.getElementById('rv-img-cac').src = cacImgSrc;
+            document.getElementById('rv-img-cac').style.display = 'block';
+            document.getElementById('rv-icon-cac').style.display = 'none';
         } else {
             cacCol.style.display = 'none';
         }
