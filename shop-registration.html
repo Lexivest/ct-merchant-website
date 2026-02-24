@@ -389,61 +389,61 @@
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     // --- STATE ---
     let currentUser = null;
     let existingShop = null;
     const params = new URLSearchParams(window.location.search);
     const shopId = params.get('id') || params.get('shop_id');
     const isEdit = !!shopId;
-
     // --- INIT ---
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "login.html"; return; }
         currentUser = session.user;
-
         document.getElementById('shop-form').style.display = 'none';
         document.getElementById('main-loader').style.display = 'block';
-
-        await fetchCategories();
-        await fetchUserLocation();
-
-        if (isEdit) {
-            await loadShopData();
+        try {
+            await fetchCategories();
+            await fetchUserLocation();
+            if (isEdit) {
+                await loadShopData();
+            }
+        } catch (err) {
+            console.error('Error during initialization:', err);
+            alert('Error loading initial data: ' + err.message + '. Proceeding with form anyway.');
+        } finally {
+            document.getElementById('main-loader').style.display = 'none';
+            document.getElementById('shop-form').style.display = 'block';
         }
-
-        document.getElementById('main-loader').style.display = 'none';
-        document.getElementById('shop-form').style.display = 'block';
     };
-
     // --- FETCHERS ---
     async function fetchCategories() {
-        const { data } = await client.from('categories').select('name').order('name');
+        const { data, error } = await client.from('categories').select('name').order('name');
+        if (error) throw error;
         const sel = document.getElementById('category');
         sel.innerHTML = '<option value="" disabled selected>Select Category</option>';
         data.forEach(c => {
             sel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
         });
     }
-
     async function fetchUserLocation() {
-        const { data } = await client.from('profiles').select('city_id, cities(name)').eq('id', currentUser.id).single();
+        const { data, error } = await client.from('profiles').select('city_id, cities(name)').eq('id', currentUser.id).single();
+        if (error) throw error;
         if (data) {
             document.getElementById('city-id').value = data.city_id;
             document.getElementById('city-display').value = data.cities.name;
-            await fetchAreas(data.city_id); 
+            await fetchAreas(data.city_id);
+        } else {
+            alert('No city found in your profile. Please set it in your dashboard.');
         }
     }
-
     async function fetchAreas(cityId) {
         const sel = document.getElementById('area');
         sel.disabled = true;
-        
-        const { data } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+        const { data, error } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+        if (error) throw error;
         sel.innerHTML = '<option value="" disabled selected>Select Area</option>';
         sel.disabled = false;
-
         data.forEach(a => {
             const opt = document.createElement('option');
             opt.value = a.id;
@@ -451,15 +451,17 @@
             sel.appendChild(opt);
         });
     }
-
     // --- EDIT / RESUBMIT LOGIC ---
     async function loadShopData() {
         document.getElementById('header-title').textContent = "Correct & Resubmit";
-
-        const { data } = await client.from('shops').select('*').eq('id', shopId).single();
-        if (!data) return;
+        const { data, error } = await client.from('shops').select('*').eq('id', shopId).single();
+        if (error) throw error;
+        if (!data) {
+            alert("Shop not found. Redirecting to dashboard.");
+            window.location.href = "user-dashboard.html";
+            return;
+        }
         existingShop = data;
-
         document.getElementById('name').value = data.name;
         document.getElementById('desc').value = data.description || '';
         document.getElementById('business-type').value = data.business_type || 'Individual/Enterprise';
@@ -473,32 +475,51 @@
         document.getElementById('id-type').value = data.id_type || 'National ID Card';
         document.getElementById('id-number').value = data.id_number || '';
         document.getElementById('cac-number').value = data.cac_number || '';
-
-        // Safe robust image loading
-        setPreview('prev-front', data.storefront_url);
-        setPreview('prev-id', data.id_card_url);
-        setPreview('prev-cac', data.cac_certificate_url);
-        setPreview('prev-logo', data.image_url);
-
+        // Safe robust image loading with signed URLs for private buckets
+        if (data.storefront_url) {
+            setPreview('prev-front', data.storefront_url);
+        }
+        if (data.image_url) {
+            setPreview('prev-logo', data.image_url);
+        }
+        if (data.id_card_url) {
+            const idPath = data.id_card_url.split('/kyc-documents/')[1];
+            if (idPath) {
+                const { data: signedData, error } = await client.storage.from('kyc-documents').createSignedUrl(idPath, 3600); // 1 hour expiry
+                if (error) {
+                    console.error('Error generating signed URL for ID:', error);
+                } else if (signedData?.signedUrl) {
+                    setPreview('prev-id', signedData.signedUrl);
+                }
+            }
+        }
+        if (data.cac_certificate_url) {
+            const cacPath = data.cac_certificate_url.split('/cac-documents/')[1];
+            if (cacPath) {
+                const { data: signedData, error } = await client.storage.from('cac-documents').createSignedUrl(cacPath, 3600); // 1 hour expiry
+                if (error) {
+                    console.error('Error generating signed URL for CAC:', error);
+                } else if (signedData?.signedUrl) {
+                    setPreview('prev-cac', signedData.signedUrl);
+                }
+            }
+        }
         if (data.status === 'rejected' && data.rejection_reason) {
             document.getElementById('rejection-box').style.display = 'flex';
             document.getElementById('rejection-reason').textContent = data.rejection_reason;
         }
-
-        toggleCacRequirement(); 
+        toggleCacRequirement();
     }
-
     // BULLETPROOF IMAGE SETTER
     function setPreview(id, url) {
         if (url && typeof url === 'string' && url.trim() !== '') {
             const img = document.getElementById(id);
-            img.src = url; 
+            img.src = url;
             img.style.display = 'block';
-            
+           
             // Show the edit pencil badge
             const badge = document.getElementById(id.replace('prev', 'badge'));
             if (badge) badge.style.display = 'block';
-
             // Hide the default icons and text to make it look clean
             const box = img.parentElement;
             const icon = box.querySelector('.upload-icon');
@@ -507,10 +528,8 @@
             if (text) text.style.display = 'none';
         }
     }
-
     // --- UI HELPERS ---
     function triggerUpload(id) { document.getElementById(id).click(); }
-
     function previewFile(input, imgId) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -518,10 +537,9 @@
                 const img = document.getElementById(imgId);
                 img.src = e.target.result;
                 img.style.display = 'block';
-                
+               
                 const badge = document.getElementById(imgId.replace('prev', 'badge'));
                 if (badge) badge.style.display = 'block';
-
                 const box = img.parentElement;
                 const icon = box.querySelector('.upload-icon');
                 const text = box.querySelector('.upload-text');
@@ -531,12 +549,11 @@
             reader.readAsDataURL(input.files[0]);
         }
     }
-
     function toggleCacRequirement() {
         const type = document.getElementById('business-type').value;
         const label = document.getElementById('cac-label');
         const numLabel = document.getElementById('cac-num-label');
-        
+       
         if (type === 'Limited Liability (Ltd)') {
             label.textContent = 'Upload CAC Cert (Required)';
             numLabel.textContent = 'RC Number (Required)';
@@ -547,48 +564,42 @@
             document.getElementById('cac-number').removeAttribute('required');
         }
     }
-
     // --- BULLETPROOF IMAGE VALIDATOR ---
     function getSafeImageSource(imgId) {
         const img = document.getElementById(imgId);
         // If the display is 'block', it means our JS specifically loaded a valid image into it!
         if (img.style.display === 'block' && img.src && img.src.trim() !== '') {
-            return img.src; 
+            return img.src;
         }
         return null;
     }
-
     // --- REVIEW & SUBMIT ---
     function showPreviewDialog(e) {
         e.preventDefault();
-
         // 1. Validation Logic
         const type = document.getElementById('business-type').value;
-        
+       
         const frontImgSrc = getSafeImageSource('prev-front');
         const idImgSrc = getSafeImageSource('prev-id');
         const cacImgSrc = getSafeImageSource('prev-cac');
-
         if (!frontImgSrc) return alert("Storefront image is required.");
         if (!idImgSrc) return alert("ID Card image is required.");
-        
+       
         if (type === 'Limited Liability (Ltd)' && !cacImgSrc) {
             return alert("CAC Certificate is required for Limited Liability companies.");
         }
-
         // 2. Populate Modal Images Forcefully
         if (frontImgSrc) {
             document.getElementById('rv-img-front').src = frontImgSrc;
             document.getElementById('rv-img-front').style.display = 'block';
             document.getElementById('rv-icon-front').style.display = 'none';
         }
-
         if (idImgSrc) {
             document.getElementById('rv-img-id').src = idImgSrc;
             document.getElementById('rv-img-id').style.display = 'block';
             document.getElementById('rv-icon-id').style.display = 'none';
         }
-        
+       
         const cacCol = document.getElementById('rv-cac-col');
         if (cacImgSrc) {
             cacCol.style.display = 'flex';
@@ -598,17 +609,15 @@
         } else {
             cacCol.style.display = 'none';
         }
-
         // 3. Populate Modal Text
         const areaSelect = document.getElementById('area');
         const areaText = areaSelect.options[areaSelect.selectedIndex]?.text || '';
         const cityText = document.getElementById('city-display').value;
-
         document.getElementById('rv-name').textContent = document.getElementById('name').value;
         document.getElementById('rv-type').textContent = type;
         document.getElementById('rv-cat').textContent = document.getElementById('category').value;
         document.getElementById('rv-loc').textContent = `${areaText}, ${cityText}`;
-        
+       
         const lat = document.getElementById('lat').value;
         const lng = document.getElementById('lng').value;
         if (lat && lng) {
@@ -617,32 +626,25 @@
         } else {
             document.getElementById('rv-coord-row').style.display = 'none';
         }
-
         document.getElementById('confirm-btn').textContent = isEdit ? "Confirm & Resubmit" : "Confirm & Submit";
-
         // Show Modal
         document.getElementById('review-modal').classList.add('active');
     }
-
     function closePreviewDialog() {
         document.getElementById('review-modal').classList.remove('active');
     }
-
     async function submitApplication() {
         const btn = document.getElementById('confirm-btn');
         const originalText = btn.textContent;
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner" style="margin: 0 auto;"></div>';
-
         try {
             const type = document.getElementById('business-type').value;
-
             // Uploads (Only uploads if a new file is explicitly selected)
             const logoUrl = await handleFileUpload('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
             const frontUrl = await handleFileUpload('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
             const idUrl = await handleFileUpload('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
             const cacUrl = await handleFileUpload('file-cac', 'cac-documents', 'cac', existingShop?.cac_certificate_url);
-
             const payload = {
                 owner_id: currentUser.id,
                 name: document.getElementById('name').value,
@@ -659,17 +661,16 @@
                 id_type: document.getElementById('id-type').value,
                 id_number: document.getElementById('id-number').value,
                 cac_number: document.getElementById('cac-number').value,
-                
+               
                 image_url: logoUrl,
                 storefront_url: frontUrl,
                 id_card_url: idUrl,
                 cac_certificate_url: cacUrl,
-                
+               
                 // CRITICAL RESUBMISSION LOGIC
-                status: 'pending', 
+                status: 'pending',
                 rejection_reason: null
             };
-
             if (isEdit && existingShop) {
                 const { error } = await client.from('shops').update(payload).eq('id', shopId);
                 if (error) throw error;
@@ -680,28 +681,24 @@
                 if (error) throw error;
                 alert("Application Submitted! You will be notified once approved.");
             }
-
             window.location.href = "user-dashboard.html";
-
         } catch (err) {
             console.error(err);
             alert("Error: " + err.message);
             btn.disabled = false;
             btn.textContent = originalText;
             closePreviewDialog();
-        } 
+        }
     }
-
     async function handleFileUpload(inputId, bucket, folder, existingUrl) {
         const file = document.getElementById(inputId).files[0];
         if (!file) return existingUrl || null; // Returns existing URL if no new file picked
-
         const ext = file.name.split('.').pop();
         const fileName = `${folder}/${currentUser.id}_${Date.now()}.${ext}`;
-        
+       
         const { error: uploadError } = await client.storage.from(bucket).upload(fileName, file);
         if (uploadError) throw uploadError;
-        
+       
         const { data } = client.storage.from(bucket).getPublicUrl(fileName);
         return data.publicUrl;
     }
@@ -709,3 +706,4 @@
 
 </body>
 </html>
+
