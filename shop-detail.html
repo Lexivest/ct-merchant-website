@@ -60,7 +60,6 @@
             max-width: 100%;
         }
         
-        /* Adjust title for desktop */
         @media(min-width: 768px) { .page-title { font-size: 1.1rem; } }
 
         /* --- SPLIT HERO LAYOUT --- */
@@ -72,11 +71,10 @@
             gap: 30px;
         }
 
-        /* Desktop Layout */
         @media (min-width: 900px) {
             .shop-hero-split {
                 display: grid;
-                grid-template-columns: 1fr 1fr; /* 50/50 Split */
+                grid-template-columns: 1fr 1fr;
                 gap: 40px;
                 align-items: start;
                 margin-bottom: 40px;
@@ -119,10 +117,36 @@
         }
         .like-btn.liked { background: #FDF2F8; color: var(--color-pink); border-color: #FBCFE8; }
 
-        .news-ticker {
+        /* --- DYNAMIC SCROLLING NEWS TICKER --- */
+        .news-container {
             background: #FFF7ED; border: 1px solid #FFEDD5; color: #C2410C;
-            padding: 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
-            display: flex; align-items: center; gap: 8px; margin-bottom: 20px;
+            border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+            display: flex; align-items: center; margin-bottom: 20px;
+            overflow: hidden; position: relative;
+        }
+        .news-icon-wrapper {
+            background: #FFF7ED; padding: 12px 12px 12px 16px; z-index: 2;
+            display: flex; align-items: center; gap: 8px;
+            box-shadow: 10px 0 15px -5px #FFF7ED;
+        }
+        .news-marquee-wrapper {
+            flex: 1; overflow: hidden; position: relative; padding: 12px 0;
+            /* Fade effect on edges */
+            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        }
+        .news-marquee-content {
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: 100%; /* Start perfectly off-screen to the right */
+            animation: marquee 25s linear infinite;
+        }
+        .news-marquee-wrapper:hover .news-marquee-content {
+            animation-play-state: paused; /* Pause on hover */
+        }
+        @keyframes marquee {
+            0%   { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
         }
 
         /* --- MINI HEADINGS --- */
@@ -231,7 +255,7 @@
         .btn-cancel { background: #F1F5F9; color: #475569; }
         .btn-confirm { background: var(--color-primary); color: white; }
 
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         .spinner { width: 32px; height: 32px; border: 3px solid #E2E8F0; border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 50px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -274,9 +298,14 @@
                         </button>
                     </div>
 
-                    <div id="news-ticker" class="news-ticker hidden">
-                        <i class="fa-solid fa-bullhorn"></i>
-                        <span id="news-text"></span>
+                    <!-- DYNAMIC NEWS TICKER -->
+                    <div id="news-container" class="news-container hidden">
+                        <div class="news-icon-wrapper">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div class="news-marquee-wrapper">
+                            <div class="news-marquee-content" id="news-text"></div>
+                        </div>
                     </div>
 
                     <!-- BANNER CAROUSEL -->
@@ -387,10 +416,12 @@
 
     async function fetchShopData() {
         try {
-            const [shopRes, prodRes, likeRes] = await Promise.all([
+            // Added 4th promise to fetch approved banners and news from the new table
+            const [shopRes, prodRes, likeRes, contentRes] = await Promise.all([
                 client.from('shops').select('*, cities(name)').eq('id', shopId).maybeSingle(),
                 client.from('products').select().eq('shop_id', shopId).eq('is_available', true).order('created_at', { ascending: false }),
-                client.from('shop_likes').select('id', { count: 'exact' }).eq('shop_id', shopId)
+                client.from('shop_likes').select('id', { count: 'exact' }).eq('shop_id', shopId),
+                client.from('shop_banners_news').select('*').eq('shop_id', shopId).eq('status', 'approved').order('created_at', { ascending: false })
             ]);
 
             if (!shopRes.data) return;
@@ -401,11 +432,18 @@
                 if (data) userLiked = true;
             }
 
+            // Extract Banners and News separately
+            const approvedContent = contentRes.data || [];
+            const approvedBanners = approvedContent.filter(c => c.content_type === 'banner').map(c => c.content_data);
+            const approvedNews = approvedContent.filter(c => c.content_type === 'news').map(c => c.content_data);
+
             const data = {
                 shop: shopRes.data,
                 products: prodRes.data || [],
                 likeCount: likeRes.count || 0,
-                hasLiked: userLiked
+                hasLiked: userLiked,
+                approvedBanners: approvedBanners,
+                approvedNews: approvedNews
             };
 
             localStorage.setItem(`shop_cache_${shopId}`, JSON.stringify(data));
@@ -447,15 +485,27 @@
 
         updateLikeUI();
 
-        if (s.news) {
-            document.getElementById('news-text').textContent = s.news;
-            document.getElementById('news-ticker').classList.remove('hidden');
+        // --- NEW: DYNAMIC NEWS RENDERING ---
+        // Uses the newly fetched approvedNews array
+        const newsArray = data.approvedNews || [];
+        if (newsArray.length > 0) {
+            // Concatenate multiple news items with a bullet separator if there are multiple
+            const combinedNews = newsArray.join(" &nbsp; • &nbsp; ");
+            document.getElementById('news-text').innerHTML = combinedNews;
+            document.getElementById('news-container').classList.remove('hidden');
+            
+            // Calculate dynamic animation speed based on text length (prevents fast scrolling for long text)
+            const textLength = combinedNews.length;
+            const scrollSpeed = Math.max(20, textLength * 0.15); // Min 20 seconds, scales up for long text
+            document.getElementById('news-text').style.animationDuration = `${scrollSpeed}s`;
         }
 
-        // --- BANNER LOGIC (Left Column) ---
-        let bannerImages = [];
-        if (s.banners && s.banners.length > 0) bannerImages = s.banners;
-        else if (s.image_url) bannerImages = [s.image_url];
+        // --- NEW: DYNAMIC BANNER RENDERING ---
+        // Uses approved banners. Fallback to shop primary image if no banners exist.
+        let bannerImages = data.approvedBanners || [];
+        if (bannerImages.length === 0 && s.image_url) {
+            bannerImages = [s.image_url];
+        }
         
         if (bannerImages.length > 0) {
             document.getElementById('banner-wrapper').classList.remove('hidden');
