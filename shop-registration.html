@@ -1,422 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shop Registration | CT‑Merchant</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <style>
-        :root {
-            --color-purple: #2E1065;
-            --color-pink: #DB2777;
-            --color-bg: #F8FAFC;
-            --color-text: #1E293B;
-            --color-border: #E2E8F0;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        
-        body { 
-            background: var(--color-bg); 
-            color: var(--color-text); 
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            padding: 20px 16px;
-        }
-
-        .container { width: 100%; max-width: 600px; position: relative; }
-
-        /* Header */
-        .header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-        .back-btn { 
-            background: white; border: 1px solid var(--color-border); 
-            width: 40px; height: 40px; border-radius: 12px; 
-            display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; color: var(--color-text); font-size: 1.1rem;
-            transition: all 0.2s;
-        }
-        .back-btn:hover { border-color: var(--color-purple); color: var(--color-purple); }
-        .page-title { font-size: 1.25rem; font-weight: 800; color: var(--color-purple); }
-
-        /* Form Card */
-        .card { background: white; padding: 24px; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--color-border); }
-
-        /* Sections */
-        .section-title { 
-            font-size: 0.85rem; font-weight: 700; color: #64748B; 
-            text-transform: uppercase; letter-spacing: 0.5px; 
-            margin: 24px 0 16px 0; border-bottom: 1px solid #E2E8F0; 
-            padding-bottom: 8px; 
-        }
-        .section-title:first-child { margin-top: 0; }
-
-        /* Inputs */
-        .form-grid { display: grid; gap: 16px; }
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .label { font-size: 0.9rem; font-weight: 600; color: #334155; }
-        
-        .input { 
-            width: 100%; padding: 12px 16px; border-radius: 10px; 
-            border: 1px solid var(--color-border); font-size: 0.95rem; 
-            background: #F8FAFC; transition: border 0.2s;
-        }
-        .input:focus { outline: none; border-color: var(--color-purple); background: white; }
-        .input:disabled { background: #E2E8F0; color: #94A3B8; cursor: not-allowed; opacity: 1; -webkit-text-fill-color: #64748B; }
-        
-        textarea.input { resize: vertical; min-height: 80px; }
-
-        /* Upload Boxes */
-        .upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .upload-box {
-            border: 2px dashed var(--color-border); border-radius: 12px;
-            height: 140px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; cursor: pointer;
-            background: #FAFAFA; position: relative; overflow: hidden;
-            transition: all 0.2s;
-        }
-        .upload-box.wide { grid-column: 1 / -1; height: 180px; }
-        .upload-box:hover { border-color: var(--color-purple); background: #F3E8FF; }
-        .upload-icon { font-size: 1.5rem; color: #94A3B8; margin-bottom: 8px; }
-        .upload-text { font-size: 0.75rem; font-weight: 600; color: #64748B; text-align: center; }
-        
-        .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; z-index: 5; }
-        .edit-badge { 
-            position: absolute; top: 8px; right: 8px; 
-            background: white; border-radius: 50%; padding: 6px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 12px; color: var(--color-purple);
-            z-index: 10; display: none;
-        }
-
-        /* Buttons */
-        .btn-submit {
-            width: 100%; background: var(--color-purple); color: white;
-            padding: 16px; border-radius: 12px; border: none;
-            font-size: 1.05rem; font-weight: 700; cursor: pointer;
-            margin-top: 30px; transition: background 0.2s;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            box-shadow: 0 4px 12px rgba(46, 16, 101, 0.2);
-        }
-        .btn-submit:hover { background: #4C1D95; transform: translateY(-2px); }
-        .btn-submit:disabled { background: #94A3B8; cursor: not-allowed; transform: none; box-shadow: none; }
-
-        /* Alerts */
-        .alert-box {
-            padding: 16px; border-radius: 12px; margin-bottom: 20px;
-            display: none; align-items: flex-start; gap: 12px;
-        }
-        .alert-error { background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; }
-
-        /* --- REVIEW MODAL --- */
-        .overlay { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
-            z-index: 1000; display: flex; align-items: flex-end; justify-content: center;
-            opacity: 0; visibility: hidden; transition: 0.3s;
-        }
-        .overlay.active { opacity: 1; visibility: visible; }
-        
-        .review-sheet {
-            background: white; width: 100%; max-width: 600px;
-            border-radius: 24px 24px 0 0; padding: 30px 24px;
-            transform: translateY(100%); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            max-height: 90vh; overflow-y: auto;
-        }
-        .overlay.active .review-sheet { transform: translateY(0); }
-
-        .review-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; color: #0F172A; }
-        .review-subtitle { color: #64748B; font-size: 0.9rem; margin-bottom: 24px; }
-        
-        .thumb-row { display: flex; gap: 12px; margin-bottom: 24px; }
-        .thumb-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .thumb-box { 
-            width: 100%; height: 80px; border-radius: 8px; background: #F1F5F9; 
-            border: 1px solid #E2E8F0; overflow: hidden; display: flex; align-items: center; justify-content: center;
-            position: relative;
-        }
-        .thumb-box i { font-size: 1.5rem; color: #CBD5E1; }
-        .thumb-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
-        
-        .thumb-label { font-size: 0.65rem; font-weight: 700; color: #475569; text-transform: uppercase; }
-
-        .detail-row { display: flex; padding: 8px 0; border-bottom: 1px dashed #E2E8F0; }
-        .detail-row:last-child { border-bottom: none; }
-        .detail-label { width: 120px; color: #64748B; font-size: 0.9rem; font-weight: 500; }
-        .detail-value { flex: 1; font-weight: 600; color: #0F172A; font-size: 0.95rem; }
-
-        .btn-confirm { background: var(--color-primary, #059669); color: white; width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 800; font-size: 1.05rem; margin-top: 24px; cursor: pointer; }
-        .btn-edit { background: transparent; color: #64748B; width: 100%; padding: 12px; border: none; font-weight: 600; cursor: pointer; margin-top: 8px; }
-
-        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        #main-loader { text-align: center; padding: 50px; color: var(--color-purple); display: none; }
-
-        @media (max-width: 480px) {
-            .upload-row { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="header">
-        <button onclick="window.location.href='user-dashboard.html'" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
-        <div class="page-title" id="header-title">Register Shop</div>
-    </div>
-
-    <!-- Rejection Notice -->
-    <div id="rejection-box" class="alert-box alert-error">
-        <i class="fa-solid fa-circle-exclamation" style="margin-top: 2px;"></i>
-        <div>
-            <h4 style="margin-bottom: 4px; font-weight: 700;">Attention Required</h4>
-            <p id="rejection-reason" style="font-size: 0.9rem; line-height: 1.4; color: #111827;"></p>
-        </div>
-    </div>
-
-    <div id="main-loader"><i class="fa-solid fa-circle-notch fa-spin fa-2x"></i></div>
-
-    <form id="shop-form" class="card" onsubmit="showPreviewDialog(event)">
-        
-        <!-- 1. Basic Info -->
-        <div class="section-title">Store Front Image</div>
-        <div class="upload-box wide" onclick="triggerUpload('file-front')">
-            <input type="file" id="file-front" hidden accept="image/*" onchange="previewFile(this, 'prev-front')">
-            <i class="fa-solid fa-store upload-icon"></i>
-            <span class="upload-text">Upload Cover Photo (Required)</span>
-            <img id="prev-front" class="preview-img">
-            <i class="fa-solid fa-pen edit-badge" id="badge-front"></i>
-        </div>
-
-        <div class="section-title">Business Details</div>
-        <div class="form-grid">
-            <div class="form-group">
-                <label class="label">Business Name</label>
-                <input type="text" id="name" class="input" placeholder="e.g. Ade & Sons Enterprise" required>
-            </div>
-            
-            <div class="form-group">
-                <label class="label">Business Type</label>
-                <select id="business-type" class="input" onchange="toggleCacRequirement()">
-                    <option value="Individual/Enterprise">Individual/Enterprise</option>
-                    <option value="Limited Liability (Ltd)">Limited Liability (Ltd)</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="label">Category</label>
-                <select id="category" class="input" required>
-                    <option value="" disabled selected>Loading Categories...</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="label">Description</label>
-                <textarea id="desc" class="input" placeholder="What do you sell or offer?" required></textarea>
-            </div>
-        </div>
-
-        <!-- 2. Location -->
-        <div class="section-title">Location</div>
-        <div class="form-grid">
-            <div class="upload-row">
-                <div class="form-group">
-                    <label class="label">City (Fixed)</label>
-                    <input type="text" id="city-display" class="input" disabled>
-                    <input type="hidden" id="city-id">
-                </div>
-                <div class="form-group">
-                    <label class="label">Area</label>
-                    <select id="area" class="input" required>
-                        <option value="" disabled selected>Loading...</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="label">Street Address</label>
-                <input type="text" id="address" class="input" placeholder="Shop 4, Main Market..." required>
-            </div>
-
-            <div class="form-group">
-                <label class="label">Coordinates (Optional)</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="lat" class="input" placeholder="Lat (e.g. 9.08)">
-                    <input type="text" id="lng" class="input" placeholder="Lng (e.g. 7.49)">
-                </div>
-            </div>
-        </div>
-
-        <!-- 3. Identity -->
-        <div class="section-title">Identity & Legal <small style="text-transform:none; font-weight:400; color:#94A3B8;">(Private)</small></div>
-        <div class="form-grid">
-            
-            <div class="form-group">
-                <label class="label" id="cac-num-label">BN Number (Optional)</label>
-                <input type="text" id="cac-number" class="input" placeholder="If applicable">
-            </div>
-
-            <div class="form-group">
-                <label class="label" id="cac-label">Upload CAC (Optional)</label>
-                <div class="upload-box" onclick="triggerUpload('file-cac')">
-                    <input type="file" id="file-cac" hidden accept="image/*" onchange="previewFile(this, 'prev-cac')">
-                    <i class="fa-solid fa-file-contract upload-icon"></i>
-                    <span class="upload-text">Tap to Upload</span>
-                    <img id="prev-cac" class="preview-img">
-                    <i class="fa-solid fa-pen edit-badge" id="badge-cac"></i>
-                </div>
-            </div>
-
-            <hr style="border:0; border-top:1px solid #E2E8F0; margin:8px 0;">
-
-            <div class="form-group">
-                <label class="label">ID Type</label>
-                <select id="id-type" class="input">
-                    <option>National ID Card</option>
-                    <option>Voters Card</option>
-                    <option>Drivers License</option>
-                    <option>International Passport</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="label">ID Number</label>
-                <input type="text" id="id-number" class="input" required>
-            </div>
-
-            <div class="form-group">
-                <label class="label">Upload ID Card (Required)</label>
-                <div class="upload-box" onclick="triggerUpload('file-id')">
-                    <input type="file" id="file-id" hidden accept="image/*" onchange="previewFile(this, 'prev-id')">
-                    <i class="fa-solid fa-id-card upload-icon"></i>
-                    <span class="upload-text">Required</span>
-                    <img id="prev-id" class="preview-img">
-                    <i class="fa-solid fa-pen edit-badge" id="badge-id"></i>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="label">Shop Logo (Optional)</label>
-                <div class="upload-box" onclick="triggerUpload('file-logo')">
-                    <input type="file" id="file-logo" hidden accept="image/*" onchange="previewFile(this, 'prev-logo')">
-                    <i class="fa-regular fa-image upload-icon"></i>
-                    <span class="upload-text">Tap to Upload</span>
-                    <img id="prev-logo" class="preview-img">
-                    <i class="fa-solid fa-pen edit-badge" id="badge-logo"></i>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- 4. Contacts -->
-        <div class="section-title">Contacts</div>
-        <div class="form-grid">
-            <div class="form-group">
-                <label class="label">Business Phone</label>
-                <input type="tel" id="phone" class="input" required>
-            </div>
-            <div class="form-group">
-                <label class="label">WhatsApp Number (Optional)</label>
-                <input type="tel" id="whatsapp" class="input">
-            </div>
-        </div>
-
-        <button type="submit" id="submit-btn" class="btn-submit">Review Application</button>
-    </form>
-</div>
-
-<!-- RICH REVIEW MODAL -->
-<div id="review-modal" class="overlay">
-    <div class="review-sheet">
-        <h2 class="review-title">Review Application</h2>
-        <p class="review-subtitle">Please ensure all details are correct before submitting.</p>
-        
-        <div class="thumb-row">
-            <div class="thumb-col">
-                <div class="thumb-box">
-                    <i class="fa-solid fa-store" id="rv-icon-front"></i>
-                    <img id="rv-img-front">
-                </div>
-                <span class="thumb-label">Store Front</span>
-            </div>
-            <div class="thumb-col">
-                <div class="thumb-box">
-                    <i class="fa-solid fa-id-card" id="rv-icon-id"></i>
-                    <img id="rv-img-id">
-                </div>
-                <span class="thumb-label">ID Card</span>
-            </div>
-            <div class="thumb-col" id="rv-cac-col" style="display: none;">
-                <div class="thumb-box">
-                    <i class="fa-solid fa-file-contract" id="rv-icon-cac"></i>
-                    <img id="rv-img-cac">
-                </div>
-                <span class="thumb-label">CAC Cert</span>
-            </div>
-        </div>
-
-        <div class="detail-row">
-            <div class="detail-label">Business Name</div>
-            <div class="detail-value" id="rv-name"></div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">Type</div>
-            <div class="detail-value" id="rv-type"></div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">Category</div>
-            <div class="detail-value" id="rv-cat"></div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">Location</div>
-            <div class="detail-value" id="rv-loc"></div>
-        </div>
-        <div class="detail-row" id="rv-coord-row">
-            <div class="detail-label">Coords</div>
-            <div class="detail-value" id="rv-coords"></div>
-        </div>
-
-        <button class="btn-confirm" id="confirm-btn" onclick="submitApplication()">Confirm & Submit</button>
-        <button class="btn-edit" onclick="closePreviewDialog()">Edit Details</button>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     // --- CONFIG ---
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     // --- STATE ---
     let currentUser = null;
     let existingShop = null;
     const params = new URLSearchParams(window.location.search);
     const shopId = params.get('id') || params.get('shop_id');
     const isEdit = !!shopId;
-
     // --- INIT ---
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "login.html"; return; }
         currentUser = session.user;
-
         document.getElementById('shop-form').style.display = 'none';
         document.getElementById('main-loader').style.display = 'block';
-
         await fetchCategories();
         await fetchUserLocation();
-
         if (isEdit) {
             await loadShopData();
         }
-
         document.getElementById('main-loader').style.display = 'none';
         document.getElementById('shop-form').style.display = 'block';
     };
-
     // --- FETCHERS ---
     async function fetchCategories() {
         const { data } = await client.from('categories').select('name').order('name');
@@ -426,24 +34,21 @@
             sel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
         });
     }
-
     async function fetchUserLocation() {
         const { data } = await client.from('profiles').select('city_id, cities(name)').eq('id', currentUser.id).single();
         if (data) {
             document.getElementById('city-id').value = data.city_id;
             document.getElementById('city-display').value = data.cities.name;
-            await fetchAreas(data.city_id); 
+            await fetchAreas(data.city_id);
         }
     }
-
     async function fetchAreas(cityId) {
         const sel = document.getElementById('area');
         sel.disabled = true;
-        
+       
         const { data } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
         sel.innerHTML = '<option value="" disabled selected>Select Area</option>';
         sel.disabled = false;
-
         data.forEach(a => {
             const opt = document.createElement('option');
             opt.value = a.id;
@@ -451,15 +56,12 @@
             sel.appendChild(opt);
         });
     }
-
     // --- EDIT / RESUBMIT LOGIC ---
     async function loadShopData() {
         document.getElementById('header-title').textContent = "Correct & Resubmit";
-
         const { data } = await client.from('shops').select('*').eq('id', shopId).single();
         if (!data) return;
         existingShop = data;
-
         document.getElementById('name').value = data.name;
         document.getElementById('desc').value = data.description || '';
         document.getElementById('business-type').value = data.business_type || 'Individual/Enterprise';
@@ -473,32 +75,51 @@
         document.getElementById('id-type').value = data.id_type || 'National ID Card';
         document.getElementById('id-number').value = data.id_number || '';
         document.getElementById('cac-number').value = data.cac_number || '';
-
-        // Safe robust image loading
-        setPreview('prev-front', data.storefront_url);
-        setPreview('prev-id', data.id_card_url);
-        setPreview('prev-cac', data.cac_certificate_url);
-        setPreview('prev-logo', data.image_url);
-
+        // Safe robust image loading with signed URLs for private buckets
+        if (data.storefront_url) {
+            setPreview('prev-front', data.storefront_url);
+        }
+        if (data.image_url) {
+            setPreview('prev-logo', data.image_url);
+        }
+        if (data.id_card_url) {
+            const idPath = data.id_card_url.split('/kyc-documents/')[1];
+            if (idPath) {
+                const { data: signedData, error } = await client.storage.from('kyc-documents').createSignedUrl(idPath, 3600); // 1 hour expiry
+                if (error) {
+                    console.error('Error generating signed URL for ID:', error);
+                } else if (signedData?.signedUrl) {
+                    setPreview('prev-id', signedData.signedUrl);
+                }
+            }
+        }
+        if (data.cac_certificate_url) {
+            const cacPath = data.cac_certificate_url.split('/cac-documents/')[1];
+            if (cacPath) {
+                const { data: signedData, error } = await client.storage.from('cac-documents').createSignedUrl(cacPath, 3600); // 1 hour expiry
+                if (error) {
+                    console.error('Error generating signed URL for CAC:', error);
+                } else if (signedData?.signedUrl) {
+                    setPreview('prev-cac', signedData.signedUrl);
+                }
+            }
+        }
         if (data.status === 'rejected' && data.rejection_reason) {
             document.getElementById('rejection-box').style.display = 'flex';
             document.getElementById('rejection-reason').textContent = data.rejection_reason;
         }
-
-        toggleCacRequirement(); 
+        toggleCacRequirement();
     }
-
     // BULLETPROOF IMAGE SETTER
     function setPreview(id, url) {
         if (url && typeof url === 'string' && url.trim() !== '') {
             const img = document.getElementById(id);
-            img.src = url; 
+            img.src = url;
             img.style.display = 'block';
-            
+           
             // Show the edit pencil badge
             const badge = document.getElementById(id.replace('prev', 'badge'));
             if (badge) badge.style.display = 'block';
-
             // Hide the default icons and text to make it look clean
             const box = img.parentElement;
             const icon = box.querySelector('.upload-icon');
@@ -507,10 +128,8 @@
             if (text) text.style.display = 'none';
         }
     }
-
     // --- UI HELPERS ---
     function triggerUpload(id) { document.getElementById(id).click(); }
-
     function previewFile(input, imgId) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -518,10 +137,9 @@
                 const img = document.getElementById(imgId);
                 img.src = e.target.result;
                 img.style.display = 'block';
-                
+               
                 const badge = document.getElementById(imgId.replace('prev', 'badge'));
                 if (badge) badge.style.display = 'block';
-
                 const box = img.parentElement;
                 const icon = box.querySelector('.upload-icon');
                 const text = box.querySelector('.upload-text');
@@ -531,12 +149,11 @@
             reader.readAsDataURL(input.files[0]);
         }
     }
-
     function toggleCacRequirement() {
         const type = document.getElementById('business-type').value;
         const label = document.getElementById('cac-label');
         const numLabel = document.getElementById('cac-num-label');
-        
+       
         if (type === 'Limited Liability (Ltd)') {
             label.textContent = 'Upload CAC Cert (Required)';
             numLabel.textContent = 'RC Number (Required)';
@@ -547,48 +164,42 @@
             document.getElementById('cac-number').removeAttribute('required');
         }
     }
-
     // --- BULLETPROOF IMAGE VALIDATOR ---
     function getSafeImageSource(imgId) {
         const img = document.getElementById(imgId);
         // If the display is 'block', it means our JS specifically loaded a valid image into it!
         if (img.style.display === 'block' && img.src && img.src.trim() !== '') {
-            return img.src; 
+            return img.src;
         }
         return null;
     }
-
     // --- REVIEW & SUBMIT ---
     function showPreviewDialog(e) {
         e.preventDefault();
-
         // 1. Validation Logic
         const type = document.getElementById('business-type').value;
-        
+       
         const frontImgSrc = getSafeImageSource('prev-front');
         const idImgSrc = getSafeImageSource('prev-id');
         const cacImgSrc = getSafeImageSource('prev-cac');
-
         if (!frontImgSrc) return alert("Storefront image is required.");
         if (!idImgSrc) return alert("ID Card image is required.");
-        
+       
         if (type === 'Limited Liability (Ltd)' && !cacImgSrc) {
             return alert("CAC Certificate is required for Limited Liability companies.");
         }
-
         // 2. Populate Modal Images Forcefully
         if (frontImgSrc) {
             document.getElementById('rv-img-front').src = frontImgSrc;
             document.getElementById('rv-img-front').style.display = 'block';
             document.getElementById('rv-icon-front').style.display = 'none';
         }
-
         if (idImgSrc) {
             document.getElementById('rv-img-id').src = idImgSrc;
             document.getElementById('rv-img-id').style.display = 'block';
             document.getElementById('rv-icon-id').style.display = 'none';
         }
-        
+       
         const cacCol = document.getElementById('rv-cac-col');
         if (cacImgSrc) {
             cacCol.style.display = 'flex';
@@ -598,17 +209,15 @@
         } else {
             cacCol.style.display = 'none';
         }
-
         // 3. Populate Modal Text
         const areaSelect = document.getElementById('area');
         const areaText = areaSelect.options[areaSelect.selectedIndex]?.text || '';
         const cityText = document.getElementById('city-display').value;
-
         document.getElementById('rv-name').textContent = document.getElementById('name').value;
         document.getElementById('rv-type').textContent = type;
         document.getElementById('rv-cat').textContent = document.getElementById('category').value;
         document.getElementById('rv-loc').textContent = `${areaText}, ${cityText}`;
-        
+       
         const lat = document.getElementById('lat').value;
         const lng = document.getElementById('lng').value;
         if (lat && lng) {
@@ -617,32 +226,25 @@
         } else {
             document.getElementById('rv-coord-row').style.display = 'none';
         }
-
         document.getElementById('confirm-btn').textContent = isEdit ? "Confirm & Resubmit" : "Confirm & Submit";
-
         // Show Modal
         document.getElementById('review-modal').classList.add('active');
     }
-
     function closePreviewDialog() {
         document.getElementById('review-modal').classList.remove('active');
     }
-
     async function submitApplication() {
         const btn = document.getElementById('confirm-btn');
         const originalText = btn.textContent;
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner" style="margin: 0 auto;"></div>';
-
         try {
             const type = document.getElementById('business-type').value;
-
             // Uploads (Only uploads if a new file is explicitly selected)
             const logoUrl = await handleFileUpload('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
             const frontUrl = await handleFileUpload('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
             const idUrl = await handleFileUpload('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
             const cacUrl = await handleFileUpload('file-cac', 'cac-documents', 'cac', existingShop?.cac_certificate_url);
-
             const payload = {
                 owner_id: currentUser.id,
                 name: document.getElementById('name').value,
@@ -659,17 +261,16 @@
                 id_type: document.getElementById('id-type').value,
                 id_number: document.getElementById('id-number').value,
                 cac_number: document.getElementById('cac-number').value,
-                
+               
                 image_url: logoUrl,
                 storefront_url: frontUrl,
                 id_card_url: idUrl,
                 cac_certificate_url: cacUrl,
-                
+               
                 // CRITICAL RESUBMISSION LOGIC
-                status: 'pending', 
+                status: 'pending',
                 rejection_reason: null
             };
-
             if (isEdit && existingShop) {
                 const { error } = await client.from('shops').update(payload).eq('id', shopId);
                 if (error) throw error;
@@ -680,32 +281,25 @@
                 if (error) throw error;
                 alert("Application Submitted! You will be notified once approved.");
             }
-
             window.location.href = "user-dashboard.html";
-
         } catch (err) {
             console.error(err);
             alert("Error: " + err.message);
             btn.disabled = false;
             btn.textContent = originalText;
             closePreviewDialog();
-        } 
+        }
     }
-
     async function handleFileUpload(inputId, bucket, folder, existingUrl) {
         const file = document.getElementById(inputId).files[0];
         if (!file) return existingUrl || null; // Returns existing URL if no new file picked
-
         const ext = file.name.split('.').pop();
         const fileName = `${folder}/${currentUser.id}_${Date.now()}.${ext}`;
-        
+       
         const { error: uploadError } = await client.storage.from(bucket).upload(fileName, file);
         if (uploadError) throw uploadError;
-        
+       
         const { data } = client.storage.from(bucket).getPublicUrl(fileName);
         return data.publicUrl;
     }
 </script>
-
-</body>
-</html>
