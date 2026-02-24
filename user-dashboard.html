@@ -553,7 +553,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v18'; // Bumped cache
+    const CACHE_KEY = 'ctm_dash_v18'; 
 
     let chatHistory = [];
 
@@ -662,8 +662,17 @@
 
     async function fetchData() {
         try {
-            const { data: profile } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).single();
-            if(!profile) return;
+            // SECURITY CHOKEPOINT: Use maybeSingle() to catch the RLS block!
+            const { data: profile, error: profileErr } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).maybeSingle();
+            
+            // If the database refuses to return the profile (RLS lock), they are suspended!
+            if (profileErr || !profile) {
+                alert("Your account access has been restricted by administration. Please contact support.");
+                await client.auth.signOut();
+                localStorage.removeItem(CACHE_KEY);
+                window.location.href = "index.html";
+                return;
+            }
             
             userProfile = profile;
             userCityId = profile.city_id;
@@ -884,7 +893,6 @@
         document.getElementById('edit-phone').value = userProfile.phone || '';
 
         if(allCities.length === 0) {
-            // NEW UX LOGIC: Fetch cities that are OPEN, OR the exact city the user is already in!
             const { data } = await client.from('cities')
                 .select('id, name')
                 .or(`is_open.eq.true,id.eq.${userProfile.city_id || 0}`)
