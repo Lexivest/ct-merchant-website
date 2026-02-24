@@ -167,6 +167,15 @@
         <div class="page-title" id="header-title">Register Shop</div>
     </div>
 
+    <!-- City Closed Notice (New) -->
+    <div id="city-closed-box" class="alert-box alert-error" style="display: none; background: #FFFBEB; border-color: #FCD34D; color: #B45309;">
+        <i class="fa-solid fa-city" style="margin-top: 2px;"></i>
+        <div>
+            <h4 style="margin-bottom: 4px; font-weight: 700;">City Operations Paused</h4>
+            <p id="city-closed-reason" style="font-size: 0.9rem; line-height: 1.4; color: #111827;"></p>
+        </div>
+    </div>
+
     <!-- Rejection Notice -->
     <div id="rejection-box" class="alert-box alert-error">
         <i class="fa-solid fa-circle-exclamation" style="margin-top: 2px;"></i>
@@ -407,14 +416,17 @@
         document.getElementById('main-loader').style.display = 'block';
 
         await fetchCategories();
-        await fetchUserLocation();
+        // User location fetch now handles the "City Closed" logic
+        const canProceed = await fetchUserLocation();
 
-        if (isEdit) {
-            await loadShopData();
+        if (canProceed) {
+            if (isEdit) {
+                await loadShopData();
+            }
+            document.getElementById('shop-form').style.display = 'block';
         }
 
         document.getElementById('main-loader').style.display = 'none';
-        document.getElementById('shop-form').style.display = 'block';
     };
 
     // --- FETCHERS ---
@@ -428,12 +440,23 @@
     }
 
     async function fetchUserLocation() {
-        const { data } = await client.from('profiles').select('city_id, cities(name)').eq('id', currentUser.id).single();
+        // Look up profile city AND check if that city is currently open
+        const { data } = await client.from('profiles').select('city_id, cities(name, is_open)').eq('id', currentUser.id).single();
+        
         if (data) {
+            // NEW LOGIC: Lock the form if the city is closed!
+            if (data.cities && data.cities.is_open === false) {
+                document.getElementById('city-closed-box').style.display = 'flex';
+                document.getElementById('city-closed-reason').innerHTML = `We are not currently accepting or processing merchant registrations in <strong>${data.cities.name}</strong>. Please check back later or contact support.`;
+                return false; // Prevent form from showing
+            }
+
             document.getElementById('city-id').value = data.city_id;
             document.getElementById('city-display').value = data.cities.name;
             await fetchAreas(data.city_id); 
+            return true;
         }
+        return false;
     }
 
     async function fetchAreas(cityId) {
