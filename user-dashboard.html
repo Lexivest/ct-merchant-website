@@ -553,7 +553,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v17'; // Bumped cache key to v17 to force fresh fetch for is_open
+    const CACHE_KEY = 'ctm_dash_v18'; // Bumped cache
 
     let chatHistory = [];
 
@@ -669,7 +669,6 @@
             userCityId = profile.city_id;
             userAreaId = profile.area_id;
 
-            // Updated myShop query to include `is_open`
             const [promos, announcements, categories, areas, shops, notifs, myShop, wishlist] = await Promise.all([
                 client.from('promo_banners').select().order('created_at', {ascending: false}),
                 client.from('announcements').select().order('created_at', {ascending: false}),
@@ -838,7 +837,6 @@
         let label = 'Register Shop';
         
         if (shop) {
-            // NEW LOGIC: Lock card if shop is suspended
             if (shop.is_open === false) {
                 icon = 'fa-lock'; bg = '#F3F4F6'; color = '#9CA3AF'; label = 'Locked';
             } 
@@ -864,7 +862,6 @@
             window.location.href = 'shop-registration.html';
         }
         else if (currentUserShop.is_open === false) {
-            // NEW LOGIC: Intercept click if locked
             alert("🔒 Your shop access has been restricted by administration. Please contact support via support@ct-merchant.com to resolve your account status.");
         }
         else if (currentUserShop.status === 'pending') {
@@ -887,7 +884,12 @@
         document.getElementById('edit-phone').value = userProfile.phone || '';
 
         if(allCities.length === 0) {
-            const { data } = await client.from('cities').select('id, name').order('name');
+            // NEW UX LOGIC: Fetch cities that are OPEN, OR the exact city the user is already in!
+            const { data } = await client.from('cities')
+                .select('id, name')
+                .or(`is_open.eq.true,id.eq.${userProfile.city_id || 0}`)
+                .order('name');
+                
             allCities = data || [];
             const citySelect = document.getElementById('edit-city');
             citySelect.innerHTML = '<option value="">Select City</option>';
