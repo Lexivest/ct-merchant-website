@@ -282,8 +282,15 @@
 
         window.onload = async () => {
             try {
-                const { data, error } = await client.from('cities').select('id, name').order('name');
+                // CHANGED: Filter by is_open = true
+                const { data, error } = await client.from('cities').select('id, name').eq('is_open', true).order('name');
                 if (error) throw error;
+                
+                if (data.length === 0) {
+                    citySelect.innerHTML = '<option value="" disabled selected>No cities currently available</option>';
+                    return;
+                }
+
                 citySelect.innerHTML = '<option value="" disabled selected>Select your city</option>';
                 data.forEach(city => {
                     citySelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
