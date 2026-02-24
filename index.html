@@ -39,8 +39,8 @@
     /* TOP LEFT: IMAGE PANEL */
     .pane-img {
         background: url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg') center/cover no-repeat;
-        justify-content: flex-end; /* Push features bar to bottom */
-        min-height: 100vh; /* Fills screen on load */
+        justify-content: flex-end; 
+        min-height: 100vh; 
     }
     .features-glass-bar {
         background: rgba(15, 23, 42, 0.85);
@@ -61,10 +61,9 @@
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
         color: white;
         padding: 60px 10% 40px 10%;
-        /* Professional Demarcation */
         border-left: 1px solid rgba(255,255,255,0.1);
         box-shadow: -15px 0 40px rgba(0,0,0,0.6);
-        z-index: 2; /* Ensures shadow overlaps image */
+        z-index: 2; 
     }
     .repo-badge {
         background: rgba(255, 255, 255, 0.1);
@@ -212,7 +211,6 @@
         -webkit-backdrop-filter: blur(10px);
         padding: 40px 10%;
         border-top: 1px solid #e2e8f0;
-        /* Professional Demarcation */
         border-left: 1px solid #e2e8f0;
         box-shadow: -15px 0 40px rgba(0,0,0,0.03);
         z-index: 2;
@@ -227,7 +225,7 @@
         border: 1px solid rgba(219, 39, 119, 0.3);
         width: 100%;
         max-width: 450px;
-        margin: 0; /* Left aligned within the pane, naturally balances */
+        margin: 0; 
     }
     .hero-auth-widget .widget-title {
         font-size: 1.2rem;
@@ -252,12 +250,11 @@
         pointer-events: none;
     }
    
-    /* OVERRIDE FOR PASSWORD TOGGLE */
     .hero-auth-widget .input-group-hero i.toggle-password {
-        left: auto; /* Removes the left alignment applied to the padlock */
-        right: 14px; /* Pins it perfectly to the right */
+        left: auto; 
+        right: 14px; 
         cursor: pointer;
-        pointer-events: auto; /* Makes it clickable */
+        pointer-events: auto; 
         transition: color 0.2s;
     }
     .hero-auth-widget .input-group-hero i.toggle-password:hover {
@@ -380,7 +377,7 @@
     @media (max-width: 900px) {
         .split-layout-grid {
             grid-template-columns: 1fr;
-            padding-top: 60px; /* Adjust based on nav height to prevent overlap */
+            padding-top: 60px; 
         }
        
         /* Reset Demarcations for mobile */
@@ -444,7 +441,7 @@
         margin-top: 8px;
         margin-bottom: 12px;
         cursor: pointer;
-        text-align: right; /* Moved to the right as requested */
+        text-align: right; 
     }
     .forgot-password:hover {
         color: #db2777;
@@ -589,6 +586,7 @@
        
     </div>
 </main>
+
 <footer class="footer">
   <div class="container footer-container">
     <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
@@ -599,10 +597,12 @@
     </div>
   </div>
 </footer>
+
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
     // --- TYPEWRITER LOGIC ---
     const textElement = document.getElementById('typewriter');
     const phrases = [
@@ -614,6 +614,7 @@
     let charIndex = 0;
     let isDeleting = false;
     let typeSpeed = 100;
+    
     function typeEffect() {
         const currentPhrase = phrases[phraseIndex];
        
@@ -628,17 +629,17 @@
         }
         if (!isDeleting && charIndex === currentPhrase.length) {
             isDeleting = true;
-            typeSpeed = 2000; // Pause at end
+            typeSpeed = 2000; 
         } else if (isDeleting && charIndex === 0) {
             isDeleting = false;
             phraseIndex = (phraseIndex + 1) % phrases.length;
-            typeSpeed = 500; // Pause before new word
+            typeSpeed = 500; 
         }
         setTimeout(typeEffect, typeSpeed);
     }
    
-    // Start Animation
     document.addEventListener('DOMContentLoaded', typeEffect);
+    
     // --- REPO SEARCH ---
     function handleRepoSearch() {
         const query = document.getElementById('repo-search-input').value.trim();
@@ -659,26 +660,24 @@
             const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password });
             if (authError) throw authError;
 
-            // 2. SUSPENSION CHECK
-            // If authentication succeeds, grab their profile to check suspension status BEFORE redirecting
+            // 2. RLS SUSPENSION CHECK
+            // We use .maybeSingle() to prevent ugly database errors if RLS blocked the row
             if (authData && authData.user) {
                 const { data: profileData, error: profileError } = await client
                     .from('profiles')
                     .select('is_suspended')
                     .eq('id', authData.user.id)
-                    .single();
+                    .maybeSingle(); 
 
-                if (profileError) throw profileError;
-
-                // 3. Block Access if suspended
-                if (profileData && profileData.is_suspended === true) {
-                    // Sign them completely out of Supabase instantly to kill the session token
+                // If profileData is NULL, it means the new RLS policy completely blocked them
+                // Or if it returns true just as a fallback
+                if (!profileData || profileData.is_suspended === true) {
                     await client.auth.signOut();
                     throw new Error("Your account has been temporarily suspended. Please contact support via support@ct-merchant.com for assistance.");
                 }
             }
 
-            // 4. Safe to proceed
+            // 3. Safe to proceed
             window.location.href = "user-dashboard.html";
             
         } catch (err) {
