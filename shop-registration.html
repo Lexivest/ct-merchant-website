@@ -17,17 +17,24 @@
         currentUser = session.user;
         document.getElementById('shop-form').style.display = 'none';
         document.getElementById('main-loader').style.display = 'block';
-        await fetchCategories();
-        await fetchUserLocation();
-        if (isEdit) {
-            await loadShopData();
+        try {
+            await fetchCategories();
+            await fetchUserLocation();
+            if (isEdit) {
+                await loadShopData();
+            }
+        } catch (err) {
+            console.error('Error during initialization:', err);
+            alert('Error loading initial data: ' + err.message + '. Proceeding with form anyway.');
+        } finally {
+            document.getElementById('main-loader').style.display = 'none';
+            document.getElementById('shop-form').style.display = 'block';
         }
-        document.getElementById('main-loader').style.display = 'none';
-        document.getElementById('shop-form').style.display = 'block';
     };
     // --- FETCHERS ---
     async function fetchCategories() {
-        const { data } = await client.from('categories').select('name').order('name');
+        const { data, error } = await client.from('categories').select('name').order('name');
+        if (error) throw error;
         const sel = document.getElementById('category');
         sel.innerHTML = '<option value="" disabled selected>Select Category</option>';
         data.forEach(c => {
@@ -35,18 +42,21 @@
         });
     }
     async function fetchUserLocation() {
-        const { data } = await client.from('profiles').select('city_id, cities(name)').eq('id', currentUser.id).single();
+        const { data, error } = await client.from('profiles').select('city_id, cities(name)').eq('id', currentUser.id).single();
+        if (error) throw error;
         if (data) {
             document.getElementById('city-id').value = data.city_id;
             document.getElementById('city-display').value = data.cities.name;
             await fetchAreas(data.city_id);
+        } else {
+            alert('No city found in your profile. Please set it in your dashboard.');
         }
     }
     async function fetchAreas(cityId) {
         const sel = document.getElementById('area');
         sel.disabled = true;
-       
-        const { data } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+        const { data, error } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+        if (error) throw error;
         sel.innerHTML = '<option value="" disabled selected>Select Area</option>';
         sel.disabled = false;
         data.forEach(a => {
@@ -59,8 +69,13 @@
     // --- EDIT / RESUBMIT LOGIC ---
     async function loadShopData() {
         document.getElementById('header-title').textContent = "Correct & Resubmit";
-        const { data } = await client.from('shops').select('*').eq('id', shopId).single();
-        if (!data) return;
+        const { data, error } = await client.from('shops').select('*').eq('id', shopId).single();
+        if (error) throw error;
+        if (!data) {
+            alert("Shop not found. Redirecting to dashboard.");
+            window.location.href = "user-dashboard.html";
+            return;
+        }
         existingShop = data;
         document.getElementById('name').value = data.name;
         document.getElementById('desc').value = data.description || '';
