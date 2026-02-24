@@ -29,7 +29,13 @@
         /* Card */
         .card { background: white; padding: 24px; border-radius: 20px; border: 1px solid var(--color-border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
 
-        .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .section-title { font-size: 1.1rem; font-weight: 700; }
+        .status-badge { font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; display: none; }
+        .status-pending { background: #FEF3C7; color: #D97706; border: 1px solid #FDE68A; display: inline-block; }
+        .status-approved { background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; display: inline-block; }
+        .status-rejected { background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; display: inline-block; }
+
         .section-desc { font-size: 0.9rem; color: #64748B; margin-bottom: 24px; line-height: 1.5; }
 
         /* Input */
@@ -73,9 +79,12 @@
     </div>
 
     <div class="card">
-        <div class="section-title">Latest Updates</div>
+        <div class="section-header">
+            <div class="section-title">Latest Updates</div>
+            <div id="news-status" class="status-badge"></div>
+        </div>
         <p class="section-desc">
-            Write a short update for your customers. It will appear as a scrolling ticker on your shop page.
+            Write a short update for your customers. It will be reviewed by an admin before appearing on your shop page.
         </p>
 
         <form id="news-form" onsubmit="saveNews(event)">
@@ -88,11 +97,11 @@
             
             <div class="helper-text">
                 <i class="fa-solid fa-circle-info"></i>
-                <span>Leave empty to remove existing news.</span>
+                <span>Leave empty and submit to remove your existing news.</span>
             </div>
 
             <button type="submit" id="btn-submit" class="btn-submit">
-                <i class="fa-solid fa-paper-plane"></i> Publish News
+                <i class="fa-solid fa-paper-plane"></i> Submit for Approval
             </button>
         </form>
     </div>
@@ -119,12 +128,33 @@
             return;
         }
 
-        // Fetch existing news
-        const { data } = await client.from('shops').select('news').eq('id', shopId).single();
-        if (data && data.news) {
+        // Fetch existing news from the new table (get the most recent one)
+        const { data, error } = await client
+            .from('shop_banners_news')
+            .select('content_data, status')
+            .eq('shop_id', shopId)
+            .eq('content_type', 'news')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (data && data.content_data) {
             const input = document.getElementById('news-text');
-            input.value = data.news;
+            input.value = data.content_data;
             updateCount(input);
+
+            // Show status badge
+            const statusBadge = document.getElementById('news-status');
+            statusBadge.style.display = 'inline-block';
+            statusBadge.innerText = data.status.toUpperCase();
+            
+            if (data.status === 'pending') {
+                statusBadge.className = 'status-badge status-pending';
+            } else if (data.status === 'approved') {
+                statusBadge.className = 'status-badge status-approved';
+            } else if (data.status === 'rejected') {
+                statusBadge.className = 'status-badge status-rejected';
+            }
         }
     };
 
@@ -138,24 +168,41 @@
         const text = document.getElementById('news-text').value.trim();
 
         btn.disabled = true;
-        btn.innerHTML = '<div class="spinner"></div> Publishing...';
+        btn.innerHTML = '<div class="spinner"></div> Submitting...';
 
         try {
-            const updateValue = text.length > 0 ? text : null;
+            if (text.length === 0) {
+                // If empty, delete existing news from the new table
+                const { error } = await client
+                    .from('shop_banners_news')
+                    .delete()
+                    .eq('shop_id', shopId)
+                    .eq('content_type', 'news');
 
-            const { error } = await client
-                .from('shops')
-                .update({ news: updateValue })
-                .eq('id', shopId);
+                if (error) throw error;
+                alert("News removed successfully!");
 
-            if (error) throw error;
+            } else {
+                // Insert into the new approval table
+                const { error } = await client
+                    .from('shop_banners_news')
+                    .insert({
+                        shop_id: shopId,
+                        merchant_id: currentUser.id,
+                        content_type: 'news',
+                        content_data: text,
+                        status: 'pending' // Goes to the pending queue for admins
+                    });
 
-            alert("News updated successfully!");
+                if (error) throw error;
+                alert("News submitted for admin approval!");
+            }
+            
             window.history.back();
 
         } catch (err) {
             alert("Error: " + err.message);
-            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Publish News';
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit for Approval';
             btn.disabled = false;
         }
     }
