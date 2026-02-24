@@ -251,7 +251,7 @@
         font-size: 1rem;
         pointer-events: none;
     }
-    
+   
     /* OVERRIDE FOR PASSWORD TOGGLE */
     .hero-auth-widget .input-group-hero i.toggle-password {
         left: auto; /* Removes the left alignment applied to the padlock */
@@ -434,7 +434,7 @@
       align-items: center;
       margin-right: 2.5rem;
     }
-    
+   
     /* Forgot password styles */
     .forgot-password {
         display: block;
@@ -644,6 +644,7 @@
         const query = document.getElementById('repo-search-input').value.trim();
         if(query) window.location.href = `reposearch.html?merchantId=${query}`;
     }
+    
     // --- LOGIN LOGIC ---
     async function handleHeroLogin() {
         const email = document.getElementById('hero-email').value;
@@ -652,16 +653,41 @@
         const originalHtml = btn.innerHTML;
         btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
         btn.disabled = true;
+        
         try {
-            const { error } = await client.auth.signInWithPassword({ email, password });
-            if (error) throw error;
+            // 1. Authenticate the user
+            const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password });
+            if (authError) throw authError;
+
+            // 2. SUSPENSION CHECK
+            // If authentication succeeds, grab their profile to check suspension status BEFORE redirecting
+            if (authData && authData.user) {
+                const { data: profileData, error: profileError } = await client
+                    .from('profiles')
+                    .select('is_suspended')
+                    .eq('id', authData.user.id)
+                    .single();
+
+                if (profileError) throw profileError;
+
+                // 3. Block Access if suspended
+                if (profileData && profileData.is_suspended === true) {
+                    // Sign them completely out of Supabase instantly to kill the session token
+                    await client.auth.signOut();
+                    throw new Error("Your account has been temporarily suspended. Please contact support via support@ct-merchant.com for assistance.");
+                }
+            }
+
+            // 4. Safe to proceed
             window.location.href = "user-dashboard.html";
+            
         } catch (err) {
             alert(err.message);
             btn.innerHTML = originalHtml;
             btn.disabled = false;
         }
     }
+    
     // --- PASSWORD TOGGLE ---
     function togglePassword() {
         const password = document.getElementById('hero-password');
