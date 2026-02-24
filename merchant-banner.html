@@ -46,16 +46,29 @@
             position: relative; width: 100%; height: 180px;
             border-radius: 16px; overflow: hidden;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            background: white; border: 1px solid var(--color-border);
         }
         .banner-img { width: 100%; height: 100%; object-fit: cover; }
         
+        /* Status Badges */
+        .status-badge {
+            position: absolute; top: 12px; left: 12px;
+            font-size: 0.75rem; font-weight: 800; padding: 6px 12px; 
+            border-radius: 8px; z-index: 10; backdrop-filter: blur(4px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-pending { background: rgba(254, 243, 199, 0.9); color: #D97706; border: 1px solid #FDE68A; }
+        .status-approved { background: rgba(209, 250, 229, 0.9); color: #059669; border: 1px solid #A7F3D0; }
+        .status-rejected { background: rgba(254, 226, 226, 0.9); color: #DC2626; border: 1px solid #FECACA; }
+        .status-new { background: rgba(224, 231, 255, 0.9); color: #4F46E5; border: 1px solid #C7D2FE; }
+
         .delete-btn {
             position: absolute; top: 10px; right: 10px;
             background: white; color: var(--color-red);
             width: 32px; height: 32px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
+            transition: transform 0.2s; z-index: 10;
         }
         .delete-btn:hover { transform: scale(1.1); background: #FEF2F2; }
 
@@ -87,7 +100,7 @@
 
     <div class="info-box">
         <div class="info-title">Upload up to 2 Banners</div>
-        <div class="info-desc">High quality landscape images work best.</div>
+        <div class="info-desc">High quality landscape images work best. New banners will be reviewed by an admin before going live.</div>
     </div>
 
     <div id="banner-container" class="banner-list">
@@ -105,47 +118,74 @@
 
     const params = new URLSearchParams(window.location.search);
     const shopId = params.get('shop_id');
+    let currentUser = null;
     
-    let bannerSlots = []; // Mixed: Strings (URL) or Files
-    let originalBanners = []; // To track deletions
+    // Array of objects holding state for each banner
+    let bannerSlots = []; 
 
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "login.html"; return; }
+        currentUser = session.user;
         
         if (!shopId) { alert("Shop ID missing"); window.history.back(); return; }
 
-        // Fetch current banners
-        const { data, error } = await client.from('shops').select('banners').eq('id', shopId).single();
+        // Fetch current banners from the NEW shop_banners_news table
+        const { data, error } = await client
+            .from('shop_banners_news')
+            .select('id, content_data, status')
+            .eq('shop_id', shopId)
+            .eq('content_type', 'banner')
+            .order('created_at', { ascending: true });
         
-        if (data && data.banners) {
-            bannerSlots = [...data.banners];
-            originalBanners = [...data.banners];
-            renderBanners();
+        if (data && data.length > 0) {
+            bannerSlots = data.map(b => ({
+                id: b.id,            // Database ID
+                url: b.content_data,// Image URL
+                file: null,         // No file because it's already uploaded
+                status: b.status,   // pending, approved, or rejected
+                isDeleted: false
+            }));
         }
+        renderBanners();
     };
 
     function renderBanners() {
         const container = document.getElementById('banner-container');
         container.innerHTML = '';
 
-        // Render existing slots
-        bannerSlots.forEach((item, index) => {
-            const url = (item instanceof File) ? URL.createObjectURL(item) : item;
+        const activeBanners = bannerSlots.filter(b => !b.isDeleted);
+
+        activeBanners.forEach((item) => {
+            const displayUrl = item.file ? URL.createObjectURL(item.file) : item.url;
+            const realIndex = bannerSlots.indexOf(item);
             
+            // Determine badge appearance
+            let badgeHTML = '';
+            if (item.file) {
+                badgeHTML = `<div class="status-badge status-new">NEW - UNSAVED</div>`;
+            } else if (item.status === 'pending') {
+                badgeHTML = `<div class="status-badge status-pending">PENDING APPROVAL</div>`;
+            } else if (item.status === 'approved') {
+                badgeHTML = `<div class="status-badge status-approved">APPROVED</div>`;
+            } else if (item.status === 'rejected') {
+                badgeHTML = `<div class="status-badge status-rejected">REJECTED</div>`;
+            }
+
             const div = document.createElement('div');
             div.className = 'banner-item';
             div.innerHTML = `
-                <img src="${url}" class="banner-img">
-                <button class="delete-btn" onclick="removeBanner(${index})">
+                <img src="${displayUrl}" class="banner-img">
+                ${badgeHTML}
+                <button class="delete-btn" onclick="removeBanner(${realIndex})">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             `;
             container.appendChild(div);
         });
 
-        // Render Add Button if < 2
-        if (bannerSlots.length < 2) {
+        // Render Add Button if < 2 active banners
+        if (activeBanners.length < 2) {
             const addBtn = document.createElement('div');
             addBtn.className = 'add-card';
             addBtn.onclick = () => document.getElementById('file-input').click();
@@ -159,14 +199,20 @@
 
     function handleFileSelect(input) {
         if (input.files && input.files[0]) {
-            bannerSlots.push(input.files[0]);
+            bannerSlots.push({
+                id: null,
+                url: null,
+                file: input.files[0],
+                status: 'pending',
+                isDeleted: false
+            });
             renderBanners();
             input.value = ''; // Reset input
         }
     }
 
     function removeBanner(index) {
-        bannerSlots.splice(index, 1);
+        bannerSlots[index].isDeleted = true;
         renderBanners();
     }
 
@@ -176,56 +222,47 @@
         btn.innerHTML = '<div class="spinner"></div>';
 
         try {
-            // 1. Delete removed banners from Storage
-            // Find items in original that are NOT in current slots (strings only)
-            const currentUrls = bannerSlots.filter(i => typeof i === 'string');
-            const toDelete = originalBanners.filter(url => !currentUrls.includes(url));
-
-            if (toDelete.length > 0) {
-                // Extract paths from URLs
-                const paths = toDelete.map(url => {
-                    // Assuming URL format: .../banner-storage/path/to/file.jpg
-                    const parts = url.split('/banner-storage/');
-                    return parts.length > 1 ? parts[1] : null;
-                }).filter(p => p);
-
-                if (paths.length > 0) {
-                    await client.storage.from('banner-storage').remove(paths);
+            // 1. Delete removed banners from Database and Storage
+            const toDelete = bannerSlots.filter(b => b.isDeleted && b.id !== null);
+            for (let b of toDelete) {
+                // Delete from DB
+                await client.from('shop_banners_news').delete().eq('id', b.id);
+                
+                // Extract path and delete from storage
+                const parts = b.url.split('/banner-storage/');
+                if (parts.length > 1) {
+                    await client.storage.from('banner-storage').remove([parts[1]]);
                 }
             }
 
-            // 2. Upload new files and build final list
-            let finalUrls = [];
-            
-            for (let item of bannerSlots) {
-                if (item instanceof File) {
-                    const ext = item.name.split('.').pop();
-                    const fileName = `${shopId}/${Date.now()}_${Math.random()}.${ext}`;
-                    
-                    const { error: uploadError } = await client.storage
-                        .from('banner-storage')
-                        .upload(fileName, item);
+            // 2. Upload new files and Insert to Database
+            const toUpload = bannerSlots.filter(b => !b.isDeleted && b.file !== null);
+            for (let b of toUpload) {
+                const ext = b.file.name.split('.').pop();
+                const fileName = `${shopId}/${Date.now()}_${Math.random()}.${ext}`;
+                
+                // Upload to Storage
+                const { error: uploadError } = await client.storage
+                    .from('banner-storage')
+                    .upload(fileName, b.file);
 
-                    if (uploadError) throw uploadError;
+                if (uploadError) throw uploadError;
 
-                    const { data } = client.storage.from('banner-storage').getPublicUrl(fileName);
-                    finalUrls.push(data.publicUrl);
-                } else {
-                    finalUrls.push(item); // Keep existing URL
-                }
+                const { data } = client.storage.from('banner-storage').getPublicUrl(fileName);
+                
+                // Insert into Approval Database
+                const { error: dbError } = await client.from('shop_banners_news').insert({
+                    shop_id: shopId,
+                    merchant_id: currentUser.id,
+                    content_type: 'banner',
+                    content_data: data.publicUrl,
+                    status: 'pending' // Goes to the pending queue for admins
+                });
+
+                if (dbError) throw dbError;
             }
 
-            // 3. Update Database
-            const firstImage = finalUrls.length > 0 ? finalUrls[0] : null;
-            
-            const { error } = await client.from('shops').update({
-                banners: finalUrls,
-                image_url: firstImage // Update primary image too
-            }).eq('id', shopId);
-
-            if (error) throw error;
-
-            alert("Banners updated successfully!");
+            alert("Banners updated! New banners have been sent for admin approval.");
             window.history.back();
 
         } catch (err) {
