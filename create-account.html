@@ -7,6 +7,9 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- 1. Google Identity Services Script -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
         /* CSS variables aligned with your website theme */
@@ -21,7 +24,7 @@
             --transition: all 0.3s ease;
         }
 
-        /* RESET: Critical to prevent projection/overflow */
+        /* RESET */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -31,7 +34,7 @@
         body.auth-body {
             min-height: 100vh;
             width: 100%;
-            overflow-x: hidden; /* Prevents horizontal scroll */
+            overflow-x: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -41,7 +44,6 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
-        /* Fixed Home Button */
         .home-btn {
             position: fixed;
             top: 1.5rem;
@@ -61,17 +63,13 @@
             z-index: 100;
             transition: var(--transition);
         }
-        .home-btn:hover {
-            background-color: var(--color-pink-hover);
-            transform: translateX(-4px);
-        }
+        .home-btn:hover { background-color: var(--color-pink-hover); transform: translateX(-4px); }
 
-        /* The Form Card - Centered and contained */
         .auth-card {
             background-color: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(10px);
             width: 100%;
-            max-width: 440px; /* Standard width for auth cards */
+            max-width: 440px;
             padding: 2.5rem;
             border-radius: 1.5rem;
             box-shadow: var(--shadow-2xl);
@@ -83,14 +81,13 @@
         .auth-title { font-size: 1.5rem; font-weight: 800; color: var(--color-purple); }
         .auth-subtitle { color: #64748b; font-size: 0.875rem; margin-top: 0.25rem; }
 
-        .form-stack { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+        .form-stack { display: flex; flex-direction: column; gap: 1rem; }
         .input-group { display: flex; flex-direction: column; gap: 0.4rem; }
         .input-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.25rem; }
         
         .input-wrapper { position: relative; width: 100%; }
         .input-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
         
-        /* Fixed Input Styles to prevent width leakage */
         .auth-input {
             width: 100%;
             padding: 0.8rem 1rem 0.8rem 2.75rem;
@@ -126,7 +123,12 @@
         .btn-primary:hover { background-color: var(--color-pink); transform: translateY(-1px); }
         .btn-primary:disabled { background-color: #cbd5e1; cursor: not-allowed; }
 
-        /* Status Box */
+        /* Divider for Google Sign In */
+        .divider { display: flex; align-items: center; text-align: center; margin: 1.5rem 0; color: #94a3b8; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
+        .divider:not(:empty)::before { margin-right: 1rem; }
+        .divider:not(:empty)::after { margin-left: 1rem; }
+
         .status-box { margin-top: 1.5rem; padding: 1rem; border-radius: 0.8rem; font-size: 0.85rem; display: none; align-items: center; gap: 0.5rem; }
         .status-box.active { display: flex; }
         .status-error { background-color: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
@@ -136,7 +138,6 @@
         .link-highlight { color: var(--color-pink); font-weight: 700; text-decoration: none; cursor: pointer; background: none; border: none; font-size: inherit; }
         .link-highlight:hover { text-decoration: underline; }
 
-        /* Modals */
         .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
         .modal-card { background: white; border-radius: 1.5rem; max-width: 400px; width: 100%; padding: 2rem; text-align: center; box-shadow: var(--shadow-2xl); }
         .terms-icon { width: 3.5rem; height: 3.5rem; background: #fce7f3; color: var(--color-pink); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem; }
@@ -166,6 +167,30 @@
             <p class="auth-subtitle">Join the professional merchant network.</p>
         </div>
 
+        <!-- 2. Google Sign-In Button Container -->
+        <div style="display: flex; justify-content: center; width: 100%;">
+            <!-- REPLACE 'data-client_id' WITH YOUR ACTUAL GOOGLE CLIENT ID -->
+            <div id="g_id_onload"
+                 data-client_id="YOUR_GOOGLE_CLIENT_ID_HERE" 
+                 data-context="signup"
+                 data-ux_mode="popup"
+                 data-callback="handleGoogleLogin"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-shape="rectangular"
+                 data-theme="outline"
+                 data-text="continue_with"
+                 data-size="large"
+                 data-logo_alignment="center"
+                 data-width="360">
+            </div>
+        </div>
+
+        <div class="divider"><span>Or sign up with Email</span></div>
+
+        <!-- Standard Signup Form -->
         <form id="signup-form" class="form-stack">
             <div class="input-group">
                 <label class="input-label">Full Name</label>
@@ -255,6 +280,46 @@
         </div>
     </div>
 
+    <!-- Complete Profile Modal (Triggered after Google Login) -->
+    <div id="complete-profile-modal" class="modal-overlay hidden">
+        <div class="modal-card" style="text-align: left;">
+            <h2 class="auth-title" style="font-size: 1.25rem; text-align: center;">Complete Your Profile</h2>
+            <p class="auth-subtitle" style="text-align: center; margin-bottom: 1.5rem;">We need a few more details to set up your dashboard.</p>
+            
+            <div class="form-stack">
+                <div class="input-group">
+                    <label class="input-label">Phone Number</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fa-solid fa-phone"></i></span>
+                        <input type="tel" id="google-phone" placeholder="08012345678" class="auth-input">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Select City</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fa-solid fa-city"></i></span>
+                        <select id="google-city" class="auth-input">
+                            <option value="" disabled selected>Loading cities...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Select Area</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fa-solid fa-map-pin"></i></span>
+                        <select id="google-area" class="auth-input" disabled>
+                            <option value="" disabled selected>Select city first</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary" style="margin-top: 1rem;">Complete Setup</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Simple Login Modal -->
     <div id="login-modal" class="modal-overlay hidden">
         <div class="modal-card">
@@ -275,46 +340,132 @@
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // Form elements
         const citySelect = document.getElementById('signup-city');
         const areaSelect = document.getElementById('signup-area');
+        const googleCitySelect = document.getElementById('google-city');
+        const googleAreaSelect = document.getElementById('google-area');
+        
         const statusBox = document.getElementById('message-container');
         const statusMsg = document.getElementById('message');
 
+        // Store Google User ID temporarily
+        let pendingGoogleUserId = null;
+        let pendingGoogleUserName = null;
+
+        // Fetch cities on load
         window.onload = async () => {
             try {
-                // CHANGED: Filter by is_open = true
                 const { data, error } = await client.from('cities').select('id, name').eq('is_open', true).order('name');
                 if (error) throw error;
                 
                 if (data.length === 0) {
                     citySelect.innerHTML = '<option value="" disabled selected>No cities currently available</option>';
+                    googleCitySelect.innerHTML = '<option value="" disabled selected>No cities currently available</option>';
                     return;
                 }
 
-                citySelect.innerHTML = '<option value="" disabled selected>Select your city</option>';
-                data.forEach(city => {
-                    citySelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
-                });
+                const cityOptions = '<option value="" disabled selected>Select your city</option>' + 
+                                    data.map(city => `<option value="${city.id}">${city.name}</option>`).join('');
+                
+                citySelect.innerHTML = cityOptions;
+                googleCitySelect.innerHTML = cityOptions;
             } catch (err) {
-                citySelect.innerHTML = '<option value="" disabled>Error loading cities</option>';
+                console.error("Error loading cities", err);
             }
         };
 
-        citySelect.addEventListener('change', async (e) => {
-            areaSelect.disabled = true;
-            areaSelect.innerHTML = '<option value="" disabled selected>Loading areas...</option>';
+        // Handle City changes for main form
+        citySelect.addEventListener('change', (e) => loadAreas(e.target.value, areaSelect));
+        // Handle City changes for Google modal
+        googleCitySelect.addEventListener('change', (e) => loadAreas(e.target.value, googleAreaSelect));
+
+        async function loadAreas(cityId, targetAreaSelect) {
+            targetAreaSelect.disabled = true;
+            targetAreaSelect.innerHTML = '<option value="" disabled selected>Loading areas...</option>';
             try {
-                const { data, error } = await client.from('areas').select('id, name').eq('city_id', e.target.value).order('name');
+                const { data, error } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
                 if (error) throw error;
-                areaSelect.innerHTML = '<option value="" disabled selected>Select your area</option>';
-                data.forEach(area => {
-                    areaSelect.innerHTML += `<option value="${area.id}">${area.name}</option>`;
-                });
-                areaSelect.disabled = false;
+                
+                targetAreaSelect.innerHTML = '<option value="" disabled selected>Select your area</option>' + 
+                                             data.map(area => `<option value="${area.id}">${area.name}</option>`).join('');
+                targetAreaSelect.disabled = false;
             } catch (err) {
-                areaSelect.innerHTML = '<option value="" disabled>Error loading areas</option>';
+                targetAreaSelect.innerHTML = '<option value="" disabled>Error loading areas</option>';
             }
-        });
+        }
+
+        // --- NEW GOOGLE LOGIN LOGIC ---
+        async function handleGoogleLogin(response) {
+            showStatus("Authenticating with Google...", "success");
+            
+            try {
+                // 1. Send Google Token to Supabase
+                const { data, error } = await client.auth.signInWithIdToken({
+                    provider: 'google',
+                    token: response.credential,
+                });
+                if (error) throw error;
+
+                const user = data.user;
+                pendingGoogleUserId = user.id;
+                pendingGoogleUserName = user.user_metadata?.full_name || '';
+
+                // 2. Check if user already has a complete profile in Supabase
+                const { data: profile, error: profileError } = await client
+                    .from('profiles')
+                    .select('city_id, area_id')
+                    .eq('id', user.id)
+                    .single();
+
+                // 3. If profile exists and has city/area, redirect to dashboard
+                if (profile && profile.city_id && profile.area_id) {
+                    window.location.href = "user-dashboard.html";
+                } else {
+                    // 4. If new user or missing city/area, show Complete Profile Modal
+                    document.getElementById('complete-profile-modal').classList.remove('hidden');
+                    statusBox.classList.remove('active'); // hide success message
+                }
+            } catch(err) {
+                showStatus(err.message, "error");
+            }
+        }
+
+        async function saveGoogleProfile() {
+            const phone = document.getElementById('google-phone').value.trim();
+            const cityId = googleCitySelect.value;
+            const areaId = googleAreaSelect.value;
+            const btn = document.getElementById('google-complete-btn');
+
+            if (!phone || !cityId || !areaId) {
+                alert("Please fill in your phone, city, and area to continue.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Saving...';
+
+            try {
+                // Upsert profile data (insert if new, update if exists)
+                const { error } = await client.from('profiles').upsert({
+                    id: pendingGoogleUserId,
+                    full_name: pendingGoogleUserName,
+                    phone: phone,
+                    city_id: parseInt(cityId),
+                    area_id: parseInt(areaId)
+                });
+
+                if (error) throw error;
+
+                // Success! Redirect to dashboard
+                window.location.href = "user-dashboard.html";
+            } catch(err) {
+                alert("Error saving profile: " + err.message);
+                btn.disabled = false;
+                btn.innerHTML = 'Complete Setup';
+            }
+        }
+        // ---------------------------------
 
         function toggleLoginModal() { document.getElementById('login-modal').classList.toggle('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
@@ -364,7 +515,8 @@
             try {
                 const { data: authData, error: authError } = await client.auth.signUp({
                     email: email,
-                    password: password
+                    password: password,
+                    options: { data: { full_name: name } }
                 });
                 if (authError) throw authError;
 
@@ -380,6 +532,8 @@
 
                     showStatus("Account created! Please Sign In.", "success");
                     closeModal('terms-modal');
+                    // Optional: clear form
+                    document.getElementById('signup-form').reset();
                 }
             } catch (err) {
                 showStatus(err.message, "error");
@@ -393,9 +547,20 @@
         async function handleLogin() {
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
+            const btn = document.querySelector('#login-modal button[type="submit"]');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Logging in...';
+
             const { error } = await client.auth.signInWithPassword({ email, password });
-            if (error) alert(error.message);
-            else window.location.href = "user-dashboard.html";
+            
+            if (error) {
+                alert(error.message);
+                btn.disabled = false;
+                btn.innerHTML = 'Sign In';
+            } else {
+                window.location.href = "user-dashboard.html";
+            }
         }
     </script>
 </body>
