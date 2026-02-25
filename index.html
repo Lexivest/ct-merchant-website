@@ -383,8 +383,6 @@
             grid-template-columns: 1fr;
             padding-top: 60px; 
         }
-       
-        /* Reset Demarcations for mobile */
         .pane-dark, .pane-white {
             border-left: none;
             box-shadow: none;
@@ -412,10 +410,30 @@
             text-align: center;
         }
     }
-    /* Marquee fixes for smoother animation in Firefox */
-    .marquee-container {
-      overflow: hidden;
-      white-space: nowrap;
+    
+    /* =========================================
+       TOP NAV MARQUEE LAYOUT FIX 
+       ========================================= */
+    .nav-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    }
+    .brand-wrapper {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    .header-marquee-box {
+        flex: 1;
+        margin: 0 20px;
+        overflow: hidden;
+        white-space: nowrap;
+        border-left: 2px solid rgba(255,255,255,0.2);
+        padding-left: 15px;
+        display: flex;
+        align-items: center;
     }
     .marquee-content {
       display: flex;
@@ -429,7 +447,14 @@
     .marquee-item {
       display: flex;
       align-items: center;
-      margin-right: 2.5rem;
+      margin-right: 3rem;
+    }
+    @media (max-width: 768px) {
+        .header-marquee-box {
+            margin: 0 10px;
+            padding-left: 10px;
+            border-left: none;
+        }
     }
    
     /* Forgot password styles */
@@ -446,7 +471,7 @@
     .forgot-password:hover { color: #db2777; }
 
     /* =========================================
-       MODAL STYLES (Google Profile & Password Reset)
+       MODAL STYLES
        ========================================= */
     .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; }
     .modal-card { background: white; border-radius: 1.5rem; max-width: 400px; width: 100%; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
@@ -576,33 +601,39 @@
 <!-- NAVIGATION -->
 <nav class="main-header">
   <div class="container nav-container">
-    <a href="index.html" class="brand-wrapper">
-      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
-      
-      <div class="marquee-container header-marquee-box">
-         <div class="marquee-content animate-brand-scroll desktop-menu">
-            <div class="marquee-item">
-                <span>CT-MERCHANT LTD.</span>
-                <div class="flag-icon">
-                    <div class="flag-stripe flag-green"></div>
-                    <div class="flag-stripe flag-white"></div>
-                    <div class="flag-stripe flag-green"></div>
-                </div>
-                <span>Repository of Shops, Products and Services.</span>
-            </div>
-            <div class="marquee-item">
-                <span>CT-MERCHANT LTD.</span>
-                <div class="flag-icon">
-                    <div class="flag-stripe flag-green"></div>
-                    <div class="flag-stripe flag-white"></div>
-                    <div class="flag-stripe flag-green"></div>
-                </div>
-                <span>Repository of Shops, Products and Services.</span>
-            </div>
-         </div>
-      </div>
+    
+    <!-- 1. Home Screen Button (Logo) -->
+    <a href="index.html" class="brand-wrapper" title="Home Screen">
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo" style="width: 45px; height: 45px; border-radius: 8px;">
     </a>
-    <!-- Menu Items -->
+    
+    <!-- 2. Scrolling Text (Immediately after Home button) -->
+    <div class="marquee-container header-marquee-box">
+       <div class="marquee-content animate-brand-scroll">
+          <!-- Item 1 -->
+          <div class="marquee-item">
+              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CT-MERCHANT LTD.</span>
+              <div class="flag-icon" style="display: flex; flex-direction: column; width: 14px; height: 10px; margin: 0 8px;">
+                  <div style="flex: 1; background: #16a34a;"></div>
+                  <div style="flex: 1; background: #ffffff;"></div>
+                  <div style="flex: 1; background: #16a34a;"></div>
+              </div>
+              <span style="color: #cbd5e1; font-weight: 500; font-size: 0.9rem;">Repository of Shops, Products and Services.</span>
+          </div>
+          <!-- Item 2 (Duplicate for smooth scroll) -->
+          <div class="marquee-item">
+              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CT-MERCHANT LTD.</span>
+              <div class="flag-icon" style="display: flex; flex-direction: column; width: 14px; height: 10px; margin: 0 8px;">
+                  <div style="flex: 1; background: #16a34a;"></div>
+                  <div style="flex: 1; background: #ffffff;"></div>
+                  <div style="flex: 1; background: #16a34a;"></div>
+              </div>
+              <span style="color: #cbd5e1; font-weight: 500; font-size: 0.9rem;">Repository of Shops, Products and Services.</span>
+          </div>
+       </div>
+    </div>
+
+    <!-- 3. Desktop Menu Items -->
     <div class="desktop-menu">
       <a href="index.html" class="nav-active">Home</a>
       <a href="about.html">About</a>
@@ -610,15 +641,15 @@
       <a href="affiliate.html">Affiliate</a>
       <a href="careers.html">Careers</a>
       <a href="contact.html">Contact</a>
-      <a href="staff-portal.html" class="btn-staff">
-        Staff Portal
-      </a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
     </div>
-    <!-- Mobile Menu Button -->
+
+    <!-- 4. Mobile Menu Button -->
     <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
       <i class="fa-solid fa-bars"></i>
     </button>
   </div>
+  
   <div class="mobile-dropdown hidden" id="mobile-menu">
       <a href="index.html" style="border-bottom: 1px solid white;">Home</a>
       <a href="about.html">About</a>
