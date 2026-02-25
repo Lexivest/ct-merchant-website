@@ -451,3 +451,472 @@
     .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; }
     .modal-card { background: white; border-radius: 1.5rem; max-width: 400px; width: 100%; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
     .modal-title { font-size: 1.25rem; font-weight: 800; color: #2E1065; text-align: center; margin-bottom: 0.5rem; }
+    .modal-subtitle { color: #64748b; font-size: 0.875rem; text-align: center; margin-bottom: 1.5rem; }
+    .hidden { display: none !important; }
+    
+    .modal-input-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+    .modal-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.25rem; }
+    .modal-input-wrapper { position: relative; width: 100%; }
+    .modal-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
+    
+    .modal-input {
+        width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem; outline: none; transition: all 0.3s ease; color: #0f172a;
+    }
+    .modal-input:focus { border-color: #db2777; box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); background: white; }
+    select.modal-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
+    
+    .btn-primary-modal {
+        width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px;
+    }
+    .btn-primary-modal:hover { background-color: #db2777; transform: translateY(-1px); }
+    .btn-primary-modal:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+    
+    .spinner { width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<!-- NAVIGATION -->
+<nav class="main-header">
+  <div class="container nav-container">
+    <a href="index.html" class="brand-wrapper">
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
+      
+      <div class="marquee-container header-marquee-box">
+         <div class="marquee-content animate-brand-scroll desktop-menu">
+            <div class="marquee-item">
+                <span>CT-MERCHANT LTD.</span>
+                <div class="flag-icon">
+                    <div class="flag-stripe flag-green"></div>
+                    <div class="flag-stripe flag-white"></div>
+                    <div class="flag-stripe flag-green"></div>
+                </div>
+                <span>Repository of Shops, Products and Services.</span>
+            </div>
+            <div class="marquee-item">
+                <span>CT-MERCHANT LTD.</span>
+                <div class="flag-icon">
+                    <div class="flag-stripe flag-green"></div>
+                    <div class="flag-stripe flag-white"></div>
+                    <div class="flag-stripe flag-green"></div>
+                </div>
+                <span>Repository of Shops, Products and Services.</span>
+            </div>
+         </div>
+      </div>
+    </a>
+    <!-- Menu Items -->
+    <div class="desktop-menu">
+      <a href="index.html" class="nav-active">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="affiliate.html">Affiliate</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+      <a href="staff-portal.html" class="btn-staff">
+        Staff Portal
+      </a>
+    </div>
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </div>
+  <div class="mobile-dropdown hidden" id="mobile-menu">
+      <a href="index.html" style="border-bottom: 1px solid white;">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="affiliate.html">Affiliate</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
+  </div>
+</nav>
+
+<!-- MAIN GRID WRAPPER -->
+<main class="split-layout-grid">
+    <!-- TOP LEFT: IMAGE PANE -->
+    <div class="split-pane pane-img">
+        <div class="features-glass-bar">
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-store" style="color:#10b981;"></i> Commerce </span>
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-magnifying-glass-location" style="color:#f472b6;"></i> Discover Locally</span>
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-id-card" style="color:#60a5fa;"></i> Unique ID</span>
+        </div>
+    </div>
+    <!-- TOP RIGHT: NOW AUTH PORTAL -->
+    <div class="split-pane pane-dark">
+        <h1 class="hero-title">
+           <span id="typewriter"></span><span class="cursor">|</span>
+        </h1>
+        
+        <p class="hero-desc">
+          We provide a digital repository of physical shops, their products, and locations within a city.
+        </p>
+        <div class="repo-search-wrapper">
+            <p class="search-label">Search Repository</p>
+            <div style="position: relative;">
+                <input type="text" id="repo-search-input" placeholder="Enter Merchant ID..." class="repo-input"
+                       onkeypress="if(event.key === 'Enter') handleRepoSearch()">
+                <div class="search-icon-btn" onclick="handleRepoSearch()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+            </div>
+            <p class="id-hint">
+                <i class="fa-solid fa-circle-info"></i> Search by unique ID (e.g., 209234)
+            </p>
+        </div>
+        <div class="hero-auth-widget">
+            <div class="widget-title">
+                <i class="fa-solid fa-lock"></i> Users Login
+            </div>
+            
+            <form onsubmit="event.preventDefault(); handleHeroLogin();">
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="hero-email" class="hero-input-login" placeholder="Email Address" required>
+                </div>
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
+                    <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePassword()"></i>
+                </div>
+                <a class="forgot-password" onclick="showForgotPopup()">Forgot password?</a>
+                <button type="submit" id="hero-login-btn" class="btn-login-hero">
+                    Secure Sign In <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+            <div class="widget-divider">New to CT-Merchant?</div>
+            <a href="create-account.html" class="btn-create-account">
+                Create Account
+            </a>
+
+            <!-- GOOGLE SIGN-IN BUTTON ADDED HERE -->
+            <div class="widget-divider">Or continue with</div>
+            <div style="display: flex; justify-content: center; width: 100%;">
+                <!-- REPLACE 'data-client_id' WITH YOUR ACTUAL GOOGLE CLIENT ID -->
+                <div id="g_id_onload"
+                     data-client_id="YOUR_GOOGLE_CLIENT_ID_HERE" 
+                     data-context="signin"
+                     data-ux_mode="popup"
+                     data-callback="handleGoogleLogin"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="continue_with"
+                     data-size="large"
+                     data-logo_alignment="center"
+                     data-width="360">
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- BOTTOM LEFT: VALUE PROP PANE -->
+    <div class="split-pane pane-light">
+        <h2 class="value-title">Grow Your Physical Shop Digitally</h2>
+        <p class="value-desc">Join thousands of verified local merchants. Create your profile, upload your products, and let our AI-powered repository connect you with buyers in your exact city area.</p>
+        
+        <ul class="value-bullets">
+            <li><i class="fa-solid fa-circle-check"></i> Get a verified digital storefront</li>
+            <li><i class="fa-solid fa-circle-check"></i> Unique CT-Merchant ID to share</li>
+            <li><i class="fa-solid fa-circle-check"></i> Be discovered in city Repository Search</li>
+        </ul>
+    </div>
+    <!-- BOTTOM RIGHT: NOW TEXT & SEARCH PANE -->
+    <div class="split-pane pane-white">
+        <span class="repo-badge">
+          Repository of Shops, Products and Services
+        </span>
+        
+        <p class="hero-pro-text">
+         CT-Merchant is a structured repository of shops, products, and services within a city. We onboard and physically verify merchants to eliminate fraudulent online claims. Our platform indexes verified, physically existing businesses and their offerings, enabling consumers to compare prices and options before visiting a store. This approach enhances transparency, improves purchasing decisions, and saves time — effectively balancing digital convenience with physical marketplace reality.
+        </p>
+        
+    </div>
+</main>
+
+<footer class="footer">
+  <div class="container footer-container">
+    <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Use</a>
+      <span>RC: 8879163</span>
+    </div>
+  </div>
+</footer>
+
+<!-- COMPLETE PROFILE MODAL (Triggered if New Google User) -->
+<div id="complete-profile-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h2 class="modal-title">Complete Your Profile</h2>
+        <p class="modal-subtitle">We need a few more details to set up your dashboard.</p>
+        
+        <div class="modal-input-group">
+            <label class="modal-label">Phone Number</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-phone"></i></span>
+                <input type="tel" id="google-phone" placeholder="08012345678" class="modal-input">
+            </div>
+        </div>
+
+        <div class="modal-input-group">
+            <label class="modal-label">Select City</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-city"></i></span>
+                <select id="google-city" class="modal-input" onchange="loadAreasForModal(this.value)">
+                    <option value="" disabled selected>Loading cities...</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="modal-input-group">
+            <label class="modal-label">Select Area</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-map-pin"></i></span>
+                <select id="google-area" class="modal-input" disabled>
+                    <option value="" disabled selected>Select city first</option>
+                </select>
+            </div>
+        </div>
+
+        <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary-modal">
+            Complete Setup
+        </button>
+        <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
+            Cancel & Sign Out
+        </button>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // --- TYPEWRITER LOGIC ---
+    const textElement = document.getElementById('typewriter');
+    const phrases = [
+        "Verified Merchants",
+        "Safe and Secure",
+        "Boost Your Business"
+    ];
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let typeSpeed = 100;
+    
+    function typeEffect() {
+        const currentPhrase = phrases[phraseIndex];
+        
+        if (isDeleting) {
+            textElement.textContent = currentPhrase.substring(0, charIndex - 1);
+            charIndex--;
+            typeSpeed = 50;
+        } else {
+            textElement.textContent = currentPhrase.substring(0, charIndex + 1);
+            charIndex++;
+            typeSpeed = 100;
+        }
+        if (!isDeleting && charIndex === currentPhrase.length) {
+            isDeleting = true;
+            typeSpeed = 2000; 
+        } else if (isDeleting && charIndex === 0) {
+            isDeleting = false;
+            phraseIndex = (phraseIndex + 1) % phrases.length;
+            typeSpeed = 500; 
+        }
+        setTimeout(typeEffect, typeSpeed);
+    }
+   
+    document.addEventListener('DOMContentLoaded', typeEffect);
+    
+    // --- REPO SEARCH ---
+    function handleRepoSearch() {
+        const query = document.getElementById('repo-search-input').value.trim();
+        if(query) window.location.href = `reposearch.html?merchantId=${query}`;
+    }
+    
+    // --- LOGIN LOGIC ---
+    async function handleHeroLogin() {
+        const email = document.getElementById('hero-email').value;
+        const password = document.getElementById('hero-password').value;
+        const btn = document.getElementById('hero-login-btn');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
+        btn.disabled = true;
+        
+        try {
+            // 1. Authenticate the user
+            const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password });
+            if (authError) throw authError;
+
+            // 2. RLS SUSPENSION CHECK
+            if (authData && authData.user) {
+                const { data: profileData } = await client
+                    .from('profiles')
+                    .select('is_suspended')
+                    .eq('id', authData.user.id)
+                    .maybeSingle(); 
+
+                if (!profileData || profileData.is_suspended === true) {
+                    await client.auth.signOut();
+                    throw new Error("Your account has been temporarily suspended. Please contact support.");
+                }
+            }
+
+            // 3. Safe to proceed
+            window.location.href = "user-dashboard.html";
+            
+        } catch (err) {
+            alert(err.message);
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    }
+
+    // --- GOOGLE SIGN IN LOGIC (HOMEPAGE) ---
+    let pendingGoogleUserId = null;
+    let pendingGoogleUserName = null;
+
+    async function handleGoogleLogin(response) {
+        // Provide feedback that authentication is happening
+        const heroBtn = document.getElementById('hero-login-btn');
+        const originalHeroHtml = heroBtn.innerHTML;
+        heroBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Checking Google...';
+        heroBtn.disabled = true;
+
+        try {
+            // 1. Send Google Token to Supabase
+            const { data, error } = await client.auth.signInWithIdToken({
+                provider: 'google',
+                token: response.credential,
+            });
+            if (error) throw error;
+
+            const user = data.user;
+            pendingGoogleUserId = user.id;
+            pendingGoogleUserName = user.user_metadata?.full_name || '';
+
+            // 2. Check if user already has a complete profile
+            const { data: profile } = await client
+                .from('profiles')
+                .select('city_id, area_id, is_suspended')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            // Check suspension first
+            if (profile && profile.is_suspended) {
+                await client.auth.signOut();
+                throw new Error("Your account has been temporarily suspended. Please contact support.");
+            }
+
+            // 3. Routing
+            if (profile && profile.city_id && profile.area_id) {
+                // Profile complete -> Dashboard
+                window.location.href = "user-dashboard.html";
+            } else {
+                // Profile INCOMPLETE -> Show Modal & Lazy Load Cities
+                document.getElementById('complete-profile-modal').classList.remove('hidden');
+                heroBtn.innerHTML = originalHeroHtml;
+                heroBtn.disabled = false;
+                await fetchCitiesForModal();
+            }
+        } catch(err) {
+            alert("Google Sign-In Error: " + err.message);
+            heroBtn.innerHTML = originalHeroHtml;
+            heroBtn.disabled = false;
+        }
+    }
+
+    // Lazy load cities only if the modal opens (keeps homepage fast)
+    async function fetchCitiesForModal() {
+        const citySelect = document.getElementById('google-city');
+        try {
+            const { data, error } = await client.from('cities').select('id, name').eq('is_open', true).order('name');
+            if (error) throw error;
+            
+            citySelect.innerHTML = '<option value="" disabled selected>Select your city</option>' + 
+                                   data.map(city => `<option value="${city.id}">${city.name}</option>`).join('');
+        } catch (err) {
+            citySelect.innerHTML = '<option value="" disabled>Error loading cities</option>';
+        }
+    }
+
+    async function loadAreasForModal(cityId) {
+        const areaSelect = document.getElementById('google-area');
+        areaSelect.disabled = true;
+        areaSelect.innerHTML = '<option value="" disabled selected>Loading areas...</option>';
+        try {
+            const { data, error } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+            if (error) throw error;
+            
+            areaSelect.innerHTML = '<option value="" disabled selected>Select your area</option>' + 
+                                   data.map(area => `<option value="${area.id}">${area.name}</option>`).join('');
+            areaSelect.disabled = false;
+        } catch (err) {
+            areaSelect.innerHTML = '<option value="" disabled>Error loading areas</option>';
+        }
+    }
+
+    async function saveGoogleProfile() {
+        const phone = document.getElementById('google-phone').value.trim();
+        const cityId = document.getElementById('google-city').value;
+        const areaId = document.getElementById('google-area').value;
+        const btn = document.getElementById('google-complete-btn');
+
+        if (!phone || !cityId || !areaId) {
+            alert("Please fill in your phone, city, and area to continue.");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Saving...';
+
+        try {
+            const { error } = await client.from('profiles').upsert({
+                id: pendingGoogleUserId,
+                full_name: pendingGoogleUserName,
+                phone: phone,
+                city_id: parseInt(cityId),
+                area_id: parseInt(areaId)
+            });
+
+            if (error) throw error;
+            window.location.href = "user-dashboard.html";
+        } catch(err) {
+            alert("Error saving profile: " + err.message);
+            btn.disabled = false;
+            btn.innerHTML = 'Complete Setup';
+        }
+    }
+
+    async function cancelGoogleLogin() {
+        await client.auth.signOut();
+        document.getElementById('complete-profile-modal').classList.add('hidden');
+    }
+    // --- END GOOGLE LOGIC ---
+    
+    // --- PASSWORD TOGGLE ---
+    function togglePassword() {
+        const password = document.getElementById('hero-password');
+        const icon = document.querySelector('.toggle-password');
+        if (password.type === 'password') {
+            password.type = 'text';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        } else {
+            password.type = 'password';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    }
+    // --- FORGOT PASSWORD POPUP ---
+    function showForgotPopup() {
+        alert('Password reset is available in mobile app');
+    }
+</script>
+</body>
+</html>
