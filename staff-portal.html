@@ -17,6 +17,7 @@
   <div class="login-card">
     
     <div class="login-header">
+      <!-- You can update this logo URL later if you migrate your storage bucket too -->
       <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"
            alt="CT-Merchant Logo"
            class="login-logo">
@@ -41,8 +42,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const SUPABASE_URL = "https://goodtvrhszsnhcyigfoi.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdvb2R0dnJoc3pzbmhjeWlnZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI";
+    // Updated to your CURRENT Supabase Project Credentials
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     
     // Check if Supabase library loaded correctly
     let client;
@@ -79,6 +81,7 @@
           btn.disabled = true;
 
           try {
+              // 1. Authenticate the user
               const { data, error } = await client.auth.signInWithPassword({ email, password });
 
               if (error) {
@@ -89,7 +92,7 @@
                 throw new Error("No user returned from system.");
               }
 
-              // Staff membership check
+              // 2. Staff membership check against the new staff_profiles table
               const { data: staff, error: staffError } = await client
                 .from("staff_profiles")
                 .select("*")
@@ -102,7 +105,7 @@
                 throw new Error("Access denied: Restricted to staff accounts only.");
               }
 
-              // Success redirect
+              // 3. Success redirect
               window.location.href = "staff-dashboard.html";
 
           } catch (err) {
