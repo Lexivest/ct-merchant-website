@@ -169,7 +169,6 @@
 
         <!-- 2. Google Sign-In Button Container -->
         <div style="display: flex; justify-content: center; width: 100%;">
-            <!-- REPLACE 'data-client_id' WITH YOUR ACTUAL GOOGLE CLIENT ID -->
             <div id="g_id_onload"
                  data-client_id="237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com" 
                  data-context="signup"
@@ -177,14 +176,13 @@
                  data-callback="handleGoogleLogin"
                  data-auto_prompt="false">
             </div>
+            <!-- Removed data-width and data-logo_alignment so it responds to screen size naturally -->
             <div class="g_id_signin"
                  data-type="standard"
                  data-shape="rectangular"
                  data-theme="outline"
                  data-text="continue_with"
-                 data-size="large"
-                 data-logo_alignment="center"
-                 data-width="360">
+                 data-size="large">
             </div>
         </div>
 
@@ -316,6 +314,11 @@
                 </div>
 
                 <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary" style="margin-top: 1rem;">Complete Setup</button>
+                
+                <!-- Added Cancel Button to keep consistency with the Index page -->
+                <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 0.5rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
+                    Cancel & Sign Out
+                </button>
             </div>
         </div>
     </div>
@@ -411,12 +414,18 @@
                 pendingGoogleUserId = user.id;
                 pendingGoogleUserName = user.user_metadata?.full_name || '';
 
-                // 2. Check if user already has a complete profile in Supabase
+                // 2. Check if user already has a complete profile AND check for suspension
                 const { data: profile, error: profileError } = await client
                     .from('profiles')
-                    .select('city_id, area_id')
+                    .select('city_id, area_id, is_suspended')
                     .eq('id', user.id)
-                    .single();
+                    .maybeSingle();
+                    
+                // Suspension safety check matching the homepage
+                if (profile && profile.is_suspended) {
+                    await client.auth.signOut();
+                    throw new Error("Your account has been temporarily suspended. Please contact support.");
+                }
 
                 // 3. If profile exists and has city/area, redirect to dashboard
                 if (profile && profile.city_id && profile.area_id) {
@@ -464,6 +473,11 @@
                 btn.disabled = false;
                 btn.innerHTML = 'Complete Setup';
             }
+        }
+        
+        async function cancelGoogleLogin() {
+            await client.auth.signOut();
+            document.getElementById('complete-profile-modal').classList.add('hidden');
         }
         // ---------------------------------
 
