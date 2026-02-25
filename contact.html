@@ -35,7 +35,7 @@
       <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
     </div>
 
-    <button class="mobile-menu-btn" id="menu-btn">
+    <button class="mobile-menu-btn" id="menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
       <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
       </svg>
@@ -167,16 +167,16 @@
 <script src="index.js"></script>
 
 <script>
-// We wrap this in a block/event listener to avoid variable name conflicts with index.js
 document.addEventListener('DOMContentLoaded', () => {
-  const CONTACT_SUPABASE_URL = "https://goodtvrhszsnhcyigfoi.supabase.co";
-  const CONTACT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdvb2R0dnJoc3pzbmhjeWlnZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI";
+  // Swapped to your current active Supabase Project credentials
+  const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
   
   let contactClient = null;
 
   try {
     if (window.supabase) {
-      contactClient = window.supabase.createClient(CONTACT_SUPABASE_URL, CONTACT_SUPABASE_KEY);
+      contactClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
   } catch(e) { console.error("Initial load failed", e); }
 
@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Re-check client in case it loaded late
       if (!contactClient && window.supabase) {
-        contactClient = window.supabase.createClient(CONTACT_SUPABASE_URL, CONTACT_SUPABASE_KEY);
+        contactClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       }
 
       if (!contactClient) {
@@ -212,8 +212,9 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
+        // Pointing to the new table we just created in SQL
         const { error } = await contactClient
-          .from('contact-us-web')
+          .from('contact_messages')
           .insert([payload]);
 
         if (error) throw error;
