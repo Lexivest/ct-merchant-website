@@ -446,7 +446,7 @@
     .forgot-password:hover { color: #db2777; }
 
     /* =========================================
-       MODAL STYLES (Google Profile Completion)
+       MODAL STYLES (Google Profile & Password Reset)
        ========================================= */
     .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; }
     .modal-card { background: white; border-radius: 1.5rem; max-width: 400px; width: 100%; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
@@ -480,7 +480,7 @@
     .floating-contact-btn {
         position: fixed;
         bottom: 24px;
-        left: 24px; /* Positioned bottom left as requested */
+        left: 24px;
         width: 60px;
         height: 60px;
         background-color: #db2777;
@@ -677,7 +677,10 @@
                     <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
                     <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePassword()"></i>
                 </div>
-                <a class="forgot-password" onclick="showForgotPopup()">Forgot password?</a>
+                
+                <!-- Updated Forgot Password Link -->
+                <a class="forgot-password" onclick="openResetEmailModal()">Forgot password?</a>
+                
                 <button type="submit" id="hero-login-btn" class="btn-login-hero">
                     Secure Sign In <i class="fa-solid fa-arrow-right"></i>
                 </button>
@@ -687,10 +690,9 @@
                 Create Account
             </a>
 
-            <!-- GOOGLE SIGN-IN BUTTON ADDED HERE -->
+            <!-- GOOGLE SIGN-IN BUTTON -->
             <div class="widget-divider">Or continue with</div>
             <div style="display: flex; justify-content: center; width: 100%;">
-                <!-- REPLACE 'data-client_id' WITH YOUR ACTUAL GOOGLE CLIENT ID -->
                 <div id="g_id_onload"
                      data-client_id="237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com" 
                      data-context="signin"
@@ -719,7 +721,7 @@
             <li><i class="fa-solid fa-circle-check"></i> Be discovered in city Repository Search</li>
         </ul>
     </div>
-    <!-- BOTTOM RIGHT: NOW TEXT & SEARCH PANE -->
+    <!-- BOTTOM RIGHT: TEXT & SEARCH PANE -->
     <div class="split-pane pane-white">
         <span class="repo-badge">
           Repository of Shops, Products and Services
@@ -743,7 +745,11 @@
   </div>
 </footer>
 
-<!-- COMPLETE PROFILE MODAL (Triggered if New Google User) -->
+<!-- ==========================================
+     MODALS 
+     ========================================== -->
+
+<!-- COMPLETE PROFILE MODAL -->
 <div id="complete-profile-modal" class="modal-overlay hidden">
     <div class="modal-card">
         <h2 class="modal-title">Complete Your Profile</h2>
@@ -786,9 +792,69 @@
     </div>
 </div>
 
-<!-- ==========================================
-     NEW FLOATING CONTACT WIDGET 
-     ========================================== -->
+<!-- RESET PASSWORD: EMAIL MODAL -->
+<div id="reset-email-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h2 class="modal-title">Reset Password</h2>
+        <p class="modal-subtitle">Enter your email address to receive a 6-digit recovery code.</p>
+        
+        <div class="modal-input-group">
+            <label class="modal-label">Registered Email</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-envelope"></i></span>
+                <input type="email" id="reset-email-input" placeholder="name@example.com" class="modal-input">
+            </div>
+        </div>
+
+        <button id="btn-send-reset" onclick="sendResetCode()" class="btn-primary-modal">
+            Send Reset Code
+        </button>
+        <button onclick="document.getElementById('reset-email-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
+            Cancel
+        </button>
+    </div>
+</div>
+
+<!-- RESET PASSWORD: OTP & NEW PASSWORD MODAL -->
+<div id="reset-password-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h2 class="modal-title">Create New Password</h2>
+        <p class="modal-subtitle">Enter the 6-digit code we just sent to your email.</p>
+        
+        <div class="modal-input-group">
+            <label class="modal-label">6-Digit Recovery Code</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-hashtag"></i></span>
+                <input type="text" id="reset-otp-input" placeholder="123456" class="modal-input" maxlength="6" style="letter-spacing: 5px; text-align: center; font-weight: bold; padding-left: 1rem;">
+            </div>
+        </div>
+
+        <div class="modal-input-group">
+            <label class="modal-label">New Password</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
+                <input type="password" id="reset-new-password" placeholder="••••••••" class="modal-input">
+            </div>
+        </div>
+
+        <div class="modal-input-group">
+            <label class="modal-label">Confirm Password</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
+                <input type="password" id="reset-confirm-password" placeholder="••••••••" class="modal-input">
+            </div>
+        </div>
+
+        <button id="btn-confirm-reset" onclick="verifyAndResetPassword()" class="btn-primary-modal">
+            Confirm & Reset Password
+        </button>
+        <button onclick="document.getElementById('reset-password-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
+            Cancel
+        </button>
+    </div>
+</div>
+
+<!-- FLOATING CONTACT WIDGET -->
 <button class="floating-contact-btn" onclick="toggleFloatingContact()" title="Need Help? Contact Support">
     <i class="fa-solid fa-headset"></i>
 </button>
@@ -835,39 +901,25 @@
     
     // --- TYPEWRITER LOGIC ---
     const textElement = document.getElementById('typewriter');
-    const phrases = [
-        "Verified Merchants",
-        "Safe and Secure",
-        "Boost Your Business"
-    ];
-    let phraseIndex = 0;
-    let charIndex = 0;
-    let isDeleting = false;
-    let typeSpeed = 100;
+    const phrases = ["Verified Merchants", "Safe and Secure", "Boost Your Business"];
+    let phraseIndex = 0; let charIndex = 0; let isDeleting = false; let typeSpeed = 100;
     
     function typeEffect() {
         const currentPhrase = phrases[phraseIndex];
-        
         if (isDeleting) {
             textElement.textContent = currentPhrase.substring(0, charIndex - 1);
-            charIndex--;
-            typeSpeed = 50;
+            charIndex--; typeSpeed = 50;
         } else {
             textElement.textContent = currentPhrase.substring(0, charIndex + 1);
-            charIndex++;
-            typeSpeed = 100;
+            charIndex++; typeSpeed = 100;
         }
         if (!isDeleting && charIndex === currentPhrase.length) {
-            isDeleting = true;
-            typeSpeed = 2000; 
+            isDeleting = true; typeSpeed = 2000; 
         } else if (isDeleting && charIndex === 0) {
-            isDeleting = false;
-            phraseIndex = (phraseIndex + 1) % phrases.length;
-            typeSpeed = 500; 
+            isDeleting = false; phraseIndex = (phraseIndex + 1) % phrases.length; typeSpeed = 500; 
         }
         setTimeout(typeEffect, typeSpeed);
     }
-   
     document.addEventListener('DOMContentLoaded', typeEffect);
     
     // --- REPO SEARCH ---
@@ -886,27 +938,17 @@
         btn.disabled = true;
         
         try {
-            // 1. Authenticate the user
             const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password });
             if (authError) throw authError;
 
-            // 2. RLS SUSPENSION CHECK
             if (authData && authData.user) {
-                const { data: profileData } = await client
-                    .from('profiles')
-                    .select('is_suspended')
-                    .eq('id', authData.user.id)
-                    .maybeSingle(); 
-
+                const { data: profileData } = await client.from('profiles').select('is_suspended').eq('id', authData.user.id).maybeSingle(); 
                 if (!profileData || profileData.is_suspended === true) {
                     await client.auth.signOut();
                     throw new Error("Your account has been temporarily suspended. Please contact support.");
                 }
             }
-
-            // 3. Safe to proceed
             window.location.href = "user-dashboard.html";
-            
         } catch (err) {
             alert(err.message);
             btn.innerHTML = originalHtml;
@@ -914,33 +956,25 @@
         }
     }
 
-    // --- GOOGLE SIGN IN LOGIC (HOMEPAGE) ---
+    // --- GOOGLE SIGN IN LOGIC ---
     let pendingGoogleUserId = null;
     let pendingGoogleUserName = null;
 
     async function handleGoogleLogin(response) {
-        // Provide feedback that authentication is happening
         const heroBtn = document.getElementById('hero-login-btn');
         const originalHeroHtml = heroBtn.innerHTML;
         heroBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Checking Google...';
         heroBtn.disabled = true;
 
         try {
-            const { data, error } = await client.auth.signInWithIdToken({
-                provider: 'google',
-                token: response.credential,
-            });
+            const { data, error } = await client.auth.signInWithIdToken({ provider: 'google', token: response.credential });
             if (error) throw error;
 
             const user = data.user;
             pendingGoogleUserId = user.id;
             pendingGoogleUserName = user.user_metadata?.full_name || '';
 
-            const { data: profile } = await client
-                .from('profiles')
-                .select('city_id, area_id, is_suspended')
-                .eq('id', user.id)
-                .maybeSingle();
+            const { data: profile } = await client.from('profiles').select('city_id, area_id, is_suspended').eq('id', user.id).maybeSingle();
 
             if (profile && profile.is_suspended) {
                 await client.auth.signOut();
@@ -967,9 +1001,7 @@
         try {
             const { data, error } = await client.from('cities').select('id, name').eq('is_open', true).order('name');
             if (error) throw error;
-            
-            citySelect.innerHTML = '<option value="" disabled selected>Select your city</option>' + 
-                                   data.map(city => `<option value="${city.id}">${city.name}</option>`).join('');
+            citySelect.innerHTML = '<option value="" disabled selected>Select your city</option>' + data.map(city => `<option value="${city.id}">${city.name}</option>`).join('');
         } catch (err) {
             citySelect.innerHTML = '<option value="" disabled>Error loading cities</option>';
         }
@@ -982,9 +1014,7 @@
         try {
             const { data, error } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
             if (error) throw error;
-            
-            areaSelect.innerHTML = '<option value="" disabled selected>Select your area</option>' + 
-                                   data.map(area => `<option value="${area.id}">${area.name}</option>`).join('');
+            areaSelect.innerHTML = '<option value="" disabled selected>Select your area</option>' + data.map(area => `<option value="${area.id}">${area.name}</option>`).join('');
             areaSelect.disabled = false;
         } catch (err) {
             areaSelect.innerHTML = '<option value="" disabled>Error loading areas</option>';
@@ -997,29 +1027,20 @@
         const areaId = document.getElementById('google-area').value;
         const btn = document.getElementById('google-complete-btn');
 
-        if (!phone || !cityId || !areaId) {
-            alert("Please fill in your phone, city, and area to continue.");
-            return;
-        }
+        if (!phone || !cityId || !areaId) return alert("Please fill in your phone, city, and area to continue.");
 
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Saving...';
 
         try {
             const { error } = await client.from('profiles').upsert({
-                id: pendingGoogleUserId,
-                full_name: pendingGoogleUserName,
-                phone: phone,
-                city_id: parseInt(cityId),
-                area_id: parseInt(areaId)
+                id: pendingGoogleUserId, full_name: pendingGoogleUserName, phone: phone, city_id: parseInt(cityId), area_id: parseInt(areaId)
             });
-
             if (error) throw error;
             window.location.href = "user-dashboard.html";
         } catch(err) {
             alert("Error saving profile: " + err.message);
-            btn.disabled = false;
-            btn.innerHTML = 'Complete Setup';
+            btn.disabled = false; btn.innerHTML = 'Complete Setup';
         }
     }
 
@@ -1033,26 +1054,95 @@
         const password = document.getElementById('hero-password');
         const icon = document.querySelector('.toggle-password');
         if (password.type === 'password') {
-            password.type = 'text';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
+            password.type = 'text'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye');
         } else {
-            password.type = 'password';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
+            password.type = 'password'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash');
         }
     }
+
+    // ==========================================
+    // PASSWORD RESET LOGIC (6-DIGIT OTP)
+    // ==========================================
     
-    function showForgotPopup() {
-        alert('Password reset is available in mobile app');
+    function openResetEmailModal() {
+        document.getElementById('reset-email-modal').classList.remove('hidden');
+        // Auto-fill the email if they already typed it in the login box
+        const loginEmail = document.getElementById('hero-email').value;
+        if (loginEmail) {
+            document.getElementById('reset-email-input').value = loginEmail;
+        }
+    }
+
+    async function sendResetCode() {
+        const email = document.getElementById('reset-email-input').value.trim();
+        if (!email) return alert("Please enter your registered email address.");
+
+        const btn = document.getElementById('btn-send-reset');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Sending...';
+
+        try {
+            // Supabase sends the 6-digit token to the user's email
+            const { error } = await client.auth.resetPasswordForEmail(email);
+            if (error) throw error;
+            
+            // Hide Email modal, Show OTP & Password modal
+            document.getElementById('reset-email-modal').classList.add('hidden');
+            document.getElementById('reset-password-modal').classList.remove('hidden');
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Send Reset Code';
+        }
+    }
+
+    async function verifyAndResetPassword() {
+        const email = document.getElementById('reset-email-input').value.trim(); 
+        const otp = document.getElementById('reset-otp-input').value.trim();
+        const newPassword = document.getElementById('reset-new-password').value;
+        const confirmPassword = document.getElementById('reset-confirm-password').value;
+
+        if (!otp || !newPassword || !confirmPassword) return alert("Please fill out all fields.");
+        if (newPassword !== confirmPassword) return alert("Passwords do not match. Please try again.");
+        if (newPassword.length < 6) return alert("Password must be at least 6 characters.");
+
+        const btn = document.getElementById('btn-confirm-reset');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Resetting...';
+
+        try {
+            // 1. Verify the 6-digit OTP code with Supabase
+            // If successful, Supabase automatically logs the user in behind the scenes!
+            const { error: verifyError } = await client.auth.verifyOtp({
+                email: email,
+                token: otp,
+                type: 'recovery'
+            });
+            if (verifyError) throw verifyError;
+
+            // 2. Because they are now technically "logged in", we can update their password
+            const { error: updateError } = await client.auth.updateUser({
+                password: newPassword
+            });
+            if (updateError) throw updateError;
+
+            alert("Success! Your password has been updated.");
+            
+            // 3. Take them straight to the dashboard since they are already authenticated
+            window.location.href = "user-dashboard.html";
+
+        } catch (err) {
+            alert("Error: " + err.message);
+            btn.disabled = false;
+            btn.innerHTML = 'Confirm & Reset Password';
+        }
     }
 
     // --- FLOATING CONTACT WIDGET LOGIC ---
     function toggleFloatingContact() {
         const popup = document.getElementById('fc-popup');
         popup.classList.toggle('show');
-        
-        // Reset status message if opening the popup fresh
         if(popup.classList.contains('show')) {
             document.getElementById('fc-status').className = 'fc-status';
             document.getElementById('fc-status').textContent = '';
@@ -1075,31 +1165,22 @@
         btn.disabled = true;
         const originalText = btn.innerHTML;
         btn.innerHTML = 'Sending... <i class="fa-solid fa-circle-notch fa-spin"></i>';
-        statusDiv.className = 'fc-status'; // hide old status
+        statusDiv.className = 'fc-status'; 
 
         try {
-            const { error } = await client
-                .from('contact_messages')
-                .insert([payload]);
-
+            const { error } = await client.from('contact_messages').insert([payload]);
             if (error) throw error;
 
             statusDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> Message sent successfully!';
             statusDiv.className = 'fc-status success';
             form.reset();
             
-            // Auto close popup after 3 seconds on success
-            setTimeout(() => {
-                toggleFloatingContact();
-            }, 3000);
-
+            setTimeout(() => { toggleFloatingContact(); }, 3000);
         } catch (err) {
-            console.error(err);
             statusDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Failed: ' + (err.message || "Unknown error");
             statusDiv.className = 'fc-status error';
         } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
+            btn.disabled = false; btn.innerHTML = originalText;
         }
     }
 </script>
