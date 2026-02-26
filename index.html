@@ -500,7 +500,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* =========================================
-       FLOATING CONTACT WIDGET STYLES
+       FLOATING CONTACT WIDGET STYLES (Left)
        ========================================= */
     .floating-contact-btn {
         position: fixed;
@@ -592,8 +592,88 @@
     .fc-status.success { display: block; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;}
     .fc-status.error { display: block; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;}
 
+    /* =========================================
+       AI CHAT WIDGET STYLES (Right)
+       ========================================= */
+    .ai-fab-container {
+        position: fixed; bottom: 24px; right: 24px; z-index: 5000;
+        display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .ai-fab {
+        width: 60px; height: 60px; border-radius: 50%;
+        background: #059669; color: white; /* Emerald Green matching Dashboard */
+        box-shadow: 0 10px 25px rgba(5, 150, 105, 0.4); cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; transition: transform 0.2s; border: none;
+    }
+    .ai-fab:active { transform: scale(0.95); }
+    .ai-label {
+        background: white; color: #059669;
+        font-size: 0.75rem; font-weight: 800;
+        padding: 4px 10px; border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB;
+        white-space: nowrap; pointer-events: none;
+    }
+
+    .ai-chat-window {
+        position: fixed; bottom: 95px; right: 24px;
+        width: 350px; height: 450px;
+        background: white; border-radius: 16px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 5000;
+        display: flex; flex-direction: column;
+        overflow: hidden; opacity: 0; pointer-events: none;
+        transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #E5E7EB;
+    }
+    .ai-chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+    .ai-chat-header {
+        background: #059669; color: white;
+        padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .ai-chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
+    .chat-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; }
+    .msg-ai { align-self: flex-start; background: white; border: 1px solid #E2E8F0; color: #1E293B; border-bottom-left-radius: 2px; }
+    .msg-user { align-self: flex-end; background: #059669; color: white; border-bottom-right-radius: 2px; }
+    .msg-error { align-self: center; background: #FEE2E2; color: #DC2626; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
+    
+    /* Beautiful Create Account Button inside the Chat */
+    .chat-register-btn {
+        display: block;
+        background: #DB2777;
+        color: white !important;
+        text-align: center;
+        padding: 10px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 800;
+        margin-top: 12px;
+        box-shadow: 0 4px 6px rgba(219, 39, 119, 0.3);
+        transition: transform 0.2s, background 0.2s;
+    }
+    .chat-register-btn:hover { background: #be185d; transform: translateY(-1px); }
+    
+    .ai-chat-input-area {
+        padding: 12px; background: white; border-top: 1px solid #E2E8F0;
+        display: flex; flex-direction: column; gap: 8px;
+    }
+    .ai-chat-input-row { display: flex; gap: 8px; width: 100%; }
+    .ai-chat-input {
+        flex: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid #E2E8F0;
+        outline: none; font-size: 0.9rem; background: #F1F5F9; color: #0f172a;
+    }
+    .ai-chat-input:focus { border-color: #059669; background: white; }
+    .ai-btn-send {
+        background: #059669; color: white; border: none;
+        width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; transition: background 0.2s;
+    }
+    .ai-btn-send:hover { background: #047857; }
+
     @media (max-width: 400px) {
         .floating-contact-popup { width: calc(100% - 48px); left: 24px; right: 24px; }
+        .ai-chat-window { width: calc(100% - 48px); left: 24px; right: 24px; }
     }
   </style>
 </head>
@@ -885,7 +965,9 @@
     </div>
 </div>
 
-<!-- FLOATING CONTACT WIDGET -->
+<!-- ==========================================
+     FLOATING CONTACT WIDGET (LEFT)
+     ========================================== -->
 <button class="floating-contact-btn" onclick="toggleFloatingContact()" title="Need Help? Contact Support">
     <i class="fa-solid fa-headset"></i>
 </button>
@@ -923,6 +1005,34 @@
             Send Message <i class="fa-solid fa-paper-plane"></i>
         </button>
     </form>
+</div>
+
+<!-- ==========================================
+     AI CHAT WIDGET (RIGHT)
+     ========================================== -->
+<div class="ai-fab-container">
+    <button class="ai-fab" onclick="toggleAiChat()">
+        <i class="fa-solid fa-comments"></i>
+    </button>
+    <span class="ai-label">AI Assistant</span>
+</div>
+
+<div id="ai-chat-window" class="ai-chat-window">
+    <div class="ai-chat-header">
+        <span style="font-weight:700;"><i class="fa-solid fa-robot"></i> Assistant</span>
+        <button onclick="toggleAiChat()" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="ai-chat-messages" class="ai-chat-body">
+        <div class="chat-msg msg-ai">
+            Hello! I am the CT-Merchant Assistant. Welcome to our platform! How can I help you today?
+        </div>
+    </div>
+    <div class="ai-chat-input-area">
+        <div class="ai-chat-input-row">
+            <input type="text" id="ai-chat-input" class="ai-chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendAiMsg()">
+            <button class="ai-btn-send" onclick="sendAiMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1091,17 +1201,10 @@
         }
     }
 
-    // ==========================================
-    // PASSWORD RESET LOGIC (6-DIGIT OTP)
-    // ==========================================
-    
     function openResetEmailModal() {
         document.getElementById('reset-email-modal').classList.remove('hidden');
-        // Auto-fill the email if they already typed it in the login box
         const loginEmail = document.getElementById('hero-email').value;
-        if (loginEmail) {
-            document.getElementById('reset-email-input').value = loginEmail;
-        }
+        if (loginEmail) document.getElementById('reset-email-input').value = loginEmail;
     }
 
     async function sendResetCode() {
@@ -1113,11 +1216,8 @@
         btn.innerHTML = '<div class="spinner"></div> Sending...';
 
         try {
-            // Supabase sends the 6-digit token to the user's email
             const { error } = await client.auth.resetPasswordForEmail(email);
             if (error) throw error;
-            
-            // Hide Email modal, Show OTP & Password modal
             document.getElementById('reset-email-modal').classList.add('hidden');
             document.getElementById('reset-password-modal').classList.remove('hidden');
         } catch (err) {
@@ -1143,24 +1243,13 @@
         btn.innerHTML = '<div class="spinner"></div> Resetting...';
 
         try {
-            // 1. Verify the 6-digit OTP code with Supabase
-            // If successful, Supabase automatically logs the user in behind the scenes!
-            const { error: verifyError } = await client.auth.verifyOtp({
-                email: email,
-                token: otp,
-                type: 'recovery'
-            });
+            const { error: verifyError } = await client.auth.verifyOtp({ email: email, token: otp, type: 'recovery' });
             if (verifyError) throw verifyError;
 
-            // 2. Because they are now technically "logged in", we can update their password
-            const { error: updateError } = await client.auth.updateUser({
-                password: newPassword
-            });
+            const { error: updateError } = await client.auth.updateUser({ password: newPassword });
             if (updateError) throw updateError;
 
             alert("Success! Your password has been updated.");
-            
-            // 3. Take them straight to the dashboard since they are already authenticated
             window.location.href = "user-dashboard.html";
 
         } catch (err) {
@@ -1170,7 +1259,6 @@
         }
     }
 
-    // --- FLOATING CONTACT WIDGET LOGIC ---
     function toggleFloatingContact() {
         const popup = document.getElementById('fc-popup');
         popup.classList.toggle('show');
@@ -1201,11 +1289,9 @@
         try {
             const { error } = await client.from('contact_messages').insert([payload]);
             if (error) throw error;
-
             statusDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> Message sent successfully!';
             statusDiv.className = 'fc-status success';
             form.reset();
-            
             setTimeout(() => { toggleFloatingContact(); }, 3000);
         } catch (err) {
             statusDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Failed: ' + (err.message || "Unknown error");
@@ -1213,6 +1299,74 @@
         } finally {
             btn.disabled = false; btn.innerHTML = originalText;
         }
+    }
+
+    // ==========================================
+    // AI CHAT WIDGET LOGIC (ANONYMOUS MODE)
+    // ==========================================
+    let aiChatHistory = [];
+
+    function toggleAiChat() {
+        document.getElementById('ai-chat-window').classList.toggle('open');
+    }
+
+    async function sendAiMsg() {
+        const inp = document.getElementById('ai-chat-input');
+        const txt = inp.value.trim();
+        if(!txt) return;
+
+        const body = document.getElementById('ai-chat-messages');
+        body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
+        inp.value = '';
+        body.scrollTop = body.scrollHeight;
+
+        aiChatHistory.push({ role: 'user', content: txt });
+
+        const loadId = 'loading-' + Date.now();
+        body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic; color:#6B7280;">Typing...</div>`;
+        body.scrollTop = body.scrollHeight;
+
+        try {
+            const recentHistory = aiChatHistory.length > 6 ? aiChatHistory.slice(aiChatHistory.length - 6) : aiChatHistory;
+
+            // Notice we do NOT request auth session here. 
+            // We only pass the Anon Key in the headers, which triggers the Edge Function's "Visitor Mode"
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, // Using Anon key
+                    'apikey': SUPABASE_ANON_KEY 
+                },
+                body: JSON.stringify({ 
+                    query: txt,
+                    history: recentHistory
+                })
+            });
+
+            document.getElementById(loadId)?.remove();
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Server returned ${response.status}`);
+            }
+
+            const data = await response.json();
+            const reply = data.reply || "No response received.";
+            const isError = (reply.startsWith("Error:") || reply.startsWith("System"));
+            const msgClass = isError ? "msg-error" : "msg-ai";
+            
+            body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
+
+            if (!isError) {
+                aiChatHistory.push({ role: 'assistant', content: reply });
+            }
+            
+        } catch (err) {
+            document.getElementById(loadId)?.remove();
+            body.innerHTML += `<div class="chat-msg msg-error">Connection Error: Could not reach AI server.</div>`;
+        }
+        body.scrollTop = body.scrollHeight;
     }
 </script>
 </body>
