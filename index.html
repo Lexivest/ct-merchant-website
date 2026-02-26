@@ -516,7 +516,6 @@
         <button class="ai-fab" onclick="toggleAiChat()">
             <i class="fa-solid fa-comments"></i>
         </button>
-        <!-- The Notification Badge -->
         <div id="ai-badge" class="ai-notif-badge">1</div>
     </div>
     <span class="ai-label">AI Assistant</span>
@@ -567,6 +566,32 @@
         setTimeout(typeEffect, typeSpeed);
     }
     document.addEventListener('DOMContentLoaded', typeEffect);
+
+    // --- NEW: IP TRACKING & BAN CHECK LOGIC ---
+    async function getClientIpData() {
+        try {
+            const res = await fetch('https://1.1.1.1/cdn-cgi/trace');
+            const text = await res.text();
+            const data = text.split('\n').reduce((acc, line) => {
+                const [key, value] = line.split('=');
+                if(key) acc[key] = value;
+                return acc;
+            }, {});
+            return { ip: data.ip || 'unknown', country: data.loc || 'unknown' };
+        } catch (e) {
+            return { ip: 'unknown', country: 'unknown' };
+        }
+    }
+
+    async function isIpBanned(ipAddress) {
+        if (ipAddress === 'unknown') return false;
+        try {
+            const { data } = await client.from('ip_blacklist').select('ip_address').eq('ip_address', ipAddress).maybeSingle();
+            return !!data;
+        } catch (e) {
+            return false;
+        }
+    }
     
     // --- REPO SEARCH ---
     function handleRepoSearch() {
@@ -574,7 +599,7 @@
         if(query) window.location.href = `reposearch.html?merchantId=${query}`;
     }
     
-    // --- LOGIN LOGIC ---
+    // --- STANDARD LOGIN LOGIC ---
     async function handleHeroLogin() {
         const email = document.getElementById('hero-email').value;
         const password = document.getElementById('hero-password').value;
@@ -584,21 +609,35 @@
         btn.disabled = true;
         
         try {
+            // 1. IP Ban Frontend Check
+            const ipData = await getClientIpData();
+            if (await isIpBanned(ipData.ip)) {
+                throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CT-Merchant.");
+            }
+
+            // 2. Perform Login
             const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password });
             if (authError) throw authError;
 
+            // 3. Post-Login Database Check Trap (Catches bypassed frontend & updates last active IP)
             if (authData && authData.user) {
-                const { data: profileData } = await client.from('profiles').select('is_suspended').eq('id', authData.user.id).maybeSingle(); 
-                if (!profileData || profileData.is_suspended === true) {
+                const { data: profileData, error: profileErr } = await client.from('profiles').select('is_suspended').eq('id', authData.user.id).maybeSingle(); 
+                
+                // If maybeSingle() throws an error, it means the RLS policy blocked them (they are IP banned!)
+                if (profileErr || !profileData || profileData.is_suspended === true) {
                     await client.auth.signOut();
-                    throw new Error("Your account has been temporarily suspended. Please contact support.");
+                    throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
                 }
+
+                // Update IP
+                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
             }
             window.location.href = "user-dashboard.html";
         } catch (err) {
             alert(err.message);
             btn.innerHTML = originalHtml;
             btn.disabled = false;
+            await client.auth.signOut(); // Force signout on any error
         }
     }
 
@@ -613,6 +652,12 @@
         heroBtn.disabled = true;
 
         try {
+            // 1. IP Ban Frontend Check
+            const ipData = await getClientIpData();
+            if (await isIpBanned(ipData.ip)) {
+                throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CT-Merchant.");
+            }
+
             const { data, error } = await client.auth.signInWithIdToken({ provider: 'google', token: response.credential });
             if (error) throw error;
 
@@ -620,14 +665,16 @@
             pendingGoogleUserId = user.id;
             pendingGoogleUserName = user.user_metadata?.full_name || '';
 
-            const { data: profile } = await client.from('profiles').select('city_id, area_id, is_suspended').eq('id', user.id).maybeSingle();
+            // 2. Profile check & DB Trap
+            const { data: profile, error: profileErr } = await client.from('profiles').select('city_id, area_id, is_suspended').eq('id', user.id).maybeSingle();
 
-            if (profile && profile.is_suspended) {
+            if (profileErr || (profile && profile.is_suspended)) {
                 await client.auth.signOut();
-                throw new Error("Your account has been temporarily suspended. Please contact support.");
+                throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
             }
 
             if (profile && profile.city_id && profile.area_id) {
+                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
                 window.location.href = "user-dashboard.html";
             } else {
                 document.getElementById('complete-profile-modal').classList.remove('hidden');
@@ -639,6 +686,7 @@
             alert("Google Sign-In Error: " + err.message);
             heroBtn.innerHTML = originalHeroHtml;
             heroBtn.disabled = false;
+            await client.auth.signOut();
         }
     }
 
@@ -679,8 +727,10 @@
         btn.innerHTML = '<div class="spinner"></div> Saving...';
 
         try {
+            const ipData = await getClientIpData();
             const { error } = await client.from('profiles').upsert({
-                id: pendingGoogleUserId, full_name: pendingGoogleUserName, phone: phone, city_id: parseInt(cityId), area_id: parseInt(areaId)
+                id: pendingGoogleUserId, full_name: pendingGoogleUserName, phone: phone, city_id: parseInt(cityId), area_id: parseInt(areaId),
+                registration_ip: ipData.ip, last_active_ip: ipData.ip, ip_country: ipData.country
             });
             if (error) throw error;
             window.location.href = "user-dashboard.html";
@@ -817,7 +867,6 @@
         
         chatWindow.classList.toggle('open');
         
-        // Hide the bouncing notification badge permanently once clicked
         if (badge) {
             badge.style.display = 'none';
         }
@@ -828,26 +877,22 @@
         const txt = inp.value.trim();
         if(!txt) return;
 
-        // --- FRONTEND RATE LIMITING LOGIC ---
         const todayStr = new Date().toISOString().split('T')[0];
         let usageStr = localStorage.getItem('ctm_ai_anon_usage');
         let aiUsage = usageStr ? JSON.parse(usageStr) : { date: todayStr, count: 0 };
         
-        // Reset counter if it's a new day
         if (aiUsage.date !== todayStr) {
             aiUsage = { date: todayStr, count: 0 };
         }
 
         const body = document.getElementById('ai-chat-messages');
 
-        // Block request if over limit
         if (aiUsage.count >= 15) {
             body.innerHTML += `<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages. This limit prevents system abuse. Please check back tomorrow!</div>`;
             body.scrollTop = body.scrollHeight;
             inp.value = '';
             return;
         }
-        // ------------------------------------
 
         body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
         inp.value = '';
@@ -891,8 +936,6 @@
 
             if (!isError) {
                 aiChatHistory.push({ role: 'assistant', content: reply });
-                
-                // Increment counter only on successful API response
                 aiUsage.count += 1;
                 localStorage.setItem('ctm_ai_anon_usage', JSON.stringify(aiUsage));
             }
