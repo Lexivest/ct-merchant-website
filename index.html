@@ -12,7 +12,6 @@
   <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Google Identity Services Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -29,16 +28,7 @@
         width: 100%;
         background: #ffffff;
     }
-    /* --- COMMON PANE STYLES --- */
-    .split-pane {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        position: relative;
-    }
-    /* =========================================
-       TOP ROW
-       ========================================= */
+    .split-pane { display: flex; flex-direction: column; justify-content: center; position: relative; }
       
     /* TOP LEFT: IMAGE PANEL */
     .pane-img {
@@ -47,427 +37,101 @@
         min-height: 100vh; 
     }
     .features-glass-bar {
-        background: rgba(15, 23, 42, 0.85);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        padding: 16px 16px;
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 16px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        color: white;
-        font-weight: 600;
-        font-size: 0.95rem;
+        background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        padding: 16px 16px; display: flex; justify-content: center; flex-wrap: wrap; gap: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1); color: white; font-weight: 600; font-size: 0.95rem;
     }
     /* TOP RIGHT: TEXT & SEARCH PANEL */
     .pane-dark {
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-        color: white;
-        padding: 60px 10% 40px 10%;
-        border-left: 1px solid rgba(255,255,255,0.1);
-        box-shadow: -15px 0 40px rgba(0,0,0,0.6);
-        z-index: 2; 
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: white;
+        padding: 60px 10% 40px 10%; border-left: 1px solid rgba(255,255,255,0.1); box-shadow: -15px 0 40px rgba(0,0,0,0.6); z-index: 2; 
     }
     .repo-badge {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 6px 14px;
-        border-radius: 50px;
-        font-size: 0.85rem;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        color: #e2e8f0;
-        display: inline-table;
-        margin-bottom: 16px;
+        background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 6px 14px; border-radius: 50px; font-size: 0.85rem; font-weight: 700;
+        letter-spacing: 0.5px; color: #e2e8f0; display: inline-table; margin-bottom: 16px;
     }
-    .hero-pro-text {
-        font-size: 1.05rem;
-        line-height: 1.6;
-        color: #cbd5e1;
-        margin: 0 0 20px 0;
-        font-weight: 400;
-    }
-    .repo-search-wrapper {
-        position: relative;
-        width: 100%;
-        max-width: 450px;
-        margin: 0 0 20px 0;
-    }
+    .hero-pro-text { font-size: 1.05rem; line-height: 1.6; color: #cbd5e1; margin: 0 0 20px 0; font-weight: 400; }
+    .repo-search-wrapper { position: relative; width: 100%; max-width: 450px; margin: 0 0 20px 0; }
     .repo-input {
-        width: 100%;
-        padding: 14px 45px 14px 20px;
-        background-color: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 50px;
-        font-size: 1rem;
-        color: white;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 600;
-        outline: none;
-        transition: all 0.3s ease;
+        width: 100%; padding: 14px 45px 14px 20px; background-color: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 50px; font-size: 1rem; color: white;
+        text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; outline: none; transition: all 0.3s ease;
     }
-   
-    .repo-input::placeholder {
-        color: rgba(255, 255, 255, 0.5);
-        text-transform: none;
-        letter-spacing: normal;
-        font-weight: 400;
-    }
-   
-    .repo-input:focus {
-        background-color: rgba(255, 255, 255, 0.15);
-        border-color: #db2777;
-        box-shadow: 0 0 15px rgba(219, 39, 119, 0.4);
-    }
-    .search-icon-btn {
-        position: absolute;
-        right: 18px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.6);
-        cursor: pointer;
-        width: 20px;
-        transition: color 0.2s;
-    }
+    .repo-input::placeholder { color: rgba(255, 255, 255, 0.5); text-transform: none; letter-spacing: normal; font-weight: 400; }
+    .repo-input:focus { background-color: rgba(255, 255, 255, 0.15); border-color: #db2777; box-shadow: 0 0 15px rgba(219, 39, 119, 0.4); }
+    .search-icon-btn { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); cursor: pointer; width: 20px; transition: color 0.2s; }
     .search-icon-btn:hover { color: #db2777; }
-    .id-hint {
-        margin-top: 6px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: #facc15;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-    .search-label {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #facc15;
-        margin-bottom: 8px;
-    }
-    .hero-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        margin-bottom: 0px;
-        min-height: 40px;
-    }
-    .cursor {
-        display: inline-block;
-        width: 3px;
-        background-color: #db2777;
-        animation: blink 1s step-end infinite;
-    }
+    .id-hint { margin-top: 6px; font-size: 0.8rem; font-weight: 600; color: #facc15; display: flex; align-items: center; gap: 4px; }
+    .search-label { font-size: 1rem; font-weight: 600; color: #facc15; margin-bottom: 8px; }
+    .hero-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 0px; min-height: 40px; }
+    .cursor { display: inline-block; width: 3px; background-color: #db2777; animation: blink 1s step-end infinite; }
     @keyframes blink { 50% { opacity: 0; } }
-    .hero-desc {
-        font-size: 1rem;
-        color: #94a3b8;
-        margin-top: 4px;
-        font-weight: 500;
-    }
-    /* =========================================
-       BOTTOM ROW
-       ========================================= */
+    .hero-desc { font-size: 1rem; color: #94a3b8; margin-top: 4px; font-weight: 500; }
+    
     /* BOTTOM LEFT: VALUE PROPOSITION */
-    .pane-light {
-        background: rgba(248, 250, 252, 0.8);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        padding: 40px 10%;
-        border-top: 1px solid #e2e8f0;
-    }
-    .value-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        color: #0f172a;
-        margin-bottom: 12px;
-    }
-    .value-desc {
-        font-size: 1.1rem;
-        color: #475569;
-        line-height: 1.6;
-        margin-bottom: 20px;
-    }
-    .value-bullets {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        list-style: none;
-        padding: 0;
-        font-weight: 600;
-        color: #1e293b;
-        font-size: 1.05rem;
-    }
-    .value-bullets li {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .value-bullets i {
-        color: #059669;
-        font-size: 1.2rem;
-    }
+    .pane-light { background: rgba(248, 250, 252, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 40px 10%; border-top: 1px solid #e2e8f0; }
+    .value-title { font-size: 2.2rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
+    .value-desc { font-size: 1.1rem; color: #475569; line-height: 1.6; margin-bottom: 20px; }
+    .value-bullets { display: flex; flex-direction: column; gap: 12px; list-style: none; padding: 0; font-weight: 600; color: #1e293b; font-size: 1.05rem; }
+    .value-bullets li { display: flex; align-items: center; gap: 10px; }
+    .value-bullets i { color: #059669; font-size: 1.2rem; }
+    
     /* BOTTOM RIGHT: AUTH PORTAL */
-    .pane-white {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        padding: 40px 10%;
-        border-top: 1px solid #e2e8f0;
-        border-left: 1px solid #e2e8f0;
-        box-shadow: -15px 0 40px rgba(0,0,0,0.03);
-        z-index: 2;
-    }
-    .hero-auth-widget {
-        background: rgba(219, 39, 119, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        padding: 30px 24px;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(219, 39, 119, 0.2);
-        border: 1px solid rgba(219, 39, 119, 0.3);
-        width: 100%;
-        max-width: 450px;
-        margin: 0; 
-    }
-    .hero-auth-widget .widget-title {
-        font-size: 1.2rem;
-        font-weight: 800;
-        color: white;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .hero-auth-widget .input-group-hero {
-        position: relative;
-        margin-bottom: 12px;
-    }
-    .hero-auth-widget .input-group-hero i {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 1rem;
-        pointer-events: none;
-    }
-   
-    .hero-auth-widget .input-group-hero i.toggle-password {
-        left: auto; 
-        right: 14px; 
-        cursor: pointer;
-        pointer-events: auto; 
-        transition: color 0.2s;
-    }
-    .hero-auth-widget .input-group-hero i.toggle-password:hover {
-        color: #db2777;
-    }
-
-    .hero-auth-widget .hero-input-login {
-        width: 100%;
-        padding: 12px 40px 12px 40px;
-        background: rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 12px;
-        color: white;
-        font-size: 1rem;
-        outline: none;
-        transition: all 0.3s ease;
-    }
+    .pane-white { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 40px 10%; border-top: 1px solid #e2e8f0; border-left: 1px solid #e2e8f0; box-shadow: -15px 0 40px rgba(0,0,0,0.03); z-index: 2; }
+    .hero-auth-widget { background: rgba(219, 39, 119, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 30px 24px; border-radius: 20px; box-shadow: 0 10px 40px rgba(219, 39, 119, 0.2); border: 1px solid rgba(219, 39, 119, 0.3); width: 100%; max-width: 450px; margin: 0; }
+    .hero-auth-widget .widget-title { font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+    .hero-auth-widget .input-group-hero { position: relative; margin-bottom: 12px; }
+    .hero-auth-widget .input-group-hero i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); font-size: 1rem; pointer-events: none; }
+    .hero-auth-widget .input-group-hero i.toggle-password { left: auto; right: 14px; cursor: pointer; pointer-events: auto; transition: color 0.2s; }
+    .hero-auth-widget .input-group-hero i.toggle-password:hover { color: #db2777; }
+    .hero-auth-widget .hero-input-login { width: 100%; padding: 12px 40px 12px 40px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 12px; color: white; font-size: 1rem; outline: none; transition: all 0.3s ease; }
     .hero-auth-widget .hero-input-login::placeholder { color: rgba(255, 255, 255, 0.6); }
-   
-    .hero-auth-widget .hero-input-login:focus {
-        background: rgba(255, 255, 255, 0.3);
-        border-color: #db2777;
-        box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.15);
-    }
-    .hero-auth-widget .btn-login-hero {
-        width: 100%;
-        background: #db2777;
-        color: white;
-        font-weight: 800;
-        padding: 12px;
-        border-radius: 12px;
-        border: none;
-        cursor: pointer;
-        font-size: 1.05rem;
-        transition: transform 0.2s, background-color 0.2s;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 6px;
-        margin-top: 6px;
-    }
-    .hero-auth-widget .btn-login-hero:hover {
-        background: #c0266a;
-        transform: translateY(-2px);
-    }
-    .hero-auth-widget .widget-divider {
-        display: flex;
-        align-items: center;
-        text-align: center;
-        margin: 16px 0;
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-    .hero-auth-widget .widget-divider::before, .hero-auth-widget .widget-divider::after {
-        content: '';
-        flex: 1;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    }
+    .hero-auth-widget .hero-input-login:focus { background: rgba(255, 255, 255, 0.3); border-color: #db2777; box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.15); }
+    .hero-auth-widget .btn-login-hero { width: 100%; background: #db2777; color: white; font-weight: 800; padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-size: 1.05rem; transition: transform 0.2s, background-color 0.2s; display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; }
+    .hero-auth-widget .btn-login-hero:hover { background: #c0266a; transform: translateY(-2px); }
+    .hero-auth-widget .widget-divider { display: flex; align-items: center; text-align: center; margin: 16px 0; color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; font-weight: 600; }
+    .hero-auth-widget .widget-divider::before, .hero-auth-widget .widget-divider::after { content: ''; flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
     .hero-auth-widget .widget-divider::before { margin-right: 10px; }
     .hero-auth-widget .widget-divider::after { margin-left: 10px; }
-    .hero-auth-widget .btn-create-account {
-        display: block;
-        width: 100%;
-        text-align: center;
-        padding: 12px;
-        border: 2px solid rgba(219, 39, 119, 0.3);
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        color: white;
-        font-weight: 700;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        font-size: 1rem;
-    }
-    .hero-auth-widget .btn-create-account:hover {
-        background: rgba(219, 39, 119, 0.2);
-        border-color: #db2777;
-    }
-    /* Overrides for text content in light pane */
-    .pane-white .repo-badge {
-        background: rgba(0, 0, 0, 0.05);
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        color: #1e293b;
-    }
-    .pane-white .hero-pro-text {
-        color: #475569;
-    }
-    .pane-white .hero-desc {
-        color: #64748b;
-    }
-    .pane-white .hero-title {
-        color: #0f172a;
-    }
-    .pane-white .repo-input {
-        background-color: rgba(0, 0, 0, 0.05);
-        border: 1px solid rgba(0, 0, 0, 0.2);
-        color: #0f172a;
-    }
-    .pane-white .repo-input::placeholder {
-        color: rgba(0, 0, 0, 0.5);
-    }
-    .pane-white .repo-input:focus {
-        background-color: rgba(0, 0, 0, 0.1);
-        border-color: #db2777;
-        box-shadow: 0 0 15px rgba(219, 39, 119, 0.4);
-    }
-    .pane-white .search-icon-btn {
-        color: rgba(0, 0, 0, 0.6);
-    }
-    .pane-white .search-icon-btn:hover {
-        color: #db2777;
-    }
-    .pane-white .id-hint {
-        color: #d97706;
-    }
-    /* =========================================
-       RESPONSIVE DESIGN (Stacks to 1 column)
-       ========================================= */
+    .hero-auth-widget .btn-create-account { display: block; width: 100%; text-align: center; padding: 12px; border: 2px solid rgba(219, 39, 119, 0.3); background: rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-weight: 700; text-decoration: none; transition: all 0.3s ease; font-size: 1rem; }
+    .hero-auth-widget .btn-create-account:hover { background: rgba(219, 39, 119, 0.2); border-color: #db2777; }
+    
+    .pane-white .repo-badge { background: rgba(0, 0, 0, 0.05); border: 1px solid rgba(0, 0, 0, 0.1); color: #1e293b; }
+    .pane-white .hero-pro-text { color: #475569; }
+    .pane-white .hero-desc { color: #64748b; }
+    .pane-white .hero-title { color: #0f172a; }
+    .pane-white .repo-input { background-color: rgba(0, 0, 0, 0.05); border: 1px solid rgba(0, 0, 0, 0.2); color: #0f172a; }
+    .pane-white .repo-input::placeholder { color: rgba(0, 0, 0, 0.5); }
+    .pane-white .repo-input:focus { background-color: rgba(0, 0, 0, 0.1); border-color: #db2777; box-shadow: 0 0 15px rgba(219, 39, 119, 0.4); }
+    .pane-white .search-icon-btn { color: rgba(0, 0, 0, 0.6); }
+    .pane-white .search-icon-btn:hover { color: #db2777; }
+    .pane-white .id-hint { color: #d97706; }
+    
     @media (max-width: 900px) {
-        .split-layout-grid {
-            grid-template-columns: 1fr;
-            padding-top: 60px; 
-        }
-        .pane-dark, .pane-white {
-            border-left: none;
-            box-shadow: none;
-        }
+        .split-layout-grid { grid-template-columns: 1fr; padding-top: 60px; }
+        .pane-dark, .pane-white { border-left: none; box-shadow: none; }
         .pane-dark { padding-top: 0; }
         .pane-img { min-height: 50vh; }
-        .hero-auth-widget {
-            margin: 0 auto;
-        }
+        .hero-auth-widget { margin: 0 auto; }
     }
     @media (max-width: 600px) {
         .hero-title { font-size: 1.8rem; }
         .value-title { font-size: 1.8rem; }
         .hero-pro-text { font-size: 0.95rem; }
-        .features-glass-bar {
-            flex-direction: row;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.7rem;
-            padding: 8px 8px;
-            justify-content: space-between;
-        }
-        .features-glass-bar span {
-            flex: 1;
-            text-align: center;
-        }
+        .features-glass-bar { flex-direction: row; align-items: center; gap: 8px; font-size: 0.7rem; padding: 8px 8px; justify-content: space-between; }
+        .features-glass-bar span { flex: 1; text-align: center; }
     }
     
-    /* =========================================
-       TOP NAV MARQUEE LAYOUT FIX 
-       ========================================= */
-    .nav-container {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-    }
-    .brand-wrapper {
-        display: flex;
-        align-items: center;
-        flex-shrink: 0;
-    }
-    .header-marquee-box {
-        flex: 1;
-        margin: 0 20px;
-        overflow: hidden;
-        white-space: nowrap;
-        border-left: 2px solid rgba(255,255,255,0.2);
-        padding-left: 15px;
-        display: flex;
-        align-items: center;
-    }
-    .marquee-content {
-      display: flex;
-      width: max-content;
-      animation: scroll 20s linear infinite;
-    }
-    @keyframes scroll {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-    .marquee-item {
-      display: flex;
-      align-items: center;
-      margin-right: 3rem;
-    }
-    @media (max-width: 768px) {
-        .header-marquee-box {
-            margin: 0 10px;
-            padding-left: 10px;
-            border-left: none;
-        }
-    }
+    .nav-container { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .brand-wrapper { display: flex; align-items: center; flex-shrink: 0; }
+    .header-marquee-box { flex: 1; margin: 0 20px; overflow: hidden; white-space: nowrap; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 15px; display: flex; align-items: center; }
+    .marquee-content { display: flex; width: max-content; animation: scroll 20s linear infinite; }
+    @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .marquee-item { display: flex; align-items: center; margin-right: 3rem; }
+    @media (max-width: 768px) { .header-marquee-box { margin: 0 10px; padding-left: 10px; border-left: none; } }
    
-    /* Forgot password styles */
-    .forgot-password {
-        display: block;
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.8);
-        text-decoration: none;
-        margin-top: 8px;
-        margin-bottom: 12px;
-        cursor: pointer;
-        text-align: right; 
-    }
+    .forgot-password { display: block; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); text-decoration: none; margin-top: 8px; margin-bottom: 12px; cursor: pointer; text-align: right; }
     .forgot-password:hover { color: #db2777; }
 
     /* =========================================
@@ -478,159 +142,67 @@
     .modal-title { font-size: 1.25rem; font-weight: 800; color: #2E1065; text-align: center; margin-bottom: 0.5rem; }
     .modal-subtitle { color: #64748b; font-size: 0.875rem; text-align: center; margin-bottom: 1.5rem; }
     .hidden { display: none !important; }
-    
     .modal-input-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
     .modal-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.25rem; }
     .modal-input-wrapper { position: relative; width: 100%; }
     .modal-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
-    
-    .modal-input {
-        width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem; outline: none; transition: all 0.3s ease; color: #0f172a;
-    }
+    .modal-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem; outline: none; transition: all 0.3s ease; color: #0f172a; }
     .modal-input:focus { border-color: #db2777; box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); background: white; }
     select.modal-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
-    
-    .btn-primary-modal {
-        width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px;
-    }
+    .btn-primary-modal { width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px; }
     .btn-primary-modal:hover { background-color: #db2777; transform: translateY(-1px); }
     .btn-primary-modal:disabled { background-color: #cbd5e1; cursor: not-allowed; }
-    
     .spinner { width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* =========================================
        FLOATING CONTACT WIDGET STYLES (Left)
        ========================================= */
-    .floating-contact-btn {
-        position: fixed;
-        bottom: 24px;
-        left: 24px;
-        width: 60px;
-        height: 60px;
-        background-color: #db2777;
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        box-shadow: 0 10px 25px rgba(219, 39, 119, 0.4);
-        cursor: pointer;
-        z-index: 999;
-        transition: transform 0.3s ease, background-color 0.3s ease;
-        border: none;
-    }
-    .floating-contact-btn:hover {
-        transform: scale(1.1);
-        background-color: #be185d;
-    }
-    
-    .floating-contact-popup {
-        position: fixed;
-        bottom: 95px;
-        left: 24px;
-        width: 350px;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-        z-index: 999;
-        overflow: hidden;
-        transform: translateY(20px);
-        opacity: 0;
-        pointer-events: none;
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        display: flex;
-        flex-direction: column;
-    }
-    .floating-contact-popup.show {
-        transform: translateY(0);
-        opacity: 1;
-        pointer-events: auto;
-    }
-    
-    .fc-header {
-        background: #2E1065;
-        color: white;
-        padding: 16px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-weight: 700;
-        font-size: 1.05rem;
-    }
-    .fc-close {
-        background: none;
-        border: none;
-        color: rgba(255,255,255,0.7);
-        cursor: pointer;
-        font-size: 1.2rem;
-        transition: color 0.2s;
-    }
+    .floating-contact-btn { position: fixed; bottom: 24px; left: 24px; width: 60px; height: 60px; background-color: #db2777; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 10px 25px rgba(219, 39, 119, 0.4); cursor: pointer; z-index: 999; transition: transform 0.3s ease, background-color 0.3s ease; border: none; }
+    .floating-contact-btn:hover { transform: scale(1.1); background-color: #be185d; }
+    .floating-contact-popup { position: fixed; bottom: 95px; left: 24px; width: 350px; background: white; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 999; overflow: hidden; transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; }
+    .floating-contact-popup.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+    .fc-header { background: #2E1065; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 1.05rem; }
+    .fc-close { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1.2rem; transition: color 0.2s; }
     .fc-close:hover { color: white; }
-    
-    .fc-body {
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
+    .fc-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
     .fc-input-group { display: flex; flex-direction: column; gap: 4px; }
     .fc-label { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
-    .fc-input, .fc-select, .fc-textarea {
-        width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; font-family: inherit; outline: none; transition: border-color 0.2s; background: #f8fafc; color: #0f172a;
-    }
+    .fc-input, .fc-select, .fc-textarea { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; font-family: inherit; outline: none; transition: border-color 0.2s; background: #f8fafc; color: #0f172a; }
     .fc-input:focus, .fc-select:focus, .fc-textarea:focus { border-color: #db2777; background: white; }
-    
-    .fc-btn {
-        background: #db2777; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 0.95rem; margin-top: 4px;
-    }
+    .fc-btn { background: #db2777; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 0.95rem; margin-top: 4px; }
     .fc-btn:hover { background: #be185d; }
     .fc-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
-    
     .fc-status { font-size: 0.85rem; text-align: center; display: none; padding: 10px; border-radius: 8px; font-weight: 600; margin-top: 4px; }
     .fc-status.success { display: block; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;}
     .fc-status.error { display: block; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;}
 
     /* =========================================
-       AI CHAT WIDGET STYLES (Right)
+       AI CHAT WIDGET STYLES (Right) + NOTIF BADGE
        ========================================= */
-    .ai-fab-container {
-        position: fixed; bottom: 24px; right: 24px; z-index: 5000;
-        display: flex; flex-direction: column; align-items: center; gap: 6px;
+    .ai-fab-container { position: fixed; bottom: 24px; right: 24px; z-index: 5000; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .ai-fab-wrapper { position: relative; }
+    
+    /* NEW: Bouncing Red Notification Badge */
+    .ai-notif-badge {
+        position: absolute; top: -4px; right: -4px; background: #EF4444; color: white;
+        font-size: 0.8rem; font-weight: 800; width: 22px; height: 22px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; border: 2px solid white;
+        animation: bounce 2s infinite; z-index: 10;
     }
-    .ai-fab {
-        width: 60px; height: 60px; border-radius: 50%;
-        background: #059669; color: white; /* Emerald Green matching Dashboard */
-        box-shadow: 0 10px 25px rgba(5, 150, 105, 0.4); cursor: pointer;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.5rem; transition: transform 0.2s; border: none;
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+        40% {transform: translateY(-5px);}
+        60% {transform: translateY(-3px);}
     }
+
+    .ai-fab { width: 60px; height: 60px; border-radius: 50%; background: #059669; color: white; box-shadow: 0 10px 25px rgba(5, 150, 105, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.2s; border: none; }
     .ai-fab:active { transform: scale(0.95); }
-    .ai-label {
-        background: white; color: #059669;
-        font-size: 0.75rem; font-weight: 800;
-        padding: 4px 10px; border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB;
-        white-space: nowrap; pointer-events: none;
-    }
+    .ai-label { background: white; color: #059669; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB; white-space: nowrap; pointer-events: none; }
 
-    .ai-chat-window {
-        position: fixed; bottom: 95px; right: 24px;
-        width: 350px; height: 450px;
-        background: white; border-radius: 16px;
-        box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 5000;
-        display: flex; flex-direction: column;
-        overflow: hidden; opacity: 0; pointer-events: none;
-        transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid #E5E7EB;
-    }
+    .ai-chat-window { position: fixed; bottom: 95px; right: 24px; width: 350px; height: 450px; background: white; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 5000; display: flex; flex-direction: column; overflow: hidden; opacity: 0; pointer-events: none; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #E5E7EB; }
     .ai-chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
-
-    .ai-chat-header {
-        background: #059669; color: white;
-        padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
-    }
+    .ai-chat-header { background: #059669; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
     .ai-chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
     .chat-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; }
     .msg-ai { align-self: flex-start; background: white; border: 1px solid #E2E8F0; color: #1E293B; border-bottom-left-radius: 2px; }
@@ -638,37 +210,14 @@
     .msg-error { align-self: center; background: #FEE2E2; color: #DC2626; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
     
     /* Beautiful Create Account Button inside the Chat */
-    .chat-register-btn {
-        display: block;
-        background: #DB2777;
-        color: white !important;
-        text-align: center;
-        padding: 10px 16px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 800;
-        margin-top: 12px;
-        box-shadow: 0 4px 6px rgba(219, 39, 119, 0.3);
-        transition: transform 0.2s, background 0.2s;
-    }
+    .chat-register-btn { display: block; background: #DB2777; color: white !important; text-align: center; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; margin-top: 12px; box-shadow: 0 4px 6px rgba(219, 39, 119, 0.3); transition: transform 0.2s, background 0.2s; }
     .chat-register-btn:hover { background: #be185d; transform: translateY(-1px); }
     
-    .ai-chat-input-area {
-        padding: 12px; background: white; border-top: 1px solid #E2E8F0;
-        display: flex; flex-direction: column; gap: 8px;
-    }
+    .ai-chat-input-area { padding: 12px; background: white; border-top: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 8px; }
     .ai-chat-input-row { display: flex; gap: 8px; width: 100%; }
-    .ai-chat-input {
-        flex: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid #E2E8F0;
-        outline: none; font-size: 0.9rem; background: #F1F5F9; color: #0f172a;
-    }
+    .ai-chat-input { flex: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid #E2E8F0; outline: none; font-size: 0.9rem; background: #F1F5F9; color: #0f172a; }
     .ai-chat-input:focus { border-color: #059669; background: white; }
-    .ai-btn-send {
-        background: #059669; color: white; border: none;
-        width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
-        display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0; transition: background 0.2s;
-    }
+    .ai-btn-send { background: #059669; color: white; border: none; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
     .ai-btn-send:hover { background: #047857; }
 
     @media (max-width: 400px) {
@@ -681,16 +230,11 @@
 <!-- NAVIGATION -->
 <nav class="main-header">
   <div class="container nav-container">
-    
-    <!-- 1. Home Screen Button (Logo) -->
     <a href="index.html" class="brand-wrapper" title="Home Screen">
       <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo" style="width: 45px; height: 45px; border-radius: 8px;">
     </a>
-    
-    <!-- 2. Scrolling Text (Immediately after Home button) -->
     <div class="marquee-container header-marquee-box">
        <div class="marquee-content animate-brand-scroll">
-          <!-- Item 1 -->
           <div class="marquee-item">
               <span style="font-weight: 800; color: white; font-size: 0.9rem;">CT-MERCHANT LTD.</span>
               <div class="flag-icon" style="display: flex; flex-direction: column; width: 14px; height: 10px; margin: 0 8px;">
@@ -700,7 +244,6 @@
               </div>
               <span style="font-weight: 800; color: white; font-size: 0.9rem; text-transform: uppercase;">REPOSITORY OF SHOPS, PRODUCTS AND SERVICES.</span>
           </div>
-          <!-- Item 2 (Duplicate for smooth scroll) -->
           <div class="marquee-item">
               <span style="font-weight: 800; color: white; font-size: 0.9rem;">CT-MERCHANT LTD.</span>
               <div class="flag-icon" style="display: flex; flex-direction: column; width: 14px; height: 10px; margin: 0 8px;">
@@ -713,7 +256,6 @@
        </div>
     </div>
 
-    <!-- 3. Desktop Menu Items -->
     <div class="desktop-menu">
       <a href="index.html" class="nav-active">Home</a>
       <a href="about.html">About</a>
@@ -724,7 +266,6 @@
       <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
     </div>
 
-    <!-- 4. Mobile Menu Button -->
     <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
       <i class="fa-solid fa-bars"></i>
     </button>
@@ -743,7 +284,6 @@
 
 <!-- MAIN GRID WRAPPER -->
 <main class="split-layout-grid">
-    <!-- TOP LEFT: IMAGE PANE -->
     <div class="split-pane pane-img">
         <div class="features-glass-bar">
             <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-store" style="color:#10b981;"></i> Commerce </span>
@@ -751,7 +291,6 @@
             <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-id-card" style="color:#60a5fa;"></i> Unique ID</span>
         </div>
     </div>
-    <!-- TOP RIGHT: NOW AUTH PORTAL -->
     <div class="split-pane pane-dark">
         <h1 class="hero-title">
            <span id="typewriter"></span><span class="cursor">|</span>
@@ -789,7 +328,6 @@
                     <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePassword()"></i>
                 </div>
                 
-                <!-- Updated Forgot Password Link -->
                 <a class="forgot-password" onclick="openResetEmailModal()">Forgot password?</a>
                 
                 <button type="submit" id="hero-login-btn" class="btn-login-hero">
@@ -801,7 +339,6 @@
                 Create Account
             </a>
 
-            <!-- GOOGLE SIGN-IN BUTTON -->
             <div class="widget-divider">Or continue with</div>
             <div style="display: flex; justify-content: center; width: 100%;">
                 <div id="g_id_onload"
@@ -821,7 +358,6 @@
             </div>
         </div>
     </div>
-    <!-- BOTTOM LEFT: VALUE PROP PANE -->
     <div class="split-pane pane-light">
         <h2 class="value-title">Grow Your Physical Shop Digitally</h2>
         <p class="value-desc">Join thousands of verified local merchants. Create your profile, upload your products, and let our AI-powered repository connect you with buyers in your exact city area.</p>
@@ -832,7 +368,6 @@
             <li><i class="fa-solid fa-circle-check"></i> Be discovered in city Repository Search</li>
         </ul>
     </div>
-    <!-- BOTTOM RIGHT: TEXT & SEARCH PANE -->
     <div class="split-pane pane-white">
         <span class="repo-badge">
           Repository of Shops, Products and Services
@@ -856,16 +391,11 @@
   </div>
 </footer>
 
-<!-- ==========================================
-     MODALS 
-     ========================================== -->
-
-<!-- COMPLETE PROFILE MODAL -->
+<!-- MODALS -->
 <div id="complete-profile-modal" class="modal-overlay hidden">
     <div class="modal-card">
         <h2 class="modal-title">Complete Your Profile</h2>
         <p class="modal-subtitle">We need a few more details to set up your dashboard.</p>
-        
         <div class="modal-input-group">
             <label class="modal-label">Phone Number</label>
             <div class="modal-input-wrapper">
@@ -873,7 +403,6 @@
                 <input type="tel" id="google-phone" placeholder="08012345678" class="modal-input">
             </div>
         </div>
-
         <div class="modal-input-group">
             <label class="modal-label">Select City</label>
             <div class="modal-input-wrapper">
@@ -883,7 +412,6 @@
                 </select>
             </div>
         </div>
-
         <div class="modal-input-group">
             <label class="modal-label">Select Area</label>
             <div class="modal-input-wrapper">
@@ -893,22 +421,15 @@
                 </select>
             </div>
         </div>
-
-        <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary-modal">
-            Complete Setup
-        </button>
-        <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
-            Cancel & Sign Out
-        </button>
+        <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary-modal">Complete Setup</button>
+        <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel & Sign Out</button>
     </div>
 </div>
 
-<!-- RESET PASSWORD: EMAIL MODAL -->
 <div id="reset-email-modal" class="modal-overlay hidden">
     <div class="modal-card">
         <h2 class="modal-title">Reset Password</h2>
         <p class="modal-subtitle">Enter your email address to receive a 6-digit recovery code.</p>
-        
         <div class="modal-input-group">
             <label class="modal-label">Registered Email</label>
             <div class="modal-input-wrapper">
@@ -916,22 +437,15 @@
                 <input type="email" id="reset-email-input" placeholder="name@example.com" class="modal-input">
             </div>
         </div>
-
-        <button id="btn-send-reset" onclick="sendResetCode()" class="btn-primary-modal">
-            Send Reset Code
-        </button>
-        <button onclick="document.getElementById('reset-email-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
-            Cancel
-        </button>
+        <button id="btn-send-reset" onclick="sendResetCode()" class="btn-primary-modal">Send Reset Code</button>
+        <button onclick="document.getElementById('reset-email-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
     </div>
 </div>
 
-<!-- RESET PASSWORD: OTP & NEW PASSWORD MODAL -->
 <div id="reset-password-modal" class="modal-overlay hidden">
     <div class="modal-card">
         <h2 class="modal-title">Create New Password</h2>
         <p class="modal-subtitle">Enter the 6-digit code we just sent to your email.</p>
-        
         <div class="modal-input-group">
             <label class="modal-label">6-Digit Recovery Code</label>
             <div class="modal-input-wrapper">
@@ -939,7 +453,6 @@
                 <input type="text" id="reset-otp-input" placeholder="123456" class="modal-input" maxlength="6" style="letter-spacing: 5px; text-align: center; font-weight: bold; padding-left: 1rem;">
             </div>
         </div>
-
         <div class="modal-input-group">
             <label class="modal-label">New Password</label>
             <div class="modal-input-wrapper">
@@ -947,7 +460,6 @@
                 <input type="password" id="reset-new-password" placeholder="••••••••" class="modal-input">
             </div>
         </div>
-
         <div class="modal-input-group">
             <label class="modal-label">Confirm Password</label>
             <div class="modal-input-wrapper">
@@ -955,13 +467,8 @@
                 <input type="password" id="reset-confirm-password" placeholder="••••••••" class="modal-input">
             </div>
         </div>
-
-        <button id="btn-confirm-reset" onclick="verifyAndResetPassword()" class="btn-primary-modal">
-            Confirm & Reset Password
-        </button>
-        <button onclick="document.getElementById('reset-password-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
-            Cancel
-        </button>
+        <button id="btn-confirm-reset" onclick="verifyAndResetPassword()" class="btn-primary-modal">Confirm & Reset Password</button>
+        <button onclick="document.getElementById('reset-password-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
     </div>
 </div>
 
@@ -998,12 +505,8 @@
             <label class="fc-label">Message</label>
             <textarea id="fc-message" class="fc-textarea" rows="3" required placeholder="How can we help you?"></textarea>
         </div>
-        
         <div id="fc-status" class="fc-status"></div>
-        
-        <button type="submit" id="fc-submit-btn" class="fc-btn">
-            Send Message <i class="fa-solid fa-paper-plane"></i>
-        </button>
+        <button type="submit" id="fc-submit-btn" class="fc-btn">Send Message <i class="fa-solid fa-paper-plane"></i></button>
     </form>
 </div>
 
@@ -1011,9 +514,13 @@
      AI CHAT WIDGET (RIGHT)
      ========================================== -->
 <div class="ai-fab-container">
-    <button class="ai-fab" onclick="toggleAiChat()">
-        <i class="fa-solid fa-comments"></i>
-    </button>
+    <div class="ai-fab-wrapper">
+        <button class="ai-fab" onclick="toggleAiChat()">
+            <i class="fa-solid fa-comments"></i>
+        </button>
+        <!-- The Notification Badge -->
+        <div id="ai-badge" class="ai-notif-badge">1</div>
+    </div>
     <span class="ai-label">AI Assistant</span>
 </div>
 
@@ -1024,7 +531,7 @@
     </div>
     <div id="ai-chat-messages" class="ai-chat-body">
         <div class="chat-msg msg-ai">
-            Hello! I am the CT-Merchant Assistant. Welcome to our platform! How can I help you today?
+            Hello! 👋 I am the CT-Merchant Welcome Ambassador. Would you like to know more about how our platform works, or are you looking to create an account today?
         </div>
     </div>
     <div class="ai-chat-input-area">
@@ -1307,7 +814,15 @@
     let aiChatHistory = [];
 
     function toggleAiChat() {
-        document.getElementById('ai-chat-window').classList.toggle('open');
+        const chatWindow = document.getElementById('ai-chat-window');
+        const badge = document.getElementById('ai-badge');
+        
+        chatWindow.classList.toggle('open');
+        
+        // Hide the bouncing notification badge permanently once clicked
+        if (badge) {
+            badge.style.display = 'none';
+        }
     }
 
     async function sendAiMsg() {
@@ -1329,13 +844,11 @@
         try {
             const recentHistory = aiChatHistory.length > 6 ? aiChatHistory.slice(aiChatHistory.length - 6) : aiChatHistory;
 
-            // Notice we do NOT request auth session here. 
-            // We only pass the Anon Key in the headers, which triggers the Edge Function's "Visitor Mode"
             const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, // Using Anon key
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 
                     'apikey': SUPABASE_ANON_KEY 
                 },
                 body: JSON.stringify({ 
