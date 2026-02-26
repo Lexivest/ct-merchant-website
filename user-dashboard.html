@@ -1,1083 +1,1045 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Marketplace | CT-Merchant</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CT-Merchant Ltd. | Digital Shops Repository</title>
+  <meta name="description" content="Discover verified merchants, local shops and products in your city. Bridging the gap between digital convenience and local availability in Nigeria.">
+  <meta name="keywords" content="Merchant, Nigeria, Shops Repository, Local Business, CT-Merchant, Unique Identifier">
+  <meta name="author" content="CT-Merchant Ltd.">
+  <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+  <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+ 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* =========================================
+       STRICT 2x2 ENTERPRISE SPLIT LAYOUT
+       ========================================= */
+    .split-layout-grid {
+        display: grid;
+        grid-template-columns: 50% 50%;
+        width: 100%;
+        background: #0f172a; /* Fallback for the glassy panes */
+    }
+    .split-pane { display: flex; flex-direction: column; justify-content: center; position: relative; }
+     
+    /* TOP LEFT: IMAGE PANEL */
+    .pane-img {
+        grid-column: 1;
+        grid-row: 1;
+        background: url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg') top center/cover no-repeat;
+        justify-content: flex-end;
+        min-height: 50vh;
+    }
+    .features-glass-bar {
+        background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        padding: 16px 16px; display: flex; justify-content: center; flex-wrap: wrap; gap: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1); color: white; font-weight: 600; font-size: 0.95rem;
+    }
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    /* RIGHT SIDE: TEXT & SEARCH PANEL (Spans full right column) */
+    .pane-dark {
+        grid-column: 2;
+        grid-row: 1 / span 3;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: white;
+        padding: 0px 10% 40px 10%; 
+        border-left: 1px solid rgba(255,255,255,0.1); box-shadow: -15px 0 40px rgba(0,0,0,0.6); z-index: 2;
+        justify-content: flex-start; 
+    }
+    .repo-badge {
+        background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 6px 14px; border-radius: 50px; font-size: 0.85rem; font-weight: 700;
+        letter-spacing: 0.5px; color: #e2e8f0; display: inline-table; margin-bottom: 16px;
+    }
+    .hero-pro-text { font-size: 1.05rem; line-height: 1.6; color: #cbd5e1; margin: 0 0 20px 0; font-weight: 400; }
+    .repo-search-wrapper { position: relative; width: 100%; max-width: 450px; margin: 0 0 20px 0; }
+    .repo-input {
+        width: 100%; padding: 14px 45px 14px 20px; background-color: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 50px; font-size: 1rem; color: white;
+        text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; outline: none; transition: all 0.3s ease;
+    }
+    .repo-input::placeholder { color: rgba(255, 255, 255, 0.5); text-transform: none; letter-spacing: normal; font-weight: 400; }
+    .repo-input:focus { background-color: rgba(255, 255, 255, 0.15); border-color: #db2777; box-shadow: 0 0 15px rgba(219, 39, 119, 0.4); }
+    .search-icon-btn { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); cursor: pointer; width: 20px; transition: color 0.2s; }
+    .search-icon-btn:hover { color: #db2777; }
+    .id-hint { margin-top: 6px; font-size: 0.8rem; font-weight: 600; color: #facc15; display: flex; align-items: center; gap: 4px; }
+    .search-label { font-size: 1rem; font-weight: 600; color: #facc15; margin-bottom: 8px; }
+    .hero-title { 
+        font-size: 2.2rem; font-weight: 800; margin-bottom: 0px; min-height: 40px; margin-top: 0px; 
+    }
+    .cursor { display: inline-block; width: 3px; background-color: #db2777; animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .hero-desc { font-size: 1rem; color: #94a3b8; margin-top: 4px; font-weight: 500; }
+   
+    /* AUTH WIDGET */
+    .hero-auth-widget { background: rgba(219, 39, 119, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 30px 24px; border-radius: 20px; box-shadow: 0 10px 40px rgba(219, 39, 119, 0.2); border: 1px solid rgba(219, 39, 119, 0.3); width: 100%; max-width: 450px; margin: 0; }
+    .hero-auth-widget .widget-title { font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+    .hero-auth-widget .input-group-hero { position: relative; margin-bottom: 12px; }
+    .hero-auth-widget .input-group-hero i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); font-size: 1rem; pointer-events: none; }
+    .hero-auth-widget .input-group-hero i.toggle-password { left: auto; right: 14px; cursor: pointer; pointer-events: auto; transition: color 0.2s; }
+    .hero-auth-widget .input-group-hero i.toggle-password:hover { color: #db2777; }
+    .hero-auth-widget .hero-input-login { width: 100%; padding: 12px 40px 12px 40px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 12px; color: white; font-size: 1rem; outline: none; transition: all 0.3s ease; }
+    .hero-auth-widget .hero-input-login::placeholder { color: rgba(255, 255, 255, 0.6); }
+    .hero-auth-widget .hero-input-login:focus { background: rgba(255, 255, 255, 0.3); border-color: #db2777; box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.15); }
+    .hero-auth-widget .btn-login-hero { width: 100%; background: #db2777; color: white; font-weight: 800; padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-size: 1.05rem; transition: transform 0.2s, background-color 0.2s; display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; }
+    .hero-auth-widget .btn-login-hero:hover { background: #c0266a; transform: translateY(-2px); }
+    .hero-auth-widget .widget-divider { display: flex; align-items: center; text-align: center; margin: 16px 0; color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; font-weight: 600; }
+    .hero-auth-widget .widget-divider::before, .hero-auth-widget .widget-divider::after { content: ''; flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
+    .hero-auth-widget .widget-divider::before { margin-right: 10px; }
+    .hero-auth-widget .widget-divider::after { margin-left: 10px; }
+    .hero-auth-widget .btn-create-account { display: block; width: 100%; text-align: center; padding: 12px; border: 2px solid rgba(219, 39, 119, 0.3); background: rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-weight: 700; text-decoration: none; transition: all 0.3s ease; font-size: 1rem; }
+    .hero-auth-widget .btn-create-account:hover { background: rgba(219, 39, 119, 0.2); border-color: #db2777; }
+   
+    /* TRUST METRICS SECTION */
+    .trust-metrics-container { display: flex; gap: 15px; width: 100%; max-width: 450px; margin-top: 30px; flex-wrap: wrap; }
+    .trust-metric-box { flex: 1; min-width: 150px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 16px; border-radius: 16px; display: flex; align-items: center; gap: 14px; transition: transform 0.3s ease, background 0.3s ease; }
+    .trust-metric-box:hover { transform: translateY(-4px); background: rgba(255, 255, 255, 0.08); }
+    .trust-metric-box i { font-size: 1.8rem; color: #10b981; }
+    .trust-metric-box .tm-text h4 { margin: 0; color: #ffffff; font-size: 1.1rem; font-weight: 800; line-height: 1.2; }
+    .trust-metric-box .tm-text p { margin: 4px 0 0 0; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+
+    /* MERCHANT ONBOARDING CYCLE */
+    .merchant-journey-wrapper {
+        margin-top: 30px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 24px;
+        width: 100%;
+        max-width: 450px;
+        box-sizing: border-box;
+    }
+    .mj-title {
+        color: white; font-size: 1.1rem; font-weight: 800; margin-top: 0; margin-bottom: 24px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .mj-title i { color: #facc15; }
+    .mj-timeline {
+        position: relative;
+        padding-left: 32px;
+    }
+    .mj-timeline::before {
+        content: ''; position: absolute; left: 11px; top: 4px; bottom: 4px;
+        width: 2px; background: rgba(255, 255, 255, 0.1);
+    }
+    .mj-item { position: relative; margin-bottom: 22px; }
+    .mj-item:last-child { margin-bottom: 0; }
+    .mj-icon {
+        position: absolute; left: -32px; top: 0;
+        width: 24px; height: 24px; border-radius: 50%;
+        background: #1e1b4b; border: 2px solid #db2777;
+        display: flex; align-items: center; justify-content: center; z-index: 2;
+    }
+    .mj-icon i { font-size: 10px; color: #db2777; }
+    .mj-content h4 { margin: 0 0 4px 0; color: #e2e8f0; font-size: 0.95rem; font-weight: 700; }
+    .mj-content p { margin: 0; color: #94a3b8; font-size: 0.8rem; line-height: 1.4; }
+    .mj-badge-fee {
+        display: inline-block; background: rgba(245, 158, 11, 0.2); color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 6px; border-radius: 4px;
+        font-size: 0.65rem; font-weight: 800; margin-left: 6px; vertical-align: middle;
+    }
+    .mj-pricing-box {
+        margin-top: 24px;
+        background: linear-gradient(90deg, rgba(219, 39, 119, 0.15) 0%, rgba(219, 39, 119, 0) 100%);
+        border-left: 3px solid #db2777;
+        padding: 14px 16px;
+        border-radius: 0 8px 8px 0;
+    }
+    .mj-pricing-text { color: #cbd5e1; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .mj-pricing-amount { color: white; font-size: 1.6rem; font-weight: 800; margin-top: 4px; display: flex; align-items: baseline; gap: 4px; }
+    .mj-pricing-amount span { font-size: 0.85rem; color: #94a3b8; font-weight: 500; }
+
+    /* =========================================
+       BOTTOM LEFT 1 & 2: GLASSY & COLORFUL PANES
+       ========================================= */
+    .pane-light { 
+        grid-column: 1; 
+        grid-row: 2; 
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(219, 39, 119, 0.15) 100%); 
+        backdrop-filter: blur(16px); 
+        -webkit-backdrop-filter: blur(16px); 
+        padding: 50px 10% 40px 10%; 
+        border-top: 1px solid rgba(255, 255, 255, 0.08); 
+        justify-content: flex-start; /* Aligns text to the top */
+    }
+    .value-title { font-size: 2.2rem; font-weight: 800; color: #ffffff; margin-bottom: 12px; margin-top: 0; }
+    .value-desc { font-size: 1.1rem; color: #e2e8f0; line-height: 1.6; margin-bottom: 20px; }
+    .value-bullets { display: flex; flex-direction: column; gap: 12px; list-style: none; padding: 0; font-weight: 600; color: #f8fafc; font-size: 1.05rem; }
+    .value-bullets li { display: flex; align-items: center; gap: 10px; }
+    .value-bullets i { color: #10b981; font-size: 1.2rem; }
+   
+    .pane-white { 
+        grid-column: 1; 
+        grid-row: 3; 
+        background: linear-gradient(135deg, rgba(219, 39, 119, 0.05) 0%, rgba(15, 23, 42, 0.95) 100%); 
+        backdrop-filter: blur(16px); 
+        -webkit-backdrop-filter: blur(16px); 
+        padding: 40px 10% 50px 10%; 
+        border-top: 1px solid rgba(255, 255, 255, 0.05); 
+        border-left: none; 
+        box-shadow: none; 
+        z-index: 2; 
+        justify-content: flex-start; /* Aligns text to the top */
+    }
+    .pane-white .repo-badge { 
+        background: rgba(219, 39, 119, 0.2); 
+        border: 1px solid rgba(219, 39, 119, 0.4); 
+        color: #fbcfe8; 
+        margin-top: 0; 
+    }
+    .pane-white .hero-pro-text { color: #cbd5e1; }
+   
+    @media (max-width: 900px) {
+        .split-layout-grid { grid-template-columns: 1fr; }
+        .pane-img { grid-column: 1; grid-row: 1; min-height: 50vh; }
+        .pane-dark { grid-column: 1; grid-row: 2; padding-top: 40px; border-left: none; box-shadow: none; }
+        .pane-light { grid-column: 1; grid-row: 3; padding-top: 40px; }
+        .pane-white { grid-column: 1; grid-row: 4; }
+        .hero-auth-widget, .trust-metrics-container, .merchant-journey-wrapper { margin-left: auto; margin-right: auto; }
+    }
+    @media (max-width: 600px) {
+        .hero-title { font-size: 1.8rem; }
+        .value-title { font-size: 1.8rem; }
+        .hero-pro-text { font-size: 0.95rem; }
+        .features-glass-bar { flex-direction: row; align-items: center; gap: 8px; font-size: 0.7rem; padding: 8px 8px; justify-content: space-between; }
+        .features-glass-bar span { flex: 1; text-align: center; }
+    }
+   
+    .nav-container { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .brand-wrapper { display: flex; align-items: center; flex-shrink: 0; }
+    .header-marquee-box { flex: 1; margin: 0 20px; overflow: hidden; white-space: nowrap; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 15px; display: flex; align-items: center; }
+    .marquee-content { display: flex; width: max-content; animation: scroll 20s linear infinite; }
+    @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .marquee-item { display: flex; align-items: center; margin-right: 3rem; }
+    @media (max-width: 768px) { .header-marquee-box { margin: 0 10px; padding-left: 10px; border-left: none; } }
+  
+    .forgot-password { display: block; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); text-decoration: none; margin-top: 8px; margin-bottom: 12px; cursor: pointer; text-align: right; }
+    .forgot-password:hover { color: #db2777; }
     
-    <style>
-        :root {
-            /* --- THEME --- */
-            --color-primary: #059669; /* Emerald Green */
-            --color-primary-dark: #047857;
-            --color-accent: #FFFFFF; /* White for header text */
-            --color-bg: #F3F4F6;
-            --color-text-main: #1F2937;
-            
-            --sidebar-width: 280px;
-            --header-height: 60px;
-        }
+    .main-header { position: sticky !important; top: 0; z-index: 9999; }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-
-        body { 
-            background-color: var(--color-bg); 
-            color: var(--color-text-main);
-            overflow-x: hidden;
-        }
-
-        /* --- 1. SIDEBAR (Universal Overlay) --- */
-        .sidebar {
-            position: fixed; top: 0; left: 0; bottom: 0;
-            width: var(--sidebar-width);
-            background: white;
-            z-index: 2000;
-            display: flex; flex-direction: column;
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
-        }
-
-        body.sb-open .sidebar { transform: translateX(0); }
-
-        .sidebar-header {
-            height: var(--header-height);
-            background: var(--color-primary);
-            color: white;
-            display: flex; align-items: center; gap: 12px; padding: 0 20px;
-        }
-        
-        .sidebar-logo { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; background: white; border: 2px solid white; }
-
-        .nav-scroll { flex: 1; padding: 16px; overflow-y: auto; }
-        .nav-btn {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px 16px; width: 100%; border: none; background: none;
-            color: #4B5563; font-weight: 600; font-size: 0.95rem;
-            border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: left; margin-bottom: 4px;
-        }
-        .nav-btn:hover { background: #F3F4F6; color: var(--color-primary); }
-        .nav-btn.active { background: #ECFDF5; color: var(--color-primary); }
-        .nav-btn i { width: 24px; text-align: center; }
-
-        .sidebar-footer { padding: 16px; border-top: 1px solid #E5E7EB; }
-
-        /* --- 2. BACKDROP OVERLAY --- */
-        .overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1500;
-            opacity: 0; visibility: hidden; transition: 0.3s;
-        }
-        body.sb-open .overlay { opacity: 1; visibility: visible; }
-
-        /* --- 3. HEADER (Fixed, Single Row) --- */
-        .top-header {
-            position: fixed; top: 0; left: 0; right: 0;
-            z-index: 1000;
-            background: var(--color-primary);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            height: var(--header-height);
-        }
-
-        .header-main {
-            height: 100%;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 12px;
-            max-width: 1400px; margin: 0 auto;
-        }
-        
-        /* Left Section */
-        .header-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .menu-toggle { background: none; border: none; color: white; font-size: 1.4rem; padding: 8px; cursor: pointer; }
-        .header-city { font-weight: 700; font-size: 1rem; color: white; white-space: nowrap; }
-
-        /* Center Section (Ticker) */
-        .header-ticker {
-            flex: 1;
-            margin: 0 16px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            height: 100%;
-            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-        }
-        .ticker-content {
-            white-space: nowrap; 
-            animation: ticker 60s linear infinite;
-            color: white; 
-            font-weight: 600; 
-            font-size: 0.9rem; 
-            padding-left: 100%;
-        }
-        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
-
-        /* Right Section */
-        .header-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-        
-        .action-btn { background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; }
-        .notif-wrap { position: relative; cursor: pointer; color: white; }
-        .notif-badge {
-            position: absolute; top: -4px; right: -4px;
-            background: #EF4444; color: white; font-size: 0.65rem; font-weight: 800;
-            padding: 2px 4px; border-radius: 10px; border: 1.5px solid var(--color-primary);
-            display: none;
-        }
-
-        /* --- 4. CONTENT BODY --- */
-        .content-body {
-            margin-top: var(--header-height);
-            padding: 0 0 40px 0;
-            max-width: 1400px; margin-left: auto; margin-right: auto;
-            width: 100%;
-        }
-        @media (min-width: 1024px) { .content-body { padding: 20px; } }
-
-        /* --- UTILS --- */
-        .screen { display: none; animation: fadeIn 0.3s ease; }
-        .screen.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* COMPACT SPACING STYLES */
-        .sec-header { 
-            display: flex; align-items: center; gap: 10px; 
-            padding: 6px 16px 2px 16px; 
-            margin: 0; 
-            background: var(--color-bg); 
-        }
-        .sec-bar { width: 4px; height: 18px; border-radius: 4px; }
-        .sec-title { font-size: 1.05rem; font-weight: 800; color: #111827; }
-
-        .h-scroll {
-            display: flex; overflow-x: auto; gap: 12px; 
-            padding: 0 16px 4px 16px;
-            scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
-        }
-        .h-scroll::-webkit-scrollbar { height: 0px; }
-
-        .shop-card {
-            min-width: 220px; width: 220px;
-            background: white; border-radius: 12px;
-            border: 1px solid #E5E7EB; overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer;
-            display: flex; flex-direction: column; flex-shrink: 0;
-            transition: transform 0.2s;
-        }
-        .shop-card:active { transform: scale(0.98); }
-
-        /* --- PROFESSIONAL COLLAGE GRID --- */
-        .img-box { 
-            height: 150px; /* Slightly taller for better product view */
-            width: 100%; 
-            background: #F1F5F9; 
-            border-bottom: 1px solid #E5E7EB;
-        }
-        
-        .collage { 
-            width: 100%; 
-            height: 100%; 
-            display: grid; 
-            gap: 1px; /* Creates perfectly thin, crisp separation lines */
-            background: #E2E8F0; /* The color of the separation lines */
-        }
-        
-        .collage img { 
-            width: 100%; 
-            height: 100%;
-            object-fit: contain; /* Guarantees 100% of the image is always visible */
-            background: #FFFFFF; /* Gives every product a clean, professional white background */
-            padding: 4px; /* Adds breathing room around the image so it doesn't touch the borders */
-            display: block; 
-            box-sizing: border-box; 
-        }
-
-        /* Grid Layout Rules */
-        .c-1 { grid-template-columns: 1fr; }
-        .c-2 { grid-template-columns: 1fr 1fr; }
-        .c-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-        .c-3 img:first-child { grid-row: 1 / 3; } /* First image takes the whole left side */
-        .c-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-
-        .info-box { padding: 10px; }
-        .s-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        /* CT ID Style */
-        .s-id-badge { 
-            display: inline-block; 
-            font-size: 0.7rem; 
-            font-weight: 700; 
-            color: #1E40AF; /* Dark Blue */
-            background: #EFF6FF; /* Light Blue */
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            border: 1px solid #DBEAFE;
-            margin-bottom: 6px; 
-        }
-
-        .s-loc { font-size: 0.75rem; color: #6B7280; display: flex; align-items: center; gap: 4px; }
-
-        /* Areas */
-        .area-container { margin-bottom: 0; padding-bottom: 0; }
-        .area-pill { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 8px 12px; border-radius: 8px; 
-            margin: 4px 16px 4px 16px; 
-        }
-        .area-pill.user { background: #DCFCE7; }
-        .area-pill.other { background: #FEF3C7; }
-        .pill-left { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #1F2937; }
-
-        .cat-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 8px 16px; }
-        .cat-chip {
-            background: white; border: 1px solid #E5E7EB; border-radius: 50px;
-            padding: 6px 14px 6px 6px; display: flex; align-items: center; gap: 8px;
-            cursor: pointer; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-        .cat-chip img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; }
-        .cat-chip span { font-size: 0.85rem; font-weight: 700; color: #374151; }
-
-        .shop-grid-view { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
-            gap: 12px; padding: 0 16px 20px 16px;
-        }
-        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding: 20px 16px; }
-        .svc-card {
-            background: white; padding: 20px 16px; border-radius: 12px; text-align: center;
-            border: 1px solid #E5E7EB; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .svc-card:active { transform: scale(0.96); }
-        .svc-icon { width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-
-        /* Form Styles */
-        .form-group { margin-bottom: 16px; text-align: left; }
-        .form-label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #374151; }
-        .form-input { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 1rem; }
-        .form-input:focus { outline: none; border-color: var(--color-primary); ring: 2px solid #A7F3D0; }
-
-        /* --- AI CHAT WIDGET STYLES --- */
-        .ai-fab-container {
-            position: fixed; bottom: 20px; right: 20px; z-index: 5000;
-            display: flex; flex-direction: column; align-items: center; gap: 6px;
-        }
-        .ai-fab {
-            width: 56px; height: 56px; border-radius: 50%;
-            background: var(--color-primary); color: white;
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4); cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; transition: transform 0.2s; border: none;
-        }
-        .ai-fab:active { transform: scale(0.95); }
-        .ai-label {
-            background: white; color: var(--color-primary);
-            font-size: 0.7rem; font-weight: 800;
-            padding: 4px 8px; border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB;
-            white-space: nowrap; pointer-events: none;
-        }
-
-        .chat-window {
-            position: fixed; bottom: 90px; right: 20px;
-            width: 350px; height: 500px;
-            background: white; border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 5000;
-            display: flex; flex-direction: column;
-            overflow: hidden; opacity: 0; pointer-events: none;
-            transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid #E5E7EB;
-        }
-        .chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
-
-        .chat-header {
-            background: var(--color-primary); color: white;
-            padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
-        }
-        .chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
-        .chat-msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; }
-        .msg-ai { align-self: flex-start; background: white; border: 1px solid #E2E8F0; color: #1E293B; border-bottom-left-radius: 2px; }
-        .msg-user { align-self: flex-end; background: var(--color-primary); color: white; border-bottom-right-radius: 2px; }
-        .msg-error { align-self: center; background: #FEE2E2; color: #DC2626; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
-        
-        .chat-input-area {
-            padding: 12px; background: white; border-top: 1px solid #E2E8F0;
-            display: flex; flex-direction: column; gap: 8px;
-        }
-        .chat-input-row {
-            display: flex; gap: 8px; width: 100%;
-        }
-        .chat-input {
-            flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #E2E8F0;
-            outline: none; font-size: 0.9rem; background: #F1F5F9;
-        }
-        .btn-send {
-            background: var(--color-primary); color: white; border: none;
-            width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .chat-disclaimer {
-            font-size: 0.65rem; color: #9CA3AF; text-align: center;
-            line-height: 1.2;
-        }
-
-        /* Mobile Chat overrides */
-        @media (max-width: 480px) {
-            .chat-window {
-                right: 0; left: 0; bottom: 0; width: 100%; height: 85vh;
-                border-bottom-left-radius: 0; border-bottom-right-radius: 0;
-            }
-        }
-    </style>
+    /* =========================================
+       MODAL STYLES
+       ========================================= */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-card { background: white; border-radius: 1.5rem; max-width: 400px; width: 100%; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+    .modal-title { font-size: 1.25rem; font-weight: 800; color: #2E1065; text-align: center; margin-bottom: 0.5rem; }
+    .modal-subtitle { color: #64748b; font-size: 0.875rem; text-align: center; margin-bottom: 1.5rem; }
+    .hidden { display: none !important; }
+    .modal-input-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+    .modal-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.25rem; }
+    .modal-input-wrapper { position: relative; width: 100%; }
+    .modal-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
+    .modal-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem; outline: none; transition: all 0.3s ease; color: #0f172a; }
+    .modal-input:focus { border-color: #db2777; box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); background: white; }
+    select.modal-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
+    .btn-primary-modal { width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn-primary-modal:hover { background-color: #db2777; transform: translateY(-1px); }
+    .btn-primary-modal:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+    .spinner { width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* =========================================
+       FLOATING CONTACT WIDGET STYLES (Left)
+       ========================================= */
+    .floating-contact-btn { position: fixed; bottom: 24px; left: 24px; width: 60px; height: 60px; background-color: #db2777; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 10px 25px rgba(219, 39, 119, 0.4); cursor: pointer; z-index: 999; transition: transform 0.3s ease, background-color 0.3s ease; border: none; }
+    .floating-contact-btn:hover { transform: scale(1.1); background-color: #be185d; }
+    .floating-contact-popup { position: fixed; bottom: 95px; left: 24px; width: 350px; background: white; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 999; overflow: hidden; transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; }
+    .floating-contact-popup.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+    .fc-header { background: #2E1065; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 1.05rem; }
+    .fc-close { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1.2rem; transition: color 0.2s; }
+    .fc-close:hover { color: white; }
+    .fc-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .fc-input-group { display: flex; flex-direction: column; gap: 4px; }
+    .fc-label { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .fc-input, .fc-select, .fc-textarea { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; font-family: inherit; outline: none; transition: border-color 0.2s; background: #f8fafc; color: #0f172a; }
+    .fc-input:focus, .fc-select:focus, .fc-textarea:focus { border-color: #db2777; background: white; }
+    .fc-btn { background: #db2777; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 0.95rem; margin-top: 4px; }
+    .fc-btn:hover { background: #be185d; }
+    .fc-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+    .fc-status { font-size: 0.85rem; text-align: center; display: none; padding: 10px; border-radius: 8px; font-weight: 600; margin-top: 4px; }
+    .fc-status.success { display: block; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;}
+    .fc-status.error { display: block; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;}
+    /* =========================================
+       AI CHAT WIDGET STYLES (Right) + NOTIF BADGE
+       ========================================= */
+    .ai-fab-container { position: fixed; bottom: 24px; right: 24px; z-index: 5000; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .ai-fab-wrapper { position: relative; }
+   
+    .ai-notif-badge {
+        position: absolute; top: -4px; right: -4px; background: #EF4444; color: white;
+        font-size: 0.8rem; font-weight: 800; width: 22px; height: 22px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; border: 2px solid white;
+        animation: bounce 2s infinite; z-index: 10;
+    }
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+        40% {transform: translateY(-5px);}
+        60% {transform: translateY(-3px);}
+    }
+    .ai-fab { width: 60px; height: 60px; border-radius: 50%; background: #059669; color: white; box-shadow: 0 10px 25px rgba(5, 150, 105, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.2s; border: none; }
+    .ai-fab:active { transform: scale(0.95); }
+    .ai-label { background: white; color: #059669; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB; white-space: nowrap; pointer-events: none; }
+    .ai-chat-window { position: fixed; bottom: 95px; right: 24px; width: 350px; height: 450px; background: white; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 5000; display: flex; flex-direction: column; overflow: hidden; opacity: 0; pointer-events: none; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #E5E7EB; }
+    .ai-chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+    .ai-chat-header { background: #059669; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .ai-chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
+    .chat-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; }
+    .msg-ai { align-self: flex-start; background: white; border: 1px solid #E2E8F0; color: #1E293B; border-bottom-left-radius: 2px; }
+    .msg-user { align-self: flex-end; background: #059669; color: white; border-bottom-right-radius: 2px; }
+    .msg-error { align-self: center; background: #FEE2E2; color: #DC2626; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
+   
+    .chat-register-btn { display: block; background: #DB2777; color: white !important; text-align: center; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; margin-top: 12px; box-shadow: 0 4px 6px rgba(219, 39, 119, 0.3); transition: transform 0.2s, background 0.2s; }
+    .chat-register-btn:hover { background: #be185d; transform: translateY(-1px); }
+   
+    .ai-chat-input-area { padding: 12px; background: white; border-top: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 8px; }
+    .ai-chat-input-row { display: flex; gap: 8px; width: 100%; }
+    .ai-chat-input { flex: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid #E2E8F0; outline: none; font-size: 0.9rem; background: #F1F5F9; color: #0f172a; }
+    .ai-chat-input:focus { border-color: #059669; background: white; }
+    .ai-btn-send { background: #059669; color: white; border: none; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+    .ai-btn-send:hover { background: #047857; }
+    @media (max-width: 400px) {
+        .floating-contact-popup { width: calc(100% - 48px); left: 24px; right: 24px; }
+        .ai-chat-window { width: calc(100% - 48px); left: 24px; right: 24px; }
+    }
+  </style>
 </head>
 <body>
-
-    <!-- OVERLAY (Universal) -->
-    <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="sidebar-logo" alt="Logo">
-            <span style="font-weight: 800; font-size: 1.1rem; margin-left: 10px;">CT-MERCHANT</span>
+<!-- NAVIGATION -->
+<nav class="main-header">
+  <div class="container nav-container">
+    <a href="index.html" class="brand-wrapper" title="Home Screen">
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo" style="width: 45px; height: 45px; border-radius: 8px;">
+    </a>
+    <div class="marquee-container header-marquee-box">
+       <div class="marquee-content animate-brand-scroll">
+          <div class="marquee-item">
+              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CT-MERCHANT LTD.</span>
+              <div class="flag-icon" style="display: flex; flex-direction: column; width: 14px; height: 10px; margin: 0 8px;">
+                  <div style="flex: 1; background: #16a34a;"></div>
+                  <div style="flex: 1; background: #ffffff;"></div>
+                  <div style="flex: 1; background: #16a34a;"></div>
+              </div>
+              <span style="font-weight: 800; color: white; font-size: 0.9rem; text-transform: uppercase;">REPOSITORY OF SHOPS, PRODUCTS AND SERVICES.</span>
+          </div>
+          <div class="marquee-item">
+              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CT-MERCHANT LTD.</span>
+              <div class="flag-icon" style="display: flex; flex-direction: column; width: 14px; height: 10px; margin: 0 8px;">
+                  <div style="flex: 1; background: #16a34a;"></div>
+                  <div style="flex: 1; background: #ffffff;"></div>
+                  <div style="flex: 1; background: #16a34a;"></div>
+              </div>
+              <span style="font-weight: 800; color: white; font-size: 0.9rem; text-transform: uppercase;">REPOSITORY OF SHOPS, PRODUCTS AND SERVICES.</span>
+          </div>
+       </div>
+    </div>
+    <div class="desktop-menu">
+      <a href="index.html" class="nav-active">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="affiliate.html">Affiliate</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
+    </div>
+    <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </div>
+ 
+  <div class="mobile-dropdown hidden" id="mobile-menu">
+      <a href="index.html" style="border-bottom: 1px solid white;">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="affiliate.html">Affiliate</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
+  </div>
+</nav>
+<!-- MAIN GRID WRAPPER -->
+<main class="split-layout-grid">
+    <div class="split-pane pane-img">
+        <div class="features-glass-bar">
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-store" style="color:#10b981;"></i> Commerce </span>
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-magnifying-glass-location" style="color:#f472b6;"></i> Discover Locally</span>
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-id-card" style="color:#60a5fa;"></i> Unique ID</span>
         </div>
-        
-        <div class="nav-scroll">
-            <button class="nav-btn active" onclick="switchScreen('market', this)">
-                <i class="fa-solid fa-store"></i> Market Overview
-            </button>
-            <button class="nav-btn" onclick="switchScreen('services', this)">
-                <i class="fa-solid fa-table-cells-large"></i> Services
-            </button>
-            <button class="nav-btn" onclick="switchScreen('profile', this)">
-                <i class="fa-solid fa-user-gear"></i> My Profile
-            </button>
-            <button class="nav-btn" onclick="switchScreen('notifications', this)">
-                <i class="fa-solid fa-bell"></i> Notifications
-            </button>
-        </div>
-        
-        <div class="sidebar-footer">
-            <button class="nav-btn" style="color: #EF4444;" onclick="handleLogout()">
-                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
-            </button>
-        </div>
-    </aside>
-
-    <!-- HEADER (Single Row) -->
-    <header class="top-header">
-        <div class="header-main">
-            <!-- Left: Toggle & City -->
-            <div class="header-left">
-                <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-                <div id="header-city" class="header-city">...</div>
+    </div>
+    <div class="split-pane pane-dark">
+        <h1 class="hero-title">
+           <span id="typewriter"></span><span class="cursor">|</span>
+        </h1>
+       
+        <p class="hero-desc">
+          We provide a digital repository of physical shops, their products, and locations within a city.
+        </p>
+        <div class="repo-search-wrapper">
+            <p class="search-label">Search Repository</p>
+            <div style="position: relative;">
+                <input type="text" id="repo-search-input" placeholder="Enter Merchant ID..." class="repo-input"
+                       onkeypress="if(event.key === 'Enter') handleRepoSearch()">
+                <div class="search-icon-btn" onclick="handleRepoSearch()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
             </div>
-            
-            <!-- Middle: Ticker -->
-            <div id="header-ticker" class="header-ticker" style="display:none;">
-                <div id="ticker-text" class="ticker-content"></div>
+            <p class="id-hint">
+                <i class="fa-solid fa-circle-info"></i> Search by unique ID (e.g., 209234)
+            </p>
+        </div>
+        <div class="hero-auth-widget">
+            <div class="widget-title">
+                <i class="fa-solid fa-lock"></i> Users Login
             </div>
-            
-            <!-- Right: Actions -->
-            <div class="header-actions">
-                <!-- SHOP INDEX ICON -->
-                <button class="action-btn" onclick="window.location.href='shop-index.html'" title="Shop Index">
-                    <i class="fa-solid fa-arrow-down-a-z" style="font-size: 1.1rem;"></i>
+           
+            <form onsubmit="event.preventDefault(); handleHeroLogin();">
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="hero-email" class="hero-input-login" placeholder="Email Address" required>
+                </div>
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
+                    <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePassword()"></i>
+                </div>
+               
+                <a class="forgot-password" onclick="openResetEmailModal()">Forgot password?</a>
+               
+                <button type="submit" id="hero-login-btn" class="btn-login-hero">
+                    Secure Sign In <i class="fa-solid fa-arrow-right"></i>
                 </button>
-                
-                <div class="notif-wrap" onclick="switchScreen('notifications', document.querySelectorAll('.nav-btn')[3])">
-                    <i class="fa-regular fa-bell" style="font-size:1.3rem;"></i>
-                    <div id="badge-count" class="notif-badge">0</div>
+            </form>
+            <div class="widget-divider">New to CT-Merchant?</div>
+            <a href="create-account.html" class="btn-create-account">
+                Create Account
+            </a>
+            <div class="widget-divider">Or continue with</div>
+            <div style="display: flex; justify-content: center; width: 100%;">
+                <div id="g_id_onload"
+                     data-client_id="237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com"
+                     data-context="signin"
+                     data-ux_mode="popup"
+                     data-callback="handleGoogleLogin"
+                     data-auto_prompt="false">
                 </div>
-                
-                <img id="header-avatar" src="" style="width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,0.5); object-fit:cover; background:#ccc; cursor:pointer;" onclick="switchScreen('profile', document.querySelectorAll('.nav-btn')[2])">
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="continue_with"
+                     data-size="large">
+                </div>
             </div>
         </div>
-    </header>
-
-    <!-- CONTENT BODY -->
-    <main class="content-body">
         
-        <!-- MARKET -->
-        <div id="market" class="screen active">
-            <!-- Promos -->
-            <div id="promo-list" class="h-scroll" style="display:none; padding-top:8px;"></div>
+        <!-- NEW TRUST METRICS SECTION -->
+        <div class="trust-metrics-container">
+            <div class="trust-metric-box">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div class="tm-text">
+                    <h4>100% Verified</h4>
+                    <p>Physical Shops Only</p>
+                </div>
+            </div>
+            <div class="trust-metric-box">
+                <i class="fa-solid fa-handshake-angle"></i>
+                <div class="tm-text">
+                    <h4>Zero Fraud</h4>
+                    <p>Secure Marketplace</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW MERCHANT ONBOARDING CYCLE -->
+        <div class="merchant-journey-wrapper">
+            <h3 class="mj-title"><i class="fa-solid fa-route"></i> Merchant Onboarding Journey</h3>
             
-            <!-- Featured -->
-            <div id="featured-section" style="display:none;">
-                <div class="sec-header">
-                    <div class="sec-bar" style="background: orange;"></div>
-                    <div class="sec-title">Featured Shops</div>
+            <div class="mj-timeline">
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-user-plus"></i></div>
+                    <div class="mj-content">
+                        <h4>1. Create Account</h4>
+                        <p>Sign up securely to join the platform.</p>
+                    </div>
                 </div>
-                <div id="featured-list" class="h-scroll"></div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-shop"></i></div>
+                    <div class="mj-content">
+                        <h4>2. Register Your Shop</h4>
+                        <p>Input your local business details.</p>
+                    </div>
+                </div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-location-dot"></i></div>
+                    <div class="mj-content">
+                        <h4>3. Physical Verification <span class="mj-badge-fee">₦5,000 Fee</span></h4>
+                        <p>On-site inspection to guarantee marketplace trust.</p>
+                    </div>
+                </div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-id-card-clip"></i></div>
+                    <div class="mj-content">
+                        <h4>4. Unique Digital Profile</h4>
+                        <p>Receive your custom URL and CT-Merchant ID.</p>
+                    </div>
+                </div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-bullhorn"></i></div>
+                    <div class="mj-content">
+                        <h4>5. Upload Inventory & Promos</h4>
+                        <p>Post banners, news, new/fairly used products, and special offers.</p>
+                    </div>
+                </div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-tents"></i></div>
+                    <div class="mj-content">
+                        <h4>6. Yearly Trade Fair</h4>
+                        <p>Exclusive access to physical exhibitions and networking events.</p>
+                    </div>
+                </div>
             </div>
 
-            <!-- Areas -->
-            <div id="areas-container" style="margin-top:0;">
-                <div id="initial-loader" style="text-align:center; padding:60px 0; color:#CBD5E1;">
-                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem;"></i>
-                </div>
-            </div>
-
-            <!-- Categories -->
-            <div class="sec-header">
-                <div class="sec-bar" style="background: var(--color-primary);"></div>
-                <div class="sec-title">Browse Categories</div>
-            </div>
-            <div id="category-list" class="cat-grid"></div>
-
-            <!-- All Shops -->
-            <div class="sec-header">
-                <div class="sec-bar" style="background: #374151;"></div>
-                <div class="sec-title">All Shops</div>
-            </div>
-            <div id="all-shops-grid" class="shop-grid-view"></div>
-        </div>
-
-        <!-- SERVICES -->
-        <div id="services" class="screen">
-            <h2 class="sec-title" style="margin: 16px 16px 0 16px;">Services & Tools</h2>
-            <div class="svc-grid">
-                
-                <!-- MY SHOP DYNAMIC CARD -->
-                <div id="myshop-card" class="svc-card" onclick="handleShopClick()">
-                    <div class="svc-icon" style="background:#F3F4F6; color:#9CA3AF;"><i class="fa-solid fa-store"></i></div>
-                    <strong>Loading...</strong>
-                </div>
-
-                <div class="svc-card" onclick="window.location.href='wishlist.html'">
-                    <div class="svc-icon" style="background:#FCE7F3; color:#DB2777;"><i class="fa-solid fa-heart"></i></div>
-                    <strong>Wishlist</strong>
-                    <!-- ADDED: Wishlist Count -->
-                    <div id="wishlist-count" style="font-size:0.8rem; color:#6B7280; margin-top:4px;">...</div>
-                </div>
-                <div class="svc-card" onclick="window.location.href='help-support.html'">
-                    <div class="svc-icon" style="background:#DCFCE7; color:#10B981;"><i class="fa-solid fa-headset"></i></div>
-                    <strong>Support</strong>
-                </div>
-                <div class="svc-card" onclick="window.location.href='faq.html'">
-                    <div class="svc-icon" style="background:#E0E7FF; color:#4338CA;"><i class="fa-solid fa-circle-question"></i></div>
-                    <strong>FAQ</strong>
-                </div>
-                <div class="svc-card" onclick="window.location.href='report-abuse.html'">
-                    <div class="svc-icon" style="background:#FEE2E2; color:#DC2626;"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                    <strong>Report Abuse</strong>
-                </div>
+            <!-- PRICING BADGE -->
+            <div class="mj-pricing-box">
+                <div class="mj-pricing-text">All-Inclusive Platform Access</div>
+                <div class="mj-pricing-amount">₦10,000 <span>/ year</span></div>
             </div>
         </div>
 
-        <!-- PROFILE -->
-        <div id="profile" class="screen">
-            <!-- View Mode -->
-            <div id="profile-view" style="max-width:600px; margin:20px auto; background:white; padding:40px; border-radius:16px; border:1px solid #E5E7EB; text-align:center;">
-                <img id="profile-avatar-lg" src="" style="width:100px; height:100px; border-radius:50%; margin-bottom:16px; border:4px solid var(--color-primary); object-fit: cover;">
-                <h2 id="profile-name" style="font-size:1.5rem; color:#111827;">Loading...</h2>
-                <p id="profile-phone" style="color:#6B7280; font-weight:500; margin-bottom:4px;"></p>
-                <p id="profile-email" style="color:#9CA3AF; margin-bottom:20px; font-size:0.9rem;">...</p>
-                
-                <div style="display:flex; justify-content:center; gap:10px;">
-                    <button onclick="openEditProfile()" style="background:var(--color-primary); color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:700; cursor:pointer;">
-                        <i class="fa-solid fa-pen-to-square"></i> Edit Profile
-                    </button>
-                </div>
-            </div>
-
-            <!-- Edit Mode -->
-            <div id="profile-edit" style="display:none; max-width:600px; margin:20px auto; background:white; padding:30px; border-radius:16px; border:1px solid #E5E7EB;">
-                <h3 style="margin-bottom:20px; font-size:1.2rem; border-bottom:1px solid #E5E7EB; padding-bottom:10px;">Edit Profile</h3>
-                
-                <div class="form-group">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" id="edit-name" class="form-input">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Phone Number</label>
-                    <input type="tel" id="edit-phone" class="form-input">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">City</label>
-                    <select id="edit-city" onchange="handleCityChange(this.value)" class="form-input" style="background:white;">
-                        <option value="">Select City</option>
-                    </select>
-                </div>
-
-                <div class="form-group" style="margin-bottom:24px;">
-                    <label class="form-label">Area</label>
-                    <select id="edit-area" class="form-input" style="background:white;">
-                        <option value="">Select Area</option>
-                    </select>
-                </div>
-                
-                <p id="edit-error" style="color:#EF4444; font-size:0.9rem; margin-bottom:16px; display:none;"></p>
-
-                <div style="display:flex; gap:12px;">
-                    <button id="btn-save" onclick="saveProfile()" style="flex:1; background:var(--color-primary); color:white; border:none; padding:12px; border-radius:8px; font-weight:700; cursor:pointer;">Save Changes</button>
-                    <button onclick="cancelEdit()" style="flex:1; background:#F3F4F6; color:#374151; border:1px solid #D1D5DB; padding:12px; border-radius:8px; font-weight:700; cursor:pointer;">Cancel</button>
-                </div>
+    </div>
+    
+    <div class="split-pane pane-light">
+        <h2 class="value-title">Grow Your Physical Shop Digitally</h2>
+        <p class="value-desc">Join our growing network of verified local merchants. Create your profile, upload your products, and let our AI-powered repository connect you with local buyers.</p>
+       
+        <ul class="value-bullets">
+            <li><i class="fa-solid fa-circle-check"></i> Get a verified digital storefront</li>
+            <li><i class="fa-solid fa-circle-check"></i> Unique CT-Merchant ID to share</li>
+            <li><i class="fa-solid fa-circle-check"></i> Be discovered in city Repository Search</li>
+        </ul>
+    </div>
+    
+    <div class="split-pane pane-white">
+        <span class="repo-badge">
+          Repository of Shops, Products and Services
+        </span>
+       
+        <p class="hero-pro-text">
+         CT-Merchant is a structured repository of shops, products, and services within a city. We onboard and physically verify merchants to eliminate fraudulent online claims. Our platform indexes verified, physically existing businesses and their offerings, enabling consumers to compare prices and options before visiting a store. This approach enhances transparency, improves purchasing decisions, and saves time — effectively balancing digital convenience with physical marketplace reality.
+        </p>
+    </div>
+</main>
+<footer class="footer">
+  <div class="container footer-container">
+    <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Use</a>
+      <span>RC: 8879163</span>
+    </div>
+  </div>
+</footer>
+<!-- MODALS -->
+<div id="complete-profile-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h2 class="modal-title">Complete Your Profile</h2>
+        <p class="modal-subtitle">We need a few more details to set up your dashboard.</p>
+        <div class="modal-input-group">
+            <label class="modal-label">Phone Number</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-phone"></i></span>
+                <input type="tel" id="google-phone" placeholder="08012345678" class="modal-input">
             </div>
         </div>
-
-        <!-- NOTIFICATIONS -->
-        <div id="notifications" class="screen">
-            <h2 class="sec-title" style="margin: 16px 16px 10px 16px;">Notifications</h2>
-            <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:600px; margin: 0 16px;">
-                <p style="color:#9CA3AF; text-align:center; padding-top:20px;">Loading notifications...</p>
+        <div class="modal-input-group">
+            <label class="modal-label">Select City</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-city"></i></span>
+                <select id="google-city" class="modal-input" onchange="loadAreasForModal(this.value)">
+                    <option value="" disabled selected>Loading cities...</option>
+                </select>
             </div>
         </div>
-
-    </main>
-
-    <!-- =========================================
-         AI CHAT WIDGET
-         ========================================= -->
-    <div class="ai-fab-container">
-        <button class="ai-fab" onclick="toggleChat()">
+        <div class="modal-input-group">
+            <label class="modal-label">Select Area</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-map-pin"></i></span>
+                <select id="google-area" class="modal-input" disabled>
+                    <option value="" disabled selected>Select city first</option>
+                </select>
+            </div>
+        </div>
+        <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary-modal">Complete Setup</button>
+        <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel & Sign Out</button>
+    </div>
+</div>
+<div id="reset-email-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h2 class="modal-title">Reset Password</h2>
+        <p class="modal-subtitle">Enter your email address to receive a 6-digit recovery code.</p>
+        <div class="modal-input-group">
+            <label class="modal-label">Registered Email</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-envelope"></i></span>
+                <input type="email" id="reset-email-input" placeholder="name@example.com" class="modal-input">
+            </div>
+        </div>
+        <button id="btn-send-reset" onclick="sendResetCode()" class="btn-primary-modal">Send Reset Code</button>
+        <button onclick="document.getElementById('reset-email-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
+    </div>
+</div>
+<div id="reset-password-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h2 class="modal-title">Create New Password</h2>
+        <p class="modal-subtitle">Enter the 6-digit code we just sent to your email.</p>
+        <div class="modal-input-group">
+            <label class="modal-label">6-Digit Recovery Code</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-hashtag"></i></span>
+                <input type="text" id="reset-otp-input" placeholder="123456" class="modal-input" maxlength="6" style="letter-spacing: 5px; text-align: center; font-weight: bold; padding-left: 1rem;">
+            </div>
+        </div>
+        <div class="modal-input-group">
+            <label class="modal-label">New Password</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
+                <input type="password" id="reset-new-password" placeholder="••••••••" class="modal-input">
+            </div>
+        </div>
+        <div class="modal-input-group">
+            <label class="modal-label">Confirm Password</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
+                <input type="password" id="reset-confirm-password" placeholder="••••••••" class="modal-input">
+            </div>
+        </div>
+        <button id="btn-confirm-reset" onclick="verifyAndResetPassword()" class="btn-primary-modal">Confirm & Reset Password</button>
+        <button onclick="document.getElementById('reset-password-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
+    </div>
+</div>
+<!-- ==========================================
+     FLOATING CONTACT WIDGET (LEFT)
+     ========================================== -->
+<button class="floating-contact-btn" onclick="toggleFloatingContact()" title="Need Help? Contact Support">
+    <i class="fa-solid fa-headset"></i>
+</button>
+<div class="floating-contact-popup" id="fc-popup">
+    <div class="fc-header">
+        <span><i class="fa-solid fa-envelope"></i> Message Us</span>
+        <button class="fc-close" onclick="toggleFloatingContact()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form class="fc-body" id="fc-form" onsubmit="handleFloatingContactSubmit(event)">
+        <div class="fc-input-group">
+            <label class="fc-label">Full Name</label>
+            <input type="text" id="fc-name" class="fc-input" required placeholder="e.g. John Doe">
+        </div>
+        <div class="fc-input-group">
+            <label class="fc-label">Email</label>
+            <input type="email" id="fc-email" class="fc-input" required placeholder="name@example.com">
+        </div>
+        <div class="fc-input-group">
+            <label class="fc-label">Subject</label>
+            <select id="fc-subject" class="fc-select">
+                <option value="General Inquiry">General Inquiry</option>
+                <option value="Merchant Support">Merchant Support</option>
+                <option value="Report an Issue">Report an Issue</option>
+            </select>
+        </div>
+        <div class="fc-input-group">
+            <label class="fc-label">Message</label>
+            <textarea id="fc-message" class="fc-textarea" rows="3" required placeholder="How can we help you?"></textarea>
+        </div>
+        <div id="fc-status" class="fc-status"></div>
+        <button type="submit" id="fc-submit-btn" class="fc-btn">Send Message <i class="fa-solid fa-paper-plane"></i></button>
+    </form>
+</div>
+<!-- ==========================================
+     AI CHAT WIDGET (RIGHT)
+     ========================================== -->
+<div class="ai-fab-container">
+    <div class="ai-fab-wrapper">
+        <button class="ai-fab" onclick="toggleAiChat()">
             <i class="fa-solid fa-comments"></i>
         </button>
-        <span class="ai-label">AI Assistant</span>
+        <div id="ai-badge" class="ai-notif-badge">1</div>
     </div>
-
-    <div id="chat-window" class="chat-window">
-        <div class="chat-header">
-            <span style="font-weight:700;"><i class="fa-solid fa-robot"></i> Assistant</span>
-            <button onclick="toggleChat()" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div id="chat-messages" class="chat-body">
-            <div class="chat-msg msg-ai">Hello! I am your AI assistant. How can I help you today?</div>
-        </div>
-        <div class="chat-input-area">
-            <div class="chat-input-row">
-                <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMsg()">
-                <button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
-            </div>
-            <!-- THE NEW UI DISCLAIMER -->
-            <div class="chat-disclaimer">
-                AI can make mistakes. Please verify prices on the merchant's shop.
-            </div>
+    <span class="ai-label">AI Assistant</span>
+</div>
+<div id="ai-chat-window" class="ai-chat-window">
+    <div class="ai-chat-header">
+        <span style="font-weight:700;"><i class="fa-solid fa-robot"></i> Assistant</span>
+        <button onclick="toggleAiChat()" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="ai-chat-messages" class="ai-chat-body">
+        <div class="chat-msg msg-ai">
+            Welcome to CT-Merchant, I am your AI assistant.
         </div>
     </div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <div class="ai-chat-input-area">
+        <div class="ai-chat-input-row">
+            <input type="text" id="ai-chat-input" class="ai-chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendAiMsg()">
+            <button class="ai-btn-send" onclick="sendAiMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+</div>
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let currentUser = null;
-    let userProfile = null;
-    let currentUserShop = null; 
-    let userCityId = null;
-    let userAreaId = null;
-    let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v18'; 
-
-    let chatHistory = [];
-
-    // --- NAVIGATION ---
-    function toggleSidebar() {
-        document.body.classList.toggle('sb-open');
-    }
-
-    function switchScreen(id, btn) {
-        if (btn) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+   
+    // --- TYPEWRITER LOGIC ---
+    const textElement = document.getElementById('typewriter');
+    const phrases = ["Verified Merchants", "Safe and Secure", "Boost Your Business"];
+    let phraseIndex = 0; let charIndex = 0; let isDeleting = false; let typeSpeed = 100;
+   
+    function typeEffect() {
+        const currentPhrase = phrases[phraseIndex];
+        if (isDeleting) {
+            textElement.textContent = currentPhrase.substring(0, charIndex - 1);
+            charIndex--; typeSpeed = 50;
+        } else {
+            textElement.textContent = currentPhrase.substring(0, charIndex + 1);
+            charIndex++; typeSpeed = 100;
         }
-        
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        const target = document.getElementById(id);
-        if (target) target.classList.add('active');
-
-        document.body.classList.remove('sb-open');
-        if(id === 'notifications') markRead();
+        if (!isDeleting && charIndex === currentPhrase.length) {
+            isDeleting = true; typeSpeed = 2000;
+        } else if (isDeleting && charIndex === 0) {
+            isDeleting = false; phraseIndex = (phraseIndex + 1) % phrases.length; typeSpeed = 500;
+        }
+        setTimeout(typeEffect, typeSpeed);
     }
-
-    // =========================================
-    // AI CHAT LOGIC (WITH FRONTEND LIMITER)
+    document.addEventListener('DOMContentLoaded', typeEffect);
+    // --- NEW: IP TRACKING & BAN CHECK LOGIC ---
+    async function getClientIpData() {
+        try {
+            const res = await fetch('https://1.1.1.1/cdn-cgi/trace');
+            const text = await res.text();
+            const data = text.split('\n').reduce((acc, line) => {
+                const [key, value] = line.split('=');
+                if(key) acc[key] = value;
+                return acc;
+            }, {});
+            return { ip: data.ip || 'unknown', country: data.loc || 'unknown' };
+        } catch (e) {
+            return { ip: 'unknown', country: 'unknown' };
+        }
+    }
+    async function isIpBanned(ipAddress) {
+        if (ipAddress === 'unknown') return false;
+        try {
+            const { data } = await client.from('ip_blacklist').select('ip_address').eq('ip_address', ipAddress).maybeSingle();
+            return !!data;
+        } catch (e) {
+            return false;
+        }
+    }
+   
+    // --- REPO SEARCH ---
+    function handleRepoSearch() {
+        const query = document.getElementById('repo-search-input').value.trim();
+        if(query) window.location.href = `reposearch.html?merchantId=${query}`;
+    }
+   
+    // --- STANDARD LOGIN LOGIC ---
+    async function handleHeroLogin() {
+        const email = document.getElementById('hero-email').value;
+        const password = document.getElementById('hero-password').value;
+        const btn = document.getElementById('hero-login-btn');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
+        btn.disabled = true;
+       
+        try {
+            // 1. IP Ban Frontend Check
+            const ipData = await getClientIpData();
+            if (await isIpBanned(ipData.ip)) {
+                throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CT-Merchant.");
+            }
+            // 2. Perform Login
+            const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password });
+            if (authError) throw authError;
+            // 3. Post-Login Database Check Trap (Catches bypassed frontend & updates last active IP)
+            if (authData && authData.user) {
+                const { data: profileData, error: profileErr } = await client.from('profiles').select('is_suspended').eq('id', authData.user.id).maybeSingle();
+               
+                // If maybeSingle() throws an error, it means the RLS policy blocked them (they are IP banned!)
+                if (profileErr || !profileData || profileData.is_suspended === true) {
+                    await client.auth.signOut();
+                    throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
+                }
+                // Update IP
+                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
+            }
+            window.location.href = "user-dashboard.html";
+        } catch (err) {
+            alert(err.message);
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            await client.auth.signOut(); // Force signout on any error
+        }
+    }
+    // --- GOOGLE SIGN IN LOGIC ---
+    let pendingGoogleUserId = null;
+    let pendingGoogleUserName = null;
+    async function handleGoogleLogin(response) {
+        const heroBtn = document.getElementById('hero-login-btn');
+        const originalHeroHtml = heroBtn.innerHTML;
+        heroBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Checking Google...';
+        heroBtn.disabled = true;
+        try {
+            // 1. IP Ban Frontend Check
+            const ipData = await getClientIpData();
+            if (await isIpBanned(ipData.ip)) {
+                throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CT-Merchant.");
+            }
+            const { data, error } = await client.auth.signInWithIdToken({ provider: 'google', token: response.credential });
+            if (error) throw error;
+            const user = data.user;
+            pendingGoogleUserId = user.id;
+            pendingGoogleUserName = user.user_metadata?.full_name || '';
+            // 2. Profile check & DB Trap
+            const { data: profile, error: profileErr } = await client.from('profiles').select('city_id, area_id, is_suspended').eq('id', user.id).maybeSingle();
+            if (profileErr || (profile && profile.is_suspended)) {
+                await client.auth.signOut();
+                throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
+            }
+            if (profile && profile.city_id && profile.area_id) {
+                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
+                window.location.href = "user-dashboard.html";
+            } else {
+                document.getElementById('complete-profile-modal').classList.remove('hidden');
+                heroBtn.innerHTML = originalHeroHtml;
+                heroBtn.disabled = false;
+                await fetchCitiesForModal();
+            }
+        } catch(err) {
+            alert("Google Sign-In Error: " + err.message);
+            heroBtn.innerHTML = originalHeroHtml;
+            heroBtn.disabled = false;
+            await client.auth.signOut();
+        }
+    }
+    async function fetchCitiesForModal() {
+        const citySelect = document.getElementById('google-city');
+        try {
+            const { data, error } = await client.from('cities').select('id, name').eq('is_open', true).order('name');
+            if (error) throw error;
+            citySelect.innerHTML = '<option value="" disabled selected>Select your city</option>' + data.map(city => `<option value="${city.id}">${city.name}</option>`).join('');
+        } catch (err) {
+            citySelect.innerHTML = '<option value="" disabled>Error loading cities</option>';
+        }
+    }
+    async function loadAreasForModal(cityId) {
+        const areaSelect = document.getElementById('google-area');
+        areaSelect.disabled = true;
+        areaSelect.innerHTML = '<option value="" disabled selected>Loading areas...</option>';
+        try {
+            const { data, error } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+            if (error) throw error;
+            areaSelect.innerHTML = '<option value="" disabled selected>Select your area</option>' + data.map(area => `<option value="${area.id}">${area.name}</option>`).join('');
+            areaSelect.disabled = false;
+        } catch (err) {
+            areaSelect.innerHTML = '<option value="" disabled>Error loading areas</option>';
+        }
+    }
+    async function saveGoogleProfile() {
+        const phone = document.getElementById('google-phone').value.trim();
+        const cityId = document.getElementById('google-city').value;
+        const areaId = document.getElementById('google-area').value;
+        const btn = document.getElementById('google-complete-btn');
+        if (!phone || !cityId || !areaId) return alert("Please fill in your phone, city, and area to continue.");
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Saving...';
+        try {
+            const ipData = await getClientIpData();
+            const { error } = await client.from('profiles').upsert({
+                id: pendingGoogleUserId, full_name: pendingGoogleUserName, phone: phone, city_id: parseInt(cityId), area_id: parseInt(areaId),
+                registration_ip: ipData.ip, last_active_ip: ipData.ip, ip_country: ipData.country
+            });
+            if (error) throw error;
+            window.location.href = "user-dashboard.html";
+        } catch(err) {
+            alert("Error saving profile: " + err.message);
+            btn.disabled = false; btn.innerHTML = 'Complete Setup';
+        }
+    }
+    async function cancelGoogleLogin() {
+        await client.auth.signOut();
+        document.getElementById('complete-profile-modal').classList.add('hidden');
+    }
+   
+    // --- PASSWORD TOGGLE ---
+    function togglePassword() {
+        const password = document.getElementById('hero-password');
+        const icon = document.querySelector('.toggle-password');
+        if (password.type === 'password') {
+            password.type = 'text'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye');
+        } else {
+            password.type = 'password'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash');
+        }
+    }
+    function openResetEmailModal() {
+        document.getElementById('reset-email-modal').classList.remove('hidden');
+        const loginEmail = document.getElementById('hero-email').value;
+        if (loginEmail) document.getElementById('reset-email-input').value = loginEmail;
+    }
+    async function sendResetCode() {
+        const email = document.getElementById('reset-email-input').value.trim();
+        if (!email) return alert("Please enter your registered email address.");
+        const btn = document.getElementById('btn-send-reset');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Sending...';
+        try {
+            const { error } = await client.auth.resetPasswordForEmail(email);
+            if (error) throw error;
+            document.getElementById('reset-email-modal').classList.add('hidden');
+            document.getElementById('reset-password-modal').classList.remove('hidden');
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Send Reset Code';
+        }
+    }
+    async function verifyAndResetPassword() {
+        const email = document.getElementById('reset-email-input').value.trim();
+        const otp = document.getElementById('reset-otp-input').value.trim();
+        const newPassword = document.getElementById('reset-new-password').value;
+        const confirmPassword = document.getElementById('reset-confirm-password').value;
+        if (!otp || !newPassword || !confirmPassword) return alert("Please fill out all fields.");
+        if (newPassword !== confirmPassword) return alert("Passwords do not match. Please try again.");
+        if (newPassword.length < 6) return alert("Password must be at least 6 characters.");
+        const btn = document.getElementById('btn-confirm-reset');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Resetting...';
+        try {
+            const { error: verifyError } = await client.auth.verifyOtp({ email: email, token: otp, type: 'recovery' });
+            if (verifyError) throw verifyError;
+            const { error: updateError } = await client.auth.updateUser({ password: newPassword });
+            if (updateError) throw updateError;
+            alert("Success! Your password has been updated.");
+            window.location.href = "user-dashboard.html";
+        } catch (err) {
+            alert("Error: " + err.message);
+            btn.disabled = false;
+            btn.innerHTML = 'Confirm & Reset Password';
+        }
+    }
+    function toggleFloatingContact() {
+        const popup = document.getElementById('fc-popup');
+        popup.classList.toggle('show');
+        if(popup.classList.contains('show')) {
+            document.getElementById('fc-status').className = 'fc-status';
+            document.getElementById('fc-status').textContent = '';
+        }
+    }
+    async function handleFloatingContactSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('fc-submit-btn');
+        const statusDiv = document.getElementById('fc-status');
+        const form = document.getElementById('fc-form');
+        const payload = {
+            full_name: document.getElementById('fc-name').value.trim(),
+            email: document.getElementById('fc-email').value.trim(),
+            subject: document.getElementById('fc-subject').value,
+            message: document.getElementById('fc-message').value.trim()
+        };
+        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Sending... <i class="fa-solid fa-circle-notch fa-spin"></i>';
+        statusDiv.className = 'fc-status';
+        try {
+            const { error } = await client.from('contact_messages').insert([payload]);
+            if (error) throw error;
+            statusDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> Message sent successfully!';
+            statusDiv.className = 'fc-status success';
+            form.reset();
+            setTimeout(() => { toggleFloatingContact(); }, 3000);
+        } catch (err) {
+            statusDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Failed: ' + (err.message || "Unknown error");
+            statusDiv.className = 'fc-status error';
+        } finally {
+            btn.disabled = false; btn.innerHTML = originalText;
+        }
+    }
     // ==========================================
-    function toggleChat() {
-        document.getElementById('chat-window').classList.toggle('open');
+    // AI CHAT WIDGET LOGIC (ANONYMOUS MODE WITH RATE LIMIT)
+    // ==========================================
+    let aiChatHistory = [];
+    function toggleAiChat() {
+        const chatWindow = document.getElementById('ai-chat-window');
+        const badge = document.getElementById('ai-badge');
+       
+        chatWindow.classList.toggle('open');
+       
+        if (badge) {
+            badge.style.display = 'none';
+        }
     }
-
-    async function sendMsg() {
-        const inp = document.getElementById('chat-input');
+    async function sendAiMsg() {
+        const inp = document.getElementById('ai-chat-input');
         const txt = inp.value.trim();
         if(!txt) return;
-
-        // --- FRONTEND RATE LIMITING LOGIC ---
         const todayStr = new Date().toISOString().split('T')[0];
-        let usageStr = localStorage.getItem('ctm_ai_usage');
+        let usageStr = localStorage.getItem('ctm_ai_anon_usage');
         let aiUsage = usageStr ? JSON.parse(usageStr) : { date: todayStr, count: 0 };
-        
-        // Reset counter if it's a new day
+       
         if (aiUsage.date !== todayStr) {
             aiUsage = { date: todayStr, count: 0 };
         }
-
-        const body = document.getElementById('chat-messages');
-
-        // Block request if over limit
+        const body = document.getElementById('ai-chat-messages');
         if (aiUsage.count >= 15) {
-            body.innerHTML += `<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages to keep the server fair for everyone. Please check back tomorrow!</div>`;
+            body.innerHTML += `<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages. This limit prevents system abuse. Please check back tomorrow!</div>`;
             body.scrollTop = body.scrollHeight;
             inp.value = '';
             return;
         }
-        // ------------------------------------
-
         body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
         inp.value = '';
         body.scrollTop = body.scrollHeight;
-
-        chatHistory.push({ role: 'user', content: txt });
-
+        aiChatHistory.push({ role: 'user', content: txt });
         const loadId = 'loading-' + Date.now();
-        body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic; color:#6B7280;">Thinking...</div>`;
+        body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic; color:#6B7280;">Typing...</div>`;
         body.scrollTop = body.scrollHeight;
-
         try {
-            const { data: { session } } = await client.auth.getSession();
-            if(!session) throw new Error("Please log in to use AI.");
-
-            const recentHistory = chatHistory.length > 6 
-                ? chatHistory.slice(chatHistory.length - 6) 
-                : chatHistory;
-
+            const recentHistory = aiChatHistory.length > 6 ? aiChatHistory.slice(aiChatHistory.length - 6) : aiChatHistory;
             const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`,
-                    'apikey': SUPABASE_ANON_KEY 
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'apikey': SUPABASE_ANON_KEY
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     query: txt,
                     history: recentHistory
                 })
             });
-
             document.getElementById(loadId)?.remove();
-
             if (!response.ok) {
                 const errText = await response.text();
-                throw new Error(`Server returned ${response.status}: ${errText}`);
+                throw new Error(`Server returned ${response.status}`);
             }
-
             const data = await response.json();
             const reply = data.reply || "No response received.";
-            const isError = (reply.startsWith("Error:") || reply.startsWith("System") || reply.startsWith("Config"));
+            const isError = (reply.startsWith("Error:") || reply.startsWith("System"));
             const msgClass = isError ? "msg-error" : "msg-ai";
-            
+           
             body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
-
             if (!isError) {
-                chatHistory.push({ role: 'assistant', content: reply });
-                
-                // Increment counter only on successful API response
+                aiChatHistory.push({ role: 'assistant', content: reply });
                 aiUsage.count += 1;
-                localStorage.setItem('ctm_ai_usage', JSON.stringify(aiUsage));
+                localStorage.setItem('ctm_ai_anon_usage', JSON.stringify(aiUsage));
             }
-            
+           
         } catch (err) {
             document.getElementById(loadId)?.remove();
-            body.innerHTML += `<div class="chat-msg msg-error">Connection Error: ${err.message}</div>`;
+            body.innerHTML += `<div class="chat-msg msg-error">Connection Error: Could not reach AI server.</div>`;
         }
         body.scrollTop = body.scrollHeight;
-    }
-
-    // --- INIT ---
-    window.onload = async () => {
-        const { data: { session } } = await client.auth.getSession();
-        if (!session) { window.location.href = "index.html"; return; }
-        currentUser = session.user;
-
-        const cache = localStorage.getItem(CACHE_KEY);
-        if (cache) {
-            renderData(JSON.parse(cache));
-            fetchData(); 
-        } else {
-            fetchData();
-        }
-    };
-
-    async function fetchData() {
-        try {
-            // SECURITY CHOKEPOINT: Use maybeSingle() to catch the RLS block!
-            const { data: profile, error: profileErr } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).maybeSingle();
-            
-            // If the database refuses to return the profile (RLS lock), they are suspended!
-            if (profileErr || !profile) {
-                alert("Your account access has been restricted by administration. Please contact support.");
-                await client.auth.signOut();
-                localStorage.removeItem(CACHE_KEY);
-                window.location.href = "index.html";
-                return;
-            }
-            
-            userProfile = profile;
-            userCityId = profile.city_id;
-            userAreaId = profile.area_id;
-
-            const [promos, announcements, categories, areas, shops, notifs, myShop, wishlist] = await Promise.all([
-                client.from('promo_banners').select().order('created_at', {ascending: false}),
-                client.from('announcements').select().order('created_at', {ascending: false}),
-                client.from('categories').select().order('name'),
-                client.from('areas').select().eq('city_id', userCityId).order('name'),
-                client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}),
-                client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20),
-                client.from('shops').select('id, status, rejection_reason, is_open').eq('owner_id', currentUser.id).maybeSingle(),
-                client.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id)
-            ]);
-
-            currentUserShop = myShop.data;
-
-            let products = [];
-            const shopIds = shops.data.map(s => s.id);
-            if(shopIds.length > 0) {
-                const { data } = await client.from('products')
-                    .select('shop_id, image_url')
-                    .in('shop_id', shopIds)
-                    .eq('is_available', true)
-                    .limit(500);
-                products = data || [];
-            }
-            
-            const unreadCount = notifs.data ? notifs.data.filter(n => !n.is_read).length : 0;
-
-            const dashboardData = {
-                profile,
-                promos: promos.data,
-                announcements: announcements.data,
-                categories: categories.data,
-                areas: areas.data,
-                shops: shops.data,
-                notifications: notifs.data || [],
-                myShop: myShop.data,
-                wishlistCount: wishlist.count || 0,
-                products,
-                unread: unreadCount
-            };
-
-            localStorage.setItem(CACHE_KEY, JSON.stringify(dashboardData));
-            renderData(dashboardData);
-        } catch (e) { console.error("Fetch error:", e); }
-    }
-
-    function renderData(data) {
-        const areaContainer = document.getElementById('areas-container');
-        if(areaContainer.querySelector('.fa-spin')) areaContainer.innerHTML = '';
-
-        document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
-        const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
-        document.getElementById('header-avatar').src = avatar;
-        document.getElementById('profile-avatar-lg').src = avatar;
-        document.getElementById('profile-name').textContent = data.profile.full_name;
-        document.getElementById('profile-phone').textContent = data.profile.phone || "No phone number added";
-        document.getElementById('profile-email').textContent = currentUser.email;
-
-        if (data.unread > 0) {
-            const b = document.getElementById('badge-count');
-            b.textContent = data.unread > 9 ? '9+' : data.unread;
-            b.style.display = 'block';
-        }
-
-        if (data.announcements && data.announcements.length > 0) {
-            document.getElementById('header-ticker').style.display = 'flex';
-            document.getElementById('ticker-text').textContent = data.announcements.map(a => a.message).join("  •  ");
-        } else {
-            document.getElementById('header-ticker').style.display = 'none';
-        }
-
-        const pList = document.getElementById('promo-list');
-        if (data.promos.length > 0) {
-            pList.style.display = 'flex';
-            pList.innerHTML = data.promos.map(p => 
-                `<div style="min-width:300px; height:160px; border-radius:12px; overflow:hidden; flex-shrink:0;">
-                    <img src="${p.image_url}" style="width:100%; height:100%; object-fit:cover;">
-                 </div>`
-            ).join('');
-        }
-
-        const featured = data.shops.filter(s => s.is_featured);
-        if (featured.length > 0) {
-            document.getElementById('featured-section').style.display = 'block';
-            document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
-        }
-
-        areaContainer.innerHTML = '';
-        const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
-
-        sortedAreas.forEach(area => {
-            const areaShops = data.shops.filter(s => s.area_id === area.id);
-            if(areaShops.length === 0) return;
-
-            const isUser = area.id === userAreaId;
-            const pillClass = isUser ? 'user' : 'other';
-            const iconColor = isUser ? 'var(--color-primary)' : '#F59E0B';
-            const icon = isUser ? '<i class="fa-solid fa-location-crosshairs"></i>' : '<i class="fa-solid fa-location-dot"></i>';
-            const title = isUser ? `Merchants in ${area.name} • Near You` : `Merchants in ${area.name}`;
-
-            areaContainer.innerHTML += `
-                <div class="area-container">
-                    <div class="area-pill ${pillClass}">
-                        <div class="pill-left">
-                            <span style="color:${iconColor}; font-size:1.1rem;">${icon}</span>
-                            <span>${title}</span>
-                        </div>
-                        <button onclick="window.location.href='area.html?id=${area.id}'" style="border:none; background:none; color:var(--color-primary); font-weight:700; cursor:pointer;">See All</button>
-                    </div>
-                    <div class="h-scroll">
-                        ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
-                    </div>
-                </div>
-            `;
-        });
-
-        document.getElementById('category-list').innerHTML = data.categories.map(cat => {
-            const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
-            const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
-            const url = p ? p.image_url : `https://via.placeholder.com/32?text=${cat.name.charAt(0)}`;
-            return `
-                <div class="cat-chip" onclick="window.location.href='cat.html?name=${encodeURIComponent(cat.name)}'">
-                    <img src="${url}"> <span>${cat.name}</span>
-                </div>
-            `;
-        }).join('');
-
-        document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
-
-        const notifListEl = document.getElementById('notif-list');
-        if (data.notifications && data.notifications.length > 0) {
-            notifListEl.innerHTML = data.notifications.map(n => {
-                const date = new Date(n.created_at).toLocaleDateString() + ' ' + new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const bg = n.is_read ? 'white' : '#EFF6FF'; 
-                const border = n.is_read ? '#E5E7EB' : '#BFDBFE'; 
-                const titleColor = n.is_read ? '#1F2937' : '#1E3A8A';
-
-                return `
-                    <div style="background:${bg}; padding:16px; border-radius:12px; border:1px solid ${border}; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                            <span style="font-weight:700; color:${titleColor}; font-size:0.95rem;">${n.title}</span>
-                            <span style="font-size:0.75rem; color:#6B7280;">${date}</span>
-                        </div>
-                        <div style="color:#374151; font-size:0.9rem; line-height:1.4;">${n.message || ''}</div>
-                    </div>
-                `;
-            }).join('');
-        } else {
-            notifListEl.innerHTML = '<p style="color:#9CA3AF; text-align:center; margin-top:20px;">No notifications yet</p>';
-        }
-
-        updateMyShopCardUI(data.myShop);
-        currentUserShop = data.myShop;
-
-        const wishlistCount = data.wishlistCount || 0;
-        document.getElementById('wishlist-count').textContent = `${wishlistCount} items`;
-    }
-
-    function updateMyShopCardUI(shop) {
-        const card = document.getElementById('myshop-card');
-        const iconContainer = card.querySelector('.svc-icon');
-        const textLabel = card.querySelector('strong');
-        
-        let icon = 'fa-store';
-        let bg = '#DBEAFE'; 
-        let color = '#2563EB';
-        let label = 'Register Shop';
-        
-        if (shop) {
-            if (shop.is_open === false) {
-                icon = 'fa-lock'; bg = '#F3F4F6'; color = '#9CA3AF'; label = 'Locked';
-            } 
-            else if (shop.status === 'pending') {
-                icon = 'fa-hourglass-half'; bg = '#FFEDD5'; color = '#EA580C'; label = 'Pending';
-            } 
-            else if (shop.status === 'approved') {
-                icon = 'fa-store'; bg = '#DCFCE7'; color = '#16A34A'; label = 'My Shop';
-            } 
-            else if (shop.status === 'rejected') {
-                icon = 'fa-circle-exclamation'; bg = '#FEE2E2'; color = '#DC2626'; label = 'Rejected';
-            }
-        }
-        
-        iconContainer.style.background = bg;
-        iconContainer.style.color = color;
-        iconContainer.innerHTML = `<i class="fa-solid ${icon}"></i>`;
-        textLabel.textContent = label;
-    }
-
-    function handleShopClick() {
-        if (!currentUserShop) {
-            window.location.href = 'shop-registration.html';
-        }
-        else if (currentUserShop.is_open === false) {
-            alert("🔒 Your shop access has been restricted by administration. Please contact support via support@ct-merchant.com to resolve your account status.");
-        }
-        else if (currentUserShop.status === 'pending') {
-            alert('Your shop application is currently being reviewed. Please check back later.');
-        }
-        else if (currentUserShop.status === 'approved') {
-            window.location.href = 'merchant-dashboard.html';
-        }
-        else if (currentUserShop.status === 'rejected') {
-            alert(`Application Rejected: ${currentUserShop.rejection_reason || 'Please update your details.'}`);
-            window.location.href = `shop-registration.html?id=${currentUserShop.id}`; 
-        }
-    }
-
-    async function openEditProfile() {
-        if(!userProfile) return;
-        document.getElementById('profile-view').style.display = 'none';
-        document.getElementById('profile-edit').style.display = 'block';
-        document.getElementById('edit-name').value = userProfile.full_name || '';
-        document.getElementById('edit-phone').value = userProfile.phone || '';
-
-        if(allCities.length === 0) {
-            const { data } = await client.from('cities')
-                .select('id, name')
-                .or(`is_open.eq.true,id.eq.${userProfile.city_id || 0}`)
-                .order('name');
-                
-            allCities = data || [];
-            const citySelect = document.getElementById('edit-city');
-            citySelect.innerHTML = '<option value="">Select City</option>';
-            allCities.forEach(c => { citySelect.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
-        }
-
-        if(userProfile.city_id) {
-            document.getElementById('edit-city').value = userProfile.city_id;
-            await handleCityChange(userProfile.city_id, userProfile.area_id);
-        }
-    }
-
-    async function handleCityChange(cityId, preSelectAreaId = null) {
-        const areaSelect = document.getElementById('edit-area');
-        areaSelect.innerHTML = '<option value="">Loading...</option>';
-        areaSelect.disabled = true;
-
-        if(!cityId) {
-            areaSelect.innerHTML = '<option value="">Select Area</option>';
-            return;
-        }
-
-        const { data: areas } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
-        
-        areaSelect.innerHTML = '<option value="">Select Area</option>';
-        if(areas) {
-            areas.forEach(a => {
-                areaSelect.innerHTML += `<option value="${a.id}">${a.name}</option>`;
-            });
-        }
-        areaSelect.disabled = false;
-
-        if(preSelectAreaId) {
-            areaSelect.value = preSelectAreaId;
-        }
-    }
-
-    function cancelEdit() {
-        document.getElementById('profile-edit').style.display = 'none';
-        document.getElementById('profile-view').style.display = 'block';
-        document.getElementById('edit-error').style.display = 'none';
-    }
-
-    async function saveProfile() {
-        const name = document.getElementById('edit-name').value.trim();
-        const phone = document.getElementById('edit-phone').value.trim();
-        const cityId = document.getElementById('edit-city').value;
-        const areaId = document.getElementById('edit-area').value;
-        const btn = document.getElementById('btn-save');
-        const err = document.getElementById('edit-error');
-
-        if(!name) { err.textContent = "Full Name is required."; err.style.display = 'block'; return; }
-        if(!cityId || !areaId) { err.textContent = "Please select both City and Area."; err.style.display = 'block'; return; }
-
-        btn.disabled = true;
-        btn.textContent = "Saving...";
-        err.style.display = 'none';
-
-        try {
-            const { error } = await client.from('profiles').update({
-                full_name: name,
-                phone: phone,
-                city_id: parseInt(cityId),
-                area_id: parseInt(areaId)
-            }).eq('id', currentUser.id);
-
-            if(error) throw error;
-            await fetchData();
-            cancelEdit();
-            alert("Profile updated successfully!");
-
-        } catch (e) {
-            err.textContent = e.message || "Error updating profile";
-            err.style.display = 'block';
-        } finally {
-            btn.disabled = false;
-            btn.textContent = "Save Changes";
-        }
-    }
-
-    function buildShopCard(shop, allProducts) {
-        const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url).slice(0, 4);
-        let collage = '';
-        
-        // NEW PROFESSIONAL CSS GRID LOGIC
-        if(p.length === 0) {
-            const fallback = shop.image_url || 'https://via.placeholder.com/240x150?text=No+Image';
-            collage = `<div class="collage c-1"><img src="${fallback}"></div>`;
-        } else if(p.length === 1) {
-            collage = `<div class="collage c-1"><img src="${p[0].image_url}"></div>`;
-        } else if(p.length === 2) {
-            collage = `
-                <div class="collage c-2">
-                    <img src="${p[0].image_url}">
-                    <img src="${p[1].image_url}">
-                </div>`;
-        } else if(p.length === 3) {
-            collage = `
-                <div class="collage c-3">
-                    <img src="${p[0].image_url}">
-                    <img src="${p[1].image_url}">
-                    <img src="${p[2].image_url}">
-                </div>`;
-        } else {
-            collage = `
-                <div class="collage c-4">
-                    <img src="${p[0].image_url}">
-                    <img src="${p[1].image_url}">
-                    <img src="${p[2].image_url}">
-                    <img src="${p[3].image_url}">
-                </div>`;
-        }
-
-        const rawId = shop.unique_id || 'N/A';
-        const displayId = rawId.includes('-') ? rawId.split('-').pop() : rawId;
-
-        return `
-            <div class="shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
-                <div class="img-box">${collage}</div>
-                <div class="info-box">
-                    <div class="s-name">${shop.name}</div>
-                    <span class="s-id-badge">ID: ${displayId}</span>
-                    <div class="s-loc"><i class="fa-solid fa-location-dot"></i> ${shop.address}</div>
-                </div>
-            </div>
-        `;
-    }
-
-    async function handleLogout() {
-        if(confirm("Log out?")) {
-            await client.auth.signOut();
-            window.location.href = "index.html";
-        }
-    }
-    async function markRead() {
-        document.getElementById('badge-count').style.display = 'none';
-        await client.from('notifications').update({is_read: true}).eq('user_id', currentUser.id);
     }
 </script>
 </body>
