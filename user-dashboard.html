@@ -167,17 +167,38 @@
         }
         .shop-card:active { transform: scale(0.98); }
 
-        .img-box { height: 140px; width: 100%; background: #F1F5F9; }
+        /* --- PROFESSIONAL COLLAGE GRID --- */
+        .img-box { 
+            height: 150px; /* Slightly taller for better product view */
+            width: 100%; 
+            background: #F1F5F9; 
+            border-bottom: 1px solid #E5E7EB;
+        }
         
-        .collage { width: 100%; height: 100%; display: flex; flex-wrap: wrap; }
-        .collage img { object-fit: cover; display: block; box-sizing: border-box; border: 0.5px solid white; }
-        .c-1 img { width: 100%; height: 100%; border: none; }
-        .c-2 img { width: 50%; height: 100%; }
-        .c-3 { display: flex; }
-        .c-3 > img:first-child { width: 50%; height: 100%; }
-        .c-3 > div { width: 50%; height: 100%; display: flex; flex-direction: column; }
-        .c-3 > div img { width: 100%; height: 50%; }
-        .c-4 img { width: 50%; height: 50%; }
+        .collage { 
+            width: 100%; 
+            height: 100%; 
+            display: grid; 
+            gap: 1px; /* Creates perfectly thin, crisp separation lines */
+            background: #E2E8F0; /* The color of the separation lines */
+        }
+        
+        .collage img { 
+            width: 100%; 
+            height: 100%;
+            object-fit: contain; /* Guarantees 100% of the image is always visible */
+            background: #FFFFFF; /* Gives every product a clean, professional white background */
+            padding: 4px; /* Adds breathing room around the image so it doesn't touch the borders */
+            display: block; 
+            box-sizing: border-box; 
+        }
+
+        /* Grid Layout Rules */
+        .c-1 { grid-template-columns: 1fr; }
+        .c-2 { grid-template-columns: 1fr 1fr; }
+        .c-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .c-3 img:first-child { grid-row: 1 / 3; } /* First image takes the whole left side */
+        .c-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
 
         .info-box { padding: 10px; }
         .s-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1003,24 +1024,33 @@
     function buildShopCard(shop, allProducts) {
         const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url).slice(0, 4);
         let collage = '';
+        
+        // NEW PROFESSIONAL CSS GRID LOGIC
         if(p.length === 0) {
             const fallback = shop.image_url || 'https://via.placeholder.com/240x150?text=No+Image';
             collage = `<div class="collage c-1"><img src="${fallback}"></div>`;
         } else if(p.length === 1) {
             collage = `<div class="collage c-1"><img src="${p[0].image_url}"></div>`;
         } else if(p.length === 2) {
-            collage = `<div class="collage c-2"><img src="${p[0].image_url}"><img src="${p[1].image_url}"></div>`;
+            collage = `
+                <div class="collage c-2">
+                    <img src="${p[0].image_url}">
+                    <img src="${p[1].image_url}">
+                </div>`;
         } else if(p.length === 3) {
             collage = `
                 <div class="collage c-3">
                     <img src="${p[0].image_url}">
-                    <div><img src="${p[1].image_url}"><img src="${p[2].image_url}"></div>
+                    <img src="${p[1].image_url}">
+                    <img src="${p[2].image_url}">
                 </div>`;
         } else {
             collage = `
                 <div class="collage c-4">
-                    <img src="${p[0].image_url}"><img src="${p[1].image_url}">
-                    <img src="${p[2].image_url}"><img src="${p[3].image_url}">
+                    <img src="${p[0].image_url}">
+                    <img src="${p[1].image_url}">
+                    <img src="${p[2].image_url}">
+                    <img src="${p[3].image_url}">
                 </div>`;
         }
 
