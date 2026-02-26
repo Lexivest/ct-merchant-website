@@ -151,86 +151,155 @@
         .sec-title { font-size: 1.05rem; font-weight: 800; color: #111827; }
 
         .h-scroll {
-            display: flex; overflow-x: auto; gap: 12px; 
+            display: flex; overflow-x: auto; gap: 16px; 
             padding: 0 16px 4px 16px;
-            scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent;
+            scrollbar-width: none; /* Hide for cleaner UI */
+            -ms-overflow-style: none;
         }
-        .h-scroll::-webkit-scrollbar { height: 0px; }
+        .h-scroll::-webkit-scrollbar { display: none; }
 
-        .shop-card {
-            min-width: 220px; width: 220px;
-            background: white; border-radius: 12px;
-            border: 1px solid #E5E7EB; overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer;
-            display: flex; flex-direction: column; flex-shrink: 0;
-            transition: transform 0.2s;
+        /* =========================================
+           NEW: PROFESSIONAL SHOP BLOCK LAYOUT
+           ========================================= */
+        .shop-list-view {
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            padding: 0 16px 20px 16px;
         }
-        .shop-card:active { transform: scale(0.98); }
 
-        /* --- PROFESSIONAL COLLAGE GRID --- */
-        .img-box { 
-            height: 150px; 
-            width: 100%; 
-            background: #FFFFFF; /* Pure white base */
-            border-bottom: 1px solid #E5E7EB;
-            overflow: hidden; 
+        .shop-block {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #E5E7EB;
+            padding: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            width: 100%;
         }
+
+        .h-scroll .shop-block {
+            min-width: 320px;
+            width: 85vw;
+            max-width: 500px;
+            flex-shrink: 0;
+        }
+
+        .shop-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #F3F4F6;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+
+        .s-name { font-weight: 800; font-size: 1.1rem; color: #111827; margin-bottom: 4px; }
         
-        .collage { 
-            width: 100%; 
-            height: 100%; 
-            display: grid; 
-            gap: 1px; 
-            background: #E5E7EB; /* Subtle divider lines */
-        }
-        
-        .collage img { 
-            width: 100%; 
-            height: 100%;
-            min-height: 0; 
-            min-width: 0;  
-            object-fit: contain; /* NEVER cut the image */
-            background: #FFFFFF; /* Matches the empty space seamlessly */
-            display: block; 
-        }
-
-        /* Strict Grid Layout Rules */
-        .c-1 { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
-        .c-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); }
-        .c-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
-        .c-3 img:first-child { grid-row: 1 / 3; } /* First image spans both rows */
-        .c-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
-
-        .info-box { padding: 10px; }
-        .s-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        /* CT ID Style */
         .s-id-badge { 
             display: inline-block; 
             font-size: 0.7rem; 
             font-weight: 700; 
-            color: #1E40AF; /* Dark Blue */
-            background: #EFF6FF; /* Light Blue */
-            padding: 2px 6px; 
-            border-radius: 4px; 
+            color: #1E40AF; 
+            background: #EFF6FF; 
+            padding: 4px 8px; 
+            border-radius: 6px; 
             border: 1px solid #DBEAFE;
-            margin-bottom: 6px; 
+            margin-bottom: 8px; 
         }
 
-        .s-loc { font-size: 0.75rem; color: #6B7280; display: flex; align-items: center; gap: 4px; }
+        .s-loc { font-size: 0.8rem; color: #6B7280; display: flex; align-items: center; gap: 6px; font-weight: 500; }
+
+        .visit-btn {
+            background: #F8FAFC;
+            color: var(--color-primary);
+            border: 1px solid #E2E8F0;
+            padding: 8px 14px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .visit-btn:hover { background: #ECFDF5; border-color: #A7F3D0; }
+
+        /* Product Row inside Shop */
+        .product-scroll-row {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: none;
+        }
+        .product-scroll-row::-webkit-scrollbar { display: none; }
+
+        .product-card {
+            min-width: 140px;
+            width: 140px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .product-card:active { transform: scale(0.96); }
+
+        /* Flexible Image Container - Never Cuts The Image */
+        .product-img-wrap {
+            width: 100%;
+            height: 140px;
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 8px; /* Breathing room */
+        }
+        
+        .product-img-wrap img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Guarantees whole image is visible */
+            display: block;
+        }
+
+        .product-info { display: flex; flex-direction: column; gap: 2px; }
+        
+        .product-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #374151;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .product-price {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--color-primary);
+        }
 
         /* Areas */
         .area-container { margin-bottom: 0; padding-bottom: 0; }
         .area-pill { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 8px 12px; border-radius: 8px; 
-            margin: 4px 16px 4px 16px; 
+            margin: 4px 16px 12px 16px; 
         }
         .area-pill.user { background: #DCFCE7; }
         .area-pill.other { background: #FEF3C7; }
         .pill-left { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #1F2937; }
 
-        .cat-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 8px 16px; }
+        .cat-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 16px 16px; }
         .cat-chip {
             background: white; border: 1px solid #E5E7EB; border-radius: 50px;
             padding: 6px 14px 6px 6px; display: flex; align-items: center; gap: 8px;
@@ -239,10 +308,6 @@
         .cat-chip img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; }
         .cat-chip span { font-size: 0.85rem; font-weight: 700; color: #374151; }
 
-        .shop-grid-view { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
-            gap: 12px; padding: 0 16px 20px 16px;
-        }
         .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding: 20px 16px; }
         .svc-card {
             background: white; padding: 20px 16px; border-radius: 12px; text-align: center;
@@ -433,7 +498,7 @@
                 <div class="sec-bar" style="background: #374151;"></div>
                 <div class="sec-title">All Shops</div>
             </div>
-            <div id="all-shops-grid" class="shop-grid-view"></div>
+            <div id="all-shops-grid" class="shop-list-view"></div>
         </div>
 
         <!-- SERVICES -->
@@ -738,8 +803,9 @@
             let products = [];
             const shopIds = shops.data.map(s => s.id);
             if(shopIds.length > 0) {
+                // Fetch all columns so we can try to extract names/prices safely
                 const { data } = await client.from('products')
-                    .select('shop_id, image_url')
+                    .select('*')
                     .in('shop_id', shopIds)
                     .eq('is_available', true)
                     .limit(500);
@@ -1022,49 +1088,54 @@
         }
     }
 
+    // =========================================
+    // NEW: SHOP BLOCK UI BUILDER
+    // =========================================
     function buildShopCard(shop, allProducts) {
-        const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url).slice(0, 4);
-        let collage = '';
+        // Fetch up to 8 distinct products for this specific shop
+        const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url).slice(0, 8);
         
-        // NEW PROFESSIONAL CSS GRID LOGIC
-        if(p.length === 0) {
-            const fallback = shop.image_url || 'https://via.placeholder.com/240x150?text=No+Image';
-            collage = `<div class="collage c-1"><img src="${fallback}"></div>`;
-        } else if(p.length === 1) {
-            collage = `<div class="collage c-1"><img src="${p[0].image_url}"></div>`;
-        } else if(p.length === 2) {
-            collage = `
-                <div class="collage c-2">
-                    <img src="${p[0].image_url}">
-                    <img src="${p[1].image_url}">
-                </div>`;
-        } else if(p.length === 3) {
-            collage = `
-                <div class="collage c-3">
-                    <img src="${p[0].image_url}">
-                    <img src="${p[1].image_url}">
-                    <img src="${p[2].image_url}">
-                </div>`;
-        } else {
-            collage = `
-                <div class="collage c-4">
-                    <img src="${p[0].image_url}">
-                    <img src="${p[1].image_url}">
-                    <img src="${p[2].image_url}">
-                    <img src="${p[3].image_url}">
-                </div>`;
-        }
-
         const rawId = shop.unique_id || 'N/A';
         const displayId = rawId.includes('-') ? rawId.split('-').pop() : rawId;
 
+        let productsHtml = '';
+        
+        if (p.length === 0) {
+            productsHtml = `<p style="color:#9CA3AF; font-size:0.85rem; padding: 10px 0;">No products uploaded yet.</p>`;
+        } else {
+            productsHtml = p.map(item => {
+                // Safely grab names/prices if they exist in the DB, otherwise fallback gracefully
+                const itemName = item.name || item.product_name || item.title || 'Product Item';
+                const itemPrice = item.price || item.product_price ? `₦${(item.price || item.product_price).toLocaleString()}` : '';
+                
+                return `
+                    <div class="product-card" onclick="event.stopPropagation(); window.location.href='shop-detail.html?id=${shop.id}'">
+                        <div class="product-img-wrap">
+                            <img src="${item.image_url}" alt="Product">
+                        </div>
+                        <div class="product-info">
+                            <div class="product-title" title="${itemName}">${itemName}</div>
+                            <div class="product-price">${itemPrice}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Return the full "Shop Block" layout
         return `
-            <div class="shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
-                <div class="img-box">${collage}</div>
-                <div class="info-box">
-                    <div class="s-name">${shop.name}</div>
-                    <span class="s-id-badge">ID: ${displayId}</span>
-                    <div class="s-loc"><i class="fa-solid fa-location-dot"></i> ${shop.address}</div>
+            <div class="shop-block" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
+                <div class="shop-block-header">
+                    <div>
+                        <div class="s-name">${shop.name}</div>
+                        <span class="s-id-badge">ID: ${displayId}</span>
+                        <div class="s-loc"><i class="fa-solid fa-location-dot"></i> ${shop.address}</div>
+                    </div>
+                    <button class="visit-btn">Visit <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+                
+                <div class="product-scroll-row">
+                    ${productsHtml}
                 </div>
             </div>
         `;
