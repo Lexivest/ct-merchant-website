@@ -31,10 +31,9 @@
     .pane-img {
         grid-column: 1;
         grid-row: 1;
-        /* Changed to 'cover' to fill all horizontal gaps */
         background: url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg') top center/cover no-repeat;
         justify-content: flex-end;
-        min-height: 50vh; /* Takes up top half of the left side */
+        min-height: 50vh;
     }
     .features-glass-bar {
         background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -46,10 +45,8 @@
         grid-column: 2;
         grid-row: 1 / span 3;
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: white;
-        /* Padding top set to 0px so text aligns perfectly with the top edge of the image */
         padding: 0px 10% 40px 10%; 
         border-left: 1px solid rgba(255,255,255,0.1); box-shadow: -15px 0 40px rgba(0,0,0,0.6); z-index: 2;
-        /* Flex-start ensures the contents push to the top */
         justify-content: flex-start; 
     }
     .repo-badge {
@@ -71,8 +68,7 @@
     .id-hint { margin-top: 6px; font-size: 0.8rem; font-weight: 600; color: #facc15; display: flex; align-items: center; gap: 4px; }
     .search-label { font-size: 1rem; font-weight: 600; color: #facc15; margin-bottom: 8px; }
     .hero-title { 
-        font-size: 2.2rem; font-weight: 800; margin-bottom: 0px; min-height: 40px; 
-        margin-top: 0px; /* Force title to sit flush against the top edge */
+        font-size: 2.2rem; font-weight: 800; margin-bottom: 0px; min-height: 40px; margin-top: 0px; 
     }
     .cursor { display: inline-block; width: 3px; background-color: #db2777; animation: blink 1s step-end infinite; }
     @keyframes blink { 50% { opacity: 0; } }
@@ -108,50 +104,65 @@
     .hero-auth-widget .btn-create-account { display: block; width: 100%; text-align: center; padding: 12px; border: 2px solid rgba(219, 39, 119, 0.3); background: rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-weight: 700; text-decoration: none; transition: all 0.3s ease; font-size: 1rem; }
     .hero-auth-widget .btn-create-account:hover { background: rgba(219, 39, 119, 0.2); border-color: #db2777; }
    
-    /* NEW: TRUST METRICS BELOW LOGIN */
-    .trust-metrics-container {
-        display: flex;
-        gap: 15px;
+    /* TRUST METRICS SECTION */
+    .trust-metrics-container { display: flex; gap: 15px; width: 100%; max-width: 450px; margin-top: 30px; flex-wrap: wrap; }
+    .trust-metric-box { flex: 1; min-width: 150px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 16px; border-radius: 16px; display: flex; align-items: center; gap: 14px; transition: transform 0.3s ease, background 0.3s ease; }
+    .trust-metric-box:hover { transform: translateY(-4px); background: rgba(255, 255, 255, 0.08); }
+    .trust-metric-box i { font-size: 1.8rem; color: #10b981; }
+    .trust-metric-box .tm-text h4 { margin: 0; color: #ffffff; font-size: 1.1rem; font-weight: 800; line-height: 1.2; }
+    .trust-metric-box .tm-text p { margin: 4px 0 0 0; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+
+    /* MERCHANT ONBOARDING CYCLE */
+    .merchant-journey-wrapper {
+        margin-top: 30px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 24px;
         width: 100%;
         max-width: 450px;
-        margin-top: 30px;
-        flex-wrap: wrap;
+        box-sizing: border-box;
     }
-    .trust-metric-box {
-        flex: 1;
-        min-width: 150px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 16px;
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        transition: transform 0.3s ease, background 0.3s ease;
+    .mj-title {
+        color: white; font-size: 1.1rem; font-weight: 800; margin-top: 0; margin-bottom: 24px;
+        display: flex; align-items: center; gap: 8px;
     }
-    .trust-metric-box:hover {
-        transform: translateY(-4px);
-        background: rgba(255, 255, 255, 0.08);
+    .mj-title i { color: #facc15; }
+    .mj-timeline {
+        position: relative;
+        padding-left: 32px;
     }
-    .trust-metric-box i {
-        font-size: 1.8rem;
-        color: #10b981; /* Emerald green for trust */
+    .mj-timeline::before {
+        content: ''; position: absolute; left: 11px; top: 4px; bottom: 4px;
+        width: 2px; background: rgba(255, 255, 255, 0.1);
     }
-    .trust-metric-box .tm-text h4 {
-        margin: 0;
-        color: #ffffff;
-        font-size: 1.1rem;
-        font-weight: 800;
-        line-height: 1.2;
+    .mj-item { position: relative; margin-bottom: 22px; }
+    .mj-item:last-child { margin-bottom: 0; }
+    .mj-icon {
+        position: absolute; left: -32px; top: 0;
+        width: 24px; height: 24px; border-radius: 50%;
+        background: #1e1b4b; border: 2px solid #db2777;
+        display: flex; align-items: center; justify-content: center; z-index: 2;
     }
-    .trust-metric-box .tm-text p {
-        margin: 4px 0 0 0;
-        color: #94a3b8;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 700;
+    .mj-icon i { font-size: 10px; color: #db2777; }
+    .mj-content h4 { margin: 0 0 4px 0; color: #e2e8f0; font-size: 0.95rem; font-weight: 700; }
+    .mj-content p { margin: 0; color: #94a3b8; font-size: 0.8rem; line-height: 1.4; }
+    .mj-badge-fee {
+        display: inline-block; background: rgba(245, 158, 11, 0.2); color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 6px; border-radius: 4px;
+        font-size: 0.65rem; font-weight: 800; margin-left: 6px; vertical-align: middle;
     }
+    
+    .mj-pricing-box {
+        margin-top: 24px;
+        background: linear-gradient(90deg, rgba(219, 39, 119, 0.15) 0%, rgba(219, 39, 119, 0) 100%);
+        border-left: 3px solid #db2777;
+        padding: 14px 16px;
+        border-radius: 0 8px 8px 0;
+    }
+    .mj-pricing-text { color: #cbd5e1; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .mj-pricing-amount { color: white; font-size: 1.6rem; font-weight: 800; margin-top: 4px; display: flex; align-items: baseline; gap: 4px; }
+    .mj-pricing-amount span { font-size: 0.85rem; color: #94a3b8; font-weight: 500; }
 
     .pane-white .repo-badge { background: rgba(0, 0, 0, 0.05); border: 1px solid rgba(0, 0, 0, 0.1); color: #1e293b; }
     .pane-white .hero-pro-text { color: #475569; }
@@ -170,7 +181,7 @@
         .pane-dark { grid-column: 1; grid-row: 2; padding-top: 40px; border-left: none; box-shadow: none; }
         .pane-light { grid-column: 1; grid-row: 3; }
         .pane-white { grid-column: 1; grid-row: 4; }
-        .hero-auth-widget, .trust-metrics-container { margin-left: auto; margin-right: auto; }
+        .hero-auth-widget, .trust-metrics-container, .merchant-journey-wrapper { margin-left: auto; margin-right: auto; }
     }
     @media (max-width: 600px) {
         .hero-title { font-size: 1.8rem; }
@@ -191,12 +202,7 @@
     .forgot-password { display: block; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); text-decoration: none; margin-top: 8px; margin-bottom: 12px; cursor: pointer; text-align: right; }
     .forgot-password:hover { color: #db2777; }
     
-    /* FIX: Ensure the main navigation bar is sticky so the content scrolls below it naturally */
-    .main-header {
-        position: sticky !important;
-        top: 0;
-        z-index: 9999;
-    }
+    .main-header { position: sticky !important; top: 0; z-index: 9999; }
 
     /* =========================================
        MODAL STYLES
@@ -421,11 +427,67 @@
                 </div>
             </div>
             <div class="trust-metric-box">
-                <i class="fa-solid fa-users-viewfinder"></i>
+                <i class="fa-solid fa-handshake-angle"></i>
                 <div class="tm-text">
-                    <h4>5,000+</h4>
-                    <p>Local Merchants</p>
+                    <h4>Zero Fraud</h4>
+                    <p>Secure Marketplace</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- NEW MERCHANT ONBOARDING CYCLE -->
+        <div class="merchant-journey-wrapper">
+            <h3 class="mj-title"><i class="fa-solid fa-route"></i> Merchant Onboarding Journey</h3>
+            
+            <div class="mj-timeline">
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-user-plus"></i></div>
+                    <div class="mj-content">
+                        <h4>1. Create Account</h4>
+                        <p>Sign up securely to join the platform.</p>
+                    </div>
+                </div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-shop"></i></div>
+                    <div class="mj-content">
+                        <h4>2. Register Your Shop</h4>
+                        <p>Input your local business details.</p>
+                    </div>
+                </div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-location-dot"></i></div>
+                    <div class="mj-content">
+                        <h4>3. Physical Verification <span class="mj-badge-fee">₦5,000 Fee</span></h4>
+                        <p>On-site inspection to guarantee marketplace trust.</p>
+                    </div>
+                </div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-id-card-clip"></i></div>
+                    <div class="mj-content">
+                        <h4>4. Unique Digital Profile</h4>
+                        <p>Receive your custom URL and CT-Merchant ID.</p>
+                    </div>
+                </div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-bullhorn"></i></div>
+                    <div class="mj-content">
+                        <h4>5. Upload Inventory & Promos</h4>
+                        <p>Post banners, news, new/fairly used products, and special offers.</p>
+                    </div>
+                </div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-tents"></i></div>
+                    <div class="mj-content">
+                        <h4>6. Yearly Trade Fair</h4>
+                        <p>Exclusive access to physical exhibitions and networking events.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRICING BADGE -->
+            <div class="mj-pricing-box">
+                <div class="mj-pricing-text">All-Inclusive Platform Access</div>
+                <div class="mj-pricing-amount">₦10,000 <span>/ year</span></div>
             </div>
         </div>
 
