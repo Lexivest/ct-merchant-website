@@ -25,55 +25,27 @@
         }
 
         /* RESET */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body.auth-body {
-            min-height: 100vh;
-            width: 100%;
-            overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            min-height: 100vh; width: 100%; overflow-x: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             background: linear-gradient(135deg, var(--color-purple), #6b21a8, var(--color-pink));
-            padding: 2rem 1rem;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            padding: 2rem 1rem; font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         .home-btn {
-            position: fixed;
-            top: 1.5rem;
-            left: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background-color: var(--color-pink);
-            color: white;
-            padding: 0.625rem 1.25rem;
-            border-radius: 9999px;
-            box-shadow: var(--shadow-lg);
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            z-index: 100;
-            transition: var(--transition);
+            position: fixed; top: 1.5rem; left: 1.5rem; display: flex; align-items: center; gap: 0.5rem;
+            background-color: var(--color-pink); color: white; padding: 0.625rem 1.25rem;
+            border-radius: 9999px; box-shadow: var(--shadow-lg); text-decoration: none;
+            font-weight: 700; font-size: 0.875rem; text-transform: uppercase; z-index: 100; transition: var(--transition);
         }
         .home-btn:hover { background-color: var(--color-pink-hover); transform: translateX(-4px); }
 
         .auth-card {
-            background-color: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            width: 100%;
-            max-width: 440px;
-            padding: 2.5rem;
-            border-radius: 1.5rem;
-            box-shadow: var(--shadow-2xl);
-            position: relative;
+            background-color: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);
+            width: 100%; max-width: 440px; padding: 2.5rem; border-radius: 1.5rem;
+            box-shadow: var(--shadow-2xl); position: relative;
         }
 
         .auth-header { text-align: center; margin-bottom: 2rem; }
@@ -89,36 +61,19 @@
         .input-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
         
         .auth-input {
-            width: 100%;
-            padding: 0.8rem 1rem 0.8rem 2.75rem;
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.8rem;
-            font-size: 0.95rem;
-            transition: var(--transition);
-            outline: none;
-            display: block;
+            width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc;
+            border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem;
+            transition: var(--transition); outline: none; display: block;
         }
         .auth-input:focus { border-color: var(--color-pink); box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); background: white; }
-        
         select.auth-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
 
         .pass-toggle { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; background: none; border: none; cursor: pointer; z-index: 5; }
 
         .btn-primary {
-            width: 100%;
-            background-color: var(--color-purple);
-            color: white;
-            padding: 1rem;
-            border-radius: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            box-shadow: var(--shadow-lg);
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-            margin-top: 0.5rem;
+            width: 100%; background-color: var(--color-purple); color: white; padding: 1rem;
+            border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+            box-shadow: var(--shadow-lg); border: none; cursor: pointer; transition: var(--transition); margin-top: 0.5rem;
         }
         .btn-primary:hover { background-color: var(--color-pink); transform: translateY(-1px); }
         .btn-primary:disabled { background-color: #cbd5e1; cursor: not-allowed; }
@@ -137,27 +92,49 @@
         .link-highlight { color: var(--color-pink); font-weight: 700; text-decoration: none; cursor: pointer; background: none; border: none; font-size: inherit; }
         .link-highlight:hover { text-decoration: underline; }
 
-        /* =========================================
-           MODAL STYLES (Synchronized with index.html)
-           ========================================= */
+        /* General Modal Overlay */
         .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+        .hidden { display: none !important; }
+
+        /* White Profile/Terms Modal */
         .modal-card { background: white; border-radius: 1.5rem; max-width: 400px; width: 100%; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: left; }
         .modal-title { font-size: 1.25rem; font-weight: 800; color: #2E1065; text-align: center; margin-bottom: 0.5rem; }
         .modal-subtitle { color: #64748b; font-size: 0.875rem; text-align: center; margin-bottom: 1.5rem; }
-        .hidden { display: none !important; }
-        
         .modal-input-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
         .modal-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.25rem; }
         .modal-input-wrapper { position: relative; width: 100%; }
         .modal-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
-        
         .modal-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem; outline: none; transition: all 0.3s ease; color: #0f172a; }
         .modal-input:focus { border-color: #db2777; box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); background: white; }
         select.modal-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
-        
         .btn-primary-modal { width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-primary-modal:hover { background-color: #db2777; transform: translateY(-1px); }
-        .btn-primary-modal:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+
+        /* =========================================
+           EXACT HOME SCREEN LOGIN WIDGET CSS
+           ========================================= */
+        .hero-auth-widget { 
+            background: rgba(15, 23, 42, 0.95); /* Solid dark slate for modal */
+            border: 1px solid rgba(219, 39, 119, 0.3); 
+            padding: 30px 24px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 40px rgba(219, 39, 119, 0.4); 
+            width: 100%; 
+            max-width: 400px; 
+            margin: auto; 
+        }
+        .hero-auth-widget .widget-title { font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+        .input-group-hero { position: relative; margin-bottom: 12px; }
+        .input-group-hero i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); font-size: 1rem; pointer-events: none; }
+        .input-group-hero i.toggle-password { left: auto; right: 14px; cursor: pointer; pointer-events: auto; transition: color 0.2s; }
+        .input-group-hero i.toggle-password:hover { color: var(--color-pink); }
+        .hero-input-login { width: 100%; padding: 12px 40px 12px 40px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: white; font-size: 1rem; outline: none; transition: all 0.3s ease; box-sizing: border-box; }
+        .hero-input-login::placeholder { color: rgba(255, 255, 255, 0.6); }
+        .hero-input-login:focus { background: rgba(255, 255, 255, 0.2); border-color: var(--color-pink); box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.15); }
+        .btn-login-hero { width: 100%; background: var(--color-pink); color: white; font-weight: 800; padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-size: 1.05rem; transition: transform 0.2s, background-color 0.2s; display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; }
+        .btn-login-hero:hover { background: var(--color-pink-hover); transform: translateY(-2px); }
+        .forgot-password { display: block; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); text-decoration: none; margin-top: 8px; margin-bottom: 12px; cursor: pointer; text-align: right; }
+        .forgot-password:hover { color: var(--color-pink); }
 
         .spinner { width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -332,32 +309,34 @@
         </div>
     </div>
 
-    <!-- Login Modal (Now using index.html styles) -->
+    <!-- EXACT COPY OF HOME SCREEN LOGIN WIDGET AS A MODAL -->
     <div id="login-modal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <h2 class="modal-title">Welcome Back</h2>
-            <p class="modal-subtitle">Access your merchant dashboard</p>
+        <div class="hero-auth-widget">
+            <div class="widget-title">
+                <i class="fa-solid fa-lock"></i> Users Login
+            </div>
             
             <form onsubmit="event.preventDefault(); handleLogin();">
-                <div class="modal-input-group">
-                    <label class="modal-label">Email Address</label>
-                    <div class="modal-input-wrapper">
-                        <span class="modal-icon"><i class="fa-solid fa-envelope"></i></span>
-                        <input type="email" id="login-email" required class="modal-input" placeholder="name@example.com">
-                    </div>
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="login-email" class="hero-input-login" placeholder="Email Address" required>
                 </div>
                 
-                <div class="modal-input-group">
-                    <label class="modal-label">Password</label>
-                    <div class="modal-input-wrapper">
-                        <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
-                        <input type="password" id="login-password" required class="modal-input" placeholder="••••••••">
-                    </div>
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="login-password" class="hero-input-login" placeholder="Password" required>
+                    <i class="fa-solid fa-eye-slash toggle-password" id="login-eye-icon" onclick="toggleLoginPassword()"></i>
                 </div>
-
-                <button type="submit" class="btn-primary-modal" id="btn-login-submit">Sign In <i class="fa-solid fa-arrow-right"></i></button>
                 
-                <button type="button" onclick="closeModal('login-modal')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
+                <a href="index.html" class="forgot-password">Forgot password?</a>
+                
+                <button type="submit" id="btn-login-submit" class="btn-login-hero">
+                    Secure Sign In <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                
+                <button type="button" onclick="closeModal('login-modal')" style="background: none; border: none; color: rgba(255,255,255,0.6); width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; text-transform: uppercase;">
+                    Cancel
+                </button>
             </form>
         </div>
     </div>
@@ -492,8 +471,8 @@
 
         async function saveGoogleProfile() {
             const phone = document.getElementById('google-phone').value.trim();
-            const cityId = googleCitySelect.value;
-            const areaId = googleAreaSelect.value;
+            const cityId = document.getElementById('google-city').value;
+            const areaId = document.getElementById('google-area').value;
             const btn = document.getElementById('google-complete-btn');
 
             if (!phone || !cityId || !areaId) {
@@ -542,6 +521,22 @@
             input.type = input.type === 'password' ? 'text' : 'password';
             icon.classList.toggle('fa-eye-slash');
             icon.style.color = input.type === 'text' ? 'var(--color-pink)' : '';
+        }
+
+        function toggleLoginPassword() {
+            const password = document.getElementById('login-password');
+            const icon = document.getElementById('login-eye-icon');
+            if (password.type === 'password') {
+                password.type = 'text'; 
+                icon.classList.remove('fa-eye-slash'); 
+                icon.classList.add('fa-eye');
+                icon.style.color = 'var(--color-pink)';
+            } else {
+                password.type = 'password'; 
+                icon.classList.remove('fa-eye'); 
+                icon.classList.add('fa-eye-slash');
+                icon.style.color = 'rgba(255, 255, 255, 0.6)';
+            }
         }
 
         function showStatus(txt, type) {
@@ -646,7 +641,7 @@
             } catch (error) {
                 alert(error.message);
                 btn.disabled = false;
-                btn.innerHTML = 'Sign In <i class="fa-solid fa-arrow-right"></i>';
+                btn.innerHTML = 'Secure Sign In <i class="fa-solid fa-arrow-right"></i>';
             }
         }
     </script>
