@@ -31,7 +31,8 @@
     .pane-img {
         grid-column: 1;
         grid-row: 1;
-        background: url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg') top center/contain no-repeat;
+        /* Changed to 'cover' to fill all horizontal gaps */
+        background: url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg') top center/cover no-repeat;
         justify-content: flex-end;
         min-height: 50vh; /* Takes up top half of the left side */
     }
@@ -45,7 +46,11 @@
         grid-column: 2;
         grid-row: 1 / span 3;
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: white;
-        padding: 60px 10% 40px 10%; border-left: 1px solid rgba(255,255,255,0.1); box-shadow: -15px 0 40px rgba(0,0,0,0.6); z-index: 2;
+        /* Padding top set to 0px so text aligns perfectly with the top edge of the image */
+        padding: 0px 10% 40px 10%; 
+        border-left: 1px solid rgba(255,255,255,0.1); box-shadow: -15px 0 40px rgba(0,0,0,0.6); z-index: 2;
+        /* Flex-start ensures the contents push to the top */
+        justify-content: flex-start; 
     }
     .repo-badge {
         background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
@@ -65,12 +70,15 @@
     .search-icon-btn:hover { color: #db2777; }
     .id-hint { margin-top: 6px; font-size: 0.8rem; font-weight: 600; color: #facc15; display: flex; align-items: center; gap: 4px; }
     .search-label { font-size: 1rem; font-weight: 600; color: #facc15; margin-bottom: 8px; }
-    .hero-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 0px; min-height: 40px; }
+    .hero-title { 
+        font-size: 2.2rem; font-weight: 800; margin-bottom: 0px; min-height: 40px; 
+        margin-top: 0px; /* Force title to sit flush against the top edge */
+    }
     .cursor { display: inline-block; width: 3px; background-color: #db2777; animation: blink 1s step-end infinite; }
     @keyframes blink { 50% { opacity: 0; } }
     .hero-desc { font-size: 1rem; color: #94a3b8; margin-top: 4px; font-weight: 500; }
    
-    /* BOTTOM LEFT: VALUE PROPOSITION */
+    /* BOTTOM LEFT 1: VALUE PROPOSITION */
     .pane-light { grid-column: 1; grid-row: 2; background: rgba(248, 250, 252, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 40px 10%; border-top: 1px solid #e2e8f0; }
     .value-title { font-size: 2.2rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
     .value-desc { font-size: 1.1rem; color: #475569; line-height: 1.6; margin-bottom: 20px; }
@@ -110,9 +118,9 @@
     .pane-white .id-hint { color: #d97706; }
    
     @media (max-width: 900px) {
-        .split-layout-grid { grid-template-columns: 1fr; padding-top: 60px; }
+        .split-layout-grid { grid-template-columns: 1fr; }
         .pane-img { grid-column: 1; grid-row: 1; min-height: 50vh; }
-        .pane-dark { grid-column: 1; grid-row: 2; padding-top: 0; border-left: none; box-shadow: none; }
+        .pane-dark { grid-column: 1; grid-row: 2; padding-top: 40px; border-left: none; box-shadow: none; }
         .pane-light { grid-column: 1; grid-row: 3; }
         .pane-white { grid-column: 1; grid-row: 4; }
         .hero-auth-widget { margin: 0 auto; }
@@ -135,6 +143,14 @@
   
     .forgot-password { display: block; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); text-decoration: none; margin-top: 8px; margin-bottom: 12px; cursor: pointer; text-align: right; }
     .forgot-password:hover { color: #db2777; }
+    
+    /* FIX: Ensure the main navigation bar is sticky so the content scrolls below it naturally */
+    .main-header {
+        position: sticky !important;
+        top: 0;
+        z-index: 9999;
+    }
+
     /* =========================================
        MODAL STYLES
        ========================================= */
