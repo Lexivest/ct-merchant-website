@@ -24,18 +24,24 @@
        ========================================= */
     .split-layout-grid {
         display: grid;
-        grid-template-columns: 50% 50%;
+        /* Slightly adjusted grid so the image gets more horizontal breathing room */
+        grid-template-columns: 55% 45%;
         width: 100%;
         background: #ffffff;
-        /* THE FIX: Snaps perfectly to the screen height minus the navbar */
         min-height: calc(100vh - 75px);
     }
     .split-pane { display: flex; flex-direction: column; justify-content: center; position: relative; }
       
-    /* TOP LEFT: IMAGE PANEL */
+    /* TOP LEFT: IMAGE PANEL (THE FIX IS HERE) */
     .pane-img {
-        /* THE FIX: Center the image focal point and let it scale smartly */
-        background: url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg') center center/cover no-repeat;
+        /* Soft framing background color */
+        background-color: #f1f5f9; 
+        /* The magic 'contain' keyword guarantees the whole image is visible */
+        background-image: url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg');
+        background-position: center center;
+        background-size: contain; 
+        background-repeat: no-repeat;
+        
         justify-content: flex-end; 
     }
     .features-glass-bar {
@@ -48,7 +54,6 @@
     .pane-dark {
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: white;
         padding: 40px 10%; border-left: 1px solid rgba(255,255,255,0.1); box-shadow: -15px 0 40px rgba(0,0,0,0.6); z-index: 2; 
-        /* THE FIX: Vertically centers all the content */
         display: flex; flex-direction: column; justify-content: center;
     }
     .repo-badge {
@@ -117,7 +122,7 @@
         .split-layout-grid { grid-template-columns: 1fr; padding-top: 60px; min-height: auto; }
         .pane-dark, .pane-white { border-left: none; box-shadow: none; }
         .pane-dark { padding-top: 40px; }
-        .pane-img { min-height: 50vh; }
+        .pane-img { min-height: 50vh; background-size: cover; /* Reverts to cover on mobile so it doesn't look tiny */ }
         .hero-auth-widget { margin: 0 auto; }
     }
     @media (max-width: 600px) {
@@ -151,7 +156,7 @@
     .modal-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.25rem; }
     .modal-input-wrapper { position: relative; width: 100%; }
     .modal-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
-    .modal-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem; outline: none; transition: all 0.3s ease; color: #0f172a; box-sizing: border-box; }
+    .modal-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem; outline: none; transition: all 0.3s ease; color: #0f172a; box-sizing: border-box;}
     .modal-input:focus { border-color: #db2777; box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); background: white; }
     select.modal-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
     .btn-primary-modal { width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px; box-sizing: border-box; }
