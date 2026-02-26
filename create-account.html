@@ -110,18 +110,11 @@
         .btn-primary-modal { width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-primary-modal:hover { background-color: #db2777; transform: translateY(-1px); }
 
-        /* =========================================
-           EXACT HOME SCREEN LOGIN WIDGET CSS
-           ========================================= */
+        /* EXACT HOME SCREEN LOGIN WIDGET CSS */
         .hero-auth-widget { 
-            background: rgba(15, 23, 42, 0.95); /* Solid dark slate for modal */
-            border: 1px solid rgba(219, 39, 119, 0.3); 
-            padding: 30px 24px; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 40px rgba(219, 39, 119, 0.4); 
-            width: 100%; 
-            max-width: 400px; 
-            margin: auto; 
+            background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(219, 39, 119, 0.3); 
+            padding: 30px 24px; border-radius: 20px; box-shadow: 0 10px 40px rgba(219, 39, 119, 0.4); 
+            width: 100%; max-width: 400px; margin: auto; 
         }
         .hero-auth-widget .widget-title { font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
         .input-group-hero { position: relative; margin-bottom: 12px; }
@@ -232,6 +225,18 @@
                     <input type="password" id="signup-password" placeholder="••••••••" required class="auth-input">
                     <button type="button" onclick="togglePasswordVisibility('signup-password', 'eye-icon-signup')" class="pass-toggle">
                         <i id="eye-icon-signup" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- NEW: Confirm Password Field -->
+            <div class="input-group">
+                <label class="input-label">Confirm Password</label>
+                <div class="input-wrapper">
+                    <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" id="signup-confirm-password" placeholder="••••••••" required class="auth-input">
+                    <button type="button" onclick="togglePasswordVisibility('signup-confirm-password', 'eye-icon-confirm')" class="pass-toggle">
+                        <i id="eye-icon-confirm" class="fa-solid fa-eye"></i>
                     </button>
                 </div>
             </div>
@@ -550,15 +555,20 @@
             const phone = document.getElementById('signup-phone').value.trim();
             const email = document.getElementById('signup-email').value.trim();
             const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
             const city = citySelect.value;
             const area = areaSelect.value;
 
-            if (!name || !phone || !email || !password || !city || !area) {
+            if (!name || !phone || !email || !password || !confirmPassword || !city || !area) {
                 return showStatus("Please fill in all fields.", "error");
             }
             if (password.length < 6) {
                 return showStatus("Password must be at least 6 characters.", "error");
             }
+            if (password !== confirmPassword) {
+                return showStatus("Passwords do not match. Please try again.", "error");
+            }
+            
             document.getElementById('terms-modal').classList.remove('hidden');
         }
 
@@ -603,9 +613,17 @@
                     });
                     if (profileError) throw profileError;
 
-                    showStatus("Account created! Please Sign In.", "success");
+                    // SUCCESS FLOW: 
+                    // Hide terms, reset the form, and pop open the login modal automatically!
                     closeModal('terms-modal');
                     document.getElementById('signup-form').reset();
+                    showStatus("Account created! Please check your email for confirmation, or Sign In below.", "success");
+                    
+                    // Pre-fill the email they just registered with to make login faster
+                    document.getElementById('login-email').value = email;
+                    setTimeout(() => {
+                        toggleLoginModal();
+                    }, 500); // Slight delay for smooth UX transition
                 }
             } catch (err) {
                 showStatus(err.message, "error");
