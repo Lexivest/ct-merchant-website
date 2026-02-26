@@ -3,20 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
- 
   <title>CT-Merchant Ltd. | Digital Shops Repository</title>
   <meta name="description" content="Discover verified merchants, local shops and products in your city. Bridging the gap between digital convenience and local availability in Nigeria.">
   <meta name="keywords" content="Merchant, Nigeria, Shops Repository, Local Business, CT-Merchant, Unique Identifier">
   <meta name="author" content="CT-Merchant Ltd.">
   <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
   <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
-  
+ 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
- 
   <link rel="stylesheet" href="styles.css">
   <style>
     /* =========================================
@@ -29,12 +26,12 @@
         background: #ffffff;
     }
     .split-pane { display: flex; flex-direction: column; justify-content: center; position: relative; }
-      
+     
     /* TOP LEFT: IMAGE PANEL */
     .pane-img {
-        background: url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg') center/cover no-repeat;
-        justify-content: flex-end; 
-        min-height: 100vh; 
+        background: url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg') center/contain no-repeat;
+        justify-content: flex-end;
+        min-height: 100vh;
     }
     .features-glass-bar {
         background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -44,7 +41,7 @@
     /* TOP RIGHT: TEXT & SEARCH PANEL */
     .pane-dark {
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: white;
-        padding: 60px 10% 40px 10%; border-left: 1px solid rgba(255,255,255,0.1); box-shadow: -15px 0 40px rgba(0,0,0,0.6); z-index: 2; 
+        padding: 60px 10% 40px 10%; border-left: 1px solid rgba(255,255,255,0.1); box-shadow: -15px 0 40px rgba(0,0,0,0.6); z-index: 2;
     }
     .repo-badge {
         background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
@@ -68,7 +65,7 @@
     .cursor { display: inline-block; width: 3px; background-color: #db2777; animation: blink 1s step-end infinite; }
     @keyframes blink { 50% { opacity: 0; } }
     .hero-desc { font-size: 1rem; color: #94a3b8; margin-top: 4px; font-weight: 500; }
-    
+   
     /* BOTTOM LEFT: VALUE PROPOSITION */
     .pane-light { background: rgba(248, 250, 252, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 40px 10%; border-top: 1px solid #e2e8f0; }
     .value-title { font-size: 2.2rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
@@ -76,7 +73,7 @@
     .value-bullets { display: flex; flex-direction: column; gap: 12px; list-style: none; padding: 0; font-weight: 600; color: #1e293b; font-size: 1.05rem; }
     .value-bullets li { display: flex; align-items: center; gap: 10px; }
     .value-bullets i { color: #059669; font-size: 1.2rem; }
-    
+   
     /* BOTTOM RIGHT: AUTH PORTAL */
     .pane-white { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 40px 10%; border-top: 1px solid #e2e8f0; border-left: 1px solid #e2e8f0; box-shadow: -15px 0 40px rgba(0,0,0,0.03); z-index: 2; }
     .hero-auth-widget { background: rgba(219, 39, 119, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 30px 24px; border-radius: 20px; box-shadow: 0 10px 40px rgba(219, 39, 119, 0.2); border: 1px solid rgba(219, 39, 119, 0.3); width: 100%; max-width: 450px; margin: 0; }
@@ -96,7 +93,7 @@
     .hero-auth-widget .widget-divider::after { margin-left: 10px; }
     .hero-auth-widget .btn-create-account { display: block; width: 100%; text-align: center; padding: 12px; border: 2px solid rgba(219, 39, 119, 0.3); background: rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-weight: 700; text-decoration: none; transition: all 0.3s ease; font-size: 1rem; }
     .hero-auth-widget .btn-create-account:hover { background: rgba(219, 39, 119, 0.2); border-color: #db2777; }
-    
+   
     .pane-white .repo-badge { background: rgba(0, 0, 0, 0.05); border: 1px solid rgba(0, 0, 0, 0.1); color: #1e293b; }
     .pane-white .hero-pro-text { color: #475569; }
     .pane-white .hero-desc { color: #64748b; }
@@ -107,7 +104,7 @@
     .pane-white .search-icon-btn { color: rgba(0, 0, 0, 0.6); }
     .pane-white .search-icon-btn:hover { color: #db2777; }
     .pane-white .id-hint { color: #d97706; }
-    
+   
     @media (max-width: 900px) {
         .split-layout-grid { grid-template-columns: 1fr; padding-top: 60px; }
         .pane-dark, .pane-white { border-left: none; box-shadow: none; }
@@ -122,7 +119,7 @@
         .features-glass-bar { flex-direction: row; align-items: center; gap: 8px; font-size: 0.7rem; padding: 8px 8px; justify-content: space-between; }
         .features-glass-bar span { flex: 1; text-align: center; }
     }
-    
+   
     .nav-container { display: flex; align-items: center; justify-content: space-between; width: 100%; }
     .brand-wrapper { display: flex; align-items: center; flex-shrink: 0; }
     .header-marquee-box { flex: 1; margin: 0 20px; overflow: hidden; white-space: nowrap; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 15px; display: flex; align-items: center; }
@@ -130,10 +127,9 @@
     @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
     .marquee-item { display: flex; align-items: center; margin-right: 3rem; }
     @media (max-width: 768px) { .header-marquee-box { margin: 0 10px; padding-left: 10px; border-left: none; } }
-   
+  
     .forgot-password { display: block; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); text-decoration: none; margin-top: 8px; margin-bottom: 12px; cursor: pointer; text-align: right; }
     .forgot-password:hover { color: #db2777; }
-
     /* =========================================
        MODAL STYLES
        ========================================= */
@@ -154,7 +150,6 @@
     .btn-primary-modal:disabled { background-color: #cbd5e1; cursor: not-allowed; }
     .spinner { width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     /* =========================================
        FLOATING CONTACT WIDGET STYLES (Left)
        ========================================= */
@@ -176,13 +171,12 @@
     .fc-status { font-size: 0.85rem; text-align: center; display: none; padding: 10px; border-radius: 8px; font-weight: 600; margin-top: 4px; }
     .fc-status.success { display: block; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;}
     .fc-status.error { display: block; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;}
-
     /* =========================================
        AI CHAT WIDGET STYLES (Right) + NOTIF BADGE
        ========================================= */
     .ai-fab-container { position: fixed; bottom: 24px; right: 24px; z-index: 5000; display: flex; flex-direction: column; align-items: center; gap: 6px; }
     .ai-fab-wrapper { position: relative; }
-    
+   
     .ai-notif-badge {
         position: absolute; top: -4px; right: -4px; background: #EF4444; color: white;
         font-size: 0.8rem; font-weight: 800; width: 22px; height: 22px; border-radius: 50%;
@@ -194,11 +188,9 @@
         40% {transform: translateY(-5px);}
         60% {transform: translateY(-3px);}
     }
-
     .ai-fab { width: 60px; height: 60px; border-radius: 50%; background: #059669; color: white; box-shadow: 0 10px 25px rgba(5, 150, 105, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.2s; border: none; }
     .ai-fab:active { transform: scale(0.95); }
     .ai-label { background: white; color: #059669; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB; white-space: nowrap; pointer-events: none; }
-
     .ai-chat-window { position: fixed; bottom: 95px; right: 24px; width: 350px; height: 450px; background: white; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 5000; display: flex; flex-direction: column; overflow: hidden; opacity: 0; pointer-events: none; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #E5E7EB; }
     .ai-chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
     .ai-chat-header { background: #059669; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -207,17 +199,16 @@
     .msg-ai { align-self: flex-start; background: white; border: 1px solid #E2E8F0; color: #1E293B; border-bottom-left-radius: 2px; }
     .msg-user { align-self: flex-end; background: #059669; color: white; border-bottom-right-radius: 2px; }
     .msg-error { align-self: center; background: #FEE2E2; color: #DC2626; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
-    
+   
     .chat-register-btn { display: block; background: #DB2777; color: white !important; text-align: center; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; margin-top: 12px; box-shadow: 0 4px 6px rgba(219, 39, 119, 0.3); transition: transform 0.2s, background 0.2s; }
     .chat-register-btn:hover { background: #be185d; transform: translateY(-1px); }
-    
+   
     .ai-chat-input-area { padding: 12px; background: white; border-top: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 8px; }
     .ai-chat-input-row { display: flex; gap: 8px; width: 100%; }
     .ai-chat-input { flex: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid #E2E8F0; outline: none; font-size: 0.9rem; background: #F1F5F9; color: #0f172a; }
     .ai-chat-input:focus { border-color: #059669; background: white; }
     .ai-btn-send { background: #059669; color: white; border: none; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
     .ai-btn-send:hover { background: #047857; }
-
     @media (max-width: 400px) {
         .floating-contact-popup { width: calc(100% - 48px); left: 24px; right: 24px; }
         .ai-chat-window { width: calc(100% - 48px); left: 24px; right: 24px; }
@@ -253,7 +244,6 @@
           </div>
        </div>
     </div>
-
     <div class="desktop-menu">
       <a href="index.html" class="nav-active">Home</a>
       <a href="about.html">About</a>
@@ -263,12 +253,11 @@
       <a href="contact.html">Contact</a>
       <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
     </div>
-
     <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
       <i class="fa-solid fa-bars"></i>
     </button>
   </div>
-  
+ 
   <div class="mobile-dropdown hidden" id="mobile-menu">
       <a href="index.html" style="border-bottom: 1px solid white;">Home</a>
       <a href="about.html">About</a>
@@ -279,7 +268,6 @@
       <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
   </div>
 </nav>
-
 <!-- MAIN GRID WRAPPER -->
 <main class="split-layout-grid">
     <div class="split-pane pane-img">
@@ -293,7 +281,7 @@
         <h1 class="hero-title">
            <span id="typewriter"></span><span class="cursor">|</span>
         </h1>
-        
+       
         <p class="hero-desc">
           We provide a digital repository of physical shops, their products, and locations within a city.
         </p>
@@ -314,7 +302,7 @@
             <div class="widget-title">
                 <i class="fa-solid fa-lock"></i> Users Login
             </div>
-            
+           
             <form onsubmit="event.preventDefault(); handleHeroLogin();">
                 <div class="input-group-hero">
                     <i class="fa-solid fa-envelope"></i>
@@ -325,9 +313,9 @@
                     <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
                     <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePassword()"></i>
                 </div>
-                
+               
                 <a class="forgot-password" onclick="openResetEmailModal()">Forgot password?</a>
-                
+               
                 <button type="submit" id="hero-login-btn" class="btn-login-hero">
                     Secure Sign In <i class="fa-solid fa-arrow-right"></i>
                 </button>
@@ -336,11 +324,10 @@
             <a href="create-account.html" class="btn-create-account">
                 Create Account
             </a>
-
             <div class="widget-divider">Or continue with</div>
             <div style="display: flex; justify-content: center; width: 100%;">
                 <div id="g_id_onload"
-                     data-client_id="237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com" 
+                     data-client_id="237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com"
                      data-context="signin"
                      data-ux_mode="popup"
                      data-callback="handleGoogleLogin"
@@ -359,7 +346,7 @@
     <div class="split-pane pane-light">
         <h2 class="value-title">Grow Your Physical Shop Digitally</h2>
         <p class="value-desc">Join thousands of verified local merchants. Create your profile, upload your products, and let our AI-powered repository connect you with buyers in your exact city area.</p>
-        
+       
         <ul class="value-bullets">
             <li><i class="fa-solid fa-circle-check"></i> Get a verified digital storefront</li>
             <li><i class="fa-solid fa-circle-check"></i> Unique CT-Merchant ID to share</li>
@@ -370,14 +357,13 @@
         <span class="repo-badge">
           Repository of Shops, Products and Services
         </span>
-        
+       
         <p class="hero-pro-text">
          CT-Merchant is a structured repository of shops, products, and services within a city. We onboard and physically verify merchants to eliminate fraudulent online claims. Our platform indexes verified, physically existing businesses and their offerings, enabling consumers to compare prices and options before visiting a store. This approach enhances transparency, improves purchasing decisions, and saves time — effectively balancing digital convenience with physical marketplace reality.
         </p>
-        
+       
     </div>
 </main>
-
 <footer class="footer">
   <div class="container footer-container">
     <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
@@ -388,7 +374,6 @@
     </div>
   </div>
 </footer>
-
 <!-- MODALS -->
 <div id="complete-profile-modal" class="modal-overlay hidden">
     <div class="modal-card">
@@ -423,7 +408,6 @@
         <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel & Sign Out</button>
     </div>
 </div>
-
 <div id="reset-email-modal" class="modal-overlay hidden">
     <div class="modal-card">
         <h2 class="modal-title">Reset Password</h2>
@@ -439,7 +423,6 @@
         <button onclick="document.getElementById('reset-email-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
     </div>
 </div>
-
 <div id="reset-password-modal" class="modal-overlay hidden">
     <div class="modal-card">
         <h2 class="modal-title">Create New Password</h2>
@@ -469,14 +452,12 @@
         <button onclick="document.getElementById('reset-password-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
     </div>
 </div>
-
 <!-- ==========================================
      FLOATING CONTACT WIDGET (LEFT)
      ========================================== -->
 <button class="floating-contact-btn" onclick="toggleFloatingContact()" title="Need Help? Contact Support">
     <i class="fa-solid fa-headset"></i>
 </button>
-
 <div class="floating-contact-popup" id="fc-popup">
     <div class="fc-header">
         <span><i class="fa-solid fa-envelope"></i> Message Us</span>
@@ -507,7 +488,6 @@
         <button type="submit" id="fc-submit-btn" class="fc-btn">Send Message <i class="fa-solid fa-paper-plane"></i></button>
     </form>
 </div>
-
 <!-- ==========================================
      AI CHAT WIDGET (RIGHT)
      ========================================== -->
@@ -520,7 +500,6 @@
     </div>
     <span class="ai-label">AI Assistant</span>
 </div>
-
 <div id="ai-chat-window" class="ai-chat-window">
     <div class="ai-chat-header">
         <span style="font-weight:700;"><i class="fa-solid fa-robot"></i> Assistant</span>
@@ -538,17 +517,16 @@
         </div>
     </div>
 </div>
-
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
+   
     // --- TYPEWRITER LOGIC ---
     const textElement = document.getElementById('typewriter');
     const phrases = ["Verified Merchants", "Safe and Secure", "Boost Your Business"];
     let phraseIndex = 0; let charIndex = 0; let isDeleting = false; let typeSpeed = 100;
-    
+   
     function typeEffect() {
         const currentPhrase = phrases[phraseIndex];
         if (isDeleting) {
@@ -559,14 +537,13 @@
             charIndex++; typeSpeed = 100;
         }
         if (!isDeleting && charIndex === currentPhrase.length) {
-            isDeleting = true; typeSpeed = 2000; 
+            isDeleting = true; typeSpeed = 2000;
         } else if (isDeleting && charIndex === 0) {
-            isDeleting = false; phraseIndex = (phraseIndex + 1) % phrases.length; typeSpeed = 500; 
+            isDeleting = false; phraseIndex = (phraseIndex + 1) % phrases.length; typeSpeed = 500;
         }
         setTimeout(typeEffect, typeSpeed);
     }
     document.addEventListener('DOMContentLoaded', typeEffect);
-
     // --- NEW: IP TRACKING & BAN CHECK LOGIC ---
     async function getClientIpData() {
         try {
@@ -582,7 +559,6 @@
             return { ip: 'unknown', country: 'unknown' };
         }
     }
-
     async function isIpBanned(ipAddress) {
         if (ipAddress === 'unknown') return false;
         try {
@@ -592,13 +568,13 @@
             return false;
         }
     }
-    
+   
     // --- REPO SEARCH ---
     function handleRepoSearch() {
         const query = document.getElementById('repo-search-input').value.trim();
         if(query) window.location.href = `reposearch.html?merchantId=${query}`;
     }
-    
+   
     // --- STANDARD LOGIN LOGIC ---
     async function handleHeroLogin() {
         const email = document.getElementById('hero-email').value;
@@ -607,28 +583,25 @@
         const originalHtml = btn.innerHTML;
         btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
         btn.disabled = true;
-        
+       
         try {
             // 1. IP Ban Frontend Check
             const ipData = await getClientIpData();
             if (await isIpBanned(ipData.ip)) {
                 throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CT-Merchant.");
             }
-
             // 2. Perform Login
             const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password });
             if (authError) throw authError;
-
             // 3. Post-Login Database Check Trap (Catches bypassed frontend & updates last active IP)
             if (authData && authData.user) {
-                const { data: profileData, error: profileErr } = await client.from('profiles').select('is_suspended').eq('id', authData.user.id).maybeSingle(); 
-                
+                const { data: profileData, error: profileErr } = await client.from('profiles').select('is_suspended').eq('id', authData.user.id).maybeSingle();
+               
                 // If maybeSingle() throws an error, it means the RLS policy blocked them (they are IP banned!)
                 if (profileErr || !profileData || profileData.is_suspended === true) {
                     await client.auth.signOut();
                     throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
                 }
-
                 // Update IP
                 await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
             }
@@ -640,39 +613,31 @@
             await client.auth.signOut(); // Force signout on any error
         }
     }
-
     // --- GOOGLE SIGN IN LOGIC ---
     let pendingGoogleUserId = null;
     let pendingGoogleUserName = null;
-
     async function handleGoogleLogin(response) {
         const heroBtn = document.getElementById('hero-login-btn');
         const originalHeroHtml = heroBtn.innerHTML;
         heroBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Checking Google...';
         heroBtn.disabled = true;
-
         try {
             // 1. IP Ban Frontend Check
             const ipData = await getClientIpData();
             if (await isIpBanned(ipData.ip)) {
                 throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CT-Merchant.");
             }
-
             const { data, error } = await client.auth.signInWithIdToken({ provider: 'google', token: response.credential });
             if (error) throw error;
-
             const user = data.user;
             pendingGoogleUserId = user.id;
             pendingGoogleUserName = user.user_metadata?.full_name || '';
-
             // 2. Profile check & DB Trap
             const { data: profile, error: profileErr } = await client.from('profiles').select('city_id, area_id, is_suspended').eq('id', user.id).maybeSingle();
-
             if (profileErr || (profile && profile.is_suspended)) {
                 await client.auth.signOut();
                 throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
             }
-
             if (profile && profile.city_id && profile.area_id) {
                 await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
                 window.location.href = "user-dashboard.html";
@@ -689,7 +654,6 @@
             await client.auth.signOut();
         }
     }
-
     async function fetchCitiesForModal() {
         const citySelect = document.getElementById('google-city');
         try {
@@ -700,7 +664,6 @@
             citySelect.innerHTML = '<option value="" disabled>Error loading cities</option>';
         }
     }
-
     async function loadAreasForModal(cityId) {
         const areaSelect = document.getElementById('google-area');
         areaSelect.disabled = true;
@@ -714,18 +677,14 @@
             areaSelect.innerHTML = '<option value="" disabled>Error loading areas</option>';
         }
     }
-
     async function saveGoogleProfile() {
         const phone = document.getElementById('google-phone').value.trim();
         const cityId = document.getElementById('google-city').value;
         const areaId = document.getElementById('google-area').value;
         const btn = document.getElementById('google-complete-btn');
-
         if (!phone || !cityId || !areaId) return alert("Please fill in your phone, city, and area to continue.");
-
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Saving...';
-
         try {
             const ipData = await getClientIpData();
             const { error } = await client.from('profiles').upsert({
@@ -739,12 +698,11 @@
             btn.disabled = false; btn.innerHTML = 'Complete Setup';
         }
     }
-
     async function cancelGoogleLogin() {
         await client.auth.signOut();
         document.getElementById('complete-profile-modal').classList.add('hidden');
     }
-    
+   
     // --- PASSWORD TOGGLE ---
     function togglePassword() {
         const password = document.getElementById('hero-password');
@@ -755,21 +713,17 @@
             password.type = 'password'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash');
         }
     }
-
     function openResetEmailModal() {
         document.getElementById('reset-email-modal').classList.remove('hidden');
         const loginEmail = document.getElementById('hero-email').value;
         if (loginEmail) document.getElementById('reset-email-input').value = loginEmail;
     }
-
     async function sendResetCode() {
         const email = document.getElementById('reset-email-input').value.trim();
         if (!email) return alert("Please enter your registered email address.");
-
         const btn = document.getElementById('btn-send-reset');
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Sending...';
-
         try {
             const { error } = await client.auth.resetPasswordForEmail(email);
             if (error) throw error;
@@ -782,38 +736,30 @@
             btn.innerHTML = 'Send Reset Code';
         }
     }
-
     async function verifyAndResetPassword() {
-        const email = document.getElementById('reset-email-input').value.trim(); 
+        const email = document.getElementById('reset-email-input').value.trim();
         const otp = document.getElementById('reset-otp-input').value.trim();
         const newPassword = document.getElementById('reset-new-password').value;
         const confirmPassword = document.getElementById('reset-confirm-password').value;
-
         if (!otp || !newPassword || !confirmPassword) return alert("Please fill out all fields.");
         if (newPassword !== confirmPassword) return alert("Passwords do not match. Please try again.");
         if (newPassword.length < 6) return alert("Password must be at least 6 characters.");
-
         const btn = document.getElementById('btn-confirm-reset');
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Resetting...';
-
         try {
             const { error: verifyError } = await client.auth.verifyOtp({ email: email, token: otp, type: 'recovery' });
             if (verifyError) throw verifyError;
-
             const { error: updateError } = await client.auth.updateUser({ password: newPassword });
             if (updateError) throw updateError;
-
             alert("Success! Your password has been updated.");
             window.location.href = "user-dashboard.html";
-
         } catch (err) {
             alert("Error: " + err.message);
             btn.disabled = false;
             btn.innerHTML = 'Confirm & Reset Password';
         }
     }
-
     function toggleFloatingContact() {
         const popup = document.getElementById('fc-popup');
         popup.classList.toggle('show');
@@ -822,25 +768,21 @@
             document.getElementById('fc-status').textContent = '';
         }
     }
-
     async function handleFloatingContactSubmit(e) {
         e.preventDefault();
         const btn = document.getElementById('fc-submit-btn');
         const statusDiv = document.getElementById('fc-status');
         const form = document.getElementById('fc-form');
-
         const payload = {
             full_name: document.getElementById('fc-name').value.trim(),
             email: document.getElementById('fc-email').value.trim(),
             subject: document.getElementById('fc-subject').value,
             message: document.getElementById('fc-message').value.trim()
         };
-
         btn.disabled = true;
         const originalText = btn.innerHTML;
         btn.innerHTML = 'Sending... <i class="fa-solid fa-circle-notch fa-spin"></i>';
-        statusDiv.className = 'fc-status'; 
-
+        statusDiv.className = 'fc-status';
         try {
             const { error } = await client.from('contact_messages').insert([payload]);
             if (error) throw error;
@@ -855,91 +797,76 @@
             btn.disabled = false; btn.innerHTML = originalText;
         }
     }
-
     // ==========================================
     // AI CHAT WIDGET LOGIC (ANONYMOUS MODE WITH RATE LIMIT)
     // ==========================================
     let aiChatHistory = [];
-
     function toggleAiChat() {
         const chatWindow = document.getElementById('ai-chat-window');
         const badge = document.getElementById('ai-badge');
-        
+       
         chatWindow.classList.toggle('open');
-        
+       
         if (badge) {
             badge.style.display = 'none';
         }
     }
-
     async function sendAiMsg() {
         const inp = document.getElementById('ai-chat-input');
         const txt = inp.value.trim();
         if(!txt) return;
-
         const todayStr = new Date().toISOString().split('T')[0];
         let usageStr = localStorage.getItem('ctm_ai_anon_usage');
         let aiUsage = usageStr ? JSON.parse(usageStr) : { date: todayStr, count: 0 };
-        
+       
         if (aiUsage.date !== todayStr) {
             aiUsage = { date: todayStr, count: 0 };
         }
-
         const body = document.getElementById('ai-chat-messages');
-
         if (aiUsage.count >= 15) {
             body.innerHTML += `<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages. This limit prevents system abuse. Please check back tomorrow!</div>`;
             body.scrollTop = body.scrollHeight;
             inp.value = '';
             return;
         }
-
         body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
         inp.value = '';
         body.scrollTop = body.scrollHeight;
-
         aiChatHistory.push({ role: 'user', content: txt });
-
         const loadId = 'loading-' + Date.now();
         body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic; color:#6B7280;">Typing...</div>`;
         body.scrollTop = body.scrollHeight;
-
         try {
             const recentHistory = aiChatHistory.length > 6 ? aiChatHistory.slice(aiChatHistory.length - 6) : aiChatHistory;
-
             const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 
-                    'apikey': SUPABASE_ANON_KEY 
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'apikey': SUPABASE_ANON_KEY
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     query: txt,
                     history: recentHistory
                 })
             });
-
             document.getElementById(loadId)?.remove();
-
             if (!response.ok) {
                 const errText = await response.text();
                 throw new Error(`Server returned ${response.status}`);
             }
-
             const data = await response.json();
             const reply = data.reply || "No response received.";
             const isError = (reply.startsWith("Error:") || reply.startsWith("System"));
             const msgClass = isError ? "msg-error" : "msg-ai";
-            
+           
             body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
-
             if (!isError) {
                 aiChatHistory.push({ role: 'assistant', content: reply });
                 aiUsage.count += 1;
                 localStorage.setItem('ctm_ai_anon_usage', JSON.stringify(aiUsage));
             }
-            
+           
         } catch (err) {
             document.getElementById(loadId)?.remove();
             body.innerHTML += `<div class="chat-msg msg-error">Connection Error: Could not reach AI server.</div>`;
