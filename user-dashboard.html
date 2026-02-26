@@ -539,8 +539,6 @@
         </div>
     </div>
 
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
@@ -577,8 +575,8 @@
     }
 
     // =========================================
-    // AI CHAT LOGIC
-    // =========================================
+    // AI CHAT LOGIC (WITH FRONTEND LIMITER)
+    // ==========================================
     function toggleChat() {
         document.getElementById('chat-window').classList.toggle('open');
     }
@@ -588,7 +586,27 @@
         const txt = inp.value.trim();
         if(!txt) return;
 
+        // --- FRONTEND RATE LIMITING LOGIC ---
+        const todayStr = new Date().toISOString().split('T')[0];
+        let usageStr = localStorage.getItem('ctm_ai_usage');
+        let aiUsage = usageStr ? JSON.parse(usageStr) : { date: todayStr, count: 0 };
+        
+        // Reset counter if it's a new day
+        if (aiUsage.date !== todayStr) {
+            aiUsage = { date: todayStr, count: 0 };
+        }
+
         const body = document.getElementById('chat-messages');
+
+        // Block request if over limit
+        if (aiUsage.count >= 15) {
+            body.innerHTML += `<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages to keep the server fair for everyone. Please check back tomorrow!</div>`;
+            body.scrollTop = body.scrollHeight;
+            inp.value = '';
+            return;
+        }
+        // ------------------------------------
+
         body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
         inp.value = '';
         body.scrollTop = body.scrollHeight;
@@ -636,6 +654,10 @@
 
             if (!isError) {
                 chatHistory.push({ role: 'assistant', content: reply });
+                
+                // Increment counter only on successful API response
+                aiUsage.count += 1;
+                localStorage.setItem('ctm_ai_usage', JSON.stringify(aiUsage));
             }
             
         } catch (err) {
@@ -648,7 +670,7 @@
     // --- INIT ---
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
-        if (!session) { window.location.href = "login.html"; return; }
+        if (!session) { window.location.href = "index.html"; return; }
         currentUser = session.user;
 
         const cache = localStorage.getItem(CACHE_KEY);
