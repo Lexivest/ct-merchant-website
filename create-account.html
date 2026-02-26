@@ -123,7 +123,6 @@
         .btn-primary:hover { background-color: var(--color-pink); transform: translateY(-1px); }
         .btn-primary:disabled { background-color: #cbd5e1; cursor: not-allowed; }
 
-        /* Divider for Google Sign In */
         .divider { display: flex; align-items: center; text-align: center; margin: 1.5rem 0; color: #94a3b8; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
         .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
         .divider:not(:empty)::before { margin-right: 1rem; }
@@ -167,7 +166,6 @@
             <p class="auth-subtitle">Join the professional merchant network.</p>
         </div>
 
-        <!-- 2. Google Sign-In Button Container -->
         <div style="display: flex; justify-content: center; width: 100%;">
             <div id="g_id_onload"
                  data-client_id="237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com" 
@@ -176,7 +174,6 @@
                  data-callback="handleGoogleLogin"
                  data-auto_prompt="false">
             </div>
-            <!-- Removed data-width and data-logo_alignment so it responds to screen size naturally -->
             <div class="g_id_signin"
                  data-type="standard"
                  data-shape="rectangular"
@@ -342,7 +339,6 @@
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Form elements
         const citySelect = document.getElementById('signup-city');
         const areaSelect = document.getElementById('signup-area');
         const googleCitySelect = document.getElementById('google-city');
@@ -351,17 +347,14 @@
         const statusBox = document.getElementById('message-container');
         const statusMsg = document.getElementById('message');
 
-        // Store Google User ID temporarily
         let pendingGoogleUserId = null;
         let pendingGoogleUserName = null;
 
-        // --- NEW: IP TRACKING LOGIC ---
-        // We use Cloudflare's trace tool because it is free, fast, and highly reliable
+        // IP Tracker
         async function getClientIpData() {
             try {
                 const res = await fetch('https://1.1.1.1/cdn-cgi/trace');
                 const text = await res.text();
-                // Parse the key=value format returned by Cloudflare
                 const data = text.split('\n').reduce((acc, line) => {
                     const [key, value] = line.split('=');
                     if(key) acc[key] = value;
@@ -374,7 +367,17 @@
             }
         }
 
-        // Fetch cities on load
+        // --- NEW: IP BLOCK CHECKER ---
+        async function isIpBanned(ipAddress) {
+            if (ipAddress === 'unknown') return false;
+            try {
+                const { data } = await client.from('ip_blacklist').select('ip_address').eq('ip_address', ipAddress).maybeSingle();
+                return !!data;
+            } catch (e) {
+                return false;
+            }
+        }
+
         window.onload = async () => {
             try {
                 const { data, error } = await client.from('cities').select('id, name').eq('is_open', true).order('name');
@@ -396,9 +399,7 @@
             }
         };
 
-        // Handle City changes for main form
         citySelect.addEventListener('change', (e) => loadAreas(e.target.value, areaSelect));
-        // Handle City changes for Google modal
         googleCitySelect.addEventListener('change', (e) => loadAreas(e.target.value, googleAreaSelect));
 
         async function loadAreas(cityId, targetAreaSelect) {
@@ -416,11 +417,17 @@
             }
         }
 
-        // --- GOOGLE LOGIN LOGIC ---
+        // --- GOOGLE LOGIN ---
         async function handleGoogleLogin(response) {
-            showStatus("Authenticating with Google...", "success");
+            showStatus("Checking security...", "success");
             
             try {
+                const ipData = await getClientIpData();
+                if (await isIpBanned(ipData.ip)) {
+                    throw new Error("ACCESS DENIED: Your IP address has been banned.");
+                }
+
+                showStatus("Authenticating with Google...", "success");
                 const { data, error } = await client.auth.signInWithIdToken({
                     provider: 'google',
                     token: response.credential,
@@ -443,8 +450,6 @@
                 }
 
                 if (profile && profile.city_id && profile.area_id) {
-                    // Update IP on successful login before redirecting
-                    const ipData = await getClientIpData();
                     await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
                     window.location.href = "user-dashboard.html";
                 } else {
@@ -471,9 +476,8 @@
             btn.innerHTML = '<div class="spinner"></div> Saving...';
 
             try {
-                // Grab IP right before saving
                 const ipData = await getClientIpData();
-
+                
                 const { error } = await client.from('profiles').upsert({
                     id: pendingGoogleUserId,
                     full_name: pendingGoogleUserName,
@@ -486,7 +490,6 @@
                 });
 
                 if (error) throw error;
-
                 window.location.href = "user-dashboard.html";
             } catch(err) {
                 alert("Error saving profile: " + err.message);
@@ -499,8 +502,8 @@
             await client.auth.signOut();
             document.getElementById('complete-profile-modal').classList.add('hidden');
         }
-        // ---------------------------------
 
+        // --- UTILS ---
         function toggleLoginModal() { document.getElementById('login-modal').classList.toggle('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
@@ -517,6 +520,7 @@
             statusMsg.textContent = txt;
         }
 
+        // --- STANDARD SIGNUP ---
         function handleInitialSignup() {
             const name = document.getElementById('signup-name').value.trim();
             const phone = document.getElementById('signup-phone').value.trim();
@@ -547,9 +551,13 @@
             const areaId = parseInt(areaSelect.value);
 
             try {
-                // Grab IP right before creating the account
+                // 1. IP Ban Frontend Check
                 const ipData = await getClientIpData();
+                if (await isIpBanned(ipData.ip)) {
+                    throw new Error("ACCESS DENIED: Your IP address has been permanently banned.");
+                }
 
+                // 2. Auth Creation
                 const { data: authData, error: authError } = await client.auth.signUp({
                     email: email,
                     password: password,
@@ -557,6 +565,7 @@
                 });
                 if (authError) throw authError;
 
+                // 3. Profile Creation (Will also fail if DB trigger catches a banned IP)
                 if (authData.user) {
                     const { error: profileError } = await client.from('profiles').insert({
                         id: authData.user.id,
@@ -583,6 +592,7 @@
             }
         }
 
+        // --- STANDARD LOGIN ---
         async function handleLogin() {
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
@@ -591,18 +601,24 @@
             btn.disabled = true;
             btn.innerHTML = '<div class="spinner"></div> Logging in...';
 
-            const { data, error } = await client.auth.signInWithPassword({ email, password });
-            
-            if (error) {
+            try {
+                // Pre-check IP Ban
+                const ipData = await getClientIpData();
+                if (await isIpBanned(ipData.ip)) {
+                    throw new Error("ACCESS DENIED: Your IP address is banned.");
+                }
+
+                const { data, error } = await client.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                
+                // Update IP on successful login
+                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', data.user.id);
+                window.location.href = "user-dashboard.html";
+
+            } catch (error) {
                 alert(error.message);
                 btn.disabled = false;
                 btn.innerHTML = 'Sign In';
-            } else {
-                // Security update: Log the IP address on successful standard login too!
-                const ipData = await getClientIpData();
-                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', data.user.id);
-                
-                window.location.href = "user-dashboard.html";
             }
         }
     </script>
