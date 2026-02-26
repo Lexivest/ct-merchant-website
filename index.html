@@ -183,7 +183,6 @@
     .ai-fab-container { position: fixed; bottom: 24px; right: 24px; z-index: 5000; display: flex; flex-direction: column; align-items: center; gap: 6px; }
     .ai-fab-wrapper { position: relative; }
     
-    /* NEW: Bouncing Red Notification Badge */
     .ai-notif-badge {
         position: absolute; top: -4px; right: -4px; background: #EF4444; color: white;
         font-size: 0.8rem; font-weight: 800; width: 22px; height: 22px; border-radius: 50%;
@@ -209,7 +208,6 @@
     .msg-user { align-self: flex-end; background: #059669; color: white; border-bottom-right-radius: 2px; }
     .msg-error { align-self: center; background: #FEE2E2; color: #DC2626; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
     
-    /* Beautiful Create Account Button inside the Chat */
     .chat-register-btn { display: block; background: #DB2777; color: white !important; text-align: center; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; margin-top: 12px; box-shadow: 0 4px 6px rgba(219, 39, 119, 0.3); transition: transform 0.2s, background 0.2s; }
     .chat-register-btn:hover { background: #be185d; transform: translateY(-1px); }
     
@@ -809,7 +807,7 @@
     }
 
     // ==========================================
-    // AI CHAT WIDGET LOGIC (ANONYMOUS MODE)
+    // AI CHAT WIDGET LOGIC (ANONYMOUS MODE WITH RATE LIMIT)
     // ==========================================
     let aiChatHistory = [];
 
@@ -830,7 +828,27 @@
         const txt = inp.value.trim();
         if(!txt) return;
 
+        // --- FRONTEND RATE LIMITING LOGIC ---
+        const todayStr = new Date().toISOString().split('T')[0];
+        let usageStr = localStorage.getItem('ctm_ai_anon_usage');
+        let aiUsage = usageStr ? JSON.parse(usageStr) : { date: todayStr, count: 0 };
+        
+        // Reset counter if it's a new day
+        if (aiUsage.date !== todayStr) {
+            aiUsage = { date: todayStr, count: 0 };
+        }
+
         const body = document.getElementById('ai-chat-messages');
+
+        // Block request if over limit
+        if (aiUsage.count >= 15) {
+            body.innerHTML += `<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages. This limit prevents system abuse. Please check back tomorrow!</div>`;
+            body.scrollTop = body.scrollHeight;
+            inp.value = '';
+            return;
+        }
+        // ------------------------------------
+
         body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
         inp.value = '';
         body.scrollTop = body.scrollHeight;
@@ -873,6 +891,10 @@
 
             if (!isError) {
                 aiChatHistory.push({ role: 'assistant', content: reply });
+                
+                // Increment counter only on successful API response
+                aiUsage.count += 1;
+                localStorage.setItem('ctm_ai_anon_usage', JSON.stringify(aiUsage));
             }
             
         } catch (err) {
