@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- 1. Google Identity Services Script -->
+    <!-- Google Identity Services Script -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
@@ -137,10 +137,27 @@
         .link-highlight { color: var(--color-pink); font-weight: 700; text-decoration: none; cursor: pointer; background: none; border: none; font-size: inherit; }
         .link-highlight:hover { text-decoration: underline; }
 
-        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-        .modal-card { background: white; border-radius: 1.5rem; max-width: 400px; width: 100%; padding: 2rem; text-align: center; box-shadow: var(--shadow-2xl); }
-        .terms-icon { width: 3.5rem; height: 3.5rem; background: #fce7f3; color: var(--color-pink); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem; }
+        /* =========================================
+           MODAL STYLES (Synchronized with index.html)
+           ========================================= */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-card { background: white; border-radius: 1.5rem; max-width: 400px; width: 100%; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: left; }
+        .modal-title { font-size: 1.25rem; font-weight: 800; color: #2E1065; text-align: center; margin-bottom: 0.5rem; }
+        .modal-subtitle { color: #64748b; font-size: 0.875rem; text-align: center; margin-bottom: 1.5rem; }
         .hidden { display: none !important; }
+        
+        .modal-input-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+        .modal-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.25rem; }
+        .modal-input-wrapper { position: relative; width: 100%; }
+        .modal-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
+        
+        .modal-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem; outline: none; transition: all 0.3s ease; color: #0f172a; }
+        .modal-input:focus { border-color: #db2777; box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); background: white; }
+        select.modal-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
+        
+        .btn-primary-modal { width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-primary-modal:hover { background-color: #db2777; transform: translateY(-1px); }
+        .btn-primary-modal:disabled { background-color: #cbd5e1; cursor: not-allowed; }
 
         .spinner { width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -260,75 +277,87 @@
 
     <!-- Legal Terms Modal -->
     <div id="terms-modal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <div class="terms-icon"><i class="fa-solid fa-shield-halved"></i></div>
-            <h2 class="auth-title" style="font-size: 1.25rem;">Legal Agreement</h2>
-            <p style="color: #475569; font-size: 0.85rem; line-height: 1.6; margin: 1rem 0;">
+        <div class="modal-card" style="text-align: center;">
+            <div style="width: 3.5rem; height: 3.5rem; background: #fce7f3; color: #DB2777; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem;"><i class="fa-solid fa-shield-halved"></i></div>
+            <h2 class="modal-title">Legal Agreement</h2>
+            <p class="modal-subtitle" style="margin-bottom: 1rem; line-height: 1.6;">
                 By clicking "Agree & Create Account", you acknowledge that you have read and agreed to our 
                 <a href="terms.html" class="link-highlight">Terms of Use</a> and 
                 <a href="privacy.html" class="link-highlight">Privacy Policy</a>.
             </p>
-            <div class="form-stack">
-                <button id="final-submit-btn" onclick="processFinalSignup()" class="btn-primary">Agree & Create Account</button>
-                <button onclick="closeModal('terms-modal')" style="background: none; border: none; color: #94a3b8; font-size: 0.75rem; font-weight: 700; cursor: pointer; text-transform: uppercase;">Cancel</button>
-            </div>
+            <button id="final-submit-btn" onclick="processFinalSignup()" class="btn-primary-modal">Agree & Create Account</button>
+            <button onclick="closeModal('terms-modal')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
         </div>
     </div>
 
     <!-- Complete Profile Modal (Triggered after Google Login) -->
     <div id="complete-profile-modal" class="modal-overlay hidden">
-        <div class="modal-card" style="text-align: left;">
-            <h2 class="auth-title" style="font-size: 1.25rem; text-align: center;">Complete Your Profile</h2>
-            <p class="auth-subtitle" style="text-align: center; margin-bottom: 1.5rem;">We need a few more details to set up your dashboard.</p>
+        <div class="modal-card">
+            <h2 class="modal-title">Complete Your Profile</h2>
+            <p class="modal-subtitle">We need a few more details to set up your dashboard.</p>
             
-            <div class="form-stack">
-                <div class="input-group">
-                    <label class="input-label">Phone Number</label>
-                    <div class="input-wrapper">
-                        <span class="input-icon"><i class="fa-solid fa-phone"></i></span>
-                        <input type="tel" id="google-phone" placeholder="08012345678" class="auth-input">
-                    </div>
+            <div class="modal-input-group">
+                <label class="modal-label">Phone Number</label>
+                <div class="modal-input-wrapper">
+                    <span class="modal-icon"><i class="fa-solid fa-phone"></i></span>
+                    <input type="tel" id="google-phone" placeholder="08012345678" class="modal-input">
                 </div>
-
-                <div class="input-group">
-                    <label class="input-label">Select City</label>
-                    <div class="input-wrapper">
-                        <span class="input-icon"><i class="fa-solid fa-city"></i></span>
-                        <select id="google-city" class="auth-input">
-                            <option value="" disabled selected>Loading cities...</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label class="input-label">Select Area</label>
-                    <div class="input-wrapper">
-                        <span class="input-icon"><i class="fa-solid fa-map-pin"></i></span>
-                        <select id="google-area" class="auth-input" disabled>
-                            <option value="" disabled selected>Select city first</option>
-                        </select>
-                    </div>
-                </div>
-
-                <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary" style="margin-top: 1rem;">Complete Setup</button>
-                
-                <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 0.5rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
-                    Cancel & Sign Out
-                </button>
             </div>
+
+            <div class="modal-input-group">
+                <label class="modal-label">Select City</label>
+                <div class="modal-input-wrapper">
+                    <span class="modal-icon"><i class="fa-solid fa-city"></i></span>
+                    <select id="google-city" class="modal-input" onchange="loadAreasForModal(this.value)">
+                        <option value="" disabled selected>Loading cities...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-input-group">
+                <label class="modal-label">Select Area</label>
+                <div class="modal-input-wrapper">
+                    <span class="modal-icon"><i class="fa-solid fa-map-pin"></i></span>
+                    <select id="google-area" class="modal-input" disabled>
+                        <option value="" disabled selected>Select city first</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary-modal">Complete Setup</button>
+            
+            <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
+                Cancel & Sign Out
+            </button>
         </div>
     </div>
 
-    <!-- Simple Login Modal -->
+    <!-- Login Modal (Now using index.html styles) -->
     <div id="login-modal" class="modal-overlay hidden">
         <div class="modal-card">
-            <h2 class="auth-title">Welcome Back</h2>
-            <p class="auth-subtitle">Access your merchant dashboard</p>
-            <form class="form-stack" onsubmit="event.preventDefault(); handleLogin();">
-                <input type="email" id="login-email" required class="auth-input" placeholder="Email" style="padding-left: 1rem;">
-                <input type="password" id="login-password" required class="auth-input" placeholder="Password" style="padding-left: 1rem;">
-                <button type="submit" class="btn-primary" id="btn-login-submit">Sign In</button>
-                <button type="button" onclick="closeModal('login-modal')" style="background: none; border: none; color: #94a3b8; margin-top: 1rem; cursor: pointer;">Close</button>
+            <h2 class="modal-title">Welcome Back</h2>
+            <p class="modal-subtitle">Access your merchant dashboard</p>
+            
+            <form onsubmit="event.preventDefault(); handleLogin();">
+                <div class="modal-input-group">
+                    <label class="modal-label">Email Address</label>
+                    <div class="modal-input-wrapper">
+                        <span class="modal-icon"><i class="fa-solid fa-envelope"></i></span>
+                        <input type="email" id="login-email" required class="modal-input" placeholder="name@example.com">
+                    </div>
+                </div>
+                
+                <div class="modal-input-group">
+                    <label class="modal-label">Password</label>
+                    <div class="modal-input-wrapper">
+                        <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" id="login-password" required class="modal-input" placeholder="••••••••">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary-modal" id="btn-login-submit">Sign In <i class="fa-solid fa-arrow-right"></i></button>
+                
+                <button type="button" onclick="closeModal('login-modal')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
             </form>
         </div>
     </div>
@@ -367,7 +396,7 @@
             }
         }
 
-        // --- NEW: IP BLOCK CHECKER ---
+        // IP BLOCK CHECKER
         async function isIpBanned(ipAddress) {
             if (ipAddress === 'unknown') return false;
             try {
@@ -565,7 +594,7 @@
                 });
                 if (authError) throw authError;
 
-                // 3. Profile Creation (Will also fail if DB trigger catches a banned IP)
+                // 3. Profile Creation
                 if (authData.user) {
                     const { error: profileError } = await client.from('profiles').insert({
                         id: authData.user.id,
@@ -602,7 +631,6 @@
             btn.innerHTML = '<div class="spinner"></div> Logging in...';
 
             try {
-                // Pre-check IP Ban
                 const ipData = await getClientIpData();
                 if (await isIpBanned(ipData.ip)) {
                     throw new Error("ACCESS DENIED: Your IP address is banned.");
@@ -618,7 +646,7 @@
             } catch (error) {
                 alert(error.message);
                 btn.disabled = false;
-                btn.innerHTML = 'Sign In';
+                btn.innerHTML = 'Sign In <i class="fa-solid fa-arrow-right"></i>';
             }
         }
     </script>
