@@ -59,7 +59,7 @@
         /* Inputs */
         .form-grid { display: grid; gap: 16px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .label { font-size: 0.9rem; font-weight: 600; color: #334155; }
+        .label { font-size: 0.9rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px; }
         
         .input { 
             width: 100%; padding: 12px 16px; border-radius: 10px; 
@@ -304,7 +304,6 @@
 
             <div class="form-group">
                 <label class="label" id="cac-label">Upload CAC (Optional)</label>
-                <!-- Landscape Box -->
                 <div class="upload-box ratio-landscape" onclick="triggerUpload('file-cac')">
                     <input type="file" id="file-cac" hidden accept="image/*" onchange="previewFile(this, 'prev-cac')">
                     <i class="fa-solid fa-file-contract upload-icon"></i>
@@ -334,7 +333,6 @@
 
             <div class="form-group">
                 <label class="label">Upload ID Card (Required)</label>
-                <!-- Landscape Box -->
                 <div class="upload-box ratio-landscape" onclick="triggerUpload('file-id')">
                     <input type="file" id="file-id" hidden accept="image/*" onchange="previewFile(this, 'prev-id')">
                     <i class="fa-solid fa-id-card upload-icon"></i>
@@ -357,6 +355,27 @@
             <div class="form-group">
                 <label class="label">WhatsApp Number (Optional)</label>
                 <input type="tel" id="whatsapp" class="input">
+            </div>
+        </div>
+
+        <!-- 5. Social Media (NEW SECTION) -->
+        <div class="section-title">Social Media Profiles <small style="text-transform:none; font-weight:400; color:#94A3B8;">(Optional)</small></div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="label"><i class="fa-brands fa-facebook" style="color: #1877F2; font-size: 1.1rem;"></i> Facebook</label>
+                <input type="url" id="facebook" class="input" placeholder="https://facebook.com/yourshop">
+            </div>
+            <div class="form-group">
+                <label class="label"><i class="fa-brands fa-instagram" style="color: #E4405F; font-size: 1.1rem;"></i> Instagram</label>
+                <input type="url" id="instagram" class="input" placeholder="https://instagram.com/yourshop">
+            </div>
+            <div class="form-group">
+                <label class="label"><i class="fa-brands fa-x-twitter" style="color: #000000; font-size: 1.1rem;"></i> X (Twitter)</label>
+                <input type="url" id="twitter" class="input" placeholder="https://x.com/yourshop">
+            </div>
+            <div class="form-group">
+                <label class="label"><i class="fa-brands fa-tiktok" style="color: #000000; font-size: 1.1rem;"></i> TikTok</label>
+                <input type="url" id="tiktok" class="input" placeholder="https://tiktok.com/@yourshop">
             </div>
         </div>
 
@@ -452,7 +471,7 @@
     let existingShop = null;
     let customBlobs = {}; 
     
-    // Cropper Settings Dictionary (UPDATED TO LANDSCAPE)
+    // Cropper Settings Dictionary
     const CROP_SETTINGS = {
         'prev-front': { ratio: 4 / 5, width: 1080, height: 1350, title: 'Storefront Image', desc: 'Fit to standard 4:5 mobile portrait frame.' },
         'prev-id': { ratio: 297 / 210, width: 1485, height: 1050, title: 'ID Card Document', desc: 'Fit to standard landscape frame.' },
@@ -554,6 +573,12 @@
         document.getElementById('id-type').value = data.id_type || 'National ID Card';
         document.getElementById('id-number').value = data.id_number || '';
         document.getElementById('cac-number').value = data.cac_number || '';
+        
+        // Load Socials
+        document.getElementById('facebook').value = data.facebook_url || '';
+        document.getElementById('instagram').value = data.instagram_url || '';
+        document.getElementById('twitter').value = data.twitter_url || '';
+        document.getElementById('tiktok').value = data.tiktok_url || '';
 
         setPreviewUI('prev-front', data.storefront_url);
         setPreviewUI('prev-id', data.id_card_url);
@@ -577,9 +602,8 @@
             const reader = new FileReader();
             
             reader.onload = (e) => {
-                // Route ALL file uploads through the custom Cropper engine
                 openCropper(e.target.result, imgId);
-                input.value = ''; // clear input to allow re-selection
+                input.value = ''; 
             };
             reader.readAsDataURL(file);
         }
@@ -589,7 +613,6 @@
         currentCropImgId = targetImgId;
         const config = CROP_SETTINGS[targetImgId];
 
-        // Update Modal Text dynamically
         document.getElementById('crop-title').innerText = `Adjust ${config.title}`;
         document.getElementById('crop-desc').innerText = config.desc;
 
@@ -600,7 +623,6 @@
 
         if (cropperInstance) cropperInstance.destroy();
 
-        // Initialize Cropper with dynamic Aspect Ratio
         cropperInstance = new Cropper(cropImg, {
             aspectRatio: config.ratio,
             viewMode: 1,
@@ -628,7 +650,6 @@
 
         const config = CROP_SETTINGS[currentCropImgId];
 
-        // Force exact output dimensions based on target type
         const canvas = cropperInstance.getCroppedCanvas({
             width: config.width,
             height: config.height,
@@ -636,14 +657,12 @@
             imageSmoothingQuality: 'high',
         });
 
-        // 1. Get Blob to send to Supabase later
         canvas.toBlob((blob) => {
-            const baseName = currentCropImgId.split('-')[1]; // 'front', 'id', 'cac', 'logo'
+            const baseName = currentCropImgId.split('-')[1]; 
             const inputId = 'file-' + baseName; 
             blob.name = `${baseName}_cropped_${Date.now()}.jpg`; 
             customBlobs[inputId] = blob;
             
-            // 2. Get DataURL to update the UI instantly
             const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
             setPreviewUI(currentCropImgId, dataUrl);
             
@@ -770,7 +789,6 @@
         try {
             const type = document.getElementById('business-type').value;
 
-            // Database insertion reads from the customBlobs array
             const logoUrl = await handleFileUpload('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
             const frontUrl = await handleFileUpload('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
             const idUrl = await handleFileUpload('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
@@ -792,6 +810,12 @@
                 id_type: document.getElementById('id-type').value,
                 id_number: document.getElementById('id-number').value,
                 cac_number: document.getElementById('cac-number').value,
+                
+                // Add new social fields to payload
+                facebook_url: document.getElementById('facebook').value || null,
+                instagram_url: document.getElementById('instagram').value || null,
+                twitter_url: document.getElementById('twitter').value || null,
+                tiktok_url: document.getElementById('tiktok').value || null,
                 
                 image_url: logoUrl,
                 storefront_url: frontUrl,
