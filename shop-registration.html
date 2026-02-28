@@ -358,7 +358,7 @@
             </div>
         </div>
 
-        <!-- 5. Social Media (NEW SECTION) -->
+        <!-- 5. Social Media -->
         <div class="section-title">Social Media Profiles <small style="text-transform:none; font-weight:400; color:#94A3B8;">(Optional)</small></div>
         <div class="form-grid">
             <div class="form-group">
@@ -471,7 +471,7 @@
     let existingShop = null;
     let customBlobs = {}; 
     
-    // Cropper Settings Dictionary
+    // Cropper Settings Dictionary 
     const CROP_SETTINGS = {
         'prev-front': { ratio: 4 / 5, width: 1080, height: 1350, title: 'Storefront Image', desc: 'Fit to standard 4:5 mobile portrait frame.' },
         'prev-id': { ratio: 297 / 210, width: 1485, height: 1050, title: 'ID Card Document', desc: 'Fit to standard landscape frame.' },
@@ -811,7 +811,6 @@
                 id_number: document.getElementById('id-number').value,
                 cac_number: document.getElementById('cac-number').value,
                 
-                // Add new social fields to payload
                 facebook_url: document.getElementById('facebook').value || null,
                 instagram_url: document.getElementById('instagram').value || null,
                 twitter_url: document.getElementById('twitter').value || null,
@@ -831,7 +830,7 @@
                 if (error) throw error;
                 alert("Correction Submitted! Your shop is pending approval again.");
             } else {
-                payload.banners = []; 
+                // 'banners' array removed completely!
                 const { error } = await client.from('shops').insert(payload);
                 if (error) throw error;
                 alert("Application Submitted! You will be notified once approved.");
