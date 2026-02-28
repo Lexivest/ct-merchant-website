@@ -84,7 +84,7 @@
         
         /* Dynamic Aspect Ratio Classes */
         .ratio-4-5 { grid-column: 1 / -1; width: 100%; max-width: 260px; aspect-ratio: 4 / 5; margin: 0 auto; height: auto; border: 2px dashed var(--color-purple); background: #F8FAFC; }
-        .ratio-a4 { width: 100%; max-width: 220px; aspect-ratio: 210 / 297; margin: 0 auto; height: auto; background: #F8FAFC; }
+        .ratio-landscape { width: 100%; aspect-ratio: 297 / 210; height: auto; background: #F8FAFC; border: 2px dashed var(--color-border); }
         .ratio-1-1 { width: 100%; max-width: 150px; aspect-ratio: 1 / 1; margin: 0 auto; height: auto; border-radius: 50%; background: #F8FAFC; border: 2px dashed var(--color-purple); }
 
         .upload-icon { font-size: 1.5rem; color: #94A3B8; margin-bottom: 8px; }
@@ -304,12 +304,12 @@
 
             <div class="form-group">
                 <label class="label" id="cac-label">Upload CAC (Optional)</label>
-                <!-- A4 Portrait Box -->
-                <div class="upload-box ratio-a4" onclick="triggerUpload('file-cac')">
+                <!-- Landscape Box -->
+                <div class="upload-box ratio-landscape" onclick="triggerUpload('file-cac')">
                     <input type="file" id="file-cac" hidden accept="image/*" onchange="previewFile(this, 'prev-cac')">
                     <i class="fa-solid fa-file-contract upload-icon"></i>
                     <span class="upload-text">Upload CAC</span>
-                    <span class="upload-subtext">A4 Portrait</span>
+                    <span class="upload-subtext">A4 Landscape</span>
                     <img id="prev-cac" class="preview-img">
                     <i class="fa-solid fa-pen edit-badge" id="badge-cac"></i>
                 </div>
@@ -334,12 +334,12 @@
 
             <div class="form-group">
                 <label class="label">Upload ID Card (Required)</label>
-                <!-- A4 Portrait Box -->
-                <div class="upload-box ratio-a4" onclick="triggerUpload('file-id')">
+                <!-- Landscape Box -->
+                <div class="upload-box ratio-landscape" onclick="triggerUpload('file-id')">
                     <input type="file" id="file-id" hidden accept="image/*" onchange="previewFile(this, 'prev-id')">
                     <i class="fa-solid fa-id-card upload-icon"></i>
                     <span class="upload-text">Upload ID</span>
-                    <span class="upload-subtext">A4 Portrait</span>
+                    <span class="upload-subtext">Landscape Format</span>
                     <img id="prev-id" class="preview-img">
                     <i class="fa-solid fa-pen edit-badge" id="badge-id"></i>
                 </div>
@@ -452,11 +452,11 @@
     let existingShop = null;
     let customBlobs = {}; 
     
-    // Cropper Settings Dictionary
+    // Cropper Settings Dictionary (UPDATED TO LANDSCAPE)
     const CROP_SETTINGS = {
         'prev-front': { ratio: 4 / 5, width: 1080, height: 1350, title: 'Storefront Image', desc: 'Fit to standard 4:5 mobile portrait frame.' },
-        'prev-id': { ratio: 210 / 297, width: 1050, height: 1485, title: 'ID Card Document', desc: 'Fit to standard A4 paper portrait frame.' },
-        'prev-cac': { ratio: 210 / 297, width: 1050, height: 1485, title: 'CAC Certificate', desc: 'Fit to standard A4 paper portrait frame.' },
+        'prev-id': { ratio: 297 / 210, width: 1485, height: 1050, title: 'ID Card Document', desc: 'Fit to standard landscape frame.' },
+        'prev-cac': { ratio: 297 / 210, width: 1485, height: 1050, title: 'CAC Certificate', desc: 'Fit to standard landscape frame.' },
         'prev-logo': { ratio: 1 / 1, width: 500, height: 500, title: 'Shop Logo', desc: 'Fit to perfect square frame for app avatars.' }
     };
 
