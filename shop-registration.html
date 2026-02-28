@@ -789,10 +789,11 @@
         try {
             const type = document.getElementById('business-type').value;
 
-            const logoUrl = await handleFileUpload('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
-            const frontUrl = await handleFileUpload('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
-            const idUrl = await handleFileUpload('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
-            const cacUrl = await handleFileUpload('file-cac', 'cac-documents', 'cac', existingShop?.cac_certificate_url);
+            // Notice the updated exact bucket names being targeted here:
+            const logoUrl = await handleFileUpload('file-logo', 'logos', existingShop?.image_url);
+            const frontUrl = await handleFileUpload('file-front', 'storefronts', existingShop?.storefront_url);
+            const idUrl = await handleFileUpload('file-id', 'kyc-documents', existingShop?.id_card_url);
+            const cacUrl = await handleFileUpload('file-cac', 'cac-documents', existingShop?.cac_certificate_url);
 
             const payload = {
                 owner_id: currentUser.id,
@@ -830,7 +831,6 @@
                 if (error) throw error;
                 alert("Correction Submitted! Your shop is pending approval again.");
             } else {
-                // 'banners' array removed completely!
                 const { error } = await client.from('shops').insert(payload);
                 if (error) throw error;
                 alert("Application Submitted! You will be notified once approved.");
@@ -847,18 +847,28 @@
         } 
     }
 
-    async function handleFileUpload(inputId, bucket, folder, existingUrl) {
+    // THE UPDATED UPLOAD ENGINE
+    async function handleFileUpload(inputId, targetBucket, existingUrl) {
         const file = customBlobs[inputId];
         
         if (!file) return existingUrl || null; 
 
         const ext = file.name ? file.name.split('.').pop() : 'jpg'; 
-        const fileName = `${folder}/${currentUser.id}_${Date.now()}.${ext}`;
+        // Generates a clean file name directly in the root of the targeted bucket
+        const fileName = `${currentUser.id}_${Date.now()}.${ext}`;
         
-        const { error: uploadError } = await client.storage.from(bucket).upload(fileName, file);
-        if (uploadError) throw uploadError;
+        // Added contentType to prevent Blobs from becoming broken octet-stream files
+        const { error: uploadError } = await client.storage.from(targetBucket).upload(fileName, file, {
+            contentType: 'image/jpeg',
+            upsert: true
+        });
         
-        const { data } = client.storage.from(bucket).getPublicUrl(fileName);
+        if (uploadError) {
+            console.error(`Upload error in ${targetBucket}:`, uploadError);
+            throw new Error(`Failed to upload to ${targetBucket} bucket: ` + uploadError.message);
+        }
+        
+        const { data } = client.storage.from(targetBucket).getPublicUrl(fileName);
         return data.publicUrl;
     }
 </script>
