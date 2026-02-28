@@ -82,23 +82,16 @@
         }
         .upload-box:hover { border-color: var(--color-purple); background: #F3E8FF; }
         
-        /* New Portrait Standard Storefront Box */
-        .upload-box.portrait {
-            grid-column: 1 / -1; 
-            width: 100%; 
-            max-width: 260px;
-            aspect-ratio: 4 / 5; 
-            margin: 0 auto;
-            height: auto; 
-            border: 2px dashed var(--color-purple);
-            background: #F8FAFC;
-        }
+        /* Dynamic Aspect Ratio Classes */
+        .ratio-4-5 { grid-column: 1 / -1; width: 100%; max-width: 260px; aspect-ratio: 4 / 5; margin: 0 auto; height: auto; border: 2px dashed var(--color-purple); background: #F8FAFC; }
+        .ratio-a4 { width: 100%; max-width: 220px; aspect-ratio: 210 / 297; margin: 0 auto; height: auto; background: #F8FAFC; }
+        .ratio-1-1 { width: 100%; max-width: 150px; aspect-ratio: 1 / 1; margin: 0 auto; height: auto; border-radius: 50%; background: #F8FAFC; border: 2px dashed var(--color-purple); }
 
         .upload-icon { font-size: 1.5rem; color: #94A3B8; margin-bottom: 8px; }
         .upload-text { font-size: 0.85rem; font-weight: 600; color: #64748B; text-align: center; }
         .upload-subtext { font-size: 0.65rem; color: #94A3B8; margin-top: 4px; text-align: center; }
         
-        .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; z-index: 5; }
+        .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; z-index: 5; border-radius: inherit; }
         .edit-badge { 
             position: absolute; top: 8px; right: 8px; 
             background: white; border-radius: 50%; padding: 8px; 
@@ -218,7 +211,7 @@
         <!-- 1. Basic Info -->
         <div class="section-title">Store Front Image</div>
         <!-- Portrait Box -->
-        <div class="upload-box portrait" onclick="triggerUpload('file-front')">
+        <div class="upload-box ratio-4-5" onclick="triggerUpload('file-front')">
             <input type="file" id="file-front" hidden accept="image/*" onchange="previewFile(this, 'prev-front')">
             <i class="fa-solid fa-store upload-icon" style="font-size: 2.5rem; color: var(--color-purple);"></i>
             <span class="upload-text" style="color: var(--color-purple); margin-top: 12px;">Upload Portrait Cover</span>
@@ -286,10 +279,24 @@
             </div>
         </div>
 
-        <!-- 3. Identity -->
+        <!-- 3. Identity & Documents -->
         <div class="section-title">Identity & Legal <small style="text-transform:none; font-weight:400; color:#94A3B8;">(Private)</small></div>
         <div class="form-grid">
             
+            <div class="form-group">
+                <label class="label">Shop Logo (Optional)</label>
+                <div class="upload-box ratio-1-1" onclick="triggerUpload('file-logo')">
+                    <input type="file" id="file-logo" hidden accept="image/*" onchange="previewFile(this, 'prev-logo')">
+                    <i class="fa-solid fa-camera upload-icon" style="color: var(--color-purple);"></i>
+                    <span class="upload-text" style="color: var(--color-purple);">Shop Logo</span>
+                    <span class="upload-subtext">Square / Circle</span>
+                    <img id="prev-logo" class="preview-img">
+                    <i class="fa-solid fa-pen edit-badge" id="badge-logo"></i>
+                </div>
+            </div>
+
+            <hr style="border:0; border-top:1px solid #E2E8F0; margin:8px 0;">
+
             <div class="form-group">
                 <label class="label" id="cac-num-label">BN Number (Optional)</label>
                 <input type="text" id="cac-number" class="input" placeholder="If applicable">
@@ -297,10 +304,12 @@
 
             <div class="form-group">
                 <label class="label" id="cac-label">Upload CAC (Optional)</label>
-                <div class="upload-box" onclick="triggerUpload('file-cac')">
+                <!-- A4 Portrait Box -->
+                <div class="upload-box ratio-a4" onclick="triggerUpload('file-cac')">
                     <input type="file" id="file-cac" hidden accept="image/*" onchange="previewFile(this, 'prev-cac')">
                     <i class="fa-solid fa-file-contract upload-icon"></i>
-                    <span class="upload-text">Tap to Upload</span>
+                    <span class="upload-text">Upload CAC</span>
+                    <span class="upload-subtext">A4 Portrait</span>
                     <img id="prev-cac" class="preview-img">
                     <i class="fa-solid fa-pen edit-badge" id="badge-cac"></i>
                 </div>
@@ -325,23 +334,14 @@
 
             <div class="form-group">
                 <label class="label">Upload ID Card (Required)</label>
-                <div class="upload-box" onclick="triggerUpload('file-id')">
+                <!-- A4 Portrait Box -->
+                <div class="upload-box ratio-a4" onclick="triggerUpload('file-id')">
                     <input type="file" id="file-id" hidden accept="image/*" onchange="previewFile(this, 'prev-id')">
                     <i class="fa-solid fa-id-card upload-icon"></i>
-                    <span class="upload-text">Required</span>
+                    <span class="upload-text">Upload ID</span>
+                    <span class="upload-subtext">A4 Portrait</span>
                     <img id="prev-id" class="preview-img">
                     <i class="fa-solid fa-pen edit-badge" id="badge-id"></i>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="label">Shop Logo (Optional)</label>
-                <div class="upload-box" onclick="triggerUpload('file-logo')">
-                    <input type="file" id="file-logo" hidden accept="image/*" onchange="previewFile(this, 'prev-logo')">
-                    <i class="fa-regular fa-image upload-icon"></i>
-                    <span class="upload-text">Tap to Upload</span>
-                    <img id="prev-logo" class="preview-img">
-                    <i class="fa-solid fa-pen edit-badge" id="badge-logo"></i>
                 </div>
             </div>
 
@@ -364,11 +364,11 @@
     </form>
 </div>
 
-<!-- IMAGE CROPPER MODAL -->
+<!-- DYNAMIC IMAGE CROPPER MODAL -->
 <div id="crop-modal" class="overlay" style="z-index: 2000;">
     <div class="crop-modal-content">
-        <h3 style="color: var(--color-purple); font-weight: 800; font-size: 1.2rem;">Adjust Image</h3>
-        <p style="font-size: 0.85rem; color: #64748B; margin-top: -12px;">Pinch to zoom, drag to position. The image must fit the 4:5 portrait frame.</p>
+        <h3 id="crop-title" style="color: var(--color-purple); font-weight: 800; font-size: 1.2rem;">Adjust Image</h3>
+        <p id="crop-desc" style="font-size: 0.85rem; color: #64748B; margin-top: -12px;">Pinch to zoom, drag to position.</p>
         
         <div class="crop-area">
             <img id="crop-target-img" style="max-width: 100%; display: block;">
@@ -450,9 +450,16 @@
     // --- STATE ---
     let currentUser = null;
     let existingShop = null;
-    let customBlobs = {}; // Stores cropped blob files keyed by their input id
+    let customBlobs = {}; 
     
-    // Cropper State
+    // Cropper Settings Dictionary
+    const CROP_SETTINGS = {
+        'prev-front': { ratio: 4 / 5, width: 1080, height: 1350, title: 'Storefront Image', desc: 'Fit to standard 4:5 mobile portrait frame.' },
+        'prev-id': { ratio: 210 / 297, width: 1050, height: 1485, title: 'ID Card Document', desc: 'Fit to standard A4 paper portrait frame.' },
+        'prev-cac': { ratio: 210 / 297, width: 1050, height: 1485, title: 'CAC Certificate', desc: 'Fit to standard A4 paper portrait frame.' },
+        'prev-logo': { ratio: 1 / 1, width: 500, height: 500, title: 'Shop Logo', desc: 'Fit to perfect square frame for app avatars.' }
+    };
+
     let cropperInstance = null;
     let currentCropImgId = null;
 
@@ -561,7 +568,7 @@
         toggleCacRequirement(); 
     }
 
-    // --- UI HELPERS & CROPPER ---
+    // --- UI HELPERS & DYNAMIC CROPPER ---
     function triggerUpload(id) { document.getElementById(id).click(); }
 
     function previewFile(input, imgId) {
@@ -570,15 +577,9 @@
             const reader = new FileReader();
             
             reader.onload = (e) => {
-                // Intercept the storefront upload to strictly enforce the 4:5 crop
-                if (imgId === 'prev-front') {
-                    openCropper(e.target.result, imgId);
-                    input.value = ''; // clear input, we rely on the generated blob now
-                } else {
-                    // Standard pass-through for IDs, CAC, Logos
-                    setPreviewUI(imgId, e.target.result);
-                    customBlobs['file-' + imgId.split('-')[1]] = file; // Store raw file for continuity
-                }
+                // Route ALL file uploads through the custom Cropper engine
+                openCropper(e.target.result, imgId);
+                input.value = ''; // clear input to allow re-selection
             };
             reader.readAsDataURL(file);
         }
@@ -586,6 +587,12 @@
 
     function openCropper(imageSrc, targetImgId) {
         currentCropImgId = targetImgId;
+        const config = CROP_SETTINGS[targetImgId];
+
+        // Update Modal Text dynamically
+        document.getElementById('crop-title').innerText = `Adjust ${config.title}`;
+        document.getElementById('crop-desc').innerText = config.desc;
+
         const cropImg = document.getElementById('crop-target-img');
         cropImg.src = imageSrc;
         
@@ -593,9 +600,9 @@
 
         if (cropperInstance) cropperInstance.destroy();
 
-        // Enforce the 4:5 aspect ratio visually
+        // Initialize Cropper with dynamic Aspect Ratio
         cropperInstance = new Cropper(cropImg, {
-            aspectRatio: 4 / 5,
+            aspectRatio: config.ratio,
             viewMode: 1,
             dragMode: 'move',
             autoCropArea: 0.9,
@@ -619,21 +626,24 @@
     function applyCrop() {
         if (!cropperInstance) return;
 
-        // Force exactly 1080x1350 for output
+        const config = CROP_SETTINGS[currentCropImgId];
+
+        // Force exact output dimensions based on target type
         const canvas = cropperInstance.getCroppedCanvas({
-            width: 1080,
-            height: 1350,
+            width: config.width,
+            height: config.height,
             imageSmoothingEnabled: true,
             imageSmoothingQuality: 'high',
         });
 
         // 1. Get Blob to send to Supabase later
         canvas.toBlob((blob) => {
-            const inputId = 'file-' + currentCropImgId.split('-')[1]; // e.g., 'file-front'
-            blob.name = `storefront_cropped_${Date.now()}.jpg`; // add mock name
+            const baseName = currentCropImgId.split('-')[1]; // 'front', 'id', 'cac', 'logo'
+            const inputId = 'file-' + baseName; 
+            blob.name = `${baseName}_cropped_${Date.now()}.jpg`; 
             customBlobs[inputId] = blob;
             
-            // 2. Get DataURL just to update the UI right now
+            // 2. Get DataURL to update the UI instantly
             const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
             setPreviewUI(currentCropImgId, dataUrl);
             
@@ -760,7 +770,7 @@
         try {
             const type = document.getElementById('business-type').value;
 
-            // Updated upload logic: reads from our customBlobs array instead of input element directly
+            // Database insertion reads from the customBlobs array
             const logoUrl = await handleFileUpload('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
             const frontUrl = await handleFileUpload('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
             const idUrl = await handleFileUpload('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
@@ -815,12 +825,11 @@
     }
 
     async function handleFileUpload(inputId, bucket, folder, existingUrl) {
-        // Core modification: Fetch file from our custom blob storage first!
         const file = customBlobs[inputId];
         
         if (!file) return existingUrl || null; 
 
-        const ext = file.name ? file.name.split('.').pop() : 'jpg'; // Fallback to jpg for blobs
+        const ext = file.name ? file.name.split('.').pop() : 'jpg'; 
         const fileName = `${folder}/${currentUser.id}_${Date.now()}.${ext}`;
         
         const { error: uploadError } = await client.storage.from(bucket).upload(fileName, file);
