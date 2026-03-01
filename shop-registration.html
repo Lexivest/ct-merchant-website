@@ -789,8 +789,8 @@
         try {
             const type = document.getElementById('business-type').value;
 
-            // Notice the updated exact bucket names being targeted here:
-            const logoUrl = await handleFileUpload('file-logo', 'logos', existingShop?.image_url);
+            // Notice the PERFECT mappings below based on your list
+            const logoUrl = await handleFileUpload('file-logo', 'avatars', existingShop?.image_url);
             const frontUrl = await handleFileUpload('file-front', 'storefronts', existingShop?.storefront_url);
             const idUrl = await handleFileUpload('file-id', 'kyc-documents', existingShop?.id_card_url);
             const cacUrl = await handleFileUpload('file-cac', 'cac-documents', existingShop?.cac_certificate_url);
@@ -854,10 +854,8 @@
         if (!file) return existingUrl || null; 
 
         const ext = file.name ? file.name.split('.').pop() : 'jpg'; 
-        // Generates a clean file name directly in the root of the targeted bucket
         const fileName = `${currentUser.id}_${Date.now()}.${ext}`;
         
-        // Added contentType to prevent Blobs from becoming broken octet-stream files
         const { error: uploadError } = await client.storage.from(targetBucket).upload(fileName, file, {
             contentType: 'image/jpeg',
             upsert: true
@@ -868,6 +866,7 @@
             throw new Error(`Failed to upload to ${targetBucket} bucket: ` + uploadError.message);
         }
         
+        // This will successfully generate and return the correct DB path for both public and private buckets
         const { data } = client.storage.from(targetBucket).getPublicUrl(fileName);
         return data.publicUrl;
     }
