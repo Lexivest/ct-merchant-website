@@ -167,6 +167,7 @@
         <div class="page-title" id="header-title">Register Shop</div>
     </div>
 
+    <!-- City Closed Notice -->
     <div id="city-closed-box" class="alert-box alert-error" style="display: none; background: #FFFBEB; border-color: #FCD34D; color: #B45309;">
         <i class="fa-solid fa-city" style="margin-top: 2px;"></i>
         <div>
@@ -175,6 +176,7 @@
         </div>
     </div>
 
+    <!-- Rejection Notice -->
     <div id="rejection-box" class="alert-box alert-error">
         <i class="fa-solid fa-circle-exclamation" style="margin-top: 2px;"></i>
         <div>
@@ -187,6 +189,7 @@
 
     <form id="shop-form" class="card" onsubmit="showPreviewDialog(event)">
         
+        <!-- 1. Basic Info -->
         <div class="section-title">Store Front Image</div>
         <div class="upload-box wide" onclick="triggerUpload('file-front')">
             <input type="file" id="file-front" hidden accept="image/*" onchange="previewFile(this, 'prev-front')">
@@ -224,6 +227,7 @@
             </div>
         </div>
 
+        <!-- 2. Location -->
         <div class="section-title">Location</div>
         <div class="form-grid">
             <div class="upload-row">
@@ -254,6 +258,7 @@
             </div>
         </div>
 
+        <!-- 3. Identity -->
         <div class="section-title">Identity & Legal <small style="text-transform:none; font-weight:400; color:#94A3B8;">(Private)</small></div>
         <div class="form-grid">
             
@@ -314,6 +319,7 @@
 
         </div>
 
+        <!-- 4. Contacts & Socials -->
         <div class="section-title">Contacts & Socials</div>
         <div class="form-grid">
             <div class="form-group">
@@ -346,6 +352,7 @@
             </div>
         </div>
 
+        <!-- 5. Initial Banner & News Content -->
         <div class="section-title">First Content Post (Optional)</div>
         <div class="form-grid">
             <div class="form-group">
@@ -368,6 +375,7 @@
     </form>
 </div>
 
+<!-- RICH REVIEW MODAL -->
 <div id="review-modal" class="overlay">
     <div class="review-sheet">
         <h2 class="review-title">Review Application</h2>
