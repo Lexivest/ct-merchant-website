@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shop Registration | CT‑Merchant</title>
+    <title>Shop Registration | CT-Merchant</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -163,11 +163,10 @@
 
 <div class="container">
     <div class="header">
-        <button onclick="window.location.href='user-dashboard.html'" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+        <button type="button" onclick="window.location.href='user-dashboard.html'" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
         <div class="page-title" id="header-title">Register Shop</div>
     </div>
 
-    <!-- City Closed Notice (New) -->
     <div id="city-closed-box" class="alert-box alert-error" style="display: none; background: #FFFBEB; border-color: #FCD34D; color: #B45309;">
         <i class="fa-solid fa-city" style="margin-top: 2px;"></i>
         <div>
@@ -176,7 +175,6 @@
         </div>
     </div>
 
-    <!-- Rejection Notice -->
     <div id="rejection-box" class="alert-box alert-error">
         <i class="fa-solid fa-circle-exclamation" style="margin-top: 2px;"></i>
         <div>
@@ -189,7 +187,6 @@
 
     <form id="shop-form" class="card" onsubmit="showPreviewDialog(event)">
         
-        <!-- 1. Basic Info -->
         <div class="section-title">Store Front Image</div>
         <div class="upload-box wide" onclick="triggerUpload('file-front')">
             <input type="file" id="file-front" hidden accept="image/*" onchange="previewFile(this, 'prev-front')">
@@ -227,7 +224,6 @@
             </div>
         </div>
 
-        <!-- 2. Location -->
         <div class="section-title">Location</div>
         <div class="form-grid">
             <div class="upload-row">
@@ -258,7 +254,6 @@
             </div>
         </div>
 
-        <!-- 3. Identity -->
         <div class="section-title">Identity & Legal <small style="text-transform:none; font-weight:400; color:#94A3B8;">(Private)</small></div>
         <div class="form-grid">
             
@@ -319,8 +314,7 @@
 
         </div>
 
-        <!-- 4. Contacts -->
-        <div class="section-title">Contacts</div>
+        <div class="section-title">Contacts & Socials</div>
         <div class="form-grid">
             <div class="form-group">
                 <label class="label">Business Phone</label>
@@ -330,13 +324,50 @@
                 <label class="label">WhatsApp Number (Optional)</label>
                 <input type="tel" id="whatsapp" class="input">
             </div>
+            <div class="upload-row">
+                <div class="form-group">
+                    <label class="label"><i class="fa-brands fa-facebook" style="color:#1877F2;"></i> Facebook URL</label>
+                    <input type="url" id="facebook" class="input" placeholder="https://facebook.com/yourshop">
+                </div>
+                <div class="form-group">
+                    <label class="label"><i class="fa-brands fa-instagram" style="color:#E4405F;"></i> Instagram URL</label>
+                    <input type="url" id="instagram" class="input" placeholder="https://instagram.com/yourshop">
+                </div>
+            </div>
+            <div class="upload-row">
+                <div class="form-group">
+                    <label class="label"><i class="fa-brands fa-x-twitter"></i> X (Twitter) URL</label>
+                    <input type="url" id="twitter" class="input" placeholder="https://x.com/yourshop">
+                </div>
+                <div class="form-group">
+                    <label class="label"><i class="fa-brands fa-tiktok" style="color:#000000;"></i> TikTok URL</label>
+                    <input type="url" id="tiktok" class="input" placeholder="https://tiktok.com/@yourshop">
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">First Content Post (Optional)</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="label">Upload First Banner</label>
+                <div class="upload-box wide" onclick="triggerUpload('file-banner')">
+                    <input type="file" id="file-banner" hidden accept="image/*" onchange="previewFile(this, 'prev-banner')">
+                    <i class="fa-regular fa-image upload-icon"></i>
+                    <span class="upload-text">Tap to Upload Banner</span>
+                    <img id="prev-banner" class="preview-img">
+                    <i class="fa-solid fa-pen edit-badge" id="badge-banner"></i>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="label">First News/Update</label>
+                <textarea id="news-text" class="input" placeholder="Welcome to our new shop! We are offering a 10% discount on all items..."></textarea>
+            </div>
         </div>
 
         <button type="submit" id="submit-btn" class="btn-submit">Review Application</button>
     </form>
 </div>
 
-<!-- RICH REVIEW MODAL -->
 <div id="review-modal" class="overlay">
     <div class="review-sheet">
         <h2 class="review-title">Review Application</h2>
@@ -416,7 +447,6 @@
         document.getElementById('main-loader').style.display = 'block';
 
         await fetchCategories();
-        // User location fetch now handles the "City Closed" logic
         const canProceed = await fetchUserLocation();
 
         if (canProceed) {
@@ -440,15 +470,13 @@
     }
 
     async function fetchUserLocation() {
-        // Look up profile city AND check if that city is currently open
         const { data } = await client.from('profiles').select('city_id, cities(name, is_open)').eq('id', currentUser.id).single();
         
         if (data) {
-            // NEW LOGIC: Lock the form if the city is closed!
             if (data.cities && data.cities.is_open === false) {
                 document.getElementById('city-closed-box').style.display = 'flex';
                 document.getElementById('city-closed-reason').innerHTML = `We are not currently accepting or processing merchant registrations in <strong>${data.cities.name}</strong>. Please check back later or contact support.`;
-                return false; // Prevent form from showing
+                return false; 
             }
 
             document.getElementById('city-id').value = data.city_id;
@@ -496,8 +524,13 @@
         document.getElementById('id-type').value = data.id_type || 'National ID Card';
         document.getElementById('id-number').value = data.id_number || '';
         document.getElementById('cac-number').value = data.cac_number || '';
+        
+        // Social Media mappings
+        document.getElementById('facebook').value = data.facebook_url || '';
+        document.getElementById('instagram').value = data.instagram_url || '';
+        document.getElementById('twitter').value = data.twitter_url || '';
+        document.getElementById('tiktok').value = data.tiktok_url || '';
 
-        // Safe robust image loading
         setPreview('prev-front', data.storefront_url);
         setPreview('prev-id', data.id_card_url);
         setPreview('prev-cac', data.cac_certificate_url);
@@ -511,18 +544,15 @@
         toggleCacRequirement(); 
     }
 
-    // BULLETPROOF IMAGE SETTER
     function setPreview(id, url) {
         if (url && typeof url === 'string' && url.trim() !== '') {
             const img = document.getElementById(id);
             img.src = url; 
             img.style.display = 'block';
             
-            // Show the edit pencil badge
             const badge = document.getElementById(id.replace('prev', 'badge'));
             if (badge) badge.style.display = 'block';
 
-            // Hide the default icons and text to make it look clean
             const box = img.parentElement;
             const icon = box.querySelector('.upload-icon');
             const text = box.querySelector('.upload-text');
@@ -571,10 +601,8 @@
         }
     }
 
-    // --- BULLETPROOF IMAGE VALIDATOR ---
     function getSafeImageSource(imgId) {
         const img = document.getElementById(imgId);
-        // If the display is 'block', it means our JS specifically loaded a valid image into it!
         if (img.style.display === 'block' && img.src && img.src.trim() !== '') {
             return img.src; 
         }
@@ -585,9 +613,7 @@
     function showPreviewDialog(e) {
         e.preventDefault();
 
-        // 1. Validation Logic
         const type = document.getElementById('business-type').value;
-        
         const frontImgSrc = getSafeImageSource('prev-front');
         const idImgSrc = getSafeImageSource('prev-id');
         const cacImgSrc = getSafeImageSource('prev-cac');
@@ -599,7 +625,6 @@
             return alert("CAC Certificate is required for Limited Liability companies.");
         }
 
-        // 2. Populate Modal Images Forcefully
         if (frontImgSrc) {
             document.getElementById('rv-img-front').src = frontImgSrc;
             document.getElementById('rv-img-front').style.display = 'block';
@@ -622,7 +647,6 @@
             cacCol.style.display = 'none';
         }
 
-        // 3. Populate Modal Text
         const areaSelect = document.getElementById('area');
         const areaText = areaSelect.options[areaSelect.selectedIndex]?.text || '';
         const cityText = document.getElementById('city-display').value;
@@ -642,8 +666,6 @@
         }
 
         document.getElementById('confirm-btn').textContent = isEdit ? "Confirm & Resubmit" : "Confirm & Submit";
-
-        // Show Modal
         document.getElementById('review-modal').classList.add('active');
     }
 
@@ -660,7 +682,6 @@
         try {
             const type = document.getElementById('business-type').value;
 
-            // Uploads (Only uploads if a new file is explicitly selected)
             const logoUrl = await handleFileUpload('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
             const frontUrl = await handleFileUpload('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
             const idUrl = await handleFileUpload('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
@@ -687,23 +708,63 @@
                 storefront_url: frontUrl,
                 id_card_url: idUrl,
                 cac_certificate_url: cacUrl,
+
+                facebook_url: document.getElementById('facebook').value || null,
+                instagram_url: document.getElementById('instagram').value || null,
+                twitter_url: document.getElementById('twitter').value || null,
+                tiktok_url: document.getElementById('tiktok').value || null,
                 
-                // CRITICAL RESUBMISSION LOGIC
                 status: 'pending', 
                 rejection_reason: null
             };
 
+            let returnedShopId = shopId;
+
+            // 1. Submit to Shops table and grab the returned ID
             if (isEdit && existingShop) {
-                const { error } = await client.from('shops').update(payload).eq('id', shopId);
+                const { data, error } = await client.from('shops').update(payload).eq('id', shopId).select('id').single();
                 if (error) throw error;
-                alert("Correction Submitted! Your shop is pending approval again.");
+                returnedShopId = data.id;
             } else {
-                payload.banners = []; // Init empty array
-                const { error } = await client.from('shops').insert(payload);
+                const { data, error } = await client.from('shops').insert(payload).select('id').single();
                 if (error) throw error;
-                alert("Application Submitted! You will be notified once approved.");
+                returnedShopId = data.id;
             }
 
+            // 2. Handle Initial Banners & News Submission
+            const bannerUrl = await handleFileUpload('file-banner', 'banner-storage', 'banners', null);
+            const newsText = document.getElementById('news-text').value;
+
+            if (bannerUrl || newsText) {
+                const contentPayload = [];
+                
+                if (bannerUrl) {
+                    contentPayload.push({
+                        shop_id: returnedShopId,
+                        merchant_id: currentUser.id,
+                        content_type: 'banner',
+                        content_data: bannerUrl,
+                        status: 'pending' 
+                    });
+                }
+                
+                if (newsText) {
+                    contentPayload.push({
+                        shop_id: returnedShopId,
+                        merchant_id: currentUser.id,
+                        content_type: 'news',
+                        content_data: newsText,
+                        status: 'pending' 
+                    });
+                }
+
+                if (contentPayload.length > 0) {
+                    const { error: contentError } = await client.from('shop_banners_news').insert(contentPayload);
+                    if (contentError) throw contentError;
+                }
+            }
+
+            alert(isEdit ? "Correction Submitted! Your shop is pending approval again." : "Application Submitted! You will be notified once approved.");
             window.location.href = "user-dashboard.html";
 
         } catch (err) {
@@ -716,9 +777,12 @@
     }
 
     async function handleFileUpload(inputId, bucket, folder, existingUrl) {
-        const file = document.getElementById(inputId).files[0];
-        if (!file) return existingUrl || null; // Returns existing URL if no new file picked
+        const fileInput = document.getElementById(inputId);
+        if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+            return existingUrl || null; 
+        }
 
+        const file = fileInput.files[0];
         const ext = file.name.split('.').pop();
         const fileName = `${folder}/${currentUser.id}_${Date.now()}.${ext}`;
         
