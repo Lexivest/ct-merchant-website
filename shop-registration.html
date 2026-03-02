@@ -7,8 +7,6 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- CROPPER JS CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     
     <style>
         :root {
@@ -59,7 +57,7 @@
         /* Inputs */
         .form-grid { display: grid; gap: 16px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .label { font-size: 0.9rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px; }
+        .label { font-size: 0.9rem; font-weight: 600; color: #334155; }
         
         .input { 
             width: 100%; padding: 12px 16px; border-radius: 10px; 
@@ -80,22 +78,16 @@
             background: #FAFAFA; position: relative; overflow: hidden;
             transition: all 0.2s;
         }
+        .upload-box.wide { grid-column: 1 / -1; height: 180px; }
         .upload-box:hover { border-color: var(--color-purple); background: #F3E8FF; }
-        
-        /* Dynamic Aspect Ratio Classes */
-        .ratio-4-5 { grid-column: 1 / -1; width: 100%; max-width: 260px; aspect-ratio: 4 / 5; margin: 0 auto; height: auto; border: 2px dashed var(--color-purple); background: #F8FAFC; }
-        .ratio-landscape { width: 100%; aspect-ratio: 297 / 210; height: auto; background: #F8FAFC; border: 2px dashed var(--color-border); }
-        .ratio-1-1 { width: 100%; max-width: 150px; aspect-ratio: 1 / 1; margin: 0 auto; height: auto; border-radius: 50%; background: #F8FAFC; border: 2px dashed var(--color-purple); }
-
         .upload-icon { font-size: 1.5rem; color: #94A3B8; margin-bottom: 8px; }
-        .upload-text { font-size: 0.85rem; font-weight: 600; color: #64748B; text-align: center; }
-        .upload-subtext { font-size: 0.65rem; color: #94A3B8; margin-top: 4px; text-align: center; }
+        .upload-text { font-size: 0.75rem; font-weight: 600; color: #64748B; text-align: center; }
         
-        .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; z-index: 5; border-radius: inherit; }
+        .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; z-index: 5; }
         .edit-badge { 
             position: absolute; top: 8px; right: 8px; 
-            background: white; border-radius: 50%; padding: 8px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2); font-size: 12px; color: var(--color-purple);
+            background: white; border-radius: 50%; padding: 6px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 12px; color: var(--color-purple);
             z-index: 10; display: none;
         }
 
@@ -118,26 +110,14 @@
         }
         .alert-error { background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C; }
 
-        /* --- MODALS (Review & Cropper) --- */
+        /* --- REVIEW MODAL --- */
         .overlay { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.7); 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
             z-index: 1000; display: flex; align-items: flex-end; justify-content: center;
             opacity: 0; visibility: hidden; transition: 0.3s;
         }
         .overlay.active { opacity: 1; visibility: visible; }
         
-        /* Cropper Specific Styles */
-        .crop-modal-content {
-            background: white; width: 100%; max-width: 500px;
-            border-radius: 20px; padding: 20px;
-            margin: 20px; margin-bottom: auto; margin-top: auto;
-            display: flex; flex-direction: column; gap: 16px;
-            transform: scale(0.95); transition: 0.3s;
-        }
-        .overlay.active .crop-modal-content { transform: scale(1); }
-        .crop-area { width: 100%; height: 60vh; max-height: 400px; background: #000; border-radius: 12px; overflow: hidden; }
-        .crop-actions { display: flex; gap: 12px; }
-
         .review-sheet {
             background: white; width: 100%; max-width: 600px;
             border-radius: 24px 24px 0 0; padding: 30px 24px;
@@ -158,6 +138,7 @@
         }
         .thumb-box i { font-size: 1.5rem; color: #CBD5E1; }
         .thumb-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+        
         .thumb-label { font-size: 0.65rem; font-weight: 700; color: #475569; text-transform: uppercase; }
 
         .detail-row { display: flex; padding: 8px 0; border-bottom: 1px dashed #E2E8F0; }
@@ -165,8 +146,8 @@
         .detail-label { width: 120px; color: #64748B; font-size: 0.9rem; font-weight: 500; }
         .detail-value { flex: 1; font-weight: 600; color: #0F172A; font-size: 0.95rem; }
 
-        .btn-confirm { background: #059669; color: white; width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 800; font-size: 1.05rem; margin-top: 24px; cursor: pointer; }
-        .btn-edit { background: transparent; color: #64748B; width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 12px; font-weight: 600; cursor: pointer; }
+        .btn-confirm { background: var(--color-primary, #059669); color: white; width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 800; font-size: 1.05rem; margin-top: 24px; cursor: pointer; }
+        .btn-edit { background: transparent; color: #64748B; width: 100%; padding: 12px; border: none; font-weight: 600; cursor: pointer; margin-top: 8px; }
 
         .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -186,7 +167,7 @@
         <div class="page-title" id="header-title">Register Shop</div>
     </div>
 
-    <!-- City Closed Notice -->
+    <!-- City Closed Notice (New) -->
     <div id="city-closed-box" class="alert-box alert-error" style="display: none; background: #FFFBEB; border-color: #FCD34D; color: #B45309;">
         <i class="fa-solid fa-city" style="margin-top: 2px;"></i>
         <div>
@@ -210,12 +191,10 @@
         
         <!-- 1. Basic Info -->
         <div class="section-title">Store Front Image</div>
-        <!-- Portrait Box -->
-        <div class="upload-box ratio-4-5" onclick="triggerUpload('file-front')">
+        <div class="upload-box wide" onclick="triggerUpload('file-front')">
             <input type="file" id="file-front" hidden accept="image/*" onchange="previewFile(this, 'prev-front')">
-            <i class="fa-solid fa-store upload-icon" style="font-size: 2.5rem; color: var(--color-purple);"></i>
-            <span class="upload-text" style="color: var(--color-purple); margin-top: 12px;">Upload Portrait Cover</span>
-            <span class="upload-subtext">Ideal for mobile (4:5 Ratio)</span>
+            <i class="fa-solid fa-store upload-icon"></i>
+            <span class="upload-text">Upload Cover Photo (Required)</span>
             <img id="prev-front" class="preview-img">
             <i class="fa-solid fa-pen edit-badge" id="badge-front"></i>
         </div>
@@ -279,24 +258,10 @@
             </div>
         </div>
 
-        <!-- 3. Identity & Documents -->
+        <!-- 3. Identity -->
         <div class="section-title">Identity & Legal <small style="text-transform:none; font-weight:400; color:#94A3B8;">(Private)</small></div>
         <div class="form-grid">
             
-            <div class="form-group">
-                <label class="label">Shop Logo (Optional)</label>
-                <div class="upload-box ratio-1-1" onclick="triggerUpload('file-logo')">
-                    <input type="file" id="file-logo" hidden accept="image/*" onchange="previewFile(this, 'prev-logo')">
-                    <i class="fa-solid fa-camera upload-icon" style="color: var(--color-purple);"></i>
-                    <span class="upload-text" style="color: var(--color-purple);">Shop Logo</span>
-                    <span class="upload-subtext">Square / Circle</span>
-                    <img id="prev-logo" class="preview-img">
-                    <i class="fa-solid fa-pen edit-badge" id="badge-logo"></i>
-                </div>
-            </div>
-
-            <hr style="border:0; border-top:1px solid #E2E8F0; margin:8px 0;">
-
             <div class="form-group">
                 <label class="label" id="cac-num-label">BN Number (Optional)</label>
                 <input type="text" id="cac-number" class="input" placeholder="If applicable">
@@ -304,11 +269,10 @@
 
             <div class="form-group">
                 <label class="label" id="cac-label">Upload CAC (Optional)</label>
-                <div class="upload-box ratio-landscape" onclick="triggerUpload('file-cac')">
+                <div class="upload-box" onclick="triggerUpload('file-cac')">
                     <input type="file" id="file-cac" hidden accept="image/*" onchange="previewFile(this, 'prev-cac')">
                     <i class="fa-solid fa-file-contract upload-icon"></i>
-                    <span class="upload-text">Upload CAC</span>
-                    <span class="upload-subtext">A4 Landscape</span>
+                    <span class="upload-text">Tap to Upload</span>
                     <img id="prev-cac" class="preview-img">
                     <i class="fa-solid fa-pen edit-badge" id="badge-cac"></i>
                 </div>
@@ -333,13 +297,23 @@
 
             <div class="form-group">
                 <label class="label">Upload ID Card (Required)</label>
-                <div class="upload-box ratio-landscape" onclick="triggerUpload('file-id')">
+                <div class="upload-box" onclick="triggerUpload('file-id')">
                     <input type="file" id="file-id" hidden accept="image/*" onchange="previewFile(this, 'prev-id')">
                     <i class="fa-solid fa-id-card upload-icon"></i>
-                    <span class="upload-text">Upload ID</span>
-                    <span class="upload-subtext">Landscape Format</span>
+                    <span class="upload-text">Required</span>
                     <img id="prev-id" class="preview-img">
                     <i class="fa-solid fa-pen edit-badge" id="badge-id"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Shop Logo (Optional)</label>
+                <div class="upload-box" onclick="triggerUpload('file-logo')">
+                    <input type="file" id="file-logo" hidden accept="image/*" onchange="previewFile(this, 'prev-logo')">
+                    <i class="fa-regular fa-image upload-icon"></i>
+                    <span class="upload-text">Tap to Upload</span>
+                    <img id="prev-logo" class="preview-img">
+                    <i class="fa-solid fa-pen edit-badge" id="badge-logo"></i>
                 </div>
             </div>
 
@@ -358,46 +332,8 @@
             </div>
         </div>
 
-        <!-- 5. Social Media -->
-        <div class="section-title">Social Media Profiles <small style="text-transform:none; font-weight:400; color:#94A3B8;">(Optional)</small></div>
-        <div class="form-grid">
-            <div class="form-group">
-                <label class="label"><i class="fa-brands fa-facebook" style="color: #1877F2; font-size: 1.1rem;"></i> Facebook</label>
-                <input type="url" id="facebook" class="input" placeholder="https://facebook.com/yourshop">
-            </div>
-            <div class="form-group">
-                <label class="label"><i class="fa-brands fa-instagram" style="color: #E4405F; font-size: 1.1rem;"></i> Instagram</label>
-                <input type="url" id="instagram" class="input" placeholder="https://instagram.com/yourshop">
-            </div>
-            <div class="form-group">
-                <label class="label"><i class="fa-brands fa-x-twitter" style="color: #000000; font-size: 1.1rem;"></i> X (Twitter)</label>
-                <input type="url" id="twitter" class="input" placeholder="https://x.com/yourshop">
-            </div>
-            <div class="form-group">
-                <label class="label"><i class="fa-brands fa-tiktok" style="color: #000000; font-size: 1.1rem;"></i> TikTok</label>
-                <input type="url" id="tiktok" class="input" placeholder="https://tiktok.com/@yourshop">
-            </div>
-        </div>
-
         <button type="submit" id="submit-btn" class="btn-submit">Review Application</button>
     </form>
-</div>
-
-<!-- DYNAMIC IMAGE CROPPER MODAL -->
-<div id="crop-modal" class="overlay" style="z-index: 2000;">
-    <div class="crop-modal-content">
-        <h3 id="crop-title" style="color: var(--color-purple); font-weight: 800; font-size: 1.2rem;">Adjust Image</h3>
-        <p id="crop-desc" style="font-size: 0.85rem; color: #64748B; margin-top: -12px;">Pinch to zoom, drag to position.</p>
-        
-        <div class="crop-area">
-            <img id="crop-target-img" style="max-width: 100%; display: block;">
-        </div>
-        
-        <div class="crop-actions">
-            <button class="btn-edit" onclick="closeCropper()" style="margin: 0;">Cancel</button>
-            <button class="btn-submit" onclick="applyCrop()" style="margin: 0; padding: 12px; font-size: 1rem;">Apply Crop</button>
-        </div>
-    </div>
 </div>
 
 <!-- RICH REVIEW MODAL -->
@@ -452,14 +388,11 @@
         </div>
 
         <button class="btn-confirm" id="confirm-btn" onclick="submitApplication()">Confirm & Submit</button>
-        <button class="btn-edit" onclick="closePreviewDialog()" style="margin-top: 8px; border:none;">Edit Details</button>
+        <button class="btn-edit" onclick="closePreviewDialog()">Edit Details</button>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- CROPPER JS LIBRARY -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-
 <script>
     // --- CONFIG ---
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
@@ -469,19 +402,6 @@
     // --- STATE ---
     let currentUser = null;
     let existingShop = null;
-    let customBlobs = {}; 
-    
-    // Cropper Settings Dictionary 
-    const CROP_SETTINGS = {
-        'prev-front': { ratio: 4 / 5, width: 1080, height: 1350, title: 'Storefront Image', desc: 'Fit to standard 4:5 mobile portrait frame.' },
-        'prev-id': { ratio: 297 / 210, width: 1485, height: 1050, title: 'ID Card Document', desc: 'Fit to standard landscape frame.' },
-        'prev-cac': { ratio: 297 / 210, width: 1485, height: 1050, title: 'CAC Certificate', desc: 'Fit to standard landscape frame.' },
-        'prev-logo': { ratio: 1 / 1, width: 500, height: 500, title: 'Shop Logo', desc: 'Fit to perfect square frame for app avatars.' }
-    };
-
-    let cropperInstance = null;
-    let currentCropImgId = null;
-
     const params = new URLSearchParams(window.location.search);
     const shopId = params.get('id') || params.get('shop_id');
     const isEdit = !!shopId;
@@ -496,6 +416,7 @@
         document.getElementById('main-loader').style.display = 'block';
 
         await fetchCategories();
+        // User location fetch now handles the "City Closed" logic
         const canProceed = await fetchUserLocation();
 
         if (canProceed) {
@@ -519,13 +440,15 @@
     }
 
     async function fetchUserLocation() {
+        // Look up profile city AND check if that city is currently open
         const { data } = await client.from('profiles').select('city_id, cities(name, is_open)').eq('id', currentUser.id).single();
         
         if (data) {
+            // NEW LOGIC: Lock the form if the city is closed!
             if (data.cities && data.cities.is_open === false) {
                 document.getElementById('city-closed-box').style.display = 'flex';
                 document.getElementById('city-closed-reason').innerHTML = `We are not currently accepting or processing merchant registrations in <strong>${data.cities.name}</strong>. Please check back later or contact support.`;
-                return false; 
+                return false; // Prevent form from showing
             }
 
             document.getElementById('city-id').value = data.city_id;
@@ -573,17 +496,12 @@
         document.getElementById('id-type').value = data.id_type || 'National ID Card';
         document.getElementById('id-number').value = data.id_number || '';
         document.getElementById('cac-number').value = data.cac_number || '';
-        
-        // Load Socials
-        document.getElementById('facebook').value = data.facebook_url || '';
-        document.getElementById('instagram').value = data.instagram_url || '';
-        document.getElementById('twitter').value = data.twitter_url || '';
-        document.getElementById('tiktok').value = data.tiktok_url || '';
 
-        setPreviewUI('prev-front', data.storefront_url);
-        setPreviewUI('prev-id', data.id_card_url);
-        setPreviewUI('prev-cac', data.cac_certificate_url);
-        setPreviewUI('prev-logo', data.image_url);
+        // Safe robust image loading
+        setPreview('prev-front', data.storefront_url);
+        setPreview('prev-id', data.id_card_url);
+        setPreview('prev-cac', data.cac_certificate_url);
+        setPreview('prev-logo', data.image_url);
 
         if (data.status === 'rejected' && data.rejection_reason) {
             document.getElementById('rejection-box').style.display = 'flex';
@@ -593,101 +511,48 @@
         toggleCacRequirement(); 
     }
 
-    // --- UI HELPERS & DYNAMIC CROPPER ---
+    // BULLETPROOF IMAGE SETTER
+    function setPreview(id, url) {
+        if (url && typeof url === 'string' && url.trim() !== '') {
+            const img = document.getElementById(id);
+            img.src = url; 
+            img.style.display = 'block';
+            
+            // Show the edit pencil badge
+            const badge = document.getElementById(id.replace('prev', 'badge'));
+            if (badge) badge.style.display = 'block';
+
+            // Hide the default icons and text to make it look clean
+            const box = img.parentElement;
+            const icon = box.querySelector('.upload-icon');
+            const text = box.querySelector('.upload-text');
+            if (icon) icon.style.display = 'none';
+            if (text) text.style.display = 'none';
+        }
+    }
+
+    // --- UI HELPERS ---
     function triggerUpload(id) { document.getElementById(id).click(); }
 
     function previewFile(input, imgId) {
         if (input.files && input.files[0]) {
-            const file = input.files[0];
             const reader = new FileReader();
-            
             reader.onload = (e) => {
-                openCropper(e.target.result, imgId);
-                input.value = ''; 
+                const img = document.getElementById(imgId);
+                img.src = e.target.result;
+                img.style.display = 'block';
+                
+                const badge = document.getElementById(imgId.replace('prev', 'badge'));
+                if (badge) badge.style.display = 'block';
+
+                const box = img.parentElement;
+                const icon = box.querySelector('.upload-icon');
+                const text = box.querySelector('.upload-text');
+                if (icon) icon.style.display = 'none';
+                if (text) text.style.display = 'none';
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(input.files[0]);
         }
-    }
-
-    function openCropper(imageSrc, targetImgId) {
-        currentCropImgId = targetImgId;
-        const config = CROP_SETTINGS[targetImgId];
-
-        document.getElementById('crop-title').innerText = `Adjust ${config.title}`;
-        document.getElementById('crop-desc').innerText = config.desc;
-
-        const cropImg = document.getElementById('crop-target-img');
-        cropImg.src = imageSrc;
-        
-        document.getElementById('crop-modal').classList.add('active');
-
-        if (cropperInstance) cropperInstance.destroy();
-
-        cropperInstance = new Cropper(cropImg, {
-            aspectRatio: config.ratio,
-            viewMode: 1,
-            dragMode: 'move',
-            autoCropArea: 0.9,
-            guides: true,
-            center: true,
-            highlight: false,
-            cropBoxMovable: true,
-            cropBoxResizable: true,
-            toggleDragModeOnDblclick: false,
-        });
-    }
-
-    function closeCropper() {
-        document.getElementById('crop-modal').classList.remove('active');
-        if (cropperInstance) {
-            cropperInstance.destroy();
-            cropperInstance = null;
-        }
-    }
-
-    function applyCrop() {
-        if (!cropperInstance) return;
-
-        const config = CROP_SETTINGS[currentCropImgId];
-
-        const canvas = cropperInstance.getCroppedCanvas({
-            width: config.width,
-            height: config.height,
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high',
-        });
-
-        canvas.toBlob((blob) => {
-            const baseName = currentCropImgId.split('-')[1]; 
-            const inputId = 'file-' + baseName; 
-            blob.name = `${baseName}_cropped_${Date.now()}.jpg`; 
-            customBlobs[inputId] = blob;
-            
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-            setPreviewUI(currentCropImgId, dataUrl);
-            
-            closeCropper();
-        }, 'image/jpeg', 0.9);
-    }
-
-    function setPreviewUI(imgId, url) {
-        if (!url || typeof url !== 'string' || url.trim() === '') return;
-        
-        const img = document.getElementById(imgId);
-        img.src = url; 
-        img.style.display = 'block';
-        
-        const badge = document.getElementById(imgId.replace('prev', 'badge'));
-        if (badge) badge.style.display = 'block';
-
-        const box = img.parentElement;
-        const icon = box.querySelector('.upload-icon');
-        const text = box.querySelector('.upload-text');
-        const subtext = box.querySelector('.upload-subtext');
-        
-        if (icon) icon.style.display = 'none';
-        if (text) text.style.display = 'none';
-        if (subtext) subtext.style.display = 'none';
     }
 
     function toggleCacRequirement() {
@@ -709,6 +574,7 @@
     // --- BULLETPROOF IMAGE VALIDATOR ---
     function getSafeImageSource(imgId) {
         const img = document.getElementById(imgId);
+        // If the display is 'block', it means our JS specifically loaded a valid image into it!
         if (img.style.display === 'block' && img.src && img.src.trim() !== '') {
             return img.src; 
         }
@@ -719,6 +585,7 @@
     function showPreviewDialog(e) {
         e.preventDefault();
 
+        // 1. Validation Logic
         const type = document.getElementById('business-type').value;
         
         const frontImgSrc = getSafeImageSource('prev-front');
@@ -732,6 +599,7 @@
             return alert("CAC Certificate is required for Limited Liability companies.");
         }
 
+        // 2. Populate Modal Images Forcefully
         if (frontImgSrc) {
             document.getElementById('rv-img-front').src = frontImgSrc;
             document.getElementById('rv-img-front').style.display = 'block';
@@ -754,6 +622,7 @@
             cacCol.style.display = 'none';
         }
 
+        // 3. Populate Modal Text
         const areaSelect = document.getElementById('area');
         const areaText = areaSelect.options[areaSelect.selectedIndex]?.text || '';
         const cityText = document.getElementById('city-display').value;
@@ -773,6 +642,8 @@
         }
 
         document.getElementById('confirm-btn').textContent = isEdit ? "Confirm & Resubmit" : "Confirm & Submit";
+
+        // Show Modal
         document.getElementById('review-modal').classList.add('active');
     }
 
@@ -789,11 +660,11 @@
         try {
             const type = document.getElementById('business-type').value;
 
-            // Notice the PERFECT mappings below based on your list
-            const logoUrl = await handleFileUpload('file-logo', 'avatars', existingShop?.image_url);
-            const frontUrl = await handleFileUpload('file-front', 'storefronts', existingShop?.storefront_url);
-            const idUrl = await handleFileUpload('file-id', 'kyc-documents', existingShop?.id_card_url);
-            const cacUrl = await handleFileUpload('file-cac', 'cac-documents', existingShop?.cac_certificate_url);
+            // Uploads (Only uploads if a new file is explicitly selected)
+            const logoUrl = await handleFileUpload('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
+            const frontUrl = await handleFileUpload('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
+            const idUrl = await handleFileUpload('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
+            const cacUrl = await handleFileUpload('file-cac', 'cac-documents', 'cac', existingShop?.cac_certificate_url);
 
             const payload = {
                 owner_id: currentUser.id,
@@ -812,16 +683,12 @@
                 id_number: document.getElementById('id-number').value,
                 cac_number: document.getElementById('cac-number').value,
                 
-                facebook_url: document.getElementById('facebook').value || null,
-                instagram_url: document.getElementById('instagram').value || null,
-                twitter_url: document.getElementById('twitter').value || null,
-                tiktok_url: document.getElementById('tiktok').value || null,
-                
                 image_url: logoUrl,
                 storefront_url: frontUrl,
                 id_card_url: idUrl,
                 cac_certificate_url: cacUrl,
                 
+                // CRITICAL RESUBMISSION LOGIC
                 status: 'pending', 
                 rejection_reason: null
             };
@@ -831,6 +698,7 @@
                 if (error) throw error;
                 alert("Correction Submitted! Your shop is pending approval again.");
             } else {
+                payload.banners = []; // Init empty array
                 const { error } = await client.from('shops').insert(payload);
                 if (error) throw error;
                 alert("Application Submitted! You will be notified once approved.");
@@ -847,27 +715,17 @@
         } 
     }
 
-    // THE UPDATED UPLOAD ENGINE
-    async function handleFileUpload(inputId, targetBucket, existingUrl) {
-        const file = customBlobs[inputId];
-        
-        if (!file) return existingUrl || null; 
+    async function handleFileUpload(inputId, bucket, folder, existingUrl) {
+        const file = document.getElementById(inputId).files[0];
+        if (!file) return existingUrl || null; // Returns existing URL if no new file picked
 
-        const ext = file.name ? file.name.split('.').pop() : 'jpg'; 
-        const fileName = `${currentUser.id}_${Date.now()}.${ext}`;
+        const ext = file.name.split('.').pop();
+        const fileName = `${folder}/${currentUser.id}_${Date.now()}.${ext}`;
         
-        const { error: uploadError } = await client.storage.from(targetBucket).upload(fileName, file, {
-            contentType: 'image/jpeg',
-            upsert: true
-        });
+        const { error: uploadError } = await client.storage.from(bucket).upload(fileName, file);
+        if (uploadError) throw uploadError;
         
-        if (uploadError) {
-            console.error(`Upload error in ${targetBucket}:`, uploadError);
-            throw new Error(`Failed to upload to ${targetBucket} bucket: ` + uploadError.message);
-        }
-        
-        // This will successfully generate and return the correct DB path for both public and private buckets
-        const { data } = client.storage.from(targetBucket).getPublicUrl(fileName);
+        const { data } = client.storage.from(bucket).getPublicUrl(fileName);
         return data.publicUrl;
     }
 </script>
