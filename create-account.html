@@ -53,6 +53,18 @@
         .auth-title { font-size: 1.5rem; font-weight: 800; color: var(--color-purple); }
         .auth-subtitle { color: #64748b; font-size: 0.875rem; margin-top: 0.25rem; }
 
+        /* CUSTOM GOOGLE BUTTON (Triggers Modal First) */
+        .btn-custom-google {
+            width: 100%; background-color: white; color: #3c4043;
+            border: 1px solid #e2e8f0; padding: 0.75rem; border-radius: 0.8rem;
+            font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 0.95rem;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            cursor: pointer; transition: var(--transition);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 0.5rem;
+        }
+        .btn-custom-google:hover { background-color: #f8fafc; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
+        .btn-custom-google img { width: 22px; height: 22px; }
+
         .form-stack { display: flex; flex-direction: column; gap: 1rem; }
         .input-group { display: flex; flex-direction: column; gap: 0.4rem; }
         .input-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.25rem; }
@@ -76,7 +88,7 @@
             box-shadow: var(--shadow-lg); border: none; cursor: pointer; transition: var(--transition); margin-top: 0.5rem;
         }
         .btn-primary:hover { background-color: var(--color-pink); transform: translateY(-1px); }
-        .btn-primary:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+        .btn-primary:disabled { background-color: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none;}
 
         .divider { display: flex; align-items: center; text-align: center; margin: 1.5rem 0; color: #94a3b8; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
         .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
@@ -109,7 +121,6 @@
         select.modal-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
         .btn-primary-modal { width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-primary-modal:hover:not(:disabled) { background-color: #db2777; transform: translateY(-1px); }
-        .btn-primary-modal:disabled { background-color: #cbd5e1; color: #64748b; cursor: not-allowed; transform: none; box-shadow: none; }
 
         /* EXACT HOME SCREEN LOGIN WIDGET CSS */
         .hero-auth-widget { 
@@ -140,7 +151,7 @@
             border-radius: 0.8rem; padding: 1.5rem; margin-bottom: 1rem;
             font-size: 0.85rem; line-height: 1.6; color: #334155; text-align: left;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-            max-height: 50vh;
+            max-height: 50vh; scroll-behavior: smooth;
         }
         .terms-scroll-box h2 { color: var(--color-purple); font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0;}
         .terms-scroll-box h2:first-child { margin-top: 0; }
@@ -148,6 +159,12 @@
         .terms-scroll-box p { margin-bottom: 0.75rem; }
         .terms-scroll-box ul { margin-left: 1.5rem; margin-bottom: 1rem; }
         .terms-scroll-box li { margin-bottom: 0.4rem; }
+
+        .scroll-alert-box {
+            text-align: center; color: #94a3b8; font-size: 0.85rem; font-weight: 600; 
+            padding: 12px; background: #f1f5f9; border-radius: 8px; margin-bottom: 10px;
+            border: 1px dashed #cbd5e1;
+        }
 
         @media (max-width: 480px) {
             .home-btn { top: 1rem; left: 1rem; padding: 0.5rem 1rem; font-size: 0.75rem; }
@@ -171,22 +188,11 @@
             <p class="auth-subtitle">Join the professional merchant network.</p>
         </div>
 
-        <div style="display: flex; justify-content: center; width: 100%;">
-            <div id="g_id_onload"
-                 data-client_id="237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com" 
-                 data-context="signup"
-                 data-ux_mode="popup"
-                 data-callback="handleGoogleLogin"
-                 data-auto_prompt="false">
-            </div>
-            <div class="g_id_signin"
-                 data-type="standard"
-                 data-shape="rectangular"
-                 data-theme="outline"
-                 data-text="continue_with"
-                 data-size="large">
-            </div>
-        </div>
+        <!-- Custom Google Button triggers Legal Agreement First -->
+        <button type="button" class="btn-custom-google" onclick="handleInitialGoogleSignup()">
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google">
+            Continue with Google
+        </button>
 
         <div class="divider"><span>Or sign up with Email</span></div>
 
@@ -258,7 +264,7 @@
                 </div>
             </div>
 
-            <button type="button" onclick="handleInitialSignup()" class="btn-primary">
+            <button type="button" onclick="handleInitialEmailSignup()" class="btn-primary">
                 Create Account
             </button>
         </form>
@@ -271,49 +277,6 @@
             <p>Already have an account? 
                 <button onclick="toggleLoginModal()" class="link-highlight">Sign In</button>
             </p>
-        </div>
-    </div>
-
-    <!-- Complete Profile Modal (Triggered after Google Login) -->
-    <div id="complete-profile-modal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <h2 class="modal-title">Complete Your Profile</h2>
-            <p class="modal-subtitle">We need a few more details to set up your dashboard.</p>
-            
-            <div class="modal-input-group">
-                <label class="modal-label">Phone Number</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-phone"></i></span>
-                    <input type="tel" id="google-phone" placeholder="08012345678" class="modal-input">
-                </div>
-            </div>
-
-            <div class="modal-input-group">
-                <label class="modal-label">Select City</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-city"></i></span>
-                    <select id="google-city" class="modal-input" onchange="loadAreasForModal(this.value)">
-                        <option value="" disabled selected>Loading cities...</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="modal-input-group">
-                <label class="modal-label">Select Area</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-map-pin"></i></span>
-                    <select id="google-area" class="modal-input" disabled>
-                        <option value="" disabled selected>Select city first</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Changed to Continue to lead them into the Terms Modal -->
-            <button id="google-continue-btn" onclick="handleGoogleProfileSetup()" class="btn-primary-modal">Continue to Agreement</button>
-            
-            <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
-                Cancel & Sign Out
-            </button>
         </div>
     </div>
 
@@ -404,11 +367,82 @@
                 </ul>
             </div>
 
-            <!-- Unified submission button, routed by logic -->
-            <button id="final-submit-btn" onclick="handleTermsAcceptance()" class="btn-primary-modal" disabled>
-                <i class="fa-solid fa-lock" id="btn-lock-icon"></i> I Agree & Create Account
+            <!-- Dynamic Footer Area depending on scroll & mode -->
+            <div id="terms-locked-indicator" class="scroll-alert-box">
+                <i class="fa-solid fa-arrow-down"></i> Please scroll to the bottom to agree
+            </div>
+
+            <!-- Button for standard Email Signup -->
+            <button id="email-submit-btn" onclick="executeEmailSignup()" class="btn-primary-modal hidden">
+                <i class="fa-solid fa-check"></i> I Agree & Create Account
             </button>
+
+            <!-- Container for Google Signup (Only shown after scroll) -->
+            <div id="google-submit-wrapper" class="hidden" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                <p style="font-size: 0.85rem; color: #15803d; font-weight: 700;"><i class="fa-solid fa-check-circle"></i> Terms Accepted. Click below to continue:</p>
+                
+                <!-- Native Google Button hidden securely inside this container -->
+                <div style="display: flex; justify-content: center; width: 100%;">
+                    <div id="g_id_onload"
+                         data-client_id="237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com" 
+                         data-context="signup"
+                         data-ux_mode="popup"
+                         data-callback="handleGoogleLogin"
+                         data-auto_prompt="false">
+                    </div>
+                    <div class="g_id_signin"
+                         data-type="standard"
+                         data-shape="rectangular"
+                         data-theme="outline"
+                         data-text="continue_with"
+                         data-size="large">
+                    </div>
+                </div>
+            </div>
+
             <button onclick="cancelTermsSetup()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel Setup</button>
+        </div>
+    </div>
+
+    <!-- Complete Profile Modal (Triggered after Google Login) -->
+    <div id="complete-profile-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <h2 class="modal-title">Complete Your Profile</h2>
+            <p class="modal-subtitle">We need a few more details to set up your dashboard.</p>
+            
+            <div class="modal-input-group">
+                <label class="modal-label">Phone Number</label>
+                <div class="modal-input-wrapper">
+                    <span class="modal-icon"><i class="fa-solid fa-phone"></i></span>
+                    <input type="tel" id="google-phone" placeholder="08012345678" class="modal-input">
+                </div>
+            </div>
+
+            <div class="modal-input-group">
+                <label class="modal-label">Select City</label>
+                <div class="modal-input-wrapper">
+                    <span class="modal-icon"><i class="fa-solid fa-city"></i></span>
+                    <select id="google-city" class="modal-input" onchange="loadAreasForModal(this.value)">
+                        <option value="" disabled selected>Loading cities...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-input-group">
+                <label class="modal-label">Select Area</label>
+                <div class="modal-input-wrapper">
+                    <span class="modal-icon"><i class="fa-solid fa-map-pin"></i></span>
+                    <select id="google-area" class="modal-input" disabled>
+                        <option value="" disabled selected>Select city first</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary-modal">Finish Setup</button>
+            
+            <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
+                Cancel & Sign Out
+            </button>
         </div>
     </div>
 
@@ -460,7 +494,7 @@
 
         let pendingGoogleUserId = null;
         let pendingGoogleUserName = null;
-        let activeSignupMode = null; // Tracks 'email' or 'google' to route the unified Terms modal
+        let activeSignupMode = null; // 'email' or 'google'
 
         // IP Tracker
         async function getClientIpData() {
@@ -474,7 +508,6 @@
                 }, {});
                 return { ip: data.ip || 'unknown', country: data.loc || 'unknown' };
             } catch (e) {
-                console.error("IP fetch failed", e);
                 return { ip: 'unknown', country: 'unknown' };
             }
         }
@@ -529,15 +562,133 @@
             }
         }
 
-        // --- GOOGLE LOGIN INIT ---
+        // --- UNIFIED TERMS & SCROLL LOGIC ---
+        function showTermsModal(mode) {
+            activeSignupMode = mode;
+            const termsModal = document.getElementById('terms-modal');
+            const box = document.getElementById('terms-scroll-box');
+            
+            // Reset UI
+            document.getElementById('email-submit-btn').classList.add('hidden');
+            document.getElementById('google-submit-wrapper').classList.add('hidden');
+            document.getElementById('terms-locked-indicator').classList.remove('hidden');
+            
+            termsModal.classList.remove('hidden');
+            box.scrollTop = 0; 
+            
+            // Auto-unlock if screen is very large and no scrolling is needed
+            setTimeout(() => {
+                if (box.scrollHeight <= box.clientHeight + 10) {
+                    unlockTermsAction();
+                }
+            }, 100);
+        }
+
+        function checkTermsScroll() {
+            const box = document.getElementById('terms-scroll-box');
+            // Allow a 15px buffer for cross-browser math rounding
+            if (box.scrollTop + box.clientHeight >= box.scrollHeight - 15) {
+                unlockTermsAction();
+            }
+        }
+
+        function unlockTermsAction() {
+            document.getElementById('terms-locked-indicator').classList.add('hidden');
+            if (activeSignupMode === 'email') {
+                document.getElementById('email-submit-btn').classList.remove('hidden');
+            } else if (activeSignupMode === 'google') {
+                document.getElementById('google-submit-wrapper').classList.remove('hidden');
+            }
+        }
+
+        function cancelTermsSetup() {
+            closeModal('terms-modal');
+            activeSignupMode = null;
+        }
+
+        // --- EMAIL SIGNUP FLOW ---
+        function handleInitialEmailSignup() {
+            const name = document.getElementById('signup-name').value.trim();
+            const phone = document.getElementById('signup-phone').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+            const city = citySelect.value;
+            const area = areaSelect.value;
+
+            if (!name || !phone || !email || !password || !confirmPassword || !city || !area) {
+                return showStatus("Please fill in all fields.", "error");
+            }
+            if (password.length < 6) {
+                return showStatus("Password must be at least 6 characters.", "error");
+            }
+            if (password !== confirmPassword) {
+                return showStatus("Passwords do not match. Please try again.", "error");
+            }
+            
+            // Intercept and enforce Terms
+            showTermsModal('email');
+        }
+
+        async function executeEmailSignup() {
+            const btn = document.getElementById('email-submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Processing...';
+
+            const name = document.getElementById('signup-name').value.trim();
+            const phone = document.getElementById('signup-phone').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const cityId = parseInt(citySelect.value);
+            const areaId = parseInt(areaSelect.value);
+
+            try {
+                const ipData = await getClientIpData();
+                if (await isIpBanned(ipData.ip)) throw new Error("ACCESS DENIED: Your IP address has been permanently banned.");
+
+                const { data: authData, error: authError } = await client.auth.signUp({
+                    email: email, password: password, options: { data: { full_name: name } }
+                });
+                if (authError) throw authError;
+
+                if (authData.user) {
+                    const { error: profileError } = await client.from('profiles').insert({
+                        id: authData.user.id, full_name: name, phone: phone,
+                        city_id: cityId, area_id: areaId,
+                        registration_ip: ipData.ip, last_active_ip: ipData.ip, ip_country: ipData.country
+                    });
+                    if (profileError) throw profileError;
+
+                    closeModal('terms-modal');
+                    document.getElementById('signup-form').reset();
+                    showStatus("Account created! Please check your email for confirmation, or Sign In below.", "success");
+                    
+                    document.getElementById('login-email').value = email;
+                    setTimeout(() => { toggleLoginModal(); }, 500); 
+                }
+            } catch (err) {
+                showStatus(err.message, "error");
+                closeModal('terms-modal');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> I Agree & Create Account';
+            }
+        }
+
+        // --- GOOGLE SIGNUP FLOW ---
+        function handleInitialGoogleSignup() {
+            // Intercept and enforce Terms BEFORE calling Google API
+            showTermsModal('google');
+        }
+
+        // Triggered automatically by Google's inner button after terms accepted
         async function handleGoogleLogin(response) {
+            closeModal('terms-modal'); // Hide terms once they successfully sign in with Google
             showStatus("Checking security...", "success");
             
             try {
                 const ipData = await getClientIpData();
-                if (await isIpBanned(ipData.ip)) {
-                    throw new Error("ACCESS DENIED: Your IP address has been banned.");
-                }
+                if (await isIpBanned(ipData.ip)) throw new Error("ACCESS DENIED: Your IP address has been banned.");
 
                 showStatus("Authenticating with Google...", "success");
                 const { data, error } = await client.auth.signInWithIdToken({
@@ -558,11 +709,11 @@
                     
                 if (profile && profile.is_suspended) {
                     await client.auth.signOut();
-                    throw new Error("Your account has been temporarily suspended. Please contact support.");
+                    throw new Error("Your account has been temporarily suspended.");
                 }
 
                 if (profile && profile.city_id && profile.area_id) {
-                    // Pre-existing valid user. Update IP and Login
+                    // Pre-existing valid user.
                     await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
                     window.location.href = "user-dashboard.html";
                 } else {
@@ -575,6 +726,33 @@
             }
         }
 
+        async function saveGoogleProfile() {
+            const phone = document.getElementById('google-phone').value.trim();
+            const cityId = document.getElementById('google-city').value;
+            const areaId = document.getElementById('google-area').value;
+            const btn = document.getElementById('google-complete-btn');
+
+            if (!phone || !cityId || !areaId) return alert("Please fill in your phone, city, and area to continue.");
+
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Saving...';
+
+            try {
+                const ipData = await getClientIpData();
+                const { error } = await client.from('profiles').upsert({
+                    id: pendingGoogleUserId, full_name: pendingGoogleUserName, phone: phone,
+                    city_id: parseInt(cityId), area_id: parseInt(areaId),
+                    registration_ip: ipData.ip, last_active_ip: ipData.ip, ip_country: ipData.country
+                });
+                if (error) throw error;
+                window.location.href = "user-dashboard.html";
+            } catch(err) {
+                alert("Error saving profile: " + err.message);
+                btn.disabled = false;
+                btn.innerHTML = 'Finish Setup';
+            }
+        }
+        
         async function cancelGoogleLogin() {
             await client.auth.signOut();
             document.getElementById('complete-profile-modal').classList.add('hidden');
@@ -606,227 +784,6 @@
                 icon.classList.remove('fa-eye'); 
                 icon.classList.add('fa-eye-slash');
                 icon.style.color = 'rgba(255, 255, 255, 0.6)';
-            }
-        }
-
-        function showStatus(txt, type) {
-            statusBox.className = `status-box active status-${type}`;
-            statusMsg.textContent = txt;
-        }
-
-        // --- UNIFIED TERMS LOGIC ---
-        function showTermsModal() {
-            const termsModal = document.getElementById('terms-modal');
-            const box = document.getElementById('terms-scroll-box');
-            const btn = document.getElementById('final-submit-btn');
-            const icon = document.getElementById('btn-lock-icon');
-            
-            termsModal.classList.remove('hidden');
-            box.scrollTop = 0; // Reset scroll to top
-            
-            // Re-disable button every time modal opens
-            btn.disabled = true;
-            if(icon) {
-                icon.classList.remove('fa-check');
-                icon.classList.add('fa-lock');
-            }
-
-            // Edge case: if screen is huge and no scrollbar exists, enable immediately
-            setTimeout(() => {
-                if (box.scrollHeight <= box.clientHeight + 10) {
-                    btn.disabled = false;
-                    if(icon) { icon.classList.remove('fa-lock'); icon.classList.add('fa-check'); }
-                }
-            }, 100);
-        }
-
-        function checkTermsScroll() {
-            const box = document.getElementById('terms-scroll-box');
-            const btn = document.getElementById('final-submit-btn');
-            const icon = document.getElementById('btn-lock-icon');
-            
-            // Allow a 15px buffer for cross-browser rounding differences
-            if (box.scrollTop + box.clientHeight >= box.scrollHeight - 15) {
-                btn.disabled = false;
-                if(icon) {
-                    icon.classList.remove('fa-lock');
-                    icon.classList.add('fa-check');
-                }
-            }
-        }
-
-        async function cancelTermsSetup() {
-            closeModal('terms-modal');
-            if (activeSignupMode === 'google') {
-                await client.auth.signOut();
-                pendingGoogleUserId = null;
-                showStatus("Google setup aborted. You must agree to the terms to use the platform.", "error");
-            }
-            activeSignupMode = null;
-        }
-
-        function handleTermsAcceptance() {
-            if (activeSignupMode === 'email') {
-                executeEmailSignup();
-            } else if (activeSignupMode === 'google') {
-                executeGoogleSignup();
-            }
-        }
-
-        // --- EMAIL SIGNUP FLOW ---
-        function handleInitialSignup() {
-            const name = document.getElementById('signup-name').value.trim();
-            const phone = document.getElementById('signup-phone').value.trim();
-            const email = document.getElementById('signup-email').value.trim();
-            const password = document.getElementById('signup-password').value;
-            const confirmPassword = document.getElementById('signup-confirm-password').value;
-            const city = citySelect.value;
-            const area = areaSelect.value;
-
-            if (!name || !phone || !email || !password || !confirmPassword || !city || !area) {
-                return showStatus("Please fill in all fields.", "error");
-            }
-            if (password.length < 6) {
-                return showStatus("Password must be at least 6 characters.", "error");
-            }
-            if (password !== confirmPassword) {
-                return showStatus("Passwords do not match. Please try again.", "error");
-            }
-            
-            activeSignupMode = 'email';
-            showTermsModal();
-        }
-
-        async function executeEmailSignup() {
-            const btn = document.getElementById('final-submit-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<div class="spinner"></div> Processing...';
-
-            const name = document.getElementById('signup-name').value.trim();
-            const phone = document.getElementById('signup-phone').value.trim();
-            const email = document.getElementById('signup-email').value.trim();
-            const password = document.getElementById('signup-password').value;
-            const cityId = parseInt(citySelect.value);
-            const areaId = parseInt(areaSelect.value);
-
-            try {
-                const ipData = await getClientIpData();
-                if (await isIpBanned(ipData.ip)) {
-                    throw new Error("ACCESS DENIED: Your IP address has been permanently banned.");
-                }
-
-                const { data: authData, error: authError } = await client.auth.signUp({
-                    email: email,
-                    password: password,
-                    options: { data: { full_name: name } }
-                });
-                if (authError) throw authError;
-
-                if (authData.user) {
-                    const { error: profileError } = await client.from('profiles').insert({
-                        id: authData.user.id,
-                        full_name: name,
-                        phone: phone,
-                        city_id: cityId,
-                        area_id: areaId,
-                        registration_ip: ipData.ip,
-                        last_active_ip: ipData.ip,
-                        ip_country: ipData.country
-                    });
-                    if (profileError) throw profileError;
-
-                    closeModal('terms-modal');
-                    document.getElementById('signup-form').reset();
-                    showStatus("Account created! Please check your email for confirmation, or Sign In below.", "success");
-                    
-                    document.getElementById('login-email').value = email;
-                    setTimeout(() => { toggleLoginModal(); }, 500); 
-                }
-            } catch (err) {
-                showStatus(err.message, "error");
-                closeModal('terms-modal');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-check" id="btn-lock-icon"></i> I Agree & Create Account';
-            }
-        }
-
-        // --- GOOGLE SIGNUP FLOW ---
-        function handleGoogleProfileSetup() {
-            const phone = document.getElementById('google-phone').value.trim();
-            const cityId = document.getElementById('google-city').value;
-            const areaId = document.getElementById('google-area').value;
-
-            if (!phone || !cityId || !areaId) {
-                alert("Please fill in your phone, city, and area to continue.");
-                return;
-            }
-
-            // Close Profile form, Open Terms
-            closeModal('complete-profile-modal');
-            activeSignupMode = 'google';
-            showTermsModal();
-        }
-
-        async function executeGoogleSignup() {
-            const btn = document.getElementById('final-submit-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<div class="spinner"></div> Saving...';
-
-            const phone = document.getElementById('google-phone').value.trim();
-            const cityId = document.getElementById('google-city').value;
-            const areaId = document.getElementById('google-area').value;
-
-            try {
-                const ipData = await getClientIpData();
-                
-                const { error } = await client.from('profiles').upsert({
-                    id: pendingGoogleUserId,
-                    full_name: pendingGoogleUserName,
-                    phone: phone,
-                    city_id: parseInt(cityId),
-                    area_id: parseInt(areaId),
-                    registration_ip: ipData.ip,
-                    last_active_ip: ipData.ip,
-                    ip_country: ipData.country
-                });
-
-                if (error) throw error;
-                
-                window.location.href = "user-dashboard.html";
-            } catch(err) {
-                alert("Error saving profile: " + err.message);
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-check" id="btn-lock-icon"></i> I Agree & Create Account';
-                cancelTermsSetup(); 
-            }
-        }
-
-        // --- STANDARD LOGIN ---
-        async function handleLogin() {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const btn = document.getElementById('btn-login-submit');
-            
-            btn.disabled = true;
-            btn.innerHTML = '<div class="spinner"></div> Logging in...';
-
-            try {
-                const ipData = await getClientIpData();
-                if (await isIpBanned(ipData.ip)) {
-                    throw new Error("ACCESS DENIED: Your IP address is banned.");
-                }
-
-                const { data, error } = await client.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-                
-                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', data.user.id);
-                window.location.href = "user-dashboard.html";
-
-            } catch (error) {
-                alert(error.message);
-                btn.disabled = false;
-                btn.innerHTML = 'Secure Sign In <i class="fa-solid fa-arrow-right"></i>';
             }
         }
     </script>
