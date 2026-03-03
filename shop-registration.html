@@ -275,7 +275,7 @@
             <input type="file" id="file-front" hidden accept="image/*" onchange="handleFileSelect(event, 'file-front', 3/4)">
             <i class="fa-solid fa-camera upload-icon"></i>
             <span class="upload-title">Cover Photo</span>
-            <span class="upload-subtitle">(Required)</span>
+            <span class="upload-subtitle">(Required, Max 200KB)</span>
             <img id="prev-front" class="preview-img">
             <i class="fa-solid fa-pen edit-badge" id="badge-front"></i>
         </div>
@@ -380,7 +380,7 @@
                     <input type="file" id="file-cac" hidden accept="image/*,application/pdf" onchange="handleFileSelect(event, 'file-cac', 1.586)">
                     <i class="fa-solid fa-file-contract upload-icon"></i>
                     <span class="upload-title">CAC Certificate</span>
-                    <span class="upload-subtitle">(Optional) Image or PDF</span>
+                    <span class="upload-subtitle">(Optional) PDF/Image, Max 200KB</span>
                     <img id="prev-cac" class="preview-img">
                     <i class="fa-solid fa-pen edit-badge" id="badge-cac"></i>
                 </div>
@@ -412,7 +412,7 @@
                     <input type="file" id="file-id" hidden accept="image/*,application/pdf" onchange="handleFileSelect(event, 'file-id', 1.586)">
                     <i class="fa-regular fa-id-card upload-icon"></i>
                     <span class="upload-title">Official ID Document</span>
-                    <span class="upload-subtitle">(Required) Image or PDF</span>
+                    <span class="upload-subtitle">(Required) PDF/Image, Max 200KB</span>
                     <img id="prev-id" class="preview-img">
                     <i class="fa-solid fa-pen edit-badge" id="badge-id"></i>
                 </div>
@@ -427,7 +427,7 @@
                     <input type="file" id="file-logo" hidden accept="image/*" onchange="handleFileSelect(event, 'file-logo', 1)">
                     <i class="fa-solid fa-circle-user upload-icon"></i>
                     <span class="upload-title">Brand Logo</span>
-                    <span class="upload-subtitle">(Optional)</span>
+                    <span class="upload-subtitle">(Optional) Max 200KB</span>
                     <img id="prev-logo" class="preview-img">
                     <i class="fa-solid fa-pen edit-badge" id="badge-logo"></i>
                 </div>
@@ -581,6 +581,7 @@
     const params = new URLSearchParams(window.location.search);
     const shopId = params.get('id') || params.get('shop_id');
     const isEdit = !!shopId;
+    const MAX_FILE_SIZE = 200 * 1024; // 200KB LIMIT
 
     // --- CROPPER & FILE STATE ---
     let cropper = null;
@@ -713,13 +714,20 @@
         delete rawFiles[inputId];
         delete croppedBlobs[inputId];
 
+        // 1. PDF Strict 200KB check
         if (file.type === 'application/pdf') {
+            if (file.size > MAX_FILE_SIZE) {
+                alert(`The selected PDF is too large (${Math.round(file.size/1024)}KB). Maximum allowed size is 200KB.`);
+                event.target.value = ''; 
+                return;
+            }
             rawFiles[inputId] = file;
             setPdfPreview(inputId, file.name);
             event.target.value = ''; 
             return;
         }
 
+        // 2. Image Selection (Pass to cropper for compression)
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -765,16 +773,24 @@
     function applyCrop() {
         if (!cropper) return;
         
+        // Use a smaller canvas (800px) and lower quality (0.75) to easily meet 200KB target
         cropper.getCroppedCanvas({
-            width: 1200, 
+            width: 800, 
             imageSmoothingEnabled: true,
             imageSmoothingQuality: 'high',
         }).toBlob((blob) => {
+            
+            // Final verification that the cropper succeeded in making it < 200KB
+            if (blob.size > MAX_FILE_SIZE) {
+                alert(`The cropped image is still too large (${Math.round(blob.size/1024)}KB). Maximum allowed size is 200KB. Try cropping a smaller area.`);
+                return; 
+            }
+
             croppedBlobs[currentCropTarget] = blob;
             const localUrl = URL.createObjectURL(blob);
             setPreview(currentCropTarget, localUrl, false);
             closeCropModal();
-        }, 'image/jpeg', 0.85); 
+        }, 'image/jpeg', 0.75); 
     }
 
     // Universal Preview Setter
@@ -866,7 +882,7 @@
 
         // Social Media Domain Validators
         const validateSocialUrl = (url, platform) => {
-            if (!url) return true;
+            if (!url) return true; // Optional fields are valid if empty
             try {
                 const parsedUrl = new URL(url.startsWith('http') ? url : `https://${url}`);
                 if (platform === 'twitter') {
