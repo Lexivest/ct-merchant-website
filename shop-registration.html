@@ -106,7 +106,7 @@
             align-items: center; justify-content: center; cursor: pointer;
             background: #F8FAFC; position: relative; overflow: hidden;
             transition: all 0.3s ease; padding: 24px 20px; text-align: center;
-            min-height: 180px; /* Removed strict constraints, made it taller */
+            min-height: 180px; 
         }
         .upload-box:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(109, 40, 217, 0.08); }
         .upload-box.portrait { height: 300px; aspect-ratio: 3/4; margin: 0 auto; max-width: 240px; grid-column: 1 / -1; }
@@ -419,7 +419,6 @@
             <div class="form-group">
                 <label class="label" style="text-align: center; margin-bottom: 4px;">Shop Logo (Square)</label>
                 <div class="upload-box square" onclick="triggerUpload('file-logo')">
-                    <!-- Logo strictly image for UI branding purposes -->
                     <input type="file" id="file-logo" hidden accept="image/*" onchange="handleFileSelect(event, 'file-logo', 1)">
                     <i class="fa-solid fa-circle-user upload-icon"></i>
                     <span class="upload-title">Brand Logo</span>
@@ -935,7 +934,7 @@
         try {
             const type = document.getElementById('business-type').value;
 
-            // UPLOAD MAPPING UPDATED: Upload files intelligently to correct buckets
+            // Upload files intelligently (Handles deletion of old files, and uploading new ones)
             const logoUrl = await uploadFileOrBlob('file-logo', 'brand-assets', 'logos', existingShop?.image_url);
             const frontUrl = await uploadFileOrBlob('file-front', 'storefronts', 'covers', existingShop?.storefront_url);
             const idUrl = await uploadFileOrBlob('file-id', 'id-documents', 'ids', existingShop?.id_card_url);
@@ -993,7 +992,7 @@
         } 
     }
 
-    // Core Upload logic taking PDF Files or Image Blobs
+    // Core Upload logic taking PDF Files or Image Blobs (WITH AUTOMATIC OLD FILE DELETION)
     async function uploadFileOrBlob(inputId, bucket, folder, existingUrl) {
         let fileOrBlob = null;
         let ext = 'jpg';
@@ -1007,8 +1006,24 @@
             fileOrBlob = croppedBlobs[inputId];
         }
 
+        // If no new file is uploaded, return the existing URL exactly as it is
         if (!fileOrBlob) return existingUrl || null; 
 
+        // --- PRE-UPLOAD CLEANUP: If there is an old file, permanently delete it from the bucket ---
+        if (existingUrl) {
+            try {
+                const urlParts = existingUrl.split(`/public/${bucket}/`);
+                if (urlParts.length === 2) {
+                    const oldFilePath = urlParts[1].split('?')[0]; 
+                    const { error: delError } = await client.storage.from(bucket).remove([oldFilePath]);
+                    if (delError) console.warn(`Note: Could not delete old file ${oldFilePath}.`, delError);
+                }
+            } catch (err) {
+                console.warn("Error processing old file deletion:", err);
+            }
+        }
+
+        // Proceed to upload the new file
         const fileName = `${folder}/${currentUser.id}_${Date.now()}.${ext}`;
         
         const { error: uploadError } = await client.storage.from(bucket).upload(fileName, fileOrBlob, {
