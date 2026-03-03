@@ -17,7 +17,9 @@
             --color-bg: #F8FAFC;
             --color-text: #1E293B;
             --color-text-muted: #64748B;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -25,7 +27,6 @@
         body { 
             background-color: var(--color-bg); 
             color: var(--color-text); 
-            padding-bottom: 90px;
         }
 
         .app-container {
@@ -80,11 +81,11 @@
             display: inline-block;
             white-space: nowrap;
             padding-left: 100%; 
-            animation: marquee 35s linear infinite; /* Slowed down default */
+            animation: marquee 35s linear infinite;
             font-weight: 700;
             font-size: 0.85rem;
             color: #C2410C;
-            will-change: transform; /* Hardware acceleration for smooth scroll */
+            will-change: transform;
         }
         .news-marquee-wrapper:hover .news-marquee-content { animation-play-state: paused; }
         
@@ -93,79 +94,88 @@
             100% { transform: translate3d(-100%, 0, 0); }
         }
 
-        /* --- SPLIT HERO LAYOUT (Visuals Left, Info Right) --- */
+        /* --- SPLIT HERO LAYOUT --- */
         .info-card { padding: 24px; }
 
         .shop-hero-split {
             display: flex;
             flex-direction: column;
-            gap: 30px;
+            gap: 24px;
         }
 
         @media (min-width: 900px) {
             .shop-hero-split {
                 display: grid;
                 grid-template-columns: 1fr 1.2fr;
-                gap: 40px;
+                gap: 32px;
                 align-items: start;
                 margin-bottom: 40px;
             }
         }
 
-        /* Left Side: Storefront Visuals */
-        .shop-visual-side {
+        /* Generic Card Styling */
+        .detail-card {
             background: white;
-            padding: 20px;
             border-radius: 16px;
             border: 1px solid #E2E8F0;
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 24px;
+        }
+
+        /* --- LEFT SIDE: STOREFRONT & MAP --- */
+        .storefront-wrapper {
+            width: 100%;
+            height: 300px; /* Fixed container height so it's not massively tall */
+            background: #F1F5F9;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
             display: flex;
-            flex-direction: column;
-            gap: 24px;
-            box-shadow: var(--shadow-md);
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 16px;
         }
         
-        /* Perfect 3:4 Portrait Ratio for Storefront */
         .storefront-img { 
-            width: 100%; 
-            max-width: 380px; 
-            aspect-ratio: 3 / 4; 
-            margin: 0 auto; 
-            display: block;
-            border-radius: 12px; object-fit: cover; 
-            border: 1px solid #E2E8F0; 
-            background-color: #F1F5F9;
+            max-width: 100%; 
+            max-height: 100%;
+            /* 'contain' ensures the whole image is visible without stretching or excessive height */
+            object-fit: contain; 
+            border-radius: 8px;
         }
         
         #map { 
-            height: 200px; width: 100%; 
+            height: 220px; width: 100%; 
             border-radius: 12px; border: 1px solid #E2E8F0; z-index: 1; 
             background-color: #F1F5F9;
         }
         .map-btn {
-            background:white; border:1px solid #ccc; padding:8px 16px; 
-            border-radius:8px; cursor:pointer; font-weight: 600; font-size:0.8rem;
-            width: 100%; margin-top: 8px; transition: 0.2s;
+            background: #F8FAFC; border: 1px solid #CBD5E1; padding: 10px 16px; 
+            border-radius: 8px; cursor: pointer; font-weight: 700; color: #334155; font-size: 0.85rem;
+            width: 100%; margin-top: 12px; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-        .map-btn:hover { background: #F8FAFC; }
+        .map-btn:hover { background: #E2E8F0; }
 
-        /* Right Side: Info & Details */
+        /* --- RIGHT SIDE: INFO CARDS --- */
         .shop-header-row { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 12px; }
         
         .shop-logo {
-            width: 64px; height: 64px; border-radius: 14px;
+            width: 72px; height: 72px; border-radius: 16px;
             object-fit: cover; border: 2px solid #E2E8F0;
             box-shadow: var(--shadow-md); background: white;
             flex-shrink: 0;
         }
 
         .shop-name-col { flex: 1; }
-        .shop-name { font-size: 1.6rem; font-weight: 800; line-height: 1.2; color: var(--color-text); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;}
+        .shop-name { font-size: 1.6rem; font-weight: 800; line-height: 1.2; color: var(--color-text); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;}
         
         .category-tag { font-weight: 700; color: var(--color-primary); font-size: 0.85rem; display: inline-block; background: var(--color-purple-light); padding: 4px 12px; border-radius: 6px; border: 1px solid #E9D5FF; }
 
         .address-row { display: flex; gap: 8px; color: var(--color-text-muted); font-size: 0.95rem; align-items: flex-start; margin-top: 16px; margin-bottom: 20px; line-height: 1.5; font-weight: 500;}
 
-        .status-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; }
+        .status-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         
         .status-badge {
             display: inline-flex; align-items: center; gap: 6px;
@@ -177,15 +187,53 @@
         .like-btn {
             display: inline-flex; align-items: center; gap: 6px;
             padding: 8px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 700;
-            background: white; color: var(--color-text); border: 1px solid #E2E8F0;
+            background: #F8FAFC; color: var(--color-text); border: 1px solid #E2E8F0;
             cursor: pointer; transition: all 0.2s;
         }
         .like-btn.liked { background: #FDF2F8; color: var(--color-pink); border-color: #FBCFE8; }
 
         .mini-heading {
-            font-size: 0.85rem; font-weight: 800; color: #64748B;
+            font-size: 0.9rem; font-weight: 800; color: #334155;
             text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
-            display: flex; align-items: center; gap: 6px;
+            display: flex; align-items: center; gap: 8px;
+            border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;
+        }
+        
+        /* Contact Icons Grid */
+        .social-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 12px;
+        }
+        
+        .social-btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 48px; height: 48px; border-radius: 14px;
+            color: white; font-size: 1.4rem; text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+        .social-btn:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); color: white; }
+        
+        .social-btn.phone { background: #3B82F6; }
+        .social-btn.website { background: #4F46E5; }
+        .social-btn.facebook { background: #1877F2; }
+        .social-btn.instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+        .social-btn.twitter { background: #000000; }
+        .social-btn.tiktok { background: #000000; }
+        
+        /* Special Animation for WhatsApp */
+        .social-btn.whatsapp {
+            background: #25D366;
+            animation: pulse-whatsapp 2s infinite;
+            border: 2px solid #25D366;
+        }
+        
+        @keyframes pulse-whatsapp {
+            0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+            70% { box-shadow: 0 0 0 14px rgba(37, 211, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
         }
 
         /* --- PRODUCTS GRID --- */
@@ -199,7 +247,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 16px;
-            content-visibility: auto; /* Boosts scrolling performance */
+            content-visibility: auto;
         }
         
         .product-card {
@@ -207,7 +255,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #E2E8F0;
             cursor: pointer; position: relative; transition: transform 0.2s;
         }
-        .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: var(--color-primary); }
+        .product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--color-primary); }
 
         .prod-img { width: 100%; height: 160px; object-fit: cover; background-color: #F1F5F9; }
         .prod-info { padding: 12px; }
@@ -223,36 +271,20 @@
         .badge-discount { left: 8px; background: #DC2626; }
         .badge-used { right: 8px; background: #EA580C; }
 
-        /* --- BOTTOM BAR --- */
-        .bottom-bar {
-            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-            width: 100%; max-width: 1200px;
-            background: white; padding: 12px 20px;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.05); z-index: 100;
-            border-top: 1px solid #E2E8F0;
-            display: flex; justify-content: center;
-        }
-        .btn-whatsapp {
-            width: 100%; max-width: 600px; 
-            background: #22C55E; color: white;
-            padding: 14px; border-radius: 12px; border: none;
-            font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
-            cursor: pointer; transition: background 0.2s;
-        }
-        .btn-whatsapp:hover { background: #16A34A; }
-
         /* Modal */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200;
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 200;
             display: flex; align-items: center; justify-content: center;
-            opacity: 0; visibility: hidden; transition: all 0.3s;
+            opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(4px);
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-card { background: white; padding: 24px; border-radius: 16px; width: 90%; max-width: 320px; text-align: center; }
-        .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
-        .btn-modal { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; }
+        .modal-card { background: white; padding: 28px 24px; border-radius: 20px; width: 90%; max-width: 360px; text-align: center; box-shadow: var(--shadow-lg);}
+        .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+        .btn-modal { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s;}
         .btn-cancel { background: #F1F5F9; color: #475569; }
-        .btn-confirm { background: var(--color-primary); color: white; }
+        .btn-cancel:hover { background: #E2E8F0; }
+        .btn-confirm { background: #25D366; color: white; }
+        .btn-confirm:hover { background: #16A34A; }
 
         .hidden { display: none !important; }
         .spinner { width: 32px; height: 32px; border: 3px solid #E2E8F0; border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 50px auto; }
@@ -287,12 +319,16 @@
                 
                 <!-- LEFT COLUMN: STOREFRONT & MAP -->
                 <div class="shop-visual-side">
-                    <div id="storefront-block" class="hidden">
+                    <div id="storefront-block" class="detail-card hidden" style="margin-bottom: 0;">
                         <div class="mini-heading"><i class="fa-solid fa-store"></i> Store Front</div>
-                        <img id="storefront-img" class="storefront-img" fetchpriority="high" alt="Store Front">
+                        
+                        <!-- NEW: perfectly framed storefront container -->
+                        <div class="storefront-wrapper">
+                            <img id="storefront-img" class="storefront-img" fetchpriority="high" alt="Store Front">
+                        </div>
                     </div>
 
-                    <div id="map-block" class="hidden">
+                    <div id="map-block" class="detail-card hidden" style="margin-bottom: 0;">
                         <div class="mini-heading"><i class="fa-solid fa-map-location-dot"></i> Location Map</div>
                         <div id="map"></div>
                         <button onclick="openGoogleMaps()" class="map-btn">
@@ -301,40 +337,54 @@
                     </div>
                 </div>
 
-                <!-- RIGHT COLUMN: SHOP DETAILS & LOGO -->
+                <!-- RIGHT COLUMN: SHOP DETAILS CARDS -->
                 <div class="shop-info-side">
-                    <div class="shop-header-row">
-                        <!-- Shop Logo -->
-                        <img id="shop-logo" class="shop-logo" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" fetchpriority="high" alt="Shop Logo">
+                    
+                    <!-- Card 1: Core Details -->
+                    <div class="detail-card">
+                        <div class="shop-header-row">
+                            <img id="shop-logo" class="shop-logo" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" fetchpriority="high" alt="Shop Logo">
+                            
+                            <div class="shop-name-col">
+                                <div id="shop-name" class="shop-name">Loading...</div>
+                                <div id="shop-category" class="category-tag"></div>
+                            </div>
+                        </div>
                         
-                        <div class="shop-name-col">
-                            <div id="shop-name" class="shop-name">Loading...</div>
-                            <div id="shop-category" class="category-tag"></div>
+                        <div class="address-row">
+                            <i class="fa-solid fa-location-dot" style="margin-top:3px; color: var(--color-primary);"></i>
+                            <span id="shop-address"></span>
+                        </div>
+
+                        <div class="status-row">
+                            <div id="status-badge" class="status-badge"></div>
+                            <button id="like-btn" class="like-btn" onclick="toggleLike()">
+                                <i class="fa-regular fa-thumbs-up"></i>
+                                <span id="like-count">0</span>
+                            </button>
                         </div>
                     </div>
                     
-                    <div class="address-row">
-                        <i class="fa-solid fa-location-dot" style="margin-top:3px; color: var(--color-primary);"></i>
-                        <span id="shop-address"></span>
-                    </div>
-
-                    <div class="status-row">
-                        <div id="status-badge" class="status-badge"></div>
-                        <button id="like-btn" class="like-btn" onclick="toggleLike()">
-                            <i class="fa-regular fa-thumbs-up"></i>
-                            <span id="like-count">0</span>
-                        </button>
-                    </div>
-                    
-                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 16px; border-radius: 12px;">
+                    <!-- Card 2: About -->
+                    <div class="detail-card">
                         <div class="mini-heading"><i class="fa-solid fa-circle-info"></i> About Business</div>
                         <p id="shop-desc" style="font-size: 0.95rem; line-height: 1.6; color: #475569; font-weight: 500;"></p>
                     </div>
-                </div>
 
+                    <!-- Card 3: Connect & Socials -->
+                    <div class="detail-card">
+                        <div class="mini-heading"><i class="fa-solid fa-address-book"></i> Connect with us</div>
+                        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 8px;">Tap an icon below to reach out or verify our profiles.</p>
+                        
+                        <div id="social-container" class="social-grid">
+                            <!-- Social icons will be injected here dynamically -->
+                        </div>
+                    </div>
+
+                </div>
             </div>
 
-            <hr style="border:0; border-top:1px solid #E2E8F0; margin: 30px 0;">
+            <hr style="border:0; border-top:1px solid #E2E8F0; margin: 20px 0 30px 0;">
 
             <!-- Product Sections -->
             <div id="section-special" class="hidden">
@@ -362,26 +412,19 @@
 
         </div>
     </div>
-
-    <!-- Bottom Bar -->
-    <div class="bottom-bar">
-        <button onclick="showSecurityModal()" class="btn-whatsapp">
-            <i class="fa-brands fa-whatsapp" style="font-size:1.2rem;"></i> Chat on WhatsApp
-        </button>
-    </div>
 </div>
 
-<!-- Security Modal -->
+<!-- Security Modal (WhatsApp) -->
 <div id="security-modal" class="modal-overlay">
     <div class="modal-card">
-        <i class="fa-solid fa-shield-halved" style="font-size: 2.5rem; color: var(--color-primary); margin-bottom: 16px;"></i>
-        <h3 style="margin-bottom: 8px;">Security Notice</h3>
+        <i class="fa-brands fa-whatsapp" style="font-size: 3rem; color: #25D366; margin-bottom: 16px;"></i>
+        <h3 style="margin-bottom: 8px; color: #1E293B;">Contact Merchant</h3>
         <p style="font-size: 0.85rem; color: #64748B; line-height: 1.5;">
             To protect merchants from spam, your User ID will be recorded. Please ensure this inquiry is business-related.
         </p>
         <div class="modal-actions">
             <button class="btn-modal btn-cancel" onclick="hideSecurityModal()">Cancel</button>
-            <button class="btn-modal btn-confirm" onclick="launchWhatsApp()">I Understand</button>
+            <button class="btn-modal btn-confirm" onclick="launchWhatsApp()">Continue to Chat</button>
         </div>
     </div>
 </div>
@@ -407,7 +450,6 @@
     window.onload = async () => {
         if (!shopId) { window.history.back(); return; }
 
-        // 1. INSTANT CACHE RENDER (Zero Loading Time)
         const cacheKey = `shop_cache_data_${shopId}`;
         const cacheStr = localStorage.getItem(cacheKey);
         
@@ -420,12 +462,10 @@
                 document.getElementById('loading-spinner').style.display = 'block';
             }
         } else {
-            // No cache? Fetch Shop Info First (Progressive Loading)
             document.getElementById('loading-spinner').style.display = 'block';
             await fetchShopHeaderQuickly();
         }
 
-        // 2. FETCH SESSION & BACKGROUND UPDATES
         client.auth.getSession().then(({ data: { session } }) => {
             if (session) currentUser = session.user;
             fetchFreshData(cacheKey, cacheStr);
@@ -436,7 +476,6 @@
         try {
             const { data } = await client.from('shops').select('*, cities(name)').eq('id', shopId).maybeSingle();
             if (data) {
-                // Construct a fake payload just to render the header instantly
                 renderFullShop({ shop: data, products: [], approvedNews: [] }, false);
             }
         } catch (e) { console.error("Fast header fetch failed", e); }
@@ -444,7 +483,6 @@
 
     async function fetchFreshData(cacheKey, oldCacheStr) {
         try {
-            // Run all heavy queries in parallel
             const [shopRes, prodRes, likeRes, contentRes] = await Promise.all([
                 client.from('shops').select('*, cities(name)').eq('id', shopId).maybeSingle(),
                 client.from('products').select().eq('shop_id', shopId).eq('is_available', true).order('created_at', { ascending: false }),
@@ -465,19 +503,17 @@
 
             const newCacheStr = JSON.stringify(newData);
 
-            // ANTI-FLICKER LOGIC: Only re-render if data actually changed
             if (newCacheStr !== oldCacheStr) {
                 localStorage.setItem(cacheKey, newCacheStr);
                 renderFullShop(newData, true);
             }
 
-            // User-specific data (not cached globally)
             if (currentUser) {
                 const { data: userLike } = await client.from('shop_likes').select('id').eq('shop_id', shopId).eq('user_id', currentUser.id).maybeSingle();
                 hasLiked = !!userLike;
                 likeCount = newData.likeCount;
                 updateLikeUI();
-                logView(); // Fire and forget
+                logView(); 
             }
 
         } catch (e) {
@@ -492,7 +528,6 @@
         const s = data.shop;
         currentShop = s;
 
-        // Ensure we don't overwrite like counts wildly if it's just a cache render
         if (!isUpdate) likeCount = data.likeCount; 
 
         // --- ANTI-FLICKER TICKER LOGIC ---
@@ -506,7 +541,6 @@
         }
         
         const tickerEl = document.getElementById('news-text');
-        // Only touch the DOM if text changed to prevent animation reset
         if (tickerEl.innerHTML !== tickerText) {
             tickerEl.innerHTML = tickerText;
             const speed = Math.max(35, tickerText.length * 0.4); 
@@ -537,6 +571,47 @@
 
         if (!isUpdate) updateLikeUI();
 
+        // --- CONTACT & SOCIALS CARD DYNAMIC POPULATION ---
+        const socialContainer = document.getElementById('social-container');
+        let socialHtml = '';
+        
+        // 1. WhatsApp (Animated Primary Action)
+        if (s.whatsapp) {
+            socialHtml += `<a href="javascript:void(0)" onclick="showSecurityModal()" class="social-btn whatsapp" title="Chat on WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>`;
+        }
+        // 2. Phone Call
+        if (s.phone) {
+            socialHtml += `<a href="tel:${s.phone}" class="social-btn phone" title="Call Business"><i class="fa-solid fa-phone"></i></a>`;
+        }
+        // 3. Website
+        if (s.website_url) {
+            socialHtml += `<a href="${s.website_url.startsWith('http') ? s.website_url : 'https://'+s.website_url}" target="_blank" class="social-btn website" title="Visit Website"><i class="fa-solid fa-globe"></i></a>`;
+        }
+        // 4. Facebook
+        if (s.facebook_url) {
+            socialHtml += `<a href="${s.facebook_url.startsWith('http') ? s.facebook_url : 'https://'+s.facebook_url}" target="_blank" class="social-btn facebook" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>`;
+        }
+        // 5. Instagram
+        if (s.instagram_url) {
+            socialHtml += `<a href="${s.instagram_url.startsWith('http') ? s.instagram_url : 'https://'+s.instagram_url}" target="_blank" class="social-btn instagram" title="Instagram"><i class="fa-brands fa-instagram"></i></a>`;
+        }
+        // 6. X (Twitter)
+        if (s.twitter_url) {
+            socialHtml += `<a href="${s.twitter_url.startsWith('http') ? s.twitter_url : 'https://'+s.twitter_url}" target="_blank" class="social-btn twitter" title="X (Twitter)"><i class="fa-brands fa-x-twitter"></i></a>`;
+        }
+        // 7. TikTok
+        if (s.tiktok_url) {
+            socialHtml += `<a href="${s.tiktok_url.startsWith('http') ? s.tiktok_url : 'https://'+s.tiktok_url}" target="_blank" class="social-btn tiktok" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>`;
+        }
+        
+        // If absolutely no contacts provided, show a fallback message
+        if (socialHtml === '') {
+            socialHtml = '<span style="font-size:0.85rem; color:#94A3B8;">No contact information provided.</span>';
+        }
+        
+        socialContainer.innerHTML = socialHtml;
+
+
         // --- VISUALS (Left Column) ---
         if (s.is_verified && (s.storefront_url || s.latitude)) {
             if (s.storefront_url) {
@@ -546,7 +621,6 @@
             }
             if (s.latitude && s.longitude) {
                 document.getElementById('map-block').classList.remove('hidden');
-                // Defer map initialization to keep main thread fast
                 if (!map) setTimeout(() => initMap(s.latitude, s.longitude), 800);
             }
         }
@@ -578,7 +652,6 @@
             return;
         }
 
-        // Build HTML with loading="lazy" for offscreen performance
         const html = products.map(p => {
             const hasDiscount = p.discount_price && p.discount_price < p.price;
             const percent = hasDiscount ? Math.round(((p.price - p.discount_price)/p.price)*100) : 0;
@@ -599,7 +672,6 @@
             `;
         }).join('');
 
-        // Only update DOM if it actually changed
         if (grid.innerHTML !== html) {
             grid.innerHTML = html;
             section.classList.remove('hidden');
@@ -637,7 +709,7 @@
         if (!currentUser) return alert("Please sign in to like shops.");
         hasLiked = !hasLiked;
         likeCount += hasLiked ? 1 : -1;
-        updateLikeUI(); // Instant optimistic update
+        updateLikeUI(); 
 
         try {
             if (hasLiked) {
@@ -646,7 +718,6 @@
                 await client.from('shop_likes').delete().eq('shop_id', shopId).eq('user_id', currentUser.id);
             }
         } catch (e) {
-            // Rollback on failure
             hasLiked = !hasLiked;
             likeCount += hasLiked ? 1 : -1;
             updateLikeUI();
