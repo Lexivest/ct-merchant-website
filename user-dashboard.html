@@ -142,7 +142,7 @@
 
         .amz-search-input {
             flex: 1;
-            min-width: 0; /* Allows input to shrink gracefully on small screens */
+            min-width: 0; 
             padding: 0 16px;
             border: none;
             outline: none;
@@ -162,7 +162,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0; /* Prevents icon from getting squished */
+            flex-shrink: 0; 
         }
         .amz-search-btn:hover { background-color: var(--color-pink-hover); }
 
@@ -187,7 +187,7 @@
             .mobile-search { display: flex; }
             
             .amz-search-select {
-                max-width: 90px; /* Slimmer dropdown for mobile */
+                max-width: 90px; 
                 padding: 0 8px;
             }
 
@@ -219,33 +219,66 @@
         }
         .h-scroll::-webkit-scrollbar { display: none; }
 
+
         /* =========================================
-           PREMIUM AMAZON-STYLE SHOP CARDS (2x2 GRID)
+           PREMIUM HEADINGS (Unbreakable & Scrollable)
+           ========================================= */
+        .sec-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #0F1111;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;      /* Forces text to remain on one line */
+            overflow-x: auto;         /* Allows horizontal scrolling if needed */
+            scrollbar-width: none;    /* Hides scrollbar for clean look */
+            -ms-overflow-style: none;
+            padding-bottom: 4px;
+        }
+        .sec-title::-webkit-scrollbar { display: none; }
+        
+        .sec-title::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 22px;
+            background: var(--color-pink);
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        /* =========================================
+           ZERO-GAP PREMIUM SHOP CARDS (2x2 GRID)
            ========================================= */
         .shop-list-view {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            column-gap: 20px;
+            row-gap: 0; /* Zero vertical space */
             margin-bottom: 40px;
-        }
-
-        .h-scroll .premium-shop-card {
-            min-width: 300px;
-            width: 80vw;
-            max-width: 360px;
-            flex-shrink: 0;
         }
 
         .premium-shop-card {
             background: white;
-            padding: 20px;
+            padding: 24px 20px;
             display: flex;
             flex-direction: column;
             cursor: pointer;
             height: 100%;
-            border-radius: 4px;
+            border-radius: 0; /* Flat edges for seamless stacking */
+            border: 1px solid #E3E6E6;
+            margin-bottom: -1px; /* Collapses duplicate borders into a single clean line */
+            position: relative;
+            transition: background 0.2s, box-shadow 0.2s;
         }
-        .premium-shop-card:hover { border: 1px solid #E3E6E6; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .premium-shop-card:hover { 
+            background: #Fcfcfc; 
+            z-index: 2; /* Brings hovered card above others */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-color: #D5D9D9;
+        }
 
         .shop-card-title {
             font-size: 1.25rem;
@@ -315,8 +348,6 @@
 
 
         /* Form & Utility Styles */
-        .sec-title { font-size: 1.5rem; font-weight: 700; color: #0F1111; margin-bottom: 16px; }
-        
         .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding-bottom: 40px; }
         .svc-card {
             background: white; padding: 20px 16px; border-radius: 8px; text-align: center;
@@ -682,7 +713,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v22'; 
+    const CACHE_KEY = 'ctm_dash_v23'; 
     const MAX_FILE_SIZE = 500 * 1024; 
 
     let chatHistory = [];
@@ -883,7 +914,6 @@
         const mobSelect = document.getElementById('search-category-mobile');
         
         if (deskSelect) deskSelect.innerHTML = `<option value="all">All Categories</option>` + catOptionsItems;
-        // Mobile uses the shorter "See all"
         if (mobSelect) mobSelect.innerHTML = `<option value="all">See all</option>` + catOptionsItems;
 
         // Avatar
@@ -904,6 +934,7 @@
             b.style.display = 'block';
         }
 
+        // --- SLOWED DOWN TICKER LOGIC ---
         if (data.announcements && data.announcements.length > 0) {
             const tickerEl = document.getElementById('ticker-text');
             const text = data.announcements.map(a => a.message).join("  •  ");
@@ -911,7 +942,6 @@
             document.getElementById('header-ticker').style.display = 'flex';
             tickerEl.textContent = text;
             
-            // Slow down the ticker dynamically
             const speed = Math.max(60, text.length * 0.6); 
             tickerEl.style.animationDuration = `${speed}s`;
         } else {
@@ -938,11 +968,15 @@
             if(areaShops.length === 0) return;
 
             const isUser = area.id === userAreaId;
-            const title = isUser ? `Top stores in ${area.name} (Near You)` : `Explore stores in ${area.name}`;
+            
+            // Beautiful Premium Headline with Pink accent
+            const titleHtml = isUser 
+                ? `Top stores in ${area.name} <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Near You)</span>` 
+                : `Explore stores in ${area.name}`;
 
             areaContainer.innerHTML += `
-                <div style="margin-bottom: 40px; padding-bottom: 20px;">
-                    <h2 class="sec-title">${title}</h2>
+                <div style="margin-bottom: 40px;">
+                    <h2 class="sec-title">${titleHtml}</h2>
                     <div class="shop-list-view">
                         ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
                     </div>
@@ -988,10 +1022,8 @@
 
         let gridHtml = '';
         
-        // Build exactly 4 slots to perfectly maintain the 2x2 grid look
         for (let i = 0; i < 4; i++) {
             if (i < p.length) {
-                // Has product image
                 const prodName = p[i].name || p[i].product_name || p[i].title || 'Product';
                 gridHtml += `
                     <div class="shop-grid-item-wrap">
@@ -1002,7 +1034,6 @@
                     </div>
                 `;
             } else {
-                // Empty placeholder slot to maintain the 2x2 grid structure perfectly
                 gridHtml += `
                     <div class="shop-grid-item-wrap">
                         <div class="shop-grid-item empty">
@@ -1082,7 +1113,6 @@
         document.getElementById('edit-name').value = userProfile.full_name || '';
         document.getElementById('edit-phone').value = userProfile.phone || '';
 
-        // Reset Avatar Logic for Edit View
         avatarBlob = null;
         currentOldAvatarUrl = userProfile.avatar_url;
         document.getElementById('edit-avatar-preview').src = currentOldAvatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${userProfile.full_name}`;
@@ -1133,7 +1163,7 @@
         if (cropper) cropper.destroy();
 
         cropper = new Cropper(img, {
-            aspectRatio: 1, // Enforce Square ratio for Avatar
+            aspectRatio: 1, 
             viewMode: 2,
             background: false,
             autoCropArea: 1,
@@ -1154,7 +1184,7 @@
         if (!cropper) return;
         
         cropper.getCroppedCanvas({
-            width: 600, // Safe max width for an avatar
+            width: 600, 
             imageSmoothingEnabled: true,
             imageSmoothingQuality: 'high',
         }).toBlob((blob) => {
@@ -1170,7 +1200,6 @@
         }, 'image/jpeg', 0.85); 
     }
 
-    // Handles smart upload & junk file deletion
     async function uploadAvatarProcess() {
         if (!avatarBlob) return currentOldAvatarUrl;
 
