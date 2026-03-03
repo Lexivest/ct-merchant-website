@@ -11,16 +11,19 @@
     
     <style>
         :root {
-            /* PREMIUM AMAZON THEME */
+            /* PREMIUM AMAZON THEME WITH CT-MERCHANT PINK */
             --amz-dark: #131921;
             --amz-nav-bar: #232F3E;
-            --amz-orange: #FEBD69;
-            --amz-orange-hover: #F3A847;
+            
+            /* Replaced Amazon Orange with Brand Pink */
+            --color-pink: #db2777; 
+            --color-pink-hover: #be185d;
+            --color-pink-light: rgba(219, 39, 119, 0.15);
+            
             --amz-bg: #E3E6E6;
             --amz-link: #007185;
             --amz-link-hover: #C40000;
             --color-text-main: #0F1111;
-            --color-primary: #059669; 
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -54,7 +57,7 @@
 
         /* Logo */
         .amz-logo {
-            height: 36px;
+            height: 38px;
             border-radius: 4px;
             object-fit: contain;
             cursor: pointer;
@@ -115,7 +118,7 @@
             border: 3px solid transparent;
             transition: 0.2s;
         }
-        .amz-search-block:focus-within { border-color: var(--amz-orange); }
+        .amz-search-block:focus-within { border-color: var(--color-pink); }
 
         .desktop-search { flex: 1; margin: 0 16px; }
         .mobile-search { display: none; margin: 0 16px 10px 16px; width: calc(100% - 32px); }
@@ -127,6 +130,7 @@
             padding: 0 12px;
             color: #555;
             font-size: 0.85rem;
+            font-weight: 600;
             outline: none;
             cursor: pointer;
             max-width: 140px;
@@ -142,11 +146,12 @@
             color: #0F1111;
         }
         
+        /* Pink Search Button */
         .amz-search-btn {
-            width: 48px;
-            background-color: var(--amz-orange);
+            width: 52px;
+            background-color: var(--color-pink);
             border: none;
-            color: #333;
+            color: white;
             font-size: 1.2rem;
             cursor: pointer;
             transition: 0.2s;
@@ -154,7 +159,7 @@
             align-items: center;
             justify-content: center;
         }
-        .amz-search-btn:hover { background-color: var(--amz-orange-hover); }
+        .amz-search-btn:hover { background-color: var(--color-pink-hover); }
 
         /* Sub Header (Ticker) laps with zero margin */
         .amz-sub-header {
@@ -167,7 +172,7 @@
             font-weight: 600;
         }
         .ticker-wrapper { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; gap: 12px;}
-        .ticker-content { white-space: nowrap; animation: ticker 35s linear infinite; padding-left: 100%; color: white;}
+        .ticker-content { white-space: nowrap; animation: ticker 60s linear infinite; padding-left: 100%; color: white;}
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
 
@@ -231,7 +236,7 @@
             height: 100%;
             border-radius: 4px;
         }
-        .premium-shop-card:hover { box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .premium-shop-card:hover { border: 1px solid #E3E6E6; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
 
         .shop-card-title {
             font-size: 1.25rem;
@@ -315,12 +320,12 @@
         .form-group { margin-bottom: 16px; text-align: left; }
         .form-label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #0F1111; }
         .form-input { width: 100%; padding: 10px 14px; border: 1px solid #888C8C; border-radius: 4px; font-size: 1rem; box-shadow: 0 1px 2px rgba(15,17,17,0.15) inset; }
-        .form-input:focus { outline: none; border-color: var(--amz-orange); box-shadow: 0 0 0 3px rgba(228,121,17,0.5); }
+        .form-input:focus { outline: none; border-color: var(--color-pink); box-shadow: 0 0 0 3px var(--color-pink-light); }
 
-        .btn-amz { background: #FFD814; border: 1px solid #FCD200; border-radius: 8px; padding: 10px 16px; color: #0F1111; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px 0 rgba(213,217,217,0.5); transition: 0.2s; }
-        .btn-amz:hover { background: #F7CA00; border-color: #F2C200; }
-        .btn-amz-alt { background: white; border: 1px solid #D5D9D9; border-radius: 8px; padding: 10px 16px; color: #0F1111; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px 0 rgba(213,217,217,0.5); transition: 0.2s;}
-        .btn-amz-alt:hover { background: #F7FAFA; }
+        .btn-brand { background: var(--color-pink); border: 1px solid var(--color-pink-hover); border-radius: 8px; padding: 10px 16px; color: white; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px 0 rgba(219,39,119,0.3); transition: 0.2s; }
+        .btn-brand:hover { background: var(--color-pink-hover); }
+        .btn-brand-alt { background: white; border: 1px solid #D5D9D9; border-radius: 8px; padding: 10px 16px; color: #0F1111; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px 0 rgba(213,217,217,0.5); transition: 0.2s;}
+        .btn-brand-alt:hover { background: #F7FAFA; }
 
         /* Profile Avatar Edit Box */
         .avatar-edit-box {
@@ -360,8 +365,8 @@
         }
         .ai-fab {
             width: 56px; height: 56px; border-radius: 50%;
-            background: var(--amz-dark); color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); cursor: pointer;
+            background: var(--color-pink); color: white;
+            box-shadow: 0 4px 12px rgba(219, 39, 119, 0.4); cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             font-size: 1.5rem; transition: transform 0.2s; border: none;
         }
@@ -386,7 +391,7 @@
         .chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
         .chat-msg { max-width: 80%; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; line-height: 1.4; }
         .msg-ai { align-self: flex-start; background: white; border: 1px solid #D5D9D9; color: #0F1111; }
-        .msg-user { align-self: flex-end; background: var(--amz-dark); color: white; }
+        .msg-user { align-self: flex-end; background: var(--color-pink); color: white; }
         .msg-error { align-self: center; background: #FEE2E2; color: #DC2626; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
         
         .chat-input-area {
@@ -398,9 +403,9 @@
             flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #888C8C;
             outline: none; font-size: 0.9rem;
         }
-        .chat-input:focus { border-color: var(--amz-orange); box-shadow: 0 0 0 2px rgba(228,121,17,0.5); }
+        .chat-input:focus { border-color: var(--color-pink); box-shadow: 0 0 0 2px var(--color-pink-light); }
         .btn-send {
-            background: var(--amz-orange); color: #0F1111; border: none;
+            background: var(--color-pink); color: white; border: none;
             width: 40px; height: 40px; border-radius: 4px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             font-size: 1.1rem;
@@ -420,13 +425,13 @@
     <!-- HEADER (Premium Amazon Style) -->
     <header class="amz-header">
         
-        <!-- MAIN ROW (Scrollable horizontally on mobile, flex spaced on desktop) -->
+        <!-- MAIN ROW (Scrollable horizontally on mobile, straight flex on desktop) -->
         <div class="amz-mobile-scroll-row">
             
             <!-- Logo -->
             <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="amz-logo" alt="Logo" onclick="window.location.reload()">
             
-            <!-- City -->
+            <!-- City (No "Deliver to" text, just icon and name) -->
             <div class="amz-location">
                 <i class="fa-solid fa-location-dot"></i> <span id="header-city">...</span>
             </div>
@@ -440,7 +445,7 @@
                 <button class="amz-search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
 
-            <!-- Navigation Links -->
+            <!-- Navigation Links (Straight line) -->
             <div class="amz-nav-item active" onclick="switchScreen('market', this)">Repository</div>
             
             <div class="amz-nav-item" onclick="switchScreen('services', this)">Services</div>
@@ -449,7 +454,7 @@
                 Alerts <span id="badge-count" class="notif-badge">0</span>
             </div>
 
-            <!-- Profile Avatar (No text) -->
+            <!-- Profile Avatar (No text at all, just image) -->
             <div class="amz-nav-item" onclick="switchScreen('profile', this)" style="padding: 4px 8px;">
                 <img id="header-avatar" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" class="header-avatar">
             </div>
@@ -472,7 +477,7 @@
         <!-- TICKER ROW (Laps tightly against header) -->
         <div class="amz-sub-header" id="header-ticker" style="display:none;">
             <div class="ticker-wrapper">
-                <i class="fa-solid fa-bullhorn" style="color: var(--amz-orange);"></i>
+                <i class="fa-solid fa-bullhorn" style="color: var(--color-pink);"></i>
                 <div id="ticker-text" class="ticker-content"></div>
             </div>
         </div>
@@ -508,7 +513,7 @@
                 </div>
 
                 <div class="svc-card" onclick="window.location.href='wishlist.html'">
-                    <div class="svc-icon"><i class="fa-solid fa-heart" style="color:#C40000;"></i></div>
+                    <div class="svc-icon"><i class="fa-solid fa-heart" style="color:#db2777;"></i></div>
                     <strong>Wishlist</strong>
                     <div id="wishlist-count" style="font-size:0.8rem; color:#565959; margin-top:4px;">...</div>
                 </div>
@@ -537,10 +542,10 @@
                 <p id="profile-email" style="color:#565959; margin-bottom:24px; font-size:0.95rem;">...</p>
                 
                 <div style="display:flex; justify-content:center; gap:12px;">
-                    <button class="btn-amz" onclick="openEditProfile()">
+                    <button class="btn-brand" onclick="openEditProfile()">
                         Edit Profile
                     </button>
-                    <button class="btn-amz-alt" onclick="handleLogout()">
+                    <button class="btn-brand-alt" onclick="handleLogout()">
                         Sign Out
                     </button>
                 </div>
@@ -587,8 +592,8 @@
                 <p id="edit-error" style="color:#C40000; font-size:0.9rem; margin-bottom:16px; display:none;"></p>
 
                 <div style="display:flex; gap:12px;">
-                    <button id="btn-save" class="btn-amz" style="flex:1;" onclick="saveProfile()">Save Changes</button>
-                    <button class="btn-amz-alt" style="flex:1;" onclick="cancelEdit()">Cancel</button>
+                    <button id="btn-save" class="btn-brand" style="flex:1;" onclick="saveProfile()">Save Changes</button>
+                    <button class="btn-brand-alt" style="flex:1;" onclick="cancelEdit()">Cancel</button>
                 </div>
             </div>
         </div>
@@ -613,8 +618,8 @@
             <img id="avatar-crop-image" src="">
         </div>
         <div class="crop-footer-bar">
-            <button type="button" class="btn-amz-alt" onclick="closeAvatarCropModal()">Cancel</button>
-            <button type="button" class="btn-amz" onclick="applyAvatarCrop()">Apply Crop</button>
+            <button type="button" class="btn-brand-alt" onclick="closeAvatarCropModal()">Cancel</button>
+            <button type="button" class="btn-brand" onclick="applyAvatarCrop()">Apply Crop</button>
         </div>
     </div>
 
@@ -659,7 +664,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v20'; 
+    const CACHE_KEY = 'ctm_dash_v21'; 
     const MAX_FILE_SIZE = 500 * 1024; 
 
     let chatHistory = [];
@@ -862,7 +867,7 @@
         if (deskSelect) deskSelect.innerHTML = catOptions;
         if (mobSelect) mobSelect.innerHTML = catOptions;
 
-        // Avatar
+        // Avatar (No Profile Text Anymore)
         const fName = data.profile.full_name || "User";
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${fName}`;
         document.getElementById('header-avatar').src = avatar;
@@ -880,9 +885,17 @@
             b.style.display = 'block';
         }
 
+        // --- SLOWED DOWN TICKER LOGIC ---
         if (data.announcements && data.announcements.length > 0) {
+            const tickerEl = document.getElementById('ticker-text');
+            const text = data.announcements.map(a => a.message).join("  •  ");
+            
             document.getElementById('header-ticker').style.display = 'flex';
-            document.getElementById('ticker-text').textContent = data.announcements.map(a => a.message).join("  •  ");
+            tickerEl.textContent = text;
+            
+            // Dynamically adjust animation speed. Base is 60 seconds.
+            const speed = Math.max(60, text.length * 0.6); 
+            tickerEl.style.animationDuration = `${speed}s`;
         } else {
             document.getElementById('header-ticker').style.display = 'none';
         }
