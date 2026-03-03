@@ -935,10 +935,10 @@
         try {
             const type = document.getElementById('business-type').value;
 
-            // Upload files intelligently (Handles raw PDFs or cropped image blobs)
-            const logoUrl = await uploadFileOrBlob('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
-            const frontUrl = await uploadFileOrBlob('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
-            const idUrl = await uploadFileOrBlob('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
+            // UPLOAD MAPPING UPDATED: Upload files intelligently to correct buckets
+            const logoUrl = await uploadFileOrBlob('file-logo', 'brand-assets', 'logos', existingShop?.image_url);
+            const frontUrl = await uploadFileOrBlob('file-front', 'storefronts', 'covers', existingShop?.storefront_url);
+            const idUrl = await uploadFileOrBlob('file-id', 'id-documents', 'ids', existingShop?.id_card_url);
             const cacUrl = await uploadFileOrBlob('file-cac', 'cac-documents', 'cac', existingShop?.cac_certificate_url);
 
             const payload = {
