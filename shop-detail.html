@@ -84,12 +84,13 @@
             font-weight: 700;
             font-size: 0.85rem;
             color: #C2410C;
+            will-change: transform; /* Hardware acceleration for smooth scroll */
         }
         .news-marquee-wrapper:hover .news-marquee-content { animation-play-state: paused; }
         
         @keyframes marquee {
-            0%   { transform: translate(0, 0); }
-            100% { transform: translate(-100%, 0); }
+            0%   { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
         }
 
         /* --- SPLIT HERO LAYOUT (Visuals Left, Info Right) --- */
@@ -126,17 +127,19 @@
         /* Perfect 3:4 Portrait Ratio for Storefront */
         .storefront-img { 
             width: 100%; 
-            max-width: 380px; /* Prevents it from getting too large on desktop */
-            aspect-ratio: 3 / 4; /* Matches the crop ratio exactly */
-            margin: 0 auto; /* Centers the image */
+            max-width: 380px; 
+            aspect-ratio: 3 / 4; 
+            margin: 0 auto; 
             display: block;
             border-radius: 12px; object-fit: cover; 
             border: 1px solid #E2E8F0; 
+            background-color: #F1F5F9;
         }
         
         #map { 
             height: 200px; width: 100%; 
             border-radius: 12px; border: 1px solid #E2E8F0; z-index: 1; 
+            background-color: #F1F5F9;
         }
         .map-btn {
             background:white; border:1px solid #ccc; padding:8px 16px; 
@@ -196,6 +199,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 16px;
+            content-visibility: auto; /* Boosts scrolling performance */
         }
         
         .product-card {
@@ -205,7 +209,7 @@
         }
         .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: var(--color-primary); }
 
-        .prod-img { width: 100%; height: 160px; object-fit: cover; }
+        .prod-img { width: 100%; height: 160px; object-fit: cover; background-color: #F1F5F9; }
         .prod-info { padding: 12px; }
         .prod-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #334155; }
         .prod-price { color: var(--color-primary); font-weight: 800; font-size: 1rem; }
@@ -285,8 +289,7 @@
                 <div class="shop-visual-side">
                     <div id="storefront-block" class="hidden">
                         <div class="mini-heading"><i class="fa-solid fa-store"></i> Store Front</div>
-                        <!-- Aspect Ratio strictly set to 3/4 via CSS -->
-                        <img id="storefront-img" class="storefront-img">
+                        <img id="storefront-img" class="storefront-img" fetchpriority="high" alt="Store Front">
                     </div>
 
                     <div id="map-block" class="hidden">
@@ -301,8 +304,8 @@
                 <!-- RIGHT COLUMN: SHOP DETAILS & LOGO -->
                 <div class="shop-info-side">
                     <div class="shop-header-row">
-                        <!-- Shop Logo replaces the old gallery/CT-logo -->
-                        <img id="shop-logo" class="shop-logo" src="https://via.placeholder.com/150?text=Logo">
+                        <!-- Shop Logo -->
+                        <img id="shop-logo" class="shop-logo" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" fetchpriority="high" alt="Shop Logo">
                         
                         <div class="shop-name-col">
                             <div id="shop-name" class="shop-name">Loading...</div>
@@ -398,23 +401,50 @@
     let currentUser = null;
     let hasLiked = false;
     let likeCount = 0;
+    let map;
 
+    // --- INSTANT SWR ARCHITECTURE ---
     window.onload = async () => {
         if (!shopId) { window.history.back(); return; }
 
-        const { data: { session } } = await client.auth.getSession();
-        if (session) currentUser = session.user;
-
-        const cached = localStorage.getItem(`shop_cache_${shopId}`);
-        if (cached) {
-            renderShopData(JSON.parse(cached));
+        // 1. INSTANT CACHE RENDER (Zero Loading Time)
+        const cacheKey = `shop_cache_data_${shopId}`;
+        const cacheStr = localStorage.getItem(cacheKey);
+        
+        if (cacheStr) {
+            try {
+                const cachedData = JSON.parse(cacheStr);
+                renderFullShop(cachedData, false);
+            } catch (e) {
+                console.error("Cache parsing error", e);
+                document.getElementById('loading-spinner').style.display = 'block';
+            }
+        } else {
+            // No cache? Fetch Shop Info First (Progressive Loading)
+            document.getElementById('loading-spinner').style.display = 'block';
+            await fetchShopHeaderQuickly();
         }
 
-        fetchShopData();
+        // 2. FETCH SESSION & BACKGROUND UPDATES
+        client.auth.getSession().then(({ data: { session } }) => {
+            if (session) currentUser = session.user;
+            fetchFreshData(cacheKey, cacheStr);
+        });
     };
 
-    async function fetchShopData() {
+    async function fetchShopHeaderQuickly() {
         try {
+            const { data } = await client.from('shops').select('*, cities(name)').eq('id', shopId).maybeSingle();
+            if (data) {
+                // Construct a fake payload just to render the header instantly
+                renderFullShop({ shop: data, products: [], approvedNews: [] }, false);
+            }
+        } catch (e) { console.error("Fast header fetch failed", e); }
+    }
+
+    async function fetchFreshData(cacheKey, oldCacheStr) {
+        try {
+            // Run all heavy queries in parallel
             const [shopRes, prodRes, likeRes, contentRes] = await Promise.all([
                 client.from('shops').select('*, cities(name)').eq('id', shopId).maybeSingle(),
                 client.from('products').select().eq('shop_id', shopId).eq('is_available', true).order('created_at', { ascending: false }),
@@ -424,42 +454,48 @@
 
             if (!shopRes.data) return;
 
-            let userLiked = false;
-            if (currentUser) {
-                const { data } = await client.from('shop_likes').select('id').eq('shop_id', shopId).eq('user_id', currentUser.id).maybeSingle();
-                if (data) userLiked = true;
-            }
-
             const approvedNews = (contentRes.data || []).filter(c => c.content_type === 'news').map(c => c.content_data);
 
-            const data = {
+            const newData = {
                 shop: shopRes.data,
                 products: prodRes.data || [],
                 likeCount: likeRes.count || 0,
-                hasLiked: userLiked,
                 approvedNews: approvedNews
             };
 
-            localStorage.setItem(`shop_cache_${shopId}`, JSON.stringify(data));
-            renderShopData(data);
-            logView();
+            const newCacheStr = JSON.stringify(newData);
+
+            // ANTI-FLICKER LOGIC: Only re-render if data actually changed
+            if (newCacheStr !== oldCacheStr) {
+                localStorage.setItem(cacheKey, newCacheStr);
+                renderFullShop(newData, true);
+            }
+
+            // User-specific data (not cached globally)
+            if (currentUser) {
+                const { data: userLike } = await client.from('shop_likes').select('id').eq('shop_id', shopId).eq('user_id', currentUser.id).maybeSingle();
+                hasLiked = !!userLike;
+                likeCount = newData.likeCount;
+                updateLikeUI();
+                logView(); // Fire and forget
+            }
 
         } catch (e) {
-            console.error("Fetch error:", e);
-            document.getElementById('loading-spinner').style.display = 'none';
+            console.error("Fresh fetch error:", e);
         }
     }
 
-    function renderShopData(data) {
+    function renderFullShop(data, isUpdate) {
         document.getElementById('loading-spinner').style.display = 'none';
         document.getElementById('content-area').classList.remove('hidden');
 
         const s = data.shop;
         currentShop = s;
-        hasLiked = data.hasLiked;
-        likeCount = data.likeCount;
 
-        // --- SLOWED DOWN TICKER LOGIC ---
+        // Ensure we don't overwrite like counts wildly if it's just a cache render
+        if (!isUpdate) likeCount = data.likeCount; 
+
+        // --- ANTI-FLICKER TICKER LOGIC ---
         const cityName = s.cities?.name || "Local";
         const defaultTickerText = `${cityName} Repository of shops, products and services`;
         const newsArray = data.approvedNews || [];
@@ -469,54 +505,53 @@
             tickerText = newsArray.join(" &nbsp; • &nbsp; ");
         }
         
-        document.getElementById('news-text').innerHTML = tickerText;
-        
-        // Dynamically adjust animation speed. 
-        // Base is 35 seconds. Adds 0.4 seconds per character to significantly slow down long text.
-        const speed = Math.max(35, tickerText.length * 0.4); 
-        document.getElementById('news-text').style.animationDuration = `${speed}s`;
+        const tickerEl = document.getElementById('news-text');
+        // Only touch the DOM if text changed to prevent animation reset
+        if (tickerEl.innerHTML !== tickerText) {
+            tickerEl.innerHTML = tickerText;
+            const speed = Math.max(35, tickerText.length * 0.4); 
+            tickerEl.style.animationDuration = `${speed}s`;
+        }
 
         // --- SHOP DETAILS ---
         const isVerifiedHtml = s.is_verified ? '<i class="fa-solid fa-circle-check" style="color: #10B981; font-size: 1.2rem; margin-left:4px;" title="Verified Shop"></i>' : '';
         document.getElementById('shop-name').innerHTML = `${s.name} ${isVerifiedHtml}`;
         
-        // Setup Shop Logo
+        // Logo
+        const logoUrl = s.image_url || `https://api.dicebear.com/7.x/initials/svg?seed=${s.name}`;
         const logoEl = document.getElementById('shop-logo');
-        if (s.image_url) {
-            logoEl.src = s.image_url;
-        } else {
-            logoEl.src = `https://api.dicebear.com/7.x/initials/svg?seed=${s.name}`;
-        }
+        if (logoEl.src !== logoUrl) logoEl.src = logoUrl;
 
         document.getElementById('shop-category').textContent = s.category;
         document.getElementById('shop-address').textContent = s.address;
         document.getElementById('shop-desc').textContent = s.description || 'No description provided by the merchant.';
         
+        const badgeEl = document.getElementById('status-badge');
         if (s.is_verified) {
-            document.getElementById('status-badge').className = "status-badge";
-            document.getElementById('status-badge').innerHTML = `<i class="fa-solid fa-shield-check"></i> ID: ${s.unique_id || 'Verified'}`;
+            badgeEl.className = "status-badge";
+            badgeEl.innerHTML = `<i class="fa-solid fa-shield-check"></i> ID: ${s.unique_id || 'Verified'}`;
         } else {
-            document.getElementById('status-badge').className = "status-badge pending";
-            document.getElementById('status-badge').innerHTML = `<i class="fa-solid fa-hourglass-half"></i> Pending Verification`;
+            badgeEl.className = "status-badge pending";
+            badgeEl.innerHTML = `<i class="fa-solid fa-hourglass-half"></i> Pending Verification`;
         }
 
-        updateLikeUI();
+        if (!isUpdate) updateLikeUI();
 
         // --- VISUALS (Left Column) ---
         if (s.is_verified && (s.storefront_url || s.latitude)) {
-            
             if (s.storefront_url) {
                 document.getElementById('storefront-block').classList.remove('hidden');
                 const imgEl = document.getElementById('storefront-img');
-                imgEl.src = s.storefront_url;
+                if (imgEl.src !== s.storefront_url) imgEl.src = s.storefront_url;
             }
             if (s.latitude && s.longitude) {
                 document.getElementById('map-block').classList.remove('hidden');
-                initMap(s.latitude, s.longitude);
+                // Defer map initialization to keep main thread fast
+                if (!map) setTimeout(() => initMap(s.latitude, s.longitude), 800);
             }
         }
 
-        // Products
+        // --- PRODUCTS GRID (Anti-Flicker) ---
         const special = data.products.filter(p => p.discount_price && p.discount_price < p.price);
         const used = data.products.filter(p => p.condition === 'Fairly Used');
         const fresh = data.products.filter(p => !p.discount_price && p.condition !== 'Fairly Used');
@@ -525,19 +560,32 @@
         renderGrid('grid-used', 'section-used', used);
         renderGrid('grid-new', 'section-new', fresh);
 
-        if (data.products.length === 0) document.getElementById('empty-state').classList.remove('hidden');
+        const emptyState = document.getElementById('empty-state');
+        if (data.products.length === 0) {
+            emptyState.classList.remove('hidden');
+        } else {
+            emptyState.classList.add('hidden');
+        }
     }
 
     function renderGrid(gridId, sectionId, products) {
-        if (products.length === 0) return;
-        document.getElementById(sectionId).classList.remove('hidden');
-        document.getElementById(gridId).innerHTML = products.map(p => {
+        const section = document.getElementById(sectionId);
+        const grid = document.getElementById(gridId);
+
+        if (products.length === 0) {
+            section.classList.add('hidden');
+            grid.innerHTML = '';
+            return;
+        }
+
+        // Build HTML with loading="lazy" for offscreen performance
+        const html = products.map(p => {
             const hasDiscount = p.discount_price && p.discount_price < p.price;
             const percent = hasDiscount ? Math.round(((p.price - p.discount_price)/p.price)*100) : 0;
             
             return `
             <div class="product-card" onclick="window.location.href='product-detail.html?id=${p.id}'">
-                <img src="${p.image_url || 'https://via.placeholder.com/150'}" class="prod-img">
+                <img src="${p.image_url || 'https://via.placeholder.com/150'}" class="prod-img" loading="lazy" alt="${p.name}">
                 ${hasDiscount ? `<span class="badge badge-discount">-${percent}%</span>` : ''}
                 ${p.condition === 'Fairly Used' ? `<span class="badge badge-used">Used</span>` : ''}
                 <div class="prod-info">
@@ -550,18 +598,21 @@
             </div>
             `;
         }).join('');
+
+        // Only update DOM if it actually changed
+        if (grid.innerHTML !== html) {
+            grid.innerHTML = html;
+            section.classList.remove('hidden');
+        }
     }
 
-    let map;
     function initMap(lat, lng) {
         if (map) return;
-        setTimeout(() => {
-            map = L.map('map').setView([lat, lng], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
-            L.marker([lat, lng]).addTo(map).bindPopup("Shop Location").openPopup();
-        }, 500);
+        map = L.map('map').setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+        L.marker([lat, lng]).addTo(map).bindPopup("Shop Location").openPopup();
     }
 
     function openGoogleMaps() {
@@ -586,7 +637,7 @@
         if (!currentUser) return alert("Please sign in to like shops.");
         hasLiked = !hasLiked;
         likeCount += hasLiked ? 1 : -1;
-        updateLikeUI();
+        updateLikeUI(); // Instant optimistic update
 
         try {
             if (hasLiked) {
@@ -595,6 +646,7 @@
                 await client.from('shop_likes').delete().eq('shop_id', shopId).eq('user_id', currentUser.id);
             }
         } catch (e) {
+            // Rollback on failure
             hasLiked = !hasLiked;
             likeCount += hasLiked ? 1 : -1;
             updateLikeUI();
@@ -605,6 +657,7 @@
         if (!currentShop?.whatsapp) return alert("This shop hasn't provided a WhatsApp number.");
         document.getElementById('security-modal').classList.add('active');
     }
+    
     function hideSecurityModal() {
         document.getElementById('security-modal').classList.remove('active');
     }
