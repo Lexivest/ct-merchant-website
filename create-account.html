@@ -140,7 +140,6 @@
             border-radius: 0.8rem; padding: 1.5rem; margin-bottom: 1rem;
             font-size: 0.85rem; line-height: 1.6; color: #334155; text-align: left;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-            /* Important for scroll listener */
             max-height: 50vh;
         }
         .terms-scroll-box h2 { color: var(--color-purple); font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0;}
@@ -275,7 +274,50 @@
         </div>
     </div>
 
-    <!-- Interactive Legal Terms Modal -->
+    <!-- Complete Profile Modal (Triggered after Google Login) -->
+    <div id="complete-profile-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <h2 class="modal-title">Complete Your Profile</h2>
+            <p class="modal-subtitle">We need a few more details to set up your dashboard.</p>
+            
+            <div class="modal-input-group">
+                <label class="modal-label">Phone Number</label>
+                <div class="modal-input-wrapper">
+                    <span class="modal-icon"><i class="fa-solid fa-phone"></i></span>
+                    <input type="tel" id="google-phone" placeholder="08012345678" class="modal-input">
+                </div>
+            </div>
+
+            <div class="modal-input-group">
+                <label class="modal-label">Select City</label>
+                <div class="modal-input-wrapper">
+                    <span class="modal-icon"><i class="fa-solid fa-city"></i></span>
+                    <select id="google-city" class="modal-input" onchange="loadAreasForModal(this.value)">
+                        <option value="" disabled selected>Loading cities...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-input-group">
+                <label class="modal-label">Select Area</label>
+                <div class="modal-input-wrapper">
+                    <span class="modal-icon"><i class="fa-solid fa-map-pin"></i></span>
+                    <select id="google-area" class="modal-input" disabled>
+                        <option value="" disabled selected>Select city first</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Changed to Continue to lead them into the Terms Modal -->
+            <button id="google-continue-btn" onclick="handleGoogleProfileSetup()" class="btn-primary-modal">Continue to Agreement</button>
+            
+            <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
+                Cancel & Sign Out
+            </button>
+        </div>
+    </div>
+
+    <!-- Unified Interactive Legal Terms Modal -->
     <div id="terms-modal" class="modal-overlay hidden">
         <div class="modal-card">
             <div style="width: 3.5rem; height: 3.5rem; background: #fce7f3; color: #DB2777; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem;"><i class="fa-solid fa-file-contract"></i></div>
@@ -362,52 +404,11 @@
                 </ul>
             </div>
 
-            <button id="final-submit-btn" onclick="processFinalSignup()" class="btn-primary-modal" disabled>
+            <!-- Unified submission button, routed by logic -->
+            <button id="final-submit-btn" onclick="handleTermsAcceptance()" class="btn-primary-modal" disabled>
                 <i class="fa-solid fa-lock" id="btn-lock-icon"></i> I Agree & Create Account
             </button>
-            <button onclick="closeModal('terms-modal')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel Setup</button>
-        </div>
-    </div>
-
-    <!-- Complete Profile Modal (Triggered after Google Login) -->
-    <div id="complete-profile-modal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <h2 class="modal-title">Complete Your Profile</h2>
-            <p class="modal-subtitle">We need a few more details to set up your dashboard.</p>
-            
-            <div class="modal-input-group">
-                <label class="modal-label">Phone Number</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-phone"></i></span>
-                    <input type="tel" id="google-phone" placeholder="08012345678" class="modal-input">
-                </div>
-            </div>
-
-            <div class="modal-input-group">
-                <label class="modal-label">Select City</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-city"></i></span>
-                    <select id="google-city" class="modal-input" onchange="loadAreasForModal(this.value)">
-                        <option value="" disabled selected>Loading cities...</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="modal-input-group">
-                <label class="modal-label">Select Area</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-map-pin"></i></span>
-                    <select id="google-area" class="modal-input" disabled>
-                        <option value="" disabled selected>Select city first</option>
-                    </select>
-                </div>
-            </div>
-
-            <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary-modal">Complete Setup</button>
-            
-            <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
-                Cancel & Sign Out
-            </button>
+            <button onclick="cancelTermsSetup()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel Setup</button>
         </div>
     </div>
 
@@ -459,6 +460,7 @@
 
         let pendingGoogleUserId = null;
         let pendingGoogleUserName = null;
+        let activeSignupMode = null; // Tracks 'email' or 'google' to route the unified Terms modal
 
         // IP Tracker
         async function getClientIpData() {
@@ -527,7 +529,7 @@
             }
         }
 
-        // --- GOOGLE LOGIN ---
+        // --- GOOGLE LOGIN INIT ---
         async function handleGoogleLogin(response) {
             showStatus("Checking security...", "success");
             
@@ -560,9 +562,11 @@
                 }
 
                 if (profile && profile.city_id && profile.area_id) {
+                    // Pre-existing valid user. Update IP and Login
                     await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
                     window.location.href = "user-dashboard.html";
                 } else {
+                    // New user -> Trigger Profile Setup
                     document.getElementById('complete-profile-modal').classList.remove('hidden');
                     statusBox.classList.remove('active'); 
                 }
@@ -571,46 +575,10 @@
             }
         }
 
-        async function saveGoogleProfile() {
-            const phone = document.getElementById('google-phone').value.trim();
-            const cityId = document.getElementById('google-city').value;
-            const areaId = document.getElementById('google-area').value;
-            const btn = document.getElementById('google-complete-btn');
-
-            if (!phone || !cityId || !areaId) {
-                alert("Please fill in your phone, city, and area to continue.");
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<div class="spinner"></div> Saving...';
-
-            try {
-                const ipData = await getClientIpData();
-                
-                const { error } = await client.from('profiles').upsert({
-                    id: pendingGoogleUserId,
-                    full_name: pendingGoogleUserName,
-                    phone: phone,
-                    city_id: parseInt(cityId),
-                    area_id: parseInt(areaId),
-                    registration_ip: ipData.ip,
-                    last_active_ip: ipData.ip,
-                    ip_country: ipData.country
-                });
-
-                if (error) throw error;
-                window.location.href = "user-dashboard.html";
-            } catch(err) {
-                alert("Error saving profile: " + err.message);
-                btn.disabled = false;
-                btn.innerHTML = 'Complete Setup';
-            }
-        }
-        
         async function cancelGoogleLogin() {
             await client.auth.signOut();
             document.getElementById('complete-profile-modal').classList.add('hidden');
+            pendingGoogleUserId = null;
         }
 
         // --- UTILS ---
@@ -646,7 +614,32 @@
             statusMsg.textContent = txt;
         }
 
-        // --- TERMS SCROLL LOGIC ---
+        // --- UNIFIED TERMS LOGIC ---
+        function showTermsModal() {
+            const termsModal = document.getElementById('terms-modal');
+            const box = document.getElementById('terms-scroll-box');
+            const btn = document.getElementById('final-submit-btn');
+            const icon = document.getElementById('btn-lock-icon');
+            
+            termsModal.classList.remove('hidden');
+            box.scrollTop = 0; // Reset scroll to top
+            
+            // Re-disable button every time modal opens
+            btn.disabled = true;
+            if(icon) {
+                icon.classList.remove('fa-check');
+                icon.classList.add('fa-lock');
+            }
+
+            // Edge case: if screen is huge and no scrollbar exists, enable immediately
+            setTimeout(() => {
+                if (box.scrollHeight <= box.clientHeight + 10) {
+                    btn.disabled = false;
+                    if(icon) { icon.classList.remove('fa-lock'); icon.classList.add('fa-check'); }
+                }
+            }, 100);
+        }
+
         function checkTermsScroll() {
             const box = document.getElementById('terms-scroll-box');
             const btn = document.getElementById('final-submit-btn');
@@ -662,7 +655,25 @@
             }
         }
 
-        // --- STANDARD SIGNUP ---
+        async function cancelTermsSetup() {
+            closeModal('terms-modal');
+            if (activeSignupMode === 'google') {
+                await client.auth.signOut();
+                pendingGoogleUserId = null;
+                showStatus("Google setup aborted. You must agree to the terms to use the platform.", "error");
+            }
+            activeSignupMode = null;
+        }
+
+        function handleTermsAcceptance() {
+            if (activeSignupMode === 'email') {
+                executeEmailSignup();
+            } else if (activeSignupMode === 'google') {
+                executeGoogleSignup();
+            }
+        }
+
+        // --- EMAIL SIGNUP FLOW ---
         function handleInitialSignup() {
             const name = document.getElementById('signup-name').value.trim();
             const phone = document.getElementById('signup-phone').value.trim();
@@ -682,32 +693,11 @@
                 return showStatus("Passwords do not match. Please try again.", "error");
             }
             
-            // Open Terms Modal & Reset state
-            const termsModal = document.getElementById('terms-modal');
-            const box = document.getElementById('terms-scroll-box');
-            const btn = document.getElementById('final-submit-btn');
-            const icon = document.getElementById('btn-lock-icon');
-            
-            termsModal.classList.remove('hidden');
-            box.scrollTop = 0; // Scroll to top
-            
-            // Re-disable button every time modal opens
-            btn.disabled = true;
-            if(icon) {
-                icon.classList.remove('fa-check');
-                icon.classList.add('fa-lock');
-            }
-
-            // Edge case: if screen is huge and no scrollbar exists, enable immediately
-            setTimeout(() => {
-                if (box.scrollHeight <= box.clientHeight + 10) {
-                    btn.disabled = false;
-                    if(icon) { icon.classList.remove('fa-lock'); icon.classList.add('fa-check'); }
-                }
-            }, 100);
+            activeSignupMode = 'email';
+            showTermsModal();
         }
 
-        async function processFinalSignup() {
+        async function executeEmailSignup() {
             const btn = document.getElementById('final-submit-btn');
             btn.disabled = true;
             btn.innerHTML = '<div class="spinner"></div> Processing...';
@@ -720,13 +710,11 @@
             const areaId = parseInt(areaSelect.value);
 
             try {
-                // 1. IP Ban Frontend Check
                 const ipData = await getClientIpData();
                 if (await isIpBanned(ipData.ip)) {
                     throw new Error("ACCESS DENIED: Your IP address has been permanently banned.");
                 }
 
-                // 2. Auth Creation
                 const { data: authData, error: authError } = await client.auth.signUp({
                     email: email,
                     password: password,
@@ -734,7 +722,6 @@
                 });
                 if (authError) throw authError;
 
-                // 3. Profile Creation
                 if (authData.user) {
                     const { error: profileError } = await client.from('profiles').insert({
                         id: authData.user.id,
@@ -748,24 +735,70 @@
                     });
                     if (profileError) throw profileError;
 
-                    // SUCCESS FLOW: 
-                    // Hide terms, reset the form, and pop open the login modal automatically!
                     closeModal('terms-modal');
                     document.getElementById('signup-form').reset();
                     showStatus("Account created! Please check your email for confirmation, or Sign In below.", "success");
                     
-                    // Pre-fill the email they just registered with to make login faster
                     document.getElementById('login-email').value = email;
-                    setTimeout(() => {
-                        toggleLoginModal();
-                    }, 500); 
+                    setTimeout(() => { toggleLoginModal(); }, 500); 
                 }
             } catch (err) {
                 showStatus(err.message, "error");
                 closeModal('terms-modal');
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> Agree & Create Account';
+                btn.innerHTML = '<i class="fa-solid fa-check" id="btn-lock-icon"></i> I Agree & Create Account';
+            }
+        }
+
+        // --- GOOGLE SIGNUP FLOW ---
+        function handleGoogleProfileSetup() {
+            const phone = document.getElementById('google-phone').value.trim();
+            const cityId = document.getElementById('google-city').value;
+            const areaId = document.getElementById('google-area').value;
+
+            if (!phone || !cityId || !areaId) {
+                alert("Please fill in your phone, city, and area to continue.");
+                return;
+            }
+
+            // Close Profile form, Open Terms
+            closeModal('complete-profile-modal');
+            activeSignupMode = 'google';
+            showTermsModal();
+        }
+
+        async function executeGoogleSignup() {
+            const btn = document.getElementById('final-submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Saving...';
+
+            const phone = document.getElementById('google-phone').value.trim();
+            const cityId = document.getElementById('google-city').value;
+            const areaId = document.getElementById('google-area').value;
+
+            try {
+                const ipData = await getClientIpData();
+                
+                const { error } = await client.from('profiles').upsert({
+                    id: pendingGoogleUserId,
+                    full_name: pendingGoogleUserName,
+                    phone: phone,
+                    city_id: parseInt(cityId),
+                    area_id: parseInt(areaId),
+                    registration_ip: ipData.ip,
+                    last_active_ip: ipData.ip,
+                    ip_country: ipData.country
+                });
+
+                if (error) throw error;
+                
+                window.location.href = "user-dashboard.html";
+            } catch(err) {
+                alert("Error saving profile: " + err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check" id="btn-lock-icon"></i> I Agree & Create Account';
+                cancelTermsSetup(); 
             }
         }
 
@@ -787,7 +820,6 @@
                 const { data, error } = await client.auth.signInWithPassword({ email, password });
                 if (error) throw error;
                 
-                // Update IP on successful login
                 await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', data.user.id);
                 window.location.href = "user-dashboard.html";
 
