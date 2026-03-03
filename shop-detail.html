@@ -37,11 +37,11 @@
             background-color: var(--color-bg);
         }
 
-        /* --- TOP BAR --- */
+        /* --- TOP BAR WITH EMBEDDED TICKER --- */
         .top-bar {
             position: sticky; top: 0; z-index: 50;
             background: white; border-bottom: 1px solid #E2E8F0;
-            padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             gap: 12px;
         }
@@ -53,16 +53,46 @@
         }
         .nav-btn:hover { background: #E2E8F0; }
 
-        .page-title { 
-            font-weight: 700; font-size: 0.9rem; color: var(--color-text); 
-            text-align: center; line-height: 1.2;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            max-width: 100%;
+        /* Sleek Pill-Shaped News Ticker */
+        .topbar-news-pill {
+            flex: 1;
+            background: #FFF7ED;
+            border: 1px solid #FFEDD5;
+            border-radius: 50px;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
+        .topbar-news-pill i {
+            color: #EA580C;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+        .news-marquee-wrapper {
+            flex: 1; overflow: hidden; position: relative;
+            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        }
+        .news-marquee-content {
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: 100%; 
+            animation: marquee 20s linear infinite;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #C2410C;
+        }
+        .news-marquee-wrapper:hover .news-marquee-content { animation-play-state: paused; }
         
-        @media(min-width: 768px) { .page-title { font-size: 1.1rem; } }
+        @keyframes marquee {
+            0%   { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
 
-        /* --- SPLIT HERO LAYOUT --- */
+        /* --- SPLIT HERO LAYOUT (Visuals Left, Info Right) --- */
         .info-card { padding: 24px; }
 
         .shop-hero-split {
@@ -74,109 +104,26 @@
         @media (min-width: 900px) {
             .shop-hero-split {
                 display: grid;
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr 1.2fr;
                 gap: 40px;
                 align-items: start;
                 margin-bottom: 40px;
             }
-            .shop-visual-side {
-                background: white;
-                padding: 20px;
-                border-radius: 16px;
-                border: 1px solid #E2E8F0;
-                display: flex;
-                flex-direction: column;
-                gap: 24px;
-            }
         }
 
-        /* Left Side: Info */
-        .shop-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-        .shop-name { font-size: 1.75rem; font-weight: 800; width: 85%; line-height: 1.2; color: var(--color-text); }
-        .verified-seal { width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; box-shadow: var(--shadow-md); }
-
-        .category-tag { font-weight: 700; color: var(--color-primary); font-size: 0.95rem; margin-bottom: 16px; display: inline-block; background: #F3E8FF; padding: 4px 12px; border-radius: 6px; }
-
-        .address-row { display: flex; gap: 8px; color: var(--color-text-muted); font-size: 0.95rem; align-items: flex-start; margin-bottom: 20px; line-height: 1.5; }
-
-        .status-row { display: flex; gap: 10px; align-items: center; margin-bottom: 24px; }
-        
-        .status-badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
-            background: #EFF6FF; color: #1E40AF; border: 1px solid #DBEAFE;
+        /* Left Side: Storefront Visuals */
+        .shop-visual-side {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            box-shadow: var(--shadow-md);
         }
-        .status-badge.pending { background: #FEF2F2; color: #B91C1C; border-color: #FEE2E2; }
-        .status-badge img { width: 16px; height: 16px; border-radius: 50%; }
-
-        .like-btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 700;
-            background: white; color: var(--color-text); border: 1px solid #E2E8F0;
-            cursor: pointer; transition: all 0.2s;
-        }
-        .like-btn.liked { background: #FDF2F8; color: var(--color-pink); border-color: #FBCFE8; }
-
-        /* --- DYNAMIC SCROLLING NEWS TICKER --- */
-        .news-container {
-            background: #FFF7ED; border: 1px solid #FFEDD5; color: #C2410C;
-            border-radius: 8px; font-size: 0.9rem; font-weight: 600;
-            display: flex; align-items: center; margin-bottom: 20px;
-            overflow: hidden; position: relative;
-        }
-        .news-icon-wrapper {
-            background: #FFF7ED; padding: 12px 12px 12px 16px; z-index: 2;
-            display: flex; align-items: center; gap: 8px;
-            box-shadow: 10px 0 15px -5px #FFF7ED;
-        }
-        .news-marquee-wrapper {
-            flex: 1; overflow: hidden; position: relative; padding: 12px 0;
-            /* Fade effect on edges */
-            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-            -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-        }
-        .news-marquee-content {
-            display: inline-block;
-            white-space: nowrap;
-            padding-left: 100%; /* Start perfectly off-screen to the right */
-            animation: marquee 25s linear infinite;
-        }
-        .news-marquee-wrapper:hover .news-marquee-content {
-            animation-play-state: paused; /* Pause on hover */
-        }
-        @keyframes marquee {
-            0%   { transform: translate(0, 0); }
-            100% { transform: translate(-100%, 0); }
-        }
-
-        /* --- MINI HEADINGS --- */
-        .mini-heading {
-            font-size: 0.85rem; font-weight: 700; color: #64748B;
-            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
-            display: flex; align-items: center; gap: 6px;
-        }
-
-        /* --- BANNER CAROUSEL (Left Column) --- */
-        .banner-carousel {
-            display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
-            height: 220px; width: 100%; border-radius: 12px;
-            scrollbar-width: none; border: 1px solid #E2E8F0;
-            position: relative; background: #F1F5F9;
-        }
-        .banner-carousel::-webkit-scrollbar { display: none; }
-        .banner-slide { min-width: 100%; height: 100%; scroll-snap-align: center; position: relative; }
-        .banner-img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .banner-count {
-            position: absolute; bottom: 10px; right: 10px;
-            background: rgba(0,0,0,0.6); color: white;
-            padding: 4px 10px; border-radius: 20px;
-            font-size: 0.75rem; font-weight: 700; pointer-events: none;
-        }
-
-        /* Right Side: Visuals */
         .storefront-img { 
-            width: 100%; height: 200px; 
+            width: 100%; height: 260px; 
             border-radius: 12px; object-fit: cover; 
             border: 1px solid #E2E8F0; 
         }
@@ -187,7 +134,48 @@
         .map-btn {
             background:white; border:1px solid #ccc; padding:8px 16px; 
             border-radius:8px; cursor:pointer; font-weight: 600; font-size:0.8rem;
-            width: 100%; margin-top: 8px;
+            width: 100%; margin-top: 8px; transition: 0.2s;
+        }
+        .map-btn:hover { background: #F8FAFC; }
+
+        /* Right Side: Info & Details */
+        .shop-header-row { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 12px; }
+        
+        .shop-logo {
+            width: 64px; height: 64px; border-radius: 14px;
+            object-fit: cover; border: 2px solid #E2E8F0;
+            box-shadow: var(--shadow-md); background: white;
+            flex-shrink: 0;
+        }
+
+        .shop-name-col { flex: 1; }
+        .shop-name { font-size: 1.6rem; font-weight: 800; line-height: 1.2; color: var(--color-text); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;}
+        
+        .category-tag { font-weight: 700; color: var(--color-primary); font-size: 0.85rem; display: inline-block; background: var(--color-purple-light); padding: 4px 12px; border-radius: 6px; border: 1px solid #E9D5FF; }
+
+        .address-row { display: flex; gap: 8px; color: var(--color-text-muted); font-size: 0.95rem; align-items: flex-start; margin-top: 16px; margin-bottom: 20px; line-height: 1.5; font-weight: 500;}
+
+        .status-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; }
+        
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
+            background: #EFF6FF; color: #1E40AF; border: 1px solid #DBEAFE;
+        }
+        .status-badge.pending { background: #FEF2F2; color: #B91C1C; border-color: #FEE2E2; }
+        
+        .like-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 700;
+            background: white; color: var(--color-text); border: 1px solid #E2E8F0;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .like-btn.liked { background: #FDF2F8; color: var(--color-pink); border-color: #FBCFE8; }
+
+        .mini-heading {
+            font-size: 0.85rem; font-weight: 800; color: #64748B;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 6px;
         }
 
         /* --- PRODUCTS GRID --- */
@@ -263,30 +251,59 @@
 <body>
 
 <div class="app-container">
-    <!-- Top Bar -->
+    
+    <!-- Top Bar with Dynamic Ticker -->
     <div class="top-bar">
         <button onclick="history.back()" class="nav-btn"><i class="fa-solid fa-arrow-left"></i></button>
-        <span class="page-title" id="page-title">Shop Details</span>
+        
+        <div class="topbar-news-pill">
+            <i class="fa-solid fa-bullhorn"></i>
+            <div class="news-marquee-wrapper">
+                <div class="news-marquee-content" id="news-text">Loading repository data...</div>
+            </div>
+        </div>
+
         <button onclick="shareShop()" class="nav-btn"><i class="fa-solid fa-share-nodes"></i></button>
     </div>
 
     <!-- Info Section -->
     <div class="info-card">
         <div id="loading-spinner" class="spinner"></div>
+        
         <div id="content-area" class="hidden">
             
             <div class="shop-hero-split">
-                <!-- LEFT COLUMN: INFO & BANNER -->
+                
+                <!-- LEFT COLUMN: STOREFRONT & MAP -->
+                <div class="shop-visual-side">
+                    <div id="storefront-block" class="hidden">
+                        <div class="mini-heading"><i class="fa-solid fa-store"></i> Store Front</div>
+                        <img id="storefront-img" class="storefront-img">
+                    </div>
+
+                    <div id="map-block" class="hidden">
+                        <div class="mini-heading"><i class="fa-solid fa-map-location-dot"></i> Location Map</div>
+                        <div id="map"></div>
+                        <button onclick="openGoogleMaps()" class="map-btn">
+                            Open in Google Maps <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: SHOP DETAILS & LOGO -->
                 <div class="shop-info-side">
                     <div class="shop-header-row">
-                        <div id="shop-name" class="shop-name">Loading...</div>
-                        <img id="verified-seal" src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="verified-seal hidden">
+                        <!-- Shop Logo replaces the old gallery/CT-logo -->
+                        <img id="shop-logo" class="shop-logo" src="https://via.placeholder.com/150?text=Logo">
+                        
+                        <div class="shop-name-col">
+                            <div id="shop-name" class="shop-name">Loading...</div>
+                            <div id="shop-category" class="category-tag"></div>
+                        </div>
                     </div>
                     
-                    <div id="shop-category" class="category-tag"></div>
-                    
                     <div class="address-row">
-                        <i class="fa-solid fa-location-dot" style="margin-top:2px;"></i>
+                        <i class="fa-solid fa-location-dot" style="margin-top:3px; color: var(--color-primary);"></i>
                         <span id="shop-address"></span>
                     </div>
 
@@ -297,42 +314,13 @@
                             <span id="like-count">0</span>
                         </button>
                     </div>
-
-                    <!-- DYNAMIC NEWS TICKER -->
-                    <div id="news-container" class="news-container hidden">
-                        <div class="news-icon-wrapper">
-                            <i class="fa-solid fa-bolt"></i>
-                        </div>
-                        <div class="news-marquee-wrapper">
-                            <div class="news-marquee-content" id="news-text"></div>
-                        </div>
-                    </div>
-
-                    <!-- BANNER CAROUSEL -->
-                    <div id="banner-wrapper" class="hidden">
-                        <div class="mini-heading"><i class="fa-regular fa-images"></i> Shop Gallery</div>
-                        <div id="banner-carousel" class="banner-carousel"></div>
-                    </div>
-                </div>
-
-                <!-- RIGHT COLUMN: STOREFRONT & MAP -->
-                <div id="location-panel" class="shop-visual-side hidden">
                     
-                    <!-- Storefront Block -->
-                    <div id="storefront-block" class="hidden">
-                        <div class="mini-heading"><i class="fa-solid fa-store"></i> Physical Store</div>
-                        <img id="storefront-img" class="storefront-img">
-                    </div>
-
-                    <!-- Map Block -->
-                    <div id="map-block">
-                        <div class="mini-heading"><i class="fa-solid fa-map-location-dot"></i> Location Map</div>
-                        <div id="map"></div>
-                        <button onclick="openGoogleMaps()" class="map-btn">
-                            Open in Google Maps <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                        </button>
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 16px; border-radius: 12px;">
+                        <div class="mini-heading"><i class="fa-solid fa-circle-info"></i> About Business</div>
+                        <p id="shop-desc" style="font-size: 0.95rem; line-height: 1.6; color: #475569; font-weight: 500;"></p>
                     </div>
                 </div>
+
             </div>
 
             <hr style="border:0; border-top:1px solid #E2E8F0; margin: 30px 0;">
@@ -353,9 +341,12 @@
                 <div id="grid-new" class="product-grid"></div>
             </div>
 
-            <div id="empty-state" class="hidden" style="text-align:center; padding: 40px 0; color:grey;">
-                <i class="fa-solid fa-box-open" style="font-size: 32px; margin-bottom:10px;"></i>
-                <p>No products listed yet.</p>
+            <div id="empty-state" class="hidden" style="text-align:center; padding: 60px 0; color:grey;">
+                <div style="width: 64px; height: 64px; background: #F1F5F9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <i class="fa-solid fa-box-open" style="font-size: 28px; color: #94A3B8;"></i>
+                </div>
+                <p style="font-weight: 600; font-size: 1.1rem; color: #475569;">No products listed yet</p>
+                <p style="font-size: 0.9rem; color: #94A3B8;">Check back later for updates from this merchant.</p>
             </div>
 
         </div>
@@ -416,7 +407,6 @@
 
     async function fetchShopData() {
         try {
-            // Added 4th promise to fetch approved banners and news from the new table
             const [shopRes, prodRes, likeRes, contentRes] = await Promise.all([
                 client.from('shops').select('*, cities(name)').eq('id', shopId).maybeSingle(),
                 client.from('products').select().eq('shop_id', shopId).eq('is_available', true).order('created_at', { ascending: false }),
@@ -432,17 +422,13 @@
                 if (data) userLiked = true;
             }
 
-            // Extract Banners and News separately
-            const approvedContent = contentRes.data || [];
-            const approvedBanners = approvedContent.filter(c => c.content_type === 'banner').map(c => c.content_data);
-            const approvedNews = approvedContent.filter(c => c.content_type === 'news').map(c => c.content_data);
+            const approvedNews = (contentRes.data || []).filter(c => c.content_type === 'news').map(c => c.content_data);
 
             const data = {
                 shop: shopRes.data,
                 products: prodRes.data || [],
                 likeCount: likeRes.count || 0,
                 hasLiked: userLiked,
-                approvedBanners: approvedBanners,
                 approvedNews: approvedNews
             };
 
@@ -465,69 +451,60 @@
         hasLiked = data.hasLiked;
         likeCount = data.likeCount;
 
-        // Dynamic Title
+        // --- TICKER LOGIC ---
         const cityName = s.cities?.name || "Local";
-        document.getElementById('page-title').textContent = `${cityName} Repository of shops, products and services`;
+        const defaultTickerText = `${cityName} Repository of shops, products and services`;
+        const newsArray = data.approvedNews || [];
+        
+        let tickerText = defaultTickerText;
+        if (newsArray.length > 0) {
+            tickerText = newsArray.join(" &nbsp; • &nbsp; ");
+        }
+        
+        document.getElementById('news-text').innerHTML = tickerText;
+        
+        // Dynamically adjust animation speed based on text length so it's always readable
+        const speed = Math.max(20, tickerText.length * 0.15); 
+        document.getElementById('news-text').style.animationDuration = `${speed}s`;
 
-        // Populate Info
-        document.getElementById('shop-name').textContent = s.name;
+        // --- SHOP DETAILS ---
+        const isVerifiedHtml = s.is_verified ? '<i class="fa-solid fa-circle-check" style="color: #10B981; font-size: 1.2rem; margin-left:4px;" title="Verified Shop"></i>' : '';
+        document.getElementById('shop-name').innerHTML = `${s.name} ${isVerifiedHtml}`;
+        
+        // Setup Shop Logo
+        const logoEl = document.getElementById('shop-logo');
+        if (s.image_url) {
+            logoEl.src = s.image_url;
+        } else {
+            logoEl.src = `https://api.dicebear.com/7.x/initials/svg?seed=${s.name}`;
+        }
+
         document.getElementById('shop-category').textContent = s.category;
         document.getElementById('shop-address').textContent = s.address;
+        document.getElementById('shop-desc').textContent = s.description || 'No description provided by the merchant.';
         
         if (s.is_verified) {
-            document.getElementById('verified-seal').classList.remove('hidden');
             document.getElementById('status-badge').className = "status-badge";
-            document.getElementById('status-badge').innerHTML = `<img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"> ${s.unique_id || 'Verified'}`;
+            document.getElementById('status-badge').innerHTML = `<i class="fa-solid fa-shield-check"></i> ID: ${s.unique_id || 'Verified'}`;
         } else {
             document.getElementById('status-badge').className = "status-badge pending";
-            document.getElementById('status-badge').textContent = "Pending Verification";
+            document.getElementById('status-badge').innerHTML = `<i class="fa-solid fa-hourglass-half"></i> Pending Verification`;
         }
 
         updateLikeUI();
 
-        // --- NEW: DYNAMIC NEWS RENDERING ---
-        // Uses the newly fetched approvedNews array
-        const newsArray = data.approvedNews || [];
-        if (newsArray.length > 0) {
-            // Concatenate multiple news items with a bullet separator if there are multiple
-            const combinedNews = newsArray.join(" &nbsp; • &nbsp; ");
-            document.getElementById('news-text').innerHTML = combinedNews;
-            document.getElementById('news-container').classList.remove('hidden');
-            
-            // Calculate dynamic animation speed based on text length (prevents fast scrolling for long text)
-            const textLength = combinedNews.length;
-            const scrollSpeed = Math.max(20, textLength * 0.15); // Min 20 seconds, scales up for long text
-            document.getElementById('news-text').style.animationDuration = `${scrollSpeed}s`;
-        }
-
-        // --- NEW: DYNAMIC BANNER RENDERING ---
-        // Uses approved banners. Fallback to shop primary image if no banners exist.
-        let bannerImages = data.approvedBanners || [];
-        if (bannerImages.length === 0 && s.image_url) {
-            bannerImages = [s.image_url];
-        }
-        
-        if (bannerImages.length > 0) {
-            document.getElementById('banner-wrapper').classList.remove('hidden');
-            document.getElementById('banner-carousel').innerHTML = bannerImages.map((url, index) => `
-                <div class="banner-slide">
-                    <img src="${url}" class="banner-img">
-                    <div class="banner-count">${index + 1}/${bannerImages.length}</div>
-                </div>
-            `).join('');
-        }
-
-        // --- VISUALS (Right Column) ---
+        // --- VISUALS (Left Column) ---
         if (s.is_verified && (s.storefront_url || s.latitude)) {
-            document.getElementById('location-panel').classList.remove('hidden');
             
             if (s.storefront_url) {
                 document.getElementById('storefront-block').classList.remove('hidden');
                 const imgEl = document.getElementById('storefront-img');
                 imgEl.src = s.storefront_url;
-                imgEl.style.display = 'block';
             }
-            if (s.latitude && s.longitude) initMap(s.latitude, s.longitude);
+            if (s.latitude && s.longitude) {
+                document.getElementById('map-block').classList.remove('hidden');
+                initMap(s.latitude, s.longitude);
+            }
         }
 
         // Products
