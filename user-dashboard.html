@@ -8,6 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
+    <!-- Cropper.js for professional image cropping -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    
     <style>
         :root {
             /* --- THEME --- */
@@ -153,14 +156,12 @@
         .h-scroll {
             display: flex; overflow-x: auto; gap: 16px; 
             padding: 0 16px 4px 16px;
-            scrollbar-width: none; /* Hide for cleaner UI */
+            scrollbar-width: none;
             -ms-overflow-style: none;
         }
         .h-scroll::-webkit-scrollbar { display: none; }
 
-        /* =========================================
-           NEW: PROFESSIONAL SHOP BLOCK LAYOUT
-           ========================================= */
+        /* PROFESSIONAL SHOP BLOCK LAYOUT */
         .shop-list-view {
             display: flex; 
             flex-direction: column; 
@@ -250,7 +251,6 @@
         }
         .product-card:active { transform: scale(0.96); }
 
-        /* Flexible Image Container - Never Cuts The Image */
         .product-img-wrap {
             width: 100%;
             height: 140px;
@@ -320,11 +320,48 @@
         .form-group { margin-bottom: 16px; text-align: left; }
         .form-label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #374151; }
         .form-input { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 1rem; }
-        .form-input:focus { outline: none; border-color: var(--color-primary); ring: 2px solid #A7F3D0; }
+        .form-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px #A7F3D0; }
+
+        /* Profile Avatar Edit Box */
+        .avatar-edit-box {
+            position: relative; width: 110px; height: 110px; margin: 0 auto;
+            border-radius: 50%; overflow: hidden; cursor: pointer;
+            border: 4px solid var(--color-primary);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .avatar-edit-box img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 1.5rem; opacity: 0; transition: 0.2s;
+        }
+        .avatar-edit-box:hover .avatar-overlay { opacity: 1; }
+
+        /* Cropper Modal */
+        .crop-overlay {
+            position: fixed; inset: 0; background: rgba(17, 24, 39, 0.95);
+            z-index: 5000; display: flex; flex-direction: column;
+            opacity: 0; visibility: hidden; transition: 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        .crop-overlay.active { opacity: 1; visibility: visible; }
+        .crop-header-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px; background: rgba(0,0,0,0.5); color: white;
+        }
+        .crop-title { font-weight: 700; font-size: 1.2rem; }
+        .crop-workspace { flex: 1; position: relative; width: 100%; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
+        .crop-workspace img { max-width: 100%; max-height: 100%; display: block; }
+        .crop-footer-bar {
+            padding: 20px; background: rgba(0,0,0,0.5); display: flex; gap: 16px; justify-content: center;
+        }
+        .btn-crop-cancel { background: #374151; color: white; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; }
+        .btn-crop-apply { background: var(--color-primary); color: white; padding: 12px 32px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
+
 
         /* --- AI CHAT WIDGET STYLES --- */
         .ai-fab-container {
-            position: fixed; bottom: 20px; right: 20px; z-index: 5000;
+            position: fixed; bottom: 20px; right: 20px; z-index: 4000;
             display: flex; flex-direction: column; align-items: center; gap: 6px;
         }
         .ai-fab {
@@ -347,7 +384,7 @@
             position: fixed; bottom: 90px; right: 20px;
             width: 350px; height: 500px;
             background: white; border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 5000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 4000;
             display: flex; flex-direction: column;
             overflow: hidden; opacity: 0; pointer-events: none;
             transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -514,7 +551,6 @@
                 <div class="svc-card" onclick="window.location.href='wishlist.html'">
                     <div class="svc-icon" style="background:#FCE7F3; color:#DB2777;"><i class="fa-solid fa-heart"></i></div>
                     <strong>Wishlist</strong>
-                    <!-- ADDED: Wishlist Count -->
                     <div id="wishlist-count" style="font-size:0.8rem; color:#6B7280; margin-top:4px;">...</div>
                 </div>
                 <div class="svc-card" onclick="window.location.href='help-support.html'">
@@ -536,13 +572,13 @@
         <div id="profile" class="screen">
             <!-- View Mode -->
             <div id="profile-view" style="max-width:600px; margin:20px auto; background:white; padding:40px; border-radius:16px; border:1px solid #E5E7EB; text-align:center;">
-                <img id="profile-avatar-lg" src="" style="width:100px; height:100px; border-radius:50%; margin-bottom:16px; border:4px solid var(--color-primary); object-fit: cover;">
+                <img id="profile-avatar-lg" src="" style="width:110px; height:110px; border-radius:50%; margin-bottom:16px; border:4px solid var(--color-primary); object-fit: cover;">
                 <h2 id="profile-name" style="font-size:1.5rem; color:#111827;">Loading...</h2>
                 <p id="profile-phone" style="color:#6B7280; font-weight:500; margin-bottom:4px;"></p>
                 <p id="profile-email" style="color:#9CA3AF; margin-bottom:20px; font-size:0.9rem;">...</p>
                 
                 <div style="display:flex; justify-content:center; gap:10px;">
-                    <button onclick="openEditProfile()" style="background:var(--color-primary); color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:700; cursor:pointer;">
+                    <button onclick="openEditProfile()" style="background:var(--color-primary); color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px;">
                         <i class="fa-solid fa-pen-to-square"></i> Edit Profile
                     </button>
                 </div>
@@ -552,6 +588,16 @@
             <div id="profile-edit" style="display:none; max-width:600px; margin:20px auto; background:white; padding:30px; border-radius:16px; border:1px solid #E5E7EB;">
                 <h3 style="margin-bottom:20px; font-size:1.2rem; border-bottom:1px solid #E5E7EB; padding-bottom:10px;">Edit Profile</h3>
                 
+                <!-- AVATAR UPLOAD SECTION -->
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div class="avatar-edit-box" onclick="document.getElementById('file-avatar').click()">
+                        <img id="edit-avatar-preview" src="" alt="Avatar">
+                        <div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>
+                    </div>
+                    <input type="file" id="file-avatar" hidden accept="image/*" onchange="handleAvatarSelect(event)">
+                    <p style="font-size: 0.8rem; color: #6B7280; margin-top: 8px; font-weight: 600;">Tap photo to update (Max 500KB)</p>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Full Name</label>
                     <input type="text" id="edit-name" class="form-input">
@@ -595,6 +641,21 @@
 
     </main>
 
+    <!-- CROPPER MODAL (For Avatar) -->
+    <div id="avatar-crop-modal" class="crop-overlay">
+        <div class="crop-header-bar">
+            <div class="crop-title"><i class="fa-solid fa-crop-simple"></i> Adjust Avatar</div>
+            <button type="button" onclick="closeAvatarCropModal()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="crop-workspace">
+            <img id="avatar-crop-image" src="">
+        </div>
+        <div class="crop-footer-bar">
+            <button type="button" class="btn-crop-cancel" onclick="closeAvatarCropModal()">Cancel</button>
+            <button type="button" class="btn-crop-apply" onclick="applyAvatarCrop()">Apply Crop</button>
+        </div>
+    </div>
+
     <!-- =========================================
          AI CHAT WIDGET
          ========================================= -->
@@ -626,6 +687,7 @@
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
@@ -638,8 +700,14 @@
     let userAreaId = null;
     let allCities = [];
     const CACHE_KEY = 'ctm_dash_v18'; 
+    const MAX_FILE_SIZE = 500 * 1024; // 500KB LIMIT
 
     let chatHistory = [];
+
+    // --- AVATAR UPLOAD STATE ---
+    let cropper = null;
+    let avatarBlob = null;
+    let currentOldAvatarUrl = null;
 
     // --- NAVIGATION ---
     function toggleSidebar() {
@@ -672,26 +740,22 @@
         const txt = inp.value.trim();
         if(!txt) return;
 
-        // --- FRONTEND RATE LIMITING LOGIC ---
         const todayStr = new Date().toISOString().split('T')[0];
         let usageStr = localStorage.getItem('ctm_ai_usage');
         let aiUsage = usageStr ? JSON.parse(usageStr) : { date: todayStr, count: 0 };
         
-        // Reset counter if it's a new day
         if (aiUsage.date !== todayStr) {
             aiUsage = { date: todayStr, count: 0 };
         }
 
         const body = document.getElementById('chat-messages');
 
-        // Block request if over limit
         if (aiUsage.count >= 15) {
             body.innerHTML += `<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages to keep the server fair for everyone. Please check back tomorrow!</div>`;
             body.scrollTop = body.scrollHeight;
             inp.value = '';
             return;
         }
-        // ------------------------------------
 
         body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
         inp.value = '';
@@ -740,8 +804,6 @@
 
             if (!isError) {
                 chatHistory.push({ role: 'assistant', content: reply });
-                
-                // Increment counter only on successful API response
                 aiUsage.count += 1;
                 localStorage.setItem('ctm_ai_usage', JSON.stringify(aiUsage));
             }
@@ -770,10 +832,8 @@
 
     async function fetchData() {
         try {
-            // SECURITY CHOKEPOINT: Use maybeSingle() to catch the RLS block!
             const { data: profile, error: profileErr } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).maybeSingle();
             
-            // If the database refuses to return the profile (RLS lock), they are suspended!
             if (profileErr || !profile) {
                 alert("Your account access has been restricted by administration. Please contact support.");
                 await client.auth.signOut();
@@ -802,7 +862,6 @@
             let products = [];
             const shopIds = shops.data.map(s => s.id);
             if(shopIds.length > 0) {
-                // Fetch all columns so we can try to extract names/prices safely
                 const { data } = await client.from('products')
                     .select('*')
                     .in('shop_id', shopIds)
@@ -837,7 +896,10 @@
         if(areaContainer.querySelector('.fa-spin')) areaContainer.innerHTML = '';
 
         document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
+        
+        // Smart Avatar Fallback
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
+        
         document.getElementById('header-avatar').src = avatar;
         document.getElementById('profile-avatar-lg').src = avatar;
         document.getElementById('profile-name').textContent = data.profile.full_name;
@@ -994,12 +1056,21 @@
         }
     }
 
+    // =========================================
+    // EDIT PROFILE & AVATAR CROPPER LOGIC
+    // =========================================
     async function openEditProfile() {
         if(!userProfile) return;
         document.getElementById('profile-view').style.display = 'none';
         document.getElementById('profile-edit').style.display = 'block';
+        
         document.getElementById('edit-name').value = userProfile.full_name || '';
         document.getElementById('edit-phone').value = userProfile.phone || '';
+
+        // Reset Avatar Logic for Edit View
+        avatarBlob = null;
+        currentOldAvatarUrl = userProfile.avatar_url;
+        document.getElementById('edit-avatar-preview').src = currentOldAvatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${userProfile.full_name}`;
 
         if(allCities.length === 0) {
             const { data } = await client.from('cities')
@@ -1017,6 +1088,102 @@
             document.getElementById('edit-city').value = userProfile.city_id;
             await handleCityChange(userProfile.city_id, userProfile.area_id);
         }
+    }
+
+    function handleAvatarSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                openAvatarCropModal(e.target.result);
+                event.target.value = ''; 
+            };
+            reader.readAsDataURL(file);
+        } else {
+            alert("Please upload a valid image file.");
+            event.target.value = '';
+        }
+    }
+
+    function openAvatarCropModal(imageSrc) {
+        const modal = document.getElementById('avatar-crop-modal');
+        const img = document.getElementById('avatar-crop-image');
+        
+        img.src = imageSrc;
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        if (cropper) cropper.destroy();
+
+        cropper = new Cropper(img, {
+            aspectRatio: 1, // Enforce Square ratio for Avatar
+            viewMode: 2,
+            background: false,
+            autoCropArea: 1,
+            responsive: true
+        });
+    }
+
+    function closeAvatarCropModal() {
+        document.getElementById('avatar-crop-modal').classList.remove('active');
+        document.body.style.overflow = '';
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    }
+
+    function applyAvatarCrop() {
+        if (!cropper) return;
+        
+        cropper.getCroppedCanvas({
+            width: 600, // Safe max width for an avatar
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        }).toBlob((blob) => {
+            if (blob.size > MAX_FILE_SIZE) {
+                alert(`Image is too large (${Math.round(blob.size/1024)}KB). Maximum allowed size is 500KB. Try cropping smaller.`);
+                return; 
+            }
+
+            avatarBlob = blob;
+            const localUrl = URL.createObjectURL(blob);
+            document.getElementById('edit-avatar-preview').src = localUrl;
+            closeAvatarCropModal();
+        }, 'image/jpeg', 0.85); 
+    }
+
+    // Handles smart upload & junk file deletion
+    async function uploadAvatarProcess() {
+        // If the user didn't crop a new photo, return the existing URL
+        if (!avatarBlob) return currentOldAvatarUrl;
+
+        // Delete Old File from Supabase to prevent junk build-up
+        if (currentOldAvatarUrl && currentOldAvatarUrl.includes('/avatars/')) {
+            try {
+                const pathMatch = currentOldAvatarUrl.match(new RegExp(`/(?:public|authenticated)/avatars/(.+)`));
+                if (pathMatch && pathMatch[1]) {
+                    const oldFilePath = pathMatch[1].split('?')[0]; 
+                    await client.storage.from('avatars').remove([oldFilePath]);
+                }
+            } catch (err) {
+                console.warn("Failed to delete old avatar:", err);
+            }
+        }
+
+        // Upload New File
+        const fileName = `${currentUser.id}_${Date.now()}.jpg`;
+        const { error: uploadError } = await client.storage.from('avatars').upload(fileName, avatarBlob, {
+            contentType: 'image/jpeg',
+            upsert: false
+        });
+        
+        if (uploadError) throw uploadError;
+        
+        const { data } = client.storage.from('avatars').getPublicUrl(fileName);
+        return data.publicUrl;
     }
 
     async function handleCityChange(cityId, preSelectAreaId = null) {
@@ -1048,6 +1215,7 @@
         document.getElementById('profile-edit').style.display = 'none';
         document.getElementById('profile-view').style.display = 'block';
         document.getElementById('edit-error').style.display = 'none';
+        avatarBlob = null; // Clear unsaved changes
     }
 
     async function saveProfile() {
@@ -1062,19 +1230,25 @@
         if(!cityId || !areaId) { err.textContent = "Please select both City and Area."; err.style.display = 'block'; return; }
 
         btn.disabled = true;
-        btn.textContent = "Saving...";
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
         err.style.display = 'none';
 
         try {
+            // Upload Avatar first
+            const finalAvatarUrl = await uploadAvatarProcess();
+
             const { error } = await client.from('profiles').update({
                 full_name: name,
                 phone: phone,
                 city_id: parseInt(cityId),
-                area_id: parseInt(areaId)
+                area_id: parseInt(areaId),
+                avatar_url: finalAvatarUrl // Save new URL to DB
             }).eq('id', currentUser.id);
 
             if(error) throw error;
-            await fetchData();
+            
+            // Force fetch fresh data so UI updates globally immediately
+            await fetchData(); 
             cancelEdit();
             alert("Profile updated successfully!");
 
@@ -1088,10 +1262,9 @@
     }
 
     // =========================================
-    // NEW: SHOP BLOCK UI BUILDER
+    // SHOP BLOCK UI BUILDER
     // =========================================
     function buildShopCard(shop, allProducts) {
-        // Fetch up to 8 distinct products for this specific shop
         const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url).slice(0, 8);
         
         const rawId = shop.unique_id || 'N/A';
@@ -1103,7 +1276,6 @@
             productsHtml = `<p style="color:#9CA3AF; font-size:0.85rem; padding: 10px 0;">No products uploaded yet.</p>`;
         } else {
             productsHtml = p.map(item => {
-                // Safely grab names/prices if they exist in the DB, otherwise fallback gracefully
                 const itemName = item.name || item.product_name || item.title || 'Product Item';
                 const itemPrice = item.price || item.product_price ? `₦${(item.price || item.product_price).toLocaleString()}` : '';
                 
@@ -1121,7 +1293,6 @@
             }).join('');
         }
 
-        // Return the full "Shop Block" layout
         return `
             <div class="shop-block" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
                 <div class="shop-block-header">
