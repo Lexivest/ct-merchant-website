@@ -13,7 +13,6 @@
         :root {
             /* PREMIUM AMAZON THEME */
             --amz-dark: #131921;
-            --amz-dark-hover: #232F3E;
             --amz-nav-bar: #232F3E;
             --amz-orange: #FEBD69;
             --amz-orange-hover: #F3A847;
@@ -21,8 +20,7 @@
             --amz-link: #007185;
             --amz-link-hover: #C40000;
             --color-text-main: #0F1111;
-            
-            --color-primary: #059669; /* Kept for forms/buttons internally */
+            --color-primary: #059669; 
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -44,55 +42,96 @@
             flex-direction: column;
         }
 
-        .amz-header-top {
+        .amz-mobile-scroll-row {
             display: flex;
             align-items: center;
-            padding: 8px 16px;
             gap: 16px;
+            padding: 10px 16px;
             max-width: 1600px;
             margin: 0 auto;
             width: 100%;
         }
 
-        /* Logo & Location Block */
-        .amz-logo-block {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            cursor: pointer;
-        }
-
+        /* Logo */
         .amz-logo {
             height: 36px;
             border-radius: 4px;
             object-fit: contain;
-        }
-
-        .amz-location {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 4px 8px;
-            border-radius: 4px;
-            border: 1px solid transparent;
-            transition: 0.2s;
             cursor: pointer;
         }
-        .amz-location:hover { border: 1px solid white; }
 
-        .loc-label { font-size: 0.75rem; color: #CCCCCC; line-height: 1; padding-left: 18px; }
-        .loc-city { font-size: 0.9rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 4px; line-height: 1; margin-top: 2px;}
+        /* City */
+        .amz-location {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            transition: 0.2s;
+        }
+        .amz-location:hover { border-color: white; }
+
+        /* Nav Items */
+        .amz-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            transition: 0.2s;
+            position: relative;
+        }
+        .amz-nav-item:hover, .amz-nav-item.active { border-color: white; }
+
+        .notif-badge {
+            position: absolute; top: -2px; right: -6px;
+            background: #EF4444; color: white; font-size: 0.65rem; font-weight: 800;
+            padding: 2px 6px; border-radius: 10px; display: none;
+        }
+
+        .header-avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            object-fit: cover; background: white;
+        }
 
         /* Search Bar */
         .amz-search-block {
-            flex: 1;
             display: flex;
-            height: 40px;
-            border-radius: 4px;
+            height: 42px;
+            border-radius: 6px;
             overflow: hidden;
-            border: 2px solid transparent;
+            border: 3px solid transparent;
+            transition: 0.2s;
         }
         .amz-search-block:focus-within { border-color: var(--amz-orange); }
+
+        .desktop-search { flex: 1; margin: 0 16px; }
+        .mobile-search { display: none; margin: 0 16px 10px 16px; width: calc(100% - 32px); }
+
+        .amz-search-select {
+            background-color: #F3F4F6;
+            border: none;
+            border-right: 1px solid #CDD2D3;
+            padding: 0 12px;
+            color: #555;
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+            max-width: 140px;
+        }
+        .amz-search-select:hover { background-color: #DADADA; color: #0F1111; }
 
         .amz-search-input {
             flex: 1;
@@ -102,80 +141,48 @@
             font-size: 1rem;
             color: #0F1111;
         }
+        
         .amz-search-btn {
-            width: 45px;
+            width: 48px;
             background-color: var(--amz-orange);
             border: none;
             color: #333;
             font-size: 1.2rem;
             cursor: pointer;
             transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .amz-search-btn:hover { background-color: var(--amz-orange-hover); }
 
-        /* Top Navigation Links */
-        .amz-nav-group {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .amz-nav-item {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 8px 12px;
-            border: 1px solid transparent;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            color: white;
-            position: relative;
-        }
-        .amz-nav-item:hover, .amz-nav-item.active { border-color: white; }
-        
-        .nav-label { font-size: 0.75rem; color: #CCCCCC; line-height: 1; margin-bottom: 2px;}
-        .nav-main { font-size: 0.9rem; font-weight: 700; line-height: 1; white-space: nowrap;}
-
-        .notif-badge {
-            position: absolute; top: 2px; right: 2px;
-            background: #EF4444; color: white; font-size: 0.65rem; font-weight: 800;
-            padding: 2px 5px; border-radius: 10px; display: none;
-        }
-
-        .profile-nav-block {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .header-avatar {
-            width: 32px; height: 32px; border-radius: 50%;
-            object-fit: cover; border: 1px solid #CCC; background: white;
-        }
-
-        /* Sub Header (Ticker) */
+        /* Sub Header (Ticker) laps with zero margin */
         .amz-sub-header {
             background-color: var(--amz-nav-bar);
-            padding: 6px 16px;
+            padding: 8px 16px;
             display: flex;
             align-items: center;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: white;
-            font-weight: 500;
+            font-weight: 600;
         }
         .ticker-wrapper { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; gap: 12px;}
-        .ticker-content { white-space: nowrap; animation: ticker 40s linear infinite; padding-left: 100%; color: white;}
+        .ticker-content { white-space: nowrap; animation: ticker 35s linear infinite; padding-left: 100%; color: white;}
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
 
-        /* Responsive Header Adjustments */
-        @media (max-width: 900px) {
-            .amz-header-top { flex-wrap: wrap; gap: 10px; padding: 10px; }
-            .amz-search-block { order: 3; width: 100%; flex: 0 0 100%; }
-            .loc-label { display: none; }
-            .loc-city { padding-left: 0; }
-            .nav-label { display: none; }
-            .profile-nav-block { flex-direction: row-reverse; }
+        /* --- RESPONSIVE MOBILE SCROLL FIX --- */
+        @media (max-width: 1024px) {
+            .desktop-search { display: none; }
+            .mobile-search { display: flex; }
+            
+            .amz-mobile-scroll-row {
+                overflow-x: auto;
+                scrollbar-width: none; 
+                -ms-overflow-style: none; 
+            }
+            .amz-mobile-scroll-row::-webkit-scrollbar { display: none; }
+            .amz-mobile-scroll-row > * { flex-shrink: 0; }
         }
 
         /* --- 2. CONTENT BODY --- */
@@ -186,7 +193,6 @@
             padding: 20px;
         }
 
-        /* Utils */
         .screen { display: none; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -209,6 +215,13 @@
             margin-bottom: 40px;
         }
 
+        .h-scroll .premium-shop-card {
+            min-width: 300px;
+            width: 80vw;
+            max-width: 360px;
+            flex-shrink: 0;
+        }
+
         .premium-shop-card {
             background: white;
             padding: 20px;
@@ -217,9 +230,8 @@
             cursor: pointer;
             height: 100%;
             border-radius: 4px;
-            /* No heavy shadows, just flat clean boxes like Amazon */
         }
-        .premium-shop-card:hover { border: 1px solid #E3E6E6; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .premium-shop-card:hover { box-shadow: 0 0 10px rgba(0,0,0,0.1); }
 
         .shop-card-title {
             font-size: 1.25rem;
@@ -238,7 +250,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 16px;
             margin-bottom: 20px;
-            flex: 1; /* Pushes CTA to bottom */
+            flex: 1;
         }
 
         .shop-grid-item-wrap {
@@ -249,12 +261,13 @@
 
         .shop-grid-item {
             width: 100%;
-            aspect-ratio: 1; /* Perfect Square */
+            aspect-ratio: 1; 
             background: #F7F7F7;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            border-radius: 4px;
         }
 
         .shop-grid-item img {
@@ -280,7 +293,7 @@
             font-size: 0.85rem;
             color: var(--amz-link);
             font-weight: 600;
-            display: inline-block;
+            display: inline-flex;
             text-decoration: none;
             margin-top: auto;
         }
@@ -353,13 +366,6 @@
             font-size: 1.5rem; transition: transform 0.2s; border: none;
         }
         .ai-fab:active { transform: scale(0.95); }
-        .ai-label {
-            background: white; color: var(--amz-dark);
-            font-size: 0.7rem; font-weight: 800;
-            padding: 4px 8px; border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB;
-            white-space: nowrap; pointer-events: none;
-        }
 
         .chat-window {
             position: fixed; bottom: 90px; right: 20px;
@@ -411,54 +417,59 @@
 </head>
 <body>
 
-    <!-- HEADER (Amazon Style) -->
+    <!-- HEADER (Premium Amazon Style) -->
     <header class="amz-header">
-        <div class="amz-header-top">
+        
+        <!-- MAIN ROW (Scrollable horizontally on mobile, flex spaced on desktop) -->
+        <div class="amz-mobile-scroll-row">
             
-            <!-- Logo & City -->
-            <div class="amz-logo-block">
-                <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="amz-logo" alt="Logo">
-                <div class="amz-location">
-                    <span class="loc-label">Deliver to</span>
-                    <span class="loc-city"><i class="fa-solid fa-location-dot"></i> <span id="header-city">...</span></span>
-                </div>
+            <!-- Logo -->
+            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="amz-logo" alt="Logo" onclick="window.location.reload()">
+            
+            <!-- City -->
+            <div class="amz-location">
+                <i class="fa-solid fa-location-dot"></i> <span id="header-city">...</span>
             </div>
             
-            <!-- Big Search Bar -->
-            <div class="amz-search-block">
-                <input type="text" class="amz-search-input" placeholder="Search shops, products...">
+            <!-- DESKTOP SEARCH -->
+            <div class="amz-search-block desktop-search">
+                <select class="amz-search-select" id="search-category-desktop">
+                    <option value="all">All Categories</option>
+                </select>
+                <input type="text" class="amz-search-input" placeholder="Search products and shops...">
                 <button class="amz-search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
+
+            <!-- Navigation Links -->
+            <div class="amz-nav-item active" onclick="switchScreen('market', this)">Repository</div>
             
-            <!-- Navigation -->
-            <div class="amz-nav-group">
-                <div class="amz-nav-item active" onclick="switchScreen('market', this)">
-                    <span class="nav-label">Browse</span>
-                    <span class="nav-main">Repository</span>
-                </div>
-                
-                <div class="amz-nav-item" onclick="switchScreen('services', this)">
-                    <span class="nav-label">Explore</span>
-                    <span class="nav-main">Services</span>
-                </div>
-
-                <div class="amz-nav-item" onclick="switchScreen('notifications', this)">
-                    <span class="nav-label">Updates</span>
-                    <span class="nav-main">Alerts <span id="badge-count" class="notif-badge">0</span></span>
-                </div>
-
-                <div class="amz-nav-item profile-nav-block" onclick="switchScreen('profile', this)">
-                    <img id="header-avatar" src="" class="header-avatar">
-                    <div style="display: flex; flex-direction: column;">
-                        <span class="nav-label" id="nav-hello-name">Hello, User</span>
-                        <span class="nav-main">Profile</span>
-                    </div>
-                </div>
+            <div class="amz-nav-item" onclick="switchScreen('services', this)">Services</div>
+            
+            <div class="amz-nav-item" onclick="switchScreen('notifications', this)">
+                Alerts <span id="badge-count" class="notif-badge">0</span>
             </div>
 
+            <!-- Profile Avatar (No text) -->
+            <div class="amz-nav-item" onclick="switchScreen('profile', this)" style="padding: 4px 8px;">
+                <img id="header-avatar" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" class="header-avatar">
+            </div>
+
+            <!-- Store Index -->
+            <div class="amz-nav-item" onclick="window.location.href='shop-index.html'" title="Shop Index">
+                <i class="fa-solid fa-arrow-down-a-z" style="font-size: 1.1rem;"></i>
+            </div>
         </div>
 
-        <!-- Sub Header Ticker -->
+        <!-- MOBILE SEARCH ROW (Hidden on Desktop) -->
+        <div class="amz-search-block mobile-search">
+            <select class="amz-search-select" id="search-category-mobile">
+                <option value="all">All Categories</option>
+            </select>
+            <input type="text" class="amz-search-input" placeholder="Search CT-Merchant...">
+            <button class="amz-search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+
+        <!-- TICKER ROW (Laps tightly against header) -->
         <div class="amz-sub-header" id="header-ticker" style="display:none;">
             <div class="ticker-wrapper">
                 <i class="fa-solid fa-bullhorn" style="color: var(--amz-orange);"></i>
@@ -474,7 +485,7 @@
         <div id="market" class="screen active">
             
             <!-- Promos (Hero Banner style) -->
-            <div id="promo-list" class="h-scroll" style="display:none;"></div>
+            <div id="promo-list" class="h-scroll" style="display:none; padding-top: 10px;"></div>
             
             <div id="initial-loader" style="text-align:center; padding:60px 0; color:#888C8C;">
                 <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem;"></i>
@@ -497,20 +508,20 @@
                 </div>
 
                 <div class="svc-card" onclick="window.location.href='wishlist.html'">
-                    <div class="svc-icon"><i class="fa-solid fa-heart"></i></div>
+                    <div class="svc-icon"><i class="fa-solid fa-heart" style="color:#C40000;"></i></div>
                     <strong>Wishlist</strong>
                     <div id="wishlist-count" style="font-size:0.8rem; color:#565959; margin-top:4px;">...</div>
                 </div>
                 <div class="svc-card" onclick="window.location.href='help-support.html'">
-                    <div class="svc-icon"><i class="fa-solid fa-headset"></i></div>
+                    <div class="svc-icon"><i class="fa-solid fa-headset" style="color:#007185;"></i></div>
                     <strong>Support</strong>
                 </div>
                 <div class="svc-card" onclick="window.location.href='faq.html'">
-                    <div class="svc-icon"><i class="fa-solid fa-circle-question"></i></div>
+                    <div class="svc-icon"><i class="fa-solid fa-circle-question" style="color:#007185;"></i></div>
                     <strong>FAQ</strong>
                 </div>
                 <div class="svc-card" onclick="window.location.href='report-abuse.html'">
-                    <div class="svc-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="svc-icon"><i class="fa-solid fa-triangle-exclamation" style="color:#C40000;"></i></div>
                     <strong>Report Abuse</strong>
                 </div>
             </div>
@@ -612,9 +623,8 @@
          ========================================= -->
     <div class="ai-fab-container">
         <button class="ai-fab" onclick="toggleChat()">
-            <i class="fa-solid fa-comments"></i>
+            <i class="fa-solid fa-robot"></i>
         </button>
-        <span class="ai-label">AI Assistant</span>
     </div>
 
     <div id="chat-window" class="chat-window">
@@ -630,7 +640,7 @@
                 <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMsg()">
                 <button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
-            <div class="chat-disclaimer">
+            <div class="chat-disclaimer" style="margin-top: 4px;">
                 AI can make mistakes. Please verify prices on the merchant's shop.
             </div>
         </div>
@@ -649,7 +659,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v19'; 
+    const CACHE_KEY = 'ctm_dash_v20'; 
     const MAX_FILE_SIZE = 500 * 1024; 
 
     let chatHistory = [];
@@ -791,9 +801,10 @@
             userCityId = profile.city_id;
             userAreaId = profile.area_id;
 
-            const [promos, announcements, areas, shops, notifs, myShop, wishlist] = await Promise.all([
+            const [promos, announcements, categories, areas, shops, notifs, myShop, wishlist] = await Promise.all([
                 client.from('promo_banners').select().order('created_at', {ascending: false}),
                 client.from('announcements').select().order('created_at', {ascending: false}),
+                client.from('categories').select().order('name'),
                 client.from('areas').select().eq('city_id', userCityId).order('name'),
                 client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}),
                 client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20),
@@ -819,6 +830,7 @@
             const dashboardData = {
                 profile,
                 promos: promos.data,
+                categories: categories.data,
                 announcements: announcements.data,
                 areas: areas.data,
                 shops: shops.data,
@@ -841,11 +853,17 @@
         // Header Population
         document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
         
-        // Smart Avatar Fallback & Name injection
-        const fName = data.profile.full_name || "User";
-        const firstName = fName.split(' ')[0];
-        document.getElementById('nav-hello-name').textContent = `Hello, ${firstName}`;
+        // Populate Categories in the new Search Bar Dropdown
+        const catOptions = `<option value="all">All Categories</option>` + 
+                           data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
         
+        const deskSelect = document.getElementById('search-category-desktop');
+        const mobSelect = document.getElementById('search-category-mobile');
+        if (deskSelect) deskSelect.innerHTML = catOptions;
+        if (mobSelect) mobSelect.innerHTML = catOptions;
+
+        // Avatar
+        const fName = data.profile.full_name || "User";
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${fName}`;
         document.getElementById('header-avatar').src = avatar;
         
@@ -892,7 +910,7 @@
             const title = isUser ? `Top stores in ${area.name} (Near You)` : `Explore stores in ${area.name}`;
 
             areaContainer.innerHTML += `
-                <div style="margin-bottom: 40px; border-bottom: 2px solid white; padding-bottom: 20px;">
+                <div style="margin-bottom: 40px; padding-bottom: 20px;">
                     <h2 class="sec-title">${title}</h2>
                     <div class="shop-list-view">
                         ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
