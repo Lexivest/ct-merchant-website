@@ -438,18 +438,17 @@
         <!-- 5. Contacts & Socials -->
         <div class="section-title sec-contact"><i class="fa-solid fa-address-book"></i> Contacts & Socials</div>
         
-        <!-- NEW DISCLAIMER -->
         <p style="font-size: 0.85rem; color: #DC2626; margin-bottom: 16px; text-align: center; font-weight: 600; background: #FEF2F2; padding: 10px; border-radius: 8px; border: 1px solid #FECACA;">
             <i class="fa-solid fa-circle-exclamation"></i> Please provide links to your <span style="text-decoration: underline;">business</span> profiles and website. Personal links may cause your application to be rejected.
         </p>
 
         <div class="form-grid">
-            <!-- NEW WEBSITE FIELD -->
             <div class="form-group" style="grid-column: 1 / -1;">
                 <label class="label">Business Website (Optional)</label>
                 <div class="input-wrapper">
                     <i class="fa-solid fa-globe" style="color: #4F46E5;"></i>
-                    <input type="url" id="website" class="input with-icon" placeholder="https://www.yourshop.com" maxlength="150">
+                    <!-- Auto-formatting on blur attached here -->
+                    <input type="url" id="website" class="input with-icon" placeholder="e.g. www.yourshop.com" maxlength="150" onblur="formatUrlOnBlur(event)">
                 </div>
             </div>
 
@@ -475,14 +474,14 @@
                     <label class="label">Facebook URL</label>
                     <div class="input-wrapper">
                         <i class="fa-brands fa-facebook" style="color:#1877F2;"></i>
-                        <input type="url" id="facebook" class="input with-icon" placeholder="https://..." maxlength="150">
+                        <input type="url" id="facebook" class="input with-icon" placeholder="e.g. www.facebook.com/yourshop" maxlength="150" onblur="formatUrlOnBlur(event)">
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="label">Instagram URL</label>
                     <div class="input-wrapper">
                         <i class="fa-brands fa-instagram" style="color:#E4405F;"></i>
-                        <input type="url" id="instagram" class="input with-icon" placeholder="https://..." maxlength="150">
+                        <input type="url" id="instagram" class="input with-icon" placeholder="e.g. www.instagram.com/yourshop" maxlength="150" onblur="formatUrlOnBlur(event)">
                     </div>
                 </div>
             </div>
@@ -491,14 +490,14 @@
                     <label class="label">X (Twitter) URL</label>
                     <div class="input-wrapper">
                         <i class="fa-brands fa-x-twitter"></i>
-                        <input type="url" id="twitter" class="input with-icon" placeholder="https://..." maxlength="150">
+                        <input type="url" id="twitter" class="input with-icon" placeholder="e.g. x.com/yourshop" maxlength="150" onblur="formatUrlOnBlur(event)">
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="label">TikTok URL</label>
                     <div class="input-wrapper">
                         <i class="fa-brands fa-tiktok" style="color:#000000;"></i>
-                        <input type="url" id="tiktok" class="input with-icon" placeholder="https://..." maxlength="150">
+                        <input type="url" id="tiktok" class="input with-icon" placeholder="e.g. www.tiktok.com/@yourshop" maxlength="150" onblur="formatUrlOnBlur(event)">
                     </div>
                 </div>
             </div>
@@ -909,6 +908,15 @@
     }
 
     // --- FORM VALIDATION ---
+    
+    // Auto-formats URL fields when the user tabs out of them (onBlur)
+    function formatUrlOnBlur(event) {
+        let val = event.target.value.trim();
+        if (val && !/^https?:\/\//i.test(val)) {
+            event.target.value = 'https://' + val;
+        }
+    }
+
     function validateFormInputs() {
         const phone = document.getElementById('phone').value.trim();
         const whatsapp = document.getElementById('whatsapp').value.trim();
@@ -928,7 +936,7 @@
             if (!url) return true; 
             try {
                 const parsedUrl = new URL(url.startsWith('http') ? url : `https://${url}`);
-                if (platform === 'any') return true; // Just checking if valid URL syntax for website
+                if (platform === 'any') return true; 
                 if (platform === 'twitter') {
                     return parsedUrl.hostname.includes('twitter.com') || parsedUrl.hostname.includes('x.com');
                 }
@@ -948,7 +956,7 @@
         if (!validateSocialUrl(ig, 'instagram')) { alert("Please enter a valid Instagram URL."); return false; }
         if (!validateSocialUrl(tw, 'twitter')) { alert("Please enter a valid X (Twitter) URL."); return false; }
         if (!validateSocialUrl(tk, 'tiktok')) { alert("Please enter a valid TikTok URL."); return false; }
-        if (!validateSocialUrl(web, 'any')) { alert("Please enter a valid Website URL."); return false; } // Validate Website
+        if (!validateSocialUrl(web, 'any')) { alert("Please enter a valid Website URL."); return false; } 
 
         return true;
     }
@@ -1062,7 +1070,7 @@
                 instagram_url: document.getElementById('instagram').value || null,
                 twitter_url: document.getElementById('twitter').value || null,
                 tiktok_url: document.getElementById('tiktok').value || null,
-                website_url: document.getElementById('website').value || null, // SAVING WEBSITE
+                website_url: document.getElementById('website').value || null, 
                 
                 status: 'pending', 
                 rejection_reason: null
