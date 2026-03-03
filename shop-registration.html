@@ -714,15 +714,21 @@
         delete rawFiles[inputId];
         delete croppedBlobs[inputId];
 
-        // 1. PDF Strict 500KB check
+        // 1. PDF Handling (Read immediately into memory to avoid zero-byte browser bug)
         if (file.type === 'application/pdf') {
             if (file.size > MAX_FILE_SIZE) {
                 alert(`The selected PDF is too large (${Math.round(file.size/1024)}KB). Maximum allowed size is 500KB.`);
                 event.target.value = ''; 
                 return;
             }
-            rawFiles[inputId] = file;
-            setPdfPreview(inputId, file.name);
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // Safely store the PDF bytes in memory 
+                rawFiles[inputId] = new Blob([e.target.result], { type: 'application/pdf' });
+                setPdfPreview(inputId, file.name);
+            };
+            reader.readAsArrayBuffer(file);
             event.target.value = ''; 
             return;
         }
@@ -1057,11 +1063,12 @@
 
         if (!fileOrBlob) return existingUrl || null; 
 
+        // robust URL extraction to guarantee old file deletion regardless of 'public' or 'authenticated' paths
         if (existingUrl) {
             try {
-                const urlParts = existingUrl.split(`/public/${bucket}/`);
-                if (urlParts.length === 2) {
-                    const oldFilePath = urlParts[1].split('?')[0]; 
+                const pathMatch = existingUrl.match(new RegExp(`/(?:public|authenticated)/${bucket}/(.+)`));
+                if (pathMatch && pathMatch[1]) {
+                    const oldFilePath = pathMatch[1].split('?')[0]; 
                     const { error: delError } = await client.storage.from(bucket).remove([oldFilePath]);
                     if (delError) console.warn(`Note: Could not delete old file ${oldFilePath}.`, delError);
                 }
