@@ -14,11 +14,10 @@
     
     <style>
         :root {
-            --primary: #4F46E5; /* Indigo */
-            --primary-dark: #3730A3;
-            --primary-light: #EEF2FF;
+            --primary: #6D28D9; /* Vibrant Violet */
+            --primary-dark: #5B21B6;
+            --primary-light: #EDE9FE;
             --secondary: #10B981; /* Emerald */
-            --bg-color: #F3F4F6;
             --card-bg: #FFFFFF;
             --text-main: #111827;
             --text-muted: #6B7280;
@@ -30,7 +29,8 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
         
         body { 
-            background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+            /* Vibrant, modern background gradient */
+            background: linear-gradient(135deg, #E0E7FF 0%, #FAE8FF 50%, #F3E8FF 100%);
             color: var(--text-main); 
             min-height: 100vh;
             display: flex;
@@ -38,82 +38,101 @@
             padding: 24px 16px;
         }
 
-        .container { width: 100%; max-width: 650px; position: relative; }
+        .container { width: 100%; max-width: 680px; position: relative; }
 
         /* Header */
         .header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
         .back-btn { 
             background: var(--card-bg); border: 1px solid var(--border-color); 
-            width: 44px; height: 44px; border-radius: 14px; 
+            width: 46px; height: 46px; border-radius: 14px; 
             display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; color: var(--text-main); font-size: 1.1rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            transition: all 0.2s ease;
+            cursor: pointer; color: var(--text-main); font-size: 1.2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
         }
-        .back-btn:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 6px rgba(79, 70, 229, 0.1); }
-        .page-title { font-size: 1.5rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; }
+        .back-btn:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-3px); box-shadow: 0 6px 12px rgba(109, 40, 217, 0.15); }
+        .page-title { font-size: 1.6rem; font-weight: 800; color: #1F2937; letter-spacing: -0.5px; }
 
         /* Form Card */
         .card { 
-            background: var(--card-bg); padding: 32px 28px; 
-            border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); 
-            border: 1px solid rgba(255,255,255,0.5); 
+            background: var(--card-bg); padding: 36px 32px; 
+            border-radius: 24px; box-shadow: 0 15px 35px -5px rgba(0,0,0,0.08), 0 10px 15px -5px rgba(0,0,0,0.03); 
+            border: 1px solid rgba(255,255,255,0.8); 
+            border-top: 6px solid var(--primary); /* Colorful top accent */
         }
 
         /* Sections */
         .section-title { 
-            font-size: 0.9rem; font-weight: 800; color: var(--primary); 
+            font-size: 0.95rem; font-weight: 800; color: #374151; 
             text-transform: uppercase; letter-spacing: 0.8px; 
-            margin: 32px 0 20px 0; border-bottom: 2px solid var(--primary-light); 
-            padding-bottom: 10px; display: flex; align-items: center; gap: 8px;
+            margin: 36px 0 20px 0; border-bottom: 2px solid var(--border-color); 
+            padding-bottom: 12px; display: flex; align-items: center; gap: 10px;
         }
-        .section-title i { font-size: 1.1rem; }
+        /* Colorful Icons for each section */
+        .sec-store i { color: #8B5CF6; } /* Violet */
+        .sec-biz i { color: #EC4899; } /* Pink */
+        .sec-loc i { color: #F59E0B; } /* Amber */
+        .sec-id i { color: #3B82F6; } /* Blue */
+        .sec-contact i { color: #10B981; } /* Emerald */
+
+        .section-title i { font-size: 1.3rem; background: var(--input-bg); padding: 8px; border-radius: 10px; }
         .section-title:first-child { margin-top: 0; }
 
         /* Inputs */
         .form-grid { display: grid; gap: 20px; }
         .form-group { display: flex; flex-direction: column; gap: 8px; }
-        .label { font-size: 0.9rem; font-weight: 600; color: #374151; }
+        .label { font-size: 0.95rem; font-weight: 700; color: #374151; }
         
         .input-wrapper { position: relative; }
-        .input-wrapper i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #9CA3AF; font-size: 1.1rem; }
+        .input-wrapper i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #9CA3AF; font-size: 1.1rem; transition: 0.3s; }
         
         .input { 
-            width: 100%; padding: 14px 16px; border-radius: 12px; 
-            border: 1px solid var(--border-color); font-size: 0.95rem; 
-            background: var(--input-bg); transition: all 0.2s;
+            width: 100%; padding: 16px 16px; border-radius: 12px; 
+            border: 2px solid var(--border-color); font-size: 1rem; 
+            background: var(--input-bg); transition: all 0.3s;
             color: var(--text-main); font-weight: 500;
         }
-        .input.with-icon { padding-left: 46px; }
+        .input.with-icon { padding-left: 48px; }
         .input:focus { outline: none; border-color: var(--primary); background: #FFF; box-shadow: 0 0 0 4px var(--primary-light); }
-        .input:disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }
-        textarea.input { resize: vertical; min-height: 100px; padding-top: 16px; }
+        .input:focus + i, .input-wrapper:focus-within i { color: var(--primary); }
+        .input:disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; border-color: #D1D5DB; }
+        textarea.input { resize: vertical; min-height: 110px; padding-top: 16px; }
 
         /* Professional Upload Boxes */
-        .upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
         .upload-box {
             border: 2px dashed #CBD5E1; border-radius: 16px;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center; cursor: pointer;
             background: #F8FAFC; position: relative; overflow: hidden;
-            transition: all 0.3s ease; padding: 20px; text-align: center;
+            transition: all 0.3s ease; padding: 24px 20px; text-align: center;
+            min-height: 180px; /* Removed strict constraints, made it taller */
         }
-        .upload-box:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-2px); }
-        .upload-box.portrait { height: 280px; aspect-ratio: 3/4; margin: 0 auto; max-width: 220px; grid-column: 1 / -1; }
-        .upload-box.landscape { height: 160px; }
-        .upload-box.square { height: 160px; aspect-ratio: 1/1; margin: 0 auto; max-width: 160px; grid-column: 1 / -1;}
+        .upload-box:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(109, 40, 217, 0.08); }
+        .upload-box.portrait { height: 300px; aspect-ratio: 3/4; margin: 0 auto; max-width: 240px; grid-column: 1 / -1; }
+        .upload-box.square { height: 180px; aspect-ratio: 1/1; margin: 0 auto; max-width: 180px; grid-column: 1 / -1;}
         
-        .upload-icon { font-size: 2rem; color: #94A3B8; margin-bottom: 12px; transition: 0.3s; }
+        .upload-icon { font-size: 2.2rem; color: #94A3B8; margin-bottom: 14px; transition: 0.3s; }
         .upload-box:hover .upload-icon { color: var(--primary); transform: scale(1.1); }
-        .upload-title { font-size: 0.9rem; font-weight: 700; color: #334155; margin-bottom: 4px; }
-        .upload-subtitle { font-size: 0.75rem; font-weight: 500; color: #64748B; }
+        .upload-title { font-size: 0.95rem; font-weight: 800; color: #334155; margin-bottom: 6px; }
+        .upload-subtitle { font-size: 0.8rem; font-weight: 600; color: #64748B; }
         
         .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; z-index: 5; background: #fff;}
+        
+        /* PDF Preview Styling */
+        .pdf-preview {
+            position: absolute; inset: 0; background: #FFFFFF; z-index: 5;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; text-align: center;
+        }
+        .pdf-preview i { font-size: 3.5rem; color: #E11D48; margin-bottom: 12px; }
+        .pdf-preview span { font-size: 0.85rem; font-weight: 700; color: #1F2937; word-break: break-all; max-width: 90%; line-height: 1.4;}
+
         .edit-badge { 
             position: absolute; top: 12px; right: 12px; 
-            background: rgba(255,255,255,0.9); border-radius: 50%; width: 32px; height: 32px; 
+            background: rgba(255,255,255,0.95); border-radius: 50%; width: 36px; height: 36px; 
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 13px; color: var(--primary);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15); font-size: 14px; color: var(--primary);
             z-index: 10; display: none; transition: 0.2s;
         }
         .upload-box:hover .edit-badge { background: var(--primary); color: white; }
@@ -121,13 +140,13 @@
         /* Buttons */
         .btn-submit {
             width: 100%; background: var(--primary); color: white;
-            padding: 16px; border-radius: 14px; border: none;
-            font-size: 1.1rem; font-weight: 700; cursor: pointer;
+            padding: 18px; border-radius: 14px; border: none;
+            font-size: 1.15rem; font-weight: 800; cursor: pointer;
             margin-top: 40px; transition: all 0.3s ease;
             display: flex; align-items: center; justify-content: center; gap: 10px;
-            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+            box-shadow: 0 8px 20px rgba(109, 40, 217, 0.3);
         }
-        .btn-submit:hover { background: var(--primary-dark); transform: translateY(-3px); box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4); }
+        .btn-submit:hover { background: var(--primary-dark); transform: translateY(-3px); box-shadow: 0 10px 25px rgba(109, 40, 217, 0.45); }
         .btn-submit:disabled { background: #9CA3AF; cursor: not-allowed; transform: none; box-shadow: none; }
 
         /* Alerts */
@@ -168,8 +187,8 @@
         .overlay.active { opacity: 1; visibility: visible; }
         
         .review-sheet {
-            background: var(--card-bg); width: 100%; max-width: 650px;
-            border-radius: 28px 28px 0 0; padding: 36px 28px;
+            background: var(--card-bg); width: 100%; max-width: 680px;
+            border-radius: 28px 28px 0 0; padding: 36px 32px;
             transform: translateY(100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             max-height: 90vh; overflow-y: auto;
         }
@@ -181,22 +200,27 @@
         .thumb-row { display: flex; gap: 16px; margin-bottom: 30px; }
         .thumb-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .thumb-box { 
-            width: 100%; height: 90px; border-radius: 12px; background: #F1F5F9; 
-            border: 1px solid #E2E8F0; overflow: hidden; display: flex; align-items: center; justify-content: center;
-            position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            width: 100%; height: 90px; border-radius: 12px; background: #F8FAFC; 
+            border: 2px solid #E2E8F0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.02); text-align: center;
         }
-        .thumb-box i { font-size: 1.8rem; color: #CBD5E1; }
-        .thumb-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
-        .thumb-label { font-size: 0.7rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;}
+        .thumb-box i { font-size: 2rem; color: #CBD5E1; }
+        .thumb-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; background:#fff;}
+        
+        /* Modal PDF Icon */
+        .thumb-pdf { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: #fff;}
+        .thumb-pdf i { font-size: 2rem; color: #E11D48; }
 
-        .detail-row { display: flex; padding: 12px 0; border-bottom: 1px solid #F1F5F9; }
+        .thumb-label { font-size: 0.75rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;}
+
+        .detail-row { display: flex; padding: 14px 0; border-bottom: 1px solid #F1F5F9; }
         .detail-row:last-child { border-bottom: none; }
         .detail-label { width: 130px; color: var(--text-muted); font-size: 0.95rem; font-weight: 600; }
-        .detail-value { flex: 1; font-weight: 700; color: var(--text-main); font-size: 1rem; }
+        .detail-value { flex: 1; font-weight: 800; color: var(--text-main); font-size: 1.05rem; }
 
-        .btn-confirm { background: var(--secondary); color: white; width: 100%; padding: 18px; border-radius: 14px; border: none; font-weight: 800; font-size: 1.1rem; margin-top: 28px; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); transition: 0.3s;}
-        .btn-confirm:hover { background: #059669; transform: translateY(-2px); }
-        .btn-edit { background: transparent; color: var(--text-muted); width: 100%; padding: 14px; border: none; font-weight: 700; cursor: pointer; margin-top: 8px; transition: 0.2s;}
+        .btn-confirm { background: var(--secondary); color: white; width: 100%; padding: 18px; border-radius: 14px; border: none; font-weight: 800; font-size: 1.15rem; margin-top: 32px; cursor: pointer; box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3); transition: 0.3s;}
+        .btn-confirm:hover { background: #059669; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4); }
+        .btn-edit { background: transparent; color: var(--text-muted); width: 100%; padding: 14px; border: none; font-weight: 700; cursor: pointer; margin-top: 8px; transition: 0.2s; font-size: 1.05rem;}
         .btn-edit:hover { color: var(--text-main); }
 
         .spinner { width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -206,10 +230,12 @@
 
         @media (max-width: 480px) {
             .upload-row { grid-template-columns: 1fr; }
-            .card { padding: 24px 20px; }
+            .card { padding: 28px 20px; }
+            .thumb-row { flex-wrap: wrap; }
+            .thumb-col { min-width: 45%; }
         }
         
-        hr.divider { border: 0; border-top: 1px dashed var(--border-color); margin: 24px 0; }
+        hr.divider { border: 0; border-top: 2px dashed var(--border-color); margin: 28px 0; }
     </style>
 </head>
 <body>
@@ -243,8 +269,8 @@
     <form id="shop-form" class="card" onsubmit="showPreviewDialog(event)">
         
         <!-- 1. Store Front -->
-        <div class="section-title"><i class="fa-solid fa-store"></i> Store Front Image</div>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; text-align: center;">Upload a clear, portrait-oriented photo of your shop's exterior.</p>
+        <div class="section-title sec-store"><i class="fa-solid fa-store"></i> Store Front Image</div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; text-align: center; font-weight: 500;">Upload a clear, portrait-oriented photo of your shop's exterior.</p>
         <div class="upload-box portrait" onclick="triggerUpload('file-front')">
             <input type="file" id="file-front" hidden accept="image/*" onchange="handleFileSelect(event, 'file-front', 3/4)">
             <i class="fa-solid fa-camera upload-icon"></i>
@@ -255,7 +281,7 @@
         </div>
 
         <!-- 2. Business Details -->
-        <div class="section-title"><i class="fa-solid fa-briefcase"></i> Business Details</div>
+        <div class="section-title sec-biz"><i class="fa-solid fa-briefcase"></i> Business Details</div>
         <div class="form-grid">
             <div class="form-group">
                 <label class="label">Business Name</label>
@@ -288,7 +314,7 @@
         </div>
 
         <!-- 3. Location -->
-        <div class="section-title"><i class="fa-solid fa-location-dot"></i> Location</div>
+        <div class="section-title sec-loc"><i class="fa-solid fa-location-dot"></i> Location</div>
         <div class="form-grid">
             <div class="upload-row">
                 <div class="form-group">
@@ -328,9 +354,9 @@
         </div>
 
         <!-- 4. Identity -->
-        <div class="section-title">
+        <div class="section-title sec-id">
             <i class="fa-solid fa-shield-halved"></i> Identity & Legal 
-            <small style="text-transform:none; font-weight:500; color:var(--text-muted); margin-left: auto;">(Private)</small>
+            <small style="text-transform:none; font-weight:600; color:var(--text-muted); margin-left: auto;">(Private)</small>
         </div>
         
         <div class="form-grid">
@@ -344,12 +370,13 @@
             </div>
 
             <div class="form-group">
-                <label class="label" id="cac-label" style="margin-bottom: 4px;">Upload CAC (Landscape)</label>
-                <div class="upload-box landscape" onclick="triggerUpload('file-cac')">
-                    <input type="file" id="file-cac" hidden accept="image/*" onchange="handleFileSelect(event, 'file-cac', 1.586)">
+                <label class="label" id="cac-label" style="margin-bottom: 4px;">Upload CAC (Image or PDF)</label>
+                <!-- Accepts both images and PDFs -->
+                <div class="upload-box" onclick="triggerUpload('file-cac')">
+                    <input type="file" id="file-cac" hidden accept="image/*,application/pdf" onchange="handleFileSelect(event, 'file-cac', 1.586)">
                     <i class="fa-solid fa-file-contract upload-icon"></i>
                     <span class="upload-title">CAC Certificate</span>
-                    <span class="upload-subtitle">(Optional)</span>
+                    <span class="upload-subtitle">(Optional) Image or PDF</span>
                     <img id="prev-cac" class="preview-img">
                     <i class="fa-solid fa-pen edit-badge" id="badge-cac"></i>
                 </div>
@@ -375,12 +402,12 @@
             </div>
 
             <div class="form-group">
-                <label class="label" style="margin-bottom: 4px;">Upload ID Card (Landscape)</label>
-                <div class="upload-box landscape" onclick="triggerUpload('file-id')">
-                    <input type="file" id="file-id" hidden accept="image/*" onchange="handleFileSelect(event, 'file-id', 1.586)">
+                <label class="label" style="margin-bottom: 4px;">Upload ID Card (Image or PDF)</label>
+                <div class="upload-box" onclick="triggerUpload('file-id')">
+                    <input type="file" id="file-id" hidden accept="image/*,application/pdf" onchange="handleFileSelect(event, 'file-id', 1.586)">
                     <i class="fa-regular fa-id-card upload-icon"></i>
-                    <span class="upload-title">Official ID Card</span>
-                    <span class="upload-subtitle">(Required)</span>
+                    <span class="upload-title">Official ID Document</span>
+                    <span class="upload-subtitle">(Required) Image or PDF</span>
                     <img id="prev-id" class="preview-img">
                     <i class="fa-solid fa-pen edit-badge" id="badge-id"></i>
                 </div>
@@ -392,6 +419,7 @@
             <div class="form-group">
                 <label class="label" style="text-align: center; margin-bottom: 4px;">Shop Logo (Square)</label>
                 <div class="upload-box square" onclick="triggerUpload('file-logo')">
+                    <!-- Logo strictly image for UI branding purposes -->
                     <input type="file" id="file-logo" hidden accept="image/*" onchange="handleFileSelect(event, 'file-logo', 1)">
                     <i class="fa-solid fa-circle-user upload-icon"></i>
                     <span class="upload-title">Brand Logo</span>
@@ -403,7 +431,7 @@
         </div>
 
         <!-- 5. Contacts & Socials -->
-        <div class="section-title"><i class="fa-solid fa-address-book"></i> Contacts & Socials</div>
+        <div class="section-title sec-contact"><i class="fa-solid fa-address-book"></i> Contacts & Socials</div>
         <div class="form-grid">
             <div class="upload-row">
                 <div class="form-group">
@@ -460,7 +488,7 @@
     </form>
 </div>
 
-<!-- CROPPER MODAL -->
+<!-- CROPPER MODAL (Only for images) -->
 <div id="crop-modal" class="crop-overlay">
     <div class="crop-header-bar">
         <div class="crop-title"><i class="fa-solid fa-crop-simple"></i> Adjust Image</div>
@@ -493,13 +521,21 @@
                 <div class="thumb-box">
                     <i class="fa-solid fa-id-card" id="rv-icon-id"></i>
                     <img id="rv-img-id">
+                    <div class="thumb-pdf" id="rv-pdf-id">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span style="font-size: 0.6rem; font-weight: bold; margin-top:4px; text-align:center; padding: 0 4px; word-break: break-all;">PDF Doc</span>
+                    </div>
                 </div>
-                <span class="thumb-label">ID Card</span>
+                <span class="thumb-label">ID Doc</span>
             </div>
             <div class="thumb-col" id="rv-cac-col" style="display: none;">
                 <div class="thumb-box">
                     <i class="fa-solid fa-file-contract" id="rv-icon-cac"></i>
                     <img id="rv-img-cac">
+                    <div class="thumb-pdf" id="rv-pdf-cac">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span style="font-size: 0.6rem; font-weight: bold; margin-top:4px; text-align:center; padding: 0 4px; word-break: break-all;">PDF Doc</span>
+                    </div>
                 </div>
                 <span class="thumb-label">CAC Cert</span>
             </div>
@@ -542,10 +578,11 @@
     const shopId = params.get('id') || params.get('shop_id');
     const isEdit = !!shopId;
 
-    // --- CROPPER STATE ---
+    // --- CROPPER & FILE STATE ---
     let cropper = null;
     let currentCropTarget = '';
-    const croppedBlobs = {}; // Holds the final Blobs ready for upload
+    const croppedBlobs = {}; // Holds cropped image Blobs
+    const rawFiles = {};     // Holds raw files (like PDFs) to bypass cropper
 
     // --- INIT ---
     window.onload = async () => {
@@ -633,10 +670,10 @@
         document.getElementById('twitter').value = data.twitter_url || '';
         document.getElementById('tiktok').value = data.tiktok_url || '';
 
-        setPreviewImage('prev-front', data.storefront_url);
-        setPreviewImage('prev-id', data.id_card_url);
-        setPreviewImage('prev-cac', data.cac_certificate_url);
-        setPreviewImage('prev-logo', data.image_url);
+        setPreview('file-front', data.storefront_url);
+        setPreview('file-id', data.id_card_url);
+        setPreview('file-cac', data.cac_certificate_url);
+        setPreview('file-logo', data.image_url);
 
         if (data.status === 'rejected' && data.rejection_reason) {
             document.getElementById('rejection-box').style.display = 'flex';
@@ -644,25 +681,6 @@
         }
 
         toggleCacRequirement(); 
-    }
-
-    function setPreviewImage(imgId, url) {
-        if (url && typeof url === 'string' && url.trim() !== '') {
-            const img = document.getElementById(imgId);
-            img.src = url; 
-            img.style.display = 'block';
-            
-            const badge = document.getElementById(imgId.replace('prev', 'badge'));
-            if (badge) badge.style.display = 'flex';
-
-            const box = img.parentElement;
-            const icon = box.querySelector('.upload-icon');
-            const title = box.querySelector('.upload-title');
-            const sub = box.querySelector('.upload-subtitle');
-            if (icon) icon.style.display = 'none';
-            if (title) title.style.display = 'none';
-            if (sub) sub.style.display = 'none';
-        }
     }
 
     function toggleCacRequirement() {
@@ -675,25 +693,43 @@
             numLabel.innerHTML = 'RC Number <span style="color:var(--danger)">*</span>';
             document.getElementById('cac-number').setAttribute('required', 'true');
         } else {
-            label.textContent = 'Upload CAC (Landscape)';
+            label.innerHTML = 'Upload CAC (Image or PDF)';
             numLabel.textContent = 'BN Number (Optional)';
             document.getElementById('cac-number').removeAttribute('required');
         }
     }
 
-    // --- CROPPER ENGINE ---
+    // --- UPLOAD & CROPPER ENGINE ---
     function triggerUpload(id) { document.getElementById(id).click(); }
 
     function handleFileSelect(event, inputId, ratio) {
         const file = event.target.files[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            openCropModal(e.target.result, inputId, ratio);
-        };
-        reader.readAsDataURL(file);
-        event.target.value = ''; // Reset input to allow re-selection
+        // Reset previous state for this input
+        delete rawFiles[inputId];
+        delete croppedBlobs[inputId];
+
+        // 1. If it's a PDF, bypass cropper
+        if (file.type === 'application/pdf') {
+            rawFiles[inputId] = file;
+            setPdfPreview(inputId, file.name);
+            event.target.value = ''; // Reset
+            return;
+        }
+
+        // 2. If it's an Image, open Cropper
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                openCropModal(e.target.result, inputId, ratio);
+            };
+            reader.readAsDataURL(file);
+            event.target.value = ''; // Reset
+        } else {
+            alert("Invalid file type. Please upload an image or PDF.");
+            event.target.value = '';
+        }
     }
 
     function openCropModal(imageSrc, targetId, ratio) {
@@ -728,7 +764,6 @@
     function applyCrop() {
         if (!cropper) return;
         
-        // Use max width 1200px for high quality but reasonable size
         cropper.getCroppedCanvas({
             width: 1200, 
             imageSmoothingEnabled: true,
@@ -739,17 +774,90 @@
             
             // Create local URL for preview
             const localUrl = URL.createObjectURL(blob);
-            setPreviewImage(currentCropTarget.replace('file', 'prev'), localUrl);
+            setPreview(currentCropTarget, localUrl, false);
             
             closeCropModal();
-        }, 'image/jpeg', 0.85); // Compress slightly to 85% quality jpeg
+        }, 'image/jpeg', 0.85); 
     }
 
-    function getSafeImageSource(imgId) {
-        const img = document.getElementById(imgId);
-        if (img.style.display === 'block' && img.src && img.src.trim() !== '') {
-            return img.src; 
+    // Universal Preview Setter (Handles both Image and PDF URLs dynamically)
+    function setPreview(inputId, url, isPdfOverride = false) {
+        if (!url || url.trim() === '') return;
+        
+        // Is it explicitly a PDF by extension or override flag?
+        if (isPdfOverride || url.toLowerCase().includes('.pdf')) {
+            setPdfPreview(inputId, url.split('/').pop().split('?')[0] || 'Document.pdf');
+            return;
         }
+
+        const box = document.getElementById(inputId).parentElement;
+        const imgId = inputId.replace('file', 'prev');
+        const img = document.getElementById(imgId);
+        
+        // Hide PDF Preview if it was showing
+        const pdfPrev = box.querySelector('.pdf-preview');
+        if (pdfPrev) pdfPrev.style.display = 'none';
+
+        // Show Image
+        img.src = url; 
+        img.style.display = 'block';
+        
+        const badge = document.getElementById(imgId.replace('prev', 'badge'));
+        if (badge) badge.style.display = 'flex';
+
+        hideBoxDefaults(box);
+    }
+
+    function setPdfPreview(inputId, filename) {
+        const box = document.getElementById(inputId).parentElement;
+        const imgId = inputId.replace('file', 'prev');
+        const img = document.getElementById(imgId);
+        
+        // Hide standard image
+        if (img) img.style.display = 'none';
+
+        // Show/Create PDF preview container
+        let pdfPrev = box.querySelector('.pdf-preview');
+        if (!pdfPrev) {
+            pdfPrev = document.createElement('div');
+            pdfPrev.className = 'pdf-preview';
+            pdfPrev.innerHTML = `<i class="fa-solid fa-file-pdf"></i><span></span>`;
+            box.appendChild(pdfPrev);
+        }
+        pdfPrev.querySelector('span').textContent = filename;
+        pdfPrev.style.display = 'flex';
+
+        const badge = document.getElementById(imgId.replace('prev', 'badge'));
+        if (badge) badge.style.display = 'flex';
+
+        hideBoxDefaults(box);
+    }
+
+    function hideBoxDefaults(box) {
+        const icon = box.querySelector('.upload-icon');
+        const title = box.querySelector('.upload-title');
+        const sub = box.querySelector('.upload-subtitle');
+        if (icon) icon.style.display = 'none';
+        if (title) title.style.display = 'none';
+        if (sub) sub.style.display = 'none';
+    }
+
+    // Helper to get preview data for the review modal
+    function getPreviewData(inputId) {
+        const box = document.getElementById(inputId).parentElement;
+        
+        // Check if PDF preview is active
+        const pdfPrev = box.querySelector('.pdf-preview');
+        if (pdfPrev && pdfPrev.style.display === 'flex') {
+            return { type: 'pdf', name: pdfPrev.querySelector('span').textContent };
+        }
+
+        // Check if Image preview is active
+        const img = document.getElementById(inputId.replace('file', 'prev'));
+        if (img && img.style.display === 'block' && img.src && img.src.trim() !== '') {
+            return { type: 'image', url: img.src };
+        }
+
         return null;
     }
 
@@ -758,40 +866,30 @@
         e.preventDefault();
 
         const type = document.getElementById('business-type').value;
-        const frontImgSrc = getSafeImageSource('prev-front');
-        const idImgSrc = getSafeImageSource('prev-id');
-        const cacImgSrc = getSafeImageSource('prev-cac');
+        const frontData = getPreviewData('file-front');
+        const idData = getPreviewData('file-id');
+        const cacData = getPreviewData('file-cac');
 
-        if (!frontImgSrc) return alert("Store Front image is required. Please upload and crop a photo.");
-        if (!idImgSrc) return alert("ID Card image is required. Please upload and crop your ID.");
+        if (!frontData) return alert("Store Front image is required.");
+        if (!idData) return alert("ID Document is required.");
         
-        if (type === 'Limited Liability (Ltd)' && !cacImgSrc) {
+        if (type === 'Limited Liability (Ltd)' && !cacData) {
             return alert("CAC Certificate is required for Limited Liability companies.");
         }
 
-        // Setup Modal Images
-        if (frontImgSrc) {
-            document.getElementById('rv-img-front').src = frontImgSrc;
-            document.getElementById('rv-img-front').style.display = 'block';
-            document.getElementById('rv-icon-front').style.display = 'none';
-        }
-        if (idImgSrc) {
-            document.getElementById('rv-img-id').src = idImgSrc;
-            document.getElementById('rv-img-id').style.display = 'block';
-            document.getElementById('rv-icon-id').style.display = 'none';
-        }
+        // Setup Modal Thumbnails
+        setupReviewThumbnail('rv-icon-front', 'rv-img-front', null, frontData);
+        setupReviewThumbnail('rv-icon-id', 'rv-img-id', 'rv-pdf-id', idData);
         
         const cacCol = document.getElementById('rv-cac-col');
-        if (cacImgSrc) {
+        if (cacData) {
             cacCol.style.display = 'flex';
-            document.getElementById('rv-img-cac').src = cacImgSrc;
-            document.getElementById('rv-img-cac').style.display = 'block';
-            document.getElementById('rv-icon-cac').style.display = 'none';
+            setupReviewThumbnail('rv-icon-cac', 'rv-img-cac', 'rv-pdf-cac', cacData);
         } else {
             cacCol.style.display = 'none';
         }
 
-        // Setup Modal Data
+        // Setup Modal Text Data
         const areaSelect = document.getElementById('area');
         const areaText = areaSelect.options[areaSelect.selectedIndex]?.text || '';
         const cityText = document.getElementById('city-display').value;
@@ -804,6 +902,23 @@
         document.getElementById('confirm-btn').innerHTML = isEdit ? 'Confirm Correction <i class="fa-solid fa-check"></i>' : 'Confirm & Submit <i class="fa-solid fa-check"></i>';
         document.getElementById('review-modal').classList.add('active');
         document.body.style.overflow = 'hidden';
+    }
+
+    function setupReviewThumbnail(iconId, imgId, pdfId, data) {
+        const icon = document.getElementById(iconId);
+        const img = document.getElementById(imgId);
+        const pdf = pdfId ? document.getElementById(pdfId) : null;
+
+        icon.style.display = 'none';
+        
+        if (data && data.type === 'pdf') {
+            img.style.display = 'none';
+            if(pdf) pdf.style.display = 'flex';
+        } else if (data && data.type === 'image') {
+            if(pdf) pdf.style.display = 'none';
+            img.src = data.url;
+            img.style.display = 'block';
+        }
     }
 
     function closePreviewDialog() {
@@ -820,11 +935,11 @@
         try {
             const type = document.getElementById('business-type').value;
 
-            // Upload the cropped blobs from memory, or fallback to existing URL
-            const logoUrl = await uploadBlob('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
-            const frontUrl = await uploadBlob('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
-            const idUrl = await uploadBlob('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
-            const cacUrl = await uploadBlob('file-cac', 'cac-documents', 'cac', existingShop?.cac_certificate_url);
+            // Upload files intelligently (Handles raw PDFs or cropped image blobs)
+            const logoUrl = await uploadFileOrBlob('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
+            const frontUrl = await uploadFileOrBlob('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
+            const idUrl = await uploadFileOrBlob('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
+            const cacUrl = await uploadFileOrBlob('file-cac', 'cac-documents', 'cac', existingShop?.cac_certificate_url);
 
             const payload = {
                 owner_id: currentUser.id,
@@ -878,15 +993,26 @@
         } 
     }
 
-    // Handles Blob upload to Supabase
-    async function uploadBlob(inputId, bucket, folder, existingUrl) {
-        const blob = croppedBlobs[inputId];
-        if (!blob) return existingUrl || null; 
+    // Core Upload logic taking PDF Files or Image Blobs
+    async function uploadFileOrBlob(inputId, bucket, folder, existingUrl) {
+        let fileOrBlob = null;
+        let ext = 'jpg';
+        let contentType = 'image/jpeg';
 
-        const fileName = `${folder}/${currentUser.id}_${Date.now()}.jpg`;
+        if (rawFiles[inputId]) {
+            fileOrBlob = rawFiles[inputId];
+            ext = 'pdf';
+            contentType = 'application/pdf';
+        } else if (croppedBlobs[inputId]) {
+            fileOrBlob = croppedBlobs[inputId];
+        }
+
+        if (!fileOrBlob) return existingUrl || null; 
+
+        const fileName = `${folder}/${currentUser.id}_${Date.now()}.${ext}`;
         
-        const { error: uploadError } = await client.storage.from(bucket).upload(fileName, blob, {
-            contentType: 'image/jpeg',
+        const { error: uploadError } = await client.storage.from(bucket).upload(fileName, fileOrBlob, {
+            contentType: contentType,
             upsert: false
         });
         
