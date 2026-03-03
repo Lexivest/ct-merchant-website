@@ -233,6 +233,7 @@
             .card { padding: 28px 20px; }
             .thumb-row { flex-wrap: wrap; }
             .thumb-col { min-width: 45%; }
+            .form-grid.full { grid-template-columns: 1fr; }
         }
         
         hr.divider { border: 0; border-top: 2px dashed var(--border-color); margin: 28px 0; }
@@ -436,7 +437,22 @@
 
         <!-- 5. Contacts & Socials -->
         <div class="section-title sec-contact"><i class="fa-solid fa-address-book"></i> Contacts & Socials</div>
+        
+        <!-- NEW DISCLAIMER -->
+        <p style="font-size: 0.85rem; color: #DC2626; margin-bottom: 16px; text-align: center; font-weight: 600; background: #FEF2F2; padding: 10px; border-radius: 8px; border: 1px solid #FECACA;">
+            <i class="fa-solid fa-circle-exclamation"></i> Please provide links to your <span style="text-decoration: underline;">business</span> profiles and website. Personal links may cause your application to be rejected.
+        </p>
+
         <div class="form-grid">
+            <!-- NEW WEBSITE FIELD -->
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="label">Business Website (Optional)</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-globe" style="color: #4F46E5;"></i>
+                    <input type="url" id="website" class="input with-icon" placeholder="https://www.yourshop.com" maxlength="150">
+                </div>
+            </div>
+
             <div class="upload-row">
                 <div class="form-group">
                     <label class="label">Business Phone</label>
@@ -561,6 +577,10 @@
             <div class="detail-label">Location</div>
             <div class="detail-value" id="rv-loc"></div>
         </div>
+        <div class="detail-row" id="rv-web-row" style="display:none;">
+            <div class="detail-label">Website</div>
+            <div class="detail-value" id="rv-web" style="color:var(--primary); word-break:break-all;"></div>
+        </div>
 
         <button type="button" class="btn-confirm" id="confirm-btn" onclick="submitApplication()">Confirm & Submit <i class="fa-solid fa-check"></i></button>
         <button type="button" class="btn-edit" onclick="closePreviewDialog()">Back to Edit</button>
@@ -656,7 +676,6 @@
                 const pathMatch = url.match(new RegExp(`/(?:public|authenticated)/${bucket}/(.+)`));
                 if (pathMatch && pathMatch[1]) {
                     const filePath = pathMatch[1].split('?')[0];
-                    // Generate a 1-hour signed URL so the merchant can see their own rejected docs
                     const { data, error } = await client.storage.from(bucket).createSignedUrl(filePath, 3600);
                     if (data && data.signedUrl) return data.signedUrl;
                 }
@@ -693,12 +712,11 @@
         document.getElementById('instagram').value = data.instagram_url || '';
         document.getElementById('twitter').value = data.twitter_url || '';
         document.getElementById('tiktok').value = data.tiktok_url || '';
+        document.getElementById('website').value = data.website_url || ''; // LOAD WEBSITE
 
-        // Generate Signed URLs for Private files so they load in the HTML preview!
         const idUrl = await getRenderableUrl(data.id_card_url, 'id-documents');
         const cacUrl = await getRenderableUrl(data.cac_certificate_url, 'cac-documents');
         
-        // Detect if original saved URL was a PDF
         const idIsPdf = data.id_card_url ? data.id_card_url.split('?')[0].toLowerCase().endsWith('.pdf') : false;
         const cacIsPdf = data.cac_certificate_url ? data.cac_certificate_url.split('?')[0].toLowerCase().endsWith('.pdf') : false;
 
@@ -741,7 +759,6 @@
         delete rawFiles[inputId];
         delete croppedBlobs[inputId];
 
-        // 1. PDF Handling (Read immediately into memory to avoid zero-byte browser bug)
         if (file.type === 'application/pdf') {
             if (file.size > MAX_FILE_SIZE) {
                 alert(`The selected PDF is too large (${Math.round(file.size/1024)}KB). Maximum allowed size is 500KB.`);
@@ -751,22 +768,19 @@
             
             const reader = new FileReader();
             reader.onload = (e) => {
-                // Safely store the PDF bytes in memory 
                 rawFiles[inputId] = new Blob([e.target.result], { type: 'application/pdf' });
-                rawFiles[inputId].name = file.name; // Keep name for the UI
+                rawFiles[inputId].name = file.name; 
                 setPdfPreview(inputId, file.name);
             };
             reader.readAsArrayBuffer(file);
-            // DO NOT clear input immediately, let the reader finish first.
             return;
         }
 
-        // 2. Image Selection (Pass to cropper for compression)
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 openCropModal(e.target.result, inputId, ratio);
-                event.target.value = ''; // Safe to clear image inputs because the cropper holds the data
+                event.target.value = ''; 
             };
             reader.readAsDataURL(file);
         } else {
@@ -914,6 +928,7 @@
             if (!url) return true; 
             try {
                 const parsedUrl = new URL(url.startsWith('http') ? url : `https://${url}`);
+                if (platform === 'any') return true; // Just checking if valid URL syntax for website
                 if (platform === 'twitter') {
                     return parsedUrl.hostname.includes('twitter.com') || parsedUrl.hostname.includes('x.com');
                 }
@@ -927,11 +942,13 @@
         const ig = document.getElementById('instagram').value.trim();
         const tw = document.getElementById('twitter').value.trim();
         const tk = document.getElementById('tiktok').value.trim();
+        const web = document.getElementById('website').value.trim();
 
         if (!validateSocialUrl(fb, 'facebook')) { alert("Please enter a valid Facebook URL."); return false; }
         if (!validateSocialUrl(ig, 'instagram')) { alert("Please enter a valid Instagram URL."); return false; }
         if (!validateSocialUrl(tw, 'twitter')) { alert("Please enter a valid X (Twitter) URL."); return false; }
         if (!validateSocialUrl(tk, 'tiktok')) { alert("Please enter a valid TikTok URL."); return false; }
+        if (!validateSocialUrl(web, 'any')) { alert("Please enter a valid Website URL."); return false; } // Validate Website
 
         return true;
     }
@@ -970,6 +987,14 @@
         document.getElementById('rv-cat').textContent = document.getElementById('category').value;
         document.getElementById('rv-loc').textContent = `${areaText}, ${cityText}`;
         
+        const web = document.getElementById('website').value.trim();
+        if (web) {
+            document.getElementById('rv-web-row').style.display = 'flex';
+            document.getElementById('rv-web').textContent = web;
+        } else {
+            document.getElementById('rv-web-row').style.display = 'none';
+        }
+
         document.getElementById('confirm-btn').innerHTML = isEdit ? 'Confirm Correction <i class="fa-solid fa-check"></i>' : 'Confirm & Submit <i class="fa-solid fa-check"></i>';
         document.getElementById('review-modal').classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -1037,6 +1062,7 @@
                 instagram_url: document.getElementById('instagram').value || null,
                 twitter_url: document.getElementById('twitter').value || null,
                 tiktok_url: document.getElementById('tiktok').value || null,
+                website_url: document.getElementById('website').value || null, // SAVING WEBSITE
                 
                 status: 'pending', 
                 rejection_reason: null
@@ -1079,7 +1105,6 @@
 
         if (!fileOrBlob) return existingUrl || null; 
 
-        // DELETE OLD FILE LOGIC
         if (existingUrl) {
             try {
                 const pathMatch = existingUrl.match(new RegExp(`/(?:public|authenticated)/${bucket}/(.+)`));
@@ -1101,7 +1126,6 @@
         
         if (uploadError) throw uploadError;
         
-        // FIX FOR PRIVATE BUCKETS: Store the `/authenticated/` URL instead of `/public/`
         const { data } = client.storage.from(bucket).getPublicUrl(fileName);
         let finalUrl = data.publicUrl;
         
