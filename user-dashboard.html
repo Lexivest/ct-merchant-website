@@ -7,202 +7,226 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- Cropper.js for professional image cropping -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     
     <style>
         :root {
-            /* --- THEME --- */
-            --color-primary: #059669; /* Emerald Green */
-            --color-primary-dark: #047857;
-            --color-accent: #FFFFFF; /* White for header text */
-            --color-bg: #F3F4F6;
-            --color-text-main: #1F2937;
+            /* PREMIUM AMAZON THEME */
+            --amz-dark: #131921;
+            --amz-dark-hover: #232F3E;
+            --amz-nav-bar: #232F3E;
+            --amz-orange: #FEBD69;
+            --amz-orange-hover: #F3A847;
+            --amz-bg: #E3E6E6;
+            --amz-link: #007185;
+            --amz-link-hover: #C40000;
+            --color-text-main: #0F1111;
             
-            --sidebar-width: 280px;
-            --header-height: 60px;
+            --color-primary: #059669; /* Kept for forms/buttons internally */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
 
         body { 
-            background-color: var(--color-bg); 
+            background-color: var(--amz-bg); 
             color: var(--color-text-main);
             overflow-x: hidden;
         }
 
-        /* --- 1. SIDEBAR (Universal Overlay) --- */
-        .sidebar {
-            position: fixed; top: 0; left: 0; bottom: 0;
-            width: var(--sidebar-width);
-            background: white;
-            z-index: 2000;
-            display: flex; flex-direction: column;
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
-        }
-
-        body.sb-open .sidebar { transform: translateX(0); }
-
-        .sidebar-header {
-            height: var(--header-height);
-            background: var(--color-primary);
+        /* --- 1. PREMIUM HEADER --- */
+        .amz-header {
+            background-color: var(--amz-dark);
             color: white;
-            display: flex; align-items: center; gap: 12px; padding: 0 20px;
-        }
-        
-        .sidebar-logo { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; background: white; border: 2px solid white; }
-
-        .nav-scroll { flex: 1; padding: 16px; overflow-y: auto; }
-        .nav-btn {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px 16px; width: 100%; border: none; background: none;
-            color: #4B5563; font-weight: 600; font-size: 0.95rem;
-            border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: left; margin-bottom: 4px;
-        }
-        .nav-btn:hover { background: #F3F4F6; color: var(--color-primary); }
-        .nav-btn.active { background: #ECFDF5; color: var(--color-primary); }
-        .nav-btn i { width: 24px; text-align: center; }
-
-        .sidebar-footer { padding: 16px; border-top: 1px solid #E5E7EB; }
-
-        /* --- 2. BACKDROP OVERLAY --- */
-        .overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1500;
-            opacity: 0; visibility: hidden; transition: 0.3s;
-        }
-        body.sb-open .overlay { opacity: 1; visibility: visible; }
-
-        /* --- 3. HEADER (Fixed, Single Row) --- */
-        .top-header {
-            position: fixed; top: 0; left: 0; right: 0;
+            position: sticky;
+            top: 0;
             z-index: 1000;
-            background: var(--color-primary);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            height: var(--header-height);
+            display: flex;
+            flex-direction: column;
         }
 
-        .header-main {
-            height: 100%;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 12px;
-            max-width: 1400px; margin: 0 auto;
-        }
-        
-        /* Left Section */
-        .header-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .menu-toggle { background: none; border: none; color: white; font-size: 1.4rem; padding: 8px; cursor: pointer; }
-        .header-city { font-weight: 700; font-size: 1rem; color: white; white-space: nowrap; }
-
-        /* Center Section (Ticker) */
-        .header-ticker {
-            flex: 1;
-            margin: 0 16px;
-            overflow: hidden;
+        .amz-header-top {
             display: flex;
             align-items: center;
-            height: 100%;
-            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-        }
-        .ticker-content {
-            white-space: nowrap; 
-            animation: ticker 60s linear infinite;
-            color: white; 
-            font-weight: 600; 
-            font-size: 0.9rem; 
-            padding-left: 100%;
-        }
-        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
-
-        /* Right Section */
-        .header-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-        
-        .action-btn { background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; }
-        .notif-wrap { position: relative; cursor: pointer; color: white; }
-        .notif-badge {
-            position: absolute; top: -4px; right: -4px;
-            background: #EF4444; color: white; font-size: 0.65rem; font-weight: 800;
-            padding: 2px 4px; border-radius: 10px; border: 1.5px solid var(--color-primary);
-            display: none;
-        }
-
-        /* --- 4. CONTENT BODY --- */
-        .content-body {
-            margin-top: var(--header-height);
-            padding: 0 0 40px 0;
-            max-width: 1400px; margin-left: auto; margin-right: auto;
+            padding: 8px 16px;
+            gap: 16px;
+            max-width: 1600px;
+            margin: 0 auto;
             width: 100%;
         }
-        @media (min-width: 1024px) { .content-body { padding: 20px; } }
 
-        /* --- UTILS --- */
+        /* Logo & Location Block */
+        .amz-logo-block {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+        }
+
+        .amz-logo {
+            height: 36px;
+            border-radius: 4px;
+            object-fit: contain;
+        }
+
+        .amz-location {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .amz-location:hover { border: 1px solid white; }
+
+        .loc-label { font-size: 0.75rem; color: #CCCCCC; line-height: 1; padding-left: 18px; }
+        .loc-city { font-size: 0.9rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 4px; line-height: 1; margin-top: 2px;}
+
+        /* Search Bar */
+        .amz-search-block {
+            flex: 1;
+            display: flex;
+            height: 40px;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 2px solid transparent;
+        }
+        .amz-search-block:focus-within { border-color: var(--amz-orange); }
+
+        .amz-search-input {
+            flex: 1;
+            padding: 0 16px;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            color: #0F1111;
+        }
+        .amz-search-btn {
+            width: 45px;
+            background-color: var(--amz-orange);
+            border: none;
+            color: #333;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .amz-search-btn:hover { background-color: var(--amz-orange-hover); }
+
+        /* Top Navigation Links */
+        .amz-nav-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .amz-nav-item {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 8px 12px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            position: relative;
+        }
+        .amz-nav-item:hover, .amz-nav-item.active { border-color: white; }
+        
+        .nav-label { font-size: 0.75rem; color: #CCCCCC; line-height: 1; margin-bottom: 2px;}
+        .nav-main { font-size: 0.9rem; font-weight: 700; line-height: 1; white-space: nowrap;}
+
+        .notif-badge {
+            position: absolute; top: 2px; right: 2px;
+            background: #EF4444; color: white; font-size: 0.65rem; font-weight: 800;
+            padding: 2px 5px; border-radius: 10px; display: none;
+        }
+
+        .profile-nav-block {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            object-fit: cover; border: 1px solid #CCC; background: white;
+        }
+
+        /* Sub Header (Ticker) */
+        .amz-sub-header {
+            background-color: var(--amz-nav-bar);
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            color: white;
+            font-weight: 500;
+        }
+        .ticker-wrapper { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; gap: 12px;}
+        .ticker-content { white-space: nowrap; animation: ticker 40s linear infinite; padding-left: 100%; color: white;}
+        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+
+
+        /* Responsive Header Adjustments */
+        @media (max-width: 900px) {
+            .amz-header-top { flex-wrap: wrap; gap: 10px; padding: 10px; }
+            .amz-search-block { order: 3; width: 100%; flex: 0 0 100%; }
+            .loc-label { display: none; }
+            .loc-city { padding-left: 0; }
+            .nav-label { display: none; }
+            .profile-nav-block { flex-direction: row-reverse; }
+        }
+
+        /* --- 2. CONTENT BODY --- */
+        .content-body {
+            max-width: 1600px; 
+            margin: 0 auto;
+            width: 100%;
+            padding: 20px;
+        }
+
+        /* Utils */
         .screen { display: none; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* COMPACT SPACING STYLES */
-        .sec-header { 
-            display: flex; align-items: center; gap: 10px; 
-            padding: 6px 16px 2px 16px; 
-            margin: 0; 
-            background: var(--color-bg); 
-        }
-        .sec-bar { width: 4px; height: 18px; border-radius: 4px; }
-        .sec-title { font-size: 1.05rem; font-weight: 800; color: #111827; }
-
+        /* Promos / Hero */
         .h-scroll {
-            display: flex; overflow-x: auto; gap: 16px; 
-            padding: 0 16px 4px 16px;
+            display: flex; overflow-x: auto; gap: 20px; 
+            padding-bottom: 20px;
             scrollbar-width: none;
-            -ms-overflow-style: none;
         }
         .h-scroll::-webkit-scrollbar { display: none; }
 
         /* =========================================
-           PREMIUM AMAZON-STYLE SHOP CARDS
+           PREMIUM AMAZON-STYLE SHOP CARDS (2x2 GRID)
            ========================================= */
         .shop-list-view {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
-            padding: 0 16px 20px 16px;
-        }
-
-        .h-scroll .premium-shop-card {
-            min-width: 280px;
-            width: 80vw;
-            max-width: 360px;
-            flex-shrink: 0;
+            margin-bottom: 40px;
         }
 
         .premium-shop-card {
             background: white;
-            border-radius: 12px;
             padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            /* Soft premium shadow */
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border: 1px solid #F3F4F6;
             cursor: pointer;
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
             height: 100%;
+            border-radius: 4px;
+            /* No heavy shadows, just flat clean boxes like Amazon */
         }
-        .premium-shop-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
-            border-color: #E5E7EB;
-        }
+        .premium-shop-card:hover { border: 1px solid #E3E6E6; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
 
         .shop-card-title {
             font-size: 1.25rem;
-            font-weight: 800;
-            color: #111827;
-            line-height: 1.3;
+            font-weight: 700;
+            color: #0F1111;
+            margin-bottom: 16px;
+            line-height: 1.2;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
@@ -212,110 +236,84 @@
         .shop-image-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px 16px; /* row-gap col-gap */
-            margin-bottom: auto; /* Pushes the CTA to the absolute bottom */
+            gap: 16px;
+            margin-bottom: 20px;
+            flex: 1; /* Pushes CTA to bottom */
         }
 
         .shop-grid-item-wrap {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
         }
 
         .shop-grid-item {
-            position: relative;
             width: 100%;
-            aspect-ratio: 1; /* Perfect squares */
-            border-radius: 8px;
-            overflow: hidden;
-            background: #F9FAFB;
+            aspect-ratio: 1; /* Perfect Square */
+            background: #F7F7F7;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
 
         .shop-grid-item img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-
-        .premium-shop-card:hover .shop-grid-item img {
-            transform: scale(1.05);
         }
 
         .shop-grid-item.empty {
-            border: 1px dashed #E5E7EB;
-            background: #F9FAFB;
+            border: 1px dashed #D5D9D9;
         }
 
         .shop-grid-caption {
-            font-size: 0.8rem;
-            color: #4B5563;
-            font-weight: 600;
+            font-size: 0.75rem;
+            color: #0F1111;
+            font-weight: 500;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .shop-cta {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--color-primary);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 8px;
-            transition: color 0.2s;
+            font-size: 0.85rem;
+            color: var(--amz-link);
+            font-weight: 600;
+            display: inline-block;
+            text-decoration: none;
+            margin-top: auto;
         }
+        .premium-shop-card:hover .shop-cta { color: var(--amz-link-hover); text-decoration: underline; }
 
-        .premium-shop-card:hover .shop-cta {
-            color: var(--color-primary-dark);
-        }
-        /* ========================================= */
 
-        /* Areas */
-        .area-container { margin-bottom: 0; padding-bottom: 0; }
-        .area-pill { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 8px 12px; border-radius: 8px; 
-            margin: 4px 16px 12px 16px; 
-        }
-        .area-pill.user { background: #DCFCE7; }
-        .area-pill.other { background: #FEF3C7; }
-        .pill-left { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #1F2937; }
-
-        .cat-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 16px 16px; }
-        .cat-chip {
-            background: white; border: 1px solid #E5E7EB; border-radius: 50px;
-            padding: 6px 14px 6px 6px; display: flex; align-items: center; gap: 8px;
-            cursor: pointer; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-        .cat-chip img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; }
-        .cat-chip span { font-size: 0.85rem; font-weight: 700; color: #374151; }
-
-        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding: 20px 16px; }
+        /* Form & Utility Styles */
+        .sec-title { font-size: 1.5rem; font-weight: 700; color: #0F1111; margin-bottom: 16px; }
+        
+        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding-bottom: 40px; }
         .svc-card {
-            background: white; padding: 20px 16px; border-radius: 12px; text-align: center;
-            border: 1px solid #E5E7EB; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;
-            transition: transform 0.2s;
+            background: white; padding: 20px 16px; border-radius: 8px; text-align: center;
+            border: 1px solid #D5D9D9; cursor: pointer; transition: 0.2s;
         }
-        .svc-card:active { transform: scale(0.96); }
-        .svc-icon { width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .svc-card:hover { background: #F7F7F7; }
+        .svc-icon { width: 48px; height: 48px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #565959;}
 
-        /* Form Styles */
+        /* Profile Forms */
         .form-group { margin-bottom: 16px; text-align: left; }
-        .form-label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #374151; }
-        .form-input { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 1rem; }
-        .form-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px #A7F3D0; }
+        .form-label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #0F1111; }
+        .form-input { width: 100%; padding: 10px 14px; border: 1px solid #888C8C; border-radius: 4px; font-size: 1rem; box-shadow: 0 1px 2px rgba(15,17,17,0.15) inset; }
+        .form-input:focus { outline: none; border-color: var(--amz-orange); box-shadow: 0 0 0 3px rgba(228,121,17,0.5); }
+
+        .btn-amz { background: #FFD814; border: 1px solid #FCD200; border-radius: 8px; padding: 10px 16px; color: #0F1111; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px 0 rgba(213,217,217,0.5); transition: 0.2s; }
+        .btn-amz:hover { background: #F7CA00; border-color: #F2C200; }
+        .btn-amz-alt { background: white; border: 1px solid #D5D9D9; border-radius: 8px; padding: 10px 16px; color: #0F1111; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px 0 rgba(213,217,217,0.5); transition: 0.2s;}
+        .btn-amz-alt:hover { background: #F7FAFA; }
 
         /* Profile Avatar Edit Box */
         .avatar-edit-box {
             position: relative; width: 110px; height: 110px; margin: 0 auto;
             border-radius: 50%; overflow: hidden; cursor: pointer;
-            border: 4px solid var(--color-primary);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 2px solid #D5D9D9;
         }
         .avatar-edit-box img { width: 100%; height: 100%; object-fit: cover; }
         .avatar-overlay {
@@ -340,12 +338,7 @@
         .crop-title { font-weight: 700; font-size: 1.2rem; }
         .crop-workspace { flex: 1; position: relative; width: 100%; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
         .crop-workspace img { max-width: 100%; max-height: 100%; display: block; }
-        .crop-footer-bar {
-            padding: 20px; background: rgba(0,0,0,0.5); display: flex; gap: 16px; justify-content: center;
-        }
-        .btn-crop-cancel { background: #374151; color: white; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; }
-        .btn-crop-apply { background: var(--color-primary); color: white; padding: 12px 32px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
-
+        .crop-footer-bar { padding: 20px; background: rgba(0,0,0,0.5); display: flex; gap: 16px; justify-content: center; }
 
         /* --- AI CHAT WIDGET STYLES --- */
         .ai-fab-container {
@@ -354,14 +347,14 @@
         }
         .ai-fab {
             width: 56px; height: 56px; border-radius: 50%;
-            background: var(--color-primary); color: white;
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4); cursor: pointer;
+            background: var(--amz-dark); color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             font-size: 1.5rem; transition: transform 0.2s; border: none;
         }
         .ai-fab:active { transform: scale(0.95); }
         .ai-label {
-            background: white; color: var(--color-primary);
+            background: white; color: var(--amz-dark);
             font-size: 0.7rem; font-weight: 800;
             padding: 4px 8px; border-radius: 12px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB;
@@ -371,45 +364,40 @@
         .chat-window {
             position: fixed; bottom: 90px; right: 20px;
             width: 350px; height: 500px;
-            background: white; border-radius: 16px;
+            background: white; border-radius: 8px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 4000;
             display: flex; flex-direction: column;
             overflow: hidden; opacity: 0; pointer-events: none;
             transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid #E5E7EB;
+            border: 1px solid #D5D9D9;
         }
         .chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
 
         .chat-header {
-            background: var(--color-primary); color: white;
+            background: var(--amz-dark); color: white;
             padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
         }
         .chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
-        .chat-msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; }
-        .msg-ai { align-self: flex-start; background: white; border: 1px solid #E2E8F0; color: #1E293B; border-bottom-left-radius: 2px; }
-        .msg-user { align-self: flex-end; background: var(--color-primary); color: white; border-bottom-right-radius: 2px; }
+        .chat-msg { max-width: 80%; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; line-height: 1.4; }
+        .msg-ai { align-self: flex-start; background: white; border: 1px solid #D5D9D9; color: #0F1111; }
+        .msg-user { align-self: flex-end; background: var(--amz-dark); color: white; }
         .msg-error { align-self: center; background: #FEE2E2; color: #DC2626; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
         
         .chat-input-area {
-            padding: 12px; background: white; border-top: 1px solid #E2E8F0;
+            padding: 12px; background: white; border-top: 1px solid #D5D9D9;
             display: flex; flex-direction: column; gap: 8px;
         }
-        .chat-input-row {
-            display: flex; gap: 8px; width: 100%;
-        }
+        .chat-input-row { display: flex; gap: 8px; width: 100%; }
         .chat-input {
-            flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #E2E8F0;
-            outline: none; font-size: 0.9rem; background: #F1F5F9;
+            flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #888C8C;
+            outline: none; font-size: 0.9rem;
         }
+        .chat-input:focus { border-color: var(--amz-orange); box-shadow: 0 0 0 2px rgba(228,121,17,0.5); }
         .btn-send {
-            background: var(--color-primary); color: white; border: none;
-            width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+            background: var(--amz-orange); color: #0F1111; border: none;
+            width: 40px; height: 40px; border-radius: 4px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .chat-disclaimer {
-            font-size: 0.65rem; color: #9CA3AF; text-align: center;
-            line-height: 1.2;
+            font-size: 1.1rem;
         }
 
         /* Mobile Chat overrides */
@@ -423,65 +411,58 @@
 </head>
 <body>
 
-    <!-- OVERLAY (Universal) -->
-    <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="sidebar-logo" alt="Logo">
-            <span style="font-weight: 800; font-size: 1.1rem; margin-left: 10px;">CT-MERCHANT</span>
-        </div>
-        
-        <div class="nav-scroll">
-            <button class="nav-btn active" onclick="switchScreen('market', this)">
-                <i class="fa-solid fa-store"></i> Repository
-            </button>
-            <button class="nav-btn" onclick="switchScreen('services', this)">
-                <i class="fa-solid fa-table-cells-large"></i> Services
-            </button>
-            <button class="nav-btn" onclick="switchScreen('profile', this)">
-                <i class="fa-solid fa-user-gear"></i> My Profile
-            </button>
-            <button class="nav-btn" onclick="switchScreen('notifications', this)">
-                <i class="fa-solid fa-bell"></i> Notifications
-            </button>
-        </div>
-        
-        <div class="sidebar-footer">
-            <button class="nav-btn" style="color: #EF4444;" onclick="handleLogout()">
-                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
-            </button>
-        </div>
-    </aside>
-
-    <!-- HEADER (Single Row) -->
-    <header class="top-header">
-        <div class="header-main">
-            <!-- Left: Toggle & City -->
-            <div class="header-left">
-                <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-                <div id="header-city" class="header-city">...</div>
+    <!-- HEADER (Amazon Style) -->
+    <header class="amz-header">
+        <div class="amz-header-top">
+            
+            <!-- Logo & City -->
+            <div class="amz-logo-block">
+                <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="amz-logo" alt="Logo">
+                <div class="amz-location">
+                    <span class="loc-label">Deliver to</span>
+                    <span class="loc-city"><i class="fa-solid fa-location-dot"></i> <span id="header-city">...</span></span>
+                </div>
             </div>
             
-            <!-- Middle: Ticker -->
-            <div id="header-ticker" class="header-ticker" style="display:none;">
-                <div id="ticker-text" class="ticker-content"></div>
+            <!-- Big Search Bar -->
+            <div class="amz-search-block">
+                <input type="text" class="amz-search-input" placeholder="Search shops, products...">
+                <button class="amz-search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
             
-            <!-- Right: Actions -->
-            <div class="header-actions">
-                <!-- SHOP INDEX ICON -->
-                <button class="action-btn" onclick="window.location.href='shop-index.html'" title="Shop Index">
-                    <i class="fa-solid fa-arrow-down-a-z" style="font-size: 1.1rem;"></i>
-                </button>
-                
-                <div class="notif-wrap" onclick="switchScreen('notifications', document.querySelectorAll('.nav-btn')[3])">
-                    <i class="fa-regular fa-bell" style="font-size:1.3rem;"></i>
-                    <div id="badge-count" class="notif-badge">0</div>
+            <!-- Navigation -->
+            <div class="amz-nav-group">
+                <div class="amz-nav-item active" onclick="switchScreen('market', this)">
+                    <span class="nav-label">Browse</span>
+                    <span class="nav-main">Repository</span>
                 </div>
                 
-                <img id="header-avatar" src="" style="width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,0.5); object-fit:cover; background:#ccc; cursor:pointer;" onclick="switchScreen('profile', document.querySelectorAll('.nav-btn')[2])">
+                <div class="amz-nav-item" onclick="switchScreen('services', this)">
+                    <span class="nav-label">Explore</span>
+                    <span class="nav-main">Services</span>
+                </div>
+
+                <div class="amz-nav-item" onclick="switchScreen('notifications', this)">
+                    <span class="nav-label">Updates</span>
+                    <span class="nav-main">Alerts <span id="badge-count" class="notif-badge">0</span></span>
+                </div>
+
+                <div class="amz-nav-item profile-nav-block" onclick="switchScreen('profile', this)">
+                    <img id="header-avatar" src="" class="header-avatar">
+                    <div style="display: flex; flex-direction: column;">
+                        <span class="nav-label" id="nav-hello-name">Hello, User</span>
+                        <span class="nav-main">Profile</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sub Header Ticker -->
+        <div class="amz-sub-header" id="header-ticker" style="display:none;">
+            <div class="ticker-wrapper">
+                <i class="fa-solid fa-bullhorn" style="color: var(--amz-orange);"></i>
+                <div id="ticker-text" class="ticker-content"></div>
             </div>
         </div>
     </header>
@@ -491,66 +472,45 @@
         
         <!-- MARKET -->
         <div id="market" class="screen active">
-            <!-- Promos -->
-            <div id="promo-list" class="h-scroll" style="display:none; padding-top:8px;"></div>
             
-            <!-- Featured -->
-            <div id="featured-section" style="display:none;">
-                <div class="sec-header">
-                    <div class="sec-bar" style="background: orange;"></div>
-                    <div class="sec-title">Featured Shops</div>
-                </div>
-                <div id="featured-list" class="h-scroll"></div>
+            <!-- Promos (Hero Banner style) -->
+            <div id="promo-list" class="h-scroll" style="display:none;"></div>
+            
+            <div id="initial-loader" style="text-align:center; padding:60px 0; color:#888C8C;">
+                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem;"></i>
             </div>
 
-            <!-- Areas -->
-            <div id="areas-container" style="margin-top:0;">
-                <div id="initial-loader" style="text-align:center; padding:60px 0; color:#CBD5E1;">
-                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem;"></i>
-                </div>
-            </div>
+            <!-- Areas Container (Dynamically injected Shop Grids go here) -->
+            <div id="areas-container"></div>
 
-            <!-- Categories -->
-            <div class="sec-header">
-                <div class="sec-bar" style="background: var(--color-primary);"></div>
-                <div class="sec-title">Browse Categories</div>
-            </div>
-            <div id="category-list" class="cat-grid"></div>
-
-            <!-- All Shops -->
-            <div class="sec-header">
-                <div class="sec-bar" style="background: #374151;"></div>
-                <div class="sec-title">All Shops</div>
-            </div>
-            <div id="all-shops-grid" class="shop-list-view"></div>
         </div>
 
         <!-- SERVICES -->
         <div id="services" class="screen">
-            <h2 class="sec-title" style="margin: 16px 16px 0 16px;">Services & Tools</h2>
+            <h2 class="sec-title">Services & Tools</h2>
             <div class="svc-grid">
                 
                 <!-- MY SHOP DYNAMIC CARD -->
                 <div id="myshop-card" class="svc-card" onclick="handleShopClick()">
-                    <div class="svc-icon" style="background:#F3F4F6; color:#9CA3AF;"><i class="fa-solid fa-store"></i></div>
+                    <div class="svc-icon"><i class="fa-solid fa-store"></i></div>
                     <strong>Loading...</strong>
                 </div>
 
                 <div class="svc-card" onclick="window.location.href='wishlist.html'">
-                    <div class="svc-icon" style="background:#FCE7F3; color:#DB2777;"><i class="fa-solid fa-heart"></i></div>
+                    <div class="svc-icon"><i class="fa-solid fa-heart"></i></div>
                     <strong>Wishlist</strong>
-                    <div id="wishlist-count" style="font-size:0.8rem; color:#6B7280; margin-top:4px;">...</div>
+                    <div id="wishlist-count" style="font-size:0.8rem; color:#565959; margin-top:4px;">...</div>
                 </div>
                 <div class="svc-card" onclick="window.location.href='help-support.html'">
-                    <div class="svc-icon" style="background:#DCFCE7; color:#10B981;"><i class="fa-solid fa-headset"></i></div>
+                    <div class="svc-icon"><i class="fa-solid fa-headset"></i></div>
                     <strong>Support</strong>
                 </div>
                 <div class="svc-card" onclick="window.location.href='faq.html'">
-                    <div class="svc-icon" style="background:#E0E7FF; color:#4338CA;"><i class="fa-solid fa-circle-question"></i></div>
+                    <div class="svc-icon"><i class="fa-solid fa-circle-question"></i></div>
                     <strong>FAQ</strong>
                 </div>
                 <div class="svc-card" onclick="window.location.href='report-abuse.html'">
-                    <div class="svc-icon" style="background:#FEE2E2; color:#DC2626;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="svc-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
                     <strong>Report Abuse</strong>
                 </div>
             </div>
@@ -559,22 +519,25 @@
         <!-- PROFILE -->
         <div id="profile" class="screen">
             <!-- View Mode -->
-            <div id="profile-view" style="max-width:600px; margin:20px auto; background:white; padding:40px; border-radius:16px; border:1px solid #E5E7EB; text-align:center;">
-                <img id="profile-avatar-lg" src="" style="width:110px; height:110px; border-radius:50%; margin-bottom:16px; border:4px solid var(--color-primary); object-fit: cover;">
-                <h2 id="profile-name" style="font-size:1.5rem; color:#111827;">Loading...</h2>
-                <p id="profile-phone" style="color:#6B7280; font-weight:500; margin-bottom:4px;"></p>
-                <p id="profile-email" style="color:#9CA3AF; margin-bottom:20px; font-size:0.9rem;">...</p>
+            <div id="profile-view" style="max-width:600px; margin:20px auto; background:white; padding:40px; border-radius:8px; border:1px solid #D5D9D9; text-align:center;">
+                <img id="profile-avatar-lg" src="" style="width:120px; height:120px; border-radius:50%; margin-bottom:16px; border:2px solid #D5D9D9; object-fit: cover;">
+                <h2 id="profile-name" style="font-size:1.8rem; color:#0F1111; margin-bottom:8px;">Loading...</h2>
+                <p id="profile-phone" style="color:#565959; font-weight:500; margin-bottom:4px;"></p>
+                <p id="profile-email" style="color:#565959; margin-bottom:24px; font-size:0.95rem;">...</p>
                 
-                <div style="display:flex; justify-content:center; gap:10px;">
-                    <button onclick="openEditProfile()" style="background:var(--color-primary); color:white; border:none; padding:10px 24px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px;">
-                        <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+                <div style="display:flex; justify-content:center; gap:12px;">
+                    <button class="btn-amz" onclick="openEditProfile()">
+                        Edit Profile
+                    </button>
+                    <button class="btn-amz-alt" onclick="handleLogout()">
+                        Sign Out
                     </button>
                 </div>
             </div>
 
             <!-- Edit Mode -->
-            <div id="profile-edit" style="display:none; max-width:600px; margin:20px auto; background:white; padding:30px; border-radius:16px; border:1px solid #E5E7EB;">
-                <h3 style="margin-bottom:20px; font-size:1.2rem; border-bottom:1px solid #E5E7EB; padding-bottom:10px;">Edit Profile</h3>
+            <div id="profile-edit" style="display:none; max-width:600px; margin:20px auto; background:white; padding:30px; border-radius:8px; border:1px solid #D5D9D9;">
+                <h3 style="margin-bottom:24px; font-size:1.4rem;">Edit Profile</h3>
                 
                 <!-- AVATAR UPLOAD SECTION -->
                 <div style="text-align: center; margin-bottom: 24px;">
@@ -583,7 +546,7 @@
                         <div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>
                     </div>
                     <input type="file" id="file-avatar" hidden accept="image/*" onchange="handleAvatarSelect(event)">
-                    <p style="font-size: 0.8rem; color: #6B7280; margin-top: 8px; font-weight: 600;">Tap photo to update (Max 500KB)</p>
+                    <p style="font-size: 0.8rem; color: #565959; margin-top: 8px; font-weight: 600;">Tap photo to update (Max 500KB)</p>
                 </div>
 
                 <div class="form-group">
@@ -610,20 +573,20 @@
                     </select>
                 </div>
                 
-                <p id="edit-error" style="color:#EF4444; font-size:0.9rem; margin-bottom:16px; display:none;"></p>
+                <p id="edit-error" style="color:#C40000; font-size:0.9rem; margin-bottom:16px; display:none;"></p>
 
                 <div style="display:flex; gap:12px;">
-                    <button id="btn-save" onclick="saveProfile()" style="flex:1; background:var(--color-primary); color:white; border:none; padding:12px; border-radius:8px; font-weight:700; cursor:pointer;">Save Changes</button>
-                    <button onclick="cancelEdit()" style="flex:1; background:#F3F4F6; color:#374151; border:1px solid #D1D5DB; padding:12px; border-radius:8px; font-weight:700; cursor:pointer;">Cancel</button>
+                    <button id="btn-save" class="btn-amz" style="flex:1;" onclick="saveProfile()">Save Changes</button>
+                    <button class="btn-amz-alt" style="flex:1;" onclick="cancelEdit()">Cancel</button>
                 </div>
             </div>
         </div>
 
         <!-- NOTIFICATIONS -->
         <div id="notifications" class="screen">
-            <h2 class="sec-title" style="margin: 16px 16px 10px 16px;">Notifications</h2>
-            <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:600px; margin: 0 16px;">
-                <p style="color:#9CA3AF; text-align:center; padding-top:20px;">Loading notifications...</p>
+            <h2 class="sec-title">Alerts & Notifications</h2>
+            <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:800px;">
+                <p style="color:#565959; padding-top:20px;">Loading notifications...</p>
             </div>
         </div>
 
@@ -639,8 +602,8 @@
             <img id="avatar-crop-image" src="">
         </div>
         <div class="crop-footer-bar">
-            <button type="button" class="btn-crop-cancel" onclick="closeAvatarCropModal()">Cancel</button>
-            <button type="button" class="btn-crop-apply" onclick="applyAvatarCrop()">Apply Crop</button>
+            <button type="button" class="btn-amz-alt" onclick="closeAvatarCropModal()">Cancel</button>
+            <button type="button" class="btn-amz" onclick="applyAvatarCrop()">Apply Crop</button>
         </div>
     </div>
 
@@ -667,7 +630,6 @@
                 <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMsg()">
                 <button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
-            <!-- THE NEW UI DISCLAIMER -->
             <div class="chat-disclaimer">
                 AI can make mistakes. Please verify prices on the merchant's shop.
             </div>
@@ -687,8 +649,8 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v18'; 
-    const MAX_FILE_SIZE = 500 * 1024; // 500KB LIMIT
+    const CACHE_KEY = 'ctm_dash_v19'; 
+    const MAX_FILE_SIZE = 500 * 1024; 
 
     let chatHistory = [];
 
@@ -698,13 +660,9 @@
     let currentOldAvatarUrl = null;
 
     // --- NAVIGATION ---
-    function toggleSidebar() {
-        document.body.classList.toggle('sb-open');
-    }
-
     function switchScreen(id, btn) {
         if (btn) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.amz-nav-item').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         }
         
@@ -712,12 +670,11 @@
         const target = document.getElementById(id);
         if (target) target.classList.add('active');
 
-        document.body.classList.remove('sb-open');
         if(id === 'notifications') markRead();
     }
 
     // =========================================
-    // AI CHAT LOGIC (WITH FRONTEND LIMITER)
+    // AI CHAT LOGIC
     // ==========================================
     function toggleChat() {
         document.getElementById('chat-window').classList.toggle('open');
@@ -752,7 +709,7 @@
         chatHistory.push({ role: 'user', content: txt });
 
         const loadId = 'loading-' + Date.now();
-        body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic; color:#6B7280;">Thinking...</div>`;
+        body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic; color:#565959;">Thinking...</div>`;
         body.scrollTop = body.scrollHeight;
 
         try {
@@ -834,10 +791,9 @@
             userCityId = profile.city_id;
             userAreaId = profile.area_id;
 
-            const [promos, announcements, categories, areas, shops, notifs, myShop, wishlist] = await Promise.all([
+            const [promos, announcements, areas, shops, notifs, myShop, wishlist] = await Promise.all([
                 client.from('promo_banners').select().order('created_at', {ascending: false}),
                 client.from('announcements').select().order('created_at', {ascending: false}),
-                client.from('categories').select().order('name'),
                 client.from('areas').select().eq('city_id', userCityId).order('name'),
                 client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}),
                 client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20),
@@ -864,7 +820,6 @@
                 profile,
                 promos: promos.data,
                 announcements: announcements.data,
-                categories: categories.data,
                 areas: areas.data,
                 shops: shops.data,
                 notifications: notifs.data || [],
@@ -880,20 +835,27 @@
     }
 
     function renderData(data) {
+        document.getElementById('initial-loader').style.display = 'none';
         const areaContainer = document.getElementById('areas-container');
-        if(areaContainer.querySelector('.fa-spin')) areaContainer.innerHTML = '';
 
+        // Header Population
         document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
         
-        // Smart Avatar Fallback
-        const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${data.profile.full_name}`;
+        // Smart Avatar Fallback & Name injection
+        const fName = data.profile.full_name || "User";
+        const firstName = fName.split(' ')[0];
+        document.getElementById('nav-hello-name').textContent = `Hello, ${firstName}`;
         
+        const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${fName}`;
         document.getElementById('header-avatar').src = avatar;
+        
+        // Profile Screen Population
         document.getElementById('profile-avatar-lg').src = avatar;
-        document.getElementById('profile-name').textContent = data.profile.full_name;
+        document.getElementById('profile-name').textContent = fName;
         document.getElementById('profile-phone').textContent = data.profile.phone || "No phone number added";
         document.getElementById('profile-email').textContent = currentUser.email;
 
+        // Notifications
         if (data.unread > 0) {
             const b = document.getElementById('badge-count');
             b.textContent = data.unread > 9 ? '9+' : data.unread;
@@ -907,22 +869,18 @@
             document.getElementById('header-ticker').style.display = 'none';
         }
 
+        // Promos
         const pList = document.getElementById('promo-list');
         if (data.promos.length > 0) {
             pList.style.display = 'flex';
             pList.innerHTML = data.promos.map(p => 
-                `<div style="min-width:300px; height:160px; border-radius:12px; overflow:hidden; flex-shrink:0;">
+                `<div style="min-width:320px; max-width: 600px; width: 85vw; height:200px; border-radius:4px; overflow:hidden; flex-shrink:0; border:1px solid #D5D9D9;">
                     <img src="${p.image_url}" style="width:100%; height:100%; object-fit:cover;">
                  </div>`
             ).join('');
         }
 
-        const featured = data.shops.filter(s => s.is_featured);
-        if (featured.length > 0) {
-            document.getElementById('featured-section').style.display = 'block';
-            document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
-        }
-
+        // Build Shop Grids Grouped By Area
         areaContainer.innerHTML = '';
         const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
 
@@ -931,60 +889,38 @@
             if(areaShops.length === 0) return;
 
             const isUser = area.id === userAreaId;
-            const pillClass = isUser ? 'user' : 'other';
-            const iconColor = isUser ? 'var(--color-primary)' : '#F59E0B';
-            const icon = isUser ? '<i class="fa-solid fa-location-crosshairs"></i>' : '<i class="fa-solid fa-location-dot"></i>';
-            const title = isUser ? `Merchants in ${area.name} • Near You` : `Merchants in ${area.name}`;
+            const title = isUser ? `Top stores in ${area.name} (Near You)` : `Explore stores in ${area.name}`;
 
             areaContainer.innerHTML += `
-                <div class="area-container">
-                    <div class="area-pill ${pillClass}">
-                        <div class="pill-left">
-                            <span style="color:${iconColor}; font-size:1.1rem;">${icon}</span>
-                            <span>${title}</span>
-                        </div>
-                        <button onclick="window.location.href='area.html?id=${area.id}'" style="border:none; background:none; color:var(--color-primary); font-weight:700; cursor:pointer;">See All</button>
-                    </div>
-                    <div class="h-scroll">
+                <div style="margin-bottom: 40px; border-bottom: 2px solid white; padding-bottom: 20px;">
+                    <h2 class="sec-title">${title}</h2>
+                    <div class="shop-list-view">
                         ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
                     </div>
                 </div>
             `;
         });
 
-        document.getElementById('category-list').innerHTML = data.categories.map(cat => {
-            const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
-            const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
-            const url = p ? p.image_url : `https://via.placeholder.com/32?text=${cat.name.charAt(0)}`;
-            return `
-                <div class="cat-chip" onclick="window.location.href='cat.html?name=${encodeURIComponent(cat.name)}'">
-                    <img src="${url}"> <span>${cat.name}</span>
-                </div>
-            `;
-        }).join('');
-
-        document.getElementById('all-shops-grid').innerHTML = data.shops.map(s => buildShopCard(s, data.products)).join('');
-
+        // Notifications Screen Build
         const notifListEl = document.getElementById('notif-list');
         if (data.notifications && data.notifications.length > 0) {
             notifListEl.innerHTML = data.notifications.map(n => {
                 const date = new Date(n.created_at).toLocaleDateString() + ' ' + new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const bg = n.is_read ? 'white' : '#EFF6FF'; 
-                const border = n.is_read ? '#E5E7EB' : '#BFDBFE'; 
-                const titleColor = n.is_read ? '#1F2937' : '#1E3A8A';
+                const bg = n.is_read ? 'white' : '#F7FAFA'; 
+                const border = n.is_read ? '#D5D9D9' : '#007185'; 
 
                 return `
-                    <div style="background:${bg}; padding:16px; border-radius:12px; border:1px solid ${border}; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                    <div style="background:${bg}; padding:16px; border-radius:8px; border:1px solid ${border};">
                         <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                            <span style="font-weight:700; color:${titleColor}; font-size:0.95rem;">${n.title}</span>
-                            <span style="font-size:0.75rem; color:#6B7280;">${date}</span>
+                            <span style="font-weight:700; color:#0F1111; font-size:0.95rem;">${n.title}</span>
+                            <span style="font-size:0.75rem; color:#565959;">${date}</span>
                         </div>
-                        <div style="color:#374151; font-size:0.9rem; line-height:1.4;">${n.message || ''}</div>
+                        <div style="color:#0F1111; font-size:0.9rem; line-height:1.4;">${n.message || ''}</div>
                     </div>
                 `;
             }).join('');
         } else {
-            notifListEl.innerHTML = '<p style="color:#9CA3AF; text-align:center; margin-top:20px;">No notifications yet</p>';
+            notifListEl.innerHTML = '<p style="color:#565959;">No notifications yet</p>';
         }
 
         updateMyShopCardUI(data.myShop);
@@ -994,33 +930,75 @@
         document.getElementById('wishlist-count').textContent = `${wishlistCount} items`;
     }
 
+    // =========================================
+    // PREMIUM AMAZON-STYLE SHOP CARD BUILDER
+    // =========================================
+    function buildShopCard(shop, allProducts) {
+        // Extract up to 4 valid products with images
+        const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url).slice(0, 4);
+
+        let gridHtml = '';
+        
+        // Build exactly 4 slots to perfectly maintain the 2x2 grid look
+        for (let i = 0; i < 4; i++) {
+            if (i < p.length) {
+                // Has product image
+                const prodName = p[i].name || p[i].product_name || p[i].title || 'Product';
+                gridHtml += `
+                    <div class="shop-grid-item-wrap">
+                        <div class="shop-grid-item">
+                            <img src="${p[i].image_url}" alt="Product" loading="lazy">
+                        </div>
+                        <div class="shop-grid-caption" title="${prodName}">${prodName}</div>
+                    </div>
+                `;
+            } else {
+                // Empty placeholder slot to maintain the 2x2 grid structure perfectly
+                gridHtml += `
+                    <div class="shop-grid-item-wrap">
+                        <div class="shop-grid-item empty">
+                            <i class="fa-solid fa-image" style="color: #E5E7EB; font-size: 1.2rem;"></i>
+                        </div>
+                        <div class="shop-grid-caption" style="color:transparent; user-select:none;">-</div>
+                    </div>
+                `;
+            }
+        }
+
+        return `
+            <div class="premium-shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
+                <div class="shop-card-title">${shop.name}</div>
+                <div class="shop-image-grid">
+                    ${gridHtml}
+                </div>
+                <div class="shop-cta">Visit shop <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i></div>
+            </div>
+        `;
+    }
+
     function updateMyShopCardUI(shop) {
         const card = document.getElementById('myshop-card');
         const iconContainer = card.querySelector('.svc-icon');
         const textLabel = card.querySelector('strong');
         
         let icon = 'fa-store';
-        let bg = '#DBEAFE'; 
-        let color = '#2563EB';
         let label = 'Register Shop';
         
         if (shop) {
             if (shop.is_open === false) {
-                icon = 'fa-lock'; bg = '#F3F4F6'; color = '#9CA3AF'; label = 'Locked';
+                icon = 'fa-lock'; label = 'Locked';
             } 
             else if (shop.status === 'pending') {
-                icon = 'fa-hourglass-half'; bg = '#FFEDD5'; color = '#EA580C'; label = 'Pending';
+                icon = 'fa-hourglass-half'; label = 'Pending';
             } 
             else if (shop.status === 'approved') {
-                icon = 'fa-store'; bg = '#DCFCE7'; color = '#16A34A'; label = 'My Shop';
+                icon = 'fa-store'; label = 'My Shop';
             } 
             else if (shop.status === 'rejected') {
-                icon = 'fa-circle-exclamation'; bg = '#FEE2E2'; color = '#DC2626'; label = 'Rejected';
+                icon = 'fa-circle-exclamation'; label = 'Rejected';
             }
         }
         
-        iconContainer.style.background = bg;
-        iconContainer.style.color = color;
         iconContainer.innerHTML = `<i class="fa-solid ${icon}"></i>`;
         textLabel.textContent = label;
     }
@@ -1145,10 +1123,8 @@
 
     // Handles smart upload & junk file deletion
     async function uploadAvatarProcess() {
-        // If the user didn't crop a new photo, return the existing URL
         if (!avatarBlob) return currentOldAvatarUrl;
 
-        // Delete Old File from Supabase to prevent junk build-up
         if (currentOldAvatarUrl && currentOldAvatarUrl.includes('/avatars/')) {
             try {
                 const pathMatch = currentOldAvatarUrl.match(new RegExp(`/(?:public|authenticated)/avatars/(.+)`));
@@ -1161,7 +1137,6 @@
             }
         }
 
-        // Upload New File
         const fileName = `${currentUser.id}_${Date.now()}.jpg`;
         const { error: uploadError } = await client.storage.from('avatars').upload(fileName, avatarBlob, {
             contentType: 'image/jpeg',
@@ -1203,7 +1178,7 @@
         document.getElementById('profile-edit').style.display = 'none';
         document.getElementById('profile-view').style.display = 'block';
         document.getElementById('edit-error').style.display = 'none';
-        avatarBlob = null; // Clear unsaved changes
+        avatarBlob = null; 
     }
 
     async function saveProfile() {
@@ -1222,7 +1197,6 @@
         err.style.display = 'none';
 
         try {
-            // Upload Avatar first
             const finalAvatarUrl = await uploadAvatarProcess();
 
             const { error } = await client.from('profiles').update({
@@ -1230,15 +1204,13 @@
                 phone: phone,
                 city_id: parseInt(cityId),
                 area_id: parseInt(areaId),
-                avatar_url: finalAvatarUrl // Save new URL to DB
+                avatar_url: finalAvatarUrl 
             }).eq('id', currentUser.id);
 
             if(error) throw error;
             
-            // Force fetch fresh data so UI updates globally immediately
             await fetchData(); 
             cancelEdit();
-            alert("Profile updated successfully!");
 
         } catch (e) {
             err.textContent = e.message || "Error updating profile";
@@ -1249,54 +1221,8 @@
         }
     }
 
-    // =========================================
-    // PREMIUM AMAZON-STYLE SHOP CARD BUILDER
-    // =========================================
-    function buildShopCard(shop, allProducts) {
-        // Extract up to 4 valid products with images
-        const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url).slice(0, 4);
-
-        let gridHtml = '';
-        
-        // Build exactly 4 slots to perfectly maintain the 2x2 grid look
-        for (let i = 0; i < 4; i++) {
-            if (i < p.length) {
-                // Has product image
-                const prodName = p[i].name || p[i].product_name || p[i].title || 'Product';
-                gridHtml += `
-                    <div class="shop-grid-item-wrap">
-                        <div class="shop-grid-item">
-                            <img src="${p[i].image_url}" alt="Product" loading="lazy">
-                        </div>
-                        <div class="shop-grid-caption" title="${prodName}">${prodName}</div>
-                    </div>
-                `;
-            } else {
-                // Empty placeholder slot to maintain the 2x2 grid structure perfectly
-                gridHtml += `
-                    <div class="shop-grid-item-wrap">
-                        <div class="shop-grid-item empty">
-                            <i class="fa-solid fa-image" style="color: #E5E7EB; font-size: 1.2rem;"></i>
-                        </div>
-                        <div class="shop-grid-caption" style="color:transparent; user-select:none;">-</div>
-                    </div>
-                `;
-            }
-        }
-
-        return `
-            <div class="premium-shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
-                <div class="shop-card-title">${shop.name}</div>
-                <div class="shop-image-grid">
-                    ${gridHtml}
-                </div>
-                <div class="shop-cta">Visit shop <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i></div>
-            </div>
-        `;
-    }
-
     async function handleLogout() {
-        if(confirm("Log out?")) {
+        if(confirm("Sign Out?")) {
             await client.auth.signOut();
             window.location.href = "index.html";
         }
