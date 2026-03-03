@@ -287,7 +287,8 @@
                 <label class="label">Business Name</label>
                 <div class="input-wrapper">
                     <i class="fa-solid fa-shop"></i>
-                    <input type="text" id="name" class="input with-icon" placeholder="e.g. Ade & Sons Enterprise" required>
+                    <!-- Max 100 chars, min 3 chars -->
+                    <input type="text" id="name" class="input with-icon" placeholder="e.g. Ade & Sons Enterprise" required maxlength="100" minlength="3">
                 </div>
             </div>
             
@@ -309,7 +310,8 @@
 
             <div class="form-group">
                 <label class="label">Description</label>
-                <textarea id="desc" class="input" placeholder="What do you sell or offer?" required></textarea>
+                <!-- Max 1000 chars to avoid essay spam -->
+                <textarea id="desc" class="input" placeholder="What do you sell or offer?" required maxlength="1000" minlength="10"></textarea>
             </div>
         </div>
 
@@ -337,18 +339,20 @@
                 <label class="label">Street Address</label>
                 <div class="input-wrapper">
                     <i class="fa-solid fa-map-pin"></i>
-                    <input type="text" id="address" class="input with-icon" placeholder="Shop 4, Main Market..." required>
+                    <!-- Strict address limit -->
+                    <input type="text" id="address" class="input with-icon" placeholder="Shop 4, Main Market..." required maxlength="255">
                 </div>
             </div>
 
             <div class="upload-row">
                 <div class="form-group">
                     <label class="label">Latitude (Optional)</label>
-                    <input type="number" step="any" id="lat" class="input" placeholder="e.g. 9.08">
+                    <!-- Strict length to avoid massive floating point spam -->
+                    <input type="number" step="any" id="lat" class="input" placeholder="e.g. 9.08" max="90" min="-90">
                 </div>
                 <div class="form-group">
                     <label class="label">Longitude (Optional)</label>
-                    <input type="number" step="any" id="lng" class="input" placeholder="e.g. 7.49">
+                    <input type="number" step="any" id="lng" class="input" placeholder="e.g. 7.49" max="180" min="-180">
                 </div>
             </div>
         </div>
@@ -365,13 +369,13 @@
                 <label class="label" id="cac-num-label">BN Number (Optional)</label>
                 <div class="input-wrapper">
                     <i class="fa-solid fa-file-signature"></i>
-                    <input type="text" id="cac-number" class="input with-icon" placeholder="If applicable">
+                    <!-- Alphanumeric limit for Business Numbers -->
+                    <input type="text" id="cac-number" class="input with-icon" placeholder="If applicable" maxlength="20">
                 </div>
             </div>
 
             <div class="form-group">
                 <label class="label" id="cac-label" style="margin-bottom: 4px;">Upload CAC (Image or PDF)</label>
-                <!-- Accepts both images and PDFs -->
                 <div class="upload-box" onclick="triggerUpload('file-cac')">
                     <input type="file" id="file-cac" hidden accept="image/*,application/pdf" onchange="handleFileSelect(event, 'file-cac', 1.586)">
                     <i class="fa-solid fa-file-contract upload-icon"></i>
@@ -397,7 +401,8 @@
                 </div>
                 <div class="form-group">
                     <label class="label">ID Number</label>
-                    <input type="text" id="id-number" class="input" required>
+                    <!-- Alphanumeric limit for ID Numbers -->
+                    <input type="text" id="id-number" class="input" required maxlength="30">
                 </div>
             </div>
 
@@ -437,14 +442,14 @@
                     <label class="label">Business Phone</label>
                     <div class="input-wrapper">
                         <i class="fa-solid fa-phone"></i>
-                        <input type="tel" id="phone" class="input with-icon" required>
+                        <input type="tel" id="phone" class="input with-icon" required maxlength="16" placeholder="e.g. 08012345678">
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="label">WhatsApp Number</label>
                     <div class="input-wrapper">
                         <i class="fa-brands fa-whatsapp" style="color:#25D366;"></i>
-                        <input type="tel" id="whatsapp" class="input with-icon">
+                        <input type="tel" id="whatsapp" class="input with-icon" maxlength="16" placeholder="e.g. 08012345678">
                     </div>
                 </div>
             </div>
@@ -454,14 +459,14 @@
                     <label class="label">Facebook URL</label>
                     <div class="input-wrapper">
                         <i class="fa-brands fa-facebook" style="color:#1877F2;"></i>
-                        <input type="url" id="facebook" class="input with-icon" placeholder="https://...">
+                        <input type="url" id="facebook" class="input with-icon" placeholder="https://..." maxlength="150">
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="label">Instagram URL</label>
                     <div class="input-wrapper">
                         <i class="fa-brands fa-instagram" style="color:#E4405F;"></i>
-                        <input type="url" id="instagram" class="input with-icon" placeholder="https://...">
+                        <input type="url" id="instagram" class="input with-icon" placeholder="https://..." maxlength="150">
                     </div>
                 </div>
             </div>
@@ -470,14 +475,14 @@
                     <label class="label">X (Twitter) URL</label>
                     <div class="input-wrapper">
                         <i class="fa-brands fa-x-twitter"></i>
-                        <input type="url" id="twitter" class="input with-icon" placeholder="https://...">
+                        <input type="url" id="twitter" class="input with-icon" placeholder="https://..." maxlength="150">
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="label">TikTok URL</label>
                     <div class="input-wrapper">
                         <i class="fa-brands fa-tiktok" style="color:#000000;"></i>
-                        <input type="url" id="tiktok" class="input with-icon" placeholder="https://...">
+                        <input type="url" id="tiktok" class="input with-icon" placeholder="https://..." maxlength="150">
                     </div>
                 </div>
             </div>
@@ -580,8 +585,8 @@
     // --- CROPPER & FILE STATE ---
     let cropper = null;
     let currentCropTarget = '';
-    const croppedBlobs = {}; // Holds cropped image Blobs
-    const rawFiles = {};     // Holds raw files (like PDFs) to bypass cropper
+    const croppedBlobs = {}; 
+    const rawFiles = {};     
 
     // --- INIT ---
     window.onload = async () => {
@@ -705,26 +710,23 @@
         const file = event.target.files[0];
         if (!file) return;
 
-        // Reset previous state for this input
         delete rawFiles[inputId];
         delete croppedBlobs[inputId];
 
-        // 1. If it's a PDF, bypass cropper
         if (file.type === 'application/pdf') {
             rawFiles[inputId] = file;
             setPdfPreview(inputId, file.name);
-            event.target.value = ''; // Reset
+            event.target.value = ''; 
             return;
         }
 
-        // 2. If it's an Image, open Cropper
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 openCropModal(e.target.result, inputId, ratio);
             };
             reader.readAsDataURL(file);
-            event.target.value = ''; // Reset
+            event.target.value = ''; 
         } else {
             alert("Invalid file type. Please upload an image or PDF.");
             event.target.value = '';
@@ -768,22 +770,17 @@
             imageSmoothingEnabled: true,
             imageSmoothingQuality: 'high',
         }).toBlob((blob) => {
-            // Save blob to our memory object
             croppedBlobs[currentCropTarget] = blob;
-            
-            // Create local URL for preview
             const localUrl = URL.createObjectURL(blob);
             setPreview(currentCropTarget, localUrl, false);
-            
             closeCropModal();
         }, 'image/jpeg', 0.85); 
     }
 
-    // Universal Preview Setter (Handles both Image and PDF URLs dynamically)
+    // Universal Preview Setter
     function setPreview(inputId, url, isPdfOverride = false) {
         if (!url || url.trim() === '') return;
         
-        // Is it explicitly a PDF by extension or override flag?
         if (isPdfOverride || url.toLowerCase().includes('.pdf')) {
             setPdfPreview(inputId, url.split('/').pop().split('?')[0] || 'Document.pdf');
             return;
@@ -793,11 +790,9 @@
         const imgId = inputId.replace('file', 'prev');
         const img = document.getElementById(imgId);
         
-        // Hide PDF Preview if it was showing
         const pdfPrev = box.querySelector('.pdf-preview');
         if (pdfPrev) pdfPrev.style.display = 'none';
 
-        // Show Image
         img.src = url; 
         img.style.display = 'block';
         
@@ -812,10 +807,8 @@
         const imgId = inputId.replace('file', 'prev');
         const img = document.getElementById(imgId);
         
-        // Hide standard image
         if (img) img.style.display = 'none';
 
-        // Show/Create PDF preview container
         let pdfPrev = box.querySelector('.pdf-preview');
         if (!pdfPrev) {
             pdfPrev = document.createElement('div');
@@ -841,29 +834,71 @@
         if (sub) sub.style.display = 'none';
     }
 
-    // Helper to get preview data for the review modal
     function getPreviewData(inputId) {
         const box = document.getElementById(inputId).parentElement;
-        
-        // Check if PDF preview is active
         const pdfPrev = box.querySelector('.pdf-preview');
         if (pdfPrev && pdfPrev.style.display === 'flex') {
             return { type: 'pdf', name: pdfPrev.querySelector('span').textContent };
         }
-
-        // Check if Image preview is active
         const img = document.getElementById(inputId.replace('file', 'prev'));
         if (img && img.style.display === 'block' && img.src && img.src.trim() !== '') {
             return { type: 'image', url: img.src };
         }
-
         return null;
+    }
+
+    // --- FORM VALIDATION ---
+    function validateFormInputs() {
+        const phone = document.getElementById('phone').value.trim();
+        const whatsapp = document.getElementById('whatsapp').value.trim();
+        
+        // Strict Phone Validator: Matches e.g. 08012345678 or +2348012345678
+        const phoneRegex = /(^0\d{10}$)|(^\+\d{11,15}$)/;
+        
+        if (!phoneRegex.test(phone)) {
+            alert("Please enter a valid Business Phone number (e.g. 08012345678 or +234...)");
+            return false;
+        }
+        if (whatsapp && !phoneRegex.test(whatsapp)) {
+            alert("Please enter a valid WhatsApp number (e.g. 08012345678 or +234...)");
+            return false;
+        }
+
+        // Social Media Domain Validators
+        const validateSocialUrl = (url, platform) => {
+            if (!url) return true;
+            try {
+                const parsedUrl = new URL(url.startsWith('http') ? url : `https://${url}`);
+                if (platform === 'twitter') {
+                    return parsedUrl.hostname.includes('twitter.com') || parsedUrl.hostname.includes('x.com');
+                }
+                return parsedUrl.hostname.includes(`${platform}.com`);
+            } catch (e) {
+                return false; 
+            }
+        };
+
+        const fb = document.getElementById('facebook').value.trim();
+        const ig = document.getElementById('instagram').value.trim();
+        const tw = document.getElementById('twitter').value.trim();
+        const tk = document.getElementById('tiktok').value.trim();
+
+        if (!validateSocialUrl(fb, 'facebook')) { alert("Please enter a valid Facebook URL."); return false; }
+        if (!validateSocialUrl(ig, 'instagram')) { alert("Please enter a valid Instagram URL."); return false; }
+        if (!validateSocialUrl(tw, 'twitter')) { alert("Please enter a valid X (Twitter) URL."); return false; }
+        if (!validateSocialUrl(tk, 'tiktok')) { alert("Please enter a valid TikTok URL."); return false; }
+
+        return true;
     }
 
     // --- REVIEW & SUBMIT ---
     function showPreviewDialog(e) {
         e.preventDefault();
 
+        // 1. Run the new validation logic
+        if (!validateFormInputs()) return;
+
+        // 2. Validate Images
         const type = document.getElementById('business-type').value;
         const frontData = getPreviewData('file-front');
         const idData = getPreviewData('file-id');
@@ -876,7 +911,7 @@
             return alert("CAC Certificate is required for Limited Liability companies.");
         }
 
-        // Setup Modal Thumbnails
+        // 3. Setup Modal Thumbnails
         setupReviewThumbnail('rv-icon-front', 'rv-img-front', null, frontData);
         setupReviewThumbnail('rv-icon-id', 'rv-img-id', 'rv-pdf-id', idData);
         
@@ -888,7 +923,7 @@
             cacCol.style.display = 'none';
         }
 
-        // Setup Modal Text Data
+        // 4. Setup Modal Text Data
         const areaSelect = document.getElementById('area');
         const areaText = areaSelect.options[areaSelect.selectedIndex]?.text || '';
         const cityText = document.getElementById('city-display').value;
@@ -934,7 +969,6 @@
         try {
             const type = document.getElementById('business-type').value;
 
-            // Upload files intelligently (Handles deletion of old files, and uploading new ones)
             const logoUrl = await uploadFileOrBlob('file-logo', 'brand-assets', 'logos', existingShop?.image_url);
             const frontUrl = await uploadFileOrBlob('file-front', 'storefronts', 'covers', existingShop?.storefront_url);
             const idUrl = await uploadFileOrBlob('file-id', 'id-documents', 'ids', existingShop?.id_card_url);
@@ -992,7 +1026,6 @@
         } 
     }
 
-    // Core Upload logic taking PDF Files or Image Blobs (WITH AUTOMATIC OLD FILE DELETION)
     async function uploadFileOrBlob(inputId, bucket, folder, existingUrl) {
         let fileOrBlob = null;
         let ext = 'jpg';
@@ -1006,10 +1039,8 @@
             fileOrBlob = croppedBlobs[inputId];
         }
 
-        // If no new file is uploaded, return the existing URL exactly as it is
         if (!fileOrBlob) return existingUrl || null; 
 
-        // --- PRE-UPLOAD CLEANUP: If there is an old file, permanently delete it from the bucket ---
         if (existingUrl) {
             try {
                 const urlParts = existingUrl.split(`/public/${bucket}/`);
@@ -1023,7 +1054,6 @@
             }
         }
 
-        // Proceed to upload the new file
         const fileName = `${folder}/${currentUser.id}_${Date.now()}.${ext}`;
         
         const { error: uploadError } = await client.storage.from(bucket).upload(fileName, fileOrBlob, {
