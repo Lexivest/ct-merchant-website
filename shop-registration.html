@@ -648,6 +648,25 @@
         });
     }
 
+    // --- HELPER TO RENDER PRIVATE BUCKET URLS FOR MERCHANT PREVIEW ---
+    async function getRenderableUrl(url, bucket) {
+        if (!url) return null;
+        if (bucket === 'id-documents' || bucket === 'cac-documents') {
+            try {
+                const pathMatch = url.match(new RegExp(`/(?:public|authenticated)/${bucket}/(.+)`));
+                if (pathMatch && pathMatch[1]) {
+                    const filePath = pathMatch[1].split('?')[0];
+                    // Generate a 1-hour signed URL so the merchant can see their own rejected docs
+                    const { data, error } = await client.storage.from(bucket).createSignedUrl(filePath, 3600);
+                    if (data && data.signedUrl) return data.signedUrl;
+                }
+            } catch (e) {
+                console.error("Error creating signed URL", e);
+            }
+        }
+        return url; 
+    }
+
     // --- EDIT LOGIC ---
     async function loadShopData() {
         document.getElementById('header-title').textContent = "Correct Application";
@@ -675,9 +694,17 @@
         document.getElementById('twitter').value = data.twitter_url || '';
         document.getElementById('tiktok').value = data.tiktok_url || '';
 
+        // Generate Signed URLs for Private files so they load in the HTML preview!
+        const idUrl = await getRenderableUrl(data.id_card_url, 'id-documents');
+        const cacUrl = await getRenderableUrl(data.cac_certificate_url, 'cac-documents');
+        
+        // Detect if original saved URL was a PDF
+        const idIsPdf = data.id_card_url ? data.id_card_url.split('?')[0].toLowerCase().endsWith('.pdf') : false;
+        const cacIsPdf = data.cac_certificate_url ? data.cac_certificate_url.split('?')[0].toLowerCase().endsWith('.pdf') : false;
+
         setPreview('file-front', data.storefront_url);
-        setPreview('file-id', data.id_card_url);
-        setPreview('file-cac', data.cac_certificate_url);
+        setPreview('file-id', idUrl, idIsPdf);
+        setPreview('file-cac', cacUrl, cacIsPdf);
         setPreview('file-logo', data.image_url);
 
         if (data.status === 'rejected' && data.rejection_reason) {
@@ -726,10 +753,11 @@
             reader.onload = (e) => {
                 // Safely store the PDF bytes in memory 
                 rawFiles[inputId] = new Blob([e.target.result], { type: 'application/pdf' });
+                rawFiles[inputId].name = file.name; // Keep name for the UI
                 setPdfPreview(inputId, file.name);
             };
             reader.readAsArrayBuffer(file);
-            event.target.value = ''; 
+            // DO NOT clear input immediately, let the reader finish first.
             return;
         }
 
@@ -738,9 +766,9 @@
             const reader = new FileReader();
             reader.onload = (e) => {
                 openCropModal(e.target.result, inputId, ratio);
+                event.target.value = ''; // Safe to clear image inputs because the cropper holds the data
             };
             reader.readAsDataURL(file);
-            event.target.value = ''; 
         } else {
             alert("Invalid file type. Please upload an image or PDF.");
             event.target.value = '';
@@ -779,14 +807,11 @@
     function applyCrop() {
         if (!cropper) return;
         
-        // Increased canvas width to 1000px and quality to 0.8 to utilize the 500KB budget nicely
         cropper.getCroppedCanvas({
             width: 1000, 
             imageSmoothingEnabled: true,
             imageSmoothingQuality: 'high',
         }).toBlob((blob) => {
-            
-            // Final verification that the cropper succeeded in making it < 500KB
             if (blob.size > MAX_FILE_SIZE) {
                 alert(`The cropped image is still too large (${Math.round(blob.size/1024)}KB). Maximum allowed size is 500KB. Try cropping a smaller area.`);
                 return; 
@@ -874,7 +899,6 @@
         const phone = document.getElementById('phone').value.trim();
         const whatsapp = document.getElementById('whatsapp').value.trim();
         
-        // Strict Phone Validator: Matches e.g. 08012345678 or +2348012345678
         const phoneRegex = /(^0\d{10}$)|(^\+\d{11,15}$)/;
         
         if (!phoneRegex.test(phone)) {
@@ -886,9 +910,8 @@
             return false;
         }
 
-        // Social Media Domain Validators
         const validateSocialUrl = (url, platform) => {
-            if (!url) return true; // Optional fields are valid if empty
+            if (!url) return true; 
             try {
                 const parsedUrl = new URL(url.startsWith('http') ? url : `https://${url}`);
                 if (platform === 'twitter') {
@@ -916,11 +939,8 @@
     // --- REVIEW & SUBMIT ---
     function showPreviewDialog(e) {
         e.preventDefault();
-
-        // 1. Run the new validation logic
         if (!validateFormInputs()) return;
 
-        // 2. Validate Images
         const type = document.getElementById('business-type').value;
         const frontData = getPreviewData('file-front');
         const idData = getPreviewData('file-id');
@@ -928,12 +948,8 @@
 
         if (!frontData) return alert("Store Front image is required.");
         if (!idData) return alert("ID Document is required.");
-        
-        if (type === 'Limited Liability (Ltd)' && !cacData) {
-            return alert("CAC Certificate is required for Limited Liability companies.");
-        }
+        if (type === 'Limited Liability (Ltd)' && !cacData) return alert("CAC Certificate is required for Limited Liability companies.");
 
-        // 3. Setup Modal Thumbnails
         setupReviewThumbnail('rv-icon-front', 'rv-img-front', null, frontData);
         setupReviewThumbnail('rv-icon-id', 'rv-img-id', 'rv-pdf-id', idData);
         
@@ -945,7 +961,6 @@
             cacCol.style.display = 'none';
         }
 
-        // 4. Setup Modal Text Data
         const areaSelect = document.getElementById('area');
         const areaText = areaSelect.options[areaSelect.selectedIndex]?.text || '';
         const cityText = document.getElementById('city-display').value;
@@ -1055,22 +1070,22 @@
 
         if (rawFiles[inputId]) {
             fileOrBlob = rawFiles[inputId];
-            ext = 'pdf';
-            contentType = 'application/pdf';
+            const nameParts = fileOrBlob.name ? fileOrBlob.name.split('.') : [];
+            ext = nameParts.length > 1 ? nameParts.pop().toLowerCase() : 'pdf';
+            contentType = fileOrBlob.type || 'application/pdf';
         } else if (croppedBlobs[inputId]) {
             fileOrBlob = croppedBlobs[inputId];
         }
 
         if (!fileOrBlob) return existingUrl || null; 
 
-        // robust URL extraction to guarantee old file deletion regardless of 'public' or 'authenticated' paths
+        // DELETE OLD FILE LOGIC
         if (existingUrl) {
             try {
                 const pathMatch = existingUrl.match(new RegExp(`/(?:public|authenticated)/${bucket}/(.+)`));
                 if (pathMatch && pathMatch[1]) {
                     const oldFilePath = pathMatch[1].split('?')[0]; 
-                    const { error: delError } = await client.storage.from(bucket).remove([oldFilePath]);
-                    if (delError) console.warn(`Note: Could not delete old file ${oldFilePath}.`, delError);
+                    await client.storage.from(bucket).remove([oldFilePath]);
                 }
             } catch (err) {
                 console.warn("Error processing old file deletion:", err);
@@ -1086,8 +1101,15 @@
         
         if (uploadError) throw uploadError;
         
+        // FIX FOR PRIVATE BUCKETS: Store the `/authenticated/` URL instead of `/public/`
         const { data } = client.storage.from(bucket).getPublicUrl(fileName);
-        return data.publicUrl;
+        let finalUrl = data.publicUrl;
+        
+        if (bucket === 'id-documents' || bucket === 'cac-documents') {
+            finalUrl = finalUrl.replace('/public/', '/authenticated/');
+        }
+        
+        return finalUrl;
     }
 </script>
 
