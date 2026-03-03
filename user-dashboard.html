@@ -15,7 +15,6 @@
             --amz-dark: #131921;
             --amz-nav-bar: #232F3E;
             
-            /* Replaced Amazon Orange with Brand Pink */
             --color-pink: #db2777; 
             --color-pink-hover: #be185d;
             --color-pink-light: rgba(219, 39, 119, 0.15);
@@ -61,6 +60,7 @@
             border-radius: 4px;
             object-fit: contain;
             cursor: pointer;
+            flex-shrink: 0;
         }
 
         /* City */
@@ -77,6 +77,7 @@
             font-size: 0.95rem;
             white-space: nowrap;
             transition: 0.2s;
+            flex-shrink: 0;
         }
         .amz-location:hover { border-color: white; }
 
@@ -95,6 +96,7 @@
             white-space: nowrap;
             transition: 0.2s;
             position: relative;
+            flex-shrink: 0;
         }
         .amz-nav-item:hover, .amz-nav-item.active { border-color: white; }
 
@@ -134,11 +136,13 @@
             outline: none;
             cursor: pointer;
             max-width: 140px;
+            flex-shrink: 0;
         }
         .amz-search-select:hover { background-color: #DADADA; color: #0F1111; }
 
         .amz-search-input {
             flex: 1;
+            min-width: 0; /* Allows input to shrink gracefully on small screens */
             padding: 0 16px;
             border: none;
             outline: none;
@@ -158,10 +162,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0; /* Prevents icon from getting squished */
         }
         .amz-search-btn:hover { background-color: var(--color-pink-hover); }
 
-        /* Sub Header (Ticker) laps with zero margin */
+        /* Sub Header (Ticker) */
         .amz-sub-header {
             background-color: var(--amz-nav-bar);
             padding: 8px 16px;
@@ -176,18 +181,22 @@
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
 
-        /* --- RESPONSIVE MOBILE SCROLL FIX --- */
+        /* --- RESPONSIVE MOBILE ADJUSTMENTS --- */
         @media (max-width: 1024px) {
             .desktop-search { display: none; }
             .mobile-search { display: flex; }
             
+            .amz-search-select {
+                max-width: 90px; /* Slimmer dropdown for mobile */
+                padding: 0 8px;
+            }
+
             .amz-mobile-scroll-row {
                 overflow-x: auto;
                 scrollbar-width: none; 
                 -ms-overflow-style: none; 
             }
             .amz-mobile-scroll-row::-webkit-scrollbar { display: none; }
-            .amz-mobile-scroll-row > * { flex-shrink: 0; }
         }
 
         /* --- 2. CONTENT BODY --- */
@@ -371,6 +380,13 @@
             font-size: 1.5rem; transition: transform 0.2s; border: none;
         }
         .ai-fab:active { transform: scale(0.95); }
+        .ai-label {
+            background: white; color: var(--color-pink);
+            font-size: 0.7rem; font-weight: 800;
+            padding: 4px 8px; border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB;
+            white-space: nowrap; pointer-events: none;
+        }
 
         .chat-window {
             position: fixed; bottom: 90px; right: 20px;
@@ -467,8 +483,9 @@
 
         <!-- MOBILE SEARCH ROW (Hidden on Desktop) -->
         <div class="amz-search-block mobile-search">
+            <!-- Mobile defaults to "See all" to save space -->
             <select class="amz-search-select" id="search-category-mobile">
-                <option value="all">All Categories</option>
+                <option value="all">See all</option>
             </select>
             <input type="text" class="amz-search-input" placeholder="Search CT-Merchant...">
             <button class="amz-search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
@@ -630,6 +647,7 @@
         <button class="ai-fab" onclick="toggleChat()">
             <i class="fa-solid fa-robot"></i>
         </button>
+        <span class="ai-label">AI Assistant</span>
     </div>
 
     <div id="chat-window" class="chat-window">
@@ -664,7 +682,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v21'; 
+    const CACHE_KEY = 'ctm_dash_v22'; 
     const MAX_FILE_SIZE = 500 * 1024; 
 
     let chatHistory = [];
@@ -859,15 +877,16 @@
         document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
         
         // Populate Categories in the new Search Bar Dropdown
-        const catOptions = `<option value="all">All Categories</option>` + 
-                           data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        const catOptionsItems = data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
         
         const deskSelect = document.getElementById('search-category-desktop');
         const mobSelect = document.getElementById('search-category-mobile');
-        if (deskSelect) deskSelect.innerHTML = catOptions;
-        if (mobSelect) mobSelect.innerHTML = catOptions;
+        
+        if (deskSelect) deskSelect.innerHTML = `<option value="all">All Categories</option>` + catOptionsItems;
+        // Mobile uses the shorter "See all"
+        if (mobSelect) mobSelect.innerHTML = `<option value="all">See all</option>` + catOptionsItems;
 
-        // Avatar (No Profile Text Anymore)
+        // Avatar
         const fName = data.profile.full_name || "User";
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${fName}`;
         document.getElementById('header-avatar').src = avatar;
@@ -885,7 +904,6 @@
             b.style.display = 'block';
         }
 
-        // --- SLOWED DOWN TICKER LOGIC ---
         if (data.announcements && data.announcements.length > 0) {
             const tickerEl = document.getElementById('ticker-text');
             const text = data.announcements.map(a => a.message).join("  •  ");
@@ -893,7 +911,7 @@
             document.getElementById('header-ticker').style.display = 'flex';
             tickerEl.textContent = text;
             
-            // Dynamically adjust animation speed. Base is 60 seconds.
+            // Slow down the ticker dynamically
             const speed = Math.max(60, text.length * 0.6); 
             tickerEl.style.animationDuration = `${speed}s`;
         } else {
