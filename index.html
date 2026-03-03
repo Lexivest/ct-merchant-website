@@ -1,1027 +1,1046 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shop Registration | CT-Merchant</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CT-Merchant Ltd. | Digital Shops Repository</title>
+  <meta name="description" content="Discover verified merchants, local shops and products in your city. Bridging the gap between digital convenience and local availability in Nigeria.">
+  <meta name="keywords" content="Merchant, Nigeria, Shops Repository, Local Business, CT-Merchant, Unique Identifier">
+  <meta name="author" content="CT-Merchant Ltd.">
+  <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+  <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+ 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* =========================================
+       STRICT 2x2 ENTERPRISE SPLIT LAYOUT
+       ========================================= */
+    .split-layout-grid {
+        display: grid;
+        grid-template-columns: 50% 50%;
+        width: 100%;
+        background: #0f172a; /* Fallback for the glassy panes */
+    }
+    .split-pane { display: flex; flex-direction: column; justify-content: center; position: relative; }
+     
+    /* TOP LEFT: IMAGE PANEL */
+    .pane-img {
+        grid-column: 1;
+        grid-row: 1;
+        background: url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg') top center/cover no-repeat;
+        justify-content: flex-end;
+        min-height: 50vh;
+    }
+    .features-glass-bar {
+        background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        padding: 16px 16px; display: flex; justify-content: center; flex-wrap: wrap; gap: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1); color: white; font-weight: 600; font-size: 0.95rem;
+    }
     
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    /* RIGHT SIDE: TEXT & SEARCH PANEL (Spans full right column) */
+    .pane-dark {
+        grid-column: 2;
+        grid-row: 1 / span 3;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: white;
+        padding: 0px 10% 40px 10%; 
+        border-left: 1px solid rgba(255,255,255,0.1); box-shadow: -15px 0 40px rgba(0,0,0,0.6); z-index: 2;
+        justify-content: flex-start; 
+    }
+    .repo-badge {
+        background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 6px 14px; border-radius: 50px; font-size: 0.85rem; font-weight: 700;
+        letter-spacing: 0.5px; color: #e2e8f0; display: inline-table; margin-bottom: 16px;
+    }
+    .hero-pro-text { font-size: 1.05rem; line-height: 1.6; color: #cbd5e1; margin: 0 0 20px 0; font-weight: 400; }
+    .repo-search-wrapper { position: relative; width: 100%; max-width: 450px; margin: 0 0 20px 0; }
+    .repo-input {
+        width: 100%; padding: 14px 45px 14px 20px; background-color: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 50px; font-size: 1rem; color: white;
+        text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; outline: none; transition: all 0.3s ease;
+    }
+    .repo-input::placeholder { color: rgba(255, 255, 255, 0.5); text-transform: none; letter-spacing: normal; font-weight: 400; }
+    .repo-input:focus { background-color: rgba(255, 255, 255, 0.15); border-color: #db2777; box-shadow: 0 0 15px rgba(219, 39, 119, 0.4); }
+    .search-icon-btn { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); cursor: pointer; width: 20px; transition: color 0.2s; }
+    .search-icon-btn:hover { color: #db2777; }
+    .id-hint { margin-top: 6px; font-size: 0.8rem; font-weight: 600; color: #facc15; display: flex; align-items: center; gap: 4px; }
+    .search-label { font-size: 1rem; font-weight: 600; color: #facc15; margin-bottom: 8px; }
+    .hero-title { 
+        font-size: 2.2rem; font-weight: 800; margin-bottom: 0px; min-height: 40px; margin-top: 0px; 
+    }
+    .cursor { display: inline-block; width: 3px; background-color: #db2777; animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .hero-desc { font-size: 1rem; color: #94a3b8; margin-top: 4px; font-weight: 500; }
+   
+    /* AUTH WIDGET */
+    .hero-auth-widget { background: rgba(219, 39, 119, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 30px 24px; border-radius: 20px; box-shadow: 0 10px 40px rgba(219, 39, 119, 0.2); border: 1px solid rgba(219, 39, 119, 0.3); width: 100%; max-width: 450px; margin: 0; }
+    .hero-auth-widget .widget-title { font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+    .hero-auth-widget .input-group-hero { position: relative; margin-bottom: 12px; }
+    .hero-auth-widget .input-group-hero i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); font-size: 1rem; pointer-events: none; }
+    .hero-auth-widget .input-group-hero i.toggle-password { left: auto; right: 14px; cursor: pointer; pointer-events: auto; transition: color 0.2s; }
+    .hero-auth-widget .input-group-hero i.toggle-password:hover { color: #db2777; }
+    .hero-auth-widget .hero-input-login { width: 100%; padding: 12px 40px 12px 40px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 12px; color: white; font-size: 1rem; outline: none; transition: all 0.3s ease; }
+    .hero-auth-widget .hero-input-login::placeholder { color: rgba(255, 255, 255, 0.6); }
+    .hero-auth-widget .hero-input-login:focus { background: rgba(255, 255, 255, 0.3); border-color: #db2777; box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.15); }
+    .hero-auth-widget .btn-login-hero { width: 100%; background: #db2777; color: white; font-weight: 800; padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-size: 1.05rem; transition: transform 0.2s, background-color 0.2s; display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; }
+    .hero-auth-widget .btn-login-hero:hover { background: #c0266a; transform: translateY(-2px); }
+    .hero-auth-widget .widget-divider { display: flex; align-items: center; text-align: center; margin: 16px 0; color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; font-weight: 600; }
+    .hero-auth-widget .widget-divider::before, .hero-auth-widget .widget-divider::after { content: ''; flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
+    .hero-auth-widget .widget-divider::before { margin-right: 10px; }
+    .hero-auth-widget .widget-divider::after { margin-left: 10px; }
+    .hero-auth-widget .btn-create-account { display: block; width: 100%; text-align: center; padding: 12px; border: 2px solid rgba(219, 39, 119, 0.3); background: rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-weight: 700; text-decoration: none; transition: all 0.3s ease; font-size: 1rem; }
+    .hero-auth-widget .btn-create-account:hover { background: rgba(219, 39, 119, 0.2); border-color: #db2777; }
+   
+    /* TRUST METRICS SECTION */
+    .trust-metrics-container { display: flex; gap: 15px; width: 100%; max-width: 450px; margin-top: 30px; flex-wrap: wrap; }
+    .trust-metric-box { flex: 1; min-width: 150px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 16px; border-radius: 16px; display: flex; align-items: center; gap: 14px; transition: transform 0.3s ease, background 0.3s ease; }
+    .trust-metric-box:hover { transform: translateY(-4px); background: rgba(255, 255, 255, 0.08); }
+    .trust-metric-box i { font-size: 1.8rem; color: #10b981; }
+    .trust-metric-box .tm-text h4 { margin: 0; color: #ffffff; font-size: 1.1rem; font-weight: 800; line-height: 1.2; }
+    .trust-metric-box .tm-text p { margin: 4px 0 0 0; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+
+    /* MERCHANT ONBOARDING CYCLE */
+    .merchant-journey-wrapper {
+        margin-top: 30px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 24px;
+        width: 100%;
+        max-width: 450px;
+        box-sizing: border-box;
+    }
+    .mj-title {
+        color: white; font-size: 1.1rem; font-weight: 800; margin-top: 0; margin-bottom: 24px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .mj-title i { color: #facc15; }
+    .mj-timeline {
+        position: relative;
+        padding-left: 32px;
+    }
+    .mj-timeline::before {
+        content: ''; position: absolute; left: 11px; top: 4px; bottom: 4px;
+        width: 2px; background: rgba(255, 255, 255, 0.1);
+    }
+    .mj-item { position: relative; margin-bottom: 22px; }
+    .mj-item:last-child { margin-bottom: 0; }
+    .mj-icon {
+        position: absolute; left: -32px; top: 0;
+        width: 24px; height: 24px; border-radius: 50%;
+        background: #1e1b4b; border: 2px solid #db2777;
+        display: flex; align-items: center; justify-content: center; z-index: 2;
+    }
+    .mj-icon i { font-size: 10px; color: #db2777; }
+    .mj-content h4 { margin: 0 0 4px 0; color: #e2e8f0; font-size: 0.95rem; font-weight: 700; }
+    .mj-content p { margin: 0; color: #94a3b8; font-size: 0.8rem; line-height: 1.4; }
+    .mj-badge-fee {
+        display: inline-block; background: rgba(245, 158, 11, 0.2); color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 6px; border-radius: 4px;
+        font-size: 0.65rem; font-weight: 800; margin-left: 6px; vertical-align: middle;
+    }
+    .mj-pricing-box {
+        margin-top: 24px;
+        background: linear-gradient(90deg, rgba(219, 39, 119, 0.15) 0%, rgba(219, 39, 119, 0) 100%);
+        border-left: 3px solid #db2777;
+        padding: 14px 16px;
+        border-radius: 0 8px 8px 0;
+    }
+    .mj-pricing-text { color: #cbd5e1; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .mj-pricing-amount { color: white; font-size: 1.6rem; font-weight: 800; margin-top: 4px; display: flex; align-items: baseline; gap: 4px; }
+    .mj-pricing-amount span { font-size: 0.85rem; color: #94a3b8; font-weight: 500; }
+
+    /* =========================================
+       BOTTOM LEFT 1 & 2: GLASSY & COLORFUL PANES
+       ========================================= */
+    .pane-light { 
+        grid-column: 1; 
+        grid-row: 2; 
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(219, 39, 119, 0.15) 100%); 
+        backdrop-filter: blur(16px); 
+        -webkit-backdrop-filter: blur(16px); 
+        padding: 50px 10% 40px 10%; 
+        border-top: 1px solid rgba(255, 255, 255, 0.08); 
+        justify-content: flex-start; /* Aligns text to the top */
+    }
+    .value-title { font-size: 2.2rem; font-weight: 800; color: #ffffff; margin-bottom: 12px; margin-top: 0; }
+    .value-desc { font-size: 1.1rem; color: #e2e8f0; line-height: 1.6; margin-bottom: 20px; }
+    .value-bullets { display: flex; flex-direction: column; gap: 12px; list-style: none; padding: 0; font-weight: 600; color: #f8fafc; font-size: 1.05rem; }
+    .value-bullets li { display: flex; align-items: center; gap: 10px; }
+    .value-bullets i { color: #10b981; font-size: 1.2rem; }
+   
+    .pane-white { 
+        grid-column: 1; 
+        grid-row: 3; 
+        background: linear-gradient(135deg, rgba(219, 39, 119, 0.05) 0%, rgba(15, 23, 42, 0.95) 100%); 
+        backdrop-filter: blur(16px); 
+        -webkit-backdrop-filter: blur(16px); 
+        padding: 40px 10% 50px 10%; 
+        border-top: 1px solid rgba(255, 255, 255, 0.05); 
+        border-left: none; 
+        box-shadow: none; 
+        z-index: 2; 
+        justify-content: flex-start; /* Aligns text to the top */
+    }
+    .pane-white .repo-badge { 
+        background: rgba(219, 39, 119, 0.2); 
+        border: 1px solid rgba(219, 39, 119, 0.4); 
+        color: #fbcfe8; 
+        margin-top: 0; 
+    }
+    .pane-white .hero-pro-text { color: #cbd5e1; }
+   
+    @media (max-width: 900px) {
+        .split-layout-grid { grid-template-columns: 1fr; }
+        .pane-img { grid-column: 1; grid-row: 1; min-height: 50vh; }
+        .pane-dark { grid-column: 1; grid-row: 2; padding-top: 40px; border-left: none; box-shadow: none; }
+        .pane-light { grid-column: 1; grid-row: 3; padding-top: 40px; }
+        .pane-white { grid-column: 1; grid-row: 4; }
+        .hero-auth-widget, .trust-metrics-container, .merchant-journey-wrapper { margin-left: auto; margin-right: auto; }
+    }
+    @media (max-width: 600px) {
+        .hero-title { font-size: 1.8rem; }
+        .value-title { font-size: 1.8rem; }
+        .hero-pro-text { font-size: 0.95rem; }
+        .features-glass-bar { flex-direction: row; align-items: center; gap: 8px; font-size: 0.7rem; padding: 8px 8px; justify-content: space-between; }
+        .features-glass-bar span { flex: 1; text-align: center; }
+    }
+   
+    .nav-container { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .brand-wrapper { display: flex; align-items: center; flex-shrink: 0; }
+    .header-marquee-box { flex: 1; margin: 0 20px; overflow: hidden; white-space: nowrap; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 15px; display: flex; align-items: center; }
+    .marquee-content { display: flex; width: max-content; animation: scroll 20s linear infinite; }
+    @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .marquee-item { display: flex; align-items: center; margin-right: 3rem; }
+    @media (max-width: 768px) { .header-marquee-box { margin: 0 10px; padding-left: 10px; border-left: none; } }
+  
+    .forgot-password { display: block; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); text-decoration: none; margin-top: 8px; margin-bottom: 12px; cursor: pointer; text-align: right; }
+    .forgot-password:hover { color: #db2777; }
     
-    <!-- Cropper.js for professional image cropping -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
-    
-    <style>
-        :root {
-            --primary: #6D28D9; /* Vibrant Violet */
-            --primary-dark: #5B21B6;
-            --primary-light: #EDE9FE;
-            --secondary: #10B981; /* Emerald */
-            --card-bg: #FFFFFF;
-            --text-main: #111827;
-            --text-muted: #6B7280;
-            --border-color: #E5E7EB;
-            --input-bg: #F9FAFB;
-            --danger: #EF4444;
-        }
+    .main-header { position: sticky !important; top: 0; z-index: 9999; }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        
-        body { 
-            /* Vibrant, modern background gradient */
-            background: linear-gradient(135deg, #E0E7FF 0%, #FAE8FF 50%, #F3E8FF 100%);
-            color: var(--text-main); 
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            padding: 24px 16px;
-        }
-
-        .container { width: 100%; max-width: 680px; position: relative; }
-
-        /* Header */
-        .header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
-        .back-btn { 
-            background: var(--card-bg); border: 1px solid var(--border-color); 
-            width: 46px; height: 46px; border-radius: 14px; 
-            display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; color: var(--text-main); font-size: 1.2rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
-            transition: all 0.3s ease;
-        }
-        .back-btn:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-3px); box-shadow: 0 6px 12px rgba(109, 40, 217, 0.15); }
-        .page-title { font-size: 1.6rem; font-weight: 800; color: #1F2937; letter-spacing: -0.5px; }
-
-        /* Form Card */
-        .card { 
-            background: var(--card-bg); padding: 36px 32px; 
-            border-radius: 24px; box-shadow: 0 15px 35px -5px rgba(0,0,0,0.08), 0 10px 15px -5px rgba(0,0,0,0.03); 
-            border: 1px solid rgba(255,255,255,0.8); 
-            border-top: 6px solid var(--primary); /* Colorful top accent */
-        }
-
-        /* Sections */
-        .section-title { 
-            font-size: 0.95rem; font-weight: 800; color: #374151; 
-            text-transform: uppercase; letter-spacing: 0.8px; 
-            margin: 36px 0 20px 0; border-bottom: 2px solid var(--border-color); 
-            padding-bottom: 12px; display: flex; align-items: center; gap: 10px;
-        }
-        /* Colorful Icons for each section */
-        .sec-store i { color: #8B5CF6; } /* Violet */
-        .sec-biz i { color: #EC4899; } /* Pink */
-        .sec-loc i { color: #F59E0B; } /* Amber */
-        .sec-id i { color: #3B82F6; } /* Blue */
-        .sec-contact i { color: #10B981; } /* Emerald */
-
-        .section-title i { font-size: 1.3rem; background: var(--input-bg); padding: 8px; border-radius: 10px; }
-        .section-title:first-child { margin-top: 0; }
-
-        /* Inputs */
-        .form-grid { display: grid; gap: 20px; }
-        .form-group { display: flex; flex-direction: column; gap: 8px; }
-        .label { font-size: 0.95rem; font-weight: 700; color: #374151; }
-        
-        .input-wrapper { position: relative; }
-        .input-wrapper i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #9CA3AF; font-size: 1.1rem; transition: 0.3s; }
-        
-        .input { 
-            width: 100%; padding: 16px 16px; border-radius: 12px; 
-            border: 2px solid var(--border-color); font-size: 1rem; 
-            background: var(--input-bg); transition: all 0.3s;
-            color: var(--text-main); font-weight: 500;
-        }
-        .input.with-icon { padding-left: 48px; }
-        .input:focus { outline: none; border-color: var(--primary); background: #FFF; box-shadow: 0 0 0 4px var(--primary-light); }
-        .input:focus + i, .input-wrapper:focus-within i { color: var(--primary); }
-        .input:disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; border-color: #D1D5DB; }
-        textarea.input { resize: vertical; min-height: 110px; padding-top: 16px; }
-
-        /* Professional Upload Boxes */
-        .upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-        .upload-box {
-            border: 2px dashed #CBD5E1; border-radius: 16px;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center; cursor: pointer;
-            background: #F8FAFC; position: relative; overflow: hidden;
-            transition: all 0.3s ease; padding: 24px 20px; text-align: center;
-            min-height: 180px; /* Removed strict constraints, made it taller */
-        }
-        .upload-box:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(109, 40, 217, 0.08); }
-        .upload-box.portrait { height: 300px; aspect-ratio: 3/4; margin: 0 auto; max-width: 240px; grid-column: 1 / -1; }
-        .upload-box.square { height: 180px; aspect-ratio: 1/1; margin: 0 auto; max-width: 180px; grid-column: 1 / -1;}
-        
-        .upload-icon { font-size: 2.2rem; color: #94A3B8; margin-bottom: 14px; transition: 0.3s; }
-        .upload-box:hover .upload-icon { color: var(--primary); transform: scale(1.1); }
-        .upload-title { font-size: 0.95rem; font-weight: 800; color: #334155; margin-bottom: 6px; }
-        .upload-subtitle { font-size: 0.8rem; font-weight: 600; color: #64748B; }
-        
-        .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; z-index: 5; background: #fff;}
-        
-        /* PDF Preview Styling */
-        .pdf-preview {
-            position: absolute; inset: 0; background: #FFFFFF; z-index: 5;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            padding: 20px; text-align: center;
-        }
-        .pdf-preview i { font-size: 3.5rem; color: #E11D48; margin-bottom: 12px; }
-        .pdf-preview span { font-size: 0.85rem; font-weight: 700; color: #1F2937; word-break: break-all; max-width: 90%; line-height: 1.4;}
-
-        .edit-badge { 
-            position: absolute; top: 12px; right: 12px; 
-            background: rgba(255,255,255,0.95); border-radius: 50%; width: 36px; height: 36px; 
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15); font-size: 14px; color: var(--primary);
-            z-index: 10; display: none; transition: 0.2s;
-        }
-        .upload-box:hover .edit-badge { background: var(--primary); color: white; }
-
-        /* Buttons */
-        .btn-submit {
-            width: 100%; background: var(--primary); color: white;
-            padding: 18px; border-radius: 14px; border: none;
-            font-size: 1.15rem; font-weight: 800; cursor: pointer;
-            margin-top: 40px; transition: all 0.3s ease;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            box-shadow: 0 8px 20px rgba(109, 40, 217, 0.3);
-        }
-        .btn-submit:hover { background: var(--primary-dark); transform: translateY(-3px); box-shadow: 0 10px 25px rgba(109, 40, 217, 0.45); }
-        .btn-submit:disabled { background: #9CA3AF; cursor: not-allowed; transform: none; box-shadow: none; }
-
-        /* Alerts */
-        .alert-box {
-            padding: 16px 20px; border-radius: 14px; margin-bottom: 24px;
-            display: none; align-items: flex-start; gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        }
-        .alert-error { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; }
-        .alert-warning { background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; }
-
-        /* --- CROPPER MODAL --- */
-        .crop-overlay {
-            position: fixed; inset: 0; background: rgba(17, 24, 39, 0.95);
-            z-index: 2000; display: flex; flex-direction: column;
-            opacity: 0; visibility: hidden; transition: 0.3s ease;
-            backdrop-filter: blur(5px);
-        }
-        .crop-overlay.active { opacity: 1; visibility: visible; }
-        .crop-header-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 20px; background: rgba(0,0,0,0.5); color: white;
-        }
-        .crop-title { font-weight: 700; font-size: 1.2rem; }
-        .crop-workspace { flex: 1; position: relative; width: 100%; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
-        .crop-workspace img { max-width: 100%; max-height: 100%; display: block; }
-        .crop-footer-bar {
-            padding: 20px; background: rgba(0,0,0,0.5); display: flex; gap: 16px; justify-content: center;
-        }
-        .btn-crop-cancel { background: #374151; color: white; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; }
-        .btn-crop-apply { background: var(--primary); color: white; padding: 12px 32px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
-
-        /* --- REVIEW MODAL --- */
-        .overlay { 
-            position: fixed; inset: 0; background: rgba(17, 24, 39, 0.6); 
-            z-index: 1000; display: flex; align-items: flex-end; justify-content: center;
-            opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(4px);
-        }
-        .overlay.active { opacity: 1; visibility: visible; }
-        
-        .review-sheet {
-            background: var(--card-bg); width: 100%; max-width: 680px;
-            border-radius: 28px 28px 0 0; padding: 36px 32px;
-            transform: translateY(100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            max-height: 90vh; overflow-y: auto;
-        }
-        .overlay.active .review-sheet { transform: translateY(0); }
-
-        .review-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; color: var(--text-main); }
-        .review-subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 28px; }
-        
-        .thumb-row { display: flex; gap: 16px; margin-bottom: 30px; }
-        .thumb-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .thumb-box { 
-            width: 100%; height: 90px; border-radius: 12px; background: #F8FAFC; 
-            border: 2px solid #E2E8F0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.02); text-align: center;
-        }
-        .thumb-box i { font-size: 2rem; color: #CBD5E1; }
-        .thumb-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; background:#fff;}
-        
-        /* Modal PDF Icon */
-        .thumb-pdf { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: #fff;}
-        .thumb-pdf i { font-size: 2rem; color: #E11D48; }
-
-        .thumb-label { font-size: 0.75rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;}
-
-        .detail-row { display: flex; padding: 14px 0; border-bottom: 1px solid #F1F5F9; }
-        .detail-row:last-child { border-bottom: none; }
-        .detail-label { width: 130px; color: var(--text-muted); font-size: 0.95rem; font-weight: 600; }
-        .detail-value { flex: 1; font-weight: 800; color: var(--text-main); font-size: 1.05rem; }
-
-        .btn-confirm { background: var(--secondary); color: white; width: 100%; padding: 18px; border-radius: 14px; border: none; font-weight: 800; font-size: 1.15rem; margin-top: 32px; cursor: pointer; box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3); transition: 0.3s;}
-        .btn-confirm:hover { background: #059669; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4); }
-        .btn-edit { background: transparent; color: var(--text-muted); width: 100%; padding: 14px; border: none; font-weight: 700; cursor: pointer; margin-top: 8px; transition: 0.2s; font-size: 1.05rem;}
-        .btn-edit:hover { color: var(--text-main); }
-
-        .spinner { width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        #main-loader { text-align: center; padding: 80px; color: var(--primary); display: none; }
-
-        @media (max-width: 480px) {
-            .upload-row { grid-template-columns: 1fr; }
-            .card { padding: 28px 20px; }
-            .thumb-row { flex-wrap: wrap; }
-            .thumb-col { min-width: 45%; }
-        }
-        
-        hr.divider { border: 0; border-top: 2px dashed var(--border-color); margin: 28px 0; }
-    </style>
+    /* =========================================
+       MODAL STYLES
+       ========================================= */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-card { background: white; border-radius: 1.5rem; max-width: 400px; width: 100%; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+    .modal-title { font-size: 1.25rem; font-weight: 800; color: #2E1065; text-align: center; margin-bottom: 0.5rem; }
+    .modal-subtitle { color: #64748b; font-size: 0.875rem; text-align: center; margin-bottom: 1.5rem; }
+    .hidden { display: none !important; }
+    .modal-input-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+    .modal-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.25rem; }
+    .modal-input-wrapper { position: relative; width: 100%; }
+    .modal-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
+    .modal-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem; outline: none; transition: all 0.3s ease; color: #0f172a; }
+    .modal-input:focus { border-color: #db2777; box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); background: white; }
+    select.modal-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
+    .btn-primary-modal { width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn-primary-modal:hover { background-color: #db2777; transform: translateY(-1px); }
+    .btn-primary-modal:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+    .spinner { width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* =========================================
+       FLOATING CONTACT WIDGET STYLES (Left)
+       ========================================= */
+    .floating-contact-btn { position: fixed; bottom: 24px; left: 24px; width: 60px; height: 60px; background-color: #db2777; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 10px 25px rgba(219, 39, 119, 0.4); cursor: pointer; z-index: 999; transition: transform 0.3s ease, background-color 0.3s ease; border: none; }
+    .floating-contact-btn:hover { transform: scale(1.1); background-color: #be185d; }
+    .floating-contact-popup { position: fixed; bottom: 95px; left: 24px; width: 350px; background: white; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 999; overflow: hidden; transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; }
+    .floating-contact-popup.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+    .fc-header { background: #2E1065; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 1.05rem; }
+    .fc-close { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1.2rem; transition: color 0.2s; }
+    .fc-close:hover { color: white; }
+    .fc-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .fc-input-group { display: flex; flex-direction: column; gap: 4px; }
+    .fc-label { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .fc-input, .fc-select, .fc-textarea { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; font-family: inherit; outline: none; transition: border-color 0.2s; background: #f8fafc; color: #0f172a; }
+    .fc-input:focus, .fc-select:focus, .fc-textarea:focus { border-color: #db2777; background: white; }
+    .fc-btn { background: #db2777; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 0.95rem; margin-top: 4px; }
+    .fc-btn:hover { background: #be185d; }
+    .fc-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+    .fc-status { font-size: 0.85rem; text-align: center; display: none; padding: 10px; border-radius: 8px; font-weight: 600; margin-top: 4px; }
+    .fc-status.success { display: block; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;}
+    .fc-status.error { display: block; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;}
+    /* =========================================
+       AI CHAT WIDGET STYLES (Right) + NOTIF BADGE
+       ========================================= */
+    .ai-fab-container { position: fixed; bottom: 24px; right: 24px; z-index: 5000; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .ai-fab-wrapper { position: relative; }
+   
+    .ai-notif-badge {
+        position: absolute; top: -4px; right: -4px; background: #EF4444; color: white;
+        font-size: 0.8rem; font-weight: 800; width: 22px; height: 22px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; border: 2px solid white;
+        animation: bounce 2s infinite; z-index: 10;
+    }
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+        40% {transform: translateY(-5px);}
+        60% {transform: translateY(-3px);}
+    }
+    .ai-fab { width: 60px; height: 60px; border-radius: 50%; background: #059669; color: white; box-shadow: 0 10px 25px rgba(5, 150, 105, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.2s; border: none; }
+    .ai-fab:active { transform: scale(0.95); }
+    .ai-label { background: white; color: #059669; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB; white-space: nowrap; pointer-events: none; }
+    .ai-chat-window { position: fixed; bottom: 95px; right: 24px; width: 350px; height: 450px; background: white; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 5000; display: flex; flex-direction: column; overflow: hidden; opacity: 0; pointer-events: none; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #E5E7EB; }
+    .ai-chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+    .ai-chat-header { background: #059669; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .ai-chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
+    .chat-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; }
+    .msg-ai { align-self: flex-start; background: white; border: 1px solid #E2E8F0; color: #1E293B; border-bottom-left-radius: 2px; }
+    .msg-user { align-self: flex-end; background: #059669; color: white; border-bottom-right-radius: 2px; }
+    .msg-error { align-self: center; background: #FEE2E2; color: #DC2626; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
+   
+    .chat-register-btn { display: block; background: #DB2777; color: white !important; text-align: center; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; margin-top: 12px; box-shadow: 0 4px 6px rgba(219, 39, 119, 0.3); transition: transform 0.2s, background 0.2s; }
+    .chat-register-btn:hover { background: #be185d; transform: translateY(-1px); }
+   
+    .ai-chat-input-area { padding: 12px; background: white; border-top: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 8px; }
+    .ai-chat-input-row { display: flex; gap: 8px; width: 100%; }
+    .ai-chat-input { flex: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid #E2E8F0; outline: none; font-size: 0.9rem; background: #F1F5F9; color: #0f172a; }
+    .ai-chat-input:focus { border-color: #059669; background: white; }
+    .ai-btn-send { background: #059669; color: white; border: none; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+    .ai-btn-send:hover { background: #047857; }
+    @media (max-width: 400px) {
+        .floating-contact-popup { width: calc(100% - 48px); left: 24px; right: 24px; }
+        .ai-chat-window { width: calc(100% - 48px); left: 24px; right: 24px; }
+    }
+  </style>
 </head>
 <body>
-
-<div class="container">
-    <div class="header">
-        <button type="button" onclick="window.location.href='user-dashboard.html'" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
-        <div class="page-title" id="header-title">Register Shop</div>
+<!-- NAVIGATION -->
+<nav class="main-header">
+  <div class="container nav-container">
+    <a href="index.html" class="brand-wrapper" title="Home Screen">
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo" style="width: 45px; height: 45px; border-radius: 8px;">
+    </a>
+    <div class="marquee-container header-marquee-box">
+       <div class="marquee-content animate-brand-scroll">
+          <div class="marquee-item">
+              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CT-MERCHANT LTD.</span>
+              <div class="flag-icon" style="display: flex; flex-direction: column; width: 14px; height: 10px; margin: 0 8px;">
+                  <div style="flex: 1; background: #16a34a;"></div>
+                  <div style="flex: 1; background: #ffffff;"></div>
+                  <div style="flex: 1; background: #16a34a;"></div>
+              </div>
+              <span style="font-weight: 800; color: white; font-size: 0.9rem; text-transform: uppercase;">REPOSITORY OF SHOPS, PRODUCTS AND SERVICES.</span>
+          </div>
+          <div class="marquee-item">
+              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CT-MERCHANT LTD.</span>
+              <div class="flag-icon" style="display: flex; flex-direction: column; width: 14px; height: 10px; margin: 0 8px;">
+                  <div style="flex: 1; background: #16a34a;"></div>
+                  <div style="flex: 1; background: #ffffff;"></div>
+                  <div style="flex: 1; background: #16a34a;"></div>
+              </div>
+              <span style="font-weight: 800; color: white; font-size: 0.9rem; text-transform: uppercase;">REPOSITORY OF SHOPS, PRODUCTS AND SERVICES.</span>
+          </div>
+       </div>
     </div>
-
-    <!-- City Closed Notice -->
-    <div id="city-closed-box" class="alert-box alert-warning">
-        <i class="fa-solid fa-city fa-lg" style="margin-top: 4px;"></i>
-        <div>
-            <h4 style="margin-bottom: 6px; font-weight: 800;">City Operations Paused</h4>
-            <p id="city-closed-reason" style="font-size: 0.95rem; line-height: 1.5;"></p>
+    <div class="desktop-menu">
+      <a href="index.html" class="nav-active">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="affiliate.html">Affiliate</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
+    </div>
+    <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </div>
+ 
+  <div class="mobile-dropdown hidden" id="mobile-menu">
+      <a href="index.html" style="border-bottom: 1px solid white;">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="affiliate.html">Affiliate</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
+  </div>
+</nav>
+<!-- MAIN GRID WRAPPER -->
+<main class="split-layout-grid">
+    <div class="split-pane pane-img">
+        <div class="features-glass-bar">
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-store" style="color:#10b981;"></i> Commerce </span>
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-magnifying-glass-location" style="color:#f472b6;"></i> Discover Locally</span>
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-id-card" style="color:#60a5fa;"></i> Unique ID</span>
         </div>
     </div>
-
-    <!-- Rejection Notice -->
-    <div id="rejection-box" class="alert-box alert-error">
-        <i class="fa-solid fa-circle-exclamation fa-lg" style="margin-top: 4px;"></i>
-        <div>
-            <h4 style="margin-bottom: 6px; font-weight: 800;">Attention Required</h4>
-            <p id="rejection-reason" style="font-size: 0.95rem; line-height: 1.5;"></p>
+    <div class="split-pane pane-dark">
+        <h1 class="hero-title">
+           <span id="typewriter"></span><span class="cursor">|</span>
+        </h1>
+       
+        <p class="hero-desc">
+          We provide a digital repository of physical shops, their products, and locations within a city.
+        </p>
+        <div class="repo-search-wrapper">
+            <p class="search-label">Search Repository</p>
+            <div style="position: relative;">
+                <input type="text" id="repo-search-input" placeholder="Enter Merchant ID..." class="repo-input"
+                       onkeypress="if(event.key === 'Enter') handleRepoSearch()">
+                <div class="search-icon-btn" onclick="handleRepoSearch()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+            </div>
+            <p class="id-hint">
+                <i class="fa-solid fa-circle-info"></i> Search by unique ID (e.g., 209234)
+            </p>
         </div>
-    </div>
-
-    <div id="main-loader"><i class="fa-solid fa-circle-notch fa-spin fa-3x"></i></div>
-
-    <form id="shop-form" class="card" onsubmit="showPreviewDialog(event)">
+        <div class="hero-auth-widget">
+            <div class="widget-title">
+                <i class="fa-solid fa-lock"></i> Users Login
+            </div>
+           
+            <form onsubmit="event.preventDefault(); handleHeroLogin();">
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="hero-email" class="hero-input-login" placeholder="Email Address" required>
+                </div>
+                <div class="input-group-hero">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
+                    <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePassword()"></i>
+                </div>
+               
+                <a class="forgot-password" onclick="openResetEmailModal()">Forgot password?</a>
+               
+                <button type="submit" id="hero-login-btn" class="btn-login-hero">
+                    Secure Sign In <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+            <div class="widget-divider">New to CT-Merchant?</div>
+            <a href="create-account.html" class="btn-create-account">
+                Create Account
+            </a>
+            <div class="widget-divider">Or continue with</div>
+            <div style="display: flex; justify-content: center; width: 100%;">
+                <div id="g_id_onload"
+                     data-client_id="237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com"
+                     data-context="signin"
+                     data-ux_mode="popup"
+                     data-callback="handleGoogleLogin"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="continue_with"
+                     data-size="large">
+                </div>
+            </div>
+        </div>
         
-        <!-- 1. Store Front -->
-        <div class="section-title sec-store"><i class="fa-solid fa-store"></i> Store Front Image</div>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; text-align: center; font-weight: 500;">Upload a clear, portrait-oriented photo of your shop's exterior.</p>
-        <div class="upload-box portrait" onclick="triggerUpload('file-front')">
-            <input type="file" id="file-front" hidden accept="image/*" onchange="handleFileSelect(event, 'file-front', 3/4)">
-            <i class="fa-solid fa-camera upload-icon"></i>
-            <span class="upload-title">Cover Photo</span>
-            <span class="upload-subtitle">(Required)</span>
-            <img id="prev-front" class="preview-img">
-            <i class="fa-solid fa-pen edit-badge" id="badge-front"></i>
-        </div>
-
-        <!-- 2. Business Details -->
-        <div class="section-title sec-biz"><i class="fa-solid fa-briefcase"></i> Business Details</div>
-        <div class="form-grid">
-            <div class="form-group">
-                <label class="label">Business Name</label>
-                <div class="input-wrapper">
-                    <i class="fa-solid fa-shop"></i>
-                    <input type="text" id="name" class="input with-icon" placeholder="e.g. Ade & Sons Enterprise" required>
+        <!-- NEW TRUST METRICS SECTION -->
+        <div class="trust-metrics-container">
+            <div class="trust-metric-box">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div class="tm-text">
+                    <h4>100% Verified</h4>
+                    <p>Physical Shops Only</p>
                 </div>
             </div>
+            <div class="trust-metric-box">
+                <i class="fa-solid fa-handshake-angle"></i>
+                <div class="tm-text">
+                    <h4>Zero Fraud</h4>
+                    <p>Secure Marketplace</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW MERCHANT ONBOARDING CYCLE -->
+        <div class="merchant-journey-wrapper">
+            <h3 class="mj-title"><i class="fa-solid fa-route"></i> Merchant Onboarding Journey</h3>
             
-            <div class="upload-row">
-                <div class="form-group">
-                    <label class="label">Business Type</label>
-                    <select id="business-type" class="input" onchange="toggleCacRequirement()">
-                        <option value="Individual/Enterprise">Individual/Enterprise</option>
-                        <option value="Limited Liability (Ltd)">Limited Liability (Ltd)</option>
-                    </select>
+            <div class="mj-timeline">
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-user-plus"></i></div>
+                    <div class="mj-content">
+                        <h4>1. Create Account</h4>
+                        <p>Sign up securely to join the platform.</p>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="label">Category</label>
-                    <select id="category" class="input" required>
-                        <option value="" disabled selected>Loading...</option>
-                    </select>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-shop"></i></div>
+                    <div class="mj-content">
+                        <h4>2. Register Your Shop</h4>
+                        <p>Input your local business details.</p>
+                    </div>
+                </div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-location-dot"></i></div>
+                    <div class="mj-content">
+                        <h4>3. Physical Verification <span class="mj-badge-fee">₦5,000 Fee</span></h4>
+                        <p>On-site inspection to guarantee marketplace trust.</p>
+                    </div>
+                </div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-id-card-clip"></i></div>
+                    <div class="mj-content">
+                        <h4>4. Unique Digital Profile</h4>
+                        <p>Receive your custom URL and CT-Merchant ID.</p>
+                    </div>
+                </div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-bullhorn"></i></div>
+                    <div class="mj-content">
+                        <h4>5. Upload Inventory & Promos</h4>
+                        <p>Post banners, news, new/fairly used products, and special offers.</p>
+                    </div>
+                </div>
+                <div class="mj-item">
+                    <div class="mj-icon"><i class="fa-solid fa-tents"></i></div>
+                    <div class="mj-content">
+                        <h4>6. Yearly Trade Fair</h4>
+                        <p>Exclusive access to physical exhibitions and networking events.</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="label">Description</label>
-                <textarea id="desc" class="input" placeholder="What do you sell or offer?" required></textarea>
+            <!-- PRICING BADGE -->
+            <div class="mj-pricing-box">
+                <div class="mj-pricing-text">All-Inclusive Platform Access</div>
+                <div class="mj-pricing-amount">₦10,000 <span>/ year</span></div>
             </div>
         </div>
 
-        <!-- 3. Location -->
-        <div class="section-title sec-loc"><i class="fa-solid fa-location-dot"></i> Location</div>
-        <div class="form-grid">
-            <div class="upload-row">
-                <div class="form-group">
-                    <label class="label">City (Fixed)</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-city"></i>
-                        <input type="text" id="city-display" class="input with-icon" disabled>
-                        <input type="hidden" id="city-id">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="label">Area</label>
-                    <select id="area" class="input" required>
-                        <option value="" disabled selected>Loading...</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="label">Street Address</label>
-                <div class="input-wrapper">
-                    <i class="fa-solid fa-map-pin"></i>
-                    <input type="text" id="address" class="input with-icon" placeholder="Shop 4, Main Market..." required>
-                </div>
-            </div>
-
-            <div class="upload-row">
-                <div class="form-group">
-                    <label class="label">Latitude (Optional)</label>
-                    <input type="number" step="any" id="lat" class="input" placeholder="e.g. 9.08">
-                </div>
-                <div class="form-group">
-                    <label class="label">Longitude (Optional)</label>
-                    <input type="number" step="any" id="lng" class="input" placeholder="e.g. 7.49">
-                </div>
-            </div>
-        </div>
-
-        <!-- 4. Identity -->
-        <div class="section-title sec-id">
-            <i class="fa-solid fa-shield-halved"></i> Identity & Legal 
-            <small style="text-transform:none; font-weight:600; color:var(--text-muted); margin-left: auto;">(Private)</small>
-        </div>
-        
-        <div class="form-grid">
-            <!-- CAC Section -->
-            <div class="form-group">
-                <label class="label" id="cac-num-label">BN Number (Optional)</label>
-                <div class="input-wrapper">
-                    <i class="fa-solid fa-file-signature"></i>
-                    <input type="text" id="cac-number" class="input with-icon" placeholder="If applicable">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="label" id="cac-label" style="margin-bottom: 4px;">Upload CAC (Image or PDF)</label>
-                <!-- Accepts both images and PDFs -->
-                <div class="upload-box" onclick="triggerUpload('file-cac')">
-                    <input type="file" id="file-cac" hidden accept="image/*,application/pdf" onchange="handleFileSelect(event, 'file-cac', 1.586)">
-                    <i class="fa-solid fa-file-contract upload-icon"></i>
-                    <span class="upload-title">CAC Certificate</span>
-                    <span class="upload-subtitle">(Optional) Image or PDF</span>
-                    <img id="prev-cac" class="preview-img">
-                    <i class="fa-solid fa-pen edit-badge" id="badge-cac"></i>
-                </div>
-            </div>
-
-            <hr class="divider">
-
-            <!-- Personal ID Section -->
-            <div class="upload-row">
-                <div class="form-group">
-                    <label class="label">ID Type</label>
-                    <select id="id-type" class="input">
-                        <option>National ID Card</option>
-                        <option>Voters Card</option>
-                        <option>Drivers License</option>
-                        <option>Int. Passport</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="label">ID Number</label>
-                    <input type="text" id="id-number" class="input" required>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="label" style="margin-bottom: 4px;">Upload ID Card (Image or PDF)</label>
-                <div class="upload-box" onclick="triggerUpload('file-id')">
-                    <input type="file" id="file-id" hidden accept="image/*,application/pdf" onchange="handleFileSelect(event, 'file-id', 1.586)">
-                    <i class="fa-regular fa-id-card upload-icon"></i>
-                    <span class="upload-title">Official ID Document</span>
-                    <span class="upload-subtitle">(Required) Image or PDF</span>
-                    <img id="prev-id" class="preview-img">
-                    <i class="fa-solid fa-pen edit-badge" id="badge-id"></i>
-                </div>
-            </div>
-
-            <hr class="divider">
-
-            <!-- Logo Section -->
-            <div class="form-group">
-                <label class="label" style="text-align: center; margin-bottom: 4px;">Shop Logo (Square)</label>
-                <div class="upload-box square" onclick="triggerUpload('file-logo')">
-                    <!-- Logo strictly image for UI branding purposes -->
-                    <input type="file" id="file-logo" hidden accept="image/*" onchange="handleFileSelect(event, 'file-logo', 1)">
-                    <i class="fa-solid fa-circle-user upload-icon"></i>
-                    <span class="upload-title">Brand Logo</span>
-                    <span class="upload-subtitle">(Optional)</span>
-                    <img id="prev-logo" class="preview-img">
-                    <i class="fa-solid fa-pen edit-badge" id="badge-logo"></i>
-                </div>
+    </div>
+    
+    <div class="split-pane pane-light">
+        <h2 class="value-title">Grow Your Physical Shop Digitally</h2>
+        <p class="value-desc">Join our growing network of verified local merchants. Create your profile, upload your products, and let our AI-powered repository connect you with local buyers.</p>
+       
+        <ul class="value-bullets">
+            <li><i class="fa-solid fa-circle-check"></i> Get a verified digital storefront</li>
+            <li><i class="fa-solid fa-circle-check"></i> Unique CT-Merchant ID to share</li>
+            <li><i class="fa-solid fa-circle-check"></i> Be discovered in city Repository Search</li>
+        </ul>
+    </div>
+    
+    <div class="split-pane pane-white">
+        <span class="repo-badge">
+          Repository of Shops, Products and Services
+        </span>
+       
+        <p class="hero-pro-text">
+         CT-Merchant is a structured repository of shops, products, and services within a city. We onboard and physically verify merchants to eliminate fraudulent online claims. Our platform indexes verified, physically existing businesses and their offerings, enabling consumers to compare prices and options before visiting a store. This approach enhances transparency, improves purchasing decisions, and saves time — effectively balancing digital convenience with physical marketplace reality.
+        </p>
+    </div>
+</main>
+<footer class="footer">
+  <div class="container footer-container">
+    <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Use</a>
+      <span>RC: 8879163</span>
+    </div>
+  </div>
+</footer>
+<!-- MODALS -->
+<div id="complete-profile-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h2 class="modal-title">Complete Your Profile</h2>
+        <p class="modal-subtitle">We need a few more details to set up your dashboard.</p>
+        <div class="modal-input-group">
+            <label class="modal-label">Phone Number</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-phone"></i></span>
+                <input type="tel" id="google-phone" placeholder="08012345678" class="modal-input">
             </div>
         </div>
-
-        <!-- 5. Contacts & Socials -->
-        <div class="section-title sec-contact"><i class="fa-solid fa-address-book"></i> Contacts & Socials</div>
-        <div class="form-grid">
-            <div class="upload-row">
-                <div class="form-group">
-                    <label class="label">Business Phone</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-phone"></i>
-                        <input type="tel" id="phone" class="input with-icon" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="label">WhatsApp Number</label>
-                    <div class="input-wrapper">
-                        <i class="fa-brands fa-whatsapp" style="color:#25D366;"></i>
-                        <input type="tel" id="whatsapp" class="input with-icon">
-                    </div>
-                </div>
-            </div>
-            
-            <div class="upload-row">
-                <div class="form-group">
-                    <label class="label">Facebook URL</label>
-                    <div class="input-wrapper">
-                        <i class="fa-brands fa-facebook" style="color:#1877F2;"></i>
-                        <input type="url" id="facebook" class="input with-icon" placeholder="https://...">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="label">Instagram URL</label>
-                    <div class="input-wrapper">
-                        <i class="fa-brands fa-instagram" style="color:#E4405F;"></i>
-                        <input type="url" id="instagram" class="input with-icon" placeholder="https://...">
-                    </div>
-                </div>
-            </div>
-            <div class="upload-row">
-                <div class="form-group">
-                    <label class="label">X (Twitter) URL</label>
-                    <div class="input-wrapper">
-                        <i class="fa-brands fa-x-twitter"></i>
-                        <input type="url" id="twitter" class="input with-icon" placeholder="https://...">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="label">TikTok URL</label>
-                    <div class="input-wrapper">
-                        <i class="fa-brands fa-tiktok" style="color:#000000;"></i>
-                        <input type="url" id="tiktok" class="input with-icon" placeholder="https://...">
-                    </div>
-                </div>
+        <div class="modal-input-group">
+            <label class="modal-label">Select City</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-city"></i></span>
+                <select id="google-city" class="modal-input" onchange="loadAreasForModal(this.value)">
+                    <option value="" disabled selected>Loading cities...</option>
+                </select>
             </div>
         </div>
-
-        <button type="submit" id="submit-btn" class="btn-submit">Review Application <i class="fa-solid fa-arrow-right"></i></button>
+        <div class="modal-input-group">
+            <label class="modal-label">Select Area</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-map-pin"></i></span>
+                <select id="google-area" class="modal-input" disabled>
+                    <option value="" disabled selected>Select city first</option>
+                </select>
+            </div>
+        </div>
+        <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary-modal">Complete Setup</button>
+        <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel & Sign Out</button>
+    </div>
+</div>
+<div id="reset-email-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h2 class="modal-title">Reset Password</h2>
+        <p class="modal-subtitle">Enter your email address to receive a 6-digit recovery code.</p>
+        <div class="modal-input-group">
+            <label class="modal-label">Registered Email</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-envelope"></i></span>
+                <input type="email" id="reset-email-input" placeholder="name@example.com" class="modal-input">
+            </div>
+        </div>
+        <button id="btn-send-reset" onclick="sendResetCode()" class="btn-primary-modal">Send Reset Code</button>
+        <button onclick="document.getElementById('reset-email-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
+    </div>
+</div>
+<div id="reset-password-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h2 class="modal-title">Create New Password</h2>
+        <p class="modal-subtitle">Enter the 6-digit code we just sent to your email.</p>
+        <div class="modal-input-group">
+            <label class="modal-label">6-Digit Recovery Code</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-hashtag"></i></span>
+                <input type="text" id="reset-otp-input" placeholder="123456" class="modal-input" maxlength="6" style="letter-spacing: 5px; text-align: center; font-weight: bold; padding-left: 1rem;">
+            </div>
+        </div>
+        <div class="modal-input-group">
+            <label class="modal-label">New Password</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
+                <input type="password" id="reset-new-password" placeholder="••••••••" class="modal-input">
+            </div>
+        </div>
+        <div class="modal-input-group">
+            <label class="modal-label">Confirm Password</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
+                <input type="password" id="reset-confirm-password" placeholder="••••••••" class="modal-input">
+            </div>
+        </div>
+        <button id="btn-confirm-reset" onclick="verifyAndResetPassword()" class="btn-primary-modal">Confirm & Reset Password</button>
+        <button onclick="document.getElementById('reset-password-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
+    </div>
+</div>
+<!-- ==========================================
+     FLOATING CONTACT WIDGET (LEFT)
+     ========================================== -->
+<button class="floating-contact-btn" onclick="toggleFloatingContact()" title="Need Help? Contact Support">
+    <i class="fa-solid fa-headset"></i>
+</button>
+<div class="floating-contact-popup" id="fc-popup">
+    <div class="fc-header">
+        <span><i class="fa-solid fa-envelope"></i> Message Us</span>
+        <button class="fc-close" onclick="toggleFloatingContact()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form class="fc-body" id="fc-form" onsubmit="handleFloatingContactSubmit(event)">
+        <div class="fc-input-group">
+            <label class="fc-label">Full Name</label>
+            <input type="text" id="fc-name" class="fc-input" required placeholder="e.g. John Doe">
+        </div>
+        <div class="fc-input-group">
+            <label class="fc-label">Email</label>
+            <input type="email" id="fc-email" class="fc-input" required placeholder="name@example.com">
+        </div>
+        <div class="fc-input-group">
+            <label class="fc-label">Subject</label>
+            <select id="fc-subject" class="fc-select">
+                <option value="General Inquiry">General Inquiry</option>
+                <option value="Merchant Support">Merchant Support</option>
+                <option value="Report an Issue">Report an Issue</option>
+            </select>
+        </div>
+        <div class="fc-input-group">
+            <label class="fc-label">Message</label>
+            <textarea id="fc-message" class="fc-textarea" rows="3" required placeholder="How can we help you?"></textarea>
+        </div>
+        <div id="fc-status" class="fc-status"></div>
+        <button type="submit" id="fc-submit-btn" class="fc-btn">Send Message <i class="fa-solid fa-paper-plane"></i></button>
     </form>
 </div>
-
-<!-- CROPPER MODAL (Only for images) -->
-<div id="crop-modal" class="crop-overlay">
-    <div class="crop-header-bar">
-        <div class="crop-title"><i class="fa-solid fa-crop-simple"></i> Adjust Image</div>
-        <button type="button" onclick="closeCropModal()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+<!-- ==========================================
+     AI CHAT WIDGET (RIGHT)
+     ========================================== -->
+<div class="ai-fab-container">
+    <div class="ai-fab-wrapper">
+        <button class="ai-fab" onclick="toggleAiChat()">
+            <i class="fa-solid fa-comments"></i>
+        </button>
+        <div id="ai-badge" class="ai-notif-badge">1</div>
     </div>
-    <div class="crop-workspace">
-        <img id="crop-image" src="">
+    <span class="ai-label">AI Assistant</span>
+</div>
+<div id="ai-chat-window" class="ai-chat-window">
+    <div class="ai-chat-header">
+        <span style="font-weight:700;"><i class="fa-solid fa-robot"></i> Assistant</span>
+        <button onclick="toggleAiChat()" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
     </div>
-    <div class="crop-footer-bar">
-        <button type="button" class="btn-crop-cancel" onclick="closeCropModal()">Cancel</button>
-        <button type="button" class="btn-crop-apply" onclick="applyCrop()">Apply Crop</button>
+    <div id="ai-chat-messages" class="ai-chat-body">
+        <div class="chat-msg msg-ai">
+            Hello! 👋 I am the CT-Merchant Welcome Ambassador. Would you like to know more about how our platform works, or are you looking to create an account today?
+        </div>
+    </div>
+    <div class="ai-chat-input-area">
+        <div class="ai-chat-input-row">
+            <input type="text" id="ai-chat-input" class="ai-chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendAiMsg()">
+            <button class="ai-btn-send" onclick="sendAiMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
     </div>
 </div>
-
-<!-- RICH REVIEW MODAL -->
-<div id="review-modal" class="overlay">
-    <div class="review-sheet">
-        <h2 class="review-title">Review Application</h2>
-        <p class="review-subtitle">Please ensure all details are correct before submitting.</p>
-        
-        <div class="thumb-row">
-            <div class="thumb-col">
-                <div class="thumb-box">
-                    <i class="fa-solid fa-store" id="rv-icon-front"></i>
-                    <img id="rv-img-front">
-                </div>
-                <span class="thumb-label">Store Front</span>
-            </div>
-            <div class="thumb-col">
-                <div class="thumb-box">
-                    <i class="fa-solid fa-id-card" id="rv-icon-id"></i>
-                    <img id="rv-img-id">
-                    <div class="thumb-pdf" id="rv-pdf-id">
-                        <i class="fa-solid fa-file-pdf"></i>
-                        <span style="font-size: 0.6rem; font-weight: bold; margin-top:4px; text-align:center; padding: 0 4px; word-break: break-all;">PDF Doc</span>
-                    </div>
-                </div>
-                <span class="thumb-label">ID Doc</span>
-            </div>
-            <div class="thumb-col" id="rv-cac-col" style="display: none;">
-                <div class="thumb-box">
-                    <i class="fa-solid fa-file-contract" id="rv-icon-cac"></i>
-                    <img id="rv-img-cac">
-                    <div class="thumb-pdf" id="rv-pdf-cac">
-                        <i class="fa-solid fa-file-pdf"></i>
-                        <span style="font-size: 0.6rem; font-weight: bold; margin-top:4px; text-align:center; padding: 0 4px; word-break: break-all;">PDF Doc</span>
-                    </div>
-                </div>
-                <span class="thumb-label">CAC Cert</span>
-            </div>
-        </div>
-
-        <div class="detail-row">
-            <div class="detail-label">Business Name</div>
-            <div class="detail-value" id="rv-name"></div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">Type</div>
-            <div class="detail-value" id="rv-type"></div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">Category</div>
-            <div class="detail-value" id="rv-cat"></div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">Location</div>
-            <div class="detail-value" id="rv-loc"></div>
-        </div>
-
-        <button type="button" class="btn-confirm" id="confirm-btn" onclick="submitApplication()">Confirm & Submit <i class="fa-solid fa-check"></i></button>
-        <button type="button" class="btn-edit" onclick="closePreviewDialog()">Back to Edit</button>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script>
-    // --- CONFIG ---
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // --- STATE ---
-    let currentUser = null;
-    let existingShop = null;
-    const params = new URLSearchParams(window.location.search);
-    const shopId = params.get('id') || params.get('shop_id');
-    const isEdit = !!shopId;
-
-    // --- CROPPER & FILE STATE ---
-    let cropper = null;
-    let currentCropTarget = '';
-    const croppedBlobs = {}; // Holds cropped image Blobs
-    const rawFiles = {};     // Holds raw files (like PDFs) to bypass cropper
-
-    // --- INIT ---
-    window.onload = async () => {
-        const { data: { session } } = await client.auth.getSession();
-        if (!session) { window.location.href = "login.html"; return; }
-        currentUser = session.user;
-
-        document.getElementById('shop-form').style.display = 'none';
-        document.getElementById('main-loader').style.display = 'block';
-
-        await fetchCategories();
-        const canProceed = await fetchUserLocation();
-
-        if (canProceed) {
-            if (isEdit) {
-                await loadShopData();
-            }
-            document.getElementById('shop-form').style.display = 'block';
-        }
-
-        document.getElementById('main-loader').style.display = 'none';
-    };
-
-    // --- FETCHERS ---
-    async function fetchCategories() {
-        const { data } = await client.from('categories').select('name').order('name');
-        const sel = document.getElementById('category');
-        sel.innerHTML = '<option value="" disabled selected>Select Category...</option>';
-        data.forEach(c => { sel.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
-    }
-
-    async function fetchUserLocation() {
-        const { data } = await client.from('profiles').select('city_id, cities(name, is_open)').eq('id', currentUser.id).single();
-        
-        if (data) {
-            if (data.cities && data.cities.is_open === false) {
-                document.getElementById('city-closed-box').style.display = 'flex';
-                document.getElementById('city-closed-reason').innerHTML = `We are not currently accepting or processing merchant registrations in <strong>${data.cities.name}</strong>. Please check back later or contact support.`;
-                return false; 
-            }
-            document.getElementById('city-id').value = data.city_id;
-            document.getElementById('city-display').value = data.cities.name;
-            await fetchAreas(data.city_id); 
-            return true;
-        }
-        return false;
-    }
-
-    async function fetchAreas(cityId) {
-        const sel = document.getElementById('area');
-        sel.disabled = true;
-        const { data } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
-        sel.innerHTML = '<option value="" disabled selected>Select Area...</option>';
-        sel.disabled = false;
-        data.forEach(a => {
-            const opt = document.createElement('option');
-            opt.value = a.id; opt.textContent = a.name; sel.appendChild(opt);
-        });
-    }
-
-    // --- EDIT LOGIC ---
-    async function loadShopData() {
-        document.getElementById('header-title').textContent = "Correct Application";
-
-        const { data } = await client.from('shops').select('*').eq('id', shopId).single();
-        if (!data) return;
-        existingShop = data;
-
-        document.getElementById('name').value = data.name;
-        document.getElementById('desc').value = data.description || '';
-        document.getElementById('business-type').value = data.business_type || 'Individual/Enterprise';
-        document.getElementById('category').value = data.category;
-        document.getElementById('area').value = data.area_id;
-        document.getElementById('address').value = data.address;
-        document.getElementById('phone').value = data.phone;
-        document.getElementById('whatsapp').value = data.whatsapp || '';
-        document.getElementById('lat').value = data.latitude || '';
-        document.getElementById('lng').value = data.longitude || '';
-        document.getElementById('id-type').value = data.id_type || 'National ID Card';
-        document.getElementById('id-number').value = data.id_number || '';
-        document.getElementById('cac-number').value = data.cac_number || '';
-        
-        document.getElementById('facebook').value = data.facebook_url || '';
-        document.getElementById('instagram').value = data.instagram_url || '';
-        document.getElementById('twitter').value = data.twitter_url || '';
-        document.getElementById('tiktok').value = data.tiktok_url || '';
-
-        setPreview('file-front', data.storefront_url);
-        setPreview('file-id', data.id_card_url);
-        setPreview('file-cac', data.cac_certificate_url);
-        setPreview('file-logo', data.image_url);
-
-        if (data.status === 'rejected' && data.rejection_reason) {
-            document.getElementById('rejection-box').style.display = 'flex';
-            document.getElementById('rejection-reason').textContent = data.rejection_reason;
-        }
-
-        toggleCacRequirement(); 
-    }
-
-    function toggleCacRequirement() {
-        const type = document.getElementById('business-type').value;
-        const label = document.getElementById('cac-label');
-        const numLabel = document.getElementById('cac-num-label');
-        
-        if (type === 'Limited Liability (Ltd)') {
-            label.innerHTML = 'Upload CAC Cert <span style="color:var(--danger)">*</span>';
-            numLabel.innerHTML = 'RC Number <span style="color:var(--danger)">*</span>';
-            document.getElementById('cac-number').setAttribute('required', 'true');
+   
+    // --- TYPEWRITER LOGIC ---
+    const textElement = document.getElementById('typewriter');
+    const phrases = ["Verified Merchants", "Safe and Secure", "Boost Your Business"];
+    let phraseIndex = 0; let charIndex = 0; let isDeleting = false; let typeSpeed = 100;
+   
+    function typeEffect() {
+        const currentPhrase = phrases[phraseIndex];
+        if (isDeleting) {
+            textElement.textContent = currentPhrase.substring(0, charIndex - 1);
+            charIndex--; typeSpeed = 50;
         } else {
-            label.innerHTML = 'Upload CAC (Image or PDF)';
-            numLabel.textContent = 'BN Number (Optional)';
-            document.getElementById('cac-number').removeAttribute('required');
+            textElement.textContent = currentPhrase.substring(0, charIndex + 1);
+            charIndex++; typeSpeed = 100;
         }
-    }
-
-    // --- UPLOAD & CROPPER ENGINE ---
-    function triggerUpload(id) { document.getElementById(id).click(); }
-
-    function handleFileSelect(event, inputId, ratio) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        // Reset previous state for this input
-        delete rawFiles[inputId];
-        delete croppedBlobs[inputId];
-
-        // 1. If it's a PDF, bypass cropper
-        if (file.type === 'application/pdf') {
-            rawFiles[inputId] = file;
-            setPdfPreview(inputId, file.name);
-            event.target.value = ''; // Reset
-            return;
+        if (!isDeleting && charIndex === currentPhrase.length) {
+            isDeleting = true; typeSpeed = 2000;
+        } else if (isDeleting && charIndex === 0) {
+            isDeleting = false; phraseIndex = (phraseIndex + 1) % phrases.length; typeSpeed = 500;
         }
-
-        // 2. If it's an Image, open Cropper
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                openCropModal(e.target.result, inputId, ratio);
-            };
-            reader.readAsDataURL(file);
-            event.target.value = ''; // Reset
-        } else {
-            alert("Invalid file type. Please upload an image or PDF.");
-            event.target.value = '';
-        }
+        setTimeout(typeEffect, typeSpeed);
     }
-
-    function openCropModal(imageSrc, targetId, ratio) {
-        currentCropTarget = targetId;
-        const modal = document.getElementById('crop-modal');
-        const img = document.getElementById('crop-image');
-        
-        img.src = imageSrc;
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-
-        if (cropper) cropper.destroy();
-
-        cropper = new Cropper(img, {
-            aspectRatio: ratio,
-            viewMode: 2,
-            background: false,
-            autoCropArea: 1,
-            responsive: true
-        });
-    }
-
-    function closeCropModal() {
-        document.getElementById('crop-modal').classList.remove('active');
-        document.body.style.overflow = '';
-        if (cropper) {
-            cropper.destroy();
-            cropper = null;
-        }
-    }
-
-    function applyCrop() {
-        if (!cropper) return;
-        
-        cropper.getCroppedCanvas({
-            width: 1200, 
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high',
-        }).toBlob((blob) => {
-            // Save blob to our memory object
-            croppedBlobs[currentCropTarget] = blob;
-            
-            // Create local URL for preview
-            const localUrl = URL.createObjectURL(blob);
-            setPreview(currentCropTarget, localUrl, false);
-            
-            closeCropModal();
-        }, 'image/jpeg', 0.85); 
-    }
-
-    // Universal Preview Setter (Handles both Image and PDF URLs dynamically)
-    function setPreview(inputId, url, isPdfOverride = false) {
-        if (!url || url.trim() === '') return;
-        
-        // Is it explicitly a PDF by extension or override flag?
-        if (isPdfOverride || url.toLowerCase().includes('.pdf')) {
-            setPdfPreview(inputId, url.split('/').pop().split('?')[0] || 'Document.pdf');
-            return;
-        }
-
-        const box = document.getElementById(inputId).parentElement;
-        const imgId = inputId.replace('file', 'prev');
-        const img = document.getElementById(imgId);
-        
-        // Hide PDF Preview if it was showing
-        const pdfPrev = box.querySelector('.pdf-preview');
-        if (pdfPrev) pdfPrev.style.display = 'none';
-
-        // Show Image
-        img.src = url; 
-        img.style.display = 'block';
-        
-        const badge = document.getElementById(imgId.replace('prev', 'badge'));
-        if (badge) badge.style.display = 'flex';
-
-        hideBoxDefaults(box);
-    }
-
-    function setPdfPreview(inputId, filename) {
-        const box = document.getElementById(inputId).parentElement;
-        const imgId = inputId.replace('file', 'prev');
-        const img = document.getElementById(imgId);
-        
-        // Hide standard image
-        if (img) img.style.display = 'none';
-
-        // Show/Create PDF preview container
-        let pdfPrev = box.querySelector('.pdf-preview');
-        if (!pdfPrev) {
-            pdfPrev = document.createElement('div');
-            pdfPrev.className = 'pdf-preview';
-            pdfPrev.innerHTML = `<i class="fa-solid fa-file-pdf"></i><span></span>`;
-            box.appendChild(pdfPrev);
-        }
-        pdfPrev.querySelector('span').textContent = filename;
-        pdfPrev.style.display = 'flex';
-
-        const badge = document.getElementById(imgId.replace('prev', 'badge'));
-        if (badge) badge.style.display = 'flex';
-
-        hideBoxDefaults(box);
-    }
-
-    function hideBoxDefaults(box) {
-        const icon = box.querySelector('.upload-icon');
-        const title = box.querySelector('.upload-title');
-        const sub = box.querySelector('.upload-subtitle');
-        if (icon) icon.style.display = 'none';
-        if (title) title.style.display = 'none';
-        if (sub) sub.style.display = 'none';
-    }
-
-    // Helper to get preview data for the review modal
-    function getPreviewData(inputId) {
-        const box = document.getElementById(inputId).parentElement;
-        
-        // Check if PDF preview is active
-        const pdfPrev = box.querySelector('.pdf-preview');
-        if (pdfPrev && pdfPrev.style.display === 'flex') {
-            return { type: 'pdf', name: pdfPrev.querySelector('span').textContent };
-        }
-
-        // Check if Image preview is active
-        const img = document.getElementById(inputId.replace('file', 'prev'));
-        if (img && img.style.display === 'block' && img.src && img.src.trim() !== '') {
-            return { type: 'image', url: img.src };
-        }
-
-        return null;
-    }
-
-    // --- REVIEW & SUBMIT ---
-    function showPreviewDialog(e) {
-        e.preventDefault();
-
-        const type = document.getElementById('business-type').value;
-        const frontData = getPreviewData('file-front');
-        const idData = getPreviewData('file-id');
-        const cacData = getPreviewData('file-cac');
-
-        if (!frontData) return alert("Store Front image is required.");
-        if (!idData) return alert("ID Document is required.");
-        
-        if (type === 'Limited Liability (Ltd)' && !cacData) {
-            return alert("CAC Certificate is required for Limited Liability companies.");
-        }
-
-        // Setup Modal Thumbnails
-        setupReviewThumbnail('rv-icon-front', 'rv-img-front', null, frontData);
-        setupReviewThumbnail('rv-icon-id', 'rv-img-id', 'rv-pdf-id', idData);
-        
-        const cacCol = document.getElementById('rv-cac-col');
-        if (cacData) {
-            cacCol.style.display = 'flex';
-            setupReviewThumbnail('rv-icon-cac', 'rv-img-cac', 'rv-pdf-cac', cacData);
-        } else {
-            cacCol.style.display = 'none';
-        }
-
-        // Setup Modal Text Data
-        const areaSelect = document.getElementById('area');
-        const areaText = areaSelect.options[areaSelect.selectedIndex]?.text || '';
-        const cityText = document.getElementById('city-display').value;
-
-        document.getElementById('rv-name').textContent = document.getElementById('name').value;
-        document.getElementById('rv-type').textContent = type;
-        document.getElementById('rv-cat').textContent = document.getElementById('category').value;
-        document.getElementById('rv-loc').textContent = `${areaText}, ${cityText}`;
-        
-        document.getElementById('confirm-btn').innerHTML = isEdit ? 'Confirm Correction <i class="fa-solid fa-check"></i>' : 'Confirm & Submit <i class="fa-solid fa-check"></i>';
-        document.getElementById('review-modal').classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function setupReviewThumbnail(iconId, imgId, pdfId, data) {
-        const icon = document.getElementById(iconId);
-        const img = document.getElementById(imgId);
-        const pdf = pdfId ? document.getElementById(pdfId) : null;
-
-        icon.style.display = 'none';
-        
-        if (data && data.type === 'pdf') {
-            img.style.display = 'none';
-            if(pdf) pdf.style.display = 'flex';
-        } else if (data && data.type === 'image') {
-            if(pdf) pdf.style.display = 'none';
-            img.src = data.url;
-            img.style.display = 'block';
-        }
-    }
-
-    function closePreviewDialog() {
-        document.getElementById('review-modal').classList.remove('active');
-        document.body.style.overflow = '';
-    }
-
-    async function submitApplication() {
-        const btn = document.getElementById('confirm-btn');
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<div class="spinner" style="margin: 0 auto;"></div>';
-
+    document.addEventListener('DOMContentLoaded', typeEffect);
+    // --- NEW: IP TRACKING & BAN CHECK LOGIC ---
+    async function getClientIpData() {
         try {
-            const type = document.getElementById('business-type').value;
-
-            // Upload files intelligently (Handles raw PDFs or cropped image blobs)
-            const logoUrl = await uploadFileOrBlob('file-logo', 'banner-storage', 'logos', existingShop?.image_url);
-            const frontUrl = await uploadFileOrBlob('file-front', 'banner-storage', 'storefronts', existingShop?.storefront_url);
-            const idUrl = await uploadFileOrBlob('file-id', 'kyc-documents', 'ids', existingShop?.id_card_url);
-            const cacUrl = await uploadFileOrBlob('file-cac', 'cac-documents', 'cac', existingShop?.cac_certificate_url);
-
-            const payload = {
-                owner_id: currentUser.id,
-                name: document.getElementById('name').value,
-                description: document.getElementById('desc').value,
-                business_type: type,
-                category: document.getElementById('category').value,
-                city_id: parseInt(document.getElementById('city-id').value),
-                area_id: parseInt(document.getElementById('area').value),
-                address: document.getElementById('address').value,
-                phone: document.getElementById('phone').value,
-                whatsapp: document.getElementById('whatsapp').value,
-                latitude: parseFloat(document.getElementById('lat').value) || null,
-                longitude: parseFloat(document.getElementById('lng').value) || null,
-                id_type: document.getElementById('id-type').value,
-                id_number: document.getElementById('id-number').value,
-                cac_number: document.getElementById('cac-number').value,
-                
-                image_url: logoUrl,
-                storefront_url: frontUrl,
-                id_card_url: idUrl,
-                cac_certificate_url: cacUrl,
-
-                facebook_url: document.getElementById('facebook').value || null,
-                instagram_url: document.getElementById('instagram').value || null,
-                twitter_url: document.getElementById('twitter').value || null,
-                tiktok_url: document.getElementById('tiktok').value || null,
-                
-                status: 'pending', 
-                rejection_reason: null
-            };
-
-            if (isEdit && existingShop) {
-                const { error } = await client.from('shops').update(payload).eq('id', shopId);
-                if (error) throw error;
-                alert("Correction Submitted! Your shop is pending approval again.");
-            } else {
-                const { error } = await client.from('shops').insert(payload);
-                if (error) throw error;
-                alert("Application Submitted! You will be notified once approved.");
+            const res = await fetch('https://1.1.1.1/cdn-cgi/trace');
+            const text = await res.text();
+            const data = text.split('\n').reduce((acc, line) => {
+                const [key, value] = line.split('=');
+                if(key) acc[key] = value;
+                return acc;
+            }, {});
+            return { ip: data.ip || 'unknown', country: data.loc || 'unknown' };
+        } catch (e) {
+            return { ip: 'unknown', country: 'unknown' };
+        }
+    }
+    async function isIpBanned(ipAddress) {
+        if (ipAddress === 'unknown') return false;
+        try {
+            const { data } = await client.from('ip_blacklist').select('ip_address').eq('ip_address', ipAddress).maybeSingle();
+            return !!data;
+        } catch (e) {
+            return false;
+        }
+    }
+   
+    // --- REPO SEARCH ---
+    function handleRepoSearch() {
+        const query = document.getElementById('repo-search-input').value.trim();
+        if(query) window.location.href = `reposearch.html?merchantId=${query}`;
+    }
+   
+    // --- STANDARD LOGIN LOGIC ---
+    async function handleHeroLogin() {
+        const email = document.getElementById('hero-email').value;
+        const password = document.getElementById('hero-password').value;
+        const btn = document.getElementById('hero-login-btn');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
+        btn.disabled = true;
+       
+        try {
+            // 1. IP Ban Frontend Check
+            const ipData = await getClientIpData();
+            if (await isIpBanned(ipData.ip)) {
+                throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CT-Merchant.");
             }
-
+            // 2. Perform Login
+            const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password });
+            if (authError) throw authError;
+            // 3. Post-Login Database Check Trap (Catches bypassed frontend & updates last active IP)
+            if (authData && authData.user) {
+                const { data: profileData, error: profileErr } = await client.from('profiles').select('is_suspended').eq('id', authData.user.id).maybeSingle();
+               
+                // If maybeSingle() throws an error, it means the RLS policy blocked them (they are IP banned!)
+                if (profileErr || !profileData || profileData.is_suspended === true) {
+                    await client.auth.signOut();
+                    throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
+                }
+                // Update IP
+                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
+            }
             window.location.href = "user-dashboard.html";
-
         } catch (err) {
-            console.error(err);
+            alert(err.message);
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            await client.auth.signOut(); // Force signout on any error
+        }
+    }
+    // --- GOOGLE SIGN IN LOGIC ---
+    let pendingGoogleUserId = null;
+    let pendingGoogleUserName = null;
+    async function handleGoogleLogin(response) {
+        const heroBtn = document.getElementById('hero-login-btn');
+        const originalHeroHtml = heroBtn.innerHTML;
+        heroBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Checking Google...';
+        heroBtn.disabled = true;
+        try {
+            // 1. IP Ban Frontend Check
+            const ipData = await getClientIpData();
+            if (await isIpBanned(ipData.ip)) {
+                throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CT-Merchant.");
+            }
+            const { data, error } = await client.auth.signInWithIdToken({ provider: 'google', token: response.credential });
+            if (error) throw error;
+            const user = data.user;
+            pendingGoogleUserId = user.id;
+            pendingGoogleUserName = user.user_metadata?.full_name || '';
+            // 2. Profile check & DB Trap
+            const { data: profile, error: profileErr } = await client.from('profiles').select('city_id, area_id, is_suspended').eq('id', user.id).maybeSingle();
+            if (profileErr || (profile && profile.is_suspended)) {
+                await client.auth.signOut();
+                throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
+            }
+            if (profile && profile.city_id && profile.area_id) {
+                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
+                window.location.href = "user-dashboard.html";
+            } else {
+                document.getElementById('complete-profile-modal').classList.remove('hidden');
+                heroBtn.innerHTML = originalHeroHtml;
+                heroBtn.disabled = false;
+                await fetchCitiesForModal();
+            }
+        } catch(err) {
+            alert("Google Sign-In Error: " + err.message);
+            heroBtn.innerHTML = originalHeroHtml;
+            heroBtn.disabled = false;
+            await client.auth.signOut();
+        }
+    }
+    async function fetchCitiesForModal() {
+        const citySelect = document.getElementById('google-city');
+        try {
+            const { data, error } = await client.from('cities').select('id, name').eq('is_open', true).order('name');
+            if (error) throw error;
+            citySelect.innerHTML = '<option value="" disabled selected>Select your city</option>' + data.map(city => `<option value="${city.id}">${city.name}</option>`).join('');
+        } catch (err) {
+            citySelect.innerHTML = '<option value="" disabled>Error loading cities</option>';
+        }
+    }
+    async function loadAreasForModal(cityId) {
+        const areaSelect = document.getElementById('google-area');
+        areaSelect.disabled = true;
+        areaSelect.innerHTML = '<option value="" disabled selected>Loading areas...</option>';
+        try {
+            const { data, error } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+            if (error) throw error;
+            areaSelect.innerHTML = '<option value="" disabled selected>Select your area</option>' + data.map(area => `<option value="${area.id}">${area.name}</option>`).join('');
+            areaSelect.disabled = false;
+        } catch (err) {
+            areaSelect.innerHTML = '<option value="" disabled>Error loading areas</option>';
+        }
+    }
+    async function saveGoogleProfile() {
+        const phone = document.getElementById('google-phone').value.trim();
+        const cityId = document.getElementById('google-city').value;
+        const areaId = document.getElementById('google-area').value;
+        const btn = document.getElementById('google-complete-btn');
+        if (!phone || !cityId || !areaId) return alert("Please fill in your phone, city, and area to continue.");
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Saving...';
+        try {
+            const ipData = await getClientIpData();
+            const { error } = await client.from('profiles').upsert({
+                id: pendingGoogleUserId, full_name: pendingGoogleUserName, phone: phone, city_id: parseInt(cityId), area_id: parseInt(areaId),
+                registration_ip: ipData.ip, last_active_ip: ipData.ip, ip_country: ipData.country
+            });
+            if (error) throw error;
+            window.location.href = "user-dashboard.html";
+        } catch(err) {
+            alert("Error saving profile: " + err.message);
+            btn.disabled = false; btn.innerHTML = 'Complete Setup';
+        }
+    }
+    async function cancelGoogleLogin() {
+        await client.auth.signOut();
+        document.getElementById('complete-profile-modal').classList.add('hidden');
+    }
+   
+    // --- PASSWORD TOGGLE ---
+    function togglePassword() {
+        const password = document.getElementById('hero-password');
+        const icon = document.querySelector('.toggle-password');
+        if (password.type === 'password') {
+            password.type = 'text'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye');
+        } else {
+            password.type = 'password'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash');
+        }
+    }
+    function openResetEmailModal() {
+        document.getElementById('reset-email-modal').classList.remove('hidden');
+        const loginEmail = document.getElementById('hero-email').value;
+        if (loginEmail) document.getElementById('reset-email-input').value = loginEmail;
+    }
+    async function sendResetCode() {
+        const email = document.getElementById('reset-email-input').value.trim();
+        if (!email) return alert("Please enter your registered email address.");
+        const btn = document.getElementById('btn-send-reset');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Sending...';
+        try {
+            const { error } = await client.auth.resetPasswordForEmail(email);
+            if (error) throw error;
+            document.getElementById('reset-email-modal').classList.add('hidden');
+            document.getElementById('reset-password-modal').classList.remove('hidden');
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Send Reset Code';
+        }
+    }
+    async function verifyAndResetPassword() {
+        const email = document.getElementById('reset-email-input').value.trim();
+        const otp = document.getElementById('reset-otp-input').value.trim();
+        const newPassword = document.getElementById('reset-new-password').value;
+        const confirmPassword = document.getElementById('reset-confirm-password').value;
+        if (!otp || !newPassword || !confirmPassword) return alert("Please fill out all fields.");
+        if (newPassword !== confirmPassword) return alert("Passwords do not match. Please try again.");
+        if (newPassword.length < 6) return alert("Password must be at least 6 characters.");
+        const btn = document.getElementById('btn-confirm-reset');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Resetting...';
+        try {
+            const { error: verifyError } = await client.auth.verifyOtp({ email: email, token: otp, type: 'recovery' });
+            if (verifyError) throw verifyError;
+            const { error: updateError } = await client.auth.updateUser({ password: newPassword });
+            if (updateError) throw updateError;
+            alert("Success! Your password has been updated.");
+            window.location.href = "user-dashboard.html";
+        } catch (err) {
             alert("Error: " + err.message);
             btn.disabled = false;
-            btn.innerHTML = originalText;
-            closePreviewDialog();
-        } 
-    }
-
-    // Core Upload logic taking PDF Files or Image Blobs
-    async function uploadFileOrBlob(inputId, bucket, folder, existingUrl) {
-        let fileOrBlob = null;
-        let ext = 'jpg';
-        let contentType = 'image/jpeg';
-
-        if (rawFiles[inputId]) {
-            fileOrBlob = rawFiles[inputId];
-            ext = 'pdf';
-            contentType = 'application/pdf';
-        } else if (croppedBlobs[inputId]) {
-            fileOrBlob = croppedBlobs[inputId];
+            btn.innerHTML = 'Confirm & Reset Password';
         }
-
-        if (!fileOrBlob) return existingUrl || null; 
-
-        const fileName = `${folder}/${currentUser.id}_${Date.now()}.${ext}`;
-        
-        const { error: uploadError } = await client.storage.from(bucket).upload(fileName, fileOrBlob, {
-            contentType: contentType,
-            upsert: false
-        });
-        
-        if (uploadError) throw uploadError;
-        
-        const { data } = client.storage.from(bucket).getPublicUrl(fileName);
-        return data.publicUrl;
+    }
+    function toggleFloatingContact() {
+        const popup = document.getElementById('fc-popup');
+        popup.classList.toggle('show');
+        if(popup.classList.contains('show')) {
+            document.getElementById('fc-status').className = 'fc-status';
+            document.getElementById('fc-status').textContent = '';
+        }
+    }
+    async function handleFloatingContactSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('fc-submit-btn');
+        const statusDiv = document.getElementById('fc-status');
+        const form = document.getElementById('fc-form');
+        const payload = {
+            full_name: document.getElementById('fc-name').value.trim(),
+            email: document.getElementById('fc-email').value.trim(),
+            subject: document.getElementById('fc-subject').value,
+            message: document.getElementById('fc-message').value.trim()
+        };
+        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Sending... <i class="fa-solid fa-circle-notch fa-spin"></i>';
+        statusDiv.className = 'fc-status';
+        try {
+            const { error } = await client.from('contact_messages').insert([payload]);
+            if (error) throw error;
+            statusDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> Message sent successfully!';
+            statusDiv.className = 'fc-status success';
+            form.reset();
+            setTimeout(() => { toggleFloatingContact(); }, 3000);
+        } catch (err) {
+            statusDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Failed: ' + (err.message || "Unknown error");
+            statusDiv.className = 'fc-status error';
+        } finally {
+            btn.disabled = false; btn.innerHTML = originalText;
+        }
+    }
+    // ==========================================
+    // AI CHAT WIDGET LOGIC (ANONYMOUS MODE WITH RATE LIMIT)
+    // ==========================================
+    let aiChatHistory = [];
+    function toggleAiChat() {
+        const chatWindow = document.getElementById('ai-chat-window');
+        const badge = document.getElementById('ai-badge');
+       
+        chatWindow.classList.toggle('open');
+       
+        if (badge) {
+            badge.style.display = 'none';
+        }
+    }
+    async function sendAiMsg() {
+        const inp = document.getElementById('ai-chat-input');
+        const txt = inp.value.trim();
+        if(!txt) return;
+        const todayStr = new Date().toISOString().split('T')[0];
+        let usageStr = localStorage.getItem('ctm_ai_anon_usage');
+        let aiUsage = usageStr ? JSON.parse(usageStr) : { date: todayStr, count: 0 };
+       
+        if (aiUsage.date !== todayStr) {
+            aiUsage = { date: todayStr, count: 0 };
+        }
+        const body = document.getElementById('ai-chat-messages');
+        if (aiUsage.count >= 15) {
+            body.innerHTML += `<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages. This limit prevents system abuse. Please check back tomorrow!</div>`;
+            body.scrollTop = body.scrollHeight;
+            inp.value = '';
+            return;
+        }
+        body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
+        inp.value = '';
+        body.scrollTop = body.scrollHeight;
+        aiChatHistory.push({ role: 'user', content: txt });
+        const loadId = 'loading-' + Date.now();
+        body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic; color:#6B7280;">Typing...</div>`;
+        body.scrollTop = body.scrollHeight;
+        try {
+            const recentHistory = aiChatHistory.length > 6 ? aiChatHistory.slice(aiChatHistory.length - 6) : aiChatHistory;
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'apikey': SUPABASE_ANON_KEY
+                },
+                body: JSON.stringify({
+                    query: txt,
+                    history: recentHistory
+                })
+            });
+            document.getElementById(loadId)?.remove();
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Server returned ${response.status}`);
+            }
+            const data = await response.json();
+            const reply = data.reply || "No response received.";
+            const isError = (reply.startsWith("Error:") || reply.startsWith("System"));
+            const msgClass = isError ? "msg-error" : "msg-ai";
+           
+            body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
+            if (!isError) {
+                aiChatHistory.push({ role: 'assistant', content: reply });
+                aiUsage.count += 1;
+                localStorage.setItem('ctm_ai_anon_usage', JSON.stringify(aiUsage));
+            }
+           
+        } catch (err) {
+            document.getElementById(loadId)?.remove();
+            body.innerHTML += `<div class="chat-msg msg-error">Connection Error: Could not reach AI server.</div>`;
+        }
+        body.scrollTop = body.scrollHeight;
     }
 </script>
-
 </body>
 </html>
