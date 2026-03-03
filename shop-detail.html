@@ -36,6 +36,7 @@
             min-height: 100vh;
             position: relative;
             background-color: var(--color-bg);
+            padding-bottom: 90px;
         }
 
         /* --- TOP BAR WITH EMBEDDED TICKER --- */
@@ -94,9 +95,46 @@
             100% { transform: translate3d(-100%, 0, 0); }
         }
 
-        /* --- SPLIT HERO LAYOUT --- */
+        /* --- CONTENT AREA --- */
         .info-card { padding: 24px; }
 
+        /* --- PRODUCTS GRID (NOW AT THE TOP) --- */
+        .section-title { 
+            display: flex; align-items: center; gap: 10px; 
+            font-size: 1.2rem; font-weight: 800; margin: 0 0 16px 0; color: #334155;
+        }
+        .section-title-spaced { margin-top: 30px; }
+        .bar { width: 4px; height: 24px; border-radius: 2px; }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+            content-visibility: auto;
+        }
+        
+        .product-card {
+            background: white; border-radius: 16px; overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #E2E8F0;
+            cursor: pointer; position: relative; transition: transform 0.2s;
+        }
+        .product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--color-primary); }
+
+        .prod-img { width: 100%; height: 160px; object-fit: cover; background-color: #F1F5F9; }
+        .prod-info { padding: 12px; }
+        .prod-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #334155; }
+        .prod-price { color: var(--color-primary); font-weight: 800; font-size: 1rem; }
+        .prod-price.discounted { color: #DC2626; }
+        .prod-old-price { text-decoration: line-through; color: #94A3B8; font-size: 0.8rem; margin-right: 4px; }
+        
+        .badge {
+            position: absolute; top: 8px; padding: 2px 8px; border-radius: 4px; 
+            font-size: 0.7rem; font-weight: 700; color: white;
+        }
+        .badge-discount { left: 8px; background: #DC2626; }
+        .badge-used { right: 8px; background: #EA580C; }
+
+        /* --- SPLIT HERO LAYOUT (NOW AT THE BOTTOM) --- */
         .shop-hero-split {
             display: flex;
             flex-direction: column;
@@ -134,10 +172,10 @@
         /* Flawless 3:4 image fitting its own bounds */
         .storefront-img { 
             width: 100%; 
-            max-width: 360px; /* Beautifully constrained max size */
+            max-width: 360px; 
             aspect-ratio: 3 / 4; 
             border-radius: 12px; 
-            object-fit: cover; /* Since it's uploaded at 3:4, this will fill perfectly without cropping */
+            object-fit: cover; 
             border: 1px solid #E2E8F0; 
             box-shadow: var(--shadow-sm);
             background-color: #F1F5F9;
@@ -234,40 +272,23 @@
             100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
         }
 
-        /* --- PRODUCTS GRID --- */
-        .section-title { 
-            display: flex; align-items: center; gap: 10px; 
-            font-size: 1.2rem; font-weight: 800; margin: 30px 0 16px 0; color: #334155;
+        /* --- BOTTOM BAR --- */
+        .bottom-bar {
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 1200px;
+            background: white; padding: 12px 20px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05); z-index: 100;
+            border-top: 1px solid #E2E8F0;
+            display: flex; justify-content: center;
         }
-        .bar { width: 4px; height: 24px; border-radius: 2px; }
-
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 16px;
-            content-visibility: auto;
+        .btn-whatsapp-bottom {
+            width: 100%; max-width: 600px; 
+            background: #25D366; color: white;
+            padding: 14px; border-radius: 12px; border: none;
+            font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
+            cursor: pointer; transition: background 0.2s;
         }
-        
-        .product-card {
-            background: white; border-radius: 16px; overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #E2E8F0;
-            cursor: pointer; position: relative; transition: transform 0.2s;
-        }
-        .product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--color-primary); }
-
-        .prod-img { width: 100%; height: 160px; object-fit: cover; background-color: #F1F5F9; }
-        .prod-info { padding: 12px; }
-        .prod-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #334155; }
-        .prod-price { color: var(--color-primary); font-weight: 800; font-size: 1rem; }
-        .prod-price.discounted { color: #DC2626; }
-        .prod-old-price { text-decoration: line-through; color: #94A3B8; font-size: 0.8rem; margin-right: 4px; }
-        
-        .badge {
-            position: absolute; top: 8px; padding: 2px 8px; border-radius: 4px; 
-            font-size: 0.7rem; font-weight: 700; color: white;
-        }
-        .badge-discount { left: 8px; background: #DC2626; }
-        .badge-used { right: 8px; background: #EA580C; }
+        .btn-whatsapp-bottom:hover { background: #16A34A; }
 
         /* Modal */
         .modal-overlay {
@@ -307,12 +328,49 @@
         <button onclick="shareShop()" class="nav-btn"><i class="fa-solid fa-share-nodes"></i></button>
     </div>
 
-    <!-- Info Section -->
+    <!-- Content Section -->
     <div class="info-card">
         <div id="loading-spinner" class="spinner"></div>
         
         <div id="content-area" class="hidden">
             
+            <!-- ========================================== -->
+            <!-- 1. PRODUCTS GRID (NOW AT THE TOP)          -->
+            <!-- ========================================== -->
+            
+            <div id="section-special" class="hidden">
+                <div class="section-title"><div class="bar" style="background:red;"></div> Special Offers</div>
+                <div id="grid-special" class="product-grid"></div>
+            </div>
+
+            <div id="section-used" class="hidden">
+                <div class="section-title section-title-spaced"><div class="bar" style="background:orange;"></div> Fairly Used Deals</div>
+                <div id="grid-used" class="product-grid"></div>
+            </div>
+
+            <div id="section-new" class="hidden">
+                <div class="section-title section-title-spaced"><div class="bar" style="background:var(--color-primary);"></div> New Stocks</div>
+                <div id="grid-new" class="product-grid"></div>
+            </div>
+
+            <div id="empty-state" class="hidden" style="text-align:center; padding: 40px 0 20px 0; color:grey;">
+                <div style="width: 64px; height: 64px; background: #F1F5F9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <i class="fa-solid fa-box-open" style="font-size: 28px; color: #94A3B8;"></i>
+                </div>
+                <p style="font-weight: 600; font-size: 1.1rem; color: #475569;">No products listed yet</p>
+                <p style="font-size: 0.9rem; color: #94A3B8;">Check back later for updates from this merchant.</p>
+            </div>
+
+            <hr style="border:0; border-top:2px dashed #E2E8F0; margin: 40px 0;">
+
+            <!-- ========================================== -->
+            <!-- 2. MERCHANT INFORMATION (NOW AT THE BOTTOM)-->
+            <!-- ========================================== -->
+
+            <div class="section-title" style="margin-bottom: 20px; font-size: 1.3rem;">
+                <div class="bar" style="background: #64748B;"></div> Merchant Information
+            </div>
+
             <div class="shop-hero-split">
                 
                 <!-- LEFT COLUMN: STOREFRONT & MAP -->
@@ -382,33 +440,14 @@
                 </div>
             </div>
 
-            <hr style="border:0; border-top:1px solid #E2E8F0; margin: 20px 0 30px 0;">
-
-            <!-- Product Sections -->
-            <div id="section-special" class="hidden">
-                <div class="section-title"><div class="bar" style="background:red;"></div> Special Offers</div>
-                <div id="grid-special" class="product-grid"></div>
-            </div>
-
-            <div id="section-used" class="hidden">
-                <div class="section-title"><div class="bar" style="background:orange;"></div> Fairly Used Deals</div>
-                <div id="grid-used" class="product-grid"></div>
-            </div>
-
-            <div id="section-new" class="hidden">
-                <div class="section-title"><div class="bar" style="background:var(--color-primary);"></div> New Stocks</div>
-                <div id="grid-new" class="product-grid"></div>
-            </div>
-
-            <div id="empty-state" class="hidden" style="text-align:center; padding: 60px 0; color:grey;">
-                <div style="width: 64px; height: 64px; background: #F1F5F9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-                    <i class="fa-solid fa-box-open" style="font-size: 28px; color: #94A3B8;"></i>
-                </div>
-                <p style="font-weight: 600; font-size: 1.1rem; color: #475569;">No products listed yet</p>
-                <p style="font-size: 0.9rem; color: #94A3B8;">Check back later for updates from this merchant.</p>
-            </div>
-
         </div>
+    </div>
+
+    <!-- Bottom Bar (Always visible floating action) -->
+    <div class="bottom-bar">
+        <button onclick="showSecurityModal()" class="btn-whatsapp-bottom">
+            <i class="fa-brands fa-whatsapp" style="font-size:1.2rem;"></i> Chat with Merchant
+        </button>
     </div>
 </div>
 
@@ -602,7 +641,6 @@
             socialHtml += `<a href="${s.tiktok_url.startsWith('http') ? s.tiktok_url : 'https://'+s.tiktok_url}" target="_blank" class="social-btn tiktok" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>`;
         }
         
-        // If absolutely no contacts provided, show a fallback message
         if (socialHtml === '') {
             socialHtml = '<span style="font-size:0.85rem; color:#94A3B8;">No contact information provided.</span>';
         }
