@@ -10,143 +10,218 @@
     
     <style>
         :root {
-            --color-purple: #2E1065;
-            --color-pink: #DB2777;
-            --color-bg: #F8FAFC;
-            --color-text: #1E293B;
-            --color-border: #E2E8F0;
+            /* PREMIUM AMAZON THEME WITH CT-MERCHANT PINK */
+            --amz-dark: #131921;
+            
+            --color-pink: #db2777; 
+            --color-pink-hover: #be185d;
+            --color-pink-light: rgba(219, 39, 119, 0.15);
+            
+            --amz-bg: #F3F4F6;
+            --color-text-main: #0F1111;
+            --color-text-muted: #565959;
+            --color-border: #D5D9D9;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--color-bg); color: var(--color-text); min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+        
+        body { 
+            background: var(--amz-bg); 
+            color: var(--color-text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
 
-        .container { width: 100%; max-width: 500px; }
+        /* --- PREMIUM HEADER --- */
+        .app-header {
+            background-color: var(--amz-dark);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
 
-        /* Header */
-        .app-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-        .back-btn { background: white; border: 1px solid var(--color-border); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-text); font-size: 1.1rem; }
-        .page-title { font-size: 1.25rem; font-weight: 800; }
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 16px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
 
-        /* Card */
-        .card { background: white; padding: 24px; border-radius: 20px; border: 1px solid var(--color-border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .back-btn { 
+            background: none; border: none; color: white; 
+            font-size: 1.2rem; cursor: pointer; padding: 4px; 
+            margin-left: -4px; transition: 0.2s;
+        }
+        .back-btn:hover { color: var(--color-pink); }
+        
+        .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; }
+
+        /* --- MAIN CONTAINER --- */
+        .container { 
+            width: 100%; 
+            max-width: 600px; 
+            padding: 30px 20px; 
+            flex: 1;
+        }
+
+        /* --- CARD & FORM --- */
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            border: 1px solid var(--color-border); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+        }
 
         /* Image Picker */
         .image-picker {
-            width: 100%; height: 200px; background: #F1F5F9;
-            border-radius: 16px; border: 2px dashed #CBD5E1;
+            width: 100%; height: 250px; background: #F7F7F7;
+            border-radius: 8px; border: 2px dashed #888C8C;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             cursor: pointer; position: relative; overflow: hidden;
             margin-bottom: 24px; transition: all 0.2s;
         }
-        .image-picker:hover { border-color: var(--color-purple); background: #F3E8FF; }
-        .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; }
+        .image-picker:hover { border-color: var(--color-pink); background: var(--color-pink-light); }
         
-        /* Form */
-        .form-group { margin-bottom: 16px; }
-        .label { display: block; font-size: 0.85rem; font-weight: 700; color: #64748B; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--color-border); font-size: 1rem; }
-        .input:focus { outline: none; border-color: var(--color-purple); }
+        .preview-img { 
+            width: 100%; height: 100%; 
+            object-fit: contain; /* Ensures the merchant sees exactly how it will look without cropping */
+            position: absolute; inset: 0; display: none; 
+            padding: 10px; background: white;
+        }
         
+        /* Form Inputs */
+        .form-group { margin-bottom: 20px; }
+        .label { display: block; font-size: 0.9rem; font-weight: 700; color: #0F1111; margin-bottom: 6px; }
+        
+        .input { 
+            width: 100%; padding: 12px 14px; border-radius: 4px; 
+            border: 1px solid #888C8C; font-size: 1rem; color: #0F1111; 
+            box-shadow: 0 1px 2px rgba(15,17,17,0.15) inset; 
+            font-family: inherit; transition: 0.2s;
+        }
+        .input:focus { outline: none; border-color: var(--color-pink); box-shadow: 0 0 0 3px var(--color-pink-light); }
+        
+        textarea.input { resize: vertical; min-height: 120px; }
+        
+        select.input { cursor: pointer; background-color: white; }
+
         /* Discount Switch */
         .discount-box {
-            background: #F8FAFC; border: 1px solid var(--color-border);
-            padding: 16px; border-radius: 12px; margin-bottom: 16px;
+            background: #F7F7F7; border: 1px solid var(--color-border);
+            padding: 16px; border-radius: 8px; margin-bottom: 24px;
         }
         .switch-row { display: flex; justify-content: space-between; align-items: center; }
-        .switch-label { font-weight: 700; font-size: 0.95rem; }
-        .switch-sub { font-size: 0.8rem; color: #64748B; }
+        .switch-label { font-weight: 700; font-size: 0.95rem; color: #0F1111; }
+        .switch-sub { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 2px; }
         
         /* Toggle Switch */
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #22C55E; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #888C8C; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+        input:checked + .slider { background-color: var(--color-pink); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        .hidden-input { display: none; margin-top: 12px; }
+        .hidden-input { display: none; margin-top: 16px; }
         .hidden-input.visible { display: block; animation: slideDown 0.3s ease; }
 
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Button */
+        /* Primary Button */
         .btn-submit {
-            width: 100%; background: var(--color-purple); color: white;
-            padding: 16px; border-radius: 12px; border: none;
-            font-size: 1rem; font-weight: 700; cursor: pointer;
-            margin-top: 20px;
+            width: 100%; background: var(--color-pink); color: white;
+            padding: 14px 16px; border-radius: 8px; border: none;
+            font-size: 1.05rem; font-weight: 700; cursor: pointer;
+            margin-top: 10px; transition: 0.2s; box-shadow: 0 2px 5px 0 rgba(219,39,119,0.3);
+            display: flex; align-items: center; justify-content: center;
         }
-        .btn-submit:disabled { background: #94A3B8; cursor: not-allowed; }
+        .btn-submit:hover { background: var(--color-pink-hover); }
+        .btn-submit:disabled { background: #E3E6E6; color: #888C8C; cursor: not-allowed; box-shadow: none; border: 1px solid #D5D9D9; }
 
-        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; margin-right: 8px; }
+        .spinner { width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; margin-right: 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="app-bar">
-        <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
-        <div class="page-title">Add Product</div>
-    </div>
-
-    <form class="card" onsubmit="handleSubmit(event)">
-        <!-- Image -->
-        <div class="image-picker" onclick="document.getElementById('file-input').click()">
-            <input type="file" id="file-input" hidden accept="image/*" onchange="previewImage(this)">
-            <img id="preview" class="preview-img">
-            <i class="fa-solid fa-camera" style="font-size: 2rem; color: #94A3B8; margin-bottom: 8px;"></i>
-            <span style="font-size: 0.9rem; font-weight: 600; color: #64748B;">Tap to upload image</span>
+    <!-- Full Width Premium Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <button onclick="history.back()" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="page-title">Add Product</div>
         </div>
+    </header>
 
-        <!-- Name -->
-        <div class="form-group">
-            <label class="label">Product Name</label>
-            <input type="text" id="name" class="input" required>
-        </div>
-
-        <!-- Price -->
-        <div class="form-group">
-            <label class="label">Original Price (₦)</label>
-            <input type="number" id="price" class="input" required>
-        </div>
-
-        <!-- Condition -->
-        <div class="form-group">
-            <label class="label">Condition</label>
-            <select id="condition" class="input">
-                <option value="New">New</option>
-                <option value="Fairly Used">Fairly Used</option>
-            </select>
-        </div>
-
-        <!-- Discount -->
-        <div class="discount-box">
-            <div class="switch-row">
-                <div>
-                    <div class="switch-label">Special Offer?</div>
-                    <div class="switch-sub">Apply a 0-20% discount</div>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="discount-switch" onchange="toggleDiscount(this)">
-                    <span class="slider"></span>
-                </label>
-            </div>
+    <div class="container">
+        <form class="card" onsubmit="handleSubmit(event)">
             
-            <div id="discount-input-box" class="hidden-input">
-                <input type="number" id="discount-percent" class="input" placeholder="Enter Percentage (e.g. 10)" max="20">
+            <!-- Image Picker -->
+            <div class="image-picker" onclick="document.getElementById('file-input').click()">
+                <input type="file" id="file-input" hidden accept="image/*" onchange="previewImage(this)">
+                <img id="preview" class="preview-img">
+                <i class="fa-solid fa-camera" style="font-size: 2.5rem; color: #888C8C; margin-bottom: 12px;"></i>
+                <span style="font-size: 0.95rem; font-weight: 700; color: var(--color-text-muted);">Tap to upload image</span>
             </div>
-        </div>
 
-        <!-- Description -->
-        <div class="form-group">
-            <label class="label">Description</label>
-            <textarea id="desc" class="input" style="min-height: 100px;" required></textarea>
-        </div>
+            <!-- Name -->
+            <div class="form-group">
+                <label class="label">Product Name</label>
+                <input type="text" id="name" class="input" placeholder="e.g. Samsung Galaxy S23" required>
+            </div>
 
-        <button type="submit" id="btn-submit" class="btn-submit">Upload Product</button>
-    </form>
-</div>
+            <!-- Price -->
+            <div class="form-group">
+                <label class="label">Price (₦)</label>
+                <input type="number" id="price" class="input" placeholder="e.g. 50000" required>
+            </div>
+
+            <!-- Condition -->
+            <div class="form-group">
+                <label class="label">Condition</label>
+                <select id="condition" class="input">
+                    <option value="New">New</option>
+                    <option value="Fairly Used">Fairly Used</option>
+                </select>
+            </div>
+
+            <!-- Discount -->
+            <div class="discount-box">
+                <div class="switch-row">
+                    <div>
+                        <div class="switch-label">Special Offer?</div>
+                        <div class="switch-sub">Apply a 1% to 20% discount</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="discount-switch" onchange="toggleDiscount(this)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div id="discount-input-box" class="hidden-input">
+                    <input type="number" id="discount-percent" class="input" placeholder="Enter Percentage (e.g. 10)" max="20" min="1">
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label class="label">Description</label>
+                <textarea id="desc" class="input" placeholder="Enter product details, specifications, etc." required></textarea>
+            </div>
+
+            <button type="submit" id="btn-submit" class="btn-submit">Upload Product</button>
+        </form>
+    </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -185,10 +260,10 @@
         const box = document.getElementById('discount-input-box');
         if (el.checked) {
             box.classList.add('visible');
-            box.style.display = 'block';
+            document.getElementById('discount-percent').setAttribute('required', 'true');
         } else {
             box.classList.remove('visible');
-            box.style.display = 'none';
+            document.getElementById('discount-percent').removeAttribute('required');
             document.getElementById('discount-percent').value = '';
         }
     }
