@@ -108,7 +108,7 @@
         }
 
         .header-avatar {
-            width: 32px; height: 32px; border-radius: 50%;
+            width: 34px; height: 34px; border-radius: 50%;
             object-fit: cover; background: white; margin-left: 4px;
         }
 
@@ -152,6 +152,7 @@
             color: #0F1111;
         }
         
+        /* Pink Search Button */
         .amz-search-btn {
             width: 52px;
             background-color: var(--color-pink);
@@ -167,7 +168,7 @@
         }
         .amz-search-btn:hover { background-color: var(--color-pink-hover); }
 
-        /* Sub Header (Category Filter + Ticker) */
+        /* Sub Header (Ticker) */
         .amz-sub-header {
             background-color: var(--amz-nav-bar);
             padding: 8px 16px;
@@ -235,7 +236,7 @@
 
 
         /* =========================================
-           PREMIUM HEADINGS
+           PREMIUM HEADINGS (Unbreakable & Scrollable)
            ========================================= */
         .sec-title {
             font-size: 1.35rem;
@@ -264,21 +265,17 @@
         }
 
         /* =========================================
-           ZERO-GAP PREMIUM SHOP CARDS (2x2 GRID)
+           HORIZONTAL PREMIUM SHOP CARDS (2x2 GRID)
            ========================================= */
-        .shop-list-view {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            column-gap: 20px;
-            row-gap: 0; 
-            margin-bottom: 40px;
-        }
-
-        .h-scroll .premium-shop-card {
-            min-width: 280px;
-            width: 80vw;
-            max-width: 340px;
+        
+        /* THIS IS THE CRITICAL FIX: flex-shrink: 0 prevents the card from being squished horizontally */
+        .h-scroll .premium-shop-card-wrap {
+            min-width: 300px;
+            width: 85vw;
+            max-width: 360px;
             flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .premium-shop-card {
@@ -288,17 +285,16 @@
             flex-direction: column;
             cursor: pointer;
             height: 100%;
-            border-radius: 0; 
-            border: 1px solid #E3E6E6;
-            margin-bottom: -1px; 
-            position: relative;
-            transition: background 0.2s, box-shadow 0.2s;
+            border-radius: 8px; 
+            border: 1px solid #D5D9D9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
         }
         .premium-shop-card:hover { 
             background: #Fcfcfc; 
-            z-index: 2; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border-color: #D5D9D9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+            border-color: #B0B5B5;
         }
 
         .shop-card-title {
@@ -313,21 +309,24 @@
             overflow: hidden;
         }
 
+        /* Enforce Grid Integrity */
         .shop-image-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
             margin-bottom: 20px;
             flex: 1;
+            width: 100%;
         }
 
         .shop-grid-item-wrap {
             display: flex;
             flex-direction: column;
             gap: 4px;
+            width: 100%;
+            overflow: hidden;
         }
 
-        /* Strictly Enforced 1:1 Aspect Ratio Block */
         .shop-grid-item {
             width: 100%;
             aspect-ratio: 1 / 1; 
@@ -807,7 +806,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v26'; 
+    const CACHE_KEY = 'ctm_dash_v27'; 
     const MAX_FILE_SIZE = 500 * 1024; 
 
     let chatHistory = [];
@@ -856,7 +855,7 @@
                 const catMatch = (catName === 'all' || shopCat === catName);
                 
                 if (catMatch) {
-                    cardWrap.style.display = 'block'; 
+                    cardWrap.style.display = 'flex'; 
                     visibleShopsCount++;
                 } else {
                     cardWrap.style.display = 'none';
@@ -1126,7 +1125,7 @@
             areaContainer.innerHTML += `
                 <div class="area-block-wrap" data-area-id="${area.id}" style="margin-bottom: 40px;">
                     <h2 class="sec-title">${titleHtml}</h2>
-                    <div class="shop-list-view" style="display: flex; overflow-x: auto; gap: 0; padding: 0 20px 20px 20px; scrollbar-width: none; -ms-overflow-style: none;">
+                    <div class="h-scroll">
                         ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
                     </div>
                 </div>
@@ -1173,7 +1172,7 @@
         const wishlistCount = data.wishlistCount || 0;
         document.getElementById('wishlist-count').textContent = `${wishlistCount} items`;
         
-        applyFilters(); // Apply any existing filters immediately
+        applyFilters(); 
     }
 
     // =========================================
@@ -1228,7 +1227,6 @@
             }
         }
 
-        // Wrap in a div with data-shop-category so we can filter easily
         return `
             <div class="premium-shop-card-wrap" data-shop-category="${shop.category}">
                 <div class="premium-shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
