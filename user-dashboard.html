@@ -4,40 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Marketplace | CT-Merchant</title>
-   
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
-   
+    
     <style>
         :root {
             /* PREMIUM AMAZON THEME WITH CT-MERCHANT PINK */
             --amz-dark: #131921;
             --amz-nav-bar: #232F3E;
-           
-            --color-pink: #db2777;
+            
+            --color-pink: #db2777; 
             --color-pink-hover: #be185d;
             --color-pink-light: rgba(219, 39, 119, 0.15);
-           
+            
             --amz-bg: #E3E6E6;
             --amz-link: #007185;
             --amz-link-hover: #C40000;
             --color-text-main: #0F1111;
         }
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
-        }
-        body {
-            background-color: var(--amz-bg);
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body { 
+            background-color: var(--amz-bg); 
             color: var(--color-text-main);
             overflow-x: hidden;
-            line-height: 1.1;
         }
-        /* --- 1. PREMIUM HEADER (ZERO VERTICAL SPACE) --- */
+
+        /* --- 1. PREMIUM HEADER --- */
         .amz-header {
             background-color: var(--amz-dark);
             color: white;
@@ -47,34 +43,82 @@
             display: flex;
             flex-direction: column;
         }
+
         .amz-mobile-scroll-row {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 6px 12px;
+            gap: 16px;
+            padding: 10px 16px;
             max-width: 1600px;
             margin: 0 auto;
             width: 100%;
         }
+
+        /* Logo */
         .amz-logo {
-            height: 34px;
+            height: 38px;
             border-radius: 4px;
             object-fit: contain;
             cursor: pointer;
             flex-shrink: 0;
         }
-        .amz-location, .amz-nav-item {
-            padding: 6px 10px;
+
+        /* City */
+        .amz-location {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            transition: 0.2s;
+            flex-shrink: 0;
         }
+        .amz-location:hover { border-color: white; }
+
+        /* Nav Items */
+        .amz-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            transition: 0.2s;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .amz-nav-item:hover, .amz-nav-item.active { border-color: white; }
+
+        .notif-badge {
+            position: absolute; top: -2px; right: -6px;
+            background: #EF4444; color: white; font-size: 0.65rem; font-weight: 800;
+            padding: 2px 6px; border-radius: 10px; display: none;
+            border: 2px solid var(--amz-dark);
+        }
+
         .header-avatar {
-            width: 32px; height: 32px;
+            width: 34px; height: 34px; border-radius: 50%;
+            object-fit: cover; background: white; margin-left: 4px;
         }
-        .desktop-search-wrap { position: relative; flex: 1; margin: 0 12px; }
-        .mobile-search-wrap { position: relative; display: none; margin: 0 12px 4px 12px; width: calc(100% - 24px); }
-       
+
+        /* Search Bar & Autocomplete */
+        .desktop-search-wrap { position: relative; flex: 1; margin: 0 16px; }
+        .mobile-search-wrap { position: relative; display: none; margin: 0 16px 10px 16px; width: calc(100% - 32px); }
+        
         .amz-search-block {
             display: flex;
-            height: 40px;
+            height: 42px;
             border-radius: 6px;
             overflow: hidden;
             border: 3px solid transparent;
@@ -82,178 +126,273 @@
             width: 100%;
             background: white;
         }
+        .amz-search-block:focus-within { border-color: var(--color-pink); }
+
         .amz-search-select {
-            padding: 0 10px;
-            max-width: 130px;
+            background-color: #F3F4F6;
+            border: none;
+            border-right: 1px solid #CDD2D3;
+            padding: 0 12px;
+            color: #555;
+            font-size: 0.85rem;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            max-width: 140px;
+            flex-shrink: 0;
+            text-overflow: ellipsis;
         }
+        .amz-search-select:hover { background-color: #DADADA; color: #0F1111; }
+
         .amz-search-input {
-            padding: 0 14px;
+            flex: 1;
+            min-width: 0; 
+            padding: 0 16px;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            color: #0F1111;
         }
+        
         .amz-search-btn {
-            width: 48px;
+            width: 52px;
+            background-color: var(--color-pink);
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0; 
         }
+        .amz-search-btn:hover { background-color: var(--color-pink-hover); }
+
+        /* LIVE SEARCH DROPDOWN */
         .search-suggestions {
-            top: calc(100% + 2px);
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0; right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border: 1px solid #D5D9D9;
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
         }
-        /* Sub Header (ZERO VERTICAL SPACE) */
+        .suggestion-item {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #F3F4F6;
+            color: #0F1111;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+        .suggestion-item:last-child { border-bottom: none; }
+        .suggestion-item:hover { background-color: #F7F7F7; }
+        .sugg-icon { color: #888C8C; font-size: 1rem; width: 20px; text-align: center; }
+        .sugg-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;}
+        .sugg-type { font-size: 0.7rem; color: var(--color-pink); background: var(--color-pink-light); padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+
+        /* Sub Header (Ticker) */
         .amz-sub-header {
             background-color: var(--amz-nav-bar);
-            padding: 5px 12px;
+            padding: 8px 16px;
             display: flex;
             align-items: center;
             font-size: 0.9rem;
             color: white;
             font-weight: 600;
         }
+        
         .amz-category-filter {
+            background-color: transparent;
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
             padding: 4px 8px;
-            margin-right: 8px;
+            border-radius: 4px;
+            outline: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-right: 12px;
+            flex-shrink: 0;
+            max-width: 130px;
         }
-       
+        .amz-category-filter option { color: #0F1111; background: white; }
+        .amz-category-filter:hover { border-color: white; }
+        
+        .ticker-wrapper { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; gap: 12px; }
+        .ticker-content { white-space: nowrap; animation: ticker 60s linear infinite; padding-left: 100%; color: white;}
+        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+
         /* --- RESPONSIVE MOBILE ADJUSTMENTS --- */
         @media (max-width: 1024px) {
             .desktop-search-wrap { display: none; }
             .mobile-search-wrap { display: block; }
-            .amz-mobile-scroll-row { padding: 6px 10px; gap: 6px; }
-            .amz-nav-item { padding: 5px 8px; }
-            .amz-category-filter { margin-right: 6px; }
+            
+            .amz-search-select { max-width: 100px; padding: 0 8px; }
+            .amz-mobile-scroll-row { padding: 8px 12px; gap: 8px; justify-content: space-between;}
+            .mobile-hide { display: none !important; }
+            .amz-nav-item { padding: 6px 8px; }
+            .amz-category-filter { max-width: 110px; margin-right: 8px; }
         }
-        /* --- 2. CONTENT BODY (ZERO VERTICAL SPACE) --- */
-        .content-body { 
-            max-width: 1600px; 
-            margin: 0 auto; 
-            width: 100%; 
-            padding: 0; 
-        }
+
+        /* --- 2. CONTENT BODY --- */
+        .content-body { max-width: 1600px; margin: 0 auto; width: 100%; padding: 20px 0; }
+
         .screen { display: none; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Horizontal Scroll Containers */
         .h-scroll {
-            display: flex; 
-            overflow-x: auto; 
-            gap: 12px;
-            padding: 0 16px 6px 16px;
+            display: flex; overflow-x: auto; gap: 16px; 
+            padding: 4px 20px 20px 20px; 
             scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-        .h-scroll::-webkit-scrollbar { display: none; }
-        
-        .sec-title {
-            font-size: 1.3rem; 
-            font-weight: 800; 
-            color: #0F1111;
-            margin: 0 16px 6px 16px; 
-            display: flex; 
-            align-items: center; 
-            gap: 8px;
-            white-space: nowrap; 
-            overflow-x: auto; 
-            scrollbar-width: none; 
             -ms-overflow-style: none; 
         }
-        .sec-title::before { 
-            content: ''; 
-            display: inline-block; 
-            width: 5px; 
-            height: 20px; 
-            background: var(--color-pink); 
-            border-radius: 4px; 
-            flex-shrink: 0; 
+        .h-scroll::-webkit-scrollbar { display: none; }
+
+        /* =========================================
+           PREMIUM HEADINGS (Unbreakable & Scrollable)
+           ========================================= */
+        .sec-title {
+            font-size: 1.35rem; font-weight: 800; color: #0F1111;
+            margin: 0 20px 16px 20px; display: flex; align-items: center; gap: 10px;
+            white-space: nowrap; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 4px;
         }
-        
-        /* SHOP CARDS (TIGHT VERTICAL) */
+        .sec-title::-webkit-scrollbar { display: none; }
+        .sec-title::before { content: ''; display: inline-block; width: 6px; height: 22px; background: var(--color-pink); border-radius: 4px; flex-shrink: 0; }
+
+        /* =========================================
+           HORIZONTAL PREMIUM SHOP CARDS (2x2 GRID)
+           ========================================= */
         .premium-shop-card-wrap { display: flex; flex-direction: column; flex-shrink: 0; }
         .h-scroll .premium-shop-card-wrap { min-width: 280px; width: 85vw; max-width: 340px; }
+
         .premium-shop-card {
-            background: white; 
-            padding: 14px 14px; 
-            display: flex; 
-            flex-direction: column;
-            cursor: pointer; 
-            height: 100%; 
-            border-radius: 8px; 
-            border: 1px solid #D5D9D9;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-            transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+            background: white; padding: 24px 20px; display: flex; flex-direction: column;
+            cursor: pointer; height: 100%; border-radius: 8px; border: 1px solid #D5D9D9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
         }
+        .premium-shop-card:hover { background: #Fcfcfc; transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.08); border-color: #B0B5B5; }
+
         .shop-card-title {
-            font-size: 1.12rem; 
-            font-weight: 800; 
-            margin-bottom: 8px; 
-            line-height: 1.2;
-            display: -webkit-box; 
-            -webkit-line-clamp: 2; 
-            -webkit-box-orient: vertical; 
-            overflow: hidden;
+            font-size: 1.15rem; font-weight: 800; color: #0F1111; margin-bottom: 16px; line-height: 1.2;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
-        .shop-image-grid { 
-            display: grid; 
-            grid-template-columns: repeat(2, minmax(0, 1fr)); 
-            gap: 8px; 
-            margin-bottom: 10px; 
-            flex: 1; 
-            width: 100%; 
-        }
-        .sg-name { font-size: 0.73rem; }
-        .sg-price { font-size: 0.78rem; margin-top: 0; }
+
+        .shop-image-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; flex: 1; width: 100%; }
+        .shop-grid-item-wrap { display: flex; flex-direction: column; gap: 4px; width: 100%; overflow: hidden; }
+        .shop-grid-item { width: 100%; aspect-ratio: 1 / 1; background: #F7F7F7; display: block; overflow: hidden; border-radius: 4px; position: relative; }
+        .shop-grid-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
         
-        /* CATEGORY CHIPS & SERVICES (TIGHT) */
-        .cat-grid { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 10px; 
-            padding: 0 16px 12px 16px; 
+        @keyframes pulse-badge { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); } 50% { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(220, 38, 38, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
+        @keyframes highlight-price { 0%, 100% { color: var(--color-pink); text-shadow: none; } 50% { color: #ff0055; text-shadow: 0 0 6px rgba(219,39,119,0.4); } }
+        .grid-badge { position: absolute; top: 4px; left: 4px; background: #DC2626; color: white; font-size: 0.65rem; font-weight: 800; padding: 2px 4px; border-radius: 4px; z-index: 2; }
+        .flash-offer { animation: pulse-badge 1.5s infinite ease-in-out; }
+        .flash-price { animation: highlight-price 1.5s infinite ease-in-out; }
+
+        .shop-grid-item.empty { border: 1px dashed #D5D9D9; display: flex; align-items: center; justify-content: center; }
+
+        .shop-grid-caption { display: flex; flex-direction: column; }
+        .sg-name { font-size: 0.75rem; color: #0F1111; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sg-price { font-size: 0.8rem; font-weight: 800; color: var(--color-pink); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sg-price-old { text-decoration: line-through; color: #888C8C; font-size: 0.65rem; font-weight: 500; margin-right: 4px; }
+        .shop-cta { font-size: 0.85rem; color: var(--amz-link); font-weight: 600; display: inline-flex; text-decoration: none; margin-top: auto; }
+        .premium-shop-card:hover .shop-cta { color: var(--amz-link-hover); text-decoration: underline; }
+
+        /* =========================================
+           CATEGORY CHIPS
+           ========================================= */
+        .cat-grid { display: flex; flex-wrap: wrap; gap: 12px; padding: 0 20px 40px 20px; }
+        .cat-chip {
+            background: white; border: 1px solid #D5D9D9; border-radius: 50px;
+            padding: 6px 16px 6px 6px; display: flex; align-items: center; gap: 10px;
+            cursor: pointer; transition: 0.2s; box-shadow: var(--shadow-sm);
         }
-        .svc-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
-            gap: 10px; 
-            padding: 0 16px 12px 16px; 
-        }
-        
-        /* PROFILE (TIGHT) */
-        .form-group { margin-bottom: 10px; }
-        #profile-view, #profile-edit {
-            max-width: 600px; 
-            margin: 0 auto; 
-            background: white; 
-            padding: 16px; 
-            border-radius: 8px; 
-            border: 1px solid #D5D9D9; 
-        }
-        .avatar-edit-box { 
-            width: 100px; 
-            height: 100px; 
-            margin: 0 auto 12px; 
-        }
-        
-        /* AREA BLOCKS (MINIMAL GAP) */
-        .area-block-wrap {
-            margin-bottom: 12px;
-        }
-        
-        /* ALL OTHER VERTICAL SPACES REMOVED */
-        .promo-list, #promo-list { padding-top: 0 !important; }
-        #featured-section { margin-bottom: 8px !important; }
-        .chat-window { bottom: 70px; }
-        
-        @media (max-width: 480px) { 
-            .chat-window { bottom: 0; height: 82vh; } 
-        }
+        .cat-chip:hover { background: #F7F7F7; border-color: var(--color-pink); transform: translateY(-2px); box-shadow: var(--shadow-md);}
+        .cat-chip img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; }
+        .cat-chip span { font-size: 0.85rem; font-weight: 700; color: #0F1111; }
+
+        /* Form & Utility Styles */
+        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding: 0 20px 40px 20px; }
+        .svc-card { background: white; padding: 20px 16px; border-radius: 8px; text-align: center; border: 1px solid #D5D9D9; cursor: pointer; transition: 0.2s; }
+        .svc-card:hover { background: #F7F7F7; }
+        .svc-icon { width: 48px; height: 48px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #565959;}
+
+        /* Profile Forms */
+        .form-group { margin-bottom: 16px; text-align: left; }
+        .form-label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #0F1111; }
+        .form-input { width: 100%; padding: 10px 14px; border: 1px solid #888C8C; border-radius: 4px; font-size: 1rem; box-shadow: 0 1px 2px rgba(15,17,17,0.15) inset; }
+        .form-input:focus { outline: none; border-color: var(--color-pink); box-shadow: 0 0 0 3px var(--color-pink-light); }
+
+        .btn-brand { background: var(--color-pink); border: 1px solid var(--color-pink-hover); border-radius: 8px; padding: 10px 16px; color: white; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px 0 rgba(219,39,119,0.3); transition: 0.2s; }
+        .btn-brand:hover { background: var(--color-pink-hover); }
+        .btn-brand-alt { background: white; border: 1px solid #D5D9D9; border-radius: 8px; padding: 10px 16px; color: #0F1111; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px 0 rgba(213,217,217,0.5); transition: 0.2s;}
+        .btn-brand-alt:hover { background: #F7FAFA; }
+
+        /* Profile Avatar */
+        .avatar-edit-box { position: relative; width: 110px; height: 110px; margin: 0 auto; border-radius: 50%; overflow: hidden; cursor: pointer; border: 2px solid #D5D9D9; }
+        .avatar-edit-box img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; opacity: 0; transition: 0.2s; }
+        .avatar-edit-box:hover .avatar-overlay { opacity: 1; }
+
+        /* Cropper Modal */
+        .crop-overlay { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.95); z-index: 5000; display: flex; flex-direction: column; opacity: 0; visibility: hidden; transition: 0.3s ease; backdrop-filter: blur(5px); }
+        .crop-overlay.active { opacity: 1; visibility: visible; }
+        .crop-header-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: rgba(0,0,0,0.5); color: white; }
+        .crop-title { font-weight: 700; font-size: 1.2rem; }
+        .crop-workspace { flex: 1; position: relative; width: 100%; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
+        .crop-workspace img { max-width: 100%; max-height: 100%; display: block; }
+        .crop-footer-bar { padding: 20px; background: rgba(0,0,0,0.5); display: flex; gap: 16px; justify-content: center; }
+
+        /* AI CHAT WIDGET STYLES */
+        .ai-fab-container { position: fixed; bottom: 20px; right: 20px; z-index: 4000; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .ai-fab { width: 56px; height: 56px; border-radius: 50%; background: var(--color-pink); color: white; box-shadow: 0 4px 12px rgba(219, 39, 119, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.2s; border: none; }
+        .ai-fab:active { transform: scale(0.95); }
+        .ai-label { background: white; color: var(--color-pink); font-size: 0.7rem; font-weight: 800; padding: 4px 8px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB; white-space: nowrap; pointer-events: none; }
+
+        .chat-window { position: fixed; bottom: 90px; right: 20px; width: 350px; height: 500px; background: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 4000; display: flex; flex-direction: column; overflow: hidden; opacity: 0; pointer-events: none; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #D5D9D9; }
+        .chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+        .chat-header { background: var(--amz-dark); color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
+        .chat-msg { max-width: 80%; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; line-height: 1.4; }
+        .msg-ai { align-self: flex-start; background: white; border: 1px solid #D5D9D9; color: #0F1111; }
+        .msg-user { align-self: flex-end; background: var(--color-pink); color: white; }
+        .msg-error { align-self: center; background: #FEE2E2; color: #DC2626; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
+        .chat-input-area { padding: 12px; background: white; border-top: 1px solid #D5D9D9; display: flex; flex-direction: column; gap: 8px; }
+        .chat-input-row { display: flex; gap: 8px; width: 100%; }
+        .chat-input { flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #888C8C; outline: none; font-size: 0.9rem; }
+        .chat-input:focus { border-color: var(--color-pink); box-shadow: 0 0 0 2px var(--color-pink-light); }
+        .btn-send { background: var(--color-pink); color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        @media (max-width: 480px) { .chat-window { right: 0; left: 0; bottom: 0; width: 100%; height: 85vh; border-bottom-left-radius: 0; border-bottom-right-radius: 0; } }
     </style>
 </head>
 <body>
-    <!-- HEADER (Premium Amazon Style - ZERO VERTICAL SPACE) -->
+
+    <!-- HEADER (Premium Amazon Style) -->
     <header class="amz-header">
+        
         <!-- MAIN ROW -->
         <div class="amz-mobile-scroll-row">
+            
+            <!-- Logo -->
             <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="amz-logo" alt="Logo" onclick="window.location.reload()">
-           
+            
+            <!-- City (Hidden on Mobile) -->
             <div class="amz-location mobile-hide">
                 <i class="fa-solid fa-location-dot"></i> <span id="header-city">...</span>
             </div>
-           
+            
+            <!-- DESKTOP SEARCH WITH AUTOCOMPLETE -->
             <div class="desktop-search-wrap mobile-hide">
                 <div class="amz-search-block">
                     <select class="amz-search-select" id="search-area-desktop" onchange="navigateArea(this.value)">
@@ -262,31 +401,40 @@
                     <input type="text" class="amz-search-input" id="search-input-desktop" placeholder="Search shops and products..." autocomplete="off" oninput="handleLiveSearch('desktop')" onkeypress="if(event.key==='Enter') executeSearch('desktop')">
                     <button class="amz-search-btn" onclick="executeSearch('desktop')"><i class="fa-solid fa-magnifying-glass"></i></button>
                 </div>
+                <!-- Live Search Dropdown -->
                 <div class="search-suggestions" id="sugg-desktop"></div>
             </div>
-            
+
+            <!-- Navigation Links -->
             <div class="amz-nav-item active" onclick="switchScreen('market', this)" title="Repository">
                 <i class="fa-solid fa-house" style="font-size: 1.1rem;"></i>
                 <span class="mobile-hide">Repository</span>
             </div>
+            
             <div class="amz-nav-item" onclick="switchScreen('services', this)" title="Services">
                 <i class="fa-solid fa-table-cells-large" style="font-size: 1.1rem;"></i>
                 <span class="mobile-hide">Services</span>
             </div>
+            
+            <!-- Alerts (Icon only on mobile) -->
             <div class="amz-nav-item" onclick="switchScreen('notifications', this)">
                 <i class="fa-regular fa-bell" style="font-size: 1.2rem;"></i>
                 <span class="mobile-hide" style="margin-left: 6px;">Alerts</span>
                 <span id="badge-count" class="notif-badge">0</span>
             </div>
+
+            <!-- Profile Avatar -->
             <div class="amz-nav-item" onclick="switchScreen('profile', this)" style="padding: 4px 8px;">
                 <img id="header-avatar" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" class="header-avatar">
             </div>
+
+            <!-- Store Index -->
             <div class="amz-nav-item" onclick="window.location.href='shop-index.html'" title="Shop Index">
                 <i class="fa-solid fa-arrow-down-a-z" style="font-size: 1.1rem;"></i>
             </div>
         </div>
-        
-        <!-- MOBILE SEARCH ROW -->
+
+        <!-- MOBILE SEARCH ROW (Hidden on Desktop) WITH AUTOCOMPLETE -->
         <div class="mobile-search-wrap">
             <div class="amz-search-block">
                 <select class="amz-search-select" id="search-area-mobile" onchange="navigateArea(this.value)">
@@ -295,54 +443,68 @@
                 <input type="text" class="amz-search-input" id="search-input-mobile" placeholder="Search CT-Merchant..." autocomplete="off" oninput="handleLiveSearch('mobile')" onkeypress="if(event.key==='Enter') executeSearch('mobile')">
                 <button class="amz-search-btn" onclick="executeSearch('mobile')"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
+            <!-- Live Search Dropdown -->
             <div class="search-suggestions" id="sugg-mobile"></div>
         </div>
-        
-        <!-- TICKER ROW -->
+
+        <!-- TICKER ROW WITH CATEGORY FILTER -->
         <div class="amz-sub-header">
+            <!-- Category Filter -->
             <select class="amz-category-filter" id="filter-category" onchange="navigateCategory(this.value)">
                 <option value="all">All Categories</option>
             </select>
+            
             <div class="ticker-wrapper" id="header-ticker" style="display:none;">
                 <div id="ticker-text" class="ticker-content"></div>
             </div>
         </div>
     </header>
-    
-    <!-- CONTENT BODY (ZERO VERTICAL SPACE) -->
+
+    <!-- CONTENT BODY -->
     <main class="content-body">
+        
         <!-- MARKET -->
         <div id="market" class="screen active">
-            <div id="initial-loader" style="text-align:center; padding:20px 0; color:#888C8C;">
-                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.2rem;"></i>
+            
+            <div id="initial-loader" style="text-align:center; padding:60px 0; color:#888C8C;">
+                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem;"></i>
             </div>
-            <div id="promo-list" class="h-scroll" style="display:none;"></div>
-           
-            <div id="featured-section" style="display:none; margin-bottom: 8px;">
+
+            <!-- Promos (Hero Banner style) -->
+            <div id="promo-list" class="h-scroll" style="display:none; padding-top: 10px;"></div>
+            
+            <!-- Featured Shops Section (Manual Scroll restored) -->
+            <div id="featured-section" style="display:none; margin-bottom: 20px;">
                 <h2 class="sec-title">Featured Shops <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Top Rated)</span></h2>
                 <div id="featured-list" class="h-scroll"></div>
             </div>
-            
+
+            <!-- Areas Container (Dynamically injected Shop Grids go here) -->
             <div id="areas-container"></div>
-            
-            <div style="margin-top: 12px;">
+
+            <!-- Categories Section (Moved to Bottom) -->
+            <div style="margin-top: 60px;">
                 <h2 class="sec-title">Browse Categories</h2>
                 <div id="category-list" class="cat-grid"></div>
             </div>
+
         </div>
-        
+
         <!-- SERVICES -->
         <div id="services" class="screen">
-            <h2 class="sec-title" style="margin-top: 8px;">Services & Tools</h2>
+            <h2 class="sec-title" style="margin-top: 16px;">Services & Tools</h2>
             <div class="svc-grid">
+                
+                <!-- MY SHOP DYNAMIC CARD -->
                 <div id="myshop-card" class="svc-card" onclick="handleShopClick()">
                     <div class="svc-icon"><i class="fa-solid fa-store"></i></div>
                     <strong>Loading...</strong>
                 </div>
+
                 <div class="svc-card" onclick="window.location.href='wishlist.html'">
                     <div class="svc-icon"><i class="fa-solid fa-heart" style="color:var(--color-pink);"></i></div>
                     <strong>Wishlist</strong>
-                    <div id="wishlist-count" style="font-size:0.8rem; color:#565959; margin-top:2px;">...</div>
+                    <div id="wishlist-count" style="font-size:0.8rem; color:#565959; margin-top:4px;">...</div>
                 </div>
                 <div class="svc-card" onclick="window.location.href='help-support.html'">
                     <div class="svc-icon"><i class="fa-solid fa-headset" style="color:#007185;"></i></div>
@@ -358,67 +520,84 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- PROFILE -->
         <div id="profile" class="screen">
-            <div id="profile-view" style="max-width:600px; margin:0 auto; background:white; padding:16px; border-radius:8px; border:1px solid #D5D9D9; text-align:center;">
-                <img id="profile-avatar-lg" src="" style="width:110px; height:110px; border-radius:50%; margin-bottom:8px; border:2px solid #D5D9D9; object-fit: cover;">
-                <h2 id="profile-name" style="font-size:1.75rem; color:#0F1111; margin-bottom:6px;">Loading...</h2>
-                <p id="profile-phone" style="color:#565959; font-weight:500; margin-bottom:2px;"></p>
-                <p id="profile-email" style="color:#565959; margin-bottom:16px; font-size:0.95rem;">...</p>
-                <div style="display:flex; justify-content:center; gap:10px;">
-                    <button class="btn-brand" onclick="openEditProfile()">Edit Profile</button>
-                    <button class="btn-brand-alt" onclick="handleLogout()">Sign Out</button>
+            <!-- View Mode -->
+            <div id="profile-view" style="max-width:600px; margin:20px auto; background:white; padding:40px; border-radius:8px; border:1px solid #D5D9D9; text-align:center;">
+                <img id="profile-avatar-lg" src="" style="width:120px; height:120px; border-radius:50%; margin-bottom:16px; border:2px solid #D5D9D9; object-fit: cover;">
+                <h2 id="profile-name" style="font-size:1.8rem; color:#0F1111; margin-bottom:8px;">Loading...</h2>
+                <p id="profile-phone" style="color:#565959; font-weight:500; margin-bottom:4px;"></p>
+                <p id="profile-email" style="color:#565959; margin-bottom:24px; font-size:0.95rem;">...</p>
+                
+                <div style="display:flex; justify-content:center; gap:12px;">
+                    <button class="btn-brand" onclick="openEditProfile()">
+                        Edit Profile
+                    </button>
+                    <button class="btn-brand-alt" onclick="handleLogout()">
+                        Sign Out
+                    </button>
                 </div>
             </div>
-            <div id="profile-edit" style="display:none; max-width:600px; margin:0 auto; background:white; padding:16px; border-radius:8px; border:1px solid #D5D9D9;">
-                <h3 style="margin-bottom:12px; font-size:1.35rem;">Edit Profile</h3>
-                <div style="text-align: center; margin-bottom: 12px;">
+
+            <!-- Edit Mode -->
+            <div id="profile-edit" style="display:none; max-width:600px; margin:20px auto; background:white; padding:30px; border-radius:8px; border:1px solid #D5D9D9;">
+                <h3 style="margin-bottom:24px; font-size:1.4rem;">Edit Profile</h3>
+                
+                <!-- AVATAR UPLOAD SECTION -->
+                <div style="text-align: center; margin-bottom: 24px;">
                     <div class="avatar-edit-box" onclick="document.getElementById('file-avatar').click()">
                         <img id="edit-avatar-preview" src="" alt="Avatar">
                         <div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>
                     </div>
                     <input type="file" id="file-avatar" hidden accept="image/*" onchange="handleAvatarSelect(event)">
-                    <p style="font-size: 0.8rem; color: #565959; margin-top: 6px; font-weight: 600;">Tap photo to update (Max 500KB)</p>
+                    <p style="font-size: 0.8rem; color: #565959; margin-top: 8px; font-weight: 600;">Tap photo to update (Max 500KB)</p>
                 </div>
+
                 <div class="form-group">
                     <label class="form-label">Full Name</label>
                     <input type="text" id="edit-name" class="form-input">
                 </div>
+
                 <div class="form-group">
                     <label class="form-label">Phone Number</label>
                     <input type="tel" id="edit-phone" class="form-input">
                 </div>
+
                 <div class="form-group">
                     <label class="form-label">City</label>
                     <select id="edit-city" onchange="handleCityChange(this.value)" class="form-input" style="background:white;">
                         <option value="">Select City</option>
                     </select>
                 </div>
-                <div class="form-group" style="margin-bottom:16px;">
+
+                <div class="form-group" style="margin-bottom:24px;">
                     <label class="form-label">Area</label>
                     <select id="edit-area" class="form-input" style="background:white;">
                         <option value="">Select Area</option>
                     </select>
                 </div>
-                <p id="edit-error" style="color:#C40000; font-size:0.9rem; margin-bottom:12px; display:none;"></p>
-                <div style="display:flex; gap:10px;">
+                
+                <p id="edit-error" style="color:#C40000; font-size:0.9rem; margin-bottom:16px; display:none;"></p>
+
+                <div style="display:flex; gap:12px;">
                     <button id="btn-save" class="btn-brand" style="flex:1;" onclick="saveProfile()">Save Changes</button>
                     <button class="btn-brand-alt" style="flex:1;" onclick="cancelEdit()">Cancel</button>
                 </div>
             </div>
         </div>
-        
+
         <!-- NOTIFICATIONS -->
         <div id="notifications" class="screen">
-            <h2 class="sec-title" style="margin-top: 8px;">Alerts & Notifications</h2>
-            <div id="notif-list" style="display:flex; flex-direction:column; gap:8px; max-width:800px; padding: 0 16px;">
-                <p style="color:#565959; padding-top:12px;">Loading notifications...</p>
+            <h2 class="sec-title" style="margin-top: 16px;">Alerts & Notifications</h2>
+            <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:800px; padding: 0 20px;">
+                <p style="color:#565959; padding-top:20px;">Loading notifications...</p>
             </div>
         </div>
+
     </main>
-    
-    <!-- CROPPER MODAL -->
+
+    <!-- CROPPER MODAL (For Avatar) -->
     <div id="avatar-crop-modal" class="crop-overlay">
         <div class="crop-header-bar">
             <div class="crop-title"><i class="fa-solid fa-crop-simple"></i> Adjust Avatar</div>
@@ -432,14 +611,17 @@
             <button type="button" class="btn-brand" onclick="applyAvatarCrop()">Apply Crop</button>
         </div>
     </div>
-    
-    <!-- AI CHAT WIDGET -->
+
+    <!-- =========================================
+         AI CHAT WIDGET
+         ========================================= -->
     <div class="ai-fab-container">
         <button class="ai-fab" onclick="toggleChat()">
             <i class="fa-solid fa-robot"></i>
         </button>
         <span class="ai-label">AI Assistant</span>
     </div>
+
     <div id="chat-window" class="chat-window">
         <div class="chat-header">
             <span style="font-weight:700;"><i class="fa-solid fa-robot"></i> Assistant</span>
@@ -465,44 +647,55 @@
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     let currentUser = null;
     let userProfile = null;
-    let currentUserShop = null;
+    let currentUserShop = null; 
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v29';
-    const MAX_FILE_SIZE = 500 * 1024;
+    const CACHE_KEY = 'ctm_dash_v29'; 
+    const MAX_FILE_SIZE = 500 * 1024; 
+
     let chatHistory = [];
+
+    // --- AVATAR UPLOAD STATE ---
     let cropper = null;
     let avatarBlob = null;
     let currentOldAvatarUrl = null;
 
+    // --- NAVIGATION ---
     function switchScreen(id, btn) {
         if (btn) {
             document.querySelectorAll('.amz-nav-item').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         }
+        
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         const target = document.getElementById(id);
         if (target) target.classList.add('active');
+
         if(id === 'notifications') markRead();
     }
 
+    // --- DUAL NAVIGATION LOGIC (Area + Category) ---
     function navigateArea(areaId) {
         if (areaId !== 'all') {
-            window.location.href = `area.html?id=${areaId}`;
+            window.location.href = `area.html?id=${areaId}`; // Fixed routing!
         }
     }
+
     function navigateCategory(catName) {
         if (catName !== 'all') {
             window.location.href = `cat.html?name=${encodeURIComponent(catName)}`;
         }
     }
 
+    // --- SEARCH BAR LOGIC WITH AUTOCOMPLETE ---
     function executeSearch(type) {
         let inputId = type === 'desktop' ? 'search-input-desktop' : 'search-input-mobile';
         let query = document.getElementById(inputId).value.trim();
+        
         if (query) {
             window.location.href = `search.html?q=${encodeURIComponent(query)}`;
         }
@@ -513,24 +706,39 @@
         const suggId = type === 'desktop' ? 'sugg-desktop' : 'sugg-mobile';
         const query = document.getElementById(inputId).value.trim().toLowerCase();
         const suggBox = document.getElementById(suggId);
+
         if (query.length < 2) {
             suggBox.style.display = 'none';
             return;
         }
+
         const cacheStr = localStorage.getItem(CACHE_KEY);
         if (!cacheStr) return;
+
         try {
             const data = JSON.parse(cacheStr);
             const shops = data.shops || [];
             const products = data.products || [];
+
             let results = [];
+
+            // Find matching shops
             shops.forEach(s => {
-                if (s.name.toLowerCase().includes(query)) results.push({ text: s.name, type: 'Shop', icon: 'fa-store' });
+                if (s.name.toLowerCase().includes(query)) {
+                    results.push({ text: s.name, type: 'Shop', icon: 'fa-store' });
+                }
             });
+
+            // Find matching products
             products.forEach(p => {
-                if (p.name.toLowerCase().includes(query)) results.push({ text: p.name, type: 'Product', icon: 'fa-box' });
+                if (p.name.toLowerCase().includes(query)) {
+                    results.push({ text: p.name, type: 'Product', icon: 'fa-box' });
+                }
             });
+
+            // Limit to top 6 results
             results = results.slice(0, 6);
+
             if (results.length > 0) {
                 suggBox.innerHTML = results.map(r => `
                     <div class="suggestion-item" onclick="applySuggestion('${r.text.replace(/'/g, "\\'")}', '${type}')">
@@ -543,24 +751,36 @@
             } else {
                 suggBox.style.display = 'none';
             }
-        } catch (e) {}
+
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     function applySuggestion(text, type) {
         const inputId = type === 'desktop' ? 'search-input-desktop' : 'search-input-mobile';
         const suggId = type === 'desktop' ? 'sugg-desktop' : 'sugg-mobile';
+        
         document.getElementById(inputId).value = text;
         document.getElementById(suggId).style.display = 'none';
+        
+        // Auto-execute search upon selection
         executeSearch(type);
     }
 
+    // Hide dropdowns when clicking outside
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.desktop-search-wrap') && !e.target.closest('.mobile-search-wrap')) {
-            document.getElementById('sugg-desktop').style.display = 'none';
-            document.getElementById('sugg-mobile').style.display = 'none';
+            const dDesk = document.getElementById('sugg-desktop');
+            const dMob = document.getElementById('sugg-mobile');
+            if (dDesk) dDesk.style.display = 'none';
+            if (dMob) dMob.style.display = 'none';
         }
     });
 
+    // =========================================
+    // AI CHAT LOGIC
+    // ==========================================
     function toggleChat() {
         document.getElementById('chat-window').classList.toggle('open');
     }
@@ -569,66 +789,92 @@
         const inp = document.getElementById('chat-input');
         const txt = inp.value.trim();
         if(!txt) return;
+
         const todayStr = new Date().toISOString().split('T')[0];
         let usageStr = localStorage.getItem('ctm_ai_usage');
         let aiUsage = usageStr ? JSON.parse(usageStr) : { date: todayStr, count: 0 };
-        if (aiUsage.date !== todayStr) aiUsage = { date: todayStr, count: 0 };
         
+        if (aiUsage.date !== todayStr) {
+            aiUsage = { date: todayStr, count: 0 };
+        }
+
         const body = document.getElementById('chat-messages');
+
         if (aiUsage.count >= 15) {
-            body.innerHTML += `<div class="chat-msg msg-error">Daily limit reached (15 msgs). Check back tomorrow!</div>`;
+            body.innerHTML += `<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages to keep the server fair for everyone. Please check back tomorrow!</div>`;
             body.scrollTop = body.scrollHeight;
             inp.value = '';
             return;
         }
+
         body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
         inp.value = '';
         body.scrollTop = body.scrollHeight;
+
         chatHistory.push({ role: 'user', content: txt });
-        
+
         const loadId = 'loading-' + Date.now();
         body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic; color:#565959;">Thinking...</div>`;
         body.scrollTop = body.scrollHeight;
-        
+
         try {
             const { data: { session } } = await client.auth.getSession();
-            if(!session) throw new Error("Please log in");
-            const recentHistory = chatHistory.length > 6 ? chatHistory.slice(-6) : chatHistory;
+            if(!session) throw new Error("Please log in to use AI.");
+
+            const recentHistory = chatHistory.length > 6 
+                ? chatHistory.slice(chatHistory.length - 6) 
+                : chatHistory;
+
             const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`,
-                    'apikey': SUPABASE_ANON_KEY
+                    'apikey': SUPABASE_ANON_KEY 
                 },
-                body: JSON.stringify({ query: txt, history: recentHistory })
+                body: JSON.stringify({ 
+                    query: txt,
+                    history: recentHistory
+                })
             });
+
             document.getElementById(loadId)?.remove();
-            if (!response.ok) throw new Error(await response.text());
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Server returned ${response.status}: ${errText}`);
+            }
+
             const data = await response.json();
-            const reply = data.reply || "No response";
-            const isError = reply.startsWith("Error:") || reply.startsWith("System");
-            body.innerHTML += `<div class="chat-msg ${isError ? "msg-error" : "msg-ai"}">${reply}</div>`;
+            const reply = data.reply || "No response received.";
+            const isError = (reply.startsWith("Error:") || reply.startsWith("System") || reply.startsWith("Config"));
+            const msgClass = isError ? "msg-error" : "msg-ai";
+            
+            body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
+
             if (!isError) {
                 chatHistory.push({ role: 'assistant', content: reply });
                 aiUsage.count += 1;
                 localStorage.setItem('ctm_ai_usage', JSON.stringify(aiUsage));
             }
+            
         } catch (err) {
             document.getElementById(loadId)?.remove();
-            body.innerHTML += `<div class="chat-msg msg-error">Error: ${err.message}</div>`;
+            body.innerHTML += `<div class="chat-msg msg-error">Connection Error: ${err.message}</div>`;
         }
         body.scrollTop = body.scrollHeight;
     }
 
+    // --- INIT ---
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "index.html"; return; }
         currentUser = session.user;
+
         const cache = localStorage.getItem(CACHE_KEY);
         if (cache) {
             renderData(JSON.parse(cache));
-            fetchData();
+            fetchData(); 
         } else {
             fetchData();
         }
@@ -636,17 +882,20 @@
 
     async function fetchData() {
         try {
-            const { data: profile } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).maybeSingle();
-            if (!profile) {
-                alert("Account restricted");
+            const { data: profile, error: profileErr } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).maybeSingle();
+            
+            if (profileErr || !profile) {
+                alert("Your account access has been restricted by administration. Please contact support.");
                 await client.auth.signOut();
+                localStorage.removeItem(CACHE_KEY);
                 window.location.href = "index.html";
                 return;
             }
+            
             userProfile = profile;
             userCityId = profile.city_id;
             userAreaId = profile.area_id;
-            
+
             const [promos, announcements, categories, areas, shops, notifs, myShop, wishlist] = await Promise.all([
                 client.from('promo_banners').select().order('created_at', {ascending: false}),
                 client.from('announcements').select().order('created_at', {ascending: false}),
@@ -657,8 +906,9 @@
                 client.from('shops').select('id, status, rejection_reason, is_open').eq('owner_id', currentUser.id).maybeSingle(),
                 client.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id)
             ]);
-            
+
             currentUserShop = myShop.data;
+
             let products = [];
             const shopIds = shops.data.map(s => s.id);
             if(shopIds.length > 0) {
@@ -671,6 +921,7 @@
             }
             
             const unreadCount = notifs.data ? notifs.data.filter(n => !n.is_read).length : 0;
+
             const dashboardData = {
                 profile,
                 promos: promos.data,
@@ -684,72 +935,103 @@
                 products,
                 unread: unreadCount
             };
+
             localStorage.setItem(CACHE_KEY, JSON.stringify(dashboardData));
             renderData(dashboardData);
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Fetch error:", e); }
     }
 
     function renderData(data) {
         document.getElementById('initial-loader').style.display = 'none';
         const areaContainer = document.getElementById('areas-container');
-        
+
+        // Header Population
         document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
         
+        // Populate Areas in Search Bar Dropdown
         const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
         const areaOptionsItems = sortedAreas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-        document.getElementById('search-area-desktop').innerHTML = `<option value="all">All Areas</option>` + areaOptionsItems;
-        document.getElementById('search-area-mobile').innerHTML = `<option value="all">All Areas</option>` + areaOptionsItems;
         
+        const deskSelect = document.getElementById('search-area-desktop');
+        const mobSelect = document.getElementById('search-area-mobile');
+        
+        if (deskSelect) deskSelect.innerHTML = `<option value="all">All Areas</option>` + areaOptionsItems;
+        if (mobSelect) mobSelect.innerHTML = `<option value="all">All Areas</option>` + areaOptionsItems;
+
+        // Populate Categories in the Ticker Dropdown
         const catFilter = document.getElementById('filter-category');
-        catFilter.innerHTML = `<option value="all">All Categories</option>` + data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-        
+        if (catFilter) {
+            catFilter.innerHTML = `<option value="all">All Categories</option>` + 
+                                  data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        }
+
+        // Avatar
         const fName = data.profile.full_name || "User";
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${fName}`;
         document.getElementById('header-avatar').src = avatar;
+        
+        // Profile Screen Population
         document.getElementById('profile-avatar-lg').src = avatar;
         document.getElementById('profile-name').textContent = fName;
-        document.getElementById('profile-phone').textContent = data.profile.phone || "No phone";
+        document.getElementById('profile-phone').textContent = data.profile.phone || "No phone number added";
         document.getElementById('profile-email').textContent = currentUser.email;
-        
+
+        // Notifications
         if (data.unread > 0) {
             const b = document.getElementById('badge-count');
             b.textContent = data.unread > 9 ? '9+' : data.unread;
             b.style.display = 'block';
         }
-        
+
+        // Ticker Logic
         if (data.announcements && data.announcements.length > 0) {
             const tickerEl = document.getElementById('ticker-text');
-            const text = data.announcements.map(a => a.message).join(" • ");
+            const text = data.announcements.map(a => a.message).join("  •  ");
+            
             document.getElementById('header-ticker').style.display = 'flex';
             tickerEl.textContent = text;
-            tickerEl.style.animationDuration = `${Math.max(30, text.length * 0.35)}s`;
+            
+            const speed = Math.max(40, text.length * 0.4); 
+            tickerEl.style.animationDuration = `${speed}s`;
+        } else {
+            document.getElementById('header-ticker').style.display = 'none';
         }
-        
+
+        // Promos
         const pList = document.getElementById('promo-list');
         if (data.promos.length > 0) {
             pList.style.display = 'flex';
-            pList.innerHTML = data.promos.map(p => `
-                <div style="min-width:320px; max-width:600px; width:85vw; height:180px; border-radius:4px; overflow:hidden; flex-shrink:0; border:1px solid #D5D9D9;">
+            pList.innerHTML = data.promos.map(p => 
+                `<div style="min-width:320px; max-width: 600px; width: 85vw; height:200px; border-radius:4px; overflow:hidden; flex-shrink:0; border:1px solid #D5D9D9;">
                     <img src="${p.image_url}" style="width:100%; height:100%; object-fit:cover;">
-                </div>
-            `).join('');
+                 </div>`
+            ).join('');
         }
-        
+
+        // --- FEATURED SHOPS ---
         const featured = data.shops.filter(s => s.is_featured);
         const featuredSection = document.getElementById('featured-section');
         if (featured.length > 0) {
             featuredSection.style.display = 'block';
             document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
+        } else {
+            featuredSection.style.display = 'none';
         }
-        
+
+        // Build Shop Grids Grouped By Area
         areaContainer.innerHTML = '';
+
         sortedAreas.forEach(area => {
             const areaShops = data.shops.filter(s => s.area_id === area.id);
             if(areaShops.length === 0) return;
+
             const isUser = area.id === userAreaId;
-            const titleHtml = isUser ? `Top stores in ${area.name} <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Near You)</span>` : `Explore stores in ${area.name}`;
+            const titleHtml = isUser 
+                ? `Top stores in ${area.name} <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Near You)</span>` 
+                : `Explore stores in ${area.name}`;
+
             areaContainer.innerHTML += `
-                <div class="area-block-wrap" style="margin-bottom:12px;">
+                <div class="area-block-wrap" style="margin-bottom: 40px;">
                     <h2 class="sec-title">${titleHtml}</h2>
                     <div class="h-scroll">
                         ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
@@ -757,7 +1039,8 @@
                 </div>
             `;
         });
-        
+
+        // Categories at the bottom
         document.getElementById('category-list').innerHTML = data.categories.map(cat => {
             const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
             const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
@@ -768,45 +1051,64 @@
                 </div>
             `;
         }).join('');
-        
+
+        // Notifications Screen Build
         const notifListEl = document.getElementById('notif-list');
         if (data.notifications && data.notifications.length > 0) {
             notifListEl.innerHTML = data.notifications.map(n => {
                 const date = new Date(n.created_at).toLocaleDateString() + ' ' + new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const bg = n.is_read ? 'white' : '#F7FAFA';
-                const border = n.is_read ? '#D5D9D9' : '#007185';
+                const bg = n.is_read ? 'white' : '#F7FAFA'; 
+                const border = n.is_read ? '#D5D9D9' : '#007185'; 
+
                 return `
-                    <div style="background:${bg}; padding:14px; border-radius:8px; border:1px solid ${border};">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <div style="background:${bg}; padding:16px; border-radius:8px; border:1px solid ${border};">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                             <span style="font-weight:700; color:#0F1111; font-size:0.95rem;">${n.title}</span>
-                            <span style="font-size:0.73rem; color:#565959;">${date}</span>
+                            <span style="font-size:0.75rem; color:#565959;">${date}</span>
                         </div>
-                        <div style="color:#0F1111; font-size:0.9rem; line-height:1.3;">${n.message || ''}</div>
+                        <div style="color:#0F1111; font-size:0.9rem; line-height:1.4;">${n.message || ''}</div>
                     </div>
                 `;
             }).join('');
         } else {
-            notifListEl.innerHTML = '<p style="color:#565959; padding:12px 0;">No notifications yet</p>';
+            notifListEl.innerHTML = '<p style="color:#565959;">No notifications yet</p>';
         }
-        
+
         updateMyShopCardUI(data.myShop);
         currentUserShop = data.myShop;
-        document.getElementById('wishlist-count').textContent = `${data.wishlistCount || 0} items`;
+
+        const wishlistCount = data.wishlistCount || 0;
+        document.getElementById('wishlist-count').textContent = `${wishlistCount} items`;
     }
 
+    // =========================================
+    // PREMIUM AMAZON-STYLE SHOP CARD BUILDER
+    // =========================================
     function buildShopCard(shop, allProducts) {
+        // Exclude "Fairly Used" items from the front card 
         const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url && x.condition !== 'Fairly Used').slice(0, 4);
+
         let gridHtml = '';
+        
         for (let i = 0; i < 4; i++) {
             if (i < p.length) {
                 const prodName = p[i].name || p[i].product_name || p[i].title || 'Product';
+                
                 const price = p[i].price || p[i].product_price;
                 const discount = p[i].discount_price;
                 const hasDiscount = discount && discount < price;
                 const percent = hasDiscount ? Math.round(((price - discount)/price)*100) : 0;
-                let priceHtml = hasDiscount 
-                    ? `<span class="sg-price-old">₦${price.toLocaleString()}</span>₦${discount.toLocaleString()}` 
-                    : (price ? `₦${price.toLocaleString()}` : '');
+                
+                let priceHtml = '';
+                let priceClass = 'sg-price';
+                
+                if (hasDiscount) {
+                    priceHtml = `<span class="sg-price-old">₦${price.toLocaleString()}</span>₦${discount.toLocaleString()}`;
+                    priceClass = 'sg-price flash-price'; 
+                } else if (price) {
+                    priceHtml = `₦${price.toLocaleString()}`;
+                }
+
                 gridHtml += `
                     <div class="shop-grid-item-wrap">
                         <div class="shop-grid-item">
@@ -815,7 +1117,7 @@
                         </div>
                         <div class="shop-grid-caption">
                             <div class="sg-name" title="${prodName}">${prodName}</div>
-                            <div class="sg-price ${hasDiscount ? 'flash-price' : ''}">${priceHtml}</div>
+                            <div class="${priceClass}">${priceHtml}</div>
                         </div>
                     </div>
                 `;
@@ -823,7 +1125,7 @@
                 gridHtml += `
                     <div class="shop-grid-item-wrap">
                         <div class="shop-grid-item empty">
-                            <i class="fa-solid fa-image" style="color: #E5E7EB; font-size: 1.1rem;"></i>
+                            <i class="fa-solid fa-image" style="color: #E5E7EB; font-size: 1.2rem;"></i>
                         </div>
                         <div class="shop-grid-caption" style="color:transparent; user-select:none;">
                             <div class="sg-name">-</div>
@@ -833,6 +1135,7 @@
                 `;
             }
         }
+
         return `
             <div class="premium-shop-card-wrap">
                 <div class="premium-shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
@@ -850,14 +1153,25 @@
         const card = document.getElementById('myshop-card');
         const iconContainer = card.querySelector('.svc-icon');
         const textLabel = card.querySelector('strong');
+        
         let icon = 'fa-store';
         let label = 'Register Shop';
+        
         if (shop) {
-            if (shop.is_open === false) { icon = 'fa-lock'; label = 'Locked'; }
-            else if (shop.status === 'pending') { icon = 'fa-hourglass-half'; label = 'Pending'; }
-            else if (shop.status === 'approved') { icon = 'fa-store'; label = 'My Shop'; }
-            else if (shop.status === 'rejected') { icon = 'fa-circle-exclamation'; label = 'Rejected'; }
+            if (shop.is_open === false) {
+                icon = 'fa-lock'; label = 'Locked';
+            } 
+            else if (shop.status === 'pending') {
+                icon = 'fa-hourglass-half'; label = 'Pending';
+            } 
+            else if (shop.status === 'approved') {
+                icon = 'fa-store'; label = 'My Shop';
+            } 
+            else if (shop.status === 'rejected') {
+                icon = 'fa-circle-exclamation'; label = 'Rejected';
+            }
         }
+        
         iconContainer.innerHTML = `<i class="fa-solid ${icon}"></i>`;
         textLabel.textContent = label;
     }
@@ -865,52 +1179,230 @@
     function handleShopClick() {
         if (!currentUserShop) {
             window.location.href = 'shop-registration.html';
-        } else if (currentUserShop.is_open === false) {
-            alert("🔒 Your shop access has been restricted. Contact support@ct-merchant.com");
-        } else if (currentUserShop.status === 'pending') {
-            alert('Your shop application is under review.');
-        } else if (currentUserShop.status === 'approved') {
+        }
+        else if (currentUserShop.is_open === false) {
+            alert("🔒 Your shop access has been restricted by administration. Please contact support via support@ct-merchant.com to resolve your account status.");
+        }
+        else if (currentUserShop.status === 'pending') {
+            alert('Your shop application is currently being reviewed. Please check back later.');
+        }
+        else if (currentUserShop.status === 'approved') {
             window.location.href = 'merchant-dashboard.html';
-        } else if (currentUserShop.status === 'rejected') {
-            alert(`Rejected: ${currentUserShop.rejection_reason || 'Update details.'}`);
-            window.location.href = `shop-registration.html?id=${currentUserShop.id}`;
+        }
+        else if (currentUserShop.status === 'rejected') {
+            alert(`Application Rejected: ${currentUserShop.rejection_reason || 'Please update your details.'}`);
+            window.location.href = `shop-registration.html?id=${currentUserShop.id}`; 
         }
     }
 
-    // AVATAR + PROFILE EDIT (kept functional)
+    // =========================================
+    // EDIT PROFILE & AVATAR CROPPER LOGIC
+    // =========================================
     async function openEditProfile() {
         if(!userProfile) return;
         document.getElementById('profile-view').style.display = 'none';
         document.getElementById('profile-edit').style.display = 'block';
+        
         document.getElementById('edit-name').value = userProfile.full_name || '';
         document.getElementById('edit-phone').value = userProfile.phone || '';
+
         avatarBlob = null;
         currentOldAvatarUrl = userProfile.avatar_url;
         document.getElementById('edit-avatar-preview').src = currentOldAvatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${userProfile.full_name}`;
+
         if(allCities.length === 0) {
-            const { data } = await client.from('cities').select('id, name').or(`is_open.eq.true,id.eq.${userProfile.city_id || 0}`).order('name');
+            const { data } = await client.from('cities')
+                .select('id, name')
+                .or(`is_open.eq.true,id.eq.${userProfile.city_id || 0}`)
+                .order('name');
+                
             allCities = data || [];
             const citySelect = document.getElementById('edit-city');
             citySelect.innerHTML = '<option value="">Select City</option>';
-            allCities.forEach(c => citySelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+            allCities.forEach(c => { citySelect.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
         }
+
         if(userProfile.city_id) {
             document.getElementById('edit-city').value = userProfile.city_id;
             await handleCityChange(userProfile.city_id, userProfile.area_id);
         }
     }
 
-    // ... (rest of avatar/profile functions unchanged - they don't affect vertical spacing)
-    function handleAvatarSelect(event) { /* unchanged */ }
-    function openAvatarCropModal(imageSrc) { /* unchanged */ }
-    function closeAvatarCropModal() { /* unchanged */ }
-    function applyAvatarCrop() { /* unchanged */ }
-    async function uploadAvatarProcess() { /* unchanged */ }
-    async function handleCityChange(cityId, preSelectAreaId = null) { /* unchanged */ }
-    function cancelEdit() { /* unchanged */ }
-    async function saveProfile() { /* unchanged */ }
-    async function handleLogout() { /* unchanged */ }
-    async function markRead() { /* unchanged */ }
+    function handleAvatarSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                openAvatarCropModal(e.target.result);
+                event.target.value = ''; 
+            };
+            reader.readAsDataURL(file);
+        } else {
+            alert("Please upload a valid image file.");
+            event.target.value = '';
+        }
+    }
+
+    function openAvatarCropModal(imageSrc) {
+        const modal = document.getElementById('avatar-crop-modal');
+        const img = document.getElementById('avatar-crop-image');
+        
+        img.src = imageSrc;
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        if (cropper) cropper.destroy();
+
+        cropper = new Cropper(img, {
+            aspectRatio: 1, 
+            viewMode: 2,
+            background: false,
+            autoCropArea: 1,
+            responsive: true
+        });
+    }
+
+    function closeAvatarCropModal() {
+        document.getElementById('avatar-crop-modal').classList.remove('active');
+        document.body.style.overflow = '';
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    }
+
+    function applyAvatarCrop() {
+        if (!cropper) return;
+        
+        cropper.getCroppedCanvas({
+            width: 600, 
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        }).toBlob((blob) => {
+            if (blob.size > MAX_FILE_SIZE) {
+                alert(`Image is too large (${Math.round(blob.size/1024)}KB). Maximum allowed size is 500KB. Try cropping smaller.`);
+                return; 
+            }
+
+            avatarBlob = blob;
+            const localUrl = URL.createObjectURL(blob);
+            document.getElementById('edit-avatar-preview').src = localUrl;
+            closeAvatarCropModal();
+        }, 'image/jpeg', 0.85); 
+    }
+
+    async function uploadAvatarProcess() {
+        if (!avatarBlob) return currentOldAvatarUrl;
+
+        if (currentOldAvatarUrl && currentOldAvatarUrl.includes('/avatars/')) {
+            try {
+                const pathMatch = currentOldAvatarUrl.match(new RegExp(`/(?:public|authenticated)/avatars/(.+)`));
+                if (pathMatch && pathMatch[1]) {
+                    const oldFilePath = pathMatch[1].split('?')[0]; 
+                    await client.storage.from('avatars').remove([oldFilePath]);
+                }
+            } catch (err) {
+                console.warn("Failed to delete old avatar:", err);
+            }
+        }
+
+        const fileName = `${currentUser.id}_${Date.now()}.jpg`;
+        const { error: uploadError } = await client.storage.from('avatars').upload(fileName, avatarBlob, {
+            contentType: 'image/jpeg',
+            upsert: false
+        });
+        
+        if (uploadError) throw uploadError;
+        
+        const { data } = client.storage.from('avatars').getPublicUrl(fileName);
+        return data.publicUrl;
+    }
+
+    async function handleCityChange(cityId, preSelectAreaId = null) {
+        const areaSelect = document.getElementById('edit-area');
+        areaSelect.innerHTML = '<option value="">Loading...</option>';
+        areaSelect.disabled = true;
+
+        if(!cityId) {
+            areaSelect.innerHTML = '<option value="">Select Area</option>';
+            return;
+        }
+
+        const { data: areas } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+        
+        areaSelect.innerHTML = '<option value="">Select Area</option>';
+        if(areas) {
+            areas.forEach(a => {
+                areaSelect.innerHTML += `<option value="${a.id}">${a.name}</option>`;
+            });
+        }
+        areaSelect.disabled = false;
+
+        if(preSelectAreaId) {
+            areaSelect.value = preSelectAreaId;
+        }
+    }
+
+    function cancelEdit() {
+        document.getElementById('profile-edit').style.display = 'none';
+        document.getElementById('profile-view').style.display = 'block';
+        document.getElementById('edit-error').style.display = 'none';
+        avatarBlob = null; 
+    }
+
+    async function saveProfile() {
+        const name = document.getElementById('edit-name').value.trim();
+        const phone = document.getElementById('edit-phone').value.trim();
+        const cityId = document.getElementById('edit-city').value;
+        const areaId = document.getElementById('edit-area').value;
+        const btn = document.getElementById('btn-save');
+        const err = document.getElementById('edit-error');
+
+        if(!name) { err.textContent = "Full Name is required."; err.style.display = 'block'; return; }
+        if(!cityId || !areaId) { err.textContent = "Please select both City and Area."; err.style.display = 'block'; return; }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+        err.style.display = 'none';
+
+        try {
+            const finalAvatarUrl = await uploadAvatarProcess();
+
+            const { error } = await client.from('profiles').update({
+                full_name: name,
+                phone: phone,
+                city_id: parseInt(cityId),
+                area_id: parseInt(areaId),
+                avatar_url: finalAvatarUrl 
+            }).eq('id', currentUser.id);
+
+            if(error) throw error;
+            
+            await fetchData(); 
+            cancelEdit();
+
+        } catch (e) {
+            err.textContent = e.message || "Error updating profile";
+            err.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Save Changes";
+        }
+    }
+
+    async function handleLogout() {
+        if(confirm("Sign Out?")) {
+            await client.auth.signOut();
+            window.location.href = "index.html";
+        }
+    }
+    
+    async function markRead() {
+        document.getElementById('badge-count').style.display = 'none';
+        await client.from('notifications').update({is_read: true}).eq('user_id', currentUser.id);
+    }
 </script>
 </body>
 </html>
