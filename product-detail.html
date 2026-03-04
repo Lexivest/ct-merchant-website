@@ -10,18 +10,25 @@
 
     <style>
         :root {
-            --color-primary: #6B21A8;
-            --color-pink: #DB2777;
-            --color-bg: #F8FAFC;
-            --color-text: #1E293B;
-            --color-text-muted: #64748B;
+            /* PREMIUM AMAZON THEME WITH CT-MERCHANT PINK */
+            --amz-dark: #131921;
+            --amz-nav-bar: #232F3E;
+            
+            --color-pink: #db2777; 
+            --color-pink-hover: #be185d;
+            --color-pink-light: rgba(219, 39, 119, 0.1);
+            
+            --amz-bg: #F3F4F6;
+            --amz-link: #007185;
+            --color-text-main: #0F1111;
+            --color-text-muted: #565959;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body { 
-            background-color: var(--color-bg); 
-            color: var(--color-text); 
+            background-color: var(--amz-bg); 
+            color: var(--color-text-main); 
             padding-bottom: 90px;
         }
 
@@ -46,12 +53,23 @@
                 flex-direction: row; 
                 gap: 40px; 
                 background: white;
-                border-radius: 24px;
+                border-radius: 12px;
                 padding: 40px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+                border: 1px solid #D5D9D9;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             }
-            .image-container { flex: 1; border-radius: 20px !important; height: 500px !important; }
-            .content-area { flex: 1; padding: 0 !important; margin-top: 0 !important; box-shadow: none !important; }
+            .image-container { 
+                flex: 1; 
+                border-radius: 8px !important; 
+                height: 550px !important; 
+                border: 1px solid #E3E6E6;
+            }
+            .content-area { 
+                flex: 1; 
+                padding: 0 !important; 
+                margin-top: 0 !important; 
+                box-shadow: none !important; 
+            }
             
             /* Hide top mobile buttons on desktop */
             .top-btn { display: none !important; }
@@ -61,87 +79,139 @@
         }
 
         /* --- HEADER & IMAGE --- */
-        .image-container { position: relative; height: 350px; width: 100%; background: #E2E8F0; overflow: hidden; }
-        .product-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-        .product-img:hover { transform: scale(1.05); }
+        .image-container { 
+            position: relative; 
+            height: 50vh; /* Responsive mobile height */
+            min-height: 350px;
+            width: 100%; 
+            background: #F7F7F7; /* Neutral background to frame images seamlessly */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #E3E6E6;
+        }
+        
+        /* CRITICAL FIX: object-fit: contain ensures 100% of the image is ALWAYS visible */
+        .product-img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; 
+            padding: 20px; /* Prevents image from touching the absolute edges */
+            transition: transform 0.3s; 
+        }
+        @media (min-width: 900px) { .product-img:hover { transform: scale(1.05); } }
 
-        /* Mobile Buttons */
+        /* Dynamic Discount Badge on Image */
+        .discount-badge-hero {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: #DC2626;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 800;
+            padding: 6px 12px;
+            border-radius: 6px;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3);
+        }
+
+        /* Mobile Buttons (Solid white for contrast against any image) */
         .top-btn {
             position: absolute; top: 20px;
-            width: 40px; height: 40px; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+            width: 44px; height: 44px; background: white;
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 1.2rem; cursor: pointer; border: none; z-index: 10; transition: transform 0.2s;
+            color: #0F1111; font-size: 1.2rem; cursor: pointer; border: 1px solid #D5D9D9; 
+            z-index: 10; transition: transform 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
         .top-btn:active { transform: scale(0.9); }
         .btn-back { left: 20px; }
         
         .actions-right { position: absolute; top: 20px; right: 20px; display: flex; gap: 12px; }
-        .btn-fav.active { color: #EF4444; background: white; }
+        .btn-fav.active { color: var(--color-pink); border-color: rgba(219, 39, 119, 0.4); background: var(--color-pink-light); }
 
         /* Desktop Actions (Initially Hidden) */
         .desktop-actions { display: none; }
         .btn-desk { 
-            padding: 8px 16px; border-radius: 8px; border: 1px solid #E2E8F0; 
-            background: white; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;
+            padding: 8px 16px; border-radius: 6px; border: 1px solid #D5D9D9; 
+            background: white; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; color: #0F1111;
+            transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
-        .btn-desk:hover { background: #F8FAFC; border-color: var(--color-primary); }
+        .btn-desk:hover { background: #F7FAFA; border-color: #B0B5B5; }
+        .btn-desk.fav-active { color: var(--color-pink); border-color: var(--color-pink); background: var(--color-pink-light); }
 
         /* --- CONTENT CARD --- */
         .content-area {
-            background: white; border-radius: 24px 24px 0 0; 
-            margin-top: -24px; position: relative; padding: 24px;
+            background: white; border-radius: 20px 20px 0 0; 
+            margin-top: -20px; position: relative; padding: 24px;
             box-shadow: 0 -4px 10px rgba(0,0,0,0.05); z-index: 5;
         }
 
         .condition-badge {
-            display: inline-block; padding: 6px 12px; border-radius: 8px;
-            font-size: 0.8rem; font-weight: 700; margin-bottom: 16px;
+            display: inline-block; padding: 4px 10px; border-radius: 4px;
+            font-size: 0.75rem; font-weight: 800; margin-bottom: 12px;
             text-transform: uppercase; letter-spacing: 0.5px;
         }
-        .cond-new { background: #EFF6FF; color: #1E40AF; border: 1px solid #DBEAFE; }
-        .cond-used { background: #FFF7ED; color: #9A3412; border: 1px solid #FFEDD5; }
+        .cond-new { background: #F3F4F6; color: #007185; border: 1px solid #D5D9D9; }
+        .cond-used { background: #FFF7ED; color: #C40000; border: 1px solid #F3A847; }
 
-        .prod-title { font-size: 1.75rem; font-weight: 800; line-height: 1.3; margin-bottom: 12px; color: var(--color-text); }
+        .prod-title { font-size: 1.6rem; font-weight: 800; line-height: 1.3; margin-bottom: 12px; color: #0F1111; }
         
-        .price-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 30px; }
-        .current-price { font-size: 2rem; font-weight: 800; color: var(--color-primary); }
-        .old-price { text-decoration: line-through; color: var(--color-text-muted); font-size: 1.2rem; }
+        .price-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; }
+        .current-price { font-size: 2.2rem; font-weight: 800; color: var(--color-pink); }
+        .old-price { text-decoration: line-through; color: #888C8C; font-size: 1.2rem; font-weight: 500;}
 
-        .section-header { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; color: var(--color-text); }
-        .description-text { font-size: 1rem; line-height: 1.7; color: #334155; }
+        .section-header { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; color: #0F1111; border-bottom: 2px solid #F3F4F6; padding-bottom: 6px;}
+        .description-text { font-size: 0.95rem; line-height: 1.7; color: #565959; white-space: pre-wrap;}
+
+        /* Animations */
+        @keyframes pulse-badge {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        @keyframes highlight-price {
+            0%, 100% { color: var(--color-pink); text-shadow: none; }
+            50% { color: #ff0055; text-shadow: 0 0 8px rgba(219,39,119,0.3); }
+        }
+        .flash-offer { animation: pulse-badge 1.5s infinite ease-in-out; }
+        .flash-price { animation: highlight-price 1.5s infinite ease-in-out; }
 
         /* --- BOTTOM BAR --- */
         .bottom-bar {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: white; padding: 16px 24px;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.05); z-index: 100;
-            display: flex; justify-content: center;
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 1200px;
+            background: white; padding: 12px 20px;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.08); z-index: 100;
+            border-top: 1px solid #D5D9D9; display: flex; justify-content: center;
         }
         .btn-whatsapp {
             width: 100%; max-width: 600px;
-            background: #22C55E; color: white;
-            padding: 16px; border-radius: 12px; border: none;
-            font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
-            cursor: pointer; transition: background 0.2s;
+            background: #25D366; color: white;
+            padding: 14px; border-radius: 8px; border: none;
+            font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; justify-content: center; gap: 8px;
+            cursor: pointer; transition: 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
         .btn-whatsapp:hover { background: #16A34A; }
 
         /* --- MODAL --- */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200;
+            position: fixed; inset: 0; background: rgba(19, 25, 33, 0.8); z-index: 200;
             display: flex; align-items: center; justify-content: center;
-            opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(4px);
+            opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(2px);
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-card { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .modal-card { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); border: 1px solid #D5D9D9;}
         
         .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
-        .btn-modal { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
-        .btn-cancel { background: #F1F5F9; color: #64748B; }
-        .btn-confirm { background: var(--color-primary); color: white; }
+        .btn-modal { flex: 1; padding: 12px; border-radius: 6px; border: none; font-weight: 700; cursor: pointer; font-size: 0.95rem; transition: 0.2s; }
+        .btn-cancel { background: white; border: 1px solid #D5D9D9; color: #0F1111; }
+        .btn-cancel:hover { background: #F7FAFA; }
+        .btn-confirm { background: #25D366; color: white; }
+        .btn-confirm:hover { background: #16A34A; }
 
         .hidden { display: none !important; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        .spinner { width: 44px; height: 44px; border: 4px solid var(--color-pink-light); border-top-color: var(--color-pink); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
@@ -151,19 +221,23 @@
     <!-- Loading State -->
     <div id="loader" style="height: 100vh; display: flex; flex-direction:column; align-items: center; justify-content: center;">
         <div class="spinner"></div>
-        <p id="loading-text" style="margin-top:16px; color:#64748B; font-size:0.9rem;">Loading Product...</p>
+        <p id="loading-text" style="margin-top:16px; color:#565959; font-weight:600;">Loading Details...</p>
     </div>
 
     <!-- Error State -->
-    <div id="error-screen" class="hidden" style="text-align:center; padding: 40px;">
-        <h3 style="color:#64748B">Product Not Found</h3>
-        <button onclick="history.back()" style="margin-top:10px; padding:8px 16px; cursor:pointer;">Go Back</button>
+    <div id="error-screen" class="hidden" style="text-align:center; padding: 60px 20px;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #C40000; margin-bottom: 16px;"></i>
+        <h3 style="color:#0F1111; font-weight: 800;">Product Not Found</h3>
+        <p style="color:#565959; margin-top: 8px;">The item you are looking for may have been removed.</p>
+        <button onclick="history.back()" style="margin-top:20px; padding:10px 24px; background: white; border: 1px solid #D5D9D9; border-radius: 6px; font-weight: 600; cursor:pointer;">Go Back</button>
     </div>
 
     <div id="main-content" class="main-layout hidden">
-        <!-- Header Image -->
+        
+        <!-- Header Image Area -->
         <div class="image-container">
             <img id="prod-img" class="product-img" src="" alt="Product Image">
+            <div id="discount-badge" class="discount-badge-hero flash-offer hidden"></div>
             
             <!-- Mobile Buttons -->
             <button onclick="history.back()" class="top-btn btn-back">
@@ -179,13 +253,14 @@
             </div>
         </div>
 
-        <!-- Details -->
+        <!-- Details Area -->
         <div class="content-area">
+            
             <!-- Desktop Buttons -->
             <div class="desktop-actions">
                 <button onclick="history.back()" class="btn-desk"><i class="fa-solid fa-arrow-left"></i> Back</button>
                 <div style="flex-grow:1"></div>
-                <button id="desk-wishlist-btn" onclick="toggleWishlist()" class="btn-desk"><i id="desk-fav-icon" class="fa-regular fa-heart"></i> Save</button>
+                <button id="desk-wishlist-btn" onclick="toggleWishlist()" class="btn-desk"><i id="desk-fav-icon" class="fa-regular fa-heart"></i> Save to Wishlist</button>
                 <button onclick="shareProduct()" class="btn-desk"><i class="fa-solid fa-share-nodes"></i> Share</button>
             </div>
 
@@ -194,11 +269,9 @@
             <h1 id="prod-name" class="prod-title">--</h1>
             
             <div class="price-row">
-                <span id="old-price" class="old-price hidden"></span>
                 <span id="current-price" class="current-price">--</span>
+                <span id="old-price" class="old-price hidden"></span>
             </div>
-
-            <hr style="border:0; border-top:1px solid #E2E8F0; margin-bottom: 24px;">
 
             <div class="section-header">Description</div>
             <p id="prod-desc" class="description-text">--</p>
@@ -208,7 +281,7 @@
     <!-- Sticky Footer -->
     <div class="bottom-bar">
         <button onclick="showSecurityModal()" class="btn-whatsapp">
-            <i class="fa-brands fa-whatsapp" style="font-size: 1.4rem;"></i> Chat on WhatsApp
+            <i class="fa-brands fa-whatsapp" style="font-size: 1.4rem;"></i> Message Merchant
         </button>
     </div>
 </div>
@@ -216,16 +289,16 @@
 <!-- Security Modal -->
 <div id="security-modal" class="modal-overlay">
     <div class="modal-card">
-        <div style="width: 60px; height: 60px; background: #F3E8FF; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-            <i class="fa-solid fa-shield-halved" style="font-size: 1.8rem; color: var(--color-primary);"></i>
+        <div style="width: 64px; height: 64px; background: var(--color-pink-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+            <i class="fa-solid fa-shield-halved" style="font-size: 1.8rem; color: var(--color-pink);"></i>
         </div>
-        <h3 style="margin-bottom: 10px; font-size: 1.2rem;">Security Notice</h3>
-        <p style="font-size: 0.9rem; color: #64748B; line-height: 1.5;">
-            To protect merchants from spam, your User ID will be recorded. Please ensure this inquiry is business-related.
+        <h3 style="margin-bottom: 10px; font-size: 1.25rem; color: #0F1111; font-weight: 800;">Security Notice</h3>
+        <p style="font-size: 0.9rem; color: #565959; line-height: 1.5;">
+            To protect merchants from spam, your User ID will be securely recorded. Please ensure this inquiry is business-related.
         </p>
         <div class="modal-actions">
             <button class="btn-modal btn-cancel" onclick="hideSecurityModal()">Cancel</button>
-            <button class="btn-modal btn-confirm" onclick="launchWhatsApp()">I Understand</button>
+            <button class="btn-modal btn-confirm" onclick="launchWhatsApp()">Continue to Chat</button>
         </div>
     </div>
 </div>
@@ -288,26 +361,36 @@
         document.getElementById('main-content').classList.remove('hidden');
 
         const p = currentProduct;
-        document.getElementById('prod-img').src = p.image_url || 'https://via.placeholder.com/600x400?text=No+Image';
+        document.getElementById('prod-img').src = p.image_url || 'https://via.placeholder.com/600x600?text=No+Image';
         
         const badge = document.getElementById('condition-badge');
         badge.textContent = p.condition || 'New';
         badge.className = p.condition === 'Fairly Used' ? 'condition-badge cond-used' : 'condition-badge cond-new';
 
         document.getElementById('prod-name').textContent = p.name;
-        document.getElementById('prod-desc').textContent = p.description || "No description provided.";
+        document.getElementById('prod-desc').textContent = p.description || "No description provided by the merchant.";
 
         const priceEl = document.getElementById('current-price');
         const oldEl = document.getElementById('old-price');
+        const dBadge = document.getElementById('discount-badge');
         const formatPrice = (val) => "₦" + Number(val).toLocaleString();
 
         if (p.discount_price && p.discount_price < p.price) {
+            const percent = Math.round(((p.price - p.discount_price) / p.price) * 100);
+            
             priceEl.textContent = formatPrice(p.discount_price);
+            priceEl.classList.add('flash-price'); // Active premium glow
+            
             oldEl.textContent = formatPrice(p.price);
             oldEl.classList.remove('hidden');
+            
+            dBadge.textContent = `-${percent}% OFF`;
+            dBadge.classList.remove('hidden');
         } else {
             priceEl.textContent = formatPrice(p.price);
+            priceEl.classList.remove('flash-price');
             oldEl.classList.add('hidden');
+            dBadge.classList.add('hidden');
         }
     }
 
@@ -322,55 +405,84 @@
     function updateWishlistIcons() {
         const mobileBtn = document.getElementById('wishlist-btn');
         const mobileIcon = document.getElementById('fav-icon');
+        const deskBtn = document.getElementById('desk-wishlist-btn');
         const deskIcon = document.getElementById('desk-fav-icon');
         
         const type = isInWishlist ? 'fa-solid' : 'fa-regular';
-        const color = isInWishlist ? 'red' : 'inherit';
 
+        // Mobile update
         mobileIcon.className = `${type} fa-heart`;
-        mobileBtn.style.color = isInWishlist ? 'red' : 'white';
-        mobileBtn.style.background = isInWishlist ? 'white' : 'rgba(0,0,0,0.4)';
+        if (isInWishlist) {
+            mobileBtn.classList.add('active');
+        } else {
+            mobileBtn.classList.remove('active');
+        }
 
+        // Desktop update
         deskIcon.className = `${type} fa-heart`;
-        if(isInWishlist) deskIcon.style.color = 'red';
-        else deskIcon.style.color = '';
+        if(isInWishlist) {
+            deskBtn.classList.add('fav-active');
+            deskBtn.innerHTML = `<i class="${type} fa-heart"></i> Saved`;
+        } else {
+            deskBtn.classList.remove('fav-active');
+            deskBtn.innerHTML = `<i class="${type} fa-heart"></i> Save to Wishlist`;
+        }
     }
 
     async function toggleWishlist() {
-        if (!currentUser) return alert("Please login first.");
+        if (!currentUser) return alert("Please login to save items to your wishlist.");
+        
         isInWishlist = !isInWishlist;
         updateWishlistIcons();
 
-        if (isInWishlist) {
-            await client.from('wishlist').insert({ user_id: currentUser.id, product_id: productId });
-        } else {
-            await client.from('wishlist').delete().eq('user_id', currentUser.id).eq('product_id', productId);
+        try {
+            if (isInWishlist) {
+                await client.from('wishlist').insert({ user_id: currentUser.id, product_id: productId });
+            } else {
+                await client.from('wishlist').delete().eq('user_id', currentUser.id).eq('product_id', productId);
+            }
+        } catch (e) {
+            // Revert on error
+            isInWishlist = !isInWishlist;
+            updateWishlistIcons();
+            alert("Failed to update wishlist.");
         }
     }
 
     function showSecurityModal() {
-        if (!currentShop?.whatsapp) return alert("No WhatsApp number provided.");
+        if (!currentShop?.whatsapp) return alert("This merchant hasn't provided a WhatsApp number.");
         document.getElementById('security-modal').classList.add('active');
     }
+    
     function hideSecurityModal() {
         document.getElementById('security-modal').classList.remove('active');
     }
 
     async function launchWhatsApp() {
         hideSecurityModal();
-        if (currentUser) {
+        if (currentUser && currentShop) {
             client.from('whatsapp_clicks').insert({ clicker_id: currentUser.id, shop_id: currentShop.id, product_id: productId });
         }
+        
         let phone = currentShop.whatsapp.replace(/\D/g, '');
         if (phone.startsWith('0')) phone = '234' + phone.substring(1);
+        
         const price = currentProduct.discount_price || currentProduct.price;
-        const msg = `Hello *${currentShop.name}*, interested in: ${currentProduct.name} (₦${price.toLocaleString()})`;
+        const msg = `Hello *${currentShop.name}*, I found this on CT-Merchant. I am interested in: ${currentProduct.name} (₦${price.toLocaleString()})`;
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
     function shareProduct() {
-        navigator.clipboard.writeText(window.location.href);
-        alert("Link copied!");
+        if (navigator.share) {
+            navigator.share({
+                title: currentProduct?.name || 'Product',
+                text: `Check out this product on CT-Merchant!`,
+                url: window.location.href
+            });
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            alert("Link copied to clipboard!");
+        }
     }
 </script>
 </body>
