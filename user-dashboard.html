@@ -265,10 +265,16 @@
         }
 
         /* =========================================
-           HORIZONTAL PREMIUM SHOP CARDS (2x2 GRID)
+           ZERO-GAP PREMIUM SHOP CARDS (2x2 GRID)
            ========================================= */
-        
-        /* THIS IS THE CRITICAL FIX: flex-shrink: 0 prevents the card from being squished horizontally */
+        .shop-list-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            column-gap: 20px;
+            row-gap: 0; 
+            margin-bottom: 40px;
+        }
+
         .h-scroll .premium-shop-card-wrap {
             min-width: 300px;
             width: 85vw;
@@ -285,16 +291,17 @@
             flex-direction: column;
             cursor: pointer;
             height: 100%;
-            border-radius: 8px; 
-            border: 1px solid #D5D9D9;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+            border-radius: 0; 
+            border: 1px solid #E3E6E6;
+            margin-bottom: -1px; 
+            position: relative;
+            transition: background 0.2s, box-shadow 0.2s;
         }
         .premium-shop-card:hover { 
             background: #Fcfcfc; 
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
-            border-color: #B0B5B5;
+            z-index: 2; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-color: #D5D9D9;
         }
 
         .shop-card-title {
@@ -327,6 +334,7 @@
             overflow: hidden;
         }
 
+        /* Strictly Enforced 1:1 Aspect Ratio Block */
         .shop-grid-item {
             width: 100%;
             aspect-ratio: 1 / 1; 
@@ -344,6 +352,18 @@
             display: block;
         }
         
+        /* --- SPECIAL OFFER ANIMATIONS --- */
+        @keyframes pulse-badge {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+            50% { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(220, 38, 38, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+
+        @keyframes highlight-price {
+            0%, 100% { color: var(--color-pink); text-shadow: none; }
+            50% { color: #ff0055; text-shadow: 0 0 6px rgba(219,39,119,0.4); }
+        }
+
         .grid-badge {
             position: absolute;
             top: 4px; left: 4px;
@@ -355,6 +375,9 @@
             border-radius: 4px;
             z-index: 2;
         }
+        
+        .flash-offer { animation: pulse-badge 1.5s infinite ease-in-out; }
+        .flash-price { animation: highlight-price 1.5s infinite ease-in-out; }
 
         .shop-grid-item.empty { border: 1px dashed #D5D9D9; display: flex; align-items: center; justify-content: center; }
 
@@ -560,7 +583,7 @@
             </div>
 
             <!-- Home / Repository Icon Nav -->
-            <div class="amz-nav-item active" onclick="switchScreen('market', this)" title="Home / Repository">
+            <div class="amz-nav-item active" onclick="switchScreen('market', this)" title="Repository">
                 <i class="fa-solid fa-house" style="font-size: 1.1rem;"></i>
                 <span class="mobile-hide">Repository</span>
             </div>
@@ -601,7 +624,7 @@
 
         <!-- TICKER ROW WITH CATEGORY FILTER -->
         <div class="amz-sub-header">
-            <!-- Category Filter replaces the home icon here -->
+            <!-- Category Filter -->
             <select class="amz-category-filter" id="filter-category" onchange="applyFilters()">
                 <option value="all">All Categories</option>
             </select>
@@ -625,7 +648,7 @@
             <!-- Promos (Hero Banner style) -->
             <div id="promo-list" class="h-scroll" style="display:none; padding-top: 10px;"></div>
             
-            <!-- Featured Shops Section (Horizontal Scroll) -->
+            <!-- Featured Shops Section (Dynamic Auto-Scroll) -->
             <div id="featured-section" class="area-block-wrap" data-area-id="all" style="display:none; margin-bottom: 20px;">
                 <h2 class="sec-title">Featured Shops <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Top Rated)</span></h2>
                 <div id="featured-list" class="h-scroll"></div>
@@ -806,10 +829,11 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v27'; 
+    const CACHE_KEY = 'ctm_dash_v28'; 
     const MAX_FILE_SIZE = 500 * 1024; 
 
     let chatHistory = [];
+    let featuredScrollReq = null; // Animation frame reference
 
     // --- AVATAR UPLOAD STATE ---
     let cropper = null;
@@ -832,7 +856,6 @@
 
     // --- DUAL FILTERING LOGIC (Area + Category) ---
     function applyFilters() {
-        // Sync Area Dropdowns across mobile and desktop based on viewport
         let areaId = 'all';
         if (window.innerWidth <= 1024) {
              areaId = document.getElementById('search-area-mobile').value;
@@ -846,7 +869,7 @@
 
         document.querySelectorAll('.area-block-wrap').forEach(areaBlock => {
             const blockAreaId = areaBlock.getAttribute('data-area-id');
-            const areaMatch = (areaId === 'all' || blockAreaId === areaId || blockAreaId === 'all'); // 'all' covers the Featured section
+            const areaMatch = (areaId === 'all' || blockAreaId === areaId || blockAreaId === 'all');
             
             let visibleShopsCount = 0;
             
@@ -868,6 +891,36 @@
                 areaBlock.style.display = 'none';
             }
         });
+    }
+
+    // --- DYNAMIC AUTO SCROLL FOR FEATURED ---
+    function startFeaturedAutoScroll() {
+        const container = document.getElementById('featured-list');
+        if (!container) return;
+        
+        let isHovered = false;
+        
+        // Pause on interaction
+        container.addEventListener('mouseenter', () => isHovered = true);
+        container.addEventListener('mouseleave', () => isHovered = false);
+        container.addEventListener('touchstart', () => isHovered = true);
+        container.addEventListener('touchend', () => { setTimeout(()=>isHovered=false, 1000); });
+        
+        if (featuredScrollReq) cancelAnimationFrame(featuredScrollReq);
+        
+        function scrollLoop() {
+            if (!isHovered) {
+                container.scrollLeft += 0.5; // Smooth slow speed
+                
+                // Reset to start if it hits the end 
+                // (-2px buffer to ensure it fires correctly across different pixel densities)
+                if (container.scrollLeft >= (container.scrollWidth - container.clientWidth - 2)) {
+                    container.scrollLeft = 0;
+                }
+            }
+            featuredScrollReq = requestAnimationFrame(scrollLoop);
+        }
+        featuredScrollReq = requestAnimationFrame(scrollLoop);
     }
 
     // =========================================
@@ -1106,6 +1159,7 @@
         if (featured.length > 0) {
             featuredSection.style.display = 'block';
             document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
+            setTimeout(startFeaturedAutoScroll, 500); // Start the dynamic animation
         } else {
             featuredSection.style.display = 'none';
         }
@@ -1125,7 +1179,7 @@
             areaContainer.innerHTML += `
                 <div class="area-block-wrap" data-area-id="${area.id}" style="margin-bottom: 40px;">
                     <h2 class="sec-title">${titleHtml}</h2>
-                    <div class="h-scroll">
+                    <div class="shop-list-view" style="display: flex; overflow-x: auto; gap: 0; padding: 0 20px 20px 20px; scrollbar-width: none; -ms-overflow-style: none;">
                         ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
                     </div>
                 </div>
@@ -1179,7 +1233,7 @@
     // PREMIUM AMAZON-STYLE SHOP CARD BUILDER
     // =========================================
     function buildShopCard(shop, allProducts) {
-        // Exclude "Fairly Used" items from the front card 
+        // Blocks Fairly Used items from appearing in the main 2x2 grid
         const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url && x.condition !== 'Fairly Used').slice(0, 4);
 
         let gridHtml = '';
@@ -1194,8 +1248,11 @@
                 const percent = hasDiscount ? Math.round(((price - discount)/price)*100) : 0;
                 
                 let priceHtml = '';
+                let priceClass = 'sg-price';
+                
                 if (hasDiscount) {
                     priceHtml = `<span class="sg-price-old">₦${price.toLocaleString()}</span>₦${discount.toLocaleString()}`;
+                    priceClass = 'sg-price flash-price'; // Active glow on discounted price
                 } else if (price) {
                     priceHtml = `₦${price.toLocaleString()}`;
                 }
@@ -1204,11 +1261,11 @@
                     <div class="shop-grid-item-wrap">
                         <div class="shop-grid-item">
                             <img src="${p[i].image_url}" alt="Product" loading="lazy">
-                            ${hasDiscount ? `<div class="grid-badge">-${percent}%</div>` : ''}
+                            ${hasDiscount ? `<div class="grid-badge flash-offer">-${percent}%</div>` : ''}
                         </div>
                         <div class="shop-grid-caption">
                             <div class="sg-name" title="${prodName}">${prodName}</div>
-                            <div class="sg-price">${priceHtml}</div>
+                            <div class="${priceClass}">${priceHtml}</div>
                         </div>
                     </div>
                 `;
