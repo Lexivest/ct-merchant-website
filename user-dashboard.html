@@ -101,9 +101,10 @@
         .amz-nav-item:hover, .amz-nav-item.active { border-color: white; }
 
         .notif-badge {
-            position: absolute; top: -2px; right: -6px;
+            position: absolute; top: -2px; right: -2px;
             background: #EF4444; color: white; font-size: 0.65rem; font-weight: 800;
             padding: 2px 6px; border-radius: 10px; display: none;
+            border: 2px solid var(--amz-dark);
         }
 
         .header-avatar {
@@ -150,7 +151,6 @@
             color: #0F1111;
         }
         
-        /* Pink Search Button */
         .amz-search-btn {
             width: 52px;
             background-color: var(--color-pink);
@@ -166,7 +166,7 @@
         }
         .amz-search-btn:hover { background-color: var(--color-pink-hover); }
 
-        /* Sub Header (Ticker) */
+        /* Sub Header (Ticker & Home Icon) */
         .amz-sub-header {
             background-color: var(--amz-nav-bar);
             padding: 8px 16px;
@@ -176,7 +176,18 @@
             color: white;
             font-weight: 600;
         }
-        .ticker-wrapper { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; gap: 12px;}
+        .home-repo-icon {
+            color: var(--color-pink);
+            font-size: 1.2rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-right: 16px;
+            padding: 4px;
+            transition: transform 0.2s;
+        }
+        .home-repo-icon:hover { transform: scale(1.1); }
+        
+        .ticker-wrapper { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; gap: 12px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 16px;}
         .ticker-content { white-space: nowrap; animation: ticker 60s linear infinite; padding-left: 100%; color: white;}
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
@@ -186,17 +197,16 @@
             .desktop-search { display: none; }
             .mobile-search { display: flex; }
             
-            .amz-search-select {
-                max-width: 90px; 
-                padding: 0 8px;
-            }
+            .amz-search-select { max-width: 90px; padding: 0 8px; }
 
-            .amz-mobile-scroll-row {
-                overflow-x: auto;
-                scrollbar-width: none; 
-                -ms-overflow-style: none; 
-            }
-            .amz-mobile-scroll-row::-webkit-scrollbar { display: none; }
+            .amz-mobile-scroll-row { padding: 8px 12px; gap: 8px; justify-content: space-between;}
+            
+            /* Hide specific texts on mobile, keep icons */
+            .mobile-hide { display: none !important; }
+            .amz-nav-item { padding: 6px 8px; }
+            
+            .home-repo-icon { margin-right: 10px; padding-left: 0;}
+            .ticker-wrapper { padding-left: 10px; }
         }
 
         /* --- 2. CONTENT BODY --- */
@@ -204,18 +214,19 @@
             max-width: 1600px; 
             margin: 0 auto;
             width: 100%;
-            padding: 20px;
+            padding: 20px 0; /* Removed side padding so horizontal scroll touches screen edges */
         }
 
         .screen { display: none; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Promos / Hero */
+        /* Horizontal Scroll Containers */
         .h-scroll {
-            display: flex; overflow-x: auto; gap: 20px; 
-            padding-bottom: 20px;
+            display: flex; overflow-x: auto; gap: 16px; 
+            padding: 4px 20px 20px 20px; /* Padding bottom for shadows */
             scrollbar-width: none;
+            -ms-overflow-style: none; 
         }
         .h-scroll::-webkit-scrollbar { display: none; }
 
@@ -227,13 +238,13 @@
             font-size: 1.35rem;
             font-weight: 800;
             color: #0F1111;
-            margin-bottom: 16px;
+            margin: 0 20px 16px 20px;
             display: flex;
             align-items: center;
             gap: 10px;
             white-space: nowrap;      /* Forces text to remain on one line */
             overflow-x: auto;         /* Allows horizontal scrolling if needed */
-            scrollbar-width: none;    /* Hides scrollbar for clean look */
+            scrollbar-width: none;    
             -ms-overflow-style: none;
             padding-bottom: 4px;
         }
@@ -250,39 +261,36 @@
         }
 
         /* =========================================
-           ZERO-GAP PREMIUM SHOP CARDS (2x2 GRID)
+           HORIZONTAL PREMIUM SHOP CARDS (2x2 GRID)
            ========================================= */
-        .shop-list-view {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            column-gap: 20px;
-            row-gap: 0; /* Zero vertical space */
-            margin-bottom: 40px;
+        .h-scroll .premium-shop-card {
+            min-width: 280px;
+            width: 80vw;
+            max-width: 340px;
+            flex-shrink: 0;
         }
 
         .premium-shop-card {
             background: white;
-            padding: 24px 20px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             cursor: pointer;
-            height: 100%;
-            border-radius: 0; /* Flat edges for seamless stacking */
-            border: 1px solid #E3E6E6;
-            margin-bottom: -1px; /* Collapses duplicate borders into a single clean line */
-            position: relative;
-            transition: background 0.2s, box-shadow 0.2s;
+            border-radius: 8px;
+            border: 1px solid #D5D9D9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
         }
         .premium-shop-card:hover { 
             background: #Fcfcfc; 
-            z-index: 2; /* Brings hovered card above others */
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border-color: #D5D9D9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+            border-color: #B0B5B5;
         }
 
         .shop-card-title {
-            font-size: 1.25rem;
-            font-weight: 700;
+            font-size: 1.15rem;
+            font-weight: 800;
             color: #0F1111;
             margin-bottom: 16px;
             line-height: 1.2;
@@ -295,7 +303,7 @@
         .shop-image-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 12px;
             margin-bottom: 20px;
             flex: 1;
         }
@@ -303,7 +311,7 @@
         .shop-grid-item-wrap {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 4px;
         }
 
         .shop-grid-item {
@@ -315,6 +323,7 @@
             justify-content: center;
             overflow: hidden;
             border-radius: 4px;
+            position: relative;
         }
 
         .shop-grid-item img {
@@ -322,18 +331,40 @@
             height: 100%;
             object-fit: cover;
         }
-
-        .shop-grid-item.empty {
-            border: 1px dashed #D5D9D9;
+        
+        .grid-badge {
+            position: absolute;
+            top: 4px; left: 4px;
+            background: #DC2626;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 4px;
+            border-radius: 4px;
+            z-index: 2;
         }
 
+        .shop-grid-item.empty { border: 1px dashed #D5D9D9; }
+
         .shop-grid-caption {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sg-name {
             font-size: 0.75rem;
             color: #0F1111;
             font-weight: 500;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+        
+        .sg-price {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--color-pink);
+            margin-top: 1px;
         }
 
         .shop-cta {
@@ -348,7 +379,7 @@
 
 
         /* Form & Utility Styles */
-        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding-bottom: 40px; }
+        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding: 0 20px 40px 20px; }
         .svc-card {
             background: white; padding: 20px 16px; border-radius: 8px; text-align: center;
             border: 1px solid #D5D9D9; cursor: pointer; transition: 0.2s;
@@ -458,7 +489,6 @@
             font-size: 1.1rem;
         }
 
-        /* Mobile Chat overrides */
         @media (max-width: 480px) {
             .chat-window {
                 right: 0; left: 0; bottom: 0; width: 100%; height: 85vh;
@@ -472,14 +502,14 @@
     <!-- HEADER (Premium Amazon Style) -->
     <header class="amz-header">
         
-        <!-- MAIN ROW (Scrollable horizontally on mobile, straight flex on desktop) -->
+        <!-- MAIN ROW -->
         <div class="amz-mobile-scroll-row">
             
             <!-- Logo -->
             <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="amz-logo" alt="Logo" onclick="window.location.reload()">
             
-            <!-- City (No "Deliver to" text, just icon and name) -->
-            <div class="amz-location">
+            <!-- City (Hidden on Mobile) -->
+            <div class="amz-location mobile-hide">
                 <i class="fa-solid fa-location-dot"></i> <span id="header-city">...</span>
             </div>
             
@@ -492,16 +522,19 @@
                 <button class="amz-search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
 
-            <!-- Navigation Links (Straight line) -->
-            <div class="amz-nav-item active" onclick="switchScreen('market', this)">Repository</div>
+            <!-- Navigation Links -->
+            <div class="amz-nav-item active mobile-hide" onclick="switchScreen('market', this)">Repository</div>
             
             <div class="amz-nav-item" onclick="switchScreen('services', this)">Services</div>
             
+            <!-- Alerts (Icon only on mobile) -->
             <div class="amz-nav-item" onclick="switchScreen('notifications', this)">
-                Alerts <span id="badge-count" class="notif-badge">0</span>
+                <i class="fa-regular fa-bell" style="font-size: 1.2rem;"></i>
+                <span class="mobile-hide" style="margin-left: 6px;">Alerts</span>
+                <span id="badge-count" class="notif-badge">0</span>
             </div>
 
-            <!-- Profile Avatar (No text at all, just image) -->
+            <!-- Profile Avatar -->
             <div class="amz-nav-item" onclick="switchScreen('profile', this)" style="padding: 4px 8px;">
                 <img id="header-avatar" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" class="header-avatar">
             </div>
@@ -523,8 +556,11 @@
         </div>
 
         <!-- TICKER ROW (Laps tightly against header) -->
-        <div class="amz-sub-header" id="header-ticker" style="display:none;">
-            <div class="ticker-wrapper">
+        <div class="amz-sub-header">
+            <!-- Home / Repo Icon replaces the Repo link on mobile practically -->
+            <i class="fa-solid fa-house home-repo-icon" onclick="switchScreen('market', document.querySelector('.amz-nav-item'))" title="Home / Repository"></i>
+            
+            <div class="ticker-wrapper" id="header-ticker" style="display:none;">
                 <i class="fa-solid fa-bullhorn" style="color: var(--color-pink);"></i>
                 <div id="ticker-text" class="ticker-content"></div>
             </div>
@@ -537,11 +573,17 @@
         <!-- MARKET -->
         <div id="market" class="screen active">
             
+            <div id="initial-loader" style="text-align:center; padding:60px 0; color:#888C8C;">
+                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem;"></i>
+            </div>
+
             <!-- Promos (Hero Banner style) -->
             <div id="promo-list" class="h-scroll" style="display:none; padding-top: 10px;"></div>
             
-            <div id="initial-loader" style="text-align:center; padding:60px 0; color:#888C8C;">
-                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem;"></i>
+            <!-- Featured Shops Section (Restored & Horizontal Scroll) -->
+            <div id="featured-section" style="display:none; margin-bottom: 20px;">
+                <h2 class="sec-title">Featured Shops <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Top Rated)</span></h2>
+                <div id="featured-list" class="h-scroll"></div>
             </div>
 
             <!-- Areas Container (Dynamically injected Shop Grids go here) -->
@@ -649,7 +691,7 @@
         <!-- NOTIFICATIONS -->
         <div id="notifications" class="screen">
             <h2 class="sec-title">Alerts & Notifications</h2>
-            <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:800px;">
+            <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:800px; padding: 0 20px;">
                 <p style="color:#565959; padding-top:20px;">Loading notifications...</p>
             </div>
         </div>
@@ -713,7 +755,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v23'; 
+    const CACHE_KEY = 'ctm_dash_v24'; 
     const MAX_FILE_SIZE = 500 * 1024; 
 
     let chatHistory = [];
@@ -931,10 +973,9 @@
         if (data.unread > 0) {
             const b = document.getElementById('badge-count');
             b.textContent = data.unread > 9 ? '9+' : data.unread;
-            b.style.display = 'block';
+            b.style.display = 'flex';
         }
 
-        // --- SLOWED DOWN TICKER LOGIC ---
         if (data.announcements && data.announcements.length > 0) {
             const tickerEl = document.getElementById('ticker-text');
             const text = data.announcements.map(a => a.message).join("  •  ");
@@ -959,6 +1000,16 @@
             ).join('');
         }
 
+        // --- FEATURED SHOPS RESTORED ---
+        const featured = data.shops.filter(s => s.is_featured);
+        const featuredSection = document.getElementById('featured-section');
+        if (featured.length > 0) {
+            featuredSection.style.display = 'block';
+            document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
+        } else {
+            featuredSection.style.display = 'none';
+        }
+
         // Build Shop Grids Grouped By Area
         areaContainer.innerHTML = '';
         const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
@@ -969,15 +1020,14 @@
 
             const isUser = area.id === userAreaId;
             
-            // Beautiful Premium Headline with Pink accent
             const titleHtml = isUser 
                 ? `Top stores in ${area.name} <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Near You)</span>` 
                 : `Explore stores in ${area.name}`;
 
             areaContainer.innerHTML += `
-                <div style="margin-bottom: 40px;">
+                <div style="margin-bottom: 20px;">
                     <h2 class="sec-title">${titleHtml}</h2>
-                    <div class="shop-list-view">
+                    <div class="h-scroll">
                         ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
                     </div>
                 </div>
@@ -1025,12 +1075,26 @@
         for (let i = 0; i < 4; i++) {
             if (i < p.length) {
                 const prodName = p[i].name || p[i].product_name || p[i].title || 'Product';
+                
+                // Calculate Price and Discount
+                const price = p[i].price || p[i].product_price;
+                const discount = p[i].discount_price;
+                const hasDiscount = discount && discount < price;
+                const percent = hasDiscount ? Math.round(((price - discount)/price)*100) : 0;
+                
+                const displayPrice = hasDiscount ? discount : price;
+                const priceStr = displayPrice ? `₦${displayPrice.toLocaleString()}` : '';
+
                 gridHtml += `
                     <div class="shop-grid-item-wrap">
                         <div class="shop-grid-item">
                             <img src="${p[i].image_url}" alt="Product" loading="lazy">
+                            ${hasDiscount ? `<div class="grid-badge">-${percent}%</div>` : ''}
                         </div>
-                        <div class="shop-grid-caption" title="${prodName}">${prodName}</div>
+                        <div class="shop-grid-caption">
+                            <div class="sg-name" title="${prodName}">${prodName}</div>
+                            <div class="sg-price">${priceStr}</div>
+                        </div>
                     </div>
                 `;
             } else {
@@ -1039,7 +1103,10 @@
                         <div class="shop-grid-item empty">
                             <i class="fa-solid fa-image" style="color: #E5E7EB; font-size: 1.2rem;"></i>
                         </div>
-                        <div class="shop-grid-caption" style="color:transparent; user-select:none;">-</div>
+                        <div class="shop-grid-caption" style="color:transparent; user-select:none;">
+                            <div class="sg-name">-</div>
+                            <div class="sg-price">-</div>
+                        </div>
                     </div>
                 `;
             }
