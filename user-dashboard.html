@@ -270,13 +270,13 @@
         .premium-shop-card-wrap {
             display: flex;
             flex-direction: column;
-            flex-shrink: 0; /* CRITICAL FIX: absolutely prevents the card from being squished horizontally */
+            flex-shrink: 0;
         }
         
         .h-scroll .premium-shop-card-wrap {
-            min-width: 280px;
+            min-width: 300px;
             width: 85vw;
-            max-width: 340px;
+            max-width: 360px;
         }
 
         .premium-shop-card {
@@ -569,26 +569,25 @@
             
             <!-- DESKTOP SEARCH -->
             <div class="amz-search-block desktop-search">
-                <select class="amz-search-select" id="search-area-desktop" onchange="applyFilters()">
+                <select class="amz-search-select" id="search-area-desktop" onchange="navigateArea(this.value)">
                     <option value="all">All Areas</option>
                 </select>
                 <input type="text" class="amz-search-input" placeholder="Search shops and products...">
                 <button class="amz-search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
 
-            <!-- Home / Repository Icon Nav -->
+            <!-- Navigation Links -->
             <div class="amz-nav-item active" onclick="switchScreen('market', this)" title="Repository">
                 <i class="fa-solid fa-house" style="font-size: 1.1rem;"></i>
                 <span class="mobile-hide">Repository</span>
             </div>
             
-            <!-- Services Icon Nav -->
             <div class="amz-nav-item" onclick="switchScreen('services', this)" title="Services">
                 <i class="fa-solid fa-table-cells-large" style="font-size: 1.1rem;"></i>
                 <span class="mobile-hide">Services</span>
             </div>
             
-            <!-- Alerts -->
+            <!-- Alerts (Icon only on mobile) -->
             <div class="amz-nav-item" onclick="switchScreen('notifications', this)">
                 <i class="fa-regular fa-bell" style="font-size: 1.2rem;"></i>
                 <span class="mobile-hide" style="margin-left: 6px;">Alerts</span>
@@ -609,7 +608,7 @@
         <!-- MOBILE SEARCH ROW (Hidden on Desktop) -->
         <div class="amz-search-block mobile-search">
             <!-- Mobile Area Dropdown -->
-            <select class="amz-search-select" id="search-area-mobile" onchange="applyFilters()">
+            <select class="amz-search-select" id="search-area-mobile" onchange="navigateArea(this.value)">
                 <option value="all">All Areas</option>
             </select>
             <input type="text" class="amz-search-input" placeholder="Search CT-Merchant...">
@@ -619,7 +618,7 @@
         <!-- TICKER ROW WITH CATEGORY FILTER -->
         <div class="amz-sub-header">
             <!-- Category Filter -->
-            <select class="amz-category-filter" id="filter-category" onchange="applyFilters()">
+            <select class="amz-category-filter" id="filter-category" onchange="navigateCategory(this.value)">
                 <option value="all">All Categories</option>
             </select>
             
@@ -642,8 +641,8 @@
             <!-- Promos (Hero Banner style) -->
             <div id="promo-list" class="h-scroll" style="display:none; padding-top: 10px;"></div>
             
-            <!-- Featured Shops Section (Dynamic Auto-Scroll) -->
-            <div id="featured-section" class="area-block-wrap" data-area-id="all" style="display:none; margin-bottom: 20px;">
+            <!-- Featured Shops Section -->
+            <div id="featured-section" style="display:none; margin-bottom: 20px;">
                 <h2 class="sec-title">Featured Shops <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Top Rated)</span></h2>
                 <div id="featured-list" class="h-scroll"></div>
             </div>
@@ -827,7 +826,6 @@
     const MAX_FILE_SIZE = 500 * 1024; 
 
     let chatHistory = [];
-    let featuredScrollReq = null;
 
     // --- AVATAR UPLOAD STATE ---
     let cropper = null;
@@ -848,70 +846,17 @@
         if(id === 'notifications') markRead();
     }
 
-    // --- DUAL FILTERING LOGIC (Area + Category) ---
-    function applyFilters() {
-        let areaId = 'all';
-        if (window.innerWidth <= 1024) {
-             areaId = document.getElementById('search-area-mobile').value;
-             document.getElementById('search-area-desktop').value = areaId;
-        } else {
-             areaId = document.getElementById('search-area-desktop').value;
-             document.getElementById('search-area-mobile').value = areaId;
+    // --- DUAL NAVIGATION LOGIC (Area + Category) ---
+    function navigateArea(areaId) {
+        if (areaId !== 'all') {
+            window.location.href = `area-shops.html?id=${areaId}`;
         }
-        
-        const catName = document.getElementById('filter-category').value;
-
-        document.querySelectorAll('.area-block-wrap').forEach(areaBlock => {
-            const blockAreaId = areaBlock.getAttribute('data-area-id');
-            const areaMatch = (areaId === 'all' || blockAreaId === areaId || blockAreaId === 'all');
-            
-            let visibleShopsCount = 0;
-            
-            areaBlock.querySelectorAll('.premium-shop-card-wrap').forEach(cardWrap => {
-                const shopCat = cardWrap.getAttribute('data-shop-category');
-                const catMatch = (catName === 'all' || shopCat === catName);
-                
-                if (catMatch) {
-                    cardWrap.style.display = 'flex'; 
-                    visibleShopsCount++;
-                } else {
-                    cardWrap.style.display = 'none';
-                }
-            });
-
-            if (areaMatch && visibleShopsCount > 0) {
-                areaBlock.style.display = 'block';
-            } else {
-                areaBlock.style.display = 'none';
-            }
-        });
     }
 
-    // --- DYNAMIC AUTO SCROLL FOR FEATURED ---
-    function startFeaturedAutoScroll() {
-        const container = document.getElementById('featured-list');
-        if (!container) return;
-        
-        let isHovered = false;
-        
-        container.addEventListener('mouseenter', () => isHovered = true);
-        container.addEventListener('mouseleave', () => isHovered = false);
-        container.addEventListener('touchstart', () => isHovered = true);
-        container.addEventListener('touchend', () => { setTimeout(()=>isHovered=false, 1000); });
-        
-        if (featuredScrollReq) cancelAnimationFrame(featuredScrollReq);
-        
-        function scrollLoop() {
-            if (!isHovered) {
-                container.scrollLeft += 0.5; 
-                
-                if (container.scrollLeft >= (container.scrollWidth - container.clientWidth - 2)) {
-                    container.scrollLeft = 0;
-                }
-            }
-            featuredScrollReq = requestAnimationFrame(scrollLoop);
+    function navigateCategory(catName) {
+        if (catName !== 'all') {
+            window.location.href = `cat.html?name=${encodeURIComponent(catName)}`;
         }
-        featuredScrollReq = requestAnimationFrame(scrollLoop);
     }
 
     // =========================================
@@ -1150,7 +1095,6 @@
         if (featured.length > 0) {
             featuredSection.style.display = 'block';
             document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
-            setTimeout(startFeaturedAutoScroll, 500); 
         } else {
             featuredSection.style.display = 'none';
         }
@@ -1168,7 +1112,7 @@
                 : `Explore stores in ${area.name}`;
 
             areaContainer.innerHTML += `
-                <div class="area-block-wrap" data-area-id="${area.id}" style="margin-bottom: 40px;">
+                <div class="area-block-wrap" style="margin-bottom: 40px;">
                     <h2 class="sec-title">${titleHtml}</h2>
                     <div class="h-scroll">
                         ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
@@ -1216,8 +1160,6 @@
 
         const wishlistCount = data.wishlistCount || 0;
         document.getElementById('wishlist-count').textContent = `${wishlistCount} items`;
-        
-        applyFilters(); 
     }
 
     // =========================================
@@ -1276,7 +1218,7 @@
         }
 
         return `
-            <div class="premium-shop-card-wrap" data-shop-category="${shop.category}">
+            <div class="premium-shop-card-wrap">
                 <div class="premium-shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
                     <div class="shop-card-title">${shop.name}</div>
                     <div class="shop-image-grid">
