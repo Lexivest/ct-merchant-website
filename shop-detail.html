@@ -39,7 +39,7 @@
             min-height: 100vh;
             position: relative;
             background-color: var(--amz-bg);
-            padding-bottom: 90px; /* Space for bottom bar */
+            padding-bottom: 40px;
         }
 
         /* --- PREMIUM HEADER --- */
@@ -76,7 +76,7 @@
         }
         .share-btn:hover { color: var(--color-pink); }
 
-        /* Sub Header (Ticker) */
+        /* Sub Header (Ticker/News Carousel) */
         .amz-sub-header {
             background-color: var(--amz-nav-bar);
             padding: 8px 16px;
@@ -301,25 +301,6 @@
             100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
         }
 
-        /* --- BOTTOM BAR --- */
-        .bottom-bar {
-            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-            width: 100%; max-width: 1200px;
-            background: white; padding: 12px 20px;
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.05); z-index: 100;
-            border-top: 1px solid #D5D9D9;
-            display: flex; justify-content: center;
-        }
-        .btn-whatsapp-bottom {
-            width: 100%; max-width: 600px; 
-            background: #25D366; color: white;
-            padding: 14px; border-radius: 8px; border: none;
-            font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
-            cursor: pointer; transition: background 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .btn-whatsapp-bottom:hover { background: #16A34A; }
-
         /* Modal */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(19, 25, 33, 0.8); z-index: 200;
@@ -354,7 +335,8 @@
             <button onclick="shareShop()" class="share-btn"><i class="fa-solid fa-share-nodes"></i></button>
         </div>
         
-        <div class="amz-sub-header" id="header-ticker" style="display:none;">
+        <!-- Shop News Carousel / Ticker -->
+        <div class="amz-sub-header" id="header-ticker">
             <div class="ticker-wrapper">
                 <i class="fa-solid fa-bullhorn" style="color: var(--color-pink);"></i>
                 <div id="ticker-text" class="ticker-content">Loading...</div>
@@ -472,13 +454,6 @@
             </div>
 
         </div>
-    </div>
-
-    <!-- Bottom Bar (Always visible floating action) -->
-    <div class="bottom-bar">
-        <button onclick="showSecurityModal()" class="btn-whatsapp-bottom">
-            <i class="fa-brands fa-whatsapp" style="font-size:1.2rem;"></i> Chat with Merchant
-        </button>
     </div>
 </div>
 
@@ -598,7 +573,7 @@
 
         if (!isUpdate) likeCount = data.likeCount; 
 
-        // --- ANTI-FLICKER TICKER LOGIC ---
+        // --- SHOP NEWS CAROUSEL (TICKER) LOGIC ---
         const cityName = s.cities?.name || "Local";
         const defaultTickerText = `${cityName} Repository of shops, products and services`;
         const newsArray = data.approvedNews || [];
@@ -606,15 +581,16 @@
         let tickerText = defaultTickerText;
         if (newsArray.length > 0) {
             tickerText = newsArray.join(" &nbsp; • &nbsp; ");
-            document.getElementById('header-ticker').style.display = 'flex';
-        } else {
-            document.getElementById('header-ticker').style.display = 'none';
         }
         
-        const tickerEl = document.getElementById('news-text');
+        // Ensure ticker is always visible
+        const tickerContainer = document.getElementById('header-ticker');
+        if (tickerContainer) tickerContainer.style.display = 'flex';
+        
+        const tickerEl = document.getElementById('ticker-text');
         if (tickerEl && tickerEl.innerHTML !== tickerText) {
             tickerEl.innerHTML = tickerText;
-            const speed = Math.max(40, tickerText.length * 0.4); 
+            const speed = Math.max(35, tickerText.length * 0.4); 
             tickerEl.style.animationDuration = `${speed}s`;
         }
 
