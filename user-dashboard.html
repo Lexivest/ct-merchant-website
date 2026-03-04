@@ -19,7 +19,7 @@
             --color-pink-hover: #be185d;
             --color-pink-light: rgba(219, 39, 119, 0.15);
             
-            --amz-bg: #E3E6E6;
+            --amz-bg: #E3E6E6; /* Amazon Gray Separator Background */
             --amz-link: #007185;
             --amz-link-hover: #C40000;
             --color-text-main: #0F1111;
@@ -200,7 +200,7 @@
         .sugg-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;}
         .sugg-type { font-size: 0.7rem; color: var(--color-pink); background: var(--color-pink-light); padding: 2px 6px; border-radius: 4px; font-weight: 700; }
 
-        /* Sub Header (Ticker) */
+        /* Sub Header (Ticker & Filter) */
         .amz-sub-header {
             background-color: var(--amz-nav-bar);
             padding: 8px 16px;
@@ -244,29 +244,42 @@
             .amz-category-filter { max-width: 110px; margin-right: 8px; }
         }
 
-        /* --- 2. CONTENT BODY --- */
-        .content-body { max-width: 1600px; margin: 0 auto; width: 100%; padding: 20px 0; }
+        /* --- 2. CONTENT BODY (AMAZON BLOCK LAYOUT) --- */
+        .content-body { 
+            max-width: 1600px; 
+            margin: 0 auto; 
+            width: 100%; 
+            padding: 0 0 40px 0; /* Removing top padding so blocks stretch fully */
+        }
 
         .screen { display: none; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* Structural White Blocks to eliminate arbitrary vertical gaps */
+        .area-block-wrap, .cat-section-wrap, .promo-section-wrap {
+            background-color: white;
+            padding-top: 16px;
+            margin-bottom: 8px; /* Classic 8px gray Amazon separator */
+        }
+
         /* Horizontal Scroll Containers */
         .h-scroll {
             display: flex; overflow-x: auto; gap: 16px; 
-            padding: 4px 20px 20px 20px; 
+            padding: 4px 16px 20px 16px; /* Padded inside to prevent cutoff shadows */
             scrollbar-width: none;
             -ms-overflow-style: none; 
         }
         .h-scroll::-webkit-scrollbar { display: none; }
 
         /* =========================================
-           PREMIUM HEADINGS (Unbreakable & Scrollable)
+           PREMIUM HEADINGS
            ========================================= */
         .sec-title {
             font-size: 1.35rem; font-weight: 800; color: #0F1111;
-            margin: 0 20px 16px 20px; display: flex; align-items: center; gap: 10px;
-            white-space: nowrap; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 4px;
+            margin: 0 0 12px 0; padding: 0 16px;
+            display: flex; align-items: center; gap: 10px;
+            white-space: nowrap; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
         }
         .sec-title::-webkit-scrollbar { display: none; }
         .sec-title::before { content: ''; display: inline-block; width: 6px; height: 22px; background: var(--color-pink); border-radius: 4px; flex-shrink: 0; }
@@ -278,7 +291,7 @@
         .h-scroll .premium-shop-card-wrap { min-width: 280px; width: 85vw; max-width: 340px; }
 
         .premium-shop-card {
-            background: white; padding: 24px 20px; display: flex; flex-direction: column;
+            background: white; padding: 20px 16px; display: flex; flex-direction: column;
             cursor: pointer; height: 100%; border-radius: 8px; border: 1px solid #D5D9D9;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
         }
@@ -289,7 +302,7 @@
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
 
-        .shop-image-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; flex: 1; width: 100%; }
+        .shop-image-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; flex: 1; width: 100%; }
         .shop-grid-item-wrap { display: flex; flex-direction: column; gap: 4px; width: 100%; overflow: hidden; }
         .shop-grid-item { width: 100%; aspect-ratio: 1 / 1; background: #F7F7F7; display: block; overflow: hidden; border-radius: 4px; position: relative; }
         .shop-grid-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -312,7 +325,7 @@
         /* =========================================
            CATEGORY CHIPS
            ========================================= */
-        .cat-grid { display: flex; flex-wrap: wrap; gap: 12px; padding: 0 20px 40px 20px; }
+        .cat-grid { display: flex; flex-wrap: wrap; gap: 12px; padding: 0 16px 24px 16px; }
         .cat-chip {
             background: white; border: 1px solid #D5D9D9; border-radius: 50px;
             padding: 6px 16px 6px 6px; display: flex; align-items: center; gap: 10px;
@@ -322,13 +335,13 @@
         .cat-chip img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; }
         .cat-chip span { font-size: 0.85rem; font-weight: 700; color: #0F1111; }
 
-        /* Form & Utility Styles */
-        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding: 0 20px 40px 20px; }
+        /* Profile & Tools Elements */
+        .tool-block-wrap { background: white; padding: 24px 16px; }
+        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
         .svc-card { background: white; padding: 20px 16px; border-radius: 8px; text-align: center; border: 1px solid #D5D9D9; cursor: pointer; transition: 0.2s; }
         .svc-card:hover { background: #F7F7F7; }
         .svc-icon { width: 48px; height: 48px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #565959;}
 
-        /* Profile Forms */
         .form-group { margin-bottom: 16px; text-align: left; }
         .form-label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #0F1111; }
         .form-input { width: 100%; padding: 10px 14px; border: 1px solid #888C8C; border-radius: 4px; font-size: 1rem; box-shadow: 0 1px 2px rgba(15,17,17,0.15) inset; }
@@ -339,7 +352,6 @@
         .btn-brand-alt { background: white; border: 1px solid #D5D9D9; border-radius: 8px; padding: 10px 16px; color: #0F1111; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px 0 rgba(213,217,217,0.5); transition: 0.2s;}
         .btn-brand-alt:hover { background: #F7FAFA; }
 
-        /* Profile Avatar */
         .avatar-edit-box { position: relative; width: 110px; height: 110px; margin: 0 auto; border-radius: 50%; overflow: hidden; cursor: pointer; border: 2px solid #D5D9D9; }
         .avatar-edit-box img { width: 100%; height: 100%; object-fit: cover; }
         .avatar-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; opacity: 0; transition: 0.2s; }
@@ -471,19 +483,19 @@
             </div>
 
             <!-- Promos (Hero Banner style) -->
-            <div id="promo-list" class="h-scroll" style="display:none; padding-top: 10px;"></div>
+            <div id="promo-list" class="promo-section-wrap h-scroll" style="display:none;"></div>
             
-            <!-- Featured Shops Section (Manual Scroll restored) -->
-            <div id="featured-section" style="display:none; margin-bottom: 20px;">
+            <!-- Featured Shops Section (White Block) -->
+            <div id="featured-section" class="area-block-wrap" style="display:none;">
                 <h2 class="sec-title">Featured Shops <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Top Rated)</span></h2>
                 <div id="featured-list" class="h-scroll"></div>
             </div>
 
-            <!-- Areas Container (Dynamically injected Shop Grids go here) -->
+            <!-- Areas Container (Dynamically injected Shop Grids as White Blocks) -->
             <div id="areas-container"></div>
 
-            <!-- Categories Section (Moved to Bottom) -->
-            <div style="margin-top: 60px;">
+            <!-- Categories Section (White Block) -->
+            <div class="cat-section-wrap">
                 <h2 class="sec-title">Browse Categories</h2>
                 <div id="category-list" class="cat-grid"></div>
             </div>
@@ -492,31 +504,32 @@
 
         <!-- SERVICES -->
         <div id="services" class="screen">
-            <h2 class="sec-title" style="margin-top: 16px;">Services & Tools</h2>
-            <div class="svc-grid">
-                
-                <!-- MY SHOP DYNAMIC CARD -->
-                <div id="myshop-card" class="svc-card" onclick="handleShopClick()">
-                    <div class="svc-icon"><i class="fa-solid fa-store"></i></div>
-                    <strong>Loading...</strong>
-                </div>
+            <div class="tool-block-wrap">
+                <h2 class="sec-title" style="padding: 0; margin-bottom: 20px;">Services & Tools</h2>
+                <div class="svc-grid">
+                    <!-- MY SHOP DYNAMIC CARD -->
+                    <div id="myshop-card" class="svc-card" onclick="handleShopClick()">
+                        <div class="svc-icon"><i class="fa-solid fa-store"></i></div>
+                        <strong>Loading...</strong>
+                    </div>
 
-                <div class="svc-card" onclick="window.location.href='wishlist.html'">
-                    <div class="svc-icon"><i class="fa-solid fa-heart" style="color:var(--color-pink);"></i></div>
-                    <strong>Wishlist</strong>
-                    <div id="wishlist-count" style="font-size:0.8rem; color:#565959; margin-top:4px;">...</div>
-                </div>
-                <div class="svc-card" onclick="window.location.href='help-support.html'">
-                    <div class="svc-icon"><i class="fa-solid fa-headset" style="color:#007185;"></i></div>
-                    <strong>Support</strong>
-                </div>
-                <div class="svc-card" onclick="window.location.href='faq.html'">
-                    <div class="svc-icon"><i class="fa-solid fa-circle-question" style="color:#007185;"></i></div>
-                    <strong>FAQ</strong>
-                </div>
-                <div class="svc-card" onclick="window.location.href='report-abuse.html'">
-                    <div class="svc-icon"><i class="fa-solid fa-triangle-exclamation" style="color:#C40000;"></i></div>
-                    <strong>Report Abuse</strong>
+                    <div class="svc-card" onclick="window.location.href='wishlist.html'">
+                        <div class="svc-icon"><i class="fa-solid fa-heart" style="color:var(--color-pink);"></i></div>
+                        <strong>Wishlist</strong>
+                        <div id="wishlist-count" style="font-size:0.8rem; color:#565959; margin-top:4px;">...</div>
+                    </div>
+                    <div class="svc-card" onclick="window.location.href='help-support.html'">
+                        <div class="svc-icon"><i class="fa-solid fa-headset" style="color:#007185;"></i></div>
+                        <strong>Support</strong>
+                    </div>
+                    <div class="svc-card" onclick="window.location.href='faq.html'">
+                        <div class="svc-icon"><i class="fa-solid fa-circle-question" style="color:#007185;"></i></div>
+                        <strong>FAQ</strong>
+                    </div>
+                    <div class="svc-card" onclick="window.location.href='report-abuse.html'">
+                        <div class="svc-icon"><i class="fa-solid fa-triangle-exclamation" style="color:#C40000;"></i></div>
+                        <strong>Report Abuse</strong>
+                    </div>
                 </div>
             </div>
         </div>
@@ -589,9 +602,11 @@
 
         <!-- NOTIFICATIONS -->
         <div id="notifications" class="screen">
-            <h2 class="sec-title" style="margin-top: 16px;">Alerts & Notifications</h2>
-            <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:800px; padding: 0 20px;">
-                <p style="color:#565959; padding-top:20px;">Loading notifications...</p>
+            <div class="tool-block-wrap">
+                <h2 class="sec-title" style="padding: 0; margin-bottom: 20px;">Alerts & Notifications</h2>
+                <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:800px;">
+                    <p style="color:#565959;">Loading notifications...</p>
+                </div>
             </div>
         </div>
 
@@ -654,7 +669,9 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v29'; 
+    
+    // User-Specific Cache Key to prevent cross-user data bleeding
+    let CACHE_KEY = ''; 
     const MAX_FILE_SIZE = 500 * 1024; 
 
     let chatHistory = [];
@@ -681,7 +698,7 @@
     // --- DUAL NAVIGATION LOGIC (Area + Category) ---
     function navigateArea(areaId) {
         if (areaId !== 'all') {
-            window.location.href = `area.html?id=${areaId}`; // Fixed routing!
+            window.location.href = `area.html?id=${areaId}`; 
         }
     }
 
@@ -764,11 +781,9 @@
         document.getElementById(inputId).value = text;
         document.getElementById(suggId).style.display = 'none';
         
-        // Auto-execute search upon selection
         executeSearch(type);
     }
 
-    // Hide dropdowns when clicking outside
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.desktop-search-wrap') && !e.target.closest('.mobile-search-wrap')) {
             const dDesk = document.getElementById('sugg-desktop');
@@ -865,22 +880,27 @@
         body.scrollTop = body.scrollHeight;
     }
 
-    // --- INIT ---
+    // --- INSTANT SWR INIT ---
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "index.html"; return; }
+        
         currentUser = session.user;
+        
+        // Highly secure User-Specific Cache Key
+        CACHE_KEY = `ctm_dashboard_v30_${currentUser.id}`;
 
         const cache = localStorage.getItem(CACHE_KEY);
         if (cache) {
-            renderData(JSON.parse(cache));
-            fetchData(); 
+            renderData(JSON.parse(cache)); // Instant render
+            fetchData(cache); // Silent background update
         } else {
-            fetchData();
+            document.getElementById('initial-loader').style.display = 'block';
+            fetchData(null); // First time load
         }
     };
 
-    async function fetchData() {
+    async function fetchData(oldCacheStr) {
         try {
             const { data: profile, error: profileErr } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).maybeSingle();
             
@@ -896,12 +916,13 @@
             userCityId = profile.city_id;
             userAreaId = profile.area_id;
 
+            // Parallel fetching for absolute maximum speed
             const [promos, announcements, categories, areas, shops, notifs, myShop, wishlist] = await Promise.all([
                 client.from('promo_banners').select().order('created_at', {ascending: false}),
                 client.from('announcements').select().order('created_at', {ascending: false}),
                 client.from('categories').select().order('name'),
                 client.from('areas').select().eq('city_id', userCityId).order('name'),
-                client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}),
+                client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}).order('id', {ascending: true}),
                 client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20),
                 client.from('shops').select('id, status, rejection_reason, is_open').eq('owner_id', currentUser.id).maybeSingle(),
                 client.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id)
@@ -916,7 +937,8 @@
                     .select('*')
                     .in('shop_id', shopIds)
                     .eq('is_available', true)
-                    .limit(500);
+                    .limit(500)
+                    .order('id', {ascending: true}); // Stable sort for JSON comparison
                 products = data || [];
             }
             
@@ -936,9 +958,17 @@
                 unread: unreadCount
             };
 
-            localStorage.setItem(CACHE_KEY, JSON.stringify(dashboardData));
-            renderData(dashboardData);
-        } catch (e) { console.error("Fetch error:", e); }
+            const newCacheStr = JSON.stringify(dashboardData);
+            
+            // Only re-render if the database actively changed to prevent flickering
+            if (newCacheStr !== oldCacheStr) {
+                localStorage.setItem(CACHE_KEY, newCacheStr);
+                renderData(dashboardData);
+            }
+            
+        } catch (e) { 
+            console.error("Fetch error:", e); 
+        }
     }
 
     function renderData(data) {
@@ -1001,6 +1031,7 @@
         const pList = document.getElementById('promo-list');
         if (data.promos.length > 0) {
             pList.style.display = 'flex';
+            pList.classList.add('promo-section-wrap');
             pList.innerHTML = data.promos.map(p => 
                 `<div style="min-width:320px; max-width: 600px; width: 85vw; height:200px; border-radius:4px; overflow:hidden; flex-shrink:0; border:1px solid #D5D9D9;">
                     <img src="${p.image_url}" style="width:100%; height:100%; object-fit:cover;">
@@ -1031,7 +1062,7 @@
                 : `Explore stores in ${area.name}`;
 
             areaContainer.innerHTML += `
-                <div class="area-block-wrap" style="margin-bottom: 40px;">
+                <div class="area-block-wrap">
                     <h2 class="sec-title">${titleHtml}</h2>
                     <div class="h-scroll">
                         ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
@@ -1061,7 +1092,7 @@
                 const border = n.is_read ? '#D5D9D9' : '#007185'; 
 
                 return `
-                    <div style="background:${bg}; padding:16px; border-radius:8px; border:1px solid ${border};">
+                    <div style="background:${bg}; padding:16px; border-radius:8px; border:1px solid ${border}; margin-bottom: 12px;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                             <span style="font-weight:700; color:#0F1111; font-size:0.95rem;">${n.title}</span>
                             <span style="font-size:0.75rem; color:#565959;">${date}</span>
@@ -1380,7 +1411,7 @@
 
             if(error) throw error;
             
-            await fetchData(); 
+            await fetchData(null); // Force full data refresh
             cancelEdit();
 
         } catch (e) {
@@ -1394,6 +1425,10 @@
 
     async function handleLogout() {
         if(confirm("Sign Out?")) {
+            // CRITICAL: Clear the user's specific cache entirely on logout
+            if (CACHE_KEY) {
+                localStorage.removeItem(CACHE_KEY);
+            }
             await client.auth.signOut();
             window.location.href = "index.html";
         }
