@@ -895,8 +895,11 @@
                 renderData(JSON.parse(correctCacheStr));
                 fetchData(correctCacheStr);
             } else {
-                // Different user, wipe the screen and show loader
-                document.getElementById('market').innerHTML = ''; 
+                // Different user, clear data gracefully WITHOUT destroying the DOM structure
+                document.getElementById('areas-container').innerHTML = '';
+                document.getElementById('promo-list').style.display = 'none';
+                document.getElementById('featured-section').style.display = 'none';
+                document.getElementById('category-container').style.display = 'none';
                 document.getElementById('initial-loader').style.display = 'block';
                 fetchData(null);
             }
