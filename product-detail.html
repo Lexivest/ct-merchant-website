@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Product Details | CT‑Merchant</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,10 +18,10 @@
             --color-pink-hover: #be185d;
             --color-pink-light: rgba(219, 39, 119, 0.1);
             
-            --amz-bg: #F3F4F6;
-            --amz-link: #007185;
+            --amz-bg: #E3E6E6; /* Classic Amazon Gray Separator */
             --color-text-main: #0F1111;
             --color-text-muted: #565959;
+            --color-border: #D5D9D9;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -29,125 +29,107 @@
         body { 
             background-color: var(--amz-bg); 
             color: var(--color-text-main); 
-            padding-bottom: 90px;
+            padding-bottom: 90px; /* Space for bottom sticky bar */
+            overflow-x: hidden;
         }
 
-        /* --- LAYOUT WRAPPER --- */
         .app-container {
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
             min-height: 100vh;
-            background: white;
-        }
-
-        .main-layout {
+            background-color: var(--amz-bg);
             display: flex;
             flex-direction: column;
         }
 
-        /* Desktop Split Layout */
+        /* --- PREMIUM HEADER --- */
+        .amz-header {
+            background-color: var(--amz-dark);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header-left { display: flex; align-items: center; gap: 12px; flex: 1; overflow: hidden;}
+        .back-btn { 
+            background: none; border: none; color: white; 
+            font-size: 1.2rem; cursor: pointer; padding: 4px; 
+            margin-left: -4px; transition: 0.2s; flex-shrink: 0;
+        }
+        .back-btn:hover { color: var(--color-pink); }
+        .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .header-actions { display: flex; gap: 16px; align-items: center; flex-shrink: 0;}
+        .action-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+        .action-btn:hover { color: var(--color-pink); }
+        .action-btn.active { color: var(--color-pink); }
+
+        /* --- AMAZON BLOCK LAYOUT --- */
+        .content-block {
+            background: white;
+            padding: 24px 20px;
+            margin-bottom: 8px; /* 8px Amazon separator */
+            border-top: 1px solid var(--color-border);
+            border-bottom: 1px solid var(--color-border);
+        }
+        .content-block:first-child { border-top: none; padding-top: 0; padding-bottom: 0; } /* Image block has custom padding */
+
+        /* --- DESKTOP SPLIT LAYOUT --- */
+        .main-layout { display: flex; flex-direction: column; width: 100%; }
+
         @media (min-width: 900px) {
             .app-container { padding: 40px; background: transparent; }
             .main-layout { 
                 flex-direction: row; 
-                gap: 40px; 
-                background: white;
-                border-radius: 12px;
-                padding: 40px;
-                border: 1px solid #D5D9D9;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                gap: 24px; 
+                background: transparent;
             }
-            .image-container { 
-                flex: 1; 
-                border-radius: 8px !important; 
-                height: 550px !important; 
-                border: 1px solid #E3E6E6;
+            .content-block { 
+                border-radius: 8px; 
+                border: 1px solid var(--color-border); 
+                margin-bottom: 24px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.04);
             }
-            .content-area { 
-                flex: 1; 
-                padding: 0 !important; 
-                margin-top: 0 !important; 
-                box-shadow: none !important; 
-            }
-            
-            /* Hide top mobile buttons on desktop */
-            .top-btn { display: none !important; }
-            
-            /* Show desktop buttons */
-            .desktop-actions { display: flex !important; gap: 10px; margin-bottom: 20px; }
+            .content-block:first-child { padding: 0; }
+            .left-col { flex: 1; }
+            .right-col { flex: 1.2; display: flex; flex-direction: column; }
         }
 
-        /* --- HEADER & IMAGE --- */
+        /* --- IMAGE BLOCK --- */
         .image-container { 
             position: relative; 
-            height: 50vh; /* Responsive mobile height */
-            min-height: 350px;
             width: 100%; 
-            background: #F7F7F7; /* Neutral background to frame images seamlessly */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-bottom: 1px solid #E3E6E6;
+            aspect-ratio: 1 / 1;
+            max-height: 500px;
+            background: #F7F7F7; 
+            display: flex; align-items: center; justify-content: center;
         }
         
-        /* CRITICAL FIX: object-fit: contain ensures 100% of the image is ALWAYS visible */
         .product-img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: contain; 
-            padding: 20px; /* Prevents image from touching the absolute edges */
+            width: 100%; height: 100%; 
+            object-fit: contain; /* Ensures 100% visibility without cropping */
+            padding: 20px; 
             transition: transform 0.3s; 
         }
         @media (min-width: 900px) { .product-img:hover { transform: scale(1.05); } }
 
         /* Dynamic Discount Badge on Image */
         .discount-badge-hero {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: #DC2626;
-            color: white;
-            font-size: 1.1rem;
-            font-weight: 800;
-            padding: 6px 12px;
-            border-radius: 6px;
-            z-index: 10;
+            position: absolute; bottom: 20px; left: 20px;
+            background: #DC2626; color: white;
+            font-size: 1.1rem; font-weight: 800;
+            padding: 6px 12px; border-radius: 6px; z-index: 10;
             box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3);
         }
 
-        /* Mobile Buttons (Solid white for contrast against any image) */
-        .top-btn {
-            position: absolute; top: 20px;
-            width: 44px; height: 44px; background: white;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: #0F1111; font-size: 1.2rem; cursor: pointer; border: 1px solid #D5D9D9; 
-            z-index: 10; transition: transform 0.2s;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-        .top-btn:active { transform: scale(0.9); }
-        .btn-back { left: 20px; }
-        
-        .actions-right { position: absolute; top: 20px; right: 20px; display: flex; gap: 12px; }
-        .btn-fav.active { color: var(--color-pink); border-color: rgba(219, 39, 119, 0.4); background: var(--color-pink-light); }
-
-        /* Desktop Actions (Initially Hidden) */
-        .desktop-actions { display: none; }
-        .btn-desk { 
-            padding: 8px 16px; border-radius: 6px; border: 1px solid #D5D9D9; 
-            background: white; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; color: #0F1111;
-            transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-        .btn-desk:hover { background: #F7FAFA; border-color: #B0B5B5; }
-        .btn-desk.fav-active { color: var(--color-pink); border-color: var(--color-pink); background: var(--color-pink-light); }
-
-        /* --- CONTENT CARD --- */
-        .content-area {
-            background: white; border-radius: 20px 20px 0 0; 
-            margin-top: -20px; position: relative; padding: 24px;
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.05); z-index: 5;
-        }
-
+        /* --- INFO BLOCK --- */
         .condition-badge {
             display: inline-block; padding: 4px 10px; border-radius: 4px;
             font-size: 0.75rem; font-weight: 800; margin-bottom: 12px;
@@ -156,25 +138,20 @@
         .cond-new { background: #F3F4F6; color: #007185; border: 1px solid #D5D9D9; }
         .cond-used { background: #FFF7ED; color: #C40000; border: 1px solid #F3A847; }
 
-        .prod-title { font-size: 1.6rem; font-weight: 800; line-height: 1.3; margin-bottom: 12px; color: #0F1111; }
+        .prod-title { font-size: 1.5rem; font-weight: 800; line-height: 1.3; margin-bottom: 12px; color: var(--color-text-main); }
         
-        .price-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; }
+        .price-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
         .current-price { font-size: 2.2rem; font-weight: 800; color: var(--color-pink); }
-        .old-price { text-decoration: line-through; color: #888C8C; font-size: 1.2rem; font-weight: 500;}
+        .old-price { text-decoration: line-through; color: var(--color-text-muted); font-size: 1.2rem; font-weight: 500;}
 
-        .section-header { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; color: #0F1111; border-bottom: 2px solid #F3F4F6; padding-bottom: 6px;}
-        .description-text { font-size: 0.95rem; line-height: 1.7; color: #565959; white-space: pre-wrap;}
+        /* --- DESCRIPTION BLOCK --- */
+        .section-header { font-size: 1.1rem; font-weight: 800; margin-bottom: 12px; color: var(--color-text-main); border-bottom: 2px solid #F3F4F6; padding-bottom: 8px;}
+        .description-text { font-size: 0.95rem; line-height: 1.7; color: var(--color-text-muted); white-space: pre-wrap;}
 
         /* Animations */
-        @keyframes pulse-badge {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
-            50% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
-        }
-        @keyframes highlight-price {
-            0%, 100% { color: var(--color-pink); text-shadow: none; }
-            50% { color: #ff0055; text-shadow: 0 0 8px rgba(219,39,119,0.3); }
-        }
+        @keyframes pulse-badge { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); } 50% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
+        @keyframes highlight-price { 0%, 100% { color: var(--color-pink); text-shadow: none; } 50% { color: #ff0055; text-shadow: 0 0 8px rgba(219,39,119,0.3); } }
+        
         .flash-offer { animation: pulse-badge 1.5s infinite ease-in-out; }
         .flash-price { animation: highlight-price 1.5s infinite ease-in-out; }
 
@@ -183,7 +160,7 @@
             position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 1200px;
             background: white; padding: 12px 20px;
             box-shadow: 0 -4px 15px rgba(0,0,0,0.08); z-index: 100;
-            border-top: 1px solid #D5D9D9; display: flex; justify-content: center;
+            border-top: 1px solid var(--color-border); display: flex; justify-content: center;
         }
         .btn-whatsapp {
             width: 100%; max-width: 600px;
@@ -201,85 +178,92 @@
             opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(2px);
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-card { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); border: 1px solid #D5D9D9;}
+        .modal-card { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); border: 1px solid var(--color-border);}
         
         .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
         .btn-modal { flex: 1; padding: 12px; border-radius: 6px; border: none; font-weight: 700; cursor: pointer; font-size: 0.95rem; transition: 0.2s; }
-        .btn-cancel { background: white; border: 1px solid #D5D9D9; color: #0F1111; }
+        .btn-cancel { background: white; border: 1px solid var(--color-border); color: var(--color-text-main); }
         .btn-cancel:hover { background: #F7FAFA; }
         .btn-confirm { background: #25D366; color: white; }
         .btn-confirm:hover { background: #16A34A; }
 
+        /* Utility States */
         .hidden { display: none !important; }
-        .spinner { width: 44px; height: 44px; border: 4px solid var(--color-pink-light); border-top-color: var(--color-pink); border-radius: 50%; animation: spin 1s linear infinite; }
+        .state-box { text-align: center; padding: 60px 20px; color: var(--color-text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;}
+        .spinner { width: 44px; height: 44px; border: 4px solid var(--color-pink-light); border-top-color: var(--color-pink); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div class="app-container">
+    
+    <!-- Premium Header -->
+    <header class="amz-header">
+        <div class="header-left">
+            <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+            <span class="page-title">Product Details</span>
+        </div>
+        <div class="header-actions">
+            <button id="wishlist-btn" onclick="toggleWishlist()" class="action-btn">
+                <i id="fav-icon" class="fa-regular fa-heart"></i>
+            </button>
+            <button onclick="shareProduct()" class="action-btn">
+                <i class="fa-solid fa-share-nodes"></i>
+            </button>
+        </div>
+    </header>
+
     <!-- Loading State -->
-    <div id="loader" style="height: 100vh; display: flex; flex-direction:column; align-items: center; justify-content: center;">
+    <div id="loader" class="state-box">
         <div class="spinner"></div>
-        <p id="loading-text" style="margin-top:16px; color:#565959; font-weight:600;">Loading Details...</p>
+        <span style="font-weight: 600; color: #0F1111;">Loading Product...</span>
     </div>
 
     <!-- Error State -->
-    <div id="error-screen" class="hidden" style="text-align:center; padding: 60px 20px;">
+    <div id="error-screen" class="state-box hidden">
         <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #C40000; margin-bottom: 16px;"></i>
-        <h3 style="color:#0F1111; font-weight: 800;">Product Not Found</h3>
-        <p style="color:#565959; margin-top: 8px;">The item you are looking for may have been removed.</p>
+        <h3 style="color:#0F1111; font-weight: 800; margin-bottom: 8px;">Product Not Found</h3>
+        <p style="color:#565959;">The item you are looking for may have been removed.</p>
         <button onclick="history.back()" style="margin-top:20px; padding:10px 24px; background: white; border: 1px solid #D5D9D9; border-radius: 6px; font-weight: 600; cursor:pointer;">Go Back</button>
     </div>
 
+    <!-- Main Content Layout -->
     <div id="main-content" class="main-layout hidden">
         
-        <!-- Header Image Area -->
-        <div class="image-container">
-            <img id="prod-img" class="product-img" src="" alt="Product Image">
-            <div id="discount-badge" class="discount-badge-hero flash-offer hidden"></div>
-            
-            <!-- Mobile Buttons -->
-            <button onclick="history.back()" class="top-btn btn-back">
-                <i class="fa-solid fa-arrow-left"></i>
-            </button>
-            <div class="actions-right">
-                <button id="wishlist-btn" onclick="toggleWishlist()" class="top-btn btn-fav">
-                    <i id="fav-icon" class="fa-regular fa-heart"></i>
-                </button>
-                <button onclick="shareProduct()" class="top-btn">
-                    <i class="fa-solid fa-share-nodes"></i>
-                </button>
+        <div class="left-col">
+            <!-- Header Image Area (Block 1) -->
+            <div class="content-block image-container">
+                <img id="prod-img" class="product-img" src="" alt="Product Image">
+                <div id="discount-badge" class="discount-badge-hero flash-offer hidden"></div>
             </div>
         </div>
-
-        <!-- Details Area -->
-        <div class="content-area">
-            
-            <!-- Desktop Buttons -->
-            <div class="desktop-actions">
-                <button onclick="history.back()" class="btn-desk"><i class="fa-solid fa-arrow-left"></i> Back</button>
-                <div style="flex-grow:1"></div>
-                <button id="desk-wishlist-btn" onclick="toggleWishlist()" class="btn-desk"><i id="desk-fav-icon" class="fa-regular fa-heart"></i> Save to Wishlist</button>
-                <button onclick="shareProduct()" class="btn-desk"><i class="fa-solid fa-share-nodes"></i> Share</button>
+        
+        <div class="right-col">
+            <!-- Details Area (Block 2) -->
+            <div class="content-block">
+                <span id="condition-badge" class="condition-badge cond-new">New</span>
+                <h1 id="prod-name" class="prod-title">--</h1>
+                <div class="price-row">
+                    <span id="current-price" class="current-price">--</span>
+                    <span id="old-price" class="old-price hidden"></span>
+                </div>
             </div>
 
-            <span id="condition-badge" class="condition-badge cond-new">New</span>
-            
-            <h1 id="prod-name" class="prod-title">--</h1>
-            
-            <div class="price-row">
-                <span id="current-price" class="current-price">--</span>
-                <span id="old-price" class="old-price hidden"></span>
+            <!-- Description Area (Block 3) -->
+            <div class="content-block" style="flex: 1;">
+                <div class="section-header">Description</div>
+                <p id="prod-desc" class="description-text">--</p>
+                
+                <div style="margin-top: 30px; font-size: 0.85rem; color: #888C8C; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-store" style="color: var(--color-pink);"></i> Sold by <span id="shop-name-link" style="font-weight: 700; cursor: pointer; color: #007185; text-decoration: underline;">Loading...</span>
+                </div>
             </div>
-
-            <div class="section-header">Description</div>
-            <p id="prod-desc" class="description-text">--</p>
         </div>
     </div>
 
     <!-- Sticky Footer -->
-    <div class="bottom-bar">
+    <div class="bottom-bar" id="bottom-action-bar" style="display:none;">
         <button onclick="showSecurityModal()" class="btn-whatsapp">
             <i class="fa-brands fa-whatsapp" style="font-size: 1.4rem;"></i> Message Merchant
         </button>
@@ -317,6 +301,7 @@
     const params = new URLSearchParams(window.location.search);
     const productId = params.get('id');
 
+    // --- INSTANT SWR INIT ---
     window.onload = async () => {
         if (typeof supabase === 'undefined') { return; }
         client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -327,40 +312,72 @@
             return;
         }
 
-        try {
-            const { data: { session } } = await client.auth.getSession();
-            if (session) currentUser = session.user;
+        // 1. Check Session
+        const { data: { session } } = await client.auth.getSession();
+        if (session) currentUser = session.user;
 
-            await fetchProductData();
-            if (currentUser) checkWishlistStatus();
+        // 2. Global Product Cache (Safe across users)
+        const cacheKey = `ctm_prod_v30_${productId}`;
+        const cacheStr = localStorage.getItem(cacheKey);
 
-        } catch (err) {
-            console.error(err);
+        if (cacheStr) {
+            try {
+                const cachedData = JSON.parse(cacheStr);
+                renderUI(cachedData);
+                if (currentUser) checkWishlistStatus();
+            } catch (e) {
+                console.error("Cache error", e);
+                document.getElementById('loader').style.display = 'flex';
+            }
+        } else {
+            document.getElementById('loader').style.display = 'flex';
         }
+
+        // 3. Fetch Fresh Data
+        fetchFreshData(cacheKey, cacheStr);
     };
 
-    async function fetchProductData() {
+    async function fetchFreshData(cacheKey, oldCacheStr) {
         try {
             const { data: product, error } = await client.from('products').select('*').eq('id', productId).single();
             if (error || !product) throw new Error();
+            
             currentProduct = product;
+            let shopData = null;
 
             if (product.shop_id) {
                 const { data: shop } = await client.from('shops').select('id, name, whatsapp').eq('id', product.shop_id).single();
                 currentShop = shop;
+                shopData = shop;
             }
-            renderUI();
+
+            const newData = { product, shop: shopData };
+            const newCacheStr = JSON.stringify(newData);
+
+            if (newCacheStr !== oldCacheStr) {
+                localStorage.setItem(cacheKey, newCacheStr);
+                renderUI(newData);
+            }
+
+            // If we didn't have cache initially, fetch user specific status now
+            if (!oldCacheStr && currentUser) {
+                checkWishlistStatus();
+            }
+
         } catch (e) {
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('error-screen').classList.remove('hidden');
         }
     }
 
-    function renderUI() {
+    function renderUI(data) {
         document.getElementById('loader').classList.add('hidden');
         document.getElementById('main-content').classList.remove('hidden');
 
-        const p = currentProduct;
+        currentProduct = data.product;
+        currentShop = data.shop;
+        const p = data.product;
+
         document.getElementById('prod-img').src = p.image_url || 'https://via.placeholder.com/600x600?text=No+Image';
         
         const badge = document.getElementById('condition-badge');
@@ -392,40 +409,41 @@
             oldEl.classList.add('hidden');
             dBadge.classList.add('hidden');
         }
+
+        // Setup Shop Link & WhatsApp Action
+        if (currentShop) {
+            const shopLink = document.getElementById('shop-name-link');
+            shopLink.textContent = currentShop.name;
+            shopLink.onclick = () => window.location.href = `shop-detail.html?id=${currentShop.id}`;
+
+            if (currentShop.whatsapp) {
+                document.getElementById('bottom-action-bar').style.display = 'flex';
+            }
+        }
     }
 
     async function checkWishlistStatus() {
-        const { data } = await client.from('wishlist').select('id').eq('user_id', currentUser.id).eq('product_id', productId).maybeSingle();
-        if (data) {
-            isInWishlist = true;
-            updateWishlistIcons();
-        }
+        if (!currentUser) return;
+        try {
+            const { data } = await client.from('wishlist').select('id').eq('user_id', currentUser.id).eq('product_id', productId).maybeSingle();
+            if (data) {
+                isInWishlist = true;
+                updateWishlistIcons();
+            }
+        } catch (e) { console.error("Wishlist check error", e); }
     }
 
     function updateWishlistIcons() {
-        const mobileBtn = document.getElementById('wishlist-btn');
-        const mobileIcon = document.getElementById('fav-icon');
-        const deskBtn = document.getElementById('desk-wishlist-btn');
-        const deskIcon = document.getElementById('desk-fav-icon');
+        const btn = document.getElementById('wishlist-btn');
+        const icon = document.getElementById('fav-icon');
         
         const type = isInWishlist ? 'fa-solid' : 'fa-regular';
 
-        // Mobile update
-        mobileIcon.className = `${type} fa-heart`;
+        icon.className = `${type} fa-heart`;
         if (isInWishlist) {
-            mobileBtn.classList.add('active');
+            btn.classList.add('active');
         } else {
-            mobileBtn.classList.remove('active');
-        }
-
-        // Desktop update
-        deskIcon.className = `${type} fa-heart`;
-        if(isInWishlist) {
-            deskBtn.classList.add('fav-active');
-            deskBtn.innerHTML = `<i class="${type} fa-heart"></i> Saved`;
-        } else {
-            deskBtn.classList.remove('fav-active');
-            deskBtn.innerHTML = `<i class="${type} fa-heart"></i> Save to Wishlist`;
+            btn.classList.remove('active');
         }
     }
 
