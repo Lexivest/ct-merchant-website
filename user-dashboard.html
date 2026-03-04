@@ -478,8 +478,9 @@
         <!-- MARKET -->
         <div id="market" class="screen active">
             
-            <div id="initial-loader" style="text-align:center; padding:60px 0; color:#888C8C;">
-                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem;"></i>
+            <!-- Hidden by default, only shows if zero cache is found on a cold boot -->
+            <div id="initial-loader" style="display: none; text-align:center; padding:60px 0; color:#888C8C;">
+                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem; color: var(--color-pink);"></i>
             </div>
 
             <!-- Promos (Hero Banner style) -->
@@ -495,7 +496,7 @@
             <div id="areas-container"></div>
 
             <!-- Categories Section (White Block) -->
-            <div class="cat-section-wrap">
+            <div class="cat-section-wrap" id="category-container" style="display:none;">
                 <h2 class="sec-title">Browse Categories</h2>
                 <div id="category-list" class="cat-grid"></div>
             </div>
@@ -538,7 +539,7 @@
         <div id="profile" class="screen">
             <!-- View Mode -->
             <div id="profile-view" style="max-width:600px; margin:20px auto; background:white; padding:40px; border-radius:8px; border:1px solid #D5D9D9; text-align:center;">
-                <img id="profile-avatar-lg" src="" style="width:120px; height:120px; border-radius:50%; margin-bottom:16px; border:2px solid #D5D9D9; object-fit: cover;">
+                <img id="profile-avatar-lg" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" style="width:120px; height:120px; border-radius:50%; margin-bottom:16px; border:2px solid #D5D9D9; object-fit: cover;">
                 <h2 id="profile-name" style="font-size:1.8rem; color:#0F1111; margin-bottom:8px;">Loading...</h2>
                 <p id="profile-phone" style="color:#565959; font-weight:500; margin-bottom:4px;"></p>
                 <p id="profile-email" style="color:#565959; margin-bottom:24px; font-size:0.95rem;">...</p>
@@ -673,13 +674,31 @@
     // User-Specific Cache Key to prevent cross-user data bleeding
     let CACHE_KEY = ''; 
     const MAX_FILE_SIZE = 500 * 1024; 
-
     let chatHistory = [];
 
     // --- AVATAR UPLOAD STATE ---
     let cropper = null;
     let avatarBlob = null;
     let currentOldAvatarUrl = null;
+
+    // =========================================
+    // OPTIMISTIC SYNCHRONOUS RENDER (ZERO LATENCY)
+    // =========================================
+    const lastUserId = localStorage.getItem('ctm_last_user_id');
+    let optimisticCacheStr = null;
+
+    if (lastUserId) {
+        CACHE_KEY = `ctm_dashboard_v31_${lastUserId}`;
+        optimisticCacheStr = localStorage.getItem(CACHE_KEY);
+        if (optimisticCacheStr) {
+            try {
+                // Instantly paint the screen before anything else loads
+                renderData(JSON.parse(optimisticCacheStr));
+            } catch(e) {
+                console.error("Optimistic render failed", e);
+            }
+        }
+    }
 
     // --- NAVIGATION ---
     function switchScreen(id, btn) {
@@ -692,30 +711,22 @@
         const target = document.getElementById(id);
         if (target) target.classList.add('active');
 
-        if(id === 'notifications') markRead();
+        if(id === 'notifications' && currentUser) markRead();
     }
 
     // --- DUAL NAVIGATION LOGIC (Area + Category) ---
     function navigateArea(areaId) {
-        if (areaId !== 'all') {
-            window.location.href = `area.html?id=${areaId}`; 
-        }
+        if (areaId !== 'all') window.location.href = `area.html?id=${areaId}`; 
     }
-
     function navigateCategory(catName) {
-        if (catName !== 'all') {
-            window.location.href = `cat.html?name=${encodeURIComponent(catName)}`;
-        }
+        if (catName !== 'all') window.location.href = `cat.html?name=${encodeURIComponent(catName)}`;
     }
 
     // --- SEARCH BAR LOGIC WITH AUTOCOMPLETE ---
     function executeSearch(type) {
         let inputId = type === 'desktop' ? 'search-input-desktop' : 'search-input-mobile';
         let query = document.getElementById(inputId).value.trim();
-        
-        if (query) {
-            window.location.href = `search.html?q=${encodeURIComponent(query)}`;
-        }
+        if (query) window.location.href = `search.html?q=${encodeURIComponent(query)}`;
     }
 
     function handleLiveSearch(type) {
@@ -741,19 +752,14 @@
 
             // Find matching shops
             shops.forEach(s => {
-                if (s.name.toLowerCase().includes(query)) {
-                    results.push({ text: s.name, type: 'Shop', icon: 'fa-store' });
-                }
+                if (s.name.toLowerCase().includes(query)) results.push({ text: s.name, type: 'Shop', icon: 'fa-store' });
             });
 
             // Find matching products
             products.forEach(p => {
-                if (p.name.toLowerCase().includes(query)) {
-                    results.push({ text: p.name, type: 'Product', icon: 'fa-box' });
-                }
+                if (p.name.toLowerCase().includes(query)) results.push({ text: p.name, type: 'Product', icon: 'fa-box' });
             });
 
-            // Limit to top 6 results
             results = results.slice(0, 6);
 
             if (results.length > 0) {
@@ -809,9 +815,7 @@
         let usageStr = localStorage.getItem('ctm_ai_usage');
         let aiUsage = usageStr ? JSON.parse(usageStr) : { date: todayStr, count: 0 };
         
-        if (aiUsage.date !== todayStr) {
-            aiUsage = { date: todayStr, count: 0 };
-        }
+        if (aiUsage.date !== todayStr) aiUsage = { date: todayStr, count: 0 };
 
         const body = document.getElementById('chat-messages');
 
@@ -836,9 +840,7 @@
             const { data: { session } } = await client.auth.getSession();
             if(!session) throw new Error("Please log in to use AI.");
 
-            const recentHistory = chatHistory.length > 6 
-                ? chatHistory.slice(chatHistory.length - 6) 
-                : chatHistory;
+            const recentHistory = chatHistory.length > 6 ? chatHistory.slice(chatHistory.length - 6) : chatHistory;
 
             const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
                 method: 'POST',
@@ -847,18 +849,12 @@
                     'Authorization': `Bearer ${session.access_token}`,
                     'apikey': SUPABASE_ANON_KEY 
                 },
-                body: JSON.stringify({ 
-                    query: txt,
-                    history: recentHistory
-                })
+                body: JSON.stringify({ query: txt, history: recentHistory })
             });
 
             document.getElementById(loadId)?.remove();
 
-            if (!response.ok) {
-                const errText = await response.text();
-                throw new Error(`Server returned ${response.status}: ${errText}`);
-            }
+            if (!response.ok) throw new Error(`Server returned ${response.status}`);
 
             const data = await response.json();
             const reply = data.reply || "No response received.";
@@ -880,23 +876,36 @@
         body.scrollTop = body.scrollHeight;
     }
 
-    // --- INSTANT SWR INIT ---
+    // --- ASYNC DATA FETCH & VERIFICATION ---
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "index.html"; return; }
         
         currentUser = session.user;
-        
-        // Highly secure User-Specific Cache Key
-        CACHE_KEY = `ctm_dashboard_v31_${currentUser.id}`;
+        localStorage.setItem('ctm_last_user_id', currentUser.id);
 
-        const cache = localStorage.getItem(CACHE_KEY);
-        if (cache) {
-            renderData(JSON.parse(cache)); // Instant render
-            fetchData(cache); // Silent background update
+        const correctCacheKey = `ctm_dashboard_v31_${currentUser.id}`;
+
+        // Verify if the optimistic cache belonged to the correct user
+        if (CACHE_KEY !== correctCacheKey) {
+            CACHE_KEY = correctCacheKey;
+            const correctCacheStr = localStorage.getItem(CACHE_KEY);
+            
+            if (correctCacheStr) {
+                renderData(JSON.parse(correctCacheStr));
+                fetchData(correctCacheStr);
+            } else {
+                // Different user, wipe the screen and show loader
+                document.getElementById('market').innerHTML = ''; 
+                document.getElementById('initial-loader').style.display = 'block';
+                fetchData(null);
+            }
         } else {
-            document.getElementById('initial-loader').style.display = 'block';
-            fetchData(null); // First time load
+            // User matched perfectly. If no cache existed, show loader.
+            if (!optimisticCacheStr) {
+                document.getElementById('initial-loader').style.display = 'block';
+            }
+            fetchData(optimisticCacheStr); // Silent background SWR check
         }
     };
 
@@ -971,8 +980,7 @@
         }
     }
 
-    // --- DOM DIFFING RENDER ENGINE ---
-    // Mathematically ensures sections only re-paint if their innerHTML has changed
+    // --- DOM DIFFING RENDER ENGINE (ZERO FLICKER) ---
     function renderData(data) {
         document.getElementById('initial-loader').style.display = 'none';
 
@@ -1006,7 +1014,9 @@
         
         document.getElementById('profile-name').textContent = fName;
         document.getElementById('profile-phone').textContent = data.profile.phone || "No phone number added";
-        document.getElementById('profile-email').textContent = currentUser.email;
+        
+        // Safety check for optimistic rendering where currentUser might be null momentarily
+        if (currentUser) document.getElementById('profile-email').textContent = currentUser.email;
 
         // 3. Notifications Badge
         const b = document.getElementById('badge-count');
@@ -1033,7 +1043,7 @@
             tickerContainer.style.display = 'none';
         }
 
-        // 5. Promos (Diff Check)
+        // 5. Promos (Diff Check prevents image flash)
         const pList = document.getElementById('promo-list');
         if (data.promos.length > 0) {
             const promoHtml = data.promos.map(p => 
@@ -1042,9 +1052,7 @@
                  </div>`
             ).join('');
             
-            if (pList.innerHTML !== promoHtml) {
-                pList.innerHTML = promoHtml;
-            }
+            if (pList.innerHTML !== promoHtml) pList.innerHTML = promoHtml;
             pList.style.display = 'flex';
         } else {
             pList.style.display = 'none';
@@ -1057,9 +1065,7 @@
         
         if (featured.length > 0) {
             const featHtml = featured.map(s => buildShopCard(s, data.products)).join('');
-            if (featuredList.innerHTML !== featHtml) {
-                featuredList.innerHTML = featHtml;
-            }
+            if (featuredList.innerHTML !== featHtml) featuredList.innerHTML = featHtml;
             featuredSection.style.display = 'block';
         } else {
             featuredSection.style.display = 'none';
@@ -1086,24 +1092,24 @@
                 </div>
             `;
         });
-        if (areaContainer.innerHTML !== areaHtmlBuilder) {
-            areaContainer.innerHTML = areaHtmlBuilder;
-        }
+        if (areaContainer.innerHTML !== areaHtmlBuilder) areaContainer.innerHTML = areaHtmlBuilder;
 
         // 8. Categories (Diff Check)
         const catList = document.getElementById('category-list');
-        const catHtml = data.categories.map(cat => {
-            const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
-            const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
-            const url = p ? p.image_url : `https://api.dicebear.com/7.x/initials/svg?seed=${cat.name}`;
-            return `
-                <div class="cat-chip" onclick="window.location.href='cat.html?name=${encodeURIComponent(cat.name)}'">
-                    <img src="${url}"> <span>${cat.name}</span>
-                </div>
-            `;
-        }).join('');
-        if (catList.innerHTML !== catHtml) {
-            catList.innerHTML = catHtml;
+        const catContainer = document.getElementById('category-container');
+        if (data.categories.length > 0) {
+            const catHtml = data.categories.map(cat => {
+                const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
+                const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
+                const url = p ? p.image_url : `https://api.dicebear.com/7.x/initials/svg?seed=${cat.name}`;
+                return `
+                    <div class="cat-chip" onclick="window.location.href='cat.html?name=${encodeURIComponent(cat.name)}'">
+                        <img src="${url}"> <span>${cat.name}</span>
+                    </div>
+                `;
+            }).join('');
+            if (catList.innerHTML !== catHtml) catList.innerHTML = catHtml;
+            catContainer.style.display = 'block';
         }
 
         // 9. Notifications (Diff Check)
@@ -1126,9 +1132,7 @@
                 `;
             }).join('');
         }
-        if (notifListEl.innerHTML !== notifHtml) {
-            notifListEl.innerHTML = notifHtml;
-        }
+        if (notifListEl.innerHTML !== notifHtml) notifListEl.innerHTML = notifHtml;
 
         // 10. Tools & Counters
         updateMyShopCardUI(data.myShop);
