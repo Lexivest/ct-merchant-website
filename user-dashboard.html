@@ -265,23 +265,18 @@
         }
 
         /* =========================================
-           ZERO-GAP PREMIUM SHOP CARDS (2x2 GRID)
+           HORIZONTAL PREMIUM SHOP CARDS (2x2 GRID)
            ========================================= */
-        .shop-list-view {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            column-gap: 20px;
-            row-gap: 0; 
-            margin-bottom: 40px;
-        }
-
-        .h-scroll .premium-shop-card-wrap {
-            min-width: 300px;
-            width: 85vw;
-            max-width: 360px;
-            flex-shrink: 0;
+        .premium-shop-card-wrap {
             display: flex;
             flex-direction: column;
+            flex-shrink: 0; /* CRITICAL FIX: absolutely prevents the card from being squished horizontally */
+        }
+        
+        .h-scroll .premium-shop-card-wrap {
+            min-width: 280px;
+            width: 85vw;
+            max-width: 340px;
         }
 
         .premium-shop-card {
@@ -291,17 +286,16 @@
             flex-direction: column;
             cursor: pointer;
             height: 100%;
-            border-radius: 0; 
-            border: 1px solid #E3E6E6;
-            margin-bottom: -1px; 
-            position: relative;
-            transition: background 0.2s, box-shadow 0.2s;
+            border-radius: 8px; 
+            border: 1px solid #D5D9D9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
         }
         .premium-shop-card:hover { 
             background: #Fcfcfc; 
-            z-index: 2; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border-color: #D5D9D9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+            border-color: #B0B5B5;
         }
 
         .shop-card-title {
@@ -829,11 +823,11 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v28'; 
+    const CACHE_KEY = 'ctm_dash_v29'; 
     const MAX_FILE_SIZE = 500 * 1024; 
 
     let chatHistory = [];
-    let featuredScrollReq = null; // Animation frame reference
+    let featuredScrollReq = null;
 
     // --- AVATAR UPLOAD STATE ---
     let cropper = null;
@@ -900,7 +894,6 @@
         
         let isHovered = false;
         
-        // Pause on interaction
         container.addEventListener('mouseenter', () => isHovered = true);
         container.addEventListener('mouseleave', () => isHovered = false);
         container.addEventListener('touchstart', () => isHovered = true);
@@ -910,10 +903,8 @@
         
         function scrollLoop() {
             if (!isHovered) {
-                container.scrollLeft += 0.5; // Smooth slow speed
+                container.scrollLeft += 0.5; 
                 
-                // Reset to start if it hits the end 
-                // (-2px buffer to ensure it fires correctly across different pixel densities)
                 if (container.scrollLeft >= (container.scrollWidth - container.clientWidth - 2)) {
                     container.scrollLeft = 0;
                 }
@@ -1159,7 +1150,7 @@
         if (featured.length > 0) {
             featuredSection.style.display = 'block';
             document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
-            setTimeout(startFeaturedAutoScroll, 500); // Start the dynamic animation
+            setTimeout(startFeaturedAutoScroll, 500); 
         } else {
             featuredSection.style.display = 'none';
         }
@@ -1179,7 +1170,7 @@
             areaContainer.innerHTML += `
                 <div class="area-block-wrap" data-area-id="${area.id}" style="margin-bottom: 40px;">
                     <h2 class="sec-title">${titleHtml}</h2>
-                    <div class="shop-list-view" style="display: flex; overflow-x: auto; gap: 0; padding: 0 20px 20px 20px; scrollbar-width: none; -ms-overflow-style: none;">
+                    <div class="h-scroll">
                         ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
                     </div>
                 </div>
@@ -1233,7 +1224,7 @@
     // PREMIUM AMAZON-STYLE SHOP CARD BUILDER
     // =========================================
     function buildShopCard(shop, allProducts) {
-        // Blocks Fairly Used items from appearing in the main 2x2 grid
+        // Exclude "Fairly Used" items from the front card 
         const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url && x.condition !== 'Fairly Used').slice(0, 4);
 
         let gridHtml = '';
@@ -1252,7 +1243,7 @@
                 
                 if (hasDiscount) {
                     priceHtml = `<span class="sg-price-old">₦${price.toLocaleString()}</span>₦${discount.toLocaleString()}`;
-                    priceClass = 'sg-price flash-price'; // Active glow on discounted price
+                    priceClass = 'sg-price flash-price'; 
                 } else if (price) {
                     priceHtml = `₦${price.toLocaleString()}`;
                 }
