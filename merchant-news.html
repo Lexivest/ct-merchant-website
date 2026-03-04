@@ -10,102 +10,168 @@
     
     <style>
         :root {
-            --color-purple: #2E1065;
-            --color-bg: #F8FAFC;
-            --color-text: #1E293B;
-            --color-border: #E2E8F0;
+            /* PREMIUM AMAZON THEME WITH CT-MERCHANT PINK */
+            --amz-dark: #131921;
+            
+            --color-pink: #db2777; 
+            --color-pink-hover: #be185d;
+            --color-pink-light: rgba(219, 39, 119, 0.15);
+            
+            --amz-bg: #F3F4F6;
+            --color-text-main: #0F1111;
+            --color-text-muted: #565959;
+            --color-border: #D5D9D9;
+            --color-red: #C40000;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--color-bg); color: var(--color-text); min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+        
+        body { 
+            background: var(--amz-bg); 
+            color: var(--color-text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
 
-        .container { width: 100%; max-width: 500px; }
+        /* --- PREMIUM HEADER --- */
+        .app-header {
+            background-color: var(--amz-dark);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
 
-        /* Header */
-        .app-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-        .back-btn { background: white; border: 1px solid var(--color-border); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-text); font-size: 1.1rem; }
-        .page-title { font-size: 1.25rem; font-weight: 800; }
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 16px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
 
-        /* Card */
-        .card { background: white; padding: 24px; border-radius: 20px; border: 1px solid var(--color-border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .back-btn { 
+            background: none; border: none; color: white; 
+            font-size: 1.2rem; cursor: pointer; padding: 4px; 
+            margin-left: -4px; transition: 0.2s;
+        }
+        .back-btn:hover { color: var(--color-pink); }
+        
+        .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; }
+
+        /* --- MAIN CONTAINER --- */
+        .container { 
+            width: 100%; 
+            max-width: 600px; 
+            padding: 30px 20px; 
+            flex: 1;
+        }
+
+        /* --- CARD & FORM --- */
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            border: 1px solid var(--color-border); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+        }
 
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .section-title { font-size: 1.1rem; font-weight: 700; }
-        .status-badge { font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; display: none; }
-        .status-pending { background: #FEF3C7; color: #D97706; border: 1px solid #FDE68A; display: inline-block; }
-        .status-approved { background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; display: inline-block; }
-        .status-rejected { background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; display: inline-block; }
+        .section-title { font-size: 1.2rem; font-weight: 800; color: var(--color-text-main); }
+        
+        /* Status Badges */
+        .status-badge {
+            font-size: 0.75rem; font-weight: 800; padding: 4px 10px; 
+            border-radius: 6px; display: none; backdrop-filter: blur(4px);
+        }
+        .status-pending { background: rgba(254, 243, 199, 0.95); color: #D97706; border: 1px solid #FDE68A; display: inline-block; }
+        .status-approved { background: rgba(209, 250, 229, 0.95); color: #059669; border: 1px solid #A7F3D0; display: inline-block; }
+        .status-rejected { background: rgba(254, 226, 226, 0.95); color: var(--color-red); border: 1px solid #FECACA; display: inline-block; }
 
-        .section-desc { font-size: 0.9rem; color: #64748B; margin-bottom: 24px; line-height: 1.5; }
+        .section-desc { font-size: 0.95rem; color: var(--color-text-muted); margin-bottom: 24px; line-height: 1.5; }
 
         /* Input */
         .input-wrapper { position: relative; }
         textarea.input {
-            width: 100%; padding: 16px; border-radius: 12px;
-            border: 1px solid var(--color-border); font-size: 1rem;
-            background: #F8FAFC; resize: none; height: 140px;
-            transition: border 0.2s; font-family: inherit;
+            width: 100%; padding: 16px; border-radius: 4px;
+            border: 1px solid #888C8C; font-size: 1rem; color: #0F1111;
+            background: white; resize: none; height: 160px;
+            transition: 0.2s; font-family: inherit;
+            box-shadow: 0 1px 2px rgba(15,17,17,0.15) inset;
         }
-        textarea.input:focus { outline: none; border-color: var(--color-purple); background: white; }
+        textarea.input:focus { outline: none; border-color: var(--color-pink); box-shadow: 0 0 0 3px var(--color-pink-light); }
+        textarea.input::placeholder { color: #888C8C; }
         
         .char-count {
             position: absolute; bottom: 12px; right: 12px;
-            font-size: 0.75rem; color: #94A3B8; font-weight: 600;
+            font-size: 0.75rem; color: #888C8C; font-weight: 600;
         }
 
-        .helper-text { font-size: 0.8rem; color: #64748B; margin-top: 8px; display: flex; gap: 6px; align-items: center; }
+        .helper-text { font-size: 0.85rem; color: var(--color-text-muted); margin-top: 12px; display: flex; gap: 8px; align-items: flex-start; line-height: 1.4;}
+        .helper-text i { margin-top: 3px; color: var(--color-pink); }
 
-        /* Button */
+        /* Primary Button */
         .btn-submit {
-            width: 100%; background: var(--color-purple); color: white;
-            padding: 16px; border-radius: 12px; border: none;
-            font-size: 1rem; font-weight: 700; cursor: pointer;
-            margin-top: 30px; display: flex; align-items: center; justify-content: center; gap: 8px;
-            transition: background 0.2s;
+            width: 100%; background: var(--color-pink); color: white;
+            padding: 14px 16px; border-radius: 8px; border: none;
+            font-size: 1.05rem; font-weight: 700; cursor: pointer;
+            margin-top: 30px; transition: 0.2s; box-shadow: 0 2px 5px 0 rgba(219,39,119,0.3);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-        .btn-submit:hover { background: #4C1D95; }
-        .btn-submit:disabled { background: #94A3B8; cursor: not-allowed; }
+        .btn-submit:hover { background: var(--color-pink-hover); }
+        .btn-submit:disabled { background: #E3E6E6; color: #888C8C; cursor: not-allowed; box-shadow: none; border: 1px solid #D5D9D9; }
 
-        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="app-bar">
-        <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
-        <div class="page-title">Post Shop News</div>
-    </div>
-
-    <div class="card">
-        <div class="section-header">
-            <div class="section-title">Latest Updates</div>
-            <div id="news-status" class="status-badge"></div>
-        </div>
-        <p class="section-desc">
-            Write a short update for your customers. It will be reviewed by an admin before appearing on your shop page.
-        </p>
-
-        <form id="news-form" onsubmit="saveNews(event)">
-            <div class="input-wrapper">
-                <textarea id="news-text" class="input" maxlength="150" 
-                    placeholder="e.g. Flash Sale! 50% off iPhones this weekend only."
-                    oninput="updateCount(this)"></textarea>
-                <div class="char-count"><span id="count">0</span>/150</div>
-            </div>
-            
-            <div class="helper-text">
-                <i class="fa-solid fa-circle-info"></i>
-                <span>Leave empty and submit to remove your existing news.</span>
-            </div>
-
-            <button type="submit" id="btn-submit" class="btn-submit">
-                <i class="fa-solid fa-paper-plane"></i> Submit for Approval
+    <!-- Full Width Premium Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <button onclick="history.back()" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
             </button>
-        </form>
+            <div class="page-title">Post Shop News</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <div class="section-header">
+                <div class="section-title">Latest Updates</div>
+                <div id="news-status" class="status-badge"></div>
+            </div>
+            <p class="section-desc">
+                Write a short update for your customers. It will be reviewed by an admin before appearing on your shop page and the main repository ticker.
+            </p>
+
+            <form id="news-form" onsubmit="saveNews(event)">
+                <div class="input-wrapper">
+                    <textarea id="news-text" class="input" maxlength="150" 
+                        placeholder="e.g. Flash Sale! 50% off all iPhones this weekend only."
+                        oninput="updateCount(this)"></textarea>
+                    <div class="char-count"><span id="count">0</span>/150</div>
+                </div>
+                
+                <div class="helper-text">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>Leave this text box empty and click submit to remove your currently active news.</span>
+                </div>
+
+                <button type="submit" id="btn-submit" class="btn-submit">
+                    <i class="fa-solid fa-paper-plane"></i> Submit for Approval
+                </button>
+            </form>
+        </div>
     </div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -168,7 +234,7 @@
         const text = document.getElementById('news-text').value.trim();
 
         btn.disabled = true;
-        btn.innerHTML = '<div class="spinner"></div> Submitting...';
+        btn.innerHTML = '<div class="spinner" style="border-top-color: #888C8C;"></div> Submitting...';
 
         try {
             if (text.length === 0) {
