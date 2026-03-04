@@ -201,7 +201,8 @@
     <!-- Premium Header -->
     <header class="amz-header">
         <div class="header-left">
-            <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+            <!-- SMART BACK BUTTON -->
+            <button onclick="goBack()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
             <span class="page-title">Product Details</span>
         </div>
         <div class="header-actions">
@@ -225,7 +226,7 @@
         <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #C40000; margin-bottom: 16px;"></i>
         <h3 style="color:#0F1111; font-weight: 800; margin-bottom: 8px;">Product Not Found</h3>
         <p style="color:#565959;">The item you are looking for may have been removed.</p>
-        <button onclick="history.back()" style="margin-top:20px; padding:10px 24px; background: white; border: 1px solid #D5D9D9; border-radius: 6px; font-weight: 600; cursor:pointer;">Go Back</button>
+        <button onclick="window.location.href='index.html'" style="margin-top:20px; padding:10px 24px; background: white; border: 1px solid #D5D9D9; border-radius: 6px; font-weight: 600; cursor:pointer;">Go Back</button>
     </div>
 
     <!-- Main Content Layout -->
@@ -301,6 +302,17 @@
     const params = new URLSearchParams(window.location.search);
     const productId = params.get('id');
 
+    // --- SMART ROUTING: Prevents getting stuck on direct links ---
+    function goBack() {
+        if (document.referrer && document.referrer.includes(window.location.hostname)) {
+            window.history.back();
+        } else if (currentProduct && currentProduct.shop_id) {
+            window.location.href = `shop-detail.html?id=${currentProduct.shop_id}`;
+        } else {
+            window.location.href = 'index.html'; // Fallback
+        }
+    }
+
     // --- INSTANT SWR INIT ---
     window.onload = async () => {
         if (typeof supabase === 'undefined') { return; }
@@ -312,19 +324,22 @@
             return;
         }
 
-        // 1. Check Session
-        const { data: { session } } = await client.auth.getSession();
-        if (session) currentUser = session.user;
+        // 1. Check Session asynchronously
+        client.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                currentUser = session.user;
+                checkWishlistStatus();
+            }
+        });
 
         // 2. Global Product Cache (Safe across users)
-        const cacheKey = `ctm_prod_v30_${productId}`;
+        const cacheKey = `ctm_prod_v32_${productId}`;
         const cacheStr = localStorage.getItem(cacheKey);
 
         if (cacheStr) {
             try {
                 const cachedData = JSON.parse(cacheStr);
                 renderUI(cachedData);
-                if (currentUser) checkWishlistStatus();
             } catch (e) {
                 console.error("Cache error", e);
                 document.getElementById('loader').style.display = 'flex';
@@ -333,22 +348,25 @@
             document.getElementById('loader').style.display = 'flex';
         }
 
-        // 3. Fetch Fresh Data
+        // 3. Fetch Fresh Data Safely
         fetchFreshData(cacheKey, cacheStr);
     };
 
     async function fetchFreshData(cacheKey, oldCacheStr) {
         try {
             const { data: product, error } = await client.from('products').select('*').eq('id', productId).single();
-            if (error || !product) throw new Error();
+            
+            if (error || !product) throw new Error("Product fetch failed.");
             
             currentProduct = product;
             let shopData = null;
 
             if (product.shop_id) {
-                const { data: shop } = await client.from('shops').select('id, name, whatsapp').eq('id', product.shop_id).single();
-                currentShop = shop;
-                shopData = shop;
+                const { data: shop } = await client.from('shops').select('id, name, whatsapp').eq('id', product.shop_id).maybeSingle();
+                if (shop) {
+                    currentShop = shop;
+                    shopData = shop;
+                }
             }
 
             const newData = { product, shop: shopData };
@@ -357,16 +375,16 @@
             if (newCacheStr !== oldCacheStr) {
                 localStorage.setItem(cacheKey, newCacheStr);
                 renderUI(newData);
-            }
-
-            // If we didn't have cache initially, fetch user specific status now
-            if (!oldCacheStr && currentUser) {
-                checkWishlistStatus();
+            } else if (!oldCacheStr) {
+                renderUI(newData);
             }
 
         } catch (e) {
-            document.getElementById('loader').classList.add('hidden');
-            document.getElementById('error-screen').classList.remove('hidden');
+            console.error(e);
+            if (!oldCacheStr) {
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('error-screen').classList.remove('hidden');
+            }
         }
     }
 
