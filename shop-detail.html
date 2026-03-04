@@ -52,7 +52,6 @@
             z-index: 100;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .amz-header-top {
@@ -358,7 +357,7 @@
     <header class="amz-header">
         <div class="amz-header-top">
             <div class="header-left">
-                <button onclick="window.location.href='index.html'" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+                <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
                 <span class="page-title" id="header-shop-name">Shop Details</span>
             </div>
             <button onclick="shareShop()" class="share-btn"><i class="fa-solid fa-share-nodes"></i></button>
@@ -373,15 +372,7 @@
         </div>
     </header>
 
-    <!-- LOADING & ERROR STATES -->
     <div id="loading-spinner" class="spinner"></div>
-
-    <div id="error-screen" class="hidden" style="text-align:center; padding: 100px 20px;">
-        <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #C40000; margin-bottom: 16px;"></i>
-        <h3 style="color:#0F1111; font-weight: 800; margin-bottom: 8px;">Shop Not Found</h3>
-        <p id="error-msg" style="color:#565959;">This shop could not be found or has been removed from the platform.</p>
-        <button onclick="window.location.href='index.html'" style="margin-top:20px; padding:10px 24px; background: white; border: 1px solid #D5D9D9; border-radius: 6px; font-weight: 600; cursor:pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); color:#0F1111;">Back to Home</button>
-    </div>
 
     <!-- Content Section (Amazon Block Layout) -->
     <div id="content-area" class="hidden">
@@ -530,22 +521,23 @@
     let likeCount = 0;
     let map;
 
-    // --- INSTANT SWR ARCHITECTURE WITH DECOUPLED PROMISES ---
+    // --- INSTANT SWR ARCHITECTURE ---
     window.onload = async () => {
         if (!shopId) { window.history.back(); return; }
 
-        // 1. Await Session FIRST so anonymous incognito mode is correctly registered
+        // 1. Check Session
         const { data: { session } } = await client.auth.getSession();
         if (session) currentUser = session.user;
 
         // 2. Global Shop Cache (Safe across users since it contains no user-specific data)
-        const cacheKey = `ctm_shop_v32_${shopId}`;
+        const cacheKey = `ctm_shop_v30_${shopId}`;
         const cacheStr = localStorage.getItem(cacheKey);
         
         if (cacheStr) {
             try {
                 const cachedData = JSON.parse(cacheStr);
                 renderFullShop(cachedData, false);
+                if (currentUser) fetchUserData(); // Instantly fetch likes separately
             } catch (e) {
                 console.error("Cache parsing error", e);
                 document.getElementById('loading-spinner').style.display = 'block';
@@ -554,86 +546,27 @@
             document.getElementById('loading-spinner').style.display = 'block';
         }
 
-        // 3. Fetch Fresh Background Data SAFELY
+        // 3. Fetch Fresh Background Data
         fetchFreshData(cacheKey, cacheStr);
     };
 
     async function fetchFreshData(cacheKey, oldCacheStr) {
         try {
-            // STEP 1: Fetch Shop (Safest query without joins to prevent RLS poisoning)
-            const { data: shopData, error: shopErr } = await client.from('shops').select('*').eq('id', shopId).maybeSingle();
+            const [shopRes, prodRes, likeRes, contentRes] = await Promise.all([
+                client.from('shops').select('*, cities(name)').eq('id', shopId).maybeSingle(),
+                client.from('products').select().eq('shop_id', shopId).eq('is_available', true).order('id', { ascending: true }),
+                client.from('shop_likes').select('id', { count: 'exact' }).eq('shop_id', shopId),
+                client.from('shop_banners_news').select('*').eq('shop_id', shopId).eq('status', 'approved').order('created_at', { ascending: false })
+            ]);
 
-            if (shopErr || !shopData) {
-                console.error("Shop Fetch Error:", shopErr);
-                showError(
-                    !currentUser 
-                    ? "This shop may be restricted. Try logging in to view it." 
-                    : "This shop could not be found or has been removed from the platform."
-                );
-                return;
-            }
+            if (!shopRes.data) return;
 
-            // STEP 2: Fetch Supplementary Data in Parallel (Fail-safe, decoupled)
-            let cityName = "Local";
-            let products = [];
-            let likeCountValue = 0;
-            let approvedNews = [];
-
-            const promises = [];
-
-            // A. City Name
-            if (shopData.city_id) {
-                promises.push(
-                    client.from('cities').select('name').eq('id', shopData.city_id).maybeSingle()
-                    .then(res => { if(res.data) cityName = res.data.name; })
-                    .catch(e => console.warn("City fetch failed", e))
-                );
-            }
-
-            // B. Products
-            promises.push(
-                client.from('products').select('*').eq('shop_id', shopId).eq('is_available', true).order('id', { ascending: true })
-                .then(res => { if(res.data) products = res.data; })
-                .catch(e => console.warn("Products fetch failed", e))
-            );
-
-            // C. Likes
-            promises.push(
-                client.from('shop_likes').select('id', { count: 'exact', head: true }).eq('shop_id', shopId)
-                .then(res => { if(res.count) likeCountValue = res.count; })
-                .catch(e => console.warn("Likes fetch failed", e))
-            );
-
-            // D. News
-            promises.push(
-                client.from('shop_banners_news').select('content_data').eq('shop_id', shopId).eq('status', 'approved').eq('content_type', 'news').order('created_at', { ascending: false })
-                .then(res => { if(res.data) approvedNews = res.data.map(n => n.content_data); })
-                .catch(e => console.warn("News fetch failed", e))
-            );
-
-            // E. User Specific Data (Only if logged in)
-            if (currentUser) {
-                promises.push(
-                    client.from('shop_likes').select('id').eq('shop_id', shopId).eq('user_id', currentUser.id).maybeSingle()
-                    .then(res => { hasLiked = !!res.data; })
-                    .catch(e => console.warn("User like check failed", e))
-                );
-
-                if (currentUser.id !== shopData.owner_id) {
-                    client.from('shop_views').insert({ shop_id: shopId, viewer_id: currentUser.id }).then().catch(e=>e);
-                }
-            }
-
-            // Await all independent promises
-            await Promise.all(promises);
-
-            // Assemble Data
-            shopData.cities = { name: cityName }; // Re-attach city structure
+            const approvedNews = (contentRes.data || []).filter(c => c.content_type === 'news').map(c => c.content_data);
 
             const newData = {
-                shop: shopData,
-                products: products,
-                likeCount: likeCountValue,
+                shop: shopRes.data,
+                products: prodRes.data || [],
+                likeCount: likeRes.count || 0,
                 approvedNews: approvedNews
             };
 
@@ -643,24 +576,29 @@
             if (newCacheStr !== oldCacheStr) {
                 localStorage.setItem(cacheKey, newCacheStr);
                 renderFullShop(newData, true);
-            } else if (!oldCacheStr) {
-                // If there was no cache, force a render now that data is ready
-                renderFullShop(newData, false);
+            }
+
+            // If we didn't have cache initially, we haven't fetched user data yet
+            if (!oldCacheStr && currentUser) {
+                fetchUserData();
             }
 
         } catch (e) {
-            console.error("Critical fetch error:", e);
-            if (!oldCacheStr) {
-                showError("Failed to load shop details. Please check your connection.");
-            }
+            console.error("Fresh fetch error:", e);
         }
     }
 
-    function showError(msg) {
-        document.getElementById('loading-spinner').style.display = 'none';
-        document.getElementById('content-area').classList.add('hidden');
-        document.getElementById('error-screen').classList.remove('hidden');
-        if (msg) document.getElementById('error-msg').textContent = msg;
+    async function fetchUserData() {
+        if (!currentUser) return;
+        try {
+            const { data: userLike } = await client.from('shop_likes').select('id').eq('shop_id', shopId).eq('user_id', currentUser.id).maybeSingle();
+            hasLiked = !!userLike;
+            updateLikeUI();
+
+            if (currentShop && currentUser.id !== currentShop.owner_id) {
+                await client.from('shop_views').insert({ shop_id: shopId, viewer_id: currentUser.id });
+            }
+        } catch (e) { console.error("User data fetch error", e); }
     }
 
     function renderFullShop(data, isUpdate) {
@@ -682,7 +620,7 @@
         
         let tickerText = defaultTickerText;
         if (newsArray.length > 0) {
-            tickerText = newsArray.join("  •  ");
+            tickerText = newsArray.join(" &nbsp; • &nbsp; ");
             document.getElementById('header-ticker').style.display = 'flex';
         } else {
             document.getElementById('header-ticker').style.display = 'none';
@@ -717,7 +655,7 @@
             badgeEl.innerHTML = `<i class="fa-solid fa-hourglass-half"></i> Pending Verification`;
         }
 
-        if (!isUpdate || currentUser) updateLikeUI();
+        if (!isUpdate) updateLikeUI();
 
         // --- CONTACT & SOCIALS CARD DYNAMIC POPULATION ---
         const socialContainer = document.getElementById('social-container');
@@ -729,7 +667,6 @@
         } else {
             document.getElementById('bottom-action-bar').style.display = 'none';
         }
-        
         if (s.phone) socialHtml += `<a href="tel:${s.phone}" class="social-btn phone" title="Call Business"><i class="fa-solid fa-phone"></i></a>`;
         if (s.website_url) socialHtml += `<a href="${s.website_url.startsWith('http') ? s.website_url : 'https://'+s.website_url}" target="_blank" class="social-btn website" title="Visit Website"><i class="fa-solid fa-globe"></i></a>`;
         if (s.facebook_url) socialHtml += `<a href="${s.facebook_url.startsWith('http') ? s.facebook_url : 'https://'+s.facebook_url}" target="_blank" class="social-btn facebook" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>`;
@@ -740,9 +677,8 @@
         if (socialHtml === '') {
             socialHtml = '<span style="font-size:0.85rem; color:#888C8C;">No contact information provided.</span>';
         }
-        
-        // Prevent unnecessary DOM writes
-        if (socialContainer.innerHTML !== socialHtml) socialContainer.innerHTML = socialHtml;
+        socialContainer.innerHTML = socialHtml;
+
 
         // --- VISUALS (Left Column) ---
         if (s.is_verified && (s.storefront_url || s.latitude)) {
