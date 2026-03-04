@@ -19,7 +19,7 @@
             --color-pink-hover: #be185d;
             --color-pink-light: rgba(219, 39, 119, 0.15);
             
-            --amz-bg: #E3E6E6; /* Amazon Gray Separator Background */
+            --amz-bg: #E3E6E6;
             --amz-link: #007185;
             --amz-link-hover: #C40000;
             --color-text-main: #0F1111;
@@ -249,24 +249,24 @@
             max-width: 1600px; 
             margin: 0 auto; 
             width: 100%; 
-            padding: 0 0 40px 0; /* Removing top padding so blocks stretch fully */
+            padding: 0 0 40px 0;
         }
 
         .screen { display: none; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Structural White Blocks to eliminate arbitrary vertical gaps */
+        /* Structural White Blocks */
         .area-block-wrap, .cat-section-wrap, .promo-section-wrap {
             background-color: white;
             padding-top: 16px;
-            margin-bottom: 8px; /* Classic 8px gray Amazon separator */
+            margin-bottom: 8px; 
         }
 
         /* Horizontal Scroll Containers */
         .h-scroll {
             display: flex; overflow-x: auto; gap: 16px; 
-            padding: 4px 16px 20px 16px; /* Padded inside to prevent cutoff shadows */
+            padding: 4px 16px 20px 16px; 
             scrollbar-width: none;
             -ms-overflow-style: none; 
         }
@@ -888,7 +888,7 @@
         currentUser = session.user;
         
         // Highly secure User-Specific Cache Key
-        CACHE_KEY = `ctm_dashboard_v30_${currentUser.id}`;
+        CACHE_KEY = `ctm_dashboard_v31_${currentUser.id}`;
 
         const cache = localStorage.getItem(CACHE_KEY);
         if (cache) {
@@ -971,87 +971,103 @@
         }
     }
 
+    // --- DOM DIFFING RENDER ENGINE ---
+    // Mathematically ensures sections only re-paint if their innerHTML has changed
     function renderData(data) {
         document.getElementById('initial-loader').style.display = 'none';
-        const areaContainer = document.getElementById('areas-container');
 
-        // Header Population
+        // 1. Header & Selectors
         document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
         
-        // Populate Areas in Search Bar Dropdown
         const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
         const areaOptionsItems = sortedAreas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
         
         const deskSelect = document.getElementById('search-area-desktop');
-        const mobSelect = document.getElementById('search-area-mobile');
+        if (deskSelect && deskSelect.innerHTML !== `<option value="all">All Areas</option>` + areaOptionsItems) {
+            deskSelect.innerHTML = `<option value="all">All Areas</option>` + areaOptionsItems;
+        }
         
-        if (deskSelect) deskSelect.innerHTML = `<option value="all">All Areas</option>` + areaOptionsItems;
-        if (mobSelect) mobSelect.innerHTML = `<option value="all">All Areas</option>` + areaOptionsItems;
-
-        // Populate Categories in the Ticker Dropdown
-        const catFilter = document.getElementById('filter-category');
-        if (catFilter) {
-            catFilter.innerHTML = `<option value="all">All Categories</option>` + 
-                                  data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        const mobSelect = document.getElementById('search-area-mobile');
+        if (mobSelect && mobSelect.innerHTML !== `<option value="all">All Areas</option>` + areaOptionsItems) {
+            mobSelect.innerHTML = `<option value="all">All Areas</option>` + areaOptionsItems;
         }
 
-        // Avatar
+        const catFilter = document.getElementById('filter-category');
+        if (catFilter) {
+            const catHtml = `<option value="all">All Categories</option>` + data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+            if (catFilter.innerHTML !== catHtml) catFilter.innerHTML = catHtml;
+        }
+
+        // 2. Avatar & Profile
         const fName = data.profile.full_name || "User";
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${fName}`;
-        document.getElementById('header-avatar').src = avatar;
+        if (document.getElementById('header-avatar').src !== avatar) document.getElementById('header-avatar').src = avatar;
+        if (document.getElementById('profile-avatar-lg').src !== avatar) document.getElementById('profile-avatar-lg').src = avatar;
         
-        // Profile Screen Population
-        document.getElementById('profile-avatar-lg').src = avatar;
         document.getElementById('profile-name').textContent = fName;
         document.getElementById('profile-phone').textContent = data.profile.phone || "No phone number added";
         document.getElementById('profile-email').textContent = currentUser.email;
 
-        // Notifications
+        // 3. Notifications Badge
+        const b = document.getElementById('badge-count');
         if (data.unread > 0) {
-            const b = document.getElementById('badge-count');
             b.textContent = data.unread > 9 ? '9+' : data.unread;
             b.style.display = 'block';
+        } else {
+            b.style.display = 'none';
         }
 
-        // Ticker Logic
+        // 4. Ticker
+        const tickerContainer = document.getElementById('header-ticker');
         if (data.announcements && data.announcements.length > 0) {
             const tickerEl = document.getElementById('ticker-text');
             const text = data.announcements.map(a => a.message).join("  •  ");
             
-            document.getElementById('header-ticker').style.display = 'flex';
-            tickerEl.textContent = text;
-            
-            const speed = Math.max(40, text.length * 0.4); 
-            tickerEl.style.animationDuration = `${speed}s`;
+            tickerContainer.style.display = 'flex';
+            if (tickerEl.innerHTML !== text) {
+                tickerEl.innerHTML = text;
+                const speed = Math.max(40, text.length * 0.4); 
+                tickerEl.style.animationDuration = `${speed}s`;
+            }
         } else {
-            document.getElementById('header-ticker').style.display = 'none';
+            tickerContainer.style.display = 'none';
         }
 
-        // Promos
+        // 5. Promos (Diff Check)
         const pList = document.getElementById('promo-list');
         if (data.promos.length > 0) {
-            pList.style.display = 'flex';
-            pList.classList.add('promo-section-wrap');
-            pList.innerHTML = data.promos.map(p => 
+            const promoHtml = data.promos.map(p => 
                 `<div style="min-width:320px; max-width: 600px; width: 85vw; height:200px; border-radius:4px; overflow:hidden; flex-shrink:0; border:1px solid #D5D9D9;">
                     <img src="${p.image_url}" style="width:100%; height:100%; object-fit:cover;">
                  </div>`
             ).join('');
+            
+            if (pList.innerHTML !== promoHtml) {
+                pList.innerHTML = promoHtml;
+            }
+            pList.style.display = 'flex';
+        } else {
+            pList.style.display = 'none';
         }
 
-        // --- FEATURED SHOPS ---
+        // 6. Featured Shops (Diff Check)
         const featured = data.shops.filter(s => s.is_featured);
         const featuredSection = document.getElementById('featured-section');
+        const featuredList = document.getElementById('featured-list');
+        
         if (featured.length > 0) {
+            const featHtml = featured.map(s => buildShopCard(s, data.products)).join('');
+            if (featuredList.innerHTML !== featHtml) {
+                featuredList.innerHTML = featHtml;
+            }
             featuredSection.style.display = 'block';
-            document.getElementById('featured-list').innerHTML = featured.map(s => buildShopCard(s, data.products)).join('');
         } else {
             featuredSection.style.display = 'none';
         }
 
-        // Build Shop Grids Grouped By Area
-        areaContainer.innerHTML = '';
-
+        // 7. Area Shops (Diff Check)
+        const areaContainer = document.getElementById('areas-container');
+        let areaHtmlBuilder = '';
         sortedAreas.forEach(area => {
             const areaShops = data.shops.filter(s => s.area_id === area.id);
             if(areaShops.length === 0) return;
@@ -1061,7 +1077,7 @@
                 ? `Top stores in ${area.name} <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Near You)</span>` 
                 : `Explore stores in ${area.name}`;
 
-            areaContainer.innerHTML += `
+            areaHtmlBuilder += `
                 <div class="area-block-wrap">
                     <h2 class="sec-title">${titleHtml}</h2>
                     <div class="h-scroll">
@@ -1070,9 +1086,13 @@
                 </div>
             `;
         });
+        if (areaContainer.innerHTML !== areaHtmlBuilder) {
+            areaContainer.innerHTML = areaHtmlBuilder;
+        }
 
-        // Categories at the bottom
-        document.getElementById('category-list').innerHTML = data.categories.map(cat => {
+        // 8. Categories (Diff Check)
+        const catList = document.getElementById('category-list');
+        const catHtml = data.categories.map(cat => {
             const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
             const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
             const url = p ? p.image_url : `https://api.dicebear.com/7.x/initials/svg?seed=${cat.name}`;
@@ -1082,11 +1102,15 @@
                 </div>
             `;
         }).join('');
+        if (catList.innerHTML !== catHtml) {
+            catList.innerHTML = catHtml;
+        }
 
-        // Notifications Screen Build
+        // 9. Notifications (Diff Check)
         const notifListEl = document.getElementById('notif-list');
+        let notifHtml = '<p style="color:#565959;">No notifications yet</p>';
         if (data.notifications && data.notifications.length > 0) {
-            notifListEl.innerHTML = data.notifications.map(n => {
+            notifHtml = data.notifications.map(n => {
                 const date = new Date(n.created_at).toLocaleDateString() + ' ' + new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 const bg = n.is_read ? 'white' : '#F7FAFA'; 
                 const border = n.is_read ? '#D5D9D9' : '#007185'; 
@@ -1101,22 +1125,25 @@
                     </div>
                 `;
             }).join('');
-        } else {
-            notifListEl.innerHTML = '<p style="color:#565959;">No notifications yet</p>';
+        }
+        if (notifListEl.innerHTML !== notifHtml) {
+            notifListEl.innerHTML = notifHtml;
         }
 
+        // 10. Tools & Counters
         updateMyShopCardUI(data.myShop);
         currentUserShop = data.myShop;
-
-        const wishlistCount = data.wishlistCount || 0;
-        document.getElementById('wishlist-count').textContent = `${wishlistCount} items`;
+        
+        const wishText = `${data.wishlistCount || 0} items`;
+        if (document.getElementById('wishlist-count').textContent !== wishText) {
+            document.getElementById('wishlist-count').textContent = wishText;
+        }
     }
 
     // =========================================
     // PREMIUM AMAZON-STYLE SHOP CARD BUILDER
     // =========================================
     function buildShopCard(shop, allProducts) {
-        // Exclude "Fairly Used" items from the front card 
         const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url && x.condition !== 'Fairly Used').slice(0, 4);
 
         let gridHtml = '';
@@ -1203,8 +1230,9 @@
             }
         }
         
-        iconContainer.innerHTML = `<i class="fa-solid ${icon}"></i>`;
-        textLabel.textContent = label;
+        const newIconHtml = `<i class="fa-solid ${icon}"></i>`;
+        if (iconContainer.innerHTML !== newIconHtml) iconContainer.innerHTML = newIconHtml;
+        if (textLabel.textContent !== label) textLabel.textContent = label;
     }
 
     function handleShopClick() {
