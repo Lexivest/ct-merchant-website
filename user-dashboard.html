@@ -108,8 +108,8 @@
         }
 
         .header-avatar {
-            width: 34px; height: 34px; border-radius: 50%;
-            object-fit: cover; background: white;
+            width: 32px; height: 32px; border-radius: 50%;
+            object-fit: cover; background: white; margin-left: 4px;
         }
 
         /* Search Bar */
@@ -152,7 +152,6 @@
             color: #0F1111;
         }
         
-        /* Pink Search Button */
         .amz-search-btn {
             width: 52px;
             background-color: var(--color-pink);
@@ -168,7 +167,7 @@
         }
         .amz-search-btn:hover { background-color: var(--color-pink-hover); }
 
-        /* Sub Header (Ticker) */
+        /* Sub Header (Category Filter + Ticker) */
         .amz-sub-header {
             background-color: var(--amz-nav-bar);
             padding: 8px 16px;
@@ -178,18 +177,25 @@
             color: white;
             font-weight: 600;
         }
-        .home-repo-icon {
-            color: var(--color-pink);
-            font-size: 1.2rem;
-            cursor: pointer;
-            flex-shrink: 0;
-            margin-right: 16px;
-            padding: 4px;
-            transition: transform 0.2s;
-        }
-        .home-repo-icon:hover { transform: scale(1.1); }
         
-        .ticker-wrapper { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; gap: 12px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 16px;}
+        .amz-category-filter {
+            background-color: transparent;
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            outline: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-right: 12px;
+            flex-shrink: 0;
+            max-width: 130px;
+        }
+        .amz-category-filter option { color: #0F1111; background: white; }
+        .amz-category-filter:hover { border-color: white; }
+        
+        .ticker-wrapper { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; gap: 12px; }
         .ticker-content { white-space: nowrap; animation: ticker 60s linear infinite; padding-left: 100%; color: white;}
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
@@ -200,14 +206,10 @@
             .mobile-search { display: flex; }
             
             .amz-search-select { max-width: 100px; padding: 0 8px; }
-
             .amz-mobile-scroll-row { padding: 8px 12px; gap: 8px; justify-content: space-between;}
-            
             .mobile-hide { display: none !important; }
             .amz-nav-item { padding: 6px 8px; }
-            
-            .home-repo-icon { margin-right: 10px; padding-left: 0;}
-            .ticker-wrapper { padding-left: 10px; }
+            .amz-category-filter { max-width: 110px; margin-right: 8px; }
         }
 
         /* --- 2. CONTENT BODY --- */
@@ -325,13 +327,12 @@
             gap: 4px;
         }
 
+        /* Strictly Enforced 1:1 Aspect Ratio Block */
         .shop-grid-item {
             width: 100%;
-            aspect-ratio: 1; 
+            aspect-ratio: 1 / 1; 
             background: #F7F7F7;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: block;
             overflow: hidden;
             border-radius: 4px;
             position: relative;
@@ -341,6 +342,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            display: block;
         }
         
         .grid-badge {
@@ -355,7 +357,7 @@
             z-index: 2;
         }
 
-        .shop-grid-item.empty { border: 1px dashed #D5D9D9; }
+        .shop-grid-item.empty { border: 1px dashed #D5D9D9; display: flex; align-items: center; justify-content: center; }
 
         .shop-grid-caption {
             display: flex;
@@ -376,6 +378,17 @@
             font-weight: 800;
             color: var(--color-pink);
             margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .sg-price-old {
+            text-decoration: line-through; 
+            color: #888C8C; 
+            font-size: 0.65rem; 
+            font-weight: 500; 
+            margin-right: 4px;
         }
 
         .shop-cta {
@@ -540,19 +553,26 @@
             
             <!-- DESKTOP SEARCH -->
             <div class="amz-search-block desktop-search">
-                <select class="amz-search-select" id="search-area-desktop" onchange="filterByArea(this.value)">
+                <select class="amz-search-select" id="search-area-desktop" onchange="applyFilters()">
                     <option value="all">All Areas</option>
                 </select>
                 <input type="text" class="amz-search-input" placeholder="Search shops and products...">
                 <button class="amz-search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
 
-            <!-- Navigation Links -->
-            <div class="amz-nav-item active mobile-hide" onclick="switchScreen('market', this)">Repository</div>
+            <!-- Home / Repository Icon Nav -->
+            <div class="amz-nav-item active" onclick="switchScreen('market', this)" title="Home / Repository">
+                <i class="fa-solid fa-house" style="font-size: 1.1rem;"></i>
+                <span class="mobile-hide">Repository</span>
+            </div>
             
-            <div class="amz-nav-item" onclick="switchScreen('services', this)">Services</div>
+            <!-- Services Icon Nav -->
+            <div class="amz-nav-item" onclick="switchScreen('services', this)" title="Services">
+                <i class="fa-solid fa-table-cells-large" style="font-size: 1.1rem;"></i>
+                <span class="mobile-hide">Services</span>
+            </div>
             
-            <!-- Alerts (Icon only on mobile) -->
+            <!-- Alerts -->
             <div class="amz-nav-item" onclick="switchScreen('notifications', this)">
                 <i class="fa-regular fa-bell" style="font-size: 1.2rem;"></i>
                 <span class="mobile-hide" style="margin-left: 6px;">Alerts</span>
@@ -573,17 +593,19 @@
         <!-- MOBILE SEARCH ROW (Hidden on Desktop) -->
         <div class="amz-search-block mobile-search">
             <!-- Mobile Area Dropdown -->
-            <select class="amz-search-select" id="search-area-mobile" onchange="filterByArea(this.value)">
+            <select class="amz-search-select" id="search-area-mobile" onchange="applyFilters()">
                 <option value="all">All Areas</option>
             </select>
             <input type="text" class="amz-search-input" placeholder="Search CT-Merchant...">
             <button class="amz-search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
         </div>
 
-        <!-- TICKER ROW (Laps tightly against header) -->
+        <!-- TICKER ROW WITH CATEGORY FILTER -->
         <div class="amz-sub-header">
-            <!-- Home / Repo Icon -->
-            <i class="fa-solid fa-house home-repo-icon" onclick="switchScreen('market', document.querySelector('.amz-nav-item'))" title="Home / Repository"></i>
+            <!-- Category Filter replaces the home icon here -->
+            <select class="amz-category-filter" id="filter-category" onchange="applyFilters()">
+                <option value="all">All Categories</option>
+            </select>
             
             <div class="ticker-wrapper" id="header-ticker" style="display:none;">
                 <div id="ticker-text" class="ticker-content"></div>
@@ -605,7 +627,7 @@
             <div id="promo-list" class="h-scroll" style="display:none; padding-top: 10px;"></div>
             
             <!-- Featured Shops Section (Horizontal Scroll) -->
-            <div id="featured-section" style="display:none; margin-bottom: 20px;">
+            <div id="featured-section" class="area-block-wrap" data-area-id="all" style="display:none; margin-bottom: 20px;">
                 <h2 class="sec-title">Featured Shops <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Top Rated)</span></h2>
                 <div id="featured-list" class="h-scroll"></div>
             </div>
@@ -623,7 +645,7 @@
 
         <!-- SERVICES -->
         <div id="services" class="screen">
-            <h2 class="sec-title">Services & Tools</h2>
+            <h2 class="sec-title" style="margin-top: 16px;">Services & Tools</h2>
             <div class="svc-grid">
                 
                 <!-- MY SHOP DYNAMIC CARD -->
@@ -720,7 +742,7 @@
 
         <!-- NOTIFICATIONS -->
         <div id="notifications" class="screen">
-            <h2 class="sec-title">Alerts & Notifications</h2>
+            <h2 class="sec-title" style="margin-top: 16px;">Alerts & Notifications</h2>
             <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:800px; padding: 0 20px;">
                 <p style="color:#565959; padding-top:20px;">Loading notifications...</p>
             </div>
@@ -785,7 +807,7 @@
     let userCityId = null;
     let userAreaId = null;
     let allCities = [];
-    const CACHE_KEY = 'ctm_dash_v25'; 
+    const CACHE_KEY = 'ctm_dash_v26'; 
     const MAX_FILE_SIZE = 500 * 1024; 
 
     let chatHistory = [];
@@ -809,25 +831,42 @@
         if(id === 'notifications') markRead();
     }
 
-    // --- AREA FILTERING LOGIC ---
-    function filterByArea(areaId) {
-        // Sync Dropdowns
-        const deskSelect = document.getElementById('search-area-desktop');
-        const mobSelect = document.getElementById('search-area-mobile');
-        if(deskSelect && deskSelect.value !== areaId) deskSelect.value = areaId;
-        if(mobSelect && mobSelect.value !== areaId) mobSelect.value = areaId;
+    // --- DUAL FILTERING LOGIC (Area + Category) ---
+    function applyFilters() {
+        // Sync Area Dropdowns across mobile and desktop based on viewport
+        let areaId = 'all';
+        if (window.innerWidth <= 1024) {
+             areaId = document.getElementById('search-area-mobile').value;
+             document.getElementById('search-area-desktop').value = areaId;
+        } else {
+             areaId = document.getElementById('search-area-desktop').value;
+             document.getElementById('search-area-mobile').value = areaId;
+        }
+        
+        const catName = document.getElementById('filter-category').value;
 
-        // Filter Blocks
-        const blocks = document.querySelectorAll('.area-block-wrap');
-        blocks.forEach(block => {
-            if (areaId === 'all') {
-                block.style.display = 'block';
-            } else {
-                if (block.getAttribute('data-area-id') === String(areaId)) {
-                    block.style.display = 'block';
+        document.querySelectorAll('.area-block-wrap').forEach(areaBlock => {
+            const blockAreaId = areaBlock.getAttribute('data-area-id');
+            const areaMatch = (areaId === 'all' || blockAreaId === areaId || blockAreaId === 'all'); // 'all' covers the Featured section
+            
+            let visibleShopsCount = 0;
+            
+            areaBlock.querySelectorAll('.premium-shop-card-wrap').forEach(cardWrap => {
+                const shopCat = cardWrap.getAttribute('data-shop-category');
+                const catMatch = (catName === 'all' || shopCat === catName);
+                
+                if (catMatch) {
+                    cardWrap.style.display = 'block'; 
+                    visibleShopsCount++;
                 } else {
-                    block.style.display = 'none';
+                    cardWrap.style.display = 'none';
                 }
+            });
+
+            if (areaMatch && visibleShopsCount > 0) {
+                areaBlock.style.display = 'block';
+            } else {
+                areaBlock.style.display = 'none';
             }
         });
     }
@@ -1012,6 +1051,13 @@
         if (deskSelect) deskSelect.innerHTML = `<option value="all">All Areas</option>` + areaOptionsItems;
         if (mobSelect) mobSelect.innerHTML = `<option value="all">All Areas</option>` + areaOptionsItems;
 
+        // Populate Categories in the Ticker Dropdown
+        const catFilter = document.getElementById('filter-category');
+        if (catFilter) {
+            catFilter.innerHTML = `<option value="all">All Categories</option>` + 
+                                  data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        }
+
         // Avatar
         const fName = data.profile.full_name || "User";
         const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${fName}`;
@@ -1030,7 +1076,7 @@
             b.style.display = 'block';
         }
 
-        // --- SLOWED DOWN TICKER LOGIC ---
+        // Ticker Logic
         if (data.announcements && data.announcements.length > 0) {
             const tickerEl = document.getElementById('ticker-text');
             const text = data.announcements.map(a => a.message).join("  •  ");
@@ -1038,7 +1084,7 @@
             document.getElementById('header-ticker').style.display = 'flex';
             tickerEl.textContent = text;
             
-            const speed = Math.max(60, text.length * 0.6); 
+            const speed = Math.max(40, text.length * 0.4); 
             tickerEl.style.animationDuration = `${speed}s`;
         } else {
             document.getElementById('header-ticker').style.display = 'none';
@@ -1077,11 +1123,10 @@
                 ? `Top stores in ${area.name} <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Near You)</span>` 
                 : `Explore stores in ${area.name}`;
 
-            // Added data-area-id for the filter functionality
             areaContainer.innerHTML += `
                 <div class="area-block-wrap" data-area-id="${area.id}" style="margin-bottom: 40px;">
                     <h2 class="sec-title">${titleHtml}</h2>
-                    <div class="h-scroll">
+                    <div class="shop-list-view" style="display: flex; overflow-x: auto; gap: 0; padding: 0 20px 20px 20px; scrollbar-width: none; -ms-overflow-style: none;">
                         ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
                     </div>
                 </div>
@@ -1128,18 +1173,15 @@
         const wishlistCount = data.wishlistCount || 0;
         document.getElementById('wishlist-count').textContent = `${wishlistCount} items`;
         
-        // Keep selected filter applied after refresh
-        const currentDeskFilter = document.getElementById('search-area-desktop')?.value;
-        if(currentDeskFilter && currentDeskFilter !== 'all') {
-            filterByArea(currentDeskFilter);
-        }
+        applyFilters(); // Apply any existing filters immediately
     }
 
     // =========================================
     // PREMIUM AMAZON-STYLE SHOP CARD BUILDER
     // =========================================
     function buildShopCard(shop, allProducts) {
-        const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url).slice(0, 4);
+        // Exclude "Fairly Used" items from the front card 
+        const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url && x.condition !== 'Fairly Used').slice(0, 4);
 
         let gridHtml = '';
         
@@ -1152,8 +1194,12 @@
                 const hasDiscount = discount && discount < price;
                 const percent = hasDiscount ? Math.round(((price - discount)/price)*100) : 0;
                 
-                const displayPrice = hasDiscount ? discount : price;
-                const priceStr = displayPrice ? `₦${displayPrice.toLocaleString()}` : '';
+                let priceHtml = '';
+                if (hasDiscount) {
+                    priceHtml = `<span class="sg-price-old">₦${price.toLocaleString()}</span>₦${discount.toLocaleString()}`;
+                } else if (price) {
+                    priceHtml = `₦${price.toLocaleString()}`;
+                }
 
                 gridHtml += `
                     <div class="shop-grid-item-wrap">
@@ -1163,7 +1209,7 @@
                         </div>
                         <div class="shop-grid-caption">
                             <div class="sg-name" title="${prodName}">${prodName}</div>
-                            <div class="sg-price">${priceStr}</div>
+                            <div class="sg-price">${priceHtml}</div>
                         </div>
                     </div>
                 `;
@@ -1182,13 +1228,16 @@
             }
         }
 
+        // Wrap in a div with data-shop-category so we can filter easily
         return `
-            <div class="premium-shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
-                <div class="shop-card-title">${shop.name}</div>
-                <div class="shop-image-grid">
-                    ${gridHtml}
+            <div class="premium-shop-card-wrap" data-shop-category="${shop.category}">
+                <div class="premium-shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
+                    <div class="shop-card-title">${shop.name}</div>
+                    <div class="shop-image-grid">
+                        ${gridHtml}
+                    </div>
+                    <div class="shop-cta">Visit shop <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i></div>
                 </div>
-                <div class="shop-cta">Visit shop <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i></div>
             </div>
         `;
     }
