@@ -10,42 +10,113 @@
     
     <style>
         :root {
-            --color-purple: #2E1065;
-            --color-bg: #F8FAFC;
-            --color-text: #1E293B;
-            --color-border: #E2E8F0;
-            --color-red: #EF4444;
+            /* PREMIUM AMAZON THEME WITH CT-MERCHANT PINK */
+            --amz-dark: #131921;
+            
+            --color-pink: #db2777; 
+            --color-pink-hover: #be185d;
+            --color-pink-light: rgba(219, 39, 119, 0.15);
+            
+            --amz-bg: #F3F4F6;
+            --color-text-main: #0F1111;
+            --color-text-muted: #565959;
+            --color-border: #D5D9D9;
+            --color-red: #C40000;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--color-bg); color: var(--color-text); min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
-
-        .container { width: 100%; max-width: 500px; }
-
-        /* Header */
-        .app-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-        .back-btn { background: white; border: 1px solid var(--color-border); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-text); font-size: 1.1rem; }
-        .page-title { font-size: 1.25rem; font-weight: 800; }
         
-        /* Save Button */
-        .save-btn {
-            margin-left: auto; background: none; border: none; color: var(--color-purple);
-            font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 6px;
+        body { 
+            background: var(--amz-bg); 
+            color: var(--color-text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
         }
-        .save-btn:disabled { color: #94A3B8; cursor: not-allowed; }
 
-        /* Instructions */
-        .info-box { margin-bottom: 24px; }
-        .info-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
-        .info-desc { color: #64748B; font-size: 0.9rem; }
+        /* --- PREMIUM HEADER --- */
+        .app-header {
+            background-color: var(--amz-dark);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 16px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .back-btn { 
+            background: none; border: none; color: white; 
+            font-size: 1.2rem; cursor: pointer; padding: 4px; 
+            margin-left: -4px; transition: 0.2s;
+        }
+        .back-btn:hover { color: var(--color-pink); }
+        
+        .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; }
+        
+        /* Save Button in Header */
+        .btn-brand { 
+            margin-left: auto;
+            background: var(--color-pink); 
+            border: 1px solid var(--color-pink-hover); 
+            border-radius: 6px; 
+            padding: 8px 16px; 
+            color: white; 
+            font-weight: 700; 
+            cursor: pointer; 
+            box-shadow: 0 2px 5px 0 rgba(219,39,119,0.3); 
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-brand:hover { background: var(--color-pink-hover); }
+        .btn-brand:disabled { 
+            background: #E3E6E6; 
+            border-color: #D5D9D9; 
+            color: #888C8C; 
+            cursor: not-allowed; 
+            box-shadow: none; 
+        }
+
+        /* --- MAIN CONTAINER --- */
+        .container { 
+            width: 100%; 
+            max-width: 600px; 
+            padding: 30px 20px; 
+            flex: 1;
+        }
+
+        /* Instructions Box */
+        .info-box { 
+            margin-bottom: 24px; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            border: 1px solid var(--color-border);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .info-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; color: var(--color-text-main); }
+        .info-desc { color: var(--color-text-muted); font-size: 0.95rem; line-height: 1.5; }
 
         /* Banner List */
-        .banner-list { display: flex; flex-direction: column; gap: 16px; }
+        .banner-list { display: flex; flex-direction: column; gap: 20px; }
 
         .banner-item {
-            position: relative; width: 100%; height: 180px;
-            border-radius: 16px; overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            position: relative; width: 100%; height: 200px;
+            border-radius: 8px; overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             background: white; border: 1px solid var(--color-border);
         }
         .banner-img { width: 100%; height: 100%; object-fit: cover; }
@@ -54,61 +125,68 @@
         .status-badge {
             position: absolute; top: 12px; left: 12px;
             font-size: 0.75rem; font-weight: 800; padding: 6px 12px; 
-            border-radius: 8px; z-index: 10; backdrop-filter: blur(4px);
+            border-radius: 6px; z-index: 10; backdrop-filter: blur(4px);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .status-pending { background: rgba(254, 243, 199, 0.9); color: #D97706; border: 1px solid #FDE68A; }
-        .status-approved { background: rgba(209, 250, 229, 0.9); color: #059669; border: 1px solid #A7F3D0; }
-        .status-rejected { background: rgba(254, 226, 226, 0.9); color: #DC2626; border: 1px solid #FECACA; }
-        .status-new { background: rgba(224, 231, 255, 0.9); color: #4F46E5; border: 1px solid #C7D2FE; }
+        .status-pending { background: rgba(254, 243, 199, 0.95); color: #D97706; border: 1px solid #FDE68A; }
+        .status-approved { background: rgba(209, 250, 229, 0.95); color: #059669; border: 1px solid #A7F3D0; }
+        .status-rejected { background: rgba(254, 226, 226, 0.95); color: var(--color-red); border: 1px solid #FECACA; }
+        .status-new { background: rgba(243, 244, 246, 0.95); color: #0F1111; border: 1px solid #D5D9D9; }
 
         .delete-btn {
-            position: absolute; top: 10px; right: 10px;
+            position: absolute; top: 12px; right: 12px;
             background: white; color: var(--color-red);
-            width: 32px; height: 32px; border-radius: 50%;
+            width: 32px; height: 32px; border-radius: 6px;
             display: flex; align-items: center; justify-content: center;
-            border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: transform 0.2s; z-index: 10;
+            border: 1px solid #D5D9D9; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, background 0.2s; z-index: 10; font-size: 1.1rem;
         }
-        .delete-btn:hover { transform: scale(1.1); background: #FEF2F2; }
+        .delete-btn:hover { transform: scale(1.05); background: #FEF2F2; border-color: #FECACA; }
 
         /* Add Button */
         .add-card {
-            width: 100%; height: 180px; background: #F1F5F9;
-            border: 2px dashed #CBD5E1; border-radius: 16px;
+            width: 100%; height: 200px; background: #F7F7F7;
+            border: 2px dashed #888C8C; border-radius: 8px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer; transition: all 0.2s; color: #64748B;
+            cursor: pointer; transition: all 0.2s; color: var(--color-text-muted);
         }
-        .add-card:hover { border-color: var(--color-purple); background: #F3E8FF; color: var(--color-purple); }
-        .add-icon { font-size: 2rem; margin-bottom: 8px; }
-        .add-text { font-weight: 600; font-size: 0.9rem; }
+        .add-card:hover { border-color: var(--color-pink); background: var(--color-pink-light); color: var(--color-pink); }
+        .add-icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .add-text { font-weight: 700; font-size: 1rem; }
 
-        .spinner { width: 20px; height: 20px; border: 2px solid rgba(46, 16, 101, 0.2); border-top-color: var(--color-purple); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(0,0,0,0.2); border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="app-bar">
-        <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
-        <div class="page-title">Shop Banners</div>
-        <button id="save-btn" onclick="saveBanners()" class="save-btn">
-            <i class="fa-solid fa-check"></i> Save
-        </button>
-    </div>
+    <!-- Full Width Premium Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <button onclick="history.back()" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="page-title">Shop Banners</div>
+            
+            <button id="save-btn" onclick="saveBanners()" class="btn-brand">
+                <i class="fa-solid fa-check"></i> Save
+            </button>
+        </div>
+    </header>
 
-    <div class="info-box">
-        <div class="info-title">Upload up to 2 Banners</div>
-        <div class="info-desc">High quality landscape images work best. New banners will be reviewed by an admin before going live.</div>
-    </div>
+    <div class="container">
+        
+        <div class="info-box">
+            <div class="info-title">Upload up to 2 Banners</div>
+            <div class="info-desc">High quality landscape images work best. New banners will be reviewed by an admin before going live on the platform.</div>
+        </div>
 
-    <div id="banner-container" class="banner-list">
-        <!-- JS Populated -->
-    </div>
+        <div id="banner-container" class="banner-list">
+            <!-- JS Populated -->
+        </div>
 
-    <input type="file" id="file-input" hidden accept="image/*" onchange="handleFileSelect(this)">
-</div>
+        <input type="file" id="file-input" hidden accept="image/*" onchange="handleFileSelect(this)">
+    </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -178,7 +256,7 @@
                 <img src="${displayUrl}" class="banner-img">
                 ${badgeHTML}
                 <button class="delete-btn" onclick="removeBanner(${realIndex})">
-                    <i class="fa-solid fa-xmark"></i>
+                    <i class="fa-solid fa-trash-can"></i>
                 </button>
             `;
             container.appendChild(div);
