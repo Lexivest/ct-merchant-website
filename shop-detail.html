@@ -11,22 +11,25 @@
 
     <style>
         :root {
-            --color-primary: #6B21A8;
-            --color-purple-light: #F3E8FF;
-            --color-pink: #DB2777;
-            --color-bg: #F8FAFC;
-            --color-text: #1E293B;
-            --color-text-muted: #64748B;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            /* PREMIUM AMAZON THEME WITH CT-MERCHANT PINK */
+            --amz-dark: #131921;
+            --amz-nav-bar: #232F3E;
+            
+            --color-pink: #db2777; 
+            --color-pink-hover: #be185d;
+            --color-pink-light: rgba(219, 39, 119, 0.1);
+            
+            --amz-bg: #F3F4F6;
+            --amz-link: #007185;
+            --color-text-main: #0F1111;
+            --color-text-muted: #565959;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body { 
-            background-color: var(--color-bg); 
-            color: var(--color-text); 
+            background-color: var(--amz-bg); 
+            color: var(--color-text-main); 
         }
 
         .app-container {
@@ -35,130 +38,163 @@
             margin: 0 auto;
             min-height: 100vh;
             position: relative;
-            background-color: var(--color-bg);
-            padding-bottom: 40px;
+            background-color: var(--amz-bg);
+            padding-bottom: 90px; /* Space for bottom bar */
         }
 
-        /* --- TOP BAR WITH EMBEDDED TICKER --- */
-        .top-bar {
-            position: sticky; top: 0; z-index: 50;
-            background: white; border-bottom: 1px solid #E2E8F0;
-            padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            gap: 12px;
+        /* --- PREMIUM HEADER --- */
+        .amz-header {
+            background-color: var(--amz-dark);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        
-        .nav-btn {
-            width: 40px; height: 40px; border-radius: 50%; border: none; background: #F1F5F9;
-            color: var(--color-text); font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: background 0.2s; flex-shrink: 0;
-        }
-        .nav-btn:hover { background: #E2E8F0; }
 
-        /* Sleek Pill-Shaped News Ticker */
-        .topbar-news-pill {
-            flex: 1;
-            background: #FFF7ED;
-            border: 1px solid #FFEDD5;
-            border-radius: 50px;
-            padding: 6px 16px;
+        .amz-header-top {
             display: flex;
             align-items: center;
-            gap: 12px;
-            overflow: hidden;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            justify-content: space-between;
+            padding: 12px 16px;
         }
-        .topbar-news-pill i {
-            color: #EA580C;
-            font-size: 0.95rem;
-            flex-shrink: 0;
+
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .back-btn { 
+            background: none; border: none; color: white; 
+            font-size: 1.2rem; cursor: pointer; padding: 4px; 
+            margin-left: -4px; transition: 0.2s;
         }
-        .news-marquee-wrapper {
-            flex: 1; overflow: hidden; position: relative;
-            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-            -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        .back-btn:hover { color: var(--color-pink); }
+        .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; }
+
+        .share-btn {
+            background: none; border: none; color: white;
+            font-size: 1.2rem; cursor: pointer; transition: 0.2s;
         }
-        .news-marquee-content {
-            display: inline-block;
-            white-space: nowrap;
-            padding-left: 100%; 
-            animation: marquee 35s linear infinite;
-            font-weight: 700;
-            font-size: 0.85rem;
-            color: #C2410C;
-            will-change: transform;
+        .share-btn:hover { color: var(--color-pink); }
+
+        /* Sub Header (Ticker) */
+        .amz-sub-header {
+            background-color: var(--amz-nav-bar);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            color: white;
+            font-weight: 600;
         }
-        .news-marquee-wrapper:hover .news-marquee-content { animation-play-state: paused; }
-        
-        @keyframes marquee {
-            0%   { transform: translate3d(0, 0, 0); }
-            100% { transform: translate3d(-100%, 0, 0); }
-        }
+        .ticker-wrapper { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; gap: 12px;}
+        .ticker-content { white-space: nowrap; animation: ticker 60s linear infinite; padding-left: 100%; color: white;}
+        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
         /* --- CONTENT AREA --- */
-        .info-card { padding: 24px; }
+        .info-card { padding: 20px 16px; }
 
-        /* --- PRODUCTS GRID (NOW AT THE TOP) --- */
-        .section-title { 
-            display: flex; align-items: center; gap: 10px; 
-            font-size: 1.2rem; font-weight: 800; margin: 0 0 16px 0; color: #334155;
+        /* PREMIUM HEADINGS */
+        .sec-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #0F1111;
+            margin: 0 0 16px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .section-title-spaced { margin-top: 30px; }
-        .bar { width: 4px; height: 24px; border-radius: 2px; }
+        .sec-title-spaced { margin-top: 30px; }
+        .sec-title::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 22px;
+            background: var(--color-pink);
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
 
+        /* --- STRICT 1:1 PRODUCTS GRID --- */
         .product-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 16px;
             content-visibility: auto;
         }
         
         .product-card {
-            background: white; border-radius: 16px; overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #E2E8F0;
-            cursor: pointer; position: relative; transition: transform 0.2s;
+            background: white; border-radius: 8px; overflow: hidden;
+            border: 1px solid #D5D9D9; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            cursor: pointer; position: relative; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            display: flex; flex-direction: column;
         }
-        .product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--color-primary); }
+        .product-card:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08); 
+            border-color: #B0B5B5; 
+        }
 
-        .prod-img { width: 100%; height: 160px; object-fit: cover; background-color: #F1F5F9; }
-        .prod-info { padding: 12px; }
-        .prod-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #334155; }
-        .prod-price { color: var(--color-primary); font-weight: 800; font-size: 1rem; }
-        .prod-price.discounted { color: #DC2626; }
-        .prod-old-price { text-decoration: line-through; color: #94A3B8; font-size: 0.8rem; margin-right: 4px; }
+        /* Enforce Perfect Square Images */
+        .prod-img-wrap {
+            width: 100%;
+            aspect-ratio: 1 / 1; 
+            background: #F7F7F7;
+            position: relative;
+            overflow: hidden;
+        }
+        .prod-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s ease; }
+        .product-card:hover .prod-img { transform: scale(1.05); }
+
+        .prod-info { padding: 12px; display: flex; flex-direction: column; flex: 1; }
+        .prod-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #0F1111; line-height: 1.3;}
         
+        .prod-price { color: var(--color-pink); font-weight: 800; font-size: 1.05rem; margin-top: auto; }
+        .prod-old-price { text-decoration: line-through; color: #888C8C; font-size: 0.75rem; margin-right: 4px; font-weight: 500;}
+        
+        /* Animations */
+        @keyframes pulse-badge {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 4px rgba(220, 38, 38, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        @keyframes highlight-price {
+            0%, 100% { color: var(--color-pink); text-shadow: none; }
+            50% { color: #ff0055; text-shadow: 0 0 6px rgba(219,39,119,0.4); }
+        }
+
         .badge {
-            position: absolute; top: 8px; padding: 2px 8px; border-radius: 4px; 
-            font-size: 0.7rem; font-weight: 700; color: white;
+            position: absolute; top: 8px; padding: 2px 6px; border-radius: 4px; 
+            font-size: 0.65rem; font-weight: 800; color: white; z-index: 2;
         }
         .badge-discount { left: 8px; background: #DC2626; }
         .badge-used { right: 8px; background: #EA580C; }
+        
+        .flash-offer { animation: pulse-badge 1.5s infinite ease-in-out; }
+        .flash-price { animation: highlight-price 1.5s infinite ease-in-out; }
 
-        /* --- SPLIT HERO LAYOUT (NOW AT THE BOTTOM) --- */
+        /* --- SPLIT HERO LAYOUT (BOTTOM) --- */
         .shop-hero-split {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 20px;
         }
 
         @media (min-width: 900px) {
             .shop-hero-split {
                 display: grid;
                 grid-template-columns: 1fr 1.2fr;
-                gap: 32px;
+                gap: 24px;
                 align-items: start;
-                margin-bottom: 40px;
             }
         }
 
-        /* Generic Card Styling */
         .detail-card {
             background: white;
-            border-radius: 16px;
-            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            border: 1px solid #D5D9D9;
             padding: 20px;
-            box-shadow: var(--shadow-sm);
-            margin-bottom: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            margin-bottom: 20px;
         }
 
         /* --- LEFT SIDE: STOREFRONT & MAP --- */
@@ -169,45 +205,43 @@
             margin-bottom: 16px;
         }
         
-        /* Flawless 3:4 image fitting its own bounds */
         .storefront-img { 
             width: 100%; 
             max-width: 360px; 
             aspect-ratio: 3 / 4; 
-            border-radius: 12px; 
+            border-radius: 8px; 
             object-fit: cover; 
-            border: 1px solid #E2E8F0; 
-            box-shadow: var(--shadow-sm);
-            background-color: #F1F5F9;
+            border: 1px solid #D5D9D9; 
+            background-color: #F7F7F7;
         }
         
         #map { 
             height: 220px; width: 100%; 
-            border-radius: 12px; border: 1px solid #E2E8F0; z-index: 1; 
-            background-color: #F1F5F9;
+            border-radius: 8px; border: 1px solid #D5D9D9; z-index: 1; 
+            background-color: #F7F7F7;
         }
         .map-btn {
-            background: #F8FAFC; border: 1px solid #CBD5E1; padding: 10px 16px; 
-            border-radius: 8px; cursor: pointer; font-weight: 700; color: #334155; font-size: 0.85rem;
+            background: white; border: 1px solid #D5D9D9; padding: 10px 16px; 
+            border-radius: 8px; cursor: pointer; font-weight: 700; color: #0F1111; font-size: 0.85rem;
             width: 100%; margin-top: 12px; transition: 0.2s;
             display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 2px 5px 0 rgba(213,217,217,0.5);
         }
-        .map-btn:hover { background: #E2E8F0; }
+        .map-btn:hover { background: #F7FAFA; }
 
         /* --- RIGHT SIDE: INFO CARDS --- */
         .shop-header-row { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 12px; }
         
         .shop-logo {
-            width: 72px; height: 72px; border-radius: 16px;
-            object-fit: cover; border: 2px solid #E2E8F0;
-            box-shadow: var(--shadow-md); background: white;
-            flex-shrink: 0;
+            width: 72px; height: 72px; border-radius: 8px;
+            object-fit: cover; border: 1px solid #D5D9D9;
+            background: white; flex-shrink: 0;
         }
 
         .shop-name-col { flex: 1; }
-        .shop-name { font-size: 1.6rem; font-weight: 800; line-height: 1.2; color: var(--color-text); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;}
+        .shop-name { font-size: 1.4rem; font-weight: 800; line-height: 1.2; color: #0F1111; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;}
         
-        .category-tag { font-weight: 700; color: var(--color-primary); font-size: 0.85rem; display: inline-block; background: var(--color-purple-light); padding: 4px 12px; border-radius: 6px; border: 1px solid #E9D5FF; }
+        .category-tag { font-weight: 700; color: var(--color-pink); font-size: 0.75rem; display: inline-block; background: var(--color-pink-light); padding: 4px 10px; border-radius: 4px; }
 
         .address-row { display: flex; gap: 8px; color: var(--color-text-muted); font-size: 0.95rem; align-items: flex-start; margin-top: 16px; margin-bottom: 20px; line-height: 1.5; font-weight: 500;}
 
@@ -215,42 +249,37 @@
         
         .status-badge {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
-            background: #EFF6FF; color: #1E40AF; border: 1px solid #DBEAFE;
+            padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 700;
+            background: #EFF6FF; color: #007185; border: 1px solid #BFE8F0;
         }
-        .status-badge.pending { background: #FEF2F2; color: #B91C1C; border-color: #FEE2E2; }
+        .status-badge.pending { background: #FEF2F2; color: #C40000; border-color: #FEE2E2; }
         
         .like-btn {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 700;
-            background: #F8FAFC; color: var(--color-text); border: 1px solid #E2E8F0;
+            padding: 8px 20px; border-radius: 6px; font-size: 0.9rem; font-weight: 700;
+            background: white; color: #0F1111; border: 1px solid #D5D9D9;
             cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 2px 5px 0 rgba(213,217,217,0.5);
         }
-        .like-btn.liked { background: #FDF2F8; color: var(--color-pink); border-color: #FBCFE8; }
+        .like-btn:hover { background: #F7FAFA; }
+        .like-btn.liked { color: var(--color-pink); border-color: rgba(219, 39, 119, 0.4); }
 
         .mini-heading {
-            font-size: 0.9rem; font-weight: 800; color: #334155;
-            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
-            display: flex; align-items: center; gap: 8px;
-            border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;
+            font-size: 1rem; font-weight: 800; color: #0F1111;
+            margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+            border-bottom: 1px solid #E3E6E6; padding-bottom: 8px;
         }
         
         /* Contact Icons Grid */
-        .social-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-top: 12px;
-        }
+        .social-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
         
         .social-btn {
             display: flex; align-items: center; justify-content: center;
-            width: 48px; height: 48px; border-radius: 14px;
-            color: white; font-size: 1.4rem; text-decoration: none;
+            width: 44px; height: 44px; border-radius: 8px;
+            color: white; font-size: 1.3rem; text-decoration: none;
             transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: var(--shadow-sm);
         }
-        .social-btn:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); color: white; }
+        .social-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); color: white; }
         
         .social-btn.phone { background: #3B82F6; }
         .social-btn.website { background: #4F46E5; }
@@ -268,27 +297,46 @@
         
         @keyframes pulse-whatsapp {
             0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
-            70% { box-shadow: 0 0 0 14px rgba(37, 211, 102, 0); }
+            70% { box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); }
             100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
         }
 
+        /* --- BOTTOM BAR --- */
+        .bottom-bar {
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 1200px;
+            background: white; padding: 12px 20px;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.05); z-index: 100;
+            border-top: 1px solid #D5D9D9;
+            display: flex; justify-content: center;
+        }
+        .btn-whatsapp-bottom {
+            width: 100%; max-width: 600px; 
+            background: #25D366; color: white;
+            padding: 14px; border-radius: 8px; border: none;
+            font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
+            cursor: pointer; transition: background 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn-whatsapp-bottom:hover { background: #16A34A; }
+
         /* Modal */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 200;
+            position: fixed; inset: 0; background: rgba(19, 25, 33, 0.8); z-index: 200;
             display: flex; align-items: center; justify-content: center;
-            opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(4px);
+            opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(2px);
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-card { background: white; padding: 28px 24px; border-radius: 20px; width: 90%; max-width: 360px; text-align: center; box-shadow: var(--shadow-lg);}
+        .modal-card { background: white; padding: 28px 24px; border-radius: 8px; width: 90%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);}
         .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
-        .btn-modal { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s;}
-        .btn-cancel { background: #F1F5F9; color: #475569; }
-        .btn-cancel:hover { background: #E2E8F0; }
+        .btn-modal { flex: 1; padding: 10px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s;}
+        .btn-cancel { background: white; border: 1px solid #D5D9D9; color: #0F1111; }
+        .btn-cancel:hover { background: #F7FAFA; }
         .btn-confirm { background: #25D366; color: white; }
         .btn-confirm:hover { background: #16A34A; }
 
         .hidden { display: none !important; }
-        .spinner { width: 32px; height: 32px; border: 3px solid #E2E8F0; border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 50px auto; }
+        .spinner { width: 36px; height: 36px; border: 4px solid var(--color-pink-light); border-top-color: var(--color-pink); border-radius: 50%; animation: spin 1s linear infinite; margin: 50px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
@@ -296,19 +344,23 @@
 
 <div class="app-container">
     
-    <!-- Top Bar with Dynamic Ticker -->
-    <div class="top-bar">
-        <button onclick="history.back()" class="nav-btn"><i class="fa-solid fa-arrow-left"></i></button>
+    <!-- Premium Header -->
+    <header class="amz-header">
+        <div class="amz-header-top">
+            <div class="header-left">
+                <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+                <span class="page-title">Shop Details</span>
+            </div>
+            <button onclick="shareShop()" class="share-btn"><i class="fa-solid fa-share-nodes"></i></button>
+        </div>
         
-        <div class="topbar-news-pill">
-            <i class="fa-solid fa-bullhorn"></i>
-            <div class="news-marquee-wrapper">
-                <div class="news-marquee-content" id="news-text">Loading repository data...</div>
+        <div class="amz-sub-header" id="header-ticker" style="display:none;">
+            <div class="ticker-wrapper">
+                <i class="fa-solid fa-bullhorn" style="color: var(--color-pink);"></i>
+                <div id="ticker-text" class="ticker-content">Loading...</div>
             </div>
         </div>
-
-        <button onclick="shareShop()" class="nav-btn"><i class="fa-solid fa-share-nodes"></i></button>
-    </div>
+    </header>
 
     <!-- Content Section -->
     <div class="info-card">
@@ -321,53 +373,50 @@
             <!-- ========================================== -->
             
             <div id="section-special" class="hidden">
-                <div class="section-title"><div class="bar" style="background:red;"></div> Special Offers</div>
+                <h2 class="sec-title">Special Offers</h2>
                 <div id="grid-special" class="product-grid"></div>
             </div>
 
             <div id="section-used" class="hidden">
-                <div class="section-title section-title-spaced"><div class="bar" style="background:orange;"></div> Fairly Used Deals</div>
+                <h2 class="sec-title sec-title-spaced">Fairly Used Deals</h2>
                 <div id="grid-used" class="product-grid"></div>
             </div>
 
             <div id="section-new" class="hidden">
-                <div class="section-title section-title-spaced"><div class="bar" style="background:var(--color-primary);"></div> New Stocks</div>
+                <h2 class="sec-title sec-title-spaced">New Stocks</h2>
                 <div id="grid-new" class="product-grid"></div>
             </div>
 
-            <div id="empty-state" class="hidden" style="text-align:center; padding: 40px 0 20px 0; color:grey;">
-                <div style="width: 64px; height: 64px; background: #F1F5F9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-                    <i class="fa-solid fa-box-open" style="font-size: 28px; color: #94A3B8;"></i>
+            <div id="empty-state" class="hidden" style="text-align:center; padding: 40px 0 20px 0; color:#565959;">
+                <div style="width: 64px; height: 64px; background: #F7F7F7; border: 1px solid #D5D9D9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <i class="fa-solid fa-box-open" style="font-size: 28px; color: #888C8C;"></i>
                 </div>
-                <p style="font-weight: 600; font-size: 1.1rem; color: #475569;">No products listed yet</p>
-                <p style="font-size: 0.9rem; color: #94A3B8;">Check back later for updates from this merchant.</p>
+                <p style="font-weight: 700; font-size: 1.1rem; color: #0F1111;">No products listed yet</p>
+                <p style="font-size: 0.9rem; margin-top:4px;">Check back later for updates from this merchant.</p>
             </div>
 
-            <hr style="border:0; border-top:2px dashed #E2E8F0; margin: 40px 0;">
+            <hr style="border:0; border-top:1px solid #D5D9D9; margin: 40px 0;">
 
             <!-- ========================================== -->
             <!-- 2. MERCHANT INFORMATION (NOW AT THE BOTTOM)-->
             <!-- ========================================== -->
 
-            <div class="section-title" style="margin-bottom: 20px; font-size: 1.3rem;">
-                <div class="bar" style="background: #64748B;"></div> Merchant Information
-            </div>
+            <h2 class="sec-title" style="margin-bottom: 20px;">Merchant Information</h2>
 
             <div class="shop-hero-split">
                 
                 <!-- LEFT COLUMN: STOREFRONT & MAP -->
                 <div class="shop-visual-side">
                     <div id="storefront-block" class="detail-card hidden" style="margin-bottom: 0;">
-                        <div class="mini-heading"><i class="fa-solid fa-store"></i> Store Front</div>
+                        <div class="mini-heading"><i class="fa-solid fa-store" style="color:var(--color-pink);"></i> Store Front</div>
                         
-                        <!-- Flawlessly framed storefront, no empty background padding -->
                         <div class="storefront-wrapper">
                             <img id="storefront-img" class="storefront-img" fetchpriority="high" alt="Store Front">
                         </div>
                     </div>
 
-                    <div id="map-block" class="detail-card hidden" style="margin-bottom: 0;">
-                        <div class="mini-heading"><i class="fa-solid fa-map-location-dot"></i> Location Map</div>
+                    <div id="map-block" class="detail-card hidden" style="margin-bottom: 0; margin-top: 24px;">
+                        <div class="mini-heading"><i class="fa-solid fa-map-location-dot" style="color:var(--color-pink);"></i> Location Map</div>
                         <div id="map"></div>
                         <button onclick="openGoogleMaps()" class="map-btn">
                             Open in Google Maps <i class="fa-solid fa-arrow-up-right-from-square"></i>
@@ -379,7 +428,7 @@
                 <div class="shop-info-side">
                     
                     <!-- Card 1: Core Details -->
-                    <div class="detail-card">
+                    <div class="detail-card" style="margin-top: 0;">
                         <div class="shop-header-row">
                             <img id="shop-logo" class="shop-logo" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" fetchpriority="high" alt="Shop Logo">
                             
@@ -390,7 +439,7 @@
                         </div>
                         
                         <div class="address-row">
-                            <i class="fa-solid fa-location-dot" style="margin-top:3px; color: var(--color-primary);"></i>
+                            <i class="fa-solid fa-location-dot" style="margin-top:3px; color: var(--color-pink);"></i>
                             <span id="shop-address"></span>
                         </div>
 
@@ -405,13 +454,13 @@
                     
                     <!-- Card 2: About -->
                     <div class="detail-card">
-                        <div class="mini-heading"><i class="fa-solid fa-circle-info"></i> About Business</div>
-                        <p id="shop-desc" style="font-size: 0.95rem; line-height: 1.6; color: #475569; font-weight: 500;"></p>
+                        <div class="mini-heading"><i class="fa-solid fa-circle-info" style="color:#007185;"></i> About Business</div>
+                        <p id="shop-desc" style="font-size: 0.95rem; line-height: 1.6; color: #0F1111; font-weight: 400;"></p>
                     </div>
 
                     <!-- Card 3: Connect & Socials -->
                     <div class="detail-card">
-                        <div class="mini-heading"><i class="fa-solid fa-address-book"></i> Connect with us</div>
+                        <div class="mini-heading"><i class="fa-solid fa-address-book" style="color:#007185;"></i> Connect with us</div>
                         <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 8px;">Tap an icon below to reach out or verify our profiles.</p>
                         
                         <div id="social-container" class="social-grid">
@@ -424,14 +473,21 @@
 
         </div>
     </div>
+
+    <!-- Bottom Bar (Always visible floating action) -->
+    <div class="bottom-bar">
+        <button onclick="showSecurityModal()" class="btn-whatsapp-bottom">
+            <i class="fa-brands fa-whatsapp" style="font-size:1.2rem;"></i> Chat with Merchant
+        </button>
+    </div>
 </div>
 
 <!-- Security Modal (WhatsApp) -->
 <div id="security-modal" class="modal-overlay">
     <div class="modal-card">
         <i class="fa-brands fa-whatsapp" style="font-size: 3rem; color: #25D366; margin-bottom: 16px;"></i>
-        <h3 style="margin-bottom: 8px; color: #1E293B;">Contact Merchant</h3>
-        <p style="font-size: 0.85rem; color: #64748B; line-height: 1.5;">
+        <h3 style="margin-bottom: 8px; color: #0F1111;">Contact Merchant</h3>
+        <p style="font-size: 0.85rem; color: #565959; line-height: 1.5;">
             To protect merchants from spam, your User ID will be recorded. Please ensure this inquiry is business-related.
         </p>
         <div class="modal-actions">
@@ -550,17 +606,20 @@
         let tickerText = defaultTickerText;
         if (newsArray.length > 0) {
             tickerText = newsArray.join(" &nbsp; • &nbsp; ");
+            document.getElementById('header-ticker').style.display = 'flex';
+        } else {
+            document.getElementById('header-ticker').style.display = 'none';
         }
         
         const tickerEl = document.getElementById('news-text');
-        if (tickerEl.innerHTML !== tickerText) {
+        if (tickerEl && tickerEl.innerHTML !== tickerText) {
             tickerEl.innerHTML = tickerText;
-            const speed = Math.max(35, tickerText.length * 0.4); 
+            const speed = Math.max(40, tickerText.length * 0.4); 
             tickerEl.style.animationDuration = `${speed}s`;
         }
 
         // --- SHOP DETAILS ---
-        const isVerifiedHtml = s.is_verified ? '<i class="fa-solid fa-circle-check" style="color: #10B981; font-size: 1.2rem; margin-left:4px;" title="Verified Shop"></i>' : '';
+        const isVerifiedHtml = s.is_verified ? '<i class="fa-solid fa-circle-check" style="color: #007185; font-size: 1.2rem; margin-left:4px;" title="Verified Shop"></i>' : '';
         document.getElementById('shop-name').innerHTML = `${s.name} ${isVerifiedHtml}`;
         
         // Logo
@@ -617,7 +676,7 @@
         }
         
         if (socialHtml === '') {
-            socialHtml = '<span style="font-size:0.85rem; color:#94A3B8;">No contact information provided.</span>';
+            socialHtml = '<span style="font-size:0.85rem; color:#888C8C;">No contact information provided.</span>';
         }
         
         socialContainer.innerHTML = socialHtml;
@@ -636,7 +695,7 @@
             }
         }
 
-        // --- PRODUCTS GRID (Anti-Flicker) ---
+        // --- PRODUCTS GRID (Anti-Flicker & Proper Pricing) ---
         const special = data.products.filter(p => p.discount_price && p.discount_price < p.price);
         const used = data.products.filter(p => p.condition === 'Fairly Used');
         const fresh = data.products.filter(p => !p.discount_price && p.condition !== 'Fairly Used');
@@ -667,17 +726,26 @@
             const hasDiscount = p.discount_price && p.discount_price < p.price;
             const percent = hasDiscount ? Math.round(((p.price - p.discount_price)/p.price)*100) : 0;
             
+            let priceHtml = '';
+            let priceClass = 'prod-price';
+            
+            if (hasDiscount) {
+                priceHtml = `<span class="prod-old-price">₦${p.price.toLocaleString()}</span>₦${p.discount_price.toLocaleString()}`;
+                priceClass = 'prod-price flash-price';
+            } else if (p.price) {
+                priceHtml = `₦${p.price.toLocaleString()}`;
+            }
+            
             return `
             <div class="product-card" onclick="window.location.href='product-detail.html?id=${p.id}'">
-                <img src="${p.image_url || 'https://via.placeholder.com/150'}" class="prod-img" loading="lazy" alt="${p.name}">
-                ${hasDiscount ? `<span class="badge badge-discount">-${percent}%</span>` : ''}
-                ${p.condition === 'Fairly Used' ? `<span class="badge badge-used">Used</span>` : ''}
+                <div class="prod-img-wrap">
+                    <img src="${p.image_url || 'https://via.placeholder.com/300'}" class="prod-img" loading="lazy" alt="${p.name}">
+                    ${hasDiscount ? `<span class="badge badge-discount flash-offer">-${percent}%</span>` : ''}
+                    ${p.condition === 'Fairly Used' ? `<span class="badge badge-used">Used</span>` : ''}
+                </div>
                 <div class="prod-info">
-                    <div class="prod-name">${p.name}</div>
-                    <div class="prod-price ${hasDiscount ? 'discounted' : ''}">
-                        ${hasDiscount ? `<span class="prod-old-price">₦${p.price.toLocaleString()}</span>` : ''}
-                        ₦${(p.discount_price || p.price).toLocaleString()}
-                    </div>
+                    <div class="prod-name" title="${p.name}">${p.name}</div>
+                    <div class="${priceClass}">${priceHtml}</div>
                 </div>
             </div>
             `;
@@ -736,7 +804,7 @@
     }
 
     function showSecurityModal() {
-        if (!currentShop?.whatsapp) return alert("This shop hasn't provided a WhatsApp number.");
+        if (!currentShop?.whatsapp) return alert("This merchant hasn't provided a WhatsApp number.");
         document.getElementById('security-modal').classList.add('active');
     }
     
