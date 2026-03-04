@@ -200,7 +200,6 @@
         .ticker-content { white-space: nowrap; animation: ticker 60s linear infinite; padding-left: 100%; color: white;}
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
-
         /* --- RESPONSIVE MOBILE ADJUSTMENTS --- */
         @media (max-width: 1024px) {
             .desktop-search { display: none; }
@@ -233,7 +232,6 @@
             -ms-overflow-style: none; 
         }
         .h-scroll::-webkit-scrollbar { display: none; }
-
 
         /* =========================================
            PREMIUM HEADINGS (Unbreakable & Scrollable)
@@ -270,13 +268,13 @@
         .premium-shop-card-wrap {
             display: flex;
             flex-direction: column;
-            flex-shrink: 0;
+            flex-shrink: 0; 
         }
         
         .h-scroll .premium-shop-card-wrap {
-            min-width: 300px;
+            min-width: 280px;
             width: 85vw;
-            max-width: 360px;
+            max-width: 340px;
         }
 
         .premium-shop-card {
@@ -310,7 +308,6 @@
             overflow: hidden;
         }
 
-        /* Enforce Grid Integrity */
         .shop-image-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -328,7 +325,6 @@
             overflow: hidden;
         }
 
-        /* Strictly Enforced 1:1 Aspect Ratio Block */
         .shop-grid-item {
             width: 100%;
             aspect-ratio: 1 / 1; 
@@ -346,7 +342,6 @@
             display: block;
         }
         
-        /* --- SPECIAL OFFER ANIMATIONS --- */
         @keyframes pulse-badge {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
             50% { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(220, 38, 38, 0); }
@@ -417,7 +412,6 @@
         }
         .premium-shop-card:hover .shop-cta { color: var(--amz-link-hover); text-decoration: underline; }
 
-
         /* =========================================
            CATEGORY CHIPS
            ========================================= */
@@ -430,7 +424,6 @@
         .cat-chip:hover { background: #F7F7F7; border-color: var(--color-pink); transform: translateY(-2px); box-shadow: var(--shadow-md);}
         .cat-chip img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; }
         .cat-chip span { font-size: 0.85rem; font-weight: 700; color: #0F1111; }
-
 
         /* Form & Utility Styles */
         .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding: 0 20px 40px 20px; }
@@ -572,8 +565,8 @@
                 <select class="amz-search-select" id="search-area-desktop" onchange="navigateArea(this.value)">
                     <option value="all">All Areas</option>
                 </select>
-                <input type="text" class="amz-search-input" placeholder="Search shops and products...">
-                <button class="amz-search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+                <input type="text" class="amz-search-input" id="search-input-desktop" placeholder="Search shops and products..." onkeypress="if(event.key==='Enter') executeSearch('desktop')">
+                <button class="amz-search-btn" onclick="executeSearch('desktop')"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
 
             <!-- Navigation Links -->
@@ -611,8 +604,8 @@
             <select class="amz-search-select" id="search-area-mobile" onchange="navigateArea(this.value)">
                 <option value="all">All Areas</option>
             </select>
-            <input type="text" class="amz-search-input" placeholder="Search CT-Merchant...">
-            <button class="amz-search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <input type="text" class="amz-search-input" id="search-input-mobile" placeholder="Search CT-Merchant..." onkeypress="if(event.key==='Enter') executeSearch('mobile')">
+            <button class="amz-search-btn" onclick="executeSearch('mobile')"><i class="fa-solid fa-magnifying-glass"></i></button>
         </div>
 
         <!-- TICKER ROW WITH CATEGORY FILTER -->
@@ -641,7 +634,7 @@
             <!-- Promos (Hero Banner style) -->
             <div id="promo-list" class="h-scroll" style="display:none; padding-top: 10px;"></div>
             
-            <!-- Featured Shops Section -->
+            <!-- Featured Shops Section (Manual Scroll restored) -->
             <div id="featured-section" style="display:none; margin-bottom: 20px;">
                 <h2 class="sec-title">Featured Shops <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Top Rated)</span></h2>
                 <div id="featured-list" class="h-scroll"></div>
@@ -849,13 +842,23 @@
     // --- DUAL NAVIGATION LOGIC (Area + Category) ---
     function navigateArea(areaId) {
         if (areaId !== 'all') {
-            window.location.href = `area-shops.html?id=${areaId}`;
+            window.location.href = `area.html?id=${areaId}`; // Fixed routing!
         }
     }
 
     function navigateCategory(catName) {
         if (catName !== 'all') {
             window.location.href = `cat.html?name=${encodeURIComponent(catName)}`;
+        }
+    }
+
+    // --- SEARCH BAR LOGIC ---
+    function executeSearch(type) {
+        let inputId = type === 'desktop' ? 'search-input-desktop' : 'search-input-mobile';
+        let query = document.getElementById(inputId).value.trim();
+        
+        if (query) {
+            window.location.href = `search.html?q=${encodeURIComponent(query)}`;
         }
     }
 
@@ -1089,7 +1092,7 @@
             ).join('');
         }
 
-        // --- FEATURED SHOPS ---
+        // --- FEATURED SHOPS (Manual Scroll Restored) ---
         const featured = data.shops.filter(s => s.is_featured);
         const featuredSection = document.getElementById('featured-section');
         if (featured.length > 0) {
