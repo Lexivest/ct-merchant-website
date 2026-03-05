@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>About CTM | Corporate Profile</title>
+  <title>About CTMerchant | Corporate Profile</title>
+  
+  <!-- Favicons for browser tab -->
+  <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+  <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
@@ -14,7 +19,7 @@
   <div class="container nav-container">
     <a href="index.html" class="brand-wrapper">
       <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
-      <span style="font-size:1.125rem;font-weight:800;color:#fff;letter-spacing:.05em;text-transform:uppercase">CTMerchant</span>
+      <span style="font-size:1.125rem;font-weight:800;color:#fff;letter-spacing:.05em">CTMerchant</span>
     </a>
     <div class="desktop-menu">
       <a href="index.html">Home</a>
@@ -42,13 +47,14 @@
   </div>
 </nav>
 
-<section class="hero-section">
+<section class="hero-section" style="min-height:60vh">
   <div class="hero-image-wrapper">
     <div class="hero-overlay"></div>
     <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" alt="Corporate Banner" class="hero-img">
   </div>
   <div class="hero-content" style="border-bottom:8px solid var(--color-purple)">
-    <h1 class="hero-title" style="text-transform:uppercase;letter-spacing:-.05em;font-size:2.5rem">Corporate Identity</h1>
+    <div class="hero-badge">CORPORATE PROFILE</div>
+    <h1 class="hero-title" style="letter-spacing:-.05em;font-size:2.5rem">Corporate Identity</h1>
     <div class="divider-line"></div>
     <p class="hero-desc" style="border:none;padding:0;color:#e2e8f0;font-style:normal;font-size:.95rem">
       Bridging the gap between localized commerce and digital accessibility across Nigeria’s urban centers.
@@ -73,13 +79,13 @@
   </div>
 
   <section class="profile-card">
-    <div class="watermark">CTM</div>
+    <div class="watermark">CTMerchant</div>
     <div class="profile-content">
       <h2 class="profile-heading">Institutional Profile</h2>
       <div class="profile-body">
-        <p>CTMerchant (CTM) is a specialized information technology firm providing critical data infrastructure for Nigeria’s local trade ecosystems. We facilitate the digital translation of physical inventory and merchant locations, providing a structured ecosystem for consumer exploration.</p>
+        <p>CTMerchant is a specialized information technology firm providing critical data infrastructure for Nigeria’s local trade ecosystems. We facilitate the digital translation of physical inventory and merchant locations, providing a structured ecosystem for consumer exploration.</p>
         <p>Our operational framework prioritizes <strong>Data Accuracy</strong> and <strong>Discovery Optimization</strong>, reducing friction in local commerce while preserving the traditional merchant–customer relationship.</p>
-        <p>CTM operates strictly as a neutral information repository. We remain independent of financial settlements and logistics to maintain data integrity and search excellence.</p>
+        <p>CTMerchant operates strictly as a neutral information repository. We remain independent of financial settlements and logistics to maintain data integrity and search excellence.</p>
       </div>
       <div class="profile-footer">
         <div class="profile-meta">
@@ -140,6 +146,8 @@
   </div>
 </footer>
 
-<script src="index.js"></script>
+<script>
+  const mBtn=document.getElementById('menu-btn'),mMenu=document.getElementById('mobile-menu');mBtn&&(mBtn.onclick=()=>mMenu.classList.toggle('hidden'));
+</script>
 </body>
 </html>
