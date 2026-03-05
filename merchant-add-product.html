@@ -21,8 +21,8 @@
     .back-btn{background:0 0;border:none;color:#fff;font-size:1.2rem;cursor:pointer;padding:4px;margin-left:-4px;transition:.2s}
     .back-btn:hover{color:var(--color-pink)}
     .page-title{font-weight:700;font-size:1.15rem;letter-spacing:.5px}
-    .container{width:100%;max-width:600px;padding:30px 20px;flex:1}
-    .card{background:#fff;padding:30px;border-radius:8px;border:1px solid var(--color-border);box-shadow:0 2px 4px rgba(0,0,0,.02)}
+    .container{width:100%;max-width:600px;padding:20px;flex:1}
+    .card{background:#fff;padding:24px;border-radius:8px;border:1px solid var(--color-border);box-shadow:0 2px 4px rgba(0,0,0,.02)}
     
     /* Educational UI Box */
     .edu-box{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:16px;margin-bottom:24px}
@@ -31,21 +31,34 @@
     .edu-visuals{display:flex;gap:20px;justify-content:center}
     .edu-visual-item{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;flex:1}
     .edu-visual-item span{font-size:.75rem;color:#64748b;line-height:1.3}
-    .edu-visual-item strong{color:#0F1111}
-    .edu-box-demo{width:64px;height:64px;border-radius:6px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+    .edu-box-demo{width:60px;height:60px;border-radius:6px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,.05)}
     .edu-box-demo.perfect{background:#10B981;color:#fff;border:2px solid #059669}
     .edu-box-demo.padded{background:#fff;border:2px solid #D5D9D9;padding:4px}
-    .edu-img-inner{background:#94A3B8;color:#fff;width:30px;height:100%;border-radius:2px;display:flex;align-items:center;justify-content:center}
+    .edu-img-inner{background:#94A3B8;color:#fff;width:26px;height:100%;border-radius:2px;display:flex;align-items:center;justify-content:center}
     
-    .image-picker{width:100%;height:280px;background:#F7F7F7;border-radius:8px;border:2px dashed #888C8C;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;margin-bottom:24px;transition:all .2s}
+    .image-picker{width:100%;padding:30px 16px;background:#F7F7F7;border-radius:8px;border:2px dashed #888C8C;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;margin-bottom:24px;transition:all .2s; text-align: center;}
     .image-picker:hover{border-color:var(--color-pink);background:var(--color-pink-light)}
-    .preview-img{width:100%;height:100%;object-fit:contain;position:absolute;inset:0;display:none;background:#fff;z-index:5;border:1px solid #E5E7EB;border-radius:8px}
     
+    /* LIVE PREVIEW EXACT CSS FROM DASHBOARD */
+    .live-preview-wrap{background:#F3F4F6;border:1px solid #D5D9D9;border-radius:8px;padding:20px;margin-bottom:24px;display:none;flex-direction:column;align-items:center;box-shadow:inset 0 2px 4px rgba(0,0,0,.05)}
+    .shop-grid-item-wrap{display:flex;flex-direction:column;gap:4px;width:140px;overflow:hidden;background:#fff;padding:8px;border-radius:6px;box-shadow:0 2px 5px rgba(0,0,0,.08); border: 1px solid #E5E7EB;}
+    .shop-grid-item{width:100%;aspect-ratio:1/1;background:#F7F7F7;display:block;overflow:hidden;border-radius:4px;position:relative}
+    .shop-grid-item img{width:100%;height:100%;object-fit:cover;display:block}
+    .grid-badge{position:absolute;top:4px;left:4px;background:#DC2626;color:#fff;font-size:.65rem;font-weight:800;padding:2px 4px;border-radius:4px;z-index:2}
+    @keyframes pulse-badge{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(220,38,38,0)}50%{transform:scale(1.1);box-shadow:0 0 0 4px rgba(220,38,38,0)}}
+    @keyframes highlight-price{0%,100%{color:var(--color-pink);text-shadow:none}50%{color:#f05;text-shadow:0 0 6px rgba(219,39,119,.4)}}
+    .flash-offer{animation:pulse-badge 1.5s infinite ease-in-out}
+    .flash-price{animation:highlight-price 1.5s infinite ease-in-out}
+    .shop-grid-caption{display:flex;flex-direction:column}
+    .sg-name{font-size:.75rem;color:#0F1111;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+    .sg-price{font-size:.8rem;font-weight:800;color:var(--color-pink);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sg-price-old{text-decoration:line-through;color:#888C8C;font-size:.65rem;font-weight:500;margin-right:4px}
+
     .form-group{margin-bottom:20px}
     .label{display:block;font-size:.9rem;font-weight:700;color:#0F1111;margin-bottom:6px}
     .input{width:100%;padding:12px 14px;border-radius:4px;border:1px solid #888C8C;font-size:1rem;color:#0F1111;box-shadow:0 1px 2px rgba(15,17,17,.15) inset;font-family:inherit;transition:.2s}
     .input:focus{outline:0;border-color:var(--color-pink);box-shadow:0 0 0 3px var(--color-pink-light)}
-    textarea.input{resize:vertical;min-height:120px}
+    textarea.input{resize:vertical;min-height:100px}
     select.input{cursor:pointer;background-color:#fff}
     
     .discount-box{background:#F7F7F7;border:1px solid var(--color-border);padding:16px;border-radius:8px;margin-bottom:24px}
@@ -82,49 +95,71 @@
   <div class="container">
       <form class="card" onsubmit="handleSubmit(event)">
           
-          <!-- EDUCATIONAL UI BLOCK -->
+          <!-- EDUCATIONAL PRO TIP -->
           <div class="edu-box">
-              <h4 class="edu-title"><i class="fa-solid fa-lightbulb" style="color: #F59E0B;"></i> Pro Photo Tip for Best Results</h4>
-              <p class="edu-text">For a premium storefront look, use your phone's photo editor to crop your image into a <strong>1:1 Square</strong> before uploading here.</p>
+              <h4 class="edu-title"><i class="fa-solid fa-lightbulb" style="color: #F59E0B;"></i> Pro Photo Tip</h4>
+              <p class="edu-text">For the best results, use your phone's photo editor to crop your image into a <strong>Square (1:1)</strong> before uploading. Otherwise, white borders will be added automatically to make it fit.</p>
               <div class="edu-visuals">
                   <div class="edu-visual-item">
                       <div class="edu-box-demo perfect"><i class="fa-solid fa-image fa-lg"></i></div>
-                      <span><strong>Square (Best)</strong><br>Fills the grid perfectly</span>
+                      <span><strong>Square (Best)</strong><br>Fills grid perfectly</span>
                   </div>
                   <div class="edu-visual-item">
                       <div class="edu-box-demo padded">
                           <div class="edu-img-inner"><i class="fa-solid fa-image"></i></div>
                       </div>
-                      <span><strong>Rectangle (Okay)</strong><br>White padding is added</span>
+                      <span><strong>Rectangle</strong><br>White bars added</span>
                   </div>
               </div>
           </div>
 
+          <!-- UPLOAD BUTTON -->
           <div class="image-picker" onclick="document.getElementById('file-input').click()">
               <input type="file" id="file-input" hidden accept="image/*" onchange="handleSmartImageSelect(this)">
               
-              <!-- Processing overlay -->
               <div id="processing-overlay" style="display:none; position:absolute; inset:0; background:rgba(255,255,255,0.9); z-index:10; flex-direction:column; align-items:center; justify-content:center;">
                   <div class="spinner" style="border-top-color: var(--color-pink); border-right-color: var(--color-pink); border-bottom-color: var(--color-pink); border-left-color: transparent;"></div>
                   <span style="font-weight:700; color:var(--color-pink); margin-top:8px;">Formatting Image...</span>
               </div>
 
-              <img id="preview" class="preview-img">
-              
               <div id="picker-defaults" style="display:flex; flex-direction:column; align-items:center;">
-                  <i class="fa-solid fa-camera" style="font-size:2.5rem;color:#888C8C;margin-bottom:12px"></i>
-                  <span style="font-size:.95rem;font-weight:700;color:var(--color-text-muted)">Tap to select product photo</span>
+                  <i class="fa-solid fa-cloud-arrow-up" style="font-size:2.5rem;color:#888C8C;margin-bottom:12px"></i>
+                  <span style="font-size:1.05rem;font-weight:800;color:#0F1111">Select Product Image</span>
+                  <span style="font-size:.85rem;font-weight:600;color:var(--color-text-muted);margin-top:4px;">(Max 500KB)</span>
               </div>
           </div>
 
+          <!-- LIVE CUSTOMER PREVIEW -->
+          <div id="live-preview-wrap" class="live-preview-wrap">
+              <h4 style="font-size:0.95rem; font-weight:800; color:#0F1111; margin-bottom:4px;"><i class="fa-regular fa-eye"></i> Live Marketplace Preview</h4>
+              <p style="font-size:0.8rem; color:#565959; margin-bottom:16px;">This is exactly how customers will see your item.</p>
+              
+              <!-- Exact Dashboard Replica CSS -->
+              <div class="shop-grid-item-wrap">
+                  <div class="shop-grid-item">
+                      <img id="live-img" src="" alt="Product">
+                      <div id="live-badge" class="grid-badge flash-offer" style="display:none;"></div>
+                  </div>
+                  <div class="shop-grid-caption">
+                      <div class="sg-name" id="live-name">Product Name</div>
+                      <div class="sg-price" id="live-price-box">₦0</div>
+                  </div>
+              </div>
+              
+              <button type="button" onclick="document.getElementById('file-input').click()" style="background:none; border:none; color:var(--color-pink); font-size:0.85rem; font-weight:700; margin-top:16px; cursor:pointer; text-decoration:underline;">
+                 Change Image
+              </button>
+          </div>
+
+          <!-- FORM INPUTS (Triggers Live Update) -->
           <div class="form-group">
               <label class="label">Product Name</label>
-              <input type="text" id="name" class="input" placeholder="e.g. Samsung Galaxy S23" required>
+              <input type="text" id="name" class="input" placeholder="e.g. Samsung Galaxy S23" required oninput="updateLivePreview()">
           </div>
 
           <div class="form-group">
               <label class="label">Price (₦)</label>
-              <input type="number" id="price" class="input" placeholder="e.g. 50000" required>
+              <input type="number" id="price" class="input" placeholder="e.g. 50000" required oninput="updateLivePreview()">
           </div>
 
           <div class="form-group">
@@ -147,7 +182,7 @@
                   </label>
               </div>
               <div id="discount-input-box" class="hidden-input">
-                  <input type="number" id="discount-percent" class="input" placeholder="Enter Percentage (e.g. 10)" max="20" min="1">
+                  <input type="number" id="discount-percent" class="input" placeholder="Enter Percentage (e.g. 10)" max="20" min="1" oninput="updateLivePreview()">
               </div>
           </div>
 
@@ -169,6 +204,8 @@
     const params=new URLSearchParams(window.location.search);
     const shopId=params.get('shop_id');
     let currentUser=null;
+    
+    // Store the processed blob ready for upload
     let finalFormattedBlob=null;
 
     window.onload=async()=>{
@@ -181,7 +218,7 @@
         }
     };
 
-    // Auto-Fit Engine
+    // --- SMART AUTO-FIT ENGINE ---
     async function handleSmartImageSelect(input) {
         if(input.files && input.files[0]) {
             const file = input.files[0];
@@ -192,19 +229,22 @@
             }
 
             document.getElementById('processing-overlay').style.display = 'flex';
-            document.getElementById('picker-defaults').style.display = 'none';
 
             try {
                 const result = await processAndFitImage(file);
                 finalFormattedBlob = result.blob;
                 
-                const previewImg = document.getElementById('preview');
-                previewImg.src = result.url;
-                previewImg.style.display = 'block';
+                // Show Live Preview Wrap
+                document.getElementById('live-preview-wrap').style.display = 'flex';
+                document.getElementById('live-img').src = result.url;
+                
+                // Reset Upload UI
+                document.querySelector('.image-picker').style.display = 'none';
+
+                updateLivePreview(); // Trigger text update
 
             } catch(e) {
                 alert("Error formatting image. Please try another photo.");
-                document.getElementById('picker-defaults').style.display = 'flex';
             } finally {
                 document.getElementById('processing-overlay').style.display = 'none';
                 input.value = ''; 
@@ -219,12 +259,13 @@
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const TARGET_SIZE = 800; 
+                    const TARGET_SIZE = 800; // Standard 1:1 Square
                     
                     canvas.width = TARGET_SIZE;
                     canvas.height = TARGET_SIZE;
                     const ctx = canvas.getContext('2d');
 
+                    // Pure white padding
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(0, 0, TARGET_SIZE, TARGET_SIZE);
 
@@ -249,11 +290,45 @@
         });
     }
 
-    function toggleDiscount(e){
-        const t=document.getElementById('discount-input-box'),o=document.getElementById('discount-percent');
-        e.checked?(t.classList.add('visible'),o.setAttribute('required','true')):(t.classList.remove('visible'),o.removeAttribute('required'),o.value='')
+    // --- LIVE PREVIEW UPDATER ---
+    function updateLivePreview() {
+        const nameVal = document.getElementById('name').value.trim();
+        const priceVal = parseFloat(document.getElementById('price').value);
+        const isDiscountOn = document.getElementById('discount-switch').checked;
+        const discPercent = parseFloat(document.getElementById('discount-percent').value);
+
+        const nameEl = document.getElementById('live-name');
+        const priceEl = document.getElementById('live-price-box');
+        const badgeEl = document.getElementById('live-badge');
+
+        nameEl.textContent = nameVal || 'Product Name';
+
+        if (priceVal && !isNaN(priceVal)) {
+            if (isDiscountOn && discPercent && discPercent > 0 && discPercent <= 20) {
+                const discountAmount = priceVal - (priceVal * (discPercent / 100));
+                priceEl.innerHTML = `<span class="sg-price-old">₦${priceVal.toLocaleString()}</span>₦${discountAmount.toLocaleString()}`;
+                priceEl.className = 'sg-price flash-price';
+                badgeEl.textContent = `-${discPercent}%`;
+                badgeEl.style.display = 'block';
+            } else {
+                priceEl.textContent = `₦${priceVal.toLocaleString()}`;
+                priceEl.className = 'sg-price';
+                badgeEl.style.display = 'none';
+            }
+        } else {
+            priceEl.textContent = '₦0';
+            priceEl.className = 'sg-price';
+            badgeEl.style.display = 'none';
+        }
     }
 
+    function toggleDiscount(e){
+        const t=document.getElementById('discount-input-box'),o=document.getElementById('discount-percent');
+        e.checked?(t.classList.add('visible'),o.setAttribute('required','true')):(t.classList.remove('visible'),o.removeAttribute('required'),o.value='');
+        updateLivePreview();
+    }
+
+    // --- SUBMISSION ---
     async function handleSubmit(e){
         e.preventDefault();
         const t=document.getElementById('btn-submit');
