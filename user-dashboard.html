@@ -671,15 +671,52 @@
     let userAreaId = null;
     let allCities = [];
     
-    // User-Specific Cache Key to prevent cross-user data bleeding
     let CACHE_KEY = ''; 
     const MAX_FILE_SIZE = 500 * 1024; 
     let chatHistory = [];
 
-    // --- AVATAR UPLOAD STATE ---
     let cropper = null;
     let avatarBlob = null;
     let currentOldAvatarUrl = null;
+
+    // ==========================================
+    // GLOBAL INACTIVITY TRACKER (15 MINUTE TIMEOUT)
+    // ==========================================
+    let inactivityTimer;
+    const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
+
+    function resetInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(logoutDueToInactivity, INACTIVITY_LIMIT);
+    }
+
+    async function logoutDueToInactivity() {
+        // 1. Clear all sensitive local cache dynamically
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('ctm_')) {
+                localStorage.removeItem(key);
+            }
+        });
+        
+        // 2. Kill Supabase Session
+        if (client && client.auth) {
+            await client.auth.signOut();
+        }
+        
+        // 3. Alert and Redirect
+        alert("Your session has securely expired due to inactivity. Please log in again.");
+        window.location.href = "index.html";
+    }
+
+    // Attach listeners to user interaction
+    ['mousemove', 'keydown', 'scroll', 'click', 'touchstart'].forEach(evt => {
+        document.addEventListener(evt, resetInactivityTimer, { passive: true });
+    });
+    
+    // Start timer on load
+    resetInactivityTimer();
+    // ==========================================
+
 
     // =========================================
     // OPTIMISTIC SYNCHRONOUS RENDER (ZERO LATENCY)
@@ -1461,9 +1498,11 @@
     async function handleLogout() {
         if(confirm("Sign Out?")) {
             // CRITICAL: Clear the user's specific cache entirely on logout
-            if (CACHE_KEY) {
-                localStorage.removeItem(CACHE_KEY);
-            }
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('ctm_')) {
+                    localStorage.removeItem(key);
+                }
+            });
             await client.auth.signOut();
             window.location.href = "index.html";
         }
