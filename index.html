@@ -82,13 +82,11 @@
     .hero-auth-widget .input-group-hero i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); font-size: 1rem; pointer-events: none; }
     .hero-auth-widget .input-group-hero i.toggle-password { left: auto; right: 14px; cursor: pointer; pointer-events: auto; transition: color 0.2s; }
     .hero-auth-widget .input-group-hero i.toggle-password:hover { color: #db2777; }
-    .hero-auth-widget .hero-input-login { width: 100%; padding: 12px 40px 12px 40px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 12px; color: white; font-size: 1rem; outline: none; transition: all 0.3s ease; box-sizing: border-box; }
+    .hero-auth-widget .hero-input-login { width: 100%; padding: 12px 40px 12px 40px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 12px; color: white; font-size: 1rem; outline: none; transition: all 0.3s ease; }
     .hero-auth-widget .hero-input-login::placeholder { color: rgba(255, 255, 255, 0.6); }
     .hero-auth-widget .hero-input-login:focus { background: rgba(255, 255, 255, 0.3); border-color: #db2777; box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.15); }
-    .hero-auth-widget .hero-input-login:not(:placeholder-shown):invalid { border-color: #facc15; }
     .hero-auth-widget .btn-login-hero { width: 100%; background: #db2777; color: white; font-weight: 800; padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-size: 1.05rem; transition: transform 0.2s, background-color 0.2s; display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; }
-    .hero-auth-widget .btn-login-hero:hover:not(:disabled) { background: #c0266a; transform: translateY(-2px); }
-    .hero-auth-widget .btn-login-hero:disabled { opacity: 0.7; cursor: not-allowed; }
+    .hero-auth-widget .btn-login-hero:hover { background: #c0266a; transform: translateY(-2px); }
     .hero-auth-widget .widget-divider { display: flex; align-items: center; text-align: center; margin: 16px 0; color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; font-weight: 600; }
     .hero-auth-widget .widget-divider::before, .hero-auth-widget .widget-divider::after { content: ''; flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
     .hero-auth-widget .widget-divider::before { margin-right: 10px; }
@@ -166,7 +164,7 @@
         -webkit-backdrop-filter: blur(16px); 
         padding: 50px 10% 40px 10%; 
         border-top: 1px solid rgba(255, 255, 255, 0.08); 
-        justify-content: flex-start; 
+        justify-content: flex-start; /* Aligns text to the top */
     }
     .value-title { font-size: 2.2rem; font-weight: 800; color: #ffffff; margin-bottom: 12px; margin-top: 0; }
     .value-desc { font-size: 1.1rem; color: #e2e8f0; line-height: 1.6; margin-bottom: 20px; }
@@ -185,7 +183,7 @@
         border-left: none; 
         box-shadow: none; 
         z-index: 2; 
-        justify-content: flex-start; 
+        justify-content: flex-start; /* Aligns text to the top */
     }
     .pane-white .repo-badge { 
         background: rgba(219, 39, 119, 0.2); 
@@ -211,7 +209,7 @@
         .features-glass-bar span { flex: 1; text-align: center; }
     }
    
-    .nav-container { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 1600px; margin: 0 auto;}
+    .nav-container { display: flex; align-items: center; justify-content: space-between; width: 100%; }
     .brand-wrapper { display: flex; align-items: center; flex-shrink: 0; }
     .header-marquee-box { flex: 1; margin: 0 20px; overflow: hidden; white-space: nowrap; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 15px; display: flex; align-items: center; }
     .marquee-content { display: flex; width: max-content; animation: scroll 20s linear infinite; }
@@ -222,22 +220,7 @@
     .forgot-password { display: block; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); text-decoration: none; margin-top: 8px; margin-bottom: 12px; cursor: pointer; text-align: right; }
     .forgot-password:hover { color: #db2777; }
     
-    .main-header { position: sticky !important; top: 0; z-index: 9999; padding: 12px 16px; background-color: #131921; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .desktop-menu { display: flex; align-items: center; gap: 20px; }
-    .desktop-menu a { color: white; text-decoration: none; font-weight: 700; font-size: 0.95rem; transition: color 0.2s; }
-    .desktop-menu a:hover { color: #db2777; }
-    .desktop-menu .nav-active { color: #db2777; }
-    .btn-staff { background: #db2777; padding: 8px 16px; border-radius: 6px; transition: 0.2s; }
-    .btn-staff:hover { background: #be185d; color: white !important;}
-
-    .mobile-menu-btn { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
-    .mobile-dropdown { display: flex; flex-direction: column; background: #232F3E; padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.1); }
-    .mobile-dropdown a { color: white; text-decoration: none; font-weight: 600; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    
-    @media (max-width: 900px) {
-        .desktop-menu { display: none; }
-        .mobile-menu-btn { display: block; }
-    }
+    .main-header { position: sticky !important; top: 0; z-index: 9999; }
 
     /* =========================================
        MODAL STYLES
@@ -253,11 +236,10 @@
     .modal-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
     .modal-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem; outline: none; transition: all 0.3s ease; color: #0f172a; }
     .modal-input:focus { border-color: #db2777; box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); background: white; }
-    .modal-input:not(:placeholder-shown):invalid { border-color: #facc15; }
     select.modal-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
     .btn-primary-modal { width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px; }
-    .btn-primary-modal:hover:not(:disabled) { background-color: #db2777; transform: translateY(-1px); }
-    .btn-primary-modal:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+    .btn-primary-modal:hover { background: #db2777; transform: translateY(-1px); }
+    .btn-primary-modal:disabled { background: #cbd5e1; cursor: not-allowed; }
     .spinner { width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
     
@@ -325,24 +307,17 @@
         .floating-contact-popup { width: calc(100% - 48px); left: 24px; right: 24px; }
         .ai-chat-window { width: calc(100% - 48px); left: 24px; right: 24px; }
     }
-
-    /* FOOTER */
-    .footer { background: #0F1111; color: white; padding: 30px 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; }
-    .footer-container { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-    .footer-links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; font-size: 0.9rem; color: #888C8C; }
-    .footer-links a { color: #888C8C; text-decoration: none; transition: 0.2s; }
-    .footer-links a:hover { color: white; }
   </style>
 </head>
 <body>
 <!-- NAVIGATION -->
 <nav class="main-header">
-  <div class="nav-container">
+  <div class="container nav-container">
     <a href="index.html" class="brand-wrapper" title="Home Screen">
-      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo" style="width: 45px; height: 45px; border-radius: 8px;">
     </a>
-    <div class="header-marquee-box">
-       <div class="marquee-content">
+    <div class="marquee-container header-marquee-box">
+       <div class="marquee-content animate-brand-scroll">
           <div class="marquee-item">
               <span style="font-weight: 800; color: white; font-size: 0.9rem;">CTMerchant</span>
               <div class="flag-icon" style="display: flex; flex-direction: column; width: 14px; height: 10px; margin: 0 8px;">
@@ -378,16 +353,15 @@
   </div>
  
   <div class="mobile-dropdown hidden" id="mobile-menu">
-      <a href="index.html" style="border-bottom: 1px solid rgba(255,255,255,0.1);">Home</a>
+      <a href="index.html" style="border-bottom: 1px solid white;">Home</a>
       <a href="about.html">About</a>
       <a href="services.html">Services</a>
       <a href="affiliate.html">Affiliate</a>
       <a href="careers.html">Careers</a>
       <a href="contact.html">Contact</a>
-      <a href="staff-portal.html" style="color: var(--color-pink);">Staff Portal</a>
+      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
   </div>
 </nav>
-
 <!-- MAIN GRID WRAPPER -->
 <main class="split-layout-grid">
     <div class="split-pane pane-img">
@@ -430,6 +404,7 @@
                 </div>
                 <div class="input-group-hero">
                     <i class="fa-solid fa-key"></i>
+                    <!-- Enforced minimum 6 characters for security -->
                     <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required minlength="6">
                     <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePassword()"></i>
                 </div>
@@ -463,7 +438,7 @@
             </div>
         </div>
        
-        <!-- TRUST METRICS SECTION -->
+        <!-- NEW TRUST METRICS SECTION -->
         <div class="trust-metrics-container">
             <div class="trust-metric-box">
                 <i class="fa-solid fa-shield-halved"></i>
@@ -481,7 +456,7 @@
             </div>
         </div>
 
-        <!-- MERCHANT ONBOARDING CYCLE -->
+        <!-- NEW MERCHANT ONBOARDING CYCLE -->
         <div class="merchant-journey-wrapper">
             <h3 class="mj-title"><i class="fa-solid fa-route"></i> Merchant Onboarding Journey</h3>
            
@@ -560,9 +535,9 @@
         </p>
     </div>
 </main>
-
 <footer class="footer">
   <div class="container footer-container">
+    <!-- TRADEMARK PROTECTED -->
     <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
     <div class="footer-links">
       <a href="privacy.html">Privacy Policy</a>
@@ -571,94 +546,84 @@
     </div>
   </div>
 </footer>
-
 <!-- MODALS -->
 <div id="complete-profile-modal" class="modal-overlay hidden">
     <div class="modal-card">
         <h2 class="modal-title">Complete Your Profile</h2>
         <p class="modal-subtitle">We need a few more details to set up your dashboard.</p>
-        <form onsubmit="event.preventDefault(); saveGoogleProfile();">
-            <div class="modal-input-group">
-                <label class="modal-label">Phone Number</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-phone"></i></span>
-                    <input type="tel" id="google-phone" placeholder="08012345678" required pattern="^0[0-9]{10}$" title="Valid 11-digit number starting with 0" class="modal-input">
-                </div>
+        <div class="modal-input-group">
+            <label class="modal-label">Phone Number</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-phone"></i></span>
+                <input type="tel" id="google-phone" placeholder="08012345678" class="modal-input">
             </div>
-            <div class="modal-input-group">
-                <label class="modal-label">Select City</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-city"></i></span>
-                    <select id="google-city" class="modal-input" required onchange="loadAreasForModal(this.value)">
-                        <option value="" disabled selected>Loading cities...</option>
-                    </select>
-                </div>
+        </div>
+        <div class="modal-input-group">
+            <label class="modal-label">Select City</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-city"></i></span>
+                <select id="google-city" class="modal-input" onchange="loadAreasForModal(this.value)">
+                    <option value="" disabled selected>Loading cities...</option>
+                </select>
             </div>
-            <div class="modal-input-group">
-                <label class="modal-label">Select Area</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-map-pin"></i></span>
-                    <select id="google-area" class="modal-input" required disabled>
-                        <option value="" disabled selected>Select city first</option>
-                    </select>
-                </div>
+        </div>
+        <div class="modal-input-group">
+            <label class="modal-label">Select Area</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-map-pin"></i></span>
+                <select id="google-area" class="modal-input" disabled>
+                    <option value="" disabled selected>Select city first</option>
+                </select>
             </div>
-            <button type="submit" id="google-complete-btn" class="btn-primary-modal">Complete Setup</button>
-            <button type="button" onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel & Sign Out</button>
-        </form>
+        </div>
+        <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary-modal">Complete Setup</button>
+        <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel & Sign Out</button>
     </div>
 </div>
-
 <div id="reset-email-modal" class="modal-overlay hidden">
     <div class="modal-card">
         <h2 class="modal-title">Reset Password</h2>
         <p class="modal-subtitle">Enter your email address to receive a 6-digit recovery code.</p>
-        <form onsubmit="event.preventDefault(); sendResetCode();">
-            <div class="modal-input-group">
-                <label class="modal-label">Registered Email</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-envelope"></i></span>
-                    <input type="email" id="reset-email-input" placeholder="name@example.com" required class="modal-input">
-                </div>
+        <div class="modal-input-group">
+            <label class="modal-label">Registered Email</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-envelope"></i></span>
+                <input type="email" id="reset-email-input" placeholder="name@example.com" class="modal-input">
             </div>
-            <button type="submit" id="btn-send-reset" class="btn-primary-modal">Send Reset Code</button>
-            <button type="button" onclick="document.getElementById('reset-email-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
-        </form>
+        </div>
+        <button id="btn-send-reset" onclick="sendResetCode()" class="btn-primary-modal">Send Reset Code</button>
+        <button onclick="document.getElementById('reset-email-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
     </div>
 </div>
-
 <div id="reset-password-modal" class="modal-overlay hidden">
     <div class="modal-card">
         <h2 class="modal-title">Create New Password</h2>
         <p class="modal-subtitle">Enter the 6-digit code we just sent to your email.</p>
-        <form onsubmit="event.preventDefault(); verifyAndResetPassword();">
-            <div class="modal-input-group">
-                <label class="modal-label">6-Digit Recovery Code</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-hashtag"></i></span>
-                    <input type="text" id="reset-otp-input" placeholder="123456" class="modal-input" required maxlength="6" style="letter-spacing: 5px; text-align: center; font-weight: bold; padding-left: 1rem;">
-                </div>
+        <div class="modal-input-group">
+            <label class="modal-label">6-Digit Recovery Code</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-hashtag"></i></span>
+                <input type="text" id="reset-otp-input" placeholder="123456" class="modal-input" maxlength="6" style="letter-spacing: 5px; text-align: center; font-weight: bold; padding-left: 1rem;">
             </div>
-            <div class="modal-input-group">
-                <label class="modal-label">New Password</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
-                    <input type="password" id="reset-new-password" placeholder="At least 6 characters" required minlength="6" class="modal-input">
-                </div>
+        </div>
+        <div class="modal-input-group">
+            <label class="modal-label">New Password</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
+                <input type="password" id="reset-new-password" placeholder="••••••••" class="modal-input">
             </div>
-            <div class="modal-input-group">
-                <label class="modal-label">Confirm Password</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
-                    <input type="password" id="reset-confirm-password" placeholder="Re-enter password" required minlength="6" class="modal-input">
-                </div>
+        </div>
+        <div class="modal-input-group">
+            <label class="modal-label">Confirm Password</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
+                <input type="password" id="reset-confirm-password" placeholder="••••••••" class="modal-input">
             </div>
-            <button type="submit" id="btn-confirm-reset" class="btn-primary-modal">Confirm & Reset Password</button>
-            <button type="button" onclick="document.getElementById('reset-password-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
-        </form>
+        </div>
+        <button id="btn-confirm-reset" onclick="verifyAndResetPassword()" class="btn-primary-modal">Confirm & Reset Password</button>
+        <button onclick="document.getElementById('reset-password-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
     </div>
 </div>
-
 <!-- ==========================================
      FLOATING CONTACT WIDGET (LEFT)
      ========================================== -->
@@ -681,7 +646,7 @@
         </div>
         <div class="fc-input-group">
             <label class="fc-label">Subject</label>
-            <select id="fc-subject" class="fc-select" required>
+            <select id="fc-subject" class="fc-select">
                 <option value="General Inquiry">General Inquiry</option>
                 <option value="Merchant Support">Merchant Support</option>
                 <option value="Report an Issue">Report an Issue</option>
@@ -695,7 +660,6 @@
         <button type="submit" id="fc-submit-btn" class="fc-btn">Send Message <i class="fa-solid fa-paper-plane"></i></button>
     </form>
 </div>
-
 <!-- ==========================================
      AI CHAT WIDGET (RIGHT)
      ========================================== -->
@@ -725,11 +689,10 @@
         </div>
     </div>
 </div>
-
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI"; 
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
    
     // --- TYPEWRITER LOGIC ---
     const textElement = document.getElementById('typewriter');
@@ -769,11 +732,10 @@
             return { ip: 'unknown', country: 'unknown' };
         }
     }
-
     async function isIpBanned(ipAddress) {
         if (ipAddress === 'unknown') return false;
         try {
-            const { data } = await client.from('ip_blacklist').select('ip_address').eq('ip_address', ipAddress).maybeSingle();
+            const { data } = await _supabase.from('ip_blacklist').select('ip_address').eq('ip_address', ipAddress).maybeSingle();
             return !!data;
         } catch (e) {
             return false;
@@ -802,55 +764,56 @@
                 throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CTMerchant.");
             }
             // 2. Perform Login
-            const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password });
+            const { data: authData, error: authError } = await _supabase.auth.signInWithPassword({ email, password });
             if (authError) throw authError;
-            // 3. Post-Login Database Check Trap
+            // 3. Post-Login Database Check Trap (Catches bypassed frontend & updates last active IP)
             if (authData && authData.user) {
-                const { data: profileData, error: profileErr } = await client.from('profiles').select('is_suspended').eq('id', authData.user.id).maybeSingle();
+                const { data: profileData, error: profileErr } = await _supabase.from('profiles').select('is_suspended').eq('id', authData.user.id).maybeSingle();
                
+                // If maybeSingle() throws an error, it means the RLS policy blocked them (they are IP banned!)
                 if (profileErr || !profileData || profileData.is_suspended === true) {
-                    await client.auth.signOut();
+                    await _supabase.auth.signOut();
                     throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
                 }
                 // Update IP
-                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
+                await _supabase.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
             }
             window.location.href = "user-dashboard.html";
         } catch (err) {
             alert(err.message);
             btn.innerHTML = originalHtml;
             btn.disabled = false;
-            await client.auth.signOut(); // Force signout on any error
+            await _supabase.auth.signOut(); // Force signout on any error
         }
     }
 
     // --- GOOGLE SIGN IN LOGIC ---
     let pendingGoogleUserId = null;
     let pendingGoogleUserName = null;
-
     async function handleGoogleLogin(response) {
         const heroBtn = document.getElementById('hero-login-btn');
         const originalHeroHtml = heroBtn.innerHTML;
         heroBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Checking Google...';
         heroBtn.disabled = true;
         try {
+            // 1. IP Ban Frontend Check
             const ipData = await getClientIpData();
             if (await isIpBanned(ipData.ip)) {
                 throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CTMerchant.");
             }
-            const { data, error } = await client.auth.signInWithIdToken({ provider: 'google', token: response.credential });
+            const { data, error } = await _supabase.auth.signInWithIdToken({ provider: 'google', token: response.credential });
             if (error) throw error;
             const user = data.user;
             pendingGoogleUserId = user.id;
             pendingGoogleUserName = user.user_metadata?.full_name || '';
-            
-            const { data: profile, error: profileErr } = await client.from('profiles').select('city_id, area_id, is_suspended').eq('id', user.id).maybeSingle();
+            // 2. Profile check & DB Trap
+            const { data: profile, error: profileErr } = await _supabase.from('profiles').select('city_id, area_id, is_suspended').eq('id', user.id).maybeSingle();
             if (profileErr || (profile && profile.is_suspended)) {
-                await client.auth.signOut();
+                await _supabase.auth.signOut();
                 throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
             }
             if (profile && profile.city_id && profile.area_id) {
-                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
+                await _supabase.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
                 window.location.href = "user-dashboard.html";
             } else {
                 document.getElementById('complete-profile-modal').classList.remove('hidden');
@@ -862,27 +825,25 @@
             alert("Google Sign-In Error: " + err.message);
             heroBtn.innerHTML = originalHeroHtml;
             heroBtn.disabled = false;
-            await client.auth.signOut();
+            await _supabase.auth.signOut();
         }
     }
-
     async function fetchCitiesForModal() {
         const citySelect = document.getElementById('google-city');
         try {
-            const { data, error } = await client.from('cities').select('id, name').eq('is_open', true).order('name');
+            const { data, error } = await _supabase.from('cities').select('id, name').eq('is_open', true).order('name');
             if (error) throw error;
             citySelect.innerHTML = '<option value="" disabled selected>Select your city</option>' + data.map(city => `<option value="${city.id}">${city.name}</option>`).join('');
         } catch (err) {
             citySelect.innerHTML = '<option value="" disabled>Error loading cities</option>';
         }
     }
-
     async function loadAreasForModal(cityId) {
         const areaSelect = document.getElementById('google-area');
         areaSelect.disabled = true;
         areaSelect.innerHTML = '<option value="" disabled selected>Loading areas...</option>';
         try {
-            const { data, error } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+            const { data, error } = await _supabase.from('areas').select('id, name').eq('city_id', cityId).order('name');
             if (error) throw error;
             areaSelect.innerHTML = '<option value="" disabled selected>Select your area</option>' + data.map(area => `<option value="${area.id}">${area.name}</option>`).join('');
             areaSelect.disabled = false;
@@ -890,18 +851,17 @@
             areaSelect.innerHTML = '<option value="" disabled>Error loading areas</option>';
         }
     }
-
     async function saveGoogleProfile() {
         const phone = document.getElementById('google-phone').value.trim();
         const cityId = document.getElementById('google-city').value;
         const areaId = document.getElementById('google-area').value;
         const btn = document.getElementById('google-complete-btn');
-        
+        if (!phone || !cityId || !areaId) return alert("Please fill in your phone, city, and area to continue.");
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Saving...';
         try {
             const ipData = await getClientIpData();
-            const { error } = await client.from('profiles').upsert({
+            const { error } = await _supabase.from('profiles').upsert({
                 id: pendingGoogleUserId, full_name: pendingGoogleUserName, phone: phone, city_id: parseInt(cityId), area_id: parseInt(areaId),
                 registration_ip: ipData.ip, last_active_ip: ipData.ip, ip_country: ipData.country
             });
@@ -912,9 +872,8 @@
             btn.disabled = false; btn.innerHTML = 'Complete Setup';
         }
     }
-
     async function cancelGoogleLogin() {
-        await client.auth.signOut();
+        await _supabase.auth.signOut();
         document.getElementById('complete-profile-modal').classList.add('hidden');
         pendingGoogleUserId = null;
     }
@@ -929,20 +888,19 @@
             password.type = 'password'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash');
         }
     }
-
     function openResetEmailModal() {
         document.getElementById('reset-email-modal').classList.remove('hidden');
         const loginEmail = document.getElementById('hero-email').value;
         if (loginEmail) document.getElementById('reset-email-input').value = loginEmail;
     }
-
     async function sendResetCode() {
         const email = document.getElementById('reset-email-input').value.trim();
+        if (!email) return alert("Please enter your registered email address.");
         const btn = document.getElementById('btn-send-reset');
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Sending...';
         try {
-            const { error } = await client.auth.resetPasswordForEmail(email);
+            const { error } = await _supabase.auth.resetPasswordForEmail(email);
             if (error) throw error;
             document.getElementById('reset-email-modal').classList.add('hidden');
             document.getElementById('reset-password-modal').classList.remove('hidden');
@@ -953,22 +911,21 @@
             btn.innerHTML = 'Send Reset Code';
         }
     }
-
     async function verifyAndResetPassword() {
         const email = document.getElementById('reset-email-input').value.trim();
         const otp = document.getElementById('reset-otp-input').value.trim();
         const newPassword = document.getElementById('reset-new-password').value;
         const confirmPassword = document.getElementById('reset-confirm-password').value;
-        
+        if (!otp || !newPassword || !confirmPassword) return alert("Please fill out all fields.");
         if (newPassword !== confirmPassword) return alert("Passwords do not match. Please try again.");
-        
+        if (newPassword.length < 6) return alert("Password must be at least 6 characters.");
         const btn = document.getElementById('btn-confirm-reset');
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Resetting...';
         try {
-            const { error: verifyError } = await client.auth.verifyOtp({ email: email, token: otp, type: 'recovery' });
+            const { error: verifyError } = await _supabase.auth.verifyOtp({ email: email, token: otp, type: 'recovery' });
             if (verifyError) throw verifyError;
-            const { error: updateError } = await client.auth.updateUser({ password: newPassword });
+            const { error: updateError } = await _supabase.auth.updateUser({ password: newPassword });
             if (updateError) throw updateError;
             alert("Success! Your password has been updated.");
             window.location.href = "user-dashboard.html";
@@ -978,7 +935,6 @@
             btn.innerHTML = 'Confirm & Reset Password';
         }
     }
-
     function toggleFloatingContact() {
         const popup = document.getElementById('fc-popup');
         popup.classList.toggle('show');
@@ -987,7 +943,6 @@
             document.getElementById('fc-status').textContent = '';
         }
     }
-
     async function handleFloatingContactSubmit(e) {
         e.preventDefault();
         const btn = document.getElementById('fc-submit-btn');
@@ -1004,7 +959,7 @@
         btn.innerHTML = 'Sending... <i class="fa-solid fa-circle-notch fa-spin"></i>';
         statusDiv.className = 'fc-status';
         try {
-            const { error } = await client.from('contact_messages').insert([payload]);
+            const { error } = await _supabase.from('contact_messages').insert([payload]);
             if (error) throw error;
             statusDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> Message sent successfully!';
             statusDiv.className = 'fc-status success';
@@ -1017,7 +972,6 @@
             btn.disabled = false; btn.innerHTML = originalText;
         }
     }
-
     // ==========================================
     // AI CHAT WIDGET LOGIC (ANONYMOUS MODE WITH RATE LIMIT)
     // ==========================================
@@ -1025,14 +979,13 @@
     function toggleAiChat() {
         const chatWindow = document.getElementById('ai-chat-window');
         const badge = document.getElementById('ai-badge');
-       
+        
         chatWindow.classList.toggle('open');
-       
+        
         if (badge) {
             badge.style.display = 'none';
         }
     }
-
     async function sendAiMsg() {
         const inp = document.getElementById('ai-chat-input');
         const txt = inp.value.trim();
@@ -1040,7 +993,7 @@
         const todayStr = new Date().toISOString().split('T')[0];
         let usageStr = localStorage.getItem('ctm_ai_anon_usage');
         let aiUsage = usageStr ? JSON.parse(usageStr) : { date: todayStr, count: 0 };
-       
+        
         if (aiUsage.date !== todayStr) {
             aiUsage = { date: todayStr, count: 0 };
         }
@@ -1081,14 +1034,14 @@
             const reply = data.reply || "No response received.";
             const isError = (reply.startsWith("Error:") || reply.startsWith("System"));
             const msgClass = isError ? "msg-error" : "msg-ai";
-           
+            
             body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
             if (!isError) {
                 aiChatHistory.push({ role: 'assistant', content: reply });
                 aiUsage.count += 1;
                 localStorage.setItem('ctm_ai_anon_usage', JSON.stringify(aiUsage));
             }
-           
+            
         } catch (err) {
             document.getElementById(loadId)?.remove();
             body.innerHTML += `<div class="chat-msg msg-error">Connection Error: Could not reach AI server.</div>`;
