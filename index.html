@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CTMerchant Ltd. | Digital Shops Repository</title>
+  <title>CTMerchant | Digital Shops Repository</title>
   <meta name="description" content="Discover verified merchants, local shops and products in your city. Bridging the gap between digital convenience and local availability in Nigeria.">
   <meta name="keywords" content="Merchant, Nigeria, Shops Repository, Local Business, CTMerchant, Unique Identifier">
-  <meta name="author" content="CTMerchant Ltd.">
+  <meta name="author" content="CTMerchant">
   <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
   <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
  
@@ -16,84 +16,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   
   <style>
-    :root {
-        /* PREMIUM AMAZON THEME WITH CTMERCHANT PINK */
-        --amz-dark: #131921;
-        --amz-nav-bar: #232F3E;
-        
-        --color-pink: #db2777; 
-        --color-pink-hover: #be185d;
-        --color-pink-light: rgba(219, 39, 119, 0.15);
-        
-        --amz-bg: #F3F4F6;
-        --amz-link: #007185;
-        --amz-link-hover: #C40000;
-        --color-text-main: #0F1111;
-        --color-text-muted: #565959;
-        --color-border: #D5D9D9;
-        
-        --transition: all 0.2s ease;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent;}
-
-    body {
-        background-color: var(--amz-bg);
-        color: var(--color-text-main);
-        overflow-x: hidden;
-        margin: 0;
-    }
-
-    /* --- PREMIUM HEADER --- */
-    .amz-header {
-        background-color: var(--amz-dark);
-        color: white;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    .nav-container {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 16px;
-        width: 100%;
-        max-width: 1600px;
-        margin: 0 auto;
-    }
-
-    .brand-wrapper { display: flex; align-items: center; flex-shrink: 0; text-decoration: none;}
-    .brand-logo { width: 40px; height: 40px; border-radius: 4px; object-fit: contain; }
-
-    .header-marquee-box { 
-        flex: 1; margin: 0 20px; overflow: hidden; white-space: nowrap; 
-        border-left: 1px solid rgba(255,255,255,0.2); padding-left: 15px; display: flex; align-items: center; 
-    }
-    .marquee-content { display: flex; width: max-content; animation: scroll 25s linear infinite; }
-    @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-    .marquee-item { display: flex; align-items: center; margin-right: 3rem; }
-    
-    .desktop-menu { display: flex; align-items: center; gap: 20px; }
-    .desktop-menu a { color: white; text-decoration: none; font-weight: 700; font-size: 0.95rem; transition: color 0.2s; }
-    .desktop-menu a:hover { color: var(--color-pink); }
-    .desktop-menu .nav-active { color: var(--color-pink); }
-    .btn-staff { background: var(--color-pink); padding: 8px 16px; border-radius: 6px; border: 1px solid var(--color-pink-hover); transition: 0.2s; }
-    .btn-staff:hover { background: var(--color-pink-hover); color: white !important;}
-
-    .mobile-menu-btn { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
-    .mobile-dropdown { display: flex; flex-direction: column; background: var(--amz-nav-bar); padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.1); }
-    .mobile-dropdown a { color: white; text-decoration: none; font-weight: 600; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    
-    @media (max-width: 900px) {
-        .desktop-menu { display: none; }
-        .mobile-menu-btn { display: block; }
-        .header-marquee-box { margin: 0 10px; padding-left: 10px; border-left: none; }
-    }
-
     /* =========================================
        STRICT 2x2 ENTERPRISE SPLIT LAYOUT
        ========================================= */
@@ -101,7 +23,7 @@
         display: grid;
         grid-template-columns: 50% 50%;
         width: 100%;
-        background: #131921; 
+        background: #0f172a; /* Fallback for the glassy panes */
     }
     .split-pane { display: flex; flex-direction: column; justify-content: center; position: relative; }
      
@@ -114,107 +36,69 @@
         min-height: 50vh;
     }
     .features-glass-bar {
-        background: rgba(19, 25, 33, 0.85); backdrop-filter: blur(12px);
-        padding: 16px; display: flex; justify-content: center; flex-wrap: wrap; gap: 16px;
+        background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        padding: 16px 16px; display: flex; justify-content: center; flex-wrap: wrap; gap: 16px;
         border-top: 1px solid rgba(255, 255, 255, 0.1); color: white; font-weight: 600; font-size: 0.95rem;
     }
     
-    /* RIGHT SIDE: TEXT & SEARCH PANEL */
+    /* RIGHT SIDE: TEXT & SEARCH PANEL (Spans full right column) */
     .pane-dark {
         grid-column: 2;
         grid-row: 1 / span 3;
-        background: linear-gradient(135deg, #131921 0%, #0F1111 100%); color: white;
-        padding: 40px 10%; 
-        border-left: 1px solid rgba(255,255,255,0.1); z-index: 2;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: white;
+        padding: 0px 10% 40px 10%; 
+        border-left: 1px solid rgba(255,255,255,0.1); box-shadow: -15px 0 40px rgba(0,0,0,0.6); z-index: 2;
         justify-content: flex-start; 
     }
-    
     .repo-badge {
         background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
         padding: 6px 14px; border-radius: 50px; font-size: 0.85rem; font-weight: 700;
         letter-spacing: 0.5px; color: #e2e8f0; display: inline-table; margin-bottom: 16px;
     }
-    
-    .hero-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; min-height: 40px; margin-top: 0px; }
-    .cursor { display: inline-block; width: 3px; background-color: var(--color-pink); animation: blink 1s step-end infinite; }
-    @keyframes blink { 50% { opacity: 0; } }
-    .hero-desc { font-size: 1rem; color: #94a3b8; margin-top: 4px; font-weight: 500; margin-bottom: 24px;}
-   
-    /* Enterprise Search Bar */
-    .repo-search-wrapper { position: relative; width: 100%; max-width: 450px; margin: 0 0 30px 0; }
-    .search-label { font-size: 0.95rem; font-weight: 700; color: #facc15; margin-bottom: 8px; }
-    .search-input-box { position: relative; width: 100%; display: flex; align-items: center; }
+    .hero-pro-text { font-size: 1.05rem; line-height: 1.6; color: #cbd5e1; margin: 0 0 20px 0; font-weight: 400; }
+    .repo-search-wrapper { position: relative; width: 100%; max-width: 450px; margin: 0 0 20px 0; }
     .repo-input {
-        width: 100%; padding: 14px 50px 14px 16px; background-color: white;
-        border: 2px solid transparent; border-radius: 6px; font-size: 1rem; color: #0F1111;
-        outline: none; transition: all 0.2s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        text-transform: uppercase; font-weight: 700; letter-spacing: 1px;
+        width: 100%; padding: 14px 45px 14px 20px; background-color: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 50px; font-size: 1rem; color: white;
+        text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; outline: none; transition: all 0.3s ease;
     }
-    .repo-input::placeholder { color: #888C8C; text-transform: none; letter-spacing: normal; font-weight: 500; }
-    .repo-input:focus { border-color: var(--color-pink); box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.2); }
-    .search-icon-btn {
-        position: absolute; right: 6px; background: var(--color-pink); color: white; width: 38px; height: 38px;
-        border-radius: 4px; display: flex; align-items: center; justify-content: center;
-        cursor: pointer; transition: 0.2s; border: none; font-size: 1.1rem;
+    .repo-input::placeholder { color: rgba(255, 255, 255, 0.5); text-transform: none; letter-spacing: normal; font-weight: 400; }
+    .repo-input:focus { background-color: rgba(255, 255, 255, 0.15); border-color: #db2777; box-shadow: 0 0 15px rgba(219, 39, 119, 0.4); }
+    .search-icon-btn { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); cursor: pointer; width: 20px; transition: color 0.2s; }
+    .search-icon-btn:hover { color: #db2777; }
+    .id-hint { margin-top: 6px; font-size: 0.8rem; font-weight: 600; color: #facc15; display: flex; align-items: center; gap: 4px; }
+    .search-label { font-size: 1rem; font-weight: 600; color: #facc15; margin-bottom: 8px; }
+    .hero-title { 
+        font-size: 2.2rem; font-weight: 800; margin-bottom: 0px; min-height: 40px; margin-top: 0px; 
     }
-    .search-icon-btn:hover { background: var(--color-pink-hover); }
-    .id-hint { margin-top: 8px; font-size: 0.8rem; font-weight: 600; color: #94a3b8; display: flex; align-items: center; gap: 6px; }
+    .cursor { display: inline-block; width: 3px; background-color: #db2777; animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .hero-desc { font-size: 1rem; color: #94a3b8; margin-top: 4px; font-weight: 500; }
    
-    /* HIGH-TRUST AUTH WIDGET */
-    .hero-auth-widget { 
-        background: white; padding: 32px 28px; border-radius: 8px; 
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--color-border); 
-        width: 100%; max-width: 450px; margin: 0; color: var(--color-text-main);
-    }
-    .hero-auth-widget .widget-title { font-size: 1.25rem; font-weight: 800; color: #0F1111; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-    
-    .input-group-hero { position: relative; margin-bottom: 16px; }
-    .input-group-hero i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #888C8C; font-size: 1rem; pointer-events: none; }
-    .input-group-hero i.toggle-password { left: auto; right: 12px; cursor: pointer; pointer-events: auto; transition: color 0.2s; }
-    .input-group-hero i.toggle-password:hover { color: var(--color-pink); }
-    
-    .hero-input-login { 
-        width: 100%; padding: 12px 12px 12px 36px; background: white; 
-        border: 1px solid #888C8C; border-radius: 4px; color: #0F1111; 
-        font-size: 0.95rem; outline: none; transition: all 0.2s ease; 
-        box-shadow: 0 1px 2px rgba(15,17,17,0.15) inset; 
-    }
-    .hero-input-login::placeholder { color: #888C8C; }
-    .hero-input-login:focus { border-color: var(--color-pink); box-shadow: 0 0 0 3px var(--color-pink-light); }
-    .hero-input-login:not(:placeholder-shown):invalid { border-color: #C40000; }
-
-    .forgot-password { display: block; font-size: 0.85rem; color: var(--amz-link); font-weight: 600; text-decoration: none; margin-bottom: 16px; text-align: right; cursor: pointer;}
-    .forgot-password:hover { color: var(--amz-link-hover); text-decoration: underline; }
-
-    .btn-login-hero { 
-        width: 100%; background: var(--color-pink); color: white; font-weight: 800; 
-        padding: 12px; border-radius: 6px; border: 1px solid var(--color-pink-hover); 
-        cursor: pointer; font-size: 1.05rem; transition: 0.2s; 
-        display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(219,39,119,0.3);
-    }
-    .btn-login-hero:hover { background: var(--color-pink-hover); }
-    .btn-login-hero:disabled { background: #E3E6E6; border-color: #D5D9D9; color: #888C8C; cursor: not-allowed; box-shadow: none; }
-
-    .widget-divider { display: flex; align-items: center; text-align: center; margin: 20px 0; color: var(--color-text-muted); font-size: 0.85rem; font-weight: 600; }
-    .widget-divider::before, .widget-divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--color-border); }
-    .widget-divider::before { margin-right: 10px; }
-    .widget-divider::after { margin-left: 10px; }
-    
-    .btn-create-account { 
-        display: block; width: 100%; text-align: center; padding: 12px; 
-        border: 1px solid var(--color-border); background: #F7FAFA; border-radius: 6px; 
-        color: #0F1111; font-weight: 700; text-decoration: none; transition: 0.2s; font-size: 1rem; 
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    .btn-create-account:hover { background: white; border-color: #B0B5B5; }
-
-    .status-box { margin-bottom: 16px; padding: 10px; border-radius: 4px; font-size: 0.85rem; display: none; align-items: flex-start; gap: 8px; line-height: 1.4; font-weight: 600;}
-    .status-box.active { display: flex; }
-    .status-error { background-color: #FEE2E2; color: #C40000; border: 1px solid #FECACA; border-left: 4px solid #C40000; }
+    /* AUTH WIDGET */
+    .hero-auth-widget { background: rgba(219, 39, 119, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 30px 24px; border-radius: 20px; box-shadow: 0 10px 40px rgba(219, 39, 119, 0.2); border: 1px solid rgba(219, 39, 119, 0.3); width: 100%; max-width: 450px; margin: 0; }
+    .hero-auth-widget .widget-title { font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+    .hero-auth-widget .input-group-hero { position: relative; margin-bottom: 12px; }
+    .hero-auth-widget .input-group-hero i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); font-size: 1rem; pointer-events: none; }
+    .hero-auth-widget .input-group-hero i.toggle-password { left: auto; right: 14px; cursor: pointer; pointer-events: auto; transition: color 0.2s; }
+    .hero-auth-widget .input-group-hero i.toggle-password:hover { color: #db2777; }
+    .hero-auth-widget .hero-input-login { width: 100%; padding: 12px 40px 12px 40px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 12px; color: white; font-size: 1rem; outline: none; transition: all 0.3s ease; box-sizing: border-box; }
+    .hero-auth-widget .hero-input-login::placeholder { color: rgba(255, 255, 255, 0.6); }
+    .hero-auth-widget .hero-input-login:focus { background: rgba(255, 255, 255, 0.3); border-color: #db2777; box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.15); }
+    .hero-auth-widget .hero-input-login:not(:placeholder-shown):invalid { border-color: #facc15; }
+    .hero-auth-widget .btn-login-hero { width: 100%; background: #db2777; color: white; font-weight: 800; padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-size: 1.05rem; transition: transform 0.2s, background-color 0.2s; display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; }
+    .hero-auth-widget .btn-login-hero:hover:not(:disabled) { background: #c0266a; transform: translateY(-2px); }
+    .hero-auth-widget .btn-login-hero:disabled { opacity: 0.7; cursor: not-allowed; }
+    .hero-auth-widget .widget-divider { display: flex; align-items: center; text-align: center; margin: 16px 0; color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; font-weight: 600; }
+    .hero-auth-widget .widget-divider::before, .hero-auth-widget .widget-divider::after { content: ''; flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
+    .hero-auth-widget .widget-divider::before { margin-right: 10px; }
+    .hero-auth-widget .widget-divider::after { margin-left: 10px; }
+    .hero-auth-widget .btn-create-account { display: block; width: 100%; text-align: center; padding: 12px; border: 2px solid rgba(219, 39, 119, 0.3); background: rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-weight: 700; text-decoration: none; transition: all 0.3s ease; font-size: 1rem; }
+    .hero-auth-widget .btn-create-account:hover { background: rgba(219, 39, 119, 0.2); border-color: #db2777; }
    
     /* TRUST METRICS SECTION */
     .trust-metrics-container { display: flex; gap: 15px; width: 100%; max-width: 450px; margin-top: 30px; flex-wrap: wrap; }
-    .trust-metric-box { flex: 1; min-width: 150px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 16px; border-radius: 8px; display: flex; align-items: center; gap: 14px; transition: transform 0.3s ease; }
+    .trust-metric-box { flex: 1; min-width: 150px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 16px; border-radius: 16px; display: flex; align-items: center; gap: 14px; transition: transform 0.3s ease, background 0.3s ease; }
     .trust-metric-box:hover { transform: translateY(-4px); background: rgba(255, 255, 255, 0.08); }
     .trust-metric-box i { font-size: 1.8rem; color: #10b981; }
     .trust-metric-box .tm-text h4 { margin: 0; color: #ffffff; font-size: 1.1rem; font-weight: 800; line-height: 1.2; }
@@ -225,23 +109,34 @@
         margin-top: 30px;
         background: rgba(0, 0, 0, 0.2);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
+        border-radius: 20px;
         padding: 24px;
         width: 100%;
         max-width: 450px;
+        box-sizing: border-box;
     }
-    .mj-title { color: white; font-size: 1.1rem; font-weight: 800; margin-top: 0; margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
+    .mj-title {
+        color: white; font-size: 1.1rem; font-weight: 800; margin-top: 0; margin-bottom: 24px;
+        display: flex; align-items: center; gap: 8px;
+    }
     .mj-title i { color: #facc15; }
-    .mj-timeline { position: relative; padding-left: 32px; }
-    .mj-timeline::before { content: ''; position: absolute; left: 11px; top: 4px; bottom: 4px; width: 2px; background: rgba(255, 255, 255, 0.1); }
+    .mj-timeline {
+        position: relative;
+        padding-left: 32px;
+    }
+    .mj-timeline::before {
+        content: ''; position: absolute; left: 11px; top: 4px; bottom: 4px;
+        width: 2px; background: rgba(255, 255, 255, 0.1);
+    }
     .mj-item { position: relative; margin-bottom: 22px; }
     .mj-item:last-child { margin-bottom: 0; }
     .mj-icon {
-        position: absolute; left: -32px; top: 0; width: 24px; height: 24px; border-radius: 50%;
-        background: #131921; border: 2px solid var(--color-pink);
+        position: absolute; left: -32px; top: 0;
+        width: 24px; height: 24px; border-radius: 50%;
+        background: #1e1b4b; border: 2px solid #db2777;
         display: flex; align-items: center; justify-content: center; z-index: 2;
     }
-    .mj-icon i { font-size: 10px; color: var(--color-pink); }
+    .mj-icon i { font-size: 10px; color: #db2777; }
     .mj-content h4 { margin: 0 0 4px 0; color: #e2e8f0; font-size: 0.95rem; font-weight: 700; }
     .mj-content p { margin: 0; color: #94a3b8; font-size: 0.8rem; line-height: 1.4; }
     .mj-badge-fee {
@@ -250,21 +145,28 @@
         font-size: 0.65rem; font-weight: 800; margin-left: 6px; vertical-align: middle;
     }
     .mj-pricing-box {
-        margin-top: 24px; background: linear-gradient(90deg, rgba(219, 39, 119, 0.15) 0%, rgba(219, 39, 119, 0) 100%);
-        border-left: 3px solid var(--color-pink); padding: 14px 16px; border-radius: 0 4px 4px 0;
+        margin-top: 24px;
+        background: linear-gradient(90deg, rgba(219, 39, 119, 0.15) 0%, rgba(219, 39, 119, 0) 100%);
+        border-left: 3px solid #db2777;
+        padding: 14px 16px;
+        border-radius: 0 8px 8px 0;
     }
     .mj-pricing-text { color: #cbd5e1; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
     .mj-pricing-amount { color: white; font-size: 1.6rem; font-weight: 800; margin-top: 4px; display: flex; align-items: baseline; gap: 4px; }
     .mj-pricing-amount span { font-size: 0.85rem; color: #94a3b8; font-weight: 500; }
 
     /* =========================================
-       BOTTOM LEFT 1 & 2: PANES
+       BOTTOM LEFT 1 & 2: GLASSY & COLORFUL PANES
        ========================================= */
     .pane-light { 
-        grid-column: 1; grid-row: 2; 
-        background: linear-gradient(135deg, rgba(19, 25, 33, 0.95) 0%, rgba(219, 39, 119, 0.1) 100%); 
-        padding: 50px 10% 40px 10%; border-top: 1px solid rgba(255, 255, 255, 0.08); 
-        justify-content: flex-start;
+        grid-column: 1; 
+        grid-row: 2; 
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(219, 39, 119, 0.15) 100%); 
+        backdrop-filter: blur(16px); 
+        -webkit-backdrop-filter: blur(16px); 
+        padding: 50px 10% 40px 10%; 
+        border-top: 1px solid rgba(255, 255, 255, 0.08); 
+        justify-content: flex-start; 
     }
     .value-title { font-size: 2.2rem; font-weight: 800; color: #ffffff; margin-bottom: 12px; margin-top: 0; }
     .value-desc { font-size: 1.1rem; color: #e2e8f0; line-height: 1.6; margin-bottom: 20px; }
@@ -273,57 +175,156 @@
     .value-bullets i { color: #10b981; font-size: 1.2rem; }
    
     .pane-white { 
-        grid-column: 1; grid-row: 3; 
-        background: linear-gradient(135deg, rgba(219, 39, 119, 0.02) 0%, #0F1111 100%); 
-        padding: 40px 10% 50px 10%; border-top: 1px solid rgba(255, 255, 255, 0.05); 
-        z-index: 2; justify-content: flex-start; 
+        grid-column: 1; 
+        grid-row: 3; 
+        background: linear-gradient(135deg, rgba(219, 39, 119, 0.05) 0%, rgba(15, 23, 42, 0.95) 100%); 
+        backdrop-filter: blur(16px); 
+        -webkit-backdrop-filter: blur(16px); 
+        padding: 40px 10% 50px 10%; 
+        border-top: 1px solid rgba(255, 255, 255, 0.05); 
+        border-left: none; 
+        box-shadow: none; 
+        z-index: 2; 
+        justify-content: flex-start; 
     }
-    .pane-white .repo-badge { background: rgba(219, 39, 119, 0.2); border: 1px solid rgba(219, 39, 119, 0.4); color: #fbcfe8; margin-top: 0; }
+    .pane-white .repo-badge { 
+        background: rgba(219, 39, 119, 0.2); 
+        border: 1px solid rgba(219, 39, 119, 0.4); 
+        color: #fbcfe8; 
+        margin-top: 0; 
+    }
     .pane-white .hero-pro-text { color: #cbd5e1; }
    
     @media (max-width: 900px) {
         .split-layout-grid { grid-template-columns: 1fr; }
-        .pane-img { grid-column: 1; grid-row: 1; min-height: 40vh; }
-        .pane-dark { grid-column: 1; grid-row: 2; padding-top: 40px; border-left: none; }
+        .pane-img { grid-column: 1; grid-row: 1; min-height: 50vh; }
+        .pane-dark { grid-column: 1; grid-row: 2; padding-top: 40px; border-left: none; box-shadow: none; }
         .pane-light { grid-column: 1; grid-row: 3; padding-top: 40px; }
         .pane-white { grid-column: 1; grid-row: 4; }
-        .hero-auth-widget, .trust-metrics-container, .merchant-journey-wrapper, .repo-search-wrapper { margin-left: auto; margin-right: auto; }
+        .hero-auth-widget, .trust-metrics-container, .merchant-journey-wrapper { margin-left: auto; margin-right: auto; }
     }
     @media (max-width: 600px) {
         .hero-title { font-size: 1.8rem; }
         .value-title { font-size: 1.8rem; }
-        .features-glass-bar { flex-direction: row; align-items: center; gap: 8px; font-size: 0.7rem; padding: 12px 8px; justify-content: space-between; }
+        .hero-pro-text { font-size: 0.95rem; }
+        .features-glass-bar { flex-direction: row; align-items: center; gap: 8px; font-size: 0.7rem; padding: 8px 8px; justify-content: space-between; }
         .features-glass-bar span { flex: 1; text-align: center; }
     }
+   
+    .nav-container { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 1600px; margin: 0 auto;}
+    .brand-wrapper { display: flex; align-items: center; flex-shrink: 0; }
+    .header-marquee-box { flex: 1; margin: 0 20px; overflow: hidden; white-space: nowrap; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 15px; display: flex; align-items: center; }
+    .marquee-content { display: flex; width: max-content; animation: scroll 20s linear infinite; }
+    @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .marquee-item { display: flex; align-items: center; margin-right: 3rem; }
+    @media (max-width: 768px) { .header-marquee-box { margin: 0 10px; padding-left: 10px; border-left: none; } }
   
+    .forgot-password { display: block; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); text-decoration: none; margin-top: 8px; margin-bottom: 12px; cursor: pointer; text-align: right; }
+    .forgot-password:hover { color: #db2777; }
+    
+    .main-header { position: sticky !important; top: 0; z-index: 9999; padding: 12px 16px; background-color: #131921; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .desktop-menu { display: flex; align-items: center; gap: 20px; }
+    .desktop-menu a { color: white; text-decoration: none; font-weight: 700; font-size: 0.95rem; transition: color 0.2s; }
+    .desktop-menu a:hover { color: #db2777; }
+    .desktop-menu .nav-active { color: #db2777; }
+    .btn-staff { background: #db2777; padding: 8px 16px; border-radius: 6px; transition: 0.2s; }
+    .btn-staff:hover { background: #be185d; color: white !important;}
+
+    .mobile-menu-btn { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+    .mobile-dropdown { display: flex; flex-direction: column; background: #232F3E; padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .mobile-dropdown a { color: white; text-decoration: none; font-weight: 600; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    
+    @media (max-width: 900px) {
+        .desktop-menu { display: none; }
+        .mobile-menu-btn { display: block; }
+    }
+
     /* =========================================
-       MODAL STYLES (Amazon Style)
+       MODAL STYLES
        ========================================= */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(19, 25, 33, 0.8); backdrop-filter: blur(2px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; visibility: hidden; transition: all 0.3s ease;}
-    .modal-overlay.active { opacity: 1; visibility: visible; }
-    .modal-card { background: white; border-radius: 8px; max-width: 400px; width: 100%; padding: 32px 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--color-border); text-align: left; }
-    .modal-title { font-size: 1.25rem; font-weight: 800; color: #0F1111; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;}
-    .modal-subtitle { color: var(--color-text-muted); font-size: 0.85rem; margin-bottom: 24px; line-height: 1.4;}
-    
-    .modal-input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-    .modal-label { font-size: 0.8rem; font-weight: 700; color: #0F1111; }
-    .modal-input-wrapper { position: relative; width: 100%; }
-    .modal-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #888C8C; z-index: 5; font-size: 0.9rem;}
-    .modal-input { width: 100%; padding: 12px 12px 12px 36px; background-color: white; border: 1px solid #888C8C; border-radius: 4px; font-size: 0.95rem; outline: none; transition: all 0.2s ease; color: #0F1111; box-shadow: 0 1px 2px rgba(15,17,17,0.15) inset;}
-    .modal-input:focus { border-color: var(--color-pink); box-shadow: 0 0 0 3px var(--color-pink-light); }
-    .modal-input:not(:placeholder-shown):invalid { border-color: #C40000; }
-    select.modal-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23888C8C'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 1rem; }
-    select.modal-input:disabled { background-color: #F3F4F6; cursor: not-allowed; opacity: 0.7;}
-    
-    .btn-primary-modal { width: 100%; background-color: var(--color-pink); color: white; padding: 12px; border-radius: 6px; font-weight: 700; font-size: 1rem; border: 1px solid var(--color-pink-hover); cursor: pointer; transition: 0.2s; margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(219,39,119,0.3); }
-    .btn-primary-modal:hover:not(:disabled) { background-color: var(--color-pink-hover); }
-    .btn-primary-modal:disabled { background-color: #E3E6E6; border-color: #D5D9D9; color: #888C8C; cursor: not-allowed; box-shadow: none; }
-    .btn-cancel { width: 100%; background: white; border: 1px solid var(--color-border); padding: 10px; border-radius: 6px; font-weight: 700; color: #0F1111; cursor: pointer; margin-top: 12px; transition: 0.2s;}
-    .btn-cancel:hover { background: #F7FAFA; }
-
-    .spinner { width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
-
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-card { background: white; border-radius: 1.5rem; max-width: 400px; width: 100%; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+    .modal-title { font-size: 1.25rem; font-weight: 800; color: #2E1065; text-align: center; margin-bottom: 0.5rem; }
+    .modal-subtitle { color: #64748b; font-size: 0.875rem; text-align: center; margin-bottom: 1.5rem; }
     .hidden { display: none !important; }
+    .modal-input-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+    .modal-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.25rem; }
+    .modal-input-wrapper { position: relative; width: 100%; }
+    .modal-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
+    .modal-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem; outline: none; transition: all 0.3s ease; color: #0f172a; }
+    .modal-input:focus { border-color: #db2777; box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); background: white; }
+    .modal-input:not(:placeholder-shown):invalid { border-color: #facc15; }
+    select.modal-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
+    .btn-primary-modal { width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn-primary-modal:hover:not(:disabled) { background-color: #db2777; transform: translateY(-1px); }
+    .btn-primary-modal:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+    .spinner { width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* =========================================
+       FLOATING CONTACT WIDGET STYLES (Left)
+       ========================================= */
+    .floating-contact-btn { position: fixed; bottom: 24px; left: 24px; width: 60px; height: 60px; background-color: #db2777; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 10px 25px rgba(219, 39, 119, 0.4); cursor: pointer; z-index: 999; transition: transform 0.3s ease, background-color 0.3s ease; border: none; }
+    .floating-contact-btn:hover { transform: scale(1.1); background-color: #be185d; }
+    .floating-contact-popup { position: fixed; bottom: 95px; left: 24px; width: 350px; background: white; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 999; overflow: hidden; transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; }
+    .floating-contact-popup.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+    .fc-header { background: #2E1065; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 1.05rem; }
+    .fc-close { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1.2rem; transition: color 0.2s; }
+    .fc-close:hover { color: white; }
+    .fc-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .fc-input-group { display: flex; flex-direction: column; gap: 4px; }
+    .fc-label { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .fc-input, .fc-select, .fc-textarea { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; font-family: inherit; outline: none; transition: border-color 0.2s; background: #f8fafc; color: #0f172a; }
+    .fc-input:focus, .fc-select:focus, .fc-textarea:focus { border-color: #db2777; background: white; }
+    .fc-btn { background: #db2777; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 0.95rem; margin-top: 4px; }
+    .fc-btn:hover { background: #be185d; }
+    .fc-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+    .fc-status { font-size: 0.85rem; text-align: center; display: none; padding: 10px; border-radius: 8px; font-weight: 600; margin-top: 4px; }
+    .fc-status.success { display: block; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;}
+    .fc-status.error { display: block; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;}
+    
+    /* =========================================
+       AI CHAT WIDGET STYLES (Right) + NOTIF BADGE
+       ========================================= */
+    .ai-fab-container { position: fixed; bottom: 24px; right: 24px; z-index: 5000; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .ai-fab-wrapper { position: relative; }
+   
+    .ai-notif-badge {
+        position: absolute; top: -4px; right: -4px; background: #EF4444; color: white;
+        font-size: 0.8rem; font-weight: 800; width: 22px; height: 22px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; border: 2px solid white;
+        animation: bounce 2s infinite; z-index: 10;
+    }
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+        40% {transform: translateY(-5px);}
+        60% {transform: translateY(-3px);}
+    }
+    .ai-fab { width: 60px; height: 60px; border-radius: 50%; background: #059669; color: white; box-shadow: 0 10px 25px rgba(5, 150, 105, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.2s; border: none; }
+    .ai-fab:active { transform: scale(0.95); }
+    .ai-label { background: white; color: #059669; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB; white-space: nowrap; pointer-events: none; }
+    .ai-chat-window { position: fixed; bottom: 95px; right: 24px; width: 350px; height: 450px; background: white; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 5000; display: flex; flex-direction: column; overflow: hidden; opacity: 0; pointer-events: none; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #E5E7EB; }
+    .ai-chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+    .ai-chat-header { background: #059669; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .ai-chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
+    .chat-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; }
+    .msg-ai { align-self: flex-start; background: white; border: 1px solid #E2E8F0; color: #1E293B; border-bottom-left-radius: 2px; }
+    .msg-user { align-self: flex-end; background: #059669; color: white; border-bottom-right-radius: 2px; }
+    .msg-error { align-self: center; background: #FEE2E2; color: #DC2626; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
+   
+    .chat-register-btn { display: block; background: #DB2777; color: white !important; text-align: center; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; margin-top: 12px; box-shadow: 0 4px 6px rgba(219, 39, 119, 0.3); transition: transform 0.2s, background 0.2s; }
+    .chat-register-btn:hover { background: #be185d; transform: translateY(-1px); }
+   
+    .ai-chat-input-area { padding: 12px; background: white; border-top: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 8px; }
+    .ai-chat-input-row { display: flex; gap: 8px; width: 100%; }
+    .ai-chat-input { flex: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid #E2E8F0; outline: none; font-size: 0.9rem; background: #F1F5F9; color: #0f172a; }
+    .ai-chat-input:focus { border-color: #059669; background: white; }
+    .ai-btn-send { background: #059669; color: white; border: none; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+    .ai-btn-send:hover { background: #047857; }
+    @media (max-width: 400px) {
+        .floating-contact-popup { width: calc(100% - 48px); left: 24px; right: 24px; }
+        .ai-chat-window { width: calc(100% - 48px); left: 24px; right: 24px; }
+    }
 
     /* FOOTER */
     .footer { background: #0F1111; color: white; padding: 30px 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; }
@@ -331,66 +332,19 @@
     .footer-links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; font-size: 0.9rem; color: #888C8C; }
     .footer-links a { color: #888C8C; text-decoration: none; transition: 0.2s; }
     .footer-links a:hover { color: white; }
-
-    /* FLOATING CONTACT WIDGET */
-    .floating-contact-btn { position: fixed; bottom: 24px; left: 24px; width: 56px; height: 56px; background-color: var(--amz-dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); cursor: pointer; z-index: 999; transition: 0.2s; border: 1px solid var(--color-border); }
-    .floating-contact-btn:hover { background-color: #232F3E; transform: scale(1.05);}
-    .floating-contact-popup { position: fixed; bottom: 95px; left: 24px; width: 350px; background: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 999; border: 1px solid var(--color-border); overflow: hidden; transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.3s; display: flex; flex-direction: column; }
-    .floating-contact-popup.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
-    .fc-header { background: var(--amz-dark); color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 1rem; }
-    .fc-close { background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; transition: 0.2s; }
-    .fc-close:hover { color: var(--color-pink); }
-    .fc-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-    .fc-input-group { display: flex; flex-direction: column; gap: 4px; }
-    .fc-label { font-size: 0.8rem; font-weight: 700; color: #0F1111; }
-    .fc-input, .fc-select, .fc-textarea { width: 100%; padding: 10px 12px; border: 1px solid #888C8C; border-radius: 4px; font-size: 0.95rem; font-family: inherit; outline: none; transition: 0.2s; box-shadow: 0 1px 2px rgba(15,17,17,0.1) inset; color: #0F1111; }
-    .fc-input:focus, .fc-select:focus, .fc-textarea:focus { border-color: var(--color-pink); box-shadow: 0 0 0 3px var(--color-pink-light); }
-    .fc-btn { background: var(--color-pink); color: white; border: 1px solid var(--color-pink-hover); padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 1rem; margin-top: 8px; }
-    .fc-btn:hover { background: var(--color-pink-hover); }
-    .fc-btn:disabled { background: #E3E6E6; border-color: #D5D9D9; color: #888C8C; cursor: not-allowed; }
-    .fc-status { font-size: 0.85rem; text-align: left; display: none; padding: 10px; border-radius: 4px; font-weight: 600; margin-top: 4px; }
-    .fc-status.success { display: flex; background: #ECFDF5; color: #007185; border: 1px solid #A7F3D0; border-left: 4px solid #007185;}
-    .fc-status.error { display: flex; background: #FEE2E2; color: #C40000; border: 1px solid #FECACA; border-left: 4px solid #C40000;}
-
-    /* AI CHAT WIDGET */
-    .ai-fab-container { position: fixed; bottom: 24px; right: 24px; z-index: 5000; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-    .ai-fab-wrapper { position: relative; }
-    .ai-notif-badge { position: absolute; top: -4px; right: -4px; background: #C40000; color: white; font-size: 0.8rem; font-weight: 800; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; animation: bounce 2s infinite; z-index: 10; }
-    @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-5px);} 60% {transform: translateY(-3px);} }
-    .ai-fab { width: 56px; height: 56px; border-radius: 50%; background: var(--color-pink); color: white; box-shadow: 0 4px 12px rgba(219, 39, 119, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.2s; border: none; }
-    .ai-fab:active { transform: scale(0.95); }
-    .ai-label { background: white; color: var(--color-pink); font-size: 0.7rem; font-weight: 800; padding: 4px 8px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid var(--color-border); white-space: nowrap; pointer-events: none; }
-    .ai-chat-window { position: fixed; bottom: 95px; right: 24px; width: 350px; height: 450px; background: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 5000; display: flex; flex-direction: column; overflow: hidden; opacity: 0; pointer-events: none; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid var(--color-border); }
-    .ai-chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
-    .ai-chat-header { background: var(--amz-dark); color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
-    .ai-chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
-    .chat-msg { max-width: 85%; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; line-height: 1.4; }
-    .msg-ai { align-self: flex-start; background: white; border: 1px solid var(--color-border); color: #0F1111; }
-    .msg-user { align-self: flex-end; background: var(--color-pink); color: white; }
-    .msg-error { align-self: center; background: #FEE2E2; color: #C40000; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
-    .chat-register-btn { display: block; background: var(--color-pink); color: white !important; text-align: center; padding: 10px 16px; border-radius: 6px; text-decoration: none; font-weight: 700; margin-top: 12px; transition: 0.2s; border: 1px solid var(--color-pink-hover);}
-    .chat-register-btn:hover { background: var(--color-pink-hover); }
-    .ai-chat-input-area { padding: 12px; background: white; border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: 8px; }
-    .ai-chat-input-row { display: flex; gap: 8px; width: 100%; }
-    .ai-chat-input { flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #888C8C; outline: none; font-size: 0.9rem; color: #0F1111; }
-    .ai-chat-input:focus { border-color: var(--color-pink); box-shadow: 0 0 0 2px var(--color-pink-light); }
-    .ai-btn-send { background: var(--color-pink); color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: 0.2s; }
-    .ai-btn-send:hover { background: var(--color-pink-hover); }
-    @media (max-width: 400px) { .floating-contact-popup, .ai-chat-window { width: calc(100% - 48px); left: 24px; right: 24px; } }
   </style>
 </head>
 <body>
-
 <!-- NAVIGATION -->
-<nav class="amz-header">
+<nav class="main-header">
   <div class="nav-container">
     <a href="index.html" class="brand-wrapper" title="Home Screen">
-      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="CTMerchant Logo" class="brand-logo">
+      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
     </a>
     <div class="header-marquee-box">
        <div class="marquee-content">
           <div class="marquee-item">
-              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CTMERCHANT LTD.</span>
+              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CTMerchant</span>
               <div class="flag-icon" style="display: flex; flex-direction: column; width: 14px; height: 10px; margin: 0 8px;">
                   <div style="flex: 1; background: #16a34a;"></div>
                   <div style="flex: 1; background: #ffffff;"></div>
@@ -399,7 +353,7 @@
               <span style="font-weight: 800; color: white; font-size: 0.9rem; text-transform: uppercase;">REPOSITORY OF SHOPS, PRODUCTS AND SERVICES.</span>
           </div>
           <div class="marquee-item">
-              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CTMERCHANT LTD.</span>
+              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CTMerchant</span>
               <div class="flag-icon" style="display: flex; flex-direction: column; width: 14px; height: 10px; margin: 0 8px;">
                   <div style="flex: 1; background: #16a34a;"></div>
                   <div style="flex: 1; background: #ffffff;"></div>
@@ -424,7 +378,7 @@
   </div>
  
   <div class="mobile-dropdown hidden" id="mobile-menu">
-      <a href="index.html">Home</a>
+      <a href="index.html" style="border-bottom: 1px solid rgba(255,255,255,0.1);">Home</a>
       <a href="about.html">About</a>
       <a href="services.html">Services</a>
       <a href="affiliate.html">Affiliate</a>
@@ -439,7 +393,7 @@
     <div class="split-pane pane-img">
         <div class="features-glass-bar">
             <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-store" style="color:#10b981;"></i> Commerce </span>
-            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-magnifying-glass-location" style="color:var(--color-pink);"></i> Discover Locally</span>
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-magnifying-glass-location" style="color:#f472b6;"></i> Discover Locally</span>
             <span style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-id-card" style="color:#60a5fa;"></i> Unique ID</span>
         </div>
     </div>
@@ -451,41 +405,33 @@
         <p class="hero-desc">
           We provide a digital repository of physical shops, their products, and locations within a city.
         </p>
-        
         <div class="repo-search-wrapper">
             <p class="search-label">Search Repository</p>
-            <div class="search-input-box">
+            <div style="position: relative;">
                 <input type="text" id="repo-search-input" placeholder="Enter Merchant ID..." class="repo-input"
                        onkeypress="if(event.key === 'Enter') handleRepoSearch()">
-                <button class="search-icon-btn" onclick="handleRepoSearch()">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </button>
+                <div class="search-icon-btn" onclick="handleRepoSearch()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
             </div>
             <p class="id-hint">
                 <i class="fa-solid fa-circle-info"></i> Search by unique ID (e.g., 209234)
             </p>
         </div>
-
-        <!-- HIGH-TRUST AUTH WIDGET -->
         <div class="hero-auth-widget">
             <div class="widget-title">
-                <i class="fa-solid fa-lock" style="color: var(--color-pink);"></i> Users Sign-In
+                <i class="fa-solid fa-lock"></i> Users Login
             </div>
            
             <form onsubmit="event.preventDefault(); handleHeroLogin();">
-                <div id="login-status" class="status-box">
-                    <i id="status-icon" class="fa-solid"></i>
-                    <span id="message"></span>
-                </div>
-
                 <div class="input-group-hero">
-                    <i class="fa-regular fa-envelope"></i>
+                    <i class="fa-solid fa-envelope"></i>
                     <input type="email" id="hero-email" class="hero-input-login" placeholder="Email Address" required>
                 </div>
                 <div class="input-group-hero">
-                    <i class="fa-solid fa-lock"></i>
+                    <i class="fa-solid fa-key"></i>
                     <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required minlength="6">
-                    <i class="fa-regular fa-eye toggle-password" onclick="togglePassword()"></i>
+                    <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePassword()"></i>
                 </div>
                
                 <a class="forgot-password" onclick="openResetEmailModal()">Forgot password?</a>
@@ -494,12 +440,10 @@
                     Secure Sign In <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
-            
             <div class="widget-divider">New to CTMerchant?</div>
             <a href="signup.html" class="btn-create-account">
                 Create Account
             </a>
-            
             <div class="widget-divider">Or continue with</div>
             <div style="display: flex; justify-content: center; width: 100%;">
                 <div id="g_id_onload"
@@ -514,9 +458,7 @@
                      data-shape="rectangular"
                      data-theme="outline"
                      data-text="continue_with"
-                     data-size="large"
-                     data-logo_alignment="left"
-                     data-width="360">
+                     data-size="large">
                 </div>
             </div>
         </div>
@@ -633,18 +575,16 @@
 <!-- MODALS -->
 <div id="complete-profile-modal" class="modal-overlay hidden">
     <div class="modal-card">
-        <h2 class="modal-title"><i class="fa-solid fa-user-check" style="color: var(--color-pink);"></i> Complete Setup</h2>
-        <p class="modal-subtitle">We need a few more details to finalize your dashboard.</p>
-        
-        <form id="google-setup-form" onsubmit="event.preventDefault(); saveGoogleProfile();">
+        <h2 class="modal-title">Complete Your Profile</h2>
+        <p class="modal-subtitle">We need a few more details to set up your dashboard.</p>
+        <form onsubmit="event.preventDefault(); saveGoogleProfile();">
             <div class="modal-input-group">
                 <label class="modal-label">Phone Number</label>
                 <div class="modal-input-wrapper">
                     <span class="modal-icon"><i class="fa-solid fa-phone"></i></span>
-                    <input type="tel" id="google-phone" placeholder="e.g. 08012345678" required pattern="^0[0-9]{10}$" title="Valid 11-digit number starting with 0" class="modal-input">
+                    <input type="tel" id="google-phone" placeholder="08012345678" required pattern="^0[0-9]{10}$" title="Valid 11-digit number starting with 0" class="modal-input">
                 </div>
             </div>
-            
             <div class="modal-input-group">
                 <label class="modal-label">Select City</label>
                 <div class="modal-input-wrapper">
@@ -654,7 +594,6 @@
                     </select>
                 </div>
             </div>
-            
             <div class="modal-input-group">
                 <label class="modal-label">Select Area</label>
                 <div class="modal-input-wrapper">
@@ -664,9 +603,8 @@
                     </select>
                 </div>
             </div>
-            
-            <button type="submit" id="google-complete-btn" class="btn-primary-modal">Finish Setup</button>
-            <button type="button" onclick="cancelGoogleLogin()" class="btn-cancel">Cancel & Sign Out</button>
+            <button type="submit" id="google-complete-btn" class="btn-primary-modal">Complete Setup</button>
+            <button type="button" onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel & Sign Out</button>
         </form>
     </div>
 </div>
@@ -675,17 +613,17 @@
     <div class="modal-card">
         <h2 class="modal-title">Reset Password</h2>
         <p class="modal-subtitle">Enter your email address to receive a 6-digit recovery code.</p>
-        
-        <div class="modal-input-group">
-            <label class="modal-label">Registered Email</label>
-            <div class="modal-input-wrapper">
-                <span class="modal-icon"><i class="fa-regular fa-envelope"></i></span>
-                <input type="email" id="reset-email-input" placeholder="name@example.com" required class="modal-input">
+        <form onsubmit="event.preventDefault(); sendResetCode();">
+            <div class="modal-input-group">
+                <label class="modal-label">Registered Email</label>
+                <div class="modal-input-wrapper">
+                    <span class="modal-icon"><i class="fa-solid fa-envelope"></i></span>
+                    <input type="email" id="reset-email-input" placeholder="name@example.com" required class="modal-input">
+                </div>
             </div>
-        </div>
-        
-        <button id="btn-send-reset" onclick="sendResetCode()" class="btn-primary-modal">Send Reset Code</button>
-        <button onclick="closeModal('reset-email-modal')" class="btn-cancel">Cancel</button>
+            <button type="submit" id="btn-send-reset" class="btn-primary-modal">Send Reset Code</button>
+            <button type="button" onclick="document.getElementById('reset-email-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
+        </form>
     </div>
 </div>
 
@@ -693,33 +631,31 @@
     <div class="modal-card">
         <h2 class="modal-title">Create New Password</h2>
         <p class="modal-subtitle">Enter the 6-digit code we just sent to your email.</p>
-        
-        <div class="modal-input-group">
-            <label class="modal-label">6-Digit Recovery Code</label>
-            <div class="modal-input-wrapper">
-                <span class="modal-icon"><i class="fa-solid fa-hashtag"></i></span>
-                <input type="text" id="reset-otp-input" placeholder="123456" class="modal-input" required maxlength="6" style="letter-spacing: 5px; text-align: center; font-weight: bold; padding-left: 1rem;">
+        <form onsubmit="event.preventDefault(); verifyAndResetPassword();">
+            <div class="modal-input-group">
+                <label class="modal-label">6-Digit Recovery Code</label>
+                <div class="modal-input-wrapper">
+                    <span class="modal-icon"><i class="fa-solid fa-hashtag"></i></span>
+                    <input type="text" id="reset-otp-input" placeholder="123456" class="modal-input" required maxlength="6" style="letter-spacing: 5px; text-align: center; font-weight: bold; padding-left: 1rem;">
+                </div>
             </div>
-        </div>
-        
-        <div class="modal-input-group">
-            <label class="modal-label">New Password</label>
-            <div class="modal-input-wrapper">
-                <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
-                <input type="password" id="reset-new-password" placeholder="At least 6 characters" required minlength="6" class="modal-input">
+            <div class="modal-input-group">
+                <label class="modal-label">New Password</label>
+                <div class="modal-input-wrapper">
+                    <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" id="reset-new-password" placeholder="At least 6 characters" required minlength="6" class="modal-input">
+                </div>
             </div>
-        </div>
-        
-        <div class="modal-input-group">
-            <label class="modal-label">Confirm Password</label>
-            <div class="modal-input-wrapper">
-                <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
-                <input type="password" id="reset-confirm-password" placeholder="Re-enter password" required minlength="6" class="modal-input">
+            <div class="modal-input-group">
+                <label class="modal-label">Confirm Password</label>
+                <div class="modal-input-wrapper">
+                    <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" id="reset-confirm-password" placeholder="Re-enter password" required minlength="6" class="modal-input">
+                </div>
             </div>
-        </div>
-        
-        <button id="btn-confirm-reset" onclick="verifyAndResetPassword()" class="btn-primary-modal">Confirm & Reset Password</button>
-        <button onclick="closeModal('reset-password-modal')" class="btn-cancel">Cancel</button>
+            <button type="submit" id="btn-confirm-reset" class="btn-primary-modal">Confirm & Reset Password</button>
+            <button type="button" onclick="document.getElementById('reset-password-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
+        </form>
     </div>
 </div>
 
@@ -731,7 +667,7 @@
 </button>
 <div class="floating-contact-popup" id="fc-popup">
     <div class="fc-header">
-        <span><i class="fa-regular fa-envelope"></i> Message Us</span>
+        <span><i class="fa-solid fa-envelope"></i> Message Us</span>
         <button class="fc-close" onclick="toggleFloatingContact()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <form class="fc-body" id="fc-form" onsubmit="handleFloatingContactSubmit(event)">
@@ -766,7 +702,7 @@
 <div class="ai-fab-container">
     <div class="ai-fab-wrapper">
         <button class="ai-fab" onclick="toggleAiChat()">
-            <i class="fa-regular fa-comments"></i>
+            <i class="fa-solid fa-comments"></i>
         </button>
         <div id="ai-badge" class="ai-notif-badge">1</div>
     </div>
@@ -792,7 +728,7 @@
 
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI"; 
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
    
     // --- TYPEWRITER LOGIC ---
@@ -818,7 +754,7 @@
     }
     document.addEventListener('DOMContentLoaded', typeEffect);
 
-    // --- IP TRACKING & BAN CHECK LOGIC ---
+    // --- NEW: IP TRACKING & BAN CHECK LOGIC ---
     async function getClientIpData() {
         try {
             const res = await fetch('https://1.1.1.1/cdn-cgi/trace');
@@ -833,7 +769,7 @@
             return { ip: 'unknown', country: 'unknown' };
         }
     }
-    
+
     async function isIpBanned(ipAddress) {
         if (ipAddress === 'unknown') return false;
         try {
@@ -856,19 +792,19 @@
         const password = document.getElementById('hero-password').value;
         const btn = document.getElementById('hero-login-btn');
         const originalHtml = btn.innerHTML;
-        
-        btn.innerHTML = '<div class="spinner"></div> Authenticating...';
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
         btn.disabled = true;
        
         try {
+            // 1. IP Ban Frontend Check
             const ipData = await getClientIpData();
             if (await isIpBanned(ipData.ip)) {
                 throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CTMerchant.");
             }
-            
+            // 2. Perform Login
             const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password });
             if (authError) throw authError;
-            
+            // 3. Post-Login Database Check Trap
             if (authData && authData.user) {
                 const { data: profileData, error: profileErr } = await client.from('profiles').select('is_suspended').eq('id', authData.user.id).maybeSingle();
                
@@ -876,25 +812,16 @@
                     await client.auth.signOut();
                     throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
                 }
+                // Update IP
                 await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
             }
             window.location.href = "user-dashboard.html";
         } catch (err) {
-            showLoginStatus(err.message, "error");
+            alert(err.message);
             btn.innerHTML = originalHtml;
             btn.disabled = false;
-            await client.auth.signOut(); 
+            await client.auth.signOut(); // Force signout on any error
         }
-    }
-
-    function showLoginStatus(txt, type) {
-        const box = document.getElementById('login-status');
-        const msg = document.getElementById('message');
-        const icon = document.getElementById('status-icon');
-        
-        box.className = `status-box active status-${type}`;
-        msg.textContent = txt;
-        icon.className = type === 'error' ? "fa-solid fa-triangle-exclamation" : "fa-solid fa-circle-check";
     }
 
     // --- GOOGLE SIGN IN LOGIC ---
@@ -904,47 +831,41 @@
     async function handleGoogleLogin(response) {
         const heroBtn = document.getElementById('hero-login-btn');
         const originalHeroHtml = heroBtn.innerHTML;
-        heroBtn.innerHTML = '<div class="spinner"></div> Checking Google...';
+        heroBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Checking Google...';
         heroBtn.disabled = true;
-        
         try {
             const ipData = await getClientIpData();
             if (await isIpBanned(ipData.ip)) {
                 throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CTMerchant.");
             }
-            
             const { data, error } = await client.auth.signInWithIdToken({ provider: 'google', token: response.credential });
             if (error) throw error;
-            
             const user = data.user;
             pendingGoogleUserId = user.id;
             pendingGoogleUserName = user.user_metadata?.full_name || '';
             
             const { data: profile, error: profileErr } = await client.from('profiles').select('city_id, area_id, is_suspended').eq('id', user.id).maybeSingle();
-            
             if (profileErr || (profile && profile.is_suspended)) {
                 await client.auth.signOut();
                 throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
             }
-            
             if (profile && profile.city_id && profile.area_id) {
                 await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
                 window.location.href = "user-dashboard.html";
             } else {
-                openModal('complete-profile-modal');
+                document.getElementById('complete-profile-modal').classList.remove('hidden');
                 heroBtn.innerHTML = originalHeroHtml;
                 heroBtn.disabled = false;
                 await fetchCitiesForModal();
             }
         } catch(err) {
-            showLoginStatus("Google Sign-In Error: " + err.message, "error");
+            alert("Google Sign-In Error: " + err.message);
             heroBtn.innerHTML = originalHeroHtml;
             heroBtn.disabled = false;
             await client.auth.signOut();
         }
     }
 
-    // CITY & AREA FETCHING FOR GOOGLE MODAL
     async function fetchCitiesForModal() {
         const citySelect = document.getElementById('google-city');
         try {
@@ -955,7 +876,7 @@
             citySelect.innerHTML = '<option value="" disabled>Error loading cities</option>';
         }
     }
-    
+
     async function loadAreasForModal(cityId) {
         const areaSelect = document.getElementById('google-area');
         areaSelect.disabled = true;
@@ -971,12 +892,6 @@
     }
 
     async function saveGoogleProfile() {
-        const form = document.getElementById('google-setup-form');
-        if(!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
-
         const phone = document.getElementById('google-phone').value.trim();
         const cityId = document.getElementById('google-city').value;
         const areaId = document.getElementById('google-area').value;
@@ -984,7 +899,6 @@
         
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Saving...';
-        
         try {
             const ipData = await getClientIpData();
             const { error } = await client.from('profiles').upsert({
@@ -995,64 +909,43 @@
             window.location.href = "user-dashboard.html";
         } catch(err) {
             alert("Error saving profile: " + err.message);
-            btn.disabled = false; 
-            btn.innerHTML = 'Finish Setup';
+            btn.disabled = false; btn.innerHTML = 'Complete Setup';
         }
     }
-    
+
     async function cancelGoogleLogin() {
         await client.auth.signOut();
-        closeModal('complete-profile-modal');
+        document.getElementById('complete-profile-modal').classList.add('hidden');
         pendingGoogleUserId = null;
     }
    
-    // --- UTILS & MODALS ---
-    function openModal(id) {
-        const modal = document.getElementById(id);
-        modal.classList.remove('hidden');
-        void modal.offsetWidth; // Trigger reflow
-        modal.classList.add('active');
-    }
-    
-    function closeModal(id) {
-        const modal = document.getElementById(id);
-        modal.classList.remove('active');
-        setTimeout(() => modal.classList.add('hidden'), 300);
-    }
-
+    // --- PASSWORD TOGGLE ---
     function togglePassword() {
         const password = document.getElementById('hero-password');
         const icon = document.querySelector('.toggle-password');
         if (password.type === 'password') {
-            password.type = 'text'; 
-            icon.classList.remove('fa-eye-slash'); 
-            icon.classList.add('fa-eye');
+            password.type = 'text'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye');
         } else {
-            password.type = 'password'; 
-            icon.classList.remove('fa-eye'); 
-            icon.classList.add('fa-eye-slash');
+            password.type = 'password'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash');
         }
     }
-    
+
     function openResetEmailModal() {
-        openModal('reset-email-modal');
+        document.getElementById('reset-email-modal').classList.remove('hidden');
         const loginEmail = document.getElementById('hero-email').value;
         if (loginEmail) document.getElementById('reset-email-input').value = loginEmail;
     }
-    
+
     async function sendResetCode() {
         const email = document.getElementById('reset-email-input').value.trim();
-        if (!email) return alert("Please enter your registered email address.");
-        
         const btn = document.getElementById('btn-send-reset');
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Sending...';
-        
         try {
             const { error } = await client.auth.resetPasswordForEmail(email);
             if (error) throw error;
-            closeModal('reset-email-modal');
-            openModal('reset-password-modal');
+            document.getElementById('reset-email-modal').classList.add('hidden');
+            document.getElementById('reset-password-modal').classList.remove('hidden');
         } catch (err) {
             alert(err.message);
         } finally {
@@ -1060,28 +953,23 @@
             btn.innerHTML = 'Send Reset Code';
         }
     }
-    
+
     async function verifyAndResetPassword() {
         const email = document.getElementById('reset-email-input').value.trim();
         const otp = document.getElementById('reset-otp-input').value.trim();
         const newPassword = document.getElementById('reset-new-password').value;
         const confirmPassword = document.getElementById('reset-confirm-password').value;
         
-        if (!otp || !newPassword || !confirmPassword) return alert("Please fill out all fields.");
         if (newPassword !== confirmPassword) return alert("Passwords do not match. Please try again.");
-        if (newPassword.length < 6) return alert("Password must be at least 6 characters.");
         
         const btn = document.getElementById('btn-confirm-reset');
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Resetting...';
-        
         try {
             const { error: verifyError } = await client.auth.verifyOtp({ email: email, token: otp, type: 'recovery' });
             if (verifyError) throw verifyError;
-            
             const { error: updateError } = await client.auth.updateUser({ password: newPassword });
             if (updateError) throw updateError;
-            
             alert("Success! Your password has been updated.");
             window.location.href = "user-dashboard.html";
         } catch (err) {
@@ -1090,8 +978,7 @@
             btn.innerHTML = 'Confirm & Reset Password';
         }
     }
-    
-    // --- FLOATING CONTACT WIDGET ---
+
     function toggleFloatingContact() {
         const popup = document.getElementById('fc-popup');
         popup.classList.toggle('show');
@@ -1100,25 +987,22 @@
             document.getElementById('fc-status').textContent = '';
         }
     }
-    
+
     async function handleFloatingContactSubmit(e) {
         e.preventDefault();
         const btn = document.getElementById('fc-submit-btn');
         const statusDiv = document.getElementById('fc-status');
         const form = document.getElementById('fc-form');
-        
         const payload = {
             full_name: document.getElementById('fc-name').value.trim(),
             email: document.getElementById('fc-email').value.trim(),
             subject: document.getElementById('fc-subject').value,
             message: document.getElementById('fc-message').value.trim()
         };
-        
         btn.disabled = true;
         const originalText = btn.innerHTML;
-        btn.innerHTML = 'Sending... <div class="spinner"></div>';
+        btn.innerHTML = 'Sending... <i class="fa-solid fa-circle-notch fa-spin"></i>';
         statusDiv.className = 'fc-status';
-        
         try {
             const { error } = await client.from('contact_messages').insert([payload]);
             if (error) throw error;
@@ -1133,29 +1017,33 @@
             btn.disabled = false; btn.innerHTML = originalText;
         }
     }
-    
-    // --- AI CHAT WIDGET LOGIC ---
+
+    // ==========================================
+    // AI CHAT WIDGET LOGIC (ANONYMOUS MODE WITH RATE LIMIT)
+    // ==========================================
     let aiChatHistory = [];
     function toggleAiChat() {
         const chatWindow = document.getElementById('ai-chat-window');
         const badge = document.getElementById('ai-badge');
+       
         chatWindow.classList.toggle('open');
-        if (badge) badge.style.display = 'none';
+       
+        if (badge) {
+            badge.style.display = 'none';
+        }
     }
-    
+
     async function sendAiMsg() {
         const inp = document.getElementById('ai-chat-input');
         const txt = inp.value.trim();
         if(!txt) return;
-        
         const todayStr = new Date().toISOString().split('T')[0];
         let usageStr = localStorage.getItem('ctm_ai_anon_usage');
         let aiUsage = usageStr ? JSON.parse(usageStr) : { date: todayStr, count: 0 };
-        
+       
         if (aiUsage.date !== todayStr) {
             aiUsage = { date: todayStr, count: 0 };
         }
-        
         const body = document.getElementById('ai-chat-messages');
         if (aiUsage.count >= 15) {
             body.innerHTML += `<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages. This limit prevents system abuse. Please check back tomorrow!</div>`;
@@ -1163,16 +1051,13 @@
             inp.value = '';
             return;
         }
-        
         body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
         inp.value = '';
         body.scrollTop = body.scrollHeight;
         aiChatHistory.push({ role: 'user', content: txt });
-        
         const loadId = 'loading-' + Date.now();
         body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic; color:#6B7280;">Typing...</div>`;
         body.scrollTop = body.scrollHeight;
-        
         try {
             const recentHistory = aiChatHistory.length > 6 ? aiChatHistory.slice(aiChatHistory.length - 6) : aiChatHistory;
             const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
@@ -1182,27 +1067,28 @@
                     'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
                     'apikey': SUPABASE_ANON_KEY
                 },
-                body: JSON.stringify({ query: txt, history: recentHistory })
+                body: JSON.stringify({
+                    query: txt,
+                    history: recentHistory
+                })
             });
-            
             document.getElementById(loadId)?.remove();
-            
             if (!response.ok) {
+                const errText = await response.text();
                 throw new Error(`Server returned ${response.status}`);
             }
-            
             const data = await response.json();
             const reply = data.reply || "No response received.";
             const isError = (reply.startsWith("Error:") || reply.startsWith("System"));
             const msgClass = isError ? "msg-error" : "msg-ai";
-            
+           
             body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
             if (!isError) {
                 aiChatHistory.push({ role: 'assistant', content: reply });
                 aiUsage.count += 1;
                 localStorage.setItem('ctm_ai_anon_usage', JSON.stringify(aiUsage));
             }
-            
+           
         } catch (err) {
             document.getElementById(loadId)?.remove();
             body.innerHTML += `<div class="chat-msg msg-error">Connection Error: Could not reach AI server.</div>`;
