@@ -11,6 +11,9 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Cropper.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
 
   <style>
     :root{--amz-dark:#131921;--color-pink:#db2777;--color-pink-hover:#be185d;--color-pink-light:rgba(219,39,119,.15);--amz-bg:#F3F4F6;--color-text-main:#0F1111;--color-text-muted:#565959;--color-border:#D5D9D9}
@@ -24,22 +27,13 @@
     .container{width:100%;max-width:600px;padding:20px;flex:1}
     .card{background:#fff;padding:24px;border-radius:8px;border:1px solid var(--color-border);box-shadow:0 2px 4px rgba(0,0,0,.02)}
     
-    /* Educational UI Box */
     .edu-box{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:16px;margin-bottom:24px}
     .edu-title{font-size:.95rem;font-weight:800;color:#0F1111;margin-bottom:8px;display:flex;align-items:center;gap:8px}
-    .edu-text{font-size:.85rem;color:#475569;line-height:1.5;margin-bottom:16px}
-    .edu-visuals{display:flex;gap:20px;justify-content:center}
-    .edu-visual-item{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;flex:1}
-    .edu-visual-item span{font-size:.75rem;color:#64748b;line-height:1.3}
-    .edu-box-demo{width:60px;height:60px;border-radius:6px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,.05)}
-    .edu-box-demo.perfect{background:#10B981;color:#fff;border:2px solid #059669}
-    .edu-box-demo.padded{background:#fff;border:2px solid #D5D9D9;padding:4px}
-    .edu-img-inner{background:#94A3B8;color:#fff;width:26px;height:100%;border-radius:2px;display:flex;align-items:center;justify-content:center}
-    
+    .edu-text{font-size:.85rem;color:#475569;line-height:1.5;margin-bottom:0}
+
     .image-picker{width:100%;padding:30px 16px;background:#F7F7F7;border-radius:8px;border:2px dashed #888C8C;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;margin-bottom:24px;transition:all .2s; text-align: center;}
     .image-picker:hover{border-color:var(--color-pink);background:var(--color-pink-light)}
     
-    /* LIVE PREVIEW EXACT CSS FROM DASHBOARD */
     .live-preview-wrap{background:#F3F4F6;border:1px solid #D5D9D9;border-radius:8px;padding:20px;margin-bottom:24px;display:none;flex-direction:column;align-items:center;box-shadow:inset 0 2px 4px rgba(0,0,0,.05)}
     .shop-grid-item-wrap{display:flex;flex-direction:column;gap:4px;width:140px;overflow:hidden;background:#fff;padding:8px;border-radius:6px;box-shadow:0 2px 5px rgba(0,0,0,.08); border: 1px solid #E5E7EB;}
     .shop-grid-item{width:100%;aspect-ratio:1/1;background:#F7F7F7;display:block;overflow:hidden;border-radius:4px;position:relative}
@@ -71,7 +65,6 @@
     .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:#fff;transition:.4s;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,.2)}
     input:checked+.slider{background-color:var(--color-pink)}
     input:checked+.slider:before{transform:translateX(20px)}
-    
     .hidden-input{display:none;margin-top:16px}
     .hidden-input.visible{display:block;animation:slideDown .3s ease}
     @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
@@ -81,6 +74,19 @@
     .btn-submit:disabled{background:#E3E6E6;color:#888C8C;cursor:not-allowed;box-shadow:none;border:1px solid #D5D9D9}
     .spinner{width:22px;height:22px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;margin-right:8px}
     @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Cropper Modal */
+    .crop-overlay{position:fixed;inset:0;background:rgba(17,24,39,.95);z-index:2000;display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:.3s ease;backdrop-filter:blur(5px)}
+    .crop-overlay.active{opacity:1;visibility:visible}
+    .crop-header-bar{display:flex;justify-content:space-between;align-items:center;padding:20px;background:rgba(0,0,0,.5);color:#fff}
+    .crop-title{font-weight:700;font-size:1.2rem}
+    .crop-workspace{flex:1;position:relative;width:100%;overflow:hidden;display:flex;justify-content:center;align-items:center;padding:20px}
+    .crop-workspace img{max-width:100%;max-height:100%;display:block}
+    .crop-footer-bar{padding:20px;background:rgba(0,0,0,.5);display:flex;gap:16px;justify-content:center; flex-direction: column;}
+    .crop-instructions { text-align: center; color: white; font-size: 0.85rem; font-weight: 500; margin-bottom: 8px;}
+    .crop-btn-row { display: flex; gap: 16px; justify-content: center; }
+    .btn-crop-cancel{background:#374151;color:#fff;padding:12px 24px;border-radius:10px;border:none;font-weight:600;cursor:pointer}
+    .btn-crop-apply{background:var(--color-pink);color:#fff;padding:12px 32px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
   </style>
 </head>
 <body>
@@ -95,34 +101,15 @@
   <div class="container">
       <form class="card" onsubmit="handleSubmit(event)">
           
-          <!-- EDUCATIONAL PRO TIP -->
           <div class="edu-box">
-              <h4 class="edu-title"><i class="fa-solid fa-lightbulb" style="color: #F59E0B;"></i> Pro Photo Tip</h4>
-              <p class="edu-text">For the best results, use your phone's photo editor to crop your image into a <strong>Square (1:1)</strong> before uploading. Otherwise, white borders will be added automatically to make it fit.</p>
-              <div class="edu-visuals">
-                  <div class="edu-visual-item">
-                      <div class="edu-box-demo perfect"><i class="fa-solid fa-image fa-lg"></i></div>
-                      <span><strong>Square (Best)</strong><br>Fills grid perfectly</span>
-                  </div>
-                  <div class="edu-visual-item">
-                      <div class="edu-box-demo padded">
-                          <div class="edu-img-inner"><i class="fa-solid fa-image"></i></div>
-                      </div>
-                      <span><strong>Rectangle</strong><br>White bars added</span>
-                  </div>
-              </div>
+              <h4 class="edu-title"><i class="fa-solid fa-crop-simple" style="color: #F59E0B;"></i> Smart Frame Tool</h4>
+              <p class="edu-text"><strong>Pinch/Zoom to fit!</strong> You can zoom in to fill the square, or zoom out to show the whole item (we will add a white background automatically).</p>
           </div>
 
           <!-- UPLOAD BUTTON -->
-          <div class="image-picker" onclick="document.getElementById('file-input').click()">
-              <input type="file" id="file-input" hidden accept="image/*" onchange="handleSmartImageSelect(this)">
-              
-              <div id="processing-overlay" style="display:none; position:absolute; inset:0; background:rgba(255,255,255,0.9); z-index:10; flex-direction:column; align-items:center; justify-content:center;">
-                  <div class="spinner" style="border-top-color: var(--color-pink); border-right-color: var(--color-pink); border-bottom-color: var(--color-pink); border-left-color: transparent;"></div>
-                  <span style="font-weight:700; color:var(--color-pink); margin-top:8px;">Formatting Image...</span>
-              </div>
-
-              <div id="picker-defaults" style="display:flex; flex-direction:column; align-items:center;">
+          <div class="image-picker" id="picker-btn" onclick="document.getElementById('file-input').click()">
+              <input type="file" id="file-input" hidden accept="image/*" onchange="handleImageSelect(this)">
+              <div style="display:flex; flex-direction:column; align-items:center;">
                   <i class="fa-solid fa-cloud-arrow-up" style="font-size:2.5rem;color:#888C8C;margin-bottom:12px"></i>
                   <span style="font-size:1.05rem;font-weight:800;color:#0F1111">Select Product Image</span>
                   <span style="font-size:.85rem;font-weight:600;color:var(--color-text-muted);margin-top:4px;">(Max 500KB)</span>
@@ -134,7 +121,6 @@
               <h4 style="font-size:0.95rem; font-weight:800; color:#0F1111; margin-bottom:4px;"><i class="fa-regular fa-eye"></i> Live Marketplace Preview</h4>
               <p style="font-size:0.8rem; color:#565959; margin-bottom:16px;">This is exactly how customers will see your item.</p>
               
-              <!-- Exact Dashboard Replica CSS -->
               <div class="shop-grid-item-wrap">
                   <div class="shop-grid-item">
                       <img id="live-img" src="" alt="Product">
@@ -151,7 +137,6 @@
               </button>
           </div>
 
-          <!-- FORM INPUTS (Triggers Live Update) -->
           <div class="form-group">
               <label class="label">Product Name</label>
               <input type="text" id="name" class="input" placeholder="e.g. Samsung Galaxy S23" required oninput="updateLivePreview()">
@@ -195,7 +180,24 @@
       </form>
   </div>
 
+  <!-- HYBRID CROPPER MODAL -->
+  <div id="crop-modal" class="crop-overlay">
+      <div class="crop-header-bar">
+          <div class="crop-title"><i class="fa-solid fa-crop-simple"></i> Frame Product</div>
+          <button type="button" onclick="closeCropModal()" style="background:0 0;border:none;color:#fff;font-size:1.5rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="crop-workspace"><img id="crop-image" src=""></div>
+      <div class="crop-footer-bar">
+          <div class="crop-instructions"><i class="fa-solid fa-hand-pointer"></i> Drag to move. Pinch to zoom in/out.</div>
+          <div class="crop-btn-row">
+              <button type="button" class="btn-crop-cancel" onclick="closeCropModal()">Cancel</button>
+              <button type="button" class="btn-crop-apply" onclick="applyCrop()">Apply Crop</button>
+          </div>
+      </div>
+  </div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script>
     const SUPABASE_URL="https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
@@ -205,8 +207,9 @@
     const shopId=params.get('shop_id');
     let currentUser=null;
     
-    // Store the processed blob ready for upload
+    let cropper=null;
     let finalFormattedBlob=null;
+    const MAX_FILE_SIZE = 500 * 1024;
 
     window.onload=async()=>{
         const{data:{session:e}}=await client.auth.getSession();
@@ -218,76 +221,67 @@
         }
     };
 
-    // --- SMART AUTO-FIT ENGINE ---
-    async function handleSmartImageSelect(input) {
-        if(input.files && input.files[0]) {
-            const file = input.files[0];
-            if(!file.type.startsWith('image/')) {
-                alert("Please upload a valid image file.");
-                input.value='';
-                return;
-            }
-
-            document.getElementById('processing-overlay').style.display = 'flex';
-
-            try {
-                const result = await processAndFitImage(file);
-                finalFormattedBlob = result.blob;
+    // --- HYBRID CROPPER SETUP ---
+    function handleImageSelect(input){
+        if(input.files && input.files[0]){
+            const file=input.files[0];
+            if(!file.type.startsWith('image/'))return alert("Please upload a valid image file."),void(input.value='');
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const modal = document.getElementById('crop-modal');
+                const img = document.getElementById('crop-image');
                 
-                // Show Live Preview Wrap
-                document.getElementById('live-preview-wrap').style.display = 'flex';
-                document.getElementById('live-img').src = result.url;
+                img.src = e.target.result;
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+
+                if(cropper) cropper.destroy();
                 
-                // Reset Upload UI
-                document.querySelector('.image-picker').style.display = 'none';
-
-                updateLivePreview(); // Trigger text update
-
-            } catch(e) {
-                alert("Error formatting image. Please try another photo.");
-            } finally {
-                document.getElementById('processing-overlay').style.display = 'none';
-                input.value = ''; 
-            }
+                // viewMode 1 is the magic key: It allows zooming out past the crop box boundary!
+                cropper = new Cropper(img, {
+                    aspectRatio: 1,
+                    viewMode: 1, 
+                    dragMode: 'move',
+                    background: true,
+                    autoCropArea: 1,
+                    responsive: true
+                });
+            };
+            reader.readAsDataURL(file);
+            input.value = '';
         }
     }
 
-    function processAndFitImage(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const TARGET_SIZE = 800; // Standard 1:1 Square
-                    
-                    canvas.width = TARGET_SIZE;
-                    canvas.height = TARGET_SIZE;
-                    const ctx = canvas.getContext('2d');
+    function closeCropModal(){
+        document.getElementById('crop-modal').classList.remove('active');
+        document.body.style.overflow = '';
+        if(cropper){ cropper.destroy(); cropper=null; }
+    }
 
-                    // Pure white padding
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(0, 0, TARGET_SIZE, TARGET_SIZE);
+    function applyCrop(){
+        if(!cropper) return;
+        
+        // fillColor: '#FFFFFF' is the magic padding key. If they zoom out, it fills the background with white.
+        cropper.getCroppedCanvas({
+            width: 800,
+            height: 800,
+            fillColor: '#FFFFFF',
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high'
+        }).toBlob(blob => {
+            if(blob.size > MAX_FILE_SIZE) return alert(`Image is too large (${Math.round(blob.size/1024)}KB). Try zooming in to crop a smaller area.`);
+            
+            finalFormattedBlob = blob;
+            
+            // Show Live Preview
+            document.getElementById('live-preview-wrap').style.display = 'flex';
+            document.getElementById('live-img').src = URL.createObjectURL(blob);
+            document.getElementById('picker-btn').style.display = 'none';
 
-                    const scale = Math.min(TARGET_SIZE / img.width, TARGET_SIZE / img.height);
-                    const newWidth = img.width * scale;
-                    const newHeight = img.height * scale;
-
-                    const x = (TARGET_SIZE - newWidth) / 2;
-                    const y = (TARGET_SIZE - newHeight) / 2;
-
-                    ctx.drawImage(img, x, y, newWidth, newHeight);
-
-                    canvas.toBlob((blob) => {
-                        resolve({ blob: blob, url: URL.createObjectURL(blob) });
-                    }, 'image/jpeg', 0.85); 
-                };
-                img.onerror = reject;
-                img.src = e.target.result;
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
+            updateLivePreview();
+            closeCropModal();
+        }, 'image/jpeg', 0.85);
     }
 
     // --- LIVE PREVIEW UPDATER ---
@@ -333,7 +327,7 @@
         e.preventDefault();
         const t=document.getElementById('btn-submit');
         
-        if(!finalFormattedBlob) return alert("Please select a product photo.");
+        if(!finalFormattedBlob) return alert("Please select and frame a product photo.");
         
         const o=parseFloat(document.getElementById('price').value);
         let n=null;
