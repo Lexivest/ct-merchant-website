@@ -359,4 +359,178 @@
             <label class="modal-label">Select Area</label>
             <div class="modal-input-wrapper">
                 <span class="modal-icon"><i class="fa-solid fa-map-pin"></i></span>
-                <select id="google-
+                <select id="google-area" class="modal-input" disabled>
+                    <option value="" disabled selected>Select city first</option>
+                </select>
+            </div>
+        </div>
+        <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary-modal">Complete Setup</button>
+        <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel & Sign Out</button>
+    </div>
+</div>
+
+<div id="reset-email-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h2 class="modal-title">Reset Password</h2>
+        <p class="modal-subtitle">Enter your email address to receive a 6-digit recovery code.</p>
+        <div class="modal-input-group">
+            <label class="modal-label">Registered Email</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-envelope"></i></span>
+                <input type="email" id="reset-email-input" placeholder="name@example.com" class="modal-input">
+            </div>
+        </div>
+        <button id="btn-send-reset" onclick="sendResetCode()" class="btn-primary-modal">Send Reset Code</button>
+        <button onclick="document.getElementById('reset-email-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
+    </div>
+</div>
+
+<div id="reset-password-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h2 class="modal-title">Create New Password</h2>
+        <p class="modal-subtitle">Enter the 6-digit code we just sent to your email.</p>
+        <div class="modal-input-group">
+            <label class="modal-label">6-Digit Recovery Code</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-hashtag"></i></span>
+                <input type="text" id="reset-otp-input" placeholder="123456" class="modal-input" maxlength="6" style="letter-spacing: 5px; text-align: center; font-weight: bold; padding-left: 1rem;">
+            </div>
+        </div>
+        <div class="modal-input-group">
+            <label class="modal-label">New Password</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
+                <input type="password" id="reset-new-password" placeholder="••••••••" class="modal-input">
+            </div>
+        </div>
+        <div class="modal-input-group">
+            <label class="modal-label">Confirm Password</label>
+            <div class="modal-input-wrapper">
+                <span class="modal-icon"><i class="fa-solid fa-lock"></i></span>
+                <input type="password" id="reset-confirm-password" placeholder="••••••••" class="modal-input">
+            </div>
+        </div>
+        <button id="btn-confirm-reset" onclick="verifyAndResetPassword()" class="btn-primary-modal">Confirm & Reset Password</button>
+        <button onclick="document.getElementById('reset-password-modal').classList.add('hidden')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel</button>
+    </div>
+</div>
+
+<button class="floating-contact-btn" onclick="toggleFloatingContact()" title="Need Help? Contact Support"><i class="fa-solid fa-headset"></i></button>
+<div class="floating-contact-popup" id="fc-popup">
+    <div class="fc-header">
+        <span><i class="fa-solid fa-envelope"></i> Message Us</span>
+        <button class="fc-close" onclick="toggleFloatingContact()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form class="fc-body" id="fc-form" onsubmit="handleFloatingContactSubmit(event)">
+        <div class="fc-input-group">
+            <label class="fc-label">Full Name</label>
+            <input type="text" id="fc-name" class="fc-input" required placeholder="e.g. John Doe">
+        </div>
+        <div class="fc-input-group">
+            <label class="fc-label">Email</label>
+            <input type="email" id="fc-email" class="fc-input" required placeholder="name@example.com">
+        </div>
+        <div class="fc-input-group">
+            <label class="fc-label">Subject</label>
+            <select id="fc-subject" class="fc-select">
+                <option value="General Inquiry">General Inquiry</option>
+                <option value="Merchant Support">Merchant Support</option>
+                <option value="Report an Issue">Report an Issue</option>
+            </select>
+        </div>
+        <div class="fc-input-group">
+            <label class="fc-label">Message</label>
+            <textarea id="fc-message" class="fc-textarea" rows="3" required placeholder="How can we help you?"></textarea>
+        </div>
+        <div id="fc-status" class="fc-status"></div>
+        <button type="submit" id="fc-submit-btn" class="fc-btn">Send Message <i class="fa-solid fa-paper-plane"></i></button>
+    </form>
+</div>
+
+<div class="ai-fab-container">
+    <div class="ai-fab-wrapper">
+        <button class="ai-fab" onclick="toggleAiChat()"><i class="fa-solid fa-comments"></i></button>
+        <div id="ai-badge" class="ai-notif-badge">1</div>
+    </div>
+    <span class="ai-label">AI Assistant</span>
+</div>
+<div id="ai-chat-window" class="ai-chat-window">
+    <div class="ai-chat-header">
+        <span style="font-weight:700;"><i class="fa-solid fa-robot"></i> Assistant</span>
+        <button onclick="toggleAiChat()" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="ai-chat-messages" class="ai-chat-body">
+        <div class="chat-msg msg-ai">Hello! 👋 I am the CTMerchant Welcome Ambassador. Would you like to know more about how our platform works, or are you looking to create an account today?</div>
+    </div>
+    <div class="ai-chat-input-area">
+        <div class="ai-chat-input-row">
+            <input type="text" id="ai-chat-input" class="ai-chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendAiMsg()">
+            <button class="ai-btn-send" onclick="sendAiMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL="https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    
+    // --- TYPEWRITER LOGIC (Restored clean syntax to prevent silent failure) ---
+    const phrases = ["Verified Merchants", "Safe and Secure", "Boost Your Business"];
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let typeSpeed = 100;
+    
+    function typeEffect() {
+        const textElement = document.getElementById('typewriter');
+        if (!textElement) return; // Failsafe
+        
+        const currentPhrase = phrases[phraseIndex];
+        
+        if (isDeleting) {
+            textElement.textContent = currentPhrase.substring(0, charIndex - 1);
+            charIndex--;
+            typeSpeed = 50;
+        } else {
+            textElement.textContent = currentPhrase.substring(0, charIndex + 1);
+            charIndex++;
+            typeSpeed = 100;
+        }
+        
+        if (!isDeleting && charIndex === currentPhrase.length) {
+            isDeleting = true;
+            typeSpeed = 2000;
+        } else if (isDeleting && charIndex === 0) {
+            isDeleting = false;
+            phraseIndex = (phraseIndex + 1) % phrases.length;
+            typeSpeed = 500;
+        }
+        
+        setTimeout(typeEffect, typeSpeed);
+    }
+    document.addEventListener('DOMContentLoaded', typeEffect);
+
+    // --- OTHER OPTIMIZED FUNCTIONS ---
+    async function getClientIpData(){try{const e=await fetch('https://1.1.1.1/cdn-cgi/trace'),t=await e.text(),a=t.split('\n').reduce((e,t)=>{const[a,n]=t.split('=');return a&&(e[a]=n),e},{});return{ip:a.ip||'unknown',country:a.loc||'unknown'}}catch(e){return{ip:'unknown',country:'unknown'}}}
+    async function isIpBanned(e){if('unknown'===e)return!1;try{const{data:t}=await client.from('ip_blacklist').select('ip_address').eq('ip_address',e).maybeSingle();return!!t}catch(e){return!1}}
+    function handleRepoSearch(){const e=document.getElementById('repo-search-input').value.trim();e&&(window.location.href=`reposearch.html?merchantId=${e}`)}
+    async function handleHeroLogin(){const e=document.getElementById('hero-email').value,t=document.getElementById('hero-password').value,a=document.getElementById('hero-login-btn'),n=a.innerHTML;a.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...',a.disabled=!0;try{const n=await getClientIpData();if(await isIpBanned(n.ip))throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CTMerchant.");const{data:o,error:r}=await client.auth.signInWithPassword({email:e,password:t});if(r)throw r;if(o&&o.user){const{data:e,error:t}=await client.from('profiles').select('is_suspended').eq('id',o.user.id).maybeSingle();if(t||!e||!0===e.is_suspended)throw await client.auth.signOut(),new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");await client.from('profiles').update({last_active_ip:n.ip}).eq('id',o.user.id)}window.location.href="user-dashboard.html"}catch(e){alert(e.message),a.innerHTML=n,a.disabled=!1,await client.auth.signOut()}}
+    let pendingGoogleUserId=null,pendingGoogleUserName=null;
+    async function handleGoogleLogin(e){const t=document.getElementById('hero-login-btn'),a=t.innerHTML;t.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i> Checking Google...',t.disabled=!0;try{const n=await getClientIpData();if(await isIpBanned(n.ip))throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CTMerchant.");const{data:o,error:r}=await client.auth.signInWithIdToken({provider:'google',token:e.credential});if(r)throw r;const s=o.user;pendingGoogleUserId=s.id,pendingGoogleUserName=s.user_metadata?.full_name||'';const{data:i,error:l}=await client.from('profiles').select('city_id, area_id, is_suspended').eq('id',s.id).maybeSingle();if(l||i&&i.is_suspended)throw await client.auth.signOut(),new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");i&&i.city_id&&i.area_id?(await client.from('profiles').update({last_active_ip:n.ip}).eq('id',s.id),window.location.href="user-dashboard.html"):(document.getElementById('complete-profile-modal').classList.remove('hidden'),t.innerHTML=a,t.disabled=!1,await fetchCitiesForModal())}catch(e){alert("Google Sign-In Error: "+e.message),t.innerHTML=a,t.disabled=!1,await client.auth.signOut()}}
+    async function fetchCitiesForModal(){const e=document.getElementById('google-city');try{const{data:t,error:a}=await client.from('cities').select('id, name').eq('is_open',!0).order('name');if(a)throw a;e.innerHTML='<option value="" disabled selected>Select your city</option>'+t.map(e=>`<option value="${e.id}">${e.name}</option>`).join('')}catch(t){e.innerHTML='<option value="" disabled>Error loading cities</option>'}}
+    async function loadAreasForModal(e){const t=document.getElementById('google-area');t.disabled=!0,t.innerHTML='<option value="" disabled selected>Loading areas...</option>';try{const{data:a,error:n}=await client.from('areas').select('id, name').eq('city_id',e).order('name');if(n)throw n;t.innerHTML='<option value="" disabled selected>Select your area</option>'+a.map(e=>`<option value="${e.id}">${e.name}</option>`).join(''),t.disabled=!1}catch(e){t.innerHTML='<option value="" disabled>Error loading areas</option>'}}
+    async function saveGoogleProfile(){const e=document.getElementById('google-phone').value.trim(),t=document.getElementById('google-city').value,a=document.getElementById('google-area').value,n=document.getElementById('google-complete-btn');if(!e||!t||!a)return alert("Please fill in your phone, city, and area to continue.");n.disabled=!0,n.innerHTML='<div class="spinner"></div> Saving...';try{const n=await getClientIpData(),{error:o}=await client.from('profiles').upsert({id:pendingGoogleUserId,full_name:pendingGoogleUserName,phone:e,city_id:parseInt(t),area_id:parseInt(a),registration_ip:n.ip,last_active_ip:n.ip,ip_country:n.country});if(o)throw o;window.location.href="user-dashboard.html"}catch(e){alert("Error saving profile: "+e.message),n.disabled=!1,n.innerHTML='Complete Setup'}}
+    async function cancelGoogleLogin(){await client.auth.signOut(),document.getElementById('complete-profile-modal').classList.add('hidden')}
+    function togglePassword(){const e=document.getElementById('hero-password'),t=document.querySelector('.toggle-password');'password'===e.type?(e.type='text',t.classList.remove('fa-eye-slash'),t.classList.add('fa-eye')):(e.type='password',t.classList.remove('fa-eye'),t.classList.add('fa-eye-slash'))}
+    function openResetEmailModal(){document.getElementById('reset-email-modal').classList.remove('hidden');const e=document.getElementById('hero-email').value;e&&(document.getElementById('reset-email-input').value=e)}
+    async function sendResetCode(){const e=document.getElementById('reset-email-input').value.trim();if(!e)return alert("Please enter your registered email address.");const t=document.getElementById('btn-send-reset');t.disabled=!0,t.innerHTML='<div class="spinner"></div> Sending...';try{const{error:a}=await client.auth.resetPasswordForEmail(e);if(a)throw a;document.getElementById('reset-email-modal').classList.add('hidden'),document.getElementById('reset-password-modal').classList.remove('hidden')}catch(e){alert(e.message)}finally{t.disabled=!1,t.innerHTML='Send Reset Code'}}
+    async function verifyAndResetPassword(){const e=document.getElementById('reset-email-input').value.trim(),t=document.getElementById('reset-otp-input').value.trim(),a=document.getElementById('reset-new-password').value,n=document.getElementById('reset-confirm-password').value;if(!t||!a||!n)return alert("Please fill out all fields.");if(a!==n)return alert("Passwords do not match. Please try again.");if(a.length<6)return alert("Password must be at least 6 characters.");const o=document.getElementById('btn-confirm-reset');o.disabled=!0,o.innerHTML='<div class="spinner"></div> Resetting...';try{const{error:r}=await client.auth.verifyOtp({email:e,token:t,type:'recovery'});if(r)throw r;const{error:s}=await client.auth.updateUser({password:a});if(s)throw s;alert("Success! Your password has been updated."),window.location.href="user-dashboard.html"}catch(e){alert("Error: "+e.message),o.disabled=!1,o.innerHTML='Confirm & Reset Password'}}
+    function toggleFloatingContact(){const e=document.getElementById('fc-popup');e.classList.toggle('show'),e.classList.contains('show')&&(document.getElementById('fc-status').className='fc-status',document.getElementById('fc-status').textContent='')}
+    async function handleFloatingContactSubmit(e){e.preventDefault();const t=document.getElementById('fc-submit-btn'),a=document.getElementById('fc-status'),n=document.getElementById('fc-form'),o={full_name:document.getElementById('fc-name').value.trim(),email:document.getElementById('fc-email').value.trim(),subject:document.getElementById('fc-subject').value,message:document.getElementById('fc-message').value.trim()};t.disabled=!0;const r=t.innerHTML;t.innerHTML='Sending... <i class="fa-solid fa-circle-notch fa-spin"></i>',a.className='fc-status';try{const{error:e}=await client.from('contact_messages').insert([o]);if(e)throw e;a.innerHTML='<i class="fa-solid fa-circle-check"></i> Message sent successfully!',a.className='fc-status success',n.reset(),setTimeout(()=>{toggleFloatingContact()},3000)}catch(e){a.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> Failed: '+(e.message||"Unknown error"),a.className='fc-status error'}finally{t.disabled=!1,t.innerHTML=r}}
+    let aiChatHistory=[];
+    function toggleAiChat(){document.getElementById('ai-chat-window').classList.toggle('open');const e=document.getElementById('ai-badge');e&&(e.style.display='none')}
+    async function sendAiMsg(){const e=document.getElementById('ai-chat-input'),t=e.value.trim();if(!t)return;const a=new Date().toISOString().split('T')[0];let n=localStorage.getItem('ctm_ai_anon_usage'),o=n?JSON.parse(n):{date:a,count:0};o.date!==a&&(o={date:a,count:0});const r=document.getElementById('ai-chat-messages');if(o.count>=15)return r.innerHTML+='<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages. This limit prevents system abuse. Please check back tomorrow!</div>',r.scrollTop=r.scrollHeight,void(e.value='');r.innerHTML+=`<div class="chat-msg msg-user">${t}</div>`,e.value='',r.scrollTop=r.scrollHeight,aiChatHistory.push({role:'user',content:t});const s='loading-'+Date.now();r.innerHTML+=`<div id="${s}" class="chat-msg msg-ai" style="font-style:italic; color:#6B7280;">Typing...</div>`,r.scrollTop=r.scrollHeight;try{const e=aiChatHistory.length>6?aiChatHistory.slice(aiChatHistory.length-6):aiChatHistory,t=await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${SUPABASE_ANON_KEY}`,apikey:SUPABASE_ANON_KEY},body:JSON.stringify({query:t,history:e})});if(document.getElementById(s)?.remove(),!t.ok)throw new Error(`Server returned ${t.status}`);const a=await t.json(),n=a.reply||"No response received.",i=n.startsWith("Error:")||n.startsWith("System"),l=i?"msg-error":"msg-ai";r.innerHTML+=`<div class="chat-msg ${l}">${n}</div>`,i||(aiChatHistory.push({role:'assistant',content:n}),o.count+=1,localStorage.setItem('ctm_ai_anon_usage',JSON.stringify(o)))}catch(e){document.getElementById(s)?.remove(),r.innerHTML+='<div class="chat-msg msg-error">Connection Error: Could not reach AI server.</div>'}r.scrollTop=r.scrollHeight}
+</script>
+</body>
+</html>
