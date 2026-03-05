@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CTMerchant | Digital Shops Repository</title>
+  <title>CT-Merchant Ltd. | Digital Shops Repository</title>
   <meta name="description" content="Discover verified merchants, local shops and products in your city. Bridging the gap between digital convenience and local availability in Nigeria.">
-  <meta name="keywords" content="Merchant, Nigeria, Shops Repository, Local Business, CTMerchant, Unique Identifier">
-  <meta name="author" content="CTMerchant">
+  <meta name="keywords" content="Merchant, Nigeria, Shops Repository, Local Business, CT-Merchant, Unique Identifier">
+  <meta name="author" content="CT-Merchant Ltd.">
   <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
   <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
  
@@ -14,7 +14,7 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
+  <link rel="stylesheet" href="styles.css">
   <style>
     /* =========================================
        STRICT 2x2 ENTERPRISE SPLIT LAYOUT
@@ -238,11 +238,10 @@
     .modal-input:focus { border-color: #db2777; box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); background: white; }
     select.modal-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
     .btn-primary-modal { width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px; }
-    .btn-primary-modal:hover { background: #db2777; transform: translateY(-1px); }
-    .btn-primary-modal:disabled { background: #cbd5e1; cursor: not-allowed; }
+    .btn-primary-modal:hover { background-color: #db2777; transform: translateY(-1px); }
+    .btn-primary-modal:disabled { background-color: #cbd5e1; cursor: not-allowed; }
     .spinner { width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    
     /* =========================================
        FLOATING CONTACT WIDGET STYLES (Left)
        ========================================= */
@@ -264,7 +263,6 @@
     .fc-status { font-size: 0.85rem; text-align: center; display: none; padding: 10px; border-radius: 8px; font-weight: 600; margin-top: 4px; }
     .fc-status.success { display: block; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;}
     .fc-status.error { display: block; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;}
-    
     /* =========================================
        AI CHAT WIDGET STYLES (Right) + NOTIF BADGE
        ========================================= */
@@ -319,7 +317,7 @@
     <div class="marquee-container header-marquee-box">
        <div class="marquee-content animate-brand-scroll">
           <div class="marquee-item">
-              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CTMerchant</span>
+              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CT-MERCHANT LTD.</span>
               <div class="flag-icon" style="display: flex; flex-direction: column; width: 14px; height: 10px; margin: 0 8px;">
                   <div style="flex: 1; background: #16a34a;"></div>
                   <div style="flex: 1; background: #ffffff;"></div>
@@ -328,7 +326,7 @@
               <span style="font-weight: 800; color: white; font-size: 0.9rem; text-transform: uppercase;">REPOSITORY OF SHOPS, PRODUCTS AND SERVICES.</span>
           </div>
           <div class="marquee-item">
-              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CTMerchant</span>
+              <span style="font-weight: 800; color: white; font-size: 0.9rem;">CT-MERCHANT LTD.</span>
               <div class="flag-icon" style="display: flex; flex-direction: column; width: 14px; height: 10px; margin: 0 8px;">
                   <div style="flex: 1; background: #16a34a;"></div>
                   <div style="flex: 1; background: #ffffff;"></div>
@@ -404,8 +402,7 @@
                 </div>
                 <div class="input-group-hero">
                     <i class="fa-solid fa-key"></i>
-                    <!-- Enforced minimum 6 characters for security -->
-                    <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required minlength="6">
+                    <input type="password" id="hero-password" class="hero-input-login" placeholder="Password" required>
                     <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePassword()"></i>
                 </div>
                
@@ -415,8 +412,8 @@
                     Secure Sign In <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
-            <div class="widget-divider">New to CTMerchant?</div>
-            <a href="signup.html" class="btn-create-account">
+            <div class="widget-divider">New to CT-Merchant?</div>
+            <a href="create-account.html" class="btn-create-account">
                 Create Account
             </a>
             <div class="widget-divider">Or continue with</div>
@@ -437,7 +434,7 @@
                 </div>
             </div>
         </div>
-       
+        
         <!-- NEW TRUST METRICS SECTION -->
         <div class="trust-metrics-container">
             <div class="trust-metric-box">
@@ -459,7 +456,7 @@
         <!-- NEW MERCHANT ONBOARDING CYCLE -->
         <div class="merchant-journey-wrapper">
             <h3 class="mj-title"><i class="fa-solid fa-route"></i> Merchant Onboarding Journey</h3>
-           
+            
             <div class="mj-timeline">
                 <div class="mj-item">
                     <div class="mj-icon"><i class="fa-solid fa-user-plus"></i></div>
@@ -486,7 +483,7 @@
                     <div class="mj-icon"><i class="fa-solid fa-id-card-clip"></i></div>
                     <div class="mj-content">
                         <h4>4. Unique Digital Profile</h4>
-                        <p>Receive your custom URL and CTMerchant ID.</p>
+                        <p>Receive your custom URL and CT-Merchant ID.</p>
                     </div>
                 </div>
                 <div class="mj-item">
@@ -513,31 +510,30 @@
         </div>
 
     </div>
-   
+    
     <div class="split-pane pane-light">
         <h2 class="value-title">Grow Your Physical Shop Digitally</h2>
         <p class="value-desc">Join our growing network of verified local merchants. Create your profile, upload your products, and let our AI-powered repository connect you with local buyers.</p>
        
         <ul class="value-bullets">
             <li><i class="fa-solid fa-circle-check"></i> Get a verified digital storefront</li>
-            <li><i class="fa-solid fa-circle-check"></i> Unique CTMerchant ID to share</li>
+            <li><i class="fa-solid fa-circle-check"></i> Unique CT-Merchant ID to share</li>
             <li><i class="fa-solid fa-circle-check"></i> Be discovered in city Repository Search</li>
         </ul>
     </div>
-   
+    
     <div class="split-pane pane-white">
         <span class="repo-badge">
           Repository of Shops, Products and Services
         </span>
        
         <p class="hero-pro-text">
-         CTMerchant is a structured repository of shops, products, and services within a city. We onboard and physically verify merchants to eliminate fraudulent online claims. Our platform indexes verified, physically existing businesses and their offerings, enabling consumers to compare prices and options before visiting a store. This approach enhances transparency, improves purchasing decisions, and saves time — effectively balancing digital convenience with physical marketplace reality.
+         CT-Merchant is a structured repository of shops, products, and services within a city. We onboard and physically verify merchants to eliminate fraudulent online claims. Our platform indexes verified, physically existing businesses and their offerings, enabling consumers to compare prices and options before visiting a store. This approach enhances transparency, improves purchasing decisions, and saves time — effectively balancing digital convenience with physical marketplace reality.
         </p>
     </div>
 </main>
 <footer class="footer">
   <div class="container footer-container">
-    <!-- TRADEMARK PROTECTED -->
     <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
     <div class="footer-links">
       <a href="privacy.html">Privacy Policy</a>
@@ -679,7 +675,7 @@
     </div>
     <div id="ai-chat-messages" class="ai-chat-body">
         <div class="chat-msg msg-ai">
-            Hello! 👋 I am the CTMerchant Welcome Ambassador. Would you like to know more about how our platform works, or are you looking to create an account today?
+            Hello! 👋 I am the CT-Merchant Welcome Ambassador. Would you like to know more about how our platform works, or are you looking to create an account today?
         </div>
     </div>
     <div class="ai-chat-input-area">
@@ -691,8 +687,8 @@
 </div>
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTIzMjEsImV4cCI6MjA4MDY4ODMyMX0.FM80U_YHA-DnPqMnD4oEiNGI07BSxGcHGqeH4JP1HlI"; 
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
    
     // --- TYPEWRITER LOGIC ---
     const textElement = document.getElementById('typewriter');
@@ -716,7 +712,6 @@
         setTimeout(typeEffect, typeSpeed);
     }
     document.addEventListener('DOMContentLoaded', typeEffect);
-
     // --- NEW: IP TRACKING & BAN CHECK LOGIC ---
     async function getClientIpData() {
         try {
@@ -735,7 +730,7 @@
     async function isIpBanned(ipAddress) {
         if (ipAddress === 'unknown') return false;
         try {
-            const { data } = await _supabase.from('ip_blacklist').select('ip_address').eq('ip_address', ipAddress).maybeSingle();
+            const { data } = await client.from('ip_blacklist').select('ip_address').eq('ip_address', ipAddress).maybeSingle();
             return !!data;
         } catch (e) {
             return false;
@@ -761,32 +756,31 @@
             // 1. IP Ban Frontend Check
             const ipData = await getClientIpData();
             if (await isIpBanned(ipData.ip)) {
-                throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CTMerchant.");
+                throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CT-Merchant.");
             }
             // 2. Perform Login
-            const { data: authData, error: authError } = await _supabase.auth.signInWithPassword({ email, password });
+            const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password });
             if (authError) throw authError;
             // 3. Post-Login Database Check Trap (Catches bypassed frontend & updates last active IP)
             if (authData && authData.user) {
-                const { data: profileData, error: profileErr } = await _supabase.from('profiles').select('is_suspended').eq('id', authData.user.id).maybeSingle();
+                const { data: profileData, error: profileErr } = await client.from('profiles').select('is_suspended').eq('id', authData.user.id).maybeSingle();
                
                 // If maybeSingle() throws an error, it means the RLS policy blocked them (they are IP banned!)
                 if (profileErr || !profileData || profileData.is_suspended === true) {
-                    await _supabase.auth.signOut();
+                    await client.auth.signOut();
                     throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
                 }
                 // Update IP
-                await _supabase.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
+                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
             }
             window.location.href = "user-dashboard.html";
         } catch (err) {
             alert(err.message);
             btn.innerHTML = originalHtml;
             btn.disabled = false;
-            await _supabase.auth.signOut(); // Force signout on any error
+            await client.auth.signOut(); // Force signout on any error
         }
     }
-
     // --- GOOGLE SIGN IN LOGIC ---
     let pendingGoogleUserId = null;
     let pendingGoogleUserName = null;
@@ -799,21 +793,21 @@
             // 1. IP Ban Frontend Check
             const ipData = await getClientIpData();
             if (await isIpBanned(ipData.ip)) {
-                throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CTMerchant.");
+                throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CT-Merchant.");
             }
-            const { data, error } = await _supabase.auth.signInWithIdToken({ provider: 'google', token: response.credential });
+            const { data, error } = await client.auth.signInWithIdToken({ provider: 'google', token: response.credential });
             if (error) throw error;
             const user = data.user;
             pendingGoogleUserId = user.id;
             pendingGoogleUserName = user.user_metadata?.full_name || '';
             // 2. Profile check & DB Trap
-            const { data: profile, error: profileErr } = await _supabase.from('profiles').select('city_id, area_id, is_suspended').eq('id', user.id).maybeSingle();
+            const { data: profile, error: profileErr } = await client.from('profiles').select('city_id, area_id, is_suspended').eq('id', user.id).maybeSingle();
             if (profileErr || (profile && profile.is_suspended)) {
-                await _supabase.auth.signOut();
+                await client.auth.signOut();
                 throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
             }
             if (profile && profile.city_id && profile.area_id) {
-                await _supabase.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
+                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
                 window.location.href = "user-dashboard.html";
             } else {
                 document.getElementById('complete-profile-modal').classList.remove('hidden');
@@ -825,13 +819,13 @@
             alert("Google Sign-In Error: " + err.message);
             heroBtn.innerHTML = originalHeroHtml;
             heroBtn.disabled = false;
-            await _supabase.auth.signOut();
+            await client.auth.signOut();
         }
     }
     async function fetchCitiesForModal() {
         const citySelect = document.getElementById('google-city');
         try {
-            const { data, error } = await _supabase.from('cities').select('id, name').eq('is_open', true).order('name');
+            const { data, error } = await client.from('cities').select('id, name').eq('is_open', true).order('name');
             if (error) throw error;
             citySelect.innerHTML = '<option value="" disabled selected>Select your city</option>' + data.map(city => `<option value="${city.id}">${city.name}</option>`).join('');
         } catch (err) {
@@ -843,7 +837,7 @@
         areaSelect.disabled = true;
         areaSelect.innerHTML = '<option value="" disabled selected>Loading areas...</option>';
         try {
-            const { data, error } = await _supabase.from('areas').select('id, name').eq('city_id', cityId).order('name');
+            const { data, error } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
             if (error) throw error;
             areaSelect.innerHTML = '<option value="" disabled selected>Select your area</option>' + data.map(area => `<option value="${area.id}">${area.name}</option>`).join('');
             areaSelect.disabled = false;
@@ -861,7 +855,7 @@
         btn.innerHTML = '<div class="spinner"></div> Saving...';
         try {
             const ipData = await getClientIpData();
-            const { error } = await _supabase.from('profiles').upsert({
+            const { error } = await client.from('profiles').upsert({
                 id: pendingGoogleUserId, full_name: pendingGoogleUserName, phone: phone, city_id: parseInt(cityId), area_id: parseInt(areaId),
                 registration_ip: ipData.ip, last_active_ip: ipData.ip, ip_country: ipData.country
             });
@@ -873,9 +867,8 @@
         }
     }
     async function cancelGoogleLogin() {
-        await _supabase.auth.signOut();
+        await client.auth.signOut();
         document.getElementById('complete-profile-modal').classList.add('hidden');
-        pendingGoogleUserId = null;
     }
    
     // --- PASSWORD TOGGLE ---
@@ -900,7 +893,7 @@
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Sending...';
         try {
-            const { error } = await _supabase.auth.resetPasswordForEmail(email);
+            const { error } = await client.auth.resetPasswordForEmail(email);
             if (error) throw error;
             document.getElementById('reset-email-modal').classList.add('hidden');
             document.getElementById('reset-password-modal').classList.remove('hidden');
@@ -923,9 +916,9 @@
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Resetting...';
         try {
-            const { error: verifyError } = await _supabase.auth.verifyOtp({ email: email, token: otp, type: 'recovery' });
+            const { error: verifyError } = await client.auth.verifyOtp({ email: email, token: otp, type: 'recovery' });
             if (verifyError) throw verifyError;
-            const { error: updateError } = await _supabase.auth.updateUser({ password: newPassword });
+            const { error: updateError } = await client.auth.updateUser({ password: newPassword });
             if (updateError) throw updateError;
             alert("Success! Your password has been updated.");
             window.location.href = "user-dashboard.html";
@@ -959,7 +952,7 @@
         btn.innerHTML = 'Sending... <i class="fa-solid fa-circle-notch fa-spin"></i>';
         statusDiv.className = 'fc-status';
         try {
-            const { error } = await _supabase.from('contact_messages').insert([payload]);
+            const { error } = await client.from('contact_messages').insert([payload]);
             if (error) throw error;
             statusDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> Message sent successfully!';
             statusDiv.className = 'fc-status success';
@@ -979,9 +972,9 @@
     function toggleAiChat() {
         const chatWindow = document.getElementById('ai-chat-window');
         const badge = document.getElementById('ai-badge');
-        
+       
         chatWindow.classList.toggle('open');
-        
+       
         if (badge) {
             badge.style.display = 'none';
         }
@@ -993,7 +986,7 @@
         const todayStr = new Date().toISOString().split('T')[0];
         let usageStr = localStorage.getItem('ctm_ai_anon_usage');
         let aiUsage = usageStr ? JSON.parse(usageStr) : { date: todayStr, count: 0 };
-        
+       
         if (aiUsage.date !== todayStr) {
             aiUsage = { date: todayStr, count: 0 };
         }
@@ -1034,14 +1027,14 @@
             const reply = data.reply || "No response received.";
             const isError = (reply.startsWith("Error:") || reply.startsWith("System"));
             const msgClass = isError ? "msg-error" : "msg-ai";
-            
+           
             body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
             if (!isError) {
                 aiChatHistory.push({ role: 'assistant', content: reply });
                 aiUsage.count += 1;
                 localStorage.setItem('ctm_ai_anon_usage', JSON.stringify(aiUsage));
             }
-            
+           
         } catch (err) {
             document.getElementById(loadId)?.remove();
             body.innerHTML += `<div class="chat-msg msg-error">Connection Error: Could not reach AI server.</div>`;
