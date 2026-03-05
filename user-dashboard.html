@@ -1,1517 +1,298 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Marketplace | CT-Merchant</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
-    
-    <style>
-        :root {
-            /* PREMIUM AMAZON THEME WITH CT-MERCHANT PINK */
-            --amz-dark: #131921;
-            --amz-nav-bar: #232F3E;
-            
-            --color-pink: #db2777; 
-            --color-pink-hover: #be185d;
-            --color-pink-light: rgba(219, 39, 119, 0.15);
-            
-            --amz-bg: #E3E6E6;
-            --amz-link: #007185;
-            --amz-link-hover: #C40000;
-            --color-text-main: #0F1111;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Marketplace | CTMerchant</title>
+  
+  <!-- Favicons for browser tab -->
+  <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+  <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-
-        body { 
-            background-color: var(--amz-bg); 
-            color: var(--color-text-main);
-            overflow-x: hidden;
-        }
-
-        /* --- 1. PREMIUM HEADER --- */
-        .amz-header {
-            background-color: var(--amz-dark);
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .amz-mobile-scroll-row {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 10px 16px;
-            max-width: 1600px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        /* Logo */
-        .amz-logo {
-            height: 38px;
-            border-radius: 4px;
-            object-fit: contain;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        /* City */
-        .amz-location {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 12px;
-            border: 1px solid transparent;
-            border-radius: 4px;
-            cursor: pointer;
-            color: white;
-            font-weight: 700;
-            font-size: 0.95rem;
-            white-space: nowrap;
-            transition: 0.2s;
-            flex-shrink: 0;
-        }
-        .amz-location:hover { border-color: white; }
-
-        /* Nav Items */
-        .amz-nav-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 12px;
-            border: 1px solid transparent;
-            border-radius: 4px;
-            cursor: pointer;
-            color: white;
-            font-weight: 700;
-            font-size: 0.95rem;
-            white-space: nowrap;
-            transition: 0.2s;
-            position: relative;
-            flex-shrink: 0;
-        }
-        .amz-nav-item:hover, .amz-nav-item.active { border-color: white; }
-
-        .notif-badge {
-            position: absolute; top: -2px; right: -6px;
-            background: #EF4444; color: white; font-size: 0.65rem; font-weight: 800;
-            padding: 2px 6px; border-radius: 10px; display: none;
-            border: 2px solid var(--amz-dark);
-        }
-
-        .header-avatar {
-            width: 34px; height: 34px; border-radius: 50%;
-            object-fit: cover; background: white; margin-left: 4px;
-        }
-
-        /* Search Bar & Autocomplete */
-        .desktop-search-wrap { position: relative; flex: 1; margin: 0 16px; }
-        .mobile-search-wrap { position: relative; display: none; margin: 0 16px 10px 16px; width: calc(100% - 32px); }
-        
-        .amz-search-block {
-            display: flex;
-            height: 42px;
-            border-radius: 6px;
-            overflow: hidden;
-            border: 3px solid transparent;
-            transition: 0.2s;
-            width: 100%;
-            background: white;
-        }
-        .amz-search-block:focus-within { border-color: var(--color-pink); }
-
-        .amz-search-select {
-            background-color: #F3F4F6;
-            border: none;
-            border-right: 1px solid #CDD2D3;
-            padding: 0 12px;
-            color: #555;
-            font-size: 0.85rem;
-            font-weight: 600;
-            outline: none;
-            cursor: pointer;
-            max-width: 140px;
-            flex-shrink: 0;
-            text-overflow: ellipsis;
-        }
-        .amz-search-select:hover { background-color: #DADADA; color: #0F1111; }
-
-        .amz-search-input {
-            flex: 1;
-            min-width: 0; 
-            padding: 0 16px;
-            border: none;
-            outline: none;
-            font-size: 1rem;
-            color: #0F1111;
-        }
-        
-        .amz-search-btn {
-            width: 52px;
-            background-color: var(--color-pink);
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0; 
-        }
-        .amz-search-btn:hover { background-color: var(--color-pink-hover); }
-
-        /* LIVE SEARCH DROPDOWN */
-        .search-suggestions {
-            position: absolute;
-            top: calc(100% + 4px);
-            left: 0; right: 0;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            border: 1px solid #D5D9D9;
-            z-index: 2000;
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .suggestion-item {
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #F3F4F6;
-            color: #0F1111;
-            font-size: 0.95rem;
-            transition: background 0.2s;
-        }
-        .suggestion-item:last-child { border-bottom: none; }
-        .suggestion-item:hover { background-color: #F7F7F7; }
-        .sugg-icon { color: #888C8C; font-size: 1rem; width: 20px; text-align: center; }
-        .sugg-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;}
-        .sugg-type { font-size: 0.7rem; color: var(--color-pink); background: var(--color-pink-light); padding: 2px 6px; border-radius: 4px; font-weight: 700; }
-
-        /* Sub Header (Ticker & Filter) */
-        .amz-sub-header {
-            background-color: var(--amz-nav-bar);
-            padding: 8px 16px;
-            display: flex;
-            align-items: center;
-            font-size: 0.9rem;
-            color: white;
-            font-weight: 600;
-        }
-        
-        .amz-category-filter {
-            background-color: transparent;
-            border: 1px solid rgba(255,255,255,0.4);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            outline: none;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            margin-right: 12px;
-            flex-shrink: 0;
-            max-width: 130px;
-        }
-        .amz-category-filter option { color: #0F1111; background: white; }
-        .amz-category-filter:hover { border-color: white; }
-        
-        .ticker-wrapper { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; gap: 12px; }
-        .ticker-content { white-space: nowrap; animation: ticker 60s linear infinite; padding-left: 100%; color: white;}
-        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
-
-        /* --- RESPONSIVE MOBILE ADJUSTMENTS --- */
-        @media (max-width: 1024px) {
-            .desktop-search-wrap { display: none; }
-            .mobile-search-wrap { display: block; }
-            
-            .amz-search-select { max-width: 100px; padding: 0 8px; }
-            .amz-mobile-scroll-row { padding: 8px 12px; gap: 8px; justify-content: space-between;}
-            .mobile-hide { display: none !important; }
-            .amz-nav-item { padding: 6px 8px; }
-            .amz-category-filter { max-width: 110px; margin-right: 8px; }
-        }
-
-        /* --- 2. CONTENT BODY (AMAZON BLOCK LAYOUT) --- */
-        .content-body { 
-            max-width: 1600px; 
-            margin: 0 auto; 
-            width: 100%; 
-            padding: 0 0 40px 0;
-        }
-
-        .screen { display: none; animation: fadeIn 0.3s ease; }
-        .screen.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Structural White Blocks */
-        .area-block-wrap, .cat-section-wrap, .promo-section-wrap {
-            background-color: white;
-            padding-top: 16px;
-            margin-bottom: 8px; 
-        }
-
-        /* Horizontal Scroll Containers */
-        .h-scroll {
-            display: flex; overflow-x: auto; gap: 16px; 
-            padding: 4px 16px 20px 16px; 
-            scrollbar-width: none;
-            -ms-overflow-style: none; 
-        }
-        .h-scroll::-webkit-scrollbar { display: none; }
-
-        /* =========================================
-           PREMIUM HEADINGS
-           ========================================= */
-        .sec-title {
-            font-size: 1.35rem; font-weight: 800; color: #0F1111;
-            margin: 0 0 12px 0; padding: 0 16px;
-            display: flex; align-items: center; gap: 10px;
-            white-space: nowrap; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
-        }
-        .sec-title::-webkit-scrollbar { display: none; }
-        .sec-title::before { content: ''; display: inline-block; width: 6px; height: 22px; background: var(--color-pink); border-radius: 4px; flex-shrink: 0; }
-
-        /* =========================================
-           HORIZONTAL PREMIUM SHOP CARDS (2x2 GRID)
-           ========================================= */
-        .premium-shop-card-wrap { display: flex; flex-direction: column; flex-shrink: 0; }
-        .h-scroll .premium-shop-card-wrap { min-width: 280px; width: 85vw; max-width: 340px; }
-
-        .premium-shop-card {
-            background: white; padding: 20px 16px; display: flex; flex-direction: column;
-            cursor: pointer; height: 100%; border-radius: 8px; border: 1px solid #D5D9D9;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
-        }
-        .premium-shop-card:hover { background: #Fcfcfc; transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.08); border-color: #B0B5B5; }
-
-        .shop-card-title {
-            font-size: 1.15rem; font-weight: 800; color: #0F1111; margin-bottom: 16px; line-height: 1.2;
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-        }
-
-        .shop-image-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; flex: 1; width: 100%; }
-        .shop-grid-item-wrap { display: flex; flex-direction: column; gap: 4px; width: 100%; overflow: hidden; }
-        .shop-grid-item { width: 100%; aspect-ratio: 1 / 1; background: #F7F7F7; display: block; overflow: hidden; border-radius: 4px; position: relative; }
-        .shop-grid-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        
-        @keyframes pulse-badge { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); } 50% { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(220, 38, 38, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
-        @keyframes highlight-price { 0%, 100% { color: var(--color-pink); text-shadow: none; } 50% { color: #ff0055; text-shadow: 0 0 6px rgba(219,39,119,0.4); } }
-        .grid-badge { position: absolute; top: 4px; left: 4px; background: #DC2626; color: white; font-size: 0.65rem; font-weight: 800; padding: 2px 4px; border-radius: 4px; z-index: 2; }
-        .flash-offer { animation: pulse-badge 1.5s infinite ease-in-out; }
-        .flash-price { animation: highlight-price 1.5s infinite ease-in-out; }
-
-        .shop-grid-item.empty { border: 1px dashed #D5D9D9; display: flex; align-items: center; justify-content: center; }
-
-        .shop-grid-caption { display: flex; flex-direction: column; }
-        .sg-name { font-size: 0.75rem; color: #0F1111; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .sg-price { font-size: 0.8rem; font-weight: 800; color: var(--color-pink); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .sg-price-old { text-decoration: line-through; color: #888C8C; font-size: 0.65rem; font-weight: 500; margin-right: 4px; }
-        .shop-cta { font-size: 0.85rem; color: var(--amz-link); font-weight: 600; display: inline-flex; text-decoration: none; margin-top: auto; }
-        .premium-shop-card:hover .shop-cta { color: var(--amz-link-hover); text-decoration: underline; }
-
-        /* =========================================
-           CATEGORY CHIPS
-           ========================================= */
-        .cat-grid { display: flex; flex-wrap: wrap; gap: 12px; padding: 0 16px 24px 16px; }
-        .cat-chip {
-            background: white; border: 1px solid #D5D9D9; border-radius: 50px;
-            padding: 6px 16px 6px 6px; display: flex; align-items: center; gap: 10px;
-            cursor: pointer; transition: 0.2s; box-shadow: var(--shadow-sm);
-        }
-        .cat-chip:hover { background: #F7F7F7; border-color: var(--color-pink); transform: translateY(-2px); box-shadow: var(--shadow-md);}
-        .cat-chip img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #E5E7EB; }
-        .cat-chip span { font-size: 0.85rem; font-weight: 700; color: #0F1111; }
-
-        /* Profile & Tools Elements */
-        .tool-block-wrap { background: white; padding: 24px 16px; }
-        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
-        .svc-card { background: white; padding: 20px 16px; border-radius: 8px; text-align: center; border: 1px solid #D5D9D9; cursor: pointer; transition: 0.2s; }
-        .svc-card:hover { background: #F7F7F7; }
-        .svc-icon { width: 48px; height: 48px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #565959;}
-
-        .form-group { margin-bottom: 16px; text-align: left; }
-        .form-label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #0F1111; }
-        .form-input { width: 100%; padding: 10px 14px; border: 1px solid #888C8C; border-radius: 4px; font-size: 1rem; box-shadow: 0 1px 2px rgba(15,17,17,0.15) inset; }
-        .form-input:focus { outline: none; border-color: var(--color-pink); box-shadow: 0 0 0 3px var(--color-pink-light); }
-
-        .btn-brand { background: var(--color-pink); border: 1px solid var(--color-pink-hover); border-radius: 8px; padding: 10px 16px; color: white; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px 0 rgba(219,39,119,0.3); transition: 0.2s; }
-        .btn-brand:hover { background: var(--color-pink-hover); }
-        .btn-brand-alt { background: white; border: 1px solid #D5D9D9; border-radius: 8px; padding: 10px 16px; color: #0F1111; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px 0 rgba(213,217,217,0.5); transition: 0.2s;}
-        .btn-brand-alt:hover { background: #F7FAFA; }
-
-        .avatar-edit-box { position: relative; width: 110px; height: 110px; margin: 0 auto; border-radius: 50%; overflow: hidden; cursor: pointer; border: 2px solid #D5D9D9; }
-        .avatar-edit-box img { width: 100%; height: 100%; object-fit: cover; }
-        .avatar-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; opacity: 0; transition: 0.2s; }
-        .avatar-edit-box:hover .avatar-overlay { opacity: 1; }
-
-        /* Cropper Modal */
-        .crop-overlay { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.95); z-index: 5000; display: flex; flex-direction: column; opacity: 0; visibility: hidden; transition: 0.3s ease; backdrop-filter: blur(5px); }
-        .crop-overlay.active { opacity: 1; visibility: visible; }
-        .crop-header-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: rgba(0,0,0,0.5); color: white; }
-        .crop-title { font-weight: 700; font-size: 1.2rem; }
-        .crop-workspace { flex: 1; position: relative; width: 100%; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
-        .crop-workspace img { max-width: 100%; max-height: 100%; display: block; }
-        .crop-footer-bar { padding: 20px; background: rgba(0,0,0,0.5); display: flex; gap: 16px; justify-content: center; }
-
-        /* AI CHAT WIDGET STYLES */
-        .ai-fab-container { position: fixed; bottom: 20px; right: 20px; z-index: 4000; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .ai-fab { width: 56px; height: 56px; border-radius: 50%; background: var(--color-pink); color: white; box-shadow: 0 4px 12px rgba(219, 39, 119, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.2s; border: none; }
-        .ai-fab:active { transform: scale(0.95); }
-        .ai-label { background: white; color: var(--color-pink); font-size: 0.7rem; font-weight: 800; padding: 4px 8px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #E5E7EB; white-space: nowrap; pointer-events: none; }
-
-        .chat-window { position: fixed; bottom: 90px; right: 20px; width: 350px; height: 500px; background: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 4000; display: flex; flex-direction: column; overflow: hidden; opacity: 0; pointer-events: none; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #D5D9D9; }
-        .chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
-        .chat-header { background: var(--amz-dark); color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
-        .chat-body { flex: 1; padding: 16px; overflow-y: auto; background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
-        .chat-msg { max-width: 80%; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; line-height: 1.4; }
-        .msg-ai { align-self: flex-start; background: white; border: 1px solid #D5D9D9; color: #0F1111; }
-        .msg-user { align-self: flex-end; background: var(--color-pink); color: white; }
-        .msg-error { align-self: center; background: #FEE2E2; color: #DC2626; font-size: 0.8rem; border: 1px solid #FECACA; text-align: center; }
-        .chat-input-area { padding: 12px; background: white; border-top: 1px solid #D5D9D9; display: flex; flex-direction: column; gap: 8px; }
-        .chat-input-row { display: flex; gap: 8px; width: 100%; }
-        .chat-input { flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #888C8C; outline: none; font-size: 0.9rem; }
-        .chat-input:focus { border-color: var(--color-pink); box-shadow: 0 0 0 2px var(--color-pink-light); }
-        .btn-send { background: var(--color-pink); color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        @media (max-width: 480px) { .chat-window { right: 0; left: 0; bottom: 0; width: 100%; height: 85vh; border-bottom-left-radius: 0; border-bottom-right-radius: 0; } }
-    </style>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+  
+  <style>
+    :root{--amz-dark:#131921;--amz-nav-bar:#232F3E;--color-pink:#db2777;--color-pink-hover:#be185d;--color-pink-light:rgba(219,39,119,.15);--amz-bg:#E3E6E6;--amz-link:#007185;--amz-link-hover:#C40000;--color-text-main:#0F1111}
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Plus Jakarta Sans',sans-serif;-webkit-tap-highlight-color:transparent}
+    body{background-color:var(--amz-bg);color:var(--color-text-main);overflow-x:hidden}
+    .amz-header{background-color:var(--amz-dark);color:#fff;position:sticky;top:0;z-index:1000;display:flex;flex-direction:column}
+    .amz-mobile-scroll-row{display:flex;align-items:center;gap:16px;padding:10px 16px;max-width:1600px;margin:0 auto;width:100%}
+    .amz-logo{height:38px;border-radius:4px;object-fit:contain;cursor:pointer;flex-shrink:0}
+    .amz-location{display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid transparent;border-radius:4px;cursor:pointer;color:#fff;font-weight:700;font-size:.95rem;white-space:nowrap;transition:.2s;flex-shrink:0}
+    .amz-location:hover{border-color:#fff}
+    .amz-nav-item{display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid transparent;border-radius:4px;cursor:pointer;color:#fff;font-weight:700;font-size:.95rem;white-space:nowrap;transition:.2s;position:relative;flex-shrink:0}
+    .amz-nav-item.active,.amz-nav-item:hover{border-color:#fff}
+    .notif-badge{position:absolute;top:-2px;right:-6px;background:#EF4444;color:#fff;font-size:.65rem;font-weight:800;padding:2px 6px;border-radius:10px;display:none;border:2px solid var(--amz-dark)}
+    .header-avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#fff;margin-left:4px}
+    .desktop-search-wrap{position:relative;flex:1;margin:0 16px}
+    .mobile-search-wrap{position:relative;display:none;margin:0 16px 10px;width:calc(100% - 32px)}
+    .amz-search-block{display:flex;height:42px;border-radius:6px;overflow:hidden;border:3px solid transparent;transition:.2s;width:100%;background:#fff}
+    .amz-search-block:focus-within{border-color:var(--color-pink)}
+    .amz-search-select{background-color:#F3F4F6;border:none;border-right:1px solid #CDD2D3;padding:0 12px;color:#555;font-size:.85rem;font-weight:600;outline:0;cursor:pointer;max-width:140px;flex-shrink:0;text-overflow:ellipsis}
+    .amz-search-select:hover{background-color:#DADADA;color:#0F1111}
+    .amz-search-input{flex:1;min-width:0;padding:0 16px;border:none;outline:0;font-size:1rem;color:#0F1111}
+    .amz-search-btn{width:52px;background-color:var(--color-pink);border:none;color:#fff;font-size:1.2rem;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .amz-search-btn:hover{background-color:var(--color-pink-hover)}
+    .search-suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,.2);border:1px solid #D5D9D9;z-index:2000;display:none;flex-direction:column;overflow:hidden}
+    .suggestion-item{padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid #F3F4F6;color:#0F1111;font-size:.95rem;transition:background .2s}
+    .suggestion-item:last-child{border-bottom:none}
+    .suggestion-item:hover{background-color:#F7F7F7}
+    .sugg-icon{color:#888C8C;font-size:1rem;width:20px;text-align:center}
+    .sugg-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+    .sugg-type{font-size:.7rem;color:var(--color-pink);background:var(--color-pink-light);padding:2px 6px;border-radius:4px;font-weight:700}
+    .amz-sub-header{background-color:var(--amz-nav-bar);padding:8px 16px;display:flex;align-items:center;font-size:.9rem;color:#fff;font-weight:600}
+    .amz-category-filter{background-color:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;padding:4px 8px;border-radius:4px;outline:0;font-weight:600;font-size:.85rem;cursor:pointer;margin-right:12px;flex-shrink:0;max-width:130px}
+    .amz-category-filter option{color:#0F1111;background:#fff}
+    .amz-category-filter:hover{border-color:#fff}
+    .ticker-wrapper{flex:1;overflow:hidden;position:relative;display:flex;align-items:center;gap:12px}
+    .ticker-content{white-space:nowrap;animation:ticker 60s linear infinite;padding-left:100%;color:#fff}
+    @keyframes ticker{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-100%,0,0)}}
+    @media (max-width:1024px){.desktop-search-wrap{display:none}.mobile-search-wrap{display:block}.amz-search-select{max-width:100px;padding:0 8px}.amz-mobile-scroll-row{padding:8px 12px;gap:8px;justify-content:space-between}.mobile-hide{display:none!important}.amz-nav-item{padding:6px 8px}.amz-category-filter{max-width:110px;margin-right:8px}}
+    .content-body{max-width:1600px;margin:0 auto;width:100%;padding:0 0 40px}
+    .screen{display:none;animation:fadeIn .3s ease}
+    .screen.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .area-block-wrap,.cat-section-wrap,.promo-section-wrap{background-color:#fff;padding-top:16px;margin-bottom:8px}
+    .h-scroll{display:flex;overflow-x:auto;gap:16px;padding:4px 16px 20px;scrollbar-width:none;-ms-overflow-style:none}
+    .h-scroll::-webkit-scrollbar{display:none}
+    .sec-title{font-size:1.35rem;font-weight:800;color:#0F1111;margin:0 0 12px;padding:0 16px;display:flex;align-items:center;gap:10px;white-space:nowrap;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+    .sec-title::-webkit-scrollbar{display:none}
+    .sec-title::before{content:'';display:inline-block;width:6px;height:22px;background:var(--color-pink);border-radius:4px;flex-shrink:0}
+    .premium-shop-card-wrap{display:flex;flex-direction:column;flex-shrink:0}
+    .h-scroll .premium-shop-card-wrap{min-width:280px;width:85vw;max-width:340px}
+    .premium-shop-card{background:#fff;padding:20px 16px;display:flex;flex-direction:column;cursor:pointer;height:100%;border-radius:8px;border:1px solid #D5D9D9;box-shadow:0 2px 4px rgba(0,0,0,.05);transition:background .2s,box-shadow .2s,transform .2s}
+    .premium-shop-card:hover{background:#Fcfcfc;transform:translateY(-2px);box-shadow:0 8px 16px rgba(0,0,0,.08);border-color:#B0B5B5}
+    .shop-card-title{font-size:1.15rem;font-weight:800;color:#0F1111;margin-bottom:16px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .shop-image-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px;flex:1;width:100%}
+    .shop-grid-item-wrap{display:flex;flex-direction:column;gap:4px;width:100%;overflow:hidden}
+    .shop-grid-item{width:100%;aspect-ratio:1/1;background:#F7F7F7;display:block;overflow:hidden;border-radius:4px;position:relative}
+    .shop-grid-item img{width:100%;height:100%;object-fit:cover;display:block}
+    @keyframes pulse-badge{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(220,38,38,0)}50%{transform:scale(1.1);box-shadow:0 0 0 4px rgba(220,38,38,0)}}
+    @keyframes highlight-price{0%,100%{color:var(--color-pink);text-shadow:none}50%{color:#f05;text-shadow:0 0 6px rgba(219,39,119,.4)}}
+    .grid-badge{position:absolute;top:4px;left:4px;background:#DC2626;color:#fff;font-size:.65rem;font-weight:800;padding:2px 4px;border-radius:4px;z-index:2}
+    .flash-offer{animation:pulse-badge 1.5s infinite ease-in-out}
+    .flash-price{animation:highlight-price 1.5s infinite ease-in-out}
+    .shop-grid-item.empty{border:1px dashed #D5D9D9;display:flex;align-items:center;justify-content:center}
+    .shop-grid-caption{display:flex;flex-direction:column}
+    .sg-name{font-size:.75rem;color:#0F1111;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sg-price{font-size:.8rem;font-weight:800;color:var(--color-pink);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sg-price-old{text-decoration:line-through;color:#888C8C;font-size:.65rem;font-weight:500;margin-right:4px}
+    .shop-cta{font-size:.85rem;color:var(--amz-link);font-weight:600;display:inline-flex;text-decoration:none;margin-top:auto}
+    .premium-shop-card:hover .shop-cta{color:var(--amz-link-hover);text-decoration:underline}
+    .cat-grid{display:flex;flex-wrap:wrap;gap:12px;padding:0 16px 24px}
+    .cat-chip{background:#fff;border:1px solid #D5D9D9;border-radius:50px;padding:6px 16px 6px 6px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:.2s;box-shadow:var(--shadow-sm)}
+    .cat-chip:hover{background:#F7F7F7;border-color:var(--color-pink);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+    .cat-chip img{width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid #E5E7EB}
+    .cat-chip span{font-size:.85rem;font-weight:700;color:#0F1111}
+    .tool-block-wrap{background:#fff;padding:24px 16px}
+    .svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px}
+    .svc-card{background:#fff;padding:20px 16px;border-radius:8px;text-align:center;border:1px solid #D5D9D9;cursor:pointer;transition:.2s}
+    .svc-card:hover{background:#F7F7F7}
+    .svc-icon{width:48px;height:48px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#565959}
+    .form-group{margin-bottom:16px;text-align:left}
+    .form-label{display:block;margin-bottom:6px;font-weight:700;font-size:.9rem;color:#0F1111}
+    .form-input{width:100%;padding:10px 14px;border:1px solid #888C8C;border-radius:4px;font-size:1rem;box-shadow:0 1px 2px rgba(15,17,17,.15) inset}
+    .form-input:focus{outline:0;border-color:var(--color-pink);box-shadow:0 0 0 3px var(--color-pink-light)}
+    .btn-brand{background:var(--color-pink);border:1px solid var(--color-pink-hover);border-radius:8px;padding:10px 16px;color:#fff;font-weight:600;cursor:pointer;box-shadow:0 2px 5px 0 rgba(219,39,119,.3);transition:.2s}
+    .btn-brand:hover{background:var(--color-pink-hover)}
+    .btn-brand-alt{background:#fff;border:1px solid #D5D9D9;border-radius:8px;padding:10px 16px;color:#0F1111;font-weight:600;cursor:pointer;box-shadow:0 2px 5px 0 rgba(213,217,217,.5);transition:.2s}
+    .btn-brand-alt:hover{background:#F7FAFA}
+    .avatar-edit-box{position:relative;width:110px;height:110px;margin:0 auto;border-radius:50%;overflow:hidden;cursor:pointer;border:2px solid #D5D9D9}
+    .avatar-edit-box img{width:100%;height:100%;object-fit:cover}
+    .avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.5rem;opacity:0;transition:.2s}
+    .avatar-edit-box:hover .avatar-overlay{opacity:1}
+    .crop-overlay{position:fixed;inset:0;background:rgba(17,24,39,.95);z-index:5000;display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:.3s ease;backdrop-filter:blur(5px)}
+    .crop-overlay.active{opacity:1;visibility:visible}
+    .crop-header-bar{display:flex;justify-content:space-between;align-items:center;padding:20px;background:rgba(0,0,0,.5);color:#fff}
+    .crop-title{font-weight:700;font-size:1.2rem}
+    .crop-workspace{flex:1;position:relative;width:100%;overflow:hidden;display:flex;justify-content:center;align-items:center;padding:20px}
+    .crop-workspace img{max-width:100%;max-height:100%;display:block}
+    .crop-footer-bar{padding:20px;background:rgba(0,0,0,.5);display:flex;gap:16px;justify-content:center}
+    .ai-fab-container{position:fixed;bottom:20px;right:20px;z-index:4000;display:flex;flex-direction:column;align-items:center;gap:6px}
+    .ai-fab{width:56px;height:56px;border-radius:50%;background:var(--color-pink);color:#fff;box-shadow:0 4px 12px rgba(219,39,119,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem;transition:transform .2s;border:none}
+    .ai-fab:active{transform:scale(.95)}
+    .ai-label{background:#fff;color:var(--color-pink);font-size:.7rem;font-weight:800;padding:4px 8px;border-radius:12px;box-shadow:0 2px 4px rgba(0,0,0,.1);border:1px solid #E5E7EB;white-space:nowrap;pointer-events:none}
+    .chat-window{position:fixed;bottom:90px;right:20px;width:350px;height:500px;background:#fff;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,.15);z-index:4000;display:flex;flex-direction:column;overflow:hidden;opacity:0;pointer-events:none;transform:translateY(20px);transition:all .3s cubic-bezier(.4,0,.2,1);border:1px solid #D5D9D9}
+    .chat-window.open{opacity:1;pointer-events:all;transform:translateY(0)}
+    .chat-header{background:var(--amz-dark);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+    .chat-body{flex:1;padding:16px;overflow-y:auto;background:#F8FAFC;display:flex;flex-direction:column;gap:12px}
+    .chat-msg{max-width:80%;padding:10px 14px;border-radius:8px;font-size:.9rem;line-height:1.4}
+    .msg-ai{align-self:flex-start;background:#fff;border:1px solid #D5D9D9;color:#0F1111}
+    .msg-user{align-self:flex-end;background:var(--color-pink);color:#fff}
+    .msg-error{align-self:center;background:#FEE2E2;color:#DC2626;font-size:.8rem;border:1px solid #FECACA;text-align:center}
+    .chat-input-area{padding:12px;background:#fff;border-top:1px solid #D5D9D9;display:flex;flex-direction:column;gap:8px}
+    .chat-input-row{display:flex;gap:8px;width:100%}
+    .chat-input{flex:1;padding:10px;border-radius:4px;border:1px solid #888C8C;outline:0;font-size:.9rem}
+    .chat-input:focus{border-color:var(--color-pink);box-shadow:0 0 0 2px var(--color-pink-light)}
+    .btn-send{background:var(--color-pink);color:#fff;border:none;width:40px;height:40px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+    @media (max-width:480px){.chat-window{right:0;left:0;bottom:0;width:100%;height:85vh;border-bottom-left-radius:0;border-bottom-right-radius:0}}
+  </style>
 </head>
 <body>
+  <header class="amz-header">
+      <div class="amz-mobile-scroll-row">
+          <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="amz-logo" alt="Logo" onclick="window.location.reload()">
+          <div class="amz-location mobile-hide"><i class="fa-solid fa-location-dot"></i> <span id="header-city">...</span></div>
+          <div class="desktop-search-wrap mobile-hide">
+              <div class="amz-search-block">
+                  <select class="amz-search-select" id="search-area-desktop" onchange="navigateArea(this.value)"><option value="all">All Areas</option></select>
+                  <input type="text" class="amz-search-input" id="search-input-desktop" placeholder="Search shops and products..." autocomplete="off" oninput="handleLiveSearch('desktop')" onkeypress="if(event.key==='Enter') executeSearch('desktop')">
+                  <button class="amz-search-btn" onclick="executeSearch('desktop')"><i class="fa-solid fa-magnifying-glass"></i></button>
+              </div>
+              <div class="search-suggestions" id="sugg-desktop"></div>
+          </div>
+          <div class="amz-nav-item active" onclick="switchScreen('market', this)" title="Repository">
+              <i class="fa-solid fa-house" style="font-size:1.1rem"></i><span class="mobile-hide">Repository</span>
+          </div>
+          <div class="amz-nav-item" onclick="switchScreen('services', this)" title="Services">
+              <i class="fa-solid fa-table-cells-large" style="font-size:1.1rem"></i><span class="mobile-hide">Services</span>
+          </div>
+          <div class="amz-nav-item" onclick="switchScreen('notifications', this)">
+              <i class="fa-regular fa-bell" style="font-size:1.2rem"></i><span class="mobile-hide" style="margin-left:6px">Alerts</span><span id="badge-count" class="notif-badge">0</span>
+          </div>
+          <div class="amz-nav-item" onclick="switchScreen('profile', this)" style="padding:4px 8px">
+              <img id="header-avatar" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" class="header-avatar">
+          </div>
+          <div class="amz-nav-item" onclick="window.location.href='shop-index.html'" title="Shop Index"><i class="fa-solid fa-arrow-down-a-z" style="font-size:1.1rem"></i></div>
+      </div>
+      <div class="mobile-search-wrap">
+          <div class="amz-search-block">
+              <select class="amz-search-select" id="search-area-mobile" onchange="navigateArea(this.value)"><option value="all">All Areas</option></select>
+              <input type="text" class="amz-search-input" id="search-input-mobile" placeholder="Search CTMerchant..." autocomplete="off" oninput="handleLiveSearch('mobile')" onkeypress="if(event.key==='Enter') executeSearch('mobile')">
+              <button class="amz-search-btn" onclick="executeSearch('mobile')"><i class="fa-solid fa-magnifying-glass"></i></button>
+          </div>
+          <div class="search-suggestions" id="sugg-mobile"></div>
+      </div>
+      <div class="amz-sub-header">
+          <select class="amz-category-filter" id="filter-category" onchange="navigateCategory(this.value)"><option value="all">All Categories</option></select>
+          <div class="ticker-wrapper" id="header-ticker" style="display:none"><div id="ticker-text" class="ticker-content"></div></div>
+      </div>
+  </header>
 
-    <!-- HEADER (Premium Amazon Style) -->
-    <header class="amz-header">
-        
-        <!-- MAIN ROW -->
-        <div class="amz-mobile-scroll-row">
-            
-            <!-- Logo -->
-            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="amz-logo" alt="Logo" onclick="window.location.reload()">
-            
-            <!-- City (Hidden on Mobile) -->
-            <div class="amz-location mobile-hide">
-                <i class="fa-solid fa-location-dot"></i> <span id="header-city">...</span>
-            </div>
-            
-            <!-- DESKTOP SEARCH WITH AUTOCOMPLETE -->
-            <div class="desktop-search-wrap mobile-hide">
-                <div class="amz-search-block">
-                    <select class="amz-search-select" id="search-area-desktop" onchange="navigateArea(this.value)">
-                        <option value="all">All Areas</option>
-                    </select>
-                    <input type="text" class="amz-search-input" id="search-input-desktop" placeholder="Search shops and products..." autocomplete="off" oninput="handleLiveSearch('desktop')" onkeypress="if(event.key==='Enter') executeSearch('desktop')">
-                    <button class="amz-search-btn" onclick="executeSearch('desktop')"><i class="fa-solid fa-magnifying-glass"></i></button>
-                </div>
-                <!-- Live Search Dropdown -->
-                <div class="search-suggestions" id="sugg-desktop"></div>
-            </div>
+  <main class="content-body">
+      <div id="market" class="screen active">
+          <div id="initial-loader" style="display:none;text-align:center;padding:60px 0;color:#888C8C"><i class="fa-solid fa-circle-notch fa-spin" style="font-size:2.5rem;color:var(--color-pink)"></i></div>
+          <div id="promo-list" class="promo-section-wrap h-scroll" style="display:none"></div>
+          <div id="featured-section" class="area-block-wrap" style="display:none">
+              <h2 class="sec-title">Featured Shops <span style="color:var(--color-pink);font-size:.85em;font-weight:700">(Top Rated)</span></h2>
+              <div id="featured-list" class="h-scroll"></div>
+          </div>
+          <div id="areas-container"></div>
+          <div class="cat-section-wrap" id="category-container" style="display:none">
+              <h2 class="sec-title">Browse Categories</h2>
+              <div id="category-list" class="cat-grid"></div>
+          </div>
+      </div>
+      <div id="services" class="screen">
+          <div class="tool-block-wrap">
+              <h2 class="sec-title" style="padding:0;margin-bottom:20px">Services & Tools</h2>
+              <div class="svc-grid">
+                  <div id="myshop-card" class="svc-card" onclick="handleShopClick()"><div class="svc-icon"><i class="fa-solid fa-store"></i></div><strong>Loading...</strong></div>
+                  <div class="svc-card" onclick="window.location.href='wishlist.html'"><div class="svc-icon"><i class="fa-solid fa-heart" style="color:var(--color-pink)"></i></div><strong>Wishlist</strong><div id="wishlist-count" style="font-size:.8rem;color:#565959;margin-top:4px">...</div></div>
+                  <div class="svc-card" onclick="window.location.href='help-support.html'"><div class="svc-icon"><i class="fa-solid fa-headset" style="color:#007185"></i></div><strong>Support</strong></div>
+                  <div class="svc-card" onclick="window.location.href='faq.html'"><div class="svc-icon"><i class="fa-solid fa-circle-question" style="color:#007185"></i></div><strong>FAQ</strong></div>
+                  <div class="svc-card" onclick="window.location.href='report-abuse.html'"><div class="svc-icon"><i class="fa-solid fa-triangle-exclamation" style="color:#C40000"></i></div><strong>Report Abuse</strong></div>
+              </div>
+          </div>
+      </div>
+      <div id="profile" class="screen">
+          <div id="profile-view" style="max-width:600px;margin:20px auto;background:#fff;padding:40px;border-radius:8px;border:1px solid #D5D9D9;text-align:center">
+              <img id="profile-avatar-lg" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" style="width:120px;height:120px;border-radius:50%;margin-bottom:16px;border:2px solid #D5D9D9;object-fit:cover">
+              <h2 id="profile-name" style="font-size:1.8rem;color:#0F1111;margin-bottom:8px">Loading...</h2>
+              <p id="profile-phone" style="color:#565959;font-weight:500;margin-bottom:4px"></p>
+              <p id="profile-email" style="color:#565959;margin-bottom:24px;font-size:.95rem">...</p>
+              <div style="display:flex;justify-content:center;gap:12px"><button class="btn-brand" onclick="openEditProfile()">Edit Profile</button><button class="btn-brand-alt" onclick="handleLogout()">Sign Out</button></div>
+          </div>
+          <div id="profile-edit" style="display:none;max-width:600px;margin:20px auto;background:#fff;padding:30px;border-radius:8px;border:1px solid #D5D9D9">
+              <h3 style="margin-bottom:24px;font-size:1.4rem">Edit Profile</h3>
+              <div style="text-align:center;margin-bottom:24px">
+                  <div class="avatar-edit-box" onclick="document.getElementById('file-avatar').click()">
+                      <img id="edit-avatar-preview" src="" alt="Avatar"><div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>
+                  </div>
+                  <input type="file" id="file-avatar" hidden accept="image/*" onchange="handleAvatarSelect(event)">
+                  <p style="font-size:.8rem;color:#565959;margin-top:8px;font-weight:600">Tap photo to update (Max 500KB)</p>
+              </div>
+              <div class="form-group"><label class="form-label">Full Name</label><input type="text" id="edit-name" class="form-input"></div>
+              <div class="form-group"><label class="form-label">Phone Number</label><input type="tel" id="edit-phone" class="form-input"></div>
+              <div class="form-group"><label class="form-label">City</label><select id="edit-city" onchange="handleCityChange(this.value)" class="form-input" style="background:#fff"><option value="">Select City</option></select></div>
+              <div class="form-group" style="margin-bottom:24px"><label class="form-label">Area</label><select id="edit-area" class="form-input" style="background:#fff"><option value="">Select Area</option></select></div>
+              <p id="edit-error" style="color:#C40000;font-size:.9rem;margin-bottom:16px;display:none"></p>
+              <div style="display:flex;gap:12px"><button id="btn-save" class="btn-brand" style="flex:1" onclick="saveProfile()">Save Changes</button><button class="btn-brand-alt" style="flex:1" onclick="cancelEdit()">Cancel</button></div>
+          </div>
+      </div>
+      <div id="notifications" class="screen">
+          <div class="tool-block-wrap">
+              <h2 class="sec-title" style="padding:0;margin-bottom:20px">Alerts & Notifications</h2>
+              <div id="notif-list" style="display:flex;flex-direction:column;gap:12px;max-width:800px"><p style="color:#565959">Loading notifications...</p></div>
+          </div>
+      </div>
+  </main>
 
-            <!-- Navigation Links -->
-            <div class="amz-nav-item active" onclick="switchScreen('market', this)" title="Repository">
-                <i class="fa-solid fa-house" style="font-size: 1.1rem;"></i>
-                <span class="mobile-hide">Repository</span>
-            </div>
-            
-            <div class="amz-nav-item" onclick="switchScreen('services', this)" title="Services">
-                <i class="fa-solid fa-table-cells-large" style="font-size: 1.1rem;"></i>
-                <span class="mobile-hide">Services</span>
-            </div>
-            
-            <!-- Alerts (Icon only on mobile) -->
-            <div class="amz-nav-item" onclick="switchScreen('notifications', this)">
-                <i class="fa-regular fa-bell" style="font-size: 1.2rem;"></i>
-                <span class="mobile-hide" style="margin-left: 6px;">Alerts</span>
-                <span id="badge-count" class="notif-badge">0</span>
-            </div>
+  <div id="avatar-crop-modal" class="crop-overlay">
+      <div class="crop-header-bar"><div class="crop-title"><i class="fa-solid fa-crop-simple"></i> Adjust Avatar</div><button type="button" onclick="closeAvatarCropModal()" style="background:0 0;border:none;color:#fff;font-size:1.5rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="crop-workspace"><img id="avatar-crop-image" src=""></div>
+      <div class="crop-footer-bar"><button type="button" class="btn-brand-alt" onclick="closeAvatarCropModal()">Cancel</button><button type="button" class="btn-brand" onclick="applyAvatarCrop()">Apply Crop</button></div>
+  </div>
 
-            <!-- Profile Avatar -->
-            <div class="amz-nav-item" onclick="switchScreen('profile', this)" style="padding: 4px 8px;">
-                <img id="header-avatar" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" class="header-avatar">
-            </div>
-
-            <!-- Store Index -->
-            <div class="amz-nav-item" onclick="window.location.href='shop-index.html'" title="Shop Index">
-                <i class="fa-solid fa-arrow-down-a-z" style="font-size: 1.1rem;"></i>
-            </div>
-        </div>
-
-        <!-- MOBILE SEARCH ROW (Hidden on Desktop) WITH AUTOCOMPLETE -->
-        <div class="mobile-search-wrap">
-            <div class="amz-search-block">
-                <select class="amz-search-select" id="search-area-mobile" onchange="navigateArea(this.value)">
-                    <option value="all">All Areas</option>
-                </select>
-                <input type="text" class="amz-search-input" id="search-input-mobile" placeholder="Search CT-Merchant..." autocomplete="off" oninput="handleLiveSearch('mobile')" onkeypress="if(event.key==='Enter') executeSearch('mobile')">
-                <button class="amz-search-btn" onclick="executeSearch('mobile')"><i class="fa-solid fa-magnifying-glass"></i></button>
-            </div>
-            <!-- Live Search Dropdown -->
-            <div class="search-suggestions" id="sugg-mobile"></div>
-        </div>
-
-        <!-- TICKER ROW WITH CATEGORY FILTER -->
-        <div class="amz-sub-header">
-            <!-- Category Filter -->
-            <select class="amz-category-filter" id="filter-category" onchange="navigateCategory(this.value)">
-                <option value="all">All Categories</option>
-            </select>
-            
-            <div class="ticker-wrapper" id="header-ticker" style="display:none;">
-                <div id="ticker-text" class="ticker-content"></div>
-            </div>
-        </div>
-    </header>
-
-    <!-- CONTENT BODY -->
-    <main class="content-body">
-        
-        <!-- MARKET -->
-        <div id="market" class="screen active">
-            
-            <!-- Hidden by default, only shows if zero cache is found on a cold boot -->
-            <div id="initial-loader" style="display: none; text-align:center; padding:60px 0; color:#888C8C;">
-                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem; color: var(--color-pink);"></i>
-            </div>
-
-            <!-- Promos (Hero Banner style) -->
-            <div id="promo-list" class="promo-section-wrap h-scroll" style="display:none;"></div>
-            
-            <!-- Featured Shops Section (White Block) -->
-            <div id="featured-section" class="area-block-wrap" style="display:none;">
-                <h2 class="sec-title">Featured Shops <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Top Rated)</span></h2>
-                <div id="featured-list" class="h-scroll"></div>
-            </div>
-
-            <!-- Areas Container (Dynamically injected Shop Grids as White Blocks) -->
-            <div id="areas-container"></div>
-
-            <!-- Categories Section (White Block) -->
-            <div class="cat-section-wrap" id="category-container" style="display:none;">
-                <h2 class="sec-title">Browse Categories</h2>
-                <div id="category-list" class="cat-grid"></div>
-            </div>
-
-        </div>
-
-        <!-- SERVICES -->
-        <div id="services" class="screen">
-            <div class="tool-block-wrap">
-                <h2 class="sec-title" style="padding: 0; margin-bottom: 20px;">Services & Tools</h2>
-                <div class="svc-grid">
-                    <!-- MY SHOP DYNAMIC CARD -->
-                    <div id="myshop-card" class="svc-card" onclick="handleShopClick()">
-                        <div class="svc-icon"><i class="fa-solid fa-store"></i></div>
-                        <strong>Loading...</strong>
-                    </div>
-
-                    <div class="svc-card" onclick="window.location.href='wishlist.html'">
-                        <div class="svc-icon"><i class="fa-solid fa-heart" style="color:var(--color-pink);"></i></div>
-                        <strong>Wishlist</strong>
-                        <div id="wishlist-count" style="font-size:0.8rem; color:#565959; margin-top:4px;">...</div>
-                    </div>
-                    <div class="svc-card" onclick="window.location.href='help-support.html'">
-                        <div class="svc-icon"><i class="fa-solid fa-headset" style="color:#007185;"></i></div>
-                        <strong>Support</strong>
-                    </div>
-                    <div class="svc-card" onclick="window.location.href='faq.html'">
-                        <div class="svc-icon"><i class="fa-solid fa-circle-question" style="color:#007185;"></i></div>
-                        <strong>FAQ</strong>
-                    </div>
-                    <div class="svc-card" onclick="window.location.href='report-abuse.html'">
-                        <div class="svc-icon"><i class="fa-solid fa-triangle-exclamation" style="color:#C40000;"></i></div>
-                        <strong>Report Abuse</strong>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- PROFILE -->
-        <div id="profile" class="screen">
-            <!-- View Mode -->
-            <div id="profile-view" style="max-width:600px; margin:20px auto; background:white; padding:40px; border-radius:8px; border:1px solid #D5D9D9; text-align:center;">
-                <img id="profile-avatar-lg" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" style="width:120px; height:120px; border-radius:50%; margin-bottom:16px; border:2px solid #D5D9D9; object-fit: cover;">
-                <h2 id="profile-name" style="font-size:1.8rem; color:#0F1111; margin-bottom:8px;">Loading...</h2>
-                <p id="profile-phone" style="color:#565959; font-weight:500; margin-bottom:4px;"></p>
-                <p id="profile-email" style="color:#565959; margin-bottom:24px; font-size:0.95rem;">...</p>
-                
-                <div style="display:flex; justify-content:center; gap:12px;">
-                    <button class="btn-brand" onclick="openEditProfile()">
-                        Edit Profile
-                    </button>
-                    <button class="btn-brand-alt" onclick="handleLogout()">
-                        Sign Out
-                    </button>
-                </div>
-            </div>
-
-            <!-- Edit Mode -->
-            <div id="profile-edit" style="display:none; max-width:600px; margin:20px auto; background:white; padding:30px; border-radius:8px; border:1px solid #D5D9D9;">
-                <h3 style="margin-bottom:24px; font-size:1.4rem;">Edit Profile</h3>
-                
-                <!-- AVATAR UPLOAD SECTION -->
-                <div style="text-align: center; margin-bottom: 24px;">
-                    <div class="avatar-edit-box" onclick="document.getElementById('file-avatar').click()">
-                        <img id="edit-avatar-preview" src="" alt="Avatar">
-                        <div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>
-                    </div>
-                    <input type="file" id="file-avatar" hidden accept="image/*" onchange="handleAvatarSelect(event)">
-                    <p style="font-size: 0.8rem; color: #565959; margin-top: 8px; font-weight: 600;">Tap photo to update (Max 500KB)</p>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" id="edit-name" class="form-input">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Phone Number</label>
-                    <input type="tel" id="edit-phone" class="form-input">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">City</label>
-                    <select id="edit-city" onchange="handleCityChange(this.value)" class="form-input" style="background:white;">
-                        <option value="">Select City</option>
-                    </select>
-                </div>
-
-                <div class="form-group" style="margin-bottom:24px;">
-                    <label class="form-label">Area</label>
-                    <select id="edit-area" class="form-input" style="background:white;">
-                        <option value="">Select Area</option>
-                    </select>
-                </div>
-                
-                <p id="edit-error" style="color:#C40000; font-size:0.9rem; margin-bottom:16px; display:none;"></p>
-
-                <div style="display:flex; gap:12px;">
-                    <button id="btn-save" class="btn-brand" style="flex:1;" onclick="saveProfile()">Save Changes</button>
-                    <button class="btn-brand-alt" style="flex:1;" onclick="cancelEdit()">Cancel</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- NOTIFICATIONS -->
-        <div id="notifications" class="screen">
-            <div class="tool-block-wrap">
-                <h2 class="sec-title" style="padding: 0; margin-bottom: 20px;">Alerts & Notifications</h2>
-                <div id="notif-list" style="display:flex; flex-direction:column; gap:12px; max-width:800px;">
-                    <p style="color:#565959;">Loading notifications...</p>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- CROPPER MODAL (For Avatar) -->
-    <div id="avatar-crop-modal" class="crop-overlay">
-        <div class="crop-header-bar">
-            <div class="crop-title"><i class="fa-solid fa-crop-simple"></i> Adjust Avatar</div>
-            <button type="button" onclick="closeAvatarCropModal()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="crop-workspace">
-            <img id="avatar-crop-image" src="">
-        </div>
-        <div class="crop-footer-bar">
-            <button type="button" class="btn-brand-alt" onclick="closeAvatarCropModal()">Cancel</button>
-            <button type="button" class="btn-brand" onclick="applyAvatarCrop()">Apply Crop</button>
-        </div>
-    </div>
-
-    <!-- =========================================
-         AI CHAT WIDGET
-         ========================================= -->
-    <div class="ai-fab-container">
-        <button class="ai-fab" onclick="toggleChat()">
-            <i class="fa-solid fa-robot"></i>
-        </button>
-        <span class="ai-label">AI Assistant</span>
-    </div>
-
-    <div id="chat-window" class="chat-window">
-        <div class="chat-header">
-            <span style="font-weight:700;"><i class="fa-solid fa-robot"></i> Assistant</span>
-            <button onclick="toggleChat()" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div id="chat-messages" class="chat-body">
-            <div class="chat-msg msg-ai">Hello! I am your AI assistant. How can I help you today?</div>
-        </div>
-        <div class="chat-input-area">
-            <div class="chat-input-row">
-                <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMsg()">
-                <button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
-            </div>
-            <div class="chat-disclaimer" style="margin-top: 4px;">
-                AI can make mistakes. Please verify prices on the merchant's shop.
-            </div>
-        </div>
-    </div>
+  <div class="ai-fab-container"><button class="ai-fab" onclick="toggleChat()"><i class="fa-solid fa-robot"></i></button><span class="ai-label">AI Assistant</span></div>
+  <div id="chat-window" class="chat-window">
+      <div class="chat-header"><span style="font-weight:700"><i class="fa-solid fa-robot"></i> Assistant</span><button onclick="toggleChat()" style="background:0 0;border:none;color:#fff;font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button></div>
+      <div id="chat-messages" class="chat-body"><div class="chat-msg msg-ai">Hello! I am your AI assistant. How can I help you today?</div></div>
+      <div class="chat-input-area">
+          <div class="chat-input-row"><input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMsg()"><button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button></div>
+          <div class="chat-disclaimer" style="margin-top:4px;font-size:0.75rem;color:#565959">AI can make mistakes. Please verify prices on the merchant's shop.</div>
+      </div>
+  </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script>
-    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let currentUser = null;
-    let userProfile = null;
-    let currentUserShop = null; 
-    let userCityId = null;
-    let userAreaId = null;
-    let allCities = [];
-    
-    let CACHE_KEY = ''; 
-    const MAX_FILE_SIZE = 500 * 1024; 
-    let chatHistory = [];
-
-    let cropper = null;
-    let avatarBlob = null;
-    let currentOldAvatarUrl = null;
-
-    // ==========================================
-    // GLOBAL INACTIVITY TRACKER (15 MINUTE TIMEOUT)
-    // ==========================================
-    let inactivityTimer;
-    const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
-
-    function resetInactivityTimer() {
-        clearTimeout(inactivityTimer);
-        inactivityTimer = setTimeout(logoutDueToInactivity, INACTIVITY_LIMIT);
-    }
-
-    async function logoutDueToInactivity() {
-        // 1. Clear all sensitive local cache dynamically
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('ctm_')) {
-                localStorage.removeItem(key);
-            }
-        });
-        
-        // 2. Kill Supabase Session
-        if (client && client.auth) {
-            await client.auth.signOut();
-        }
-        
-        // 3. Alert and Redirect
-        alert("Your session has securely expired due to inactivity. Please log in again.");
-        window.location.href = "index.html";
-    }
-
-    // Attach listeners to user interaction
-    ['mousemove', 'keydown', 'scroll', 'click', 'touchstart'].forEach(evt => {
-        document.addEventListener(evt, resetInactivityTimer, { passive: true });
-    });
-    
-    // Start timer on load
-    resetInactivityTimer();
-    // ==========================================
-
-
-    // =========================================
-    // OPTIMISTIC SYNCHRONOUS RENDER (ZERO LATENCY)
-    // =========================================
-    const lastUserId = localStorage.getItem('ctm_last_user_id');
-    let optimisticCacheStr = null;
-
-    if (lastUserId) {
-        CACHE_KEY = `ctm_dashboard_v31_${lastUserId}`;
-        optimisticCacheStr = localStorage.getItem(CACHE_KEY);
-        if (optimisticCacheStr) {
-            try {
-                // Instantly paint the screen before anything else loads
-                renderData(JSON.parse(optimisticCacheStr));
-            } catch(e) {
-                console.error("Optimistic render failed", e);
-            }
-        }
-    }
-
-    // --- NAVIGATION ---
-    function switchScreen(id, btn) {
-        if (btn) {
-            document.querySelectorAll('.amz-nav-item').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-        
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        const target = document.getElementById(id);
-        if (target) target.classList.add('active');
-
-        if(id === 'notifications' && currentUser) markRead();
-    }
-
-    // --- DUAL NAVIGATION LOGIC (Area + Category) ---
-    function navigateArea(areaId) {
-        if (areaId !== 'all') window.location.href = `area.html?id=${areaId}`; 
-    }
-    function navigateCategory(catName) {
-        if (catName !== 'all') window.location.href = `cat.html?name=${encodeURIComponent(catName)}`;
-    }
-
-    // --- SEARCH BAR LOGIC WITH AUTOCOMPLETE ---
-    function executeSearch(type) {
-        let inputId = type === 'desktop' ? 'search-input-desktop' : 'search-input-mobile';
-        let query = document.getElementById(inputId).value.trim();
-        if (query) window.location.href = `search.html?q=${encodeURIComponent(query)}`;
-    }
-
-    function handleLiveSearch(type) {
-        const inputId = type === 'desktop' ? 'search-input-desktop' : 'search-input-mobile';
-        const suggId = type === 'desktop' ? 'sugg-desktop' : 'sugg-mobile';
-        const query = document.getElementById(inputId).value.trim().toLowerCase();
-        const suggBox = document.getElementById(suggId);
-
-        if (query.length < 2) {
-            suggBox.style.display = 'none';
-            return;
-        }
-
-        const cacheStr = localStorage.getItem(CACHE_KEY);
-        if (!cacheStr) return;
-
-        try {
-            const data = JSON.parse(cacheStr);
-            const shops = data.shops || [];
-            const products = data.products || [];
-
-            let results = [];
-
-            // Find matching shops
-            shops.forEach(s => {
-                if (s.name.toLowerCase().includes(query)) results.push({ text: s.name, type: 'Shop', icon: 'fa-store' });
-            });
-
-            // Find matching products
-            products.forEach(p => {
-                if (p.name.toLowerCase().includes(query)) results.push({ text: p.name, type: 'Product', icon: 'fa-box' });
-            });
-
-            results = results.slice(0, 6);
-
-            if (results.length > 0) {
-                suggBox.innerHTML = results.map(r => `
-                    <div class="suggestion-item" onclick="applySuggestion('${r.text.replace(/'/g, "\\'")}', '${type}')">
-                        <i class="fa-solid ${r.icon} sugg-icon"></i>
-                        <span class="sugg-text">${r.text}</span>
-                        <span class="sugg-type">${r.type}</span>
-                    </div>
-                `).join('');
-                suggBox.style.display = 'flex';
-            } else {
-                suggBox.style.display = 'none';
-            }
-
-        } catch (e) {
-            console.error(e);
-        }
-    }
-
-    function applySuggestion(text, type) {
-        const inputId = type === 'desktop' ? 'search-input-desktop' : 'search-input-mobile';
-        const suggId = type === 'desktop' ? 'sugg-desktop' : 'sugg-mobile';
-        
-        document.getElementById(inputId).value = text;
-        document.getElementById(suggId).style.display = 'none';
-        
-        executeSearch(type);
-    }
-
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.desktop-search-wrap') && !e.target.closest('.mobile-search-wrap')) {
-            const dDesk = document.getElementById('sugg-desktop');
-            const dMob = document.getElementById('sugg-mobile');
-            if (dDesk) dDesk.style.display = 'none';
-            if (dMob) dMob.style.display = 'none';
-        }
-    });
-
-    // =========================================
-    // AI CHAT LOGIC
-    // ==========================================
-    function toggleChat() {
-        document.getElementById('chat-window').classList.toggle('open');
-    }
-
-    async function sendMsg() {
-        const inp = document.getElementById('chat-input');
-        const txt = inp.value.trim();
-        if(!txt) return;
-
-        const todayStr = new Date().toISOString().split('T')[0];
-        let usageStr = localStorage.getItem('ctm_ai_usage');
-        let aiUsage = usageStr ? JSON.parse(usageStr) : { date: todayStr, count: 0 };
-        
-        if (aiUsage.date !== todayStr) aiUsage = { date: todayStr, count: 0 };
-
-        const body = document.getElementById('chat-messages');
-
-        if (aiUsage.count >= 15) {
-            body.innerHTML += `<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages to keep the server fair for everyone. Please check back tomorrow!</div>`;
-            body.scrollTop = body.scrollHeight;
-            inp.value = '';
-            return;
-        }
-
-        body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
-        inp.value = '';
-        body.scrollTop = body.scrollHeight;
-
-        chatHistory.push({ role: 'user', content: txt });
-
-        const loadId = 'loading-' + Date.now();
-        body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic; color:#565959;">Thinking...</div>`;
-        body.scrollTop = body.scrollHeight;
-
-        try {
-            const { data: { session } } = await client.auth.getSession();
-            if(!session) throw new Error("Please log in to use AI.");
-
-            const recentHistory = chatHistory.length > 6 ? chatHistory.slice(chatHistory.length - 6) : chatHistory;
-
-            const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`,
-                    'apikey': SUPABASE_ANON_KEY 
-                },
-                body: JSON.stringify({ query: txt, history: recentHistory })
-            });
-
-            document.getElementById(loadId)?.remove();
-
-            if (!response.ok) throw new Error(`Server returned ${response.status}`);
-
-            const data = await response.json();
-            const reply = data.reply || "No response received.";
-            const isError = (reply.startsWith("Error:") || reply.startsWith("System") || reply.startsWith("Config"));
-            const msgClass = isError ? "msg-error" : "msg-ai";
-            
-            body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
-
-            if (!isError) {
-                chatHistory.push({ role: 'assistant', content: reply });
-                aiUsage.count += 1;
-                localStorage.setItem('ctm_ai_usage', JSON.stringify(aiUsage));
-            }
-            
-        } catch (err) {
-            document.getElementById(loadId)?.remove();
-            body.innerHTML += `<div class="chat-msg msg-error">Connection Error: ${err.message}</div>`;
-        }
-        body.scrollTop = body.scrollHeight;
-    }
-
-    // --- ASYNC DATA FETCH & VERIFICATION ---
-    window.onload = async () => {
-        const { data: { session } } = await client.auth.getSession();
-        if (!session) { window.location.href = "index.html"; return; }
-        
-        currentUser = session.user;
-        localStorage.setItem('ctm_last_user_id', currentUser.id);
-
-        const correctCacheKey = `ctm_dashboard_v31_${currentUser.id}`;
-
-        // Verify if the optimistic cache belonged to the correct user
-        if (CACHE_KEY !== correctCacheKey) {
-            CACHE_KEY = correctCacheKey;
-            const correctCacheStr = localStorage.getItem(CACHE_KEY);
-            
-            if (correctCacheStr) {
-                renderData(JSON.parse(correctCacheStr));
-                fetchData(correctCacheStr);
-            } else {
-                // Different user, clear data gracefully WITHOUT destroying the DOM structure
-                document.getElementById('areas-container').innerHTML = '';
-                document.getElementById('promo-list').style.display = 'none';
-                document.getElementById('featured-section').style.display = 'none';
-                document.getElementById('category-container').style.display = 'none';
-                document.getElementById('initial-loader').style.display = 'block';
-                fetchData(null);
-            }
-        } else {
-            // User matched perfectly. If no cache existed, show loader.
-            if (!optimisticCacheStr) {
-                document.getElementById('initial-loader').style.display = 'block';
-            }
-            fetchData(optimisticCacheStr); // Silent background SWR check
-        }
-    };
-
-    async function fetchData(oldCacheStr) {
-        try {
-            const { data: profile, error: profileErr } = await client.from('profiles').select('*, cities(name)').eq('id', currentUser.id).maybeSingle();
-            
-            if (profileErr || !profile) {
-                alert("Your account access has been restricted by administration. Please contact support.");
-                await client.auth.signOut();
-                localStorage.removeItem(CACHE_KEY);
-                window.location.href = "index.html";
-                return;
-            }
-            
-            userProfile = profile;
-            userCityId = profile.city_id;
-            userAreaId = profile.area_id;
-
-            // Parallel fetching for absolute maximum speed
-            const [promos, announcements, categories, areas, shops, notifs, myShop, wishlist] = await Promise.all([
-                client.from('promo_banners').select().order('created_at', {ascending: false}),
-                client.from('announcements').select().order('created_at', {ascending: false}),
-                client.from('categories').select().order('name'),
-                client.from('areas').select().eq('city_id', userCityId).order('name'),
-                client.from('shops').select().eq('city_id', userCityId).order('is_verified', {ascending: false}).order('id', {ascending: true}),
-                client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20),
-                client.from('shops').select('id, status, rejection_reason, is_open').eq('owner_id', currentUser.id).maybeSingle(),
-                client.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id)
-            ]);
-
-            currentUserShop = myShop.data;
-
-            let products = [];
-            const shopIds = shops.data.map(s => s.id);
-            if(shopIds.length > 0) {
-                const { data } = await client.from('products')
-                    .select('*')
-                    .in('shop_id', shopIds)
-                    .eq('is_available', true)
-                    .limit(500)
-                    .order('id', {ascending: true}); // Stable sort for JSON comparison
-                products = data || [];
-            }
-            
-            const unreadCount = notifs.data ? notifs.data.filter(n => !n.is_read).length : 0;
-
-            const dashboardData = {
-                profile,
-                promos: promos.data,
-                categories: categories.data,
-                announcements: announcements.data,
-                areas: areas.data,
-                shops: shops.data,
-                notifications: notifs.data || [],
-                myShop: myShop.data,
-                wishlistCount: wishlist.count || 0,
-                products,
-                unread: unreadCount
-            };
-
-            const newCacheStr = JSON.stringify(dashboardData);
-            
-            // Only re-render if the database actively changed to prevent flickering
-            if (newCacheStr !== oldCacheStr) {
-                localStorage.setItem(CACHE_KEY, newCacheStr);
-                renderData(dashboardData);
-            }
-            
-        } catch (e) { 
-            console.error("Fetch error:", e); 
-        }
-    }
-
-    // --- DOM DIFFING RENDER ENGINE (ZERO FLICKER) ---
-    function renderData(data) {
-        document.getElementById('initial-loader').style.display = 'none';
-
-        // 1. Header & Selectors
-        document.getElementById('header-city').textContent = data.profile.cities?.name || "Unknown";
-        
-        const sortedAreas = data.areas.sort((a,b) => (a.id === userAreaId ? -1 : (b.id === userAreaId ? 1 : a.name.localeCompare(b.name))));
-        const areaOptionsItems = sortedAreas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-        
-        const deskSelect = document.getElementById('search-area-desktop');
-        if (deskSelect && deskSelect.innerHTML !== `<option value="all">All Areas</option>` + areaOptionsItems) {
-            deskSelect.innerHTML = `<option value="all">All Areas</option>` + areaOptionsItems;
-        }
-        
-        const mobSelect = document.getElementById('search-area-mobile');
-        if (mobSelect && mobSelect.innerHTML !== `<option value="all">All Areas</option>` + areaOptionsItems) {
-            mobSelect.innerHTML = `<option value="all">All Areas</option>` + areaOptionsItems;
-        }
-
-        const catFilter = document.getElementById('filter-category');
-        if (catFilter) {
-            const catHtml = `<option value="all">All Categories</option>` + data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-            if (catFilter.innerHTML !== catHtml) catFilter.innerHTML = catHtml;
-        }
-
-        // 2. Avatar & Profile
-        const fName = data.profile.full_name || "User";
-        const avatar = data.profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${fName}`;
-        if (document.getElementById('header-avatar').src !== avatar) document.getElementById('header-avatar').src = avatar;
-        if (document.getElementById('profile-avatar-lg').src !== avatar) document.getElementById('profile-avatar-lg').src = avatar;
-        
-        document.getElementById('profile-name').textContent = fName;
-        document.getElementById('profile-phone').textContent = data.profile.phone || "No phone number added";
-        
-        // Safety check for optimistic rendering where currentUser might be null momentarily
-        if (currentUser) document.getElementById('profile-email').textContent = currentUser.email;
-
-        // 3. Notifications Badge
-        const b = document.getElementById('badge-count');
-        if (data.unread > 0) {
-            b.textContent = data.unread > 9 ? '9+' : data.unread;
-            b.style.display = 'block';
-        } else {
-            b.style.display = 'none';
-        }
-
-        // 4. Ticker
-        const tickerContainer = document.getElementById('header-ticker');
-        if (data.announcements && data.announcements.length > 0) {
-            const tickerEl = document.getElementById('ticker-text');
-            const text = data.announcements.map(a => a.message).join("  •  ");
-            
-            tickerContainer.style.display = 'flex';
-            if (tickerEl.innerHTML !== text) {
-                tickerEl.innerHTML = text;
-                const speed = Math.max(40, text.length * 0.4); 
-                tickerEl.style.animationDuration = `${speed}s`;
-            }
-        } else {
-            tickerContainer.style.display = 'none';
-        }
-
-        // 5. Promos (Diff Check prevents image flash)
-        const pList = document.getElementById('promo-list');
-        if (data.promos.length > 0) {
-            const promoHtml = data.promos.map(p => 
-                `<div style="min-width:320px; max-width: 600px; width: 85vw; height:200px; border-radius:4px; overflow:hidden; flex-shrink:0; border:1px solid #D5D9D9;">
-                    <img src="${p.image_url}" style="width:100%; height:100%; object-fit:cover;">
-                 </div>`
-            ).join('');
-            
-            if (pList.innerHTML !== promoHtml) pList.innerHTML = promoHtml;
-            pList.style.display = 'flex';
-        } else {
-            pList.style.display = 'none';
-        }
-
-        // 6. Featured Shops (Diff Check)
-        const featured = data.shops.filter(s => s.is_featured);
-        const featuredSection = document.getElementById('featured-section');
-        const featuredList = document.getElementById('featured-list');
-        
-        if (featured.length > 0) {
-            const featHtml = featured.map(s => buildShopCard(s, data.products)).join('');
-            if (featuredList.innerHTML !== featHtml) featuredList.innerHTML = featHtml;
-            featuredSection.style.display = 'block';
-        } else {
-            featuredSection.style.display = 'none';
-        }
-
-        // 7. Area Shops (Diff Check)
-        const areaContainer = document.getElementById('areas-container');
-        let areaHtmlBuilder = '';
-        sortedAreas.forEach(area => {
-            const areaShops = data.shops.filter(s => s.area_id === area.id);
-            if(areaShops.length === 0) return;
-
-            const isUser = area.id === userAreaId;
-            const titleHtml = isUser 
-                ? `Top stores in ${area.name} <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Near You)</span>` 
-                : `Explore stores in ${area.name}`;
-
-            areaHtmlBuilder += `
-                <div class="area-block-wrap">
-                    <h2 class="sec-title">${titleHtml}</h2>
-                    <div class="h-scroll">
-                        ${areaShops.map(s => buildShopCard(s, data.products)).join('')}
-                    </div>
-                </div>
-            `;
-        });
-        if (areaContainer.innerHTML !== areaHtmlBuilder) areaContainer.innerHTML = areaHtmlBuilder;
-
-        // 8. Categories (Diff Check)
-        const catList = document.getElementById('category-list');
-        const catContainer = document.getElementById('category-container');
-        if (data.categories.length > 0) {
-            const catHtml = data.categories.map(cat => {
-                const shopIds = data.shops.filter(s => s.category === cat.name).map(s => s.id);
-                const p = data.products.find(x => shopIds.includes(x.shop_id) && x.image_url);
-                const url = p ? p.image_url : `https://api.dicebear.com/7.x/initials/svg?seed=${cat.name}`;
-                return `
-                    <div class="cat-chip" onclick="window.location.href='cat.html?name=${encodeURIComponent(cat.name)}'">
-                        <img src="${url}"> <span>${cat.name}</span>
-                    </div>
-                `;
-            }).join('');
-            if (catList.innerHTML !== catHtml) catList.innerHTML = catHtml;
-            catContainer.style.display = 'block';
-        }
-
-        // 9. Notifications (Diff Check)
-        const notifListEl = document.getElementById('notif-list');
-        let notifHtml = '<p style="color:#565959;">No notifications yet</p>';
-        if (data.notifications && data.notifications.length > 0) {
-            notifHtml = data.notifications.map(n => {
-                const date = new Date(n.created_at).toLocaleDateString() + ' ' + new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const bg = n.is_read ? 'white' : '#F7FAFA'; 
-                const border = n.is_read ? '#D5D9D9' : '#007185'; 
-
-                return `
-                    <div style="background:${bg}; padding:16px; border-radius:8px; border:1px solid ${border}; margin-bottom: 12px;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                            <span style="font-weight:700; color:#0F1111; font-size:0.95rem;">${n.title}</span>
-                            <span style="font-size:0.75rem; color:#565959;">${date}</span>
-                        </div>
-                        <div style="color:#0F1111; font-size:0.9rem; line-height:1.4;">${n.message || ''}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-        if (notifListEl.innerHTML !== notifHtml) notifListEl.innerHTML = notifHtml;
-
-        // 10. Tools & Counters
-        updateMyShopCardUI(data.myShop);
-        currentUserShop = data.myShop;
-        
-        const wishText = `${data.wishlistCount || 0} items`;
-        if (document.getElementById('wishlist-count').textContent !== wishText) {
-            document.getElementById('wishlist-count').textContent = wishText;
-        }
-    }
-
-    // =========================================
-    // PREMIUM AMAZON-STYLE SHOP CARD BUILDER
-    // =========================================
-    function buildShopCard(shop, allProducts) {
-        const p = allProducts.filter(x => x.shop_id === shop.id && x.image_url && x.condition !== 'Fairly Used').slice(0, 4);
-
-        let gridHtml = '';
-        
-        for (let i = 0; i < 4; i++) {
-            if (i < p.length) {
-                const prodName = p[i].name || p[i].product_name || p[i].title || 'Product';
-                
-                const price = p[i].price || p[i].product_price;
-                const discount = p[i].discount_price;
-                const hasDiscount = discount && discount < price;
-                const percent = hasDiscount ? Math.round(((price - discount)/price)*100) : 0;
-                
-                let priceHtml = '';
-                let priceClass = 'sg-price';
-                
-                if (hasDiscount) {
-                    priceHtml = `<span class="sg-price-old">₦${price.toLocaleString()}</span>₦${discount.toLocaleString()}`;
-                    priceClass = 'sg-price flash-price'; 
-                } else if (price) {
-                    priceHtml = `₦${price.toLocaleString()}`;
-                }
-
-                gridHtml += `
-                    <div class="shop-grid-item-wrap">
-                        <div class="shop-grid-item">
-                            <img src="${p[i].image_url}" alt="Product" loading="lazy">
-                            ${hasDiscount ? `<div class="grid-badge flash-offer">-${percent}%</div>` : ''}
-                        </div>
-                        <div class="shop-grid-caption">
-                            <div class="sg-name" title="${prodName}">${prodName}</div>
-                            <div class="${priceClass}">${priceHtml}</div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                gridHtml += `
-                    <div class="shop-grid-item-wrap">
-                        <div class="shop-grid-item empty">
-                            <i class="fa-solid fa-image" style="color: #E5E7EB; font-size: 1.2rem;"></i>
-                        </div>
-                        <div class="shop-grid-caption" style="color:transparent; user-select:none;">
-                            <div class="sg-name">-</div>
-                            <div class="sg-price">-</div>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        return `
-            <div class="premium-shop-card-wrap">
-                <div class="premium-shop-card" onclick="window.location.href='shop-detail.html?id=${shop.id}'">
-                    <div class="shop-card-title">${shop.name}</div>
-                    <div class="shop-image-grid">
-                        ${gridHtml}
-                    </div>
-                    <div class="shop-cta">Visit shop <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i></div>
-                </div>
-            </div>
-        `;
-    }
-
-    function updateMyShopCardUI(shop) {
-        const card = document.getElementById('myshop-card');
-        const iconContainer = card.querySelector('.svc-icon');
-        const textLabel = card.querySelector('strong');
-        
-        let icon = 'fa-store';
-        let label = 'Register Shop';
-        
-        if (shop) {
-            if (shop.is_open === false) {
-                icon = 'fa-lock'; label = 'Locked';
-            } 
-            else if (shop.status === 'pending') {
-                icon = 'fa-hourglass-half'; label = 'Pending';
-            } 
-            else if (shop.status === 'approved') {
-                icon = 'fa-store'; label = 'My Shop';
-            } 
-            else if (shop.status === 'rejected') {
-                icon = 'fa-circle-exclamation'; label = 'Rejected';
-            }
-        }
-        
-        const newIconHtml = `<i class="fa-solid ${icon}"></i>`;
-        if (iconContainer.innerHTML !== newIconHtml) iconContainer.innerHTML = newIconHtml;
-        if (textLabel.textContent !== label) textLabel.textContent = label;
-    }
-
-    function handleShopClick() {
-        if (!currentUserShop) {
-            window.location.href = 'shop-registration.html';
-        }
-        else if (currentUserShop.is_open === false) {
-            alert("🔒 Your shop access has been restricted by administration. Please contact support via support@ct-merchant.com to resolve your account status.");
-        }
-        else if (currentUserShop.status === 'pending') {
-            alert('Your shop application is currently being reviewed. Please check back later.');
-        }
-        else if (currentUserShop.status === 'approved') {
-            window.location.href = 'merchant-dashboard.html';
-        }
-        else if (currentUserShop.status === 'rejected') {
-            alert(`Application Rejected: ${currentUserShop.rejection_reason || 'Please update your details.'}`);
-            window.location.href = `shop-registration.html?id=${currentUserShop.id}`; 
-        }
-    }
-
-    // =========================================
-    // EDIT PROFILE & AVATAR CROPPER LOGIC
-    // =========================================
-    async function openEditProfile() {
-        if(!userProfile) return;
-        document.getElementById('profile-view').style.display = 'none';
-        document.getElementById('profile-edit').style.display = 'block';
-        
-        document.getElementById('edit-name').value = userProfile.full_name || '';
-        document.getElementById('edit-phone').value = userProfile.phone || '';
-
-        avatarBlob = null;
-        currentOldAvatarUrl = userProfile.avatar_url;
-        document.getElementById('edit-avatar-preview').src = currentOldAvatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${userProfile.full_name}`;
-
-        if(allCities.length === 0) {
-            const { data } = await client.from('cities')
-                .select('id, name')
-                .or(`is_open.eq.true,id.eq.${userProfile.city_id || 0}`)
-                .order('name');
-                
-            allCities = data || [];
-            const citySelect = document.getElementById('edit-city');
-            citySelect.innerHTML = '<option value="">Select City</option>';
-            allCities.forEach(c => { citySelect.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
-        }
-
-        if(userProfile.city_id) {
-            document.getElementById('edit-city').value = userProfile.city_id;
-            await handleCityChange(userProfile.city_id, userProfile.area_id);
-        }
-    }
-
-    function handleAvatarSelect(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                openAvatarCropModal(e.target.result);
-                event.target.value = ''; 
-            };
-            reader.readAsDataURL(file);
-        } else {
-            alert("Please upload a valid image file.");
-            event.target.value = '';
-        }
-    }
-
-    function openAvatarCropModal(imageSrc) {
-        const modal = document.getElementById('avatar-crop-modal');
-        const img = document.getElementById('avatar-crop-image');
-        
-        img.src = imageSrc;
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-
-        if (cropper) cropper.destroy();
-
-        cropper = new Cropper(img, {
-            aspectRatio: 1, 
-            viewMode: 2,
-            background: false,
-            autoCropArea: 1,
-            responsive: true
-        });
-    }
-
-    function closeAvatarCropModal() {
-        document.getElementById('avatar-crop-modal').classList.remove('active');
-        document.body.style.overflow = '';
-        if (cropper) {
-            cropper.destroy();
-            cropper = null;
-        }
-    }
-
-    function applyAvatarCrop() {
-        if (!cropper) return;
-        
-        cropper.getCroppedCanvas({
-            width: 600, 
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high',
-        }).toBlob((blob) => {
-            if (blob.size > MAX_FILE_SIZE) {
-                alert(`Image is too large (${Math.round(blob.size/1024)}KB). Maximum allowed size is 500KB. Try cropping smaller.`);
-                return; 
-            }
-
-            avatarBlob = blob;
-            const localUrl = URL.createObjectURL(blob);
-            document.getElementById('edit-avatar-preview').src = localUrl;
-            closeAvatarCropModal();
-        }, 'image/jpeg', 0.85); 
-    }
-
-    async function uploadAvatarProcess() {
-        if (!avatarBlob) return currentOldAvatarUrl;
-
-        if (currentOldAvatarUrl && currentOldAvatarUrl.includes('/avatars/')) {
-            try {
-                const pathMatch = currentOldAvatarUrl.match(new RegExp(`/(?:public|authenticated)/avatars/(.+)`));
-                if (pathMatch && pathMatch[1]) {
-                    const oldFilePath = pathMatch[1].split('?')[0]; 
-                    await client.storage.from('avatars').remove([oldFilePath]);
-                }
-            } catch (err) {
-                console.warn("Failed to delete old avatar:", err);
-            }
-        }
-
-        const fileName = `${currentUser.id}_${Date.now()}.jpg`;
-        const { error: uploadError } = await client.storage.from('avatars').upload(fileName, avatarBlob, {
-            contentType: 'image/jpeg',
-            upsert: false
-        });
-        
-        if (uploadError) throw uploadError;
-        
-        const { data } = client.storage.from('avatars').getPublicUrl(fileName);
-        return data.publicUrl;
-    }
-
-    async function handleCityChange(cityId, preSelectAreaId = null) {
-        const areaSelect = document.getElementById('edit-area');
-        areaSelect.innerHTML = '<option value="">Loading...</option>';
-        areaSelect.disabled = true;
-
-        if(!cityId) {
-            areaSelect.innerHTML = '<option value="">Select Area</option>';
-            return;
-        }
-
-        const { data: areas } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
-        
-        areaSelect.innerHTML = '<option value="">Select Area</option>';
-        if(areas) {
-            areas.forEach(a => {
-                areaSelect.innerHTML += `<option value="${a.id}">${a.name}</option>`;
-            });
-        }
-        areaSelect.disabled = false;
-
-        if(preSelectAreaId) {
-            areaSelect.value = preSelectAreaId;
-        }
-    }
-
-    function cancelEdit() {
-        document.getElementById('profile-edit').style.display = 'none';
-        document.getElementById('profile-view').style.display = 'block';
-        document.getElementById('edit-error').style.display = 'none';
-        avatarBlob = null; 
-    }
-
-    async function saveProfile() {
-        const name = document.getElementById('edit-name').value.trim();
-        const phone = document.getElementById('edit-phone').value.trim();
-        const cityId = document.getElementById('edit-city').value;
-        const areaId = document.getElementById('edit-area').value;
-        const btn = document.getElementById('btn-save');
-        const err = document.getElementById('edit-error');
-
-        if(!name) { err.textContent = "Full Name is required."; err.style.display = 'block'; return; }
-        if(!cityId || !areaId) { err.textContent = "Please select both City and Area."; err.style.display = 'block'; return; }
-
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-        err.style.display = 'none';
-
-        try {
-            const finalAvatarUrl = await uploadAvatarProcess();
-
-            const { error } = await client.from('profiles').update({
-                full_name: name,
-                phone: phone,
-                city_id: parseInt(cityId),
-                area_id: parseInt(areaId),
-                avatar_url: finalAvatarUrl 
-            }).eq('id', currentUser.id);
-
-            if(error) throw error;
-            
-            await fetchData(null); // Force full data refresh
-            cancelEdit();
-
-        } catch (e) {
-            err.textContent = e.message || "Error updating profile";
-            err.style.display = 'block';
-        } finally {
-            btn.disabled = false;
-            btn.textContent = "Save Changes";
-        }
-    }
-
-    async function handleLogout() {
-        if(confirm("Sign Out?")) {
-            // CRITICAL: Clear the user's specific cache entirely on logout
-            Object.keys(localStorage).forEach(key => {
-                if (key.startsWith('ctm_')) {
-                    localStorage.removeItem(key);
-                }
-            });
-            await client.auth.signOut();
-            window.location.href = "index.html";
-        }
-    }
-    
-    async function markRead() {
-        document.getElementById('badge-count').style.display = 'none';
-        await client.from('notifications').update({is_read: true}).eq('user_id', currentUser.id);
-    }
+    const SUPABASE_URL="https://xdchacdjcgazyckacbpc.supabase.co",SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    let currentUser=null,userProfile=null,currentUserShop=null,userCityId=null,userAreaId=null,allCities=[],CACHE_KEY='',chatHistory=[],cropper=null,avatarBlob=null,currentOldAvatarUrl=null,inactivityTimer;
+    const MAX_FILE_SIZE=5e5,INACTIVITY_LIMIT=9e5;
+
+    function resetInactivityTimer(){clearTimeout(inactivityTimer),inactivityTimer=setTimeout(logoutDueToInactivity,INACTIVITY_LIMIT)}
+    async function logoutDueToInactivity(){Object.keys(localStorage).forEach(e=>{e.startsWith('ctm_')&&localStorage.removeItem(e)}),client&&client.auth&&await client.auth.signOut(),alert("Your session has securely expired due to inactivity. Please log in again."),window.location.href="index.html"}
+    ['mousemove','keydown','scroll','click','touchstart'].forEach(e=>{document.addEventListener(e,resetInactivityTimer,{passive:!0})}),resetInactivityTimer();
+
+    const lastUserId=localStorage.getItem('ctm_last_user_id');
+    let optimisticCacheStr=null;
+    if(lastUserId){CACHE_KEY=`ctm_dashboard_v31_${lastUserId}`,optimisticCacheStr=localStorage.getItem(CACHE_KEY);if(optimisticCacheStr)try{renderData(JSON.parse(optimisticCacheStr))}catch(e){console.error("Optimistic render failed",e)}}
+
+    function switchScreen(e,t){t&&(document.querySelectorAll('.amz-nav-item').forEach(e=>e.classList.remove('active')),t.classList.add('active')),document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));const a=document.getElementById(e);a&&a.classList.add('active'),'notifications'===e&&currentUser&&markRead()}
+    function navigateArea(e){'all'!==e&&(window.location.href=`area.html?id=${e}`)}
+    function navigateCategory(e){'all'!==e&&(window.location.href=`cat.html?name=${encodeURIComponent(e)}`)}
+    function executeSearch(e){let t='desktop'===e?'search-input-desktop':'search-input-mobile',a=document.getElementById(t).value.trim();a&&(window.location.href=`search.html?q=${encodeURIComponent(a)}`)}
+    function handleLiveSearch(e){const t='desktop'===e?'search-input-desktop':'search-input-mobile',a='desktop'===e?'sugg-desktop':'sugg-mobile',n=document.getElementById(t).value.trim().toLowerCase(),o=document.getElementById(a);if(n.length<2)return void(o.style.display='none');const r=localStorage.getItem(CACHE_KEY);if(!r)return;try{const s=JSON.parse(r),i=s.shops||[],c=s.products||[];let d=[];i.forEach(e=>{e.name.toLowerCase().includes(n)&&d.push({text:e.name,type:'Shop',icon:'fa-store'})}),c.forEach(e=>{e.name.toLowerCase().includes(n)&&d.push({text:e.name,type:'Product',icon:'fa-box'})}),d=d.slice(0,6),d.length>0?(o.innerHTML=d.map(t=>`<div class="suggestion-item" onclick="applySuggestion('${t.text.replace(/'/g,"\\'")}', '${e}')"><i class="fa-solid ${t.icon} sugg-icon"></i><span class="sugg-text">${t.text}</span><span class="sugg-type">${t.type}</span></div>`).join(''),o.style.display='flex'):o.style.display='none'}catch(e){console.error(e)}}
+    function applySuggestion(e,t){document.getElementById('desktop'===t?'search-input-desktop':'search-input-mobile').value=e,document.getElementById('desktop'===t?'sugg-desktop':'sugg-mobile').style.display='none',executeSearch(t)}
+    document.addEventListener('click',function(e){if(!e.target.closest('.desktop-search-wrap')&&!e.target.closest('.mobile-search-wrap')){const e=document.getElementById('sugg-desktop'),t=document.getElementById('sugg-mobile');e&&(e.style.display='none'),t&&(t.style.display='none')}});
+
+    function toggleChat(){document.getElementById('chat-window').classList.toggle('open')}
+    async function sendMsg(){const e=document.getElementById('chat-input'),t=e.value.trim();if(!t)return;const a=new Date().toISOString().split('T')[0];let n=localStorage.getItem('ctm_ai_usage'),o=n?JSON.parse(n):{date:a,count:0};o.date!==a&&(o={date:a,count:0});const r=document.getElementById('chat-messages');if(o.count>=15)return r.innerHTML+='<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages to keep the server fair for everyone. Please check back tomorrow!</div>',r.scrollTop=r.scrollHeight,void(e.value='');r.innerHTML+=`<div class="chat-msg msg-user">${t}</div>`,e.value='',r.scrollTop=r.scrollHeight,chatHistory.push({role:'user',content:t});const s='loading-'+Date.now();r.innerHTML+=`<div id="${s}" class="chat-msg msg-ai" style="font-style:italic; color:#565959;">Thinking...</div>`,r.scrollTop=r.scrollHeight;try{const{data:{session:e}}=await client.auth.getSession();if(!e)throw new Error("Please log in to use AI.");const a=chatHistory.length>6?chatHistory.slice(chatHistory.length-6):chatHistory,n=await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${e.access_token}`,apikey:SUPABASE_ANON_KEY},body:JSON.stringify({query:t,history:a})});if(document.getElementById(s)?.remove(),!n.ok)throw new Error(`Server returned ${n.status}`);const i=await n.json(),c=i.reply||"No response received.",d=c.startsWith("Error:")||c.startsWith("System")||c.startsWith("Config"),l=d?"msg-error":"msg-ai";r.innerHTML+=`<div class="chat-msg ${l}">${c}</div>`,d||(chatHistory.push({role:'assistant',content:c}),o.count+=1,localStorage.setItem('ctm_ai_usage',JSON.stringify(o)))}catch(e){document.getElementById(s)?.remove(),r.innerHTML+=`<div class="chat-msg msg-error">Connection Error: ${e.message}</div>`}r.scrollTop=r.scrollHeight}
+
+    window.onload=async()=>{const{data:{session:e}}=await client.auth.getSession();if(!e)return void(window.location.href="index.html");currentUser=e.user,localStorage.setItem('ctm_last_user_id',currentUser.id);const t=`ctm_dashboard_v31_${currentUser.id}`;if(CACHE_KEY!==t){CACHE_KEY=t;const e=localStorage.getItem(CACHE_KEY);e?(renderData(JSON.parse(e)),fetchData(e)):(document.getElementById('areas-container').innerHTML='',document.getElementById('promo-list').style.display='none',document.getElementById('featured-section').style.display='none',document.getElementById('category-container').style.display='none',document.getElementById('initial-loader').style.display='block',fetchData(null))}else optimisticCacheStr||(document.getElementById('initial-loader').style.display='block'),fetchData(optimisticCacheStr)};
+
+    async function fetchData(e){try{const{data:t,error:a}=await client.from('profiles').select('*, cities(name)').eq('id',currentUser.id).maybeSingle();if(a||!t)return alert("Your account access has been restricted by administration. Please contact support."),await client.auth.signOut(),localStorage.removeItem(CACHE_KEY),void(window.location.href="index.html");userProfile=t,userCityId=t.city_id,userAreaId=t.area_id;const[n,o,r,s,i,c,d,l]=await Promise.all([client.from('promo_banners').select().order('created_at',{ascending:!1}),client.from('announcements').select().order('created_at',{ascending:!1}),client.from('categories').select().order('name'),client.from('areas').select().eq('city_id',userCityId).order('name'),client.from('shops').select().eq('city_id',userCityId).order('is_verified',{ascending:!1}).order('id',{ascending:!0}),client.from('notifications').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:!1}).limit(20),client.from('shops').select('id, status, rejection_reason, is_open').eq('owner_id',currentUser.id).maybeSingle(),client.from('wishlist').select('*',{count:'exact',head:!0}).eq('user_id',currentUser.id)]);currentUserShop=d.data;let p=[];const u=i.data.map(e=>e.id);if(u.length>0){const{data:e}=await client.from('products').select('*').in('shop_id',u).eq('is_available',!0).limit(500).order('id',{ascending:!0});p=e||[]}const m={profile:t,promos:n.data,categories:r.data,announcements:o.data,areas:s.data,shops:i.data,notifications:c.data||[],myShop:d.data,wishlistCount:l.count||0,products:p,unread:c.data?c.data.filter(e=>!e.is_read).length:0},h=JSON.stringify(m);h!==e&&(localStorage.setItem(CACHE_KEY,h),renderData(m))}catch(e){console.error("Fetch error:",e)}}
+
+    function renderData(e){document.getElementById('initial-loader').style.display='none',document.getElementById('header-city').textContent=e.profile.cities?.name||"Unknown";const t=e.areas.sort((e,t)=>e.id===userAreaId?-1:t.id===userAreaId?1:e.name.localeCompare(t.name)),a=t.map(e=>`<option value="${e.id}">${e.name}</option>`).join(''),n=document.getElementById('search-area-desktop');n&&n.innerHTML!==`<option value="all">All Areas</option>`+a&&(n.innerHTML=`<option value="all">All Areas</option>`+a);const o=document.getElementById('search-area-mobile');o&&o.innerHTML!==`<option value="all">All Areas</option>`+a&&(o.innerHTML=`<option value="all">All Areas</option>`+a);const r=document.getElementById('filter-category');if(r){const t=`<option value="all">All Categories</option>`+e.categories.map(e=>`<option value="${e.name}">${e.name}</option>`).join('');r.innerHTML!==t&&(r.innerHTML=t)}const s=e.profile.full_name||"User",i=e.profile.avatar_url||`https://api.dicebear.com/7.x/initials/svg?seed=${s}`;document.getElementById('header-avatar').src!==i&&(document.getElementById('header-avatar').src=i),document.getElementById('profile-avatar-lg').src!==i&&(document.getElementById('profile-avatar-lg').src=i),document.getElementById('profile-name').textContent=s,document.getElementById('profile-phone').textContent=e.profile.phone||"No phone number added",currentUser&&(document.getElementById('profile-email').textContent=currentUser.email);const c=document.getElementById('badge-count');if(e.unread>0? (c.textContent=e.unread>9?'9+':e.unread,c.style.display='block') : c.style.display='none', e.announcements&&e.announcements.length>0){const t=document.getElementById('header-ticker'),a=document.getElementById('ticker-text'),n=e.announcements.map(e=>e.message).join("  •  ");t.style.display='flex',a.innerHTML!==n&&(a.innerHTML=n,a.style.animationDuration=`${Math.max(40,n.length*.4)}s`)}else document.getElementById('header-ticker').style.display='none';const d=document.getElementById('promo-list');if(e.promos.length>0){const t=e.promos.map(e=>`<div style="min-width:320px; max-width: 600px; width: 85vw; height:200px; border-radius:4px; overflow:hidden; flex-shrink:0; border:1px solid #D5D9D9;"><img src="${e.image_url}" style="width:100%; height:100%; object-fit:cover;"></div>`).join('');d.innerHTML!==t&&(d.innerHTML=t),d.style.display='flex'}else d.style.display='none';const l=e.shops.filter(e=>e.is_featured),p=document.getElementById('featured-section'),u=document.getElementById('featured-list');if(l.length>0){const t=l.map(t=>buildShopCard(t,e.products)).join('');u.innerHTML!==t&&(u.innerHTML=t),p.style.display='block'}else p.style.display='none';const m=document.getElementById('areas-container');let h='';t.forEach(t=>{const a=e.shops.filter(e=>e.area_id===t.id);if(0===a.length)return;h+=`<div class="area-block-wrap"><h2 class="sec-title">${t.id===userAreaId?`Top stores in ${t.name} <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Near You)</span>`:`Explore stores in ${t.name}`}</h2><div class="h-scroll">${a.map(t=>buildShopCard(t,e.products)).join('')}</div></div>`}),m.innerHTML!==h&&(m.innerHTML=h);const y=document.getElementById('category-list'),f=document.getElementById('category-container');if(e.categories.length>0){const t=e.categories.map(t=>{const a=e.shops.filter(e=>e.category===t.name).map(e=>e.id),n=e.products.find(e=>a.includes(e.shop_id)&&e.image_url),o=n?n.image_url:`https://api.dicebear.com/7.x/initials/svg?seed=${t.name}`;return`<div class="cat-chip" onclick="window.location.href='cat.html?name=${encodeURIComponent(t.name)}'"><img src="${o}"> <span>${t.name}</span></div>`}).join('');y.innerHTML!==t&&(y.innerHTML=t),f.style.display='block'}const g=document.getElementById('notif-list');let v='<p style="color:#565959;">No notifications yet</p>';e.notifications&&e.notifications.length>0&&(v=e.notifications.map(e=>{const t=new Date(e.created_at).toLocaleDateString()+' '+new Date(e.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});return`<div style="background:${e.is_read?'white':'#F7FAFA'}; padding:16px; border-radius:8px; border:1px solid ${e.is_read?'#D5D9D9':'#007185'}; margin-bottom: 12px;"><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="font-weight:700; color:#0F1111; font-size:0.95rem;">${e.title}</span><span style="font-size:0.75rem; color:#565959;">${t}</span></div><div style="color:#0F1111; font-size:0.9rem; line-height:1.4;">${e.message||''}</div></div>`}).join('')),g.innerHTML!==v&&(g.innerHTML=v),updateMyShopCardUI(e.myShop),currentUserShop=e.myShop;const x=`${e.wishlistCount||0} items`;document.getElementById('wishlist-count').textContent!==x&&(document.getElementById('wishlist-count').textContent=x)}
+    function buildShopCard(e,t){const a=t.filter(t=>t.shop_id===e.id&&t.image_url&&'Fairly Used'!==t.condition).slice(0,4);let n='';for(let t=0;t<4;t++)if(t<a.length){const e=a[t].name||a[t].product_name||a[t].title||'Product',o=a[t].price||a[t].product_price,r=a[t].discount_price,s=r&&r<o,i=s?Math.round((o-r)/o*100):0;let c='',d='sg-price';s?(c=`<span class="sg-price-old">₦${o.toLocaleString()}</span>₦${r.toLocaleString()}`,d='sg-price flash-price'):o&&(c=`₦${o.toLocaleString()}`),n+=`<div class="shop-grid-item-wrap"><div class="shop-grid-item"><img src="${a[t].image_url}" alt="Product" loading="lazy">${s?`<div class="grid-badge flash-offer">-${i}%</div>`:''}</div><div class="shop-grid-caption"><div class="sg-name" title="${e}">${e}</div><div class="${d}">${c}</div></div></div>`}else n+=`<div class="shop-grid-item-wrap"><div class="shop-grid-item empty"><i class="fa-solid fa-image" style="color: #E5E7EB; font-size: 1.2rem;"></i></div><div class="shop-grid-caption" style="color:transparent; user-select:none;"><div class="sg-name">-</div><div class="sg-price">-</div></div></div>`;return`<div class="premium-shop-card-wrap"><div class="premium-shop-card" onclick="window.location.href='shop-detail.html?id=${e.id}'"><div class="shop-card-title">${e.name}</div><div class="shop-image-grid">${n}</div><div class="shop-cta">Visit shop <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i></div></div></div>`}
+    function updateMyShopCardUI(e){const t=document.getElementById('myshop-card'),a=t.querySelector('.svc-icon'),n=t.querySelector('strong');let o='fa-store',r='Register Shop';e&&(!1===e.is_open?(o='fa-lock',r='Locked'):'pending'===e.status?(o='fa-hourglass-half',r='Pending'):'approved'===e.status?(o='fa-store',r='My Shop'):'rejected'===e.status&&(o='fa-circle-exclamation',r='Rejected'));const s=`<i class="fa-solid ${o}"></i>`;a.innerHTML!==s&&(a.innerHTML=s),n.textContent!==r&&(n.textContent=r)}
+    function handleShopClick(){currentUserShop?!1===currentUserShop.is_open?alert("🔒 Your shop access has been restricted by administration. Please contact support via support@ct-merchant.com to resolve your account status."):'pending'===currentUserShop.status?alert('Your shop application is currently being reviewed. Please check back later.'):'approved'===currentUserShop.status?window.location.href='merchant-dashboard.html':'rejected'===currentUserShop.status&&(alert(`Application Rejected: ${currentUserShop.rejection_reason||'Please update your details.'}`),window.location.href=`shop-registration.html?id=${currentUserShop.id}`):window.location.href='shop-registration.html'}
+
+    async function openEditProfile(){if(!userProfile)return;document.getElementById('profile-view').style.display='none',document.getElementById('profile-edit').style.display='block',document.getElementById('edit-name').value=userProfile.full_name||'',document.getElementById('edit-phone').value=userProfile.phone||'',avatarBlob=null,currentOldAvatarUrl=userProfile.avatar_url,document.getElementById('edit-avatar-preview').src=currentOldAvatarUrl||`https://api.dicebear.com/7.x/initials/svg?seed=${userProfile.full_name}`;if(0===allCities.length){const{data:e}=await client.from('cities').select('id, name').or(`is_open.eq.true,id.eq.${userProfile.city_id||0}`).order('name');allCities=e||[];const t=document.getElementById('edit-city');t.innerHTML='<option value="">Select City</option>',allCities.forEach(e=>{t.innerHTML+=`<option value="${e.id}">${e.name}</option>`})}userProfile.city_id&&(document.getElementById('edit-city').value=userProfile.city_id,await handleCityChange(userProfile.city_id,userProfile.area_id))}
+    function handleAvatarSelect(e){const t=e.target.files[0];if(!t)return;if(t.type.startsWith('image/')){const a=new FileReader;a.onload=t=>{openAvatarCropModal(t.target.result),e.target.value=''},a.readAsDataURL(t)}else alert("Please upload a valid image file."),e.target.value=''}
+    function openAvatarCropModal(e){const t=document.getElementById('avatar-crop-modal'),a=document.getElementById('avatar-crop-image');a.src=e,t.classList.add('active'),document.body.style.overflow='hidden',cropper&&cropper.destroy(),cropper=new Cropper(a,{aspectRatio:1,viewMode:2,background:!1,autoCropArea:1,responsive:!0})}
+    function closeAvatarCropModal(){document.getElementById('avatar-crop-modal').classList.remove('active'),document.body.style.overflow='',cropper&&(cropper.destroy(),cropper=null)}
+    function applyAvatarCrop(){cropper&&cropper.getCroppedCanvas({width:600,imageSmoothingEnabled:!0,imageSmoothingQuality:'high'}).toBlob(e=>{if(e.size>MAX_FILE_SIZE)return void alert(`Image is too large (${Math.round(e.size/1024)}KB). Maximum allowed size is 500KB. Try cropping smaller.`);avatarBlob=e,document.getElementById('edit-avatar-preview').src=URL.createObjectURL(e),closeAvatarCropModal()},'image/jpeg',.85)}
+    async function uploadAvatarProcess(){if(!avatarBlob)return currentOldAvatarUrl;if(currentOldAvatarUrl&&currentOldAvatarUrl.includes('/avatars/'))try{const e=currentOldAvatarUrl.match(/(?:public|authenticated)\/avatars\/(.+)/);e&&e[1]&&await client.storage.from('avatars').remove([e[1].split('?')[0]])}catch(e){console.warn("Failed to delete old avatar:",e)}const e=`${currentUser.id}_${Date.now()}.jpg`,{error:t}=await client.storage.from('avatars').upload(e,avatarBlob,{contentType:'image/jpeg',upsert:!1});if(t)throw t;return client.storage.from('avatars').getPublicUrl(e).data.publicUrl}
+    async function handleCityChange(e,t=null){const a=document.getElementById('edit-area');if(a.innerHTML='<option value="">Loading...</option>',a.disabled=!0,!e)return void(a.innerHTML='<option value="">Select Area</option>');const{data:n}=await client.from('areas').select('id, name').eq('city_id',e).order('name');a.innerHTML='<option value="">Select Area</option>',n&&n.forEach(e=>{a.innerHTML+=`<option value="${e.id}">${e.name}</option>`}),a.disabled=!1,t&&(a.value=t)}
+    function cancelEdit(){document.getElementById('profile-edit').style.display='none',document.getElementById('profile-view').style.display='block',document.getElementById('edit-error').style.display='none',avatarBlob=null}
+    async function saveProfile(){const e=document.getElementById('edit-name').value.trim(),t=document.getElementById('edit-phone').value.trim(),a=document.getElementById('edit-city').value,n=document.getElementById('edit-area').value,o=document.getElementById('btn-save'),r=document.getElementById('edit-error');if(!e)return r.textContent="Full Name is required.",void(r.style.display='block');if(!a||!n)return r.textContent="Please select both City and Area.",void(r.style.display='block');o.disabled=!0,o.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving...',r.style.display='none';try{const r=await uploadAvatarProcess(),{error:s}=await client.from('profiles').update({full_name:e,phone:t,city_id:parseInt(a),area_id:parseInt(n),avatar_url:r}).eq('id',currentUser.id);if(s)throw s;await fetchData(null),cancelEdit()}catch(e){r.textContent=e.message||"Error updating profile",r.style.display='block'}finally{o.disabled=!1,o.textContent="Save Changes"}}
+    async function handleLogout(){confirm("Sign Out?")&&(Object.keys(localStorage).forEach(e=>{e.startsWith('ctm_')&&localStorage.removeItem(e)}),await client.auth.signOut(),window.location.href="index.html")}
+    async function markRead(){document.getElementById('badge-count').style.display='none',await client.from('notifications').update({is_read:!0}).eq('user_id',currentUser.id)}
 </script>
 </body>
 </html>
