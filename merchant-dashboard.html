@@ -263,9 +263,45 @@
 
         let myShop = null;
 
+        // ==========================================
+        // GLOBAL INACTIVITY TRACKER (15 MINUTE TIMEOUT)
+        // ==========================================
+        let inactivityTimer;
+        const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes in milliseconds
+
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(logoutDueToInactivity, INACTIVITY_LIMIT);
+        }
+
+        async function logoutDueToInactivity() {
+            // 1. Securely clear all cached user data
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('ctm_')) {
+                    localStorage.removeItem(key);
+                }
+            });
+            // 2. Kill Supabase Session
+            if (client && client.auth) {
+                await client.auth.signOut();
+            }
+            // 3. Alert and Redirect
+            alert("Your session has securely expired due to inactivity. Please log in again.");
+            window.location.href = "index.html";
+        }
+
+        // Attach listeners to absolutely every form of user interaction
+        ['mousemove', 'keydown', 'scroll', 'click', 'touchstart'].forEach(evt => {
+            document.addEventListener(evt, resetInactivityTimer, { passive: true });
+        });
+        
+        // Start the timer immediately
+        resetInactivityTimer();
+        // ==========================================
+
         window.onload = async () => {
             const { data: { session } } = await client.auth.getSession();
-            if (!session) { window.location.href = "login.html"; return; }
+            if (!session) { window.location.href = "index.html"; return; }
 
             await fetchShop(session.user.id);
         };
