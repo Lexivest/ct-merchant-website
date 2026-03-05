@@ -5,160 +5,166 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Account | CT‑Merchant</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <!-- Google Identity Services Script -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
-        /* CSS variables aligned with your website theme */
         :root {
-            --color-purple: #2E1065;
-            --color-purple-light: #5B21B6;
-            --color-pink: #DB2777;
+            /* PREMIUM AMAZON THEME WITH CT-MERCHANT PINK */
+            --amz-dark: #131921;
+            --amz-nav-bar: #232F3E;
+            
+            --color-pink: #db2777; 
             --color-pink-hover: #be185d;
-            --color-light: #F8FAFC;
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            --transition: all 0.3s ease;
+            --color-pink-light: rgba(219, 39, 119, 0.1);
+            
+            --amz-bg: #F3F4F6;
+            --color-text-main: #0F1111;
+            --color-text-muted: #565959;
+            --color-border: #D5D9D9;
+            
+            --transition: all 0.2s ease;
         }
 
         /* RESET */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
 
         body.auth-body {
             min-height: 100vh; width: 100%; overflow-x: hidden;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, var(--color-purple), #6b21a8, var(--color-pink));
-            padding: 2rem 1rem; font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--amz-bg); color: var(--color-text-main);
+            padding: 2rem 1rem; 
         }
 
         .home-btn {
-            position: fixed; top: 1.5rem; left: 1.5rem; display: flex; align-items: center; gap: 0.5rem;
-            background-color: var(--color-pink); color: white; padding: 0.625rem 1.25rem;
-            border-radius: 9999px; box-shadow: var(--shadow-lg); text-decoration: none;
-            font-weight: 700; font-size: 0.875rem; text-transform: uppercase; z-index: 100; transition: var(--transition);
+            position: absolute; top: 1.5rem; left: 1.5rem; display: flex; align-items: center; gap: 0.5rem;
+            color: var(--color-text-muted); background: white; padding: 8px 16px; border: 1px solid var(--color-border);
+            border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 0.85rem; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: var(--transition);
         }
-        .home-btn:hover { background-color: var(--color-pink-hover); transform: translateX(-4px); }
+        .home-btn:hover { background: #F7FAFA; color: var(--color-text-main); border-color: #B0B5B5; }
 
+        /* BRAND LOGO ABOVE CARD */
+        .brand-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .brand-logo {
+            width: 140px;
+            object-fit: contain;
+            mix-blend-mode: multiply;
+        }
+
+        /* MAIN AUTH CARD */
         .auth-card {
-            background-color: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);
-            width: 100%; max-width: 440px; padding: 2.5rem; border-radius: 1.5rem;
-            box-shadow: var(--shadow-2xl); position: relative;
+            background-color: white;
+            width: 100%; max-width: 400px; 
+            padding: 32px 28px; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--color-border);
+            position: relative;
         }
 
-        .auth-header { text-align: center; margin-bottom: 2rem; }
-        .auth-logo { width: 5rem; height: 5rem; border-radius: 1.2rem; margin-bottom: 1rem; object-fit: cover; box-shadow: var(--shadow-lg); border: 2px solid white; }
-        .auth-title { font-size: 1.5rem; font-weight: 800; color: var(--color-purple); }
-        .auth-subtitle { color: #64748b; font-size: 0.875rem; margin-top: 0.25rem; }
+        .auth-title { font-size: 1.5rem; font-weight: 800; color: #0F1111; margin-bottom: 6px; }
+        .auth-subtitle { color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 24px; line-height: 1.4; }
 
-        .form-stack { display: flex; flex-direction: column; gap: 1rem; }
-        .input-group { display: flex; flex-direction: column; gap: 0.4rem; }
-        .input-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.25rem; }
+        .form-stack { display: flex; flex-direction: column; gap: 16px; }
+        
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-label { font-size: 0.8rem; font-weight: 700; color: #0F1111; }
         
         .input-wrapper { position: relative; width: 100%; }
-        .input-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
+        .input-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #888C8C; z-index: 5; font-size: 0.9rem;}
         
         .auth-input {
-            width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc;
-            border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem;
+            width: 100%; padding: 12px 12px 12px 36px; background-color: white;
+            border: 1px solid #888C8C; border-radius: 4px; font-size: 0.95rem; color: #0F1111;
             transition: var(--transition); outline: none; display: block;
+            box-shadow: 0 1px 2px rgba(15,17,17,0.15) inset;
         }
-        .auth-input:focus { border-color: var(--color-pink); box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); background: white; }
-        select.auth-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
+        .auth-input:focus { border-color: var(--color-pink); box-shadow: 0 0 0 3px var(--color-pink-light); }
+        .auth-input::placeholder { color: #888C8C; }
+        
+        /* Validation Styling */
+        .auth-input:not(:placeholder-shown):invalid { border-color: #C40000; }
+        
+        select.auth-input { padding-left: 36px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23888C8C'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 1rem; }
+        select.auth-input:disabled { background-color: #F3F4F6; cursor: not-allowed; opacity: 0.7;}
 
-        .pass-toggle { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; background: none; border: none; cursor: pointer; z-index: 5; }
+        .pass-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #888C8C; background: none; border: none; cursor: pointer; z-index: 5; font-size: 0.9rem;}
+        .pass-toggle:hover { color: var(--color-pink); }
 
         .btn-primary {
-            width: 100%; background-color: var(--color-purple); color: white; padding: 1rem;
-            border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
-            box-shadow: var(--shadow-lg); border: none; cursor: pointer; transition: var(--transition); margin-top: 0.5rem;
+            width: 100%; background-color: var(--color-pink); color: white; padding: 12px;
+            border-radius: 6px; font-weight: 700; font-size: 1rem;
+            box-shadow: 0 2px 5px 0 rgba(219,39,119,0.3); border: 1px solid var(--color-pink-hover); 
+            cursor: pointer; transition: var(--transition); margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-        .btn-primary:hover { background-color: var(--color-pink); transform: translateY(-1px); }
-        .btn-primary:disabled { background-color: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none;}
+        .btn-primary:hover { background-color: var(--color-pink-hover); }
+        .btn-primary:disabled { background-color: #E3E6E6; border-color: #D5D9D9; color: #888C8C; cursor: not-allowed; box-shadow: none;}
 
-        .divider { display: flex; align-items: center; text-align: center; margin: 1.5rem 0; color: #94a3b8; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
-        .divider:not(:empty)::before { margin-right: 1rem; }
-        .divider:not(:empty)::after { margin-left: 1rem; }
+        .divider { display: flex; align-items: center; text-align: center; margin: 24px 0; color: var(--color-text-muted); font-size: 0.8rem; font-weight: 600; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--color-border); }
+        .divider:not(:empty)::before { margin-right: 12px; }
+        .divider:not(:empty)::after { margin-left: 12px; }
 
-        .status-box { margin-top: 1.5rem; padding: 1rem; border-radius: 0.8rem; font-size: 0.85rem; display: none; align-items: center; gap: 0.5rem; }
+        .status-box { margin-top: 16px; padding: 12px; border-radius: 6px; font-size: 0.85rem; display: none; align-items: flex-start; gap: 8px; line-height: 1.4; font-weight: 600;}
         .status-box.active { display: flex; }
-        .status-error { background-color: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
-        .status-success { background-color: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
+        .status-error { background-color: #FEE2E2; color: #C40000; border: 1px solid #FECACA; border-left: 4px solid #C40000; }
+        .status-success { background-color: #ECFDF5; color: #007185; border: 1px solid #A7F3D0; border-left: 4px solid #007185; }
 
-        .footer-link { text-align: center; margin-top: 1.5rem; border-top: 1px solid #f1f5f9; padding-top: 1.5rem; font-size: 0.85rem; color: #64748b; }
-        .link-highlight { color: var(--color-pink); font-weight: 700; text-decoration: none; cursor: pointer; background: none; border: none; font-size: inherit; }
-        .link-highlight:hover { text-decoration: underline; }
+        .footer-link { text-align: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid #F3F4F6; font-size: 0.9rem; color: #0F1111; }
+        .link-highlight { color: var(--amz-link); font-weight: 700; text-decoration: none; cursor: pointer; background: none; border: none; font-size: inherit; }
+        .link-highlight:hover { color: var(--amz-link-hover); text-decoration: underline; }
 
         /* General Modal Overlay */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-        .hidden { display: none !important; }
-
+        .modal-overlay { position: fixed; inset: 0; background: rgba(19, 25, 33, 0.8); backdrop-filter: blur(2px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; visibility: hidden; transition: all 0.3s ease;}
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        
         /* Generic Modals */
-        .modal-card { background: white; border-radius: 1.5rem; max-width: 400px; width: 100%; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: left; }
-        .modal-title { font-size: 1.25rem; font-weight: 800; color: #2E1065; text-align: center; margin-bottom: 0.5rem; }
-        .modal-subtitle { color: #64748b; font-size: 0.875rem; text-align: center; margin-bottom: 1.5rem; }
-        .modal-input-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
-        .modal-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.25rem; }
-        .modal-input-wrapper { position: relative; width: 100%; }
-        .modal-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 5; }
-        .modal-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.75rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.8rem; font-size: 0.95rem; outline: none; transition: all 0.3s ease; color: #0f172a; }
-        .modal-input:focus { border-color: #db2777; box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); background: white; }
-        select.modal-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem; }
-        .btn-primary-modal { width: 100%; background-color: #2E1065; color: white; padding: 1rem; border-radius: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s ease; margin-top: 0.5rem; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        .btn-primary-modal:hover:not(:disabled) { background-color: #db2777; transform: translateY(-1px); }
-        .btn-primary-modal:disabled { background-color: #cbd5e1; color: #64748b; cursor: not-allowed; transform: none; box-shadow: none; }
+        .modal-card { background: white; border-radius: 8px; max-width: 400px; width: 100%; padding: 32px 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--color-border); text-align: left; }
+        
+        .modal-title { font-size: 1.25rem; font-weight: 800; color: #0F1111; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;}
+        .modal-subtitle { color: var(--color-text-muted); font-size: 0.85rem; margin-bottom: 24px; line-height: 1.4;}
 
-        /* EXACT HOME SCREEN LOGIN WIDGET CSS */
-        .hero-auth-widget { 
-            background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(219, 39, 119, 0.3); 
-            padding: 30px 24px; border-radius: 20px; box-shadow: 0 10px 40px rgba(219, 39, 119, 0.4); 
-            width: 100%; max-width: 400px; margin: auto; 
-        }
-        .hero-auth-widget .widget-title { font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
-        .input-group-hero { position: relative; margin-bottom: 12px; }
-        .input-group-hero i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.6); font-size: 1rem; pointer-events: none; }
-        .input-group-hero i.toggle-password { left: auto; right: 14px; cursor: pointer; pointer-events: auto; transition: color 0.2s; }
-        .input-group-hero i.toggle-password:hover { color: var(--color-pink); }
-        .hero-input-login { width: 100%; padding: 12px 40px 12px 40px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: white; font-size: 1rem; outline: none; transition: all 0.3s ease; box-sizing: border-box; }
-        .hero-input-login::placeholder { color: rgba(255, 255, 255, 0.6); }
-        .hero-input-login:focus { background: rgba(255, 255, 255, 0.2); border-color: var(--color-pink); box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.15); }
-        .btn-login-hero { width: 100%; background: var(--color-pink); color: white; font-weight: 800; padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-size: 1.05rem; transition: transform 0.2s, background-color 0.2s; display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; }
-        .btn-login-hero:hover { background: var(--color-pink-hover); transform: translateY(-2px); }
-        .forgot-password { display: block; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); text-decoration: none; margin-top: 8px; margin-bottom: 12px; cursor: pointer; text-align: right; }
-        .forgot-password:hover { color: var(--color-pink); }
+        .btn-cancel { width: 100%; background: white; border: 1px solid var(--color-border); padding: 10px; border-radius: 6px; font-weight: 700; color: #0F1111; cursor: pointer; margin-top: 12px; transition: 0.2s;}
+        .btn-cancel:hover { background: #F7FAFA; }
 
         .spinner { width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* LEGAL MODAL STYLES */
-        #terms-modal .modal-card { max-width: 600px; display: flex; flex-direction: column; max-height: 90vh; }
+        #terms-modal .modal-card { max-width: 600px; display: flex; flex-direction: column; max-height: 90vh; padding: 24px; }
         .terms-scroll-box {
-            flex: 1; overflow-y: auto; background: #f8fafc; border: 1px solid #e2e8f0;
-            border-radius: 0.8rem; padding: 1.5rem; margin-bottom: 1rem;
-            font-size: 0.85rem; line-height: 1.6; color: #334155; text-align: left;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            flex: 1; overflow-y: auto; background: white; border: 1px solid #888C8C;
+            border-radius: 4px; padding: 16px; margin-bottom: 16px;
+            font-size: 0.85rem; line-height: 1.6; color: #0F1111; text-align: left;
+            box-shadow: 0 1px 2px rgba(15,17,17,0.1) inset;
             max-height: 50vh; scroll-behavior: smooth;
         }
-        .terms-scroll-box h2 { color: var(--color-purple); font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0;}
+        .terms-scroll-box h2 { color: #0F1111; font-size: 1.1rem; margin-top: 1rem; margin-bottom: 0.5rem; font-weight: 800;}
         .terms-scroll-box h2:first-child { margin-top: 0; }
-        .terms-scroll-box h3 { color: #0f172a; font-size: 1rem; margin-top: 1.2rem; margin-bottom: 0.25rem; }
-        .terms-scroll-box p { margin-bottom: 0.75rem; }
-        .terms-scroll-box ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        .terms-scroll-box h3 { color: #0F1111; font-size: 0.95rem; margin-top: 1rem; margin-bottom: 0.25rem; font-weight: 700;}
+        .terms-scroll-box p { margin-bottom: 0.75rem; color: #565959;}
+        .terms-scroll-box ul { margin-left: 1.5rem; margin-bottom: 1rem; color: #565959;}
         .terms-scroll-box li { margin-bottom: 0.4rem; }
 
         .scroll-alert-box {
-            text-align: center; color: #94a3b8; font-size: 0.85rem; font-weight: 600; 
-            padding: 12px; background: #f1f5f9; border-radius: 8px; margin-bottom: 10px;
-            border: 1px dashed #cbd5e1;
+            text-align: center; color: #007185; font-size: 0.85rem; font-weight: 700; 
+            padding: 10px; background: #F7FAFA; border-radius: 4px; margin-bottom: 16px;
+            border: 1px dashed #BFE8F0;
         }
 
+        .hidden { display: none !important; }
+
         @media (max-width: 480px) {
-            .home-btn { top: 1rem; left: 1rem; padding: 0.5rem 1rem; font-size: 0.75rem; }
-            .auth-card { padding: 1.5rem; }
-            #terms-modal .modal-card { padding: 1.5rem; }
+            .home-btn { top: 1rem; left: 1rem; padding: 6px 12px; font-size: 0.75rem; }
+            .auth-card { padding: 24px 20px; border-radius: 0; border: none; box-shadow: none; background: transparent; }
+            body.auth-body { background: white; padding-top: 60px;}
+            #terms-modal .modal-card { width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; }
         }
     </style>
 </head>
@@ -166,16 +172,17 @@
 <body class="auth-body">
 
     <a href="index.html" class="home-btn">
-        <i class="fa-solid fa-house"></i>
-        <span>Home</span>
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back</span>
     </a>
 
+    <div class="brand-header">
+        <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="CT-Merchant Logo" class="brand-logo">
+    </div>
+
     <div class="auth-card">
-        <div class="auth-header">
-            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="auth-logo">
-            <h2 class="auth-title">Create Account</h2>
-            <p class="auth-subtitle">Join the professional merchant network.</p>
-        </div>
+        <h2 class="auth-title">Create Account</h2>
+        <p class="auth-subtitle">Join the professional merchant network.</p>
 
         <!-- Standard Google Identity Login -->
         <div style="display: flex; justify-content: center; width: 100%;">
@@ -191,19 +198,23 @@
                  data-shape="rectangular"
                  data-theme="outline"
                  data-text="continue_with"
-                 data-size="large">
+                 data-size="large"
+                 data-logo_alignment="left"
+                 data-width="340">
             </div>
         </div>
 
         <div class="divider"><span>Or sign up with Email</span></div>
 
-        <!-- Standard Signup Form (Added preventDefault to prevent page reload bug) -->
+        <!-- Strict HTML5 Validation Form -->
         <form id="signup-form" class="form-stack" onsubmit="event.preventDefault(); handleInitialEmailSignup();">
+            
             <div class="input-group">
                 <label class="input-label">Full Name</label>
                 <div class="input-wrapper">
-                    <span class="input-icon"><i class="fa-solid fa-user"></i></span>
-                    <input type="text" id="signup-name" placeholder="Full name" required class="auth-input">
+                    <span class="input-icon"><i class="fa-regular fa-user"></i></span>
+                    <!-- Minimum 2 characters -->
+                    <input type="text" id="signup-name" placeholder="First and Last Name" required minlength="2" class="auth-input">
                 </div>
             </div>
 
@@ -211,14 +222,15 @@
                 <label class="input-label">Phone Number</label>
                 <div class="input-wrapper">
                     <span class="input-icon"><i class="fa-solid fa-phone"></i></span>
-                    <input type="tel" id="signup-phone" placeholder="08012345678" required class="auth-input">
+                    <!-- Exactly 11 digits, must start with 0 -->
+                    <input type="tel" id="signup-phone" placeholder="e.g. 08012345678" required pattern="^0[0-9]{10}$" title="Please enter a valid 11-digit Nigerian phone number starting with 0." class="auth-input">
                 </div>
             </div>
 
             <div class="input-group">
                 <label class="input-label">Work Email</label>
                 <div class="input-wrapper">
-                    <span class="input-icon"><i class="fa-solid fa-envelope"></i></span>
+                    <span class="input-icon"><i class="fa-regular fa-envelope"></i></span>
                     <input type="email" id="signup-email" placeholder="name@company.com" required class="auth-input">
                 </div>
             </div>
@@ -247,9 +259,10 @@
                 <label class="input-label">Password</label>
                 <div class="input-wrapper">
                     <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
-                    <input type="password" id="signup-password" placeholder="••••••••" required class="auth-input">
-                    <button type="button" onclick="togglePasswordVisibility('signup-password', 'eye-icon-signup')" class="pass-toggle">
-                        <i id="eye-icon-signup" class="fa-solid fa-eye"></i>
+                    <!-- Minimum 6 characters as required by Supabase Auth -->
+                    <input type="password" id="signup-password" placeholder="At least 6 characters" required minlength="6" class="auth-input">
+                    <button type="button" onclick="togglePasswordVisibility('signup-password', 'eye-icon-signup')" class="pass-toggle" tabindex="-1">
+                        <i id="eye-icon-signup" class="fa-regular fa-eye"></i>
                     </button>
                 </div>
             </div>
@@ -258,80 +271,78 @@
                 <label class="input-label">Confirm Password</label>
                 <div class="input-wrapper">
                     <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
-                    <input type="password" id="signup-confirm-password" placeholder="••••••••" required class="auth-input">
-                    <button type="button" onclick="togglePasswordVisibility('signup-confirm-password', 'eye-icon-confirm')" class="pass-toggle">
-                        <i id="eye-icon-confirm" class="fa-solid fa-eye"></i>
+                    <input type="password" id="signup-confirm-password" placeholder="Re-enter password" required minlength="6" class="auth-input">
+                    <button type="button" onclick="togglePasswordVisibility('signup-confirm-password', 'eye-icon-confirm')" class="pass-toggle" tabindex="-1">
+                        <i id="eye-icon-confirm" class="fa-regular fa-eye"></i>
                     </button>
                 </div>
             </div>
 
             <button type="submit" class="btn-primary">
-                Create Account
+                Continue
             </button>
         </form>
 
         <div id="message-container" class="status-box">
+            <i id="status-icon" class="fa-solid"></i>
             <p id="message"></p>
         </div>
 
         <div class="footer-link">
             <p>Already have an account? 
-                <button onclick="toggleLoginModal()" class="link-highlight">Sign In</button>
+                <button onclick="toggleModal('login-modal')" class="link-highlight">Sign In</button>
             </p>
         </div>
     </div>
 
     <!-- Complete Profile Modal (Triggered after Google Login) -->
-    <div id="complete-profile-modal" class="modal-overlay hidden">
+    <div id="complete-profile-modal" class="modal-overlay">
         <div class="modal-card">
-            <h2 class="modal-title">Complete Your Profile</h2>
-            <p class="modal-subtitle">We need a few more details to set up your dashboard.</p>
+            <h2 class="modal-title"><i class="fa-solid fa-user-check" style="color: var(--color-pink);"></i> Complete Setup</h2>
+            <p class="modal-subtitle">We need a few more details to finalize your dashboard.</p>
             
-            <div class="modal-input-group">
-                <label class="modal-label">Phone Number</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-phone"></i></span>
-                    <input type="tel" id="google-phone" placeholder="08012345678" class="modal-input">
+            <form id="google-setup-form" onsubmit="event.preventDefault(); saveGoogleProfile();">
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="input-label">Phone Number</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fa-solid fa-phone"></i></span>
+                        <input type="tel" id="google-phone" placeholder="e.g. 08012345678" required pattern="^0[0-9]{10}$" title="Valid 11-digit number starting with 0" class="auth-input">
+                    </div>
                 </div>
-            </div>
 
-            <div class="modal-input-group">
-                <label class="modal-label">Select City</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-city"></i></span>
-                    <select id="google-city" class="modal-input" onchange="loadAreasForModal(this.value)">
-                        <option value="" disabled selected>Loading cities...</option>
-                    </select>
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="input-label">Select City</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fa-solid fa-city"></i></span>
+                        <select id="google-city" class="auth-input" required onchange="loadAreasForModal(this.value)">
+                            <option value="" disabled selected>Loading cities...</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <div class="modal-input-group">
-                <label class="modal-label">Select Area</label>
-                <div class="modal-input-wrapper">
-                    <span class="modal-icon"><i class="fa-solid fa-map-pin"></i></span>
-                    <select id="google-area" class="modal-input" disabled>
-                        <option value="" disabled selected>Select city first</option>
-                    </select>
+                <div class="input-group" style="margin-bottom: 24px;">
+                    <label class="input-label">Select Area</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon"><i class="fa-solid fa-map-pin"></i></span>
+                        <select id="google-area" class="auth-input" required disabled>
+                            <option value="" disabled selected>Select city first</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <button id="google-complete-btn" onclick="saveGoogleProfile()" class="btn-primary-modal">Finish Setup</button>
-            
-            <button onclick="cancelGoogleLogin()" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
-                Cancel & Sign Out
-            </button>
+                <button type="submit" id="google-complete-btn" class="btn-primary">Finish Setup</button>
+                <button type="button" onclick="cancelGoogleLogin()" class="btn-cancel">Cancel & Sign Out</button>
+            </form>
         </div>
     </div>
 
-    <!-- Interactive Legal Terms Modal (Now solely for Email Signup) -->
-    <div id="terms-modal" class="modal-overlay hidden">
+    <!-- Interactive Legal Terms Modal -->
+    <div id="terms-modal" class="modal-overlay">
         <div class="modal-card">
-            <div style="width: 3.5rem; height: 3.5rem; background: #fce7f3; color: #DB2777; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem;"><i class="fa-solid fa-file-contract"></i></div>
-            <h2 class="modal-title">Agreements & Policies</h2>
+            <h2 class="modal-title"><i class="fa-solid fa-file-contract" style="color: var(--color-pink);"></i> Agreements & Policies</h2>
             <p class="modal-subtitle">Please read through and scroll to the bottom to agree.</p>
             
             <div class="terms-scroll-box" id="terms-scroll-box" onscroll="checkTermsScroll()">
-                
                 <h2>Privacy Policy</h2>
                 <p><em>Last Updated: January 15, 2026</em></p>
                 <p>This policy explains how CT-MERCHANT LTD. collects, uses, and protects personal information.</p>
@@ -378,7 +389,7 @@
 
                 <p><strong>Questions?</strong><br>Contact us if you need clarification regarding this Privacy Policy via our Support channels.</p>
 
-                <hr style="border:0; border-top: 1px dashed #cbd5e1; margin: 2rem 0;">
+                <hr style="border:0; border-top: 1px dashed #D5D9D9; margin: 2rem 0;">
 
                 <h2>Terms of Use</h2>
                 <p><em>Effective Date: January 15, 2026</em></p>
@@ -411,43 +422,45 @@
             </div>
 
             <div id="terms-locked-indicator" class="scroll-alert-box">
-                <i class="fa-solid fa-arrow-down"></i> Please scroll to the bottom to agree
+                <i class="fa-solid fa-arrow-down"></i> Scroll to bottom to agree
             </div>
 
             <!-- Email Final Submission Button -->
-            <button id="final-submit-btn" onclick="executeEmailSignup()" class="btn-primary-modal" disabled>
+            <button id="final-submit-btn" onclick="executeEmailSignup()" class="btn-primary" disabled>
                 <i class="fa-solid fa-lock" id="btn-lock-icon"></i> I Agree & Create Account
             </button>
-            <button onclick="closeModal('terms-modal')" style="background: none; border: none; color: #94a3b8; width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">Cancel Setup</button>
+            <button onclick="toggleModal('terms-modal')" class="btn-cancel">Cancel Setup</button>
         </div>
     </div>
 
-    <!-- EXACT COPY OF HOME SCREEN LOGIN WIDGET AS A MODAL -->
-    <div id="login-modal" class="modal-overlay hidden">
-        <div class="hero-auth-widget">
-            <div class="widget-title">
-                <i class="fa-solid fa-lock"></i> Users Login
-            </div>
+    <!-- CLEAN AMAZON-STYLE LOGIN MODAL -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h2 class="modal-title" style="margin-bottom: 24px;">Sign-In</h2>
             
-            <form onsubmit="event.preventDefault(); handleLogin();">
-                <div class="input-group-hero">
-                    <i class="fa-solid fa-envelope"></i>
-                    <input type="email" id="login-email" class="hero-input-login" placeholder="Email Address" required>
+            <form onsubmit="event.preventDefault(); handleLogin();" class="form-stack">
+                <div class="input-group">
+                    <label class="input-label">Email Address</label>
+                    <input type="email" id="login-email" class="auth-input" style="padding-left: 12px;" required>
                 </div>
                 
-                <div class="input-group-hero">
-                    <i class="fa-solid fa-key"></i>
-                    <input type="password" id="login-password" class="hero-input-login" placeholder="Password" required>
-                    <i class="fa-solid fa-eye-slash toggle-password" id="login-eye-icon" onclick="toggleLoginPassword()"></i>
+                <div class="input-group">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <label class="input-label">Password</label>
+                        <a href="index.html" class="link-highlight" style="font-size: 0.8rem; font-weight: 500;">Forgot password?</a>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="password" id="login-password" class="auth-input" style="padding-left: 12px;" required>
+                        <button type="button" onclick="togglePasswordVisibility('login-password', 'login-eye-icon')" class="pass-toggle" tabindex="-1">
+                            <i id="login-eye-icon" class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 
-                <a href="index.html" class="forgot-password">Forgot password?</a>
-                
-                <button type="submit" id="btn-login-submit" class="btn-login-hero">
-                    Secure Sign In <i class="fa-solid fa-arrow-right"></i>
+                <button type="submit" id="btn-login-submit" class="btn-primary" style="margin-top: 16px;">
+                    Continue
                 </button>
-                
-                <button type="button" onclick="closeModal('login-modal')" style="background: none; border: none; color: rgba(255,255,255,0.6); width: 100%; margin-top: 1rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; text-transform: uppercase;">
+                <button type="button" onclick="toggleModal('login-modal')" class="btn-cancel">
                     Cancel
                 </button>
             </form>
@@ -467,6 +480,7 @@
         
         const statusBox = document.getElementById('message-container');
         const statusMsg = document.getElementById('message');
+        const statusIcon = document.getElementById('status-icon');
 
         let pendingGoogleUserId = null;
         let pendingGoogleUserName = null;
@@ -573,7 +587,7 @@
                     window.location.href = "user-dashboard.html";
                 } else {
                     // New user -> Trigger Profile Setup
-                    document.getElementById('complete-profile-modal').classList.remove('hidden');
+                    toggleModal('complete-profile-modal');
                     statusBox.classList.remove('active'); 
                 }
             } catch(err) {
@@ -582,12 +596,16 @@
         }
 
         async function saveGoogleProfile() {
+            const form = document.getElementById('google-setup-form');
+            if(!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
             const phone = document.getElementById('google-phone').value.trim();
             const cityId = document.getElementById('google-city').value;
             const areaId = document.getElementById('google-area').value;
             const btn = document.getElementById('google-complete-btn');
-
-            if (!phone || !cityId || !areaId) return alert("Please fill in your phone, city, and area to continue.");
 
             btn.disabled = true;
             btn.innerHTML = '<div class="spinner"></div> Saving...';
@@ -610,67 +628,65 @@
 
         async function cancelGoogleLogin() {
             await client.auth.signOut();
-            document.getElementById('complete-profile-modal').classList.add('hidden');
+            toggleModal('complete-profile-modal');
             pendingGoogleUserId = null;
         }
 
         // --- UTILS ---
-        function toggleLoginModal() { document.getElementById('login-modal').classList.toggle('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function toggleModal(id) { 
+            const modal = document.getElementById(id);
+            if(modal.classList.contains('active')) {
+                modal.classList.remove('active');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            } else {
+                modal.classList.remove('hidden');
+                // Trigger reflow
+                void modal.offsetWidth;
+                modal.classList.add('active');
+            }
+        }
 
         function togglePasswordVisibility(inputId, iconId) {
             const input = document.getElementById(inputId);
             const icon = document.getElementById(iconId);
             input.type = input.type === 'password' ? 'text' : 'password';
             icon.classList.toggle('fa-eye-slash');
+            icon.classList.toggle('fa-eye');
             icon.style.color = input.type === 'text' ? 'var(--color-pink)' : '';
-        }
-
-        function toggleLoginPassword() {
-            const password = document.getElementById('login-password');
-            const icon = document.getElementById('login-eye-icon');
-            if (password.type === 'password') {
-                password.type = 'text'; 
-                icon.classList.remove('fa-eye-slash'); 
-                icon.classList.add('fa-eye');
-                icon.style.color = 'var(--color-pink)';
-            } else {
-                password.type = 'password'; 
-                icon.classList.remove('fa-eye'); 
-                icon.classList.add('fa-eye-slash');
-                icon.style.color = 'rgba(255, 255, 255, 0.6)';
-            }
         }
 
         function showStatus(txt, type) {
             statusBox.className = `status-box active status-${type}`;
             statusMsg.textContent = txt;
+            if(type === 'error') {
+                statusIcon.className = "fa-solid fa-triangle-exclamation";
+            } else {
+                statusIcon.className = "fa-solid fa-circle-check";
+            }
         }
 
-        // --- EMAIL TERMS SCROLL LOGIC ---
-        function showTermsModal() {
-            const termsModal = document.getElementById('terms-modal');
-            const box = document.getElementById('terms-scroll-box');
-            const btn = document.getElementById('final-submit-btn');
-            const icon = document.getElementById('btn-lock-icon');
-            const indicator = document.getElementById('terms-locked-indicator');
+        // --- EMAIL SIGNUP FLOW ---
+        function handleInitialEmailSignup() {
+            const form = document.getElementById('signup-form');
             
-            indicator.classList.remove('hidden');
-            termsModal.classList.remove('hidden');
-            box.scrollTop = 0; 
-            
-            btn.disabled = true;
-            if(icon) {
-                icon.classList.remove('fa-check');
-                icon.classList.add('fa-lock');
+            // HTML5 Form Validation
+            if(!form.checkValidity()) {
+                form.reportValidity();
+                return;
             }
 
-            // Auto-unlock if screen is very large and no scrolling is needed
-            setTimeout(() => {
-                if (box.scrollHeight <= box.clientHeight + 10) {
-                    unlockTermsAction();
-                }
-            }, 100);
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+
+            if (password !== confirmPassword) {
+                return showStatus("Passwords do not match. Please try again.", "error");
+            }
+            
+            statusBox.classList.remove('active');
+            toggleModal('terms-modal');
+            
+            // Re-check scroll in case it's already at bottom
+            setTimeout(checkTermsScroll, 100);
         }
 
         function checkTermsScroll() {
@@ -691,29 +707,6 @@
                 icon.classList.remove('fa-lock');
                 icon.classList.add('fa-check');
             }
-        }
-
-        // --- EMAIL SIGNUP FLOW ---
-        function handleInitialEmailSignup() {
-            const name = document.getElementById('signup-name').value.trim();
-            const phone = document.getElementById('signup-phone').value.trim();
-            const email = document.getElementById('signup-email').value.trim();
-            const password = document.getElementById('signup-password').value;
-            const confirmPassword = document.getElementById('signup-confirm-password').value;
-            const city = citySelect.value;
-            const area = areaSelect.value;
-
-            if (!name || !phone || !email || !password || !confirmPassword || !city || !area) {
-                return showStatus("Please fill in all fields.", "error");
-            }
-            if (password.length < 6) {
-                return showStatus("Password must be at least 6 characters.", "error");
-            }
-            if (password !== confirmPassword) {
-                return showStatus("Passwords do not match. Please try again.", "error");
-            }
-            
-            showTermsModal();
         }
 
         async function executeEmailSignup() {
@@ -745,18 +738,18 @@
                     });
                     if (profileError) throw profileError;
 
-                    closeModal('terms-modal');
+                    toggleModal('terms-modal');
                     document.getElementById('signup-form').reset();
                     showStatus("Account created! Please check your email for confirmation, or Sign In below.", "success");
                     
                     document.getElementById('login-email').value = email;
                     
                     // Pop up the login modal so they can instantly enter their password
-                    setTimeout(() => { toggleLoginModal(); }, 500); 
+                    setTimeout(() => { toggleModal('login-modal'); }, 1000); 
                 }
             } catch (err) {
                 showStatus(err.message, "error");
-                closeModal('terms-modal');
+                toggleModal('terms-modal');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-check" id="btn-lock-icon"></i> I Agree & Create Account';
@@ -787,7 +780,7 @@
             } catch (error) {
                 alert(error.message);
                 btn.disabled = false;
-                btn.innerHTML = 'Secure Sign In <i class="fa-solid fa-arrow-right"></i>';
+                btn.innerHTML = 'Continue';
             }
         }
     </script>
