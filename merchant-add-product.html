@@ -11,7 +11,6 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
 
   <style>
     :root{--amz-dark:#131921;--color-pink:#db2777;--color-pink-hover:#be185d;--color-pink-light:rgba(219,39,119,.15);--amz-bg:#F3F4F6;--color-text-main:#0F1111;--color-text-muted:#565959;--color-border:#D5D9D9}
@@ -24,16 +23,22 @@
     .page-title{font-weight:700;font-size:1.15rem;letter-spacing:.5px}
     .container{width:100%;max-width:600px;padding:30px 20px;flex:1}
     .card{background:#fff;padding:30px;border-radius:8px;border:1px solid var(--color-border);box-shadow:0 2px 4px rgba(0,0,0,.02)}
-    .warning-note{font-size:.85rem;color:#DC2626;background:#FEF2F2;padding:12px;border-radius:8px;border:1px solid #FECACA;margin-bottom:20px;text-align:center;font-weight:600;line-height:1.4}
-    .image-picker{width:100%;height:250px;background:#F7F7F7;border-radius:8px;border:2px dashed #888C8C;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;margin-bottom:24px;transition:all .2s}
+    
+    .info-note{font-size:.85rem;color:#007185;background:#F0F9FA;padding:12px;border-radius:8px;border:1px solid #BFE8F0;margin-bottom:20px;text-align:center;font-weight:600;line-height:1.4; display:flex; align-items:center; gap: 8px; justify-content:center;}
+    
+    .image-picker{width:100%;height:280px;background:#F7F7F7;border-radius:8px;border:2px dashed #888C8C;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;margin-bottom:24px;transition:all .2s}
     .image-picker:hover{border-color:var(--color-pink);background:var(--color-pink-light)}
-    .preview-img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;display:none;background:#fff;z-index:5}
+    
+    /* The preview image uses object-fit: contain so they see the white padding */
+    .preview-img{width:100%;height:100%;object-fit:contain;position:absolute;inset:0;display:none;background:#fff;z-index:5; border: 1px solid #E5E7EB; border-radius:8px;}
+    
     .form-group{margin-bottom:20px}
     .label{display:block;font-size:.9rem;font-weight:700;color:#0F1111;margin-bottom:6px}
     .input{width:100%;padding:12px 14px;border-radius:4px;border:1px solid #888C8C;font-size:1rem;color:#0F1111;box-shadow:0 1px 2px rgba(15,17,17,.15) inset;font-family:inherit;transition:.2s}
     .input:focus{outline:0;border-color:var(--color-pink);box-shadow:0 0 0 3px var(--color-pink-light)}
     textarea.input{resize:vertical;min-height:120px}
     select.input{cursor:pointer;background-color:#fff}
+    
     .discount-box{background:#F7F7F7;border:1px solid var(--color-border);padding:16px;border-radius:8px;margin-bottom:24px}
     .switch-row{display:flex;justify-content:space-between;align-items:center}
     .switch-label{font-weight:700;font-size:.95rem;color:#0F1111}
@@ -44,30 +49,23 @@
     .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:#fff;transition:.4s;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,.2)}
     input:checked+.slider{background-color:var(--color-pink)}
     input:checked+.slider:before{transform:translateX(20px)}
+    
     .hidden-input{display:none;margin-top:16px}
     .hidden-input.visible{display:block;animation:slideDown .3s ease}
     @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+    
     .btn-submit{width:100%;background:var(--color-pink);color:#fff;padding:14px 16px;border-radius:8px;border:none;font-size:1.05rem;font-weight:700;cursor:pointer;margin-top:10px;transition:.2s;box-shadow:0 2px 5px 0 rgba(219,39,119,.3);display:flex;align-items:center;justify-content:center}
     .btn-submit:hover:not(:disabled){background:var(--color-pink-hover)}
     .btn-submit:disabled{background:#E3E6E6;color:#888C8C;cursor:not-allowed;box-shadow:none;border:1px solid #D5D9D9}
     .spinner{width:22px;height:22px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;margin-right:8px}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .crop-overlay{position:fixed;inset:0;background:rgba(17,24,39,.95);z-index:2000;display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:.3s ease;backdrop-filter:blur(5px)}
-    .crop-overlay.active{opacity:1;visibility:visible}
-    .crop-header-bar{display:flex;justify-content:space-between;align-items:center;padding:20px;background:rgba(0,0,0,.5);color:#fff}
-    .crop-title{font-weight:700;font-size:1.2rem}
-    .crop-workspace{flex:1;position:relative;width:100%;overflow:hidden;display:flex;justify-content:center;align-items:center;padding:20px}
-    .crop-workspace img{max-width:100%;max-height:100%;display:block}
-    .crop-footer-bar{padding:20px;background:rgba(0,0,0,.5);display:flex;gap:16px;justify-content:center}
-    .btn-crop-cancel{background:#374151;color:#fff;padding:12px 24px;border-radius:10px;border:none;font-weight:600;cursor:pointer}
-    .btn-crop-apply{background:var(--color-pink);color:#fff;padding:12px 32px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
   </style>
 </head>
 <body>
 
   <header class="app-header">
       <div class="header-content">
-          <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+          <button type="button" onclick="window.location.href='merchant-dashboard.html'" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
           <div class="page-title">Add Product</div>
       </div>
   </header>
@@ -75,16 +73,26 @@
   <div class="container">
       <form class="card" onsubmit="handleSubmit(event)">
           
-          <div class="warning-note">
-              <i class="fa-solid fa-crop-simple"></i> Professional Requirement:<br>
-              <span style="font-weight: 500;">Your image will be cropped into a perfect square (1:1) to fit the marketplace grid. Please ensure your product is centered within the box!</span>
+          <div class="info-note">
+              <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 1.2rem;"></i>
+              <span><strong>Smart Upload:</strong> Select any photo. We will automatically frame, center, and format it for the marketplace!</span>
           </div>
 
           <div class="image-picker" onclick="document.getElementById('file-input').click()">
-              <input type="file" id="file-input" hidden accept="image/*" onchange="handleImageSelect(this)">
+              <input type="file" id="file-input" hidden accept="image/*" onchange="handleSmartImageSelect(this)">
+              
+              <!-- Processing overlay -->
+              <div id="processing-overlay" style="display:none; position:absolute; inset:0; background:rgba(255,255,255,0.9); z-index:10; flex-direction:column; align-items:center; justify-content:center;">
+                  <div class="spinner" style="border-top-color: var(--color-pink); border-right-color: var(--color-pink); border-bottom-color: var(--color-pink); border-left-color: transparent;"></div>
+                  <span style="font-weight:700; color:var(--color-pink); margin-top:8px;">Formatting Image...</span>
+              </div>
+
               <img id="preview" class="preview-img">
-              <i class="fa-solid fa-camera" id="cam-icon" style="font-size:2.5rem;color:#888C8C;margin-bottom:12px"></i>
-              <span id="cam-text" style="font-size:.95rem;font-weight:700;color:var(--color-text-muted)">Tap to upload image</span>
+              
+              <div id="picker-defaults" style="display:flex; flex-direction:column; align-items:center;">
+                  <i class="fa-solid fa-camera" style="font-size:2.5rem;color:#888C8C;margin-bottom:12px"></i>
+                  <span style="font-size:.95rem;font-weight:700;color:var(--color-text-muted)">Tap to select product photo</span>
+              </div>
           </div>
 
           <div class="form-group">
@@ -130,55 +138,109 @@
       </form>
   </div>
 
-  <div id="crop-modal" class="crop-overlay">
-      <div class="crop-header-bar">
-          <div class="crop-title"><i class="fa-solid fa-crop-simple"></i> Frame Product</div>
-          <button type="button" onclick="closeCropModal()" style="background:0 0;border:none;color:#fff;font-size:1.5rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="crop-workspace"><img id="crop-image" src=""></div>
-      <div class="crop-footer-bar">
-          <button type="button" class="btn-crop-cancel" onclick="closeCropModal()">Cancel</button>
-          <button type="button" class="btn-crop-apply" onclick="applyCrop()">Apply Crop</button>
-      </div>
-  </div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script>
-    const SUPABASE_URL="https://xdchacdjcgazyckacbpc.supabase.co",SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const SUPABASE_URL="https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-    const params=new URLSearchParams(window.location.search),shopId=params.get('shop_id');
-    let currentUser=null,cropper=null,croppedBlob=null;
-    const MAX_FILE_SIZE=5e5;
+    
+    const params=new URLSearchParams(window.location.search);
+    const shopId=params.get('shop_id');
+    let currentUser=null;
+    
+    // Store the processed blob ready for upload
+    let finalFormattedBlob=null;
 
     window.onload=async()=>{
         const{data:{session:e}}=await client.auth.getSession();
         if(!e)return void(window.location.href="login.html");
         currentUser=e.user;
-        if(!shopId)alert("No shop ID provided."),window.location.href="merchant-dashboard.html";
+        if(!shopId) {
+            alert("No shop ID provided.");
+            window.location.href="merchant-dashboard.html";
+        }
     };
 
-    function handleImageSelect(e){
-        if(e.files&&e.files[0]){
-            const t=e.files[0];
-            if(!t.type.startsWith('image/'))return alert("Please upload a valid image file."),void(e.value='');
-            const o=new FileReader;
-            o.onload=e=>{
-                const t=document.getElementById('crop-modal'),n=document.getElementById('crop-image');
-                n.src=e.target.result,t.classList.add('active'),document.body.style.overflow='hidden',cropper&&cropper.destroy(),cropper=new Cropper(n,{aspectRatio:1,viewMode:2,background:!1,autoCropArea:1,responsive:!0})
-            },o.readAsDataURL(t),e.value=''
+    // --- THE SMART AUTO-FIT ENGINE ---
+    async function handleSmartImageSelect(input) {
+        if(input.files && input.files[0]) {
+            const file = input.files[0];
+            if(!file.type.startsWith('image/')) {
+                alert("Please upload a valid image file.");
+                input.value='';
+                return;
+            }
+
+            // Show processing UI
+            document.getElementById('processing-overlay').style.display = 'flex';
+            document.getElementById('picker-defaults').style.display = 'none';
+
+            try {
+                const result = await processAndFitImage(file);
+                
+                // Store the blob for Supabase upload
+                finalFormattedBlob = result.blob;
+                
+                // Show the perfectly formatted image in the preview box
+                const previewImg = document.getElementById('preview');
+                previewImg.src = result.url;
+                previewImg.style.display = 'block';
+
+            } catch(e) {
+                alert("Error formatting image. Please try another photo.");
+                document.getElementById('picker-defaults').style.display = 'flex';
+            } finally {
+                // Hide processing UI
+                document.getElementById('processing-overlay').style.display = 'none';
+                input.value = ''; // Reset input so they can select the same file again if needed
+            }
         }
     }
 
-    function closeCropModal(){document.getElementById('crop-modal').classList.remove('active'),document.body.style.overflow='',cropper&&(cropper.destroy(),cropper=null)}
-    function applyCrop(){
-        if(!cropper)return;
-        cropper.getCroppedCanvas({width:800,height:800,imageSmoothingEnabled:!0,imageSmoothingQuality:'high'}).toBlob(e=>{
-            if(e.size>MAX_FILE_SIZE)return void alert(`Cropped image is too large (${Math.round(e.size/1024)}KB). Try cropping a smaller area.`);
-            croppedBlob=e;
-            const t=document.getElementById('preview');
-            t.src=URL.createObjectURL(e),t.style.display='block',document.getElementById('cam-icon').style.display='none',document.getElementById('cam-text').style.display='none',closeCropModal()
-        },'image/jpeg',.85)
+    function processAndFitImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const TARGET_SIZE = 800; // Perfect Amazon/Jumia catalog size
+                    
+                    canvas.width = TARGET_SIZE;
+                    canvas.height = TARGET_SIZE;
+                    const ctx = canvas.getContext('2d');
+
+                    // 1. Fill the background with pure white
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, TARGET_SIZE, TARGET_SIZE);
+
+                    // 2. Calculate the scaling factor to fit the entire image inside the box
+                    const scale = Math.min(TARGET_SIZE / img.width, TARGET_SIZE / img.height);
+                    const newWidth = img.width * scale;
+                    const newHeight = img.height * scale;
+
+                    // 3. Calculate X and Y to perfectly center the image
+                    const x = (TARGET_SIZE - newWidth) / 2;
+                    const y = (TARGET_SIZE - newHeight) / 2;
+
+                    // 4. Draw the image onto the white canvas
+                    ctx.drawImage(img, x, y, newWidth, newHeight);
+
+                    // 5. Export as a highly compressed JPEG (saves bandwidth and storage)
+                    canvas.toBlob((blob) => {
+                        resolve({ 
+                            blob: blob, 
+                            url: URL.createObjectURL(blob) 
+                        });
+                    }, 'image/jpeg', 0.85); // 85% quality is visually indistinguishable but highly compressed
+                };
+                img.onerror = reject;
+                img.src = e.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
     }
 
     function toggleDiscount(e){
@@ -189,21 +251,54 @@
     async function handleSubmit(e){
         e.preventDefault();
         const t=document.getElementById('btn-submit');
-        if(!croppedBlob)return alert("Please upload and frame a product image.");
-        const o=parseFloat(document.getElementById('price').value);let n=null;
+        
+        if(!finalFormattedBlob) return alert("Please select a product image.");
+        
+        const o=parseFloat(document.getElementById('price').value);
+        let n=null;
+        
         if(document.getElementById('discount-switch').checked){
             const e=parseFloat(document.getElementById('discount-percent').value);
-            if(!e||e<=0||e>20)return alert("Discount must be between 1% and 20%");
-            n=o-o*(e/100)
+            if(!e||e<=0||e>20) return alert("Discount must be between 1% and 20%");
+            n=o-o*(e/100);
         }
-        t.disabled=!0,t.innerHTML='<div class="spinner"></div> Uploading...';
+        
+        t.disabled=!0;
+        t.innerHTML='<div class="spinner"></div> Uploading...';
+        
         try{
-            const e=`${currentUser.id}_${Date.now()}.jpg`,{error:c}=await client.storage.from('products').upload(e,croppedBlob,{contentType:'image/jpeg'});
-            if(c)throw c;
-            const{data:{publicUrl:r}}=client.storage.from('products').getPublicUrl(e),{error:i}=await client.from('products').insert({shop_id:parseInt(shopId),name:document.getElementById('name').value.trim(),description:document.getElementById('desc').value.trim(),price:o,discount_price:n,condition:document.getElementById('condition').value,image_url:r,is_available:!0});
-            if(i)throw i;
-            alert("Product uploaded successfully!"),window.location.href="merchant-dashboard.html"
-        }catch(e){console.error(e),alert("Upload failed: "+e.message),t.disabled=!1,t.innerHTML='Upload Product'}
+            // Upload the perfectly formatted Smart-Fit Blob instead of the raw file
+            const e=`${currentUser.id}_${Date.now()}.jpg`;
+            const {error:c} = await client.storage.from('products').upload(e, finalFormattedBlob, {
+                contentType: 'image/jpeg'
+            });
+            
+            if(c) throw c;
+            
+            const{data:{publicUrl:r}} = client.storage.from('products').getPublicUrl(e);
+            
+            const {error:i} = await client.from('products').insert({
+                shop_id: parseInt(shopId),
+                name: document.getElementById('name').value.trim(),
+                description: document.getElementById('desc').value.trim(),
+                price: o,
+                discount_price: n,
+                condition: document.getElementById('condition').value,
+                image_url: r,
+                is_available: true
+            });
+            
+            if(i) throw i;
+            
+            alert("Product uploaded successfully!");
+            window.location.href="merchant-dashboard.html";
+            
+        } catch(e) {
+            console.error(e);
+            alert("Upload failed: "+e.message);
+            t.disabled=!1;
+            t.innerHTML='Upload Product';
+        }
     }
 </script>
 </body>
