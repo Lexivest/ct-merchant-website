@@ -1,26 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Careers at CTM | Join the Team</title>
-  
+  <title>Careers at CTMerchant | Join the Team</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
-  
   <link rel="stylesheet" href="careers.css">
 </head>
-
 <body>
-
 <nav class="main-header">
   <div class="container nav-container">
     <a href="index.html" class="brand-wrapper">
       <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
-      <span style="font-size: 1.125rem; font-weight: 800; color: white; letter-spacing: 0.05em; text-transform: uppercase;">CT-Merchant Ltd.</span>
+      <span style="font-size:1.125rem;font-weight:800;color:#fff;letter-spacing:.05em;text-transform:uppercase">CTMerchant</span>
     </a>
-
     <div class="desktop-menu">
       <a href="index.html">Home</a>
       <a href="about.html">About</a>
@@ -30,135 +25,95 @@
       <a href="contact.html">Contact</a>
       <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
     </div>
-
     <button class="mobile-menu-btn" id="menu-btn">
       <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
       </svg>
     </button>
   </div>
-
   <div class="mobile-dropdown hidden" id="mobile-menu">
       <a href="index.html">Home</a>
       <a href="about.html">About</a>
       <a href="services.html">Services</a>
       <a href="affiliate.html">Affiliate</a>
-      <a href="careers.html" style="border-bottom: 1px solid white;">Careers</a>
+      <a href="careers.html" style="border-bottom:1px solid #fff">Careers</a>
       <a href="contact.html">Contact</a>
       <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
   </div>
 </nav>
 
-<section class="hero-section" style="min-height: 60vh;">
+<section class="hero-section" style="min-height:60vh">
   <div class="hero-image-wrapper">
     <div class="hero-overlay"></div>
-    <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" 
-         alt="CTM Team" 
-         class="hero-img">
+    <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" alt="CTMerchant Team" class="hero-img">
   </div>
-
-  <div class="hero-content" style="border-bottom: 8px solid var(--color-purple);">
-    
-    <div class="hero-badge">
-      JOIN THE MISSION
-    </div>
-    
-    <h1 class="hero-title" style="text-transform: uppercase; letter-spacing: -0.05em; font-size: 2.5rem;">
-      Build Digital Infrastructure
-    </h1>
+  <div class="hero-content" style="border-bottom:8px solid var(--color-purple)">
+    <div class="hero-badge">JOIN THE MISSION</div>
+    <h1 class="hero-title" style="text-transform:uppercase;letter-spacing:-.05em;font-size:2.5rem">Build Digital Infrastructure</h1>
     <div class="divider-line"></div>
-    
-    <p class="hero-desc" style="border:none; padding:0; color: #e2e8f0; font-style: normal; font-size: 0.95rem;">
-      At CTM, we are building a trusted digital repository of real physical businesses within cities. Join a team focused on mapping, structuring, and maintaining accurate commercial data that serves communities, merchants, and institutions.
+    <p class="hero-desc" style="border:none;padding:0;color:#e2e8f0;font-style:normal;font-size:.95rem">
+      At CTMerchant, we are building a trusted digital repository of real physical businesses within cities. Join a team focused on mapping, structuring, and maintaining accurate commercial data that serves communities, merchants, and institutions.
     </p>
-    
-    <a href="#openings" class="hero-btn">
-      View Openings <span style="font-size: 1.125rem;">↓</span>
-    </a>
+    <a href="#openings" class="hero-btn">View Openings <span style="font-size:1.125rem">↓</span></a>
   </div>
 </section>
 
 <section id="openings" class="careers-container">
-  
   <h2 class="section-heading">Current Openings</h2>
-
   <div class="job-list">
-    
     <div class="job-card animate-up">
       <div class="job-info">
         <h3 class="job-title">City Merchant Growth Lead</h3>
         <div class="job-meta">
-          <span class="meta-item">
-            <span class="dot-full bg-green"></span> Full Time
-          </span>
+          <span class="meta-item"><span class="dot-full bg-green"></span> Full Time</span>
           <span>• Kaduna (Hybrid)</span>
           <span>• Platform Operations</span>
         </div>
       </div>
-      <button onclick="openClosedNotice('City Merchant Growth Lead')" class="btn-apply" style="opacity: 0.7;">
-        Application Closed
-      </button>
+      <button onclick="openClosedNotice('City Merchant Growth Lead')" class="btn-apply" style="opacity:.7">Application Closed</button>
     </div>
-
     <div class="job-card animate-up">
       <div class="job-info">
         <h3 class="job-title">Flutter Application Engineer</h3>
         <div class="job-meta">
-          <span class="meta-item">
-            <span class="dot-full bg-blue"></span> Contract
-          </span>
+          <span class="meta-item"><span class="dot-full bg-blue"></span> Contract</span>
           <span>• Remote</span>
           <span>• Platform Engineering</span>
         </div>
       </div>
-      <button onclick="openClosedNotice('Flutter Application Engineer')" class="btn-apply" style="opacity: 0.7;">
-        Application Closed
-      </button>
+      <button onclick="openClosedNotice('Flutter Application Engineer')" class="btn-apply" style="opacity:.7">Application Closed</button>
     </div>
-
   </div>
 </section>
 
 <div id="apply-modal" class="apply-modal-wrapper hidden">
   <div class="apply-modal-content">
-    
     <button onclick="closeApply()" class="close-modal-btn">
       <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
       </svg>
     </button>
-
     <div class="apply-header">
-      <h3 class="apply-title">
-        Status: <span id="job-title-placeholder" class="text-highlight">Role</span>
-      </h3>
+      <h3 class="apply-title">Status: <span id="job-title-placeholder" class="text-highlight">Role</span></h3>
     </div>
-
-    <div class="apply-form" style="text-align: center;">
-      <div style="margin-bottom: 1.5rem; display: flex; justify-content: center;">
-        <div style="width: 3rem; height: 3rem; background-color: #fdf2f8; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--color-pink);">
-           <i class="fa-solid fa-hourglass-half" style="font-size: 1.25rem;"></i>
+    <div class="apply-form" style="text-align:center">
+      <div style="margin-bottom:1.5rem;display:flex;justify-content:center">
+        <div style="width:3rem;height:3rem;background-color:#fdf2f8;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--color-pink)">
+           <i class="fa-solid fa-hourglass-half" style="font-size:1.25rem"></i>
         </div>
       </div>
-      
-      <p style="font-size: 0.95rem; color: #334155; font-weight: 700; margin-bottom: 0.5rem;">
-        Applications for this role are currently paused.
+      <p style="font-size:.95rem;color:#334155;font-weight:700;margin-bottom:.5rem">Applications for this role are currently paused.</p>
+      <p style="font-size:.85rem;color:#64748b;line-height:1.6;margin-bottom:2rem">
+        Thank you for your interest in joining CTMerchant. We have reached our current intake capacity for this position. Please check back soon or follow our updates for future opportunities.
       </p>
-      
-      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.6; margin-bottom: 2rem;">
-        Thank you for your interest in joining CT-Merchant. We have reached our current intake capacity for this position. Please check back soon or follow our updates for future opportunities.
-      </p>
-
-      <button onclick="closeApply()" class="btn-submit-app">
-        Close
-      </button>
+      <button onclick="closeApply()" class="btn-submit-app">Close</button>
     </div>
   </div>
 </div>
 
 <footer class="footer">
   <div class="container footer-container">
-    <span style="font-weight: 700; color: white;">© 2026 CT-MERCHANT LTD.</span>
+    <span style="font-weight:700;color:#fff">© 2026 CT-MERCHANT LTD.</span>
     <div class="footer-links">
       <a href="privacy.html">Privacy Policy</a>
       <a href="terms.html">Terms of Use</a>
@@ -168,42 +123,13 @@
 </footer>
 
 <script>
-  // Mobile Menu Logic
-  const menuBtn = document.getElementById('menu-btn');
-  const mobileMenu = document.getElementById('mobile-menu');
-  if(menuBtn) {
-      menuBtn.onclick = () => mobileMenu.classList.toggle('hidden');
-  }
-
-  // Scroll Animation Observer
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) entry.target.classList.add('visible');
-    });
-  }, { threshold: 0.1 });
-  
-  document.querySelectorAll('.animate-up').forEach(el => observer.observe(el));
-
-  // Modal Logic
-  const modal = document.getElementById('apply-modal');
-  const jobPlaceholder = document.getElementById('job-title-placeholder');
-
-  function openClosedNotice(role) {
-    jobPlaceholder.textContent = role;
-    modal.classList.remove('hidden');
-  }
-
-  function closeApply() {
-    modal.classList.add('hidden');
-  }
-
-  // Close modal when clicking outside
-  if(modal) {
-      modal.onclick = (e) => {
-          if(e.target === modal) closeApply();
-      }
-  }
+  const mBtn=document.getElementById('menu-btn'),mMenu=document.getElementById('mobile-menu');mBtn&&(mBtn.onclick=()=>mMenu.classList.toggle('hidden'));
+  const obs=new IntersectionObserver(e=>{e.forEach(e=>{e.isIntersecting&&e.target.classList.add('visible')})},{threshold:.1});
+  document.querySelectorAll('.animate-up').forEach(e=>obs.observe(e));
+  const mod=document.getElementById('apply-modal'),jPl=document.getElementById('job-title-placeholder');
+  function openClosedNotice(e){jPl.textContent=e,mod.classList.remove('hidden')}
+  function closeApply(){mod.classList.add('hidden')}
+  mod&&(mod.onclick=e=>{e.target===mod&&closeApply()});
 </script>
-
 </body>
 </html>
