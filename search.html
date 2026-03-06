@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Search | CT-Merchant</title>
+    <title>Search | CTMerchant</title>
     
+    <!-- Favicons for browser tab -->
+    <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+    <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         :root {
-            /* PREMIUM AMAZON THEME WITH CT-MERCHANT PINK */
             --amz-dark: #131921;
-            
             --color-pink: #db2777; 
             --color-pink-hover: #be185d;
             --color-pink-light: rgba(219, 39, 119, 0.15);
-            
             --amz-bg: #E3E6E6;
             --amz-link: #007185;
             --amz-link-hover: #C40000;
@@ -245,7 +246,7 @@
         
         <div id="loader" class="state-box" style="background:transparent; border:none; padding-top: 100px;">
             <div class="spinner"></div>
-            <span style="font-weight: 600; color: #0F1111;">Searching...</span>
+            <span style="font-weight: 600; color: #0F1111;">Searching repository...</span>
         </div>
 
         <div id="content-area" class="hidden">
@@ -275,17 +276,22 @@
         </div>
     </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const params = new URLSearchParams(window.location.search);
     const searchQuery = params.get('q');
 
-    window.onload = () => {
+    window.onload = async () => {
         if (!searchQuery) { window.history.back(); return; }
         
         document.getElementById('search-input').value = searchQuery;
         document.getElementById('search-results-title').innerHTML = `Search results for <span style="color:var(--color-pink); font-weight:800;">"${searchQuery}"</span>`;
 
-        performSearch(searchQuery.toLowerCase());
+        await performSearch(searchQuery.toLowerCase());
     };
 
     function runSearch() {
@@ -295,58 +301,99 @@
         }
     }
 
-    function performSearch(query) {
-        // Leverages the incredibly fast local SWR cache built on the user dashboard
-        const cacheStr = localStorage.getItem('ctm_dash_v29');
+    async function performSearch(query) {
+        document.getElementById('loader').classList.remove('hidden');
+        document.getElementById('content-area').classList.add('hidden');
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('shops-container').classList.add('hidden');
+        document.getElementById('products-container').classList.add('hidden');
+
+        // 1. DYNAMIC FAST CACHE: Find the most recent dashboard cache dynamically
+        const cacheKey = Object.keys(localStorage).find(k => k.startsWith('ctm_dashboard_'));
         
-        if (!cacheStr) {
-            // Failsafe if accessed directly without caching first
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('content-area').classList.remove('hidden');
-            document.getElementById('empty-state').classList.remove('hidden');
-            return;
+        if (cacheKey) {
+            try {
+                const data = JSON.parse(localStorage.getItem(cacheKey));
+                const allShops = data.shops || [];
+                const allProducts = data.products || [];
+
+                const matchedShops = allShops.filter(s => 
+                    s.name.toLowerCase().includes(query) || 
+                    s.category.toLowerCase().includes(query) ||
+                    (s.description && s.description.toLowerCase().includes(query))
+                );
+
+                const matchedProducts = allProducts.filter(p => 
+                    p.name.toLowerCase().includes(query) || 
+                    (p.description && p.description.toLowerCase().includes(query))
+                );
+
+                renderResults(matchedShops, matchedProducts, allProducts);
+                return; // Exit successfully using fast cache
+            } catch (e) {
+                console.error("Cache read failed, falling back to database", e);
+            }
         }
 
+        // 2. DATABASE FALLBACK: If user opens link directly with no cache
         try {
-            const data = JSON.parse(cacheStr);
-            const allShops = data.shops || [];
-            const allProducts = data.products || [];
+            const { data: shops } = await client.from('shops')
+                .select('*')
+                .or(`name.ilike.%${query}%,category.ilike.%${query}%,description.ilike.%${query}%`)
+                .eq('is_verified', true);
+                
+            const { data: products } = await client.from('products')
+                .select('*')
+                .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+                .eq('is_available', true);
 
-            // Intelligent Search Filtering
-            const matchedShops = allShops.filter(s => 
-                s.name.toLowerCase().includes(query) || 
-                s.category.toLowerCase().includes(query) ||
-                (s.description && s.description.toLowerCase().includes(query))
-            );
-
-            const matchedProducts = allProducts.filter(p => 
-                p.name.toLowerCase().includes(query) || 
-                (p.description && p.description.toLowerCase().includes(query))
-            );
-
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('content-area').classList.remove('hidden');
-
-            let hasResults = false;
-
-            if (matchedShops.length > 0) {
-                document.getElementById('shops-container').classList.remove('hidden');
-                document.getElementById('shop-list').innerHTML = matchedShops.map(shop => buildShopCard(shop, allProducts)).join('');
-                hasResults = true;
+            let allRelevantProducts = products || [];
+            
+            // If shops match, fetch their products to build the shop grid UI correctly
+            if (shops && shops.length > 0) {
+                const shopIds = shops.map(s => s.id);
+                const { data: shopProducts } = await client.from('products')
+                    .select('*')
+                    .in('shop_id', shopIds)
+                    .eq('is_available', true);
+                
+                if (shopProducts) {
+                    const existingIds = new Set(allRelevantProducts.map(p => p.id));
+                    shopProducts.forEach(sp => {
+                        if (!existingIds.has(sp.id)) {
+                            allRelevantProducts.push(sp);
+                        }
+                    });
+                }
             }
 
-            if (matchedProducts.length > 0) {
-                document.getElementById('products-container').classList.remove('hidden');
-                document.getElementById('product-list').innerHTML = matchedProducts.map(p => buildProductCard(p)).join('');
-                hasResults = true;
-            }
+            renderResults(shops || [], products || [], allRelevantProducts);
+        } catch(e) {
+            console.error("Search DB Error", e);
+            renderResults([], [], []);
+        }
+    }
 
-            if (!hasResults) {
-                document.getElementById('empty-state').classList.remove('hidden');
-            }
+    function renderResults(matchedShops, matchedProducts, allContextProducts) {
+        document.getElementById('loader').classList.add('hidden');
+        document.getElementById('content-area').classList.remove('hidden');
 
-        } catch (e) {
-            console.error("Search extraction error", e);
+        let hasResults = false;
+
+        if (matchedShops.length > 0) {
+            document.getElementById('shops-container').classList.remove('hidden');
+            document.getElementById('shop-list').innerHTML = matchedShops.map(shop => buildShopCard(shop, allContextProducts)).join('');
+            hasResults = true;
+        }
+
+        if (matchedProducts.length > 0) {
+            document.getElementById('products-container').classList.remove('hidden');
+            document.getElementById('product-list').innerHTML = matchedProducts.map(p => buildProductCard(p)).join('');
+            hasResults = true;
+        }
+
+        if (!hasResults) {
+            document.getElementById('empty-state').classList.remove('hidden');
         }
     }
 
