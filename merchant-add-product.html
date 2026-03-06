@@ -28,6 +28,12 @@
     .edu-title{font-size:.95rem;font-weight:800;color:#0F1111;margin-bottom:8px;display:flex;align-items:center;gap:8px}
     .edu-text{font-size:.85rem;color:#475569;line-height:1.5;margin-bottom:0}
 
+    /* Limit Reached Box */
+    .limit-box { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; background: white; border-radius: 8px; border: 1px solid #D5D9D9; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-top: 20px; }
+    .limit-icon { font-size: 3.5rem; color: #F59E0B; margin-bottom: 16px; }
+    .limit-title { font-size: 1.25rem; font-weight: 800; color: #0F1111; margin-bottom: 8px; }
+    .limit-text { font-size: 0.95rem; color: #565959; line-height: 1.5; margin-bottom: 24px; max-width: 400px;}
+
     /* 3-Image Grid System */
     .img-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
     .img-picker { background: #F7F7F7; border: 2px dashed #888C8C; border-radius: 8px; aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; transition: 0.2s; text-align: center; padding: 10px; }
@@ -79,7 +85,12 @@
     .btn-submit{width:100%;background:var(--color-pink);color:#fff;padding:16px;border-radius:8px;border:none;font-size:1.05rem;font-weight:700;cursor:pointer;margin-top:10px;transition:.2s;box-shadow:0 4px 10px rgba(219,39,119,.3);display:flex;align-items:center;justify-content:center}
     .btn-submit:hover:not(:disabled){background:var(--color-pink-hover)}
     .btn-submit:disabled{background:#E3E6E6;color:#888C8C;cursor:not-allowed;box-shadow:none;border:1px solid #D5D9D9}
+    
+    .btn-outline {background:white; color:#0F1111; border: 1px solid #D5D9D9; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;}
+    .btn-outline:hover {background: #F7FAFA;}
+
     .spinner{width:22px;height:22px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;margin-right:8px}
+    .spinner-dark{border-color: rgba(0,0,0,0.1); border-top-color: var(--color-pink); width: 36px; height: 36px; border-width: 4px; margin: 40px auto; display: block;}
     @keyframes spin{to{transform:rotate(360deg)}}
 
     .crop-overlay{position:fixed;inset:0;background:rgba(17,24,39,.95);z-index:2000;display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:.3s ease;backdrop-filter:blur(5px)}
@@ -107,7 +118,20 @@
   </header>
 
   <div class="container">
-      <form class="card" id="product-form" onsubmit="handleSubmit(event)">
+      
+      <!-- INITIAL LOADER -->
+      <div id="page-loader"><div class="spinner-dark"></div></div>
+
+      <!-- LIMIT REACHED UI -->
+      <div id="limit-reached-message" class="limit-box">
+          <i class="fa-solid fa-boxes-packing limit-icon"></i>
+          <h2 class="limit-title">Upload Limit Reached</h2>
+          <p class="limit-text">You have reached the maximum allowed limit of <strong>30 active products</strong> for your shop. To add a new product, please delete an older or out-of-stock item first.</p>
+          <button onclick="window.location.href='merchant-dashboard.html'" class="btn-outline">Go to My Shop</button>
+      </div>
+
+      <!-- MAIN FORM (Hidden until limit is checked) -->
+      <form class="card" id="product-form" onsubmit="handleSubmit(event)" style="display:none;">
           
           <div class="edu-box">
               <h4 class="edu-title"><i class="fa-solid fa-crop-simple" style="color: #F59E0B;"></i> Smart Frame Tool</h4>
@@ -263,6 +287,8 @@
     let activeCropIndex=1;
     // Store blobs for 3 images
     const finalBlobs = { 1: null, 2: null, 3: null };
+    
+    const MAX_PRODUCTS_LIMIT = 30;
 
     window.onload=async()=>{
         const{data:{session:e}}=await client.auth.getSession();
@@ -271,8 +297,40 @@
         if(!shopId) {
             alert("No shop ID provided.");
             window.location.href="merchant-dashboard.html";
+            return;
         }
+
+        // --- THE LIMIT CHECK PIPELINE ---
+        await enforceUploadLimit();
     };
+
+    async function enforceUploadLimit() {
+        try {
+            // Ask Supabase for the exact count of products for this shop
+            const { count, error } = await client
+                .from('products')
+                .select('*', { count: 'exact', head: true })
+                .eq('shop_id', shopId);
+
+            if (error) throw error;
+
+            document.getElementById('page-loader').style.display = 'none';
+
+            if (count >= MAX_PRODUCTS_LIMIT) {
+                // Limit hit: Hide form, show limit message
+                document.getElementById('limit-reached-message').style.display = 'flex';
+                document.getElementById('product-form').style.display = 'none';
+            } else {
+                // Safe to upload: Show form
+                document.getElementById('limit-reached-message').style.display = 'none';
+                document.getElementById('product-form').style.display = 'block';
+            }
+
+        } catch (e) {
+            console.error("Failed to check limits", e);
+            alert("Error verifying account limits. Please refresh.");
+        }
+    }
 
     // --- HYBRID CROPPER FOR 3 IMAGES ---
     function handleImageSelect(input, index){
@@ -316,7 +374,6 @@
     function applyCrop(){
         if(!cropper) return;
         
-        // 0.65 quality gives aggressive compression (usually < 80KB) with good enough web quality
         cropper.getCroppedCanvas({
             width: 800,
             height: 800,
@@ -331,7 +388,6 @@
             previewImg.src = localUrl;
             previewImg.style.display = 'block';
 
-            // Update main live preview if it's image 1
             if(activeCropIndex === 1) {
                 document.getElementById('live-placeholder').style.display = 'none';
                 const liveImg = document.getElementById('live-img');
@@ -458,29 +514,41 @@
         
         if(!finalBlobs[1]) return alert("Please upload the Main Image (Box 1).");
         
-        const o=parseFloat(document.getElementById('price').value);
-        const stockCount=parseInt(document.getElementById('stock').value);
-        let n=null;
-        
-        if(document.getElementById('discount-switch').checked){
-            const e=parseFloat(document.getElementById('discount-percent').value);
-            if(!e||e<=0||e>20) return alert("Discount must be between 1% and 20%");
-            n=o-o*(e/100);
-        }
-
-        // Build Attributes JSON
-        let attributes = {};
-        document.querySelectorAll('.dynamic-attr').forEach(input => {
-            if(input.value.trim() !== '') {
-                attributes[input.name] = input.value.trim();
-            }
-        });
-        
         t.disabled=!0;
-        t.innerHTML='<div class="spinner"></div> Uploading...';
-        
-        try{
-            // Upload Images in Parallel WITH THE BANDWIDTH CHEAT CODE
+        t.innerHTML='<div class="spinner"></div> Checking limits...';
+
+        try {
+            // Security Pre-flight Check: Ensure they haven't opened two tabs to bypass limits
+            const { count, error: countErr } = await client.from('products').select('*', { count: 'exact', head: true }).eq('shop_id', shopId);
+            if (countErr) throw countErr;
+            
+            if (count >= MAX_PRODUCTS_LIMIT) {
+                document.getElementById('limit-reached-message').style.display = 'flex';
+                document.getElementById('product-form').style.display = 'none';
+                throw new Error("Product limit reached.");
+            }
+
+            t.innerHTML='<div class="spinner"></div> Uploading...';
+            
+            const o=parseFloat(document.getElementById('price').value);
+            const stockCount=parseInt(document.getElementById('stock').value);
+            let n=null;
+            
+            if(document.getElementById('discount-switch').checked){
+                const e=parseFloat(document.getElementById('discount-percent').value);
+                if(!e||e<=0||e>20) throw new Error("Discount must be between 1% and 20%");
+                n=o-o*(e/100);
+            }
+
+            // Build Attributes JSON
+            let attributes = {};
+            document.querySelectorAll('.dynamic-attr').forEach(input => {
+                if(input.value.trim() !== '') {
+                    attributes[input.name] = input.value.trim();
+                }
+            });
+            
+            // Upload Images in Parallel WITH BANDWIDTH CHEAT CODE
             const uploadPromises = [];
             [1, 2, 3].forEach(idx => {
                 if(finalBlobs[idx]) {
@@ -526,7 +594,9 @@
             
         } catch(e) {
             console.error(e);
-            alert("Upload failed: "+e.message);
+            if (e.message !== "Product limit reached.") {
+                alert("Upload failed: " + e.message);
+            }
             t.disabled=!1;
             t.innerHTML='Upload to Marketplace';
         }
