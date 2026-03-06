@@ -82,6 +82,19 @@
     .section-header{font-size:1.1rem;font-weight:800;margin-bottom:12px;color:var(--color-text-main);border-bottom:2px solid #F3F4F6;padding-bottom:8px}
     .description-text{font-size:.95rem;line-height:1.7;color:var(--color-text-muted);white-space:pre-wrap}
 
+    /* Recommendations Section */
+    .h-scroll { display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px; scrollbar-width: none; }
+    .h-scroll::-webkit-scrollbar { display: none; }
+    .mini-card { width: 150px; flex-shrink: 0; background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; }
+    .mini-card:hover { border-color: var(--color-pink); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+    .mini-img-wrap { width: 100%; aspect-ratio: 1/1; background: #F7F7F7; position: relative; }
+    .mini-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .mini-card-body { padding: 10px; display: flex; flex-direction: column; flex: 1; justify-content: space-between; }
+    .mini-title { font-size: 0.8rem; color: #0F1111; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 6px; line-height: 1.3; }
+    .mini-price { font-size: 0.95rem; font-weight: 800; color: var(--color-pink); }
+    .mini-old-price { font-size: 0.7rem; color: #888C8C; text-decoration: line-through; margin-right: 4px; }
+    .grid-badge{position:absolute;top:4px;left:4px;background:#DC2626;color:#fff;font-size:.65rem;font-weight:800;padding:2px 4px;border-radius:4px;z-index:2}
+
     @keyframes pulse-badge{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(220,38,38,0)}50%{transform:scale(1.05);box-shadow:0 0 0 6px rgba(220,38,38,0)}}
     @keyframes highlight-price{0%,100%{color:var(--color-pink);text-shadow:none}50%{color:#f05;text-shadow:0 0 8px rgba(219,39,119,.3)}}
     .flash-offer{animation:pulse-badge 1.5s infinite ease-in-out}
@@ -197,6 +210,12 @@
           </div>
       </div>
   </div>
+  
+  <!-- Recommendations Block -->
+  <div id="recommendations-block" class="content-block hidden" style="margin-top: 8px;">
+      <h2 class="section-header" style="border-bottom:none; padding-bottom:4px;">Recommended For You</h2>
+      <div class="h-scroll" id="recommendation-list"></div>
+  </div>
 </div>
 
 <!-- Security Modal for WhatsApp -->
@@ -231,19 +250,34 @@
         
         client.auth.getSession().then(({data:{session:e}})=>{e&&(currentUser=e.user,checkWishlistStatus())});
         
-        const e=`ctm_prod_v37_${productId}`,t=localStorage.getItem(e);
+        const e=`ctm_prod_v38_${productId}`,t=localStorage.getItem(e);
         if(t)try{renderUI(JSON.parse(t))}catch(e){console.error("Cache error",e),document.getElementById('loader').style.display='flex'}else document.getElementById('loader').style.display='flex';
         fetchFreshData(e,t)
     };
 
     async function fetchFreshData(e,t){
         try{
+            // 1. Fetch Main Product
             const{data:n,error:o}=await client.from('products').select('*').eq('id',productId).single();
             if(o||!n)throw new Error("Product fetch failed.");
             currentProduct=n;let r=null;
-            // Fetch cities(name) to include city name in the share message seamlessly
+            
+            // 2. Fetch Shop Details
             if(n.shop_id){const{data:e}=await client.from('shops').select('id, name, whatsapp, phone, address, city_id, areas(name), cities(name)').eq('id',n.shop_id).maybeSingle();e&&(currentShop=e,r=e)}
-            const c={product:n,shop:r},s=JSON.stringify(c);
+            
+            // 3. Fetch Recommendations based on category
+            let recs = [];
+            if(n.category) {
+                const { data: recData } = await client.from('products')
+                    .select('id, name, price, discount_price, image_url')
+                    .eq('category', n.category)
+                    .neq('id', n.id)
+                    .eq('is_available', true)
+                    .limit(10);
+                if(recData) recs = recData;
+            }
+
+            const c={product:n,shop:r,recommendations:recs},s=JSON.stringify(c);
             s!==t?(localStorage.setItem(e,s),renderUI(c)):!t&&renderUI(c)
         }catch(e){console.error(e),!t&&(document.getElementById('loader').classList.add('hidden'),document.getElementById('error-screen').classList.remove('hidden'))}
     }
@@ -325,6 +359,34 @@
             
             if(!currentShop.phone) btnCall.style.display = 'none';
             if(!currentShop.whatsapp) btnWhatsapp.style.display = 'none';
+        }
+
+        // Render Recommendations
+        const recBlock = document.getElementById('recommendations-block');
+        const recList = document.getElementById('recommendation-list');
+        if(e.recommendations && e.recommendations.length > 0) {
+            recList.innerHTML = e.recommendations.map(p => {
+                const pHasDisc = p.discount_price && p.discount_price < p.price;
+                const priceHtml = pHasDisc 
+                    ? `<span class="mini-old-price">₦${p.price.toLocaleString()}</span>₦${p.discount_price.toLocaleString()}`
+                    : `₦${p.price.toLocaleString()}`;
+                const badgeHtml = pHasDisc ? `<div class="grid-badge flash-offer">-${Math.round(((p.price - p.discount_price) / p.price) * 100)}%</div>` : '';
+                return `
+                    <div class="mini-card" onclick="window.location.href='product-detail.html?id=${p.id}'">
+                        <div class="mini-img-wrap">
+                            ${badgeHtml}
+                            <img src="${p.image_url || 'https://via.placeholder.com/400x400?text=No+Image'}" loading="lazy">
+                        </div>
+                        <div class="mini-card-body">
+                            <div class="mini-title">${p.name}</div>
+                            <div class="mini-price">${priceHtml}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            recBlock.classList.remove('hidden');
+        } else {
+            recBlock.classList.add('hidden');
         }
     }
 
