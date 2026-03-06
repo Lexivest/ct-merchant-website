@@ -15,7 +15,7 @@
   <style>
     :root{--amz-dark:#131921;--amz-nav-bar:#232F3E;--color-pink:#db2777;--color-pink-hover:#be185d;--color-pink-light:rgba(219,39,119,.1);--amz-bg:#E3E6E6;--color-text-main:#0F1111;--color-text-muted:#565959;--color-border:#D5D9D9;--stock-ok:#007185;--stock-low:#B12704;--stock-out:#565959}
     *{box-sizing:border-box;margin:0;padding:0;font-family:'Plus Jakarta Sans',sans-serif;-webkit-tap-highlight-color:transparent}
-    body{background-color:var(--amz-bg);color:var(--color-text-main);overflow-x:hidden}
+    body{background-color:var(--amz-bg);color:var(--color-text-main);padding-bottom:90px;overflow-x:hidden}
     .app-container{width:100%;max-width:1200px;margin:0 auto;min-height:100vh;background-color:var(--amz-bg);display:flex;flex-direction:column}
     
     .amz-header{background-color:var(--amz-dark);color:#fff;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;box-shadow:0 4px 6px rgba(0,0,0,.1)}
@@ -54,20 +54,20 @@
     .stock-low{color:var(--stock-low)}
     .stock-out{color:var(--stock-out)}
 
-    .price-row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+    .price-row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px}
     .current-price{font-size:2.2rem;font-weight:800;color:var(--color-pink)}
     .old-price{text-decoration:line-through;color:var(--color-text-muted);font-size:1.2rem;font-weight:500}
 
     /* Physical Visit Box & Buttons */
-    .address-box{margin-top:20px;padding:20px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px}
+    .address-box{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:20px;margin-top:16px}
     .address-title{font-size:.85rem;font-weight:800;color:var(--color-pink);text-transform:uppercase;margin-bottom:12px;letter-spacing:.5px}
     .address-content{font-size:.95rem;color:#0F1111;line-height:1.5;font-weight:500}
     .address-content i{color:#888C8C;width:16px;text-align:center;margin-right:6px}
     
-    .action-buttons-row { display: flex; gap: 12px; margin-top: 20px; margin-bottom: 12px; width: 100%; }
-    .btn-call { flex: 1; background: #007185; color: #fff; padding: 14px 10px; border-radius: 8px; border: none; font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: .2s; box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+    .action-buttons-row { display: flex; gap: 12px; margin-top: 20px; margin-bottom: 12px; width: 100%; flex-wrap: wrap;}
+    .btn-call { flex: 1; background: #007185; color: #fff; padding: 14px 10px; border-radius: 8px; border: none; font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: .2s; box-shadow: 0 2px 4px rgba(0,0,0,.1); min-width: 140px;}
     .btn-call:hover:not(:disabled) { background: #005A6A; }
-    .btn-whatsapp { flex: 1; background: #25D366; color: #fff; padding: 14px 10px; border-radius: 8px; border: none; font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: .2s; box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+    .btn-whatsapp { flex: 1; background: #25D366; color: #fff; padding: 14px 10px; border-radius: 8px; border: none; font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: .2s; box-shadow: 0 2px 4px rgba(0,0,0,.1); min-width: 140px;}
     .btn-whatsapp:hover:not(:disabled) { background: #16A34A; }
     .btn-call:disabled, .btn-whatsapp:disabled { background: #D5D9D9; color: #888C8C; cursor: not-allowed; box-shadow: none; }
 
@@ -149,50 +149,51 @@
       </div>
       
       <div class="right-col">
+          <!-- Product Info Block -->
           <div class="content-block">
               <span id="condition-badge" class="condition-badge cond-new">New</span>
               <h1 id="prod-name" class="prod-title">--</h1>
               
-              <!-- Stock Indicator -->
-              <div id="stock-status" class="stock-status"></div>
-
               <div class="price-row">
                   <span id="current-price" class="current-price">--</span>
                   <span id="old-price" class="old-price hidden"></span>
               </div>
               
-              <!-- Clean Actions Box -->
-              <div class="address-box">
-                  <div class="address-title">Retailer Information</div>
-                  <div class="address-content">
-                      <div style="font-weight:800;color:#0F1111;margin-bottom:6px">
-                          <i class="fa-solid fa-store" style="color:var(--color-pink)"></i> <span id="shop-name-visit">Loading...</span>
-                      </div>
-                      <div style="color:#565959;font-size:.9rem;display:flex;align-items:flex-start;">
-                          <i class="fa-solid fa-map-pin" style="margin-top:3px"></i>
-                          <span id="shop-address-visit" style="line-height:1.4">...</span>
-                      </div>
-                  </div>
-
-                  <!-- Integrated Buttons -->
-                  <div class="action-buttons-row" id="contact-action-row" style="display:none">
-                      <button id="btn-call-merchant" onclick="callMerchant()" class="btn-call">
-                          <i class="fa-solid fa-phone"></i> Call Seller
-                      </button>
-                      <button id="btn-whatsapp-merchant" onclick="showSecurityModal()" class="btn-whatsapp">
-                          <i class="fa-brands fa-whatsapp" style="font-size:1.2rem"></i> WhatsApp
-                      </button>
-                  </div>
-                  
-                  <button id="btn-view-shop" class="btn-view-shop">View Full Shop Catalog</button>
-              </div>
+              <div id="stock-status" class="stock-status"></div>
           </div>
 
+          <!-- Details & Description Block -->
           <div class="content-block" style="flex:1">
               <div id="attributes-container" class="attr-grid hidden"></div>
               
               <div class="section-header">Description</div>
               <p id="prod-desc" class="description-text">--</p>
+          </div>
+          
+          <!-- Retailer Info & Action Block (Moved to Bottom) -->
+          <div class="content-block">
+              <div class="address-title">Retailer Information</div>
+              <div class="address-content">
+                  <div style="font-weight:800;color:#0F1111;margin-bottom:6px">
+                      <i class="fa-solid fa-store" style="color:var(--color-pink)"></i> <span id="shop-name-visit">Loading...</span>
+                  </div>
+                  <div style="color:#565959;font-size:.9rem;display:flex;align-items:flex-start;">
+                      <i class="fa-solid fa-map-pin" style="margin-top:3px"></i>
+                      <span id="shop-address-visit" style="line-height:1.4">...</span>
+                  </div>
+              </div>
+
+              <!-- Integrated Buttons -->
+              <div class="action-buttons-row" id="contact-action-row" style="display:none">
+                  <button id="btn-call-merchant" onclick="callMerchant()" class="btn-call">
+                      <i class="fa-solid fa-phone"></i> Call Seller
+                  </button>
+                  <button id="btn-whatsapp-merchant" onclick="showSecurityModal()" class="btn-whatsapp">
+                      <i class="fa-brands fa-whatsapp" style="font-size:1.2rem"></i> WhatsApp
+                  </button>
+              </div>
+              
+              <button id="btn-view-shop" class="btn-view-shop">View Full Shop Catalog</button>
           </div>
       </div>
   </div>
@@ -230,7 +231,7 @@
         
         client.auth.getSession().then(({data:{session:e}})=>{e&&(currentUser=e.user,checkWishlistStatus())});
         
-        const e=`ctm_prod_v34_${productId}`,t=localStorage.getItem(e);
+        const e=`ctm_prod_v35_${productId}`,t=localStorage.getItem(e);
         if(t)try{renderUI(JSON.parse(t))}catch(e){console.error("Cache error",e),document.getElementById('loader').style.display='flex'}else document.getElementById('loader').style.display='flex';
         fetchFreshData(e,t)
     };
@@ -267,23 +268,28 @@
         document.getElementById('prod-name').textContent=t.name;
         document.getElementById('prod-desc').textContent=t.description||"No description provided by the merchant.";
         
-        // Set document title for basic SEO
         document.title = `${t.name} | CTMerchant`;
 
-        // Stock Status & CTA Buttons
+        // Price & Discount
+        const o=document.getElementById('current-price'),r=document.getElementById('old-price'),c=document.getElementById('discount-badge'),s=e=>"₦"+Number(e).toLocaleString();
+        const hasDiscount = t.discount_price && t.discount_price < t.price;
+
+        if(hasDiscount){
+            const e=Math.round((t.price-t.discount_price)/t.price*100);
+            o.textContent=s(t.discount_price),o.classList.add('flash-price'),r.textContent=s(t.price),r.classList.remove('hidden'),c.textContent=`-${e}% OFF`,c.classList.remove('hidden')
+        }else o.textContent=s(t.price),o.classList.remove('flash-price'),r.classList.add('hidden'),c.classList.add('hidden');
+
+        // Stock Status & CTA Buttons Logic
         const stockEl = document.getElementById('stock-status');
         const btnCall = document.getElementById('btn-call-merchant');
         const btnWhatsapp = document.getElementById('btn-whatsapp-merchant');
         
         let stockCount = typeof t.stock_count === 'number' ? t.stock_count : 1;
         
-        if(stockCount > 5) {
-            stockEl.textContent = 'In Stock';
-            stockEl.className = 'stock-status stock-ok';
-            btnCall.disabled = false; btnWhatsapp.disabled = false;
-        } else if(stockCount > 0) {
-            stockEl.textContent = `Only ${stockCount} left in stock - order soon.`;
-            stockEl.className = 'stock-status stock-low';
+        if(stockCount > 0) {
+            const promoText = hasDiscount ? ' - hurry now promo ends soon' : '';
+            stockEl.textContent = `${stockCount} in stock${promoText}`;
+            stockEl.className = (stockCount <= 5 || hasDiscount) ? 'stock-status stock-low' : 'stock-status stock-ok';
             btnCall.disabled = false; btnWhatsapp.disabled = false;
         } else {
             stockEl.textContent = 'Currently unavailable.';
@@ -292,13 +298,6 @@
             btnCall.innerHTML = '<i class="fa-solid fa-ban"></i> Out of Stock';
             btnWhatsapp.innerHTML = '<i class="fa-solid fa-ban"></i> Out of Stock';
         }
-
-        // Price & Discount
-        const o=document.getElementById('current-price'),r=document.getElementById('old-price'),c=document.getElementById('discount-badge'),s=e=>"₦"+Number(e).toLocaleString();
-        if(t.discount_price&&t.discount_price<t.price){
-            const e=Math.round((t.price-t.discount_price)/t.price*100);
-            o.textContent=s(t.discount_price),o.classList.add('flash-price'),r.textContent=s(t.price),r.classList.remove('hidden'),c.textContent=`-${e}% OFF`,c.classList.remove('hidden')
-        }else o.textContent=s(t.price),o.classList.remove('flash-price'),r.classList.add('hidden'),c.classList.add('hidden');
         
         // Attributes Grid
         const attrBox = document.getElementById('attributes-container');
@@ -349,7 +348,6 @@
     function hideSecurityModal(){document.getElementById('security-modal').classList.remove('active')}
     async function launchWhatsApp(){hideSecurityModal(),currentUser&&currentShop&&client.from('whatsapp_clicks').insert({clicker_id:currentUser.id,shop_id:currentShop.id,product_id:productId});let e=currentShop.whatsapp.replace(/\D/g,'');e.startsWith('0')&&(e='234'+e.substring(1));const t=currentProduct.discount_price||currentProduct.price,n=`Hello *${currentShop.name}*, I found this on CTMerchant. I am interested in: ${currentProduct.name} (₦${t.toLocaleString()})`;window.open(`https://wa.me/${e}?text=${encodeURIComponent(n)}`,'_blank')}
     
-    // --- ADVANCED IMAGE & TEXT SHARE ENGINE ---
     async function shareProductWithImage() {
         if (!currentProduct) return;
         const title = currentProduct.name || 'Product';
@@ -360,7 +358,6 @@
         try {
             if (navigator.share) {
                 let file = null;
-                // Attempt to fetch the image to share it directly as a rich media file
                 if (currentProduct.image_url) {
                     try {
                         const response = await fetch(currentProduct.image_url);
@@ -370,12 +367,9 @@
                         console.warn("Could not fetch image for native share", e);
                     }
                 }
-
-                // If device supports sharing files, pass the image so it shows perfectly on WhatsApp
                 if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({ title: title, text: text, url: url, files: [file] });
                 } else {
-                    // Fallback to standard URL sharing
                     await navigator.share({ title: title, text: text, url: url });
                 }
             } else {
