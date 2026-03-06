@@ -54,12 +54,12 @@
         
         .delete-img-btn {
             position: absolute; top: 8px; right: 8px;
-            background: rgba(220, 38, 38, 0.9); color: white;
-            border: none; border-radius: 50%; width: 30px; height: 30px;
+            background: rgba(220, 38, 38, 0.95); color: white;
+            border: none; border-radius: 50%; width: 32px; height: 32px;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 10; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer; z-index: 10; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        .delete-img-btn:hover { background: #B12704; transform: scale(1.1); }
+        .delete-img-btn:hover { background: #991B1B; transform: scale(1.1); }
 
         .form-group { margin-bottom: 20px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;}
@@ -69,7 +69,6 @@
         textarea.input { resize: vertical; min-height: 100px; }
         select.input { cursor: pointer; background-color: #fff; }
         
-        /* Dynamic Fields Container */
         #dynamic-fields-container { background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px dashed #CBD5E1; margin-bottom: 24px; display: none;}
         .dyn-title { font-size: 0.85rem; font-weight: 800; color: var(--color-pink); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;}
 
@@ -90,6 +89,10 @@
         .btn-submit { width: 100%; background: var(--color-pink); color: #fff; padding: 16px; border-radius: 8px; border: none; font-size: 1.05rem; font-weight: 700; cursor: pointer; margin-top: 10px; transition: .2s; box-shadow: 0 4px 10px rgba(219,39,119,.3); display: flex; align-items: center; justify-content: center; }
         .btn-submit:hover:not(:disabled) { background: var(--color-pink-hover); }
         .btn-submit:disabled { background: #E3E6E6; color: #888C8C; cursor: not-allowed; box-shadow: none; border: 1px solid #D5D9D9; }
+
+        .danger-zone { margin-top: 40px; padding-top: 24px; border-top: 1px solid #D5D9D9; }
+        .btn-danger { width: 100%; background: white; border: 1px solid #DC2626; color: #DC2626; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .btn-danger:hover { background: #FEF2F2; }
 
         .spinner { width: 22px; height: 22px; border: 3px solid rgba(255,255,255,.3); border-top-color: currentColor; border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; margin-right: 8px; }
         .spinner.lg { width: 44px; height: 44px; border: 4px solid var(--color-pink-light); border-top-color: var(--color-pink); margin: 40px auto 16px auto; }
@@ -115,7 +118,7 @@
 
     <header class="app-header">
         <div class="header-content">
-            <button onclick="history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+            <button onclick="window.location.href='merchant-dashboard.html'" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
             <div class="page-title">Edit Product</div>
         </div>
     </header>
@@ -125,7 +128,7 @@
         <!-- LOADING STATE -->
         <div id="loader" style="text-align:center;">
             <div class="spinner lg"></div>
-            <p style="color:#565959; font-size:0.95rem; font-weight: 600;">Loading product details...</p>
+            <p id="loader-text" style="color:#565959; font-size:0.95rem; font-weight: 600;">Loading product details...</p>
         </div>
 
         <!-- ERROR STATE -->
@@ -141,7 +144,7 @@
             
             <div class="edu-box">
                 <h4 class="edu-title"><i class="fa-solid fa-boxes-stacked" style="color: #007185;"></i> Storage Manager</h4>
-                <p class="edu-text">Replacing or deleting an image here will automatically delete the old file from your cloud storage, keeping your repository clean.</p>
+                <p class="edu-text">Replacing or deleting an image here will securely delete the old file from your cloud storage, keeping your limits intact.</p>
             </div>
 
             <!-- 3 IMAGE GRID -->
@@ -169,7 +172,6 @@
                 </div>
             </div>
 
-            <!-- CATEGORY -->
             <div class="form-group">
                 <label class="label">Category</label>
                 <select id="category" class="input" required onchange="handleCategoryChange()">
@@ -246,6 +248,14 @@
             </div>
 
             <button type="submit" id="btn-submit" class="btn-submit">Update Product</button>
+
+            <!-- DANGER ZONE -->
+            <div class="danger-zone">
+                <h4 style="color: #DC2626; font-weight: 800; margin-bottom: 12px; font-size: 0.95rem;">Danger Zone</h4>
+                <button type="button" class="btn-danger" onclick="deleteEntireProduct()">
+                    <i class="fa-solid fa-trash-can"></i> Delete Entire Product
+                </button>
+            </div>
         </form>
     </div>
 
@@ -287,10 +297,7 @@
     let activeCropIndex = 1;
 
     window.onload = async () => {
-        if (!productId) {
-            showError("No Product ID provided.");
-            return;
-        }
+        if (!productId) { showError("No Product ID provided."); return; }
         try {
             const { data: { session } } = await client.auth.getSession();
             if (!session) { window.location.href = "login.html"; return; }
@@ -335,16 +342,14 @@
         document.getElementById('stock').value = p.stock_count !== undefined ? p.stock_count : 1;
         document.getElementById('condition').value = p.condition || 'New';
 
-        // 3. Populate Dynamic Categories
+        // 3. Render Dynamic Categories Synchronously (No setTimeout delay!)
         handleCategoryChange();
-        setTimeout(() => {
-            if(p.attributes) {
-                for(const key in p.attributes) {
-                    const el = document.querySelector(`[name="${key}"]`);
-                    if(el) el.value = p.attributes[key];
-                }
+        if(p.attributes) {
+            for(const key in p.attributes) {
+                const el = document.querySelector(`[name="${key}"]`);
+                if(el) el.value = p.attributes[key];
             }
-        }, 100); // slight delay to let DOM render inputs
+        }
 
         // 4. Discount Toggle
         const isSpecial = p.discount_price && p.discount_price < p.price;
@@ -364,9 +369,10 @@
         document.getElementById(`del-btn-${slot}`).classList.remove('hidden');
     }
 
-    // --- GARBAGE COLLECTION ENGINE: Mark for deletion ---
+    // --- SECURE UI DELETION ---
     function removeImage(e, slot) {
-        e.stopPropagation(); // Prevents the file picker from opening
+        e.preventDefault(); 
+        e.stopPropagation(); 
         
         deletedSlots[slot] = true;
         finalBlobs[slot] = null;
@@ -412,7 +418,7 @@
             width: 800, height: 800, fillColor: '#FFFFFF', imageSmoothingEnabled: true, imageSmoothingQuality: 'medium'
         }).toBlob(blob => {
             finalBlobs[activeCropIndex] = blob;
-            deletedSlots[activeCropIndex] = false; // Reset delete flag if they uploaded a new one
+            deletedSlots[activeCropIndex] = false; 
             showPreview(activeCropIndex, URL.createObjectURL(blob));
             closeCropModal();
         }, 'image/jpeg', 0.65);
@@ -430,45 +436,20 @@
         const property = ["Real Estate & Properties", "Hotels & Accommodations"];
 
         if (tech.includes(cat)) {
-            html = `
-                <div class="dyn-title">Technical Specifications</div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="brand" class="input dynamic-attr" placeholder="e.g. Apple"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Storage (ROM)</label><input type="text" name="storage" class="input dynamic-attr" placeholder="e.g. 256GB"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">RAM</label><input type="text" name="ram" class="input dynamic-attr" placeholder="e.g. 8GB"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Battery / Defect Note</label><input type="text" name="condition_note" class="input dynamic-attr" placeholder="e.g. 85% Health"></div>
-                </div>`;
+            html = `<div class="dyn-title">Technical Specifications</div>
+                <div class="form-row"><div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="brand" class="input dynamic-attr" placeholder="e.g. Apple"></div><div class="form-group" style="margin:0;"><label class="label">Storage (ROM)</label><input type="text" name="storage" class="input dynamic-attr" placeholder="e.g. 256GB"></div></div>
+                <div class="form-row"><div class="form-group" style="margin:0;"><label class="label">RAM</label><input type="text" name="ram" class="input dynamic-attr" placeholder="e.g. 8GB"></div><div class="form-group" style="margin:0;"><label class="label">Battery / Defect Note</label><input type="text" name="condition_note" class="input dynamic-attr" placeholder="e.g. 85% Health"></div></div>`;
         } else if (fashion.includes(cat)) {
-            html = `
-                <div class="dyn-title">Apparel Details</div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="brand" class="input dynamic-attr" placeholder="e.g. Nike"></div>
-                    <div class="form-group" style="margin:0;">
-                        <label class="label">Target</label>
-                        <select name="gender" class="input dynamic-attr"><option value="Unisex">Unisex</option><option value="Men">Men</option><option value="Women">Women</option><option value="Kids">Kids</option></select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Size</label><input type="text" name="size" class="input dynamic-attr" placeholder="e.g. XL, 42 EU"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Color</label><input type="text" name="color" class="input dynamic-attr" placeholder="e.g. Black"></div>
-                </div>`;
+            html = `<div class="dyn-title">Apparel Details</div>
+                <div class="form-row"><div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="brand" class="input dynamic-attr" placeholder="e.g. Nike"></div><div class="form-group" style="margin:0;"><label class="label">Target</label><select name="gender" class="input dynamic-attr"><option value="Unisex">Unisex</option><option value="Men">Men</option><option value="Women">Women</option><option value="Kids">Kids</option></select></div></div>
+                <div class="form-row"><div class="form-group" style="margin:0;"><label class="label">Size</label><input type="text" name="size" class="input dynamic-attr" placeholder="e.g. XL, 42 EU"></div><div class="form-group" style="margin:0;"><label class="label">Color</label><input type="text" name="color" class="input dynamic-attr" placeholder="e.g. Black"></div></div>`;
         } else if (consumables.includes(cat)) {
-            html = `
-                <div class="dyn-title">Product Details</div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Brand/Maker</label><input type="text" name="brand" class="input dynamic-attr" placeholder="e.g. Nivea"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Weight/Volume</label><input type="text" name="weight" class="input dynamic-attr" placeholder="e.g. 500ml, 1kg"></div>
-                </div>
+            html = `<div class="dyn-title">Product Details</div>
+                <div class="form-row"><div class="form-group" style="margin:0;"><label class="label">Brand/Maker</label><input type="text" name="brand" class="input dynamic-attr" placeholder="e.g. Nivea"></div><div class="form-group" style="margin:0;"><label class="label">Weight/Volume</label><input type="text" name="weight" class="input dynamic-attr" placeholder="e.g. 500ml, 1kg"></div></div>
                 <div class="form-group" style="margin-bottom:0;"><label class="label">Expiration Date <span style="color:#C40000">*</span></label><input type="date" name="expiry_date" class="input dynamic-attr" required></div>`;
         } else if (property.includes(cat)) {
-            html = `
-                <div class="dyn-title">Property Details</div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Type</label><input type="text" name="property_type" class="input dynamic-attr" placeholder="e.g. 2 Bed Flat, Self Con"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Payment Cycle</label><select name="duration" class="input dynamic-attr"><option value="Per Year">Per Year</option><option value="Per Month">Per Month</option><option value="Per Night">Per Night (Hotels)</option></select></div>
-                </div>`;
+            html = `<div class="dyn-title">Property Details</div>
+                <div class="form-row"><div class="form-group" style="margin:0;"><label class="label">Type</label><input type="text" name="property_type" class="input dynamic-attr" placeholder="e.g. 2 Bed Flat, Self Con"></div><div class="form-group" style="margin:0;"><label class="label">Payment Cycle</label><select name="duration" class="input dynamic-attr"><option value="Per Year">Per Year</option><option value="Per Month">Per Month</option><option value="Per Night">Per Night (Hotels)</option></select></div></div>`;
         }
 
         if(html) { container.innerHTML = html; container.style.display = 'block'; } 
@@ -487,7 +468,9 @@
         }
     }
 
-    // --- MASTER SUBMIT ---
+    // =========================================================
+    // THE NEW FAIL-SAFE MASTER UPDATE ENGINE
+    // =========================================================
     async function handleUpdate(e) {
         e.preventDefault();
         const btn = document.getElementById('btn-submit');
@@ -511,44 +494,19 @@
             if(input.value.trim() !== '') attributes[input.name] = input.value.trim();
         });
 
-        btn.disabled = true;
-        btn.innerHTML = '<div class="spinner" style="border-top-color: #888C8C;"></div> Updating...';
-
         try {
-            // --- 1. GARBAGE COLLECTION (Delete old images from cloud) ---
-            const pathsToDelete = [];
-            for (let i = 1; i <= 3; i++) {
-                if (existingUrls[i]) {
-                    // If user explicitly deleted it, OR replaced it with a new upload
-                    if (deletedSlots[i] || finalBlobs[i]) {
-                        // Extract just the filename from the URL safely
-                        const oldUrl = existingUrls[i];
-                        if (oldUrl.includes('/products/')) {
-                            const fileName = oldUrl.split('/products/')[1].split('?')[0];
-                            if (fileName) pathsToDelete.push(fileName);
-                        }
-                    }
-                }
-            }
-
-            if (pathsToDelete.length > 0) {
-                // Execute secure bucket deletion
-                const { error: delErr } = await client.storage.from('products').remove(pathsToDelete);
-                if (delErr) console.warn("Failed to delete orphaned images:", delErr);
-            }
-
-            // --- 2. UPLOAD NEW IMAGES ---
+            // STEP 1: UPLOAD NEW IMAGES FIRST
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner" style="border-top-color: #888C8C;"></div> Uploading New Images...';
+            
             const uploadPromises = [];
             for(let idx = 1; idx <= 3; idx++) {
                 if(finalBlobs[idx]) {
                     const fName = `${currentUser.id}_${Date.now()}_img${idx}.jpg`;
                     uploadPromises.push(
                         client.storage.from('products').upload(fName, finalBlobs[idx], {
-                            contentType: 'image/jpeg',
-                            cacheControl: '31536000', // Apply the same bandwidth hack here!
-                            upsert: false
-                        })
-                        .then(({error}) => {
+                            contentType: 'image/jpeg', cacheControl: '31536000', upsert: false
+                        }).then(({error}) => {
                             if(error) throw error;
                             return client.storage.from('products').getPublicUrl(fName).data.publicUrl;
                         })
@@ -560,12 +518,13 @@
 
             const [url1, url2, url3] = await Promise.all(uploadPromises);
 
-            // Determine final URLs to save to DB
+            // Determine final URLs
             const finalUrl1 = url1 || (deletedSlots[1] ? null : existingUrls[1]);
             const finalUrl2 = url2 || (deletedSlots[2] ? null : existingUrls[2]);
             const finalUrl3 = url3 || (deletedSlots[3] ? null : existingUrls[3]);
 
-            // --- 3. UPDATE DATABASE ---
+            // STEP 2: UPDATE DATABASE
+            btn.innerHTML = '<div class="spinner" style="border-top-color: #888C8C;"></div> Saving Database...';
             const { error: updateError } = await client.from('products').update({
                 name: document.getElementById('name').value.trim(),
                 description: document.getElementById('desc').value.trim(),
@@ -583,6 +542,23 @@
 
             if (updateError) throw updateError;
 
+            // STEP 3: GARBAGE COLLECTION (Safe to do last!)
+            btn.innerHTML = '<div class="spinner" style="border-top-color: #888C8C;"></div> Cleaning Storage...';
+            const pathsToDelete = [];
+            for (let i = 1; i <= 3; i++) {
+                if (existingUrls[i] && (deletedSlots[i] || finalBlobs[i])) {
+                    try {
+                        // Bulletproof extraction of the exact filename
+                        const fileName = decodeURIComponent(new URL(existingUrls[i]).pathname.split('/').pop());
+                        if (fileName) pathsToDelete.push(fileName);
+                    } catch(e) { console.warn("Failed to parse URL:", e); }
+                }
+            }
+
+            if (pathsToDelete.length > 0) {
+                await client.storage.from('products').remove(pathsToDelete);
+            }
+
             alert("Product updated successfully!");
             window.location.href = "merchant-dashboard.html";
 
@@ -591,6 +567,51 @@
             alert("Update failed: " + err.message);
             btn.innerHTML = originalText;
             btn.disabled = false;
+        }
+    }
+
+    // =========================================================
+    // DANGER ZONE: DELETE ENTIRE PRODUCT
+    // =========================================================
+    async function deleteEntireProduct() {
+        if(!confirm("Are you sure you want to permanently delete this product? This action cannot be undone.")) return;
+        
+        document.getElementById('content').style.opacity = '0.4';
+        document.getElementById('content').style.pointerEvents = 'none';
+        
+        const btn = document.querySelector('.btn-danger');
+        btn.innerHTML = '<div class="spinner" style="border-top-color: #DC2626; border-width: 2px;"></div> Deleting...';
+
+        try {
+            // 1. Hunt down all image files for this product
+            const pathsToDelete = [];
+            [currentProduct.image_url, currentProduct.image_url_2, currentProduct.image_url_3].forEach(url => {
+                if(url && url.includes('/products/')) {
+                    try {
+                        const fileName = decodeURIComponent(new URL(url).pathname.split('/').pop());
+                        if(fileName) pathsToDelete.push(fileName);
+                    } catch(e) {}
+                }
+            });
+            
+            // 2. Delete images from Cloud Storage
+            if(pathsToDelete.length > 0) {
+                await client.storage.from('products').remove(pathsToDelete);
+            }
+            
+            // 3. Delete from database (Cascade will automatically clean up wishlists!)
+            const { error } = await client.from('products').delete().eq('id', productId);
+            if(error) throw error;
+            
+            alert("Product and images completely deleted.");
+            window.location.href = "merchant-dashboard.html";
+            
+        } catch(err) {
+            console.error(err);
+            alert("Failed to delete product: " + err.message);
+            document.getElementById('content').style.opacity = '1';
+            document.getElementById('content').style.pointerEvents = 'auto';
+            btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> Delete Entire Product';
         }
     }
 </script>
