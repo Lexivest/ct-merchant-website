@@ -1,184 +1,563 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Product Details | CTMerchant</title>
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  <!-- Favicons for browser tab -->
+  <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+  <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const groqKey = Deno.env.get('GROQ_API_KEY') 
-
-    if (!supabaseUrl || !serviceRoleKey || !groqKey) throw new Error("Missing Server Secrets")
-
-    // We now expect 'context' from the frontend
-    const { query, history = [], context = {} } = await req.json()
+  <style>
+    :root{--amz-dark:#131921;--amz-nav-bar:#232F3E;--color-pink:#db2777;--color-pink-hover:#be185d;--color-pink-light:rgba(219,39,119,.1);--amz-bg:#E3E6E6;--color-text-main:#0F1111;--color-text-muted:#565959;--color-border:#D5D9D9;--stock-ok:#007185;--stock-low:#B12704;--stock-out:#565959}
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Plus Jakarta Sans',sans-serif;-webkit-tap-highlight-color:transparent}
+    body{background-color:var(--amz-bg);color:var(--color-text-main);padding-bottom:90px;overflow-x:hidden}
+    .app-container{width:100%;max-width:1200px;margin:0 auto;min-height:100vh;background-color:var(--amz-bg);display:flex;flex-direction:column}
     
-    const recentHistory = history.slice(-4);
-    const safeHistory = recentHistory.map((h: any) => ({
-        role: h.role,
-        content: h.content || ""
-    }));
-
-    const authHeader = req.headers.get('Authorization')
-    let user = null;
+    .amz-header{background-color:var(--amz-dark);color:#fff;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;box-shadow:0 4px 6px rgba(0,0,0,.1)}
+    .header-left{display:flex;align-items:center;gap:12px;flex:1;overflow:hidden}
+    .back-btn{background:0 0;border:none;color:#fff;font-size:1.2rem;cursor:pointer;padding:4px;margin-left:-4px;transition:.2s;flex-shrink:0}
+    .back-btn:hover{color:var(--color-pink)}
+    .page-title{font-weight:700;font-size:1.05rem;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+    .area-header{font-size:.75rem;color:#D5D9D9;font-weight:600;display:flex;align-items:center;gap:4px}
+    .header-actions{display:flex;gap:16px;align-items:center;flex-shrink:0}
+    .action-btn{background:0 0;border:none;color:#fff;font-size:1.2rem;cursor:pointer;transition:.2s}
+    .action-btn:hover,.action-btn.active{color:var(--color-pink)}
     
-    if (authHeader) {
-        const authClient = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } })
-        const { data } = await authClient.auth.getUser()
-        if (data && data.user) user = data.user;
-    }
-
-    const adminClient = createClient(supabaseUrl, serviceRoleKey)
-    const today = new Date().toISOString().split('T')[0]; 
-    let finalReplyText = "";
+    .content-block{background:#fff;padding:24px 20px;margin-bottom:8px;border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border)}
+    .content-block:first-child{border-top:none;padding-top:0;padding-bottom:0}
+    .main-layout{display:flex;flex-direction:column;width:100%}
+    @media (min-width:900px){.app-container{padding:40px;background:transparent}.main-layout{flex-direction:row;gap:24px;background:transparent}.content-block{border-radius:8px;border:1px solid var(--color-border);margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,.04)}.content-block:first-child{padding:0}.left-col{flex:1}.right-col{flex:1.2;display:flex;flex-direction:column}}
     
-    // --- 1. DETERMINE USAGE LIMITS ---
-    let chatCount = 0;
-    let clientIp = 'unknown';
+    .image-container{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;background:#fff;}
+    .main-img-wrapper{width:100%;aspect-ratio:1/1;max-height:500px;background:#F7F7F7;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid #F3F4F6}
+    .product-img{width:100%;height:100%;object-fit:contain;padding:0;transition:transform .3s}
+    @media (min-width:900px){.product-img:hover{transform:scale(1.05)}}
+    .discount-badge-hero{position:absolute;top:20px;left:20px;background:#DC2626;color:#fff;font-size:1.1rem;font-weight:800;padding:6px 12px;border-radius:6px;z-index:10;box-shadow:0 4px 10px rgba(220,38,38,.3)}
+    
+    .thumb-gallery{display:flex;gap:12px;padding:16px;width:100%;overflow-x:auto;scrollbar-width:none}
+    .thumb-gallery::-webkit-scrollbar{display:none}
+    .thumb-img{width:60px;height:60px;border-radius:6px;object-fit:cover;border:2px solid transparent;cursor:pointer;background:#F7F7F7;transition:.2s;flex-shrink:0}
+    .thumb-img.active{border-color:var(--color-pink);box-shadow:0 2px 8px rgba(219,39,119,.2)}
 
-    if (user) {
-        const { data: profile } = await adminClient.from('profiles').select('ai_chat_count, ai_last_chat_date').eq('id', user.id).single();
-        chatCount = profile?.ai_chat_count || 0;
-        let lastDate = profile?.ai_last_chat_date || today;
-        if (lastDate !== today) chatCount = 0;
+    .condition-badge{display:inline-block;padding:4px 10px;border-radius:4px;font-size:.75rem;font-weight:800;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+    .cond-new{background:#F3F4F6;color:#007185;border:1px solid #D5D9D9}
+    .cond-used{background:#FFF7ED;color:#C40000;border:1px solid #F3A847}
+    .prod-title{font-size:1.4rem;font-weight:800;line-height:1.3;margin-bottom:8px;color:var(--color-text-main)}
+    
+    .stock-status{font-size:1.05rem;font-weight:700;margin-bottom:16px}
+    .stock-ok{color:var(--stock-ok)}
+    .stock-low{color:var(--stock-low)}
+    .stock-out{color:var(--stock-out)}
+
+    .price-row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+    .current-price{font-size:2.2rem;font-weight:800;color:var(--color-pink)}
+    .old-price{text-decoration:line-through;color:var(--color-text-muted);font-size:1.2rem;font-weight:500}
+
+    /* Physical Visit Box & Buttons */
+    .address-box{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:20px;margin-top:16px}
+    .address-title{font-size:.85rem;font-weight:800;color:var(--color-pink);text-transform:uppercase;margin-bottom:12px;letter-spacing:.5px}
+    .address-content{font-size:.95rem;color:#0F1111;line-height:1.5;font-weight:500}
+    .address-content i{color:#888C8C;width:16px;text-align:center;margin-right:6px}
+    
+    .action-buttons-row { display: flex; gap: 12px; margin-top: 20px; margin-bottom: 12px; width: 100%; flex-wrap: wrap;}
+    .btn-call { flex: 1; background: #007185; color: #fff; padding: 14px 10px; border-radius: 8px; border: none; font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: .2s; box-shadow: 0 2px 4px rgba(0,0,0,.1); min-width: 140px;}
+    .btn-call:hover:not(:disabled) { background: #005A6A; }
+    .btn-whatsapp { flex: 1; background: #25D366; color: #fff; padding: 14px 10px; border-radius: 8px; border: none; font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: .2s; box-shadow: 0 2px 4px rgba(0,0,0,.1); min-width: 140px;}
+    .btn-whatsapp:hover:not(:disabled) { background: #16A34A; }
+    .btn-call:disabled, .btn-whatsapp:disabled { background: #D5D9D9; color: #888C8C; cursor: not-allowed; box-shadow: none; }
+
+    .btn-view-shop{width:100%;padding:12px;background:transparent;border:1px solid var(--color-border);border-radius:8px;font-weight:700;color:var(--color-text-main);cursor:pointer;transition:.2s}
+    .btn-view-shop:hover{background:#fff;border-color:#B0B5B5}
+
+    .attr-grid{display:grid;grid-template-columns:1fr;gap:1px;background:var(--color-border);border:1px solid var(--color-border);border-radius:6px;overflow:hidden;margin-bottom:24px}
+    .attr-row{display:flex;background:#fff;padding:12px 16px}
+    .attr-key{flex:1;font-weight:700;color:var(--color-text-main);font-size:.9rem}
+    .attr-val{flex:2;color:var(--color-text-muted);font-size:.9rem;font-weight:500}
+
+    .section-header{font-size:1.1rem;font-weight:800;margin-bottom:12px;color:var(--color-text-main);border-bottom:2px solid #F3F4F6;padding-bottom:8px}
+    .description-text{font-size:.95rem;line-height:1.7;color:var(--color-text-muted);white-space:pre-wrap}
+
+    /* Recommendations Section */
+    .h-scroll { display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px; scrollbar-width: none; }
+    .h-scroll::-webkit-scrollbar { display: none; }
+    .mini-card { width: 150px; flex-shrink: 0; background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; }
+    .mini-card:hover { border-color: var(--color-pink); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+    .mini-img-wrap { width: 100%; aspect-ratio: 1/1; background: #F7F7F7; position: relative; }
+    .mini-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .mini-card-body { padding: 10px; display: flex; flex-direction: column; flex: 1; justify-content: space-between; }
+    .mini-title { font-size: 0.8rem; color: #0F1111; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 6px; line-height: 1.3; }
+    .mini-price { font-size: 0.95rem; font-weight: 800; color: var(--color-pink); }
+    .mini-old-price { font-size: 0.7rem; color: #888C8C; text-decoration: line-through; margin-right: 4px; }
+    .grid-badge{position:absolute;top:4px;left:4px;background:#DC2626;color:#fff;font-size:.65rem;font-weight:800;padding:2px 4px;border-radius:4px;z-index:2}
+
+    @keyframes pulse-badge{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(220,38,38,0)}50%{transform:scale(1.05);box-shadow:0 0 0 6px rgba(220,38,38,0)}}
+    @keyframes highlight-price{0%,100%{color:var(--color-pink);text-shadow:none}50%{color:#f05;text-shadow:0 0 8px rgba(219,39,119,.3)}}
+    .flash-offer{animation:pulse-badge 1.5s infinite ease-in-out}
+    .flash-price{animation:highlight-price 1.5s infinite ease-in-out}
+
+    /* AI CHAT UI OVERRIDES (Elevated to not clash with content) */
+    .ai-fab-container{position:fixed;bottom:20px;right:20px;z-index:4000;display:flex;flex-direction:column;align-items:center;gap:6px}
+    .ai-fab{width:56px;height:56px;border-radius:50%;background:var(--color-pink);color:#fff;box-shadow:0 4px 12px rgba(219,39,119,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem;transition:transform .2s;border:none}
+    .ai-fab:active{transform:scale(.95)}
+    .ai-label{background:#fff;color:var(--color-pink);font-size:.7rem;font-weight:800;padding:4px 8px;border-radius:12px;box-shadow:0 2px 4px rgba(0,0,0,.1);border:1px solid #E5E7EB;white-space:nowrap;pointer-events:none}
+    .chat-window{position:fixed;bottom:90px;right:20px;width:350px;height:500px;background:#fff;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,.15);z-index:4000;display:flex;flex-direction:column;overflow:hidden;opacity:0;pointer-events:none;transform:translateY(20px);transition:all .3s cubic-bezier(.4,0,.2,1);border:1px solid #D5D9D9}
+    .chat-window.open{opacity:1;pointer-events:all;transform:translateY(0)}
+    .chat-header{background:var(--amz-dark);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+    .chat-body{flex:1;padding:16px;overflow-y:auto;background:#F8FAFC;display:flex;flex-direction:column;gap:12px}
+    .chat-msg{max-width:85%;padding:10px 14px;border-radius:8px;font-size:.9rem;line-height:1.4}
+    .msg-ai{align-self:flex-start;background:#fff;border:1px solid #D5D9D9;color:#0F1111}
+    .msg-user{align-self:flex-end;background:var(--color-pink);color:#fff}
+    .msg-error{align-self:center;background:#FEE2E2;color:#DC2626;font-size:.8rem;border:1px solid #FECACA;text-align:center}
+    .chat-input-area{padding:12px;background:#fff;border-top:1px solid #D5D9D9;display:flex;flex-direction:column;gap:8px}
+    .chat-input-row{display:flex;gap:8px;width:100%}
+    .chat-input{flex:1;padding:10px;border-radius:4px;border:1px solid #888C8C;outline:0;font-size:.9rem}
+    .chat-input:focus{border-color:var(--color-pink);box-shadow:0 0 0 2px var(--color-pink-light)}
+    .btn-send{background:var(--color-pink);color:#fff;border:none;width:40px;height:40px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+    @media (max-width:480px){.chat-window{right:0;left:0;bottom:0;width:100%;height:85vh;border-bottom-left-radius:0;border-bottom-right-radius:0}}
+
+    /* General Modals */
+    .modal-overlay{position:fixed;inset:0;background:rgba(19,25,33,.8);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:all .3s;backdrop-filter:blur(2px)}
+    .modal-overlay.active{opacity:1;visibility:visible}
+    .modal-card{background:#fff;padding:30px;border-radius:8px;width:90%;max-width:350px;text-align:center;box-shadow:0 20px 25px -5px rgba(0,0,0,.2);border:1px solid var(--color-border)}
+    .modal-actions{display:flex;gap:12px;margin-top:24px}
+    .btn-modal{flex:1;padding:12px;border-radius:6px;border:none;font-weight:700;cursor:pointer;font-size:.95rem;transition:.2s}
+    .btn-cancel{background:#fff;border:1px solid var(--color-border);color:var(--color-text-main)}
+    .btn-cancel:hover{background:#F7FAFA}
+    .btn-confirm{background:#25D366;color:#fff}
+    .btn-confirm:hover{background:#16A34A}
+
+    .hidden{display:none!important}
+    .state-box{text-align:center;padding:60px 20px;color:var(--color-text-muted);display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh}
+    .spinner{width:44px;height:44px;border:4px solid var(--color-pink-light);border-top-color:var(--color-pink);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <header class="amz-header">
+      <div class="header-left">
+          <button onclick="goBack()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+          <div style="display:flex;flex-direction:column">
+              <span class="page-title">Product Details</span>
+              <span id="shop-area-header" class="area-header"><i class="fa-solid fa-location-dot"></i> Loading...</span>
+          </div>
+      </div>
+      <div class="header-actions">
+          <button id="wishlist-btn" onclick="toggleWishlist()" class="action-btn" aria-label="Add to Wishlist">
+              <i id="fav-icon" class="fa-regular fa-heart"></i>
+          </button>
+          <button onclick="shareProductWithImage()" class="action-btn" aria-label="Share">
+              <i class="fa-solid fa-share-nodes"></i>
+          </button>
+      </div>
+  </header>
+
+  <div id="loader" class="state-box">
+      <div class="spinner"></div>
+      <span style="font-weight:600;color:#0F1111">Loading Product...</span>
+  </div>
+
+  <div id="error-screen" class="state-box hidden">
+      <i class="fa-solid fa-triangle-exclamation" style="font-size:3rem;color:#C40000;margin-bottom:16px"></i>
+      <h3 style="color:#0F1111;font-weight:800;margin-bottom:8px">Product Not Found</h3>
+      <p style="color:#565959">The item you are looking for may have been removed.</p>
+      <button onclick="window.location.href='index.html'" style="margin-top:20px;padding:10px 24px;background:#fff;border:1px solid #D5D9D9;border-radius:6px;font-weight:600;cursor:pointer">Go Back</button>
+  </div>
+
+  <div id="main-content" class="main-layout hidden">
+      <div class="left-col">
+          <!-- Main Image & Gallery -->
+          <div class="content-block image-container">
+              <div class="main-img-wrapper">
+                  <div id="discount-badge" class="discount-badge-hero flash-offer hidden"></div>
+                  <img id="prod-img" class="product-img" src="" alt="Product Image">
+              </div>
+              <div id="thumb-gallery" class="thumb-gallery hidden"></div>
+          </div>
+      </div>
+      
+      <div class="right-col">
+          <!-- Product Info Block -->
+          <div class="content-block">
+              <span id="condition-badge" class="condition-badge cond-new">New</span>
+              <h1 id="prod-name" class="prod-title">--</h1>
+              
+              <div class="price-row">
+                  <span id="current-price" class="current-price">--</span>
+                  <span id="old-price" class="old-price hidden"></span>
+              </div>
+              
+              <div id="stock-status" class="stock-status"></div>
+          </div>
+
+          <!-- Details & Description Block -->
+          <div class="content-block" style="flex:1">
+              <div id="attributes-container" class="attr-grid hidden"></div>
+              
+              <div class="section-header">Description</div>
+              <p id="prod-desc" class="description-text">--</p>
+          </div>
+          
+          <!-- Retailer Info & Action Block -->
+          <div class="content-block">
+              <div class="address-title">Retailer Information</div>
+              <div class="address-content">
+                  <div style="font-weight:800;color:#0F1111;margin-bottom:6px">
+                      <i class="fa-solid fa-store" style="color:var(--color-pink)"></i> <span id="shop-name-visit">Loading...</span>
+                  </div>
+                  <div style="color:#565959;font-size:.9rem;display:flex;align-items:flex-start;">
+                      <i class="fa-solid fa-map-pin" style="margin-top:3px"></i>
+                      <span id="shop-address-visit" style="line-height:1.4">...</span>
+                  </div>
+              </div>
+
+              <!-- Integrated Buttons -->
+              <div class="action-buttons-row" id="contact-action-row" style="display:none">
+                  <button id="btn-call-merchant" onclick="callMerchant()" class="btn-call">
+                      <i class="fa-solid fa-phone"></i> Call Seller
+                  </button>
+                  <button id="btn-whatsapp-merchant" onclick="showSecurityModal()" class="btn-whatsapp">
+                      <i class="fa-brands fa-whatsapp" style="font-size:1.2rem"></i> WhatsApp
+                  </button>
+              </div>
+              
+              <button id="btn-view-shop" class="btn-view-shop">View Full Shop Catalog</button>
+          </div>
+      </div>
+  </div>
+  
+  <!-- Recommendations Block -->
+  <div id="recommendations-block" class="content-block hidden" style="margin-top: 8px;">
+      <h2 class="section-header" style="border-bottom:none; padding-bottom:4px;">Recommended For You</h2>
+      <div class="h-scroll" id="recommendation-list"></div>
+  </div>
+</div>
+
+<!-- =========================================
+     AI CHAT WIDGET
+     ========================================= -->
+<div class="ai-fab-container">
+    <button class="ai-fab" onclick="toggleChat()">
+        <i class="fa-solid fa-robot"></i>
+    </button>
+    <span class="ai-label">Ask AI</span>
+</div>
+
+<div id="chat-window" class="chat-window">
+    <div class="chat-header">
+        <span style="font-weight:700"><i class="fa-solid fa-robot"></i> Product Concierge</span>
+        <button onclick="toggleChat()" style="background:0 0;border:none;color:#fff;font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="chat-messages" class="chat-body">
+        <div class="chat-msg msg-ai">Hi! I'm the CTMerchant Assistant. What would you like to know about this product?</div>
+    </div>
+    <div class="chat-input-area">
+        <div class="chat-input-row">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMsg()">
+            <button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+        <div class="chat-disclaimer" style="margin-top:4px;font-size:0.75rem;color:#565959">
+            AI can make mistakes. Please verify important details directly with the merchant.
+        </div>
+    </div>
+</div>
+
+<!-- Security Modal for WhatsApp -->
+<div id="security-modal" class="modal-overlay">
+  <div class="modal-card">
+      <div style="width:64px;height:64px;background:var(--color-pink-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+          <i class="fa-solid fa-shield-halved" style="font-size:1.8rem;color:var(--color-pink)"></i>
+      </div>
+      <h3 style="margin-bottom:10px;font-size:1.25rem;color:#0F1111;font-weight:800">Security Notice</h3>
+      <p style="font-size:.9rem;color:#565959;line-height:1.5">
+          To protect merchants from spam, your User ID will be securely recorded. Please ensure this inquiry is business-related.
+      </p>
+      <div class="modal-actions">
+          <button class="btn-modal btn-cancel" onclick="hideSecurityModal()">Cancel</button>
+          <button class="btn-modal btn-confirm" onclick="launchWhatsApp()">Continue to Chat</button>
+      </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL="https://xdchacdjcgazyckacbpc.supabase.co",SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    let client,currentProduct=null,currentShop=null,currentUser=null,isInWishlist=!1;
+    let chatHistory = [];
+    const params=new URLSearchParams(window.location.search),productId=params.get('id');
+
+    function goBack(){document.referrer&&document.referrer.includes(window.location.hostname)?window.history.back():currentProduct&&currentProduct.shop_id?window.location.href=`shop-detail.html?id=${currentProduct.shop_id}`:window.location.href='index.html'}
+
+    window.onload=async()=>{
+        if('undefined'==typeof supabase)return;
+        client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+        if(!productId)return document.getElementById('loader').classList.add('hidden'),void document.getElementById('error-screen').classList.remove('hidden');
         
-        if (chatCount >= 15) {
-            return new Response(JSON.stringify({ reply: "Error: You have reached your daily limit of 15 AI requests. Please check back tomorrow!" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        }
-    } else {
-        clientIp = req.headers.get('x-forwarded-for')?.split(',')[0] || req.headers.get('cf-connecting-ip') || 'unknown';
-        if (clientIp !== 'unknown') {
-            const { data: usageData } = await adminClient.from('anonymous_ai_usage').select('*').eq('ip_address', clientIp).single();
-            if (usageData) {
-                chatCount = usageData.chat_count;
-                let anonLastDate = usageData.last_chat_date;
-                if (anonLastDate !== today) chatCount = 0;
-            }
-            if (chatCount >= 15) {
-                return new Response(JSON.stringify({ reply: "Error: You have reached the daily free limit. Please <a href='create-account.html' style='color:#db2777; text-decoration:underline;'>Create a Free Account</a> to continue!" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-            }
-        }
-    }
-
-    // --- 2. BUILD CONTEXT-AWARE SYSTEM PROMPT ---
-    let systemMessage = "";
-    let tools = [];
-
-    // If the user is on the Product Detail page
-    if (context.page === 'product_detail' && context.product) {
-        const p = context.product;
-        const s = context.shop || {};
+        client.auth.getSession().then(({data:{session:e}})=>{e&&(currentUser=e.user,checkWishlistStatus())});
         
-        systemMessage = `You are the CTMerchant AI Concierge.
-        CURRENT CONTEXT: The user is looking at a specific product.
-        Product Name: ${p.name}
-        Price: ₦${p.discount_price || p.price}
-        Condition: ${p.condition}
-        Description: ${p.description}
-        Shop Name: ${s.name || 'Unknown'}
-        Shop Address: ${s.address || 'Unknown'}
+        const e=`ctm_prod_v39_${productId}`,t=localStorage.getItem(e);
+        if(t)try{renderUI(JSON.parse(t))}catch(e){console.error("Cache error",e),document.getElementById('loader').style.display='flex'}else document.getElementById('loader').style.display='flex';
+        fetchFreshData(e,t)
+    };
 
-        STRICT DIRECTIVES:
-        1. STAY ON TOPIC: Focus ONLY on this product. If asked about unrelated things, politely direct them to use the homepage search bar.
-        2. SECURITY (CRITICAL): Strongly advise the user to VISIT THE PHYSICAL SHOP (${s.address}) to inspect the item. Explicitly WARN them NEVER to transfer money to a seller's bank account before seeing the product in person.
-        3. CONTACT: Tell them to use the 'WhatsApp' or 'Call Seller' buttons at the bottom of the screen to negotiate or ask the seller questions.
-        4. PROACTIVE OFFER: Ask: "Would you like me to find similar items in this category to compare prices?"
-        5. HTML FORMATTING: If you use the 'find_similar_products' tool, format the results exactly like this:
-           <div style="background:#fff; border:1px solid #D5D9D9; padding:12px; border-radius:8px; margin-top:8px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-              <strong style="color:#0F1111;">[Product Name]</strong><br>
-              <span style="color:#db2777; font-weight:800;">₦[Price]</span> - Sold by [Shop Name]<br>
-              <a href="product-detail.html?id=[ID]" style="color:#007185; font-size:0.85rem; text-decoration:underline; font-weight:700; margin-top:4px; display:inline-block;">View Product</a>
-           </div>`;
-
-        tools = [{ 
-            type: "function", 
-            function: { 
-                name: "find_similar_products", 
-                description: "Finds other products in the same category to compare prices.", 
-                parameters: { type: "object", properties: {}, required: [] } 
-            } 
-        }];
-    } 
-    // Generic Fallback Prompt
-    else {
-        systemMessage = `You are CTMerchant's AI Assistant. "CTMerchant is a verified repository of physical shops." Keep responses concise, friendly, and human-like. Do NOT attempt to search for products.`;
-    }
-
-    const messages = [{ role: "system", content: systemMessage }, ...safeHistory, { role: "user", content: query }];
-
-    // --- 3. CALL GROQ (LLAMA 3) ---
-    const groqCall1 = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
-        body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: messages, tools: tools.length > 0 ? tools : undefined, temperature: 0.2, max_tokens: 300 })
-    });
-
-    const data1 = await groqCall1.json();
-    if (!data1.choices || data1.choices.length === 0) throw new Error("Groq API returned an empty response.");
-
-    const responseMessage = data1.choices[0].message;
-
-    // --- 4. HANDLE TOOL CALLING (Product Comparison) ---
-    if (responseMessage.tool_calls) {
-        messages.push(responseMessage); 
-        for (const toolCall of responseMessage.tool_calls) {
-            if (toolCall.function.name === "find_similar_products") {
-                let toolResultString = "";
-                
-                // Fetch similar products natively using Supabase
-                const { data: similarProducts, error: searchErr } = await adminClient
-                    .from('products')
-                    .select('id, name, price, discount_price, shops(name)')
-                    .eq('category', context.product.category)
+    async function fetchFreshData(e,t){
+        try{
+            const{data:n,error:o}=await client.from('products').select('*').eq('id',productId).single();
+            if(o||!n)throw new Error("Product fetch failed.");
+            currentProduct=n;let r=null;
+            
+            if(n.shop_id){const{data:e}=await client.from('shops').select('id, name, whatsapp, phone, address, city_id, areas(name), cities(name)').eq('id',n.shop_id).maybeSingle();e&&(currentShop=e,r=e)}
+            
+            let recs = [];
+            if(n.category) {
+                const { data: recData } = await client.from('products')
+                    .select('id, name, price, discount_price, image_url')
+                    .eq('category', n.category)
+                    .neq('id', n.id)
                     .eq('is_available', true)
-                    .neq('id', context.product.id)
-                    .limit(3);
-
-                if (searchErr) {
-                    toolResultString = `Database Error: ${searchErr.message}`;
-                } else if (similarProducts && similarProducts.length > 0) {
-                    toolResultString = similarProducts.map((p: any) => {
-                        const price = p.discount_price || p.price;
-                        return `ID: ${p.id} | Name: ${p.name} | Price: ${price} | Shop: ${p.shops?.name || 'Unknown'}`;
-                    }).join('\n');
-                } else {
-                    toolResultString = `No similar products found in this category right now.`;
-                }
-                
-                messages.push({ tool_call_id: toolCall.id, role: "tool", name: toolCall.function.name, content: toolResultString });
+                    .limit(10);
+                if(recData) recs = recData;
             }
+
+            const c={product:n,shop:r,recommendations:recs},s=JSON.stringify(c);
+            s!==t?(localStorage.setItem(e,s),renderUI(c)):!t&&renderUI(c)
+        }catch(e){console.error(e),!t&&(document.getElementById('loader').classList.add('hidden'),document.getElementById('error-screen').classList.remove('hidden'))}
+    }
+
+    function renderUI(e){
+        document.getElementById('loader').classList.add('hidden'),document.getElementById('main-content').classList.remove('hidden');
+        currentProduct=e.product,currentShop=e.shop;const t=e.product;
+        
+        document.getElementById('prod-img').src=t.image_url||'https://via.placeholder.com/800x800?text=No+Image';
+        const imgArr = [t.image_url, t.image_url_2, t.image_url_3].filter(Boolean);
+        const gal = document.getElementById('thumb-gallery');
+        if(imgArr.length > 1) {
+            gal.innerHTML = imgArr.map((img, i) => `<img src="${img}" class="thumb-img ${i===0?'active':''}" onclick="swapImage('${img}', this)">`).join('');
+            gal.classList.remove('hidden');
+        } else {
+            gal.classList.add('hidden');
+        }
+        
+        const n=document.getElementById('condition-badge');
+        n.textContent=t.condition||'New',n.className='Fairly Used'===t.condition?'condition-badge cond-used':'condition-badge cond-new';
+        document.getElementById('prod-name').textContent=t.name;
+        document.getElementById('prod-desc').textContent=t.description||"No description provided by the merchant.";
+        
+        document.title = `${t.name} | CTMerchant`;
+
+        const o=document.getElementById('current-price'),r=document.getElementById('old-price'),c=document.getElementById('discount-badge'),s=e=>"₦"+Number(e).toLocaleString();
+        const hasDiscount = t.discount_price && t.discount_price < t.price;
+
+        if(hasDiscount){
+            const e=Math.round((t.price-t.discount_price)/t.price*100);
+            o.textContent=s(t.discount_price),o.classList.add('flash-price'),r.textContent=s(t.price),r.classList.remove('hidden'),c.textContent=`-${e}% OFF`,c.classList.remove('hidden')
+        }else o.textContent=s(t.price),o.classList.remove('flash-price'),r.classList.add('hidden'),c.classList.add('hidden');
+
+        // STOCK LOGIC
+        const stockEl = document.getElementById('stock-status');
+        const btnCall = document.getElementById('btn-call-merchant');
+        const btnWhatsapp = document.getElementById('btn-whatsapp-merchant');
+        
+        let stockCount = typeof t.stock_count === 'number' ? t.stock_count : 1;
+        
+        if(stockCount > 0) {
+            const promoText = hasDiscount ? ' - hurry now promo ends soon' : '';
+            stockEl.textContent = `${stockCount} in stock${promoText}`;
+            stockEl.className = (stockCount <= 5 || hasDiscount) ? 'stock-status stock-low' : 'stock-status stock-ok';
+            btnCall.disabled = false; btnWhatsapp.disabled = false;
+        } else {
+            stockEl.textContent = 'Currently unavailable.';
+            stockEl.className = 'stock-status stock-out';
+            btnCall.disabled = true; btnWhatsapp.disabled = true;
+            btnCall.innerHTML = '<i class="fa-solid fa-ban"></i> Out of Stock';
+            btnWhatsapp.innerHTML = '<i class="fa-solid fa-ban"></i> Out of Stock';
+        }
+        
+        const attrBox = document.getElementById('attributes-container');
+        if(t.attributes && Object.keys(t.attributes).length > 0) {
+            attrBox.innerHTML = Object.entries(t.attributes).map(([key, val]) => {
+                const cleanKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                return `<div class="attr-row"><span class="attr-key">${cleanKey}</span><span class="attr-val">${val}</span></div>`;
+            }).join('');
+            attrBox.classList.remove('hidden');
+        } else {
+            attrBox.classList.add('hidden');
         }
 
-        // Second call with tool results
-        const groqCall2 = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
-            body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: messages, temperature: 0.2, max_tokens: 400 })
-        });
+        if(currentShop){
+            document.getElementById('shop-area-header').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${currentShop.areas?.name || 'Local Area'}`;
+            document.getElementById('shop-name-visit').textContent = currentShop.name;
+            document.getElementById('shop-address-visit').textContent = currentShop.address;
+            
+            const vBtn = document.getElementById('btn-view-shop');
+            vBtn.onclick = () => window.location.href = `shop-detail.html?id=${currentShop.id}`;
 
-        const data2 = await groqCall2.json();
-        finalReplyText = data2.choices[0].message.content;
-    } else {
-        finalReplyText = responseMessage.content;
+            document.getElementById('contact-action-row').style.display = 'flex';
+            
+            if(!currentShop.phone) btnCall.style.display = 'none';
+            if(!currentShop.whatsapp) btnWhatsapp.style.display = 'none';
+        }
+
+        const recBlock = document.getElementById('recommendations-block');
+        const recList = document.getElementById('recommendation-list');
+        if(e.recommendations && e.recommendations.length > 0) {
+            recList.innerHTML = e.recommendations.map(p => {
+                const pHasDisc = p.discount_price && p.discount_price < p.price;
+                const priceHtml = pHasDisc 
+                    ? `<span class="mini-old-price">₦${p.price.toLocaleString()}</span>₦${p.discount_price.toLocaleString()}`
+                    : `₦${p.price.toLocaleString()}`;
+                const badgeHtml = pHasDisc ? `<div class="grid-badge flash-offer">-${Math.round(((p.price - p.discount_price) / p.price) * 100)}%</div>` : '';
+                return `
+                    <div class="mini-card" onclick="window.location.href='product-detail.html?id=${p.id}'">
+                        <div class="mini-img-wrap">
+                            ${badgeHtml}
+                            <img src="${p.image_url || 'https://via.placeholder.com/400x400?text=No+Image'}" loading="lazy">
+                        </div>
+                        <div class="mini-card-body">
+                            <div class="mini-title">${p.name}</div>
+                            <div class="mini-price">${priceHtml}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            recBlock.classList.remove('hidden');
+        } else {
+            recBlock.classList.add('hidden');
+        }
     }
 
-    // --- 5. UPDATE USAGE LIMITS ---
-    if (user) {
-        await adminClient.from('profiles').update({ ai_chat_count: chatCount + 1, ai_last_chat_date: today }).eq('id', user.id);
-    } else if (clientIp !== 'unknown') {
-        await adminClient.from('anonymous_ai_usage').upsert({ ip_address: clientIp, chat_count: chatCount + 1, last_chat_date: today });
+    function swapImage(src, el) {
+        document.getElementById('prod-img').src = src;
+        document.querySelectorAll('.thumb-img').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
     }
 
-    return new Response(JSON.stringify({ reply: finalReplyText }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // --- AI CHAT LOGIC (Context-Aware) ---
+    function toggleChat() {
+        document.getElementById('chat-window').classList.toggle('open');
+    }
 
-  } catch (error) {
-    return new Response(JSON.stringify({ reply: `System Error: ${error.message}` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  }
-})
+    async function sendMsg() {
+        const inp = document.getElementById('chat-input');
+        const txt = inp.value.trim();
+        if(!txt) return;
+
+        const body = document.getElementById('chat-messages');
+        body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
+        inp.value = '';
+        body.scrollTop = body.scrollHeight;
+
+        chatHistory.push({ role: 'user', content: txt });
+
+        const loadId = 'loading-' + Date.now();
+        body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic; color:#565959;">Thinking...</div>`;
+        body.scrollTop = body.scrollHeight;
+
+        try {
+            const { data: { session } } = await client.auth.getSession();
+            const token = session ? session.access_token : '';
+            const headers = { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            const contextData = {
+                page: 'product_detail',
+                product: currentProduct,
+                shop: currentShop
+            };
+
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ query: txt, history: chatHistory, context: contextData })
+            });
+
+            document.getElementById(loadId)?.remove();
+
+            if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+            const data = await response.json();
+            const reply = data.reply || "No response received.";
+            const isError = (reply.startsWith("Error:") || reply.startsWith("System") || reply.startsWith("Config"));
+            const msgClass = isError ? "msg-error" : "msg-ai";
+            
+            body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
+
+            if (!isError) chatHistory.push({ role: 'assistant', content: reply });
+            
+        } catch (err) {
+            document.getElementById(loadId)?.remove();
+            body.innerHTML += `<div class="chat-msg msg-error">Connection Error: ${err.message}</div>`;
+        }
+        body.scrollTop = body.scrollHeight;
+    }
+
+    async function callMerchant() {
+        if(!currentShop || !currentShop.phone) return alert("No phone number provided.");
+        if (currentUser && currentShop) {
+             client.from('call_clicks').insert({ clicker_id: currentUser.id, shop_id: currentShop.id, product_id: productId });
+        }
+        window.open(`tel:${currentShop.phone}`, '_self');
+    }
+
+    async function checkWishlistStatus(){if(!currentUser)return;try{const{data:e}=await client.from('wishlist').select('id').eq('user_id',currentUser.id).eq('product_id',productId).maybeSingle();e&&(isInWishlist=!0,updateWishlistIcons())}catch(e){console.error("Wishlist check error",e)}}
+    function updateWishlistIcons(){const e=document.getElementById('wishlist-btn'),t=document.getElementById('fav-icon');t.className=`${isInWishlist?'fa-solid':'fa-regular'} fa-heart`,isInWishlist?e.classList.add('active'):e.classList.remove('active')}
+    async function toggleWishlist(){if(!currentUser)return alert("Please login to save items to your wishlist.");isInWishlist=!isInWishlist,updateWishlistIcons();try{isInWishlist?await client.from('wishlist').insert({user_id:currentUser.id,product_id:productId}):await client.from('wishlist').delete().eq('user_id',currentUser.id).eq('product_id',productId)}catch(e){isInWishlist=!isInWishlist,updateWishlistIcons(),alert("Failed to update wishlist.")}}
+    function showSecurityModal(){currentShop?.whatsapp?document.getElementById('security-modal').classList.add('active'):alert("This merchant hasn't provided a WhatsApp number.")}
+    function hideSecurityModal(){document.getElementById('security-modal').classList.remove('active')}
+    async function launchWhatsApp(){hideSecurityModal(),currentUser&&currentShop&&client.from('whatsapp_clicks').insert({clicker_id:currentUser.id,shop_id:currentShop.id,product_id:productId});let e=currentShop.whatsapp.replace(/\D/g,'');e.startsWith('0')&&(e='234'+e.substring(1));const t=currentProduct.discount_price||currentProduct.price,n=`Hello *${currentShop.name}*, I found this on CTMerchant. I am interested in: ${currentProduct.name} (₦${t.toLocaleString()})`;window.open(`https://wa.me/${e}?text=${encodeURIComponent(n)}`,'_blank')}
+    
+    // --- ADVANCED IMAGE & TEXT SHARE ENGINE ---
+    async function shareProductWithImage() {
+        if (!currentProduct) return;
+        
+        const title = currentProduct.name || 'Product';
+        let priceText = '';
+        
+        if (currentProduct.discount_price && currentProduct.discount_price < currentProduct.price) {
+            const percent = Math.round(((currentProduct.price - currentProduct.discount_price) / currentProduct.price) * 100);
+            priceText = `₦${currentProduct.discount_price.toLocaleString()} (Special Offer: Was ₦${currentProduct.price.toLocaleString()}, -${percent}% OFF)`;
+        } else {
+            priceText = `₦${(currentProduct.price || 0).toLocaleString()}`;
+        }
+
+        const shopName = currentShop && currentShop.name ? currentShop.name : "our shop";
+        const cityName = currentShop && currentShop.cities && currentShop.cities.name ? currentShop.cities.name : "your local";
+
+        // Precise formatting requested by user
+        const text = `Check out ${title} for ${priceText}. ${shopName}. ${cityName} biz repository.`;
+        const url = window.location.href;
+
+        try {
+            if (navigator.share) {
+                let file = null;
+                if (currentProduct.image_url) {
+                    try {
+                        const response = await fetch(currentProduct.image_url);
+                        const blob = await response.blob();
+                        file = new File([blob], 'product.jpg', { type: blob.type });
+                    } catch (e) {
+                        console.warn("Could not fetch image for native share", e);
+                    }
+                }
+                if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ title: title, text: text, url: url, files: [file] });
+                } else {
+                    await navigator.share({ title: title, text: text, url: url });
+                }
+            } else {
+                navigator.clipboard.writeText(`${text}\n${url}`);
+                alert("Link copied to clipboard!");
+            }
+        } catch (error) {
+            console.error('Error sharing:', error);
+        }
+    }
+</script>
+</body>
+</html>
