@@ -110,24 +110,6 @@
     .crop-workspace{flex:1;position:relative;width:100%;overflow:hidden;display:flex;justify-content:center;align-items:center;padding:20px}
     .crop-workspace img{max-width:100%;max-height:100%;display:block}
     .crop-footer-bar{padding:20px;background:rgba(0,0,0,.5);display:flex;gap:16px;justify-content:center}
-    .ai-fab-container{position:fixed;bottom:20px;right:20px;z-index:4000;display:flex;flex-direction:column;align-items:center;gap:6px}
-    .ai-fab{width:56px;height:56px;border-radius:50%;background:var(--color-pink);color:#fff;box-shadow:0 4px 12px rgba(219,39,119,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem;transition:transform .2s;border:none}
-    .ai-fab:active{transform:scale(.95)}
-    .ai-label{background:#fff;color:var(--color-pink);font-size:.7rem;font-weight:800;padding:4px 8px;border-radius:12px;box-shadow:0 2px 4px rgba(0,0,0,.1);border:1px solid #E5E7EB;white-space:nowrap;pointer-events:none}
-    .chat-window{position:fixed;bottom:90px;right:20px;width:350px;height:500px;background:#fff;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,.15);z-index:4000;display:flex;flex-direction:column;overflow:hidden;opacity:0;pointer-events:none;transform:translateY(20px);transition:all .3s cubic-bezier(.4,0,.2,1);border:1px solid #D5D9D9}
-    .chat-window.open{opacity:1;pointer-events:all;transform:translateY(0)}
-    .chat-header{background:var(--amz-dark);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
-    .chat-body{flex:1;padding:16px;overflow-y:auto;background:#F8FAFC;display:flex;flex-direction:column;gap:12px}
-    .chat-msg{max-width:80%;padding:10px 14px;border-radius:8px;font-size:.9rem;line-height:1.4}
-    .msg-ai{align-self:flex-start;background:#fff;border:1px solid #D5D9D9;color:#0F1111}
-    .msg-user{align-self:flex-end;background:var(--color-pink);color:#fff}
-    .msg-error{align-self:center;background:#FEE2E2;color:#DC2626;font-size:.8rem;border:1px solid #FECACA;text-align:center}
-    .chat-input-area{padding:12px;background:#fff;border-top:1px solid #D5D9D9;display:flex;flex-direction:column;gap:8px}
-    .chat-input-row{display:flex;gap:8px;width:100%}
-    .chat-input{flex:1;padding:10px;border-radius:4px;border:1px solid #888C8C;outline:0;font-size:.9rem}
-    .chat-input:focus{border-color:var(--color-pink);box-shadow:0 0 0 2px var(--color-pink-light)}
-    .btn-send{background:var(--color-pink);color:#fff;border:none;width:40px;height:40px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
-    @media (max-width:480px){.chat-window{right:0;left:0;bottom:0;width:100%;height:85vh;border-bottom-left-radius:0;border-bottom-right-radius:0}}
   </style>
 </head>
 <body>
@@ -236,22 +218,12 @@
       <div class="crop-footer-bar"><button type="button" class="btn-brand-alt" onclick="closeAvatarCropModal()">Cancel</button><button type="button" class="btn-brand" onclick="applyAvatarCrop()">Apply Crop</button></div>
   </div>
 
-  <div class="ai-fab-container"><button class="ai-fab" onclick="toggleChat()"><i class="fa-solid fa-robot"></i></button><span class="ai-label">AI Assistant</span></div>
-  <div id="chat-window" class="chat-window">
-      <div class="chat-header"><span style="font-weight:700"><i class="fa-solid fa-robot"></i> Assistant</span><button onclick="toggleChat()" style="background:0 0;border:none;color:#fff;font-size:1.2rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button></div>
-      <div id="chat-messages" class="chat-body"><div class="chat-msg msg-ai">Hello! I am your AI assistant. How can I help you today?</div></div>
-      <div class="chat-input-area">
-          <div class="chat-input-row"><input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMsg()"><button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button></div>
-          <div class="chat-disclaimer" style="margin-top:4px;font-size:0.75rem;color:#565959">AI can make mistakes. Please verify prices on the merchant's shop.</div>
-      </div>
-  </div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script>
     const SUPABASE_URL="https://xdchacdjcgazyckacbpc.supabase.co",SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-    let currentUser=null,userProfile=null,currentUserShop=null,userCityId=null,userAreaId=null,allCities=[],CACHE_KEY='',chatHistory=[],cropper=null,avatarBlob=null,currentOldAvatarUrl=null,inactivityTimer;
+    let currentUser=null,userProfile=null,currentUserShop=null,userCityId=null,userAreaId=null,allCities=[],CACHE_KEY='',cropper=null,avatarBlob=null,currentOldAvatarUrl=null,inactivityTimer;
     const MAX_FILE_SIZE=5e5,INACTIVITY_LIMIT=9e5;
 
     function resetInactivityTimer(){clearTimeout(inactivityTimer),inactivityTimer=setTimeout(logoutDueToInactivity,INACTIVITY_LIMIT)}
@@ -269,9 +241,6 @@
     function handleLiveSearch(e){const t='desktop'===e?'search-input-desktop':'search-input-mobile',a='desktop'===e?'sugg-desktop':'sugg-mobile',n=document.getElementById(t).value.trim().toLowerCase(),o=document.getElementById(a);if(n.length<2)return void(o.style.display='none');const r=localStorage.getItem(CACHE_KEY);if(!r)return;try{const s=JSON.parse(r),i=s.shops||[],c=s.products||[];let d=[];i.forEach(e=>{e.name.toLowerCase().includes(n)&&d.push({text:e.name,type:'Shop',icon:'fa-store'})}),c.forEach(e=>{e.name.toLowerCase().includes(n)&&d.push({text:e.name,type:'Product',icon:'fa-box'})}),d=d.slice(0,6),d.length>0?(o.innerHTML=d.map(t=>`<div class="suggestion-item" onclick="applySuggestion('${t.text.replace(/'/g,"\\'")}', '${e}')"><i class="fa-solid ${t.icon} sugg-icon"></i><span class="sugg-text">${t.text}</span><span class="sugg-type">${t.type}</span></div>`).join(''),o.style.display='flex'):o.style.display='none'}catch(e){console.error(e)}}
     function applySuggestion(e,t){document.getElementById('desktop'===t?'search-input-desktop':'search-input-mobile').value=e,document.getElementById('desktop'===t?'sugg-desktop':'sugg-mobile').style.display='none',executeSearch(t)}
     document.addEventListener('click',function(e){if(!e.target.closest('.desktop-search-wrap')&&!e.target.closest('.mobile-search-wrap')){const e=document.getElementById('sugg-desktop'),t=document.getElementById('sugg-mobile');e&&(e.style.display='none'),t&&(t.style.display='none')}});
-
-    function toggleChat(){document.getElementById('chat-window').classList.toggle('open')}
-    async function sendMsg(){const e=document.getElementById('chat-input'),t=e.value.trim();if(!t)return;const a=new Date().toISOString().split('T')[0];let n=localStorage.getItem('ctm_ai_usage'),o=n?JSON.parse(n):{date:a,count:0};o.date!==a&&(o={date:a,count:0});const r=document.getElementById('chat-messages');if(o.count>=15)return r.innerHTML+='<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages to keep the server fair for everyone. Please check back tomorrow!</div>',r.scrollTop=r.scrollHeight,void(e.value='');r.innerHTML+=`<div class="chat-msg msg-user">${t}</div>`,e.value='',r.scrollTop=r.scrollHeight,chatHistory.push({role:'user',content:t});const s='loading-'+Date.now();r.innerHTML+=`<div id="${s}" class="chat-msg msg-ai" style="font-style:italic; color:#565959;">Thinking...</div>`,r.scrollTop=r.scrollHeight;try{const{data:{session:e}}=await client.auth.getSession();if(!e)throw new Error("Please log in to use AI.");const a=chatHistory.length>6?chatHistory.slice(chatHistory.length-6):chatHistory,n=await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${e.access_token}`,apikey:SUPABASE_ANON_KEY},body:JSON.stringify({query:t,history:a})});if(document.getElementById(s)?.remove(),!n.ok)throw new Error(`Server returned ${n.status}`);const i=await n.json(),c=i.reply||"No response received.",d=c.startsWith("Error:")||c.startsWith("System")||c.startsWith("Config"),l=d?"msg-error":"msg-ai";r.innerHTML+=`<div class="chat-msg ${l}">${c}</div>`,d||(chatHistory.push({role:'assistant',content:c}),o.count+=1,localStorage.setItem('ctm_ai_usage',JSON.stringify(o)))}catch(e){document.getElementById(s)?.remove(),r.innerHTML+=`<div class="chat-msg msg-error">Connection Error: ${e.message}</div>`}r.scrollTop=r.scrollHeight}
 
     window.onload=async()=>{const{data:{session:e}}=await client.auth.getSession();if(!e)return void(window.location.href="index.html");currentUser=e.user,localStorage.setItem('ctm_last_user_id',currentUser.id);const t=`ctm_dashboard_v31_${currentUser.id}`;if(CACHE_KEY!==t){CACHE_KEY=t;const e=localStorage.getItem(CACHE_KEY);e?(renderData(JSON.parse(e)),fetchData(e)):(document.getElementById('areas-container').innerHTML='',document.getElementById('promo-list').style.display='none',document.getElementById('featured-section').style.display='none',document.getElementById('category-container').style.display='none',document.getElementById('initial-loader').style.display='block',fetchData(null))}else optimisticCacheStr||(document.getElementById('initial-loader').style.display='block'),fetchData(optimisticCacheStr)};
 
