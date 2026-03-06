@@ -111,7 +111,7 @@
           
           <div class="edu-box">
               <h4 class="edu-title"><i class="fa-solid fa-crop-simple" style="color: #F59E0B;"></i> Smart Frame Tool</h4>
-              <p class="edu-text"><strong>Pinch/Zoom to fit!</strong> Upload up to 3 images. Keep sizes under 100KB automatically.</p>
+              <p class="edu-text"><strong>Pinch/Zoom to fit!</strong> Upload up to 3 images. They will be automatically compressed for blazing fast loading speeds.</p>
           </div>
 
           <!-- 3 IMAGE GRID -->
@@ -480,13 +480,17 @@
         t.innerHTML='<div class="spinner"></div> Uploading...';
         
         try{
-            // Upload Images in Parallel
+            // Upload Images in Parallel WITH THE BANDWIDTH CHEAT CODE
             const uploadPromises = [];
             [1, 2, 3].forEach(idx => {
                 if(finalBlobs[idx]) {
                     const fName = `${currentUser.id}_${Date.now()}_img${idx}.jpg`;
                     uploadPromises.push(
-                        client.storage.from('products').upload(fName, finalBlobs[idx], {contentType: 'image/jpeg'})
+                        client.storage.from('products').upload(fName, finalBlobs[idx], {
+                            contentType: 'image/jpeg',
+                            cacheControl: '31536000', // MAGIC BANDWIDTH SAVER (1 Year Cache)
+                            upsert: false
+                        })
                         .then(({error}) => {
                             if(error) throw error;
                             return client.storage.from('products').getPublicUrl(fName).data.publicUrl;
@@ -506,6 +510,7 @@
                 price: o,
                 discount_price: n,
                 condition: document.getElementById('condition').value,
+                category: document.getElementById('category').value,
                 image_url: url1,
                 image_url_2: url2,
                 image_url_3: url3,
@@ -523,7 +528,7 @@
             console.error(e);
             alert("Upload failed: "+e.message);
             t.disabled=!1;
-            t.innerHTML='Upload Product';
+            t.innerHTML='Upload to Marketplace';
         }
     }
 </script>
