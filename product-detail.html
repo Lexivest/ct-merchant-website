@@ -231,7 +231,7 @@
         
         client.auth.getSession().then(({data:{session:e}})=>{e&&(currentUser=e.user,checkWishlistStatus())});
         
-        const e=`ctm_prod_v36_${productId}`,t=localStorage.getItem(e);
+        const e=`ctm_prod_v37_${productId}`,t=localStorage.getItem(e);
         if(t)try{renderUI(JSON.parse(t))}catch(e){console.error("Cache error",e),document.getElementById('loader').style.display='flex'}else document.getElementById('loader').style.display='flex';
         fetchFreshData(e,t)
     };
@@ -241,7 +241,7 @@
             const{data:n,error:o}=await client.from('products').select('*').eq('id',productId).single();
             if(o||!n)throw new Error("Product fetch failed.");
             currentProduct=n;let r=null;
-            // Also fetch cities(name) to include city name in the share message
+            // Fetch cities(name) to include city name in the share message seamlessly
             if(n.shop_id){const{data:e}=await client.from('shops').select('id, name, whatsapp, phone, address, city_id, areas(name), cities(name)').eq('id',n.shop_id).maybeSingle();e&&(currentShop=e,r=e)}
             const c={product:n,shop:r},s=JSON.stringify(c);
             s!==t?(localStorage.setItem(e,s),renderUI(c)):!t&&renderUI(c)
@@ -349,14 +349,13 @@
     function hideSecurityModal(){document.getElementById('security-modal').classList.remove('active')}
     async function launchWhatsApp(){hideSecurityModal(),currentUser&&currentShop&&client.from('whatsapp_clicks').insert({clicker_id:currentUser.id,shop_id:currentShop.id,product_id:productId});let e=currentShop.whatsapp.replace(/\D/g,'');e.startsWith('0')&&(e='234'+e.substring(1));const t=currentProduct.discount_price||currentProduct.price,n=`Hello *${currentShop.name}*, I found this on CTMerchant. I am interested in: ${currentProduct.name} (₦${t.toLocaleString()})`;window.open(`https://wa.me/${e}?text=${encodeURIComponent(n)}`,'_blank')}
     
-    // --- ADVANCED IMAGE & TEXT SHARE ENGINE ---
+    // --- ADVANCED IMAGE & PUNCHY TEXT SHARE ENGINE ---
     async function shareProductWithImage() {
         if (!currentProduct) return;
         
         const title = currentProduct.name || 'Product';
         let priceText = '';
         
-        // Dynamically build discount text for share message
         if (currentProduct.discount_price && currentProduct.discount_price < currentProduct.price) {
             const percent = Math.round(((currentProduct.price - currentProduct.discount_price) / currentProduct.price) * 100);
             priceText = `₦${currentProduct.discount_price.toLocaleString()} (Special Offer: Was ₦${currentProduct.price.toLocaleString()}, -${percent}% OFF)`;
@@ -364,17 +363,16 @@
             priceText = `₦${(currentProduct.price || 0).toLocaleString()}`;
         }
 
-        const shopName = currentShop && currentShop.name ? currentShop.name : "our shop";
-        const cityName = currentShop && currentShop.cities && currentShop.cities.name ? currentShop.cities.name : "your local";
+        const shopName = currentShop && currentShop.name ? currentShop.name : "Our Shop";
+        const cityName = currentShop && currentShop.cities && currentShop.cities.name ? currentShop.cities.name : "Your local";
 
-        // The final text that will appear in WhatsApp
-        const text = `Check out ${title} for ${priceText} on ${shopName} in ${cityName} biz repository.`;
+        // Punchy, direct sharing text
+        const text = `Check out ${title} for ${priceText}. ${shopName}. ${cityName} biz repository.`;
         const url = window.location.href;
 
         try {
             if (navigator.share) {
                 let file = null;
-                // Attempt to fetch the image to share it directly as a rich media file
                 if (currentProduct.image_url) {
                     try {
                         const response = await fetch(currentProduct.image_url);
@@ -385,11 +383,9 @@
                     }
                 }
 
-                // If device supports sharing files, pass the image so it shows perfectly on WhatsApp
                 if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({ title: title, text: text, url: url, files: [file] });
                 } else {
-                    // Fallback to standard URL sharing with the new text
                     await navigator.share({ title: title, text: text, url: url });
                 }
             } else {
