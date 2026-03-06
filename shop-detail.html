@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shop Details | CT‑Merchant</title>
+    <title>Shop Details | CTMerchant</title>
     
+    <!-- Favicons for browser tab -->
+    <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+    <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -40,7 +44,7 @@
             min-height: 100vh;
             position: relative;
             background-color: var(--amz-bg);
-            padding-bottom: 90px; /* Space for bottom sticky bar */
+            padding-bottom: 40px;
         }
 
         /* --- PREMIUM HEADER --- */
@@ -311,25 +315,6 @@
             100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
         }
 
-        /* --- BOTTOM BAR --- */
-        .bottom-bar {
-            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-            width: 100%; max-width: 1600px;
-            background: white; padding: 12px 20px;
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.05); z-index: 100;
-            border-top: 1px solid #D5D9D9;
-            display: flex; justify-content: center;
-        }
-        .btn-whatsapp-bottom {
-            width: 100%; max-width: 600px; 
-            background: #25D366; color: white;
-            padding: 14px; border-radius: 8px; border: none;
-            font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
-            cursor: pointer; transition: background 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .btn-whatsapp-bottom:hover { background: #16A34A; }
-
         /* Modal */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(19, 25, 33, 0.8); z-index: 200;
@@ -489,13 +474,6 @@
             </div>
         </div>
 
-    </div>
-
-    <!-- Bottom Bar (Always visible floating action) -->
-    <div class="bottom-bar" id="bottom-action-bar" style="display:none;">
-        <button onclick="showSecurityModal()" class="btn-whatsapp-bottom">
-            <i class="fa-brands fa-whatsapp" style="font-size:1.2rem;"></i> Message Merchant
-        </button>
     </div>
 </div>
 
@@ -735,9 +713,6 @@
         
         if (s.whatsapp) {
             socialHtml += `<a href="javascript:void(0)" onclick="showSecurityModal()" class="social-btn whatsapp" title="Chat on WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>`;
-            document.getElementById('bottom-action-bar').style.display = 'flex';
-        } else {
-            document.getElementById('bottom-action-bar').style.display = 'none';
         }
         
         if (s.phone) socialHtml += `<a href="tel:${s.phone}" class="social-btn phone" title="Call Business"><i class="fa-solid fa-phone"></i></a>`;
@@ -889,7 +864,7 @@
         let phone = currentShop.whatsapp.replace(/\D/g, '');
         if (phone.startsWith('0')) phone = '234' + phone.substring(1);
         
-        const msg = `Hello ${currentShop.name}, I found your shop on CT-Merchant.`;
+        const msg = `Hello ${currentShop.name}, I found your shop on CTMerchant.`;
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
 
         if (currentUser) {
@@ -901,7 +876,7 @@
         if (navigator.share) {
             navigator.share({
                 title: currentShop.name,
-                text: `Check out ${currentShop.name} on CT-Merchant!`,
+                text: `Check out ${currentShop.name} on CTMerchant!`,
                 url: window.location.href
             });
         } else {
