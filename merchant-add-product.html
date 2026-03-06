@@ -126,7 +126,7 @@
       <div id="limit-reached-message" class="limit-box">
           <i class="fa-solid fa-boxes-packing limit-icon"></i>
           <h2 class="limit-title">Upload Limit Reached</h2>
-          <p class="limit-text">You have reached the maximum allowed limit of <strong>2 active products</strong> for your shop. To add a new product, please delete an older or out-of-stock item first.</p>
+          <p class="limit-text">You have reached the maximum allowed limit of <strong>30 active products</strong> for your shop. To add a new product, please delete an older or out-of-stock item first.</p>
           <button onclick="window.location.href='merchant-dashboard.html'" class="btn-outline">Go to My Shop</button>
       </div>
 
@@ -288,8 +288,8 @@
     // Store blobs for 3 images
     const finalBlobs = { 1: null, 2: null, 3: null };
     
-    // TEMPORARY TEST LIMIT: Set to 2
-    const MAX_PRODUCTS_LIMIT = 2;
+    // PRODUCTION LIMIT: Set back to 30
+    const MAX_PRODUCTS_LIMIT = 30;
 
     window.onload=async()=>{
         const{data:{session:e}}=await client.auth.getSession();
