@@ -39,6 +39,7 @@
     .shop-grid-item{width:100%;aspect-ratio:1/1;background:#F7F7F7;display:block;overflow:hidden;border-radius:4px;position:relative}
     .shop-grid-item img{width:100%;height:100%;object-fit:cover;display:block}
     .grid-badge{position:absolute;top:4px;left:4px;background:#DC2626;color:#fff;font-size:.65rem;font-weight:800;padding:2px 4px;border-radius:4px;z-index:2}
+    .condition-badge{left:auto;right:4px;background:#F59E0B;} /* Amber color for Used badge */
     @keyframes pulse-badge{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(220,38,38,0)}50%{transform:scale(1.1);box-shadow:0 0 0 4px rgba(220,38,38,0)}}
     @keyframes highlight-price{0%,100%{color:var(--color-pink);text-shadow:none}50%{color:#f05;text-shadow:0 0 6px rgba(219,39,119,.4)}}
     .flash-offer{animation:pulse-badge 1.5s infinite ease-in-out}
@@ -125,6 +126,8 @@
                   <div class="shop-grid-item">
                       <img id="live-img" src="" alt="Product">
                       <div id="live-badge" class="grid-badge flash-offer" style="display:none;"></div>
+                      <!-- NEW: Used Badge -->
+                      <div id="live-condition-badge" class="grid-badge condition-badge" style="display:none;">Used</div>
                   </div>
                   <div class="shop-grid-caption">
                       <div class="sg-name" id="live-name">Product Name</div>
@@ -147,9 +150,10 @@
               <input type="number" id="price" class="input" placeholder="e.g. 50000" required oninput="updateLivePreview()">
           </div>
 
+          <!-- Added onchange to trigger live preview update -->
           <div class="form-group">
               <label class="label">Condition</label>
-              <select id="condition" class="input">
+              <select id="condition" class="input" onchange="updateLivePreview()">
                   <option value="New">New</option>
                   <option value="Fairly Used">Fairly Used</option>
               </select>
@@ -238,7 +242,6 @@
 
                 if(cropper) cropper.destroy();
                 
-                // viewMode 1 is the magic key: It allows zooming out past the crop box boundary!
                 cropper = new Cropper(img, {
                     aspectRatio: 1,
                     viewMode: 1, 
@@ -262,7 +265,6 @@
     function applyCrop(){
         if(!cropper) return;
         
-        // fillColor: '#FFFFFF' is the magic padding key. If they zoom out, it fills the background with white.
         cropper.getCroppedCanvas({
             width: 800,
             height: 800,
@@ -274,7 +276,6 @@
             
             finalFormattedBlob = blob;
             
-            // Show Live Preview
             document.getElementById('live-preview-wrap').style.display = 'flex';
             document.getElementById('live-img').src = URL.createObjectURL(blob);
             document.getElementById('picker-btn').style.display = 'none';
@@ -288,15 +289,25 @@
     function updateLivePreview() {
         const nameVal = document.getElementById('name').value.trim();
         const priceVal = parseFloat(document.getElementById('price').value);
+        const conditionVal = document.getElementById('condition').value; // Added Condition
         const isDiscountOn = document.getElementById('discount-switch').checked;
         const discPercent = parseFloat(document.getElementById('discount-percent').value);
 
         const nameEl = document.getElementById('live-name');
         const priceEl = document.getElementById('live-price-box');
         const badgeEl = document.getElementById('live-badge');
+        const conditionBadgeEl = document.getElementById('live-condition-badge'); // New Element
 
         nameEl.textContent = nameVal || 'Product Name';
 
+        // Update Used Badge
+        if (conditionVal === 'Fairly Used') {
+            conditionBadgeEl.style.display = 'block';
+        } else {
+            conditionBadgeEl.style.display = 'none';
+        }
+
+        // Update Price & Discount
         if (priceVal && !isNaN(priceVal)) {
             if (isDiscountOn && discPercent && discPercent > 0 && discPercent <= 20) {
                 const discountAmount = priceVal - (priceVal * (discPercent / 100));
