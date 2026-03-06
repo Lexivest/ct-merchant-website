@@ -17,20 +17,22 @@
     *{box-sizing:border-box;margin:0;padding:0;font-family:'Plus Jakarta Sans',sans-serif;-webkit-tap-highlight-color:transparent}
     body{background-color:var(--amz-bg);color:var(--color-text-main);padding-bottom:90px;overflow-x:hidden}
     .app-container{width:100%;max-width:1200px;margin:0 auto;min-height:100vh;background-color:var(--amz-bg);display:flex;flex-direction:column}
+    
     .amz-header{background-color:var(--amz-dark);color:#fff;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;box-shadow:0 4px 6px rgba(0,0,0,.1)}
     .header-left{display:flex;align-items:center;gap:12px;flex:1;overflow:hidden}
     .back-btn{background:0 0;border:none;color:#fff;font-size:1.2rem;cursor:pointer;padding:4px;margin-left:-4px;transition:.2s;flex-shrink:0}
     .back-btn:hover{color:var(--color-pink)}
-    .page-title{font-weight:700;font-size:1.15rem;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .page-title{font-weight:700;font-size:1.05rem;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+    .area-header{font-size:.75rem;color:#D5D9D9;font-weight:600;display:flex;align-items:center;gap:4px}
     .header-actions{display:flex;gap:16px;align-items:center;flex-shrink:0}
     .action-btn{background:0 0;border:none;color:#fff;font-size:1.2rem;cursor:pointer;transition:.2s}
     .action-btn:hover,.action-btn.active{color:var(--color-pink)}
+    
     .content-block{background:#fff;padding:24px 20px;margin-bottom:8px;border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border)}
     .content-block:first-child{border-top:none;padding-top:0;padding-bottom:0}
     .main-layout{display:flex;flex-direction:column;width:100%}
     @media (min-width:900px){.app-container{padding:40px;background:transparent}.main-layout{flex-direction:row;gap:24px;background:transparent}.content-block{border-radius:8px;border:1px solid var(--color-border);margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,.04)}.content-block:first-child{padding:0}.left-col{flex:1}.right-col{flex:1.2;display:flex;flex-direction:column}}
     
-    /* Image Gallery */
     .image-container{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;background:#fff;}
     .main-img-wrapper{width:100%;aspect-ratio:1/1;max-height:500px;background:#F7F7F7;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid #F3F4F6}
     .product-img{width:100%;height:100%;object-fit:contain;padding:0;transition:transform .3s}
@@ -42,13 +44,11 @@
     .thumb-img{width:60px;height:60px;border-radius:6px;object-fit:cover;border:2px solid transparent;cursor:pointer;background:#F7F7F7;transition:.2s;flex-shrink:0}
     .thumb-img.active{border-color:var(--color-pink);box-shadow:0 2px 8px rgba(219,39,119,.2)}
 
-    /* Product Info */
     .condition-badge{display:inline-block;padding:4px 10px;border-radius:4px;font-size:.75rem;font-weight:800;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
     .cond-new{background:#F3F4F6;color:#007185;border:1px solid #D5D9D9}
     .cond-used{background:#FFF7ED;color:#C40000;border:1px solid #F3A847}
     .prod-title{font-size:1.4rem;font-weight:800;line-height:1.3;margin-bottom:8px;color:var(--color-text-main)}
     
-    /* Stock Display */
     .stock-status{font-size:1.05rem;font-weight:700;margin-bottom:16px}
     .stock-ok{color:var(--stock-ok)}
     .stock-low{color:var(--stock-low)}
@@ -58,7 +58,14 @@
     .current-price{font-size:2.2rem;font-weight:800;color:var(--color-pink)}
     .old-price{text-decoration:line-through;color:var(--color-text-muted);font-size:1.2rem;font-weight:500}
 
-    /* Attributes Grid */
+    /* Physical Visit Box */
+    .address-box{margin-top:20px;padding:16px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px}
+    .address-title{font-size:.85rem;font-weight:800;color:var(--color-pink);text-transform:uppercase;margin-bottom:8px;letter-spacing:.5px}
+    .address-content{font-size:.95rem;color:#0F1111;line-height:1.5;font-weight:500}
+    .address-content i{color:#888C8C;width:16px;text-align:center;margin-right:6px}
+    .btn-view-shop{margin-top:12px;width:100%;padding:10px;background:transparent;border:1px solid var(--color-border);border-radius:6px;font-weight:700;color:var(--color-text-main);cursor:pointer;transition:.2s}
+    .btn-view-shop:hover{background:#fff;border-color:#B0B5B5}
+
     .attr-grid{display:grid;grid-template-columns:1fr;gap:1px;background:var(--color-border);border:1px solid var(--color-border);border-radius:6px;overflow:hidden;margin-bottom:24px}
     .attr-row{display:flex;background:#fff;padding:12px 16px}
     .attr-key{flex:1;font-weight:700;color:var(--color-text-main);font-size:.9rem}
@@ -72,10 +79,13 @@
     .flash-offer{animation:pulse-badge 1.5s infinite ease-in-out}
     .flash-price{animation:highlight-price 1.5s infinite ease-in-out}
 
-    .bottom-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:1200px;background:#fff;padding:12px 20px;box-shadow:0 -4px 15px rgba(0,0,0,.08);z-index:100;border-top:1px solid var(--color-border);display:flex;justify-content:center}
-    .btn-whatsapp{width:100%;max-width:600px;background:#25D366;color:#fff;padding:14px;border-radius:8px;border:none;font-weight:700;font-size:1.05rem;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+    /* Dual Action Bottom Bar */
+    .bottom-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:1200px;background:#fff;padding:12px 16px;box-shadow:0 -4px 15px rgba(0,0,0,.08);z-index:100;border-top:1px solid var(--color-border);display:flex;gap:12px}
+    .btn-call{flex:1;background:#007185;color:#fff;padding:14px;border-radius:8px;border:none;font-weight:700;font-size:1.05rem;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+    .btn-call:hover:not(:disabled){background:#005A6A}
+    .btn-whatsapp{flex:1;background:#25D366;color:#fff;padding:14px;border-radius:8px;border:none;font-weight:700;font-size:1.05rem;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1)}
     .btn-whatsapp:hover:not(:disabled){background:#16A34A}
-    .btn-whatsapp:disabled{background:#D5D9D9;color:#888C8C;cursor:not-allowed;box-shadow:none}
+    .btn-call:disabled, .btn-whatsapp:disabled{background:#D5D9D9;color:#888C8C;cursor:not-allowed;box-shadow:none}
 
     .modal-overlay{position:fixed;inset:0;background:rgba(19,25,33,.8);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:all .3s;backdrop-filter:blur(2px)}
     .modal-overlay.active{opacity:1;visibility:visible}
@@ -99,7 +109,10 @@
   <header class="amz-header">
       <div class="header-left">
           <button onclick="goBack()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
-          <span class="page-title">Product Details</span>
+          <div style="display:flex;flex-direction:column">
+              <span class="page-title">Product Details</span>
+              <span id="shop-area-header" class="area-header"><i class="fa-solid fa-location-dot"></i> Loading...</span>
+          </div>
       </div>
       <div class="header-actions">
           <button id="wishlist-btn" onclick="toggleWishlist()" class="action-btn"><i id="fav-icon" class="fa-regular fa-heart"></i></button>
@@ -121,7 +134,6 @@
 
   <div id="main-content" class="main-layout hidden">
       <div class="left-col">
-          <!-- Main Image & Gallery -->
           <div class="content-block image-container">
               <div class="main-img-wrapper">
                   <div id="discount-badge" class="discount-badge-hero flash-offer hidden"></div>
@@ -136,7 +148,6 @@
               <span id="condition-badge" class="condition-badge cond-new">New</span>
               <h1 id="prod-name" class="prod-title">--</h1>
               
-              <!-- Stock Indicator -->
               <div id="stock-status" class="stock-status"></div>
 
               <div class="price-row">
@@ -144,24 +155,38 @@
                   <span id="old-price" class="old-price hidden"></span>
               </div>
               
-              <!-- Dynamic Attributes Grid -->
-              <div id="attributes-container" class="attr-grid hidden"></div>
+              <!-- Physical Shop Location Box -->
+              <div class="address-box">
+                  <div class="address-title">Visit Physical Shop</div>
+                  <div class="address-content">
+                      <div style="font-weight:800;color:#0F1111;margin-bottom:6px">
+                          <i class="fa-solid fa-store" style="color:var(--color-pink)"></i> <span id="shop-name-visit">Loading...</span>
+                      </div>
+                      <div style="color:#565959;font-size:.9rem;display:flex;align-items:flex-start">
+                          <i class="fa-solid fa-map-pin" style="margin-top:3px"></i>
+                          <span id="shop-address-visit" style="line-height:1.4">...</span>
+                      </div>
+                  </div>
+                  <button id="btn-view-shop" class="btn-view-shop">View Full Catalog</button>
+              </div>
           </div>
 
           <div class="content-block" style="flex:1">
+              <div id="attributes-container" class="attr-grid hidden"></div>
+              
               <div class="section-header">Description</div>
               <p id="prod-desc" class="description-text">--</p>
-              
-              <div style="margin-top:30px;font-size:.85rem;color:#888C8C;display:flex;align-items:center;gap:6px">
-                  <i class="fa-solid fa-store" style="color:var(--color-pink)"></i> Sold by <span id="shop-name-link" style="font-weight:700;cursor:pointer;color:#007185;text-decoration:underline">Loading...</span>
-              </div>
           </div>
       </div>
   </div>
 
+  <!-- Dual Action Bottom Bar -->
   <div class="bottom-bar" id="bottom-action-bar" style="display:none">
-      <button id="btn-contact-merchant" onclick="showSecurityModal()" class="btn-whatsapp">
-          <i class="fa-brands fa-whatsapp" style="font-size:1.4rem"></i> Message Merchant
+      <button id="btn-call-merchant" onclick="callMerchant()" class="btn-call">
+          <i class="fa-solid fa-phone"></i> Call Seller
+      </button>
+      <button id="btn-whatsapp-merchant" onclick="showSecurityModal()" class="btn-whatsapp">
+          <i class="fa-brands fa-whatsapp" style="font-size:1.2rem"></i> WhatsApp
       </button>
   </div>
 </div>
@@ -197,7 +222,7 @@
         
         client.auth.getSession().then(({data:{session:e}})=>{e&&(currentUser=e.user,checkWishlistStatus())});
         
-        const e=`ctm_prod_v32_${productId}`,t=localStorage.getItem(e);
+        const e=`ctm_prod_v33_${productId}`,t=localStorage.getItem(e);
         if(t)try{renderUI(JSON.parse(t))}catch(e){console.error("Cache error",e),document.getElementById('loader').style.display='flex'}else document.getElementById('loader').style.display='flex';
         fetchFreshData(e,t)
     };
@@ -207,7 +232,7 @@
             const{data:n,error:o}=await client.from('products').select('*').eq('id',productId).single();
             if(o||!n)throw new Error("Product fetch failed.");
             currentProduct=n;let r=null;
-            if(n.shop_id){const{data:e}=await client.from('shops').select('id, name, whatsapp').eq('id',n.shop_id).maybeSingle();e&&(currentShop=e,r=e)}
+            if(n.shop_id){const{data:e}=await client.from('shops').select('id, name, whatsapp, phone, address, areas(name)').eq('id',n.shop_id).maybeSingle();e&&(currentShop=e,r=e)}
             const c={product:n,shop:r},s=JSON.stringify(c);
             s!==t?(localStorage.setItem(e,s),renderUI(c)):!t&&renderUI(c)
         }catch(e){console.error(e),!t&&(document.getElementById('loader').classList.add('hidden'),document.getElementById('error-screen').classList.remove('hidden'))}
@@ -232,24 +257,27 @@
         const n=document.getElementById('condition-badge');
         n.textContent=t.condition||'New',n.className='Fairly Used'===t.condition?'condition-badge cond-used':'condition-badge cond-new',document.getElementById('prod-name').textContent=t.name,document.getElementById('prod-desc').textContent=t.description||"No description provided by the merchant.";
         
-        // Stock Status
+        // Stock Status & CTA Buttons
         const stockEl = document.getElementById('stock-status');
-        const btnContact = document.getElementById('btn-contact-merchant');
-        if(t.stock_count > 5) {
+        const btnCall = document.getElementById('btn-call-merchant');
+        const btnWhatsapp = document.getElementById('btn-whatsapp-merchant');
+        
+        let stockCount = typeof t.stock_count === 'number' ? t.stock_count : 1; // Fallback for old records
+        
+        if(stockCount > 5) {
             stockEl.textContent = 'In Stock';
             stockEl.className = 'stock-status stock-ok';
-            btnContact.disabled = false;
-            btnContact.innerHTML = '<i class="fa-brands fa-whatsapp" style="font-size:1.4rem"></i> Message Merchant';
-        } else if(t.stock_count > 0) {
-            stockEl.textContent = `Only ${t.stock_count} left in stock - order soon.`;
+            btnCall.disabled = false; btnWhatsapp.disabled = false;
+        } else if(stockCount > 0) {
+            stockEl.textContent = `Only ${stockCount} left in stock - order soon.`;
             stockEl.className = 'stock-status stock-low';
-            btnContact.disabled = false;
-            btnContact.innerHTML = '<i class="fa-brands fa-whatsapp" style="font-size:1.4rem"></i> Message Merchant';
+            btnCall.disabled = false; btnWhatsapp.disabled = false;
         } else {
             stockEl.textContent = 'Currently unavailable.';
             stockEl.className = 'stock-status stock-out';
-            btnContact.disabled = true;
-            btnContact.innerHTML = '<i class="fa-solid fa-ban" style="font-size:1.4rem"></i> Out of Stock';
+            btnCall.disabled = true; btnWhatsapp.disabled = true;
+            btnCall.innerHTML = '<i class="fa-solid fa-ban"></i> Out of Stock';
+            btnWhatsapp.innerHTML = '<i class="fa-solid fa-ban"></i> Out of Stock';
         }
 
         // Price & Discount
@@ -271,9 +299,19 @@
             attrBox.classList.add('hidden');
         }
 
+        // Shop Physical Info & Display CTAs
         if(currentShop){
-            const e=document.getElementById('shop-name-link');
-            e.textContent=currentShop.name,e.onclick=()=>window.location.href=`shop-detail.html?id=${currentShop.id}`,currentShop.whatsapp&&(document.getElementById('bottom-action-bar').style.display='flex')
+            document.getElementById('shop-area-header').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${currentShop.areas?.name || 'Local Area'}`;
+            document.getElementById('shop-name-visit').textContent = currentShop.name;
+            document.getElementById('shop-address-visit').textContent = currentShop.address;
+            
+            const vBtn = document.getElementById('btn-view-shop');
+            vBtn.onclick = () => window.location.href = `shop-detail.html?id=${currentShop.id}`;
+
+            document.getElementById('bottom-action-bar').style.display = 'flex';
+            
+            if(!currentShop.phone) btnCall.style.display = 'none';
+            if(!currentShop.whatsapp) btnWhatsapp.style.display = 'none';
         }
     }
 
@@ -281,6 +319,14 @@
         document.getElementById('prod-img').src = src;
         document.querySelectorAll('.thumb-img').forEach(t => t.classList.remove('active'));
         el.classList.add('active');
+    }
+
+    async function callMerchant() {
+        if(!currentShop || !currentShop.phone) return alert("No phone number provided.");
+        if (currentUser && currentShop) {
+             client.from('call_clicks').insert({ clicker_id: currentUser.id, shop_id: currentShop.id, product_id: productId });
+        }
+        window.open(`tel:${currentShop.phone}`, '_self');
     }
 
     async function checkWishlistStatus(){if(!currentUser)return;try{const{data:e}=await client.from('wishlist').select('id').eq('user_id',currentUser.id).eq('product_id',productId).maybeSingle();e&&(isInWishlist=!0,updateWishlistIcons())}catch(e){console.error("Wishlist check error",e)}}
