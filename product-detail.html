@@ -100,7 +100,7 @@
     .flash-offer{animation:pulse-badge 1.5s infinite ease-in-out}
     .flash-price{animation:highlight-price 1.5s infinite ease-in-out}
 
-    /* AI CHAT UI OVERRIDES (Elevated to not clash with content) */
+    /* AI CHAT UI OVERRIDES */
     .ai-fab-container{position:fixed;bottom:20px;right:20px;z-index:4000;display:flex;flex-direction:column;align-items:center;gap:6px}
     .ai-fab{width:56px;height:56px;border-radius:50%;background:var(--color-pink);color:#fff;box-shadow:0 4px 12px rgba(219,39,119,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem;transition:transform .2s;border:none}
     .ai-fab:active{transform:scale(.95)}
@@ -510,7 +510,54 @@
     async function toggleWishlist(){if(!currentUser)return alert("Please login to save items to your wishlist.");isInWishlist=!isInWishlist,updateWishlistIcons();try{isInWishlist?await client.from('wishlist').insert({user_id:currentUser.id,product_id:productId}):await client.from('wishlist').delete().eq('user_id',currentUser.id).eq('product_id',productId)}catch(e){isInWishlist=!isInWishlist,updateWishlistIcons(),alert("Failed to update wishlist.")}}
     function showSecurityModal(){currentShop?.whatsapp?document.getElementById('security-modal').classList.add('active'):alert("This merchant hasn't provided a WhatsApp number.")}
     function hideSecurityModal(){document.getElementById('security-modal').classList.remove('active')}
-    async function launchWhatsApp(){hideSecurityModal(),currentUser&&currentShop&&client.from('whatsapp_clicks').insert({clicker_id:currentUser.id,shop_id:currentShop.id,product_id:productId});let e=currentShop.whatsapp.replace(/\D/g,'');e.startsWith('0')&&(e='234'+e.substring(1));const t=currentProduct.discount_price||currentProduct.price,n=`Hello *${currentShop.name}*, I found this on CTMerchant. I am interested in: ${currentProduct.name} (₦${t.toLocaleString()})`;window.open(`https://wa.me/${e}?text=${encodeURIComponent(n)}`,'_blank')}
+
+    // --- ANALYTICS DEBUGGER ---
+    async function launchWhatsApp() {
+        hideSecurityModal();
+
+        // 1. Prepare WhatsApp link and open it immediately so the user isn't waiting
+        let phone = currentShop.whatsapp.replace(/\D/g, '');
+        if (phone.startsWith('0')) phone = '234' + phone.substring(1);
+        const price = currentProduct.discount_price || currentProduct.price;
+        const msg = `Hello *${currentShop.name}*, I found this on CTMerchant. I am interested in: ${currentProduct.name} (₦${price.toLocaleString()})`;
+        
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+
+        // 2. Debugging Data
+        console.log("--- WHATSAPP CLICK DEBUG (PRODUCT DETAIL) ---");
+        console.log("Shop ID:", currentShop ? currentShop.id : "Missing Shop");
+        console.log("Product ID:", productId);
+        console.log("Current User:", currentUser ? currentUser.id : "Anonymous (null)");
+
+        if (currentShop && currentShop.id) {
+            try {
+                // The payload matches exactly what you had before
+                const payload = {
+                    shop_id: currentShop.id,
+                    clicker_id: currentUser ? currentUser.id : null,
+                    product_id: productId // NOTE: If this column doesn't exist in your DB, this will fail!
+                };
+                
+                console.log("Attempting to insert payload:", payload);
+
+                // By adding .select(), we force Supabase to return the exact error message if it fails
+                const { data, error } = await client.from('whatsapp_clicks').insert(payload).select();
+
+                if (error) {
+                    console.error("❌ SUPABASE INSERT ERROR:", error.message);
+                    console.error("Full error object:", error);
+                    console.error("HINT: If the error says 'column product_id does not exist', you need to add that column to the database, or remove it from the payload!");
+                } else {
+                    console.log("✅ SUCCESS! Click recorded:", data);
+                }
+            } catch (err) {
+                console.error("❌ TRY/CATCH ERROR:", err.message);
+            }
+        } else {
+            console.error("❌ Cannot record click: currentShop object is missing.");
+        }
+        console.log("--- DEBUG END ---");
+    }
     
     // --- ADVANCED IMAGE & TEXT SHARE ENGINE ---
     async function shareProductWithImage() {
