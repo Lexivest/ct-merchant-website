@@ -144,11 +144,18 @@
         .prod-price { font-weight: 800; color: var(--color-pink); font-size: 1.05rem; }
         .prod-old-price { text-decoration: line-through; color: #888C8C; font-size: 0.8rem; font-weight: 500;}
 
-        .prod-condition {
-            font-size: 0.75rem; color: var(--color-text-muted); 
-            margin-top: 4px; font-weight: 600;
-            background: #F3F4F6; display: inline-block; padding: 2px 8px; border-radius: 4px; border: 1px solid #E3E6E6;
+        /* --- DYNAMIC BADGES --- */
+        .badges-row { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; align-items: center; }
+        
+        .prod-badge {
+            font-size: 0.7rem; font-weight: 800; padding: 4px 8px; border-radius: 4px; 
+            display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; letter-spacing: 0.5px;
         }
+        
+        .badge-condition { background: #F3F4F6; color: var(--color-text-muted); border: 1px solid #E3E6E6; }
+        .badge-live { background: #DCFCE7; color: #16A34A; border: 1px solid #BBF7D0; }
+        .badge-pending { background: #FEF3C7; color: #D97706; border: 1px solid #FDE68A; }
+        .badge-rejected { background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; }
 
         /* Action Buttons */
         .actions { display: flex; flex-direction: column; gap: 8px; }
@@ -234,7 +241,7 @@
             .from('products')
             .select('*')
             .eq('shop_id', shopId)
-            .eq('is_available', true)
+            // .eq('is_available', true) <-- Removed so they can see all their products, even out of stock ones
             .order('created_at', { ascending: false });
 
         document.getElementById('loader').style.display = 'none';
@@ -254,6 +261,7 @@
         container.innerHTML = products.map(p => {
             const hasDiscount = p.discount_price && p.discount_price < p.price;
             
+            // 1. Price Formatting
             let priceHtml = '';
             if (hasDiscount) {
                 priceHtml = `
@@ -262,6 +270,16 @@
                 `;
             } else {
                 priceHtml = `<span class="prod-price">₦${(p.price || 0).toLocaleString()}</span>`;
+            }
+
+            // 2. Admin Approval Status Logic
+            let statusBadgeHtml = '';
+            if (p.is_approved) {
+                statusBadgeHtml = `<div class="prod-badge badge-live"><i class="fa-solid fa-circle-check"></i> Active</div>`;
+            } else if (p.rejection_reason) {
+                statusBadgeHtml = `<div class="prod-badge badge-rejected"><i class="fa-solid fa-triangle-exclamation"></i> Rejected</div>`;
+            } else {
+                statusBadgeHtml = `<div class="prod-badge badge-pending"><i class="fa-solid fa-clock"></i> Pending</div>`;
             }
             
             return `
@@ -274,8 +292,10 @@
                         <div class="price-wrapper">
                             ${priceHtml}
                         </div>
-                        <div class="prod-condition">
-                            ${p.condition}
+                        
+                        <div class="badges-row">
+                            <div class="prod-badge badge-condition">${p.condition}</div>
+                            ${statusBadgeHtml}
                         </div>
                     </div>
                     <div class="actions">
