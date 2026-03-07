@@ -21,7 +21,6 @@
             --color-text-main: #0F1111;
             --color-text-muted: #565959;
             --color-border: #D5D9D9;
-            --color-red: #C40000;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -160,9 +159,6 @@
         }
         .btn-edit { background: white; color: #0F1111; }
         .btn-edit:hover { background: #F7FAFA; border-color: #B0B5B5; }
-        
-        .btn-delete { background: white; color: var(--color-red); }
-        .btn-delete:hover { background: #FEF2F2; border-color: #FECACA; color: #991B1B;}
 
         /* Utilities */
         .empty-state { 
@@ -180,7 +176,7 @@
     <!-- Full Width Premium Header -->
     <header class="app-header">
         <div class="header-content">
-            <button onclick="history.back()" class="back-btn">
+            <button onclick="window.location.href='merchant-dashboard.html'" class="back-btn">
                 <i class="fa-solid fa-arrow-left"></i>
             </button>
             <div class="page-title">Manage Products</div>
@@ -217,7 +213,18 @@
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "login.html"; return; }
-        if (!shopId) { alert("Shop ID missing"); window.history.back(); return; }
+        
+        // Use user's shop ID if the URL parameter is missing
+        if (!shopId) {
+            const { data: shop } = await client.from('shops').select('id').eq('owner_id', session.user.id).single();
+            if(shop) {
+                window.location.replace(`merchant-products.html?shop_id=${shop.id}`);
+            } else {
+                alert("Shop ID missing"); 
+                window.location.href = "merchant-dashboard.html";
+            }
+            return; 
+        }
 
         fetchProducts();
     };
@@ -258,7 +265,7 @@
             }
             
             return `
-                <div class="product-card">
+                <div class="product-card" onclick="editProduct(${p.id})" style="cursor: pointer;">
                     <div class="prod-img-wrap">
                         <img src="${p.image_url}" class="prod-img" alt="Product Image" loading="lazy">
                     </div>
@@ -272,11 +279,8 @@
                         </div>
                     </div>
                     <div class="actions">
-                        <button class="action-btn btn-edit" onclick="editProduct(${p.id})" title="Edit Product">
+                        <button class="action-btn btn-edit" title="Edit Product">
                             <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button class="action-btn btn-delete" onclick="deleteProduct(${p.id})" title="Delete Product">
-                            <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
                 </div>
@@ -290,25 +294,6 @@
 
     function editProduct(id) {
         window.location.href = `merchant-edit-product.html?id=${id}`;
-    }
-
-    async function deleteProduct(id) {
-        if(!confirm("Are you sure you want to delete this product? This action cannot be undone.")) return;
-
-        // 1. Soft Delete (Set is_available = false)
-        const { error } = await client
-            .from('products')
-            .update({ is_available: false })
-            .eq('id', id);
-
-        if (error) {
-            alert("Failed to delete product.");
-        } else {
-            // Hide the list and show spinner while refreshing
-            document.getElementById('product-list').style.display = 'none';
-            document.getElementById('loader').style.display = 'block';
-            fetchProducts(); 
-        }
     }
 </script>
 </body>
