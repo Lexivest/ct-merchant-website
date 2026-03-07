@@ -80,7 +80,7 @@
         #dynamic-fields-container { background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px dashed #CBD5E1; margin-bottom: 24px; display: none;}
         .dyn-title { font-size: 0.85rem; font-weight: 800; color: var(--color-pink); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;}
 
-        .discount-box { background: #F7F7F7; border: 1px solid var(--color-border); padding: 16px; border-radius: 8px; margin-bottom: 24px; }
+        .discount-box { background: #F7F7F7; border: 1px solid var(--color-border); padding: 16px; border-radius: 8px; margin-bottom: 24px; transition: opacity 0.3s; }
         .switch-row { display: flex; justify-content: space-between; align-items: center; }
         .switch-label { font-weight: 700; font-size: 0.95rem; color: #0F1111; }
         .switch-sub { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 2px; }
@@ -245,13 +245,14 @@
 
             <div class="form-group">
                 <label class="label">Condition</label>
-                <select id="condition" class="input">
+                <select id="condition" class="input" onchange="handleConditionChange()">
                     <option value="New">New</option>
                     <option value="Fairly Used">Fairly Used</option>
                 </select>
             </div>
 
-            <div class="discount-box">
+            <!-- ADDED ID HERE -->
+            <div class="discount-box" id="discount-container">
                 <div id="discount-limit-msg" class="discount-limit-alert">
                     <i class="fa-solid fa-lock" style="margin-top: 2px;"></i> 
                     <div><strong>Premium Limit Reached</strong><br>You currently have 2 active Special Offers. Remove the discount from another product to enable it here.</div>
@@ -259,7 +260,7 @@
                 <div class="switch-row" id="discount-switch-row">
                     <div>
                         <div class="switch-label">Special Offer?</div>
-                        <div class="switch-sub">Apply a 1% to 20% discount</div>
+                        <div class="switch-sub">Apply a 1% to 20% discount (New Items Only)</div>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="discount-switch" onchange="toggleDiscount(this)">
@@ -427,6 +428,9 @@
             document.getElementById('discount-percent').value = Math.round(percent);
             document.getElementById('discount-percent').setAttribute('required', 'true');
         }
+
+        // 5. Trigger condition change to apply UI rules
+        handleConditionChange();
     }
 
     function showPreview(slot, url) {
@@ -535,6 +539,27 @@
         }
     }
 
+    // --- NEW SMART CONDITION HANDLER ---
+    function handleConditionChange() {
+        const conditionVal = document.getElementById('condition').value;
+        const discountContainer = document.getElementById('discount-container');
+        const discountSwitch = document.getElementById('discount-switch');
+
+        if (conditionVal === 'Fairly Used') {
+            // Instantly hide and disable the discount UI
+            discountContainer.style.display = 'none';
+            
+            // Forcefully turn it off if the merchant had it checked before switching
+            if (discountSwitch.checked) {
+                discountSwitch.checked = false;
+                toggleDiscount(discountSwitch);
+            }
+        } else {
+            // Restore it for New items
+            discountContainer.style.display = 'block';
+        }
+    }
+
     // =========================================================
     // THE NEW FAIL-SAFE MASTER UPDATE ENGINE
     // =========================================================
@@ -550,7 +575,8 @@
         const price = parseFloat(document.getElementById('price').value);
         let discountPrice = null;
 
-        if (document.getElementById('discount-switch').checked) {
+        // Only apply discount if the switch is checked AND it is NOT a used item
+        if (document.getElementById('discount-switch').checked && document.getElementById('condition').value !== 'Fairly Used') {
             const percent = parseFloat(document.getElementById('discount-percent').value);
             if (!percent || percent <= 0 || percent > 20) return alert("Discount must be between 1% and 20%");
             discountPrice = price - (price * (percent / 100));
@@ -596,7 +622,7 @@
                 name: document.getElementById('name').value.trim(),
                 description: document.getElementById('desc').value.trim(),
                 price: price,
-                discount_price: discountPrice,
+                discount_price: discountPrice, // Safely null if 'Fairly Used'
                 condition: document.getElementById('condition').value,
                 category: document.getElementById('category').value,
                 image_url: finalUrl1,
