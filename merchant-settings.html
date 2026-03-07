@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shop Settings | CT‑Merchant</title>
     
+    <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+    <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
@@ -81,7 +84,7 @@
             gap: 8px;
             font-size: 0.95rem;
         }
-        .btn-brand:hover { background: var(--color-pink-hover); }
+        .btn-brand:hover:not(:disabled) { background: var(--color-pink-hover); }
         .btn-brand:disabled { 
             background: #E3E6E6; 
             border-color: #D5D9D9; 
@@ -94,26 +97,27 @@
         .container { 
             width: 100%; 
             max-width: 600px; 
-            padding: 30px 20px; 
+            padding: 24px 20px 60px 20px; 
             flex: 1;
         }
 
         /* --- CARD & FORM --- */
         .card { 
             background: white; 
-            padding: 30px; 
+            padding: 24px; 
             border-radius: 8px; 
             border: 1px solid var(--color-border); 
             box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
         }
 
         .section-title { 
-            font-size: 1.2rem; font-weight: 800; color: var(--color-text-main); 
+            font-size: 1.15rem; font-weight: 800; color: var(--color-text-main); 
             margin-bottom: 20px; margin-top: 8px; 
             border-bottom: 2px solid #F3F4F6; padding-bottom: 8px;
+            display: flex; align-items: center; gap: 8px;
         }
         
-        .divider { height: 1px; background: var(--color-border); margin: 30px 0; border: none;}
+        .divider { height: 1px; background: var(--color-border); margin: 32px 0; border: none;}
 
         .form-group { margin-bottom: 20px; }
         
@@ -145,15 +149,14 @@
 </head>
 <body>
 
-    <!-- Full Width Premium Header -->
     <header class="app-header">
         <div class="header-content">
-            <button onclick="history.back()" class="back-btn">
+            <button onclick="window.location.href='merchant-dashboard.html'" class="back-btn">
                 <i class="fa-solid fa-arrow-left"></i>
             </button>
             <div class="page-title">Shop Settings</div>
             
-            <button id="save-btn" onclick="updateShop()" class="btn-brand">
+            <button id="save-btn" onclick="updateShop()" class="btn-brand hidden">
                 <i class="fa-solid fa-check"></i> Save
             </button>
         </div>
@@ -164,11 +167,12 @@
         <!-- 1. LOADING STATE -->
         <div id="loader" class="spinner"></div>
 
-        <!-- 2. CONTENT (Hidden initially) -->
+        <!-- 2. CONTENT -->
         <div id="content" class="hidden">
             <form id="settings-form" class="card" onsubmit="event.preventDefault(); updateShop();">
                 
-                <div class="section-title">Basic Information</div>
+                <!-- BASIC INFO -->
+                <div class="section-title"><i class="fa-solid fa-building"></i> Basic Information</div>
 
                 <div class="form-group">
                     <label class="label"><i class="fa-solid fa-store"></i> Business Name</label>
@@ -187,7 +191,8 @@
 
                 <hr class="divider">
 
-                <div class="section-title">Contact Details</div>
+                <!-- CONTACT DETAILS -->
+                <div class="section-title"><i class="fa-solid fa-address-book"></i> Contact Details</div>
 
                 <div class="form-group">
                     <label class="label"><i class="fa-solid fa-phone"></i> Phone Number</label>
@@ -196,8 +201,38 @@
 
                 <div class="form-group">
                     <label class="label"><i class="fa-brands fa-whatsapp"></i> WhatsApp Number</label>
-                    <input type="tel" id="whatsapp" class="input" placeholder="Optional">
-                    <div class="helper-text"><i class="fa-solid fa-circle-info" style="color:var(--color-pink);"></i> Include a valid WhatsApp number to receive direct messages from customers.</div>
+                    <input type="tel" id="whatsapp" class="input" placeholder="e.g. 08012345678">
+                    <div class="helper-text"><i class="fa-solid fa-circle-info" style="color:var(--color-pink);"></i> Used for direct customer messaging.</div>
+                </div>
+
+                <hr class="divider">
+
+                <!-- SOCIAL MEDIA LINKS -->
+                <div class="section-title"><i class="fa-solid fa-share-nodes"></i> Social Links (Optional)</div>
+                
+                <div class="form-group">
+                    <label class="label"><i class="fa-solid fa-globe" style="color: #4F46E5;"></i> Website</label>
+                    <input type="url" id="website" class="input" placeholder="e.g. https://mybusiness.com">
+                </div>
+
+                <div class="form-group">
+                    <label class="label"><i class="fa-brands fa-facebook-f" style="color: #1877F2;"></i> Facebook Page</label>
+                    <input type="url" id="facebook" class="input" placeholder="e.g. https://facebook.com/myshop">
+                </div>
+
+                <div class="form-group">
+                    <label class="label"><i class="fa-brands fa-instagram" style="color: #E1306C;"></i> Instagram Profile</label>
+                    <input type="url" id="instagram" class="input" placeholder="e.g. https://instagram.com/myshop">
+                </div>
+
+                <div class="form-group">
+                    <label class="label"><i class="fa-brands fa-x-twitter" style="color: #000000;"></i> X (Twitter) Profile</label>
+                    <input type="url" id="twitter" class="input" placeholder="e.g. https://x.com/myshop">
+                </div>
+
+                <div class="form-group">
+                    <label class="label"><i class="fa-brands fa-tiktok" style="color: #000000;"></i> TikTok Profile</label>
+                    <input type="url" id="tiktok" class="input" placeholder="e.g. https://tiktok.com/@myshop">
                 </div>
 
             </form>
@@ -212,7 +247,6 @@
 
     const params = new URLSearchParams(window.location.search);
     const shopId = params.get('shop_id');
-    let currentShop = null;
 
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
@@ -220,7 +254,7 @@
         
         if (!shopId) {
             alert("Shop ID missing");
-            window.history.back();
+            window.location.href = "merchant-dashboard.html";
             return;
         }
 
@@ -233,22 +267,28 @@
             
             if (error || !data) { 
                 alert("Shop not found"); 
-                window.history.back(); 
+                window.location.href = "merchant-dashboard.html"; 
                 return;
             }
             
-            currentShop = data;
-            
-            // Populate Form
-            document.getElementById('name').value = data.name;
+            // Populate Basic Info
+            document.getElementById('name').value = data.name || '';
             document.getElementById('desc').value = data.description || '';
-            document.getElementById('address').value = data.address;
-            document.getElementById('phone').value = data.phone;
+            document.getElementById('address').value = data.address || '';
+            document.getElementById('phone').value = data.phone || '';
             document.getElementById('whatsapp').value = data.whatsapp || '';
 
-            // Reveal Content
+            // Populate Social Links
+            document.getElementById('website').value = data.website_url || '';
+            document.getElementById('facebook').value = data.facebook_url || '';
+            document.getElementById('instagram').value = data.instagram_url || '';
+            document.getElementById('twitter').value = data.twitter_url || '';
+            document.getElementById('tiktok').value = data.tiktok_url || '';
+
+            // Reveal Content & Button
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('content').classList.remove('hidden');
+            document.getElementById('save-btn').classList.remove('hidden');
 
         } catch (e) {
             console.error(e);
@@ -270,21 +310,36 @@
         btn.innerHTML = '<div class="spinner-inline"></div> Saving...';
 
         try {
+            // Helper function to convert empty strings to null for clean DB storage
+            const cleanVal = (val) => val.trim() === '' ? null : val.trim();
+
             const updates = {
                 name: document.getElementById('name').value.trim(),
                 description: document.getElementById('desc').value.trim(),
                 address: document.getElementById('address').value.trim(),
                 phone: document.getElementById('phone').value.trim(),
-                whatsapp: document.getElementById('whatsapp').value.trim() || null,
+                whatsapp: cleanVal(document.getElementById('whatsapp').value),
+                
+                // Social Links
+                website_url: cleanVal(document.getElementById('website').value),
+                facebook_url: cleanVal(document.getElementById('facebook').value),
+                instagram_url: cleanVal(document.getElementById('instagram').value),
+                twitter_url: cleanVal(document.getElementById('twitter').value),
+                tiktok_url: cleanVal(document.getElementById('tiktok').value)
             };
 
             const { error } = await client.from('shops').update(updates).eq('id', shopId);
             if (error) throw error;
 
+            // SMART CACHE INVALIDATION
+            // Force the shop-detail screen to immediately fetch fresh data on next visit
+            localStorage.removeItem(`ctm_shop_v33_${shopId}`);
+
             alert("Shop details updated successfully!");
-            window.history.back();
+            window.location.href = "merchant-dashboard.html";
 
         } catch (err) {
+            console.error(err);
             alert("Update failed: " + err.message);
             btn.innerHTML = originalText;
             btn.disabled = false;
