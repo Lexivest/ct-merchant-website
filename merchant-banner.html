@@ -121,9 +121,9 @@
         .crop-workspace img { max-width: 100%; max-height: 100%; display: block; }
         .crop-footer-bar { padding: 20px; background: rgba(0,0,0,.5); display: flex; gap: 16px; justify-content: center; flex-direction: column; }
         .crop-instructions { text-align: center; color: white; font-size: 0.85rem; font-weight: 500; margin-bottom: 8px; }
-        .crop-btn-row { display: flex; gap: 16px; justify-content: center; }
+        .crop-btn-row { display: flex; gap: 16px; justify-content: center; align-items: center; }
         .btn-crop-cancel { background: #374151; color: #fff; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; }
-        .btn-crop-apply { background: var(--color-pink); color: #fff; padding: 12px 32px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
+        .btn-crop-apply { background: var(--color-pink); color: #fff; padding: 12px 32px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; }
 
         .hidden { display: none !important; }
     </style>
@@ -147,7 +147,7 @@
         <div id="main-content" class="hidden">
             <div class="edu-box">
                 <h4 class="edu-title"><i class="fa-solid fa-panorama" style="color: #007185;"></i> Landscape Shop Banner</h4>
-                <p class="edu-text">Upload <strong>1 Landscape Banner</strong> to feature your shop. If you upload a new one, the old banner will be securely deleted. All banners are reviewed by an admin.</p>
+                <p class="edu-text">Upload <strong>1 Landscape Banner</strong> to feature your shop. Images are auto-compressed to ensure fast loading speeds for your customers. All banners are reviewed by an admin.</p>
             </div>
 
             <div class="banner-wrapper">
@@ -183,7 +183,7 @@
             <div class="crop-instructions"><i class="fa-solid fa-hand-pointer"></i> Drag to move. Pinch to zoom in/out.</div>
             <div class="crop-btn-row">
                 <button type="button" class="btn-crop-cancel" onclick="closeCropModal()">Cancel</button>
-                <button type="button" class="btn-crop-apply" onclick="applyCrop()">Apply Crop</button>
+                <button type="button" id="btn-crop-apply" class="btn-crop-apply" onclick="applyCrop()">Apply Crop</button>
             </div>
         </div>
     </div>
@@ -202,9 +202,9 @@
     let cropper = null;
     
     // STATE MANAGEMENT
-    let existingBannersFromDB = []; // Array to hold old banners for garbage collection
-    let activeBannerBlob = null;    // Holds the newly cropped image file
-    let shouldDeleteOld = false;    // Flag to trigger garbage collection
+    let existingBannersFromDB = []; 
+    let activeBannerBlob = null;    
+    let shouldDeleteOld = false;    
 
     window.onload = async () => {
         if (!shopId) { alert("Shop ID missing"); window.history.back(); return; }
@@ -221,7 +221,6 @@
     };
 
     async function fetchExistingBanner() {
-        // Fetch ALL existing banners to ensure we clean up if the merchant used the old multi-banner system
         const { data, error } = await client
             .from('shop_banners_news')
             .select('*')
@@ -235,8 +234,6 @@
 
         if (data && data.length > 0) {
             existingBannersFromDB = data;
-            
-            // Display the most recent one in the UI
             const primaryBanner = data[0];
             showPreview(primaryBanner.content_data, primaryBanner.status);
         }
@@ -251,7 +248,6 @@
         img.style.display = 'block';
         delBtn.classList.remove('hidden');
         
-        // Reset badge classes
         badge.className = 'status-badge';
         
         if (statusStr === 'pending') {
@@ -275,11 +271,9 @@
         e.preventDefault();
         e.stopPropagation();
         
-        // Trigger Garbage Collection flag
         shouldDeleteOld = true;
         activeBannerBlob = null;
         
-        // Update UI
         document.getElementById('preview').style.display = 'none';
         document.getElementById('preview').src = '';
         document.getElementById('del-btn').classList.add('hidden');
@@ -302,7 +296,6 @@
 
                 if(cropper) cropper.destroy();
                 
-                // Enforce Landscape Aspect Ratio (16:9)
                 cropper = new Cropper(img, { 
                     aspectRatio: 16 / 9, 
                     viewMode: 1, 
@@ -323,19 +316,42 @@
         if(cropper){ cropper.destroy(); cropper=null; }
     }
 
+    // --- AUTO-COMPRESSION ENGINE (Enforces < 200KB) ---
     function applyCrop() {
         if(!cropper) return;
         
-        cropper.getCroppedCanvas({
-            width: 1280, height: 720, // Standard HD landscape bounds
+        const btnApply = document.getElementById('btn-crop-apply');
+        const originalText = btnApply.innerHTML;
+        btnApply.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> Compressing...';
+        btnApply.disabled = true;
+
+        const canvas = cropper.getCroppedCanvas({
+            width: 1280, height: 720, 
             fillColor: '#FFFFFF', imageSmoothingEnabled: true, imageSmoothingQuality: 'high'
-        }).toBlob(blob => {
-            activeBannerBlob = blob;
-            shouldDeleteOld = true; // Overwriting means we delete the old one
-            
-            showPreview(URL.createObjectURL(blob), 'new');
-            closeCropModal();
-        }, 'image/jpeg', 0.7); // 0.7 Quality for excellent web compression
+        });
+
+        let quality = 0.8;
+        const maxBytes = 200 * 1024; // 200KB limit
+
+        function attemptCompress() {
+            canvas.toBlob(blob => {
+                if (blob.size <= maxBytes || quality <= 0.2) {
+                    activeBannerBlob = blob;
+                    shouldDeleteOld = true; 
+                    
+                    showPreview(URL.createObjectURL(blob), 'new');
+                    
+                    btnApply.innerHTML = originalText;
+                    btnApply.disabled = false;
+                    closeCropModal();
+                } else {
+                    quality -= 0.15; // Step down quality by 15% and try again
+                    attemptCompress();
+                }
+            }, 'image/jpeg', quality);
+        }
+        
+        attemptCompress();
     }
 
     // --- MASTER SAVE & GARBAGE COLLECTION ---
@@ -343,7 +359,6 @@
         const btn = document.getElementById('save-btn');
         const originalText = btn.innerHTML;
         
-        // If they didn't change anything, just go back
         if (!shouldDeleteOld && !activeBannerBlob) {
             window.history.back();
             return;
@@ -361,7 +376,7 @@
                 
                 existingBannersFromDB.forEach(b => {
                     idsToDelete.push(b.id);
-                    if (b.content_data && b.content_data.includes('/banner-storage/')) {
+                    if (b.content_data && b.content_data.includes('/shops-banner-storage/')) {
                         try {
                             const fileName = decodeURIComponent(new URL(b.content_data).pathname.split('/').pop());
                             if (fileName) pathsToDelete.push(`${shopId}/${fileName}`);
@@ -369,33 +384,31 @@
                     }
                 });
 
-                // Delete Physical Files
                 if (pathsToDelete.length > 0) {
-                    await client.storage.from('banner-storage').remove(pathsToDelete);
+                    await client.storage.from('shops-banner-storage').remove(pathsToDelete);
                 }
-                // Delete Database Rows
                 if (idsToDelete.length > 0) {
                     await client.from('shop_banners_news').delete().in('id', idsToDelete);
                 }
             }
 
-            // STEP 2: UPLOAD NEW BANNER
+            // STEP 2: UPLOAD NEW BANNER (Guaranteed < 200KB)
             if (activeBannerBlob) {
                 btn.innerHTML = '<div class="spinner"></div> Uploading...';
                 
                 const fName = `${shopId}/${Date.now()}_banner.jpg`;
                 
                 const { error: uploadError } = await client.storage
-                    .from('banner-storage')
+                    .from('shops-banner-storage')
                     .upload(fName, activeBannerBlob, {
                         contentType: 'image/jpeg',
-                        cacheControl: '31536000', // Browser cache hack
+                        cacheControl: '31536000', 
                         upsert: false
                     });
 
                 if (uploadError) throw uploadError;
 
-                const { data } = client.storage.from('banner-storage').getPublicUrl(fName);
+                const { data } = client.storage.from('shops-banner-storage').getPublicUrl(fName);
                 
                 // STEP 3: INSERT NEW RECORD
                 btn.innerHTML = '<div class="spinner"></div> Saving...';
@@ -404,7 +417,7 @@
                     merchant_id: currentUser.id,
                     content_type: 'banner',
                     content_data: data.publicUrl,
-                    status: 'pending' // Send to Admin Queue
+                    status: 'pending' 
                 });
 
                 if (dbError) throw dbError;
