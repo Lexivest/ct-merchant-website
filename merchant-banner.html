@@ -2,21 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop Banners | CT‑Merchant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shop Banner | CT‑Merchant</title>
     
+    <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+    <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     
     <style>
         :root {
-            /* PREMIUM AMAZON THEME WITH CT-MERCHANT PINK */
             --amz-dark: #131921;
-            
             --color-pink: #db2777; 
             --color-pink-hover: #be185d;
             --color-pink-light: rgba(219, 39, 119, 0.15);
-            
             --amz-bg: #F3F4F6;
             --color-text-main: #0F1111;
             --color-text-muted: #565959;
@@ -35,25 +36,15 @@
             align-items: center; 
         }
 
-        /* --- PREMIUM HEADER --- */
         .app-header {
-            background-color: var(--amz-dark);
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            width: 100%;
+            background-color: var(--amz-dark); color: white;
+            position: sticky; top: 0; z-index: 100; width: 100%;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .header-content {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 12px 16px;
-            max-width: 600px;
-            margin: 0 auto;
-            width: 100%;
+            display: flex; align-items: center; gap: 16px;
+            padding: 12px 16px; max-width: 600px; margin: 0 auto; width: 100%;
         }
 
         .back-btn { 
@@ -62,113 +53,88 @@
             margin-left: -4px; transition: 0.2s;
         }
         .back-btn:hover { color: var(--color-pink); }
-        
         .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; }
         
-        /* Save Button in Header */
         .btn-brand { 
-            margin-left: auto;
-            background: var(--color-pink); 
-            border: 1px solid var(--color-pink-hover); 
-            border-radius: 6px; 
-            padding: 8px 16px; 
-            color: white; 
-            font-weight: 700; 
-            cursor: pointer; 
-            box-shadow: 0 2px 5px 0 rgba(219,39,119,0.3); 
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            margin-left: auto; background: var(--color-pink); 
+            border: 1px solid var(--color-pink-hover); border-radius: 6px; 
+            padding: 8px 16px; color: white; font-weight: 700; 
+            cursor: pointer; box-shadow: 0 2px 5px 0 rgba(219,39,119,0.3); 
+            transition: 0.2s; display: flex; align-items: center; gap: 8px;
         }
-        .btn-brand:hover { background: var(--color-pink-hover); }
-        .btn-brand:disabled { 
-            background: #E3E6E6; 
-            border-color: #D5D9D9; 
-            color: #888C8C; 
-            cursor: not-allowed; 
-            box-shadow: none; 
-        }
+        .btn-brand:hover:not(:disabled) { background: var(--color-pink-hover); }
+        .btn-brand:disabled { background: #E3E6E6; border-color: #D5D9D9; color: #888C8C; cursor: not-allowed; box-shadow: none; }
 
-        /* --- MAIN CONTAINER --- */
-        .container { 
-            width: 100%; 
-            max-width: 600px; 
-            padding: 30px 20px; 
-            flex: 1;
-        }
+        .container { width: 100%; max-width: 600px; padding: 20px; flex: 1; }
 
-        /* Instructions Box */
-        .info-box { 
-            margin-bottom: 24px; 
-            background: white; 
-            padding: 20px; 
-            border-radius: 8px; 
-            border: 1px solid var(--color-border);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-        .info-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; color: var(--color-text-main); }
-        .info-desc { color: var(--color-text-muted); font-size: 0.95rem; line-height: 1.5; }
+        .edu-box { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+        .edu-title { font-size: 0.95rem; font-weight: 800; color: #0F1111; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .edu-text { font-size: 0.85rem; color: #475569; line-height: 1.5; margin-bottom: 0; }
 
-        /* Banner List */
-        .banner-list { display: flex; flex-direction: column; gap: 20px; }
-
-        .banner-item {
-            position: relative; width: 100%; height: 200px;
-            border-radius: 8px; overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            background: white; border: 1px solid var(--color-border);
-        }
-        .banner-img { width: 100%; height: 100%; object-fit: cover; }
+        /* PORTRAIT BANNER PICKER */
+        .banner-wrapper { width: 100%; max-width: 400px; margin: 0 auto; position: relative;}
         
-        /* Status Badges */
+        .img-picker {
+            background: #F7F7F7; border: 2px dashed #888C8C; border-radius: 12px;
+            aspect-ratio: 3/4; /* STRICT PORTRAIT RATIO */
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; position: relative; overflow: hidden; transition: 0.2s; text-align: center;
+            padding: 20px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .img-picker:hover { border-color: var(--color-pink); background: var(--color-pink-light); }
+        .img-picker i.main-icon { font-size: 3rem; color: #888C8C; margin-bottom: 12px; }
+        .img-picker span { font-size: 0.9rem; font-weight: 700; color: var(--color-text-muted); line-height: 1.4; }
+        
+        .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; background: #fff; z-index: 5; }
+        
+        .delete-btn {
+            position: absolute; top: 12px; right: 12px;
+            background: rgba(220, 38, 38, 0.95); color: white;
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: none; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: transform 0.2s, background 0.2s; z-index: 10; font-size: 1.1rem;
+        }
+        .delete-btn:hover { transform: scale(1.1); background: #991B1B; }
+
         .status-badge {
             position: absolute; top: 12px; left: 12px;
             font-size: 0.75rem; font-weight: 800; padding: 6px 12px; 
             border-radius: 6px; z-index: 10; backdrop-filter: blur(4px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: none;
         }
-        .status-pending { background: rgba(254, 243, 199, 0.95); color: #D97706; border: 1px solid #FDE68A; }
-        .status-approved { background: rgba(209, 250, 229, 0.95); color: #059669; border: 1px solid #A7F3D0; }
-        .status-rejected { background: rgba(254, 226, 226, 0.95); color: var(--color-red); border: 1px solid #FECACA; }
-        .status-new { background: rgba(243, 244, 246, 0.95); color: #0F1111; border: 1px solid #D5D9D9; }
+        .status-pending { background: rgba(254, 243, 199, 0.95); color: #D97706; border: 1px solid #FDE68A; display: block;}
+        .status-approved { background: rgba(209, 250, 229, 0.95); color: #059669; border: 1px solid #A7F3D0; display: block;}
+        .status-rejected { background: rgba(254, 226, 226, 0.95); color: var(--color-red); border: 1px solid #FECACA; display: block;}
+        .status-new { background: rgba(243, 244, 246, 0.95); color: #0F1111; border: 1px solid #D5D9D9; display: block;}
 
-        .delete-btn {
-            position: absolute; top: 12px; right: 12px;
-            background: white; color: var(--color-red);
-            width: 32px; height: 32px; border-radius: 6px;
-            display: flex; align-items: center; justify-content: center;
-            border: 1px solid #D5D9D9; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: transform 0.2s, background 0.2s; z-index: 10; font-size: 1.1rem;
-        }
-        .delete-btn:hover { transform: scale(1.05); background: #FEF2F2; border-color: #FECACA; }
-
-        /* Add Button */
-        .add-card {
-            width: 100%; height: 200px; background: #F7F7F7;
-            border: 2px dashed #888C8C; border-radius: 8px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer; transition: all 0.2s; color: var(--color-text-muted);
-        }
-        .add-card:hover { border-color: var(--color-pink); background: var(--color-pink-light); color: var(--color-pink); }
-        .add-icon { font-size: 2.5rem; margin-bottom: 12px; }
-        .add-text { font-weight: 700; font-size: 1rem; }
-
-        .spinner { width: 20px; height: 20px; border: 3px solid rgba(0,0,0,0.2); border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+        .spinner.dark { border-color: rgba(0,0,0,0.1); border-top-color: var(--color-pink); width: 44px; height: 44px; margin: 60px auto; display: block;}
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* MODAL STYLES */
+        .crop-overlay { position: fixed; inset: 0; background: rgba(17,24,39,.95); z-index: 2000; display: flex; flex-direction: column; opacity: 0; visibility: hidden; transition: .3s ease; backdrop-filter: blur(5px); }
+        .crop-overlay.active { opacity: 1; visibility: visible; }
+        .crop-header-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: rgba(0,0,0,.5); color: #fff; }
+        .crop-title { font-weight: 700; font-size: 1.2rem; }
+        .crop-workspace { flex: 1; position: relative; width: 100%; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .crop-workspace img { max-width: 100%; max-height: 100%; display: block; }
+        .crop-footer-bar { padding: 20px; background: rgba(0,0,0,.5); display: flex; gap: 16px; justify-content: center; flex-direction: column; }
+        .crop-instructions { text-align: center; color: white; font-size: 0.85rem; font-weight: 500; margin-bottom: 8px; }
+        .crop-btn-row { display: flex; gap: 16px; justify-content: center; }
+        .btn-crop-cancel { background: #374151; color: #fff; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; }
+        .btn-crop-apply { background: var(--color-pink); color: #fff; padding: 12px 32px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- Full Width Premium Header -->
     <header class="app-header">
         <div class="header-content">
-            <button onclick="history.back()" class="back-btn">
-                <i class="fa-solid fa-arrow-left"></i>
-            </button>
-            <div class="page-title">Shop Banners</div>
-            
-            <button id="save-btn" onclick="saveBanners()" class="btn-brand">
+            <button onclick="window.history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+            <div class="page-title">Shop Banner</div>
+            <button id="save-btn" onclick="saveBanner()" class="btn-brand hidden">
                 <i class="fa-solid fa-check"></i> Save
             </button>
         </div>
@@ -176,19 +142,54 @@
 
     <div class="container">
         
-        <div class="info-box">
-            <div class="info-title">Upload up to 2 Banners</div>
-            <div class="info-desc">High quality landscape images work best. New banners will be reviewed by an admin before going live on the platform.</div>
+        <div id="loader" class="spinner dark"></div>
+
+        <div id="main-content" class="hidden">
+            <div class="edu-box">
+                <h4 class="edu-title"><i class="fa-solid fa-mobile-screen-button" style="color: #007185;"></i> Portrait Mobile Banner</h4>
+                <p class="edu-text">Upload <strong>1 Portrait Banner</strong> to feature your shop. If you upload a new one, the old banner will be securely deleted. All banners are reviewed by an admin.</p>
+            </div>
+
+            <div class="banner-wrapper">
+                <div class="img-picker" onclick="document.getElementById('file-input').click()">
+                    <input type="file" id="file-input" hidden accept="image/*" onchange="handleFileSelect(this)">
+                    
+                    <!-- Placeholder State -->
+                    <i class="fa-solid fa-image main-icon"></i>
+                    <span>Tap to Upload Banner<br>(Portrait Format)</span>
+                    
+                    <!-- Image State -->
+                    <img id="preview" class="preview-img">
+                    <div id="status-badge" class="status-badge"></div>
+                    
+                    <!-- Delete Button -->
+                    <button type="button" id="del-btn" class="delete-btn hidden" onclick="removeImage(event)">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <div id="banner-container" class="banner-list">
-            <!-- JS Populated -->
-        </div>
+    </div>
 
-        <input type="file" id="file-input" hidden accept="image/*" onchange="handleFileSelect(this)">
+    <!-- CROPPER MODAL -->
+    <div id="crop-modal" class="crop-overlay">
+        <div class="crop-header-bar">
+            <div class="crop-title"><i class="fa-solid fa-crop-simple"></i> Frame Banner</div>
+            <button type="button" onclick="closeCropModal()" style="background:0 0;border:none;color:#fff;font-size:1.5rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="crop-workspace"><img id="crop-image" src=""></div>
+        <div class="crop-footer-bar">
+            <div class="crop-instructions"><i class="fa-solid fa-hand-pointer"></i> Drag to move. Pinch to zoom in/out.</div>
+            <div class="crop-btn-row">
+                <button type="button" class="btn-crop-cancel" onclick="closeCropModal()">Cancel</button>
+                <button type="button" class="btn-crop-apply" onclick="applyCrop()">Apply Crop</button>
+            </div>
+        </div>
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script>
     const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
@@ -196,157 +197,228 @@
 
     const params = new URLSearchParams(window.location.search);
     const shopId = params.get('shop_id');
-    let currentUser = null;
     
-    // Array of objects holding state for each banner
-    let bannerSlots = []; 
+    let currentUser = null;
+    let cropper = null;
+    
+    // STATE MANAGEMENT
+    let existingBannersFromDB = []; // Array to hold old banners for garbage collection
+    let activeBannerBlob = null;    // Holds the newly cropped image file
+    let shouldDeleteOld = false;    // Flag to trigger garbage collection
 
     window.onload = async () => {
-        const { data: { session } } = await client.auth.getSession();
-        if (!session) { window.location.href = "login.html"; return; }
-        currentUser = session.user;
-        
         if (!shopId) { alert("Shop ID missing"); window.history.back(); return; }
-
-        // Fetch current banners from the NEW shop_banners_news table
-        const { data, error } = await client
-            .from('shop_banners_news')
-            .select('id, content_data, status')
-            .eq('shop_id', shopId)
-            .eq('content_type', 'banner')
-            .order('created_at', { ascending: true });
         
-        if (data && data.length > 0) {
-            bannerSlots = data.map(b => ({
-                id: b.id,            // Database ID
-                url: b.content_data,// Image URL
-                file: null,         // No file because it's already uploaded
-                status: b.status,   // pending, approved, or rejected
-                isDeleted: false
-            }));
+        try {
+            const { data: { session } } = await client.auth.getSession();
+            if (!session) { window.location.href = "login.html"; return; }
+            currentUser = session.user;
+            
+            await fetchExistingBanner();
+        } catch (err) {
+            alert("Auth Error: " + err.message);
         }
-        renderBanners();
     };
 
-    function renderBanners() {
-        const container = document.getElementById('banner-container');
-        container.innerHTML = '';
+    async function fetchExistingBanner() {
+        // Fetch ALL existing banners to ensure we clean up if the merchant used the old multi-banner system
+        const { data, error } = await client
+            .from('shop_banners_news')
+            .select('*')
+            .eq('shop_id', shopId)
+            .eq('content_type', 'banner')
+            .order('created_at', { ascending: false });
 
-        const activeBanners = bannerSlots.filter(b => !b.isDeleted);
+        document.getElementById('loader').classList.add('hidden');
+        document.getElementById('main-content').classList.remove('hidden');
+        document.getElementById('save-btn').classList.remove('hidden');
 
-        activeBanners.forEach((item) => {
-            const displayUrl = item.file ? URL.createObjectURL(item.file) : item.url;
-            const realIndex = bannerSlots.indexOf(item);
+        if (data && data.length > 0) {
+            existingBannersFromDB = data;
             
-            // Determine badge appearance
-            let badgeHTML = '';
-            if (item.file) {
-                badgeHTML = `<div class="status-badge status-new">NEW - UNSAVED</div>`;
-            } else if (item.status === 'pending') {
-                badgeHTML = `<div class="status-badge status-pending">PENDING APPROVAL</div>`;
-            } else if (item.status === 'approved') {
-                badgeHTML = `<div class="status-badge status-approved">APPROVED</div>`;
-            } else if (item.status === 'rejected') {
-                badgeHTML = `<div class="status-badge status-rejected">REJECTED</div>`;
-            }
-
-            const div = document.createElement('div');
-            div.className = 'banner-item';
-            div.innerHTML = `
-                <img src="${displayUrl}" class="banner-img">
-                ${badgeHTML}
-                <button class="delete-btn" onclick="removeBanner(${realIndex})">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-            `;
-            container.appendChild(div);
-        });
-
-        // Render Add Button if < 2 active banners
-        if (activeBanners.length < 2) {
-            const addBtn = document.createElement('div');
-            addBtn.className = 'add-card';
-            addBtn.onclick = () => document.getElementById('file-input').click();
-            addBtn.innerHTML = `
-                <i class="fa-solid fa-images add-icon"></i>
-                <div class="add-text">Tap to add banner</div>
-            `;
-            container.appendChild(addBtn);
+            // Display the most recent one in the UI
+            const primaryBanner = data[0];
+            showPreview(primaryBanner.content_data, primaryBanner.status);
         }
     }
 
+    function showPreview(url, statusStr) {
+        const img = document.getElementById('preview');
+        const badge = document.getElementById('status-badge');
+        const delBtn = document.getElementById('del-btn');
+        
+        img.src = url;
+        img.style.display = 'block';
+        delBtn.classList.remove('hidden');
+        
+        // Reset badge classes
+        badge.className = 'status-badge';
+        
+        if (statusStr === 'pending') {
+            badge.classList.add('status-pending');
+            badge.textContent = 'PENDING APPROVAL';
+        } else if (statusStr === 'approved') {
+            badge.classList.add('status-approved');
+            badge.textContent = 'APPROVED';
+        } else if (statusStr === 'rejected') {
+            badge.classList.add('status-rejected');
+            badge.textContent = 'REJECTED';
+        } else if (statusStr === 'new') {
+            badge.classList.add('status-new');
+            badge.textContent = 'UNSAVED CHANGES';
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    function removeImage(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Trigger Garbage Collection flag
+        shouldDeleteOld = true;
+        activeBannerBlob = null;
+        
+        // Update UI
+        document.getElementById('preview').style.display = 'none';
+        document.getElementById('preview').src = '';
+        document.getElementById('del-btn').classList.add('hidden');
+        document.getElementById('status-badge').className = 'status-badge hidden';
+    }
+
+    // --- CROPPER ENGINE (LOCKED TO 3:4 PORTRAIT) ---
     function handleFileSelect(input) {
         if (input.files && input.files[0]) {
-            bannerSlots.push({
-                id: null,
-                url: null,
-                file: input.files[0],
-                status: 'pending',
-                isDeleted: false
-            });
-            renderBanners();
-            input.value = ''; // Reset input
+            const file = input.files[0];
+            if (!file.type.startsWith('image/')) return alert("Please upload a valid image file.");
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const modal = document.getElementById('crop-modal');
+                const img = document.getElementById('crop-image');
+                img.src = e.target.result;
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+
+                if(cropper) cropper.destroy();
+                
+                // Enforce Portrait Aspect Ratio (3:4)
+                cropper = new Cropper(img, { 
+                    aspectRatio: 3 / 4, 
+                    viewMode: 1, 
+                    dragMode: 'move', 
+                    background: true, 
+                    autoCropArea: 1, 
+                    responsive: true 
+                });
+            };
+            reader.readAsDataURL(file);
+            input.value = ''; 
         }
     }
 
-    function removeBanner(index) {
-        bannerSlots[index].isDeleted = true;
-        renderBanners();
+    function closeCropModal() {
+        document.getElementById('crop-modal').classList.remove('active');
+        document.body.style.overflow = '';
+        if(cropper){ cropper.destroy(); cropper=null; }
     }
 
-    async function saveBanners() {
-        const btn = document.getElementById('save-btn');
-        btn.disabled = true;
-        btn.innerHTML = '<div class="spinner"></div>';
+    function applyCrop() {
+        if(!cropper) return;
+        
+        cropper.getCroppedCanvas({
+            width: 720, height: 960, // Standard high-res portrait bounds
+            fillColor: '#FFFFFF', imageSmoothingEnabled: true, imageSmoothingQuality: 'high'
+        }).toBlob(blob => {
+            activeBannerBlob = blob;
+            shouldDeleteOld = true; // Overwriting means we delete the old one
+            
+            showPreview(URL.createObjectURL(blob), 'new');
+            closeCropModal();
+        }, 'image/jpeg', 0.7); // 0.7 Quality for excellent web compression
+    }
 
+    // --- MASTER SAVE & GARBAGE COLLECTION ---
+    async function saveBanner() {
+        const btn = document.getElementById('save-btn');
+        const originalText = btn.innerHTML;
+        
+        // If they didn't change anything, just go back
+        if (!shouldDeleteOld && !activeBannerBlob) {
+            window.history.back();
+            return;
+        }
+
+        btn.disabled = true;
+        
         try {
-            // 1. Delete removed banners from Database and Storage
-            const toDelete = bannerSlots.filter(b => b.isDeleted && b.id !== null);
-            for (let b of toDelete) {
-                // Delete from DB
-                await client.from('shop_banners_news').delete().eq('id', b.id);
+            // STEP 1: GARBAGE COLLECTION
+            if (shouldDeleteOld && existingBannersFromDB.length > 0) {
+                btn.innerHTML = '<div class="spinner"></div> Cleaning...';
                 
-                // Extract path and delete from storage
-                const parts = b.url.split('/banner-storage/');
-                if (parts.length > 1) {
-                    await client.storage.from('banner-storage').remove([parts[1]]);
+                const pathsToDelete = [];
+                const idsToDelete = [];
+                
+                existingBannersFromDB.forEach(b => {
+                    idsToDelete.push(b.id);
+                    if (b.content_data && b.content_data.includes('/banner-storage/')) {
+                        try {
+                            const fileName = decodeURIComponent(new URL(b.content_data).pathname.split('/').pop());
+                            if (fileName) pathsToDelete.push(`${shopId}/${fileName}`);
+                        } catch(e) {}
+                    }
+                });
+
+                // Delete Physical Files
+                if (pathsToDelete.length > 0) {
+                    await client.storage.from('banner-storage').remove(pathsToDelete);
+                }
+                // Delete Database Rows
+                if (idsToDelete.length > 0) {
+                    await client.from('shop_banners_news').delete().in('id', idsToDelete);
                 }
             }
 
-            // 2. Upload new files and Insert to Database
-            const toUpload = bannerSlots.filter(b => !b.isDeleted && b.file !== null);
-            for (let b of toUpload) {
-                const ext = b.file.name.split('.').pop();
-                const fileName = `${shopId}/${Date.now()}_${Math.random()}.${ext}`;
+            // STEP 2: UPLOAD NEW BANNER
+            if (activeBannerBlob) {
+                btn.innerHTML = '<div class="spinner"></div> Uploading...';
                 
-                // Upload to Storage
+                const fName = `${shopId}/${Date.now()}_banner.jpg`;
+                
                 const { error: uploadError } = await client.storage
                     .from('banner-storage')
-                    .upload(fileName, b.file);
+                    .upload(fName, activeBannerBlob, {
+                        contentType: 'image/jpeg',
+                        cacheControl: '31536000', // Browser cache hack
+                        upsert: false
+                    });
 
                 if (uploadError) throw uploadError;
 
-                const { data } = client.storage.from('banner-storage').getPublicUrl(fileName);
+                const { data } = client.storage.from('banner-storage').getPublicUrl(fName);
                 
-                // Insert into Approval Database
+                // STEP 3: INSERT NEW RECORD
+                btn.innerHTML = '<div class="spinner"></div> Saving...';
                 const { error: dbError } = await client.from('shop_banners_news').insert({
                     shop_id: shopId,
                     merchant_id: currentUser.id,
                     content_type: 'banner',
                     content_data: data.publicUrl,
-                    status: 'pending' // Goes to the pending queue for admins
+                    status: 'pending' // Send to Admin Queue
                 });
 
                 if (dbError) throw dbError;
+                alert("New Banner uploaded! It will be reviewed by an admin shortly.");
+            } else {
+                alert("Banner successfully deleted.");
             }
 
-            alert("Banners updated! New banners have been sent for admin approval.");
-            window.history.back();
+            window.location.href = "merchant-dashboard.html";
 
         } catch (err) {
             console.error(err);
-            alert("Error: " + err.message);
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> Save';
+            alert("Error saving banner: " + err.message);
+            btn.innerHTML = originalText;
             btn.disabled = false;
         }
     }
