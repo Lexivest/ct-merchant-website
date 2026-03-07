@@ -71,12 +71,12 @@
         .edu-title { font-size: 0.95rem; font-weight: 800; color: #0F1111; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
         .edu-text { font-size: 0.85rem; color: #475569; line-height: 1.5; margin-bottom: 0; }
 
-        /* PORTRAIT BANNER PICKER */
-        .banner-wrapper { width: 100%; max-width: 400px; margin: 0 auto; position: relative;}
+        /* LANDSCAPE BANNER PICKER */
+        .banner-wrapper { width: 100%; margin: 0 auto; position: relative;}
         
         .img-picker {
             background: #F7F7F7; border: 2px dashed #888C8C; border-radius: 12px;
-            aspect-ratio: 3/4; /* STRICT PORTRAIT RATIO */
+            aspect-ratio: 16/9; /* STRICT LANDSCAPE RATIO */
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             cursor: pointer; position: relative; overflow: hidden; transition: 0.2s; text-align: center;
             padding: 20px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
@@ -146,8 +146,8 @@
 
         <div id="main-content" class="hidden">
             <div class="edu-box">
-                <h4 class="edu-title"><i class="fa-solid fa-mobile-screen-button" style="color: #007185;"></i> Portrait Mobile Banner</h4>
-                <p class="edu-text">Upload <strong>1 Portrait Banner</strong> to feature your shop. If you upload a new one, the old banner will be securely deleted. All banners are reviewed by an admin.</p>
+                <h4 class="edu-title"><i class="fa-solid fa-panorama" style="color: #007185;"></i> Landscape Shop Banner</h4>
+                <p class="edu-text">Upload <strong>1 Landscape Banner</strong> to feature your shop. If you upload a new one, the old banner will be securely deleted. All banners are reviewed by an admin.</p>
             </div>
 
             <div class="banner-wrapper">
@@ -156,7 +156,7 @@
                     
                     <!-- Placeholder State -->
                     <i class="fa-solid fa-image main-icon"></i>
-                    <span>Tap to Upload Banner<br>(Portrait Format)</span>
+                    <span>Tap to Upload Banner<br>(Landscape Format)</span>
                     
                     <!-- Image State -->
                     <img id="preview" class="preview-img">
@@ -286,7 +286,7 @@
         document.getElementById('status-badge').className = 'status-badge hidden';
     }
 
-    // --- CROPPER ENGINE (LOCKED TO 3:4 PORTRAIT) ---
+    // --- CROPPER ENGINE (LOCKED TO 16:9 LANDSCAPE) ---
     function handleFileSelect(input) {
         if (input.files && input.files[0]) {
             const file = input.files[0];
@@ -302,9 +302,9 @@
 
                 if(cropper) cropper.destroy();
                 
-                // Enforce Portrait Aspect Ratio (3:4)
+                // Enforce Landscape Aspect Ratio (16:9)
                 cropper = new Cropper(img, { 
-                    aspectRatio: 3 / 4, 
+                    aspectRatio: 16 / 9, 
                     viewMode: 1, 
                     dragMode: 'move', 
                     background: true, 
@@ -327,7 +327,7 @@
         if(!cropper) return;
         
         cropper.getCroppedCanvas({
-            width: 720, height: 960, // Standard high-res portrait bounds
+            width: 1280, height: 720, // Standard HD landscape bounds
             fillColor: '#FFFFFF', imageSmoothingEnabled: true, imageSmoothingQuality: 'high'
         }).toBlob(blob => {
             activeBannerBlob = blob;
