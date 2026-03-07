@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shop Analytics | CT‑Merchant</title>
     
+    <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+    <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
@@ -62,7 +65,25 @@
         }
         .back-btn:hover { color: var(--color-pink); }
         
-        .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; flex: 1; }
+
+        .refresh-btn {
+            background: var(--color-pink);
+            color: white;
+            border: 1px solid var(--color-pink-hover);
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 5px rgba(219, 39, 119, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .refresh-btn:hover { background: var(--color-pink-hover); }
+        .refresh-btn:disabled { background: #565959; border-color: #565959; cursor: not-allowed; box-shadow: none; }
 
         /* --- MAIN CONTAINER --- */
         .container { 
@@ -73,9 +94,11 @@
         }
 
         /* --- CONTENT --- */
-        .section-header { margin-bottom: 24px; }
+        .section-header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;}
         .section-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 6px; color: var(--color-text-main); }
         .section-desc { color: var(--color-text-muted); font-size: 0.95rem; font-weight: 500; }
+        
+        .time-badge { background: white; border: 1px solid var(--color-border); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; color: #565959; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
 
         /* --- STATS GRID --- */
         .stats-grid { 
@@ -116,7 +139,7 @@
         .theme-blue .icon-box { background: #F0F8FF; color: #0284C7; border: 1px solid #BAE6FD; }
         .theme-green .icon-box { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
         .theme-pink .icon-box { background: var(--color-pink-light); color: var(--color-pink); border: 1px solid rgba(219,39,119,0.2); }
-        .theme-grey .icon-box { background: #F7F7F7; color: #888C8C; border: 1px solid #D5D9D9; } 
+        .theme-purple .icon-box { background: #F3E8FF; color: #9333EA; border: 1px solid #E9D5FF; } 
 
         .spinner { width: 44px; height: 44px; border: 4px solid var(--color-pink-light); border-top-color: var(--color-pink); border-radius: 50%; animation: spin 1s linear infinite; margin: 100px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -129,13 +152,18 @@
 </head>
 <body>
 
-    <!-- Full Width Premium Header -->
     <header class="app-header">
         <div class="header-content">
-            <button onclick="history.back()" class="back-btn">
+            <button onclick="window.history.back()" class="back-btn">
                 <i class="fa-solid fa-arrow-left"></i>
             </button>
             <div class="page-title">Shop Analytics</div>
+            
+            <!-- Live Refresh Button -->
+            <button id="btn-refresh" onclick="fetchStats(true)" class="refresh-btn hidden">
+                <i id="refresh-icon" class="fa-solid fa-rotate-right"></i>
+                <span style="display: inline-block;">Refresh</span>
+            </button>
         </div>
     </header>
 
@@ -146,8 +174,11 @@
 
         <div id="content" class="hidden">
             <div class="section-header">
-                <h2 class="section-title">Performance Overview</h2>
-                <p class="section-desc">Track how customers are interacting with your shop.</p>
+                <div>
+                    <h2 class="section-title">Performance Overview</h2>
+                    <p class="section-desc">Track how customers are interacting with your shop.</p>
+                </div>
+                <div class="time-badge">All Time</div>
             </div>
 
             <div class="stats-grid">
@@ -176,12 +207,12 @@
                     <div class="stat-sub">Customers who saved your shop</div>
                 </div>
 
-                <!-- 4. Placeholder (Future Metric) -->
-                <div class="stat-card theme-grey" style="opacity: 0.6;">
+                <!-- 4. Conversion Rate (Now Activated!) -->
+                <div class="stat-card theme-purple">
                     <div class="icon-box"><i class="fa-solid fa-chart-pie"></i></div>
-                    <div class="stat-value">--</div>
+                    <div class="stat-value" id="val-conversion">0.0%</div>
                     <div class="stat-title">Conversion Rate</div>
-                    <div class="stat-sub">Feature coming soon</div>
+                    <div class="stat-sub">Percentage of visitors who contact you</div>
                 </div>
 
             </div>
@@ -210,29 +241,67 @@
         fetchStats();
     };
 
-    async function fetchStats() {
+    async function fetchStats(isRefresh = false) {
+        const refreshBtn = document.getElementById('btn-refresh');
+        const refreshIcon = document.getElementById('refresh-icon');
+
+        if (isRefresh) {
+            refreshBtn.disabled = true;
+            refreshIcon.classList.add('fa-spin');
+        }
+
         try {
-            // Parallel Fetch using count aggregation
-            const [viewsRes, clicksRes, likesRes] = await Promise.all([
-                client.from('shop_views').select('*', { count: 'exact', head: true }).eq('shop_id', shopId),
-                client.from('whatsapp_clicks').select('*', { count: 'exact', head: true }).eq('shop_id', shopId),
-                client.from('shop_likes').select('*', { count: 'exact', head: true }).eq('shop_id', shopId)
+            // Fault-Tolerant Fetching Wrapper: If one fails, it returns 0 instead of crashing the whole app
+            const safeCountFetch = async (table) => {
+                try {
+                    const { count, error } = await client.from(table).select('*', { count: 'exact', head: true }).eq('shop_id', shopId);
+                    if (error) throw error;
+                    return count || 0;
+                } catch (err) {
+                    console.warn(`Failed to fetch ${table} count:`, err);
+                    return 0; // Fallback gracefully
+                }
+            };
+
+            // Parallel Execution
+            const [views, clicks, likes] = await Promise.all([
+                safeCountFetch('shop_views'),
+                safeCountFetch('whatsapp_clicks'),
+                safeCountFetch('shop_likes')
             ]);
 
-            document.getElementById('val-views').textContent = formatNumber(viewsRes.count || 0);
-            document.getElementById('val-clicks').textContent = formatNumber(clicksRes.count || 0);
-            document.getElementById('val-likes').textContent = formatNumber(likesRes.count || 0);
+            // Calculate Conversion Rate (Clicks / Views)
+            let conversionRate = "0.0%";
+            if (views > 0) {
+                conversionRate = ((clicks / views) * 100).toFixed(1) + '%';
+            }
 
+            // Update UI Elements
+            document.getElementById('val-views').textContent = formatNumber(views);
+            document.getElementById('val-clicks').textContent = formatNumber(clicks);
+            document.getElementById('val-likes').textContent = formatNumber(likes);
+            document.getElementById('val-conversion').textContent = conversionRate;
+
+            // Reveal Content
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('content').classList.remove('hidden');
+            refreshBtn.classList.remove('hidden');
 
         } catch (e) {
-            console.error("Stats error", e);
+            console.error("Critical Stats error", e);
             alert("Failed to load statistics.");
+        } finally {
+            if (isRefresh) {
+                refreshBtn.disabled = false;
+                refreshIcon.classList.remove('fa-spin');
+            }
         }
     }
 
     function formatNumber(num) {
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        }
         if (num >= 1000) {
             return (num / 1000).toFixed(1) + 'k';
         }
