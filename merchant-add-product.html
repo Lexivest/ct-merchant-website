@@ -74,6 +74,7 @@
     .switch-sub{font-size:.8rem;color:var(--color-text-muted);margin-top:2px}
     .switch{position:relative;display:inline-block;width:44px;height:24px}
     .switch input{opacity:0;width:0;height:0}
+    .switch input:disabled ~ .slider {background-color: #D5D9D9; cursor: not-allowed;}
     .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#888C8C;transition:.4s;border-radius:34px}
     .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:#fff;transition:.4s;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,.2)}
     input:checked+.slider{background-color:var(--color-pink)}
@@ -82,6 +83,10 @@
     .hidden-input.visible{display:block;animation:slideDown .3s ease}
     @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
     
+    /* Premium Limit Alert */
+    .discount-limit-alert { background: #FEE2E2; border: 1px solid #FECACA; color: #991B1B; padding: 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; display: none; align-items: flex-start; gap: 10px; line-height: 1.4;}
+    .discount-limit-alert i { margin-top: 3px; font-size: 1rem;}
+
     .btn-submit{width:100%;background:var(--color-pink);color:#fff;padding:16px;border-radius:8px;border:none;font-size:1.05rem;font-weight:700;cursor:pointer;margin-top:10px;transition:.2s;box-shadow:0 4px 10px rgba(219,39,119,.3);display:flex;align-items:center;justify-content:center}
     .btn-submit:hover:not(:disabled){background:var(--color-pink-hover)}
     .btn-submit:disabled{background:#E3E6E6;color:#888C8C;cursor:not-allowed;box-shadow:none;border:1px solid #D5D9D9}
@@ -233,7 +238,11 @@
           </div>
 
           <div class="discount-box">
-              <div class="switch-row">
+              <div id="discount-limit-msg" class="discount-limit-alert">
+                  <i class="fa-solid fa-lock"></i> 
+                  <div><strong>Premium Limit Reached</strong><br>You currently have 2 active Special Offers. To add another, please remove the discount from an existing product.</div>
+              </div>
+              <div class="switch-row" id="discount-switch-row">
                   <div>
                       <div class="switch-label">Special Offer?</div>
                       <div class="switch-sub">Apply a 1% to 20% discount</div>
@@ -288,8 +297,10 @@
     // Store blobs for 3 images
     const finalBlobs = { 1: null, 2: null, 3: null };
     
-    // PRODUCTION LIMIT: Set back to 30
+    // PRODUCTION LIMITS
     const MAX_PRODUCTS_LIMIT = 30;
+    const MAX_SPECIAL_OFFERS = 2;
+    let activeSpecialOffersCount = 0;
 
     window.onload=async()=>{
         const{data:{session:e}}=await client.auth.getSession();
@@ -307,24 +318,36 @@
 
     async function enforceUploadLimit() {
         try {
-            // Ask Supabase for the exact count of products for this shop
-            const { count, error } = await client
-                .from('products')
-                .select('*', { count: 'exact', head: true })
-                .eq('shop_id', shopId);
+            // Parallel Fetch for both limits to keep loading instant
+            const [prodRes, discountRes] = await Promise.all([
+                client.from('products').select('*', { count: 'exact', head: true }).eq('shop_id', shopId),
+                client.from('products').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).not('discount_price', 'is', null)
+            ]);
 
-            if (error) throw error;
+            if (prodRes.error) throw prodRes.error;
 
             document.getElementById('page-loader').style.display = 'none';
 
-            if (count >= MAX_PRODUCTS_LIMIT) {
-                // Limit hit: Hide form, show limit message
+            // 1. Enforce Product Limit (30)
+            if (prodRes.count >= MAX_PRODUCTS_LIMIT) {
                 document.getElementById('limit-reached-message').style.display = 'flex';
                 document.getElementById('product-form').style.display = 'none';
             } else {
-                // Safe to upload: Show form
                 document.getElementById('limit-reached-message').style.display = 'none';
                 document.getElementById('product-form').style.display = 'block';
+            }
+
+            // 2. Enforce Special Offers Limit (2)
+            activeSpecialOffersCount = discountRes.count || 0;
+            if (activeSpecialOffersCount >= MAX_SPECIAL_OFFERS) {
+                const switchInput = document.getElementById('discount-switch');
+                switchInput.disabled = true;
+                
+                // Visually grey out the switch row
+                document.getElementById('discount-switch-row').style.opacity = '0.5';
+                
+                // Show the beautiful red error box
+                document.getElementById('discount-limit-msg').style.display = 'flex';
             }
 
         } catch (e) {
@@ -515,6 +538,11 @@
         
         if(!finalBlobs[1]) return alert("Please upload the Main Image (Box 1).");
         
+        // Final Security Check before Uploading
+        if(document.getElementById('discount-switch').checked && activeSpecialOffersCount >= MAX_SPECIAL_OFFERS) {
+            return alert("Security Block: You already have the maximum of 2 Special Offers active. Remove an existing offer to add a new one.");
+        }
+
         t.disabled=!0;
         t.innerHTML='<div class="spinner"></div> Checking limits...';
 
