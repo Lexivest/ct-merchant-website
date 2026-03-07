@@ -95,6 +95,26 @@
         .ticker-content { white-space: nowrap; animation: ticker 60s linear infinite; padding-left: 100%; color: white;}
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
+        /* --- SHOP COVER PHOTO BANNER --- */
+        .shop-cover-wrapper {
+            width: 100%;
+            max-width: 1000px; /* Enforces the empty space on desktop */
+            margin: 24px auto; 
+            padding: 0 16px;
+        }
+        .shop-cover-img {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            max-height: 400px;
+            object-fit: cover;
+            object-position: center;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #D5D9D9;
+            background-color: #F7F7F7;
+            display: block;
+        }
+
         /* --- CONTENT AREA (AMAZON BLOCK LAYOUT) --- */
         .content-block {
             background-color: white;
@@ -373,6 +393,13 @@
     <div id="content-area" class="hidden">
         
         <!-- ========================================== -->
+        <!-- SHOP BANNER (COVER PHOTO)                  -->
+        <!-- ========================================== -->
+        <div id="shop-banner-container" class="shop-cover-wrapper hidden">
+            <img id="shop-banner-img" class="shop-cover-img" alt="Shop Banner" fetchpriority="high">
+        </div>
+
+        <!-- ========================================== -->
         <!-- 1. PRODUCTS GRIDS (WHITE BLOCKS)           -->
         <!-- ========================================== -->
         
@@ -527,7 +554,7 @@
         if (session) currentUser = session.user;
 
         // 2. Global Shop Cache (Safe across users since it contains no user-specific data)
-        const cacheKey = `ctm_shop_v32_${shopId}`;
+        const cacheKey = `ctm_shop_v33_${shopId}`; // Bumped to v33 for new banner logic
         const cacheStr = localStorage.getItem(cacheKey);
         
         if (cacheStr) {
@@ -566,6 +593,7 @@
             let products = [];
             let likeCountValue = 0;
             let approvedNews = [];
+            let shopBanner = null;
 
             const promises = [];
 
@@ -592,11 +620,21 @@
                 .catch(e => console.warn("Likes fetch failed", e))
             );
 
-            // D. News
+            // D. Banners & News (Combined Request for Speed)
             promises.push(
-                client.from('shop_banners_news').select('content_data').eq('shop_id', shopId).eq('status', 'approved').eq('content_type', 'news').order('created_at', { ascending: false })
-                .then(res => { if(res.data) approvedNews = res.data.map(n => n.content_data); })
-                .catch(e => console.warn("News fetch failed", e))
+                client.from('shop_banners_news')
+                .select('content_type, content_data')
+                .eq('shop_id', shopId)
+                .eq('status', 'approved')
+                .order('created_at', { ascending: false })
+                .then(res => { 
+                    if(res.data) {
+                        approvedNews = res.data.filter(i => i.content_type === 'news').map(n => n.content_data);
+                        const banners = res.data.filter(i => i.content_type === 'banner');
+                        if (banners.length > 0) shopBanner = banners[0].content_data; // Get newest banner
+                    } 
+                })
+                .catch(e => console.warn("News/Banner fetch failed", e))
             );
 
             // E. User Specific Data (Only if logged in)
@@ -622,7 +660,8 @@
                 shop: shopData,
                 products: products,
                 likeCount: likeCountValue,
-                approvedNews: approvedNews
+                approvedNews: approvedNews,
+                shopBanner: shopBanner
             };
 
             const newCacheStr = JSON.stringify(newData);
@@ -662,6 +701,17 @@
 
         // Set Top Title
         document.getElementById('header-shop-name').textContent = s.name;
+
+        // --- SHOP BANNER (COVER PHOTO) ---
+        const bannerContainer = document.getElementById('shop-banner-container');
+        const bannerImg = document.getElementById('shop-banner-img');
+        
+        if (data.shopBanner) {
+            if (bannerImg.src !== data.shopBanner) bannerImg.src = data.shopBanner;
+            bannerContainer.classList.remove('hidden');
+        } else {
+            bannerContainer.classList.add('hidden');
+        }
 
         // --- ANTI-FLICKER TICKER LOGIC ---
         const cityName = s.cities?.name || "Local";
