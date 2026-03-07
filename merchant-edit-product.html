@@ -40,6 +40,14 @@
         .edu-title { font-size: 0.95rem; font-weight: 800; color: #0F1111; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
         .edu-text { font-size: 0.85rem; color: #475569; line-height: 1.5; margin-bottom: 0; }
 
+        /* --- REJECTION BANNER STYLES --- */
+        .rejection-banner { background: #FEF2F2; border: 1px solid #FECACA; padding: 16px; border-radius: 8px; margin-bottom: 24px; display: none; align-items: flex-start; gap: 12px; }
+        .rejection-banner.visible { display: flex; animation: slideDown 0.3s ease; }
+        .rejection-icon { color: #DC2626; font-size: 1.5rem; margin-top: 2px; }
+        .rejection-content { flex: 1; }
+        .rejection-title { color: #991B1B; font-weight: 800; font-size: 1rem; margin-bottom: 6px; }
+        .rejection-text { color: #B91C1C; font-size: 0.9rem; line-height: 1.5; }
+
         /* 3-Image Grid System with Delete Buttons */
         .img-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
         .img-picker { background: #F7F7F7; border: 2px dashed #888C8C; border-radius: 8px; aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; transition: 0.2s; text-align: center; padding: 10px; }
@@ -78,15 +86,19 @@
         .switch-sub { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 2px; }
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
+        .switch input:disabled ~ .slider { background-color: #D5D9D9; cursor: not-allowed; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #888C8C; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #fff; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
         input:checked + .slider { background-color: var(--color-pink); }
         input:checked + .slider:before { transform: translateX(20px); }
         .hidden-input { display: none; margin-top: 16px; }
         .hidden-input.visible { display: block; animation: slideDown 0.3s ease; }
+        
+        .discount-limit-alert { background: #FEE2E2; border: 1px solid #FECACA; color: #991B1B; padding: 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; display: none; align-items: flex-start; gap: 10px; line-height: 1.4;}
+
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .btn-submit { width: 100%; background: var(--color-pink); color: #fff; padding: 16px; border-radius: 8px; border: none; font-size: 1.05rem; font-weight: 700; cursor: pointer; margin-top: 10px; transition: .2s; box-shadow: 0 4px 10px rgba(219,39,119,.3); display: flex; align-items: center; justify-content: center; }
+        .btn-submit { width: 100%; background: var(--color-pink); color: #fff; padding: 16px; border-radius: 8px; border: none; font-size: 1.05rem; font-weight: 700; cursor: pointer; margin-top: 10px; transition: .2s; box-shadow: 0 4px 10px rgba(219,39,119,.3); display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-submit:hover:not(:disabled) { background: var(--color-pink-hover); }
         .btn-submit:disabled { background: #E3E6E6; color: #888C8C; cursor: not-allowed; box-shadow: none; border: 1px solid #D5D9D9; }
 
@@ -142,6 +154,19 @@
         <!-- CONTENT FORM -->
         <form id="content" class="card hidden" onsubmit="handleUpdate(event)">
             
+            <!-- THE REJECTION BANNER -->
+            <div id="rejection-banner" class="rejection-banner">
+                <i class="fa-solid fa-triangle-exclamation rejection-icon"></i>
+                <div class="rejection-content">
+                    <div class="rejection-title">Action Required: Product Rejected</div>
+                    <div class="rejection-text">
+                        <strong>Reason:</strong> <span id="rejection-text-content"></span>
+                        <br><br>
+                        <em>Please fix the issues mentioned above and click "Resubmit Update" at the bottom to send it back to the admins for approval.</em>
+                    </div>
+                </div>
+            </div>
+
             <div class="edu-box">
                 <h4 class="edu-title"><i class="fa-solid fa-boxes-stacked" style="color: #007185;"></i> Storage Manager</h4>
                 <p class="edu-text">Replacing or deleting an image here will securely delete the old file from your cloud storage, keeping your limits intact.</p>
@@ -227,7 +252,11 @@
             </div>
 
             <div class="discount-box">
-                <div class="switch-row">
+                <div id="discount-limit-msg" class="discount-limit-alert">
+                    <i class="fa-solid fa-lock" style="margin-top: 2px;"></i> 
+                    <div><strong>Premium Limit Reached</strong><br>You currently have 2 active Special Offers. Remove the discount from another product to enable it here.</div>
+                </div>
+                <div class="switch-row" id="discount-switch-row">
                     <div>
                         <div class="switch-label">Special Offer?</div>
                         <div class="switch-sub">Apply a 1% to 20% discount</div>
@@ -247,7 +276,9 @@
                 <textarea id="desc" class="input" required></textarea>
             </div>
 
-            <button type="submit" id="btn-submit" class="btn-submit">Update Product</button>
+            <button type="submit" id="btn-submit" class="btn-submit">
+                <i id="btn-icon" class="fa-solid fa-cloud-arrow-up"></i> <span id="btn-text">Update Product</span>
+            </button>
 
             <!-- DANGER ZONE -->
             <div class="danger-zone">
@@ -295,6 +326,9 @@
     
     let cropper = null;
     let activeCropIndex = 1;
+    
+    // Limits
+    const MAX_SPECIAL_OFFERS = 2;
 
     window.onload = async () => {
         if (!productId) { showError("No Product ID provided."); return; }
@@ -312,7 +346,27 @@
         try {
             const { data, error } = await client.from('products').select('*').eq('id', productId).single();
             if (error || !data) throw new Error("Product data is missing or deleted.");
+            
             currentProduct = data;
+            
+            // Check Special Offer Limits for this Shop (Excluding THIS product)
+            const { count: specialCount } = await client
+                .from('products')
+                .select('id', { count: 'exact', head: true })
+                .eq('shop_id', currentProduct.shop_id)
+                .not('discount_price', 'is', null)
+                .neq('id', productId); 
+
+            if (specialCount >= MAX_SPECIAL_OFFERS) {
+                // If they are already at the limit from other products, lock the switch
+                const isCurrentlySpecial = currentProduct.discount_price && currentProduct.discount_price < currentProduct.price;
+                if (!isCurrentlySpecial) {
+                    document.getElementById('discount-switch').disabled = true;
+                    document.getElementById('discount-switch-row').style.opacity = '0.5';
+                    document.getElementById('discount-limit-msg').style.display = 'flex';
+                }
+            }
+
             populateForm(data);
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('content').classList.remove('hidden');
@@ -329,6 +383,19 @@
     }
 
     function populateForm(p) {
+        // Handle Rejection Banner
+        const rejectionBanner = document.getElementById('rejection-banner');
+        if (p.is_approved === false && p.rejection_reason) {
+            document.getElementById('rejection-text-content').textContent = p.rejection_reason;
+            rejectionBanner.classList.add('visible');
+            
+            // Change button text to reflect resubmission
+            document.getElementById('btn-icon').className = 'fa-solid fa-paper-plane';
+            document.getElementById('btn-text').textContent = 'Resubmit Update';
+        } else {
+            rejectionBanner.classList.remove('visible');
+        }
+
         // 1. Populate Images
         if (p.image_url) { existingUrls[1] = p.image_url; showPreview(1, p.image_url); }
         if (p.image_url_2) { existingUrls[2] = p.image_url_2; showPreview(2, p.image_url_2); }
@@ -497,7 +564,7 @@
         try {
             // STEP 1: UPLOAD NEW IMAGES FIRST
             btn.disabled = true;
-            btn.innerHTML = '<div class="spinner" style="border-top-color: #888C8C;"></div> Uploading New Images...';
+            btn.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> Uploading New Images...';
             
             const uploadPromises = [];
             for(let idx = 1; idx <= 3; idx++) {
@@ -523,8 +590,8 @@
             const finalUrl2 = url2 || (deletedSlots[2] ? null : existingUrls[2]);
             const finalUrl3 = url3 || (deletedSlots[3] ? null : existingUrls[3]);
 
-            // STEP 2: UPDATE DATABASE
-            btn.innerHTML = '<div class="spinner" style="border-top-color: #888C8C;"></div> Saving Database...';
+            // STEP 2: UPDATE DATABASE & CLEAR REJECTION REASON
+            btn.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> Saving Database...';
             const { error: updateError } = await client.from('products').update({
                 name: document.getElementById('name').value.trim(),
                 description: document.getElementById('desc').value.trim(),
@@ -537,18 +604,21 @@
                 image_url_3: finalUrl3,
                 stock_count: parseInt(document.getElementById('stock').value),
                 attributes: attributes,
-                is_available: parseInt(document.getElementById('stock').value) > 0
+                is_available: parseInt(document.getElementById('stock').value) > 0,
+                
+                // Puts the product back into the Admin queue!
+                is_approved: false, 
+                rejection_reason: null
             }).eq('id', productId);
 
             if (updateError) throw updateError;
 
             // STEP 3: GARBAGE COLLECTION (Safe to do last!)
-            btn.innerHTML = '<div class="spinner" style="border-top-color: #888C8C;"></div> Cleaning Storage...';
+            btn.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> Cleaning Storage...';
             const pathsToDelete = [];
             for (let i = 1; i <= 3; i++) {
                 if (existingUrls[i] && (deletedSlots[i] || finalBlobs[i])) {
                     try {
-                        // Bulletproof extraction of the exact filename
                         const fileName = decodeURIComponent(new URL(existingUrls[i]).pathname.split('/').pop());
                         if (fileName) pathsToDelete.push(fileName);
                     } catch(e) { console.warn("Failed to parse URL:", e); }
@@ -558,8 +628,11 @@
             if (pathsToDelete.length > 0) {
                 await client.storage.from('products').remove(pathsToDelete);
             }
+            
+            // SMART CACHE INVALIDATION
+            localStorage.removeItem(`ctm_prod_v39_${productId}`);
 
-            alert("Product updated successfully!");
+            alert("Product updated and resubmitted for admin approval!");
             window.location.href = "merchant-dashboard.html";
 
         } catch (err) {
