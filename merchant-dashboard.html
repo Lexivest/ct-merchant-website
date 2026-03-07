@@ -133,6 +133,31 @@
             border-color: #B0B5B5; 
         }
 
+        /* Action Badge Notification */
+        .notify-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #DC2626;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 800;
+            min-width: 24px;
+            height: 24px;
+            padding: 0 6px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(220, 38, 38, 0.5);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            border: 2px solid white;
+        }
+        @keyframes popIn {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
         .icon-box {
             width: 50px; height: 50px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
@@ -206,6 +231,8 @@
                 </div>
 
                 <div onclick="navTo('merchant-products.html')" class="dash-card card-blue">
+                    <!-- NOTIFICATION BADGE ADDED HERE -->
+                    <div id="edit-product-badge" class="notify-badge hidden">0</div>
                     <div class="icon-box"><i class="fa-solid fa-pen-to-square"></i></div>
                     <div class="card-title">Edit Products</div>
                 </div>
@@ -329,6 +356,26 @@
                 if (data.status === 'pending') {
                     document.getElementById('pending-notice').classList.remove('hidden');
                 }
+
+                // ========================================================
+                // NOTIFICATION BADGE LOGIC (REJECTED PRODUCTS CHECK)
+                // ========================================================
+                try {
+                    const { count: rejectedCount, error: rejectErr } = await client
+                        .from('products')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('shop_id', data.id)
+                        .eq('is_approved', false)
+                        .not('rejection_reason', 'is', null);
+
+                    if (!rejectErr && rejectedCount > 0) {
+                        const badge = document.getElementById('edit-product-badge');
+                        badge.textContent = rejectedCount;
+                        badge.classList.remove('hidden');
+                    }
+                } catch(e) { console.warn("Failed to check rejected products", e); }
+                // ========================================================
+
 
                 // Check if they have paid the verification fee
                 const { data: paymentRecord } = await client
