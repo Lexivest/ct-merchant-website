@@ -288,15 +288,15 @@
             if (profileErr) {
                 console.error("Network or database error fetching profile:", profileErr.message);
                 document.getElementById('initial-loader').style.display = 'none';
-                alert("Network error loading profile. Please refresh the page.");
                 return; 
             }
 
-            // 2. Handle Missing Profile SAFELY
-            if (!profile) {
-                console.warn("User profile not found. Still syncing or deleted.");
+            // --- THE GHOST RECOVERY BUG FIX ---
+            // If the profile row doesn't exist, log them out and force them to setup again!
+            if (!profile || !profile.city_id) {
+                console.warn("User profile not found. Deleted or incomplete.");
                 document.getElementById('initial-loader').style.display = 'none';
-                alert("Your profile data is missing or was deleted. Please sign in again to set up your account.");
+                alert("Your profile data is missing or was deleted. Please sign in again to complete setup.");
                 await client.auth.signOut();
                 localStorage.removeItem(CACHE_KEY);
                 window.location.href = "index.html";
