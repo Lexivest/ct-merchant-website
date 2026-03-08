@@ -167,7 +167,7 @@
         .card-title { font-weight: 800; font-size: 0.95rem; color: var(--color-text-main); margin-bottom: 4px;}
         .card-subtitle { font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600; }
 
-        /* Colors (Maintained for UX sorting, adapted to premium look) */
+        /* Colors */
         .card-green .icon-box { background: #DCFCE7; color: #16A34A; }
         .card-blue .icon-box { background: #DBEAFE; color: #2563EB; }
         .card-purple .icon-box { background: #F3E8FF; color: #9333EA; }
@@ -231,7 +231,7 @@
                 </div>
 
                 <div onclick="navTo('merchant-products.html')" class="dash-card card-blue">
-                    <!-- NOTIFICATION BADGE ADDED HERE -->
+                    <!-- NOTIFICATION BADGE -->
                     <div id="edit-product-badge" class="notify-badge hidden">0</div>
                     <div class="icon-box"><i class="fa-solid fa-pen-to-square"></i></div>
                     <div class="card-title">Edit Products</div>
@@ -322,7 +322,6 @@
             document.addEventListener(evt, resetInactivityTimer, { passive: true });
         });
         
-        // Start the timer immediately
         resetInactivityTimer();
         // ==========================================
 
@@ -335,15 +334,42 @@
 
         async function fetchShop(userId) {
             try {
-                // Fetch shop
-                const { data, error } = await client.from('shops').select('*').eq('owner_id', userId).single();
+                // --- PRE-FLIGHT SUSPENSION CHECK ---
+                // Prevents a suspended user from sneaking directly into merchant-dashboard.html
+                const { data: profile, error: profileErr } = await client
+                    .from('profiles')
+                    .select('is_suspended, status')
+                    .eq('id', userId)
+                    .maybeSingle();
 
-                if (error || !data) {
-                    alert("Shop data not found. Please register a shop first.");
+                if (profileErr) {
+                    console.error("Network error verifying profile:", profileErr.message);
+                } else if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+                    alert("🔒 Your account access has been restricted by administration.");
+                    await client.auth.signOut();
+                    window.location.href = "index.html";
+                    return;
+                }
+
+                // --- FETCH SHOP DATA (FIXED) ---
+                const { data, error } = await client.from('shops').select('*').eq('owner_id', userId).maybeSingle();
+
+                // 1. Safe Network Error Check
+                if (error) {
+                    console.error("Shop Fetch Error:", error.message);
+                    alert("Connection error while verifying your shop. Please check your network and try again.");
                     window.location.href = "user-dashboard.html";
                     return;
                 }
 
+                // 2. Missing Shop Check
+                if (!data) {
+                    alert("Shop data not found. Please register a shop first.");
+                    window.location.href = "shop-registration.html";
+                    return;
+                }
+
+                // 3. Rejected Application Check
                 if (data.status === 'rejected') {
                     alert("Your shop application was rejected. Please contact support.");
                     window.location.href = "user-dashboard.html";
@@ -374,7 +400,6 @@
                         badge.classList.remove('hidden');
                     }
                 } catch(e) { console.warn("Failed to check rejected products", e); }
-                // ========================================================
 
 
                 // Check if they have paid the verification fee
@@ -392,8 +417,6 @@
                 const verifySubtitle = document.getElementById('verify-subtitle');
                 const serviceFeeCard = document.getElementById('service-fee-card');
                 const serviceFeeSubtitle = document.getElementById('service-fee-subtitle');
-                
-                // NEW: View Shop Elements
                 const viewShopCard = document.getElementById('view-shop-card');
                 const viewShopSubtitle = document.getElementById('view-shop-subtitle');
                 const viewShopIcon = document.getElementById('view-shop-icon');
@@ -402,7 +425,6 @@
                 if (data.is_open === false) {
                     document.getElementById('suspended-notice').classList.remove('hidden');
                     
-                    // Lock the View Shop Card
                     viewShopCard.className = 'dash-card card-locked';
                     viewShopIcon.innerHTML = '<i class="fa-solid fa-store-slash"></i>';
                     viewShopSubtitle.textContent = 'Suspended';
@@ -411,13 +433,11 @@
                         alert("🔒 Your shop access has been restricted by administration. Please contact support via support@ct-merchant.com to resolve your account status.");
                     };
                 } else {
-                    // Shop is open, normal behavior
                     viewShopCard.onclick = () => viewPublicShop();
                 }
 
                 // --- 2. VERIFICATION AND SERVICE FEE LOGIC ---
                 if (data.is_verified) {
-                    // Fully verified by Admin
                     verifyCard.className = 'dash-card card-green';
                     verifyCard.querySelector('.card-title').textContent = 'Verified Shop';
                     verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-check-double"></i>';
@@ -425,11 +445,9 @@
                     verifySubtitle.classList.remove('hidden');
                     verifyCard.onclick = () => alert('Your shop is already physically verified!');
 
-                    // Unlock Service Fee
                     serviceFeeCard.onclick = () => navTo('service-fee.html');
 
                 } else {
-                    // Not verified yet
                     if (hasPaid) {
                         verifyCard.className = 'dash-card card-blue';
                         verifyCard.querySelector('.card-title').textContent = 'Dispatching Agent';
@@ -444,7 +462,6 @@
                         verifyCard.onclick = () => navTo('remita.html');
                     }
 
-                    // Lock the Service Fee Card (Greyed out)
                     serviceFeeCard.className = 'dash-card card-locked';
                     document.getElementById('service-fee-icon').innerHTML = '<i class="fa-solid fa-lock"></i>';
                     serviceFeeSubtitle.textContent = 'Verification Req.';
@@ -459,7 +476,7 @@
 
             } catch (e) {
                 console.error(e);
-                alert("Error loading dashboard");
+                alert("An unexpected error occurred while loading your dashboard.");
                 window.location.href = "user-dashboard.html";
             }
         }
