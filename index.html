@@ -94,12 +94,15 @@
     .forgot-password{display:block;font-size:.85rem;color:rgba(255,255,255,.8);text-decoration:none;margin-top:8px;margin-bottom:12px;cursor:pointer;text-align:right}
     .forgot-password:hover{color:#db2777}
     .main-header{position:sticky!important;top:0;z-index:9999}
+    
+    /* MODAL OVERLAY FIXED CSS */
     .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.85);backdrop-filter:blur(5px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;visibility:hidden;transition:all .3s ease}
     .modal-overlay.active{opacity:1;visibility:visible}
+    .hidden{display:none!important}
+    
     .modal-card{background:#fff;border-radius:1.5rem;max-width:400px;width:100%;padding:2rem;box-shadow:0 25px 50px -12px rgba(0,0,0,.5)}
     .modal-title{font-size:1.25rem;font-weight:800;color:#2E1065;text-align:center;margin-bottom:.5rem}
     .modal-subtitle{color:#64748b;font-size:.875rem;text-align:center;margin-bottom:1.5rem}
-    .hidden{display:none!important}
     .modal-input-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem}
     .modal-label{font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-left:.25rem}
     .modal-input-wrapper{position:relative;width:100%}
@@ -564,8 +567,11 @@
     }
 
     // ==========================================
-    // BULLETPROOF EMAIL LOGIN
+    // GHOST RECOVERY: EMAIL LOGIN
     // ==========================================
+    let pendingGoogleUserId = null;
+    let pendingGoogleUserName = null;
+
     async function handleHeroLogin() {
         const email = document.getElementById('hero-email').value;
         const pass = document.getElementById('hero-password').value;
@@ -584,30 +590,41 @@
             if (authErr) throw authErr;
 
             if (authData && authData.user) {
-                // --- PRE-FLIGHT PROFILE CHECK (FIXED) ---
                 const { data: profile, error: profileErr } = await client
                     .from('profiles')
-                    .select('is_suspended')
+                    .select('city_id, area_id, is_suspended')
                     .eq('id', authData.user.id)
                     .maybeSingle();
 
-                // 1. Handle Network Error gracefully (do not log out)
                 if (profileErr) {
                     await client.auth.signOut();
                     throw new Error("Network error verifying profile. Please try again.");
                 }
 
-                // 2. ONLY ban if explicitly suspended
                 if (profile && profile.is_suspended === true) {
                     await client.auth.signOut();
                     throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
                 }
 
-                // 3. Update IP and login
-                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
+                // GHOST RECOVERY CHECK
+                if (profile && profile.city_id && profile.area_id) {
+                    await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
+                    window.location.href = "user-dashboard.html";
+                } else {
+                    // Profile deleted or incomplete -> Show Setup Modal
+                    pendingGoogleUserId = authData.user.id;
+                    pendingGoogleUserName = authData.user.user_metadata?.full_name || '';
+                    
+                    const cModal = document.getElementById('complete-profile-modal');
+                    cModal.classList.remove('hidden');
+                    void cModal.offsetWidth; // Force Reflow
+                    cModal.classList.add('active');
+                    
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    await fetchCitiesForModal();
+                }
             }
-            
-            window.location.href = "user-dashboard.html";
         } catch (err) {
             alert(err.message);
             btn.innerHTML = originalText;
@@ -616,11 +633,8 @@
     }
 
     // ==========================================
-    // BULLETPROOF GOOGLE LOGIN
+    // GHOST RECOVERY: GOOGLE LOGIN
     // ==========================================
-    let pendingGoogleUserId = null;
-    let pendingGoogleUserName = null;
-
     async function handleGoogleLogin(e) {
         const btn = document.getElementById('hero-login-btn');
         const originalText = btn.innerHTML;
@@ -636,34 +650,37 @@
             if (authErr) throw authErr;
 
             const user = authData.user;
-            pendingGoogleUserId = user.id;
-            pendingGoogleUserName = user.user_metadata?.full_name || '';
-
-            // --- PRE-FLIGHT PROFILE CHECK (FIXED) ---
+            
             const { data: profile, error: profileErr } = await client
                 .from('profiles')
                 .select('city_id, area_id, is_suspended')
                 .eq('id', user.id)
                 .maybeSingle();
 
-            // 1. Handle Network Error gracefully
             if (profileErr) {
                 await client.auth.signOut();
                 throw new Error("Network error verifying profile. Please try again.");
             }
 
-            // 2. ONLY ban if explicitly suspended
             if (profile && profile.is_suspended === true) {
                 await client.auth.signOut();
                 throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
             }
 
-            // 3. Success Routing
+            // GHOST RECOVERY CHECK
             if (profile && profile.city_id && profile.area_id) {
                 await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
                 window.location.href = "user-dashboard.html";
             } else {
-                document.getElementById('complete-profile-modal').classList.remove('hidden');
+                pendingGoogleUserId = user.id;
+                pendingGoogleUserName = user.user_metadata?.full_name || '';
+                
+                // FOOLPROOF MODAL VISIBILITY
+                const cModal = document.getElementById('complete-profile-modal');
+                cModal.classList.remove('hidden');
+                void cModal.offsetWidth; // Force Reflow
+                cModal.classList.add('active');
+                
                 btn.innerHTML = originalText;
                 btn.disabled = false;
                 await fetchCitiesForModal();
@@ -737,7 +754,9 @@
 
     async function cancelGoogleLogin() {
         await client.auth.signOut();
-        document.getElementById('complete-profile-modal').classList.add('hidden');
+        const cModal = document.getElementById('complete-profile-modal');
+        cModal.classList.remove('active');
+        setTimeout(() => cModal.classList.add('hidden'), 300);
     }
 
     // --- PASSWORD RESET ---
