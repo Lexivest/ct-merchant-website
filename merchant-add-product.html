@@ -175,7 +175,7 @@
             
             <div class="edu-box">
                 <h4 class="edu-title"><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--color-pink);"></i> Powered by CT Studio</h4>
-                <p class="edu-text">Tap an image slot below to open the studio. We compress your images to save your data, and auto-format them for the marketplace!</p>
+                <p class="edu-text">Tap an image slot below to open the studio. We auto-compress your images (Max 4MB input) to perfectly balance data savings and high resolution.</p>
             </div>
 
             <!-- 3 IMAGE GRID -->
@@ -378,6 +378,7 @@
     let activeCropIndex = 1;
     let currentOriginalSrc = null; 
     
+    const MAX_UPLOAD_SIZE = 4 * 1024 * 1024; // 4MB
     const originalSizes = { 1: 0, 2: 0, 3: 0 };
     const finalBlobs = { 1: null, 2: null, 3: null };
     
@@ -459,13 +460,19 @@
                 input.value = '';
                 return;
             }
+
+            if (file.size > MAX_UPLOAD_SIZE) {
+                alert("File is too large! The maximum allowed upload size is 4MB.");
+                input.value = '';
+                return;
+            }
             
             activeCropIndex = index;
-            originalSizes[index] = file.size; // Store size to calculate savings later
+            originalSizes[index] = file.size; 
             
             const reader = new FileReader();
             reader.onload = (e) => {
-                currentOriginalSrc = e.target.result; // Store original base64 for "Fit Borders" button
+                currentOriginalSrc = e.target.result; 
                 
                 const modal = document.getElementById('crop-modal');
                 const img = document.getElementById('crop-image');
@@ -476,7 +483,6 @@
 
                 if (cropper) cropper.destroy();
                 
-                // Reset Studio Controls
                 document.getElementById('slide-bright').value = 100;
                 document.getElementById('slide-contrast').value = 100;
                 updateLiveFilters();
@@ -492,7 +498,7 @@
                 });
             };
             reader.readAsDataURL(file);
-            input.value = ''; // Reset input to allow selecting same file again if needed
+            input.value = ''; 
         }
     }
 
@@ -512,16 +518,13 @@
             canvas.height = size;
             const ctx = canvas.getContext('2d');
             
-            // Fill white background
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, size, size);
             
-            // Draw image perfectly centered
             const x = (size - img.width) / 2;
             const y = (size - img.height) / 2;
             ctx.drawImage(img, x, y);
             
-            // Re-init cropper with perfectly square image
             const paddedSrc = canvas.toDataURL('image/jpeg', 1.0);
             const cropImg = document.getElementById('crop-image');
             
@@ -532,7 +535,7 @@
                 viewMode: 1, 
                 dragMode: 'move', 
                 background: false, 
-                autoCropArea: 1, // Automatically selects the ENTIRE square!
+                autoCropArea: 1, 
                 responsive: true
             });
             
@@ -552,7 +555,6 @@
         document.getElementById('val-bright').textContent = bright + '%';
         document.getElementById('val-contrast').textContent = contrast + '%';
         
-        // Apply filter to cropper preview box instantly
         const container = document.querySelector('.cropper-view-box img');
         if (container) {
             container.style.filter = `brightness(${bright}%) contrast(${contrast}%)`;
@@ -574,7 +576,6 @@
         btnApply.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
         btnApply.disabled = true;
 
-        // 1. Get Base Crop
         const croppedCanvas = cropper.getCroppedCanvas({
             width: 800,
             height: 800,
@@ -583,7 +584,6 @@
             imageSmoothingQuality: 'high'
         });
 
-        // 2. Apply Studio Filters & Watermark
         const finalCanvas = document.createElement('canvas');
         finalCanvas.width = 800;
         finalCanvas.height = 800;
@@ -595,7 +595,7 @@
         ctx.drawImage(croppedCanvas, 0, 0);
 
         if (document.getElementById('check-watermark').checked) {
-            ctx.filter = 'none'; // Reset filter for text
+            ctx.filter = 'none'; 
             ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
             ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
             ctx.shadowBlur = 4;
@@ -607,48 +607,57 @@
             ctx.fillText('Verified CTMerchant', 780, 780);
         }
 
-        // 3. Compress & Save
-        finalCanvas.toBlob(blob => {
-            finalBlobs[activeCropIndex] = blob;
-            
-            // UI Updates
-            const localUrl = URL.createObjectURL(blob);
-            const previewImg = document.getElementById(`preview-${activeCropIndex}`);
-            previewImg.src = localUrl;
-            previewImg.style.display = 'block';
-            document.getElementById(`del-btn-${activeCropIndex}`).classList.remove('hidden');
+        // AUTO-TUNING COMPRESSION LOOP (Target: max 100KB)
+        let quality = 0.92;
+        const maxBytes = 100 * 1024; // 100KB limit
 
-            if (activeCropIndex === 1) {
-                document.getElementById('live-placeholder').style.display = 'none';
-                const liveImg = document.getElementById('live-img');
-                liveImg.src = localUrl;
-                liveImg.style.display = 'block';
-            }
+        function attemptCompress() {
+            finalCanvas.toBlob(blob => {
+                if (blob.size <= maxBytes || quality <= 0.4) {
+                    finalBlobs[activeCropIndex] = blob;
+                    
+                    const localUrl = URL.createObjectURL(blob);
+                    const previewImg = document.getElementById(`preview-${activeCropIndex}`);
+                    previewImg.src = localUrl;
+                    previewImg.style.display = 'block';
+                    document.getElementById(`del-btn-${activeCropIndex}`).classList.remove('hidden');
 
-            // Calculate and display Data Savings
-            const origSize = originalSizes[activeCropIndex];
-            const newSize = blob.size;
-            const savingsBadge = document.getElementById(`savings-${activeCropIndex}`);
-            
-            if (origSize && origSize > newSize) {
-                const percent = Math.round(((origSize - newSize) / origSize) * 100);
-                const newKb = Math.round(newSize / 1024);
-                savingsBadge.innerHTML = `<i class="fa-solid fa-arrow-down"></i> Saved ${percent}% (${newKb}KB)`;
-                savingsBadge.style.display = 'block';
-            } else {
-                const newKb = Math.round(newSize / 1024);
-                savingsBadge.innerHTML = `<i class="fa-solid fa-check"></i> Ready (${newKb}KB)`;
-                savingsBadge.style.display = 'block';
-            }
+                    if (activeCropIndex === 1) {
+                        document.getElementById('live-placeholder').style.display = 'none';
+                        const liveImg = document.getElementById('live-img');
+                        liveImg.src = localUrl;
+                        liveImg.style.display = 'block';
+                    }
 
-            btnApply.innerHTML = originalText;
-            btnApply.disabled = false;
-            closeCropModal();
-            
-        }, 'image/jpeg', 0.75); // 75% quality for web optimization
+                    // Calculate Data Savings
+                    const origSize = originalSizes[activeCropIndex];
+                    const newSize = blob.size;
+                    const savingsBadge = document.getElementById(`savings-${activeCropIndex}`);
+                    
+                    if (origSize && origSize > newSize) {
+                        const percent = Math.round(((origSize - newSize) / origSize) * 100);
+                        const newKb = Math.round(newSize / 1024);
+                        savingsBadge.innerHTML = `<i class="fa-solid fa-arrow-down"></i> Saved ${percent}% (${newKb}KB)`;
+                        savingsBadge.style.display = 'block';
+                    } else {
+                        const newKb = Math.round(newSize / 1024);
+                        savingsBadge.innerHTML = `<i class="fa-solid fa-check"></i> Ready (${newKb}KB)`;
+                        savingsBadge.style.display = 'block';
+                    }
+
+                    btnApply.innerHTML = originalText;
+                    btnApply.disabled = false;
+                    closeCropModal();
+                } else {
+                    quality -= 0.05;
+                    attemptCompress();
+                }
+            }, 'image/jpeg', quality);
+        }
+
+        attemptCompress();
     }
 
-    // UI DELETION
     function removeImage(e, slot) {
         e.preventDefault(); 
         e.stopPropagation(); 
@@ -669,7 +678,6 @@
         }
     }
 
-    // --- DYNAMIC TEMPLATES LOGIC ---
     function handleCategoryChange() {
         const cat = document.getElementById('category').value;
         const container = document.getElementById('dynamic-fields-container');
@@ -802,7 +810,6 @@
         updateLivePreview();
     }
 
-    // --- SUBMISSION ---
     async function handleSubmit(e) {
         e.preventDefault();
         const btnSubmit = document.getElementById('btn-submit');
