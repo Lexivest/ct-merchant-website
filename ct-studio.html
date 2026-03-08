@@ -243,7 +243,7 @@
                 <button class="upload-btn-main" onclick="document.getElementById('file-input').click()">
                     <i class="fa-solid fa-image"></i> Select Photo from Device
                 </button>
-                <p style="margin-top: 16px; color: var(--text-muted); font-size: 0.9rem;">High-res photos accepted. Processed locally.</p>
+                <p style="margin-top: 16px; color: var(--text-muted); font-size: 0.9rem;">High-res photos accepted (Max 4MB). Processed locally.</p>
                 <input type="file" id="file-input" hidden accept="image/*" onchange="handleFileUpload(event)">
             </div>
             
@@ -295,6 +295,7 @@
     let originalFileSize = 0;
     
     // Limits
+    const MAX_UPLOAD_SIZE = 4 * 1024 * 1024; // 4MB
     const PRODUCT_MAX = 800; // 800x800
     const BANNER_MAX_W = 1280; // 1280x720
     const BANNER_MAX_H = 720;
@@ -330,38 +331,42 @@
     function handleFileUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
-        if (!file.type.startsWith('image/')) return alert("Please select an image file.");
+        if (!file.type.startsWith('image/')) {
+            alert("Please select a valid image file.");
+            event.target.value = '';
+            return;
+        }
+        if (file.size > MAX_UPLOAD_SIZE) {
+            alert("File is too large! The maximum allowed upload size is 4MB.");
+            event.target.value = '';
+            return;
+        }
 
         originalFileSize = file.size;
         document.getElementById('stat-orig').textContent = (file.size / 1024).toFixed(1) + ' KB';
 
         const reader = new FileReader();
         reader.onload = (e) => {
-            // Hide overlay, show workspace
             uploadOverlay.style.display = 'none';
             cropperWrapper.style.display = 'block';
             btnProcess.disabled = false;
 
             workspaceImg.src = e.target.result;
             
-            // Destroy old cropper if exists
             if (cropper) cropper.destroy();
             
-            // Init Cropper
             cropper = new Cropper(workspaceImg, {
                 aspectRatio: currentMode === 'product' ? 1 : 16/9,
                 viewMode: 1,
                 dragMode: 'move',
-                background: false, // Turn off background so our CSS repeating gradient shows
+                background: false,
                 autoCropArea: 0.9,
                 responsive: true
             });
             
-            // Reset filters
             sBright.value = 100; sContrast.value = 100;
             updateLiveFilters();
             
-            // Hide old output
             document.getElementById('final-preview').style.display = 'none';
             document.getElementById('preview-placeholder').style.display = 'block';
             document.getElementById('btn-download').style.display = 'none';
@@ -370,14 +375,12 @@
             document.getElementById('stat-dim').textContent = '-- x --';
         };
         reader.readAsDataURL(file);
-        event.target.value = ''; // Reset input
+        event.target.value = ''; 
     }
 
     function updateLiveFilters() {
         vBright.textContent = sBright.value + '%';
         vContrast.textContent = sContrast.value + '%';
-        
-        // Apply CSS filter to the cropper viewing container for live preview
         const container = document.querySelector('.cropper-view-box img');
         if (container) {
             container.style.filter = `brightness(${sBright.value}%) contrast(${sContrast.value}%)`;
@@ -387,7 +390,6 @@
     function processImage() {
         if (!cropper) return;
         
-        // 1. Determine Target Dimensions based on mode
         let targetW, targetH;
         if (currentMode === 'product') {
             targetW = PRODUCT_MAX; targetH = PRODUCT_MAX;
@@ -395,75 +397,69 @@
             targetW = BANNER_MAX_W; targetH = BANNER_MAX_H;
         }
 
-        // 2. Get the cropped image data from Cropper.js
         const croppedCanvas = cropper.getCroppedCanvas({
-            width: targetW,
-            height: targetH,
-            fillColor: '#FFFFFF', // White background for transparent PNGs
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high'
+            width: targetW, height: targetH, fillColor: '#FFFFFF', 
+            imageSmoothingEnabled: true, imageSmoothingQuality: 'high'
         });
 
-        // 3. Create a NEW off-screen canvas to apply our Lighting Filters and Watermark
         const finalCanvas = document.createElement('canvas');
         finalCanvas.width = targetW;
         finalCanvas.height = targetH;
         const ctx = finalCanvas.getContext('2d');
 
-        // 4. Apply Lighting Filters
         ctx.filter = `brightness(${sBright.value}%) contrast(${sContrast.value}%)`;
         ctx.drawImage(croppedCanvas, 0, 0);
 
-        // 5. Draw Watermark if checked
         if (document.getElementById('check-watermark').checked) {
-            ctx.filter = 'none'; // Reset filter so watermark isn't affected
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'; // Semi-transparent white
-            
-            // Draw a subtle dark shadow for readability on bright images
+            ctx.filter = 'none';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'; 
             ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetX = 1;
-            ctx.shadowOffsetY = 1;
-
+            ctx.shadowBlur = 4; ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 1;
             ctx.font = 'bold 24px "Plus Jakarta Sans", sans-serif';
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'bottom';
-            
-            // Bottom Right Corner
+            ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
             ctx.fillText('Verified CTMerchant', targetW - 20, targetH - 20);
         }
 
-        // 6. Compress to JPEG (Quality 0.75 is the magic number for web)
-        finalCanvas.toBlob((blob) => {
-            
-            // 7. Update Output UI
-            const previewImg = document.getElementById('final-preview');
-            previewImg.src = URL.createObjectURL(blob);
-            previewImg.style.display = 'block';
-            document.getElementById('preview-placeholder').style.display = 'none';
+        // AUTO-TUNING COMPRESSION LOOP
+        let quality = 0.92; // Start with Pristine Quality
+        const maxBytes = currentMode === 'product' ? 100 * 1024 : 200 * 1024; // 100KB for product, 200KB for banner
 
-            // Calculate Stats
-            const newKb = (blob.size / 1024).toFixed(1);
-            document.getElementById('stat-new').textContent = newKb + ' KB';
-            document.getElementById('stat-dim').textContent = `${targetW} x ${targetH}`;
-            
-            const savedBytes = originalFileSize - blob.size;
-            if (savedBytes > 0) {
-                const percent = Math.round((savedBytes / originalFileSize) * 100);
-                document.getElementById('stat-savings').textContent = `🎉 You saved ${percent}%!`;
-                document.getElementById('stat-savings').style.color = '#10b981';
-            } else {
-                document.getElementById('stat-savings').textContent = `Image optimized for web.`;
-                document.getElementById('stat-savings').style.color = '#94a3b8';
-            }
+        function attemptCompress() {
+            finalCanvas.toBlob((blob) => {
+                if (blob.size <= maxBytes || quality <= 0.4) {
+                    // Success! Show Output
+                    const previewImg = document.getElementById('final-preview');
+                    previewImg.src = URL.createObjectURL(blob);
+                    previewImg.style.display = 'block';
+                    document.getElementById('preview-placeholder').style.display = 'none';
 
-            // Setup Download Button
-            const dlBtn = document.getElementById('btn-download');
-            dlBtn.href = URL.createObjectURL(blob);
-            dlBtn.download = `ctm-${currentMode}-${Date.now()}.jpg`;
-            dlBtn.style.display = 'flex';
+                    const newKb = (blob.size / 1024).toFixed(1);
+                    document.getElementById('stat-new').textContent = newKb + ' KB';
+                    document.getElementById('stat-dim').textContent = `${targetW} x ${targetH}`;
+                    
+                    const savedBytes = originalFileSize - blob.size;
+                    if (savedBytes > 0) {
+                        const percent = Math.round((savedBytes / originalFileSize) * 100);
+                        document.getElementById('stat-savings').textContent = `🎉 You saved ${percent}%!`;
+                        document.getElementById('stat-savings').style.color = '#10b981';
+                    } else {
+                        document.getElementById('stat-savings').textContent = `Image optimized for web.`;
+                        document.getElementById('stat-savings').style.color = '#94a3b8';
+                    }
 
-        }, 'image/jpeg', 0.75);
+                    const dlBtn = document.getElementById('btn-download');
+                    dlBtn.href = URL.createObjectURL(blob);
+                    dlBtn.download = `ctm-${currentMode}-${Date.now()}.jpg`;
+                    dlBtn.style.display = 'flex';
+                } else {
+                    // Reduce quality and try again
+                    quality -= 0.05;
+                    attemptCompress();
+                }
+            }, 'image/jpeg', quality);
+        }
+
+        attemptCompress();
     }
 
     function resetStudio() {
