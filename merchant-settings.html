@@ -247,10 +247,14 @@
 
     const params = new URLSearchParams(window.location.search);
     const shopId = params.get('shop_id');
+    
+    let currentUser = null;
 
     window.onload = async () => {
         const { data: { session } } = await client.auth.getSession();
         if (!session) { window.location.href = "login.html"; return; }
+        
+        currentUser = session.user;
         
         if (!shopId) {
             alert("Shop ID missing");
@@ -263,10 +267,34 @@
 
     async function fetchShopData() {
         try {
-            const { data, error } = await client.from('shops').select('*').eq('id', shopId).single();
+            // --- 1. PRE-FLIGHT SUSPENSION CHECK ---
+            const { data: profile, error: profileErr } = await client
+                .from('profiles')
+                .select('is_suspended, status')
+                .eq('id', currentUser.id)
+                .maybeSingle();
+
+            if (profileErr) {
+                console.error("Network error verifying profile:", profileErr.message);
+            } else if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+                alert("🔒 Your account access has been restricted by administration.");
+                await client.auth.signOut();
+                window.location.href = "index.html";
+                return;
+            }
+
+            // --- 2. FETCH SHOP DATA SAFELY ---
+            const { data, error } = await client.from('shops').select('*').eq('id', shopId).maybeSingle();
             
-            if (error || !data) { 
-                alert("Shop not found"); 
+            if (error) {
+                console.error("Network error loading shop data:", error.message);
+                alert("Connection error while loading shop settings. Please check your network and try again.");
+                window.location.href = "merchant-dashboard.html";
+                return;
+            }
+
+            if (!data) { 
+                alert("Shop not found."); 
                 window.location.href = "merchant-dashboard.html"; 
                 return;
             }
@@ -292,7 +320,8 @@
 
         } catch (e) {
             console.error(e);
-            alert("Error loading shop data");
+            alert("An unexpected error occurred while loading settings.");
+            window.location.href = "merchant-dashboard.html";
         }
     }
 
