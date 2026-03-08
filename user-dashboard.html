@@ -279,26 +279,30 @@
 
     async function fetchData(oldCacheStr) {
         try {
-            // REMOVED 'status' column from query
             const { data: profile, error: profileErr } = await client
                 .from('profiles')
                 .select('*, cities(name)')
                 .eq('id', currentUser.id)
                 .maybeSingle();
 
-            // 1. Handle Network Errors silently without logging out
             if (profileErr) {
                 console.error("Network or database error fetching profile:", profileErr.message);
+                document.getElementById('initial-loader').style.display = 'none';
+                alert("Network error loading profile. Please refresh the page.");
                 return; 
             }
 
-            // 2. Handle Missing Profile silently
+            // 2. Handle Missing Profile SAFELY
             if (!profile) {
                 console.warn("User profile not found. Still syncing or deleted.");
+                document.getElementById('initial-loader').style.display = 'none';
+                alert("Your profile data is missing or was deleted. Please sign in again to set up your account.");
+                await client.auth.signOut();
+                localStorage.removeItem(CACHE_KEY);
+                window.location.href = "index.html";
                 return; 
             }
 
-            // 3. ONLY log out if explicitly suspended!
             if (profile.is_suspended === true) {
                 alert("Your account access has been restricted by administration. Please contact support.");
                 await client.auth.signOut();
@@ -352,6 +356,7 @@
             }
         } catch (e) {
             console.error("Fetch error:", e);
+            document.getElementById('initial-loader').style.display = 'none';
         }
     }
 
