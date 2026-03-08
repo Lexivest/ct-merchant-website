@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CT Studio | Image Optimizer</title>
+    
+    <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    
+    <style>
+        :root {
+            --studio-bg: #0f172a;
+            --studio-panel: #1e293b;
+            --color-pink: #db2777; 
+            --color-pink-hover: #be185d;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--studio-bg); 
+            color: var(--text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        /* --- HEADER --- */
+        .app-header {
+            background-color: #020617;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .back-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+        .back-btn:hover { color: var(--color-pink); }
+        .page-title { font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;}
+        .page-title i { color: var(--color-pink); }
+
+        /* --- STUDIO LAYOUT --- */
+        .studio-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 60px);
+            overflow: hidden;
+        }
+
+        /* Left Panel: Controls */
+        .control-panel {
+            width: 320px;
+            background: var(--studio-panel);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            flex-shrink: 0;
+        }
+
+        /* Center Panel: Workspace */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: repeating-conic-gradient(#0f172a 0% 25%, #1e293b 0% 50%) 50% / 20px 20px;
+            position: relative;
+        }
+
+        .upload-overlay {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(15, 23, 42, 0.9); z-index: 10;
+        }
+        .upload-btn-main {
+            background: var(--color-pink); color: white; border: none;
+            padding: 16px 32px; border-radius: 8px; font-size: 1.1rem; font-weight: 800;
+            cursor: pointer; display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 4px 15px rgba(219,39,119,0.4); transition: 0.2s;
+        }
+        .upload-btn-main:hover { transform: translateY(-2px); background: var(--color-pink-hover); }
+
+        .cropper-container-wrapper {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            display: none; /* Hidden until image uploaded */
+        }
+        
+        #image-workspace { max-width: 100%; max-height: 100%; display: block; }
+
+        /* Right Panel: Output & Stats */
+        .output-panel {
+            width: 340px;
+            background: var(--studio-panel);
+            border-left: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        /* --- CONTROL COMPONENTS --- */
+        .panel-title { font-size: 0.9rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;}
+
+        /* Format Toggles */
+        .format-toggles { display: flex; gap: 8px; background: #0f172a; padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);}
+        .format-btn {
+            flex: 1; background: transparent; border: none; color: var(--text-muted);
+            padding: 10px; border-radius: 6px; font-weight: 700; cursor: pointer; transition: 0.2s;
+            display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.8rem;
+        }
+        .format-btn i { font-size: 1.2rem; }
+        .format-btn.active { background: var(--studio-panel); color: var(--color-pink); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        /* Sliders */
+        .slider-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+        .slider-label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+        .slider { 
+            -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; 
+            background: #334155; outline: none; 
+        }
+        .slider::-webkit-slider-thumb { 
+            -webkit-appearance: none; appearance: none; width: 16px; height: 16px; 
+            border-radius: 50%; background: var(--color-pink); cursor: pointer; 
+        }
+        
+        /* Checkbox */
+        .check-group { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; margin-bottom: 10px;}
+        .check-group input { width: 18px; height: 18px; accent-color: var(--color-pink); cursor: pointer;}
+        .check-label { font-size: 0.9rem; font-weight: 600; }
+
+        /* Process Button */
+        .btn-process {
+            background: #10b981; color: white; border: none; width: 100%;
+            padding: 14px; border-radius: 8px; font-weight: 800; font-size: 1rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: 0.2s; box-shadow: 0 4px 10px rgba(16,185,129,0.3); margin-top: auto;
+        }
+        .btn-process:hover { background: #059669; }
+        .btn-process:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; box-shadow: none; }
+
+        /* --- OUTPUT PANEL COMPONENTS --- */
+        .preview-box {
+            width: 100%; background: #0f172a; border-radius: 8px; border: 1px dashed var(--border-color);
+            aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; margin-bottom: 20px; position: relative;
+        }
+        .preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .preview-placeholder { color: var(--border-color); font-size: 3rem; }
+
+        .stats-box { background: #0f172a; border-radius: 8px; padding: 16px; border: 1px solid var(--border-color); margin-bottom: 20px;}
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; }
+        .stat-val { font-weight: 800; color: white; }
+        .stat-savings { color: #10b981; font-weight: 800; font-size: 1.1rem; text-align: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);}
+
+        .btn-download {
+            background: var(--color-pink); color: white; text-decoration: none; text-align: center;
+            padding: 14px; border-radius: 8px; font-weight: 800; font-size: 1rem;
+            display: none; align-items: center; justify-content: center; gap: 8px;
+            transition: 0.2s; box-shadow: 0 4px 10px rgba(219,39,119,0.3);
+        }
+        .btn-download:hover { background: var(--color-pink-hover); }
+
+        /* Mobile Adjustments */
+        @media (max-width: 900px) {
+            .studio-container { flex-direction: column; overflow-y: auto; height: auto; }
+            .control-panel, .output-panel { width: 100%; border: none; border-bottom: 1px solid var(--border-color); }
+            .workspace { height: 400px; flex: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="header-left">
+            <button onclick="window.history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+            <div class="page-title"><i class="fa-solid fa-wand-magic-sparkles"></i> CT Studio</div>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">
+            Zero Server Cost • Local Processing
+        </div>
+    </header>
+
+    <div class="studio-container">
+        
+        <!-- LEFT: CONTROLS -->
+        <div class="control-panel">
+            <div>
+                <div class="panel-title">1. Select Format</div>
+                <div class="format-toggles">
+                    <button class="format-btn active" id="btn-fmt-product" onclick="setMode('product')">
+                        <i class="fa-solid fa-box"></i> Product (1:1)
+                    </button>
+                    <button class="format-btn" id="btn-fmt-banner" onclick="setMode('banner')">
+                        <i class="fa-solid fa-panorama"></i> Banner (16:9)
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <div class="panel-title">2. Lighting Fixes</div>
+                <div class="slider-group">
+                    <div class="slider-label"><span>Brightness</span> <span id="val-bright">100%</span></div>
+                    <input type="range" id="slide-bright" class="slider" min="50" max="150" value="100" oninput="updateLiveFilters()">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-label"><span>Contrast</span> <span id="val-contrast">100%</span></div>
+                    <input type="range" id="slide-contrast" class="slider" min="50" max="150" value="100" oninput="updateLiveFilters()">
+                </div>
+            </div>
+
+            <div>
+                <div class="panel-title">3. Branding</div>
+                <label class="check-group">
+                    <input type="checkbox" id="check-watermark" checked>
+                    <span class="check-label">Add "Verified CTMerchant" Watermark</span>
+                </label>
+            </div>
+
+            <button id="btn-process" class="btn-process" onclick="processImage()" disabled>
+                <i class="fa-solid fa-microchip"></i> Process & Compress
+            </button>
+        </div>
+
+        <!-- CENTER: WORKSPACE -->
+        <div class="workspace">
+            <div id="upload-overlay" class="upload-overlay">
+                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 4rem; color: var(--border-color); margin-bottom: 20px;"></i>
+                <button class="upload-btn-main" onclick="document.getElementById('file-input').click()">
+                    <i class="fa-solid fa-image"></i> Select Photo from Device
+                </button>
+                <p style="margin-top: 16px; color: var(--text-muted); font-size: 0.9rem;">High-res photos accepted. Processed locally.</p>
+                <input type="file" id="file-input" hidden accept="image/*" onchange="handleFileUpload(event)">
+            </div>
+            
+            <div id="cropper-wrapper" class="cropper-container-wrapper">
+                <img id="image-workspace" src="">
+            </div>
+        </div>
+
+        <!-- RIGHT: OUTPUT -->
+        <div class="output-panel">
+            <div class="panel-title">Web-Ready Output</div>
+            
+            <div class="preview-box" id="preview-box">
+                <i class="fa-solid fa-image preview-placeholder" id="preview-placeholder"></i>
+                <img id="final-preview" src="" style="display:none;">
+            </div>
+
+            <div class="stats-box">
+                <div class="stat-row">
+                    <span style="color: var(--text-muted)">Original File Size:</span>
+                    <span class="stat-val" id="stat-orig">-- KB</span>
+                </div>
+                <div class="stat-row">
+                    <span style="color: var(--text-muted)">Processed Size:</span>
+                    <span class="stat-val" id="stat-new" style="color: var(--color-pink)">-- KB</span>
+                </div>
+                <div class="stat-row">
+                    <span style="color: var(--text-muted)">Output Dimensions:</span>
+                    <span class="stat-val" id="stat-dim">-- x --</span>
+                </div>
+                <div class="stat-savings" id="stat-savings">Awaiting processing...</div>
+            </div>
+
+            <a id="btn-download" class="btn-download" download="ctm-optimized-image.jpg">
+                <i class="fa-solid fa-download"></i> Download Web-Ready Image
+            </a>
+            
+            <button class="back-btn" onclick="resetStudio()" style="margin-top: 16px; font-size: 0.9rem; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; width: 100%;">
+                <i class="fa-solid fa-rotate-left"></i> Start Over
+            </button>
+        </div>
+
+    </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<script>
+    let cropper = null;
+    let currentMode = 'product'; // 'product' (1:1) or 'banner' (16:9)
+    let originalFileSize = 0;
+    
+    // Limits
+    const PRODUCT_MAX = 800; // 800x800
+    const BANNER_MAX_W = 1280; // 1280x720
+    const BANNER_MAX_H = 720;
+
+    // Elements
+    const workspaceImg = document.getElementById('image-workspace');
+    const cropperWrapper = document.getElementById('cropper-wrapper');
+    const uploadOverlay = document.getElementById('upload-overlay');
+    const btnProcess = document.getElementById('btn-process');
+    
+    // Sliders
+    const sBright = document.getElementById('slide-bright');
+    const sContrast = document.getElementById('slide-contrast');
+    const vBright = document.getElementById('val-bright');
+    const vContrast = document.getElementById('val-contrast');
+
+    function setMode(mode) {
+        currentMode = mode;
+        
+        // Update Buttons
+        document.getElementById('btn-fmt-product').classList.toggle('active', mode === 'product');
+        document.getElementById('btn-fmt-banner').classList.toggle('active', mode === 'banner');
+        
+        // Update Preview Box Ratio
+        document.getElementById('preview-box').style.aspectRatio = mode === 'product' ? '1/1' : '16/9';
+
+        // Update Cropper Ratio if initialized
+        if (cropper) {
+            cropper.setAspectRatio(mode === 'product' ? 1 : 16/9);
+        }
+    }
+
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) return alert("Please select an image file.");
+
+        originalFileSize = file.size;
+        document.getElementById('stat-orig').textContent = (file.size / 1024).toFixed(1) + ' KB';
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            // Hide overlay, show workspace
+            uploadOverlay.style.display = 'none';
+            cropperWrapper.style.display = 'block';
+            btnProcess.disabled = false;
+
+            workspaceImg.src = e.target.result;
+            
+            // Destroy old cropper if exists
+            if (cropper) cropper.destroy();
+            
+            // Init Cropper
+            cropper = new Cropper(workspaceImg, {
+                aspectRatio: currentMode === 'product' ? 1 : 16/9,
+                viewMode: 1,
+                dragMode: 'move',
+                background: false, // Turn off background so our CSS repeating gradient shows
+                autoCropArea: 0.9,
+                responsive: true
+            });
+            
+            // Reset filters
+            sBright.value = 100; sContrast.value = 100;
+            updateLiveFilters();
+            
+            // Hide old output
+            document.getElementById('final-preview').style.display = 'none';
+            document.getElementById('preview-placeholder').style.display = 'block';
+            document.getElementById('btn-download').style.display = 'none';
+            document.getElementById('stat-savings').textContent = 'Ready to process.';
+            document.getElementById('stat-new').textContent = '-- KB';
+            document.getElementById('stat-dim').textContent = '-- x --';
+        };
+        reader.readAsDataURL(file);
+        event.target.value = ''; // Reset input
+    }
+
+    function updateLiveFilters() {
+        vBright.textContent = sBright.value + '%';
+        vContrast.textContent = sContrast.value + '%';
+        
+        // Apply CSS filter to the cropper viewing container for live preview
+        const container = document.querySelector('.cropper-view-box img');
+        if (container) {
+            container.style.filter = `brightness(${sBright.value}%) contrast(${sContrast.value}%)`;
+        }
+    }
+
+    function processImage() {
+        if (!cropper) return;
+        
+        // 1. Determine Target Dimensions based on mode
+        let targetW, targetH;
+        if (currentMode === 'product') {
+            targetW = PRODUCT_MAX; targetH = PRODUCT_MAX;
+        } else {
+            targetW = BANNER_MAX_W; targetH = BANNER_MAX_H;
+        }
+
+        // 2. Get the cropped image data from Cropper.js
+        const croppedCanvas = cropper.getCroppedCanvas({
+            width: targetW,
+            height: targetH,
+            fillColor: '#FFFFFF', // White background for transparent PNGs
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high'
+        });
+
+        // 3. Create a NEW off-screen canvas to apply our Lighting Filters and Watermark
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = targetW;
+        finalCanvas.height = targetH;
+        const ctx = finalCanvas.getContext('2d');
+
+        // 4. Apply Lighting Filters
+        ctx.filter = `brightness(${sBright.value}%) contrast(${sContrast.value}%)`;
+        ctx.drawImage(croppedCanvas, 0, 0);
+
+        // 5. Draw Watermark if checked
+        if (document.getElementById('check-watermark').checked) {
+            ctx.filter = 'none'; // Reset filter so watermark isn't affected
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'; // Semi-transparent white
+            
+            // Draw a subtle dark shadow for readability on bright images
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+
+            ctx.font = 'bold 24px "Plus Jakarta Sans", sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            
+            // Bottom Right Corner
+            ctx.fillText('Verified CTMerchant', targetW - 20, targetH - 20);
+        }
+
+        // 6. Compress to JPEG (Quality 0.75 is the magic number for web)
+        finalCanvas.toBlob((blob) => {
+            
+            // 7. Update Output UI
+            const previewImg = document.getElementById('final-preview');
+            previewImg.src = URL.createObjectURL(blob);
+            previewImg.style.display = 'block';
+            document.getElementById('preview-placeholder').style.display = 'none';
+
+            // Calculate Stats
+            const newKb = (blob.size / 1024).toFixed(1);
+            document.getElementById('stat-new').textContent = newKb + ' KB';
+            document.getElementById('stat-dim').textContent = `${targetW} x ${targetH}`;
+            
+            const savedBytes = originalFileSize - blob.size;
+            if (savedBytes > 0) {
+                const percent = Math.round((savedBytes / originalFileSize) * 100);
+                document.getElementById('stat-savings').textContent = `🎉 You saved ${percent}%!`;
+                document.getElementById('stat-savings').style.color = '#10b981';
+            } else {
+                document.getElementById('stat-savings').textContent = `Image optimized for web.`;
+                document.getElementById('stat-savings').style.color = '#94a3b8';
+            }
+
+            // Setup Download Button
+            const dlBtn = document.getElementById('btn-download');
+            dlBtn.href = URL.createObjectURL(blob);
+            dlBtn.download = `ctm-${currentMode}-${Date.now()}.jpg`;
+            dlBtn.style.display = 'flex';
+
+        }, 'image/jpeg', 0.75);
+    }
+
+    function resetStudio() {
+        if (cropper) { cropper.destroy(); cropper = null; }
+        uploadOverlay.style.display = 'flex';
+        cropperWrapper.style.display = 'none';
+        btnProcess.disabled = true;
+        
+        document.getElementById('final-preview').style.display = 'none';
+        document.getElementById('preview-placeholder').style.display = 'block';
+        document.getElementById('btn-download').style.display = 'none';
+        
+        document.getElementById('stat-orig').textContent = '-- KB';
+        document.getElementById('stat-new').textContent = '-- KB';
+        document.getElementById('stat-dim').textContent = '-- x --';
+        document.getElementById('stat-savings').textContent = 'Awaiting processing...';
+        document.getElementById('stat-savings').style.color = '#10b981';
+    }
+</script>
+
+</body>
+</html>
