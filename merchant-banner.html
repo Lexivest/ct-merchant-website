@@ -132,7 +132,7 @@
 
     <header class="app-header">
         <div class="header-content">
-            <button onclick="window.location.href='merchant-dashboard.html'" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+            <button onclick="window.history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
             <div class="page-title">Shop Banner</div>
             <button id="save-btn" onclick="saveBanner()" class="btn-brand hidden">
                 <i class="fa-solid fa-check"></i> Save
@@ -207,7 +207,7 @@
     let shouldDeleteOld = false;    
 
     window.onload = async () => {
-        if (!shopId) { alert("Shop ID missing"); window.location.href = 'merchant-dashboard.html'; return; }
+        if (!shopId) { alert("Shop ID missing"); window.history.back(); return; }
         
         try {
             const { data: { session } } = await client.auth.getSession();
@@ -215,15 +215,16 @@
             currentUser = session.user;
             
             // --- 1. PRE-FLIGHT SUSPENSION CHECK ---
+            // REMOVED 'status' WHICH WAS CRASHING THE QUERY
             const { data: profile, error: profileErr } = await client
                 .from('profiles')
-                .select('is_suspended, status')
+                .select('is_suspended')
                 .eq('id', currentUser.id)
                 .maybeSingle();
 
             if (profileErr) {
                 console.error("Network error verifying profile:", profileErr.message);
-            } else if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+            } else if (profile && profile.is_suspended === true) {
                 alert("🔒 Your account access has been restricted by administration.");
                 await client.auth.signOut();
                 window.location.href = "index.html";
@@ -381,7 +382,7 @@
         const originalText = btn.innerHTML;
         
         if (!shouldDeleteOld && !activeBannerBlob) {
-            window.location.href = 'merchant-dashboard.html';
+            window.history.back();
             return;
         }
 
