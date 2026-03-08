@@ -64,7 +64,6 @@
         textarea.input{resize:vertical;min-height:100px}
         select.input{cursor:pointer;background-color:#fff}
         
-        /* Dynamic Fields Container */
         #dynamic-fields-container { background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px dashed #CBD5E1; margin-bottom: 24px; display: none;}
         .dyn-title { font-size: 0.85rem; font-weight: 800; color: var(--color-pink); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;}
 
@@ -83,7 +82,6 @@
         .hidden-input.visible{display:block;animation:slideDown .3s ease}
         @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
         
-        /* Premium Limit Alert */
         .discount-limit-alert { background: #FEE2E2; border: 1px solid #FECACA; color: #991B1B; padding: 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; display: none; align-items: flex-start; gap: 10px; line-height: 1.4;}
         .discount-limit-alert i { margin-top: 3px; font-size: 1rem;}
 
@@ -98,18 +96,37 @@
         .spinner-dark{border-color: rgba(0,0,0,0.1); border-top-color: var(--color-pink); width: 36px; height: 36px; border-width: 4px; margin: 40px auto; display: block;}
         @keyframes spin{to{transform:rotate(360deg)}}
 
-        .crop-overlay{position:fixed;inset:0;background:rgba(17,24,39,.95);z-index:2000;display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:.3s ease;backdrop-filter:blur(5px)}
-        .crop-overlay.active{opacity:1;visibility:visible}
-        .crop-header-bar{display:flex;justify-content:space-between;align-items:center;padding:20px;background:rgba(0,0,0,.5);color:#fff}
-        .crop-title{font-weight:700;font-size:1.2rem}
-        .crop-workspace{flex:1;position:relative;width:100%;overflow:hidden;display:flex;justify-content:center;align-items:center;padding:20px}
-        .crop-workspace img{max-width:100%;max-height:100%;display:block}
-        .crop-footer-bar{padding:20px;background:rgba(0,0,0,.5);display:flex;gap:16px;justify-content:center; flex-direction: column;}
-        .crop-instructions { text-align: center; color: white; font-size: 0.85rem; font-weight: 500; margin-bottom: 8px;}
-        .crop-btn-row { display: flex; gap: 16px; justify-content: center; }
-        .btn-crop-cancel{background:#374151;color:#fff;padding:12px 24px;border-radius:10px;border:none;font-weight:600;cursor:pointer}
-        .btn-crop-apply{background:var(--color-pink);color:#fff;padding:12px 32px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
+        /* --- CT STUDIO EMBEDDED MODAL --- */
+        .crop-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 2000; display: flex; flex-direction: column; opacity: 0; visibility: hidden; transition: .3s ease; backdrop-filter: blur(5px); }
+        .crop-overlay.active { opacity: 1; visibility: visible; }
+        .crop-header-bar { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #020617; color: #fff; border-bottom: 1px solid #334155;}
+        .crop-title { font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;}
+        .crop-title i { color: var(--color-pink); }
         
+        .studio-body { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        
+        .crop-workspace { flex: 1; position: relative; width: 100%; min-height: 250px; background: repeating-conic-gradient(#0f172a 0% 25%, #1e293b 0% 50%) 50% / 20px 20px; display: flex; justify-content: center; align-items: center; padding: 16px; }
+        .crop-workspace img { max-width: 100%; max-height: 100%; display: block; }
+        
+        .studio-controls { background: #1e293b; padding: 20px; border-top: 1px solid #334155; display: flex; flex-direction: column; gap: 16px;}
+        .slider-group { display: flex; flex-direction: column; gap: 6px; }
+        .slider-label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; color: #f8fafc; }
+        .studio-slider { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: #334155; outline: none; }
+        .studio-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--color-pink); cursor: pointer; }
+        .check-group { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #f8fafc;}
+        .check-group input { width: 18px; height: 18px; accent-color: var(--color-pink); }
+
+        .crop-footer-bar { padding: 16px 20px; background: #020617; display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid #334155;}
+        .btn-crop-cancel { background: transparent; color: #94a3b8; padding: 12px 20px; border-radius: 8px; border: 1px solid #334155; font-weight: 600; cursor: pointer; transition: 0.2s;}
+        .btn-crop-cancel:hover { background: #334155; color: white;}
+        .btn-crop-apply { background: #10b981; color: #fff; padding: 12px 24px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; box-shadow: 0 4px 10px rgba(16,185,129,0.3);}
+        .btn-crop-apply:hover { background: #059669; }
+
+        @media (min-width: 768px) { 
+            .studio-body { flex-direction: row; }
+            .crop-workspace { height: auto; }
+            .studio-controls { width: 320px; border-top: none; border-left: 1px solid #334155; }
+        }
         @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; gap: 0; } }
     </style>
 </head>
@@ -139,8 +156,8 @@
         <form class="card" id="product-form" onsubmit="handleSubmit(event)" style="display:none;">
             
             <div class="edu-box">
-                <h4 class="edu-title"><i class="fa-solid fa-crop-simple" style="color: #F59E0B;"></i> Smart Frame Tool</h4>
-                <p class="edu-text"><strong>Pinch/Zoom to fit!</strong> Upload up to 3 images. They will be automatically compressed for blazing fast loading speeds.</p>
+                <h4 class="edu-title"><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--color-pink);"></i> Powered by CT Studio</h4>
+                <p class="edu-text">Tap an image slot below to open the studio. You can crop, enhance lighting, and auto-compress your photos for perfect marketplace visibility.</p>
             </div>
 
             <!-- 3 IMAGE GRID -->
@@ -238,7 +255,7 @@
                 </select>
             </div>
 
-            <!-- SPECIAL OFFER BOX (WITH ID ADDED) -->
+            <!-- SPECIAL OFFER BOX -->
             <div class="discount-box" id="discount-container">
                 <div id="discount-limit-msg" class="discount-limit-alert">
                     <i class="fa-solid fa-lock"></i> 
@@ -268,34 +285,61 @@
         </form>
     </div>
 
-    <!-- HYBRID CROPPER MODAL -->
+    <!-- CT STUDIO EMBEDDED MODAL -->
     <div id="crop-modal" class="crop-overlay">
         <div class="crop-header-bar">
-            <div class="crop-title"><i class="fa-solid fa-crop-simple"></i> Frame Image</div>
-            <button type="button" onclick="closeCropModal()" style="background:0 0;border:none;color:#fff;font-size:1.5rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+            <div class="crop-title"><i class="fa-solid fa-wand-magic-sparkles"></i> CT Studio Editor</div>
+            <button type="button" onclick="closeCropModal()" style="background:0 0;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="crop-workspace"><img id="crop-image" src=""></div>
-        <div class="crop-footer-bar">
-            <div class="crop-instructions"><i class="fa-solid fa-hand-pointer"></i> Drag to move. Pinch to zoom in/out.</div>
-            <div class="crop-btn-row">
-                <button type="button" class="btn-crop-cancel" onclick="closeCropModal()">Cancel</button>
-                <button type="button" class="btn-crop-apply" onclick="applyCrop()">Apply Crop</button>
+        
+        <div class="studio-body">
+            <div class="crop-workspace">
+                <img id="crop-image" src="">
             </div>
+            
+            <div class="studio-controls">
+                <div style="font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 8px;">Lighting Fixes</div>
+                
+                <div class="slider-group">
+                    <div class="slider-label"><span>Brightness</span> <span id="val-bright">100%</span></div>
+                    <input type="range" id="slide-bright" class="studio-slider" min="50" max="150" value="100" oninput="updateLiveFilters()">
+                </div>
+                
+                <div class="slider-group">
+                    <div class="slider-label"><span>Contrast</span> <span id="val-contrast">100%</span></div>
+                    <input type="range" id="slide-contrast" class="studio-slider" min="50" max="150" value="100" oninput="updateLiveFilters()">
+                </div>
+
+                <div style="font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-top: 8px;">Branding</div>
+                
+                <label class="check-group">
+                    <input type="checkbox" id="check-watermark" checked>
+                    <span>Add "Verified" Watermark</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="crop-footer-bar">
+            <button type="button" class="btn-crop-cancel" onclick="closeCropModal()">Cancel</button>
+            <button type="button" class="btn-crop-apply" id="btn-crop-apply" onclick="applyCrop()">
+                <i class="fa-solid fa-microchip"></i> Process & Save
+            </button>
         </div>
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script>
-    const SUPABASE_URL="https://xdchacdjcgazyckacbpc.supabase.co",SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
-    const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
-    const params=new URLSearchParams(window.location.search);
-    const shopId=params.get('shop_id');
-    let currentUser=null;
+    const params = new URLSearchParams(window.location.search);
+    const shopId = params.get('shop_id');
+    let currentUser = null;
     
-    let cropper=null;
-    let activeCropIndex=1;
+    let cropper = null;
+    let activeCropIndex = 1;
     // Store blobs for 3 images
     const finalBlobs = { 1: null, 2: null, 3: null };
     
@@ -304,18 +348,21 @@
     const MAX_SPECIAL_OFFERS = 2;
     let activeSpecialOffersCount = 0;
 
-    window.onload=async()=>{
-        const{data:{session:e}}=await client.auth.getSession();
-        if(!e)return void(window.location.href="login.html");
-        currentUser=e.user;
-        if(!shopId) {
+    window.onload = async () => {
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) {
+            window.location.href = "login.html";
+            return;
+        }
+        currentUser = session.user;
+        
+        if (!shopId) {
             alert("No shop ID provided.");
-            window.location.href="merchant-dashboard.html";
+            window.location.href = "merchant-dashboard.html";
             return;
         }
 
         // --- 1. PRE-FLIGHT SUSPENSION CHECK ---
-        // REMOVED 'status' WHICH WAS CRASHING THE QUERY
         const { data: profile, error: profileErr } = await client
             .from('profiles')
             .select('is_suspended')
@@ -331,13 +378,11 @@
             return;
         }
 
-        // --- THE LIMIT CHECK PIPELINE ---
         await enforceUploadLimit();
     };
 
     async function enforceUploadLimit() {
         try {
-            // Parallel Fetch for both limits to keep loading instant
             const [prodRes, discountRes] = await Promise.all([
                 client.from('products').select('*', { count: 'exact', head: true }).eq('shop_id', shopId),
                 client.from('products').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).not('discount_price', 'is', null)
@@ -347,7 +392,6 @@
 
             document.getElementById('page-loader').style.display = 'none';
 
-            // 1. Enforce Product Limit (30)
             if (prodRes.count >= MAX_PRODUCTS_LIMIT) {
                 document.getElementById('limit-reached-message').style.display = 'flex';
                 document.getElementById('product-form').style.display = 'none';
@@ -356,30 +400,28 @@
                 document.getElementById('product-form').style.display = 'block';
             }
 
-            // 2. Enforce Special Offers Limit (2)
             activeSpecialOffersCount = discountRes.count || 0;
             if (activeSpecialOffersCount >= MAX_SPECIAL_OFFERS) {
                 const switchInput = document.getElementById('discount-switch');
                 switchInput.disabled = true;
-                
-                // Visually grey out the switch row
                 document.getElementById('discount-switch-row').style.opacity = '0.5';
-                
-                // Show the beautiful red error box
                 document.getElementById('discount-limit-msg').style.display = 'flex';
             }
-
         } catch (e) {
             console.error("Failed to check limits", e);
             alert("Error verifying account limits. Please refresh.");
         }
     }
 
-    // --- HYBRID CROPPER FOR 3 IMAGES ---
-    function handleImageSelect(input, index){
-        if(input.files && input.files[0]){
-            const file=input.files[0];
-            if(!file.type.startsWith('image/'))return alert("Please upload a valid image file."),void(input.value='');
+    // --- CT STUDIO EMBEDDED LOGIC ---
+    function handleImageSelect(input, index) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            if (!file.type.startsWith('image/')) {
+                alert("Please upload a valid image file.");
+                input.value = '';
+                return;
+            }
             
             activeCropIndex = index;
             
@@ -392,13 +434,19 @@
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
 
-                if(cropper) cropper.destroy();
+                if (cropper) cropper.destroy();
+                
+                // Reset Studio Controls
+                document.getElementById('slide-bright').value = 100;
+                document.getElementById('slide-contrast').value = 100;
+                updateLiveFilters();
+                document.getElementById('check-watermark').checked = true;
                 
                 cropper = new Cropper(img, {
-                    aspectRatio: 1,
+                    aspectRatio: 1, // Products are strictly 1:1
                     viewMode: 1, 
                     dragMode: 'move',
-                    background: true,
+                    background: false, // Better for dark mode
                     autoCropArea: 1,
                     responsive: true
                 });
@@ -408,22 +456,69 @@
         }
     }
 
-    function closeCropModal(){
-        document.getElementById('crop-modal').classList.remove('active');
-        document.body.style.overflow = '';
-        if(cropper){ cropper.destroy(); cropper=null; }
+    function updateLiveFilters() {
+        const bright = document.getElementById('slide-bright').value;
+        const contrast = document.getElementById('slide-contrast').value;
+        
+        document.getElementById('val-bright').textContent = bright + '%';
+        document.getElementById('val-contrast').textContent = contrast + '%';
+        
+        // Apply filter to cropper preview box instantly
+        const container = document.querySelector('.cropper-view-box img');
+        if (container) {
+            container.style.filter = `brightness(${bright}%) contrast(${contrast}%)`;
+        }
     }
 
-    function applyCrop(){
-        if(!cropper) return;
+    function closeCropModal() {
+        document.getElementById('crop-modal').classList.remove('active');
+        document.body.style.overflow = '';
+        if (cropper) { cropper.destroy(); cropper = null; }
+    }
+
+    function applyCrop() {
+        if (!cropper) return;
         
-        cropper.getCroppedCanvas({
+        const btnApply = document.getElementById('btn-crop-apply');
+        const originalText = btnApply.innerHTML;
+        btnApply.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+        btnApply.disabled = true;
+
+        // 1. Get Base Crop
+        const croppedCanvas = cropper.getCroppedCanvas({
             width: 800,
             height: 800,
             fillColor: '#FFFFFF',
             imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'medium'
-        }).toBlob(blob => {
+            imageSmoothingQuality: 'high'
+        });
+
+        // 2. Apply Studio Filters & Watermark
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = 800;
+        finalCanvas.height = 800;
+        const ctx = finalCanvas.getContext('2d');
+
+        const bright = document.getElementById('slide-bright').value;
+        const contrast = document.getElementById('slide-contrast').value;
+        ctx.filter = `brightness(${bright}%) contrast(${contrast}%)`;
+        ctx.drawImage(croppedCanvas, 0, 0);
+
+        if (document.getElementById('check-watermark').checked) {
+            ctx.filter = 'none'; // Reset filter for text
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('Verified CTMerchant', 780, 780);
+        }
+
+        // 3. Compress & Save
+        finalCanvas.toBlob(blob => {
             finalBlobs[activeCropIndex] = blob;
             
             const localUrl = URL.createObjectURL(blob);
@@ -431,15 +526,17 @@
             previewImg.src = localUrl;
             previewImg.style.display = 'block';
 
-            if(activeCropIndex === 1) {
+            if (activeCropIndex === 1) {
                 document.getElementById('live-placeholder').style.display = 'none';
                 const liveImg = document.getElementById('live-img');
                 liveImg.src = localUrl;
                 liveImg.style.display = 'block';
             }
 
+            btnApply.innerHTML = originalText;
+            btnApply.disabled = false;
             closeCropModal();
-        }, 'image/jpeg', 0.65);
+        }, 'image/jpeg', 0.75); // 75% quality for web optimization
     }
 
     // --- DYNAMIC TEMPLATES LOGIC ---
@@ -495,7 +592,7 @@
                 </div>`;
         }
 
-        if(html) {
+        if (html) {
             container.innerHTML = html;
             container.style.display = 'block';
         } else {
@@ -504,31 +601,23 @@
         }
     }
 
-    // --- NEW SMART CONDITION HANDLER ---
     function handleConditionChange() {
         const conditionVal = document.getElementById('condition').value;
         const discountContainer = document.getElementById('discount-container');
         const discountSwitch = document.getElementById('discount-switch');
 
         if (conditionVal === 'Fairly Used') {
-            // Instantly hide and disable the discount UI
             discountContainer.style.display = 'none';
-            
-            // Forcefully turn it off if the merchant had it checked before switching
             if (discountSwitch.checked) {
                 discountSwitch.checked = false;
                 toggleDiscount(discountSwitch);
             }
         } else {
-            // Restore it for New items
             discountContainer.style.display = 'block';
         }
-        
-        // Run standard preview update
         updateLivePreview();
     }
 
-    // --- LIVE PREVIEW UPDATER ---
     function updateLivePreview() {
         const nameVal = document.getElementById('name').value.trim();
         const priceVal = parseFloat(document.getElementById('price').value);
@@ -568,29 +657,40 @@
         }
     }
 
-    function toggleDiscount(e){
-        const t=document.getElementById('discount-input-box'),o=document.getElementById('discount-percent');
-        e.checked?(t.classList.add('visible'),o.setAttribute('required','true')):(t.classList.remove('visible'),o.removeAttribute('required'),o.value='');
+    function toggleDiscount(e) {
+        const box = document.getElementById('discount-input-box');
+        const input = document.getElementById('discount-percent');
+        
+        if (e.checked) {
+            box.classList.add('visible');
+            input.setAttribute('required', 'true');
+        } else {
+            box.classList.remove('visible');
+            input.removeAttribute('required');
+            input.value = '';
+        }
         updateLivePreview();
     }
 
     // --- SUBMISSION ---
-    async function handleSubmit(e){
+    async function handleSubmit(e) {
         e.preventDefault();
-        const t=document.getElementById('btn-submit');
+        const btnSubmit = document.getElementById('btn-submit');
         
-        if(!finalBlobs[1]) return alert("Please upload the Main Image (Box 1).");
+        if (!finalBlobs[1]) {
+            alert("Please upload the Main Image (Box 1).");
+            return;
+        }
         
-        // Final Security Check before Uploading
-        if(document.getElementById('discount-switch').checked && activeSpecialOffersCount >= MAX_SPECIAL_OFFERS) {
-            return alert("Security Block: You already have the maximum of 2 Special Offers active. Remove an existing offer to add a new one.");
+        if (document.getElementById('discount-switch').checked && activeSpecialOffersCount >= MAX_SPECIAL_OFFERS) {
+            alert("Security Block: You already have the maximum of 2 Special Offers active. Remove an existing offer to add a new one.");
+            return;
         }
 
-        t.disabled=!0;
-        t.innerHTML='<div class="spinner" style="border-top-color: white;"></div> <span style="margin-left:8px;">Checking limits...</span>';
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> <span style="margin-left:8px;">Checking limits...</span>';
 
         try {
-            // Security Pre-flight Check: Ensure they haven't opened two tabs to bypass limits
             const { count, error: countErr } = await client.from('products').select('*', { count: 'exact', head: true }).eq('shop_id', shopId);
             if (countErr) throw countErr;
             
@@ -600,40 +700,39 @@
                 throw new Error("Product limit reached.");
             }
 
-            t.innerHTML='<div class="spinner" style="border-top-color: white;"></div> <span style="margin-left:8px;">Uploading...</span>';
+            btnSubmit.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> <span style="margin-left:8px;">Uploading...</span>';
             
-            const o=parseFloat(document.getElementById('price').value);
-            const stockCount=parseInt(document.getElementById('stock').value);
-            let n=null;
+            const priceVal = parseFloat(document.getElementById('price').value);
+            const stockCount = parseInt(document.getElementById('stock').value);
+            let discountPrice = null;
             
-            // Only apply discount if the switch is checked AND it is NOT a used item
-            if(document.getElementById('discount-switch').checked && document.getElementById('condition').value !== 'Fairly Used'){
-                const e=parseFloat(document.getElementById('discount-percent').value);
-                if(!e||e<=0||e>20) throw new Error("Discount must be between 1% and 20%");
-                n=o-o*(e/100);
+            if (document.getElementById('discount-switch').checked && document.getElementById('condition').value !== 'Fairly Used') {
+                const discountPercent = parseFloat(document.getElementById('discount-percent').value);
+                if (!discountPercent || discountPercent <= 0 || discountPercent > 20) {
+                    throw new Error("Discount must be between 1% and 20%");
+                }
+                discountPrice = priceVal - (priceVal * (discountPercent / 100));
             }
 
-            // Build Attributes JSON
             let attributes = {};
             document.querySelectorAll('.dynamic-attr').forEach(input => {
-                if(input.value.trim() !== '') {
+                if (input.value.trim() !== '') {
                     attributes[input.name] = input.value.trim();
                 }
             });
             
-            // Upload Images in Parallel WITH BANDWIDTH CHEAT CODE
             const uploadPromises = [];
             [1, 2, 3].forEach(idx => {
-                if(finalBlobs[idx]) {
+                if (finalBlobs[idx]) {
                     const fName = `${currentUser.id}_${Date.now()}_img${idx}.jpg`;
                     uploadPromises.push(
                         client.storage.from('products').upload(fName, finalBlobs[idx], {
                             contentType: 'image/jpeg',
-                            cacheControl: '31536000', // MAGIC BANDWIDTH SAVER (1 Year Cache)
+                            cacheControl: '31536000', 
                             upsert: false
                         })
                         .then(({error}) => {
-                            if(error) throw error;
+                            if (error) throw error;
                             return client.storage.from('products').getPublicUrl(fName).data.publicUrl;
                         })
                     );
@@ -644,12 +743,12 @@
 
             const [url1, url2, url3] = await Promise.all(uploadPromises);
             
-            const {error:i} = await client.from('products').insert({
+            const { error: insertError } = await client.from('products').insert({
                 shop_id: parseInt(shopId),
                 name: document.getElementById('name').value.trim(),
                 description: document.getElementById('desc').value.trim(),
-                price: o,
-                discount_price: n, // Safely null if 'Fairly Used'
+                price: priceVal,
+                discount_price: discountPrice,
                 condition: document.getElementById('condition').value,
                 category: document.getElementById('category').value,
                 image_url: url1,
@@ -660,18 +759,18 @@
                 is_available: stockCount > 0
             });
             
-            if(i) throw i;
+            if (insertError) throw insertError;
             
             alert("Product uploaded successfully!");
-            window.location.href="merchant-dashboard.html";
+            window.location.href = "merchant-dashboard.html";
             
         } catch(e) {
             console.error(e);
             if (e.message !== "Product limit reached.") {
                 alert("Upload failed: " + e.message);
             }
-            t.disabled=!1;
-            t.innerHTML='Upload to Marketplace';
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = 'Upload to Marketplace';
         }
     }
 </script>
