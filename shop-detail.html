@@ -98,7 +98,7 @@
         /* --- SHOP COVER PHOTO BANNER --- */
         .shop-cover-wrapper {
             width: 100%;
-            max-width: 1000px; /* Enforces the empty space on desktop */
+            max-width: 1000px;
             margin: 24px auto; 
             padding: 0 16px;
         }
@@ -145,41 +145,62 @@
             flex-shrink: 0;
         }
 
-        /* --- STRICT 1:1 PRODUCTS GRID --- */
+        /* ======================================================== */
+        /* --- BORDERLESS, FLOAT-ON-WHITE PRODUCTS GRID (NEW) ---   */
+        /* ======================================================== */
         .product-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 16px;
+            gap: 20px; /* Slightly wider gap since there are no borders */
             content-visibility: auto;
         }
         
         .product-card {
-            background: white; border-radius: 8px; overflow: hidden;
-            border: 1px solid #D5D9D9; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            cursor: pointer; position: relative; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-            display: flex; flex-direction: column;
+            background: white; 
+            border-radius: 0; /* Remove radius for a flush, modern look */
+            overflow: visible; /* Let badges sit freely */
+            border: none; /* REMOVED DEMARCATION */
+            box-shadow: none; /* REMOVED DEMARCATION */
+            cursor: pointer; 
+            position: relative; 
+            transition: transform 0.2s, opacity 0.2s;
+            display: flex; 
+            flex-direction: column;
         }
         .product-card:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 8px 16px rgba(0,0,0,0.08); 
-            border-color: #B0B5B5; 
+            transform: translateY(-4px); 
+            opacity: 0.9; 
         }
 
-        /* Enforce Perfect Square Images */
+        /* The white background wrap */
         .prod-img-wrap {
             width: 100%;
             aspect-ratio: 1 / 1; 
-            background: #F7F7F7;
+            background: #FFFFFF; /* Pure white, no gray */
             position: relative;
-            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .prod-img { width: 100%; height: 100%; object-fit: contain; padding: 10px; transition: transform 0.3s ease; }
+        
+        .prod-img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; 
+            padding: 0; /* Removed padding. Let CT Studio handle the white space */
+            transition: transform 0.3s ease; 
+            
+            /* MAGIC CSS: This blends the white background of the JPEG perfectly into the white container */
+            mix-blend-mode: multiply; 
+        }
         .product-card:hover .prod-img { transform: scale(1.05); }
 
-        .prod-info { padding: 12px; display: flex; flex-direction: column; flex: 1; }
+        .prod-info { 
+            padding: 12px 4px 0 4px; /* Reduced side padding since there is no border */
+            display: flex; 
+            flex-direction: column; 
+            flex: 1; 
+        }
         .prod-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #0F1111; line-height: 1.3;}
         
         .prod-price { color: var(--color-pink); font-weight: 800; font-size: 1.05rem; margin-top: auto; }
@@ -197,11 +218,11 @@
         }
 
         .badge {
-            position: absolute; top: 8px; padding: 2px 6px; border-radius: 4px; 
+            position: absolute; top: 4px; padding: 4px 8px; border-radius: 4px; 
             font-size: 0.65rem; font-weight: 800; color: white; z-index: 2;
         }
-        .badge-discount { left: 8px; background: #DC2626; }
-        .badge-used { right: 8px; background: #EA580C; }
+        .badge-discount { left: 4px; background: #DC2626; }
+        .badge-used { right: 4px; background: #EA580C; }
         
         .flash-offer { animation: pulse-badge 1.5s infinite ease-in-out; }
         .flash-price { animation: highlight-price 1.5s infinite ease-in-out; }
@@ -792,7 +813,7 @@
             }
         }
 
-        // --- PRODUCTS GRID (Anti-Flicker & Proper Pricing) ---
+        // --- PRODUCTS GRID ---
         const special = data.products.filter(p => p.discount_price && p.discount_price < p.price);
         const used = data.products.filter(p => p.condition === 'Fairly Used');
         const fresh = data.products.filter(p => !p.discount_price && p.condition !== 'Fairly Used');
