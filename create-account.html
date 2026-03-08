@@ -155,7 +155,7 @@
   </div>
 
   <!-- COMPLETE PROFILE MODAL FOR GOOGLE LOGINS -->
-  <div id="complete-profile-modal" class="modal-overlay">
+  <div id="complete-profile-modal" class="modal-overlay hidden">
       <div class="modal-card">
           <h2 class="modal-title"><i class="fa-solid fa-user-check" style="color:var(--color-pink)"></i> Complete Setup</h2>
           <p class="modal-subtitle">We need a few more details to finalize your dashboard.</p>
@@ -188,7 +188,7 @@
   </div>
 
   <!-- TERMS MODAL -->
-  <div id="terms-modal" class="modal-overlay">
+  <div id="terms-modal" class="modal-overlay hidden">
       <div class="modal-card">
           <h2 class="modal-title"><i class="fa-solid fa-file-contract" style="color:var(--color-pink)"></i> Agreements & Policies</h2>
           <p class="modal-subtitle">Please read through and scroll to the bottom to agree.</p>
@@ -264,7 +264,7 @@
   </div>
 
   <!-- LOGIN MODAL -->
-  <div id="login-modal" class="modal-overlay">
+  <div id="login-modal" class="modal-overlay hidden">
       <div class="modal-card">
           <h2 class="modal-title" style="margin-bottom:24px">Sign-In</h2>
           <form onsubmit="event.preventDefault(); handleLogin();" class="form-stack">
@@ -368,7 +368,7 @@
       }
 
       // ==========================================
-      // BULLETPROOF GOOGLE LOGIN LOGIC (FIXED)
+      // BULLETPROOF GOOGLE LOGIN LOGIC
       // ==========================================
       async function handleGoogleLogin(e) {
           showStatus("Checking security...", "success");
@@ -381,24 +381,19 @@
               if (authErr) throw authErr;
 
               const user = authData.user;
-              pendingGoogleUserId = user.id;
-              pendingGoogleUserName = user.user_metadata?.full_name || '';
-
+              
               // --- PRE-FLIGHT PROFILE CHECK ---
-              // REMOVED 'status' WHICH WAS CRASHING THE QUERY
               const { data: profile, error: profileErr } = await client
                   .from('profiles')
                   .select('city_id, area_id, is_suspended')
                   .eq('id', user.id)
                   .maybeSingle();
 
-              // 1. Network Error: Do NOT prompt for setup, safely abort.
               if (profileErr) {
                   await client.auth.signOut();
                   throw new Error("Network error verifying profile. Please try again.");
               }
 
-              // 2. Suspension Check: Block at the door!
               if (profile && profile.is_suspended === true) {
                   await client.auth.signOut();
                   throw new Error("Your account access has been restricted by administration.");
@@ -406,13 +401,20 @@
 
               // 3. Success Routing
               if (profile && profile.city_id && profile.area_id) {
-                  // Profile is complete, send to dashboard
                   await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
                   window.location.href = "user-dashboard.html";
               } else {
-                  // Profile is incomplete, show setup modal
-                  toggleModal('complete-profile-modal');
+                  // Profile is missing or incomplete (Ghost Bug Recovery for Google)
+                  pendingGoogleUserId = user.id;
+                  pendingGoogleUserName = user.user_metadata?.full_name || '';
+                  
                   statusBox.classList.remove('active');
+                  
+                  // FOOLPROOF MODAL VISIBILITY
+                  const cModal = document.getElementById('complete-profile-modal');
+                  cModal.classList.remove('hidden');
+                  void cModal.offsetWidth; // Trigger reflow
+                  cModal.classList.add('active');
               }
               
           } catch (err) {
@@ -456,8 +458,10 @@
 
       async function cancelGoogleLogin() {
           await client.auth.signOut();
-          toggleModal('complete-profile-modal');
           pendingGoogleUserId = null;
+          const cModal = document.getElementById('complete-profile-modal');
+          cModal.classList.remove('active');
+          setTimeout(() => cModal.classList.add('hidden'), 300);
       }
 
       // --- UI HELPERS ---
@@ -468,7 +472,7 @@
               setTimeout(() => modal.classList.add('hidden'), 300);
           } else {
               modal.classList.remove('hidden');
-              void modal.offsetWidth; // Trigger reflow
+              void modal.offsetWidth;
               modal.classList.add('active');
           }
       }
@@ -574,7 +578,7 @@
       }
 
       // ==========================================
-      // BULLETPROOF EMAIL LOGIN LOGIC (FIXED)
+      // BULLETPROOF EMAIL LOGIN LOGIC
       // ==========================================
       async function handleLogin() {
           const email = document.getElementById('login-email').value;
@@ -591,23 +595,35 @@
               const { data: authData, error: authErr } = await client.auth.signInWithPassword({ email: email, password: pass });
               if (authErr) throw authErr;
 
-              // --- PRE-FLIGHT PROFILE CHECK ---
-              // REMOVED 'status' WHICH WAS CRASHING THE QUERY
               const { data: profile, error: profileErr } = await client
                   .from('profiles')
-                  .select('is_suspended')
+                  .select('city_id, area_id, is_suspended')
                   .eq('id', authData.user.id)
                   .maybeSingle();
 
-              // Block Suspended Users at the door!
               if (profile && profile.is_suspended === true) {
                   await client.auth.signOut();
                   throw new Error("Your account access has been restricted by administration.");
               }
-              // ----------------------------------------
               
-              await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
-              window.location.href = "user-dashboard.html";
+              if (profile && profile.city_id && profile.area_id) {
+                  await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
+                  window.location.href = "user-dashboard.html";
+              } else {
+                  // GHOST RECOVERY: They have an auth account but deleted their profile row
+                  pendingGoogleUserId = authData.user.id;
+                  pendingGoogleUserName = authData.user.user_metadata?.full_name || '';
+                  
+                  const lModal = document.getElementById('login-modal');
+                  lModal.classList.remove('active');
+                  setTimeout(() => lModal.classList.add('hidden'), 300);
+                  
+                  // FOOLPROOF MODAL VISIBILITY
+                  const cModal = document.getElementById('complete-profile-modal');
+                  cModal.classList.remove('hidden');
+                  void cModal.offsetWidth;
+                  cModal.classList.add('active');
+              }
               
           } catch (err) {
               alert(err.message);
