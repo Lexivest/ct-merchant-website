@@ -39,12 +39,26 @@
         .img-picker { background: #F7F7F7; border: 2px dashed #888C8C; border-radius: 8px; aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; transition: 0.2s; text-align: center; padding: 10px; }
         .img-picker:hover { border-color: var(--color-pink); background: var(--color-pink-light); }
         .img-picker.main { border-color: var(--color-pink); border-width: 2px; border-style: solid; background: #fdf2f8;}
-        .img-picker i { font-size: 1.8rem; color: #888C8C; margin-bottom: 8px; }
-        .img-picker.main i { color: var(--color-pink); }
-        .img-picker span { font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); line-height: 1.2; }
-        .img-picker.main span { color: var(--color-pink); }
+        .img-picker i.cam { font-size: 1.8rem; color: #888C8C; margin-bottom: 8px; }
+        .img-picker.main i.cam { color: var(--color-pink); }
+        .img-picker span.lbl { font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); line-height: 1.2; }
+        .img-picker.main span.lbl { color: var(--color-pink); }
         .preview-img { width: 100%; height: 100%; object-fit: contain; position: absolute; inset: 0; display: none; background: #fff; z-index: 5; }
         
+        .delete-img-btn {
+            position: absolute; top: 6px; right: 6px; background: rgba(220, 38, 38, 0.95); color: white;
+            border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 15; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .delete-img-btn:hover { background: #991B1B; transform: scale(1.1); }
+
+        /* CT Studio Savings Badge */
+        .savings-badge {
+            position: absolute; bottom: 6px; left: 6px; right: 6px; background: rgba(16, 185, 129, 0.95); color: white;
+            font-size: 0.65rem; font-weight: 800; padding: 4px; border-radius: 4px; z-index: 10; text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); backdrop-filter: blur(4px);
+        }
+
         .live-preview-wrap{background:#F3F4F6;border:1px solid #D5D9D9;border-radius:8px;padding:20px;margin-bottom:24px;display:flex;flex-direction:column;align-items:center;box-shadow:inset 0 2px 4px rgba(0,0,0,.05)}
         .shop-grid-item-wrap{display:flex;flex-direction:column;gap:4px;width:140px;overflow:hidden;background:#fff;padding:8px;border-radius:6px;box-shadow:0 2px 5px rgba(0,0,0,.08); border: 1px solid #E5E7EB;}
         .shop-grid-item{width:100%;aspect-ratio:1/1;background:#F7F7F7;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:4px;position:relative; border: 1px dashed #D5D9D9;}
@@ -108,7 +122,11 @@
         .crop-workspace { flex: 1; position: relative; width: 100%; min-height: 250px; background: repeating-conic-gradient(#0f172a 0% 25%, #1e293b 0% 50%) 50% / 20px 20px; display: flex; justify-content: center; align-items: center; padding: 16px; }
         .crop-workspace img { max-width: 100%; max-height: 100%; display: block; }
         
-        .studio-controls { background: #1e293b; padding: 20px; border-top: 1px solid #334155; display: flex; flex-direction: column; gap: 16px;}
+        .studio-controls { background: #1e293b; padding: 20px; border-top: 1px solid #334155; display: flex; flex-direction: column; gap: 20px;}
+        
+        .btn-fit-image { background: transparent; border: 1px solid var(--color-pink); color: var(--color-pink); padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; font-size: 0.95rem;}
+        .btn-fit-image:hover { background: rgba(219,39,119,0.1); }
+
         .slider-group { display: flex; flex-direction: column; gap: 6px; }
         .slider-label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; color: #f8fafc; }
         .studio-slider { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: #334155; outline: none; }
@@ -125,7 +143,7 @@
         @media (min-width: 768px) { 
             .studio-body { flex-direction: row; }
             .crop-workspace { height: auto; }
-            .studio-controls { width: 320px; border-top: none; border-left: 1px solid #334155; }
+            .studio-controls { width: 340px; border-top: none; border-left: 1px solid #334155; }
         }
         @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; gap: 0; } }
     </style>
@@ -157,28 +175,34 @@
             
             <div class="edu-box">
                 <h4 class="edu-title"><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--color-pink);"></i> Powered by CT Studio</h4>
-                <p class="edu-text">Tap an image slot below to open the studio. You can crop, enhance lighting, and auto-compress your photos for perfect marketplace visibility.</p>
+                <p class="edu-text">Tap an image slot below to open the studio. We compress your images to save your data, and auto-format them for the marketplace!</p>
             </div>
 
             <!-- 3 IMAGE GRID -->
             <div class="img-grid">
                 <div class="img-picker main" onclick="document.getElementById('file-input-1').click()">
                     <input type="file" id="file-input-1" hidden accept="image/*" onchange="handleImageSelect(this, 1)">
-                    <i class="fa-solid fa-image"></i>
-                    <span>Main Image<br>(Required)</span>
+                    <i class="fa-solid fa-image cam"></i>
+                    <span class="lbl">Main Image<br>(Required)</span>
                     <img id="preview-1" class="preview-img">
+                    <div id="savings-1" class="savings-badge" style="display:none;"></div>
+                    <button type="button" id="del-btn-1" class="delete-img-btn hidden" onclick="removeImage(event, 1)"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
                 <div class="img-picker" onclick="document.getElementById('file-input-2').click()">
                     <input type="file" id="file-input-2" hidden accept="image/*" onchange="handleImageSelect(this, 2)">
-                    <i class="fa-solid fa-camera"></i>
-                    <span>Extra Angle<br>(Optional)</span>
+                    <i class="fa-solid fa-camera cam"></i>
+                    <span class="lbl">Extra Angle<br>(Optional)</span>
                     <img id="preview-2" class="preview-img">
+                    <div id="savings-2" class="savings-badge" style="display:none;"></div>
+                    <button type="button" id="del-btn-2" class="delete-img-btn hidden" onclick="removeImage(event, 2)"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
                 <div class="img-picker" onclick="document.getElementById('file-input-3').click()">
                     <input type="file" id="file-input-3" hidden accept="image/*" onchange="handleImageSelect(this, 3)">
-                    <i class="fa-solid fa-camera"></i>
-                    <span>Label/Box<br>(Optional)</span>
+                    <i class="fa-solid fa-camera cam"></i>
+                    <span class="lbl">Label/Box<br>(Optional)</span>
                     <img id="preview-3" class="preview-img">
+                    <div id="savings-3" class="savings-badge" style="display:none;"></div>
+                    <button type="button" id="del-btn-3" class="delete-img-btn hidden" onclick="removeImage(event, 3)"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
             </div>
 
@@ -298,24 +322,35 @@
             </div>
             
             <div class="studio-controls">
-                <div style="font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 8px;">Lighting Fixes</div>
                 
-                <div class="slider-group">
-                    <div class="slider-label"><span>Brightness</span> <span id="val-bright">100%</span></div>
-                    <input type="range" id="slide-bright" class="studio-slider" min="50" max="150" value="100" oninput="updateLiveFilters()">
+                <div>
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 12px;">Smart Sizing</div>
+                    
+                    <button type="button" class="btn-fit-image" onclick="applyWhiteBorders()" id="btn-fit-border">
+                        <i class="fa-solid fa-expand"></i> Fit Entire Image (Add Borders)
+                    </button>
+                    <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 6px; line-height: 1.4;">Prevents edges of tall/wide photos from being cut off.</p>
                 </div>
                 
-                <div class="slider-group">
-                    <div class="slider-label"><span>Contrast</span> <span id="val-contrast">100%</span></div>
-                    <input type="range" id="slide-contrast" class="studio-slider" min="50" max="150" value="100" oninput="updateLiveFilters()">
+                <div>
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 12px;">Lighting Fixes</div>
+                    <div class="slider-group">
+                        <div class="slider-label"><span>Brightness</span> <span id="val-bright">100%</span></div>
+                        <input type="range" id="slide-bright" class="studio-slider" min="50" max="150" value="100" oninput="updateLiveFilters()">
+                    </div>
+                    <div class="slider-group" style="margin-top:12px;">
+                        <div class="slider-label"><span>Contrast</span> <span id="val-contrast">100%</span></div>
+                        <input type="range" id="slide-contrast" class="studio-slider" min="50" max="150" value="100" oninput="updateLiveFilters()">
+                    </div>
                 </div>
 
-                <div style="font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-top: 8px;">Branding</div>
-                
-                <label class="check-group">
-                    <input type="checkbox" id="check-watermark" checked>
-                    <span>Add "Verified" Watermark</span>
-                </label>
+                <div>
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 12px;">Branding</div>
+                    <label class="check-group">
+                        <input type="checkbox" id="check-watermark" checked>
+                        <span>Add "Verified" Watermark</span>
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -338,9 +373,12 @@
     const shopId = params.get('shop_id');
     let currentUser = null;
     
+    // Studio State Tracking
     let cropper = null;
     let activeCropIndex = 1;
-    // Store blobs for 3 images
+    let currentOriginalSrc = null; 
+    
+    const originalSizes = { 1: 0, 2: 0, 3: 0 };
     const finalBlobs = { 1: null, 2: null, 3: null };
     
     // PRODUCTION LIMITS
@@ -362,7 +400,6 @@
             return;
         }
 
-        // --- 1. PRE-FLIGHT SUSPENSION CHECK ---
         const { data: profile, error: profileErr } = await client
             .from('profiles')
             .select('is_suspended')
@@ -370,7 +407,7 @@
             .maybeSingle();
 
         if (profileErr) {
-            console.error("Network error verifying profile:", profileErr.message);
+            console.error("Network error:", profileErr.message);
         } else if (profile && profile.is_suspended === true) {
             alert("🔒 Your account access has been restricted by administration.");
             await client.auth.signOut();
@@ -424,13 +461,16 @@
             }
             
             activeCropIndex = index;
+            originalSizes[index] = file.size; // Store size to calculate savings later
             
             const reader = new FileReader();
             reader.onload = (e) => {
+                currentOriginalSrc = e.target.result; // Store original base64 for "Fit Borders" button
+                
                 const modal = document.getElementById('crop-modal');
                 const img = document.getElementById('crop-image');
                 
-                img.src = e.target.result;
+                img.src = currentOriginalSrc;
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
 
@@ -443,17 +483,66 @@
                 document.getElementById('check-watermark').checked = true;
                 
                 cropper = new Cropper(img, {
-                    aspectRatio: 1, // Products are strictly 1:1
+                    aspectRatio: 1, 
                     viewMode: 1, 
                     dragMode: 'move',
-                    background: false, // Better for dark mode
+                    background: false, 
                     autoCropArea: 1,
                     responsive: true
                 });
             };
             reader.readAsDataURL(file);
-            input.value = '';
+            input.value = ''; // Reset input to allow selecting same file again if needed
         }
+    }
+
+    // --- THE "FIT IMAGE / LETTERBOX" ENGINE ---
+    function applyWhiteBorders() {
+        if (!currentOriginalSrc) return;
+        
+        const btn = document.getElementById('btn-fit-border');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Fitting...';
+        btn.disabled = true;
+        
+        const img = new Image();
+        img.onload = () => {
+            const size = Math.max(img.width, img.height);
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Fill white background
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Draw image perfectly centered
+            const x = (size - img.width) / 2;
+            const y = (size - img.height) / 2;
+            ctx.drawImage(img, x, y);
+            
+            // Re-init cropper with perfectly square image
+            const paddedSrc = canvas.toDataURL('image/jpeg', 1.0);
+            const cropImg = document.getElementById('crop-image');
+            
+            cropImg.src = paddedSrc;
+            if(cropper) cropper.destroy();
+            cropper = new Cropper(cropImg, {
+                aspectRatio: 1, 
+                viewMode: 1, 
+                dragMode: 'move', 
+                background: false, 
+                autoCropArea: 1, // Automatically selects the ENTIRE square!
+                responsive: true
+            });
+            
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Image Fitted!';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-expand"></i> Fit Entire Image (Add Borders)';
+                btn.disabled = false;
+            }, 2000);
+        };
+        img.src = currentOriginalSrc;
     }
 
     function updateLiveFilters() {
@@ -474,6 +563,7 @@
         document.getElementById('crop-modal').classList.remove('active');
         document.body.style.overflow = '';
         if (cropper) { cropper.destroy(); cropper = null; }
+        currentOriginalSrc = null;
     }
 
     function applyCrop() {
@@ -521,10 +611,12 @@
         finalCanvas.toBlob(blob => {
             finalBlobs[activeCropIndex] = blob;
             
+            // UI Updates
             const localUrl = URL.createObjectURL(blob);
             const previewImg = document.getElementById(`preview-${activeCropIndex}`);
             previewImg.src = localUrl;
             previewImg.style.display = 'block';
+            document.getElementById(`del-btn-${activeCropIndex}`).classList.remove('hidden');
 
             if (activeCropIndex === 1) {
                 document.getElementById('live-placeholder').style.display = 'none';
@@ -533,10 +625,48 @@
                 liveImg.style.display = 'block';
             }
 
+            // Calculate and display Data Savings
+            const origSize = originalSizes[activeCropIndex];
+            const newSize = blob.size;
+            const savingsBadge = document.getElementById(`savings-${activeCropIndex}`);
+            
+            if (origSize && origSize > newSize) {
+                const percent = Math.round(((origSize - newSize) / origSize) * 100);
+                const newKb = Math.round(newSize / 1024);
+                savingsBadge.innerHTML = `<i class="fa-solid fa-arrow-down"></i> Saved ${percent}% (${newKb}KB)`;
+                savingsBadge.style.display = 'block';
+            } else {
+                const newKb = Math.round(newSize / 1024);
+                savingsBadge.innerHTML = `<i class="fa-solid fa-check"></i> Ready (${newKb}KB)`;
+                savingsBadge.style.display = 'block';
+            }
+
             btnApply.innerHTML = originalText;
             btnApply.disabled = false;
             closeCropModal();
+            
         }, 'image/jpeg', 0.75); // 75% quality for web optimization
+    }
+
+    // UI DELETION
+    function removeImage(e, slot) {
+        e.preventDefault(); 
+        e.stopPropagation(); 
+        
+        finalBlobs[slot] = null;
+        originalSizes[slot] = 0;
+        
+        const img = document.getElementById(`preview-${slot}`);
+        img.src = '';
+        img.style.display = 'none';
+        
+        document.getElementById(`del-btn-${slot}`).classList.add('hidden');
+        document.getElementById(`savings-${slot}`).style.display = 'none';
+        
+        if (slot === 1) {
+            document.getElementById('live-img').style.display = 'none';
+            document.getElementById('live-placeholder').style.display = 'block';
+        }
     }
 
     // --- DYNAMIC TEMPLATES LOGIC ---
@@ -582,7 +712,7 @@
                     <div class="form-group" style="margin:0;"><label class="label">Brand/Maker</label><input type="text" name="brand" class="input dynamic-attr" placeholder="e.g. Nivea"></div>
                     <div class="form-group" style="margin:0;"><label class="label">Weight/Volume</label><input type="text" name="weight" class="input dynamic-attr" placeholder="e.g. 500ml, 1kg"></div>
                 </div>
-                <div class="form-group" style="margin-bottom:0;"><label class="label">Expiration Date <span style="color:var(--danger)">*</span></label><input type="date" name="expiry_date" class="input dynamic-attr" required></div>`;
+                <div class="form-group" style="margin-bottom:0;"><label class="label">Expiration Date <span style="color:var(--color-red)">*</span></label><input type="date" name="expiry_date" class="input dynamic-attr" required></div>`;
         } else if (property.includes(cat)) {
             html = `
                 <div class="dyn-title">Property Details</div>
