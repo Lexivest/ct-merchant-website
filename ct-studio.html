@@ -96,7 +96,7 @@
             width: 100%;
             height: 100%;
             padding: 20px;
-            display: none; /* Hidden until image uploaded */
+            display: none; 
         }
         
         #image-workspace { max-width: 100%; max-height: 100%; display: block; }
@@ -137,11 +137,19 @@
             -webkit-appearance: none; appearance: none; width: 16px; height: 16px; 
             border-radius: 50%; background: var(--color-pink); cursor: pointer; 
         }
-        
-        /* Checkbox */
-        .check-group { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; margin-bottom: 10px;}
-        .check-group input { width: 18px; height: 18px; accent-color: var(--color-pink); cursor: pointer;}
-        .check-label { font-size: 0.9rem; font-weight: 600; }
+
+        /* Branding Info Box */
+        .branding-info-box {
+            background: rgba(219, 39, 119, 0.1); 
+            border: 1px solid rgba(219, 39, 119, 0.2); 
+            padding: 12px; 
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .branding-info-box i { color: var(--color-pink); margin-top: 3px; font-size: 1.1rem;}
+        .branding-info-box p { color: #f8fafc; font-size: 0.85rem; font-weight: 500; line-height: 1.4; margin: 0; }
 
         /* Process Button */
         .btn-process {
@@ -225,10 +233,10 @@
 
             <div>
                 <div class="panel-title">3. Branding</div>
-                <label class="check-group">
-                    <input type="checkbox" id="check-watermark" checked>
-                    <span class="check-label">Add "Verified CTMerchant" Watermark</span>
-                </label>
+                <div class="branding-info-box">
+                    <i class="fa-solid fa-shield-check"></i>
+                    <p>All exported images carry a subtle <strong>CTMerchant</strong> watermark to protect your copyright across platforms.</p>
+                </div>
             </div>
 
             <button id="btn-process" class="btn-process" onclick="processImage()" disabled>
@@ -277,7 +285,7 @@
                 <div class="stat-savings" id="stat-savings">Awaiting processing...</div>
             </div>
 
-            <a id="btn-download" class="btn-download" download="ctm-optimized-image.jpg">
+            <a id="btn-download" class="btn-download" download="ctmerchant-optimized.jpg">
                 <i class="fa-solid fa-download"></i> Download Web-Ready Image
             </a>
             
@@ -336,6 +344,7 @@
             event.target.value = '';
             return;
         }
+
         if (file.size > MAX_UPLOAD_SIZE) {
             alert("File is too large! The maximum allowed upload size is 4MB.");
             event.target.value = '';
@@ -357,7 +366,7 @@
             
             cropper = new Cropper(workspaceImg, {
                 aspectRatio: currentMode === 'product' ? 1 : 16/9,
-                viewMode: 1,
+                viewMode: 1, // Enforces bounds
                 dragMode: 'move',
                 background: false,
                 autoCropArea: 0.9,
@@ -407,22 +416,30 @@
         finalCanvas.height = targetH;
         const ctx = finalCanvas.getContext('2d');
 
+        // Apply Lighting Filters
         ctx.filter = `brightness(${sBright.value}%) contrast(${sContrast.value}%)`;
         ctx.drawImage(croppedCanvas, 0, 0);
 
-        if (document.getElementById('check-watermark').checked) {
-            ctx.filter = 'none';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'; 
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-            ctx.shadowBlur = 4; ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 1;
-            ctx.font = 'bold 24px "Plus Jakarta Sans", sans-serif';
-            ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-            ctx.fillText('Verified CTMerchant', targetW - 20, targetH - 20);
-        }
+        // PERMANENT WATERMARK LOGIC
+        ctx.filter = 'none'; // Reset filter so watermark is clean
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.45)'; // Semi-transparent white
+        
+        // Dark shadow for readability on bright backgrounds
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+        
+        ctx.font = 'bold 24px "Plus Jakarta Sans", sans-serif';
+        ctx.textAlign = 'right'; 
+        ctx.textBaseline = 'bottom';
+        
+        // Stamp it in the bottom right corner
+        ctx.fillText('CTMerchant', targetW - 20, targetH - 20);
 
         // AUTO-TUNING COMPRESSION LOOP
-        let quality = 0.92; // Start with Pristine Quality
-        const maxBytes = currentMode === 'product' ? 100 * 1024 : 200 * 1024; // 100KB for product, 200KB for banner
+        let quality = 0.92; // Start Pristine
+        const maxBytes = currentMode === 'product' ? 100 * 1024 : 200 * 1024;
 
         function attemptCompress() {
             finalCanvas.toBlob((blob) => {
@@ -449,7 +466,7 @@
 
                     const dlBtn = document.getElementById('btn-download');
                     dlBtn.href = URL.createObjectURL(blob);
-                    dlBtn.download = `ctm-${currentMode}-${Date.now()}.jpg`;
+                    dlBtn.download = `ctmerchant-optimized-${Date.now()}.jpg`;
                     dlBtn.style.display = 'flex';
                 } else {
                     // Reduce quality and try again
