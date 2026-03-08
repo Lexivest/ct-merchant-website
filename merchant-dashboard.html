@@ -335,16 +335,16 @@
         async function fetchShop(userId) {
             try {
                 // --- PRE-FLIGHT SUSPENSION CHECK ---
-                // Prevents a suspended user from sneaking directly into merchant-dashboard.html
+                // REMOVED 'status' WHICH WAS CRASHING THE QUERY
                 const { data: profile, error: profileErr } = await client
                     .from('profiles')
-                    .select('is_suspended, status')
+                    .select('is_suspended')
                     .eq('id', userId)
                     .maybeSingle();
 
                 if (profileErr) {
                     console.error("Network error verifying profile:", profileErr.message);
-                } else if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+                } else if (profile && profile.is_suspended === true) {
                     alert("🔒 Your account access has been restricted by administration.");
                     await client.auth.signOut();
                     window.location.href = "index.html";
