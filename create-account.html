@@ -81,11 +81,14 @@
   <div class="auth-card">
       <h2 class="auth-title">Create Account</h2>
       <p class="auth-subtitle">Join the professional merchant network.</p>
+      
       <div style="display:flex;justify-content:center;width:100%">
           <div id="g_id_onload" data-client_id="237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com" data-context="signup" data-ux_mode="popup" data-callback="handleGoogleLogin" data-auto_prompt="false"></div>
           <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="continue_with" data-size="large" data-logo_alignment="left" data-width="340"></div>
       </div>
+      
       <div class="divider"><span>Or sign up with Email</span></div>
+      
       <form id="signup-form" class="form-stack" onsubmit="event.preventDefault(); handleInitialEmailSignup();">
           <div class="input-group">
               <label class="input-label">Full Name</label>
@@ -140,15 +143,18 @@
           </div>
           <button type="submit" class="btn-primary">Continue</button>
       </form>
+      
       <div id="message-container" class="status-box">
           <i id="status-icon" class="fa-solid"></i>
           <p id="message"></p>
       </div>
+      
       <div class="footer-link">
           <p>Already have an account? <button onclick="toggleModal('login-modal')" class="link-highlight">Sign In</button></p>
       </div>
   </div>
 
+  <!-- COMPLETE PROFILE MODAL FOR GOOGLE LOGINS -->
   <div id="complete-profile-modal" class="modal-overlay">
       <div class="modal-card">
           <h2 class="modal-title"><i class="fa-solid fa-user-check" style="color:var(--color-pink)"></i> Complete Setup</h2>
@@ -165,7 +171,7 @@
                   <label class="input-label">Select City</label>
                   <div class="input-wrapper">
                       <span class="input-icon"><i class="fa-solid fa-city"></i></span>
-                      <select id="google-city" class="auth-input" required onchange="loadAreasForModal(this.value)"><option value="" disabled selected>Loading cities...</option></select>
+                      <select id="google-city" class="auth-input" required onchange="loadAreas(this.value, document.getElementById('google-area'))"><option value="" disabled selected>Loading cities...</option></select>
                   </div>
               </div>
               <div class="input-group" style="margin-bottom:24px">
@@ -181,6 +187,7 @@
       </div>
   </div>
 
+  <!-- TERMS MODAL -->
   <div id="terms-modal" class="modal-overlay">
       <div class="modal-card">
           <h2 class="modal-title"><i class="fa-solid fa-file-contract" style="color:var(--color-pink)"></i> Agreements & Policies</h2>
@@ -256,6 +263,7 @@
       </div>
   </div>
 
+  <!-- LOGIN MODAL -->
   <div id="login-modal" class="modal-overlay">
       <div class="modal-card">
           <h2 class="modal-title" style="margin-bottom:24px">Sign-In</h2>
@@ -282,36 +290,329 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-      const SUPABASE_URL="https://xdchacdjcgazyckacbpc.supabase.co",SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
-      const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-      const citySelect=document.getElementById('signup-city'),areaSelect=document.getElementById('signup-area'),googleCitySelect=document.getElementById('google-city'),googleAreaSelect=document.getElementById('google-area');
-      const statusBox=document.getElementById('message-container'),statusMsg=document.getElementById('message'),statusIcon=document.getElementById('status-icon');
-      let pendingGoogleUserId=null,pendingGoogleUserName=null;
+      const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      
+      const citySelect = document.getElementById('signup-city');
+      const areaSelect = document.getElementById('signup-area');
+      const googleCitySelect = document.getElementById('google-city');
+      const googleAreaSelect = document.getElementById('google-area');
+      const statusBox = document.getElementById('message-container');
+      const statusMsg = document.getElementById('message');
+      const statusIcon = document.getElementById('status-icon');
+      
+      let pendingGoogleUserId = null;
+      let pendingGoogleUserName = null;
 
-      async function getClientIpData(){try{const e=await fetch('https://1.1.1.1/cdn-cgi/trace'),t=await e.text(),a=t.split('\n').reduce((e,t)=>{const[a,n]=t.split('=');return a&&(e[a]=n),e},{});return{ip:a.ip||'unknown',country:a.loc||'unknown'}}catch(e){return{ip:'unknown',country:'unknown'}}}
-      async function isIpBanned(e){if('unknown'===e)return!1;try{const{data:t}=await client.from('ip_blacklist').select('ip_address').eq('ip_address',e).maybeSingle();return!!t}catch(e){return!1}}
+      // --- IP SECURITY ---
+      async function getClientIpData() {
+          try {
+              const res = await fetch('https://1.1.1.1/cdn-cgi/trace');
+              const text = await res.text();
+              const data = text.split('\n').reduce((obj, line) => {
+                  const [key, val] = line.split('=');
+                  if (key) obj[key] = val;
+                  return obj;
+              }, {});
+              return { ip: data.ip || 'unknown', country: data.loc || 'unknown' };
+          } catch (e) {
+              return { ip: 'unknown', country: 'unknown' };
+          }
+      }
 
-      window.onload=async()=>{try{const{data:e,error:t}=await client.from('cities').select('id, name').eq('is_open',!0).order('name');if(t)throw t;if(0===e.length)return citySelect.innerHTML='<option value="" disabled selected>No cities currently available</option>',void(googleCitySelect.innerHTML='<option value="" disabled selected>No cities currently available</option>');const a='<option value="" disabled selected>Select your city</option>'+e.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');citySelect.innerHTML=a,googleCitySelect.innerHTML=a}catch(e){console.error("Error loading cities",e)}};
-      citySelect.addEventListener('change',e=>loadAreas(e.target.value,areaSelect));
-      googleCitySelect.addEventListener('change',e=>loadAreas(e.target.value,googleAreaSelect));
+      async function isIpBanned(ip) {
+          if (ip === 'unknown') return false;
+          try {
+              const { data } = await client.from('ip_blacklist').select('ip_address').eq('ip_address', ip).maybeSingle();
+              return !!data;
+          } catch (e) {
+              return false;
+          }
+      }
 
-      async function loadAreas(e,t){t.disabled=!0,t.innerHTML='<option value="" disabled selected>Loading areas...</option>';try{const{data:a,error:n}=await client.from('areas').select('id, name').eq('city_id',e).order('name');if(n)throw n;t.innerHTML='<option value="" disabled selected>Select your area</option>'+a.map(e=>`<option value="${e.id}">${e.name}</option>`).join(''),t.disabled=!1}catch(e){t.innerHTML='<option value="" disabled>Error loading areas</option>'}}
+      // --- INITIALIZATION ---
+      window.onload = async () => {
+          try {
+              const { data: cities, error } = await client.from('cities').select('id, name').eq('is_open', true).order('name');
+              if (error) throw error;
+              
+              if (cities.length === 0) {
+                  citySelect.innerHTML = '<option value="" disabled selected>No cities currently available</option>';
+                  googleCitySelect.innerHTML = '<option value="" disabled selected>No cities currently available</option>';
+                  return;
+              }
+              
+              const options = '<option value="" disabled selected>Select your city</option>' + cities.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+              citySelect.innerHTML = options;
+              googleCitySelect.innerHTML = options;
+          } catch (e) {
+              console.error("Error loading cities", e);
+          }
+      };
 
-      async function handleGoogleLogin(e){showStatus("Checking security...","success");try{const t=await getClientIpData();if(await isIpBanned(t.ip))throw new Error("ACCESS DENIED: Your IP address has been banned.");showStatus("Authenticating with Google...","success");const{data:a,error:n}=await client.auth.signInWithIdToken({provider:'google',token:e.credential});if(n)throw n;const o=a.user;pendingGoogleUserId=o.id,pendingGoogleUserName=o.user_metadata?.full_name||'';const{data:r,error:s}=await client.from('profiles').select('city_id, area_id, is_suspended').eq('id',o.id).maybeSingle();if(r&&r.is_suspended)throw await client.auth.signOut(),new Error("Your account has been temporarily suspended.");r&&r.city_id&&r.area_id?(await client.from('profiles').update({last_active_ip:t.ip}).eq('id',o.id),window.location.href="user-dashboard.html"):(toggleModal('complete-profile-modal'),statusBox.classList.remove('active'))}catch(e){showStatus(e.message,"error")}}
-      async function saveGoogleProfile(){const e=document.getElementById('google-setup-form');if(!e.checkValidity())return void e.reportValidity();const t=document.getElementById('google-phone').value.trim(),a=document.getElementById('google-city').value,n=document.getElementById('google-area').value,o=document.getElementById('google-complete-btn');o.disabled=!0,o.innerHTML='<div class="spinner"></div> Saving...';try{const e=await getClientIpData(),{error:r}=await client.from('profiles').upsert({id:pendingGoogleUserId,full_name:pendingGoogleUserName,phone:t,city_id:parseInt(a),area_id:parseInt(n),registration_ip:e.ip,last_active_ip:e.ip,ip_country:e.country});if(r)throw r;window.location.href="user-dashboard.html"}catch(e){alert("Error saving profile: "+e.message),o.disabled=!1,o.innerHTML='Finish Setup'}}
-      async function cancelGoogleLogin(){await client.auth.signOut(),toggleModal('complete-profile-modal'),pendingGoogleUserId=null}
+      citySelect.addEventListener('change', e => loadAreas(e.target.value, areaSelect));
 
-      function toggleModal(e){const t=document.getElementById(e);t.classList.contains('active')?(t.classList.remove('active'),setTimeout(()=>t.classList.add('hidden'),300)):(t.classList.remove('hidden'),void t.offsetWidth,t.classList.add('active'))}
-      function togglePasswordVisibility(e,t){const a=document.getElementById(e),n=document.getElementById(t);a.type='password'===a.type?'text':'password',n.classList.toggle('fa-eye-slash'),n.classList.toggle('fa-eye'),n.style.color='text'===a.type?'var(--color-pink)':''}
-      function showStatus(e,t){statusBox.className=`status-box active status-${t}`,statusMsg.textContent=e,'error'===t?statusIcon.className="fa-solid fa-triangle-exclamation":statusIcon.className="fa-solid fa-circle-check"}
+      async function loadAreas(cityId, targetSelect) {
+          targetSelect.disabled = true;
+          targetSelect.innerHTML = '<option value="" disabled selected>Loading areas...</option>';
+          try {
+              const { data: areas, error } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+              if (error) throw error;
+              
+              targetSelect.innerHTML = '<option value="" disabled selected>Select your area</option>' + areas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+              targetSelect.disabled = false;
+          } catch (e) {
+              targetSelect.innerHTML = '<option value="" disabled>Error loading areas</option>';
+          }
+      }
 
-      function handleInitialEmailSignup(){const e=document.getElementById('signup-form');if(!e.checkValidity())return void e.reportValidity();if(document.getElementById('signup-password').value!==document.getElementById('signup-confirm-password').value)return showStatus("Passwords do not match. Please try again.","error");statusBox.classList.remove('active'),toggleModal('terms-modal'),setTimeout(checkTermsScroll,100)}
-      function checkTermsScroll(){const e=document.getElementById('terms-scroll-box');e.scrollTop+e.clientHeight>=e.scrollHeight-15&&unlockTermsAction()}
-      function unlockTermsAction(){document.getElementById('terms-locked-indicator').classList.add('hidden');const e=document.getElementById('final-submit-btn'),t=document.getElementById('btn-lock-icon');e.disabled=!1,t&&(t.classList.remove('fa-lock'),t.classList.add('fa-check'))}
+      // ==========================================
+      // BULLETPROOF GOOGLE LOGIN LOGIC
+      // ==========================================
+      async function handleGoogleLogin(e) {
+          showStatus("Checking security...", "success");
+          try {
+              const ipData = await getClientIpData();
+              if (await isIpBanned(ipData.ip)) throw new Error("ACCESS DENIED: Your IP address has been banned.");
 
-      async function executeEmailSignup(){const e=document.getElementById('final-submit-btn');e.disabled=!0,e.innerHTML='<div class="spinner"></div> Processing...';const t=document.getElementById('signup-name').value.trim(),a=document.getElementById('signup-phone').value.trim(),n=document.getElementById('signup-email').value.trim(),o=document.getElementById('signup-password').value,r=parseInt(citySelect.value),s=parseInt(areaSelect.value);try{const i=await getClientIpData();if(await isIpBanned(i.ip))throw new Error("ACCESS DENIED: Your IP address has been permanently banned.");const{data:l,error:c}=await client.auth.signUp({email:n,password:o,options:{data:{full_name:t}}});if(c)throw c;if(l.user){const{error:e}=await client.from('profiles').insert({id:l.user.id,full_name:t,phone:a,city_id:r,area_id:s,registration_ip:i.ip,last_active_ip:i.ip,ip_country:i.country});if(e)throw e;toggleModal('terms-modal'),document.getElementById('signup-form').reset(),showStatus("Account created! Please check your email for confirmation, or Sign In below.","success"),document.getElementById('login-email').value=n,setTimeout(()=>{toggleModal('login-modal')},1e3)}}catch(t){showStatus(t.message,"error"),toggleModal('terms-modal')}finally{e.disabled=!1,e.innerHTML='<i class="fa-solid fa-check" id="btn-lock-icon"></i> I Agree & Create Account'}}
+              showStatus("Authenticating with Google...", "success");
+              const { data: authData, error: authErr } = await client.auth.signInWithIdToken({ provider: 'google', token: e.credential });
+              if (authErr) throw authErr;
 
-      async function handleLogin(){const e=document.getElementById('login-email').value,t=document.getElementById('login-password').value,a=document.getElementById('btn-login-submit');a.disabled=!0,a.innerHTML='<div class="spinner"></div> Logging in...';try{const n=await getClientIpData();if(await isIpBanned(n.ip))throw new Error("ACCESS DENIED: Your IP address is banned.");const{data:o,error:r}=await client.auth.signInWithPassword({email:e,password:t});if(r)throw r;await client.from('profiles').update({last_active_ip:n.ip}).eq('id',o.user.id),window.location.href="user-dashboard.html"}catch(e){alert(e.message),a.disabled=!1,a.innerHTML='Continue'}}
+              const user = authData.user;
+              pendingGoogleUserId = user.id;
+              pendingGoogleUserName = user.user_metadata?.full_name || '';
+
+              // --- PRE-FLIGHT PROFILE CHECK (FIXED) ---
+              const { data: profile, error: profileErr } = await client
+                  .from('profiles')
+                  .select('city_id, area_id, is_suspended, status')
+                  .eq('id', user.id)
+                  .maybeSingle();
+
+              // 1. Network Error: Do NOT prompt for setup, safely abort.
+              if (profileErr) {
+                  await client.auth.signOut();
+                  throw new Error("Network error verifying profile. Please try again.");
+              }
+
+              // 2. Suspension Check: Block at the door!
+              if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+                  await client.auth.signOut();
+                  throw new Error("Your account access has been restricted by administration.");
+              }
+
+              // 3. Success Routing
+              if (profile && profile.city_id && profile.area_id) {
+                  // Profile is complete, send to dashboard
+                  await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
+                  window.location.href = "user-dashboard.html";
+              } else {
+                  // Profile is incomplete, show setup modal
+                  toggleModal('complete-profile-modal');
+                  statusBox.classList.remove('active');
+              }
+              
+          } catch (err) {
+              showStatus(err.message, "error");
+          }
+      }
+
+      async function saveGoogleProfile() {
+          const form = document.getElementById('google-setup-form');
+          if (!form.checkValidity()) return form.reportValidity();
+          
+          const phone = document.getElementById('google-phone').value.trim();
+          const cityId = document.getElementById('google-city').value;
+          const areaId = document.getElementById('google-area').value;
+          const btn = document.getElementById('google-complete-btn');
+          
+          btn.disabled = true;
+          btn.innerHTML = '<div class="spinner"></div> Saving...';
+          
+          try {
+              const ipData = await getClientIpData();
+              const { error } = await client.from('profiles').upsert({
+                  id: pendingGoogleUserId,
+                  full_name: pendingGoogleUserName,
+                  phone: phone,
+                  city_id: parseInt(cityId),
+                  area_id: parseInt(areaId),
+                  registration_ip: ipData.ip,
+                  last_active_ip: ipData.ip,
+                  ip_country: ipData.country
+              });
+              
+              if (error) throw error;
+              window.location.href = "user-dashboard.html";
+          } catch (e) {
+              alert("Error saving profile: " + e.message);
+              btn.disabled = false;
+              btn.innerHTML = 'Finish Setup';
+          }
+      }
+
+      async function cancelGoogleLogin() {
+          await client.auth.signOut();
+          toggleModal('complete-profile-modal');
+          pendingGoogleUserId = null;
+      }
+
+      // --- UI HELPERS ---
+      function toggleModal(id) {
+          const modal = document.getElementById(id);
+          if (modal.classList.contains('active')) {
+              modal.classList.remove('active');
+              setTimeout(() => modal.classList.add('hidden'), 300);
+          } else {
+              modal.classList.remove('hidden');
+              void modal.offsetWidth; // Trigger reflow
+              modal.classList.add('active');
+          }
+      }
+
+      function togglePasswordVisibility(inputId, iconId) {
+          const input = document.getElementById(inputId);
+          const icon = document.getElementById(iconId);
+          input.type = input.type === 'password' ? 'text' : 'password';
+          icon.classList.toggle('fa-eye-slash');
+          icon.classList.toggle('fa-eye');
+          icon.style.color = input.type === 'text' ? 'var(--color-pink)' : '';
+      }
+
+      function showStatus(message, type) {
+          statusBox.className = `status-box active status-${type}`;
+          statusMsg.textContent = message;
+          statusIcon.className = type === 'error' ? "fa-solid fa-triangle-exclamation" : "fa-solid fa-circle-check";
+      }
+
+      // --- EMAIL SIGNUP LOGIC ---
+      function handleInitialEmailSignup() {
+          const form = document.getElementById('signup-form');
+          if (!form.checkValidity()) return form.reportValidity();
+          
+          if (document.getElementById('signup-password').value !== document.getElementById('signup-confirm-password').value) {
+              return showStatus("Passwords do not match. Please try again.", "error");
+          }
+          
+          statusBox.classList.remove('active');
+          toggleModal('terms-modal');
+          setTimeout(checkTermsScroll, 100);
+      }
+
+      function checkTermsScroll() {
+          const box = document.getElementById('terms-scroll-box');
+          if (box.scrollTop + box.clientHeight >= box.scrollHeight - 15) {
+              unlockTermsAction();
+          }
+      }
+
+      function unlockTermsAction() {
+          document.getElementById('terms-locked-indicator').classList.add('hidden');
+          const btn = document.getElementById('final-submit-btn');
+          const icon = document.getElementById('btn-lock-icon');
+          btn.disabled = false;
+          if (icon) {
+              icon.classList.remove('fa-lock');
+              icon.classList.add('fa-check');
+          }
+      }
+
+      async function executeEmailSignup() {
+          const btn = document.getElementById('final-submit-btn');
+          btn.disabled = true;
+          btn.innerHTML = '<div class="spinner"></div> Processing...';
+          
+          const name = document.getElementById('signup-name').value.trim();
+          const phone = document.getElementById('signup-phone').value.trim();
+          const email = document.getElementById('signup-email').value.trim();
+          const password = document.getElementById('signup-password').value;
+          const cityId = parseInt(citySelect.value);
+          const areaId = parseInt(areaSelect.value);
+          
+          try {
+              const ipData = await getClientIpData();
+              if (await isIpBanned(ipData.ip)) throw new Error("ACCESS DENIED: Your IP address has been permanently banned.");
+              
+              const { data: authData, error: authErr } = await client.auth.signUp({
+                  email: email,
+                  password: password,
+                  options: { data: { full_name: name } }
+              });
+              
+              if (authErr) throw authErr;
+              
+              if (authData.user) {
+                  const { error: profileErr } = await client.from('profiles').insert({
+                      id: authData.user.id,
+                      full_name: name,
+                      phone: phone,
+                      city_id: cityId,
+                      area_id: areaId,
+                      registration_ip: ipData.ip,
+                      last_active_ip: ipData.ip,
+                      ip_country: ipData.country
+                  });
+                  
+                  if (profileErr) throw profileErr;
+                  
+                  toggleModal('terms-modal');
+                  document.getElementById('signup-form').reset();
+                  showStatus("Account created! Please check your email for confirmation, or Sign In below.", "success");
+                  document.getElementById('login-email').value = email;
+                  setTimeout(() => { toggleModal('login-modal'); }, 1000);
+              }
+          } catch (err) {
+              showStatus(err.message, "error");
+              toggleModal('terms-modal');
+          } finally {
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fa-solid fa-check" id="btn-lock-icon"></i> I Agree & Create Account';
+          }
+      }
+
+      // ==========================================
+      // BULLETPROOF EMAIL LOGIN LOGIC
+      // ==========================================
+      async function handleLogin() {
+          const email = document.getElementById('login-email').value;
+          const pass = document.getElementById('login-password').value;
+          const btn = document.getElementById('btn-login-submit');
+          
+          btn.disabled = true;
+          btn.innerHTML = '<div class="spinner"></div> Logging in...';
+          
+          try {
+              const ipData = await getClientIpData();
+              if (await isIpBanned(ipData.ip)) throw new Error("ACCESS DENIED: Your IP address is banned.");
+              
+              const { data: authData, error: authErr } = await client.auth.signInWithPassword({ email: email, password: pass });
+              if (authErr) throw authErr;
+
+              // --- PRE-FLIGHT PROFILE CHECK (FIXED) ---
+              const { data: profile, error: profileErr } = await client
+                  .from('profiles')
+                  .select('status, is_suspended')
+                  .eq('id', authData.user.id)
+                  .maybeSingle();
+
+              // Block Suspended Users at the door!
+              if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+                  await client.auth.signOut();
+                  throw new Error("Your account access has been restricted by administration.");
+              }
+              // ----------------------------------------
+              
+              await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
+              window.location.href = "user-dashboard.html";
+              
+          } catch (err) {
+              alert(err.message);
+              btn.disabled = false;
+              btn.innerHTML = 'Continue';
+          }
+      }
   </script>
 </body>
 </html>
