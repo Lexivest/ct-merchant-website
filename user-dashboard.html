@@ -242,9 +242,119 @@
     function applySuggestion(e,t){document.getElementById('desktop'===t?'search-input-desktop':'search-input-mobile').value=e,document.getElementById('desktop'===t?'sugg-desktop':'sugg-mobile').style.display='none',executeSearch(t)}
     document.addEventListener('click',function(e){if(!e.target.closest('.desktop-search-wrap')&&!e.target.closest('.mobile-search-wrap')){const e=document.getElementById('sugg-desktop'),t=document.getElementById('sugg-mobile');e&&(e.style.display='none'),t&&(t.style.display='none')}});
 
-    window.onload=async()=>{const{data:{session:e}}=await client.auth.getSession();if(!e)return void(window.location.href="index.html");currentUser=e.user,localStorage.setItem('ctm_last_user_id',currentUser.id);const t=`ctm_dashboard_v31_${currentUser.id}`;if(CACHE_KEY!==t){CACHE_KEY=t;const e=localStorage.getItem(CACHE_KEY);e?(renderData(JSON.parse(e)),fetchData(e)):(document.getElementById('areas-container').innerHTML='',document.getElementById('promo-list').style.display='none',document.getElementById('featured-section').style.display='none',document.getElementById('category-container').style.display='none',document.getElementById('initial-loader').style.display='block',fetchData(null))}else optimisticCacheStr||(document.getElementById('initial-loader').style.display='block'),fetchData(optimisticCacheStr)};
+    window.onload = async () => {
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) {
+            window.location.href = "index.html";
+            return;
+        }
+        
+        currentUser = session.user;
+        localStorage.setItem('ctm_last_user_id', currentUser.id);
+        
+        const expectedCacheKey = `ctm_dashboard_v31_${currentUser.id}`;
+        
+        if (CACHE_KEY !== expectedCacheKey) {
+            CACHE_KEY = expectedCacheKey;
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            
+            if (cachedData) {
+                renderData(JSON.parse(cachedData));
+                fetchData(cachedData);
+            } else {
+                document.getElementById('areas-container').innerHTML = '';
+                document.getElementById('promo-list').style.display = 'none';
+                document.getElementById('featured-section').style.display = 'none';
+                document.getElementById('category-container').style.display = 'none';
+                document.getElementById('initial-loader').style.display = 'block';
+                fetchData(null);
+            }
+        } else {
+            if (!optimisticCacheStr) {
+                document.getElementById('initial-loader').style.display = 'block';
+            }
+            fetchData(optimisticCacheStr);
+        }
+    };
 
-    async function fetchData(e){try{const{data:t,error:a}=await client.from('profiles').select('*, cities(name)').eq('id',currentUser.id).maybeSingle();if(a||!t)return alert("Your account access has been restricted by administration. Please contact support."),await client.auth.signOut(),localStorage.removeItem(CACHE_KEY),void(window.location.href="index.html");userProfile=t,userCityId=t.city_id,userAreaId=t.area_id;const[n,o,r,s,i,c,d,l]=await Promise.all([client.from('promo_banners').select().order('created_at',{ascending:!1}),client.from('announcements').select().order('created_at',{ascending:!1}),client.from('categories').select().order('name'),client.from('areas').select().eq('city_id',userCityId).order('name'),client.from('shops').select().eq('city_id',userCityId).order('is_verified',{ascending:!1}).order('id',{ascending:!0}),client.from('notifications').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:!1}).limit(20),client.from('shops').select('id, status, rejection_reason, is_open').eq('owner_id',currentUser.id).maybeSingle(),client.from('wishlist').select('*',{count:'exact',head:!0}).eq('user_id',currentUser.id)]);currentUserShop=d.data;let p=[];const u=i.data.map(e=>e.id);if(u.length>0){const{data:e}=await client.from('products').select('*').in('shop_id',u).eq('is_available',!0).limit(500).order('id',{ascending:!0});p=e||[]}const m={profile:t,promos:n.data,categories:r.data,announcements:o.data,areas:s.data,shops:i.data,notifications:c.data||[],myShop:d.data,wishlistCount:l.count||0,products:p,unread:c.data?c.data.filter(e=>!e.is_read).length:0},h=JSON.stringify(m);h!==e&&(localStorage.setItem(CACHE_KEY,h),renderData(m))}catch(e){console.error("Fetch error:",e)}}
+    async function fetchData(oldCacheStr) {
+        try {
+            const { data: profile, error: profileErr } = await client
+                .from('profiles')
+                .select('*, cities(name)')
+                .eq('id', currentUser.id)
+                .maybeSingle();
+
+            // --- THE CRITICAL BUG FIX ---
+            // 1. Handle Network Errors silently without logging out
+            if (profileErr) {
+                console.error("Network or database error fetching profile:", profileErr.message);
+                return; 
+            }
+
+            // 2. Handle Missing Profile silently
+            if (!profile) {
+                console.warn("User profile not found. Still syncing or deleted.");
+                return; 
+            }
+
+            // 3. ONLY log out if explicitly suspended!
+            if (profile.status === 'suspended') {
+                alert("Your account access has been restricted by administration. Please contact support.");
+                await client.auth.signOut();
+                localStorage.removeItem(CACHE_KEY);
+                window.location.href = "index.html";
+                return;
+            }
+            // -----------------------------
+
+            userProfile = profile;
+            userCityId = profile.city_id;
+            userAreaId = profile.area_id;
+
+            const [promosRes, annRes, catsRes, areasRes, shopsRes, notifRes, myShopRes, wishRes] = await Promise.all([
+                client.from('promo_banners').select().order('created_at', { ascending: false }),
+                client.from('announcements').select().order('created_at', { ascending: false }),
+                client.from('categories').select().order('name'),
+                client.from('areas').select().eq('city_id', userCityId).order('name'),
+                client.from('shops').select().eq('city_id', userCityId).order('is_verified', { ascending: false }).order('id', { ascending: true }),
+                client.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(20),
+                client.from('shops').select('id, status, rejection_reason, is_open').eq('owner_id', currentUser.id).maybeSingle(),
+                client.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id)
+            ]);
+
+            currentUserShop = myShopRes.data;
+            
+            let products = [];
+            const shopIds = shopsRes.data.map(e => e.id);
+            if (shopIds.length > 0) {
+                const { data: prodData } = await client.from('products').select('*').in('shop_id', shopIds).eq('is_available', true).limit(500).order('id', { ascending: true });
+                products = prodData || [];
+            }
+
+            const newData = {
+                profile: profile,
+                promos: promosRes.data || [],
+                categories: catsRes.data || [],
+                announcements: annRes.data || [],
+                areas: areasRes.data || [],
+                shops: shopsRes.data || [],
+                notifications: notifRes.data || [],
+                myShop: myShopRes.data,
+                wishlistCount: wishRes.count || 0,
+                products: products,
+                unread: notifRes.data ? notifRes.data.filter(e => !e.is_read).length : 0
+            };
+
+            const newCacheStr = JSON.stringify(newData);
+            if (newCacheStr !== oldCacheStr) {
+                localStorage.setItem(CACHE_KEY, newCacheStr);
+                renderData(newData);
+            }
+        } catch (e) {
+            console.error("Fetch error:", e);
+        }
+    }
 
     function renderData(e){document.getElementById('initial-loader').style.display='none',document.getElementById('header-city').textContent=e.profile.cities?.name||"Unknown";const t=e.areas.sort((e,t)=>e.id===userAreaId?-1:t.id===userAreaId?1:e.name.localeCompare(t.name)),a=t.map(e=>`<option value="${e.id}">${e.name}</option>`).join(''),n=document.getElementById('search-area-desktop');n&&n.innerHTML!==`<option value="all">All Areas</option>`+a&&(n.innerHTML=`<option value="all">All Areas</option>`+a);const o=document.getElementById('search-area-mobile');o&&o.innerHTML!==`<option value="all">All Areas</option>`+a&&(o.innerHTML=`<option value="all">All Areas</option>`+a);const r=document.getElementById('filter-category');if(r){const t=`<option value="all">All Categories</option>`+e.categories.map(e=>`<option value="${e.name}">${e.name}</option>`).join('');r.innerHTML!==t&&(r.innerHTML=t)}const s=e.profile.full_name||"User",i=e.profile.avatar_url||`https://api.dicebear.com/7.x/initials/svg?seed=${s}`;document.getElementById('header-avatar').src!==i&&(document.getElementById('header-avatar').src=i),document.getElementById('profile-avatar-lg').src!==i&&(document.getElementById('profile-avatar-lg').src=i),document.getElementById('profile-name').textContent=s,document.getElementById('profile-phone').textContent=e.profile.phone||"No phone number added",currentUser&&(document.getElementById('profile-email').textContent=currentUser.email);const c=document.getElementById('badge-count');if(e.unread>0? (c.textContent=e.unread>9?'9+':e.unread,c.style.display='block') : c.style.display='none', e.announcements&&e.announcements.length>0){const t=document.getElementById('header-ticker'),a=document.getElementById('ticker-text'),n=e.announcements.map(e=>e.message).join("  •  ");t.style.display='flex',a.innerHTML!==n&&(a.innerHTML=n,a.style.animationDuration=`${Math.max(40,n.length*.4)}s`)}else document.getElementById('header-ticker').style.display='none';const d=document.getElementById('promo-list');if(e.promos.length>0){const t=e.promos.map(e=>`<div style="min-width:320px; max-width: 600px; width: 85vw; height:200px; border-radius:4px; overflow:hidden; flex-shrink:0; border:1px solid #D5D9D9;"><img src="${e.image_url}" style="width:100%; height:100%; object-fit:cover;"></div>`).join('');d.innerHTML!==t&&(d.innerHTML=t),d.style.display='flex'}else d.style.display='none';const l=e.shops.filter(e=>e.is_featured),p=document.getElementById('featured-section'),u=document.getElementById('featured-list');if(l.length>0){const t=l.map(t=>buildShopCard(t,e.products)).join('');u.innerHTML!==t&&(u.innerHTML=t),p.style.display='block'}else p.style.display='none';const m=document.getElementById('areas-container');let h='';t.forEach(t=>{const a=e.shops.filter(e=>e.area_id===t.id);if(0===a.length)return;h+=`<div class="area-block-wrap"><h2 class="sec-title">${t.id===userAreaId?`Top stores in ${t.name} <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Near You)</span>`:`Explore stores in ${t.name}`}</h2><div class="h-scroll">${a.map(t=>buildShopCard(t,e.products)).join('')}</div></div>`}),m.innerHTML!==h&&(m.innerHTML=h);const y=document.getElementById('category-list'),f=document.getElementById('category-container');if(e.categories.length>0){const t=e.categories.map(t=>{const a=e.shops.filter(e=>e.category===t.name).map(e=>e.id),n=e.products.find(e=>a.includes(e.shop_id)&&e.image_url),o=n?n.image_url:`https://api.dicebear.com/7.x/initials/svg?seed=${t.name}`;return`<div class="cat-chip" onclick="window.location.href='cat.html?name=${encodeURIComponent(t.name)}'"><img src="${o}"> <span>${t.name}</span></div>`}).join('');y.innerHTML!==t&&(y.innerHTML=t),f.style.display='block'}const g=document.getElementById('notif-list');let v='<p style="color:#565959;">No notifications yet</p>';e.notifications&&e.notifications.length>0&&(v=e.notifications.map(e=>{const t=new Date(e.created_at).toLocaleDateString()+' '+new Date(e.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});return`<div style="background:${e.is_read?'white':'#F7FAFA'}; padding:16px; border-radius:8px; border:1px solid ${e.is_read?'#D5D9D9':'#007185'}; margin-bottom: 12px;"><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="font-weight:700; color:#0F1111; font-size:0.95rem;">${e.title}</span><span style="font-size:0.75rem; color:#565959;">${t}</span></div><div style="color:#0F1111; font-size:0.9rem; line-height:1.4;">${e.message||''}</div></div>`}).join('')),g.innerHTML!==v&&(g.innerHTML=v),updateMyShopCardUI(e.myShop),currentUserShop=e.myShop;const x=`${e.wishlistCount||0} items`;document.getElementById('wishlist-count').textContent!==x&&(document.getElementById('wishlist-count').textContent=x)}
     function buildShopCard(e,t){const a=t.filter(t=>t.shop_id===e.id&&t.image_url&&'Fairly Used'!==t.condition).slice(0,4);let n='';for(let t=0;t<4;t++)if(t<a.length){const e=a[t].name||a[t].product_name||a[t].title||'Product',o=a[t].price||a[t].product_price,r=a[t].discount_price,s=r&&r<o,i=s?Math.round((o-r)/o*100):0;let c='',d='sg-price';s?(c=`<span class="sg-price-old">₦${o.toLocaleString()}</span>₦${r.toLocaleString()}`,d='sg-price flash-price'):o&&(c=`₦${o.toLocaleString()}`),n+=`<div class="shop-grid-item-wrap"><div class="shop-grid-item"><img src="${a[t].image_url}" alt="Product" loading="lazy">${s?`<div class="grid-badge flash-offer">-${i}%</div>`:''}</div><div class="shop-grid-caption"><div class="sg-name" title="${e}">${e}</div><div class="${d}">${c}</div></div></div>`}else n+=`<div class="shop-grid-item-wrap"><div class="shop-grid-item empty"><i class="fa-solid fa-image" style="color: #E5E7EB; font-size: 1.2rem;"></i></div><div class="shop-grid-caption" style="color:transparent; user-select:none;"><div class="sg-name">-</div><div class="sg-price">-</div></div></div>`;return`<div class="premium-shop-card-wrap"><div class="premium-shop-card" onclick="window.location.href='shop-detail.html?id=${e.id}'"><div class="shop-card-title">${e.name}</div><div class="shop-image-grid">${n}</div><div class="shop-cta">Visit shop <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i></div></div></div>`}
