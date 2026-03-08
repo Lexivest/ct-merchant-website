@@ -53,21 +53,26 @@
         .img-picker { background: #F7F7F7; border: 2px dashed #888C8C; border-radius: 8px; aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; transition: 0.2s; text-align: center; padding: 10px; }
         .img-picker:hover { border-color: var(--color-pink); background: var(--color-pink-light); }
         .img-picker.main { border-color: var(--color-pink); border-width: 2px; border-style: solid; background: #fdf2f8;}
-        .img-picker i { font-size: 1.8rem; color: #888C8C; margin-bottom: 8px; }
-        .img-picker.main i { color: var(--color-pink); }
-        .img-picker span { font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); line-height: 1.2; }
-        .img-picker.main span { color: var(--color-pink); }
+        .img-picker i.cam { font-size: 1.8rem; color: #888C8C; margin-bottom: 8px; }
+        .img-picker.main i.cam { color: var(--color-pink); }
+        .img-picker span.lbl { font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); line-height: 1.2; }
+        .img-picker.main span.lbl { color: var(--color-pink); }
         
         .preview-img { width: 100%; height: 100%; object-fit: contain; position: absolute; inset: 0; display: none; background: #fff; z-index: 5; }
         
         .delete-img-btn {
-            position: absolute; top: 8px; right: 8px;
-            background: rgba(220, 38, 38, 0.95); color: white;
-            border: none; border-radius: 50%; width: 32px; height: 32px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 10; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: absolute; top: 6px; right: 6px; background: rgba(220, 38, 38, 0.95); color: white;
+            border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 15; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         .delete-img-btn:hover { background: #991B1B; transform: scale(1.1); }
+
+        /* CT Studio Savings Badge */
+        .savings-badge {
+            position: absolute; bottom: 6px; left: 6px; right: 6px; background: rgba(16, 185, 129, 0.95); color: white;
+            font-size: 0.65rem; font-weight: 800; padding: 4px; border-radius: 4px; z-index: 10; text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); backdrop-filter: blur(4px);
+        }
 
         .form-group { margin-bottom: 20px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;}
@@ -107,22 +112,45 @@
         .btn-danger:hover { background: #FEF2F2; }
 
         .spinner { width: 22px; height: 22px; border: 3px solid rgba(255,255,255,.3); border-top-color: currentColor; border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; margin-right: 8px; }
-        .spinner.lg { width: 44px; height: 44px; border: 4px solid var(--color-pink-light); border-top-color: var(--color-pink); margin: 40px auto 16px auto; }
+        .spinner.lg { width: 44px; height: 44px; border: 4px solid var(--color-pink-light); border-top-color: var(--color-pink); margin: 40px auto 16px auto; display: block;}
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .crop-overlay { position: fixed; inset: 0; background: rgba(17,24,39,.95); z-index: 2000; display: flex; flex-direction: column; opacity: 0; visibility: hidden; transition: .3s ease; backdrop-filter: blur(5px); }
+        /* --- CT STUDIO EMBEDDED MODAL --- */
+        .crop-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 2000; display: flex; flex-direction: column; opacity: 0; visibility: hidden; transition: .3s ease; backdrop-filter: blur(5px); }
         .crop-overlay.active { opacity: 1; visibility: visible; }
-        .crop-header-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: rgba(0,0,0,.5); color: #fff; }
-        .crop-title { font-weight: 700; font-size: 1.2rem; }
-        .crop-workspace { flex: 1; position: relative; width: 100%; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .crop-workspace img { max-width: 100%; max-height: 100%; display: block; }
-        .crop-footer-bar { padding: 20px; background: rgba(0,0,0,.5); display: flex; gap: 16px; justify-content: center; flex-direction: column; }
-        .crop-instructions { text-align: center; color: white; font-size: 0.85rem; font-weight: 500; margin-bottom: 8px; }
-        .crop-btn-row { display: flex; gap: 16px; justify-content: center; }
-        .btn-crop-cancel { background: #374151; color: #fff; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; }
-        .btn-crop-apply { background: var(--color-pink); color: #fff; padding: 12px 32px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
+        .crop-header-bar { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #020617; color: #fff; border-bottom: 1px solid #334155;}
+        .crop-title { font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;}
+        .crop-title i { color: var(--color-pink); }
         
+        .studio-body { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        
+        .crop-workspace { flex: 1; position: relative; width: 100%; min-height: 250px; background: repeating-conic-gradient(#0f172a 0% 25%, #1e293b 0% 50%) 50% / 20px 20px; display: flex; justify-content: center; align-items: center; padding: 16px; }
+        .crop-workspace img { max-width: 100%; max-height: 100%; display: block; }
+        
+        .studio-controls { background: #1e293b; padding: 20px; border-top: 1px solid #334155; display: flex; flex-direction: column; gap: 20px;}
+        
+        .btn-fit-image { background: transparent; border: 1px solid var(--color-pink); color: var(--color-pink); padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; font-size: 0.95rem;}
+        .btn-fit-image:hover { background: rgba(219,39,119,0.1); }
+
+        .slider-group { display: flex; flex-direction: column; gap: 6px; }
+        .slider-label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; color: #f8fafc; }
+        .studio-slider { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: #334155; outline: none; }
+        .studio-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--color-pink); cursor: pointer; }
+        .check-group { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #f8fafc;}
+        .check-group input { width: 18px; height: 18px; accent-color: var(--color-pink); }
+
+        .crop-footer-bar { padding: 16px 20px; background: #020617; display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid #334155;}
+        .btn-crop-cancel { background: transparent; color: #94a3b8; padding: 12px 20px; border-radius: 8px; border: 1px solid #334155; font-weight: 600; cursor: pointer; transition: 0.2s;}
+        .btn-crop-cancel:hover { background: #334155; color: white;}
+        .btn-crop-apply { background: #10b981; color: #fff; padding: 12px 24px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; box-shadow: 0 4px 10px rgba(16,185,129,0.3);}
+        .btn-crop-apply:hover { background: #059669; }
+
         .hidden { display: none !important; }
+        @media (min-width: 768px) { 
+            .studio-body { flex-direction: row; }
+            .crop-workspace { height: auto; }
+            .studio-controls { width: 340px; border-top: none; border-left: 1px solid #334155; }
+        }
         @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; gap: 0; } }
     </style>
 </head>
@@ -168,31 +196,34 @@
             </div>
 
             <div class="edu-box">
-                <h4 class="edu-title"><i class="fa-solid fa-boxes-stacked" style="color: #007185;"></i> Storage Manager</h4>
-                <p class="edu-text">Replacing or deleting an image here will securely delete the old file from your cloud storage, keeping your limits intact.</p>
+                <h4 class="edu-title"><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--color-pink);"></i> Powered by CT Studio</h4>
+                <p class="edu-text">Tap an image slot below to open the studio. We auto-compress your images (Max 4MB input) to perfectly balance data savings and high resolution.</p>
             </div>
 
             <!-- 3 IMAGE GRID -->
             <div class="img-grid">
                 <div class="img-picker main" onclick="document.getElementById('file-input-1').click()">
                     <input type="file" id="file-input-1" hidden accept="image/*" onchange="handleImageSelect(this, 1)">
-                    <i class="fa-solid fa-image"></i>
-                    <span>Main Image<br>(Required)</span>
+                    <i class="fa-solid fa-image cam"></i>
+                    <span class="lbl">Main Image<br>(Required)</span>
                     <img id="preview-1" class="preview-img">
+                    <div id="savings-1" class="savings-badge" style="display:none;"></div>
                     <button type="button" id="del-btn-1" class="delete-img-btn hidden" onclick="removeImage(event, 1)"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
                 <div class="img-picker" onclick="document.getElementById('file-input-2').click()">
                     <input type="file" id="file-input-2" hidden accept="image/*" onchange="handleImageSelect(this, 2)">
-                    <i class="fa-solid fa-camera"></i>
-                    <span>Extra Angle<br>(Optional)</span>
+                    <i class="fa-solid fa-camera cam"></i>
+                    <span class="lbl">Extra Angle<br>(Optional)</span>
                     <img id="preview-2" class="preview-img">
+                    <div id="savings-2" class="savings-badge" style="display:none;"></div>
                     <button type="button" id="del-btn-2" class="delete-img-btn hidden" onclick="removeImage(event, 2)"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
                 <div class="img-picker" onclick="document.getElementById('file-input-3').click()">
                     <input type="file" id="file-input-3" hidden accept="image/*" onchange="handleImageSelect(this, 3)">
-                    <i class="fa-solid fa-camera"></i>
-                    <span>Label/Box<br>(Optional)</span>
+                    <i class="fa-solid fa-camera cam"></i>
+                    <span class="lbl">Label/Box<br>(Optional)</span>
                     <img id="preview-3" class="preview-img">
+                    <div id="savings-3" class="savings-badge" style="display:none;"></div>
                     <button type="button" id="del-btn-3" class="delete-img-btn hidden" onclick="removeImage(event, 3)"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
             </div>
@@ -251,7 +282,6 @@
                 </select>
             </div>
 
-            <!-- ADDED ID HERE -->
             <div class="discount-box" id="discount-container">
                 <div id="discount-limit-msg" class="discount-limit-alert">
                     <i class="fa-solid fa-lock" style="margin-top: 2px;"></i> 
@@ -291,19 +321,56 @@
         </form>
     </div>
 
-    <!-- HYBRID CROPPER MODAL -->
+    <!-- CT STUDIO EMBEDDED MODAL -->
     <div id="crop-modal" class="crop-overlay">
         <div class="crop-header-bar">
-            <div class="crop-title"><i class="fa-solid fa-crop-simple"></i> Frame Image</div>
-            <button type="button" onclick="closeCropModal()" style="background:0 0;border:none;color:#fff;font-size:1.5rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+            <div class="crop-title"><i class="fa-solid fa-wand-magic-sparkles"></i> CT Studio Editor</div>
+            <button type="button" onclick="closeCropModal()" style="background:0 0;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="crop-workspace"><img id="crop-image" src=""></div>
-        <div class="crop-footer-bar">
-            <div class="crop-instructions"><i class="fa-solid fa-hand-pointer"></i> Drag to move. Pinch to zoom in/out.</div>
-            <div class="crop-btn-row">
-                <button type="button" class="btn-crop-cancel" onclick="closeCropModal()">Cancel</button>
-                <button type="button" class="btn-crop-apply" onclick="applyCrop()">Apply Crop</button>
+        
+        <div class="studio-body">
+            <div class="crop-workspace">
+                <img id="crop-image" src="">
             </div>
+            
+            <div class="studio-controls">
+                
+                <div>
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 12px;">Smart Sizing</div>
+                    
+                    <button type="button" class="btn-fit-image" onclick="applyWhiteBorders()" id="btn-fit-border">
+                        <i class="fa-solid fa-expand"></i> Fit Entire Image (Add Borders)
+                    </button>
+                    <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 6px; line-height: 1.4;">Prevents edges of tall/wide photos from being cut off.</p>
+                </div>
+                
+                <div>
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 12px;">Lighting Fixes</div>
+                    <div class="slider-group">
+                        <div class="slider-label"><span>Brightness</span> <span id="val-bright">100%</span></div>
+                        <input type="range" id="slide-bright" class="studio-slider" min="50" max="150" value="100" oninput="updateLiveFilters()">
+                    </div>
+                    <div class="slider-group" style="margin-top:12px;">
+                        <div class="slider-label"><span>Contrast</span> <span id="val-contrast">100%</span></div>
+                        <input type="range" id="slide-contrast" class="studio-slider" min="50" max="150" value="100" oninput="updateLiveFilters()">
+                    </div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 12px;">Branding</div>
+                    <label class="check-group">
+                        <input type="checkbox" id="check-watermark" checked>
+                        <span>Add "Verified" Watermark</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="crop-footer-bar">
+            <button type="button" class="btn-crop-cancel" onclick="closeCropModal()">Cancel</button>
+            <button type="button" class="btn-crop-apply" id="btn-crop-apply" onclick="applyCrop()">
+                <i class="fa-solid fa-microchip"></i> Process & Save
+            </button>
         </div>
     </div>
 
@@ -324,11 +391,13 @@
     const existingUrls = { 1: null, 2: null, 3: null };
     const finalBlobs = { 1: null, 2: null, 3: null };
     const deletedSlots = { 1: false, 2: false, 3: false };
+    const originalSizes = { 1: 0, 2: 0, 3: 0 };
     
     let cropper = null;
     let activeCropIndex = 1;
+    let currentOriginalSrc = null; 
     
-    // Limits
+    const MAX_UPLOAD_SIZE = 4 * 1024 * 1024; // 4MB
     const MAX_SPECIAL_OFFERS = 2;
 
     window.onload = async () => {
@@ -338,8 +407,6 @@
             if (!session) { window.location.href = "login.html"; return; }
             currentUser = session.user;
             
-            // --- 1. PRE-FLIGHT SUSPENSION CHECK ---
-            // REMOVED 'status' WHICH WAS CRASHING THE QUERY
             const { data: profile, error: profileErr } = await client
                 .from('profiles')
                 .select('is_suspended')
@@ -363,7 +430,6 @@
 
     async function fetchProductData() {
         try {
-            // --- 2. FETCH PRODUCT SAFELY ---
             const { data, error } = await client.from('products').select('*').eq('id', productId).maybeSingle();
             
             if (error) {
@@ -390,7 +456,6 @@
             if (countErr) {
                 console.warn("Failed to check special offers limit", countErr);
             } else if (specialCount >= MAX_SPECIAL_OFFERS) {
-                // If they are already at the limit from other products, lock the switch
                 const isCurrentlySpecial = currentProduct.discount_price && currentProduct.discount_price < currentProduct.price;
                 if (!isCurrentlySpecial) {
                     document.getElementById('discount-switch').disabled = true;
@@ -421,7 +486,6 @@
             document.getElementById('rejection-text-content').textContent = p.rejection_reason;
             rejectionBanner.classList.add('visible');
             
-            // Change button text to reflect resubmission
             document.getElementById('btn-icon').className = 'fa-solid fa-paper-plane';
             document.getElementById('btn-text').textContent = 'Resubmit Update';
         } else {
@@ -441,7 +505,7 @@
         document.getElementById('stock').value = p.stock_count !== undefined ? p.stock_count : 1;
         document.getElementById('condition').value = p.condition || 'New';
 
-        // 3. Render Dynamic Categories Synchronously (No setTimeout delay!)
+        // 3. Render Dynamic Categories
         handleCategoryChange();
         if(p.attributes) {
             for(const key in p.attributes) {
@@ -471,59 +535,220 @@
         document.getElementById(`del-btn-${slot}`).classList.remove('hidden');
     }
 
-    // --- SECURE UI DELETION ---
     function removeImage(e, slot) {
         e.preventDefault(); 
         e.stopPropagation(); 
         
         deletedSlots[slot] = true;
         finalBlobs[slot] = null;
+        originalSizes[slot] = 0;
         
         const img = document.getElementById(`preview-${slot}`);
         img.src = '';
         img.style.display = 'none';
+        
         document.getElementById(`del-btn-${slot}`).classList.add('hidden');
+        document.getElementById(`savings-${slot}`).style.display = 'none';
     }
 
-    // --- CROPPER ENGINE ---
-    function handleImageSelect(input, index){
-        if(input.files && input.files[0]){
+    // --- CT STUDIO EMBEDDED LOGIC ---
+    function handleImageSelect(input, index) {
+        if (input.files && input.files[0]) {
             const file = input.files[0];
-            if(!file.type.startsWith('image/')) return alert("Please upload a valid image file."), void(input.value='');
+            if (!file.type.startsWith('image/')) {
+                alert("Please upload a valid image file.");
+                input.value = '';
+                return;
+            }
+
+            if (file.size > MAX_UPLOAD_SIZE) {
+                alert("File is too large! The maximum allowed upload size is 4MB.");
+                input.value = '';
+                return;
+            }
             
             activeCropIndex = index;
+            originalSizes[index] = file.size; 
+            
             const reader = new FileReader();
             reader.onload = (e) => {
+                currentOriginalSrc = e.target.result; 
+                
                 const modal = document.getElementById('crop-modal');
                 const img = document.getElementById('crop-image');
-                img.src = e.target.result;
+                
+                img.src = currentOriginalSrc;
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
 
-                if(cropper) cropper.destroy();
-                cropper = new Cropper(img, { aspectRatio: 1, viewMode: 1, dragMode: 'move', background: true, autoCropArea: 1, responsive: true });
+                if (cropper) cropper.destroy();
+                
+                document.getElementById('slide-bright').value = 100;
+                document.getElementById('slide-contrast').value = 100;
+                updateLiveFilters();
+                document.getElementById('check-watermark').checked = true;
+                
+                cropper = new Cropper(img, {
+                    aspectRatio: 1, 
+                    viewMode: 1, 
+                    dragMode: 'move',
+                    background: false, 
+                    autoCropArea: 1,
+                    responsive: true
+                });
             };
             reader.readAsDataURL(file);
-            input.value = '';
+            input.value = ''; 
+        }
+    }
+
+    function applyWhiteBorders() {
+        if (!currentOriginalSrc) return;
+        
+        const btn = document.getElementById('btn-fit-border');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Fitting...';
+        btn.disabled = true;
+        
+        const img = new Image();
+        img.onload = () => {
+            const size = Math.max(img.width, img.height);
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, size, size);
+            
+            const x = (size - img.width) / 2;
+            const y = (size - img.height) / 2;
+            ctx.drawImage(img, x, y);
+            
+            const paddedSrc = canvas.toDataURL('image/jpeg', 1.0);
+            const cropImg = document.getElementById('crop-image');
+            
+            cropImg.src = paddedSrc;
+            if(cropper) cropper.destroy();
+            cropper = new Cropper(cropImg, {
+                aspectRatio: 1, 
+                viewMode: 1, 
+                dragMode: 'move', 
+                background: false, 
+                autoCropArea: 1, 
+                responsive: true
+            });
+            
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Image Fitted!';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-expand"></i> Fit Entire Image (Add Borders)';
+                btn.disabled = false;
+            }, 2000);
+        };
+        img.src = currentOriginalSrc;
+    }
+
+    function updateLiveFilters() {
+        const bright = document.getElementById('slide-bright').value;
+        const contrast = document.getElementById('slide-contrast').value;
+        
+        document.getElementById('val-bright').textContent = bright + '%';
+        document.getElementById('val-contrast').textContent = contrast + '%';
+        
+        const container = document.querySelector('.cropper-view-box img');
+        if (container) {
+            container.style.filter = `brightness(${bright}%) contrast(${contrast}%)`;
         }
     }
 
     function closeCropModal() {
         document.getElementById('crop-modal').classList.remove('active');
         document.body.style.overflow = '';
-        if(cropper){ cropper.destroy(); cropper=null; }
+        if (cropper) { cropper.destroy(); cropper = null; }
+        currentOriginalSrc = null;
     }
 
     function applyCrop() {
-        if(!cropper) return;
-        cropper.getCroppedCanvas({
-            width: 800, height: 800, fillColor: '#FFFFFF', imageSmoothingEnabled: true, imageSmoothingQuality: 'medium'
-        }).toBlob(blob => {
-            finalBlobs[activeCropIndex] = blob;
-            deletedSlots[activeCropIndex] = false; 
-            showPreview(activeCropIndex, URL.createObjectURL(blob));
-            closeCropModal();
-        }, 'image/jpeg', 0.65);
+        if (!cropper) return;
+        
+        const btnApply = document.getElementById('btn-crop-apply');
+        const originalText = btnApply.innerHTML;
+        btnApply.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+        btnApply.disabled = true;
+
+        const croppedCanvas = cropper.getCroppedCanvas({
+            width: 800,
+            height: 800,
+            fillColor: '#FFFFFF',
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high'
+        });
+
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = 800;
+        finalCanvas.height = 800;
+        const ctx = finalCanvas.getContext('2d');
+
+        const bright = document.getElementById('slide-bright').value;
+        const contrast = document.getElementById('slide-contrast').value;
+        ctx.filter = `brightness(${bright}%) contrast(${contrast}%)`;
+        ctx.drawImage(croppedCanvas, 0, 0);
+
+        if (document.getElementById('check-watermark').checked) {
+            ctx.filter = 'none'; 
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('Verified CTMerchant', 780, 780);
+        }
+
+        // AUTO-TUNING COMPRESSION LOOP (Target: max 100KB)
+        let quality = 0.92;
+        const maxBytes = 100 * 1024; // 100KB limit
+
+        function attemptCompress() {
+            finalCanvas.toBlob(blob => {
+                if (blob.size <= maxBytes || quality <= 0.4) {
+                    finalBlobs[activeCropIndex] = blob;
+                    deletedSlots[activeCropIndex] = false;
+                    
+                    const localUrl = URL.createObjectURL(blob);
+                    const previewImg = document.getElementById(`preview-${activeCropIndex}`);
+                    previewImg.src = localUrl;
+                    previewImg.style.display = 'block';
+                    document.getElementById(`del-btn-${activeCropIndex}`).classList.remove('hidden');
+
+                    // Calculate Data Savings
+                    const origSize = originalSizes[activeCropIndex];
+                    const newSize = blob.size;
+                    const savingsBadge = document.getElementById(`savings-${activeCropIndex}`);
+                    
+                    if (origSize && origSize > newSize) {
+                        const percent = Math.round(((origSize - newSize) / origSize) * 100);
+                        const newKb = Math.round(newSize / 1024);
+                        savingsBadge.innerHTML = `<i class="fa-solid fa-arrow-down"></i> Saved ${percent}% (${newKb}KB)`;
+                        savingsBadge.style.display = 'block';
+                    } else {
+                        const newKb = Math.round(newSize / 1024);
+                        savingsBadge.innerHTML = `<i class="fa-solid fa-check"></i> Ready (${newKb}KB)`;
+                        savingsBadge.style.display = 'block';
+                    }
+
+                    btnApply.innerHTML = originalText;
+                    btnApply.disabled = false;
+                    closeCropModal();
+                } else {
+                    quality -= 0.05;
+                    attemptCompress();
+                }
+            }, 'image/jpeg', quality);
+        }
+
+        attemptCompress();
     }
 
     // --- DYNAMIC TEMPLATES LOGIC ---
@@ -570,23 +795,18 @@
         }
     }
 
-    // --- NEW SMART CONDITION HANDLER ---
     function handleConditionChange() {
         const conditionVal = document.getElementById('condition').value;
         const discountContainer = document.getElementById('discount-container');
         const discountSwitch = document.getElementById('discount-switch');
 
         if (conditionVal === 'Fairly Used') {
-            // Instantly hide and disable the discount UI
             discountContainer.style.display = 'none';
-            
-            // Forcefully turn it off if the merchant had it checked before switching
             if (discountSwitch.checked) {
                 discountSwitch.checked = false;
                 toggleDiscount(discountSwitch);
             }
         } else {
-            // Restore it for New items
             discountContainer.style.display = 'block';
         }
     }
@@ -606,7 +826,6 @@
         const price = parseFloat(document.getElementById('price').value);
         let discountPrice = null;
 
-        // Only apply discount if the switch is checked AND it is NOT a used item
         if (document.getElementById('discount-switch').checked && document.getElementById('condition').value !== 'Fairly Used') {
             const percent = parseFloat(document.getElementById('discount-percent').value);
             if (!percent || percent <= 0 || percent > 20) return alert("Discount must be between 1% and 20%");
@@ -642,7 +861,6 @@
 
             const [url1, url2, url3] = await Promise.all(uploadPromises);
 
-            // Determine final URLs
             const finalUrl1 = url1 || (deletedSlots[1] ? null : existingUrls[1]);
             const finalUrl2 = url2 || (deletedSlots[2] ? null : existingUrls[2]);
             const finalUrl3 = url3 || (deletedSlots[3] ? null : existingUrls[3]);
@@ -653,7 +871,7 @@
                 name: document.getElementById('name').value.trim(),
                 description: document.getElementById('desc').value.trim(),
                 price: price,
-                discount_price: discountPrice, // Safely null if 'Fairly Used'
+                discount_price: discountPrice,
                 condition: document.getElementById('condition').value,
                 category: document.getElementById('category').value,
                 image_url: finalUrl1,
@@ -670,7 +888,7 @@
 
             if (updateError) throw updateError;
 
-            // STEP 3: GARBAGE COLLECTION (Safe to do last!)
+            // STEP 3: GARBAGE COLLECTION
             btn.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> Cleaning Storage...';
             const pathsToDelete = [];
             for (let i = 1; i <= 3; i++) {
@@ -686,7 +904,6 @@
                 await client.storage.from('products').remove(pathsToDelete);
             }
             
-            // SMART CACHE INVALIDATION
             localStorage.removeItem(`ctm_prod_v39_${productId}`);
 
             alert("Product updated and resubmitted for admin approval!");
@@ -700,9 +917,7 @@
         }
     }
 
-    // =========================================================
-    // DANGER ZONE: DELETE ENTIRE PRODUCT
-    // =========================================================
+    // DANGER ZONE
     async function deleteEntireProduct() {
         if(!confirm("Are you sure you want to permanently delete this product? This action cannot be undone.")) return;
         
@@ -713,7 +928,6 @@
         btn.innerHTML = '<div class="spinner" style="border-top-color: #DC2626; border-width: 2px;"></div> Deleting...';
 
         try {
-            // 1. Hunt down all image files for this product
             const pathsToDelete = [];
             [currentProduct.image_url, currentProduct.image_url_2, currentProduct.image_url_3].forEach(url => {
                 if(url && url.includes('/products/')) {
@@ -724,12 +938,10 @@
                 }
             });
             
-            // 2. Delete images from Cloud Storage
             if(pathsToDelete.length > 0) {
                 await client.storage.from('products').remove(pathsToDelete);
             }
             
-            // 3. Delete from database (Cascade will automatically clean up wishlists!)
             const { error } = await client.from('products').delete().eq('id', productId);
             if(error) throw error;
             
