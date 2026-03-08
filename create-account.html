@@ -368,7 +368,7 @@
       }
 
       // ==========================================
-      // BULLETPROOF GOOGLE LOGIN LOGIC
+      // BULLETPROOF GOOGLE LOGIN LOGIC (FIXED)
       // ==========================================
       async function handleGoogleLogin(e) {
           showStatus("Checking security...", "success");
@@ -384,10 +384,11 @@
               pendingGoogleUserId = user.id;
               pendingGoogleUserName = user.user_metadata?.full_name || '';
 
-              // --- PRE-FLIGHT PROFILE CHECK (FIXED) ---
+              // --- PRE-FLIGHT PROFILE CHECK ---
+              // REMOVED 'status' WHICH WAS CRASHING THE QUERY
               const { data: profile, error: profileErr } = await client
                   .from('profiles')
-                  .select('city_id, area_id, is_suspended, status')
+                  .select('city_id, area_id, is_suspended')
                   .eq('id', user.id)
                   .maybeSingle();
 
@@ -398,7 +399,7 @@
               }
 
               // 2. Suspension Check: Block at the door!
-              if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+              if (profile && profile.is_suspended === true) {
                   await client.auth.signOut();
                   throw new Error("Your account access has been restricted by administration.");
               }
@@ -573,7 +574,7 @@
       }
 
       // ==========================================
-      // BULLETPROOF EMAIL LOGIN LOGIC
+      // BULLETPROOF EMAIL LOGIN LOGIC (FIXED)
       // ==========================================
       async function handleLogin() {
           const email = document.getElementById('login-email').value;
@@ -590,15 +591,16 @@
               const { data: authData, error: authErr } = await client.auth.signInWithPassword({ email: email, password: pass });
               if (authErr) throw authErr;
 
-              // --- PRE-FLIGHT PROFILE CHECK (FIXED) ---
+              // --- PRE-FLIGHT PROFILE CHECK ---
+              // REMOVED 'status' WHICH WAS CRASHING THE QUERY
               const { data: profile, error: profileErr } = await client
                   .from('profiles')
-                  .select('status, is_suspended')
+                  .select('is_suspended')
                   .eq('id', authData.user.id)
                   .maybeSingle();
 
               // Block Suspended Users at the door!
-              if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+              if (profile && profile.is_suspended === true) {
                   await client.auth.signOut();
                   throw new Error("Your account access has been restricted by administration.");
               }
