@@ -279,13 +279,13 @@
 
     async function fetchData(oldCacheStr) {
         try {
+            // REMOVED 'status' column from query
             const { data: profile, error: profileErr } = await client
                 .from('profiles')
                 .select('*, cities(name)')
                 .eq('id', currentUser.id)
                 .maybeSingle();
 
-            // --- THE CRITICAL BUG FIX ---
             // 1. Handle Network Errors silently without logging out
             if (profileErr) {
                 console.error("Network or database error fetching profile:", profileErr.message);
@@ -299,14 +299,13 @@
             }
 
             // 3. ONLY log out if explicitly suspended!
-            if (profile.status === 'suspended') {
+            if (profile.is_suspended === true) {
                 alert("Your account access has been restricted by administration. Please contact support.");
                 await client.auth.signOut();
                 localStorage.removeItem(CACHE_KEY);
                 window.location.href = "index.html";
                 return;
             }
-            // -----------------------------
 
             userProfile = profile;
             userCityId = profile.city_id;
