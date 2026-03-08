@@ -200,6 +200,22 @@
             return;
         }
 
+        // --- 1. PRE-FLIGHT SUSPENSION CHECK ---
+        const { data: profile, error: profileErr } = await client
+            .from('profiles')
+            .select('is_suspended, status')
+            .eq('id', currentUser.id)
+            .maybeSingle();
+
+        if (profileErr) {
+            console.error("Network error verifying profile:", profileErr.message);
+        } else if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+            alert("🔒 Your account access has been restricted by administration.");
+            await client.auth.signOut();
+            window.location.href = "index.html";
+            return;
+        }
+
         // Fetch existing news from the new table (get the most recent one)
         const { data, error } = await client
             .from('shop_banners_news')
