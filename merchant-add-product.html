@@ -238,7 +238,7 @@
                 </select>
             </div>
 
-            <!-- SPECIAL OFFER BOX (WITH ID ADDED) -->
+            <!-- SPECIAL OFFER BOX -->
             <div class="discount-box" id="discount-container">
                 <div id="discount-limit-msg" class="discount-limit-alert">
                     <i class="fa-solid fa-lock"></i> 
@@ -287,15 +287,16 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script>
-    const SUPABASE_URL="https://xdchacdjcgazyckacbpc.supabase.co",SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
-    const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
-    const params=new URLSearchParams(window.location.search);
-    const shopId=params.get('shop_id');
-    let currentUser=null;
+    const params = new URLSearchParams(window.location.search);
+    const shopId = params.get('shop_id');
+    let currentUser = null;
     
-    let cropper=null;
-    let activeCropIndex=1;
+    let cropper = null;
+    let activeCropIndex = 1;
     // Store blobs for 3 images
     const finalBlobs = { 1: null, 2: null, 3: null };
     
@@ -304,13 +305,33 @@
     const MAX_SPECIAL_OFFERS = 2;
     let activeSpecialOffersCount = 0;
 
-    window.onload=async()=>{
-        const{data:{session:e}}=await client.auth.getSession();
-        if(!e)return void(window.location.href="login.html");
-        currentUser=e.user;
-        if(!shopId) {
+    window.onload = async () => {
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) {
+            window.location.href = "login.html";
+            return;
+        }
+        currentUser = session.user;
+        
+        if (!shopId) {
             alert("No shop ID provided.");
-            window.location.href="merchant-dashboard.html";
+            window.location.href = "merchant-dashboard.html";
+            return;
+        }
+
+        // --- 1. PRE-FLIGHT SUSPENSION CHECK ---
+        const { data: profile, error: profileErr } = await client
+            .from('profiles')
+            .select('is_suspended, status')
+            .eq('id', currentUser.id)
+            .maybeSingle();
+
+        if (profileErr) {
+            console.error("Network error verifying profile:", profileErr.message);
+        } else if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+            alert("🔒 Your account access has been restricted by administration.");
+            await client.auth.signOut();
+            window.location.href = "index.html";
             return;
         }
 
@@ -359,10 +380,14 @@
     }
 
     // --- HYBRID CROPPER FOR 3 IMAGES ---
-    function handleImageSelect(input, index){
-        if(input.files && input.files[0]){
-            const file=input.files[0];
-            if(!file.type.startsWith('image/'))return alert("Please upload a valid image file."),void(input.value='');
+    function handleImageSelect(input, index) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            if (!file.type.startsWith('image/')) {
+                alert("Please upload a valid image file.");
+                input.value = '';
+                return;
+            }
             
             activeCropIndex = index;
             
@@ -375,7 +400,7 @@
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
 
-                if(cropper) cropper.destroy();
+                if (cropper) cropper.destroy();
                 
                 cropper = new Cropper(img, {
                     aspectRatio: 1,
@@ -391,14 +416,17 @@
         }
     }
 
-    function closeCropModal(){
+    function closeCropModal() {
         document.getElementById('crop-modal').classList.remove('active');
         document.body.style.overflow = '';
-        if(cropper){ cropper.destroy(); cropper=null; }
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
     }
 
-    function applyCrop(){
-        if(!cropper) return;
+    function applyCrop() {
+        if (!cropper) return;
         
         cropper.getCroppedCanvas({
             width: 800,
@@ -414,7 +442,7 @@
             previewImg.src = localUrl;
             previewImg.style.display = 'block';
 
-            if(activeCropIndex === 1) {
+            if (activeCropIndex === 1) {
                 document.getElementById('live-placeholder').style.display = 'none';
                 const liveImg = document.getElementById('live-img');
                 liveImg.src = localUrl;
@@ -478,7 +506,7 @@
                 </div>`;
         }
 
-        if(html) {
+        if (html) {
             container.innerHTML = html;
             container.style.display = 'block';
         } else {
@@ -551,26 +579,39 @@
         }
     }
 
-    function toggleDiscount(e){
-        const t=document.getElementById('discount-input-box'),o=document.getElementById('discount-percent');
-        e.checked?(t.classList.add('visible'),o.setAttribute('required','true')):(t.classList.remove('visible'),o.removeAttribute('required'),o.value='');
+    function toggleDiscount(e) {
+        const box = document.getElementById('discount-input-box');
+        const input = document.getElementById('discount-percent');
+        
+        if (e.checked) {
+            box.classList.add('visible');
+            input.setAttribute('required', 'true');
+        } else {
+            box.classList.remove('visible');
+            input.removeAttribute('required');
+            input.value = '';
+        }
         updateLivePreview();
     }
 
     // --- SUBMISSION ---
-    async function handleSubmit(e){
+    async function handleSubmit(e) {
         e.preventDefault();
-        const t=document.getElementById('btn-submit');
+        const btnSubmit = document.getElementById('btn-submit');
         
-        if(!finalBlobs[1]) return alert("Please upload the Main Image (Box 1).");
+        if (!finalBlobs[1]) {
+            alert("Please upload the Main Image (Box 1).");
+            return;
+        }
         
         // Final Security Check before Uploading
-        if(document.getElementById('discount-switch').checked && activeSpecialOffersCount >= MAX_SPECIAL_OFFERS) {
-            return alert("Security Block: You already have the maximum of 2 Special Offers active. Remove an existing offer to add a new one.");
+        if (document.getElementById('discount-switch').checked && activeSpecialOffersCount >= MAX_SPECIAL_OFFERS) {
+            alert("Security Block: You already have the maximum of 2 Special Offers active. Remove an existing offer to add a new one.");
+            return;
         }
 
-        t.disabled=!0;
-        t.innerHTML='<div class="spinner" style="border-top-color: white;"></div> <span style="margin-left:8px;">Checking limits...</span>';
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> <span style="margin-left:8px;">Checking limits...</span>';
 
         try {
             // Security Pre-flight Check: Ensure they haven't opened two tabs to bypass limits
@@ -583,23 +624,25 @@
                 throw new Error("Product limit reached.");
             }
 
-            t.innerHTML='<div class="spinner" style="border-top-color: white;"></div> <span style="margin-left:8px;">Uploading...</span>';
+            btnSubmit.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> <span style="margin-left:8px;">Uploading...</span>';
             
-            const o=parseFloat(document.getElementById('price').value);
-            const stockCount=parseInt(document.getElementById('stock').value);
-            let n=null;
+            const priceVal = parseFloat(document.getElementById('price').value);
+            const stockCount = parseInt(document.getElementById('stock').value);
+            let discountPrice = null;
             
             // Only apply discount if the switch is checked AND it is NOT a used item
-            if(document.getElementById('discount-switch').checked && document.getElementById('condition').value !== 'Fairly Used'){
-                const e=parseFloat(document.getElementById('discount-percent').value);
-                if(!e||e<=0||e>20) throw new Error("Discount must be between 1% and 20%");
-                n=o-o*(e/100);
+            if (document.getElementById('discount-switch').checked && document.getElementById('condition').value !== 'Fairly Used') {
+                const discountPercent = parseFloat(document.getElementById('discount-percent').value);
+                if (!discountPercent || discountPercent <= 0 || discountPercent > 20) {
+                    throw new Error("Discount must be between 1% and 20%");
+                }
+                discountPrice = priceVal - (priceVal * (discountPercent / 100));
             }
 
             // Build Attributes JSON
             let attributes = {};
             document.querySelectorAll('.dynamic-attr').forEach(input => {
-                if(input.value.trim() !== '') {
+                if (input.value.trim() !== '') {
                     attributes[input.name] = input.value.trim();
                 }
             });
@@ -607,7 +650,7 @@
             // Upload Images in Parallel WITH BANDWIDTH CHEAT CODE
             const uploadPromises = [];
             [1, 2, 3].forEach(idx => {
-                if(finalBlobs[idx]) {
+                if (finalBlobs[idx]) {
                     const fName = `${currentUser.id}_${Date.now()}_img${idx}.jpg`;
                     uploadPromises.push(
                         client.storage.from('products').upload(fName, finalBlobs[idx], {
@@ -616,7 +659,7 @@
                             upsert: false
                         })
                         .then(({error}) => {
-                            if(error) throw error;
+                            if (error) throw error;
                             return client.storage.from('products').getPublicUrl(fName).data.publicUrl;
                         })
                     );
@@ -627,12 +670,12 @@
 
             const [url1, url2, url3] = await Promise.all(uploadPromises);
             
-            const {error:i} = await client.from('products').insert({
+            const { error: insertError } = await client.from('products').insert({
                 shop_id: parseInt(shopId),
                 name: document.getElementById('name').value.trim(),
                 description: document.getElementById('desc').value.trim(),
-                price: o,
-                discount_price: n, // Safely null if 'Fairly Used'
+                price: priceVal,
+                discount_price: discountPrice, // Safely null if 'Fairly Used'
                 condition: document.getElementById('condition').value,
                 category: document.getElementById('category').value,
                 image_url: url1,
@@ -643,18 +686,18 @@
                 is_available: stockCount > 0
             });
             
-            if(i) throw i;
+            if (insertError) throw insertError;
             
             alert("Product uploaded successfully!");
-            window.location.href="merchant-dashboard.html";
+            window.location.href = "merchant-dashboard.html";
             
         } catch(e) {
             console.error(e);
             if (e.message !== "Product limit reached.") {
                 alert("Upload failed: " + e.message);
             }
-            t.disabled=!1;
-            t.innerHTML='Upload to Marketplace';
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = 'Upload to Marketplace';
         }
     }
 </script>
