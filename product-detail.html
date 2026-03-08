@@ -505,9 +505,102 @@
         window.open(`tel:${currentShop.phone}`, '_self');
     }
 
-    async function checkWishlistStatus(){if(!currentUser)return;try{const{data:e}=await client.from('wishlist').select('id').eq('user_id',currentUser.id).eq('product_id',productId).maybeSingle();e&&(isInWishlist=!0,updateWishlistIcons())}catch(e){console.error("Wishlist check error",e)}}
-    function updateWishlistIcons(){const e=document.getElementById('wishlist-btn'),t=document.getElementById('fav-icon');t.className=`${isInWishlist?'fa-solid':'fa-regular'} fa-heart`,isInWishlist?e.classList.add('active'):e.classList.remove('active')}
-    async function toggleWishlist(){if(!currentUser)return alert("Please login to save items to your wishlist.");isInWishlist=!isInWishlist,updateWishlistIcons();try{isInWishlist?await client.from('wishlist').insert({user_id:currentUser.id,product_id:productId}):await client.from('wishlist').delete().eq('user_id',currentUser.id).eq('product_id',productId)}catch(e){isInWishlist=!isInWishlist,updateWishlistIcons(),alert("Failed to update wishlist.")}}
+    // ============================================
+    // EXPANDED WISHLIST LOGIC (MINIFIED REMOVED)
+    // ============================================
+    
+    async function checkWishlistStatus() {
+        if (!currentUser) return;
+        try {
+            const { data } = await client.from('wishlist')
+                .select('id')
+                .eq('user_id', currentUser.id)
+                .eq('product_id', productId)
+                .maybeSingle();
+                
+            if (data) {
+                isInWishlist = true;
+                updateWishlistIcons();
+            }
+        } catch (e) {
+            console.error("Wishlist check error", e);
+        }
+    }
+
+    function updateWishlistIcons() {
+        const btn = document.getElementById('wishlist-btn');
+        const icon = document.getElementById('fav-icon');
+        icon.className = `${isInWishlist ? 'fa-solid' : 'fa-regular'} fa-heart`;
+        if (isInWishlist) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    }
+
+    async function toggleWishlist() {
+        if (!currentUser) return alert("Please login to save items to your wishlist.");
+
+        // Optimistic UI update
+        isInWishlist = !isInWishlist;
+        updateWishlistIcons();
+
+        try {
+            if (isInWishlist) {
+                // 1. Fetch current wishlist to check limit, ordered by oldest first
+                const { data: existingItems, error: fetchError } = await client
+                    .from('wishlist')
+                    .select('id')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: true });
+
+                if (fetchError) throw fetchError;
+
+                // 2. Enforce Max 5 items
+                // If they already have 5 or more items, we delete the oldest ones before adding the new one
+                if (existingItems && existingItems.length >= 5) {
+                    // We want to keep 4 items, so the new one makes 5
+                    const numToDelete = existingItems.length - 4;
+                    const itemsToDelete = existingItems.slice(0, numToDelete);
+                    const idsToDelete = itemsToDelete.map(item => item.id);
+
+                    const { error: deleteError } = await client
+                        .from('wishlist')
+                        .delete()
+                        .in('id', idsToDelete);
+
+                    if (deleteError) throw deleteError;
+                    console.log("Wishlist limit reached. Replaced oldest item.");
+                }
+
+                // 3. Add the new item
+                const { error: insertError } = await client
+                    .from('wishlist')
+                    .insert({ user_id: currentUser.id, product_id: productId });
+
+                if (insertError) throw insertError;
+
+            } else {
+                // Remove item
+                const { error: removeError } = await client
+                    .from('wishlist')
+                    .delete()
+                    .eq('user_id', currentUser.id)
+                    .eq('product_id', productId);
+
+                if (removeError) throw removeError;
+            }
+        } catch (e) {
+            console.error("Wishlist error:", e);
+            // Revert UI state on failure
+            isInWishlist = !isInWishlist; 
+            updateWishlistIcons();
+            alert("Failed to update wishlist.");
+        }
+    }
+
+    // ============================================
+
     function showSecurityModal(){currentShop?.whatsapp?document.getElementById('security-modal').classList.add('active'):alert("This merchant hasn't provided a WhatsApp number.")}
     function hideSecurityModal(){document.getElementById('security-modal').classList.remove('active')}
 
