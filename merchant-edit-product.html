@@ -146,7 +146,7 @@
         <!-- ERROR STATE -->
         <div id="error-screen" class="card hidden" style="text-align:center; padding: 40px 20px;">
             <i class="fa-solid fa-circle-exclamation" style="font-size: 3rem; color: #C40000; margin-bottom: 16px;"></i>
-            <h3 style="color: #0F1111; font-weight: 800; margin-bottom: 8px;">Product Not Found</h3>
+            <h3 style="color: #0F1111; font-weight: 800; margin-bottom: 8px;">Failed to Load</h3>
             <p id="error-msg" style="color: var(--color-text-muted);">We couldn't load the product data.</p>
             <button onclick="location.reload()" class="btn-submit" style="width: auto; margin: 20px auto 0; padding: 10px 24px;">Retry</button>
         </div>
@@ -337,6 +337,23 @@
             const { data: { session } } = await client.auth.getSession();
             if (!session) { window.location.href = "login.html"; return; }
             currentUser = session.user;
+            
+            // --- 1. PRE-FLIGHT SUSPENSION CHECK ---
+            const { data: profile, error: profileErr } = await client
+                .from('profiles')
+                .select('is_suspended, status')
+                .eq('id', currentUser.id)
+                .maybeSingle();
+
+            if (profileErr) {
+                console.error("Network error verifying profile:", profileErr.message);
+            } else if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+                alert("🔒 Your account access has been restricted by administration.");
+                await client.auth.signOut();
+                window.location.href = "index.html";
+                return;
+            }
+
             await fetchProductData();
         } catch (err) {
             showError("Authentication error: " + err.message);
@@ -345,20 +362,33 @@
 
     async function fetchProductData() {
         try {
-            const { data, error } = await client.from('products').select('*').eq('id', productId).single();
-            if (error || !data) throw new Error("Product data is missing or deleted.");
+            // --- 2. FETCH PRODUCT SAFELY ---
+            const { data, error } = await client.from('products').select('*').eq('id', productId).maybeSingle();
+            
+            if (error) {
+                console.error("Network Error:", error.message);
+                showError("Connection error while loading product data. Please check your network and try again.");
+                return;
+            }
+
+            if (!data) {
+                showError("Product data is missing or has been deleted.");
+                return;
+            }
             
             currentProduct = data;
             
             // Check Special Offer Limits for this Shop (Excluding THIS product)
-            const { count: specialCount } = await client
+            const { count: specialCount, error: countErr } = await client
                 .from('products')
                 .select('id', { count: 'exact', head: true })
                 .eq('shop_id', currentProduct.shop_id)
                 .not('discount_price', 'is', null)
                 .neq('id', productId); 
 
-            if (specialCount >= MAX_SPECIAL_OFFERS) {
+            if (countErr) {
+                console.warn("Failed to check special offers limit", countErr);
+            } else if (specialCount >= MAX_SPECIAL_OFFERS) {
                 // If they are already at the limit from other products, lock the switch
                 const isCurrentlySpecial = currentProduct.discount_price && currentProduct.discount_price < currentProduct.price;
                 if (!isCurrentlySpecial) {
