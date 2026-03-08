@@ -587,7 +587,7 @@
                 // --- PRE-FLIGHT PROFILE CHECK (FIXED) ---
                 const { data: profile, error: profileErr } = await client
                     .from('profiles')
-                    .select('is_suspended, status')
+                    .select('is_suspended')
                     .eq('id', authData.user.id)
                     .maybeSingle();
 
@@ -598,7 +598,7 @@
                 }
 
                 // 2. ONLY ban if explicitly suspended
-                if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+                if (profile && profile.is_suspended === true) {
                     await client.auth.signOut();
                     throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
                 }
@@ -642,7 +642,7 @@
             // --- PRE-FLIGHT PROFILE CHECK (FIXED) ---
             const { data: profile, error: profileErr } = await client
                 .from('profiles')
-                .select('city_id, area_id, is_suspended, status')
+                .select('city_id, area_id, is_suspended')
                 .eq('id', user.id)
                 .maybeSingle();
 
@@ -653,7 +653,7 @@
             }
 
             // 2. ONLY ban if explicitly suspended
-            if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+            if (profile && profile.is_suspended === true) {
                 await client.auth.signOut();
                 throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
             }
