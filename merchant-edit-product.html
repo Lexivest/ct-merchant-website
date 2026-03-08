@@ -482,4 +482,269 @@
         const img = document.getElementById(`preview-${slot}`);
         img.src = '';
         img.style.display = 'none';
-        document.getElementById(`del-btn
+        document.getElementById(`del-btn-${slot}`).classList.add('hidden');
+    }
+
+    // --- CROPPER ENGINE ---
+    function handleImageSelect(input, index){
+        if(input.files && input.files[0]){
+            const file = input.files[0];
+            if(!file.type.startsWith('image/')) return alert("Please upload a valid image file."), void(input.value='');
+            
+            activeCropIndex = index;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const modal = document.getElementById('crop-modal');
+                const img = document.getElementById('crop-image');
+                img.src = e.target.result;
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+
+                if(cropper) cropper.destroy();
+                cropper = new Cropper(img, { aspectRatio: 1, viewMode: 1, dragMode: 'move', background: true, autoCropArea: 1, responsive: true });
+            };
+            reader.readAsDataURL(file);
+            input.value = '';
+        }
+    }
+
+    function closeCropModal() {
+        document.getElementById('crop-modal').classList.remove('active');
+        document.body.style.overflow = '';
+        if(cropper){ cropper.destroy(); cropper=null; }
+    }
+
+    function applyCrop() {
+        if(!cropper) return;
+        cropper.getCroppedCanvas({
+            width: 800, height: 800, fillColor: '#FFFFFF', imageSmoothingEnabled: true, imageSmoothingQuality: 'medium'
+        }).toBlob(blob => {
+            finalBlobs[activeCropIndex] = blob;
+            deletedSlots[activeCropIndex] = false; 
+            showPreview(activeCropIndex, URL.createObjectURL(blob));
+            closeCropModal();
+        }, 'image/jpeg', 0.65);
+    }
+
+    // --- DYNAMIC TEMPLATES LOGIC ---
+    function handleCategoryChange() {
+        const cat = document.getElementById('category').value;
+        const container = document.getElementById('dynamic-fields-container');
+        let html = '';
+
+        const tech = ["Mobile Phones & Accessories", "Computers & IT Services", "Electronics & Appliances"];
+        const fashion = ["Fashion & Apparel"];
+        const consumables = ["Groceries & Supermarkets", "Beauty & Personal Care", "Pharmacies & Health Shops", "Food & Drinks", "Agriculture & Agro-Allied"];
+        const property = ["Real Estate & Properties", "Hotels & Accommodations"];
+
+        if (tech.includes(cat)) {
+            html = `<div class="dyn-title">Technical Specifications</div>
+                <div class="form-row"><div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="brand" class="input dynamic-attr" placeholder="e.g. Apple"></div><div class="form-group" style="margin:0;"><label class="label">Storage (ROM)</label><input type="text" name="storage" class="input dynamic-attr" placeholder="e.g. 256GB"></div></div>
+                <div class="form-row"><div class="form-group" style="margin:0;"><label class="label">RAM</label><input type="text" name="ram" class="input dynamic-attr" placeholder="e.g. 8GB"></div><div class="form-group" style="margin:0;"><label class="label">Battery / Defect Note</label><input type="text" name="condition_note" class="input dynamic-attr" placeholder="e.g. 85% Health"></div></div>`;
+        } else if (fashion.includes(cat)) {
+            html = `<div class="dyn-title">Apparel Details</div>
+                <div class="form-row"><div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="brand" class="input dynamic-attr" placeholder="e.g. Nike"></div><div class="form-group" style="margin:0;"><label class="label">Target</label><select name="gender" class="input dynamic-attr"><option value="Unisex">Unisex</option><option value="Men">Men</option><option value="Women">Women</option><option value="Kids">Kids</option></select></div></div>
+                <div class="form-row"><div class="form-group" style="margin:0;"><label class="label">Size</label><input type="text" name="size" class="input dynamic-attr" placeholder="e.g. XL, 42 EU"></div><div class="form-group" style="margin:0;"><label class="label">Color</label><input type="text" name="color" class="input dynamic-attr" placeholder="e.g. Black"></div></div>`;
+        } else if (consumables.includes(cat)) {
+            html = `<div class="dyn-title">Product Details</div>
+                <div class="form-row"><div class="form-group" style="margin:0;"><label class="label">Brand/Maker</label><input type="text" name="brand" class="input dynamic-attr" placeholder="e.g. Nivea"></div><div class="form-group" style="margin:0;"><label class="label">Weight/Volume</label><input type="text" name="weight" class="input dynamic-attr" placeholder="e.g. 500ml, 1kg"></div></div>
+                <div class="form-group" style="margin-bottom:0;"><label class="label">Expiration Date <span style="color:#C40000">*</span></label><input type="date" name="expiry_date" class="input dynamic-attr" required></div>`;
+        } else if (property.includes(cat)) {
+            html = `<div class="dyn-title">Property Details</div>
+                <div class="form-row"><div class="form-group" style="margin:0;"><label class="label">Type</label><input type="text" name="property_type" class="input dynamic-attr" placeholder="e.g. 2 Bed Flat, Self Con"></div><div class="form-group" style="margin:0;"><label class="label">Payment Cycle</label><select name="duration" class="input dynamic-attr"><option value="Per Year">Per Year</option><option value="Per Month">Per Month</option><option value="Per Night">Per Night (Hotels)</option></select></div></div>`;
+        }
+
+        if(html) { container.innerHTML = html; container.style.display = 'block'; } 
+        else { container.innerHTML = ''; container.style.display = 'none'; }
+    }
+
+    function toggleDiscount(el) {
+        const box = document.getElementById('discount-input-box');
+        if (el.checked) {
+            box.classList.add('visible');
+            document.getElementById('discount-percent').setAttribute('required', 'true');
+        } else {
+            box.classList.remove('visible');
+            document.getElementById('discount-percent').removeAttribute('required');
+            document.getElementById('discount-percent').value = '';
+        }
+    }
+
+    // --- NEW SMART CONDITION HANDLER ---
+    function handleConditionChange() {
+        const conditionVal = document.getElementById('condition').value;
+        const discountContainer = document.getElementById('discount-container');
+        const discountSwitch = document.getElementById('discount-switch');
+
+        if (conditionVal === 'Fairly Used') {
+            // Instantly hide and disable the discount UI
+            discountContainer.style.display = 'none';
+            
+            // Forcefully turn it off if the merchant had it checked before switching
+            if (discountSwitch.checked) {
+                discountSwitch.checked = false;
+                toggleDiscount(discountSwitch);
+            }
+        } else {
+            // Restore it for New items
+            discountContainer.style.display = 'block';
+        }
+    }
+
+    // =========================================================
+    // THE NEW FAIL-SAFE MASTER UPDATE ENGINE
+    // =========================================================
+    async function handleUpdate(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-submit');
+        const originalText = btn.innerHTML;
+        
+        // Validation
+        const hasMainImage = (existingUrls[1] && !deletedSlots[1]) || finalBlobs[1];
+        if (!hasMainImage) return alert("The Main Image (Box 1) is strictly required!");
+
+        const price = parseFloat(document.getElementById('price').value);
+        let discountPrice = null;
+
+        // Only apply discount if the switch is checked AND it is NOT a used item
+        if (document.getElementById('discount-switch').checked && document.getElementById('condition').value !== 'Fairly Used') {
+            const percent = parseFloat(document.getElementById('discount-percent').value);
+            if (!percent || percent <= 0 || percent > 20) return alert("Discount must be between 1% and 20%");
+            discountPrice = price - (price * (percent / 100));
+        }
+
+        let attributes = {};
+        document.querySelectorAll('.dynamic-attr').forEach(input => {
+            if(input.value.trim() !== '') attributes[input.name] = input.value.trim();
+        });
+
+        try {
+            // STEP 1: UPLOAD NEW IMAGES FIRST
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> Uploading New Images...';
+            
+            const uploadPromises = [];
+            for(let idx = 1; idx <= 3; idx++) {
+                if(finalBlobs[idx]) {
+                    const fName = `${currentUser.id}_${Date.now()}_img${idx}.jpg`;
+                    uploadPromises.push(
+                        client.storage.from('products').upload(fName, finalBlobs[idx], {
+                            contentType: 'image/jpeg', cacheControl: '31536000', upsert: false
+                        }).then(({error}) => {
+                            if(error) throw error;
+                            return client.storage.from('products').getPublicUrl(fName).data.publicUrl;
+                        })
+                    );
+                } else {
+                    uploadPromises.push(Promise.resolve(null));
+                }
+            }
+
+            const [url1, url2, url3] = await Promise.all(uploadPromises);
+
+            // Determine final URLs
+            const finalUrl1 = url1 || (deletedSlots[1] ? null : existingUrls[1]);
+            const finalUrl2 = url2 || (deletedSlots[2] ? null : existingUrls[2]);
+            const finalUrl3 = url3 || (deletedSlots[3] ? null : existingUrls[3]);
+
+            // STEP 2: UPDATE DATABASE & CLEAR REJECTION REASON
+            btn.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> Saving Database...';
+            const { error: updateError } = await client.from('products').update({
+                name: document.getElementById('name').value.trim(),
+                description: document.getElementById('desc').value.trim(),
+                price: price,
+                discount_price: discountPrice, // Safely null if 'Fairly Used'
+                condition: document.getElementById('condition').value,
+                category: document.getElementById('category').value,
+                image_url: finalUrl1,
+                image_url_2: finalUrl2,
+                image_url_3: finalUrl3,
+                stock_count: parseInt(document.getElementById('stock').value),
+                attributes: attributes,
+                is_available: parseInt(document.getElementById('stock').value) > 0,
+                
+                // Puts the product back into the Admin queue!
+                is_approved: false, 
+                rejection_reason: null
+            }).eq('id', productId);
+
+            if (updateError) throw updateError;
+
+            // STEP 3: GARBAGE COLLECTION (Safe to do last!)
+            btn.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> Cleaning Storage...';
+            const pathsToDelete = [];
+            for (let i = 1; i <= 3; i++) {
+                if (existingUrls[i] && (deletedSlots[i] || finalBlobs[i])) {
+                    try {
+                        const fileName = decodeURIComponent(new URL(existingUrls[i]).pathname.split('/').pop());
+                        if (fileName) pathsToDelete.push(fileName);
+                    } catch(e) { console.warn("Failed to parse URL:", e); }
+                }
+            }
+
+            if (pathsToDelete.length > 0) {
+                await client.storage.from('products').remove(pathsToDelete);
+            }
+            
+            // SMART CACHE INVALIDATION
+            localStorage.removeItem(`ctm_prod_v39_${productId}`);
+
+            alert("Product updated and resubmitted for admin approval!");
+            window.location.href = "merchant-dashboard.html";
+
+        } catch (err) {
+            console.error(err);
+            alert("Update failed: " + err.message);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    // =========================================================
+    // DANGER ZONE: DELETE ENTIRE PRODUCT
+    // =========================================================
+    async function deleteEntireProduct() {
+        if(!confirm("Are you sure you want to permanently delete this product? This action cannot be undone.")) return;
+        
+        document.getElementById('content').style.opacity = '0.4';
+        document.getElementById('content').style.pointerEvents = 'none';
+        
+        const btn = document.querySelector('.btn-danger');
+        btn.innerHTML = '<div class="spinner" style="border-top-color: #DC2626; border-width: 2px;"></div> Deleting...';
+
+        try {
+            // 1. Hunt down all image files for this product
+            const pathsToDelete = [];
+            [currentProduct.image_url, currentProduct.image_url_2, currentProduct.image_url_3].forEach(url => {
+                if(url && url.includes('/products/')) {
+                    try {
+                        const fileName = decodeURIComponent(new URL(url).pathname.split('/').pop());
+                        if(fileName) pathsToDelete.push(fileName);
+                    } catch(e) {}
+                }
+            });
+            
+            // 2. Delete images from Cloud Storage
+            if(pathsToDelete.length > 0) {
+                await client.storage.from('products').remove(pathsToDelete);
+            }
+            
+            // 3. Delete from database (Cascade will automatically clean up wishlists!)
+            const { error } = await client.from('products').delete().eq('id', productId);
+            if(error) throw error;
+            
+            alert("Product and images completely deleted.");
+            window.location.href = "merchant-dashboard.html";
+            
+        } catch(err) {
+            console.error(err);
+            alert("Failed to delete product: " + err.message);
+            document.getElementById('content').style.opacity = '1';
+            document.getElementById('content').style.pointerEvents = 'auto';
+            btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> Delete Entire Product';
+        }
+    }
+</script>
+
+</body>
+</html>
