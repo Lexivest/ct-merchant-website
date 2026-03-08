@@ -94,7 +94,8 @@
     .forgot-password{display:block;font-size:.85rem;color:rgba(255,255,255,.8);text-decoration:none;margin-top:8px;margin-bottom:12px;cursor:pointer;text-align:right}
     .forgot-password:hover{color:#db2777}
     .main-header{position:sticky!important;top:0;z-index:9999}
-    .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.85);backdrop-filter:blur(5px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem}
+    .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.85);backdrop-filter:blur(5px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;visibility:hidden;transition:all .3s ease}
+    .modal-overlay.active{opacity:1;visibility:visible}
     .modal-card{background:#fff;border-radius:1.5rem;max-width:400px;width:100%;padding:2rem;box-shadow:0 25px 50px -12px rgba(0,0,0,.5)}
     .modal-title{font-size:1.25rem;font-weight:800;color:#2E1065;text-align:center;margin-bottom:.5rem}
     .modal-subtitle{color:#64748b;font-size:.875rem;text-align:center;margin-bottom:1.5rem}
@@ -475,7 +476,7 @@
     const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
     const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
     
-    // --- TYPEWRITER LOGIC (Restored clean syntax to prevent silent failure) ---
+    // --- TYPEWRITER LOGIC ---
     const phrases = ["Verified Merchants", "Safe and Secure", "Boost Your Business"];
     let phraseIndex = 0;
     let charIndex = 0;
@@ -484,7 +485,7 @@
     
     function typeEffect() {
         const textElement = document.getElementById('typewriter');
-        if (!textElement) return; // Failsafe
+        if (!textElement) return;
         
         const currentPhrase = phrases[phraseIndex];
         
@@ -511,26 +512,402 @@
     }
     document.addEventListener('DOMContentLoaded', typeEffect);
 
-    // --- OTHER OPTIMIZED FUNCTIONS ---
-    async function getClientIpData(){try{const e=await fetch('https://1.1.1.1/cdn-cgi/trace'),t=await e.text(),a=t.split('\n').reduce((e,t)=>{const[a,n]=t.split('=');return a&&(e[a]=n),e},{});return{ip:a.ip||'unknown',country:a.loc||'unknown'}}catch(e){return{ip:'unknown',country:'unknown'}}}
-    async function isIpBanned(e){if('unknown'===e)return!1;try{const{data:t}=await client.from('ip_blacklist').select('ip_address').eq('ip_address',e).maybeSingle();return!!t}catch(e){return!1}}
-    function handleRepoSearch(){const e=document.getElementById('repo-search-input').value.trim();e&&(window.location.href=`reposearch.html?merchantId=${e}`)}
-    async function handleHeroLogin(){const e=document.getElementById('hero-email').value,t=document.getElementById('hero-password').value,a=document.getElementById('hero-login-btn'),n=a.innerHTML;a.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...',a.disabled=!0;try{const n=await getClientIpData();if(await isIpBanned(n.ip))throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CTMerchant.");const{data:o,error:r}=await client.auth.signInWithPassword({email:e,password:t});if(r)throw r;if(o&&o.user){const{data:e,error:t}=await client.from('profiles').select('is_suspended').eq('id',o.user.id).maybeSingle();if(t||!e||!0===e.is_suspended)throw await client.auth.signOut(),new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");await client.from('profiles').update({last_active_ip:n.ip}).eq('id',o.user.id)}window.location.href="user-dashboard.html"}catch(e){alert(e.message),a.innerHTML=n,a.disabled=!1,await client.auth.signOut()}}
-    let pendingGoogleUserId=null,pendingGoogleUserName=null;
-    async function handleGoogleLogin(e){const t=document.getElementById('hero-login-btn'),a=t.innerHTML;t.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i> Checking Google...',t.disabled=!0;try{const n=await getClientIpData();if(await isIpBanned(n.ip))throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CTMerchant.");const{data:o,error:r}=await client.auth.signInWithIdToken({provider:'google',token:e.credential});if(r)throw r;const s=o.user;pendingGoogleUserId=s.id,pendingGoogleUserName=s.user_metadata?.full_name||'';const{data:i,error:l}=await client.from('profiles').select('city_id, area_id, is_suspended').eq('id',s.id).maybeSingle();if(l||i&&i.is_suspended)throw await client.auth.signOut(),new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");i&&i.city_id&&i.area_id?(await client.from('profiles').update({last_active_ip:n.ip}).eq('id',s.id),window.location.href="user-dashboard.html"):(document.getElementById('complete-profile-modal').classList.remove('hidden'),t.innerHTML=a,t.disabled=!1,await fetchCitiesForModal())}catch(e){alert("Google Sign-In Error: "+e.message),t.innerHTML=a,t.disabled=!1,await client.auth.signOut()}}
-    async function fetchCitiesForModal(){const e=document.getElementById('google-city');try{const{data:t,error:a}=await client.from('cities').select('id, name').eq('is_open',!0).order('name');if(a)throw a;e.innerHTML='<option value="" disabled selected>Select your city</option>'+t.map(e=>`<option value="${e.id}">${e.name}</option>`).join('')}catch(t){e.innerHTML='<option value="" disabled>Error loading cities</option>'}}
-    async function loadAreasForModal(e){const t=document.getElementById('google-area');t.disabled=!0,t.innerHTML='<option value="" disabled selected>Loading areas...</option>';try{const{data:a,error:n}=await client.from('areas').select('id, name').eq('city_id',e).order('name');if(n)throw n;t.innerHTML='<option value="" disabled selected>Select your area</option>'+a.map(e=>`<option value="${e.id}">${e.name}</option>`).join(''),t.disabled=!1}catch(e){t.innerHTML='<option value="" disabled>Error loading areas</option>'}}
-    async function saveGoogleProfile(){const e=document.getElementById('google-phone').value.trim(),t=document.getElementById('google-city').value,a=document.getElementById('google-area').value,n=document.getElementById('google-complete-btn');if(!e||!t||!a)return alert("Please fill in your phone, city, and area to continue.");n.disabled=!0,n.innerHTML='<div class="spinner"></div> Saving...';try{const n=await getClientIpData(),{error:o}=await client.from('profiles').upsert({id:pendingGoogleUserId,full_name:pendingGoogleUserName,phone:e,city_id:parseInt(t),area_id:parseInt(a),registration_ip:n.ip,last_active_ip:n.ip,ip_country:n.country});if(o)throw o;window.location.href="user-dashboard.html"}catch(e){alert("Error saving profile: "+e.message),n.disabled=!1,n.innerHTML='Complete Setup'}}
-    async function cancelGoogleLogin(){await client.auth.signOut(),document.getElementById('complete-profile-modal').classList.add('hidden')}
-    function togglePassword(){const e=document.getElementById('hero-password'),t=document.querySelector('.toggle-password');'password'===e.type?(e.type='text',t.classList.remove('fa-eye-slash'),t.classList.add('fa-eye')):(e.type='password',t.classList.remove('fa-eye'),t.classList.add('fa-eye-slash'))}
-    function openResetEmailModal(){document.getElementById('reset-email-modal').classList.remove('hidden');const e=document.getElementById('hero-email').value;e&&(document.getElementById('reset-email-input').value=e)}
-    async function sendResetCode(){const e=document.getElementById('reset-email-input').value.trim();if(!e)return alert("Please enter your registered email address.");const t=document.getElementById('btn-send-reset');t.disabled=!0,t.innerHTML='<div class="spinner"></div> Sending...';try{const{error:a}=await client.auth.resetPasswordForEmail(e);if(a)throw a;document.getElementById('reset-email-modal').classList.add('hidden'),document.getElementById('reset-password-modal').classList.remove('hidden')}catch(e){alert(e.message)}finally{t.disabled=!1,t.innerHTML='Send Reset Code'}}
-    async function verifyAndResetPassword(){const e=document.getElementById('reset-email-input').value.trim(),t=document.getElementById('reset-otp-input').value.trim(),a=document.getElementById('reset-new-password').value,n=document.getElementById('reset-confirm-password').value;if(!t||!a||!n)return alert("Please fill out all fields.");if(a!==n)return alert("Passwords do not match. Please try again.");if(a.length<6)return alert("Password must be at least 6 characters.");const o=document.getElementById('btn-confirm-reset');o.disabled=!0,o.innerHTML='<div class="spinner"></div> Resetting...';try{const{error:r}=await client.auth.verifyOtp({email:e,token:t,type:'recovery'});if(r)throw r;const{error:s}=await client.auth.updateUser({password:a});if(s)throw s;alert("Success! Your password has been updated."),window.location.href="user-dashboard.html"}catch(e){alert("Error: "+e.message),o.disabled=!1,o.innerHTML='Confirm & Reset Password'}}
-    function toggleFloatingContact(){const e=document.getElementById('fc-popup');e.classList.toggle('show'),e.classList.contains('show')&&(document.getElementById('fc-status').className='fc-status',document.getElementById('fc-status').textContent='')}
-    async function handleFloatingContactSubmit(e){e.preventDefault();const t=document.getElementById('fc-submit-btn'),a=document.getElementById('fc-status'),n=document.getElementById('fc-form'),o={full_name:document.getElementById('fc-name').value.trim(),email:document.getElementById('fc-email').value.trim(),subject:document.getElementById('fc-subject').value,message:document.getElementById('fc-message').value.trim()};t.disabled=!0;const r=t.innerHTML;t.innerHTML='Sending... <i class="fa-solid fa-circle-notch fa-spin"></i>',a.className='fc-status';try{const{error:e}=await client.from('contact_messages').insert([o]);if(e)throw e;a.innerHTML='<i class="fa-solid fa-circle-check"></i> Message sent successfully!',a.className='fc-status success',n.reset(),setTimeout(()=>{toggleFloatingContact()},3000)}catch(e){a.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> Failed: '+(e.message||"Unknown error"),a.className='fc-status error'}finally{t.disabled=!1,t.innerHTML=r}}
-    let aiChatHistory=[];
-    function toggleAiChat(){document.getElementById('ai-chat-window').classList.toggle('open');const e=document.getElementById('ai-badge');e&&(e.style.display='none')}
-    async function sendAiMsg(){const e=document.getElementById('ai-chat-input'),t=e.value.trim();if(!t)return;const a=new Date().toISOString().split('T')[0];let n=localStorage.getItem('ctm_ai_anon_usage'),o=n?JSON.parse(n):{date:a,count:0};o.date!==a&&(o={date:a,count:0});const r=document.getElementById('ai-chat-messages');if(o.count>=15)return r.innerHTML+='<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages. This limit prevents system abuse. Please check back tomorrow!</div>',r.scrollTop=r.scrollHeight,void(e.value='');r.innerHTML+=`<div class="chat-msg msg-user">${t}</div>`,e.value='',r.scrollTop=r.scrollHeight,aiChatHistory.push({role:'user',content:t});const s='loading-'+Date.now();r.innerHTML+=`<div id="${s}" class="chat-msg msg-ai" style="font-style:italic; color:#6B7280;">Typing...</div>`,r.scrollTop=r.scrollHeight;try{const e=aiChatHistory.length>6?aiChatHistory.slice(aiChatHistory.length-6):aiChatHistory,t=await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${SUPABASE_ANON_KEY}`,apikey:SUPABASE_ANON_KEY},body:JSON.stringify({query:t,history:e})});if(document.getElementById(s)?.remove(),!t.ok)throw new Error(`Server returned ${t.status}`);const a=await t.json(),n=a.reply||"No response received.",i=n.startsWith("Error:")||n.startsWith("System"),l=i?"msg-error":"msg-ai";r.innerHTML+=`<div class="chat-msg ${l}">${n}</div>`,i||(aiChatHistory.push({role:'assistant',content:n}),o.count+=1,localStorage.setItem('ctm_ai_anon_usage',JSON.stringify(o)))}catch(e){document.getElementById(s)?.remove(),r.innerHTML+='<div class="chat-msg msg-error">Connection Error: Could not reach AI server.</div>'}r.scrollTop=r.scrollHeight}
+    // --- UTILITIES ---
+    async function getClientIpData() {
+        try {
+            const e = await fetch('https://1.1.1.1/cdn-cgi/trace');
+            const t = await e.text();
+            const a = t.split('\n').reduce((acc, line) => {
+                const [k, v] = line.split('=');
+                if (k) acc[k] = v;
+                return acc;
+            }, {});
+            return { ip: a.ip || 'unknown', country: a.loc || 'unknown' };
+        } catch (e) {
+            return { ip: 'unknown', country: 'unknown' };
+        }
+    }
+
+    async function isIpBanned(ip) {
+        if ('unknown' === ip) return false;
+        try {
+            const { data } = await client.from('ip_blacklist').select('ip_address').eq('ip_address', ip).maybeSingle();
+            return !!data;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function handleRepoSearch(){
+        const e=document.getElementById('repo-search-input').value.trim();
+        if(e) window.location.href=`reposearch.html?merchantId=${e}`;
+    }
+
+    function togglePassword() {
+        const input = document.getElementById('hero-password');
+        const icon = document.querySelector('.toggle-password');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    }
+
+    function openResetEmailModal(){
+        document.getElementById('reset-email-modal').classList.remove('hidden');
+        const e=document.getElementById('hero-email').value;
+        if(e) document.getElementById('reset-email-input').value=e;
+    }
+
+    // ==========================================
+    // BULLETPROOF EMAIL LOGIN
+    // ==========================================
+    async function handleHeroLogin() {
+        const email = document.getElementById('hero-email').value;
+        const pass = document.getElementById('hero-password').value;
+        const btn = document.getElementById('hero-login-btn');
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
+        btn.disabled = true;
+
+        try {
+            const ipData = await getClientIpData();
+            if (await isIpBanned(ipData.ip)) throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CTMerchant.");
+
+            // Attempt Auth
+            const { data: authData, error: authErr } = await client.auth.signInWithPassword({ email: email, password: pass });
+            if (authErr) throw authErr;
+
+            if (authData && authData.user) {
+                // --- PRE-FLIGHT PROFILE CHECK (FIXED) ---
+                const { data: profile, error: profileErr } = await client
+                    .from('profiles')
+                    .select('is_suspended, status')
+                    .eq('id', authData.user.id)
+                    .maybeSingle();
+
+                // 1. Handle Network Error gracefully (do not log out)
+                if (profileErr) {
+                    await client.auth.signOut();
+                    throw new Error("Network error verifying profile. Please try again.");
+                }
+
+                // 2. ONLY ban if explicitly suspended
+                if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+                    await client.auth.signOut();
+                    throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
+                }
+
+                // 3. Update IP and login
+                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
+            }
+            
+            window.location.href = "user-dashboard.html";
+        } catch (err) {
+            alert(err.message);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    // ==========================================
+    // BULLETPROOF GOOGLE LOGIN
+    // ==========================================
+    let pendingGoogleUserId = null;
+    let pendingGoogleUserName = null;
+
+    async function handleGoogleLogin(e) {
+        const btn = document.getElementById('hero-login-btn');
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Checking Google...';
+        btn.disabled = true;
+
+        try {
+            const ipData = await getClientIpData();
+            if (await isIpBanned(ipData.ip)) throw new Error("ACCESS DENIED: Your IP address has been permanently banned from CTMerchant.");
+
+            const { data: authData, error: authErr } = await client.auth.signInWithIdToken({ provider: 'google', token: e.credential });
+            if (authErr) throw authErr;
+
+            const user = authData.user;
+            pendingGoogleUserId = user.id;
+            pendingGoogleUserName = user.user_metadata?.full_name || '';
+
+            // --- PRE-FLIGHT PROFILE CHECK (FIXED) ---
+            const { data: profile, error: profileErr } = await client
+                .from('profiles')
+                .select('city_id, area_id, is_suspended, status')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            // 1. Handle Network Error gracefully
+            if (profileErr) {
+                await client.auth.signOut();
+                throw new Error("Network error verifying profile. Please try again.");
+            }
+
+            // 2. ONLY ban if explicitly suspended
+            if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+                await client.auth.signOut();
+                throw new Error("ACCESS DENIED: Your account has been suspended or banned. Please contact support.");
+            }
+
+            // 3. Success Routing
+            if (profile && profile.city_id && profile.area_id) {
+                await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
+                window.location.href = "user-dashboard.html";
+            } else {
+                document.getElementById('complete-profile-modal').classList.remove('hidden');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                await fetchCitiesForModal();
+            }
+
+        } catch (err) {
+            alert("Google Sign-In Error: " + err.message);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    // --- GOOGLE SETUP MODAL LOGIC ---
+    async function fetchCitiesForModal() {
+        const select = document.getElementById('google-city');
+        try {
+            const { data, error } = await client.from('cities').select('id, name').eq('is_open', true).order('name');
+            if (error) throw error;
+            select.innerHTML = '<option value="" disabled selected>Select your city</option>' + data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        } catch (e) {
+            select.innerHTML = '<option value="" disabled>Error loading cities</option>';
+        }
+    }
+
+    async function loadAreasForModal(cityId) {
+        const select = document.getElementById('google-area');
+        select.disabled = true;
+        select.innerHTML = '<option value="" disabled selected>Loading areas...</option>';
+        try {
+            const { data, error } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+            if (error) throw error;
+            select.innerHTML = '<option value="" disabled selected>Select your area</option>' + data.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+            select.disabled = false;
+        } catch (e) {
+            select.innerHTML = '<option value="" disabled>Error loading areas</option>';
+        }
+    }
+
+    async function saveGoogleProfile() {
+        const phone = document.getElementById('google-phone').value.trim();
+        const cityId = document.getElementById('google-city').value;
+        const areaId = document.getElementById('google-area').value;
+        const btn = document.getElementById('google-complete-btn');
+
+        if (!phone || !cityId || !areaId) return alert("Please fill in your phone, city, and area to continue.");
+
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Saving...';
+
+        try {
+            const ipData = await getClientIpData();
+            const { error } = await client.from('profiles').upsert({
+                id: pendingGoogleUserId,
+                full_name: pendingGoogleUserName,
+                phone: phone,
+                city_id: parseInt(cityId),
+                area_id: parseInt(areaId),
+                registration_ip: ipData.ip,
+                last_active_ip: ipData.ip,
+                ip_country: ipData.country
+            });
+
+            if (error) throw error;
+            window.location.href = "user-dashboard.html";
+        } catch (e) {
+            alert("Error saving profile: " + e.message);
+            btn.disabled = false;
+            btn.innerHTML = 'Complete Setup';
+        }
+    }
+
+    async function cancelGoogleLogin() {
+        await client.auth.signOut();
+        document.getElementById('complete-profile-modal').classList.add('hidden');
+    }
+
+    // --- PASSWORD RESET ---
+    async function sendResetCode() {
+        const email = document.getElementById('reset-email-input').value.trim();
+        if (!email) return alert("Please enter your registered email address.");
+        
+        const btn = document.getElementById('btn-send-reset');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Sending...';
+        
+        try {
+            const { error } = await client.auth.resetPasswordForEmail(email);
+            if (error) throw error;
+            
+            document.getElementById('reset-email-modal').classList.add('hidden');
+            document.getElementById('reset-password-modal').classList.remove('hidden');
+        } catch (e) {
+            alert(e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Send Reset Code';
+        }
+    }
+
+    async function verifyAndResetPassword() {
+        const email = document.getElementById('reset-email-input').value.trim();
+        const token = document.getElementById('reset-otp-input').value.trim();
+        const newPass = document.getElementById('reset-new-password').value;
+        const confirmPass = document.getElementById('reset-confirm-password').value;
+        
+        if (!token || !newPass || !confirmPass) return alert("Please fill out all fields.");
+        if (newPass !== confirmPass) return alert("Passwords do not match. Please try again.");
+        if (newPass.length < 6) return alert("Password must be at least 6 characters.");
+        
+        const btn = document.getElementById('btn-confirm-reset');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Resetting...';
+        
+        try {
+            const { error: verifyErr } = await client.auth.verifyOtp({ email: email, token: token, type: 'recovery' });
+            if (verifyErr) throw verifyErr;
+            
+            const { error: updateErr } = await client.auth.updateUser({ password: newPass });
+            if (updateErr) throw updateErr;
+            
+            alert("Success! Your password has been updated.");
+            window.location.href = "user-dashboard.html";
+        } catch (e) {
+            alert("Error: " + e.message);
+            btn.disabled = false;
+            btn.innerHTML = 'Confirm & Reset Password';
+        }
+    }
+
+    // --- FLOATING CONTACT ---
+    function toggleFloatingContact() {
+        const popup = document.getElementById('fc-popup');
+        popup.classList.toggle('show');
+        if (popup.classList.contains('show')) {
+            document.getElementById('fc-status').className = 'fc-status';
+            document.getElementById('fc-status').textContent = '';
+        }
+    }
+
+    async function handleFloatingContactSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('fc-submit-btn');
+        const status = document.getElementById('fc-status');
+        const form = document.getElementById('fc-form');
+        
+        const payload = {
+            full_name: document.getElementById('fc-name').value.trim(),
+            email: document.getElementById('fc-email').value.trim(),
+            subject: document.getElementById('fc-subject').value,
+            message: document.getElementById('fc-message').value.trim()
+        };
+        
+        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Sending... <i class="fa-solid fa-circle-notch fa-spin"></i>';
+        status.className = 'fc-status';
+        
+        try {
+            const { error } = await client.from('contact_messages').insert([payload]);
+            if (error) throw error;
+            
+            status.innerHTML = '<i class="fa-solid fa-circle-check"></i> Message sent successfully!';
+            status.className = 'fc-status success';
+            form.reset();
+            setTimeout(() => { toggleFloatingContact(); }, 3000);
+        } catch (err) {
+            status.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Failed: ' + (err.message || "Unknown error");
+            status.className = 'fc-status error';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+
+    // --- AI CHAT LOGIC ---
+    let aiChatHistory = [];
+    function toggleAiChat() {
+        document.getElementById('ai-chat-window').classList.toggle('open');
+        const badge = document.getElementById('ai-badge');
+        if (badge) badge.style.display = 'none';
+    }
+
+    async function sendAiMsg() {
+        const input = document.getElementById('ai-chat-input');
+        const txt = input.value.trim();
+        if (!txt) return;
+        
+        const today = new Date().toISOString().split('T')[0];
+        let usageStr = localStorage.getItem('ctm_ai_anon_usage');
+        let usage = usageStr ? JSON.parse(usageStr) : { date: today, count: 0 };
+        if (usage.date !== today) usage = { date: today, count: 0 };
+        
+        const body = document.getElementById('ai-chat-messages');
+        
+        if (usage.count >= 15) {
+            body.innerHTML += '<div class="chat-msg msg-error">You have reached the free daily limit of 15 messages. This limit prevents system abuse. Please check back tomorrow!</div>';
+            body.scrollTop = body.scrollHeight;
+            input.value = '';
+            return;
+        }
+        
+        body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
+        input.value = '';
+        body.scrollTop = body.scrollHeight;
+        aiChatHistory.push({ role: 'user', content: txt });
+        
+        const loadId = 'loading-' + Date.now();
+        body.innerHTML += `<div id="${loadId}" class="chat-msg msg-ai" style="font-style:italic; color:#6B7280;">Typing...</div>`;
+        body.scrollTop = body.scrollHeight;
+        
+        try {
+            const contextHistory = aiChatHistory.length > 6 ? aiChatHistory.slice(aiChatHistory.length - 6) : aiChatHistory;
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'apikey': SUPABASE_ANON_KEY
+                },
+                body: JSON.stringify({ query: txt, history: contextHistory })
+            });
+            
+            document.getElementById(loadId)?.remove();
+            
+            if (!response.ok) throw new Error(`Server returned ${response.status}`);
+            
+            const data = await response.json();
+            const reply = data.reply || "No response received.";
+            const isError = reply.startsWith("Error:") || reply.startsWith("System");
+            const msgClass = isError ? "msg-error" : "msg-ai";
+            
+            body.innerHTML += `<div class="chat-msg ${msgClass}">${reply}</div>`;
+            
+            if (!isError) {
+                aiChatHistory.push({ role: 'assistant', content: reply });
+                usage.count += 1;
+                localStorage.setItem('ctm_ai_anon_usage', JSON.stringify(usage));
+            }
+        } catch (err) {
+            document.getElementById(loadId)?.remove();
+            body.innerHTML += '<div class="chat-msg msg-error">Connection Error: Could not reach AI server.</div>';
+        }
+        body.scrollTop = body.scrollHeight;
+    }
 </script>
 </body>
 </html>
