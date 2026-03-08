@@ -201,15 +201,16 @@
         }
 
         // --- 1. PRE-FLIGHT SUSPENSION CHECK ---
+        // REMOVED 'status' WHICH WAS CRASHING THE QUERY
         const { data: profile, error: profileErr } = await client
             .from('profiles')
-            .select('is_suspended, status')
+            .select('is_suspended')
             .eq('id', currentUser.id)
             .maybeSingle();
 
         if (profileErr) {
             console.error("Network error verifying profile:", profileErr.message);
-        } else if (profile && (profile.is_suspended === true || profile.status === 'suspended')) {
+        } else if (profile && profile.is_suspended === true) {
             alert("🔒 Your account access has been restricted by administration.");
             await client.auth.signOut();
             window.location.href = "index.html";
@@ -264,7 +265,6 @@
 
         try {
             // STEP 1: GARBAGE COLLECTION
-            // Always delete old news rows for this shop first to prevent DB bloat
             await client.from('shop_banners_news')
                 .delete()
                 .eq('shop_id', shopId)
@@ -275,7 +275,6 @@
             if (text.length === 0) {
                 alert("News removed successfully!");
             } else {
-                // Hard limit the string length to 150 chars before DB insert
                 const sanitizedText = text.substring(0, 150);
 
                 const { error } = await client
@@ -285,7 +284,7 @@
                         merchant_id: currentUser.id,
                         content_type: 'news',
                         content_data: sanitizedText,
-                        status: 'pending' // Goes to the pending queue for admins
+                        status: 'pending' 
                     });
 
                 if (error) throw error;
