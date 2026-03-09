@@ -994,10 +994,10 @@
             successModal.classList.add('active');
             document.body.style.overflow = 'hidden';
 
-            // Wait 2.5 seconds, then AUTOMATICALLY navigate back to the dashboard
+            // Wait 3 seconds, then AUTOMATICALLY navigate back to the dashboard
             setTimeout(() => {
                 navigateSafely('user-dashboard.html');
-            }, 2500);
+            }, 3000);
 
         } catch (err) {
             console.error(err);
