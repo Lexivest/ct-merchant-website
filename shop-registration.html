@@ -223,7 +223,8 @@
           <div class="form-group">
               <label class="label" id="cac-label" style="margin-bottom:4px">Upload CAC (Image or PDF)</label>
               <div class="upload-box" onclick="triggerUpload('file-cac')">
-                  <input type="file" id="file-cac" hidden accept="image/*,application/pdf" onchange="handleFileSelect(event, 'file-cac', 1.586)">
+                  <!-- PASSING FALSE AS ASPECT RATIO TO BYPASS CROPPER -->
+                  <input type="file" id="file-cac" hidden accept="image/*,application/pdf" onchange="handleFileSelect(event, 'file-cac', false)">
                   <i class="fa-solid fa-file-contract upload-icon"></i>
                   <span class="upload-title">CAC Certificate</span>
                   <span class="upload-subtitle">(Optional) PDF/Image, Max 500KB</span>
@@ -245,7 +246,8 @@
           <div class="form-group">
               <label class="label" style="margin-bottom:4px">Upload ID Card (Image or PDF)</label>
               <div class="upload-box" onclick="triggerUpload('file-id')">
-                  <input type="file" id="file-id" hidden accept="image/*,application/pdf" onchange="handleFileSelect(event, 'file-id', 1.586)">
+                  <!-- PASSING FALSE AS ASPECT RATIO TO BYPASS CROPPER -->
+                  <input type="file" id="file-id" hidden accept="image/*,application/pdf" onchange="handleFileSelect(event, 'file-id', false)">
                   <i class="fa-regular fa-id-card upload-icon"></i>
                   <span class="upload-title">Official ID Document</span>
                   <span class="upload-subtitle">(Required) PDF/Image, Max 500KB</span>
@@ -657,12 +659,16 @@
         delete rawFiles[target];
         delete croppedBlobs[target];
 
-        if (file.type === 'application/pdf') {
+        // Ensure file isn't larger than 500KB (Checked immediately for PDFs and raw uncropped images)
+        if (file.type === 'application/pdf' || aspectRatio === false) {
             if (file.size > MAX_FILE_SIZE) {
-                alert(`The selected PDF is too large (${Math.round(file.size/1024)}KB). Maximum allowed size is 500KB.`);
+                alert(`The selected file is too large (${Math.round(file.size/1024)}KB). Maximum allowed size is 500KB.`);
                 e.target.value = '';
                 return;
             }
+        }
+
+        if (file.type === 'application/pdf') {
             const reader = new FileReader();
             reader.onload = (ev) => {
                 rawFiles[target] = new Blob([ev.target.result], { type: 'application/pdf' });
@@ -674,6 +680,14 @@
         }
 
         if (file.type.startsWith('image/')) {
+            // BYPASS CROPPER LOGIC: If aspectRatio is strictly "false", we skip the cropper
+            if (aspectRatio === false) {
+                rawFiles[target] = file;
+                setPreview(target, URL.createObjectURL(file), false);
+                e.target.value = '';
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = (ev) => {
                 openCropModal(ev.target.result, target, aspectRatio);
@@ -932,7 +946,6 @@
         document.body.style.overflow = '';
     }
 
-    // THE UPDATED SUBMISSION FUNCTION
     async function submitApplication() {
         const btn = document.getElementById('confirm-btn');
         const originalText = btn.innerHTML;
