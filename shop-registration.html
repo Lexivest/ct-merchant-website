@@ -99,6 +99,20 @@
     .spinner{width:22px;height:22px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
     #main-loader{text-align:center;padding:80px;color:var(--primary);display:none}
+    
+    /* Success Modal Styles */
+    .success-modal-content {
+        background: #fff; padding: 48px 32px; border-radius: 28px; text-align: center; 
+        max-width: 420px; width: 90%; margin: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; transform: scale(0.8); opacity: 0;
+    }
+    @keyframes scaleUp { to { transform: scale(1); opacity: 1; } }
+    .success-icon-wrap {
+        width: 80px; height: 80px; background: #D1FAE5; border-radius: 50%; 
+        display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+    }
+    .success-icon-wrap i { font-size: 2.5rem; color: #10B981; }
+
     @media (max-width:480px){.upload-row{grid-template-columns:1fr}.card{padding:28px 20px}.thumb-row{flex-wrap:wrap}.thumb-col{min-width:45%}}
     hr.divider{border:0;border-top:2px dashed var(--border-color);margin:28px 0}
   </style>
@@ -165,7 +179,6 @@
           </div>
           <div class="form-group">
               <label class="label">Description <span style="color:var(--danger)">*</span></label>
-              <!-- Removed max/min length to rely purely on word count -->
               <textarea id="desc" class="input" placeholder="Give detailed information about what you sell, the services you provide, and what makes your business unique..." required></textarea>
               <div id="desc-counter" class="word-counter error">0 words (Min: 30, Max: 150)</div>
           </div>
@@ -191,7 +204,6 @@
               <label class="label">Detailed Street Address <span style="color:var(--danger)">*</span></label>
               <div class="input-wrapper">
                   <i class="fa-solid fa-map-pin"></i>
-                  <!-- Address allows up to 500 chars to cover the 50 words comfortably -->
                   <input type="text" id="address" class="input with-icon" placeholder="e.g. Shop 4, Ground Floor, Main Market Plaza..." required maxlength="500">
               </div>
               <div id="address-counter" class="word-counter error">0 words (Min: 5, Max: 50)</div>
@@ -337,6 +349,19 @@
       <button type="button" class="btn-confirm" id="confirm-btn" onclick="submitApplication()">Confirm & Submit <i class="fa-solid fa-check"></i></button>
       <button type="button" class="btn-edit" onclick="closePreviewDialog()">Back to Edit</button>
   </div>
+</div>
+
+<!-- BEAUTIFUL SUCCESS MODAL -->
+<div id="success-modal" class="crop-overlay" style="align-items: center; justify-content: center; z-index: 3000;">
+    <div class="success-modal-content">
+        <div class="success-icon-wrap">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <h2 style="font-size: 1.6rem; font-weight: 800; color: #1F2937; margin-bottom: 8px;" id="success-title">Success!</h2>
+        <p style="color: #6B7280; font-size: 0.95rem; font-weight: 500; margin-bottom: 24px;" id="success-message">Your shop has been submitted.</p>
+        <div class="spinner" style="border-top-color: var(--primary); width: 28px; height: 28px; margin: 0 auto; border-width: 4px;"></div>
+        <p style="color: var(--primary); font-size: 0.8rem; font-weight: 700; margin-top: 16px;">Redirecting to dashboard...</p>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -907,6 +932,7 @@
         document.body.style.overflow = '';
     }
 
+    // THE UPDATED SUBMISSION FUNCTION
     async function submitApplication() {
         const btn = document.getElementById('confirm-btn');
         const originalText = btn.innerHTML;
@@ -953,17 +979,29 @@
             if (isEdit && existingShop) {
                 const { error } = await client.from('shops').update(payload).eq('id', shopId);
                 if (error) throw error;
-                alert("Correction Submitted! Your shop is pending approval again.");
+                document.getElementById('success-title').textContent = "Correction Submitted!";
+                document.getElementById('success-message').textContent = "Your shop is pending approval again.";
             } else {
                 const { error } = await client.from('shops').insert(payload);
                 if (error) throw error;
-                alert("Application Submitted! You will be notified once approved.");
+                document.getElementById('success-title').textContent = "Application Submitted!";
+                document.getElementById('success-message').textContent = "You will be notified once approved.";
             }
             
-            navigateSafely('user-dashboard.html');
+            // Close the review sheet and show the new Success Modal
+            closePreviewDialog();
+            const successModal = document.getElementById('success-modal');
+            successModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Wait 2.5 seconds, then AUTOMATICALLY navigate back to the dashboard
+            setTimeout(() => {
+                navigateSafely('user-dashboard.html');
+            }, 2500);
+
         } catch (err) {
             console.error(err);
-            alert("Error: " + err.message);
+            alert("Error: " + err.message); // Keep native alert for errors only
             btn.disabled = false;
             btn.innerHTML = originalText;
             closePreviewDialog();
