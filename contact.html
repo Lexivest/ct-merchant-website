@@ -91,7 +91,8 @@
             </div>
             <div>
                 <label class="form-label">Email Address</label>
-                <input type="email" id="email" required class="contact-input">
+                <!-- ADDED STRICT HTML PATTERN VALIDATION -->
+                <input type="email" id="email" required class="contact-input" pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address (e.g., name@example.com)">
             </div>
         </div>
         <div class="form-group">
@@ -150,19 +151,41 @@ document.addEventListener('DOMContentLoaded',()=>{
   try{window.supabase&&(client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY))}catch(e){console.error("Initial load failed",e)}
 
   const form=document.getElementById('contactForm'),status=document.getElementById('formStatus'),btn=document.getElementById('submitBtn');
+  
   form&&(form.onsubmit=async e=>{
     e.preventDefault();
     if(!client&&window.supabase&&(client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY)),!client){
       return status.className="status-msg status-warning active",status.textContent="Error: Database library not loaded. Please check your internet connection and refresh.",!1;
     }
-    btn.disabled=!0;const t=btn.innerHTML;btn.innerHTML='<span>Sending...</span> <i class="fa-solid fa-circle-notch fa-spin"></i>',status.className="status-msg";
-    const n={full_name:document.getElementById('full_name').value,email:document.getElementById('email').value,subject:document.getElementById('subject').value,message:document.getElementById('message').value};
+
+    // --- ADDED STRICT JS EMAIL VALIDATION ---
+    const emailInput = document.getElementById('email').value.trim();
+    const emailPattern = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+    if (!emailPattern.test(emailInput)) {
+        status.className = "status-msg status-error active";
+        status.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Invalid Email: Please enter a valid email address (e.g., name@example.com).';
+        return false;
+    }
+
+    btn.disabled=!0;
+    const t=btn.innerHTML;
+    btn.innerHTML='<span>Sending...</span> <i class="fa-solid fa-circle-notch fa-spin"></i>';
+    status.className="status-msg";
+    
+    // Sanitize all inputs before payload creation
+    const n = {
+        full_name: document.getElementById('full_name').value.trim(),
+        email: emailInput,
+        subject: document.getElementById('subject').value,
+        message: document.getElementById('message').value.trim()
+    };
+    
     try{
       const{error:s}=await client.from('contact_messages').insert([n]);
       if(s)throw s;
       status.className="status-msg status-success active",status.innerHTML='<i class="fa-solid fa-circle-check"></i> SUCCESS: Message Sent!',form.reset()
     }catch(s){
-      console.error("Submission error:",s),status.className="status-msg status-error active",status.textContent="FAILED: "+(s.message||"Unknown error")
+      console.error("Submission error:",s),status.className="status-msg status-error active",status.innerHTML='<i class="fa-solid fa-circle-xmark"></i> FAILED: '+(s.message||"Unknown error")
     }finally{
       btn.disabled=!1,btn.innerHTML=t
     }
