@@ -112,6 +112,45 @@
         .spinner.dark { border-color: rgba(0,0,0,0.1); border-top-color: var(--color-pink); width: 44px; height: 44px; margin: 60px auto; display: block;}
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* ACTION SHEET STYLES */
+        .action-sheet-overlay {
+            position: fixed; inset: 0; background: rgba(17,24,39,0.6); z-index: 2500;
+            display: flex; align-items: flex-end; justify-content: center;
+            opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(4px);
+        }
+        .action-sheet-overlay.active { opacity: 1; visibility: visible; }
+        .action-sheet {
+            background: #fff; width: 100%; max-width: 680px; border-radius: 24px 24px 0 0;
+            padding: 24px 20px 32px; transform: translateY(100%); transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .action-sheet-overlay.active .action-sheet { transform: translateY(0); }
+        .action-btn {
+            display: flex; align-items: center; gap: 16px; width: 100%; padding: 16px;
+            border: none; background: #F8FAFC; border-radius: 16px; margin-bottom: 12px;
+            font-size: 1.05rem; font-weight: 700; color: #1E293B; cursor: pointer; transition: 0.2s;
+        }
+        .action-btn:hover { background: #F1F5F9; transform: translateY(-2px); }
+        .action-btn i { font-size: 1.4rem; width: 24px; text-align: center; }
+        .action-btn.camera i { color: var(--color-pink); }
+        .action-btn.gallery i { color: #10B981; }
+        .action-btn-cancel { background: #E2E8F0; color: #64748B; justify-content: center; margin-top: 12px; margin-bottom: 0; }
+        .action-btn-cancel:hover { background: #CBD5E1; transform: none; }
+
+        /* SUCCESS MODAL STYLES */
+        .success-modal-content {
+            background: #fff; padding: 48px 32px; border-radius: 28px; text-align: center; 
+            max-width: 420px; width: 90%; margin: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; transform: scale(0.8); opacity: 0;
+        }
+        @keyframes scaleUp { to { transform: scale(1); opacity: 1; } }
+        .success-icon-wrap {
+            width: 80px; height: 80px; background: #D1FAE5; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+        }
+        .success-icon-wrap.danger { background: #FEE2E2; }
+        .success-icon-wrap i { font-size: 2.5rem; color: #10B981; }
+        .success-icon-wrap.danger i { color: #DC2626; }
+
         /* MODAL STYLES */
         .crop-overlay { position: fixed; inset: 0; background: rgba(17,24,39,.95); z-index: 2000; display: flex; flex-direction: column; opacity: 0; visibility: hidden; transition: .3s ease; backdrop-filter: blur(5px); }
         .crop-overlay.active { opacity: 1; visibility: visible; }
@@ -132,7 +171,7 @@
 
     <header class="app-header">
         <div class="header-content">
-            <button onclick="window.history.back()" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+            <button onclick="navigateSafely('merchant-dashboard.html')" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
             <div class="page-title">Shop Banner</div>
             <button id="save-btn" onclick="saveBanner()" class="btn-brand hidden">
                 <i class="fa-solid fa-check"></i> Save
@@ -151,7 +190,7 @@
             </div>
 
             <div class="banner-wrapper">
-                <div class="img-picker" onclick="document.getElementById('file-input').click()">
+                <div class="img-picker" onclick="openUploadMenu()">
                     <input type="file" id="file-input" hidden accept="image/*" onchange="handleFileSelect(this)">
                     
                     <!-- Placeholder State -->
@@ -172,6 +211,25 @@
 
     </div>
 
+    <!-- ACTION SHEET FOR CAMERA / GALLERY CHOICE -->
+    <div id="upload-action-sheet" class="action-sheet-overlay" onclick="closeUploadMenu(event)">
+        <div class="action-sheet" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 24px; font-weight: 800; font-size: 1.2rem; color: #1E293B;">Choose Image Source</h3>
+            
+            <button type="button" class="action-btn camera" onclick="triggerFileSelection('camera')">
+                <i class="fa-solid fa-camera"></i> Take a Photo
+            </button>
+            
+            <button type="button" class="action-btn gallery" onclick="triggerFileSelection('gallery')">
+                <i class="fa-solid fa-image"></i> Choose from Gallery
+            </button>
+            
+            <button type="button" class="action-btn action-btn-cancel" onclick="closeUploadMenu()">
+                Cancel
+            </button>
+        </div>
+    </div>
+
     <!-- CROPPER MODAL -->
     <div id="crop-modal" class="crop-overlay">
         <div class="crop-header-bar">
@@ -185,6 +243,19 @@
                 <button type="button" class="btn-crop-cancel" onclick="closeCropModal()">Cancel</button>
                 <button type="button" id="btn-crop-apply" class="btn-crop-apply" onclick="applyCrop()">Apply Crop</button>
             </div>
+        </div>
+    </div>
+
+    <!-- BEAUTIFUL SUCCESS MODAL -->
+    <div id="success-modal" class="crop-overlay" style="align-items: center; justify-content: center; z-index: 3000;">
+        <div class="success-modal-content">
+            <div class="success-icon-wrap" id="success-icon-wrap">
+                <i class="fa-solid fa-check" id="success-icon"></i>
+            </div>
+            <h2 style="font-size: 1.6rem; font-weight: 800; color: #1F2937; margin-bottom: 8px;" id="success-title">Success!</h2>
+            <p style="color: #6B7280; font-size: 0.95rem; font-weight: 500; margin-bottom: 24px;" id="success-message">Banner successfully updated.</p>
+            <div class="spinner" id="success-spinner" style="border-top-color: var(--color-pink); width: 28px; height: 28px; margin: 0 auto; border-width: 4px;"></div>
+            <p style="color: var(--color-text-muted); font-size: 0.8rem; font-weight: 700; margin-top: 16px;">Redirecting to dashboard...</p>
         </div>
     </div>
 
@@ -206,16 +277,22 @@
     let activeBannerBlob = null;    
     let shouldDeleteOld = false;    
 
+    function navigateSafely(url) {
+        if (window.location.protocol === 'blob:' || window.location.origin === 'null') {
+            alert(`Navigation to ${url} blocked in this preview environment.`);
+        } else {
+            window.location.href = url;
+        }
+    }
+
     window.onload = async () => {
-        if (!shopId) { alert("Shop ID missing"); window.history.back(); return; }
+        if (!shopId) { alert("Shop ID missing"); navigateSafely("merchant-dashboard.html"); return; }
         
         try {
             const { data: { session } } = await client.auth.getSession();
-            if (!session) { window.location.href = "login.html"; return; }
+            if (!session) { navigateSafely("login.html"); return; }
             currentUser = session.user;
             
-            // --- 1. PRE-FLIGHT SUSPENSION CHECK ---
-            // REMOVED 'status' WHICH WAS CRASHING THE QUERY
             const { data: profile, error: profileErr } = await client
                 .from('profiles')
                 .select('is_suspended')
@@ -227,7 +304,7 @@
             } else if (profile && profile.is_suspended === true) {
                 alert("🔒 Your account access has been restricted by administration.");
                 await client.auth.signOut();
-                window.location.href = "index.html";
+                navigateSafely("index.html");
                 return;
             }
 
@@ -300,6 +377,35 @@
         document.getElementById('preview').src = '';
         document.getElementById('del-btn').classList.add('hidden');
         document.getElementById('status-badge').className = 'status-badge hidden';
+    }
+
+    // ==========================================
+    // ACTION SHEET LOGIC (CAMERA VS GALLERY)
+    // ==========================================
+    function openUploadMenu() {
+        document.getElementById('upload-action-sheet').classList.add('active');
+        document.body.style.overflow = 'hidden'; 
+    }
+
+    function closeUploadMenu(e) {
+        if (e && e.target !== e.currentTarget) return; 
+        document.getElementById('upload-action-sheet').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function triggerFileSelection(mode) {
+        const input = document.getElementById('file-input');
+        
+        if (mode === 'camera') {
+            input.setAttribute('accept', 'image/*');
+            input.setAttribute('capture', 'environment');
+        } else if (mode === 'gallery') {
+            input.setAttribute('accept', 'image/*');
+            input.removeAttribute('capture');
+        }
+        
+        input.click();
+        closeUploadMenu();
     }
 
     // --- CROPPER ENGINE (LOCKED TO 16:9 LANDSCAPE) ---
@@ -382,7 +488,7 @@
         const originalText = btn.innerHTML;
         
         if (!shouldDeleteOld && !activeBannerBlob) {
-            window.history.back();
+            navigateSafely("merchant-dashboard.html");
             return;
         }
 
@@ -443,12 +549,32 @@
                 });
 
                 if (dbError) throw dbError;
-                alert("New Banner uploaded! It will be reviewed by an admin shortly.");
-            } else {
-                alert("Banner successfully deleted.");
             }
 
-            window.location.href = "merchant-dashboard.html";
+            // SHOW BEAUTIFUL SUCCESS MODAL
+            const successModal = document.getElementById('success-modal');
+            
+            if (activeBannerBlob) {
+                document.getElementById('success-title').textContent = "Upload Successful!";
+                document.getElementById('success-message').textContent = "New Banner uploaded! It will be reviewed by an admin shortly.";
+                document.getElementById('success-icon-wrap').className = 'success-icon-wrap';
+                document.getElementById('success-icon').className = 'fa-solid fa-check';
+                document.getElementById('success-spinner').style.borderTopColor = 'var(--color-pink)';
+            } else {
+                document.getElementById('success-title').textContent = "Banner Deleted";
+                document.getElementById('success-title').style.color = '#991B1B';
+                document.getElementById('success-message').textContent = "Banner successfully removed from your shop.";
+                document.getElementById('success-icon-wrap').className = 'success-icon-wrap danger';
+                document.getElementById('success-icon').className = 'fa-solid fa-trash-can';
+                document.getElementById('success-spinner').style.borderTopColor = '#DC2626';
+            }
+
+            successModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(() => {
+                navigateSafely("merchant-dashboard.html");
+            }, 3000);
 
         } catch (err) {
             console.error(err);
