@@ -113,6 +113,33 @@
     }
     .success-icon-wrap i { font-size: 2.5rem; color: #10B981; }
 
+    /* Action Sheet Styles (Camera vs Gallery) */
+    .action-sheet-overlay {
+        position: fixed; inset: 0; background: rgba(17,24,39,0.6); z-index: 2500;
+        display: flex; align-items: flex-end; justify-content: center;
+        opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(4px);
+    }
+    .action-sheet-overlay.active { opacity: 1; visibility: visible; }
+    .action-sheet {
+        background: #fff; width: 100%; max-width: 680px; border-radius: 24px 24px 0 0;
+        padding: 24px 20px 32px; transform: translateY(100%); transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .action-sheet-overlay.active .action-sheet { transform: translateY(0); }
+    .action-btn {
+        display: flex; align-items: center; gap: 16px; width: 100%; padding: 16px;
+        border: none; background: #F8FAFC; border-radius: 16px; margin-bottom: 12px;
+        font-size: 1.05rem; font-weight: 700; color: #1E293B; cursor: pointer; transition: 0.2s;
+    }
+    .action-btn:hover { background: #F1F5F9; transform: translateY(-2px); }
+    .action-btn i { font-size: 1.4rem; width: 24px; text-align: center; }
+    .action-btn.camera i { color: #3B82F6; }
+    .action-btn.gallery i { color: #10B981; }
+    .action-btn.pdf i { color: #EF4444; }
+    .action-btn-cancel {
+        background: #E2E8F0; color: #64748B; justify-content: center; margin-top: 12px; margin-bottom: 0;
+    }
+    .action-btn-cancel:hover { background: #CBD5E1; transform: none; }
+
     @media (max-width:480px){.upload-row{grid-template-columns:1fr}.card{padding:28px 20px}.thumb-row{flex-wrap:wrap}.thumb-col{min-width:45%}}
     hr.divider{border:0;border-top:2px dashed var(--border-color);margin:28px 0}
   </style>
@@ -146,8 +173,10 @@
   <form id="shop-form" class="card" onsubmit="showPreviewDialog(event)" style="display:none;">
       <div class="section-title sec-store"><i class="fa-solid fa-store"></i> Store Front Image</div>
       <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:16px;text-align:center;font-weight:500">Upload a clear, portrait-oriented photo of your shop's exterior.</p>
-      <div class="upload-box portrait" onclick="triggerUpload('file-front')">
-          <input type="file" id="file-front" hidden accept="image/*" onchange="handleFileSelect(event, 'file-front', 3/4)">
+      
+      <!-- CHANGED: onclick now opens Action Sheet instead of instantly opening file picker -->
+      <div class="upload-box portrait" onclick="openUploadMenu('file-front', false)">
+          <input type="file" id="file-front" hidden onchange="handleFileSelect(event, 'file-front', 3/4)">
           <i class="fa-solid fa-camera upload-icon"></i>
           <span class="upload-title">Cover Photo</span>
           <span class="upload-subtitle">(Required, Max 500KB)</span>
@@ -222,9 +251,9 @@
           </div>
           <div class="form-group">
               <label class="label" id="cac-label" style="margin-bottom:4px">Upload CAC (Image or PDF)</label>
-              <div class="upload-box" onclick="triggerUpload('file-cac')">
-                  <!-- PASSING FALSE AS ASPECT RATIO TO BYPASS CROPPER -->
-                  <input type="file" id="file-cac" hidden accept="image/*,application/pdf" onchange="handleFileSelect(event, 'file-cac', false)">
+              <!-- CHANGED: onclick now opens Action Sheet and permits PDF option -->
+              <div class="upload-box" onclick="openUploadMenu('file-cac', true)">
+                  <input type="file" id="file-cac" hidden onchange="handleFileSelect(event, 'file-cac', false)">
                   <i class="fa-solid fa-file-contract upload-icon"></i>
                   <span class="upload-title">CAC Certificate</span>
                   <span class="upload-subtitle">(Optional) PDF/Image, Max 500KB</span>
@@ -245,9 +274,9 @@
           </div>
           <div class="form-group">
               <label class="label" style="margin-bottom:4px">Upload ID Card (Image or PDF)</label>
-              <div class="upload-box" onclick="triggerUpload('file-id')">
-                  <!-- PASSING FALSE AS ASPECT RATIO TO BYPASS CROPPER -->
-                  <input type="file" id="file-id" hidden accept="image/*,application/pdf" onchange="handleFileSelect(event, 'file-id', false)">
+              <!-- CHANGED: onclick now opens Action Sheet and permits PDF option -->
+              <div class="upload-box" onclick="openUploadMenu('file-id', true)">
+                  <input type="file" id="file-id" hidden onchange="handleFileSelect(event, 'file-id', false)">
                   <i class="fa-regular fa-id-card upload-icon"></i>
                   <span class="upload-title">Official ID Document</span>
                   <span class="upload-subtitle">(Required) PDF/Image, Max 500KB</span>
@@ -258,8 +287,9 @@
           <hr class="divider">
           <div class="form-group">
               <label class="label" style="text-align:center;margin-bottom:4px">Shop Logo (Square)</label>
-              <div class="upload-box square" onclick="triggerUpload('file-logo')">
-                  <input type="file" id="file-logo" hidden accept="image/*" onchange="handleFileSelect(event, 'file-logo', 1)">
+              <!-- CHANGED: onclick now opens Action Sheet -->
+              <div class="upload-box square" onclick="openUploadMenu('file-logo', false)">
+                  <input type="file" id="file-logo" hidden onchange="handleFileSelect(event, 'file-logo', 1)">
                   <i class="fa-solid fa-circle-user upload-icon"></i>
                   <span class="upload-title">Brand Logo</span>
                   <span class="upload-subtitle">(Optional) Max 500KB</span>
@@ -314,6 +344,29 @@
       </div>
       <button type="submit" id="submit-btn" class="btn-submit">Review Application <i class="fa-solid fa-arrow-right"></i></button>
   </form>
+</div>
+
+<!-- ACTION SHEET FOR CAMERA / GALLERY CHOICE -->
+<div id="upload-action-sheet" class="action-sheet-overlay" onclick="closeUploadMenu(event)">
+  <div class="action-sheet" onclick="event.stopPropagation()">
+      <h3 style="margin-bottom: 24px; font-weight: 800; font-size: 1.2rem; color: #1E293B;">Choose Source</h3>
+      
+      <button type="button" class="action-btn camera" onclick="triggerFileSelection('camera')">
+          <i class="fa-solid fa-camera"></i> Take a Photo
+      </button>
+      
+      <button type="button" class="action-btn gallery" onclick="triggerFileSelection('gallery')">
+          <i class="fa-solid fa-image"></i> Choose from Gallery
+      </button>
+      
+      <button type="button" id="action-sheet-pdf-btn" class="action-btn pdf" onclick="triggerFileSelection('pdf')">
+          <i class="fa-solid fa-file-pdf"></i> Upload PDF Document
+      </button>
+      
+      <button type="button" class="action-btn action-btn-cancel" onclick="closeUploadMenu()">
+          Cancel
+      </button>
+  </div>
 </div>
 
 <div id="crop-modal" class="crop-overlay">
@@ -648,9 +701,57 @@
         }
     }
 
-    function triggerUpload(id) {
-        document.getElementById(id).click();
+
+    // ==========================================
+    // ACTION SHEET & UPLOAD LOGIC
+    // ==========================================
+    let currentUploadTargetId = null;
+
+    // 1. Opens the elegant bottom Action Sheet
+    function openUploadMenu(targetId, acceptsPdf) {
+        currentUploadTargetId = targetId;
+        
+        // Only show the PDF button if the target allows it (e.g. CAC / ID Card)
+        document.getElementById('action-sheet-pdf-btn').style.display = acceptsPdf ? 'flex' : 'none';
+        
+        // Show the sheet
+        document.getElementById('upload-action-sheet').classList.add('active');
+        document.body.style.overflow = 'hidden'; // prevent background scrolling
     }
+
+    // 2. Closes the Action Sheet
+    function closeUploadMenu(e) {
+        // If an event was passed, ensure they clicked the overlay background, not the menu itself
+        if (e && e.target !== e.currentTarget) return; 
+        
+        document.getElementById('upload-action-sheet').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // 3. Modifies the hidden HTML Input based on their choice, then artificially clicks it
+    function triggerFileSelection(mode) {
+        if (!currentUploadTargetId) return;
+        const input = document.getElementById(currentUploadTargetId);
+        
+        if (mode === 'camera') {
+            // Forces the device to open the environment (rear) camera directly
+            input.setAttribute('accept', 'image/*');
+            input.setAttribute('capture', 'environment');
+        } else if (mode === 'gallery') {
+            // Opens the standard image gallery
+            input.setAttribute('accept', 'image/*');
+            input.removeAttribute('capture');
+        } else if (mode === 'pdf') {
+            // Opens the file browser filtered to PDFs
+            input.setAttribute('accept', 'application/pdf');
+            input.removeAttribute('capture');
+        }
+        
+        // Programmatically click the hidden input and immediately close our menu
+        input.click();
+        closeUploadMenu();
+    }
+
 
     // ==========================================
     // THE INVISIBLE CANVAS COMPRESSOR
