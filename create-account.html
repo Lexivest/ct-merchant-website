@@ -49,8 +49,8 @@
     .status-error{background-color:#FEE2E2;color:#C40000;border:1px solid #FECACA;border-left:4px solid #C40000}
     .status-success{background-color:#ECFDF5;color:#007185;border:1px solid #A7F3D0;border-left:4px solid #007185}
     .footer-link{text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid #F3F4F6;font-size:.9rem;color:#0F1111}
-    .link-highlight{color:var(--amz-link);font-weight:700;text-decoration:none;cursor:pointer;background:0 0;border:0;font-size:inherit}
-    .link-highlight:hover{color:var(--amz-link-hover);text-decoration:underline}
+    .link-highlight{color:#007185;font-weight:700;text-decoration:none;cursor:pointer;background:0 0;border:0;font-size:inherit}
+    .link-highlight:hover{color:#C40000;text-decoration:underline}
     .modal-overlay{position:fixed;inset:0;background:rgba(19,25,33,.8);backdrop-filter:blur(2px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;visibility:hidden;transition:all .3s ease}
     .modal-overlay.active{opacity:1;visibility:visible}
     .modal-card{background:#fff;border-radius:8px;max-width:400px;width:100%;padding:32px 24px;box-shadow:0 10px 25px rgba(0,0,0,.2);border:1px solid var(--color-border);text-align:left}
@@ -70,14 +70,33 @@
     .terms-scroll-box li{margin-bottom:.4rem}
     .scroll-alert-box{text-align:center;color:#007185;font-size:.85rem;font-weight:700;padding:10px;background:#F7FAFA;border-radius:4px;margin-bottom:16px;border:1px dashed #BFE8F0}
     .hidden{display:none!important}
+
+    /* SUCCESS / ERROR PREMIUM MODAL STYLES */
+    .status-modal-overlay { z-index: 10000 !important; }
+    .success-modal-content {
+        background: #fff; padding: 48px 32px; border-radius: 28px; text-align: center; 
+        max-width: 420px; width: 90%; margin: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; transform: scale(0.8); opacity: 0;
+    }
+    @keyframes scaleUp { to { transform: scale(1); opacity: 1; } }
+    .success-icon-wrap {
+        width: 80px; height: 80px; background: #D1FAE5; border-radius: 50%; 
+        display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+    }
+    .success-icon-wrap.danger { background: #FEE2E2; }
+    .success-icon-wrap i { font-size: 2.5rem; color: #10B981; }
+    .success-icon-wrap.danger i { color: #DC2626; }
+
     @media (max-width:480px){.home-btn{top:1rem;left:1rem;padding:6px 12px;font-size:.75rem}.auth-card{padding:24px 20px;border-radius:0;border:none;box-shadow:none;background:0 0}body.auth-body{background:#fff;padding-top:60px}#terms-modal .modal-card{width:100%;height:100vh;max-height:100vh;border-radius:0}}
   </style>
 </head>
 <body class="auth-body">
   <a href="index.html" class="home-btn"><i class="fa-solid fa-arrow-left"></i><span>Back</span></a>
+  
   <div class="brand-header">
       <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="CTMerchant Logo" class="brand-logo">
   </div>
+  
   <div class="auth-card">
       <h2 class="auth-title">Create Account</h2>
       <p class="auth-subtitle">Join the professional merchant network.</p>
@@ -288,6 +307,24 @@
       </div>
   </div>
 
+  <!-- PREMIUM STATUS MODAL (Replaces default Alerts) -->
+  <div id="status-modal" class="modal-overlay status-modal-overlay hidden">
+      <div class="success-modal-content" id="status-modal-content">
+          <div class="success-icon-wrap" id="status-icon-wrap">
+              <i class="fa-solid fa-check" id="status-modal-icon"></i>
+          </div>
+          <h2 style="font-size: 1.6rem; font-weight: 800; color: #1F2937; margin-bottom: 8px;" id="status-modal-title">Success!</h2>
+          <p style="color: #6B7280; font-size: 0.95rem; font-weight: 500; margin-bottom: 24px;" id="status-modal-msg">Action completed successfully.</p>
+          
+          <!-- Used for success loading states -->
+          <div class="spinner" id="status-modal-spinner" style="border-top-color: var(--color-pink); width: 28px; height: 28px; margin: 0 auto; border-width: 4px;"></div>
+          <p id="status-modal-footer" style="color: var(--color-text-muted); font-size: 0.8rem; font-weight: 700; margin-top: 16px;">Redirecting...</p>
+          
+          <!-- Used for error dismissals -->
+          <button id="status-modal-close-btn" class="btn-cancel hidden" onclick="closeStatusModal()" style="margin-top: 12px;">Close</button>
+      </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
       const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
@@ -298,12 +335,74 @@
       const areaSelect = document.getElementById('signup-area');
       const googleCitySelect = document.getElementById('google-city');
       const googleAreaSelect = document.getElementById('google-area');
+      
+      // Inline status box for non-intrusive warnings
       const statusBox = document.getElementById('message-container');
       const statusMsg = document.getElementById('message');
       const statusIcon = document.getElementById('status-icon');
       
       let pendingGoogleUserId = null;
       let pendingGoogleUserName = null;
+
+      // ==========================================
+      // PREMIUM MODAL CONTROLLER
+      // ==========================================
+      function showBeautifulModal(type, title, message, footerText, autoCloseMs = null, redirectUrl = null) {
+          const modal = document.getElementById('status-modal');
+          const iconWrap = document.getElementById('status-icon-wrap');
+          const icon = document.getElementById('status-modal-icon');
+          const titleEl = document.getElementById('status-modal-title');
+          const msgEl = document.getElementById('status-modal-msg');
+          const spinner = document.getElementById('status-modal-spinner');
+          const footer = document.getElementById('status-modal-footer');
+          const closeBtn = document.getElementById('status-modal-close-btn');
+
+          titleEl.textContent = title;
+          msgEl.textContent = message;
+
+          if (type === 'success') {
+              iconWrap.className = 'success-icon-wrap';
+              icon.className = 'fa-solid fa-check';
+              spinner.style.display = 'block';
+              spinner.style.borderTopColor = 'var(--color-pink)';
+              titleEl.style.color = '#1F2937';
+              
+              if (footerText) {
+                  footer.style.display = 'block';
+                  footer.textContent = footerText;
+              } else {
+                  footer.style.display = 'none';
+              }
+              closeBtn.classList.add('hidden');
+          } else if (type === 'error') {
+              iconWrap.className = 'success-icon-wrap danger';
+              icon.className = 'fa-solid fa-xmark';
+              spinner.style.display = 'none';
+              titleEl.style.color = '#991B1B';
+              footer.style.display = 'none';
+              closeBtn.classList.remove('hidden');
+          }
+
+          modal.classList.remove('hidden');
+          void modal.offsetWidth; 
+          modal.classList.add('active');
+
+          if (autoCloseMs) {
+              setTimeout(() => {
+                  if (redirectUrl) {
+                      window.location.href = redirectUrl;
+                  } else {
+                      closeStatusModal();
+                  }
+              }, autoCloseMs);
+          }
+      }
+
+      function closeStatusModal() {
+          const modal = document.getElementById('status-modal');
+          modal.classList.remove('active');
+          setTimeout(() => modal.classList.add('hidden'), 300);
+      }
 
       // --- IP SECURITY ---
       async function getClientIpData() {
@@ -402,7 +501,7 @@
               // 3. Success Routing
               if (profile && profile.city_id && profile.area_id) {
                   await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', user.id);
-                  window.location.href = "user-dashboard.html";
+                  showBeautifulModal('success', 'Login Successful', 'Welcome back to CTMerchant.', 'Opening dashboard...', 1500, 'user-dashboard.html');
               } else {
                   // Profile is missing or incomplete (Ghost Bug Recovery for Google)
                   pendingGoogleUserId = user.id;
@@ -418,7 +517,7 @@
               }
               
           } catch (err) {
-              showStatus(err.message, "error");
+              showBeautifulModal('error', 'Google Sign-In Failed', err.message);
           }
       }
 
@@ -448,9 +547,14 @@
               });
               
               if (error) throw error;
-              window.location.href = "user-dashboard.html";
+              
+              // Use Premium Modal
+              document.getElementById('complete-profile-modal').classList.remove('active');
+              document.getElementById('complete-profile-modal').classList.add('hidden');
+              showBeautifulModal('success', 'Profile Completed!', 'Your account is ready.', 'Entering dashboard...', 2000, 'user-dashboard.html');
+
           } catch (e) {
-              alert("Error saving profile: " + e.message);
+              showBeautifulModal('error', 'Setup Failed', e.message);
               btn.disabled = false;
               btn.innerHTML = 'Finish Setup';
           }
@@ -564,13 +668,19 @@
                   
                   toggleModal('terms-modal');
                   document.getElementById('signup-form').reset();
-                  showStatus("Account created! Please check your email for confirmation, or Sign In below.", "success");
+                  
+                  // Smooth Success Presentation
+                  showBeautifulModal('success', 'Account Created!', 'Please check your email inbox to verify your account.', 'Opening Sign-In...', 2800);
+                  
                   document.getElementById('login-email').value = email;
-                  setTimeout(() => { toggleModal('login-modal'); }, 1000);
+                  
+                  setTimeout(() => {
+                      toggleModal('login-modal');
+                  }, 3100);
               }
           } catch (err) {
-              showStatus(err.message, "error");
               toggleModal('terms-modal');
+              showBeautifulModal('error', 'Registration Failed', err.message);
           } finally {
               btn.disabled = false;
               btn.innerHTML = '<i class="fa-solid fa-check" id="btn-lock-icon"></i> I Agree & Create Account';
@@ -608,7 +718,11 @@
               
               if (profile && profile.city_id && profile.area_id) {
                   await client.from('profiles').update({ last_active_ip: ipData.ip }).eq('id', authData.user.id);
-                  window.location.href = "user-dashboard.html";
+                  
+                  document.getElementById('login-modal').classList.remove('active');
+                  document.getElementById('login-modal').classList.add('hidden');
+                  
+                  showBeautifulModal('success', 'Welcome Back!', 'Login successful.', 'Entering dashboard...', 1500, 'user-dashboard.html');
               } else {
                   // GHOST RECOVERY: They have an auth account but deleted their profile row
                   pendingGoogleUserId = authData.user.id;
@@ -626,7 +740,7 @@
               }
               
           } catch (err) {
-              alert(err.message);
+              showBeautifulModal('error', 'Login Failed', err.message);
               btn.disabled = false;
               btn.innerHTML = 'Continue';
           }
