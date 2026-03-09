@@ -37,7 +37,13 @@
     .input:focus{outline:0;border-color:var(--primary);background:#FFF;box-shadow:0 0 0 4px var(--primary-light)}
     .input:focus+i,.input-wrapper:focus-within i{color:var(--primary)}
     .input:disabled{background:#E5E7EB;color:#9CA3AF;cursor:not-allowed;border-color:#D1D5DB}
-    textarea.input{resize:vertical;min-height:110px;padding-top:16px}
+    textarea.input{resize:vertical;min-height:140px;padding-top:16px}
+    
+    /* Word Counter Styles */
+    .word-counter { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-align: right; margin-top: -2px; transition: 0.3s; }
+    .word-counter.error { color: var(--danger); }
+    .word-counter.success { color: var(--secondary); }
+
     .upload-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
     .upload-box{border:2px dashed #CBD5E1;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:#F8FAFC;position:relative;overflow:hidden;transition:all .3s ease;padding:24px 20px;text-align:center;min-height:180px}
     .upload-box:hover{border-color:var(--primary);background:var(--primary-light);transform:translateY(-2px);box-shadow:0 6px 12px rgba(109,40,217,.08)}
@@ -158,8 +164,10 @@
               </div>
           </div>
           <div class="form-group">
-              <label class="label">Description</label>
-              <textarea id="desc" class="input" placeholder="What do you sell or offer?" required maxlength="1000" minlength="10"></textarea>
+              <label class="label">Description <span style="color:var(--danger)">*</span></label>
+              <!-- Removed max/min length to rely purely on word count -->
+              <textarea id="desc" class="input" placeholder="Give detailed information about what you sell, the services you provide, and what makes your business unique..." required></textarea>
+              <div id="desc-counter" class="word-counter error">0 words (Min: 100, Max: 250)</div>
           </div>
       </div>
 
@@ -180,11 +188,13 @@
               </div>
           </div>
           <div class="form-group">
-              <label class="label">Street Address</label>
+              <label class="label">Detailed Street Address <span style="color:var(--danger)">*</span></label>
               <div class="input-wrapper">
                   <i class="fa-solid fa-map-pin"></i>
-                  <input type="text" id="address" class="input with-icon" placeholder="Shop 4, Main Market..." required maxlength="255">
+                  <!-- Address allows up to 500 chars to cover the 50 words comfortably -->
+                  <input type="text" id="address" class="input with-icon" placeholder="e.g. Shop 4, Ground Floor, Main Market Plaza..." required maxlength="500">
               </div>
+              <div id="address-counter" class="word-counter error">0 words (Min: 5, Max: 50)</div>
           </div>
           <div class="upload-row">
               <div class="form-group"><label class="label">Latitude (Optional)</label><input type="number" step="any" id="lat" class="input" placeholder="e.g. 9.08" max="90" min="-90"></div>
@@ -342,7 +352,13 @@
     const params = new URLSearchParams(window.location.search);
     const shopId = params.get('id') || params.get('shop_id');
     const isEdit = !!shopId;
-    const MAX_FILE_SIZE = 512000; // 500KB
+    const MAX_FILE_SIZE = 512000; 
+    
+    // Word Count Limits Configuration
+    const DESC_MIN_WORDS = 100;
+    const DESC_MAX_WORDS = 250;
+    const ADDR_MIN_WORDS = 5;
+    const ADDR_MAX_WORDS = 50;
     
     let cropper = null;
     let currentCropTarget = '';
@@ -353,6 +369,10 @@
         try {
             document.getElementById('shop-form').style.display = 'none';
             document.getElementById('main-loader').style.display = 'block';
+
+            // Initialize the real-time word counters
+            setupWordCounter('desc', 'desc-counter', DESC_MIN_WORDS, DESC_MAX_WORDS);
+            setupWordCounter('address', 'address-counter', ADDR_MIN_WORDS, ADDR_MAX_WORDS);
 
             const { data: { session }, error: authError } = await client.auth.getSession();
             if (authError || !session) {
@@ -383,6 +403,31 @@
         }
     };
 
+    // --- WORD COUNTER LOGIC ---
+    function countWords(str) {
+        // Removes extra spaces and filters out empty strings to get a true word count
+        return str.trim().split(/\s+/).filter(word => word.length > 0).length;
+    }
+
+    function setupWordCounter(inputId, counterId, min, max) {
+        const input = document.getElementById(inputId);
+        const counter = document.getElementById(counterId);
+
+        // Update counter immediately on typing
+        input.addEventListener('input', () => {
+            const words = countWords(input.value);
+            counter.textContent = `${words} words (Min: ${min}, Max: ${max})`;
+
+            if (words < min || words > max) {
+                counter.classList.add('error');
+                counter.classList.remove('success');
+            } else {
+                counter.classList.remove('error');
+                counter.classList.add('success');
+            }
+        });
+    }
+
     async function fetchCategories() {
         try {
             const { data } = await client.from('categories').select('name').order('name');
@@ -400,7 +445,6 @@
 
     async function fetchUserLocation() {
         try {
-            // FIX: Removed 'status' from the select query since it does not exist in the database schema
             const { data: profile, error } = await client
                 .from('profiles')
                 .select('city_id, is_suspended, cities(name, is_open)')
@@ -420,7 +464,6 @@
                 return false;
             }
 
-            // FIX: Removed the profile.status check to match the database
             if (profile.is_suspended === true) {
                 alert("🔒 Your account is restricted. You cannot register or edit a shop.");
                 window.location.href = "user-dashboard.html";
@@ -522,6 +565,10 @@
             document.getElementById('twitter').value = shop.twitter_url || '';
             document.getElementById('tiktok').value = shop.tiktok_url || '';
             document.getElementById('website').value = shop.website_url || '';
+
+            // Manually trigger the input events so the loaded text updates the word counters
+            document.getElementById('desc').dispatchEvent(new Event('input'));
+            document.getElementById('address').dispatchEvent(new Event('input'));
 
             const idUrl = await getRenderableUrl(shop.id_card_url, 'id-documents');
             const cacUrl = await getRenderableUrl(shop.cac_certificate_url, 'cac-documents');
@@ -733,6 +780,22 @@
     }
 
     function validateFormInputs() {
+        // Enforce word count before validating other inputs
+        const descWords = countWords(document.getElementById('desc').value);
+        if (descWords < DESC_MIN_WORDS || descWords > DESC_MAX_WORDS) {
+            alert(`Your Business Description must be between ${DESC_MIN_WORDS} and ${DESC_MAX_WORDS} words. You currently have ${descWords} words.`);
+            // Auto-scroll up to the description field
+            document.getElementById('desc').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
+
+        const addressWords = countWords(document.getElementById('address').value);
+        if (addressWords < ADDR_MIN_WORDS || addressWords > ADDR_MAX_WORDS) {
+            alert(`Your Street Address must be between ${ADDR_MIN_WORDS} and ${ADDR_MAX_WORDS} words to ensure it is detailed but not too long.`);
+            document.getElementById('address').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
+
         const phone = document.getElementById('phone').value.trim();
         const whatsapp = document.getElementById('whatsapp').value.trim();
         const phoneRegex = /(^0\d{10}$)|(^\+\d{11,15}$)/;
