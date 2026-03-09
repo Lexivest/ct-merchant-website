@@ -349,7 +349,6 @@
     const croppedBlobs = {};
     const rawFiles = {};
 
-    // BUG FIX 1: Wrap window.onload in a try/catch so if anything crashes, the user isn't stranded
     window.onload = async () => {
         try {
             document.getElementById('shop-form').style.display = 'none';
@@ -365,25 +364,22 @@
             
             await fetchCategories();
             
-            // BUG FIX 2: Check if canProceed evaluated successfully
             const canProceed = await fetchUserLocation();
             
             if (canProceed) {
                 if (isEdit) {
                     const loaded = await loadShopData();
-                    if (!loaded) return; // If load failed and redirected, stop execution
+                    if (!loaded) return; 
                 }
                 document.getElementById('main-loader').style.display = 'none';
                 document.getElementById('shop-form').style.display = 'block';
             } else {
-                // If canProceed was false, the user was either redirected or shown a hard-stop message.
-                // Just hide the loader so it's not spinning over the alert boxes.
                 document.getElementById('main-loader').style.display = 'none';
             }
         } catch (err) {
             console.error("Critical Load Error:", err);
             alert("A critical error occurred while loading the page.");
-            window.location.href = "user-dashboard.html"; // Never leave them stranded
+            window.location.href = "user-dashboard.html"; 
         }
     };
 
@@ -404,20 +400,17 @@
 
     async function fetchUserLocation() {
         try {
+            // FIX: Removed 'status' from the select query since it does not exist in the database schema
             const { data: profile, error } = await client
                 .from('profiles')
-                .select('city_id, is_suspended, status, cities(name, is_open)')
+                .select('city_id, is_suspended, cities(name, is_open)')
                 .eq('id', currentUser.id)
                 .maybeSingle();
 
-            // BUG FIX 3: Stop swallowing Supabase errors and redirect!
             if (error) {
                 console.error("Database Error fetching profile:", error);
-                
-                // Show the ACTUAL error message to help you debug. It might be an RLS policy issue, 
-                // or the "cities" relationship might not exist in your database!
                 alert("Error loading profile: " + error.message); 
-                window.location.href = "user-dashboard.html"; // The crucial redirect
+                window.location.href = "user-dashboard.html"; 
                 return false;
             }
 
@@ -427,7 +420,8 @@
                 return false;
             }
 
-            if (profile.is_suspended === true || profile.status === 'suspended') {
+            // FIX: Removed the profile.status check to match the database
+            if (profile.is_suspended === true) {
                 alert("🔒 Your account is restricted. You cannot register or edit a shop.");
                 window.location.href = "user-dashboard.html";
                 return false;
@@ -497,7 +491,6 @@
         try {
             const { data: shop, error } = await client.from('shops').select('*').eq('id', shopId).maybeSingle();
             
-            // BUG FIX 4: Properly handle load errors and redirect
             if (error) {
                 console.error("Database error loading shop data:", error);
                 alert("Could not load your shop details: " + error.message);
