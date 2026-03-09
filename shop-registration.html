@@ -107,7 +107,7 @@
 
 <div class="container">
   <div class="header">
-      <button type="button" onclick="window.location.href='user-dashboard.html'" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+      <button type="button" onclick="navigateSafely('user-dashboard.html')" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
       <div class="page-title" id="header-title">Register Shop</div>
   </div>
 
@@ -167,7 +167,7 @@
               <label class="label">Description <span style="color:var(--danger)">*</span></label>
               <!-- Removed max/min length to rely purely on word count -->
               <textarea id="desc" class="input" placeholder="Give detailed information about what you sell, the services you provide, and what makes your business unique..." required></textarea>
-              <div id="desc-counter" class="word-counter error">0 words (Min: 100, Max: 250)</div>
+              <div id="desc-counter" class="word-counter error">0 words (Min: 30, Max: 150)</div>
           </div>
       </div>
 
@@ -355,8 +355,8 @@
     const MAX_FILE_SIZE = 512000; 
     
     // Word Count Limits Configuration
-    const DESC_MIN_WORDS = 100;
-    const DESC_MAX_WORDS = 250;
+    const DESC_MIN_WORDS = 30;
+    const DESC_MAX_WORDS = 150;
     const ADDR_MIN_WORDS = 5;
     const ADDR_MAX_WORDS = 50;
     
@@ -364,6 +364,14 @@
     let currentCropTarget = '';
     const croppedBlobs = {};
     const rawFiles = {};
+
+    function navigateSafely(url) {
+        if (window.location.protocol === 'blob:' || window.location.origin === 'null') {
+            alert(`Navigation to ${url} blocked in this preview environment.`);
+        } else {
+            window.location.href = url;
+        }
+    }
 
     window.onload = async () => {
         try {
@@ -376,7 +384,7 @@
 
             const { data: { session }, error: authError } = await client.auth.getSession();
             if (authError || !session) {
-                window.location.href = "login.html";
+                navigateSafely('login.html');
                 return;
             }
             
@@ -399,7 +407,7 @@
         } catch (err) {
             console.error("Critical Load Error:", err);
             alert("A critical error occurred while loading the page.");
-            window.location.href = "user-dashboard.html"; 
+            navigateSafely('user-dashboard.html'); 
         }
     };
 
@@ -454,19 +462,19 @@
             if (error) {
                 console.error("Database Error fetching profile:", error);
                 alert("Error loading profile: " + error.message); 
-                window.location.href = "user-dashboard.html"; 
+                navigateSafely('user-dashboard.html'); 
                 return false;
             }
 
             if (!profile) {
                 alert("Profile not found. Please complete your profile setup first.");
-                window.location.href = "user-dashboard.html";
+                navigateSafely('user-dashboard.html');
                 return false;
             }
 
             if (profile.is_suspended === true) {
                 alert("🔒 Your account is restricted. You cannot register or edit a shop.");
-                window.location.href = "user-dashboard.html";
+                navigateSafely('user-dashboard.html');
                 return false;
             }
 
@@ -484,7 +492,7 @@
         } catch (err) {
             console.error("Error in fetchUserLocation:", err);
             alert("An unexpected error occurred verifying your profile.");
-            window.location.href = "user-dashboard.html";
+            navigateSafely('user-dashboard.html');
             return false;
         }
     }
@@ -537,12 +545,12 @@
             if (error) {
                 console.error("Database error loading shop data:", error);
                 alert("Could not load your shop details: " + error.message);
-                window.location.href = "user-dashboard.html";
+                navigateSafely('user-dashboard.html');
                 return false;
             }
             if (!shop) {
                 alert("Shop not found or you don't have permission to edit it.");
-                window.location.href = "user-dashboard.html";
+                navigateSafely('user-dashboard.html');
                 return false;
             }
 
@@ -591,7 +599,7 @@
         } catch (err) {
             console.error("Error loading shop data:", err);
             alert("An unexpected error occurred loading your shop.");
-            window.location.href = "user-dashboard.html";
+            navigateSafely('user-dashboard.html');
             return false;
         }
     }
@@ -952,7 +960,7 @@
                 alert("Application Submitted! You will be notified once approved.");
             }
             
-            window.location.href = "user-dashboard.html";
+            navigateSafely('user-dashboard.html');
         } catch (err) {
             console.error(err);
             alert("Error: " + err.message);
