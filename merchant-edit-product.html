@@ -115,6 +115,30 @@
         .spinner.lg { width: 44px; height: 44px; border: 4px solid var(--color-pink-light); border-top-color: var(--color-pink); margin: 40px auto 16px auto; display: block;}
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* --- ACTION SHEET --- */
+        .action-sheet-overlay {
+            position: fixed; inset: 0; background: rgba(17,24,39,0.6); z-index: 2500;
+            display: flex; align-items: flex-end; justify-content: center;
+            opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(4px);
+        }
+        .action-sheet-overlay.active { opacity: 1; visibility: visible; }
+        .action-sheet {
+            background: #fff; width: 100%; max-width: 680px; border-radius: 24px 24px 0 0;
+            padding: 24px 20px 32px; transform: translateY(100%); transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .action-sheet-overlay.active .action-sheet { transform: translateY(0); }
+        .action-btn {
+            display: flex; align-items: center; gap: 16px; width: 100%; padding: 16px;
+            border: none; background: #F8FAFC; border-radius: 16px; margin-bottom: 12px;
+            font-size: 1.05rem; font-weight: 700; color: #1E293B; cursor: pointer; transition: 0.2s;
+        }
+        .action-btn:hover { background: #F1F5F9; transform: translateY(-2px); }
+        .action-btn i { font-size: 1.4rem; width: 24px; text-align: center; }
+        .action-btn.camera i { color: var(--color-pink); }
+        .action-btn.gallery i { color: #10B981; }
+        .action-btn-cancel { background: #E2E8F0; color: #64748B; justify-content: center; margin-top: 12px; margin-bottom: 0; }
+        .action-btn-cancel:hover { background: #CBD5E1; transform: none; }
+
         /* --- CT STUDIO EMBEDDED MODAL --- */
         .crop-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 2000; display: flex; flex-direction: column; opacity: 0; visibility: hidden; transition: .3s ease; backdrop-filter: blur(5px); }
         .crop-overlay.active { opacity: 1; visibility: visible; }
@@ -144,6 +168,21 @@
         .btn-crop-cancel:hover { background: #334155; color: white;}
         .btn-crop-apply { background: #10b981; color: #fff; padding: 12px 24px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; box-shadow: 0 4px 10px rgba(16,185,129,0.3);}
         .btn-crop-apply:hover { background: #059669; }
+
+        /* SUCCESS MODAL */
+        .success-modal-content {
+            background: #fff; padding: 48px 32px; border-radius: 28px; text-align: center; 
+            max-width: 420px; width: 90%; margin: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; transform: scale(0.8); opacity: 0;
+        }
+        @keyframes scaleUp { to { transform: scale(1); opacity: 1; } }
+        .success-icon-wrap {
+            width: 80px; height: 80px; background: #D1FAE5; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+        }
+        .success-icon-wrap.danger { background: #FEE2E2; }
+        .success-icon-wrap i { font-size: 2.5rem; color: #10B981; }
+        .success-icon-wrap.danger i { color: #DC2626; }
 
         .hidden { display: none !important; }
         @media (min-width: 768px) { 
@@ -202,7 +241,7 @@
 
             <!-- 3 IMAGE GRID -->
             <div class="img-grid">
-                <div class="img-picker main" onclick="document.getElementById('file-input-1').click()">
+                <div class="img-picker main" onclick="openUploadMenu('file-input-1')">
                     <input type="file" id="file-input-1" hidden accept="image/*" onchange="handleImageSelect(this, 1)">
                     <i class="fa-solid fa-image cam"></i>
                     <span class="lbl">Main Image<br>(Required)</span>
@@ -210,7 +249,7 @@
                     <div id="savings-1" class="savings-badge" style="display:none;"></div>
                     <button type="button" id="del-btn-1" class="delete-img-btn hidden" onclick="removeImage(event, 1)"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
-                <div class="img-picker" onclick="document.getElementById('file-input-2').click()">
+                <div class="img-picker" onclick="openUploadMenu('file-input-2')">
                     <input type="file" id="file-input-2" hidden accept="image/*" onchange="handleImageSelect(this, 2)">
                     <i class="fa-solid fa-camera cam"></i>
                     <span class="lbl">Extra Angle<br>(Optional)</span>
@@ -218,7 +257,7 @@
                     <div id="savings-2" class="savings-badge" style="display:none;"></div>
                     <button type="button" id="del-btn-2" class="delete-img-btn hidden" onclick="removeImage(event, 2)"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
-                <div class="img-picker" onclick="document.getElementById('file-input-3').click()">
+                <div class="img-picker" onclick="openUploadMenu('file-input-3')">
                     <input type="file" id="file-input-3" hidden accept="image/*" onchange="handleImageSelect(this, 3)">
                     <i class="fa-solid fa-camera cam"></i>
                     <span class="lbl">Label/Box<br>(Optional)</span>
@@ -321,6 +360,25 @@
         </form>
     </div>
 
+    <!-- ACTION SHEET FOR CAMERA / GALLERY CHOICE -->
+    <div id="upload-action-sheet" class="action-sheet-overlay" onclick="closeUploadMenu(event)">
+        <div class="action-sheet" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 24px; font-weight: 800; font-size: 1.2rem; color: #1E293B;">Choose Image Source</h3>
+            
+            <button type="button" class="action-btn camera" onclick="triggerFileSelection('camera')">
+                <i class="fa-solid fa-camera"></i> Take a Photo
+            </button>
+            
+            <button type="button" class="action-btn gallery" onclick="triggerFileSelection('gallery')">
+                <i class="fa-solid fa-image"></i> Choose from Gallery
+            </button>
+            
+            <button type="button" class="action-btn action-btn-cancel" onclick="closeUploadMenu()">
+                Cancel
+            </button>
+        </div>
+    </div>
+
     <!-- CT STUDIO EMBEDDED MODAL -->
     <div id="crop-modal" class="crop-overlay">
         <div class="crop-header-bar">
@@ -371,6 +429,19 @@
             <button type="button" class="btn-crop-apply" id="btn-crop-apply" onclick="applyCrop()">
                 <i class="fa-solid fa-microchip"></i> Process & Save
             </button>
+        </div>
+    </div>
+
+    <!-- BEAUTIFUL SUCCESS MODAL -->
+    <div id="success-modal" class="crop-overlay" style="align-items: center; justify-content: center; z-index: 3000;">
+        <div class="success-modal-content">
+            <div class="success-icon-wrap" id="success-icon-wrap">
+                <i class="fa-solid fa-check" id="success-icon"></i>
+            </div>
+            <h2 style="font-size: 1.6rem; font-weight: 800; color: #1F2937; margin-bottom: 8px;" id="success-title">Success!</h2>
+            <p style="color: #6B7280; font-size: 0.95rem; font-weight: 500; margin-bottom: 24px;" id="success-message">Your product has been updated successfully.</p>
+            <div class="spinner" id="success-spinner" style="border-top-color: var(--color-pink); width: 28px; height: 28px; margin: 0 auto; border-width: 4px;"></div>
+            <p style="color: var(--color-text-muted); font-size: 0.8rem; font-weight: 700; margin-top: 16px;">Redirecting to dashboard...</p>
         </div>
     </div>
 
@@ -551,6 +622,39 @@
         document.getElementById(`savings-${slot}`).style.display = 'none';
     }
 
+    // ==========================================
+    // ACTION SHEET LOGIC (CAMERA VS GALLERY)
+    // ==========================================
+    let currentUploadTargetId = null;
+
+    function openUploadMenu(targetId) {
+        currentUploadTargetId = targetId;
+        document.getElementById('upload-action-sheet').classList.add('active');
+        document.body.style.overflow = 'hidden'; 
+    }
+
+    function closeUploadMenu(e) {
+        if (e && e.target !== e.currentTarget) return; 
+        document.getElementById('upload-action-sheet').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function triggerFileSelection(mode) {
+        if (!currentUploadTargetId) return;
+        const input = document.getElementById(currentUploadTargetId);
+        
+        if (mode === 'camera') {
+            input.setAttribute('accept', 'image/*');
+            input.setAttribute('capture', 'environment');
+        } else if (mode === 'gallery') {
+            input.setAttribute('accept', 'image/*');
+            input.removeAttribute('capture');
+        }
+        
+        input.click();
+        closeUploadMenu();
+    }
+
     // --- CT STUDIO EMBEDDED LOGIC ---
     function handleImageSelect(input, index) {
         if (input.files && input.files[0]) {
@@ -706,9 +810,9 @@
             ctx.fillText('Verified CTMerchant', 780, 780);
         }
 
-        // AUTO-TUNING COMPRESSION LOOP (Target: max 100KB)
+        // AUTO-TUNING COMPRESSION LOOP
         let quality = 0.92;
-        const maxBytes = 100 * 1024; // 100KB limit
+        const maxBytes = 100 * 1024;
 
         function attemptCompress() {
             finalCanvas.toBlob(blob => {
@@ -812,14 +916,13 @@
     }
 
     // =========================================================
-    // THE NEW FAIL-SAFE MASTER UPDATE ENGINE
+    // THE MASTER UPDATE ENGINE
     // =========================================================
     async function handleUpdate(e) {
         e.preventDefault();
         const btn = document.getElementById('btn-submit');
         const originalText = btn.innerHTML;
         
-        // Validation
         const hasMainImage = (existingUrls[1] && !deletedSlots[1]) || finalBlobs[1];
         if (!hasMainImage) return alert("The Main Image (Box 1) is strictly required!");
 
@@ -838,9 +941,8 @@
         });
 
         try {
-            // STEP 1: UPLOAD NEW IMAGES FIRST
             btn.disabled = true;
-            btn.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> Uploading New Images...';
+            btn.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> Uploading...';
             
             const uploadPromises = [];
             for(let idx = 1; idx <= 3; idx++) {
@@ -865,8 +967,7 @@
             const finalUrl2 = url2 || (deletedSlots[2] ? null : existingUrls[2]);
             const finalUrl3 = url3 || (deletedSlots[3] ? null : existingUrls[3]);
 
-            // STEP 2: UPDATE DATABASE & CLEAR REJECTION REASON
-            btn.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> Saving Database...';
+            btn.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> Saving...';
             const { error: updateError } = await client.from('products').update({
                 name: document.getElementById('name').value.trim(),
                 description: document.getElementById('desc').value.trim(),
@@ -881,15 +982,13 @@
                 attributes: attributes,
                 is_available: parseInt(document.getElementById('stock').value) > 0,
                 
-                // Puts the product back into the Admin queue!
                 is_approved: false, 
                 rejection_reason: null
             }).eq('id', productId);
 
             if (updateError) throw updateError;
 
-            // STEP 3: GARBAGE COLLECTION
-            btn.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> Cleaning Storage...';
+            // Garbage collection
             const pathsToDelete = [];
             for (let i = 1; i <= 3; i++) {
                 if (existingUrls[i] && (deletedSlots[i] || finalBlobs[i])) {
@@ -906,8 +1005,22 @@
             
             localStorage.removeItem(`ctm_prod_v39_${productId}`);
 
-            alert("Product updated and resubmitted for admin approval!");
-            window.location.href = "merchant-dashboard.html";
+            // SHOW BEAUTIFUL SUCCESS MODAL FOR UPDATE
+            const successModal = document.getElementById('success-modal');
+            document.getElementById('success-title').textContent = "Update Successful!";
+            document.getElementById('success-message').textContent = "Your product has been updated and resubmitted for approval.";
+            
+            // Standard success theme
+            document.getElementById('success-icon-wrap').className = 'success-icon-wrap';
+            document.getElementById('success-icon').className = 'fa-solid fa-check';
+            document.getElementById('success-spinner').style.borderTopColor = 'var(--color-pink)';
+            
+            successModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(() => {
+                window.location.href = "merchant-dashboard.html";
+            }, 3000);
 
         } catch (err) {
             console.error(err);
@@ -945,8 +1058,23 @@
             const { error } = await client.from('products').delete().eq('id', productId);
             if(error) throw error;
             
-            alert("Product and images completely deleted.");
-            window.location.href = "merchant-dashboard.html";
+            // SHOW BEAUTIFUL DANGER SUCCESS MODAL FOR DELETE
+            const successModal = document.getElementById('success-modal');
+            document.getElementById('success-title').textContent = "Product Deleted";
+            document.getElementById('success-title').style.color = '#991B1B';
+            document.getElementById('success-message').textContent = "This product has been permanently removed from your shop.";
+            
+            // Apply red danger theme to the modal
+            document.getElementById('success-icon-wrap').className = 'success-icon-wrap danger';
+            document.getElementById('success-icon').className = 'fa-solid fa-trash-can';
+            document.getElementById('success-spinner').style.borderTopColor = '#DC2626';
+            
+            successModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(() => {
+                window.location.href = "merchant-dashboard.html";
+            }, 3000);
             
         } catch(err) {
             console.error(err);
