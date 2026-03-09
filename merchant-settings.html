@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shop Settings | CT‑Merchant</title>
     
+    <!-- Favicons for browser tab -->
     <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
     <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
 
@@ -110,6 +111,23 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
         }
 
+        /* --- SECURITY BANNER --- */
+        .security-banner {
+            background: #EFF6FF;
+            border: 1px solid #93C5FD;
+            color: #1E3A8A;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+        }
+        .security-banner i.fa-shield-halved { font-size: 1.5rem; margin-top: 2px; color: #3B82F6; }
+        .security-banner h4 { font-size: 0.95rem; font-weight: 800; margin-bottom: 4px; }
+        .security-banner p { font-size: 0.85rem; line-height: 1.5; color: #1E40AF; }
+
         .section-title { 
             font-size: 1.15rem; font-weight: 800; color: var(--color-text-main); 
             margin-bottom: 20px; margin-top: 8px; 
@@ -126,7 +144,22 @@
             font-size: 0.9rem; font-weight: 700; color: #0F1111; 
             margin-bottom: 8px; 
         }
-        .label i { color: var(--color-pink); font-size: 1rem; width: 16px; text-align: center;}
+        .label i.fa-solid, .label i.fa-brands { color: var(--color-pink); font-size: 1rem; width: 16px; text-align: center;}
+        
+        /* Lock Icon for labels */
+        .lock-badge {
+            background: #F3F4F6;
+            color: #6B7280;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 12px;
+            margin-left: auto;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border: 1px solid #E5E7EB;
+        }
         
         .input { 
             width: 100%; padding: 12px 14px; border-radius: 4px; 
@@ -135,6 +168,7 @@
             font-family: inherit; transition: 0.2s;
         }
         .input:focus { outline: none; border-color: var(--color-pink); box-shadow: 0 0 0 3px var(--color-pink-light); }
+        .input:disabled { background: #F3F4F6; color: #9CA3AF; border-color: #E5E7EB; box-shadow: none; cursor: not-allowed; }
         
         textarea.input { resize: vertical; min-height: 120px; }
 
@@ -169,13 +203,26 @@
 
         <!-- 2. CONTENT -->
         <div id="content" class="hidden">
+            
+            <!-- SECURITY BANNER (Hidden by default) -->
+            <div id="security-banner" class="security-banner hidden">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div>
+                    <h4>Security Lockdown Active</h4>
+                    <p>Because your shop is fully Approved, critical details (Name & Phone) are locked to protect your account from hijacking. Contact Support if you need to update these.</p>
+                </div>
+            </div>
+
             <form id="settings-form" class="card" onsubmit="event.preventDefault(); updateShop();">
                 
                 <!-- BASIC INFO -->
                 <div class="section-title"><i class="fa-solid fa-building"></i> Basic Information</div>
 
                 <div class="form-group">
-                    <label class="label"><i class="fa-solid fa-store"></i> Business Name</label>
+                    <label class="label">
+                        <i class="fa-solid fa-store"></i> Business Name 
+                        <span class="lock-badge hidden"><i class="fa-solid fa-lock"></i> Locked</span>
+                    </label>
                     <input type="text" id="name" class="input" required>
                 </div>
 
@@ -195,14 +242,20 @@
                 <div class="section-title"><i class="fa-solid fa-address-book"></i> Contact Details</div>
 
                 <div class="form-group">
-                    <label class="label"><i class="fa-solid fa-phone"></i> Phone Number</label>
+                    <label class="label">
+                        <i class="fa-solid fa-phone"></i> Phone Number
+                        <span class="lock-badge hidden"><i class="fa-solid fa-lock"></i> Locked</span>
+                    </label>
                     <input type="tel" id="phone" class="input" placeholder="e.g. 08012345678" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="label"><i class="fa-brands fa-whatsapp"></i> WhatsApp Number</label>
+                    <label class="label">
+                        <i class="fa-brands fa-whatsapp"></i> WhatsApp Number
+                        <span class="lock-badge hidden"><i class="fa-solid fa-lock"></i> Locked</span>
+                    </label>
                     <input type="tel" id="whatsapp" class="input" placeholder="e.g. 08012345678">
-                    <div class="helper-text"><i class="fa-solid fa-circle-info" style="color:var(--color-pink);"></i> Used for direct customer messaging.</div>
+                    <div class="helper-text" id="wa-helper"><i class="fa-solid fa-circle-info" style="color:var(--color-pink);"></i> Used for direct customer messaging.</div>
                 </div>
 
                 <hr class="divider">
@@ -268,7 +321,6 @@
     async function fetchShopData() {
         try {
             // --- 1. PRE-FLIGHT SUSPENSION CHECK ---
-            // REMOVED 'status' WHICH WAS CRASHING THE QUERY
             const { data: profile, error: profileErr } = await client
                 .from('profiles')
                 .select('is_suspended')
@@ -314,6 +366,25 @@
             document.getElementById('twitter').value = data.twitter_url || '';
             document.getElementById('tiktok').value = data.tiktok_url || '';
 
+            // --- 3. APPLY SECURITY LOCKDOWN IF APPROVED ---
+            if (data.status === 'approved') {
+                // Disable the inputs
+                document.getElementById('name').disabled = true;
+                document.getElementById('phone').disabled = true;
+                document.getElementById('whatsapp').disabled = true;
+                
+                // Show the blue security banner at the top
+                document.getElementById('security-banner').classList.remove('hidden');
+                
+                // Hide the normal whatsapp helper info to reduce clutter
+                document.getElementById('wa-helper').style.display = 'none';
+
+                // Show the "Locked" badges next to the labels
+                document.querySelectorAll('.lock-badge').forEach(badge => {
+                    badge.classList.remove('hidden');
+                });
+            }
+
             // Reveal Content & Button
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('content').classList.remove('hidden');
@@ -344,6 +415,8 @@
             const cleanVal = (val) => val.trim() === '' ? null : val.trim();
 
             const updates = {
+                // Even though disabled inputs can't be typed in, JS can still read their values.
+                // The database trigger we created will guarantee these are ignored if status is approved.
                 name: document.getElementById('name').value.trim(),
                 description: document.getElementById('desc').value.trim(),
                 address: document.getElementById('address').value.trim(),
