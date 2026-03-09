@@ -349,29 +349,42 @@
     const croppedBlobs = {};
     const rawFiles = {};
 
+    // BUG FIX 1: Wrap window.onload in a try/catch so if anything crashes, the user isn't stranded
     window.onload = async () => {
-        const { data: { session } } = await client.auth.getSession();
-        if (!session) {
-            window.location.href = "login.html";
-            return;
-        }
-        
-        currentUser = session.user;
-        document.getElementById('shop-form').style.display = 'none';
-        document.getElementById('main-loader').style.display = 'block';
-        
-        await fetchCategories();
-        
-        const canProceed = await fetchUserLocation();
-        
-        if (canProceed) {
-            if (isEdit) {
-                await loadShopData();
+        try {
+            document.getElementById('shop-form').style.display = 'none';
+            document.getElementById('main-loader').style.display = 'block';
+
+            const { data: { session }, error: authError } = await client.auth.getSession();
+            if (authError || !session) {
+                window.location.href = "login.html";
+                return;
             }
-            document.getElementById('shop-form').style.display = 'block';
+            
+            currentUser = session.user;
+            
+            await fetchCategories();
+            
+            // BUG FIX 2: Check if canProceed evaluated successfully
+            const canProceed = await fetchUserLocation();
+            
+            if (canProceed) {
+                if (isEdit) {
+                    const loaded = await loadShopData();
+                    if (!loaded) return; // If load failed and redirected, stop execution
+                }
+                document.getElementById('main-loader').style.display = 'none';
+                document.getElementById('shop-form').style.display = 'block';
+            } else {
+                // If canProceed was false, the user was either redirected or shown a hard-stop message.
+                // Just hide the loader so it's not spinning over the alert boxes.
+                document.getElementById('main-loader').style.display = 'none';
+            }
+        } catch (err) {
+            console.error("Critical Load Error:", err);
+            alert("A critical error occurred while loading the page.");
+            window.location.href = "user-dashboard.html"; // Never leave them stranded
         }
-        
-        document.getElementById('main-loader').style.display = 'none';
     };
 
     async function fetchCategories() {
@@ -389,9 +402,6 @@
         }
     }
 
-    // ==========================================
-    // BUG FIX: BULLETPROOF USER PRE-FLIGHT CHECK
-    // ==========================================
     async function fetchUserLocation() {
         try {
             const { data: profile, error } = await client
@@ -400,35 +410,35 @@
                 .eq('id', currentUser.id)
                 .maybeSingle();
 
-            // 1. Network Error fallback
+            // BUG FIX 3: Stop swallowing Supabase errors and redirect!
             if (error) {
-                console.error("Network error fetching profile:", error.message);
-                alert("Network connection issue. Please check your internet and try again.");
+                console.error("Database Error fetching profile:", error);
+                
+                // Show the ACTUAL error message to help you debug. It might be an RLS policy issue, 
+                // or the "cities" relationship might not exist in your database!
+                alert("Error loading profile: " + error.message); 
+                window.location.href = "user-dashboard.html"; // The crucial redirect
                 return false;
             }
 
-            // 2. Missing Profile fallback
             if (!profile) {
                 alert("Profile not found. Please complete your profile setup first.");
                 window.location.href = "user-dashboard.html";
                 return false;
             }
 
-            // 3. Security Check: Explicit Suspension
             if (profile.is_suspended === true || profile.status === 'suspended') {
                 alert("🔒 Your account is restricted. You cannot register or edit a shop.");
                 window.location.href = "user-dashboard.html";
                 return false;
             }
 
-            // 4. City Operations Check
             if (profile.cities && profile.cities.is_open === false) {
                 document.getElementById('city-closed-box').style.display = 'flex';
                 document.getElementById('city-closed-reason').innerHTML = `We are not currently accepting or processing merchant registrations in <strong>${profile.cities.name}</strong>. Please check back later or contact support.`;
                 return false;
             }
 
-            // 5. Success! Populate UI
             document.getElementById('city-id').value = profile.city_id;
             document.getElementById('city-display').value = profile.cities ? profile.cities.name : 'Unknown City';
             await fetchAreas(profile.city_id);
@@ -437,6 +447,7 @@
         } catch (err) {
             console.error("Error in fetchUserLocation:", err);
             alert("An unexpected error occurred verifying your profile.");
+            window.location.href = "user-dashboard.html";
             return false;
         }
     }
@@ -445,7 +456,9 @@
         const select = document.getElementById('area');
         select.disabled = true;
         try {
-            const { data } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+            const { data, error } = await client.from('areas').select('id, name').eq('city_id', cityId).order('name');
+            if (error) throw error;
+            
             select.innerHTML = '<option value="" disabled selected>Select Area...</option>';
             select.disabled = false;
             if (data) {
@@ -458,6 +471,7 @@
             }
         } catch (e) {
             console.error("Error fetching areas:", e);
+            select.innerHTML = '<option value="" disabled selected>Error loading areas</option>';
         }
     }
 
@@ -477,21 +491,24 @@
         return url;
     }
 
-    // ==========================================
-    // BUG FIX: BULLETPROOF SHOP DATA LOAD
-    // ==========================================
     async function loadShopData() {
         document.getElementById('header-title').textContent = "Correct Application";
         
         try {
             const { data: shop, error } = await client.from('shops').select('*').eq('id', shopId).maybeSingle();
             
+            // BUG FIX 4: Properly handle load errors and redirect
             if (error) {
-                console.error("Network error loading shop data:", error.message);
-                alert("Could not load your shop details due to a network error.");
-                return;
+                console.error("Database error loading shop data:", error);
+                alert("Could not load your shop details: " + error.message);
+                window.location.href = "user-dashboard.html";
+                return false;
             }
-            if (!shop) return;
+            if (!shop) {
+                alert("Shop not found or you don't have permission to edit it.");
+                window.location.href = "user-dashboard.html";
+                return false;
+            }
 
             existingShop = shop;
             document.getElementById('name').value = shop.name || '';
@@ -530,8 +547,12 @@
             }
             
             toggleCacRequirement();
+            return true;
         } catch (err) {
             console.error("Error loading shop data:", err);
+            alert("An unexpected error occurred loading your shop.");
+            window.location.href = "user-dashboard.html";
+            return false;
         }
     }
 
