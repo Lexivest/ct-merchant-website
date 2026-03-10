@@ -128,7 +128,6 @@
           <div class="amz-nav-item active" onclick="switchScreen('market', this)" title="Repository">
               <i class="fa-solid fa-house" style="font-size:1.1rem"></i><span class="mobile-hide">Repository</span>
           </div>
-          <!-- CHANGED: Services -> Dashboard -->
           <div class="amz-nav-item" onclick="switchScreen('services', this)" title="Dashboard">
               <i class="fa-solid fa-table-cells-large" style="font-size:1.1rem"></i><span class="mobile-hide">Dashboard</span>
           </div>
@@ -170,7 +169,6 @@
       </div>
       <div id="services" class="screen">
           <div class="tool-block-wrap">
-              <!-- CHANGED: Services & Tools -> Dashboard -->
               <h2 class="sec-title" style="padding:0;margin-bottom:20px">Dashboard</h2>
               <div class="svc-grid">
                   <div id="myshop-card" class="svc-card" onclick="handleShopClick()"><div class="svc-icon"><i class="fa-solid fa-store"></i></div><strong>Loading...</strong></div>
@@ -178,6 +176,24 @@
                   <div class="svc-card" onclick="window.location.href='help-support.html'"><div class="svc-icon"><i class="fa-solid fa-headset" style="color:#007185"></i></div><strong>Support</strong></div>
                   <div class="svc-card" onclick="window.location.href='faq.html'"><div class="svc-icon"><i class="fa-solid fa-circle-question" style="color:#007185"></i></div><strong>FAQ</strong></div>
                   <div class="svc-card" onclick="window.location.href='report-abuse.html'"><div class="svc-icon"><i class="fa-solid fa-triangle-exclamation" style="color:#C40000"></i></div><strong>Report Abuse</strong></div>
+                  
+                  <!-- NEW CARDS ADDED BELOW -->
+                  <div class="svc-card" onclick="window.location.href='affiliate.html'">
+                      <div class="svc-icon"><i class="fa-solid fa-handshake" style="color:#007185"></i></div>
+                      <strong>Affiliates</strong>
+                  </div>
+                  <div class="svc-card" onclick="window.location.href='careers.html'">
+                      <div class="svc-icon"><i class="fa-solid fa-briefcase" style="color:#007185"></i></div>
+                      <strong>Careers</strong>
+                  </div>
+                  <div class="svc-card" onclick="window.location.href='about.html'">
+                      <div class="svc-icon"><i class="fa-solid fa-building" style="color:#007185"></i></div>
+                      <strong>About Us</strong>
+                  </div>
+                  <div class="svc-card" onclick="window.location.href='services.html'">
+                      <div class="svc-icon"><i class="fa-solid fa-layer-group" style="color:#007185"></i></div>
+                      <strong>Our Services</strong>
+                  </div>
               </div>
           </div>
       </div>
@@ -293,8 +309,6 @@
                 return; 
             }
 
-            // --- THE GHOST RECOVERY BUG FIX ---
-            // If the profile row doesn't exist, log them out and force them to setup again!
             if (!profile || !profile.city_id) {
                 console.warn("User profile not found. Deleted or incomplete.");
                 document.getElementById('initial-loader').style.display = 'none';
