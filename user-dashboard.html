@@ -128,8 +128,9 @@
           <div class="amz-nav-item active" onclick="switchScreen('market', this)" title="Repository">
               <i class="fa-solid fa-house" style="font-size:1.1rem"></i><span class="mobile-hide">Repository</span>
           </div>
-          <div class="amz-nav-item" onclick="switchScreen('services', this)" title="Services">
-              <i class="fa-solid fa-table-cells-large" style="font-size:1.1rem"></i><span class="mobile-hide">Services</span>
+          <!-- CHANGED: Services -> Dashboard -->
+          <div class="amz-nav-item" onclick="switchScreen('services', this)" title="Dashboard">
+              <i class="fa-solid fa-table-cells-large" style="font-size:1.1rem"></i><span class="mobile-hide">Dashboard</span>
           </div>
           <div class="amz-nav-item" onclick="switchScreen('notifications', this)">
               <i class="fa-regular fa-bell" style="font-size:1.2rem"></i><span class="mobile-hide" style="margin-left:6px">Alerts</span><span id="badge-count" class="notif-badge">0</span>
@@ -169,7 +170,8 @@
       </div>
       <div id="services" class="screen">
           <div class="tool-block-wrap">
-              <h2 class="sec-title" style="padding:0;margin-bottom:20px">Services & Tools</h2>
+              <!-- CHANGED: Services & Tools -> Dashboard -->
+              <h2 class="sec-title" style="padding:0;margin-bottom:20px">Dashboard</h2>
               <div class="svc-grid">
                   <div id="myshop-card" class="svc-card" onclick="handleShopClick()"><div class="svc-icon"><i class="fa-solid fa-store"></i></div><strong>Loading...</strong></div>
                   <div class="svc-card" onclick="window.location.href='wishlist.html'"><div class="svc-icon"><i class="fa-solid fa-heart" style="color:var(--color-pink)"></i></div><strong>Wishlist</strong><div id="wishlist-count" style="font-size:.8rem;color:#565959;margin-top:4px">...</div></div>
