@@ -13,13 +13,10 @@
     
     <style>
         :root {
-            /* PREMIUM AMAZON THEME */
             --amz-dark: #131921;
-            
             --color-pink: #db2777; 
             --color-pink-hover: #be185d;
             --color-pink-light: rgba(219, 39, 119, 0.15);
-            
             --amz-bg: #F3F4F6;
             --color-text-main: #0F1111;
             --color-text-muted: #565959;
@@ -37,7 +34,6 @@
             align-items: center; 
         }
 
-        /* --- PREMIUM HEADER --- */
         .app-header {
             background-color: var(--amz-dark);
             color: white;
@@ -67,7 +63,6 @@
         
         .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; }
 
-        /* --- MAIN CONTAINER --- */
         .container { 
             width: 100%; 
             max-width: 680px; 
@@ -101,7 +96,6 @@
             font-size: 1.2rem;
         }
 
-        /* --- JOB CARDS --- */
         .card { 
             background: white; 
             padding: 20px; 
@@ -145,7 +139,6 @@
             .btn-closed { width: 100%; text-align: center; }
         }
 
-        /* --- MODAL --- */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(19,25,33,0.8); backdrop-filter: blur(2px);
             z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem;
@@ -174,7 +167,6 @@
         }
         .btn-outline:hover { background: #F7FAFA; border-color: #B0B5B5; }
 
-        /* --- FOOTER --- */
         .footer {
             margin-top: 40px; padding: 20px; text-align: center;
             font-size: 0.8rem; color: #888C8C; width: 100%; border-top: 1px solid #D5D9D9;
@@ -186,8 +178,7 @@
 
     <header class="app-header">
         <div class="header-content">
-            <!-- Returns the user to the dashboard tab automatically -->
-            <button onclick="window.location.href='user-dashboard.html?tab=services'" class="back-btn">
+            <button onclick="goSmartBack()" class="back-btn">
                 <i class="fa-solid fa-arrow-left"></i>
             </button>
             <div class="page-title">Careers</div>
@@ -269,6 +260,15 @@
             modal.classList.add('hidden');
             document.body.style.overflow = '';
         }, 300);
+    }
+    
+    function goSmartBack() {
+        const ref = document.referrer.toLowerCase();
+        if (ref.includes('user-dashboard') || ref.includes('merchant-dashboard')) {
+            window.location.href = 'user-dashboard.html?tab=services';
+        } else {
+            window.location.href = 'index.html';
+        }
     }
 </script>
 
