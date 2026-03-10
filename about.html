@@ -13,13 +13,10 @@
     
     <style>
         :root {
-            /* PREMIUM AMAZON THEME */
             --amz-dark: #131921;
-            
             --color-pink: #db2777; 
             --color-pink-hover: #be185d;
             --color-pink-light: rgba(219, 39, 119, 0.15);
-            
             --amz-bg: #F3F4F6;
             --color-text-main: #0F1111;
             --color-text-muted: #565959;
@@ -37,7 +34,6 @@
             align-items: center; 
         }
 
-        /* --- PREMIUM HEADER --- */
         .app-header {
             background-color: var(--amz-dark);
             color: white;
@@ -67,7 +63,6 @@
         
         .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; }
 
-        /* --- MAIN CONTAINER --- */
         .container { 
             width: 100%; 
             max-width: 680px; 
@@ -91,7 +86,6 @@
             font-size: 0.85rem; color: #475569; line-height: 1.5; margin-bottom: 0; 
         }
 
-        /* --- CARDS & GRIDS --- */
         .card { 
             background: white; 
             padding: 24px; 
@@ -128,7 +122,6 @@
         }
         .text-content:last-child { margin-bottom: 0; }
 
-        /* --- META BADGES (CAC / RC) --- */
         .meta-box {
             background: #F8FAFC;
             border: 1px solid #E2E8F0;
@@ -148,7 +141,6 @@
         .meta-label { color: #64748B; font-weight: 600; }
         .meta-value { color: #0F1111; font-weight: 800; }
 
-        /* --- EXECUTIVE LIST --- */
         .exec-list {
             display: flex;
             flex-direction: column;
@@ -188,7 +180,6 @@
             transform: scale(1.05);
         }
 
-        /* --- FOOTER --- */
         .footer {
             margin-top: 40px; padding: 20px; text-align: center;
             font-size: 0.8rem; color: #888C8C; width: 100%; border-top: 1px solid #D5D9D9;
@@ -199,8 +190,7 @@
 
     <header class="app-header">
         <div class="header-content">
-            <!-- Returns the user to the dashboard tab automatically -->
-            <button onclick="window.location.href='user-dashboard.html?tab=services'" class="back-btn">
+            <button onclick="goSmartBack()" class="back-btn">
                 <i class="fa-solid fa-arrow-left"></i>
             </button>
             <div class="page-title">About Us</div>
@@ -307,5 +297,15 @@
         © 2026 CT-MERCHANT LTD. | RC: 8879163
     </footer>
 
+    <script>
+        function goSmartBack() {
+            const ref = document.referrer.toLowerCase();
+            if (ref.includes('user-dashboard') || ref.includes('merchant-dashboard')) {
+                window.location.href = 'user-dashboard.html?tab=services';
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
 </body>
 </html>
