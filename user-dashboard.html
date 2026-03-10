@@ -177,7 +177,6 @@
                   <div class="svc-card" onclick="window.location.href='faq.html'"><div class="svc-icon"><i class="fa-solid fa-circle-question" style="color:#007185"></i></div><strong>FAQ</strong></div>
                   <div class="svc-card" onclick="window.location.href='report-abuse.html'"><div class="svc-icon"><i class="fa-solid fa-triangle-exclamation" style="color:#C40000"></i></div><strong>Report Abuse</strong></div>
                   
-                  <!-- NEW CARDS ADDED BELOW -->
                   <div class="svc-card" onclick="window.location.href='affiliate.html'">
                       <div class="svc-icon"><i class="fa-solid fa-handshake" style="color:#007185"></i></div>
                       <strong>Affiliates</strong>
@@ -265,6 +264,17 @@
         if (!session) {
             window.location.href = "index.html";
             return;
+        }
+
+        // --- ADDED ROUTING LOGIC HERE ---
+        // Reads the URL to see if it was directed to ?tab=services
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetTab = urlParams.get('tab');
+        if (targetTab) {
+            const targetNavBtn = document.querySelector(`.amz-nav-item[onclick*="'${targetTab}'"]`);
+            if (targetNavBtn) {
+                switchScreen(targetTab, targetNavBtn);
+            }
         }
         
         currentUser = session.user;
