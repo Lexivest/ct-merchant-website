@@ -13,13 +13,10 @@
     
     <style>
         :root {
-            /* PREMIUM AMAZON THEME */
             --amz-dark: #131921;
-            
             --color-pink: #db2777; 
             --color-pink-hover: #be185d;
             --color-pink-light: rgba(219, 39, 119, 0.15);
-            
             --amz-bg: #F3F4F6;
             --color-text-main: #0F1111;
             --color-text-muted: #565959;
@@ -37,7 +34,6 @@
             align-items: center; 
         }
 
-        /* --- PREMIUM HEADER --- */
         .app-header {
             background-color: var(--amz-dark);
             color: white;
@@ -67,7 +63,6 @@
         
         .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; }
 
-        /* --- MAIN CONTAINER --- */
         .container { 
             width: 100%; 
             max-width: 680px; 
@@ -91,7 +86,6 @@
             font-size: 0.85rem; color: #475569; line-height: 1.5; margin-bottom: 0; 
         }
 
-        /* --- SERVICES GRID --- */
         .services-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -142,7 +136,6 @@
             line-height: 1.5;
         }
 
-        /* --- CALL TO ACTION --- */
         .cta-box {
             background: #F8FAFC; 
             border: 1px solid #CBD5E1;
@@ -168,7 +161,6 @@
         }
         .btn-brand:hover { background: var(--color-pink-hover); transform: translateY(-1px); }
 
-        /* --- FOOTER --- */
         .footer {
             margin-top: auto; padding: 20px; text-align: center;
             font-size: 0.8rem; color: #888C8C; width: 100%; border-top: 1px solid #D5D9D9;
@@ -179,8 +171,7 @@
 
     <header class="app-header">
         <div class="header-content">
-            <!-- Returns the user to the dashboard tab automatically -->
-            <button onclick="window.location.href='user-dashboard.html?tab=services'" class="back-btn">
+            <button onclick="goSmartBack()" class="back-btn">
                 <i class="fa-solid fa-arrow-left"></i>
             </button>
             <div class="page-title">Platform Capabilities</div>
@@ -237,7 +228,6 @@
             <p class="cta-text">
                 CTMerchant operates as a neutral discovery layer—connecting people to real places without intermediating commerce.
             </p>
-            <!-- UPDATED TO HELP-SUPPORT.HTML -->
             <a href="help-support.html" class="btn-brand">Contact Support</a>
         </div>
 
@@ -247,5 +237,15 @@
         © 2026 CT-MERCHANT LTD. | RC: 8879163
     </footer>
 
+    <script>
+        function goSmartBack() {
+            const ref = document.referrer.toLowerCase();
+            if (ref.includes('user-dashboard') || ref.includes('merchant-dashboard')) {
+                window.location.href = 'user-dashboard.html?tab=services';
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
 </body>
 </html>
