@@ -54,7 +54,39 @@
     .screen{display:none;animation:fadeIn .3s ease}
     .screen.active{display:block}
     @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    .area-block-wrap,.cat-section-wrap,.promo-section-wrap{background-color:#fff;padding-top:16px;margin-bottom:8px}
+    
+    /* --- FULL WIDTH PROMO BANNER STYLES --- */
+    .promo-banner-slider {
+        display: none;
+        width: 100%;
+        height: 280px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        background: #fff;
+        margin-bottom: 16px;
+    }
+    .promo-banner-slider::-webkit-scrollbar { display: none; }
+    .promo-slide {
+        min-width: 100%;
+        width: 100%;
+        height: 100%;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+    }
+    .promo-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+    }
+    @media (max-width: 768px) {
+        .promo-banner-slider { height: 180px; }
+    }
+
+    .area-block-wrap,.cat-section-wrap{background-color:#fff;padding-top:16px;margin-bottom:8px}
     .h-scroll{display:flex;overflow-x:auto;gap:16px;padding:4px 16px 20px;scrollbar-width:none;-ms-overflow-style:none}
     .h-scroll::-webkit-scrollbar{display:none}
     .sec-title{font-size:1.35rem;font-weight:800;color:#0F1111;margin:0 0 12px;padding:0 16px;display:flex;align-items:center;gap:10px;white-space:nowrap;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
@@ -156,7 +188,10 @@
   <main class="content-body">
       <div id="market" class="screen active">
           <div id="initial-loader" style="display:none;text-align:center;padding:60px 0;color:#888C8C"><i class="fa-solid fa-circle-notch fa-spin" style="font-size:2.5rem;color:var(--color-pink)"></i></div>
-          <div id="promo-list" class="promo-section-wrap h-scroll" style="display:none"></div>
+          
+          <!-- REFACTORED TO FULL WIDTH BANNER -->
+          <div id="promo-list" class="promo-banner-slider"></div>
+          
           <div id="featured-section" class="area-block-wrap" style="display:none">
               <h2 class="sec-title">Featured Shops <span style="color:var(--color-pink);font-size:.85em;font-weight:700">(Top Rated)</span></h2>
               <div id="featured-list" class="h-scroll"></div>
@@ -177,19 +212,19 @@
                   <div class="svc-card" onclick="window.location.href='faq.html'"><div class="svc-icon"><i class="fa-solid fa-circle-question" style="color:#007185"></i></div><strong>FAQ</strong></div>
                   <div class="svc-card" onclick="window.location.href='report-abuse.html'"><div class="svc-icon"><i class="fa-solid fa-triangle-exclamation" style="color:#C40000"></i></div><strong>Report Abuse</strong></div>
                   
-                  <div class="svc-card" onclick="window.location.href='affiliate.html'">
+                  <div class="svc-card" onclick="window.location.href='affiliate.html?src=dash'">
                       <div class="svc-icon"><i class="fa-solid fa-handshake" style="color:#007185"></i></div>
                       <strong>Affiliates</strong>
                   </div>
-                  <div class="svc-card" onclick="window.location.href='careers.html'">
+                  <div class="svc-card" onclick="window.location.href='careers.html?src=dash'">
                       <div class="svc-icon"><i class="fa-solid fa-briefcase" style="color:#007185"></i></div>
                       <strong>Careers</strong>
                   </div>
-                  <div class="svc-card" onclick="window.location.href='about.html'">
+                  <div class="svc-card" onclick="window.location.href='about.html?src=dash'">
                       <div class="svc-icon"><i class="fa-solid fa-building" style="color:#007185"></i></div>
                       <strong>About Us</strong>
                   </div>
-                  <div class="svc-card" onclick="window.location.href='services.html'">
+                  <div class="svc-card" onclick="window.location.href='services.html?src=dash'">
                       <div class="svc-icon"><i class="fa-solid fa-layer-group" style="color:#007185"></i></div>
                       <strong>Our Services</strong>
                   </div>
@@ -266,8 +301,6 @@
             return;
         }
 
-        // --- ADDED ROUTING LOGIC HERE ---
-        // Reads the URL to see if it was directed to ?tab=services
         const urlParams = new URLSearchParams(window.location.search);
         const targetTab = urlParams.get('tab');
         if (targetTab) {
@@ -386,7 +419,14 @@
         }
     }
 
-    function renderData(e){document.getElementById('initial-loader').style.display='none',document.getElementById('header-city').textContent=e.profile.cities?.name||"Unknown";const t=e.areas.sort((e,t)=>e.id===userAreaId?-1:t.id===userAreaId?1:e.name.localeCompare(t.name)),a=t.map(e=>`<option value="${e.id}">${e.name}</option>`).join(''),n=document.getElementById('search-area-desktop');n&&n.innerHTML!==`<option value="all">All Areas</option>`+a&&(n.innerHTML=`<option value="all">All Areas</option>`+a);const o=document.getElementById('search-area-mobile');o&&o.innerHTML!==`<option value="all">All Areas</option>`+a&&(o.innerHTML=`<option value="all">All Areas</option>`+a);const r=document.getElementById('filter-category');if(r){const t=`<option value="all">All Categories</option>`+e.categories.map(e=>`<option value="${e.name}">${e.name}</option>`).join('');r.innerHTML!==t&&(r.innerHTML=t)}const s=e.profile.full_name||"User",i=e.profile.avatar_url||`https://api.dicebear.com/7.x/initials/svg?seed=${s}`;document.getElementById('header-avatar').src!==i&&(document.getElementById('header-avatar').src=i),document.getElementById('profile-avatar-lg').src!==i&&(document.getElementById('profile-avatar-lg').src=i),document.getElementById('profile-name').textContent=s,document.getElementById('profile-phone').textContent=e.profile.phone||"No phone number added",currentUser&&(document.getElementById('profile-email').textContent=currentUser.email);const c=document.getElementById('badge-count');if(e.unread>0? (c.textContent=e.unread>9?'9+':e.unread,c.style.display='block') : c.style.display='none', e.announcements&&e.announcements.length>0){const t=document.getElementById('header-ticker'),a=document.getElementById('ticker-text'),n=e.announcements.map(e=>e.message).join("  •  ");t.style.display='flex',a.innerHTML!==n&&(a.innerHTML=n,a.style.animationDuration=`${Math.max(40,n.length*.4)}s`)}else document.getElementById('header-ticker').style.display='none';const d=document.getElementById('promo-list');if(e.promos.length>0){const t=e.promos.map(e=>`<div style="min-width:320px; max-width: 600px; width: 85vw; height:200px; border-radius:4px; overflow:hidden; flex-shrink:0; border:1px solid #D5D9D9;"><img src="${e.image_url}" style="width:100%; height:100%; object-fit:cover;"></div>`).join('');d.innerHTML!==t&&(d.innerHTML=t),d.style.display='flex'}else d.style.display='none';const l=e.shops.filter(e=>e.is_featured),p=document.getElementById('featured-section'),u=document.getElementById('featured-list');if(l.length>0){const t=l.map(t=>buildShopCard(t,e.products)).join('');u.innerHTML!==t&&(u.innerHTML=t),p.style.display='block'}else p.style.display='none';const m=document.getElementById('areas-container');let h='';t.forEach(t=>{const a=e.shops.filter(e=>e.area_id===t.id);if(0===a.length)return;h+=`<div class="area-block-wrap"><h2 class="sec-title">${t.id===userAreaId?`Top stores in ${t.name} <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Near You)</span>`:`Explore stores in ${t.name}`}</h2><div class="h-scroll">${a.map(t=>buildShopCard(t,e.products)).join('')}</div></div>`}),m.innerHTML!==h&&(m.innerHTML=h);const y=document.getElementById('category-list'),f=document.getElementById('category-container');if(e.categories.length>0){const t=e.categories.map(t=>{const a=e.shops.filter(e=>e.category===t.name).map(e=>e.id),n=e.products.find(e=>a.includes(e.shop_id)&&e.image_url),o=n?n.image_url:`https://api.dicebear.com/7.x/initials/svg?seed=${t.name}`;return`<div class="cat-chip" onclick="window.location.href='cat.html?name=${encodeURIComponent(t.name)}'"><img src="${o}"> <span>${t.name}</span></div>`}).join('');y.innerHTML!==t&&(y.innerHTML=t),f.style.display='block'}const g=document.getElementById('notif-list');let v='<p style="color:#565959;">No notifications yet</p>';e.notifications&&e.notifications.length>0&&(v=e.notifications.map(e=>{const t=new Date(e.created_at).toLocaleDateString()+' '+new Date(e.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});return`<div style="background:${e.is_read?'white':'#F7FAFA'}; padding:16px; border-radius:8px; border:1px solid ${e.is_read?'#D5D9D9':'#007185'}; margin-bottom: 12px;"><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="font-weight:700; color:#0F1111; font-size:0.95rem;">${e.title}</span><span style="font-size:0.75rem; color:#565959;">${t}</span></div><div style="color:#0F1111; font-size:0.9rem; line-height:1.4;">${e.message||''}</div></div>`}).join('')),g.innerHTML!==v&&(g.innerHTML=v),updateMyShopCardUI(e.myShop),currentUserShop=e.myShop;const x=`${e.wishlistCount||0} items`;document.getElementById('wishlist-count').textContent!==x&&(document.getElementById('wishlist-count').textContent=x)}
+    // --- REFACTORED PROMO RENDERING SCRIPT ---
+    function renderData(e){document.getElementById('initial-loader').style.display='none',document.getElementById('header-city').textContent=e.profile.cities?.name||"Unknown";const t=e.areas.sort((e,t)=>e.id===userAreaId?-1:t.id===userAreaId?1:e.name.localeCompare(t.name)),a=t.map(e=>`<option value="${e.id}">${e.name}</option>`).join(''),n=document.getElementById('search-area-desktop');n&&n.innerHTML!==`<option value="all">All Areas</option>`+a&&(n.innerHTML=`<option value="all">All Areas</option>`+a);const o=document.getElementById('search-area-mobile');o&&o.innerHTML!==`<option value="all">All Areas</option>`+a&&(o.innerHTML=`<option value="all">All Areas</option>`+a);const r=document.getElementById('filter-category');if(r){const t=`<option value="all">All Categories</option>`+e.categories.map(e=>`<option value="${e.name}">${e.name}</option>`).join('');r.innerHTML!==t&&(r.innerHTML=t)}const s=e.profile.full_name||"User",i=e.profile.avatar_url||`https://api.dicebear.com/7.x/initials/svg?seed=${s}`;document.getElementById('header-avatar').src!==i&&(document.getElementById('header-avatar').src=i),document.getElementById('profile-avatar-lg').src!==i&&(document.getElementById('profile-avatar-lg').src=i),document.getElementById('profile-name').textContent=s,document.getElementById('profile-phone').textContent=e.profile.phone||"No phone number added",currentUser&&(document.getElementById('profile-email').textContent=currentUser.email);const c=document.getElementById('badge-count');if(e.unread>0? (c.textContent=e.unread>9?'9+':e.unread,c.style.display='block') : c.style.display='none', e.announcements&&e.announcements.length>0){const t=document.getElementById('header-ticker'),a=document.getElementById('ticker-text'),n=e.announcements.map(e=>e.message).join("  •  ");t.style.display='flex',a.innerHTML!==n&&(a.innerHTML=n,a.style.animationDuration=`${Math.max(40,n.length*.4)}s`)}else document.getElementById('header-ticker').style.display='none';
+    
+    // UPDATED BANNER SCRIPT FOR FULL WIDTH
+    const d=document.getElementById('promo-list');if(e.promos.length>0){const t=e.promos.map(e=>`<div class="promo-slide"><img src="${e.image_url}" alt="Promo Banner"></div>`).join('');d.innerHTML!==t&&(d.innerHTML=t),d.style.display='flex'}else d.style.display='none';
+    
+    const l=e.shops.filter(e=>e.is_featured),p=document.getElementById('featured-section'),u=document.getElementById('featured-list');if(l.length>0){const t=l.map(t=>buildShopCard(t,e.products)).join('');u.innerHTML!==t&&(u.innerHTML=t),p.style.display='block'}else p.style.display='none';const m=document.getElementById('areas-container');let h='';t.forEach(t=>{const a=e.shops.filter(e=>e.area_id===t.id);if(0===a.length)return;h+=`<div class="area-block-wrap"><h2 class="sec-title">${t.id===userAreaId?`Top stores in ${t.name} <span style="color:var(--color-pink); font-size:0.85em; font-weight:700;">(Near You)</span>`:`Explore stores in ${t.name}`}</h2><div class="h-scroll">${a.map(t=>buildShopCard(t,e.products)).join('')}</div></div>`}),m.innerHTML!==h&&(m.innerHTML=h);const y=document.getElementById('category-list'),f=document.getElementById('category-container');if(e.categories.length>0){const t=e.categories.map(t=>{const a=e.shops.filter(e=>e.category===t.name).map(e=>e.id),n=e.products.find(e=>a.includes(e.shop_id)&&e.image_url),o=n?n.image_url:`https://api.dicebear.com/7.x/initials/svg?seed=${t.name}`;return`<div class="cat-chip" onclick="window.location.href='cat.html?name=${encodeURIComponent(t.name)}'"><img src="${o}"> <span>${t.name}</span></div>`}).join('');y.innerHTML!==t&&(y.innerHTML=t),f.style.display='block'}const g=document.getElementById('notif-list');let v='<p style="color:#565959;">No notifications yet</p>';e.notifications&&e.notifications.length>0&&(v=e.notifications.map(e=>{const t=new Date(e.created_at).toLocaleDateString()+' '+new Date(e.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});return`<div style="background:${e.is_read?'white':'#F7FAFA'}; padding:16px; border-radius:8px; border:1px solid ${e.is_read?'#D5D9D9':'#007185'}; margin-bottom: 12px;"><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="font-weight:700; color:#0F1111; font-size:0.95rem;">${e.title}</span><span style="font-size:0.75rem; color:#565959;">${t}</span></div><div style="color:#0F1111; font-size:0.9rem; line-height:1.4;">${e.message||''}</div></div>`}).join('')),g.innerHTML!==v&&(g.innerHTML=v),updateMyShopCardUI(e.myShop),currentUserShop=e.myShop;const x=`${e.wishlistCount||0} items`;document.getElementById('wishlist-count').textContent!==x&&(document.getElementById('wishlist-count').textContent=x)}
+
     function buildShopCard(e,t){const a=t.filter(t=>t.shop_id===e.id&&t.image_url&&'Fairly Used'!==t.condition).slice(0,4);let n='';for(let t=0;t<4;t++)if(t<a.length){const e=a[t].name||a[t].product_name||a[t].title||'Product',o=a[t].price||a[t].product_price,r=a[t].discount_price,s=r&&r<o,i=s?Math.round((o-r)/o*100):0;let c='',d='sg-price';s?(c=`<span class="sg-price-old">₦${o.toLocaleString()}</span>₦${r.toLocaleString()}`,d='sg-price flash-price'):o&&(c=`₦${o.toLocaleString()}`),n+=`<div class="shop-grid-item-wrap"><div class="shop-grid-item"><img src="${a[t].image_url}" alt="Product" loading="lazy">${s?`<div class="grid-badge flash-offer">-${i}%</div>`:''}</div><div class="shop-grid-caption"><div class="sg-name" title="${e}">${e}</div><div class="${d}">${c}</div></div></div>`}else n+=`<div class="shop-grid-item-wrap"><div class="shop-grid-item empty"><i class="fa-solid fa-image" style="color: #E5E7EB; font-size: 1.2rem;"></i></div><div class="shop-grid-caption" style="color:transparent; user-select:none;"><div class="sg-name">-</div><div class="sg-price">-</div></div></div>`;return`<div class="premium-shop-card-wrap"><div class="premium-shop-card" onclick="window.location.href='shop-detail.html?id=${e.id}'"><div class="shop-card-title">${e.name}</div><div class="shop-image-grid">${n}</div><div class="shop-cta">Visit shop <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i></div></div></div>`}
     function updateMyShopCardUI(e){const t=document.getElementById('myshop-card'),a=t.querySelector('.svc-icon'),n=t.querySelector('strong');let o='fa-store',r='Register Shop';e&&(!1===e.is_open?(o='fa-lock',r='Locked'):'pending'===e.status?(o='fa-hourglass-half',r='Pending'):'approved'===e.status?(o='fa-store',r='My Shop'):'rejected'===e.status&&(o='fa-circle-exclamation',r='Rejected'));const s=`<i class="fa-solid ${o}"></i>`;a.innerHTML!==s&&(a.innerHTML=s),n.textContent!==r&&(n.textContent=r)}
     function handleShopClick(){currentUserShop?!1===currentUserShop.is_open?alert("🔒 Your shop access has been restricted by administration. Please contact support via support@ct-merchant.com to resolve your account status."):'pending'===currentUserShop.status?alert('Your shop application is currently being reviewed. Please check back later.'):'approved'===currentUserShop.status?window.location.href='merchant-dashboard.html':'rejected'===currentUserShop.status&&(alert(`Application Rejected: ${currentUserShop.rejection_reason||'Please update your details.'}`),window.location.href=`shop-registration.html?id=${currentUserShop.id}`):window.location.href='shop-registration.html'}
