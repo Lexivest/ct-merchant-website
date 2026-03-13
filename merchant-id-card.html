@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Digital ID | CTMerchant</title>
+    
+    <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+    <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Libraries for QR Code and Image Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --amz-dark: #131921;
+            --color-pink: #db2777; 
+            --color-pink-hover: #be185d;
+            --amz-bg: #F3F4F6;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--amz-bg); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+
+        .app-header {
+            background-color: var(--amz-dark);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 16px;
+            max-width: 680px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .back-btn { 
+            background: none; border: none; color: white; 
+            font-size: 1.2rem; cursor: pointer; padding: 4px; 
+            margin-left: -4px; transition: 0.2s;
+        }
+        .back-btn:hover { color: var(--color-pink); }
+        .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; }
+
+        .container { 
+            width: 100%; 
+            max-width: 600px; 
+            padding: 20px; 
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .edu-box { 
+            background: #F8FAFC; 
+            border: 1px solid #E2E8F0; 
+            border-radius: 8px; 
+            padding: 16px; 
+            margin-bottom: 24px; 
+            border-left: 4px solid var(--color-pink);
+            width: 100%;
+        }
+        .edu-title { font-size: 0.95rem; font-weight: 800; color: #0F1111; margin-bottom: 8px; }
+        .edu-text { font-size: 0.85rem; color: #475569; line-height: 1.5; }
+
+        /* ========================================== */
+        /* --- DIGITAL ID CARD STYLES ---             */
+        /* ========================================== */
+        .id-card-wrapper {
+            /* This is the container we will screenshot */
+            background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1.6 / 1; /* Standard ID/Credit Card Ratio */
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Abstract Background Decor */
+        .id-card-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: rgba(219, 39, 119, 0.15);
+            border-radius: 50%;
+            filter: blur(40px);
+            z-index: 0;
+        }
+        .id-card-wrapper::after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            left: -50px;
+            width: 150px;
+            height: 150px;
+            background: rgba(0, 113, 133, 0.2);
+            border-radius: 50%;
+            filter: blur(30px);
+            z-index: 0;
+        }
+
+        .card-content { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: space-between;}
+
+        /* Header: Logo & Badge */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-img {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            background: white;
+            padding: 2px;
+        }
+        .logo-text {
+            font-size: 1rem;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            color: #FFF;
+        }
+        .verified-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34D399;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Middle: Shop Info */
+        .card-middle {
+            margin-top: 16px;
+            flex: 1;
+        }
+        .shop-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            margin-bottom: 4px;
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .shop-category {
+            font-size: 0.8rem;
+            color: #94A3B8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Footer: ID & QR Code */
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 12px;
+        }
+        .id-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .id-label {
+            font-size: 0.65rem;
+            color: var(--color-pink);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+        .id-value {
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            font-family: monospace;
+            color: #FFF;
+        }
+        
+        .qr-wrapper {
+            background: white;
+            padding: 4px;
+            border-radius: 6px;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        #qrcode { width: 100%; height: 100%; }
+        #qrcode img { width: 100%; height: 100%; }
+
+        /* ========================================== */
+
+        /* Buttons */
+        .action-box {
+            width: 100%;
+            max-width: 400px;
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .btn-brand {
+            background: var(--color-pink); 
+            border: 1px solid var(--color-pink-hover); 
+            border-radius: 8px; 
+            padding: 16px; 
+            color: white; 
+            font-size: 1.05rem;
+            font-weight: 800; 
+            cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(219,39,119,0.3); 
+            transition: 0.2s; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-brand:hover { background: var(--color-pink-hover); transform: translateY(-2px); }
+        
+        .btn-outline {
+            background: white; 
+            color: #0F1111; 
+            border: 1px solid #D5D9D9; 
+            padding: 14px; 
+            border-radius: 8px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-outline:hover { background: #F7FAFA; border-color: #B0B5B5; }
+
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Loader */
+        #loader { margin-top: 50px; text-align: center; }
+        #loader .spinner { border-color: rgba(0,0,0,0.1); border-top-color: var(--color-pink); width: 40px; height: 40px; border-width: 4px; }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="header-content">
+            <button onclick="window.location.href='merchant-dashboard.html'" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="page-title">Digital ID Card</div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div id="loader">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; font-weight: 600; color: #565959;">Generating your card...</p>
+        </div>
+
+        <div id="card-ui" style="display: none; width: 100%; align-items: center; flex-direction: column;">
+            
+            <div class="edu-box">
+                <h4 class="edu-title"><i class="fa-solid fa-address-card" style="color: var(--color-pink);"></i> Share Your Shop</h4>
+                <p class="edu-text">Download this digital card and post it on your WhatsApp status, Facebook, or print it out. Customers can scan the QR code or search your ID to find your products instantly!</p>
+            </div>
+
+            <!-- THE DIGITAL ID CARD -->
+            <div class="id-card-wrapper" id="capture-area">
+                <div class="card-content">
+                    <div class="card-header">
+                        <div class="logo-group">
+                            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="logo-img" alt="Logo">
+                            <span class="logo-text">CTMerchant</span>
+                        </div>
+                        <div class="verified-badge" id="verification-status">
+                            <i class="fa-solid fa-shield-check"></i> Verified
+                        </div>
+                    </div>
+
+                    <div class="card-middle">
+                        <h2 class="shop-name" id="card-shop-name">Loading Shop...</h2>
+                        <p class="shop-category" id="card-shop-category">Category</p>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="id-group">
+                            <span class="id-label">Merchant ID</span>
+                            <span class="id-value" id="card-shop-id">------</span>
+                        </div>
+                        <div class="qr-wrapper">
+                            <div id="qrcode"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="action-box">
+                <button onclick="downloadCard()" class="btn-brand" id="btn-download">
+                    <i class="fa-solid fa-download"></i> Save Image to Gallery
+                </button>
+                <button onclick="shareLink()" class="btn-outline">
+                    <i class="fa-solid fa-share-nodes"></i> Share Direct Link
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentShop = null;
+
+    window.onload = async () => {
+        try {
+            const { data: { session } } = await client.auth.getSession();
+            if (!session) {
+                window.location.href = "login.html";
+                return;
+            }
+
+            // Fetch the shop belonging to this user
+            const { data: shop, error } = await client
+                .from('shops')
+                .select('id, name, unique_id, category, is_verified')
+                .eq('owner_id', session.user.id)
+                .maybeSingle();
+
+            if (error) throw error;
+
+            if (!shop) {
+                alert("You have not registered a shop yet.");
+                window.location.href = "shop-registration.html";
+                return;
+            }
+
+            currentShop = shop;
+            renderCard();
+
+        } catch (e) {
+            console.error(e);
+            alert("Error loading your ID card. Please try again.");
+            window.location.href = "merchant-dashboard.html";
+        }
+    };
+
+    function renderCard() {
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('card-ui').style.display = 'flex';
+
+        // Populate Text
+        document.getElementById('card-shop-name').textContent = currentShop.name;
+        document.getElementById('card-shop-category').textContent = currentShop.category;
+        document.getElementById('card-shop-id').textContent = currentShop.unique_id || 'PENDING';
+
+        // Badge Status
+        const badge = document.getElementById('verification-status');
+        if (!currentShop.is_verified) {
+            badge.innerHTML = '<i class="fa-solid fa-hourglass-half"></i> Pending';
+            badge.style.color = '#F59E0B';
+            badge.style.background = 'rgba(245, 158, 11, 0.15)';
+            badge.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+        }
+
+        // Generate QR Code
+        // The QR code links directly to the repository search page with their ID pre-filled!
+        const shopUrl = `https://ct-merchant.com.ng/reposearch.html?merchantId=${currentShop.unique_id || currentShop.id}`;
+        
+        document.getElementById('qrcode').innerHTML = ''; // clear if re-rendering
+        new QRCode(document.getElementById("qrcode"), {
+            text: shopUrl,
+            width: 48,
+            height: 48,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.L // Low error correction is fine for simple URLs, makes QR less dense
+        });
+    }
+
+    async function downloadCard() {
+        const btn = document.getElementById('btn-download');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<div class="spinner"></div> Saving...';
+        btn.disabled = true;
+
+        try {
+            const captureArea = document.getElementById('capture-area');
+            
+            // html2canvas takes a "screenshot" of the DOM element
+            const canvas = await html2canvas(captureArea, {
+                scale: 3, // High resolution
+                useCORS: true, // Allow external images (like the logo)
+                backgroundColor: null // transparent background if any
+            });
+
+            // Convert to image and download
+            const image = canvas.toDataURL("image/png");
+            const link = document.createElement('a');
+            link.href = image;
+            link.download = `CTMerchant_ID_${currentShop.unique_id || 'Card'}.png`;
+            link.click();
+
+        } catch (e) {
+            console.error("Error generating image:", e);
+            alert("Failed to save image. Please try again or take a screenshot manually.");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function shareLink() {
+        const shopUrl = `https://ct-merchant.com.ng/reposearch.html?merchantId=${currentShop.unique_id || currentShop.id}`;
+        const text = `Check out my shop "${currentShop.name}" on CTMerchant! Search my ID: ${currentShop.unique_id}`;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: currentShop.name,
+                text: text,
+                url: shopUrl
+            }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(`${text}\n${shopUrl}`);
+            alert("Shop link and ID copied to clipboard!");
+        }
+    }
+</script>
+</body>
+</html>
