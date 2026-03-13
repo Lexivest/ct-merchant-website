@@ -272,6 +272,7 @@
             flex-direction: column;
             gap: 12px;
         }
+        
         .btn-brand {
             background: var(--color-pink); 
             border: 1px solid var(--color-pink-hover); 
@@ -336,8 +337,8 @@
         <div id="card-ui" style="display: none; width: 100%; align-items: center; flex-direction: column;">
             
             <div class="edu-box">
-                <h4 class="edu-title"><i class="fa-solid fa-address-card" style="color: var(--color-pink);"></i> Share Your Shop</h4>
-                <p class="edu-text">Download this digital card and post it on your WhatsApp status, Facebook, or print it out. Customers can scan the QR code to find your products instantly!</p>
+                <h4 class="edu-title"><i class="fa-solid fa-bullhorn" style="color: var(--color-pink);"></i> Share Your Digital Identity</h4>
+                <p class="edu-text">Share your ID directly to WhatsApp and Facebook! This card carries your official shop link and a scannable QR code, allowing the public to open your store instantly.</p>
             </div>
 
             <!-- THE DIGITAL ID CARD -->
@@ -362,7 +363,6 @@
                         </div>
                         
                         <div class="info-group">
-                            <!-- Changed from Category to Proprietor -->
                             <div class="info-label">Proprietor</div>
                             <div class="info-value" id="card-proprietor-name">...</div>
                         </div>
@@ -386,13 +386,18 @@
                 </div>
             </div>
 
-            <!-- ACTION BUTTONS -->
+            <!-- ACTION BUTTONS (SWAPPED) -->
             <div class="action-box">
-                <button onclick="downloadCard()" class="btn-brand" id="btn-download">
-                    <i class="fa-solid fa-download"></i> Save Image to Gallery
+                <!-- Primary Share Button -->
+                <button onclick="shareLink()" class="btn-brand" id="btn-share">
+                    <span>Share ID to</span> 
+                    <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> 
+                    <i class="fa-brands fa-facebook" style="font-size: 1.2rem;"></i>
                 </button>
-                <button onclick="shareLink()" class="btn-outline" id="btn-share">
-                    <i class="fa-solid fa-share-nodes"></i> Share ID to Socials
+
+                <!-- Secondary Download Button -->
+                <button onclick="downloadCard()" class="btn-outline" id="btn-download">
+                    <i class="fa-solid fa-download"></i> Save Image to Gallery
                 </button>
             </div>
 
@@ -479,7 +484,7 @@
         
         document.getElementById('qrcode').innerHTML = '';
         
-        // FIX: Generate the QR code at a HIGH RESOLUTION (256x256) so it is sharp, 
+        // Generate the QR code at a HIGH RESOLUTION (256x256) so it is sharp, 
         // then CSS will scale it down to fit in the 64px box.
         new QRCode(document.getElementById("qrcode"), {
             text: shopUrl,
@@ -504,34 +509,12 @@
         });
     }
 
-    async function downloadCard() {
-        const btn = document.getElementById('btn-download');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<div class="spinner"></div> Saving...';
-        btn.disabled = true;
-
-        try {
-            const blob = await generateCardBlob();
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `CTMerchant_ID_${currentShop.unique_id || 'Card'}.png`;
-            link.click();
-            URL.revokeObjectURL(url);
-        } catch (e) {
-            console.error("Error generating image:", e);
-            alert("Failed to save image. Please try again or take a screenshot manually.");
-        } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
-    }
-
-    // NEW: Share actual Image to WhatsApp/Socials
+    // NEW PRIMARY ACTION: Share actual Image to WhatsApp/Socials
     async function shareLink() {
         const btn = document.getElementById('btn-share');
         const originalText = btn.innerHTML;
-        btn.innerHTML = '<div class="spinner" style="border-top-color: #0F1111;"></div> Preparing Share...';
+        // White spinner since background is pink
+        btn.innerHTML = '<div class="spinner" style="border-top-color: #fff;"></div> Preparing Share...';
         btn.disabled = true;
 
         try {
@@ -548,7 +531,7 @@
                 await navigator.share({
                     title: currentShop.name,
                     text: textContent,
-                    files: [file] // <--- This attaches the image to WhatsApp!
+                    files: [file] // Attach the image!
                 });
             } else if (navigator.share) {
                 // Fallback for older devices: just share the text
@@ -563,6 +546,31 @@
         } catch (e) {
             // Usually happens if the user cancels the share dialog, so we just log it silently
             console.warn("Share action cancelled or failed:", e);
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    // SECONDARY ACTION: Download directly
+    async function downloadCard() {
+        const btn = document.getElementById('btn-download');
+        const originalText = btn.innerHTML;
+        // Dark spinner since background is white
+        btn.innerHTML = '<div class="spinner" style="border-top-color: #0F1111;"></div> Saving...';
+        btn.disabled = true;
+
+        try {
+            const blob = await generateCardBlob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `CTMerchant_ID_${currentShop.unique_id || 'Card'}.png`;
+            link.click();
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error("Error generating image:", e);
+            alert("Failed to save image. Please try again or take a screenshot manually.");
         } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
