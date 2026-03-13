@@ -140,7 +140,7 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 16px;
+            margin-bottom: 12px; /* Slightly reduced to fit the new badge */
         }
         
         .header-titles {
@@ -181,8 +181,34 @@
         .card-body {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 8px; /* Tighter gap to fit everything perfectly */
             flex: 1;
+        }
+
+        /* NEW: Verified Badge Row */
+        .verified-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .small-badge-logo {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            background: white;
+            padding: 1px;
+            object-fit: contain;
+        }
+        .verified-text {
+            color: #10B981; /* Premium Green */
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .info-group {
@@ -272,7 +298,6 @@
             flex-direction: column;
             gap: 12px;
         }
-        
         .btn-brand {
             background: var(--color-pink); 
             border: 1px solid var(--color-pink-hover); 
@@ -357,6 +382,12 @@
                     </div>
 
                     <div class="card-body">
+                        <!-- NEW VERIFIED BADGE ROW -->
+                        <div class="verified-row">
+                            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="small-badge-logo" crossorigin="anonymous" alt="Logo">
+                            <span class="verified-text"><i class="fa-solid fa-circle-check"></i> Verified Merchant</span>
+                        </div>
+
                         <div class="info-group">
                             <div class="info-label">Business Name</div>
                             <div class="info-value b-name" id="card-shop-name">...</div>
@@ -528,16 +559,18 @@
 
             // 2. Check if device supports sharing files (Works on iOS and Modern Android)
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                // BY OMITTING THE URL PARAMETER HERE, WE FORCE WHATSAPP TO TREAT IT AS AN IMAGE SHARE
                 await navigator.share({
                     title: currentShop.name,
                     text: textContent,
                     files: [file] // Attach the image!
                 });
             } else if (navigator.share) {
-                // Fallback for older devices: just share the text
+                // Fallback for older devices: just share the text/link
                 await navigator.share({
                     title: currentShop.name,
-                    text: textContent
+                    text: textContent,
+                    url: shopUrl
                 });
             } else {
                 navigator.clipboard.writeText(textContent);
