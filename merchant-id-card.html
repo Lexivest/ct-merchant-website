@@ -167,8 +167,8 @@
         }
         
         .profile-pic {
-            width: 52px;
-            height: 52px;
+            width: 64px; /* Increased to match QR Code size */
+            height: 64px; /* Increased to match QR Code size */
             border-radius: 8px;
             border: 2px solid rgba(255,255,255,0.8);
             object-fit: cover;
@@ -234,8 +234,8 @@
             position: absolute;
             bottom: 0;
             right: 0;
-            width: 64px;
-            height: 64px;
+            width: 64px; /* Matches Profile Pic size */
+            height: 64px; /* Matches Profile Pic size */
             background: white;
             padding: 4px;
             border-radius: 6px;
@@ -344,7 +344,6 @@
                         </div>
                         
                         <div class="info-group">
-                            <!-- Changed from Category to Proprietor -->
                             <div class="info-label">Proprietor</div>
                             <div class="info-value" id="card-proprietor-name">...</div>
                         </div>
@@ -356,7 +355,7 @@
                             </div>
                             <div class="info-group">
                                 <div class="info-label">Expiry</div>
-                                <div class="info-value">2027</div>
+                                <div class="info-value" id="card-expiry">....</div>
                             </div>
                         </div>
                     </div>
@@ -399,7 +398,7 @@
             // 1. Fetch Shop details along with the City Name
             const { data: shop, error: shopErr } = await client
                 .from('shops')
-                .select('id, name, unique_id, is_verified, cities(name)')
+                .select('id, name, unique_id, category, is_verified, cities(name)')
                 .eq('owner_id', session.user.id)
                 .maybeSingle();
 
@@ -410,6 +409,14 @@
                 window.location.href = "shop-registration.html";
                 return;
             }
+
+            // --- STRICT VERIFICATION CHECK ---
+            if (!shop.is_verified) {
+                alert("🔒 Access Denied: Your shop must be Physically Verified by a CTMerchant agent before you can generate a Digital ID Card.");
+                window.location.href = "merchant-dashboard.html";
+                return;
+            }
+
             currentShop = shop;
 
             // 2. Fetch User Profile for Avatar and Proprietor Name
@@ -435,10 +442,14 @@
         document.getElementById('loader').style.display = 'none';
         document.getElementById('card-ui').style.display = 'flex';
 
+        // Set Dynamic Expiry Date (Current Year + 1)
+        const currentYear = new Date().getFullYear();
+        document.getElementById('card-expiry').textContent = currentYear + 1;
+
         // Populate Text Fields
         document.getElementById('card-city').textContent = shop.cities?.name || "Local";
         document.getElementById('card-shop-name').textContent = shop.name;
-        document.getElementById('card-proprietor-name').textContent = proprietorName; // Added Proprietor Data
+        document.getElementById('card-proprietor-name').textContent = proprietorName;
         document.getElementById('card-shop-id').textContent = shop.unique_id || 'PENDING';
         
         // Profile Pic
