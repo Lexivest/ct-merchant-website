@@ -344,8 +344,9 @@
                         </div>
                         
                         <div class="info-group">
-                            <div class="info-label">Category</div>
-                            <div class="info-value" id="card-shop-category">...</div>
+                            <!-- Changed from Category to Proprietor -->
+                            <div class="info-label">Proprietor</div>
+                            <div class="info-value" id="card-proprietor-name">...</div>
                         </div>
 
                         <div class="card-footer-row">
@@ -398,7 +399,7 @@
             // 1. Fetch Shop details along with the City Name
             const { data: shop, error: shopErr } = await client
                 .from('shops')
-                .select('id, name, unique_id, category, is_verified, cities(name)')
+                .select('id, name, unique_id, is_verified, cities(name)')
                 .eq('owner_id', session.user.id)
                 .maybeSingle();
 
@@ -411,7 +412,7 @@
             }
             currentShop = shop;
 
-            // 2. Fetch User Profile for Avatar
+            // 2. Fetch User Profile for Avatar and Proprietor Name
             const { data: profile, error: profErr } = await client
                 .from('profiles')
                 .select('avatar_url, full_name')
@@ -419,8 +420,9 @@
                 .maybeSingle();
                 
             const avatarUrl = profile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || shop.name}`;
+            const proprietorName = profile?.full_name || "Authorized Merchant";
 
-            renderCard(shop, avatarUrl);
+            renderCard(shop, avatarUrl, proprietorName);
 
         } catch (e) {
             console.error(e);
@@ -429,14 +431,14 @@
         }
     };
 
-    function renderCard(shop, avatarUrl) {
+    function renderCard(shop, avatarUrl, proprietorName) {
         document.getElementById('loader').style.display = 'none';
         document.getElementById('card-ui').style.display = 'flex';
 
         // Populate Text Fields
         document.getElementById('card-city').textContent = shop.cities?.name || "Local";
         document.getElementById('card-shop-name').textContent = shop.name;
-        document.getElementById('card-shop-category').textContent = shop.category;
+        document.getElementById('card-proprietor-name').textContent = proprietorName; // Added Proprietor Data
         document.getElementById('card-shop-id').textContent = shop.unique_id || 'PENDING';
         
         // Profile Pic
