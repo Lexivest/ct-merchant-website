@@ -73,10 +73,14 @@
         .input{width:100%;padding:12px 14px;border-radius:4px;border:1px solid #888C8C;font-size:1rem;color:#0F1111;box-shadow:0 1px 2px rgba(15,17,17,.15) inset;font-family:inherit;transition:.2s}
         .input:focus{outline:0;border-color:var(--color-pink);box-shadow:0 0 0 3px var(--color-pink-light)}
         textarea.input{resize:vertical;min-height:100px}
+        textarea.input.sm-box { min-height: 65px; } /* For smaller desc boxes */
         select.input{cursor:pointer;background-color:#fff}
         
         #dynamic-fields-container { background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px dashed #CBD5E1; margin-bottom: 24px; display: none;}
         .dyn-title { font-size: 0.85rem; font-weight: 800; color: var(--color-pink); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;}
+
+        .description-wrapper { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 20px; border-radius: 8px; margin-bottom: 24px; }
+        .description-wrapper-title { font-size: 1rem; font-weight: 800; color: #0F1111; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;}
 
         .discount-box{background:#F7F7F7;border:1px solid var(--color-border);padding:16px;border-radius:8px;margin-bottom:24px; transition: opacity 0.3s;}
         .switch-row{display:flex;justify-content:space-between;align-items:center}
@@ -325,9 +329,32 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="label">Description</label>
-                <textarea id="desc" class="input" placeholder="Enter full product details, specifications, etc." required></textarea>
+            <!-- --- NEW 4-SECTION DESCRIPTION AREA --- -->
+            <div class="description-wrapper">
+                <div class="description-wrapper-title">
+                    <i class="fa-solid fa-list-ul" style="color: var(--color-pink);"></i> Product Presentation Details
+                </div>
+                
+                <div class="form-group">
+                    <label class="label">Key Features</label>
+                    <textarea id="key_features" name="Key Features" class="input dynamic-attr sm-box" placeholder="e.g. 5G Network, 120Hz AMOLED Display, 5000mAh Battery" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">Full Description <span style="color: var(--color-pink);">*</span></label>
+                    <textarea id="desc" class="input" placeholder="Enter full detailed product description, capabilities, and uses..." required rows="4"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group" style="margin:0;">
+                        <label class="label">What's in the Box</label>
+                        <textarea id="box_content" name="What's in the Box" class="input dynamic-attr sm-box" placeholder="e.g. 1x Phone, 1x Charger, Manual" rows="2"></textarea>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label class="label">Warranty</label>
+                        <textarea id="warranty" name="Warranty" class="input dynamic-attr sm-box" placeholder="e.g. 1 Year Manufacturer Warranty" rows="2"></textarea>
+                    </div>
+                </div>
             </div>
 
             <button type="submit" id="btn-submit" class="btn-submit">Upload to Marketplace</button>
@@ -573,7 +600,7 @@
                 
                 cropper = new Cropper(img, {
                     aspectRatio: 1, 
-                    viewMode: 1, // Enforces crop box stays within image bounds, preventing user from making white borders!
+                    viewMode: 1, 
                     dragMode: 'move',
                     background: false, 
                     autoCropArea: 1,
@@ -730,41 +757,41 @@
             html = `
                 <div class="dyn-title">Technical Specifications</div>
                 <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="brand" class="input dynamic-attr" placeholder="e.g. Apple"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Storage (ROM)</label><input type="text" name="storage" class="input dynamic-attr" placeholder="e.g. 256GB"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="Brand" class="input dynamic-attr" placeholder="e.g. Apple"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Storage (ROM)</label><input type="text" name="Storage" class="input dynamic-attr" placeholder="e.g. 256GB"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">RAM</label><input type="text" name="ram" class="input dynamic-attr" placeholder="e.g. 8GB"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Battery / Defect Note</label><input type="text" name="condition_note" class="input dynamic-attr" placeholder="e.g. 85% Health"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">RAM</label><input type="text" name="RAM" class="input dynamic-attr" placeholder="e.g. 8GB"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Battery / Defect Note</label><input type="text" name="Condition Note" class="input dynamic-attr" placeholder="e.g. 85% Health"></div>
                 </div>`;
         } else if (fashion.includes(cat)) {
             html = `
                 <div class="dyn-title">Apparel Details</div>
                 <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="brand" class="input dynamic-attr" placeholder="e.g. Nike"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="Brand" class="input dynamic-attr" placeholder="e.g. Nike"></div>
                     <div class="form-group" style="margin:0;">
                         <label class="label">Target</label>
-                        <select name="gender" class="input dynamic-attr"><option value="Unisex">Unisex</option><option value="Men">Men</option><option value="Women">Women</option><option value="Kids">Kids</option></select>
+                        <select name="Gender" class="input dynamic-attr"><option value="Unisex">Unisex</option><option value="Men">Men</option><option value="Women">Women</option><option value="Kids">Kids</option></select>
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Size</label><input type="text" name="size" class="input dynamic-attr" placeholder="e.g. XL, 42 EU"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Color</label><input type="text" name="color" class="input dynamic-attr" placeholder="e.g. Black"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Size</label><input type="text" name="Size" class="input dynamic-attr" placeholder="e.g. XL, 42 EU"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Color</label><input type="text" name="Color" class="input dynamic-attr" placeholder="e.g. Black"></div>
                 </div>`;
         } else if (consumables.includes(cat)) {
             html = `
                 <div class="dyn-title">Product Details</div>
                 <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Brand/Maker</label><input type="text" name="brand" class="input dynamic-attr" placeholder="e.g. Nivea"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Weight/Volume</label><input type="text" name="weight" class="input dynamic-attr" placeholder="e.g. 500ml, 1kg"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Brand/Maker</label><input type="text" name="Brand" class="input dynamic-attr" placeholder="e.g. Nivea"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Weight/Volume</label><input type="text" name="Weight" class="input dynamic-attr" placeholder="e.g. 500ml, 1kg"></div>
                 </div>
-                <div class="form-group" style="margin-bottom:0;"><label class="label">Expiration Date <span style="color:var(--color-red)">*</span></label><input type="date" name="expiry_date" class="input dynamic-attr" required></div>`;
+                <div class="form-group" style="margin-bottom:0;"><label class="label">Expiration Date <span style="color:var(--color-red)">*</span></label><input type="date" name="Expiry Date" class="input dynamic-attr" required></div>`;
         } else if (property.includes(cat)) {
             html = `
                 <div class="dyn-title">Property Details</div>
                 <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Type</label><input type="text" name="property_type" class="input dynamic-attr" placeholder="e.g. 2 Bed Flat, Self Con"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Payment Cycle</label><select name="duration" class="input dynamic-attr"><option value="Per Year">Per Year</option><option value="Per Month">Per Month</option><option value="Per Night">Per Night (Hotels)</option></select></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Type</label><input type="text" name="Property Type" class="input dynamic-attr" placeholder="e.g. 2 Bed Flat, Self Con"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Payment Cycle</label><select name="Payment Cycle" class="input dynamic-attr"><option value="Per Year">Per Year</option><option value="Per Month">Per Month</option><option value="Per Night">Per Night (Hotels)</option></select></div>
                 </div>`;
         }
 
@@ -889,6 +916,7 @@
                 discountPrice = priceVal - (priceVal * (discountPercent / 100));
             }
 
+            // Collect all dynamic attributes PLUS the new Key Features, Box Content, and Warranty
             let attributes = {};
             document.querySelectorAll('.dynamic-attr').forEach(input => {
                 if (input.value.trim() !== '') {
@@ -921,7 +949,7 @@
             const { error: insertError } = await client.from('products').insert({
                 shop_id: parseInt(shopId),
                 name: document.getElementById('name').value.trim(),
-                description: document.getElementById('desc').value.trim(),
+                description: document.getElementById('desc').value.trim(), // Only the "Full Description" maps to this column
                 price: priceVal,
                 discount_price: discountPrice,
                 condition: document.getElementById('condition').value,
@@ -930,7 +958,7 @@
                 image_url_2: url2,
                 image_url_3: url3,
                 stock_count: stockCount,
-                attributes: attributes,
+                attributes: attributes, // Key Features, Warranty, etc. safely stored here!
                 is_available: stockCount > 0
             });
             
