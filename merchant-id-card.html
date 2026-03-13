@@ -88,7 +88,7 @@
         /* --- STRICT DIGITAL ID CARD STYLES ---      */
         /* ========================================== */
         .id-card-wrapper {
-            /* Standard ID Card Aspect Ratio */
+            /* Strict fixed dimensions to prevent any layout shifting */
             width: 380px;
             height: 240px; 
             background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
@@ -96,17 +96,16 @@
             padding: 20px;
             box-shadow: 0 15px 30px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.2);
             position: relative;
-            overflow: hidden; /* Prevents absolutely any overflow */
+            overflow: hidden; 
             color: white;
             border: 1px solid rgba(255,255,255,0.15);
-            /* Scaling for smaller mobile screens */
             transform-origin: top center;
         }
 
         @media (max-width: 400px) {
             .id-card-wrapper {
                 transform: scale(0.85);
-                margin-bottom: -30px; /* Adjust spacing due to scale */
+                margin-bottom: -30px; 
             }
         }
 
@@ -122,7 +121,7 @@
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            opacity: 0.06; /* Very faint */
+            opacity: 0.06;
             z-index: 0;
             pointer-events: none;
         }
@@ -135,35 +134,61 @@
             flex-direction: column;
         }
 
-        /* Header: Repo Name, URL & Profile Pic */
+        /* Header: Left Col (Title, URL, Badge) & Right Col (Profile Pic) */
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 12px; /* Slightly reduced to fit the new badge */
+            margin-bottom: 6px; 
         }
         
-        .header-titles {
+        .header-left-col {
             display: flex;
             flex-direction: column;
             gap: 2px;
         }
 
         .repo-title {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 900;
             color: var(--color-pink);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            line-height: 1.3;
+            line-height: 1.2;
             max-width: 240px;
         }
         
         .repo-website {
             font-size: 0.6rem;
             font-weight: 700;
-            color: #FBBF24; /* Matches Gold ID text */
+            color: #FBBF24;
             letter-spacing: 0.5px;
+        }
+
+        /* Grouped the badge inside the header left column to fill the gap! */
+        .verified-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px; /* Safe space from URL */
+        }
+        .small-badge-logo {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            background: white;
+            padding: 1px;
+            object-fit: contain;
+        }
+        .verified-text {
+            color: #10B981;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
         
         .profile-pic {
@@ -177,52 +202,26 @@
             flex-shrink: 0;
         }
 
-        /* Body: Info Rows */
+        /* Body: Info Rows (Pulled up safely from the bottom) */
         .card-body {
             display: flex;
             flex-direction: column;
-            gap: 8px; /* Tighter gap to fit everything perfectly */
-            flex: 1;
-        }
-
-        /* NEW: Verified Badge Row */
-        .verified-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 4px;
-        }
-        .small-badge-logo {
-            width: 18px;
-            height: 18px;
-            border-radius: 4px;
-            background: white;
-            padding: 1px;
-            object-fit: contain;
-        }
-        .verified-text {
-            color: #10B981; /* Premium Green */
-            font-size: 0.7rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            gap: 10px;
+            margin-top: 8px;
         }
 
         .info-group {
             display: flex;
             flex-direction: column;
-            gap: 2px;
         }
         
         .info-label {
-            font-size: 0.55rem;
+            font-size: 0.6rem;
             color: #94A3B8;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
+            margin-bottom: 2px;
         }
         
         .info-value {
@@ -232,27 +231,26 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 270px; /* Leave space for QR code on the right */
+            max-width: 270px; 
         }
         
         .info-value.b-name {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             font-weight: 800;
-            color: #FFFFFF;
         }
 
         /* Footer Row for ID and Expiry */
         .card-footer-row {
             display: flex;
             gap: 32px;
-            margin-top: auto; /* Pushes to bottom */
+            margin-top: 6px; 
         }
 
         .id-text {
             font-family: monospace;
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             letter-spacing: 1px;
-            color: #FBBF24; /* Gold color for ID */
+            color: #FBBF24;
         }
 
         /* QR Code placed absolute bottom right */
@@ -272,7 +270,6 @@
             overflow: hidden;
         }
         
-        /* Force the inner QR code to scale down to fit the 64px wrapper */
         #qrcode {
             width: 100%;
             height: 100%;
@@ -373,21 +370,22 @@
                 
                 <div class="card-inner">
                     <div class="card-header">
-                        <div class="header-titles">
+                        <div class="header-left-col">
                             <div class="repo-title">CTMerchant <span id="card-city">...</span> Repo</div>
                             <div class="repo-website">www.ctmerchant.com.ng</div>
+                            
+                            <!-- VERIFIED BADGE MOVED UP HERE TO FILL GAP -->
+                            <div class="verified-row">
+                                <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="small-badge-logo" crossorigin="anonymous" alt="Logo">
+                                <span class="verified-text"><i class="fa-solid fa-circle-check"></i> Verified Merchant</span>
+                            </div>
                         </div>
                         <!-- crossorigin="anonymous" is crucial for html2canvas to save the image -->
                         <img id="card-profile-pic" class="profile-pic" src="" crossorigin="anonymous" alt="Profile">
                     </div>
 
+                    <!-- TEXT INFO MOVED UP -->
                     <div class="card-body">
-                        <!-- NEW VERIFIED BADGE ROW -->
-                        <div class="verified-row">
-                            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="small-badge-logo" crossorigin="anonymous" alt="Logo">
-                            <span class="verified-text"><i class="fa-solid fa-circle-check"></i> Verified Merchant</span>
-                        </div>
-
                         <div class="info-group">
                             <div class="info-label">Business Name</div>
                             <div class="info-value b-name" id="card-shop-name">...</div>
@@ -417,7 +415,7 @@
                 </div>
             </div>
 
-            <!-- ACTION BUTTONS (SWAPPED) -->
+            <!-- ACTION BUTTONS -->
             <div class="action-box">
                 <!-- Primary Share Button -->
                 <button onclick="shareLink()" class="btn-brand" id="btn-share">
@@ -450,10 +448,9 @@
                 return;
             }
 
-            // 1. Fetch Shop details along with the City Name
             const { data: shop, error: shopErr } = await client
                 .from('shops')
-                .select('id, name, unique_id, category, is_verified, cities(name)')
+                .select('id, name, unique_id, is_verified, cities(name)')
                 .eq('owner_id', session.user.id)
                 .maybeSingle();
 
@@ -465,7 +462,6 @@
                 return;
             }
 
-            // --- STRICT VERIFICATION CHECK ---
             if (!shop.is_verified) {
                 alert("🔒 Access Denied: Your shop must be Physically Verified by a CTMerchant agent before you can generate a Digital ID Card.");
                 window.location.href = "merchant-dashboard.html";
@@ -474,7 +470,6 @@
 
             currentShop = shop;
 
-            // 2. Fetch User Profile for Avatar and Proprietor Name
             const { data: profile, error: profErr } = await client
                 .from('profiles')
                 .select('avatar_url, full_name')
