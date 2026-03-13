@@ -1,133 +1,266 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Terms of Use | CTMerchant</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Terms of Use | CTMerchant</title>
+    
+    <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+    <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
 
-  <!-- Favicons for browser tab -->
-  <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
-  <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --amz-dark: #131921;
+            --color-pink: #db2777; 
+            --color-pink-hover: #be185d;
+            --color-pink-light: rgba(219, 39, 119, 0.15);
+            --amz-bg: #F3F4F6;
+            --color-text-main: #0F1111;
+            --color-text-muted: #565959;
+            --color-border: #D5D9D9;
+        }
 
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="terms.css">
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--amz-bg); 
+            color: var(--color-text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+
+        /* --- PREMIUM HEADER --- */
+        .app-header {
+            background-color: var(--amz-dark);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 16px;
+            max-width: 680px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .back-btn { 
+            background: none; border: none; color: white; 
+            font-size: 1.2rem; cursor: pointer; padding: 4px; 
+            margin-left: -4px; transition: 0.2s;
+        }
+        .back-btn:hover { color: var(--color-pink); }
+        
+        .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; }
+
+        /* --- MAIN CONTAINER --- */
+        .container { 
+            width: 100%; 
+            max-width: 680px; 
+            padding: 20px; 
+            flex: 1;
+        }
+
+        .edu-box { 
+            background: #F8FAFC; 
+            border: 1px solid #E2E8F0; 
+            border-radius: 8px; 
+            padding: 16px; 
+            margin-bottom: 24px; 
+            border-left: 4px solid var(--color-pink);
+        }
+        .edu-title { 
+            font-size: 0.95rem; font-weight: 800; color: #0F1111; 
+            margin-bottom: 8px; display: flex; align-items: center; gap: 8px; 
+        }
+        .edu-text { 
+            font-size: 0.85rem; color: #475569; line-height: 1.5; margin-bottom: 0; 
+        }
+
+        /* --- CARDS & TYPOGRAPHY --- */
+        .card { 
+            background: white; 
+            padding: 24px; 
+            border-radius: 8px; 
+            border: 1px solid var(--color-border); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+            margin-bottom: 20px;
+        }
+
+        .section-title { 
+            font-size: 1.1rem; font-weight: 800; color: var(--color-text-main); 
+            margin-bottom: 12px; display: flex; align-items: center; gap: 10px;
+        }
+        .section-title i {
+            color: #007185;
+            font-size: 1.2rem;
+        }
+
+        .text-content {
+            font-size: 0.95rem;
+            color: var(--color-text-muted);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .text-content:last-child { margin-bottom: 0; }
+
+        .terms-list {
+            list-style: none;
+            margin-top: 12px;
+            margin-bottom: 12px;
+        }
+        .terms-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            color: var(--color-text-muted);
+            line-height: 1.5;
+        }
+        .terms-list li i {
+            color: var(--amz-link); 
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        /* --- CALL TO ACTION --- */
+        .cta-box {
+            background: #F8FAFC; 
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+        }
+        .cta-title { font-size: 1.15rem; font-weight: 800; color: #0F1111; margin-bottom: 8px; }
+        .cta-text { font-size: 0.95rem; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 20px; }
+
+        .btn-brand {
+            background: var(--color-pink); 
+            border: 1px solid var(--color-pink-hover); 
+            border-radius: 8px; 
+            padding: 14px 24px; 
+            color: white; 
+            font-weight: 700; 
+            cursor: pointer; 
+            box-shadow: 0 2px 5px 0 rgba(219,39,119,0.3); 
+            transition: 0.2s; 
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-brand:hover { background: var(--color-pink-hover); transform: translateY(-1px); }
+
+        /* --- FOOTER --- */
+        .footer {
+            margin-top: auto; padding: 20px; text-align: center;
+            font-size: 0.8rem; color: #888C8C; width: 100%; border-top: 1px solid #D5D9D9;
+        }
+    </style>
 </head>
 <body>
-<nav class="main-header">
-  <div class="container nav-container">
-    <a href="index.html" class="brand-wrapper">
-      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
-      <span style="font-size:1.125rem;font-weight:800;color:#fff;letter-spacing:.05em">CTMerchant</span>
-    </a>
-    <div class="desktop-menu">
-      <a href="index.html">Home</a>
-      <a href="about.html">About</a>
-      <a href="services.html">Services</a>
-      <a href="affiliate.html">Affiliate</a>
-      <a href="careers.html">Careers</a>
-      <a href="contact.html">Contact</a>
-      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
+
+    <header class="app-header">
+        <div class="header-content">
+            <button onclick="goSmartBack()" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="page-title">Terms of Use</div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div class="edu-box">
+            <h4 class="edu-title"><i class="fa-solid fa-scale-balanced"></i> Legal Agreement</h4>
+            <p class="edu-text">These terms govern access to and use of the CTMerchant digital repository platform. By accessing or using the platform, you agree to these Terms & Conditions.</p>
+            <p class="edu-text" style="margin-top: 8px; font-weight: 700; color: #0F1111;">Effective Date: March 2026</p>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title"><i class="fa-solid fa-handshake"></i> 1. Introduction & Scope</h2>
+            <p class="text-content">
+                CTMerchant (“we”, “our”) operates a digital repository that lists physical shops, their products, and their locations within a city for discovery and informational purposes only.
+            </p>
+            <p class="text-content" style="font-weight: 700; color: #0F1111; background: #F3F4F6; padding: 10px; border-radius: 6px; margin-top: 12px;">
+                CTMerchant is not an online marketplace, agent, broker, or seller. We do not facilitate payments, deliveries, escrow services, or commercial transactions. All interactions and transactions between users and shops occur entirely independently of CTMerchant.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title"><i class="fa-solid fa-list-check"></i> 2. User & Merchant Responsibilities</h2>
+            <p class="text-content">By utilizing this platform, users and merchants agree to:</p>
+            <ul class="terms-list">
+                <li><i class="fa-solid fa-circle-check"></i> Provide information that is accurate to the best of their knowledge.</li>
+                <li><i class="fa-solid fa-circle-check"></i> Use the platform strictly for lawful discovery and communication purposes.</li>
+                <li><i class="fa-solid fa-circle-check"></i> Independently verify business details, pricing, quality, and availability before engaging in any transaction.</li>
+                <li><i class="fa-solid fa-circle-check"></i> Comply with all applicable local, state, and federal laws and regulations.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title"><i class="fa-solid fa-store-slash"></i> 3. Listings & Availability</h2>
+            <p class="text-content">
+                Listings provided on CTMerchant are informational only and may change at any time without notice. Any request, inquiry, or intent to purchase communicated through the platform or via third-party apps (e.g., WhatsApp) is non-binding. 
+            </p>
+            <p class="text-content">
+                CTMerchant does not guarantee seller response times, product availability, or fulfillment of any inquiries made.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title"><i class="fa-solid fa-shield-check"></i> 4. Verification & Endorsement</h2>
+            <p class="text-content">
+                <strong>Physical Verification:</strong> CTMerchant performs basic physical verification of a merchant's existence and location accuracy to ensure the integrity of the repository. This is intended solely to confirm that a listed shop is an active physical entity at the stated address.
+            </p>
+            <p class="text-content">
+                <strong>Limitation of Verification:</strong> While we verify physical existence, CTMerchant does not audit, certify, or guarantee the quality, safety, authenticity, or legality of any products offered by the merchant. A "Verified" status on our platform relates strictly to location and identity; it does not imply an endorsement of the merchant's financial standing or regulatory status.
+            </p>
+            <p class="text-content">
+                <strong>Independent Entity:</strong> CTMerchant is an independent private technology company and is not affiliated with any government or regulatory agencies.
+            </p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid #DC2626;">
+            <h2 class="section-title" style="color: #DC2626;"><i class="fa-solid fa-triangle-exclamation" style="color: #DC2626;"></i> 5. Limitation of Liability</h2>
+            <p class="text-content">
+                To the maximum extent permitted by law, CTMerchant and its affiliates shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from your use of the platform. Because we do not intermediate transactions, we cannot be held responsible for financial losses, defective goods, or disputes arising between buyers and sellers discovered via our repository.
+            </p>
+        </div>
+
+        <div class="cta-box">
+            <h2 class="cta-title">Questions regarding these terms?</h2>
+            <p class="cta-text">
+                Our team is available to provide clarification regarding our platform policies and limitations.
+            </p>
+            <a href="help-support.html" class="btn-brand">Contact Support</a>
+        </div>
+
     </div>
-    <button class="mobile-menu-btn" id="menu-btn">
-      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
-      </svg>
-    </button>
-  </div>
-  <div class="mobile-dropdown hidden" id="mobile-menu">
-      <a href="index.html">Home</a>
-      <a href="about.html">About</a>
-      <a href="services.html">Services</a>
-      <a href="affiliate.html">Affiliate</a>
-      <a href="careers.html">Careers</a>
-      <a href="contact.html">Contact</a>
-      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
-  </div>
-</nav>
 
-<section class="terms-hero">
-  <div class="container">
-    <h1 class="terms-title">Terms of Use</h1>
-    <div class="divider-line divider-center"></div>
-    <p class="terms-subtitle">
-      These terms govern access to and use of the CTMerchant digital repository platform.
-    </p>
-    <div class="effective-date">Effective Date: January 15, 2026</div>
-  </div>
-</section>
+    <footer class="footer">
+        © 2026 CT-MERCHANT LTD. | RC: 8879163
+    </footer>
 
-<div class="terms-container">
-  <section id="introduction" class="terms-section">
-    <h2 class="section-heading">1. Introduction</h2>
-    <div class="terms-card">
-      CTMerchant (“we”, “our”) operates a digital repository that lists physical shops, their products, and their locations within a city for discovery and informational purposes only. By accessing or using the platform, you agree to these Terms & Conditions.
-    </div>
-  </section>
-
-  <section class="terms-section">
-    <h2 class="section-heading">2. Platform Scope</h2>
-    <div class="terms-card">
-      CTMerchant is not an online marketplace, agent, broker or seller. We do not facilitate payments, deliveries, escrow services, or commercial transactions. All interactions between users and shops occur independently of CTMerchant.
-    </div>
-  </section>
-
-  <section class="terms-section">
-    <h2 class="section-heading">3. User Responsibilities</h2>
-    <div class="terms-card">
-      Users agree to:
-      <ul class="terms-list">
-        <li>Provide information that is accurate to the best of their knowledge.</li>
-        <li>Use the platform only for lawful discovery and communication purposes.</li>
-        <li>Independently verify business details, pricing, and availability.</li>
-        <li>Comply with all applicable local laws and regulations.</li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="terms-section">
-    <h2 class="section-heading">4. Listings & Requests</h2>
-    <div class="terms-card">
-      Listings are informational only and may change at any time. Any request, inquiry, or reservation made through the platform is non-binding. CTMerchant does not guarantee seller response, availability, or fulfillment.
-    </div>
-  </section>
-
-  <section class="terms-section">
-    <h2 class="section-heading">5. Verification & Endorsement</h2>
-    <div class="terms-card">
-      <p style="margin-bottom:1rem">
-        <strong>Physical Verification:</strong> CTMerchant performs basic physical verification of a merchant's existence and location accuracy to ensure the integrity of the repository. This is intended solely to confirm that a listed shop is an active physical entity at the stated address.
-      </p>
-      <p style="margin-bottom:1rem">
-        <strong>Limitation of Verification:</strong> While we verify physical existence, CTMerchant does not audit, certify, or guarantee the quality, safety, or legality of any products offered by the merchant. A "Verified" status on our platform relates strictly to <strong>location and identity</strong>; it does not imply an endorsement of the merchant's financial standing, tax compliance, or regulatory status.
-      </p>
-      <p>
-        <strong>Independent Entity:</strong> CTMerchant is an independent private digital service provider. We are not an agent of, nor affiliated with, the Corporate Affairs Commission (CAC), the Federal Inland Revenue Service (FIRS), or any other government regulatory agency.
-      </p>
-    </div>
-  </section>
-
-  <section class="terms-cta-box">
-    <h2 class="cta-heading">Questions?</h2>
-    <p class="cta-text">Contact us if you need clarification regarding these Terms.</p>
-    <a href="contact.html" class="btn-support">Contact Support</a>
-  </section>
-</div>
-
-<footer class="footer">
-  <div class="container footer-container">
-    <span style="font-weight:700;color:#fff">© 2026 CT-MERCHANT LTD.</span>
-    <div class="footer-links">
-      <a href="privacy.html">Privacy Policy</a>
-      <a href="terms.html" style="color:#fff">Terms of Use</a>
-      <span>RC: 8879163</span>
-    </div>
-  </div>
-</footer>
-
-<script>
-  const mBtn=document.getElementById('menu-btn'),mMenu=document.getElementById('mobile-menu');mBtn&&(mBtn.onclick=()=>mMenu.classList.toggle('hidden'));
-</script>
+    <script>
+        function goSmartBack() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('src') === 'dash') {
+                window.location.href = 'user-dashboard.html?tab=services';
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
 </body>
 </html>
