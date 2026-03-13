@@ -85,9 +85,10 @@
         .edu-text { font-size: 0.85rem; color: #475569; line-height: 1.5; }
 
         /* ========================================== */
-        /* --- DIGITAL ID CARD STYLES ---             */
+        /* --- STRICT DIGITAL ID CARD STYLES ---      */
         /* ========================================== */
         .id-card-wrapper {
+            /* Standard ID Card Aspect Ratio */
             width: 380px;
             height: 240px; 
             background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
@@ -95,19 +96,21 @@
             padding: 20px;
             box-shadow: 0 15px 30px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.2);
             position: relative;
-            overflow: hidden; 
+            overflow: hidden; /* Prevents absolutely any overflow */
             color: white;
             border: 1px solid rgba(255,255,255,0.15);
+            /* Scaling for smaller mobile screens */
             transform-origin: top center;
         }
 
         @media (max-width: 400px) {
             .id-card-wrapper {
                 transform: scale(0.85);
-                margin-bottom: -30px; 
+                margin-bottom: -30px; /* Adjust spacing due to scale */
             }
         }
 
+        /* CTMerchant Watermark */
         .card-watermark {
             position: absolute;
             top: 50%;
@@ -119,7 +122,7 @@
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            opacity: 0.06;
+            opacity: 0.06; /* Very faint */
             z-index: 0;
             pointer-events: none;
         }
@@ -132,6 +135,7 @@
             flex-direction: column;
         }
 
+        /* Header: Repo Name, URL & Profile Pic */
         .card-header {
             display: flex;
             justify-content: space-between;
@@ -158,7 +162,7 @@
         .repo-website {
             font-size: 0.6rem;
             font-weight: 700;
-            color: #FBBF24;
+            color: #FBBF24; /* Matches Gold ID text */
             letter-spacing: 0.5px;
         }
         
@@ -173,6 +177,7 @@
             flex-shrink: 0;
         }
 
+        /* Body: Info Rows */
         .card-body {
             display: flex;
             flex-direction: column;
@@ -201,7 +206,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 270px;
+            max-width: 270px; /* Leave space for QR code on the right */
         }
         
         .info-value.b-name {
@@ -210,19 +215,21 @@
             color: #FFFFFF;
         }
 
+        /* Footer Row for ID and Expiry */
         .card-footer-row {
             display: flex;
             gap: 32px;
-            margin-top: auto; 
+            margin-top: auto; /* Pushes to bottom */
         }
 
         .id-text {
             font-family: monospace;
             font-size: 1.1rem;
             letter-spacing: 1px;
-            color: #FBBF24;
+            color: #FBBF24; /* Gold color for ID */
         }
 
+        /* QR Code placed absolute bottom right */
         .qr-wrapper {
             position: absolute;
             bottom: 0;
@@ -239,6 +246,7 @@
             overflow: hidden;
         }
         
+        /* Force the inner QR code to scale down to fit the 64px wrapper */
         #qrcode {
             width: 100%;
             height: 100%;
@@ -255,6 +263,7 @@
 
         /* ========================================== */
 
+        /* Buttons */
         .action-box {
             width: 100%;
             max-width: 380px;
@@ -298,9 +307,10 @@
         .btn-outline:hover:not(:disabled) { background: #F7FAFA; border-color: #B0B5B5; }
         .btn-brand:disabled, .btn-outline:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
-        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-top-color: currentColor; border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Loader */
         #loader { margin-top: 50px; text-align: center; }
         #loader .spinner { border-color: rgba(0,0,0,0.1); border-top-color: var(--color-pink); width: 40px; height: 40px; border-width: 4px; }
     </style>
@@ -341,6 +351,7 @@
                             <div class="repo-title">CTMerchant <span id="card-city">...</span> Repo</div>
                             <div class="repo-website">www.ctmerchant.com.ng</div>
                         </div>
+                        <!-- crossorigin="anonymous" is crucial for html2canvas to save the image -->
                         <img id="card-profile-pic" class="profile-pic" src="" crossorigin="anonymous" alt="Profile">
                     </div>
 
@@ -351,6 +362,7 @@
                         </div>
                         
                         <div class="info-group">
+                            <!-- Changed from Category to Proprietor -->
                             <div class="info-label">Proprietor</div>
                             <div class="info-value" id="card-proprietor-name">...</div>
                         </div>
@@ -402,6 +414,7 @@
                 return;
             }
 
+            // 1. Fetch Shop details along with the City Name
             const { data: shop, error: shopErr } = await client
                 .from('shops')
                 .select('id, name, unique_id, category, is_verified, cities(name)')
@@ -416,6 +429,7 @@
                 return;
             }
 
+            // --- STRICT VERIFICATION CHECK ---
             if (!shop.is_verified) {
                 alert("🔒 Access Denied: Your shop must be Physically Verified by a CTMerchant agent before you can generate a Digital ID Card.");
                 window.location.href = "merchant-dashboard.html";
@@ -424,6 +438,7 @@
 
             currentShop = shop;
 
+            // 2. Fetch User Profile for Avatar and Proprietor Name
             const { data: profile, error: profErr } = await client
                 .from('profiles')
                 .select('avatar_url, full_name')
@@ -446,27 +461,33 @@
         document.getElementById('loader').style.display = 'none';
         document.getElementById('card-ui').style.display = 'flex';
 
-        // Dynamic Expiry Year
+        // Set Dynamic Expiry Date (Current Year + 1)
         const currentYear = new Date().getFullYear();
         document.getElementById('card-expiry').textContent = currentYear + 1;
 
+        // Populate Text Fields
         document.getElementById('card-city').textContent = shop.cities?.name || "Local";
         document.getElementById('card-shop-name').textContent = shop.name;
         document.getElementById('card-proprietor-name').textContent = proprietorName; 
         document.getElementById('card-shop-id').textContent = shop.unique_id || 'PENDING';
+        
+        // Profile Pic
         document.getElementById('card-profile-pic').src = avatarUrl;
 
-        // QR Code points to shop-detail directly!
-        const shopUrl = `https://ct-merchant.com.ng/shop-detail.html?id=${shop.id}`;
+        // Generate QR Code using the proper domain (no hyphen)
+        const shopUrl = `https://ctmerchant.com.ng/shop-detail.html?id=${shop.id}`;
         
         document.getElementById('qrcode').innerHTML = '';
+        
+        // FIX: Generate the QR code at a HIGH RESOLUTION (256x256) so it is sharp, 
+        // then CSS will scale it down to fit in the 64px box.
         new QRCode(document.getElementById("qrcode"), {
             text: shopUrl,
-            width: 256, // High res for sharp scanning
+            width: 256, 
             height: 256,
             colorDark : "#000000",
             colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.M
+            correctLevel : QRCode.CorrectLevel.M // Medium Error correction
         });
     }
 
@@ -474,8 +495,8 @@
     async function generateCardBlob() {
         const captureArea = document.getElementById('capture-area');
         const canvas = await html2canvas(captureArea, {
-            scale: 3, 
-            useCORS: true, 
+            scale: 3, // High resolution for sharp printing/sharing
+            useCORS: true, // Crucial for loading cross-origin images (avatars)
             backgroundColor: null 
         });
         return new Promise(resolve => {
@@ -514,7 +535,8 @@
         btn.disabled = true;
 
         try {
-            const shopUrl = `https://ct-merchant.com.ng/shop-detail.html?id=${currentShop.id}`;
+            // Using the proper domain (no hyphen)
+            const shopUrl = `https://ctmerchant.com.ng/shop-detail.html?id=${currentShop.id}`;
             const textContent = `Check out my shop "${currentShop.name}" on CTMerchant!\n\nLink: ${shopUrl}`;
             
             // 1. Generate the image first
