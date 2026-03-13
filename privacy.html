@@ -1,144 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Privacy Policy | CTMerchant</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Privacy Policy | CTMerchant</title>
+    
+    <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+    <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
 
-  <!-- Favicons for browser tab -->
-  <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
-  <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --amz-dark: #131921;
+            --color-pink: #db2777; 
+            --color-pink-hover: #be185d;
+            --color-pink-light: rgba(219, 39, 119, 0.15);
+            --amz-bg: #F3F4F6;
+            --color-text-main: #0F1111;
+            --color-text-muted: #565959;
+            --color-border: #D5D9D9;
+        }
 
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="privacy.css">
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--amz-bg); 
+            color: var(--color-text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+
+        /* --- PREMIUM HEADER --- */
+        .app-header {
+            background-color: var(--amz-dark);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 16px;
+            max-width: 680px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .back-btn { 
+            background: none; border: none; color: white; 
+            font-size: 1.2rem; cursor: pointer; padding: 4px; 
+            margin-left: -4px; transition: 0.2s;
+        }
+        .back-btn:hover { color: var(--color-pink); }
+        
+        .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; }
+
+        /* --- MAIN CONTAINER --- */
+        .container { 
+            width: 100%; 
+            max-width: 680px; 
+            padding: 20px; 
+            flex: 1;
+        }
+
+        .edu-box { 
+            background: #F8FAFC; 
+            border: 1px solid #E2E8F0; 
+            border-radius: 8px; 
+            padding: 16px; 
+            margin-bottom: 24px; 
+            border-left: 4px solid var(--color-pink);
+        }
+        .edu-title { 
+            font-size: 0.95rem; font-weight: 800; color: #0F1111; 
+            margin-bottom: 8px; display: flex; align-items: center; gap: 8px; 
+        }
+        .edu-text { 
+            font-size: 0.85rem; color: #475569; line-height: 1.5; margin-bottom: 0; 
+        }
+
+        /* --- CARDS & TYPOGRAPHY --- */
+        .card { 
+            background: white; 
+            padding: 24px; 
+            border-radius: 8px; 
+            border: 1px solid var(--color-border); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+            margin-bottom: 20px;
+        }
+
+        .section-title { 
+            font-size: 1.1rem; font-weight: 800; color: var(--color-text-main); 
+            margin-bottom: 12px; display: flex; align-items: center; gap: 10px;
+        }
+        .section-title i {
+            color: #007185;
+            font-size: 1.2rem;
+        }
+
+        .text-content {
+            font-size: 0.95rem;
+            color: var(--color-text-muted);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .text-content:last-child { margin-bottom: 0; }
+
+        .privacy-list {
+            list-style: none;
+            margin-top: 12px;
+            margin-bottom: 12px;
+        }
+        .privacy-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            color: var(--color-text-muted);
+            line-height: 1.5;
+        }
+        .privacy-list li i {
+            color: var(--color-pink); 
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        /* --- CALL TO ACTION --- */
+        .cta-box {
+            background: #F8FAFC; 
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+        }
+        .cta-title { font-size: 1.15rem; font-weight: 800; color: #0F1111; margin-bottom: 8px; }
+        .cta-text { font-size: 0.95rem; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 20px; }
+
+        .btn-brand {
+            background: var(--color-pink); 
+            border: 1px solid var(--color-pink-hover); 
+            border-radius: 8px; 
+            padding: 14px 24px; 
+            color: white; 
+            font-weight: 700; 
+            cursor: pointer; 
+            box-shadow: 0 2px 5px 0 rgba(219,39,119,0.3); 
+            transition: 0.2s; 
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-brand:hover { background: var(--color-pink-hover); transform: translateY(-1px); }
+
+        /* --- FOOTER --- */
+        .footer {
+            margin-top: auto; padding: 20px; text-align: center;
+            font-size: 0.8rem; color: #888C8C; width: 100%; border-top: 1px solid #D5D9D9;
+        }
+    </style>
 </head>
 <body>
-<nav class="main-header">
-  <div class="container nav-container">
-    <a href="index.html" class="brand-wrapper">
-      <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" class="brand-logo">
-      <span style="font-size:1.125rem;font-weight:800;color:#fff;letter-spacing:.05em">CTMerchant</span>
-    </a>
-    <div class="desktop-menu">
-      <a href="index.html">Home</a>
-      <a href="about.html">About</a>
-      <a href="services.html">Services</a>
-      <a href="affiliate.html">Affiliate</a>
-      <a href="careers.html">Careers</a>
-      <a href="contact.html">Contact</a>
-      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
+
+    <header class="app-header">
+        <div class="header-content">
+            <button onclick="goSmartBack()" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="page-title">Privacy Policy</div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div class="edu-box">
+            <h4 class="edu-title"><i class="fa-solid fa-shield-halved"></i> Data Protection Commitment</h4>
+            <p class="edu-text">This policy explains how CTMerchant collects, uses, and protects personal information in compliance with the Nigeria Data Protection Regulation (NDPR) and global app store guidelines.</p>
+            <p class="edu-text" style="margin-top: 8px; font-weight: 700; color: #0F1111;">Last Updated: March 2026</p>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title"><i class="fa-solid fa-book-open"></i> 1. Introduction</h2>
+            <p class="text-content">
+                CTMerchant (“we”, “our”) operates a digital repository that lists physical shops, products, and locations for discovery and informational purposes only. This Privacy Policy describes how personal data is handled when you use our web and mobile platforms.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title"><i class="fa-solid fa-database"></i> 2. Information We Collect</h2>
+            <p class="text-content">We collect limited information necessary to operate and improve the platform securely, including:</p>
+            <ul class="privacy-list">
+                <li><i class="fa-solid fa-circle-check"></i> <strong>Account Information:</strong> Name, email address, phone number, and authentication tokens (e.g., via Google Sign-In).</li>
+                <li><i class="fa-solid fa-circle-check"></i> <strong>Business Data:</strong> Shop listings, physical addresses, coordinates, and product details voluntarily provided by merchants.</li>
+                <li><i class="fa-solid fa-circle-check"></i> <strong>Technical Data:</strong> IP addresses, device types, and usage statistics (utilized strictly for security profiling and preventing platform abuse).</li>
+                <li><i class="fa-solid fa-circle-check"></i> <strong>AI Interactions:</strong> Non-personally identifiable queries sent to our AI Assistant to improve product discovery.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title"><i class="fa-solid fa-gears"></i> 3. How We Use Information</h2>
+            <p class="text-content">We use collected information solely to:</p>
+            <ul class="privacy-list">
+                <li><i class="fa-solid fa-circle-check"></i> Provide, secure, and maintain the digital repository.</li>
+                <li><i class="fa-solid fa-circle-check"></i> Display accurate shop listings, product information, and map locations.</li>
+                <li><i class="fa-solid fa-circle-check"></i> Enable direct communication between users and listed shops via WhatsApp or phone.</li>
+                <li><i class="fa-solid fa-circle-check"></i> Enforce community guidelines and block malicious IP addresses.</li>
+            </ul>
+            <p class="text-content" style="font-weight: 700; color: #0F1111; background: #F3F4F6; padding: 10px; border-radius: 6px; margin-top: 12px;">
+                Important: CTMerchant does not use personal data for payment processing, credit assessments, or financial transactions.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title"><i class="fa-solid fa-cookie-bite"></i> 4. Cookies & Local Storage</h2>
+            <p class="text-content">
+                CTMerchant utilizes local storage technologies (often referred to as caching) to dramatically improve platform performance and reduce data consumption for our users. We also use local storage to monitor free-tier usage of our AI Assistant. These caches do not track your activity across other websites.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title"><i class="fa-solid fa-share-from-square"></i> 5. Data Sharing</h2>
+            <p class="text-content">CTMerchant <strong>does not sell</strong> your personal data. Information may be shared only under the following circumstances:</p>
+            <ul class="privacy-list">
+                <li><i class="fa-solid fa-circle-check"></i> When users voluntarily initiate contact (e.g., clicking to WhatsApp) with listed shops.</li>
+                <li><i class="fa-solid fa-circle-check"></i> With highly secure, trusted cloud infrastructure providers (e.g., Supabase) strictly for platform hosting.</li>
+                <li><i class="fa-solid fa-circle-check"></i> When formally required by law enforcement or valid legal requests.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title"><i class="fa-solid fa-lock"></i> 6. Data Security & Account Deletion</h2>
+            <p class="text-content">
+                <strong>Security:</strong> All data is securely hosted on enterprise-grade cloud infrastructure with Row-Level Security (RLS) and advanced encryption protocols. Access to personal and merchant data is strictly limited.
+            </p>
+            <p class="text-content">
+                <strong>Account Deletion (Your Right to Erasure):</strong> You may request the complete deletion of your account and associated data at any time. To do so, please contact our support team at <a href="mailto:support@ct-merchant.com.ng" style="color: var(--amz-link);">support@ct-merchant.com.ng</a>. Upon receiving a verified request, we will erase your personal data from our active databases within 30 days.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title"><i class="fa-solid fa-scale-balanced"></i> 7. Your Privacy Rights</h2>
+            <p class="text-content">In compliance with data protection laws, you have the right to:</p>
+            <ul class="privacy-list">
+                <li><i class="fa-solid fa-circle-check"></i> Access the personal data we hold about you.</li>
+                <li><i class="fa-solid fa-circle-check"></i> Request correction of inaccurate or incomplete data.</li>
+                <li><i class="fa-solid fa-circle-check"></i> Request deletion of your data (as outlined above).</li>
+                <li><i class="fa-solid fa-circle-check"></i> Restrict or object to certain types of processing.</li>
+            </ul>
+        </div>
+
+        <div class="cta-box">
+            <h2 class="cta-title">Questions regarding your privacy?</h2>
+            <p class="cta-text">
+                Our compliance team is ready to assist you with any clarifications or data requests.
+            </p>
+            <a href="help-support.html" class="btn-brand">Contact Support</a>
+        </div>
+
     </div>
-    <button class="mobile-menu-btn" id="menu-btn">
-      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
-      </svg>
-    </button>
-  </div>
-  <div class="mobile-dropdown hidden" id="mobile-menu">
-      <a href="index.html">Home</a>
-      <a href="about.html">About</a>
-      <a href="services.html">Services</a>
-      <a href="affiliate.html">Affiliate</a>
-      <a href="careers.html">Careers</a>
-      <a href="contact.html">Contact</a>
-      <a href="staff-portal.html" class="btn-staff">Staff Portal</a>
-  </div>
-</nav>
 
-<section class="privacy-hero">
-  <div class="container">
-    <h1 class="privacy-title">Privacy Policy</h1>
-    <div class="divider-line divider-center"></div>
-    <p class="privacy-subtitle">
-      This policy explains how CTMerchant collects, uses, and protects personal information.
-    </p>
-    <div class="last-updated">Last Updated: January 15, 2026</div>
-  </div>
-</section>
+    <footer class="footer">
+        © 2026 CT-MERCHANT LTD. | RC: 8879163
+    </footer>
 
-<div class="privacy-container">
-  <section class="privacy-section">
-    <h2 class="section-heading">1. Introduction</h2>
-    <div class="privacy-card">
-      CTMerchant (“we”, “our”) operates a digital repository that lists physical shops, products, and locations for discovery and informational purposes only. This Privacy Policy describes how personal data is handled when you use our platform.
-    </div>
-  </section>
-
-  <section class="privacy-section">
-    <h2 class="section-heading">2. Information We Collect</h2>
-    <div class="privacy-card">
-      We collect limited information necessary to operate and improve the platform, including:
-      <ul class="privacy-list">
-        <li>Account information such as name, email address, and phone number.</li>
-        <li>Business listing details voluntarily provided by shop owners.</li>
-        <li>General location data (city or area) to support local discovery.</li>
-        <li>Technical data such as device type and usage statistics.</li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="privacy-section">
-    <h2 class="section-heading">3. How We Use Information</h2>
-    <div class="privacy-card">
-      We use collected information solely to:
-      <ul class="privacy-list">
-        <li>Provide and maintain the digital repository.</li>
-        <li>Display shop listings, product information, and locations.</li>
-        <li>Enable direct communication between users and listed shops.</li>
-        <li>Improve platform performance and usability.</li>
-      </ul>
-      <br>
-      CTMerchant does not use personal data for payments, credit assessment, or transaction processing.
-    </div>
-  </section>
-
-  <section class="privacy-section">
-    <h2 class="section-heading">4. Data Sharing</h2>
-    <div class="privacy-card">
-      CTMerchant does not sell personal data. Information may be shared only:
-      <ul class="privacy-list">
-        <li>When users voluntarily share contact details with listed shops.</li>
-        <li>With trusted service providers strictly for platform operations.</li>
-        <li>When required by law or lawful government request.</li>
-      </ul>
-      CTMerchant does not share data with tax authorities or third parties for enforcement purposes.
-    </div>
-  </section>
-
-  <section class="privacy-section">
-    <h2 class="section-heading">5. Data Security & Storage</h2>
-    <div class="privacy-card">
-      CTMerchant implements industry-standard security measures to protect your personal information and ensure data integrity:
-      <ul class="privacy-list">
-        <li><strong>Cloud Security:</strong> All data is securely hosted on enterprise-grade cloud infrastructure with advanced encryption protocols.</li>
-        <li><strong>Secure Transmission:</strong> We use secure communication protocols (HTTPS/SSL) to protect data transmitted over the internet.</li>
-        <li><strong>Restricted Access:</strong> Access to personal and merchant data is strictly limited to authorized personnel on a need-to-know basis.</li>
-        <li><strong>Continuous Monitoring:</strong> We regularly review and update our security practices to prevent unauthorized access, loss, or misuse of your data.</li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="privacy-cta-box">
-    <h2 class="cta-heading">Questions?</h2>
-    <p class="cta-text">Contact us if you need clarification regarding this Privacy Policy.</p>
-    <a href="contact.html" class="btn-support">Contact Support</a>
-  </section>
-</div>
-
-<footer class="footer">
-  <div class="container footer-container">
-    <span style="font-weight:700;color:#fff">© 2026 CT-MERCHANT LTD.</span>
-    <div class="footer-links">
-      <a href="privacy.html" style="color:#fff">Privacy Policy</a>
-      <a href="terms.html">Terms of Use</a>
-      <span>RC: 8879163</span>
-    </div>
-  </div>
-</footer>
-
-<script>
-  const mBtn=document.getElementById('menu-btn'),mMenu=document.getElementById('mobile-menu');mBtn&&(mBtn.onclick=()=>mMenu.classList.toggle('hidden'));
-</script>
+    <script>
+        function goSmartBack() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('src') === 'dash') {
+                window.location.href = 'user-dashboard.html?tab=services';
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
 </body>
 </html>
