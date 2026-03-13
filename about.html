@@ -3,1002 +3,438 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Add Product | CTMerchant</title>
-
+    <title>About CTMerchant | Corporate Profile</title>
+    
     <link rel="icon" type="image/png" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
     <link rel="apple-touch-icon" href="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg">
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
-
+    
     <style>
-        :root{--amz-dark:#131921;--color-pink:#db2777;--color-pink-hover:#be185d;--color-pink-light:rgba(219,39,119,.15);--amz-bg:#F3F4F6;--color-text-main:#0F1111;--color-text-muted:#565959;--color-border:#D5D9D9}
-        *{box-sizing:border-box;margin:0;padding:0;font-family:'Plus Jakarta Sans',sans-serif}
-        body{background:var(--amz-bg);color:var(--color-text-main);min-height:100vh;display:flex;flex-direction:column;align-items:center}
-        .app-header{background-color:var(--amz-dark);color:#fff;position:sticky;top:0;z-index:100;width:100%;box-shadow:0 4px 6px rgba(0,0,0,.1)}
-        .header-content{display:flex;align-items:center;gap:16px;padding:12px 16px;max-width:680px;margin:0 auto;width:100%}
-        .back-btn{background:0 0;border:none;color:#fff;font-size:1.2rem;cursor:pointer;padding:4px;margin-left:-4px;transition:.2s}
-        .back-btn:hover{color:var(--color-pink)}
-        .page-title{font-weight:700;font-size:1.15rem;letter-spacing:.5px}
-        .container{width:100%;max-width:680px;padding:20px;flex:1}
-        .card{background:#fff;padding:24px;border-radius:8px;border:1px solid var(--color-border);box-shadow:0 2px 4px rgba(0,0,0,.02)}
-        
-        .edu-box{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:16px;margin-bottom:24px}
-        .edu-title{font-size:.95rem;font-weight:800;color:#0F1111;margin-bottom:8px;display:flex;align-items:center;gap:8px}
-        .edu-text{font-size:.85rem;color:#475569;line-height:1.5;margin-bottom:0}
-
-        .limit-box { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; background: white; border-radius: 8px; border: 1px solid #D5D9D9; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-top: 20px; }
-        .limit-icon { font-size: 3.5rem; color: #F59E0B; margin-bottom: 16px; }
-        .limit-title { font-size: 1.25rem; font-weight: 800; color: #0F1111; margin-bottom: 8px; }
-        .limit-text { font-size: 0.95rem; color: #565959; line-height: 1.5; margin-bottom: 24px; max-width: 400px;}
-
-        .img-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
-        .img-picker { background: #F7F7F7; border: 2px dashed #888C8C; border-radius: 8px; aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; transition: 0.2s; text-align: center; padding: 10px; }
-        .img-picker:hover { border-color: var(--color-pink); background: var(--color-pink-light); }
-        .img-picker.main { border-color: var(--color-pink); border-width: 2px; border-style: solid; background: #fdf2f8;}
-        .img-picker i.cam { font-size: 1.8rem; color: #888C8C; margin-bottom: 8px; }
-        .img-picker.main i.cam { color: var(--color-pink); }
-        .img-picker span.lbl { font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); line-height: 1.2; }
-        .img-picker.main span.lbl { color: var(--color-pink); }
-        .preview-img { width: 100%; height: 100%; object-fit: contain; position: absolute; inset: 0; display: none; background: #fff; z-index: 5; }
-        
-        .delete-img-btn {
-            position: absolute; top: 6px; right: 6px; background: rgba(220, 38, 38, 0.95); color: white;
-            border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 15; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .delete-img-btn:hover { background: #991B1B; transform: scale(1.1); }
-
-        .savings-badge {
-            position: absolute; bottom: 6px; left: 6px; right: 6px; background: rgba(16, 185, 129, 0.95); color: white;
-            font-size: 0.65rem; font-weight: 800; padding: 4px; border-radius: 4px; z-index: 10; text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); backdrop-filter: blur(4px);
+        :root {
+            --amz-dark: #131921;
+            --color-pink: #db2777; 
+            --color-pink-hover: #be185d;
+            --color-pink-light: rgba(219, 39, 119, 0.15);
+            --amz-bg: #F3F4F6;
+            --color-text-main: #0F1111;
+            --color-text-muted: #565959;
+            --color-border: #D5D9D9;
         }
 
-        .live-preview-wrap{background:#F3F4F6;border:1px solid #D5D9D9;border-radius:8px;padding:20px;margin-bottom:24px;display:flex;flex-direction:column;align-items:center;box-shadow:inset 0 2px 4px rgba(0,0,0,.05)}
-        .shop-grid-item-wrap{display:flex;flex-direction:column;gap:4px;width:140px;overflow:hidden;background:#fff;padding:8px;border-radius:6px;box-shadow:0 2px 5px rgba(0,0,0,.08); border: 1px solid #E5E7EB;}
-        .shop-grid-item{width:100%;aspect-ratio:1/1;background:#F7F7F7;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:4px;position:relative; border: 1px dashed #D5D9D9;}
-        .shop-grid-item img{width:100%;height:100%;object-fit:cover;display:none;}
-        .grid-badge{position:absolute;top:4px;left:4px;background:#DC2626;color:#fff;font-size:.65rem;font-weight:800;padding:2px 4px;border-radius:4px;z-index:2}
-        .condition-badge{left:auto;right:4px;background:#F59E0B;} 
-        .shop-grid-caption{display:flex;flex-direction:column}
-        .sg-name{font-size:.75rem;color:#0F1111;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-        .sg-price{font-size:.8rem;font-weight:800;color:var(--color-pink);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .sg-price-old{text-decoration:line-through;color:#888C8C;font-size:.65rem;font-weight:500;margin-right:4px}
-
-        .form-group{margin-bottom:20px}
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;}
-        .label{display:block;font-size:.9rem;font-weight:700;color:#0F1111;margin-bottom:6px}
-        .input{width:100%;padding:12px 14px;border-radius:4px;border:1px solid #888C8C;font-size:1rem;color:#0F1111;box-shadow:0 1px 2px rgba(15,17,17,.15) inset;font-family:inherit;transition:.2s}
-        .input:focus{outline:0;border-color:var(--color-pink);box-shadow:0 0 0 3px var(--color-pink-light)}
-        textarea.input{resize:vertical;min-height:100px}
-        textarea.input.sm-box { min-height: 65px; } 
-        select.input{cursor:pointer;background-color:#fff}
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        #dynamic-fields-container { background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px dashed #CBD5E1; margin-bottom: 24px; display: none;}
-        .dyn-title { font-size: 0.85rem; font-weight: 800; color: var(--color-pink); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;}
+        body { 
+            background: var(--amz-bg); 
+            color: var(--color-text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
 
-        .description-wrapper { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 20px; border-radius: 8px; margin-bottom: 24px; }
-        .description-wrapper-title { font-size: 1rem; font-weight: 800; color: #0F1111; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;}
+        .app-header {
+            background-color: var(--amz-dark);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
 
-        .discount-box{background:#F7F7F7;border:1px solid var(--color-border);padding:16px;border-radius:8px;margin-bottom:24px; transition: opacity 0.3s;}
-        .switch-row{display:flex;justify-content:space-between;align-items:center}
-        .switch-label{font-weight:700;font-size:.95rem;color:#0F1111}
-        .switch-sub{font-size:.8rem;color:var(--color-text-muted);margin-top:2px}
-        .switch{position:relative;display:inline-block;width:44px;height:24px}
-        .switch input{opacity:0;width:0;height:0}
-        .switch input:disabled ~ .slider {background-color: #D5D9D9; cursor: not-allowed;}
-        .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#888C8C;transition:.4s;border-radius:34px}
-        .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:#fff;transition:.4s;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,.2)}
-        input:checked+.slider{background-color:var(--color-pink)}
-        input:checked+.slider:before{transform:translateX(20px)}
-        .hidden-input{display:none;margin-top:16px}
-        .hidden-input.visible{display:block;animation:slideDown .3s ease}
-        @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 16px;
+            max-width: 680px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .back-btn { 
+            background: none; border: none; color: white; 
+            font-size: 1.2rem; cursor: pointer; padding: 4px; 
+            margin-left: -4px; transition: 0.2s;
+        }
+        .back-btn:hover { color: var(--color-pink); }
         
-        .discount-limit-alert { background: #FEE2E2; border: 1px solid #FECACA; color: #991B1B; padding: 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; display: none; align-items: flex-start; gap: 10px; line-height: 1.4;}
-        .discount-limit-alert i { margin-top: 3px; font-size: 1rem;}
+        .page-title { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px; }
 
-        .btn-submit{width:100%;background:var(--color-pink);color:#fff;padding:16px;border-radius:8px;border:none;font-size:1.05rem;font-weight:700;cursor:pointer;margin-top:10px;transition:.2s;box-shadow:0 4px 10px rgba(219,39,119,.3);display:flex;align-items:center;justify-content:center}
-        .btn-submit:hover:not(:disabled){background:var(--color-pink-hover)}
-        .btn-submit:disabled{background:#E3E6E6;color:#888C8C;cursor:not-allowed;box-shadow:none;border:1px solid #D5D9D9}
+        .container { 
+            width: 100%; 
+            max-width: 900px; /* Widened to accommodate the 4-column org chart perfectly */
+            padding: 20px; 
+            flex: 1;
+        }
+
+        .edu-box { 
+            background: #F8FAFC; 
+            border: 1px solid #E2E8F0; 
+            border-radius: 8px; 
+            padding: 16px; 
+            margin-bottom: 24px; 
+            border-left: 4px solid var(--color-pink);
+        }
+        .edu-title { 
+            font-size: 0.95rem; font-weight: 800; color: #0F1111; 
+            margin-bottom: 8px; display: flex; align-items: center; gap: 8px; 
+        }
+        .edu-text { 
+            font-size: 0.85rem; color: #475569; line-height: 1.5; margin-bottom: 0; 
+        }
+
+        .card { 
+            background: white; 
+            padding: 24px; 
+            border-radius: 8px; 
+            border: 1px solid var(--color-border); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+            margin-bottom: 20px;
+        }
+
+        .split-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 500px) {
+            .split-grid { grid-template-columns: 1fr; }
+        }
+
+        .section-title { 
+            font-size: 1.1rem; font-weight: 800; color: var(--color-text-main); 
+            margin-bottom: 12px; display: flex; align-items: center; gap: 10px;
+        }
+        .section-title i {
+            color: #007185;
+            font-size: 1.2rem;
+        }
+
+        .text-content {
+            font-size: 0.95rem;
+            color: var(--color-text-muted);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .text-content:last-child { margin-bottom: 0; }
+
+        .meta-box {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+        .meta-label { color: #64748B; font-weight: 600; }
+        .meta-value { color: #0F1111; font-weight: 800; }
+
+        /* ========================================== */
+        /* --- DYNAMIC ORGANIZATIONAL CHART (NEW) --- */
+        /* ========================================== */
         
-        .btn-outline {background:white; color:#0F1111; border: 1px solid #D5D9D9; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;}
-        .btn-outline:hover {background: #F7FAFA;}
+        .org-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 10px 0;
+        }
 
-        .spinner{width:22px;height:22px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;margin-right:8px}
-        .spinner-dark{border-color: rgba(0,0,0,0.1); border-top-color: var(--color-pink); width: 36px; height: 36px; border-width: 4px; margin: 40px auto; display: block;}
-        @keyframes spin{to{transform:rotate(360deg)}}
+        .org-card {
+            background: #fff;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 16px 12px;
+            width: 100%;
+            max-width: 280px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+            z-index: 2; /* Keep above connecting lines */
+        }
+        .org-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.06);
+            border-color: #CBD5E1;
+        }
 
-        /* Success Modal Styles */
-        .success-modal-content {
-            background: #fff; padding: 48px 32px; border-radius: 28px; text-align: center; 
-            max-width: 420px; width: 90%; margin: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-            animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; transform: scale(0.8); opacity: 0;
-        }
-        @keyframes scaleUp { to { transform: scale(1); opacity: 1; } }
-        .success-icon-wrap {
-            width: 80px; height: 80px; background: #D1FAE5; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
-        }
-        .success-icon-wrap i { font-size: 2.5rem; color: #10B981; }
+        /* Tier Borders */
+        .org-card.top-tier { border-top: 4px solid var(--amz-dark); }
+        .org-card.exec-tier { border-top: 4px solid var(--color-pink); }
+        .org-card.dept-tier { border-top: 4px solid #007185; }
 
-        /* Action Sheet Styles (Camera vs Gallery) */
-        .action-sheet-overlay {
-            position: fixed; inset: 0; background: rgba(17,24,39,0.6); z-index: 2500;
-            display: flex; align-items: flex-end; justify-content: center;
-            opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(4px);
+        .org-icon {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 1.1rem;
         }
-        .action-sheet-overlay.active { opacity: 1; visibility: visible; }
-        .action-sheet {
-            background: #fff; width: 100%; max-width: 680px; border-radius: 24px 24px 0 0;
-            padding: 24px 20px 32px; transform: translateY(100%); transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .action-sheet-overlay.active .action-sheet { transform: translateY(0); }
-        .action-btn {
-            display: flex; align-items: center; gap: 16px; width: 100%; padding: 16px;
-            border: none; background: #F8FAFC; border-radius: 16px; margin-bottom: 12px;
-            font-size: 1.05rem; font-weight: 700; color: #1E293B; cursor: pointer; transition: 0.2s;
-        }
-        .action-btn:hover { background: #F1F5F9; transform: translateY(-2px); }
-        .action-btn i { font-size: 1.4rem; width: 24px; text-align: center; }
-        .action-btn.camera i { color: var(--color-pink); }
-        .action-btn.gallery i { color: #10B981; }
-        .action-btn-cancel {
-            background: #E2E8F0; color: #64748B; justify-content: center; margin-top: 12px; margin-bottom: 0;
-        }
-        .action-btn-cancel:hover { background: #CBD5E1; transform: none; }
+        .top-tier .org-icon { color: var(--amz-dark); background: #E2E8F0; }
+        .exec-tier .org-icon { color: var(--color-pink); background: var(--color-pink-light); }
+        .dept-tier .org-icon { color: #007185; background: #E6F0F2; }
 
-        /* --- CT STUDIO EMBEDDED MODAL --- */
-        .crop-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 2000; display: flex; flex-direction: column; opacity: 0; visibility: hidden; transition: .3s ease; backdrop-filter: blur(5px); }
-        .crop-overlay.active { opacity: 1; visibility: visible; }
-        .crop-header-bar { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #020617; color: #fff; border-bottom: 1px solid #334155;}
-        .crop-title { font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;}
-        .crop-title i { color: var(--color-pink); }
+        .org-role { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #64748B; margin-bottom: 4px; }
+        .org-name { font-size: 1rem; font-weight: 800; color: #0F1111; line-height: 1.3;}
+
+        /* Connecting Lines */
+        .org-connector {
+            height: 24px;
+            width: 2px;
+            background: #CBD5E1;
+            margin: 0 auto;
+        }
+
+        /* Mobile Defaults for Departments (Vertical Stack) */
+        .org-departments {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 24px; /* Space for the vertical line connectors */
+            position: relative;
+        }
+
+        .org-card.dept-tier::before {
+            content: '';
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            width: 2px;
+            height: 24px;
+            background: #CBD5E1;
+            transform: translateX(-50%);
+        }
         
-        .studio-body { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        
-        .crop-workspace { flex: 1; position: relative; width: 100%; min-height: 250px; background: repeating-conic-gradient(#0f172a 0% 25%, #1e293b 0% 50%) 50% / 20px 20px; display: flex; justify-content: center; align-items: center; padding: 16px; }
-        .crop-workspace img { max-width: 100%; max-height: 100%; display: block; }
-        
-        .studio-controls { background: #1e293b; padding: 20px; border-top: 1px solid #334155; display: flex; flex-direction: column; gap: 20px;}
-        
-        .slider-group { display: flex; flex-direction: column; gap: 6px; }
-        .slider-label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; color: #f8fafc; }
-        .studio-slider { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: #334155; outline: none; }
-        .studio-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--color-pink); cursor: pointer; }
-        .check-group { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #f8fafc;}
-        .check-group input { width: 18px; height: 18px; accent-color: var(--color-pink); }
-
-        .crop-footer-bar { padding: 16px 20px; background: #020617; display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid #334155;}
-        .btn-crop-cancel { background: transparent; color: #94a3b8; padding: 12px 20px; border-radius: 8px; border: 1px solid #334155; font-weight: 600; cursor: pointer; transition: 0.2s;}
-        .btn-crop-cancel:hover { background: #334155; color: white;}
-        .btn-crop-apply { background: #10b981; color: #fff; padding: 12px 24px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; box-shadow: 0 4px 10px rgba(16,185,129,0.3);}
-        .btn-crop-apply:hover { background: #059669; }
-
-        @media (min-width: 768px) { 
-            .studio-body { flex-direction: row; }
-            .crop-workspace { height: auto; }
-            .studio-controls { width: 340px; border-top: none; border-left: 1px solid #334155; }
+        /* Hide the top connector line for the first card on mobile so it connects seamlessly to the main vertical line */
+        .org-departments .org-card.dept-tier:first-child::before {
+            display: none; 
         }
-        @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; gap: 0; } }
+
+        /* Sub-Tiers (Marketers under Marketing) */
+        .org-sub-tier {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #E2E8F0;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Desktop Branching Magic (Auto-Routing Lines) */
+        @media (min-width: 800px) {
+            .org-departments {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 16px;
+                padding-top: 24px; /* Space for the horizontal bracket line */
+            }
+            
+            /* The Horizontal Bracket Line */
+            .org-departments::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: calc(12.5%); /* Exact center of the 1st column */
+                right: calc(12.5%); /* Exact center of the 4th column */
+                height: 2px;
+                background: #CBD5E1;
+            }
+
+            /* Restore the vertical drop line for the first card on desktop */
+            .org-departments .org-card.dept-tier:first-child::before {
+                display: block; 
+            }
+        }
+        /* ========================================== */
+
+        .footer {
+            margin-top: 40px; padding: 20px; text-align: center;
+            font-size: 0.8rem; color: #888C8C; width: 100%; border-top: 1px solid #D5D9D9;
+        }
     </style>
 </head>
 <body>
 
     <header class="app-header">
         <div class="header-content">
-            <button type="button" onclick="window.location.href='merchant-dashboard.html'" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
-            <div class="page-title">Add Product</div>
+            <button onclick="goSmartBack()" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="page-title">About Us</div>
         </div>
     </header>
 
     <div class="container">
         
-        <div id="page-loader"><div class="spinner-dark"></div></div>
-
-        <div id="limit-reached-message" class="limit-box">
-            <i class="fa-solid fa-boxes-packing limit-icon"></i>
-            <h2 class="limit-title">Upload Limit Reached</h2>
-            <p class="limit-text">You have reached the maximum allowed limit of <strong>30 active products</strong> for your shop. To add a new product, please delete an older or out-of-stock item first.</p>
-            <button onclick="window.location.href='merchant-dashboard.html'" class="btn-outline">Go to My Shop</button>
+        <div class="edu-box">
+            <h4 class="edu-title"><i class="fa-solid fa-id-card-clip"></i> Corporate Identity</h4>
+            <p class="edu-text">Bridging the gap between localized commerce and digital accessibility across Nigeria’s urban centers.</p>
         </div>
 
-        <form class="card" id="product-form" onsubmit="handleSubmit(event)" style="display:none;">
+        <div class="split-grid">
+            <div class="card" style="margin-bottom: 0;">
+                <h2 class="section-title" style="color: var(--color-pink);">
+                    <i class="fa-solid fa-eye" style="color: var(--color-pink);"></i> Vision
+                </h2>
+                <p class="text-content">
+                    To serve as the definitive digital architecture for urban commercial discovery, ensuring every physical storefront is accessible to the modern digital consumer.
+                </p>
+            </div>
+            <div class="card" style="margin-bottom: 0;">
+                <h2 class="section-title">
+                    <i class="fa-solid fa-bullseye"></i> Mission
+                </h2>
+                <p class="text-content">
+                    Deploying a comprehensive, location-aware repository that empowers physical merchants with institutional-grade visibility and structured data integrity.
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title"><i class="fa-solid fa-building-columns"></i> Institutional Profile</h2>
+            <p class="text-content">
+                CTMerchant is a specialized information technology firm providing critical data infrastructure for Nigeria’s local trade ecosystems. We facilitate the digital translation of physical inventory and merchant locations, providing a structured ecosystem for consumer exploration.
+            </p>
+            <p class="text-content">
+                Our operational framework prioritizes <strong>Data Accuracy</strong> and <strong>Discovery Optimization</strong>, reducing friction in local commerce while preserving the traditional merchant–customer relationship.
+            </p>
+            <p class="text-content">
+                CTMerchant operates strictly as a neutral information repository. We remain independent of financial settlements and logistics to maintain data integrity and search excellence.
+            </p>
+
+            <div class="meta-box">
+                <div class="meta-row">
+                    <span class="meta-label">Jurisdiction</span>
+                    <span class="meta-value">CAC, Nigeria</span>
+                </div>
+                <div class="meta-row" style="border-top: 1px solid #E2E8F0; padding-top: 8px; margin-top: 4px;">
+                    <span class="meta-label">RC Number</span>
+                    <span class="meta-value">8879163</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW: PROFESSIONAL ORG CHART -->
+        <div class="card" style="background: #F8FAFC;">
+            <h2 class="section-title" style="justify-content: center; margin-bottom: 24px;"><i class="fa-solid fa-sitemap"></i> Organizational Structure</h2>
             
-            <div class="edu-box">
-                <h4 class="edu-title"><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--color-pink);"></i> Powered by CT Studio</h4>
-                <p class="edu-text">Tap an image slot below to open the studio. Drag and zoom your image to perfectly fill the square to ensure all products on the marketplace are uniform and professional.</p>
-            </div>
-
-            <!-- 3 IMAGE GRID -->
-            <div class="img-grid">
-                <div class="img-picker main" onclick="openUploadMenu('file-input-1')">
-                    <input type="file" id="file-input-1" hidden accept="image/*" onchange="handleImageSelect(this, 1)">
-                    <i class="fa-solid fa-image cam"></i>
-                    <span class="lbl">Main Image<br>(Required)</span>
-                    <img id="preview-1" class="preview-img">
-                    <div id="savings-1" class="savings-badge" style="display:none;"></div>
-                    <button type="button" id="del-btn-1" class="delete-img-btn hidden" onclick="removeImage(event, 1)"><i class="fa-solid fa-trash-can"></i></button>
-                </div>
-                <div class="img-picker" onclick="openUploadMenu('file-input-2')">
-                    <input type="file" id="file-input-2" hidden accept="image/*" onchange="handleImageSelect(this, 2)">
-                    <i class="fa-solid fa-camera cam"></i>
-                    <span class="lbl">Extra Angle<br>(Optional)</span>
-                    <img id="preview-2" class="preview-img">
-                    <div id="savings-2" class="savings-badge" style="display:none;"></div>
-                    <button type="button" id="del-btn-2" class="delete-img-btn hidden" onclick="removeImage(event, 2)"><i class="fa-solid fa-trash-can"></i></button>
-                </div>
-                <div class="img-picker" onclick="openUploadMenu('file-input-3')">
-                    <input type="file" id="file-input-3" hidden accept="image/*" onchange="handleImageSelect(this, 3)">
-                    <i class="fa-solid fa-camera cam"></i>
-                    <span class="lbl">Label/Box<br>(Optional)</span>
-                    <img id="preview-3" class="preview-img">
-                    <div id="savings-3" class="savings-badge" style="display:none;"></div>
-                    <button type="button" id="del-btn-3" class="delete-img-btn hidden" onclick="removeImage(event, 3)"><i class="fa-solid fa-trash-can"></i></button>
-                </div>
-            </div>
-
-            <div id="live-preview-wrap" class="live-preview-wrap">
-                <h4 style="font-size:0.95rem; font-weight:800; color:#0F1111; margin-bottom:12px;"><i class="fa-regular fa-eye"></i> Marketplace Preview</h4>
-                <div class="shop-grid-item-wrap">
-                    <div class="shop-grid-item">
-                        <i id="live-placeholder" class="fa-solid fa-image" style="font-size: 2rem; color: #D5D9D9;"></i>
-                        <img id="live-img" src="" alt="Product">
-                        <div id="live-badge" class="grid-badge flash-offer" style="display:none;"></div>
-                        <div id="live-condition-badge" class="grid-badge condition-badge" style="display:none;">Used</div>
-                    </div>
-                    <div class="shop-grid-caption">
-                        <div class="sg-name" id="live-name">Product Title</div>
-                        <div class="sg-price" id="live-price-box">₦0</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="label">Category</label>
-                <select id="category" class="input" required onchange="handleCategoryChange()">
-                    <option value="" disabled selected>Select a Category...</option>
-                    <option value="Electronics & Appliances">Electronics & Appliances</option>
-                    <option value="Mobile Phones & Accessories">Mobile Phones & Accessories</option>
-                    <option value="Computers & IT Services">Computers & IT Services</option>
-                    <option value="Fashion & Apparel">Fashion & Apparel</option>
-                    <option value="Beauty & Personal Care">Beauty & Personal Care</option>
-                    <option value="Pharmacies & Health Shops">Pharmacies & Health Shops</option>
-                    <option value="Groceries & Supermarkets">Groceries & Supermarkets</option>
-                    <option value="Food & Drinks">Food & Drinks</option>
-                    <option value="Agriculture & Agro-Allied">Agriculture & Agro-Allied</option>
-                    <option value="Real Estate & Properties">Real Estate & Properties</option>
-                    <option value="Hotels & Accommodations">Hotels & Accommodations</option>
-                    <option value="Logistics & Delivery">Logistics & Delivery</option>
-                    <option value="Printing & Branding">Printing & Branding</option>
-                    <option value="Education & Training">Education & Training</option>
-                    <option value="Mechanics & Auto Repairs">Mechanics & Auto Repairs</option>
-                    <option value="Building Materials">Building Materials</option>
-                    <option value="Solar Installation">Solar Installation</option>
-                    <option value="Event Services">Event Services</option>
-                    <option value="Furniture & Interior Decor">Furniture & Interior Decor</option>
-                    <option value="Artisans">Artisans</option>
-                </select>
-            </div>
-
-            <div id="dynamic-fields-container"></div>
-
-            <div class="form-group">
-                <label class="label">Product Name / Title</label>
-                <input type="text" id="name" class="input" placeholder="e.g. Samsung Galaxy S23" required oninput="updateLivePreview()">
-            </div>
-
-            <div class="form-row">
-                <div class="form-group" style="margin:0;">
-                    <label class="label">Price (₦)</label>
-                    <input type="number" id="price" class="input" placeholder="e.g. 50000" required oninput="updateLivePreview()">
-                </div>
-                <div class="form-group" style="margin:0;">
-                    <label class="label">Stock Available</label>
-                    <input type="number" id="stock" class="input" value="1" min="1" required>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="label">Condition</label>
-                <select id="condition" class="input" onchange="handleConditionChange()">
-                    <option value="New">New</option>
-                    <option value="Fairly Used">Fairly Used</option>
-                </select>
-            </div>
-
-            <div class="discount-box" id="discount-container">
-                <div id="discount-limit-msg" class="discount-limit-alert">
-                    <i class="fa-solid fa-lock"></i> 
-                    <div><strong>Premium Limit Reached</strong><br>You currently have 2 active Special Offers. To add another, please remove the discount from an existing product.</div>
-                </div>
-                <div class="switch-row" id="discount-switch-row">
-                    <div>
-                        <div class="switch-label">Special Offer?</div>
-                        <div class="switch-sub">Apply a 1% to 20% discount (New Items Only)</div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="discount-switch" onchange="toggleDiscount(this)">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div id="discount-input-box" class="hidden-input">
-                    <input type="number" id="discount-percent" class="input" placeholder="Enter Percentage (e.g. 10)" max="20" min="1" oninput="updateLivePreview()">
-                </div>
-            </div>
-
-            <!-- --- NEW 4-SECTION DESCRIPTION AREA --- -->
-            <div class="description-wrapper">
-                <div class="description-wrapper-title">
-                    <i class="fa-solid fa-list-ul" style="color: var(--color-pink);"></i> Product Presentation Details
-                </div>
+            <div class="org-wrapper">
                 
-                <div class="form-group">
-                    <label class="label">Key Features</label>
-                    <textarea id="key_features" name="Key Features" class="input dynamic-attr sm-box" placeholder="e.g. 5G Network, 120Hz AMOLED Display, 5000mAh Battery" rows="2"></textarea>
+                <!-- Tier 1 -->
+                <div class="org-card top-tier">
+                    <div class="org-icon"><i class="fa-solid fa-users-rectangle"></i></div>
+                    <div class="org-name">Board of Directors</div>
+                    <div class="org-role">Governing Body</div>
                 </div>
 
-                <div class="form-group">
-                    <label class="label">Full Description <span style="color: var(--color-pink);">*</span></label>
-                    <textarea id="desc" class="input" placeholder="Enter full detailed product description, capabilities, and uses..." required rows="4"></textarea>
+                <div class="org-connector"></div>
+
+                <!-- Tier 2 -->
+                <div class="org-card exec-tier">
+                    <div class="org-icon"><i class="fa-solid fa-user-tie"></i></div>
+                    <div class="org-name">Chief Executive Officer</div>
+                    <div class="org-role">Director General</div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;">
-                        <label class="label">What's in the Box</label>
-                        <textarea id="box_content" name="What's in the Box" class="input dynamic-attr sm-box" placeholder="e.g. 1x Phone, 1x Charger, Manual" rows="2"></textarea>
-                    </div>
-                    <div class="form-group" style="margin:0;">
-                        <label class="label">Warranty</label>
-                        <textarea id="warranty" name="Warranty" class="input dynamic-attr sm-box" placeholder="e.g. 1 Year Manufacturer Warranty" rows="2"></textarea>
-                    </div>
-                </div>
-            </div>
+                <div class="org-connector"></div>
 
-            <button type="submit" id="btn-submit" class="btn-submit">Upload to Marketplace</button>
-        </form>
-    </div>
-
-    <!-- ACTION SHEET FOR CAMERA / GALLERY CHOICE -->
-    <div id="upload-action-sheet" class="action-sheet-overlay" onclick="closeUploadMenu(event)">
-        <div class="action-sheet" onclick="event.stopPropagation()">
-            <h3 style="margin-bottom: 24px; font-weight: 800; font-size: 1.2rem; color: #1E293B;">Choose Image Source</h3>
-            
-            <button type="button" class="action-btn camera" onclick="triggerFileSelection('camera')">
-                <i class="fa-solid fa-camera"></i> Take a Photo
-            </button>
-            
-            <button type="button" class="action-btn gallery" onclick="triggerFileSelection('gallery')">
-                <i class="fa-solid fa-image"></i> Choose from Gallery
-            </button>
-            
-            <button type="button" class="action-btn action-btn-cancel" onclick="closeUploadMenu()">
-                Cancel
-            </button>
-        </div>
-    </div>
-
-    <!-- CT STUDIO EMBEDDED MODAL (Strict Cropping) -->
-    <div id="crop-modal" class="crop-overlay">
-        <div class="crop-header-bar">
-            <div class="crop-title"><i class="fa-solid fa-wand-magic-sparkles"></i> CT Studio Editor</div>
-            <button type="button" onclick="closeCropModal()" style="background:0 0;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        
-        <div class="studio-body">
-            <div class="crop-workspace">
-                <img id="crop-image" src="">
-            </div>
-            
-            <div class="studio-controls">
-                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
-                    <p style="color: #10b981; font-size: 0.85rem; font-weight: 600; line-height: 1.4; margin: 0; text-align: center;">
-                        <i class="fa-solid fa-expand"></i> Drag and zoom the image to fill the square completely. This guarantees perfect uniformity on the marketplace.
-                    </p>
+                <!-- Tier 3 -->
+                <div class="org-card exec-tier">
+                    <div class="org-icon"><i class="fa-solid fa-user-gear"></i></div>
+                    <div class="org-name">Chief Operating Officer</div>
+                    <div class="org-role">Operations Management</div>
                 </div>
 
-                <div>
-                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 12px; margin-top: 12px;">Lighting Fixes</div>
-                    <div class="slider-group">
-                        <div class="slider-label"><span>Brightness</span> <span id="val-bright">100%</span></div>
-                        <input type="range" id="slide-bright" class="studio-slider" min="50" max="150" value="100" oninput="updateLiveFilters()">
-                    </div>
-                    <div class="slider-group" style="margin-top:12px;">
-                        <div class="slider-label"><span>Contrast</span> <span id="val-contrast">100%</span></div>
-                        <input type="range" id="slide-contrast" class="studio-slider" min="50" max="150" value="100" oninput="updateLiveFilters()">
-                    </div>
-                </div>
+                <!-- Connects the COO to the top of the Departments bracket -->
+                <div class="org-connector"></div>
 
-                <div>
-                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 12px;">Branding</div>
-                    <label class="check-group">
-                        <input type="checkbox" id="check-watermark" checked>
-                        <span>Add "Verified" Watermark</span>
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        <div class="crop-footer-bar">
-            <button type="button" class="btn-crop-cancel" onclick="closeCropModal()">Cancel</button>
-            <button type="button" class="btn-crop-apply" id="btn-crop-apply" onclick="applyCrop()">
-                <i class="fa-solid fa-microchip"></i> Crop & Process
-            </button>
-        </div>
-    </div>
-
-    <!-- BEAUTIFUL SUCCESS MODAL -->
-    <div id="success-modal" class="crop-overlay" style="align-items: center; justify-content: center; z-index: 3000;">
-        <div class="success-modal-content">
-            <div class="success-icon-wrap">
-                <i class="fa-solid fa-check"></i>
-            </div>
-            <h2 style="font-size: 1.6rem; font-weight: 800; color: #1F2937; margin-bottom: 8px;" id="success-title">Success!</h2>
-            <p style="color: #6B7280; font-size: 0.95rem; font-weight: 500; margin-bottom: 24px;" id="success-message">Your product has been added to your shop.</p>
-            <div class="spinner" style="border-top-color: var(--color-pink); width: 28px; height: 28px; margin: 0 auto; border-width: 4px;"></div>
-            <p style="color: var(--color-pink); font-size: 0.8rem; font-weight: 700; margin-top: 16px;">Redirecting to dashboard...</p>
-        </div>
-    </div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-<script>
-    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    const params = new URLSearchParams(window.location.search);
-    const shopId = params.get('shop_id');
-    let currentUser = null;
-    
-    // Studio State Tracking
-    let cropper = null;
-    let activeCropIndex = 1;
-    
-    const MAX_UPLOAD_SIZE = 4 * 1024 * 1024; // 4MB
-    const originalSizes = { 1: 0, 2: 0, 3: 0 };
-    const finalBlobs = { 1: null, 2: null, 3: null };
-    
-    // PRODUCTION LIMITS
-    const MAX_PRODUCTS_LIMIT = 30;
-    const MAX_SPECIAL_OFFERS = 2;
-    let activeSpecialOffersCount = 0;
-
-    window.onload = async () => {
-        const { data: { session } } = await client.auth.getSession();
-        if (!session) {
-            window.location.href = "login.html";
-            return;
-        }
-        currentUser = session.user;
-        
-        if (!shopId) {
-            alert("No shop ID provided.");
-            window.location.href = "merchant-dashboard.html";
-            return;
-        }
-
-        const { data: profile, error: profileErr } = await client
-            .from('profiles')
-            .select('is_suspended')
-            .eq('id', currentUser.id)
-            .maybeSingle();
-
-        if (profileErr) {
-            console.error("Network error:", profileErr.message);
-        } else if (profile && profile.is_suspended === true) {
-            alert("🔒 Your account access has been restricted by administration.");
-            await client.auth.signOut();
-            window.location.href = "index.html";
-            return;
-        }
-
-        await enforceUploadLimit();
-    };
-
-    async function enforceUploadLimit() {
-        try {
-            const [prodRes, discountRes] = await Promise.all([
-                client.from('products').select('*', { count: 'exact', head: true }).eq('shop_id', shopId),
-                client.from('products').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).not('discount_price', 'is', null)
-            ]);
-
-            if (prodRes.error) throw prodRes.error;
-
-            document.getElementById('page-loader').style.display = 'none';
-
-            if (prodRes.count >= MAX_PRODUCTS_LIMIT) {
-                document.getElementById('limit-reached-message').style.display = 'flex';
-                document.getElementById('product-form').style.display = 'none';
-            } else {
-                document.getElementById('limit-reached-message').style.display = 'none';
-                document.getElementById('product-form').style.display = 'block';
-            }
-
-            activeSpecialOffersCount = discountRes.count || 0;
-            if (activeSpecialOffersCount >= MAX_SPECIAL_OFFERS) {
-                const switchInput = document.getElementById('discount-switch');
-                switchInput.disabled = true;
-                document.getElementById('discount-switch-row').style.opacity = '0.5';
-                document.getElementById('discount-limit-msg').style.display = 'flex';
-            }
-        } catch (e) {
-            console.error("Failed to check limits", e);
-            alert("Error verifying account limits. Please refresh.");
-        }
-    }
-
-    // ==========================================
-    // ACTION SHEET LOGIC (CAMERA VS GALLERY)
-    // ==========================================
-    let currentUploadTargetId = null;
-
-    function openUploadMenu(targetId) {
-        currentUploadTargetId = targetId;
-        document.getElementById('upload-action-sheet').classList.add('active');
-        document.body.style.overflow = 'hidden'; 
-    }
-
-    function closeUploadMenu(e) {
-        if (e && e.target !== e.currentTarget) return; 
-        document.getElementById('upload-action-sheet').classList.remove('active');
-        document.body.style.overflow = '';
-    }
-
-    function triggerFileSelection(mode) {
-        if (!currentUploadTargetId) return;
-        const input = document.getElementById(currentUploadTargetId);
-        
-        if (mode === 'camera') {
-            input.setAttribute('accept', 'image/*');
-            input.setAttribute('capture', 'environment');
-        } else if (mode === 'gallery') {
-            input.setAttribute('accept', 'image/*');
-            input.removeAttribute('capture');
-        }
-        
-        input.click();
-        closeUploadMenu();
-    }
-
-    // --- CT STUDIO EMBEDDED LOGIC ---
-    function handleImageSelect(input, index) {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-            if (!file.type.startsWith('image/')) {
-                alert("Please upload a valid image file.");
-                input.value = '';
-                return;
-            }
-
-            if (file.size > MAX_UPLOAD_SIZE) {
-                alert("File is too large! The maximum allowed upload size is 4MB.");
-                input.value = '';
-                return;
-            }
-            
-            activeCropIndex = index;
-            originalSizes[index] = file.size; 
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const modal = document.getElementById('crop-modal');
-                const img = document.getElementById('crop-image');
-                
-                img.src = e.target.result;
-                modal.classList.add('active');
-                document.body.style.overflow = 'hidden';
-
-                if (cropper) cropper.destroy();
-                
-                document.getElementById('slide-bright').value = 100;
-                document.getElementById('slide-contrast').value = 100;
-                updateLiveFilters();
-                document.getElementById('check-watermark').checked = true;
-                
-                cropper = new Cropper(img, {
-                    aspectRatio: 1, 
-                    viewMode: 1, 
-                    dragMode: 'move',
-                    background: false, 
-                    autoCropArea: 1,
-                    responsive: true
-                });
-            };
-            reader.readAsDataURL(file);
-            input.value = ''; 
-        }
-    }
-
-    function updateLiveFilters() {
-        const bright = document.getElementById('slide-bright').value;
-        const contrast = document.getElementById('slide-contrast').value;
-        
-        document.getElementById('val-bright').textContent = bright + '%';
-        document.getElementById('val-contrast').textContent = contrast + '%';
-        
-        const container = document.querySelector('.cropper-view-box img');
-        if (container) {
-            container.style.filter = `brightness(${bright}%) contrast(${contrast}%)`;
-        }
-    }
-
-    function closeCropModal() {
-        document.getElementById('crop-modal').classList.remove('active');
-        document.body.style.overflow = '';
-        if (cropper) { cropper.destroy(); cropper = null; }
-    }
-
-    function applyCrop() {
-        if (!cropper) return;
-        
-        const btnApply = document.getElementById('btn-crop-apply');
-        const originalText = btnApply.innerHTML;
-        btnApply.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
-        btnApply.disabled = true;
-
-        const croppedCanvas = cropper.getCroppedCanvas({
-            width: 800,
-            height: 800,
-            fillColor: '#FFFFFF',
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high'
-        });
-
-        const finalCanvas = document.createElement('canvas');
-        finalCanvas.width = 800;
-        finalCanvas.height = 800;
-        const ctx = finalCanvas.getContext('2d');
-
-        const bright = document.getElementById('slide-bright').value;
-        const contrast = document.getElementById('slide-contrast').value;
-        ctx.filter = `brightness(${bright}%) contrast(${contrast}%)`;
-        ctx.drawImage(croppedCanvas, 0, 0);
-
-        if (document.getElementById('check-watermark').checked) {
-            ctx.filter = 'none'; 
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetX = 1;
-            ctx.shadowOffsetY = 1;
-            ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'bottom';
-            ctx.fillText('Verified CTMerchant', 780, 780);
-        }
-
-        // AUTO-TUNING COMPRESSION LOOP (Target: max 100KB)
-        let quality = 0.92;
-        const maxBytes = 100 * 1024; // 100KB limit
-
-        function attemptCompress() {
-            finalCanvas.toBlob(blob => {
-                if (blob.size <= maxBytes || quality <= 0.4) {
-                    finalBlobs[activeCropIndex] = blob;
+                <!-- Tier 4: Departments Grid -->
+                <div class="org-departments">
                     
-                    const localUrl = URL.createObjectURL(blob);
-                    const previewImg = document.getElementById(`preview-${activeCropIndex}`);
-                    previewImg.src = localUrl;
-                    previewImg.style.display = 'block';
-                    document.getElementById(`del-btn-${activeCropIndex}`).classList.remove('hidden');
-
-                    if (activeCropIndex === 1) {
-                        document.getElementById('live-placeholder').style.display = 'none';
-                        const liveImg = document.getElementById('live-img');
-                        liveImg.src = localUrl;
-                        liveImg.style.display = 'block';
-                    }
-
-                    // Calculate Data Savings
-                    const origSize = originalSizes[activeCropIndex];
-                    const newSize = blob.size;
-                    const savingsBadge = document.getElementById(`savings-${activeCropIndex}`);
-                    
-                    if (origSize && origSize > newSize) {
-                        const percent = Math.round(((origSize - newSize) / origSize) * 100);
-                        const newKb = Math.round(newSize / 1024);
-                        savingsBadge.innerHTML = `<i class="fa-solid fa-arrow-down"></i> Saved ${percent}% (${newKb}KB)`;
-                        savingsBadge.style.display = 'block';
-                    } else {
-                        const newKb = Math.round(newSize / 1024);
-                        savingsBadge.innerHTML = `<i class="fa-solid fa-check"></i> Ready (${newKb}KB)`;
-                        savingsBadge.style.display = 'block';
-                    }
-
-                    btnApply.innerHTML = originalText;
-                    btnApply.disabled = false;
-                    closeCropModal();
-                } else {
-                    quality -= 0.05;
-                    attemptCompress();
-                }
-            }, 'image/jpeg', quality);
-        }
-
-        attemptCompress();
-    }
-
-    // UI DELETION
-    function removeImage(e, slot) {
-        e.preventDefault(); 
-        e.stopPropagation(); 
-        
-        finalBlobs[slot] = null;
-        originalSizes[slot] = 0;
-        
-        const img = document.getElementById(`preview-${slot}`);
-        img.src = '';
-        img.style.display = 'none';
-        
-        document.getElementById(`del-btn-${slot}`).classList.add('hidden');
-        document.getElementById(`savings-${slot}`).style.display = 'none';
-        
-        if (slot === 1) {
-            document.getElementById('live-img').style.display = 'none';
-            document.getElementById('live-placeholder').style.display = 'block';
-        }
-    }
-
-    // --- ENHANCED DYNAMIC TEMPLATES LOGIC ---
-    function handleCategoryChange() {
-        const cat = document.getElementById('category').value;
-        const container = document.getElementById('dynamic-fields-container');
-        let html = '';
-
-        const tech = ["Mobile Phones & Accessories", "Computers & IT Services", "Electronics & Appliances"];
-        const fashion = ["Fashion & Apparel"];
-        const consumables = ["Groceries & Supermarkets", "Beauty & Personal Care", "Pharmacies & Health Shops", "Food & Drinks", "Agriculture & Agro-Allied"];
-        const property = ["Real Estate & Properties", "Hotels & Accommodations"];
-
-        if (tech.includes(cat)) {
-            html = `
-                <div class="dyn-title">Technical Specifications</div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="Brand" class="input dynamic-attr" placeholder="e.g. Apple, HP"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Model</label><input type="text" name="Model" class="input dynamic-attr" placeholder="e.g. iPhone 14 Pro"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">RAM / Memory</label><input type="text" name="RAM" class="input dynamic-attr" placeholder="e.g. 8GB"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Storage (ROM)</label><input type="text" name="Storage" class="input dynamic-attr" placeholder="e.g. 256GB SSD"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Display / Screen</label><input type="text" name="Display" class="input dynamic-attr" placeholder="e.g. 6.1 OLED"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Processor</label><input type="text" name="Processor" class="input dynamic-attr" placeholder="e.g. A16 Bionic, Core i7"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Operating System</label><input type="text" name="OS" class="input dynamic-attr" placeholder="e.g. iOS 16, Win 11"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Camera</label><input type="text" name="Camera" class="input dynamic-attr" placeholder="e.g. 48MP Rear"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Battery</label><input type="text" name="Battery" class="input dynamic-attr" placeholder="e.g. 5000mAh"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Color</label><input type="text" name="Color" class="input dynamic-attr" placeholder="e.g. Midnight Black"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Package Weight</label><input type="text" name="Weight" class="input dynamic-attr" placeholder="e.g. 200g, 1.5kg"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Defects / Note</label><input type="text" name="Condition Note" class="input dynamic-attr" placeholder="e.g. Minor scratch"></div>
-                </div>`;
-        } else if (fashion.includes(cat)) {
-            html = `
-                <div class="dyn-title">Apparel Details</div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="Brand" class="input dynamic-attr" placeholder="e.g. Nike"></div>
-                    <div class="form-group" style="margin:0;">
-                        <label class="label">Target</label>
-                        <select name="Gender" class="input dynamic-attr"><option value="Unisex">Unisex</option><option value="Men">Men</option><option value="Women">Women</option><option value="Kids">Kids</option></select>
+                    <!-- ICT -->
+                    <div class="org-card dept-tier">
+                        <div class="org-icon"><i class="fa-solid fa-network-wired"></i></div>
+                        <div class="org-name">ICT & Engineering</div>
+                        <div class="org-role">Head of Technology</div>
+                        <div class="org-sub-tier">
+                            <i class="fa-solid fa-arrow-turn-down" style="transform: scaleX(-1); color: #94A3B8;"></i> Developers & Support
+                        </div>
                     </div>
+
+                    <!-- Finance -->
+                    <div class="org-card dept-tier">
+                        <div class="org-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                        <div class="org-name">Finance & Accounts</div>
+                        <div class="org-role">Head of Department</div>
+                    </div>
+
+                    <!-- Operations/City -->
+                    <div class="org-card dept-tier">
+                        <div class="org-icon"><i class="fa-solid fa-city"></i></div>
+                        <div class="org-name">Regional Operations</div>
+                        <div class="org-role">City Administrators</div>
+                        <div class="org-sub-tier">
+                            <i class="fa-solid fa-arrow-turn-down" style="transform: scaleX(-1); color: #94A3B8;"></i> Zonal Reps
+                        </div>
+                    </div>
+
+                    <!-- Marketing -->
+                    <div class="org-card dept-tier">
+                        <div class="org-icon"><i class="fa-solid fa-bullhorn"></i></div>
+                        <div class="org-name">Marketing Directorate</div>
+                        <div class="org-role">Head of Marketing</div>
+                        <div class="org-sub-tier">
+                            <i class="fa-solid fa-arrow-turn-down" style="transform: scaleX(-1); color: #94A3B8;"></i> Field Marketers
+                        </div>
+                    </div>
+
                 </div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Size</label><input type="text" name="Size" class="input dynamic-attr" placeholder="e.g. XL, 42 EU"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Color</label><input type="text" name="Color" class="input dynamic-attr" placeholder="e.g. Black"></div>
-                </div>`;
-        } else if (consumables.includes(cat)) {
-            html = `
-                <div class="dyn-title">Product Details</div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Brand/Maker</label><input type="text" name="Brand" class="input dynamic-attr" placeholder="e.g. Nivea"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Weight/Volume</label><input type="text" name="Weight" class="input dynamic-attr" placeholder="e.g. 500ml, 1kg"></div>
-                </div>
-                <div class="form-group" style="margin-bottom:0;"><label class="label">Expiration Date <span style="color:var(--color-red)">*</span></label><input type="date" name="Expiry Date" class="input dynamic-attr" required></div>`;
-        } else if (property.includes(cat)) {
-            html = `
-                <div class="dyn-title">Property Details</div>
-                <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Type</label><input type="text" name="Property Type" class="input dynamic-attr" placeholder="e.g. 2 Bed Flat, Self Con"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Payment Cycle</label><select name="Payment Cycle" class="input dynamic-attr"><option value="Per Year">Per Year</option><option value="Per Month">Per Month</option><option value="Per Night">Per Night (Hotels)</option></select></div>
-                </div>`;
-        }
 
-        if (html) {
-            container.innerHTML = html;
-            container.style.display = 'block';
-        } else {
-            container.innerHTML = '';
-            container.style.display = 'none';
-        }
-    }
+            </div>
+            
+            <!-- Privacy Disclaimer -->
+            <div style="background: #FFFBEB; border: 1px solid #FDE68A; padding: 12px; border-radius: 6px; margin-top: 30px; display: flex; gap: 10px; align-items: flex-start;">
+                <i class="fa-solid fa-circle-info" style="color: #D97706; margin-top: 2px;"></i>
+                <p style="font-size: 0.8rem; color: #92400E; line-height: 1.4; margin: 0;">
+                    Communications with executive staff are prioritized strictly on institutional relevance and maintained in line with corporate privacy protocols. For direct inquiries, please use the <a href="help-support.html" style="color: #D97706; text-decoration: underline; font-weight: bold;">Support Center</a>.
+                </p>
+            </div>
+        </div>
 
-    function handleConditionChange() {
-        const conditionVal = document.getElementById('condition').value;
-        const discountContainer = document.getElementById('discount-container');
-        const discountSwitch = document.getElementById('discount-switch');
+    </div>
 
-        if (conditionVal === 'Fairly Used') {
-            discountContainer.style.display = 'none';
-            if (discountSwitch.checked) {
-                discountSwitch.checked = false;
-                toggleDiscount(discountSwitch);
-            }
-        } else {
-            discountContainer.style.display = 'block';
-        }
-        updateLivePreview();
-    }
+    <footer class="footer">
+        © 2026 CT-MERCHANT LTD. | RC: 8879163
+    </footer>
 
-    function updateLivePreview() {
-        const nameVal = document.getElementById('name').value.trim();
-        const priceVal = parseFloat(document.getElementById('price').value);
-        const conditionVal = document.getElementById('condition').value; 
-        const isDiscountOn = document.getElementById('discount-switch').checked;
-        const discPercent = parseFloat(document.getElementById('discount-percent').value);
-
-        const nameEl = document.getElementById('live-name');
-        const priceEl = document.getElementById('live-price-box');
-        const badgeEl = document.getElementById('live-badge');
-        const conditionBadgeEl = document.getElementById('live-condition-badge');
-
-        nameEl.textContent = nameVal || 'Product Title';
-
-        if (conditionVal === 'Fairly Used') {
-            conditionBadgeEl.style.display = 'block';
-        } else {
-            conditionBadgeEl.style.display = 'none';
-        }
-
-        if (priceVal && !isNaN(priceVal)) {
-            if (isDiscountOn && discPercent && discPercent > 0 && discPercent <= 20) {
-                const discountAmount = priceVal - (priceVal * (discPercent / 100));
-                priceEl.innerHTML = `<span class="sg-price-old">₦${priceVal.toLocaleString()}</span>₦${discountAmount.toLocaleString()}`;
-                priceEl.className = 'sg-price flash-price';
-                badgeEl.textContent = `-${discPercent}%`;
-                badgeEl.style.display = 'block';
+    <script>
+        function goSmartBack() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('src') === 'dash') {
+                window.location.href = 'user-dashboard.html?tab=services';
             } else {
-                priceEl.textContent = `₦${priceVal.toLocaleString()}`;
-                priceEl.className = 'sg-price';
-                badgeEl.style.display = 'none';
+                window.location.href = 'index.html';
             }
-        } else {
-            priceEl.textContent = '₦0';
-            priceEl.className = 'sg-price';
-            badgeEl.style.display = 'none';
         }
-    }
-
-    function toggleDiscount(e) {
-        const box = document.getElementById('discount-input-box');
-        const input = document.getElementById('discount-percent');
-        
-        if (e.checked) {
-            box.classList.add('visible');
-            input.setAttribute('required', 'true');
-        } else {
-            box.classList.remove('visible');
-            input.removeAttribute('required');
-            input.value = '';
-        }
-        updateLivePreview();
-    }
-
-    async function handleSubmit(e) {
-        e.preventDefault();
-        const btnSubmit = document.getElementById('btn-submit');
-        
-        if (!finalBlobs[1]) {
-            alert("Please upload the Main Image (Box 1).");
-            return;
-        }
-        
-        if (document.getElementById('discount-switch').checked && activeSpecialOffersCount >= MAX_SPECIAL_OFFERS) {
-            alert("Security Block: You already have the maximum of 2 Special Offers active. Remove an existing offer to add a new one.");
-            return;
-        }
-
-        btnSubmit.disabled = true;
-        btnSubmit.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> <span style="margin-left:8px;">Checking limits...</span>';
-
-        try {
-            const { count, error: countErr } = await client.from('products').select('*', { count: 'exact', head: true }).eq('shop_id', shopId);
-            if (countErr) throw countErr;
-            
-            if (count >= MAX_PRODUCTS_LIMIT) {
-                document.getElementById('limit-reached-message').style.display = 'flex';
-                document.getElementById('product-form').style.display = 'none';
-                throw new Error("Product limit reached.");
-            }
-
-            btnSubmit.innerHTML = '<div class="spinner" style="border-top-color: white;"></div> <span style="margin-left:8px;">Uploading...</span>';
-            
-            const priceVal = parseFloat(document.getElementById('price').value);
-            const stockCount = parseInt(document.getElementById('stock').value);
-            let discountPrice = null;
-            
-            if (document.getElementById('discount-switch').checked && document.getElementById('condition').value !== 'Fairly Used') {
-                const discountPercent = parseFloat(document.getElementById('discount-percent').value);
-                if (!discountPercent || discountPercent <= 0 || discountPercent > 20) {
-                    throw new Error("Discount must be between 1% and 20%");
-                }
-                discountPrice = priceVal - (priceVal * (discountPercent / 100));
-            }
-
-            // Collect all dynamic attributes PLUS the new Key Features, Box Content, and Warranty
-            let attributes = {};
-            document.querySelectorAll('.dynamic-attr').forEach(input => {
-                if (input.value.trim() !== '') {
-                    attributes[input.name] = input.value.trim();
-                }
-            });
-            
-            const uploadPromises = [];
-            [1, 2, 3].forEach(idx => {
-                if (finalBlobs[idx]) {
-                    const fName = `${currentUser.id}_${Date.now()}_img${idx}.jpg`;
-                    uploadPromises.push(
-                        client.storage.from('products').upload(fName, finalBlobs[idx], {
-                            contentType: 'image/jpeg',
-                            cacheControl: '31536000', 
-                            upsert: false
-                        })
-                        .then(({error}) => {
-                            if (error) throw error;
-                            return client.storage.from('products').getPublicUrl(fName).data.publicUrl;
-                        })
-                    );
-                } else {
-                    uploadPromises.push(Promise.resolve(null));
-                }
-            });
-
-            const [url1, url2, url3] = await Promise.all(uploadPromises);
-            
-            const { error: insertError } = await client.from('products').insert({
-                shop_id: parseInt(shopId),
-                name: document.getElementById('name').value.trim(),
-                description: document.getElementById('desc').value.trim(), // Only the "Full Description" maps to this column
-                price: priceVal,
-                discount_price: discountPrice,
-                condition: document.getElementById('condition').value,
-                category: document.getElementById('category').value,
-                image_url: url1,
-                image_url_2: url2,
-                image_url_3: url3,
-                stock_count: stockCount,
-                attributes: attributes, // Key Features, Warranty, etc. safely stored here!
-                is_available: stockCount > 0
-            });
-            
-            if (insertError) throw insertError;
-            
-            // SHOW BEAUTIFUL SUCCESS MODAL
-            const successModal = document.getElementById('success-modal');
-            successModal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-
-            // Redirect automatically after 3 seconds
-            setTimeout(() => {
-                window.location.href = "merchant-dashboard.html";
-            }, 3000);
-            
-        } catch(e) {
-            console.error(e);
-            if (e.message !== "Product limit reached.") {
-                alert("Upload failed: " + e.message);
-            }
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = 'Upload to Marketplace';
-        }
-    }
-</script>
+    </script>
 </body>
 </html>
