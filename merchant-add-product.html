@@ -73,7 +73,7 @@
         .input{width:100%;padding:12px 14px;border-radius:4px;border:1px solid #888C8C;font-size:1rem;color:#0F1111;box-shadow:0 1px 2px rgba(15,17,17,.15) inset;font-family:inherit;transition:.2s}
         .input:focus{outline:0;border-color:var(--color-pink);box-shadow:0 0 0 3px var(--color-pink-light)}
         textarea.input{resize:vertical;min-height:100px}
-        textarea.input.sm-box { min-height: 65px; } /* For smaller desc boxes */
+        textarea.input.sm-box { min-height: 65px; } 
         select.input{cursor:pointer;background-color:#fff}
         
         #dynamic-fields-container { background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px dashed #CBD5E1; margin-bottom: 24px; display: none;}
@@ -742,7 +742,7 @@
         }
     }
 
-    // --- DYNAMIC TEMPLATES LOGIC ---
+    // --- ENHANCED DYNAMIC TEMPLATES LOGIC ---
     function handleCategoryChange() {
         const cat = document.getElementById('category').value;
         const container = document.getElementById('dynamic-fields-container');
@@ -757,12 +757,28 @@
             html = `
                 <div class="dyn-title">Technical Specifications</div>
                 <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="Brand" class="input dynamic-attr" placeholder="e.g. Apple"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Storage (ROM)</label><input type="text" name="Storage" class="input dynamic-attr" placeholder="e.g. 256GB"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Brand</label><input type="text" name="Brand" class="input dynamic-attr" placeholder="e.g. Apple, HP"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Model</label><input type="text" name="Model" class="input dynamic-attr" placeholder="e.g. iPhone 14 Pro"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group" style="margin:0;"><label class="label">RAM</label><input type="text" name="RAM" class="input dynamic-attr" placeholder="e.g. 8GB"></div>
-                    <div class="form-group" style="margin:0;"><label class="label">Battery / Defect Note</label><input type="text" name="Condition Note" class="input dynamic-attr" placeholder="e.g. 85% Health"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">RAM / Memory</label><input type="text" name="RAM" class="input dynamic-attr" placeholder="e.g. 8GB"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Storage (ROM)</label><input type="text" name="Storage" class="input dynamic-attr" placeholder="e.g. 256GB SSD"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="margin:0;"><label class="label">Display / Screen</label><input type="text" name="Display" class="input dynamic-attr" placeholder="e.g. 6.1 OLED"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Processor</label><input type="text" name="Processor" class="input dynamic-attr" placeholder="e.g. A16 Bionic, Core i7"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="margin:0;"><label class="label">Operating System</label><input type="text" name="OS" class="input dynamic-attr" placeholder="e.g. iOS 16, Win 11"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Camera</label><input type="text" name="Camera" class="input dynamic-attr" placeholder="e.g. 48MP Rear"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="margin:0;"><label class="label">Battery</label><input type="text" name="Battery" class="input dynamic-attr" placeholder="e.g. 5000mAh"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Color</label><input type="text" name="Color" class="input dynamic-attr" placeholder="e.g. Midnight Black"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="margin:0;"><label class="label">Package Weight</label><input type="text" name="Weight" class="input dynamic-attr" placeholder="e.g. 200g, 1.5kg"></div>
+                    <div class="form-group" style="margin:0;"><label class="label">Defects / Note</label><input type="text" name="Condition Note" class="input dynamic-attr" placeholder="e.g. Minor scratch"></div>
                 </div>`;
         } else if (fashion.includes(cat)) {
             html = `
