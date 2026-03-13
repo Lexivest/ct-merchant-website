@@ -88,7 +88,6 @@
         /* --- STRICT DIGITAL ID CARD STYLES ---      */
         /* ========================================== */
         .id-card-wrapper {
-            /* Strict fixed dimensions to prevent any layout shifting */
             width: 380px;
             height: 240px; 
             background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
@@ -109,7 +108,7 @@
             }
         }
 
-        /* CTMerchant Watermark */
+        /* Fixed Watermark using actual IMG tag for better canvas rendering */
         .card-watermark {
             position: absolute;
             top: 50%;
@@ -117,10 +116,7 @@
             transform: translate(-50%, -50%);
             width: 180px;
             height: 180px;
-            background-image: url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            object-fit: contain;
             opacity: 0.06;
             z-index: 0;
             pointer-events: none;
@@ -134,7 +130,6 @@
             flex-direction: column;
         }
 
-        /* Header: Left Col (Title, URL, Badge) & Right Col (Profile Pic) */
         .card-header {
             display: flex;
             justify-content: space-between;
@@ -165,12 +160,11 @@
             letter-spacing: 0.5px;
         }
 
-        /* Grouped the badge inside the header left column to fill the gap! */
         .verified-row {
             display: flex;
             align-items: center;
             gap: 6px;
-            margin-top: 8px; /* Safe space from URL */
+            margin-top: 8px; 
         }
         .small-badge-logo {
             width: 18px;
@@ -202,7 +196,6 @@
             flex-shrink: 0;
         }
 
-        /* Body: Info Rows (Pulled up safely from the bottom) */
         .card-body {
             display: flex;
             flex-direction: column;
@@ -239,7 +232,6 @@
             font-weight: 800;
         }
 
-        /* Footer Row for ID and Expiry */
         .card-footer-row {
             display: flex;
             gap: 32px;
@@ -253,7 +245,6 @@
             color: #FBBF24;
         }
 
-        /* QR Code placed absolute bottom right */
         .qr-wrapper {
             position: absolute;
             bottom: 0;
@@ -286,7 +277,6 @@
 
         /* ========================================== */
 
-        /* Buttons */
         .action-box {
             width: 100%;
             max-width: 380px;
@@ -333,7 +323,6 @@
         .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Loader */
         #loader { margin-top: 50px; text-align: center; }
         #loader .spinner { border-color: rgba(0,0,0,0.1); border-top-color: var(--color-pink); width: 40px; height: 40px; border-width: 4px; }
     </style>
@@ -365,26 +354,23 @@
 
             <!-- THE DIGITAL ID CARD -->
             <div class="id-card-wrapper" id="capture-area">
-                <!-- Watermark Logo -->
-                <div class="card-watermark"></div>
+                <!-- Watermark Logo updated to IMG tag for better capture -->
+                <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="card-watermark" crossorigin="anonymous" alt="Watermark">
                 
                 <div class="card-inner">
                     <div class="card-header">
                         <div class="header-left-col">
                             <div class="repo-title">CTMerchant <span id="card-city">...</span> Repo</div>
-                            <div class="repo-website">www.ctmerchant.com.ng</div>
+                            <div class="repo-website">ctmerchant.com.ng</div>
                             
-                            <!-- VERIFIED BADGE MOVED UP HERE TO FILL GAP -->
                             <div class="verified-row">
                                 <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" class="small-badge-logo" crossorigin="anonymous" alt="Logo">
                                 <span class="verified-text"><i class="fa-solid fa-circle-check"></i> Verified Merchant</span>
                             </div>
                         </div>
-                        <!-- crossorigin="anonymous" is crucial for html2canvas to save the image -->
                         <img id="card-profile-pic" class="profile-pic" src="" crossorigin="anonymous" alt="Profile">
                     </div>
 
-                    <!-- TEXT INFO MOVED UP -->
                     <div class="card-body">
                         <div class="info-group">
                             <div class="info-label">Business Name</div>
@@ -408,7 +394,6 @@
                         </div>
                     </div>
                     
-                    <!-- QR Code (Bottom Right Absolute) -->
                     <div class="qr-wrapper">
                         <div id="qrcode"></div>
                     </div>
@@ -492,87 +477,72 @@
         document.getElementById('loader').style.display = 'none';
         document.getElementById('card-ui').style.display = 'flex';
 
-        // Set Dynamic Expiry Date (Current Year + 1)
         const currentYear = new Date().getFullYear();
         document.getElementById('card-expiry').textContent = currentYear + 1;
 
-        // Populate Text Fields
         document.getElementById('card-city').textContent = shop.cities?.name || "Local";
         document.getElementById('card-shop-name').textContent = shop.name;
         document.getElementById('card-proprietor-name').textContent = proprietorName; 
         document.getElementById('card-shop-id').textContent = shop.unique_id || 'PENDING';
-        
-        // Profile Pic
         document.getElementById('card-profile-pic').src = avatarUrl;
 
-        // Generate QR Code using the proper domain (no hyphen)
         const shopUrl = `https://ctmerchant.com.ng/shop-detail.html?id=${shop.id}`;
-        
         document.getElementById('qrcode').innerHTML = '';
         
-        // Generate the QR code at a HIGH RESOLUTION (256x256) so it is sharp, 
-        // then CSS will scale it down to fit in the 64px box.
         new QRCode(document.getElementById("qrcode"), {
             text: shopUrl,
             width: 256, 
             height: 256,
             colorDark : "#000000",
             colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.M // Medium Error correction
+            correctLevel : QRCode.CorrectLevel.M
         });
     }
 
-    // Helper to generate the image blob
+    // Switched to JPEG for stronger mobile sharing compatibility
     async function generateCardBlob() {
         const captureArea = document.getElementById('capture-area');
         const canvas = await html2canvas(captureArea, {
-            scale: 3, // High resolution for sharp printing/sharing
-            useCORS: true, // Crucial for loading cross-origin images (avatars)
-            backgroundColor: null 
+            scale: 3, 
+            useCORS: true, 
+            backgroundColor: '#131921' // Hardcode background color to prevent transparency issues
         });
         return new Promise(resolve => {
-            canvas.toBlob(blob => resolve(blob), "image/png");
+            canvas.toBlob(blob => resolve(blob), "image/jpeg", 0.95);
         });
     }
 
-    // NEW PRIMARY ACTION: Share actual Image to WhatsApp/Socials
+    // Force Image Attachment Share
     async function shareLink() {
         const btn = document.getElementById('btn-share');
         const originalText = btn.innerHTML;
-        // White spinner since background is pink
         btn.innerHTML = '<div class="spinner" style="border-top-color: #fff;"></div> Preparing Share...';
         btn.disabled = true;
 
         try {
-            // Using the proper domain (no hyphen)
-            const shopUrl = `https://ctmerchant.com.ng/shop-detail.html?id=${currentShop.id}`;
-            const textContent = `Check out my shop "${currentShop.name}" on CTMerchant!\n\nLink: ${shopUrl}`;
-            
-            // 1. Generate the image first
             const blob = await generateCardBlob();
-            const file = new File([blob], `CTMerchant_${currentShop.unique_id}.png`, { type: 'image/png' });
+            // Changed to JPG
+            const file = new File([blob], `CTMerchant_${currentShop.unique_id}.jpg`, { type: 'image/jpeg' });
 
-            // 2. Check if device supports sharing files (Works on iOS and Modern Android)
+            // Removed the explicit 'https://' from the text to stop WhatsApp from overriding the image with a link preview
+            const textContent = `Check out my shop "${currentShop.name}" on ctmerchant.com.ng!\nSearch my ID: ${currentShop.unique_id} or scan the QR code on my card.`;
+
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                // BY OMITTING THE URL PARAMETER HERE, WE FORCE WHATSAPP TO TREAT IT AS AN IMAGE SHARE
                 await navigator.share({
                     title: currentShop.name,
                     text: textContent,
-                    files: [file] // Attach the image!
+                    files: [file] // Send the image file
                 });
             } else if (navigator.share) {
-                // Fallback for older devices: just share the text/link
                 await navigator.share({
                     title: currentShop.name,
-                    text: textContent,
-                    url: shopUrl
+                    text: textContent
                 });
             } else {
                 navigator.clipboard.writeText(textContent);
-                alert("Shop link copied to clipboard!");
+                alert("Shop details copied to clipboard!");
             }
         } catch (e) {
-            // Usually happens if the user cancels the share dialog, so we just log it silently
             console.warn("Share action cancelled or failed:", e);
         } finally {
             btn.innerHTML = originalText;
@@ -580,11 +550,9 @@
         }
     }
 
-    // SECONDARY ACTION: Download directly
     async function downloadCard() {
         const btn = document.getElementById('btn-download');
         const originalText = btn.innerHTML;
-        // Dark spinner since background is white
         btn.innerHTML = '<div class="spinner" style="border-top-color: #0F1111;"></div> Saving...';
         btn.disabled = true;
 
@@ -593,7 +561,7 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `CTMerchant_ID_${currentShop.unique_id || 'Card'}.png`;
+            link.download = `CTMerchant_ID_${currentShop.unique_id}.jpg`;
             link.click();
             URL.revokeObjectURL(url);
         } catch (e) {
