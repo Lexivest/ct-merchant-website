@@ -423,13 +423,12 @@
         }
     }
 
-    // --- REFACTORED RENDER SCRIPT WITH AUTO-FADING BANNER LOGIC ---
     function renderData(e){
         document.getElementById('initial-loader').style.display='none';
         document.getElementById('header-city').textContent=e.profile.cities?.name||"Unknown";
         const t=e.areas.sort((e,t)=>e.id===userAreaId?-1:t.id===userAreaId?1:e.name.localeCompare(t.name)),a=t.map(e=>`<option value="${e.id}">${e.name}</option>`).join(''),n=document.getElementById('search-area-desktop');n&&n.innerHTML!==`<option value="all">All Areas</option>`+a&&(n.innerHTML=`<option value="all">All Areas</option>`+a);const o=document.getElementById('search-area-mobile');o&&o.innerHTML!==`<option value="all">All Areas</option>`+a&&(o.innerHTML=`<option value="all">All Areas</option>`+a);const r=document.getElementById('filter-category');if(r){const t=`<option value="all">All Categories</option>`+e.categories.map(e=>`<option value="${e.name}">${e.name}</option>`).join('');r.innerHTML!==t&&(r.innerHTML=t)}const s=e.profile.full_name||"User",i=e.profile.avatar_url||`https://api.dicebear.com/7.x/initials/svg?seed=${s}`;document.getElementById('header-avatar').src!==i&&(document.getElementById('header-avatar').src=i),document.getElementById('profile-avatar-lg').src!==i&&(document.getElementById('profile-avatar-lg').src=i),document.getElementById('profile-name').textContent=s,document.getElementById('profile-phone').textContent=e.profile.phone||"No phone number added",currentUser&&(document.getElementById('profile-email').textContent=currentUser.email);const c=document.getElementById('badge-count');if(e.unread>0? (c.textContent=e.unread>9?'9+':e.unread,c.style.display='block') : c.style.display='none', e.announcements&&e.announcements.length>0){const t=document.getElementById('header-ticker'),a=document.getElementById('ticker-text'),n=e.announcements.map(e=>e.message).join("  •  ");t.style.display='flex',a.innerHTML!==n&&(a.innerHTML=n,a.style.animationDuration=`${Math.max(40,n.length*.4)}s`)}else document.getElementById('header-ticker').style.display='none';
         
-        // --- NEW FADE BANNER LOGIC ---
+        // --- 8-SECOND CROSS-FADE BANNER LOGIC ---
         const d=document.getElementById('promo-list');
         if(window.promoInterval) clearInterval(window.promoInterval);
         if(e.promos && e.promos.length > 0){
@@ -444,7 +443,7 @@
                     slides[currentSlide].classList.remove('active');
                     currentSlide = (currentSlide + 1) % slides.length;
                     slides[currentSlide].classList.add('active');
-                }, 5000); // Crossfades every 5 seconds
+                }, 8000); // Crossfades every 8 seconds for comfortable reading
             }
         }else{
             d.style.display = 'none';
