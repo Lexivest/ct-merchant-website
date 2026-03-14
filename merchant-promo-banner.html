@@ -85,19 +85,17 @@
         .edu-text { font-size: 0.85rem; color: #475569; line-height: 1.5; }
 
         /* ========================================== */
-        /* --- HIGH-RES BANNER STYLES ---             */
+        /* --- BULLETPROOF BANNER LAYOUT ---          */
         /* ========================================== */
         .banner-wrapper {
-            /* Large Landscape format for high quality printing/sharing */
             width: 800px;
             height: 450px; 
-            background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+            background: #1E1B4B;
             border-radius: 12px;
             position: relative;
             overflow: hidden; 
             color: white;
             box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-            /* Transform Origin top left to scale down neatly on mobile */
             transform-origin: top center;
         }
 
@@ -109,126 +107,146 @@
         @media (max-width: 450px) { .banner-wrapper { transform: scale(0.42); margin-bottom: -260px; } }
         @media (max-width: 360px) { .banner-wrapper { transform: scale(0.38); margin-bottom: -280px; } }
 
-        /* Full Bleed Background Image */
+        /* Full Cover Graphic */
         .banner-bg-graphic {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            top: 0; left: 0; 
+            width: 100%; height: 100%;
             object-fit: cover;
             z-index: 1;
         }
 
-        /* Overlay Dark Gradient on the right side to make text readable */
-        .banner-gradient-overlay {
+        /* Smooth Gradient Fade */
+        .banner-gradient {
             position: absolute;
-            top: 0; right: 0; width: 60%; height: 100%;
-            background: linear-gradient(to right, transparent, rgba(15, 23, 42, 0.95) 40%, rgba(15, 23, 42, 1));
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to right, rgba(15,23,42,0) 10%, rgba(15,23,42,0.8) 50%, rgba(15,23,42,1) 100%);
             z-index: 2;
         }
 
-        /* Dynamic Content Container (Right Side) */
-        .banner-content {
+        /* STRICT RIGHT-SIDE DATA BOX */
+        .banner-glass-box {
             position: absolute;
-            top: 0; right: 0;
-            width: 45%; 
-            height: 100%;
-            z-index: 3;
+            top: 30px;
+            right: 30px;
+            width: 420px;
+            height: 350px; /* Locked height so it fits above the bottom strip */
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 24px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            padding: 30px 40px;
+            z-index: 5;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
 
-        /* Shop Name Header */
-        .banner-shop-name {
-            font-size: 2.2rem;
+        /* Box Header: Name & Badge */
+        .box-header {
+            flex-shrink: 0;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .b-shop-name {
+            font-size: 1.8rem;
             font-weight: 900;
-            color: var(--color-pink);
-            line-height: 1.1;
-            margin-bottom: 8px;
+            color: #FFFFFF;
+            line-height: 1.2;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Truncates if too long */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
             text-transform: uppercase;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
-        
-        .verified-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(16, 185, 129, 0.15);
-            border: 1px solid rgba(16, 185, 129, 0.4);
-            color: #34D399;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
+        .b-verified {
+            color: #10B981;
+            font-size: 0.85rem;
             font-weight: 800;
-            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .verified-badge img { width: 18px; height: 18px; border-radius: 4px; }
+        .b-verified img { width: 16px; height: 16px; border-radius: 3px; }
 
-        /* Data Fields */
-        .data-row {
-            margin-bottom: 12px;
+        /* Box Details: Proprietor & ID */
+        .box-details {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: auto; /* Pushes the footer exactly to the bottom */
         }
-        .data-label {
-            font-size: 0.8rem;
+        .b-row { display: flex; flex-direction: column; gap: 2px; }
+        .b-label {
+            font-size: 0.7rem;
             color: #94A3B8;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 2px;
         }
-        .data-value {
-            font-size: 1.2rem;
-            font-weight: 800;
+        .b-value {
+            font-size: 1.1rem;
+            font-weight: 700;
             color: #FFFFFF;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .data-value.highlight { color: #FBBF24; font-family: monospace; font-size: 1.4rem; letter-spacing: 1px;}
+        .b-value.highlight {
+            color: #FBBF24;
+            font-family: monospace;
+            font-size: 1.35rem;
+            letter-spacing: 1px;
+        }
 
-        /* Bottom Section: QR & Profile */
-        .banner-bottom-flex {
+        /* Box Footer: Profile Pic & QR Code (Never Overlaps) */
+        .box-footer {
+            flex-shrink: 0;
             display: flex;
-            align-items: flex-end;
             justify-content: space-between;
-            margin-top: auto;
+            align-items: flex-end;
         }
-
-        .profile-pic {
-            width: 80px; 
-            height: 80px; 
+        .b-profile {
+            width: 76px;
+            height: 76px;
             border-radius: 8px;
-            border: 3px solid white;
+            border: 2px solid rgba(255,255,255,0.8);
             object-fit: cover;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-
-        .qr-wrapper {
-            width: 100px; 
-            height: 100px; 
+        .b-qr-wrap {
+            width: 84px;
+            height: 84px;
             background: white;
-            padding: 6px;
+            padding: 4px;
             border-radius: 8px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
         #qrcode { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-        #qrcode img { width: 100% !important; height: 100% !important; object-fit: contain; }
+        #qrcode img, #qrcode canvas { width: 100% !important; height: 100% !important; object-fit: contain; }
 
-        /* Bottom Banner Strip */
+        /* Bottom Branding Strip */
         .bottom-strip {
             position: absolute;
             bottom: 0; left: 0; width: 100%;
             height: 40px;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(5px);
-            z-index: 4;
+            background: var(--color-pink);
+            z-index: 6;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            font-size: 1rem;
-            font-weight: 700;
+            gap: 10px;
+            font-size: 0.95rem;
+            font-weight: 800;
             color: white;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            letter-spacing: 0.5px;
         }
-        .bottom-strip span { color: #FBBF24; }
 
         /* ========================================== */
 
@@ -322,44 +340,54 @@
                 <p class="edu-text">This high-resolution banner is perfect for printing as a flex banner for your physical shop or broadcasting on WhatsApp to attract new customers.</p>
             </div>
 
+            <!-- THE PROMO BANNER -->
             <div class="banner-wrapper" id="capture-area">
                 
+                <!-- BACKGROUND GRAPHIC (Replace with your actual uploaded image URL later) -->
                 <img src="https://images.unsplash.com/photo-1573855619003-97b4799dcd8b?q=80&w=800&auto=format&fit=crop" class="banner-bg-graphic" crossorigin="anonymous" alt="Background">
                 
-                <div class="banner-gradient-overlay"></div>
+                <div class="banner-gradient"></div>
                 
-                <div class="banner-content">
-                    <div class="banner-shop-name" id="banner-shop-name">Loading...</div>
+                <!-- STRICT RIGHT BOX (Prevents any overlap) -->
+                <div class="banner-glass-box">
                     
-                    <div class="verified-badge">
-                        <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" crossorigin="anonymous" alt="Logo">
-                        <span><i class="fa-solid fa-circle-check"></i> Verified Physical Shop</span>
+                    <div class="box-header">
+                        <div class="b-shop-name" id="banner-shop-name">Loading...</div>
+                        <div class="b-verified">
+                            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" crossorigin="anonymous" alt="Logo">
+                            <i class="fa-solid fa-circle-check"></i> Verified Physical Shop
+                        </div>
                     </div>
 
-                    <div class="data-row">
-                        <div class="data-label">Proprietor</div>
-                        <div class="data-value" id="banner-proprietor">...</div>
+                    <div class="box-details">
+                        <div class="b-row">
+                            <span class="b-label">Proprietor</span>
+                            <span class="b-value" id="banner-proprietor">...</span>
+                        </div>
+                        <div class="b-row">
+                            <span class="b-label">Merchant ID Number</span>
+                            <span class="b-value highlight" id="banner-id">------</span>
+                        </div>
                     </div>
 
-                    <div class="data-row">
-                        <div class="data-label">Merchant ID Number</div>
-                        <div class="data-value highlight" id="banner-id">------</div>
-                    </div>
-
-                    <div class="banner-bottom-flex">
-                        <img id="banner-profile-pic" class="profile-pic" src="" crossorigin="anonymous" alt="Profile">
-                        <div class="qr-wrapper">
+                    <div class="box-footer">
+                        <img id="banner-profile-pic" class="b-profile" src="" crossorigin="anonymous" alt="Profile">
+                        <div class="b-qr-wrap">
                             <div id="qrcode"></div>
                         </div>
                     </div>
+
                 </div>
 
+                <!-- Bottom Branding Strip -->
                 <div class="bottom-strip">
-                    <i class="fa-solid fa-globe"></i> Visit <span>ctmerchant.com.ng</span> to view my full catalog
+                    <i class="fa-solid fa-globe"></i> Scan QR Code to view my full catalog on ctmerchant.com.ng
                 </div>
             </div>
 
+            <!-- ACTION BUTTONS -->
             <div class="action-box">
+                <!-- Primary Share Button -->
                 <button onclick="shareLink()" class="btn-brand" id="btn-share">
                     <span>Broadcast Banner to</span> 
                     <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> 
@@ -370,6 +398,7 @@
                     <strong>💡 PRO TIP:</strong> This generates a high-quality image. You can also save it to your phone and send it to a local printing press to create a physical flex banner!
                 </div>
 
+                <!-- Secondary Download Button -->
                 <button onclick="downloadCard()" class="btn-outline" id="btn-download">
                     <i class="fa-solid fa-download"></i> Save Image in High Quality
                 </button>
@@ -446,11 +475,11 @@
         const shopUrl = `https://ctmerchant.com.ng/shop-detail.html?id=${shop.id}`;
         document.getElementById('qrcode').innerHTML = '';
         
-        // High Res QR Code
+        // High Res QR Code ensures sharp scanning on printed flex banners
         new QRCode(document.getElementById("qrcode"), {
             text: shopUrl,
-            width: 300, 
-            height: 300,
+            width: 256, 
+            height: 256,
             colorDark : "#000000",
             colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.M
@@ -460,7 +489,7 @@
     async function generateBannerBlob() {
         const captureArea = document.getElementById('capture-area');
         const canvas = await html2canvas(captureArea, {
-            scale: 3, // Very High resolution for printing
+            scale: 3, // High resolution for printing
             useCORS: true, 
             backgroundColor: '#0F172A' 
         });
