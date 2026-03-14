@@ -485,10 +485,10 @@
                 return;
             }
 
-            // 1. Get Shop Details Safely (Fetch all columns to prevent missing column errors)
+            // 1. Get Shop Details with Exact Schema Columns
             const { data: shop, error: shopErr } = await client
                 .from('shops')
-                .select('*, cities(name)') 
+                .select('id, name, unique_id, category, is_verified, storefront_url, image_url, cities(name)') 
                 .eq('owner_id', session.user.id)
                 .maybeSingle();
 
@@ -506,10 +506,10 @@
 
             currentShop = shop;
 
-            // 2. Fetch Latest Approved Products Safely
+            // 2. Fetch Latest Approved Products
             const { data: products, error: prodErr } = await client
                 .from('products')
-                .select('*') 
+                .select('image_url') 
                 .eq('shop_id', shop.id)
                 .eq('is_approved', true)
                 .limit(4);
@@ -541,28 +541,27 @@
         let collageImages = [];
         let hasStorefront = false;
 
-        // 1. Safely locate Storefront Image (checks multiple possible column names)
-        const shopBanner = shop.banner_url || shop.banner || shop.shop_banner;
+        // 1. Use the storefront_url (fallback to their profile logo image_url)
+        const shopBanner = shop.storefront_url || shop.image_url;
         if (shopBanner) {
             collageImages.push(shopBanner);
             hasStorefront = true;
         }
 
-        // 2. Safely locate Product Images
+        // 2. Add Product Images
         if (products && products.length > 0) {
             for (let i = 0; i < products.length; i++) {
                 if (collageImages.length < 4) {
-                    const p = products[i];
-                    // Smartly check for however the image is stored in DB
-                    const pImg = p.image_url || p.image || (p.images && p.images[0]) || (p.image_urls && p.image_urls[0]);
-                    if (pImg) collageImages.push(pImg);
+                    if (products[i].image_url) {
+                        collageImages.push(products[i].image_url);
+                    }
                 }
             }
         }
 
         const bgGrid = document.getElementById('banner-bg-grid');
         
-        // Only update if we found actual images to use
+        // Update Grid with dynamically found images
         if (collageImages.length > 0) {
             bgGrid.innerHTML = ''; 
             bgGrid.className = `dynamic-bg-grid grid-${collageImages.length}`;
