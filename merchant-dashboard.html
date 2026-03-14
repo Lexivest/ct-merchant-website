@@ -108,8 +108,17 @@
         /* --- GRID LAYOUT --- */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 20px;
+            /* Default to exactly 2 columns for mobile phones */
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        /* Expand to more columns on larger screens (Tablets/Desktops) */
+        @media (min-width: 600px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 20px;
+            }
         }
 
         .dash-card {
@@ -127,10 +136,19 @@
             color: inherit;
             position: relative;
         }
+        
         .dash-card:hover { 
             transform: translateY(-3px); 
             box-shadow: var(--shadow-md); 
             border-color: #B0B5B5; 
+        }
+
+        /* Fine-tune padding on small phones to prevent text squeezing */
+        @media (max-width: 480px) {
+            .dash-card { padding: 16px 10px; height: 135px; }
+            .icon-box { width: 42px !important; height: 42px !important; font-size: 1.2rem !important; margin-bottom: 8px !important; }
+            .card-title { font-size: 0.85rem !important; }
+            .card-subtitle { font-size: 0.7rem !important; }
         }
 
         /* Action Badge Notification */
@@ -178,7 +196,8 @@
         .card-amber .icon-box { background: #FEF3C7; color: #D97706; } 
         .card-rose .icon-box { background: var(--color-pink-light); color: var(--color-pink); }  
         .card-cyan .icon-box { background: #CFFAFE; color: #0891B2; } 
-        .card-fuchsia .icon-box { background: #FAE8FF; color: #C026D3; } /* Added for ID Card */
+        .card-fuchsia .icon-box { background: #FAE8FF; color: #C026D3; } 
+        .card-emerald .icon-box { background: #D1FAE5; color: #059669; } /* For Promo Banner */
         
         /* Locked Card Styling */
         .card-locked { background: #F7F7F7; border-color: #E2E8F0; color: #888C8C; cursor: not-allowed;}
@@ -268,11 +287,18 @@
                     <div id="view-shop-subtitle" class="card-subtitle hidden"></div>
                 </div>
 
-                <!-- NEW: DIGITAL ID CARD -->
+                <!-- DIGITAL ID CARD -->
                 <div onclick="window.location.href='merchant-id-card.html'" class="dash-card card-fuchsia">
                     <div class="icon-box"><i class="fa-solid fa-address-card"></i></div>
                     <div class="card-title">Digital ID Card</div>
                     <div class="card-subtitle">QR Code & Share</div>
+                </div>
+
+                <!-- NEW: PROMO BANNER -->
+                <div onclick="window.location.href='merchant-promo-banner.html'" class="dash-card card-emerald">
+                    <div class="icon-box"><i class="fa-solid fa-image"></i></div>
+                    <div class="card-title">Promo Banner</div>
+                    <div class="card-subtitle">Print & Broadcast</div>
                 </div>
 
                 <div onclick="navTo('merchant-analytics.html')" class="dash-card card-teal">
