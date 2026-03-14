@@ -92,7 +92,7 @@
         .detail-label { color: var(--color-text-muted); font-weight: 600; }
         .detail-value { font-weight: 700; color: #0F172A; text-align: right; }
 
-        /* WARNING NOTE */
+        /* WARNING NOTE REBRANDED FOR VIDEO KYC */
         .warning-note {
             background: #FEF2F2;
             color: #991B1B;
@@ -161,11 +161,11 @@
 
     <div id="checkout-content" class="checkout-card hidden">
         <div class="icon-circle">
-            <i class="fa-solid fa-building-circle-check"></i>
+            <i class="fa-solid fa-id-card-clip"></i>
         </div>
         
-        <h2 class="title">Physical Verification</h2>
-        <p class="subtitle">A one-time fee to dispatch an agent to verify your physical shop location.</p>
+        <h2 class="title">Digital ID & KYC Verification</h2>
+        <p class="subtitle">A one-time fee to process your Video KYC, activate your Digital ID, and unlock your public storefront.</p>
 
         <div class="price-box">
             <div class="price-label">Total Amount</div>
@@ -187,18 +187,17 @@
             </div>
         </div>
 
-        <!-- NEW: Industry Standard Non-Refundable Warning with Address -->
+        <!-- NEW: Rebranded Warning for Video KYC -->
         <div class="warning-note">
-            <strong><i class="fa-solid fa-triangle-exclamation"></i> Important:</strong> 
-            Our field agent will visit the exact address provided below. 
+            <strong><i class="fa-solid fa-video"></i> Next Step: Video KYC</strong> <br>
+            After payment, you will be required to record a short 60-second video of yourself and your shop at the following registered address:
             
             <div class="address-box">
                 <i class="fa-solid fa-location-dot" style="margin-top: 3px;"></i>
                 <span id="lbl-address">Loading registered address...</span>
             </div>
 
-            Ensure your shop is actively operating at this location. 
-            <strong>This verification fee is strictly non-refundable.</strong>
+            Your video must prove your shop operates here. <strong>This fee is strictly non-refundable.</strong>
         </div>
 
         <div class="gateway-section" id="gateway-buttons">
@@ -221,7 +220,7 @@
     <!-- Processing Overlay -->
     <div id="processing-overlay" class="overlay hidden">
         <div class="spinner"></div>
-        <h2 style="margin-bottom: 10px;">Verifying Securely...</h2>
+        <h2 style="margin-bottom: 10px;">Processing Securely...</h2>
         <p>Please do not close this window.</p>
     </div>
 
@@ -258,12 +257,12 @@
                 if (shopErr || !shop) throw new Error("Shop not found");
 
                 if (shop.is_verified) {
-                    alert("Your shop is already physically verified!");
+                    alert("Your shop is already fully verified!");
                     window.location.href = "merchant-dashboard.html";
                     return;
                 }
 
-                // Check if they have already PAID the fee (but agent hasn't arrived yet)
+                // Check if they have already PAID the fee
                 const { data: paymentRecord } = await client
                     .from('physical_verification_payments')
                     .select('id')
@@ -272,8 +271,13 @@
                     .maybeSingle();
 
                 if (paymentRecord) {
-                    alert("You have already paid the verification fee! Our agent will contact you soon.");
-                    window.location.href = "merchant-dashboard.html";
+                    if (shop.status === 'pending_kyc_review') {
+                        alert("We are currently reviewing your Video KYC! We will notify you once approved.");
+                        window.location.href = "merchant-dashboard.html";
+                    } else {
+                        alert("You have already paid the fee! Let's get your Video KYC recorded.");
+                        window.location.href = "merchant-video-kyc.html";
+                    }
                     return;
                 }
 
@@ -284,7 +288,7 @@
                     merchantName: profile.full_name || "Merchant",
                     shopName: shop.name,
                     cityName: profile.cities?.name || "Unknown City",
-                    shopAddress: shop.address || "Address not provided", // Extracted Address
+                    shopAddress: shop.address || "Address not provided", 
                     email: currentUserSession.user.email
                 };
 
@@ -343,7 +347,7 @@
                 lastName: lastName,
                 email: dynamicShopDetails.email,
                 amount: FEE_AMOUNT,
-                narration: "CT-Merchant Physical Verification",
+                narration: "CT-Merchant KYC Verification",
                 transactionId: transactionId,
                 
                 onSuccess: function (response) {
@@ -384,11 +388,12 @@
 
                 document.getElementById('processing-overlay').classList.add('hidden');
                 
-                // NEW SUCCESS MESSAGE
-                document.getElementById('status-msg').innerHTML = `✅ Payment Successful! Generating receipt and dispatching agent...`;
+                // NEW SUCCESS MESSAGE & REDIRECT TO VIDEO STUDIO
+                document.getElementById('status-msg').innerHTML = `✅ Payment Successful! Redirecting you to record your KYC Video...`;
                 
                 setTimeout(() => {
-                    window.location.href = "merchant-dashboard.html";
+                    // Send them straight to the studio to keep the momentum going!
+                    window.location.href = "merchant-video-kyc.html";
                 }, 3500);
 
             } catch (error) {
@@ -402,4 +407,3 @@
     </script>
 </body>
 </html>
-
