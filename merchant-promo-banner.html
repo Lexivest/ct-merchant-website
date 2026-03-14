@@ -90,7 +90,7 @@
         .banner-wrapper {
             width: 800px;
             height: 450px; 
-            background: #003B95; /* Deep corporate blue fallback */
+            background: #003B95; 
             position: relative;
             overflow: hidden; 
             color: white;
@@ -106,22 +106,37 @@
         @media (max-width: 450px) { .banner-wrapper { transform: scale(0.42); margin-bottom: -260px; } }
         @media (max-width: 360px) { .banner-wrapper { transform: scale(0.38); margin-bottom: -280px; } }
 
-        /* Full Background Graphic (Upload your smiling lady here) */
-        .banner-bg-graphic {
+        /* --- DYNAMIC PRODUCT GRID (LEFT SIDE) --- */
+        .dynamic-bg-grid {
             position: absolute;
             top: 0; left: 0; 
-            width: 100%; height: 100%;
-            object-fit: cover;
+            width: 60%; /* Covers the left half before the solid blue */
+            height: 100%;
+            display: grid;
+            gap: 2px; /* Creates nice white borders between photos like a collage */
+            background: #FFFFFF;
             z-index: 1;
         }
+        .dynamic-bg-grid img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #E2E8F0; /* Fallback color while loading */
+        }
+        
+        /* Grid Layout Rules based on number of products */
+        .grid-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+        .grid-2 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
+        .grid-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .grid-3 img:nth-child(1) { grid-row: span 2; } /* Make the first image big */
+        .grid-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
 
-        /* Diagonal Blue Gradient Slice (Matches Reference Image) */
+        /* Diagonal Blue Gradient Slice (Smoothed out to blend over the photos) */
         .banner-gradient-slice {
             position: absolute;
             top: 0; right: 0; 
-            width: 65%; height: 100%;
-            /* Sharp, solid blue overlay that fades softly to the left */
-            background: linear-gradient(105deg, transparent 5%, #003B95 35%, #001E50 100%);
+            width: 70%; height: 100%;
+            background: linear-gradient(105deg, transparent 0%, rgba(0,59,149,0.85) 30%, #003B95 45%, #001E50 100%);
             z-index: 2;
         }
 
@@ -131,7 +146,7 @@
             top: 25px;
             right: 30px;
             width: 440px;
-            height: calc(100% - 75px); /* Leave room for bottom bar */
+            height: calc(100% - 75px); 
             z-index: 5;
             display: flex;
             flex-direction: column;
@@ -156,7 +171,7 @@
             margin-bottom: 12px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
-        .promo-platform span { color: #FBBF24; } /* Yellow highlight for City Repo */
+        .promo-platform span { color: #FBBF24; } 
 
         /* The Shop Name */
         .promo-shop-name {
@@ -175,7 +190,7 @@
 
         /* The Advertising Ribbon (For Category) */
         .promo-ribbon {
-            background: #EA580C; /* Bright Orange */
+            background: #EA580C; 
             color: white;
             padding: 8px 24px;
             border-radius: 30px;
@@ -188,9 +203,9 @@
             margin-bottom: 20px;
         }
 
-        /* The Big ID Highlight Box (Mimics the N5,000 Waived Box) */
+        /* The Big ID Highlight Box */
         .promo-highlight-box {
-            background: linear-gradient(to bottom, #FDE68A, #F59E0B); /* Vibrant Yellow/Gold */
+            background: linear-gradient(to bottom, #FDE68A, #F59E0B); 
             border: 3px solid #FFFFFF;
             border-radius: 12px;
             padding: 12px 24px;
@@ -219,7 +234,7 @@
         /* Verified Footer inside content */
         .promo-verified {
             margin-top: auto;
-            color: #34D399; /* Bright Green */
+            color: #34D399; 
             font-size: 1rem;
             font-weight: 800;
             text-transform: uppercase;
@@ -230,14 +245,14 @@
         }
         .promo-verified img { width: 22px; height: 22px; border-radius: 4px; box-shadow: 0 0 0 1px white;}
 
-        /* Bottom Branding Bar (Like Reference Image) */
+        /* Bottom Branding Bar */
         .promo-bottom-bar {
             position: absolute;
             bottom: 0; left: 0; 
             width: 100%;
             height: 50px;
             background: #001E50;
-            border-top: 4px solid #FBBF24; /* Yellow top border */
+            border-top: 4px solid #FBBF24; 
             z-index: 6;
             display: flex;
             align-items: center;
@@ -256,7 +271,7 @@
         /* Floating QR Code (Bottom Left) */
         .promo-qr-wrap {
             position: absolute;
-            bottom: 15px; /* Overlaps bottom bar slightly */
+            bottom: 15px; 
             left: 30px;
             width: 110px;
             height: 110px;
@@ -362,21 +377,24 @@
         
         <div id="loader">
             <div class="spinner"></div>
-            <p style="margin-top: 10px; font-weight: 600; color: #565959;">Generating your banner...</p>
+            <p style="margin-top: 10px; font-weight: 600; color: #565959;">Generating your custom catalog banner...</p>
         </div>
 
         <div id="card-ui" style="display: none; width: 100%; align-items: center; flex-direction: column;">
             
             <div class="edu-box">
                 <h4 class="edu-title"><i class="fa-solid fa-image" style="color: var(--color-pink);"></i> Download & Print</h4>
-                <p class="edu-text">This high-resolution banner is perfect for printing as a flex banner for your physical shop or broadcasting on WhatsApp to attract new customers.</p>
+                <p class="edu-text">We automatically pulled your latest products to create this high-resolution banner. It is perfect for printing as a flex banner for your physical shop or broadcasting on WhatsApp.</p>
             </div>
 
             <!-- THE REDESIGNED PROMO BANNER -->
             <div class="banner-wrapper" id="capture-area">
                 
-                <!-- BACKGROUND GRAPHIC (Replace with your actual uploaded image URL later) -->
-                <img src="https://images.unsplash.com/photo-1573855619003-97b4799dcd8b?q=80&w=800&auto=format&fit=crop" class="banner-bg-graphic" crossorigin="anonymous" alt="Background">
+                <!-- DYNAMIC PRODUCT COLLAGE -->
+                <div class="dynamic-bg-grid grid-1" id="banner-bg-grid">
+                    <!-- Default Fallback Image (Will be replaced by user products if available) -->
+                    <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop" crossorigin="anonymous" alt="Background">
+                </div>
                 
                 <!-- The Blue Advertising Overlay -->
                 <div class="banner-gradient-slice"></div>
@@ -392,7 +410,7 @@
                     <!-- Orange Advertising Ribbon -->
                     <div class="promo-ribbon" id="banner-category">Category</div>
 
-                    <!-- Highlight Box matching the reference image -->
+                    <!-- Highlight Box -->
                     <div class="promo-highlight-box">
                         <div class="highlight-label">Search Our Merchant ID</div>
                         <div class="highlight-id" id="banner-id">CT-------</div>
@@ -420,7 +438,6 @@
 
             <!-- ACTION BUTTONS -->
             <div class="action-box">
-                <!-- Primary Share Button -->
                 <button onclick="shareLink()" class="btn-brand" id="btn-share">
                     <span>Broadcast Banner to</span> 
                     <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> 
@@ -428,10 +445,9 @@
                 </button>
                 
                 <div class="share-tip">
-                    <strong>💡 PRO TIP:</strong> This generates a high-quality image. You can also save it to your phone and send it to a local printing press to create a physical flex banner!
+                    <strong>💡 PRO TIP:</strong> This generates a high-quality image. Save it to your phone and send it to a local printing press to create a physical flex banner!
                 </div>
 
-                <!-- Secondary Download Button -->
                 <button onclick="downloadCard()" class="btn-outline" id="btn-download">
                     <i class="fa-solid fa-download"></i> Save Image in High Quality
                 </button>
@@ -455,6 +471,7 @@
                 return;
             }
 
+            // 1. Get Shop Details
             const { data: shop, error: shopErr } = await client
                 .from('shops')
                 .select('id, name, unique_id, category, is_verified, cities(name)')
@@ -462,21 +479,28 @@
                 .maybeSingle();
 
             if (shopErr) throw shopErr;
-
             if (!shop) {
                 alert("You have not registered a shop yet.");
                 window.location.href = "shop-registration.html";
                 return;
             }
-
             if (!shop.is_verified) {
-                alert("🔒 Access Denied: Your shop must be Physically Verified by a CTMerchant agent before you can generate a Promotional Banner.");
+                alert("🔒 Access Denied: Your shop must be Physically Verified before you can generate a Promotional Banner.");
                 window.location.href = "merchant-dashboard.html";
                 return;
             }
 
             currentShop = shop;
-            renderBanner(shop);
+
+            // 2. Fetch Up to 4 Approved Products for the Collage
+            const { data: products, error: prodErr } = await client
+                .from('products')
+                .select('image_url')
+                .eq('shop_id', shop.id)
+                .eq('is_approved', true) // Only use approved products
+                .limit(4);
+
+            renderBanner(shop, products);
 
         } catch (e) {
             console.error(e);
@@ -485,25 +509,41 @@
         }
     };
 
-    function renderBanner(shop) {
+    function renderBanner(shop, products) {
         document.getElementById('loader').style.display = 'none';
         document.getElementById('card-ui').style.display = 'flex';
 
-        // Populate Text Fields dynamically
+        // Populate Text Fields
         document.getElementById('banner-city').textContent = shop.cities?.name || "Local";
         document.getElementById('banner-shop-name').textContent = shop.name;
         document.getElementById('banner-category').textContent = shop.category || "Shop & Retail"; 
         document.getElementById('banner-id').textContent = shop.unique_id || 'PENDING';
 
+        // Build Product Collage
+        const bgGrid = document.getElementById('banner-bg-grid');
+        if (products && products.length > 0) {
+            bgGrid.innerHTML = ''; // Clear default image
+            // Set the correct CSS Grid class (grid-1, grid-2, grid-3, or grid-4)
+            bgGrid.className = `dynamic-bg-grid grid-${products.length}`;
+            
+            products.forEach(p => {
+                const img = document.createElement('img');
+                img.crossOrigin = "anonymous"; // CRITICAL for downloading
+                // If it's a full URL, use it directly. If it's a path, append your storage URL.
+                // Assuming it's already a full URL based on the rest of your app.
+                img.src = p.image_url; 
+                bgGrid.appendChild(img);
+            });
+        }
+
+        // Generate QR Code
         const shopUrl = `https://ctmerchant.com.ng/shop-detail.html?id=${shop.id}`;
         document.getElementById('qrcode').innerHTML = '';
-        
-        // High Res QR Code ensures sharp scanning on printed flex banners
         new QRCode(document.getElementById("qrcode"), {
             text: shopUrl,
             width: 256, 
             height: 256,
-            colorDark : "#003B95", // Match the QR color to the corporate blue
+            colorDark : "#003B95", // Blue QR code to match ad
             colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.M
         });
