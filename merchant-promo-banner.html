@@ -85,13 +85,12 @@
         .edu-text { font-size: 0.85rem; color: #475569; line-height: 1.5; }
 
         /* ========================================== */
-        /* --- BULLETPROOF BANNER LAYOUT ---          */
+        /* --- ADVERTISING BANNER LAYOUT ---          */
         /* ========================================== */
         .banner-wrapper {
             width: 800px;
             height: 450px; 
-            background: #1E1B4B;
-            border-radius: 12px;
+            background: #003B95; /* Deep corporate blue fallback */
             position: relative;
             overflow: hidden; 
             color: white;
@@ -107,7 +106,7 @@
         @media (max-width: 450px) { .banner-wrapper { transform: scale(0.42); margin-bottom: -260px; } }
         @media (max-width: 360px) { .banner-wrapper { transform: scale(0.38); margin-bottom: -280px; } }
 
-        /* Full Cover Graphic */
+        /* Full Background Graphic (Upload your smiling lady here) */
         .banner-bg-graphic {
             position: absolute;
             top: 0; left: 0; 
@@ -116,137 +115,170 @@
             z-index: 1;
         }
 
-        /* Smooth Gradient Fade */
-        .banner-gradient {
+        /* Diagonal Blue Gradient Slice (Matches Reference Image) */
+        .banner-gradient-slice {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to right, rgba(15,23,42,0) 10%, rgba(15,23,42,0.8) 50%, rgba(15,23,42,1) 100%);
+            top: 0; right: 0; 
+            width: 65%; height: 100%;
+            /* Sharp, solid blue overlay that fades softly to the left */
+            background: linear-gradient(105deg, transparent 5%, #003B95 35%, #001E50 100%);
             z-index: 2;
         }
 
-        /* STRICT RIGHT-SIDE DATA BOX */
-        .banner-glass-box {
+        /* Content Container */
+        .promo-content {
             position: absolute;
-            top: 30px;
+            top: 25px;
             right: 30px;
-            width: 420px;
-            height: 350px; /* Locked height so it fits above the bottom strip */
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 24px;
+            width: 440px;
+            height: calc(100% - 75px); /* Leave room for bottom bar */
+            z-index: 5;
             display: flex;
             flex-direction: column;
-            z-index: 5;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            align-items: center;
+            text-align: center;
         }
 
-        /* Box Header: Name & Badge */
-        .box-header {
-            flex-shrink: 0;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+        /* Top Heading Elements */
+        .promo-lead {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #E2E8F0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
         }
-        .b-shop-name {
+        .promo-platform {
             font-size: 1.8rem;
             font-weight: 900;
             color: #FFFFFF;
             line-height: 1.2;
-            margin-bottom: 6px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2; /* Truncates if too long */
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-transform: uppercase;
+            margin-bottom: 12px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
-        .b-verified {
-            color: #10B981;
-            font-size: 0.85rem;
+        .promo-platform span { color: #FBBF24; } /* Yellow highlight for City Repo */
+
+        /* The Shop Name */
+        .promo-shop-name {
+            font-size: 2.6rem;
+            font-weight: 900;
+            color: #FFFFFF;
+            line-height: 1.1;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            text-shadow: 0 4px 6px rgba(0,0,0,0.6);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* The Advertising Ribbon (For Category) */
+        .promo-ribbon {
+            background: #EA580C; /* Bright Orange */
+            color: white;
+            padding: 8px 24px;
+            border-radius: 30px;
+            font-size: 1rem;
             font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 6px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            border: 2px solid #FFFFFF;
+            box-shadow: 0 6px 12px rgba(234, 88, 12, 0.4);
+            margin-bottom: 20px;
         }
-        .b-verified img { width: 16px; height: 16px; border-radius: 3px; }
 
-        /* Box Details: Proprietor & ID */
-        .box-details {
-            flex-shrink: 0;
+        /* The Big ID Highlight Box (Mimics the N5,000 Waived Box) */
+        .promo-highlight-box {
+            background: linear-gradient(to bottom, #FDE68A, #F59E0B); /* Vibrant Yellow/Gold */
+            border: 3px solid #FFFFFF;
+            border-radius: 12px;
+            padding: 12px 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: auto; /* Pushes the footer exactly to the bottom */
+            align-items: center;
+            width: 85%;
         }
-        .b-row { display: flex; flex-direction: column; gap: 2px; }
-        .b-label {
-            font-size: 0.7rem;
-            color: #94A3B8;
-            font-weight: 700;
+        .highlight-label {
+            color: #92400E;
+            font-size: 0.9rem;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            margin-bottom: 2px;
         }
-        .b-value {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #FFFFFF;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .b-value.highlight {
-            color: #FBBF24;
+        .highlight-id {
+            color: #78350F;
+            font-size: 2.2rem;
+            font-weight: 900;
             font-family: monospace;
-            font-size: 1.35rem;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            line-height: 1;
         }
 
-        /* Box Footer: Profile Pic & QR Code (Never Overlaps) */
-        .box-footer {
-            flex-shrink: 0;
+        /* Verified Footer inside content */
+        .promo-verified {
+            margin-top: auto;
+            color: #34D399; /* Bright Green */
+            font-size: 1rem;
+            font-weight: 800;
+            text-transform: uppercase;
             display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
-        .b-profile {
-            width: 76px;
-            height: 76px;
-            border-radius: 8px;
-            border: 2px solid rgba(255,255,255,0.8);
-            object-fit: cover;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        .b-qr-wrap {
-            width: 84px;
-            height: 84px;
-            background: white;
-            padding: 4px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        #qrcode { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-        #qrcode img, #qrcode canvas { width: 100% !important; height: 100% !important; object-fit: contain; }
+        .promo-verified img { width: 22px; height: 22px; border-radius: 4px; box-shadow: 0 0 0 1px white;}
 
-        /* Bottom Branding Strip */
-        .bottom-strip {
+        /* Bottom Branding Bar (Like Reference Image) */
+        .promo-bottom-bar {
             position: absolute;
-            bottom: 0; left: 0; width: 100%;
-            height: 40px;
-            background: var(--color-pink);
+            bottom: 0; left: 0; 
+            width: 100%;
+            height: 50px;
+            background: #001E50;
+            border-top: 4px solid #FBBF24; /* Yellow top border */
             z-index: 6;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            font-size: 0.95rem;
-            font-weight: 800;
             color: white;
-            letter-spacing: 0.5px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
         }
+        .promo-bottom-bar span {
+            color: #FBBF24;
+            font-weight: 800;
+            margin: 0 6px;
+        }
+
+        /* Floating QR Code (Bottom Left) */
+        .promo-qr-wrap {
+            position: absolute;
+            bottom: 15px; /* Overlaps bottom bar slightly */
+            left: 30px;
+            width: 110px;
+            height: 110px;
+            background: white;
+            padding: 6px;
+            border-radius: 8px;
+            border: 3px solid #FBBF24;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .qr-scan-label {
+            font-size: 0.65rem;
+            font-weight: 900;
+            color: #003B95;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        #qrcode { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;}
+        #qrcode img, #qrcode canvas { width: 100% !important; height: 100% !important; object-fit: contain; }
 
         /* ========================================== */
 
@@ -254,7 +286,7 @@
         .action-box {
             width: 100%;
             max-width: 400px;
-            margin-top: 40px; /* Space for the scaled banner */
+            margin-top: 40px; 
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -340,49 +372,50 @@
                 <p class="edu-text">This high-resolution banner is perfect for printing as a flex banner for your physical shop or broadcasting on WhatsApp to attract new customers.</p>
             </div>
 
-            <!-- THE PROMO BANNER -->
+            <!-- THE REDESIGNED PROMO BANNER -->
             <div class="banner-wrapper" id="capture-area">
                 
                 <!-- BACKGROUND GRAPHIC (Replace with your actual uploaded image URL later) -->
                 <img src="https://images.unsplash.com/photo-1573855619003-97b4799dcd8b?q=80&w=800&auto=format&fit=crop" class="banner-bg-graphic" crossorigin="anonymous" alt="Background">
                 
-                <div class="banner-gradient"></div>
+                <!-- The Blue Advertising Overlay -->
+                <div class="banner-gradient-slice"></div>
                 
-                <!-- STRICT RIGHT BOX (Prevents any overlap) -->
-                <div class="banner-glass-box">
+                <!-- The Advertising Content -->
+                <div class="promo-content">
                     
-                    <div class="box-header">
-                        <div class="b-shop-name" id="banner-shop-name">Loading...</div>
-                        <div class="b-verified">
-                            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" crossorigin="anonymous" alt="Logo">
-                            <i class="fa-solid fa-circle-check"></i> Verified Physical Shop
-                        </div>
+                    <div class="promo-lead">Shop Online With Us On</div>
+                    <div class="promo-platform">CTMerchant <span id="banner-city">...</span> Repo</div>
+                    
+                    <div class="promo-shop-name" id="banner-shop-name">Loading...</div>
+                    
+                    <!-- Orange Advertising Ribbon -->
+                    <div class="promo-ribbon" id="banner-category">Category</div>
+
+                    <!-- Highlight Box matching the reference image -->
+                    <div class="promo-highlight-box">
+                        <div class="highlight-label">Search Our Merchant ID</div>
+                        <div class="highlight-id" id="banner-id">CT-------</div>
                     </div>
 
-                    <div class="box-details">
-                        <div class="b-row">
-                            <span class="b-label">Proprietor</span>
-                            <span class="b-value" id="banner-proprietor">...</span>
-                        </div>
-                        <div class="b-row">
-                            <span class="b-label">Merchant ID Number</span>
-                            <span class="b-value highlight" id="banner-id">------</span>
-                        </div>
-                    </div>
-
-                    <div class="box-footer">
-                        <img id="banner-profile-pic" class="b-profile" src="" crossorigin="anonymous" alt="Profile">
-                        <div class="b-qr-wrap">
-                            <div id="qrcode"></div>
-                        </div>
+                    <div class="promo-verified">
+                        <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" crossorigin="anonymous" alt="Logo">
+                        <i class="fa-solid fa-circle-check"></i> Verified Physical Shop
                     </div>
 
                 </div>
 
-                <!-- Bottom Branding Strip -->
-                <div class="bottom-strip">
-                    <i class="fa-solid fa-globe"></i> Scan QR Code to view my full catalog on ctmerchant.com.ng
+                <!-- Floating QR Code (Bottom Left) -->
+                <div class="promo-qr-wrap">
+                    <div class="qr-scan-label">Scan to Shop</div>
+                    <div id="qrcode"></div>
                 </div>
+
+                <!-- Bottom Advertising Strip -->
+                <div class="promo-bottom-bar">
+                    Visit <span>www.ctmerchant.com.ng</span> to view our full catalog!
+                </div>
+
             </div>
 
             <!-- ACTION BUTTONS -->
@@ -424,7 +457,7 @@
 
             const { data: shop, error: shopErr } = await client
                 .from('shops')
-                .select('id, name, unique_id, is_verified, cities(name)')
+                .select('id, name, unique_id, category, is_verified, cities(name)')
                 .eq('owner_id', session.user.id)
                 .maybeSingle();
 
@@ -443,17 +476,7 @@
             }
 
             currentShop = shop;
-
-            const { data: profile, error: profErr } = await client
-                .from('profiles')
-                .select('avatar_url, full_name')
-                .eq('id', session.user.id)
-                .maybeSingle();
-                
-            const avatarUrl = profile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || shop.name}`;
-            const proprietorName = profile?.full_name || "Authorized Merchant";
-
-            renderBanner(shop, avatarUrl, proprietorName);
+            renderBanner(shop);
 
         } catch (e) {
             console.error(e);
@@ -462,15 +485,15 @@
         }
     };
 
-    function renderBanner(shop, avatarUrl, proprietorName) {
+    function renderBanner(shop) {
         document.getElementById('loader').style.display = 'none';
         document.getElementById('card-ui').style.display = 'flex';
 
-        // Populate Text Fields
+        // Populate Text Fields dynamically
+        document.getElementById('banner-city').textContent = shop.cities?.name || "Local";
         document.getElementById('banner-shop-name').textContent = shop.name;
-        document.getElementById('banner-proprietor').textContent = proprietorName; 
+        document.getElementById('banner-category').textContent = shop.category || "Shop & Retail"; 
         document.getElementById('banner-id').textContent = shop.unique_id || 'PENDING';
-        document.getElementById('banner-profile-pic').src = avatarUrl;
 
         const shopUrl = `https://ctmerchant.com.ng/shop-detail.html?id=${shop.id}`;
         document.getElementById('qrcode').innerHTML = '';
@@ -480,7 +503,7 @@
             text: shopUrl,
             width: 256, 
             height: 256,
-            colorDark : "#000000",
+            colorDark : "#003B95", // Match the QR color to the corporate blue
             colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.M
         });
@@ -491,7 +514,7 @@
         const canvas = await html2canvas(captureArea, {
             scale: 3, // High resolution for printing
             useCORS: true, 
-            backgroundColor: '#0F172A' 
+            backgroundColor: '#003B95' 
         });
         return new Promise(resolve => {
             canvas.toBlob(blob => resolve(blob), "image/jpeg", 0.95);
