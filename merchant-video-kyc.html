@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Video KYC Verification | CTMerchant</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --amz-dark: #131921;
+            --color-pink: #db2777; 
+            --color-pink-hover: #be185d;
+            --amz-bg: #F3F4F6;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: #000; /* Dark background for studio feel */
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            color: white;
+        }
+
+        .app-header {
+            background-color: var(--amz-dark);
+            width: 100%;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        .back-btn { 
+            background: none; border: none; color: white; 
+            font-size: 1.2rem; cursor: pointer; padding: 4px; 
+        }
+        .page-title { font-weight: 700; font-size: 1.15rem; }
+
+        .container { 
+            width: 100%; 
+            max-width: 600px; 
+            padding: 20px; 
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- INSTRUCTIONS --- */
+        .instruction-box {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .instruction-box h4 { color: #38BDF8; font-size: 1.05rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;}
+        .instruction-box ul { padding-left: 20px; font-size: 0.85rem; color: #CBD5E1; line-height: 1.6; }
+        .instruction-box li { margin-bottom: 4px; }
+
+        /* --- CAMERA VIEWPORT --- */
+        .camera-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 3/4; /* Portrait mode optimized for mobile */
+            background: #0F172A;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 2px solid #334155;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(1); /* Ensure it's not mirrored if using back camera */
+        }
+
+        /* --- TELEPROMPTER OVERLAY --- */
+        .teleprompter {
+            position: absolute;
+            top: 20px;
+            left: 5%;
+            width: 90%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+            z-index: 10;
+        }
+        .tele-title { font-size: 0.7rem; color: #FBBF24; text-transform: uppercase; font-weight: 800; margin-bottom: 4px; letter-spacing: 1px;}
+        .tele-text { font-size: 0.95rem; font-weight: 600; color: white; line-height: 1.4;}
+
+        /* --- RECORDING UI ELEMENTS --- */
+        .rec-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(220, 38, 38, 0.9);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            z-index: 15;
+            box-shadow: 0 2px 10px rgba(220,38,38,0.5);
+            animation: pulse 1.5s infinite;
+        }
+        .rec-indicator.active { display: flex; }
+        .rec-dot { width: 8px; height: 8px; background: white; border-radius: 50%; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .timer {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            font-weight: 800;
+            z-index: 10;
+        }
+
+        /* --- CONTROLS --- */
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-record {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: transparent;
+            border: 4px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-record .inner-circle {
+            width: 50px;
+            height: 50px;
+            background: #DC2626;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+        /* Recording state */
+        .btn-record.recording .inner-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px; /* Turns into a square stop button */
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: #10B981; 
+            border: none; 
+            border-radius: 8px; 
+            padding: 16px; 
+            color: white; 
+            font-size: 1.05rem;
+            font-weight: 800; 
+            cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); 
+            display: none; /* Hidden until video is recorded */
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-submit:hover:not(:disabled) { background: #059669; }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .btn-retake {
+            background: transparent;
+            color: #94A3B8;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+            display: none;
+        }
+
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Loader Overlay */
+        #loader-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,23,42,0.9); z-index: 200;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        #loader-overlay.hidden { display: none; }
+        #loader-overlay .spinner { width: 50px; height: 50px; border-width: 5px; border-top-color: var(--color-pink); margin-bottom: 20px;}
+        #loader-text { font-size: 1.1rem; font-weight: 700; color: white; text-align: center; padding: 0 20px;}
+
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <button onclick="window.location.href='merchant-dashboard.html'" class="back-btn">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <div class="page-title">Video KYC Verification</div>
+    </header>
+
+    <!-- Global Loader -->
+    <div id="loader-overlay">
+        <div class="spinner"></div>
+        <div id="loader-text">Setting up camera...</div>
+    </div>
+
+    <div class="container">
+        
+        <div class="instruction-box" id="instruction-box">
+            <h4><i class="fa-solid fa-shield-halved"></i> Secure Verification</h4>
+            <ul>
+                <li>Show your face and your physical shop items.</li>
+                <li>Read the text on the screen out loud.</li>
+                <li>You have exactly 60 seconds. Keep it short!</li>
+            </ul>
+        </div>
+
+        <div class="camera-container">
+            <!-- Camera feed -->
+            <video id="live-video" autoplay playsinline muted></video>
+            <!-- Playback feed (hidden initially) -->
+            <video id="playback-video" playsinline controls style="display:none;"></video>
+
+            <div class="teleprompter" id="teleprompter">
+                <div class="tele-title">Please Read This Aloud:</div>
+                <div class="tele-text" id="script-text">
+                    "My name is [Name], today is [Date], and this is my physical shop [Shop Name] on CTMerchant."
+                </div>
+            </div>
+
+            <div class="rec-indicator" id="rec-indicator">
+                <div class="rec-dot"></div> REC
+            </div>
+
+            <div class="timer" id="timer">00:60</div>
+        </div>
+
+        <div class="controls">
+            <!-- Record / Stop Button -->
+            <button class="btn-record" id="btn-record" onclick="toggleRecording()">
+                <div class="inner-circle"></div>
+            </button>
+
+            <!-- Submit Button (Shows after recording) -->
+            <button class="btn-submit" id="btn-submit" onclick="uploadVideo()">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Submit Video for Approval
+            </button>
+
+            <!-- Retake Button -->
+            <button class="btn-retake" id="btn-retake" onclick="resetStudio()">
+                Retake Video
+            </button>
+        </div>
+
+    </div>
+
+<script>
+    const SUPABASE_URL = "https://xdchacdjcgazyckacbpc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let myShop = null;
+    let myProfile = null;
+
+    // Media and Recording Variables
+    let mediaRecorder;
+    let recordedChunks = [];
+    let recordedBlob = null;
+    let stream = null;
+    
+    // Timer Variables
+    let maxSeconds = 60;
+    let currentSeconds = maxSeconds;
+    let timerInterval;
+
+    // Elements
+    const liveVideo = document.getElementById('live-video');
+    const playbackVideo = document.getElementById('playback-video');
+    const btnRecord = document.getElementById('btn-record');
+    const btnSubmit = document.getElementById('btn-submit');
+    const btnRetake = document.getElementById('btn-retake');
+    const timerDisplay = document.getElementById('timer');
+    const recIndicator = document.getElementById('rec-indicator');
+    const teleprompter = document.getElementById('teleprompter');
+    const loaderOverlay = document.getElementById('loader-overlay');
+    const loaderText = document.getElementById('loader-text');
+
+    window.onload = async () => {
+        try {
+            const { data: { session } } = await client.auth.getSession();
+            if (!session) {
+                window.location.href = "login.html";
+                return;
+            }
+
+            // Fetch User and Shop Data
+            const { data: profile } = await client.from('profiles').select('full_name').eq('id', session.user.id).single();
+            const { data: shop } = await client.from('shops').select('id, name, unique_id, is_verified').eq('owner_id', session.user.id).single();
+
+            if (!shop) {
+                alert("Shop not found.");
+                window.location.href = "merchant-dashboard.html";
+                return;
+            }
+
+            myShop = shop;
+            myProfile = profile;
+
+            if (shop.is_verified) {
+                alert("Your shop is already verified!");
+                window.location.href = "merchant-dashboard.html";
+                return;
+            }
+
+            // Populate the Teleprompter Script dynamically
+            const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            const pName = profile?.full_name || "the owner";
+            document.getElementById('script-text').textContent = 
+                `"My name is ${pName}, today is ${today}, and this is my physical shop ${shop.name}."`;
+
+            // Start Camera
+            await initCamera();
+
+            loaderOverlay.classList.add('hidden');
+
+        } catch (e) {
+            console.error(e);
+            alert("Error initializing studio. Please check camera permissions.");
+            window.location.href = "merchant-dashboard.html";
+        }
+    };
+
+    async function initCamera() {
+        try {
+            // WE AGGRESSIVELY CONSTRAIN RESOLUTION TO KEEP FILE SIZE TINY (< 4MB)
+            const constraints = {
+                audio: true,
+                video: {
+                    facingMode: "environment", // Default to back camera to show the shop
+                    width: { ideal: 640, max: 854 }, // Forces low resolution (480p)
+                    height: { ideal: 480, max: 480 } 
+                }
+            };
+
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
+            liveVideo.srcObject = stream;
+
+        } catch (err) {
+            console.error("Camera access denied or unavailable", err);
+            alert("CTMerchant needs camera and microphone access to record your verification video. Please enable permissions in your browser settings.");
+            window.location.href = "merchant-dashboard.html";
+        }
+    }
+
+    function toggleRecording() {
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    }
+
+    function startRecording() {
+        recordedChunks = [];
+        
+        // CONSTRAIN BITRATE TO ~500kbps TO ENSURE TINY FILE SIZE
+        // Note: Not all browsers support passing bitrate, but it helps when they do.
+        let options = { mimeType: 'video/webm;codecs=vp8,opus' };
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+            options = { mimeType: 'video/mp4' }; // Fallback for iOS Safari
+        }
+        options.videoBitsPerSecond = 500000; // 500 kbps
+
+        try {
+            mediaRecorder = new MediaRecorder(stream, options);
+        } catch (e) {
+            // Ultimate fallback if constraints fail
+            mediaRecorder = new MediaRecorder(stream);
+        }
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        };
+
+        mediaRecorder.onstop = processVideo;
+
+        mediaRecorder.start();
+
+        // Update UI
+        btnRecord.classList.add('recording');
+        recIndicator.classList.add('active');
+        document.getElementById('instruction-box').style.display = 'none';
+        
+        // Start Timer
+        currentSeconds = maxSeconds;
+        updateTimerDisplay();
+        timerInterval = setInterval(() => {
+            currentSeconds--;
+            updateTimerDisplay();
+            
+            // Auto stop at 0
+            if (currentSeconds <= 0) {
+                stopRecording();
+            }
+        }, 1000);
+    }
+
+    function stopRecording() {
+        if (mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop();
+        }
+        clearInterval(timerInterval);
+        
+        // Update UI
+        btnRecord.classList.remove('recording');
+        btnRecord.style.display = 'none'; // Hide record button
+        recIndicator.classList.remove('active');
+        teleprompter.style.display = 'none'; // Hide text
+    }
+
+    function updateTimerDisplay() {
+        const secs = currentSeconds.toString().padStart(2, '0');
+        timerDisplay.textContent = `00:${secs}`;
+        if (currentSeconds <= 10) {
+            timerDisplay.style.color = '#EF4444'; // Red warning
+        } else {
+            timerDisplay.style.color = 'white';
+        }
+    }
+
+    function processVideo() {
+        // Stop camera stream to free resources
+        stream.getTracks().forEach(track => track.stop());
+
+        // Create Blob
+        const mimeType = recordedChunks[0].type || 'video/mp4';
+        recordedBlob = new Blob(recordedChunks, { type: mimeType });
+        
+        // Log approximate size for debug (Expected < 4MB)
+        const sizeMB = (recordedBlob.size / (1024 * 1024)).toFixed(2);
+        console.log(`Video recorded. Size: ${sizeMB} MB`);
+
+        // Show Playback
+        liveVideo.style.display = 'none';
+        playbackVideo.style.display = 'block';
+        playbackVideo.src = URL.createObjectURL(recordedBlob);
+        
+        // Show Submit and Retake buttons
+        btnSubmit.style.display = 'flex';
+        btnRetake.style.display = 'block';
+    }
+
+    async function resetStudio() {
+        // Hide playback, show live video
+        playbackVideo.style.display = 'none';
+        liveVideo.style.display = 'block';
+        
+        // Reset UI
+        btnRecord.style.display = 'flex';
+        btnSubmit.style.display = 'none';
+        btnRetake.style.display = 'none';
+        teleprompter.style.display = 'block';
+        document.getElementById('instruction-box').style.display = 'block';
+        
+        // Reset Timer
+        currentSeconds = maxSeconds;
+        updateTimerDisplay();
+
+        // Restart Camera
+        await initCamera();
+    }
+
+    async function uploadVideo() {
+        if (!recordedBlob) return;
+
+        loaderText.textContent = "Compressing and uploading video securely... Please do not close the app.";
+        loaderOverlay.classList.remove('hidden');
+        btnSubmit.disabled = true;
+
+        try {
+            // 1. Generate unique file name
+            const ext = recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
+            const fileName = `kyc_${myShop.id}_${Date.now()}.${ext}`;
+            const filePath = `verifications/${fileName}`;
+
+            // 2. Upload to Supabase Storage (Assumes you have a bucket named 'kyc_videos' or similar. Using 'ctm_web_files' for now)
+            // Ideally, you should create a private bucket just for KYC videos in your Supabase dashboard!
+            const { data: uploadData, error: uploadErr } = await client
+                .storage
+                .from('ctm_web_files') // Change this bucket name if you created a dedicated one!
+                .upload(filePath, recordedBlob, {
+                    cacheControl: '3600',
+                    upsert: true
+                });
+
+            if (uploadErr) throw uploadErr;
+
+            // 3. Get Public URL (or just save the path if bucket is private)
+            const { data: { publicUrl } } = client.storage.from('ctm_web_files').getPublicUrl(filePath);
+
+            // 4. Update the Shop Record to alert Admin
+            // We update a hypothetical 'kyc_video_url' column, or append it to the description/status
+            const { error: dbErr } = await client
+                .from('shops')
+                .update({ 
+                    is_verified: false, // Keep false until admin approves
+                    status: 'pending_kyc_review', // Signal admin
+                    // If you don't have a kyc_video_url column yet, we temporarily store it in rejection_reason just to hold data
+                    rejection_reason: `VIDEO UPLOADED: ${publicUrl}` 
+                })
+                .eq('id', myShop.id);
+
+            if (dbErr) throw dbErr;
+
+            // Success!
+            loaderOverlay.classList.add('hidden');
+            alert("Video Uploaded Successfully! Our admins will review your shop and activate your Digital ID card within 24 hours.");
+            window.location.href = "merchant-dashboard.html";
+
+        } catch (e) {
+            console.error(e);
+            loaderOverlay.classList.add('hidden');
+            btnSubmit.disabled = false;
+            alert("Failed to upload video. Please ensure you have a stable internet connection and try again.");
+        }
+    }
+</script>
+</body>
+</html>
