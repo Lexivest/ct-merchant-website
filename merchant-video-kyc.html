@@ -61,11 +61,24 @@
             border: 1px solid #334155;
             border-radius: 12px;
             padding: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         .instruction-box h4 { color: #38BDF8; font-size: 1.05rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;}
         .instruction-box ul { padding-left: 20px; font-size: 0.85rem; color: #CBD5E1; line-height: 1.6; }
         .instruction-box li { margin-bottom: 4px; }
+
+        /* --- DEDICATED SCRIPT BOX (ABOVE CAMERA) --- */
+        .script-box {
+            background: #0F172A;
+            border: 2px dashed #FBBF24;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.15);
+        }
+        .tele-title { font-size: 0.85rem; color: #FBBF24; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .tele-text { font-size: 1.1rem; font-weight: 700; color: white; line-height: 1.5;}
 
         /* --- CAMERA VIEWPORT --- */
         .camera-container {
@@ -86,25 +99,8 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(1); /* Ensure it's not mirrored if using back camera */
+            transform: scaleX(1); 
         }
-
-        /* --- TELEPROMPTER OVERLAY --- */
-        .teleprompter {
-            position: absolute;
-            top: 20px;
-            left: 5%;
-            width: 90%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            border-radius: 8px;
-            padding: 12px;
-            border: 1px solid rgba(255,255,255,0.2);
-            text-align: center;
-            z-index: 10;
-        }
-        .tele-title { font-size: 0.7rem; color: #FBBF24; text-transform: uppercase; font-weight: 800; margin-bottom: 4px; letter-spacing: 1px;}
-        .tele-text { font-size: 0.95rem; font-weight: 600; color: white; line-height: 1.4;}
 
         /* --- RECORDING UI ELEMENTS --- */
         .rec-indicator {
@@ -248,9 +244,17 @@
             <h4><i class="fa-solid fa-shield-halved"></i> Secure Verification</h4>
             <ul>
                 <li>Show your face and your physical shop items.</li>
-                <li>Read the text on the screen out loud.</li>
+                <li>Read the text in the yellow box below out loud.</li>
                 <li>You have exactly 60 seconds. Keep it short!</li>
             </ul>
+        </div>
+
+        <!-- SCRIPT BOX NOW SITS ABOVE THE CAMERA -->
+        <div class="script-box" id="teleprompter">
+            <div class="tele-title"><i class="fa-solid fa-microphone"></i> Read This Aloud:</div>
+            <div class="tele-text" id="script-text">
+                "My name is [Name], today is [Date], and this is my physical shop [Shop Name] on CTMerchant."
+            </div>
         </div>
 
         <div class="camera-container">
@@ -259,17 +263,12 @@
             <!-- Playback feed (hidden initially) -->
             <video id="playback-video" playsinline controls style="display:none;"></video>
 
-            <div class="teleprompter" id="teleprompter">
-                <div class="tele-title">Please Read This Aloud:</div>
-                <div class="tele-text" id="script-text">
-                    "My name is [Name], today is [Date], and this is my physical shop [Shop Name] on CTMerchant."
-                </div>
-            </div>
-
+            <!-- Recording indicators -->
             <div class="rec-indicator" id="rec-indicator">
                 <div class="rec-dot"></div> REC
             </div>
-
+            
+            <!-- Custom Recording Timer -->
             <div class="timer" id="timer">00:60</div>
         </div>
 
@@ -320,6 +319,7 @@
     const timerDisplay = document.getElementById('timer');
     const recIndicator = document.getElementById('rec-indicator');
     const teleprompter = document.getElementById('teleprompter');
+    const instructionBox = document.getElementById('instruction-box');
     const loaderOverlay = document.getElementById('loader-overlay');
     const loaderText = document.getElementById('loader-text');
 
@@ -350,7 +350,7 @@
                 return;
             }
 
-            // Populate the Teleprompter Script dynamically
+            // Populate the Script dynamically
             const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
             const pName = profile?.full_name || "the owner";
             document.getElementById('script-text').textContent = 
@@ -370,12 +370,11 @@
 
     async function initCamera() {
         try {
-            // WE AGGRESSIVELY CONSTRAIN RESOLUTION TO KEEP FILE SIZE TINY (< 4MB)
             const constraints = {
                 audio: true,
                 video: {
-                    facingMode: "environment", // Default to back camera to show the shop
-                    width: { ideal: 640, max: 854 }, // Forces low resolution (480p)
+                    facingMode: "environment", 
+                    width: { ideal: 640, max: 854 }, 
                     height: { ideal: 480, max: 480 } 
                 }
             };
@@ -401,18 +400,15 @@
     function startRecording() {
         recordedChunks = [];
         
-        // CONSTRAIN BITRATE TO ~500kbps TO ENSURE TINY FILE SIZE
-        // Note: Not all browsers support passing bitrate, but it helps when they do.
         let options = { mimeType: 'video/webm;codecs=vp8,opus' };
         if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-            options = { mimeType: 'video/mp4' }; // Fallback for iOS Safari
+            options = { mimeType: 'video/mp4' }; 
         }
-        options.videoBitsPerSecond = 500000; // 500 kbps
+        options.videoBitsPerSecond = 500000; 
 
         try {
             mediaRecorder = new MediaRecorder(stream, options);
         } catch (e) {
-            // Ultimate fallback if constraints fail
             mediaRecorder = new MediaRecorder(stream);
         }
 
@@ -426,19 +422,20 @@
 
         mediaRecorder.start();
 
-        // Update UI
+        // Update UI: Hide instructions to save space, but KEEP the teleprompter visible!
         btnRecord.classList.add('recording');
         recIndicator.classList.add('active');
-        document.getElementById('instruction-box').style.display = 'none';
+        instructionBox.style.display = 'none';
         
-        // Start Timer
+        // Start Recording Timer
         currentSeconds = maxSeconds;
         updateTimerDisplay();
+        timerDisplay.style.display = 'block'; // Make sure it is showing
+        
         timerInterval = setInterval(() => {
             currentSeconds--;
             updateTimerDisplay();
             
-            // Auto stop at 0
             if (currentSeconds <= 0) {
                 stopRecording();
             }
@@ -453,56 +450,59 @@
         
         // Update UI
         btnRecord.classList.remove('recording');
-        btnRecord.style.display = 'none'; // Hide record button
+        btnRecord.style.display = 'none'; 
         recIndicator.classList.remove('active');
-        teleprompter.style.display = 'none'; // Hide text
     }
 
     function updateTimerDisplay() {
         const secs = currentSeconds.toString().padStart(2, '0');
         timerDisplay.textContent = `00:${secs}`;
         if (currentSeconds <= 10) {
-            timerDisplay.style.color = '#EF4444'; // Red warning
+            timerDisplay.style.color = '#EF4444'; 
         } else {
             timerDisplay.style.color = 'white';
         }
     }
 
     function processVideo() {
-        // Stop camera stream to free resources
+        // Stop camera stream
         stream.getTracks().forEach(track => track.stop());
 
         // Create Blob
         const mimeType = recordedChunks[0].type || 'video/mp4';
         recordedBlob = new Blob(recordedChunks, { type: mimeType });
         
-        // Log approximate size for debug (Expected < 4MB)
-        const sizeMB = (recordedBlob.size / (1024 * 1024)).toFixed(2);
-        console.log(`Video recorded. Size: ${sizeMB} MB`);
-
-        // Show Playback
+        // --- UI SWAP FOR PLAYBACK ---
+        
+        // Hide Live video & Recording Timer
         liveVideo.style.display = 'none';
+        timerDisplay.style.display = 'none'; // FIX: Hides the static 00:00 timer during playback!
+        teleprompter.style.display = 'none'; // Hide script since they are done reading
+        
+        // Show Playback Video (Uses native HTML5 controls for time tracking)
         playbackVideo.style.display = 'block';
         playbackVideo.src = URL.createObjectURL(recordedBlob);
         
-        // Show Submit and Retake buttons
+        // Show Submit/Retake
         btnSubmit.style.display = 'flex';
         btnRetake.style.display = 'block';
     }
 
     async function resetStudio() {
-        // Hide playback, show live video
+        // Hide playback
         playbackVideo.style.display = 'none';
-        liveVideo.style.display = 'block';
         
-        // Reset UI
+        // Reset UI Elements
+        liveVideo.style.display = 'block';
+        timerDisplay.style.display = 'block'; // Show recording timer again
+        teleprompter.style.display = 'block'; // Show script again
+        instructionBox.style.display = 'block'; // Show instructions again
+        
         btnRecord.style.display = 'flex';
         btnSubmit.style.display = 'none';
         btnRetake.style.display = 'none';
-        teleprompter.style.display = 'block';
-        document.getElementById('instruction-box').style.display = 'block';
         
-        // Reset Timer
+        // Reset Recording Timer
         currentSeconds = maxSeconds;
         updateTimerDisplay();
 
@@ -518,16 +518,14 @@
         btnSubmit.disabled = true;
 
         try {
-            // 1. Generate unique file name
             const ext = recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
             const fileName = `kyc_${myShop.id}_${Date.now()}.${ext}`;
             const filePath = `verifications/${fileName}`;
 
-            // 2. Upload to Supabase Storage (Assumes you have a bucket named 'kyc_videos' or similar. Using 'ctm_web_files' for now)
-            // Ideally, you should create a private bucket just for KYC videos in your Supabase dashboard!
+            // Upload to Supabase Storage
             const { data: uploadData, error: uploadErr } = await client
                 .storage
-                .from('ctm_web_files') // Change this bucket name if you created a dedicated one!
+                .from('ctm_web_files')
                 .upload(filePath, recordedBlob, {
                     cacheControl: '3600',
                     upsert: true
@@ -535,24 +533,20 @@
 
             if (uploadErr) throw uploadErr;
 
-            // 3. Get Public URL (or just save the path if bucket is private)
             const { data: { publicUrl } } = client.storage.from('ctm_web_files').getPublicUrl(filePath);
 
-            // 4. Update the Shop Record to alert Admin
-            // We update a hypothetical 'kyc_video_url' column, or append it to the description/status
+            // Update Database
             const { error: dbErr } = await client
                 .from('shops')
                 .update({ 
-                    is_verified: false, // Keep false until admin approves
-                    status: 'pending_kyc_review', // Signal admin
-                    // If you don't have a kyc_video_url column yet, we temporarily store it in rejection_reason just to hold data
+                    is_verified: false, 
+                    status: 'pending_kyc_review', 
                     rejection_reason: `VIDEO UPLOADED: ${publicUrl}` 
                 })
                 .eq('id', myShop.id);
 
             if (dbErr) throw dbErr;
 
-            // Success!
             loaderOverlay.classList.add('hidden');
             alert("Video Uploaded Successfully! Our admins will review your shop and activate your Digital ID card within 24 hours.");
             window.location.href = "merchant-dashboard.html";
