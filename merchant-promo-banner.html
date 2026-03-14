@@ -106,7 +106,7 @@
         @media (max-width: 450px) { .banner-wrapper { transform: scale(0.42); margin-bottom: -260px; } }
         @media (max-width: 360px) { .banner-wrapper { transform: scale(0.38); margin-bottom: -280px; } }
 
-        /* --- DYNAMIC HERO COLLAGE (LEFT SIDE) --- */
+        /* --- DYNAMIC PRODUCT COLLAGE (LEFT SIDE) --- */
         .dynamic-bg-grid {
             position: absolute;
             top: 0; left: 0; 
@@ -128,23 +128,8 @@
             width: 100%; height: 100%;
             object-fit: cover;
         }
-        
-        .storefront-badge {
-            position: absolute;
-            top: 12px; left: 12px;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-            color: white;
-            font-size: 0.65rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            padding: 4px 10px;
-            border-radius: 4px;
-            letter-spacing: 1px;
-            border: 1px solid rgba(255,255,255,0.2);
-            display: flex; align-items: center; gap: 4px;
-        }
 
+        /* Collage Layout Grids */
         .grid-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
         .grid-2 { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; } 
         .grid-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
@@ -396,15 +381,15 @@
             
             <div class="edu-box">
                 <h4 class="edu-title"><i class="fa-solid fa-image" style="color: var(--color-pink);"></i> Download & Print</h4>
-                <p class="edu-text">We automatically pulled your storefront and products to create this high-resolution banner. It is perfect for printing as a flex banner for your physical shop or broadcasting on WhatsApp.</p>
+                <p class="edu-text">We automatically pulled your latest products to create this high-resolution banner. It is perfect for printing as a flex banner for your physical shop or broadcasting on WhatsApp.</p>
             </div>
 
             <!-- THE REDESIGNED PROMO BANNER -->
             <div class="banner-wrapper" id="capture-area">
                 
-                <!-- DYNAMIC HERO COLLAGE -->
+                <!-- DYNAMIC PRODUCT COLLAGE -->
                 <div class="dynamic-bg-grid grid-1" id="banner-bg-grid">
-                    <!-- Default Fallback Image if absolutely nothing exists -->
+                    <!-- Default Fallback Image if absolutely no products exist -->
                     <div class="img-wrap">
                         <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop" crossorigin="anonymous" alt="Background">
                     </div>
@@ -485,10 +470,10 @@
                 return;
             }
 
-            // 1. Get Shop Details with Exact Schema Columns
+            // 1. Get Shop Details 
             const { data: shop, error: shopErr } = await client
                 .from('shops')
-                .select('id, name, unique_id, category, is_verified, storefront_url, image_url, cities(name)') 
+                .select('id, name, unique_id, category, is_verified, cities(name)') 
                 .eq('owner_id', session.user.id)
                 .maybeSingle();
 
@@ -506,7 +491,7 @@
 
             currentShop = shop;
 
-            // 2. Fetch Latest Approved Products
+            // 2. Fetch Latest Approved Products (Up to 4)
             const { data: products, error: prodErr } = await client
                 .from('products')
                 .select('image_url') 
@@ -536,19 +521,11 @@
         document.getElementById('banner-id').textContent = shop.unique_id || 'PENDING';
 
         // ====================================================
-        // BUILD THE STRATEGIC PRODUCT COLLAGE
+        // BUILD THE STRATEGIC PRODUCT COLLAGE (PRODUCTS ONLY)
         // ====================================================
         let collageImages = [];
-        let hasStorefront = false;
 
-        // 1. Use the storefront_url (fallback to their profile logo image_url)
-        const shopBanner = shop.storefront_url || shop.image_url;
-        if (shopBanner) {
-            collageImages.push(shopBanner);
-            hasStorefront = true;
-        }
-
-        // 2. Add Product Images
+        // 1. Add Product Images
         if (products && products.length > 0) {
             for (let i = 0; i < products.length; i++) {
                 if (collageImages.length < 4) {
@@ -561,12 +538,12 @@
 
         const bgGrid = document.getElementById('banner-bg-grid');
         
-        // Update Grid with dynamically found images
+        // Update Grid with dynamically found product images
         if (collageImages.length > 0) {
             bgGrid.innerHTML = ''; 
             bgGrid.className = `dynamic-bg-grid grid-${collageImages.length}`;
             
-            collageImages.forEach((imgUrl, index) => {
+            collageImages.forEach((imgUrl) => {
                 const wrap = document.createElement('div');
                 wrap.className = 'img-wrap';
                 
@@ -574,14 +551,6 @@
                 img.crossOrigin = "anonymous"; 
                 img.src = imgUrl; 
                 wrap.appendChild(img);
-
-                // Add the "Storefront" Badge to the first image IF it is actually the storefront
-                if (index === 0 && hasStorefront) {
-                    const badge = document.createElement('div');
-                    badge.className = 'storefront-badge';
-                    badge.innerHTML = '<i class="fa-solid fa-store"></i> Storefront';
-                    wrap.appendChild(badge);
-                }
 
                 bgGrid.appendChild(wrap);
             });
