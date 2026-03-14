@@ -110,8 +110,8 @@
         .dynamic-bg-grid {
             position: absolute;
             top: 0; left: 0; 
-            width: 52%; /* Covers exactly the left half */
-            height: calc(100% - 50px); /* Stops exactly above the bottom bar! */
+            width: 52%; 
+            height: calc(100% - 50px); 
             display: grid;
             grid-template-columns: 1fr 1fr; 
             grid-template-rows: 1fr 1fr;    
@@ -131,23 +131,22 @@
             object-fit: cover;
         }
 
-        /* --- NEW: SHARP DIAGONAL CUT (NO MUDDY MASKING) --- */
+        /* Sharp Diagonal Cut Overlay */
         .banner-gradient-slice {
             position: absolute;
             top: 0; right: 0; 
             width: 60%; 
-            height: calc(100% - 50px); /* Matches grid height */
-            /* This creates a hard, crisp diagonal edge with a yellow accent line! */
+            height: calc(100% - 50px);
             background: linear-gradient(105deg, transparent 0%, transparent 15%, #FBBF24 15.1%, #FBBF24 16.5%, #003B95 16.6%, #001E50 100%);
             z-index: 2;
         }
 
-        /* Content Container (Right Side) */
+        /* Content Container */
         .promo-content {
             position: absolute;
             top: 20px;
             right: 15px;
-            width: 390px; /* Safely fits inside the solid blue area */
+            width: 390px; 
             height: calc(100% - 70px); 
             z-index: 5;
             display: flex;
@@ -203,14 +202,14 @@
             margin-bottom: 20px;
         }
 
-        /* --- QR CODE & ID HIGHLIGHT ROW --- */
+        /* QR Code & ID Row */
         .id-qr-row {
             display: flex;
             align-items: stretch;
             justify-content: center;
             gap: 12px;
             width: 100%;
-            margin-bottom: auto; /* Pushes Verified badge to bottom */
+            margin-bottom: 12px; /* Replaced auto with fixed margin to make room for address */
         }
 
         .promo-highlight-box {
@@ -242,7 +241,6 @@
             line-height: 1;
         }
 
-        /* QR Code safely housed inside right column */
         .promo-qr-wrap {
             width: 90px;
             height: 90px;
@@ -265,6 +263,25 @@
         }
         #qrcode { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;}
         #qrcode img, #qrcode canvas { width: 100% !important; height: 100% !important; object-fit: contain; }
+
+        /* --- NEW: SHOP ADDRESS (Fills the space nicely) --- */
+        .promo-address {
+            font-size: 0.8rem;
+            color: #CBD5E1;
+            font-weight: 600;
+            margin-bottom: auto; /* This pushes the Verified Badge to the very bottom */
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Prevents overflow if address is too long */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            padding: 0 10px;
+            line-height: 1.3;
+        }
+        .promo-address i {
+            color: #FBBF24;
+            margin-right: 4px;
+        }
 
         /* Verified Footer */
         .promo-verified {
@@ -383,7 +400,7 @@
         
         <div id="loader">
             <div class="spinner"></div>
-            <p style="margin-top: 10px; font-weight: 600; color: #565959;">Generating your custom 4-grid catalog banner...</p>
+            <p style="margin-top: 10px; font-weight: 600; color: #565959;">Generating your custom catalog banner...</p>
         </div>
 
         <div id="card-ui" style="display: none; width: 100%; align-items: center; flex-direction: column;">
@@ -398,10 +415,10 @@
                 
                 <!-- DYNAMIC 4-GRID PRODUCT COLLAGE -->
                 <div class="dynamic-bg-grid" id="banner-bg-grid">
-                    <!-- Images will be injected here dynamically -->
+                    <!-- Images injected dynamically -->
                 </div>
                 
-                <!-- NEW SHARP DIAGONAL CUT OVERLAY -->
+                <!-- SHARP DIAGONAL CUT OVERLAY -->
                 <div class="banner-gradient-slice"></div>
                 
                 <!-- The Advertising Content -->
@@ -430,6 +447,12 @@
                         </div>
                     </div>
 
+                    <!-- NEW: SHOP ADDRESS -->
+                    <div class="promo-address" id="banner-address">
+                        <i class="fa-solid fa-location-dot"></i> Loading...
+                    </div>
+
+                    <!-- VERIFIED SHOP BADGE -->
                     <div class="promo-verified">
                         <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" crossorigin="anonymous" alt="Logo">
                         <i class="fa-solid fa-circle-check"></i> Verified Physical Shop
@@ -479,10 +502,10 @@
                 return;
             }
 
-            // 1. Get Shop Details 
+            // 1. Get Shop Details (Added 'address' to query)
             const { data: shop, error: shopErr } = await client
                 .from('shops')
-                .select('id, name, unique_id, category, is_verified, cities(name)') 
+                .select('id, name, unique_id, category, is_verified, address, cities(name)') 
                 .eq('owner_id', session.user.id)
                 .maybeSingle();
 
@@ -526,13 +549,16 @@
         document.getElementById('banner-shop-name').textContent = shop.name;
         document.getElementById('banner-category').textContent = shop.category || "Shop & Retail"; 
         document.getElementById('banner-id').textContent = shop.unique_id || 'PENDING';
+        
+        // Inject physical address
+        const displayAddress = shop.address || "Registered Business Address";
+        document.getElementById('banner-address').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${displayAddress}`;
 
         // ====================================================
         // BUILD THE STRICT 4-GRID PRODUCT COLLAGE
         // ====================================================
         let availableImages = [];
 
-        // Gather all available product images
         if (products && products.length > 0) {
             products.forEach(p => {
                 if (p.image_url) availableImages.push(p.image_url);
@@ -542,11 +568,9 @@
         let finalGridImages = [];
 
         if (availableImages.length === 0) {
-            // Fallback: If no products, fill 4 slots with placeholder
             const fallback = "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop";
             finalGridImages = [fallback, fallback, fallback, fallback];
         } else {
-            // Guarantee exactly 4 images by repeating the available ones if necessary
             for (let i = 0; i < 4; i++) {
                 finalGridImages.push(availableImages[i % availableImages.length]);
             }
