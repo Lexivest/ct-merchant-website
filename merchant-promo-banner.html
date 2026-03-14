@@ -106,16 +106,16 @@
         @media (max-width: 450px) { .banner-wrapper { transform: scale(0.42); margin-bottom: -260px; } }
         @media (max-width: 360px) { .banner-wrapper { transform: scale(0.38); margin-bottom: -280px; } }
 
-        /* --- STRICT 4-GRID PRODUCT COLLAGE (LEFT SIDE) --- */
+        /* --- STRICT 4-GRID PRODUCT COLLAGE --- */
         .dynamic-bg-grid {
             position: absolute;
             top: 0; left: 0; 
-            width: 60%; 
-            height: 100%;
+            width: 52%; /* Covers exactly the left half */
+            height: calc(100% - 50px); /* Stops exactly above the bottom bar! */
             display: grid;
-            grid-template-columns: 1fr 1fr; /* Exactly 2 columns */
-            grid-template-rows: 1fr 1fr;    /* Exactly 2 rows */
-            gap: 3px; /* Clean white borders */
+            grid-template-columns: 1fr 1fr; 
+            grid-template-rows: 1fr 1fr;    
+            gap: 3px; 
             background: #FFFFFF;
             z-index: 1;
         }
@@ -131,12 +131,14 @@
             object-fit: cover;
         }
 
-        /* Diagonal Blue Gradient Slice */
+        /* --- NEW: SHARP DIAGONAL CUT (NO MUDDY MASKING) --- */
         .banner-gradient-slice {
             position: absolute;
             top: 0; right: 0; 
-            width: 75%; height: 100%; /* Extended slightly to cover more behind the text */
-            background: linear-gradient(105deg, transparent 0%, rgba(0,59,149,0.85) 25%, #003B95 45%, #001E50 100%);
+            width: 60%; 
+            height: calc(100% - 50px); /* Matches grid height */
+            /* This creates a hard, crisp diagonal edge with a yellow accent line! */
+            background: linear-gradient(105deg, transparent 0%, transparent 15%, #FBBF24 15.1%, #FBBF24 16.5%, #003B95 16.6%, #001E50 100%);
             z-index: 2;
         }
 
@@ -144,8 +146,8 @@
         .promo-content {
             position: absolute;
             top: 20px;
-            right: 20px;
-            width: 460px;
+            right: 15px;
+            width: 390px; /* Safely fits inside the solid blue area */
             height: calc(100% - 70px); 
             z-index: 5;
             display: flex;
@@ -155,25 +157,25 @@
         }
 
         .promo-lead {
-            font-size: 1.1rem;
-            font-weight: 600;
+            font-size: 1rem;
+            font-weight: 700;
             color: #E2E8F0;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 2px;
         }
         .promo-platform {
-            font-size: 1.8rem;
+            font-size: 1.55rem;
             font-weight: 900;
             color: #FFFFFF;
             line-height: 1.2;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         .promo-platform span { color: #FBBF24; } 
 
         .promo-shop-name {
-            font-size: 2.4rem;
+            font-size: 2.3rem;
             font-weight: 900;
             color: #FFFFFF;
             line-height: 1.1;
@@ -192,7 +194,7 @@
             color: white;
             padding: 6px 20px;
             border-radius: 30px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -201,12 +203,12 @@
             margin-bottom: 20px;
         }
 
-        /* --- NEW: QR CODE & ID HIGHLIGHT ROW --- */
+        /* --- QR CODE & ID HIGHLIGHT ROW --- */
         .id-qr-row {
             display: flex;
             align-items: stretch;
             justify-content: center;
-            gap: 16px;
+            gap: 12px;
             width: 100%;
             margin-bottom: auto; /* Pushes Verified badge to bottom */
         }
@@ -215,17 +217,17 @@
             background: linear-gradient(to bottom, #FDE68A, #F59E0B); 
             border: 3px solid #FFFFFF;
             border-radius: 12px;
-            padding: 12px 20px;
+            padding: 10px 16px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            flex: 1; /* Takes remaining space next to QR */
+            flex: 1; 
         }
         .highlight-label {
             color: #92400E;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             font-weight: 800;
             text-transform: uppercase;
             margin-bottom: 4px;
@@ -233,19 +235,19 @@
         }
         .highlight-id {
             color: #78350F;
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 900;
             font-family: monospace;
             letter-spacing: 1px;
             line-height: 1;
         }
 
-        /* QR Code is now safely housed inside the right column */
+        /* QR Code safely housed inside right column */
         .promo-qr-wrap {
-            width: 100px;
-            height: 100px;
+            width: 90px;
+            height: 90px;
             background: white;
-            padding: 6px;
+            padding: 5px;
             border-radius: 8px;
             border: 3px solid #FBBF24;
             box-shadow: 0 8px 20px rgba(0,0,0,0.5);
@@ -255,7 +257,7 @@
             flex-shrink: 0;
         }
         .qr-scan-label {
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             font-weight: 900;
             color: #003B95;
             text-transform: uppercase;
@@ -267,7 +269,7 @@
         /* Verified Footer */
         .promo-verified {
             color: #34D399; 
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 800;
             text-transform: uppercase;
             display: flex;
@@ -276,7 +278,7 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
             margin-bottom: 10px;
         }
-        .promo-verified img { width: 20px; height: 20px; border-radius: 4px; box-shadow: 0 0 0 1px white;}
+        .promo-verified img { width: 18px; height: 18px; border-radius: 4px; box-shadow: 0 0 0 1px white;}
 
         /* Bottom Branding Bar */
         .promo-bottom-bar {
@@ -399,7 +401,7 @@
                     <!-- Images will be injected here dynamically -->
                 </div>
                 
-                <!-- The Blue Advertising Overlay -->
+                <!-- NEW SHARP DIAGONAL CUT OVERLAY -->
                 <div class="banner-gradient-slice"></div>
                 
                 <!-- The Advertising Content -->
@@ -413,11 +415,11 @@
                     <!-- Orange Advertising Ribbon -->
                     <div class="promo-ribbon" id="banner-category">Category</div>
 
-                    <!-- NEW: ROW FOR QR CODE AND ID BOX -->
+                    <!-- ROW FOR QR CODE AND ID BOX -->
                     <div class="id-qr-row">
                         <!-- QR Code -->
                         <div class="promo-qr-wrap">
-                            <div class="qr-scan-label">Scan to Shop</div>
+                            <div class="qr-scan-label">Scan Here</div>
                             <div id="qrcode"></div>
                         </div>
 
