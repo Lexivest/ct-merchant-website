@@ -106,32 +106,58 @@
         @media (max-width: 450px) { .banner-wrapper { transform: scale(0.42); margin-bottom: -260px; } }
         @media (max-width: 360px) { .banner-wrapper { transform: scale(0.38); margin-bottom: -280px; } }
 
-        /* --- DYNAMIC PRODUCT GRID (LEFT SIDE) --- */
+        /* --- DYNAMIC HERO COLLAGE (LEFT SIDE) --- */
         .dynamic-bg-grid {
             position: absolute;
             top: 0; left: 0; 
             width: 60%; /* Covers the left half before the solid blue */
             height: 100%;
             display: grid;
-            gap: 2px; /* Creates nice white borders between photos like a collage */
+            gap: 3px; /* Clean white borders between photos */
             background: #FFFFFF;
             z-index: 1;
         }
-        .dynamic-bg-grid img {
-            width: 100%;
-            height: 100%;
+        
+        .img-wrap {
+            position: relative;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: #E2E8F0;
+        }
+        .img-wrap img {
+            width: 100%; height: 100%;
             object-fit: cover;
-            background: #E2E8F0; /* Fallback color while loading */
         }
         
-        /* Grid Layout Rules based on number of products */
-        .grid-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
-        .grid-2 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
-        .grid-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-        .grid-3 img:nth-child(1) { grid-row: span 2; } /* Make the first image big */
-        .grid-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        /* Storefront Badge styling */
+        .storefront-badge {
+            position: absolute;
+            top: 12px; left: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 4px;
+            letter-spacing: 1px;
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex; align-items: center; gap: 4px;
+        }
 
-        /* Diagonal Blue Gradient Slice (Smoothed out to blend over the photos) */
+        /* Smart Grid Configurations based on image count */
+        .grid-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+        
+        .grid-2 { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; } /* Stacked vertically */
+        
+        .grid-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .grid-3 .img-wrap:nth-child(1) { grid-column: 1 / -1; grid-row: 1; } /* Top half full width */
+        
+        .grid-4 { grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1.4fr 1fr; } /* Storefront is slightly taller */
+        .grid-4 .img-wrap:nth-child(1) { grid-column: 1 / -1; grid-row: 1; } /* Storefront spans full top width */
+
+        /* Diagonal Blue Gradient Slice */
         .banner-gradient-slice {
             position: absolute;
             top: 0; right: 0; 
@@ -384,16 +410,18 @@
             
             <div class="edu-box">
                 <h4 class="edu-title"><i class="fa-solid fa-image" style="color: var(--color-pink);"></i> Download & Print</h4>
-                <p class="edu-text">We automatically pulled your latest products to create this high-resolution banner. It is perfect for printing as a flex banner for your physical shop or broadcasting on WhatsApp.</p>
+                <p class="edu-text">We automatically pulled your storefront and products to create this high-resolution banner. It is perfect for printing as a flex banner for your physical shop or broadcasting on WhatsApp.</p>
             </div>
 
             <!-- THE REDESIGNED PROMO BANNER -->
             <div class="banner-wrapper" id="capture-area">
                 
-                <!-- DYNAMIC PRODUCT COLLAGE -->
+                <!-- DYNAMIC HERO COLLAGE -->
                 <div class="dynamic-bg-grid grid-1" id="banner-bg-grid">
-                    <!-- Default Fallback Image (Will be replaced by user products if available) -->
-                    <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop" crossorigin="anonymous" alt="Background">
+                    <!-- Default Fallback Image if absolutely nothing exists -->
+                    <div class="img-wrap">
+                        <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop" crossorigin="anonymous" alt="Background">
+                    </div>
                 </div>
                 
                 <!-- The Blue Advertising Overlay -->
@@ -471,10 +499,10 @@
                 return;
             }
 
-            // 1. Get Shop Details
+            // 1. Get Shop Details (INCLUDING banner_url)
             const { data: shop, error: shopErr } = await client
                 .from('shops')
-                .select('id, name, unique_id, category, is_verified, cities(name)')
+                .select('id, name, unique_id, category, is_verified, banner_url, cities(name)')
                 .eq('owner_id', session.user.id)
                 .maybeSingle();
 
@@ -492,12 +520,12 @@
 
             currentShop = shop;
 
-            // 2. Fetch Up to 4 Approved Products for the Collage
+            // 2. Fetch Latest Approved Products for the rest of the Collage
             const { data: products, error: prodErr } = await client
                 .from('products')
                 .select('image_url')
                 .eq('shop_id', shop.id)
-                .eq('is_approved', true) // Only use approved products
+                .eq('is_approved', true)
                 .limit(4);
 
             renderBanner(shop, products);
@@ -519,20 +547,53 @@
         document.getElementById('banner-category').textContent = shop.category || "Shop & Retail"; 
         document.getElementById('banner-id').textContent = shop.unique_id || 'PENDING';
 
-        // Build Product Collage
-        const bgGrid = document.getElementById('banner-bg-grid');
+        // ====================================================
+        // BUILD THE STRATEGIC PRODUCT COLLAGE
+        // ====================================================
+        let collageImages = [];
+        let hasStorefront = false;
+
+        // 1. Add Storefront Image First (if it exists)
+        if (shop.banner_url) {
+            collageImages.push(shop.banner_url);
+            hasStorefront = true;
+        }
+
+        // 2. Add Product Images (Up to 4 total images)
         if (products && products.length > 0) {
-            bgGrid.innerHTML = ''; // Clear default image
-            // Set the correct CSS Grid class (grid-1, grid-2, grid-3, or grid-4)
-            bgGrid.className = `dynamic-bg-grid grid-${products.length}`;
+            for (let i = 0; i < products.length; i++) {
+                if (collageImages.length < 4) {
+                    collageImages.push(products[i].image_url);
+                }
+            }
+        }
+
+        const bgGrid = document.getElementById('banner-bg-grid');
+        
+        // Only update if we found actual images to use
+        if (collageImages.length > 0) {
+            bgGrid.innerHTML = ''; 
+            // Set the correct CSS Grid layout class
+            bgGrid.className = `dynamic-bg-grid grid-${collageImages.length}`;
             
-            products.forEach(p => {
+            collageImages.forEach((imgUrl, index) => {
+                const wrap = document.createElement('div');
+                wrap.className = 'img-wrap';
+                
                 const img = document.createElement('img');
-                img.crossOrigin = "anonymous"; // CRITICAL for downloading
-                // If it's a full URL, use it directly. If it's a path, append your storage URL.
-                // Assuming it's already a full URL based on the rest of your app.
-                img.src = p.image_url; 
-                bgGrid.appendChild(img);
+                img.crossOrigin = "anonymous"; 
+                img.src = imgUrl; 
+                wrap.appendChild(img);
+
+                // Add the "Storefront" Badge to the first image IF it is actually the storefront
+                if (index === 0 && hasStorefront) {
+                    const badge = document.createElement('div');
+                    badge.className = 'storefront-badge';
+                    badge.innerHTML = '<i class="fa-solid fa-store"></i> Storefront';
+                    wrap.appendChild(badge);
+                }
+
+                bgGrid.appendChild(wrap);
             });
         }
 
@@ -543,7 +604,7 @@
             text: shopUrl,
             width: 256, 
             height: 256,
-            colorDark : "#003B95", // Blue QR code to match ad
+            colorDark : "#003B95", 
             colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.M
         });
@@ -552,7 +613,7 @@
     async function generateBannerBlob() {
         const captureArea = document.getElementById('capture-area');
         const canvas = await html2canvas(captureArea, {
-            scale: 3, // High resolution for printing
+            scale: 3, 
             useCORS: true, 
             backgroundColor: '#003B95' 
         });
