@@ -164,8 +164,8 @@
             <i class="fa-solid fa-id-card-clip"></i>
         </div>
         
-        <h2 class="title">Digital ID & KYC Verification</h2>
-        <p class="subtitle">A one-time fee to process your Video KYC, activate your Digital ID, and unlock your public storefront.</p>
+        <h2 class="title">Digital ID & Promo Banner Fee</h2>
+        <p class="subtitle">A one-time fee to process your Video KYC and permanently unlock your premium Digital ID Card and Custom Promo Banner.</p>
 
         <div class="price-box">
             <div class="price-label">Total Amount</div>
@@ -187,17 +187,17 @@
             </div>
         </div>
 
-        <!-- NEW: Rebranded Warning for Video KYC -->
+        <!-- WARNING NOTE REBRANDED WITH STRONG CONDITIONS -->
         <div class="warning-note">
             <strong><i class="fa-solid fa-video"></i> Next Step: Video KYC</strong> <br>
-            After payment, you will be required to record a short 60-second video of yourself and your shop at the following registered address:
+            After payment, you will be required to record a short 60-second video of yourself inside your physical shop at this exact registered address:
             
             <div class="address-box">
                 <i class="fa-solid fa-location-dot" style="margin-top: 3px;"></i>
                 <span id="lbl-address">Loading registered address...</span>
             </div>
 
-            Your video must prove your shop operates here. <strong>This fee is strictly non-refundable.</strong>
+            Your video must clearly prove your shop operates here. <strong>If you do not have a physical shop, DO NOT PAY, please contact support.</strong> This fee is strictly non-refundable.
         </div>
 
         <div class="gateway-section" id="gateway-buttons">
@@ -297,7 +297,7 @@
                 document.getElementById('lbl-shop').textContent = dynamicShopDetails.shopName;
                 document.getElementById('lbl-city').textContent = dynamicShopDetails.cityName;
                 
-                // Populate the new Address Warning box
+                // Populate the Address Warning box
                 document.getElementById('lbl-address').textContent = dynamicShopDetails.shopAddress;
 
                 document.getElementById('loader').classList.add('hidden');
@@ -347,7 +347,7 @@
                 lastName: lastName,
                 email: dynamicShopDetails.email,
                 amount: FEE_AMOUNT,
-                narration: "CT-Merchant KYC Verification",
+                narration: "CT-Merchant Digital ID & KYC",
                 transactionId: transactionId,
                 
                 onSuccess: function (response) {
@@ -388,11 +388,10 @@
 
                 document.getElementById('processing-overlay').classList.add('hidden');
                 
-                // NEW SUCCESS MESSAGE & REDIRECT TO VIDEO STUDIO
                 document.getElementById('status-msg').innerHTML = `✅ Payment Successful! Redirecting you to record your KYC Video...`;
                 
                 setTimeout(() => {
-                    // Send them straight to the studio to keep the momentum going!
+                    // Send them straight to the studio
                     window.location.href = "merchant-video-kyc.html";
                 }, 3500);
 
