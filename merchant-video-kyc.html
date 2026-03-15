@@ -21,7 +21,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
         
         body { 
-            background: #000; /* Dark background for studio feel */
+            background: #000; 
             min-height: 100vh; 
             display: flex; 
             flex-direction: column; 
@@ -55,7 +55,6 @@
             flex-direction: column;
         }
 
-        /* --- INSTRUCTIONS --- */
         .instruction-box {
             background: #1E293B;
             border: 1px solid #334155;
@@ -67,7 +66,6 @@
         .instruction-box ul { padding-left: 20px; font-size: 0.85rem; color: #CBD5E1; line-height: 1.6; }
         .instruction-box li { margin-bottom: 4px; }
 
-        /* --- DEDICATED SCRIPT BOX (ABOVE CAMERA) --- */
         .script-box {
             background: #0F172A;
             border: 2px dashed #FBBF24;
@@ -80,11 +78,10 @@
         .tele-title { font-size: 0.85rem; color: #FBBF24; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 8px;}
         .tele-text { font-size: 1.1rem; font-weight: 700; color: white; line-height: 1.5;}
 
-        /* --- CAMERA VIEWPORT --- */
         .camera-container {
             position: relative;
             width: 100%;
-            aspect-ratio: 3/4; /* Portrait mode optimized for mobile */
+            aspect-ratio: 3/4; 
             background: #0F172A;
             border-radius: 16px;
             overflow: hidden;
@@ -102,7 +99,6 @@
             transform: scaleX(1); 
         }
 
-        /* --- RECORDING UI ELEMENTS --- */
         .rec-indicator {
             position: absolute;
             top: 20px;
@@ -143,7 +139,6 @@
             z-index: 10;
         }
 
-        /* --- CONTROLS --- */
         .controls {
             margin-top: 20px;
             display: flex;
@@ -171,11 +166,10 @@
             border-radius: 50%;
             transition: 0.2s;
         }
-        /* Recording state */
         .btn-record.recording .inner-circle {
             width: 30px;
             height: 30px;
-            border-radius: 6px; /* Turns into a square stop button */
+            border-radius: 6px; 
         }
 
         .btn-submit {
@@ -189,7 +183,7 @@
             font-weight: 800; 
             cursor: pointer; 
             box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); 
-            display: none; /* Hidden until video is recorded */
+            display: none; 
             align-items: center;
             justify-content: center;
             gap: 10px;
@@ -211,7 +205,6 @@
         .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Loader Overlay */
         #loader-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15,23,42,0.9); z-index: 200;
@@ -232,7 +225,6 @@
         <div class="page-title">Video KYC Verification</div>
     </header>
 
-    <!-- Global Loader -->
     <div id="loader-overlay">
         <div class="spinner"></div>
         <div id="loader-text">Setting up camera...</div>
@@ -249,7 +241,6 @@
             </ul>
         </div>
 
-        <!-- SCRIPT BOX NOW SITS ABOVE THE CAMERA -->
         <div class="script-box" id="teleprompter">
             <div class="tele-title"><i class="fa-solid fa-microphone"></i> Read This Aloud:</div>
             <div class="tele-text" id="script-text">
@@ -258,32 +249,25 @@
         </div>
 
         <div class="camera-container">
-            <!-- Camera feed -->
             <video id="live-video" autoplay playsinline muted></video>
-            <!-- Playback feed (hidden initially) -->
             <video id="playback-video" playsinline controls style="display:none;"></video>
 
-            <!-- Recording indicators -->
             <div class="rec-indicator" id="rec-indicator">
                 <div class="rec-dot"></div> REC
             </div>
             
-            <!-- Custom Recording Timer -->
             <div class="timer" id="timer">00:60</div>
         </div>
 
         <div class="controls">
-            <!-- Record / Stop Button -->
             <button class="btn-record" id="btn-record" onclick="toggleRecording()">
                 <div class="inner-circle"></div>
             </button>
 
-            <!-- Submit Button (Shows after recording) -->
             <button class="btn-submit" id="btn-submit" onclick="uploadVideo()">
                 <i class="fa-solid fa-cloud-arrow-up"></i> Submit Video for Approval
             </button>
 
-            <!-- Retake Button -->
             <button class="btn-retake" id="btn-retake" onclick="resetStudio()">
                 Retake Video
             </button>
@@ -306,12 +290,10 @@
     let recordedBlob = null;
     let stream = null;
     
-    // Timer Variables
     let maxSeconds = 60;
     let currentSeconds = maxSeconds;
     let timerInterval;
 
-    // Elements
     const liveVideo = document.getElementById('live-video');
     const playbackVideo = document.getElementById('playback-video');
     const btnRecord = document.getElementById('btn-record');
@@ -333,7 +315,6 @@
             }
             currentUserSession = session;
 
-            // Fetch User and Shop Data
             const { data: profile } = await client.from('profiles').select('full_name').eq('id', session.user.id).single();
             const { data: shop } = await client.from('shops').select('id, name, unique_id, is_verified').eq('owner_id', session.user.id).single();
 
@@ -352,15 +333,12 @@
                 return;
             }
 
-            // Populate the Script dynamically
             const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
             const pName = profile?.full_name || "the owner";
             document.getElementById('script-text').textContent = 
                 `"My name is ${pName}, today is ${today}, and this is my physical shop ${shop.name}."`;
 
-            // Start Camera
             await initCamera();
-
             loaderOverlay.classList.add('hidden');
 
         } catch (e) {
@@ -380,10 +358,8 @@
                     height: { ideal: 480, max: 480 } 
                 }
             };
-
             stream = await navigator.mediaDevices.getUserMedia(constraints);
             liveVideo.srcObject = stream;
-
         } catch (err) {
             console.error("Camera access denied or unavailable", err);
             alert("CTMerchant needs camera and microphone access to record your verification video. Please enable permissions in your browser settings.");
@@ -401,35 +377,26 @@
 
     function startRecording() {
         recordedChunks = [];
-        
         let options = { mimeType: 'video/webm;codecs=vp8,opus' };
         if (!MediaRecorder.isTypeSupported(options.mimeType)) {
             options = { mimeType: 'video/mp4' }; 
         }
         options.videoBitsPerSecond = 500000; 
 
-        try {
-            mediaRecorder = new MediaRecorder(stream, options);
-        } catch (e) {
-            mediaRecorder = new MediaRecorder(stream);
-        }
+        try { mediaRecorder = new MediaRecorder(stream, options); } 
+        catch (e) { mediaRecorder = new MediaRecorder(stream); }
 
         mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-                recordedChunks.push(event.data);
-            }
+            if (event.data.size > 0) recordedChunks.push(event.data);
         };
 
         mediaRecorder.onstop = processVideo;
-
         mediaRecorder.start();
 
-        // Update UI
         btnRecord.classList.add('recording');
         recIndicator.classList.add('active');
         instructionBox.style.display = 'none';
         
-        // Start Recording Timer
         currentSeconds = maxSeconds;
         updateTimerDisplay();
         timerDisplay.style.display = 'block'; 
@@ -437,20 +404,14 @@
         timerInterval = setInterval(() => {
             currentSeconds--;
             updateTimerDisplay();
-            
-            if (currentSeconds <= 0) {
-                stopRecording();
-            }
+            if (currentSeconds <= 0) stopRecording();
         }, 1000);
     }
 
     function stopRecording() {
-        if (mediaRecorder.state !== "inactive") {
-            mediaRecorder.stop();
-        }
+        if (mediaRecorder.state !== "inactive") mediaRecorder.stop();
         clearInterval(timerInterval);
         
-        // Update UI
         btnRecord.classList.remove('recording');
         btnRecord.style.display = 'none'; 
         recIndicator.classList.remove('active');
@@ -459,31 +420,22 @@
     function updateTimerDisplay() {
         const secs = currentSeconds.toString().padStart(2, '0');
         timerDisplay.textContent = `00:${secs}`;
-        if (currentSeconds <= 10) {
-            timerDisplay.style.color = '#EF4444'; 
-        } else {
-            timerDisplay.style.color = 'white';
-        }
+        if (currentSeconds <= 10) timerDisplay.style.color = '#EF4444'; 
+        else timerDisplay.style.color = 'white';
     }
 
     function processVideo() {
-        // Stop camera stream
         stream.getTracks().forEach(track => track.stop());
-
-        // Create Blob
         const mimeType = recordedChunks[0].type || 'video/mp4';
         recordedBlob = new Blob(recordedChunks, { type: mimeType });
         
-        // Hide Live video
         liveVideo.style.display = 'none';
         timerDisplay.style.display = 'none'; 
         teleprompter.style.display = 'none'; 
         
-        // Show Playback Video
         playbackVideo.style.display = 'block';
         playbackVideo.src = URL.createObjectURL(recordedBlob);
         
-        // Show Submit/Retake
         btnSubmit.style.display = 'flex';
         btnRetake.style.display = 'block';
     }
@@ -510,18 +462,19 @@
 
         loaderText.textContent = "Uploading video to secure vault... Please wait.";
         loaderOverlay.classList.remove('hidden');
-        btnSubmit.disabled = true;
+        btnSubmit.disabled = true; // Prevents double clicking
 
         try {
-            // Check session exists
             if (!currentUserSession || !currentUserSession.user) {
                  throw new Error("User session expired. Please log out and log back in.");
             }
 
             const ext = recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
-            const fileName = `kyc_${myShop.id}_${Date.now()}.${ext}`;
             
-            // PATH MUST MATCH RLS POLICY: user_id/filename
+            // 🔥 FIX 1: STATIC FILENAME PREVENTS DUPLICATES
+            // By keeping the filename the same, 'upsert: true' will automatically OVERWRITE 
+            // any existing video instead of flooding your storage with multiple copies!
+            const fileName = `kyc_video.${ext}`;
             const userId = currentUserSession.user.id;
             const filePath = `${userId}/${fileName}`;
 
@@ -531,33 +484,29 @@
                 .from('kyc_videos')
                 .upload(filePath, recordedBlob, {
                     cacheControl: '3600',
-                    upsert: true
+                    upsert: true // Forces overwrite!
                 });
 
-            // THROW DETAILED STORAGE ERROR
             if (uploadErr) {
-                console.error("Supabase Storage Error Details:", uploadErr);
-                throw new Error(`Storage Error: ${uploadErr.message}. Ensure the 'kyc_videos' bucket exists and policies allow uploads.`);
+                throw new Error(`Storage Error: ${uploadErr.message}`);
             }
 
-            // GET PUBLIC URL
             const { data: { publicUrl } } = client.storage.from('kyc_videos').getPublicUrl(filePath);
 
-            // 2. UPDATE SHOPS DATABASE
+            // 🔥 FIX 2: VALID ENUM STATUS
+            // Changed 'pending_kyc_review' to 'pending' because your database ENUM only accepts 'pending'
             const { error: dbErr } = await client
                 .from('shops')
                 .update({ 
                     is_verified: false, 
-                    status: 'pending_kyc_review', 
+                    status: 'pending', // Safe enum
                     rejection_reason: `VIDEO UPLOADED: ${publicUrl}` 
                 })
                 .eq('id', myShop.id);
 
-            // THROW DETAILED DB ERROR
             if (dbErr) {
-                 console.error("Supabase Database Error Details:", dbErr);
                  throw new Error(`Database Error: ${dbErr.message}`);
-            }
+             }
 
             // SUCCESS
             loaderOverlay.classList.add('hidden');
@@ -569,7 +518,7 @@
             loaderOverlay.classList.add('hidden');
             btnSubmit.disabled = false;
             
-            // SHOW THE EXACT ERROR TO THE USER
+            // SHOW THE EXACT ERROR
             alert(`Upload Failed!\n\nReason: ${e.message}`);
         }
     }
