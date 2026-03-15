@@ -232,7 +232,6 @@
         <div class="page-title">Video KYC Verification</div>
     </header>
 
-    <!-- Global Loader -->
     <div id="loader-overlay">
         <div class="spinner"></div>
         <div id="loader-text">Setting up camera...</div>
@@ -249,7 +248,6 @@
             </ul>
         </div>
 
-        <!-- SCRIPT BOX NOW SITS ABOVE THE CAMERA -->
         <div class="script-box" id="teleprompter">
             <div class="tele-title"><i class="fa-solid fa-microphone"></i> Read This Aloud:</div>
             <div class="tele-text" id="script-text">
@@ -258,32 +256,25 @@
         </div>
 
         <div class="camera-container">
-            <!-- Camera feed -->
             <video id="live-video" autoplay playsinline muted></video>
-            <!-- Playback feed (hidden initially) -->
             <video id="playback-video" playsinline controls style="display:none;"></video>
 
-            <!-- Recording indicators -->
             <div class="rec-indicator" id="rec-indicator">
                 <div class="rec-dot"></div> REC
             </div>
             
-            <!-- Custom Recording Timer -->
             <div class="timer" id="timer">00:60</div>
         </div>
 
         <div class="controls">
-            <!-- Record / Stop Button -->
             <button class="btn-record" id="btn-record" onclick="toggleRecording()">
                 <div class="inner-circle"></div>
             </button>
 
-            <!-- Submit Button (Shows after recording) -->
             <button class="btn-submit" id="btn-submit" onclick="uploadVideo()">
                 <i class="fa-solid fa-cloud-arrow-up"></i> Submit Video for Approval
             </button>
 
-            <!-- Retake Button -->
             <button class="btn-retake" id="btn-retake" onclick="resetStudio()">
                 Retake Video
             </button>
@@ -298,6 +289,7 @@
 
     let myShop = null;
     let myProfile = null;
+    let currentUserSession = null; // Store session globally for upload
 
     // Media and Recording Variables
     let mediaRecorder;
@@ -330,6 +322,7 @@
                 window.location.href = "login.html";
                 return;
             }
+            currentUserSession = session;
 
             // Fetch User and Shop Data
             const { data: profile } = await client.from('profiles').select('full_name').eq('id', session.user.id).single();
@@ -430,7 +423,7 @@
         // Start Recording Timer
         currentSeconds = maxSeconds;
         updateTimerDisplay();
-        timerDisplay.style.display = 'block'; // Make sure it is showing
+        timerDisplay.style.display = 'block'; 
         
         timerInterval = setInterval(() => {
             currentSeconds--;
@@ -476,10 +469,10 @@
         
         // Hide Live video & Recording Timer
         liveVideo.style.display = 'none';
-        timerDisplay.style.display = 'none'; // FIX: Hides the static 00:00 timer during playback!
+        timerDisplay.style.display = 'none'; // Hides the static 00:00 timer during playback!
         teleprompter.style.display = 'none'; // Hide script since they are done reading
         
-        // Show Playback Video (Uses native HTML5 controls for time tracking)
+        // Show Playback Video
         playbackVideo.style.display = 'block';
         playbackVideo.src = URL.createObjectURL(recordedBlob);
         
@@ -518,14 +511,18 @@
         btnSubmit.disabled = true;
 
         try {
+            // 1. Generate unique file name
             const ext = recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
             const fileName = `kyc_${myShop.id}_${Date.now()}.${ext}`;
-            const filePath = `verifications/${fileName}`;
+            
+            // 🛑 CRITICAL: Path MUST start with the user's UUID to pass Row Level Security!
+            const userId = currentUserSession.user.id;
+            const filePath = `${userId}/${fileName}`;
 
-            // Upload to Supabase Storage
+            // 2. Upload to the secure 'kyc_videos' bucket
             const { data: uploadData, error: uploadErr } = await client
                 .storage
-                .from('ctm_web_files')
+                .from('kyc_videos')
                 .upload(filePath, recordedBlob, {
                     cacheControl: '3600',
                     upsert: true
@@ -533,9 +530,10 @@
 
             if (uploadErr) throw uploadErr;
 
-            const { data: { publicUrl } } = client.storage.from('ctm_web_files').getPublicUrl(filePath);
+            // 3. Get Public URL
+            const { data: { publicUrl } } = client.storage.from('kyc_videos').getPublicUrl(filePath);
 
-            // Update Database
+            // 4. Update Database
             const { error: dbErr } = await client
                 .from('shops')
                 .update({ 
