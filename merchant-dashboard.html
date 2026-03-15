@@ -108,12 +108,10 @@
         /* --- GRID LAYOUT --- */
         .dashboard-grid {
             display: grid;
-            /* Default to exactly 2 columns for mobile phones */
             grid-template-columns: repeat(2, 1fr);
             gap: 16px;
         }
 
-        /* Expand to more columns on larger screens (Tablets/Desktops) */
         @media (min-width: 600px) {
             .dashboard-grid {
                 grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -143,7 +141,6 @@
             border-color: #B0B5B5; 
         }
 
-        /* Fine-tune padding on small phones to prevent text squeezing */
         @media (max-width: 480px) {
             .dash-card { padding: 16px 10px; height: 135px; }
             .icon-box { width: 42px !important; height: 42px !important; font-size: 1.2rem !important; margin-bottom: 8px !important; }
@@ -151,7 +148,6 @@
             .card-subtitle { font-size: 0.7rem !important; }
         }
 
-        /* Action Badge Notification */
         .notify-badge {
             position: absolute;
             top: 12px;
@@ -199,7 +195,6 @@
         .card-fuchsia .icon-box { background: #FAE8FF; color: #C026D3; } 
         .card-emerald .icon-box { background: #D1FAE5; color: #059669; }
         
-        /* Locked Card Styling */
         .card-locked { background: #F7F7F7; border-color: #E2E8F0; color: #888C8C; cursor: not-allowed;}
         .card-locked .icon-box { background: #E2E8F0; color: #888C8C; }
         .card-locked .card-title { color: #565959; }
@@ -234,7 +229,13 @@
                 
                 <div id="pending-notice" class="alert-notice alert-warning hidden">
                     <i class="fa-solid fa-circle-exclamation" style="font-size: 1.2rem;"></i> 
-                    <span>Your shop is currently pending digital approval.</span>
+                    <span>Your shop application is pending digital approval.</span>
+                </div>
+
+                <!-- NEW: KYC Rejection Notice -->
+                <div id="kyc-rejected-notice" class="alert-notice alert-error hidden">
+                    <i class="fa-solid fa-video-slash" style="font-size: 1.2rem;"></i> 
+                    <span id="kyc-rejected-text">Your KYC video was rejected. Please click the red "Record Video" card below to try again.</span>
                 </div>
 
                 <!-- Notice for Suspended Shops -->
@@ -331,12 +332,8 @@
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let myShop = null;
-
-        // ==========================================
-        // GLOBAL INACTIVITY TRACKER (15 MINUTE TIMEOUT)
-        // ==========================================
         let inactivityTimer;
-        const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes in milliseconds
+        const INACTIVITY_LIMIT = 15 * 60 * 1000; 
 
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
@@ -344,74 +341,55 @@
         }
 
         async function logoutDueToInactivity() {
-            // 1. Securely clear all cached user data
             Object.keys(localStorage).forEach(key => {
-                if (key.startsWith('ctm_')) {
-                    localStorage.removeItem(key);
-                }
+                if (key.startsWith('ctm_')) localStorage.removeItem(key);
             });
-            // 2. Kill Supabase Session
-            if (client && client.auth) {
-                await client.auth.signOut();
-            }
-            // 3. Alert and Redirect
+            if (client && client.auth) await client.auth.signOut();
             alert("Your session has securely expired due to inactivity. Please log in again.");
             window.location.href = "index.html";
         }
 
-        // Attach listeners to absolutely every form of user interaction
         ['mousemove', 'keydown', 'scroll', 'click', 'touchstart'].forEach(evt => {
             document.addEventListener(evt, resetInactivityTimer, { passive: true });
         });
         
         resetInactivityTimer();
-        // ==========================================
 
         window.onload = async () => {
             const { data: { session } } = await client.auth.getSession();
             if (!session) { window.location.href = "index.html"; return; }
-
             await fetchShop(session.user.id);
         };
 
         async function fetchShop(userId) {
             try {
-                // --- PRE-FLIGHT SUSPENSION CHECK ---
+                // --- SUSPENSION CHECK ---
                 const { data: profile, error: profileErr } = await client
-                    .from('profiles')
-                    .select('is_suspended')
-                    .eq('id', userId)
-                    .maybeSingle();
+                    .from('profiles').select('is_suspended').eq('id', userId).maybeSingle();
 
-                if (profileErr) {
-                    console.error("Network error verifying profile:", profileErr.message);
-                } else if (profile && profile.is_suspended === true) {
+                if (profileErr) console.error("Profile check error:", profileErr.message);
+                if (profile && profile.is_suspended === true) {
                     alert("🔒 Your account access has been restricted by administration.");
                     await client.auth.signOut();
                     window.location.href = "index.html";
                     return;
                 }
 
-                // --- FETCH SHOP DATA ---
+                // --- FETCH SHOP DATA (Including new KYC columns) ---
                 const { data, error } = await client.from('shops').select('*').eq('owner_id', userId).maybeSingle();
 
-                // 1. Safe Network Error Check
                 if (error) {
-                    console.error("Shop Fetch Error:", error.message);
-                    alert("Connection error while verifying your shop. Please check your network and try again.");
+                    alert("Connection error while verifying your shop.");
                     window.location.href = "user-dashboard.html";
                     return;
                 }
-
-                // 2. Missing Shop Check
                 if (!data) {
                     alert("Shop data not found. Please register a shop first.");
                     window.location.href = "shop-registration.html";
                     return;
                 }
-
-                // 3. Rejected Application Check
-                if (data.status === 'rejected') {
+                if (data.status === 'rejected' && data.kyc_status !== 'rejected') {
+                    // Application rejected (not related to KYC video)
                     alert("Your shop application was rejected. Please contact support.");
                     window.location.href = "user-dashboard.html";
                     return;
@@ -424,36 +402,28 @@
                     document.getElementById('pending-notice').classList.remove('hidden');
                 }
 
-                // ========================================================
-                // NOTIFICATION BADGE LOGIC (REJECTED PRODUCTS CHECK)
-                // ========================================================
+                // Rejected Products Check
                 try {
                     const { count: rejectedCount, error: rejectErr } = await client
-                        .from('products')
-                        .select('id', { count: 'exact', head: true })
-                        .eq('shop_id', data.id)
-                        .eq('is_approved', false)
-                        .not('rejection_reason', 'is', null);
+                        .from('products').select('id', { count: 'exact', head: true })
+                        .eq('shop_id', data.id).eq('is_approved', false).not('rejection_reason', 'is', null);
 
                     if (!rejectErr && rejectedCount > 0) {
                         const badge = document.getElementById('edit-product-badge');
                         badge.textContent = rejectedCount;
                         badge.classList.remove('hidden');
                     }
-                } catch(e) { console.warn("Failed to check rejected products", e); }
+                } catch(e) { console.warn(e); }
 
 
-                // Check if they have paid the verification fee
+                // Payment Verification
                 const { data: paymentRecord } = await client
-                    .from('physical_verification_payments')
-                    .select('id')
-                    .eq('merchant_id', userId)
-                    .eq('status', 'success')
-                    .maybeSingle();
+                    .from('physical_verification_payments').select('id')
+                    .eq('merchant_id', userId).eq('status', 'success').maybeSingle();
 
                 const hasPaid = !!paymentRecord;
 
-                // Elements
+                // UI Elements
                 const verifyCard = document.getElementById('verify-card');
                 const verifySubtitle = document.getElementById('verify-subtitle');
                 const serviceFeeCard = document.getElementById('service-fee-card');
@@ -465,41 +435,54 @@
                 // --- 1. SHOP LOCK LOGIC (IS_OPEN) ---
                 if (data.is_open === false) {
                     document.getElementById('suspended-notice').classList.remove('hidden');
-                    
                     viewShopCard.className = 'dash-card card-locked';
                     viewShopIcon.innerHTML = '<i class="fa-solid fa-store-slash"></i>';
                     viewShopSubtitle.textContent = 'Suspended';
                     viewShopSubtitle.classList.remove('hidden');
-                    viewShopCard.onclick = () => {
-                        alert("🔒 Your shop access has been restricted by administration. Please contact support via support@ct-merchant.com to resolve your account status.");
-                    };
+                    viewShopCard.onclick = () => alert("🔒 Your shop access has been restricted by administration.");
                 } else {
                     viewShopCard.onclick = () => viewPublicShop();
                 }
 
-                // --- 2. VERIFICATION (VIDEO KYC) AND SERVICE FEE LOGIC ---
-                if (data.is_verified) {
+                // --- 2. VIDEO KYC & VERIFICATION LOGIC ---
+                // If verified manually, OR if KYC status is explicitly approved
+                if (data.is_verified || data.kyc_status === 'approved') {
                     verifyCard.className = 'dash-card card-green';
                     verifyCard.querySelector('.card-title').textContent = 'Verified Shop';
                     verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-check-double"></i>';
                     verifySubtitle.textContent = 'Active';
                     verifySubtitle.classList.remove('hidden');
-                    verifyCard.onclick = () => alert('Your shop is already physically verified!');
+                    verifyCard.onclick = () => alert('Your shop is physically verified and your Digital ID is active!');
 
                     serviceFeeCard.onclick = () => navTo('service-fee.html');
 
                 } else {
                     if (hasPaid) {
-                        // Check if they already uploaded a video and it is pending review
-                        if (data.status === 'pending_kyc_review') {
-                            verifyCard.className = 'dash-card card-blue';
-                            verifyCard.querySelector('.card-title').textContent = 'KYC Under Review';
+                        // They have paid. Check the new kyc_status column.
+                        if (data.kyc_status === 'submitted') {
+                            // Video Uploaded, waiting for admin
+                            verifyCard.className = 'dash-card card-locked'; // Locked so they don't click it again
+                            verifyCard.querySelector('.card-title').textContent = 'KYC Pending';
                             verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-hourglass-half"></i>';
-                            verifySubtitle.textContent = 'Processing';
+                            verifySubtitle.textContent = 'Under Review';
                             verifySubtitle.classList.remove('hidden');
-                            verifyCard.onclick = () => alert('We have received your KYC video! Our admin team is reviewing it and will activate your Digital ID card shortly.');
+                            verifyCard.onclick = () => alert('We are currently reviewing your Video KYC! We will notify you once approved.');
+                        
+                        } else if (data.kyc_status === 'rejected') {
+                            // Admin watched the video and rejected it
+                            const rejectReason = data.rejection_reason || "Your video did not meet our verification standards.";
+                            document.getElementById('kyc-rejected-text').textContent = `KYC REJECTED: ${rejectReason}`;
+                            document.getElementById('kyc-rejected-notice').classList.remove('hidden');
+
+                            verifyCard.className = 'dash-card card-red';
+                            verifyCard.querySelector('.card-title').textContent = 'Re-record Video';
+                            verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-video"></i>';
+                            verifySubtitle.textContent = 'Action Required';
+                            verifySubtitle.classList.remove('hidden');
+                            verifyCard.onclick = () => window.location.href = 'merchant-video-kyc.html';
+                        
                         } else {
-                            // Fee paid, but video not uploaded yet -> Show Record Video Button
+                            // 'unsubmitted' or null. Fee is paid, but no video uploaded yet.
                             verifyCard.className = 'dash-card card-red';
                             verifyCard.querySelector('.card-title').textContent = 'Record KYC Video';
                             verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-video"></i>';
@@ -510,8 +493,8 @@
                     } else {
                         // Fee not paid yet
                         verifyCard.className = 'dash-card card-amber';
-                        verifyCard.querySelector('.card-title').textContent = 'Verification Fee';
-                        verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-building-circle-check"></i>';
+                        verifyCard.querySelector('.card-title').textContent = 'Digital ID & KYC';
+                        verifyCard.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-id-card-clip"></i>';
                         verifyCard.onclick = () => navTo('remita.html');
                     }
 
@@ -520,9 +503,7 @@
                     document.getElementById('service-fee-icon').innerHTML = '<i class="fa-solid fa-lock"></i>';
                     serviceFeeSubtitle.textContent = 'Verification Req.';
                     serviceFeeSubtitle.classList.remove('hidden');
-                    serviceFeeCard.onclick = () => {
-                        alert("🔒 You cannot subscribe to a service plan until your shop is Verified. Please complete your Verification first.");
-                    };
+                    serviceFeeCard.onclick = () => alert("🔒 You cannot subscribe to a service plan until your shop passes KYC Verification.");
                 }
 
                 document.getElementById('loader').classList.add('hidden');
