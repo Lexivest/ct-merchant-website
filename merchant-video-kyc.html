@@ -232,6 +232,7 @@
         <div class="page-title">Video KYC Verification</div>
     </header>
 
+    <!-- Global Loader -->
     <div id="loader-overlay">
         <div class="spinner"></div>
         <div id="loader-text">Setting up camera...</div>
@@ -248,6 +249,7 @@
             </ul>
         </div>
 
+        <!-- SCRIPT BOX NOW SITS ABOVE THE CAMERA -->
         <div class="script-box" id="teleprompter">
             <div class="tele-title"><i class="fa-solid fa-microphone"></i> Read This Aloud:</div>
             <div class="tele-text" id="script-text">
@@ -256,25 +258,32 @@
         </div>
 
         <div class="camera-container">
+            <!-- Camera feed -->
             <video id="live-video" autoplay playsinline muted></video>
+            <!-- Playback feed (hidden initially) -->
             <video id="playback-video" playsinline controls style="display:none;"></video>
 
+            <!-- Recording indicators -->
             <div class="rec-indicator" id="rec-indicator">
                 <div class="rec-dot"></div> REC
             </div>
             
+            <!-- Custom Recording Timer -->
             <div class="timer" id="timer">00:60</div>
         </div>
 
         <div class="controls">
+            <!-- Record / Stop Button -->
             <button class="btn-record" id="btn-record" onclick="toggleRecording()">
                 <div class="inner-circle"></div>
             </button>
 
+            <!-- Submit Button (Shows after recording) -->
             <button class="btn-submit" id="btn-submit" onclick="uploadVideo()">
                 <i class="fa-solid fa-cloud-arrow-up"></i> Submit Video for Approval
             </button>
 
+            <!-- Retake Button -->
             <button class="btn-retake" id="btn-retake" onclick="resetStudio()">
                 Retake Video
             </button>
@@ -289,7 +298,7 @@
 
     let myShop = null;
     let myProfile = null;
-    let currentUserSession = null; // Store session globally for upload
+    let currentUserSession = null; 
 
     // Media and Recording Variables
     let mediaRecorder;
@@ -415,7 +424,7 @@
 
         mediaRecorder.start();
 
-        // Update UI: Hide instructions to save space, but KEEP the teleprompter visible!
+        // Update UI
         btnRecord.classList.add('recording');
         recIndicator.classList.add('active');
         instructionBox.style.display = 'none';
@@ -465,12 +474,10 @@
         const mimeType = recordedChunks[0].type || 'video/mp4';
         recordedBlob = new Blob(recordedChunks, { type: mimeType });
         
-        // --- UI SWAP FOR PLAYBACK ---
-        
-        // Hide Live video & Recording Timer
+        // Hide Live video
         liveVideo.style.display = 'none';
-        timerDisplay.style.display = 'none'; // Hides the static 00:00 timer during playback!
-        teleprompter.style.display = 'none'; // Hide script since they are done reading
+        timerDisplay.style.display = 'none'; 
+        teleprompter.style.display = 'none'; 
         
         // Show Playback Video
         playbackVideo.style.display = 'block';
@@ -482,44 +489,43 @@
     }
 
     async function resetStudio() {
-        // Hide playback
         playbackVideo.style.display = 'none';
-        
-        // Reset UI Elements
         liveVideo.style.display = 'block';
-        timerDisplay.style.display = 'block'; // Show recording timer again
-        teleprompter.style.display = 'block'; // Show script again
-        instructionBox.style.display = 'block'; // Show instructions again
+        timerDisplay.style.display = 'block'; 
+        teleprompter.style.display = 'block'; 
+        instructionBox.style.display = 'block'; 
         
         btnRecord.style.display = 'flex';
         btnSubmit.style.display = 'none';
         btnRetake.style.display = 'none';
         
-        // Reset Recording Timer
         currentSeconds = maxSeconds;
         updateTimerDisplay();
 
-        // Restart Camera
         await initCamera();
     }
 
     async function uploadVideo() {
         if (!recordedBlob) return;
 
-        loaderText.textContent = "Compressing and uploading video securely... Please do not close the app.";
+        loaderText.textContent = "Uploading video to secure vault... Please wait.";
         loaderOverlay.classList.remove('hidden');
         btnSubmit.disabled = true;
 
         try {
-            // 1. Generate unique file name
+            // Check session exists
+            if (!currentUserSession || !currentUserSession.user) {
+                 throw new Error("User session expired. Please log out and log back in.");
+            }
+
             const ext = recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
             const fileName = `kyc_${myShop.id}_${Date.now()}.${ext}`;
             
-            // 🛑 CRITICAL: Path MUST start with the user's UUID to pass Row Level Security!
+            // PATH MUST MATCH RLS POLICY: user_id/filename
             const userId = currentUserSession.user.id;
             const filePath = `${userId}/${fileName}`;
 
-            // 2. Upload to the secure 'kyc_videos' bucket
+            // 1. UPLOAD TO STORAGE BUCKET
             const { data: uploadData, error: uploadErr } = await client
                 .storage
                 .from('kyc_videos')
@@ -528,12 +534,16 @@
                     upsert: true
                 });
 
-            if (uploadErr) throw uploadErr;
+            // THROW DETAILED STORAGE ERROR
+            if (uploadErr) {
+                console.error("Supabase Storage Error Details:", uploadErr);
+                throw new Error(`Storage Error: ${uploadErr.message}. Ensure the 'kyc_videos' bucket exists and policies allow uploads.`);
+            }
 
-            // 3. Get Public URL
+            // GET PUBLIC URL
             const { data: { publicUrl } } = client.storage.from('kyc_videos').getPublicUrl(filePath);
 
-            // 4. Update Database
+            // 2. UPDATE SHOPS DATABASE
             const { error: dbErr } = await client
                 .from('shops')
                 .update({ 
@@ -543,17 +553,24 @@
                 })
                 .eq('id', myShop.id);
 
-            if (dbErr) throw dbErr;
+            // THROW DETAILED DB ERROR
+            if (dbErr) {
+                 console.error("Supabase Database Error Details:", dbErr);
+                 throw new Error(`Database Error: ${dbErr.message}`);
+            }
 
+            // SUCCESS
             loaderOverlay.classList.add('hidden');
             alert("Video Uploaded Successfully! Our admins will review your shop and activate your Digital ID card within 24 hours.");
             window.location.href = "merchant-dashboard.html";
 
         } catch (e) {
-            console.error(e);
+            console.error("Upload process crashed:", e);
             loaderOverlay.classList.add('hidden');
             btnSubmit.disabled = false;
-            alert("Failed to upload video. Please ensure you have a stable internet connection and try again.");
+            
+            // SHOW THE EXACT ERROR TO THE USER
+            alert(`Upload Failed!\n\nReason: ${e.message}`);
         }
     }
 </script>
