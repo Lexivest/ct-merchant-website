@@ -316,7 +316,7 @@
             currentUserSession = session;
 
             const { data: profile } = await client.from('profiles').select('full_name').eq('id', session.user.id).single();
-            const { data: shop } = await client.from('shops').select('id, name, unique_id, is_verified').eq('owner_id', session.user.id).single();
+            const { data: shop } = await client.from('shops').select('id, name, unique_id, is_verified, kyc_status').eq('owner_id', session.user.id).single();
 
             if (!shop) {
                 alert("Shop not found.");
@@ -327,7 +327,7 @@
             myShop = shop;
             myProfile = profile;
 
-            if (shop.is_verified) {
+            if (shop.is_verified || shop.kyc_status === 'approved') {
                 alert("Your shop is already verified!");
                 window.location.href = "merchant-dashboard.html";
                 return;
@@ -368,19 +368,14 @@
     }
 
     function toggleRecording() {
-        if (mediaRecorder && mediaRecorder.state === "recording") {
-            stopRecording();
-        } else {
-            startRecording();
-        }
+        if (mediaRecorder && mediaRecorder.state === "recording") stopRecording();
+        else startRecording();
     }
 
     function startRecording() {
         recordedChunks = [];
         let options = { mimeType: 'video/webm;codecs=vp8,opus' };
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-            options = { mimeType: 'video/mp4' }; 
-        }
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/mp4' }; 
         options.videoBitsPerSecond = 500000; 
 
         try { mediaRecorder = new MediaRecorder(stream, options); } 
@@ -462,7 +457,7 @@
 
         loaderText.textContent = "Uploading video to secure vault... Please wait.";
         loaderOverlay.classList.remove('hidden');
-        btnSubmit.disabled = true; // Prevents double clicking
+        btnSubmit.disabled = true; 
 
         try {
             if (!currentUserSession || !currentUserSession.user) {
@@ -470,10 +465,6 @@
             }
 
             const ext = recordedBlob.type.includes('mp4') ? 'mp4' : 'webm';
-            
-            // 🔥 FIX 1: STATIC FILENAME PREVENTS DUPLICATES
-            // By keeping the filename the same, 'upsert: true' will automatically OVERWRITE 
-            // any existing video instead of flooding your storage with multiple copies!
             const fileName = `kyc_video.${ext}`;
             const userId = currentUserSession.user.id;
             const filePath = `${userId}/${fileName}`;
@@ -484,29 +475,31 @@
                 .from('kyc_videos')
                 .upload(filePath, recordedBlob, {
                     cacheControl: '3600',
-                    upsert: true // Forces overwrite!
+                    upsert: true
                 });
 
-            if (uploadErr) {
-                throw new Error(`Storage Error: ${uploadErr.message}`);
-            }
+            if (uploadErr) throw new Error(`Storage Error: ${uploadErr.message}`);
 
             const { data: { publicUrl } } = client.storage.from('kyc_videos').getPublicUrl(filePath);
 
-            // 🔥 FIX 2: VALID ENUM STATUS
-            // Changed 'pending_kyc_review' to 'pending' because your database ENUM only accepts 'pending'
-            const { error: dbErr } = await client
+            // 2. UPDATE SHOPS DATABASE
+            // Removed 'is_verified' and 'status' so RLS doesn't silently block the update!
+            // Added .select() to strictly verify the database recorded the change.
+            const { data: updatedShop, error: dbErr } = await client
                 .from('shops')
                 .update({ 
-                    is_verified: false, 
-                    status: 'pending', // Safe enum
-                    rejection_reason: `VIDEO UPLOADED: ${publicUrl}` 
+                    kyc_status: 'submitted',     
+                    kyc_video_url: publicUrl,    
+                    rejection_reason: null       
                 })
-                .eq('id', myShop.id);
+                .eq('owner_id', userId)
+                .select();
 
-            if (dbErr) {
-                 throw new Error(`Database Error: ${dbErr.message}`);
-             }
+            if (dbErr) throw new Error(`Database Error: ${dbErr.message}`);
+
+            if (!updatedShop || updatedShop.length === 0) {
+                throw new Error("Database Security Blocked Update: Ensure your database allows updating the 'kyc_status' column.");
+            }
 
             // SUCCESS
             loaderOverlay.classList.add('hidden');
@@ -517,8 +510,6 @@
             console.error("Upload process crashed:", e);
             loaderOverlay.classList.add('hidden');
             btnSubmit.disabled = false;
-            
-            // SHOW THE EXACT ERROR
             alert(`Upload Failed!\n\nReason: ${e.message}`);
         }
     }
