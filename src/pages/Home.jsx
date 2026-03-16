@@ -1,6 +1,40 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import {
+  FaArrowRight,
+  FaCircleInfo,
+  FaEnvelope,
+  FaEye,
+  FaEyeSlash,
+  FaHashtag,
+  FaLock,
+  FaMapPin,
+  FaPhone,
+  FaSearch,
+} from "react-icons/fa"
 import MainLayout from "../layouts/MainLayout"
 import RepoSearchBar from "../components/RepoSearchBar"
+import AuthInput from "../components/auth/AuthInput"
+import AuthButton from "../components/auth/AuthButton"
+import AuthNotification from "../components/auth/AuthNotification"
+import CompleteProfileModal from "../components/auth/CompleteProfileModal"
+import useAuthSession from "../hooks/useAuthSession"
+import {
+  fetchOpenCities,
+  fetchAreasByCity,
+  sendPasswordResetCode,
+  signInWithGoogleIdToken,
+  signInWithPassword,
+  signOutUser,
+  updateLastActiveIp,
+  verifyRecoveryCodeAndResetPassword,
+} from "../lib/auth"
+import { supabase } from "../lib/supabase"
+import {
+  isValidEmail,
+  validateResetPasswordForm,
+  validateResetRequestForm,
+} from "../lib/validators"
 
 const phrases = [
   "Verified Merchants",
@@ -9,9 +43,55 @@ const phrases = [
 ]
 
 function Home() {
+  const navigate = useNavigate()
+  const { user, profile, profileComplete, suspended } = useAuthSession()
+
   const [phraseIndex, setPhraseIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  const [loginForm, setLoginForm] = useState({
+    email: "",
+    password: "",
+  })
+  const [loginErrors, setLoginErrors] = useState({})
+  const [showPassword, setShowPassword] = useState(false)
+  const [loginLoading, setLoginLoading] = useState(false)
+  const [loginNotice, setLoginNotice] = useState({
+    visible: false,
+    type: "info",
+    title: "",
+    message: "",
+  })
+
+  const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false)
+  const [pendingProfileUser, setPendingProfileUser] = useState(null)
+
+  const [resetEmailOpen, setResetEmailOpen] = useState(false)
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false)
+  const [resetEmailForm, setResetEmailForm] = useState({ email: "" })
+  const [resetPasswordForm, setResetPasswordForm] = useState({
+    token: "",
+    newPassword: "",
+    confirmPassword: "",
+  })
+  const [resetEmailErrors, setResetEmailErrors] = useState({})
+  const [resetPasswordErrors, setResetPasswordErrors] = useState({})
+  const [sendingReset, setSendingReset] = useState(false)
+  const [resettingPassword, setResettingPassword] = useState(false)
+  const [resetNotice, setResetNotice] = useState({
+    visible: false,
+    type: "info",
+    title: "",
+    message: "",
+  })
+
+  const [googleReady, setGoogleReady] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+
+  const [profileModalOpen, setProfileModalOpen] = useState(false)
+
+  const [repoSearchValue, setRepoSearchValue] = useState("")
 
   useEffect(() => {
     const currentPhrase = phrases[phraseIndex]
@@ -36,6 +116,372 @@ function Home() {
 
     return () => clearTimeout(timer)
   }, [charIndex, isDeleting, phraseIndex])
+
+  useEffect(() => {
+    if (!user) return
+    if (suspended) return
+
+    if (profile && profileComplete) {
+      navigate("/user-dashboard", { replace: true })
+    } else {
+      setPendingProfileUser({
+        id: user.id,
+        fullName: profile?.full_name || user.user_metadata?.full_name || "",
+      })
+      setNeedsProfileCompletion(true)
+      setProfileModalOpen(true)
+    }
+  }, [user, profile, profileComplete, suspended, navigate])
+
+  useEffect(() => {
+    const clientId =
+      "237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com"
+
+    function initializeGoogle() {
+      if (!window.google?.accounts?.id) return
+
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleGoogleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      })
+
+      const button = document.getElementById("google-signin-home")
+      if (button && button.childNodes.length === 0) {
+        window.google.accounts.id.renderButton(button, {
+          type: "standard",
+          theme: "outline",
+          text: "continue_with",
+          size: "large",
+          shape: "rectangular",
+          logo_alignment: "left",
+          width: 340,
+        })
+      }
+
+      setGoogleReady(true)
+    }
+
+    const timer = setInterval(() => {
+      if (window.google?.accounts?.id) {
+        initializeGoogle()
+        clearInterval(timer)
+      }
+    }, 300)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  const currentPhraseText = useMemo(
+    () => phrases[phraseIndex].slice(0, charIndex),
+    [phraseIndex, charIndex]
+  )
+
+  function validateLogin() {
+    const errors = {}
+
+    if (!loginForm.email.trim()) {
+      errors.email = "Email address is required."
+    } else if (!isValidEmail(loginForm.email)) {
+      errors.email = "Enter a valid email address."
+    }
+
+    if (!loginForm.password) {
+      errors.password = "Password is required."
+    }
+
+    setLoginErrors(errors)
+    return errors
+  }
+
+  async function handleEmailLogin(event) {
+    event.preventDefault()
+
+    const errors = validateLogin()
+    if (Object.keys(errors).length > 0) return
+
+    try {
+      setLoginLoading(true)
+      setLoginNotice({
+        visible: false,
+        type: "info",
+        title: "",
+        message: "",
+      })
+
+      const result = await signInWithPassword({
+        email: loginForm.email,
+        password: loginForm.password,
+      })
+
+      const signedInUser = result.auth?.user || result.auth?.session?.user
+      if (!signedInUser) {
+        throw new Error("Login did not return a valid user session.")
+      }
+
+      const currentProfile = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", signedInUser.id)
+        .maybeSingle()
+
+      if (currentProfile.error) {
+        throw new Error("Could not verify your profile. Please try again.")
+      }
+
+      if (currentProfile.data?.is_suspended === true) {
+        await signOutUser()
+        throw new Error(
+          "Your account has been restricted. Please contact support."
+        )
+      }
+
+      if (currentProfile.data?.city_id && currentProfile.data?.area_id) {
+        await updateLastActiveIp(signedInUser.id, result.ipData.ip)
+        setLoginNotice({
+          visible: true,
+          type: "success",
+          title: "Login successful",
+          message: "Opening your dashboard...",
+        })
+        setTimeout(() => {
+          navigate("/user-dashboard")
+        }, 900)
+      } else {
+        setPendingProfileUser({
+          id: signedInUser.id,
+          fullName:
+            currentProfile.data?.full_name ||
+            signedInUser.user_metadata?.full_name ||
+            "",
+        })
+        setNeedsProfileCompletion(true)
+        setProfileModalOpen(true)
+      }
+    } catch (error) {
+      setLoginNotice({
+        visible: true,
+        type: "error",
+        title: "Login failed",
+        message:
+          error.message ||
+          "We could not sign you in. Check your connection and try again.",
+      })
+    } finally {
+      setLoginLoading(false)
+    }
+  }
+
+  async function handleGoogleCredentialResponse(response) {
+    if (!response?.credential) {
+      setLoginNotice({
+        visible: true,
+        type: "error",
+        title: "Google sign-in failed",
+        message: "No Google credential was received.",
+      })
+      return
+    }
+
+    try {
+      setGoogleLoading(true)
+      setLoginNotice({
+        visible: false,
+        type: "info",
+        title: "",
+        message: "",
+      })
+
+      const result = await signInWithGoogleIdToken(response.credential)
+      const signedInUser = result.auth?.user || result.auth?.session?.user
+
+      if (!signedInUser) {
+        throw new Error("Google sign-in did not return a valid user.")
+      }
+
+      const currentProfile = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", signedInUser.id)
+        .maybeSingle()
+
+      if (currentProfile.error) {
+        throw new Error("Could not verify your profile. Please try again.")
+      }
+
+      if (currentProfile.data?.is_suspended === true) {
+        await signOutUser()
+        throw new Error(
+          "Your account has been restricted. Please contact support."
+        )
+      }
+
+      if (currentProfile.data?.city_id && currentProfile.data?.area_id) {
+        await updateLastActiveIp(signedInUser.id, result.ipData.ip)
+        setLoginNotice({
+          visible: true,
+          type: "success",
+          title: "Google sign-in successful",
+          message: "Opening your dashboard...",
+        })
+        setTimeout(() => {
+          navigate("/user-dashboard")
+        }, 900)
+      } else {
+        setPendingProfileUser({
+          id: signedInUser.id,
+          fullName:
+            currentProfile.data?.full_name ||
+            signedInUser.user_metadata?.full_name ||
+            "",
+        })
+        setNeedsProfileCompletion(true)
+        setProfileModalOpen(true)
+      }
+    } catch (error) {
+      setLoginNotice({
+        visible: true,
+        type: "error",
+        title: "Google sign-in failed",
+        message: error.message || "Please try again.",
+      })
+    } finally {
+      setGoogleLoading(false)
+    }
+  }
+
+  function openResetFlow() {
+    setResetNotice({
+      visible: false,
+      type: "info",
+      title: "",
+      message: "",
+    })
+    setResetEmailErrors({})
+    setResetPasswordErrors({})
+    setResetEmailForm({
+      email: loginForm.email || "",
+    })
+    setResetEmailOpen(true)
+  }
+
+  async function handleSendResetCode() {
+    const errors = validateResetRequestForm(resetEmailForm)
+    setResetEmailErrors(errors)
+    if (Object.keys(errors).length > 0) return
+
+    try {
+      setSendingReset(true)
+      setResetNotice({
+        visible: false,
+        type: "info",
+        title: "",
+        message: "",
+      })
+
+      await sendPasswordResetCode(resetEmailForm.email)
+
+      setResetNotice({
+        visible: true,
+        type: "success",
+        title: "Recovery code sent",
+        message: "Check your email for the 6-digit recovery code.",
+      })
+
+      setResetEmailOpen(false)
+      setResetPasswordOpen(true)
+    } catch (error) {
+      setResetNotice({
+        visible: true,
+        type: "error",
+        title: "Could not send code",
+        message: error.message || "Please try again.",
+      })
+    } finally {
+      setSendingReset(false)
+    }
+  }
+
+  async function handleResetPassword() {
+    const errors = validateResetPasswordForm(resetPasswordForm)
+    setResetPasswordErrors(errors)
+    if (Object.keys(errors).length > 0) return
+
+    try {
+      setResettingPassword(true)
+      setResetNotice({
+        visible: false,
+        type: "info",
+        title: "",
+        message: "",
+      })
+
+      await verifyRecoveryCodeAndResetPassword({
+        email: resetEmailForm.email,
+        token: resetPasswordForm.token,
+        newPassword: resetPasswordForm.newPassword,
+      })
+
+      setResetNotice({
+        visible: true,
+        type: "success",
+        title: "Password updated",
+        message: "You can now sign in with your new password.",
+      })
+
+      setResetPasswordOpen(false)
+      setLoginForm((prev) => ({
+        ...prev,
+        email: resetEmailForm.email,
+        password: "",
+      }))
+    } catch (error) {
+      setResetNotice({
+        visible: true,
+        type: "error",
+        title: "Reset failed",
+        message: error.message || "Please try again.",
+      })
+    } finally {
+      setResettingPassword(false)
+    }
+  }
+
+  function handleProfileCompleted() {
+    setProfileModalOpen(false)
+    setNeedsProfileCompletion(false)
+    setLoginNotice({
+      visible: true,
+      type: "success",
+      title: "Profile completed",
+      message: "Opening your dashboard...",
+    })
+    setTimeout(() => {
+      navigate("/user-dashboard")
+    }, 800)
+  }
+
+  async function handleProfileModalClose() {
+    setProfileModalOpen(false)
+    if (needsProfileCompletion) {
+      await signOutUser()
+      setNeedsProfileCompletion(false)
+      setPendingProfileUser(null)
+      setLoginNotice({
+        visible: true,
+        type: "warning",
+        title: "Setup cancelled",
+        message: "You were signed out because profile setup was not completed.",
+      })
+    }
+  }
+
+  function handleRepoSearch() {
+    const value = repoSearchValue.trim()
+    if (!value) return
+    navigate(`/reposearch?merchantId=${encodeURIComponent(value)}`)
+  }
 
   return (
     <MainLayout>
@@ -62,7 +508,7 @@ function Home() {
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-2 lg:row-span-2 lg:row-start-1">
             <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
               <div className="min-h-[34px] text-lg font-extrabold text-slate-900 md:text-2xl">
-                {phrases[phraseIndex].slice(0, charIndex)}
+                {currentPhraseText}
                 <span className="ml-1 inline-block animate-pulse text-pink-600">
                   |
                 </span>
@@ -75,100 +521,155 @@ function Home() {
 
               <div className="mt-6 rounded-[22px] bg-pink-200 p-1">
                 <div className="rounded-[18px] bg-slate-900 p-5 text-white">
-                  <RepoSearchBar />
+                  <p className="mb-2 text-sm font-bold text-amber-300">
+                    Search Repository
+                  </p>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={repoSearchValue}
+                      onChange={(e) => setRepoSearchValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleRepoSearch()
+                      }}
+                      placeholder="Enter Merchant ID..."
+                      className="w-full rounded-full border border-white/20 bg-white/10 px-5 py-3 pr-12 text-sm text-white outline-none placeholder:text-white/50 focus:border-pink-400 focus:ring-4 focus:ring-pink-500/20"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRepoSearch}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 transition hover:text-pink-300"
+                      aria-label="Search repository"
+                    >
+                      <FaSearch />
+                    </button>
+                  </div>
+                  <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-amber-300">
+                    <FaCircleInfo />
+                    Search by unique ID, for example 209234
+                  </p>
                 </div>
               </div>
 
               <div className="mt-6 rounded-[22px] bg-pink-200 p-1">
                 <div className="rounded-[18px] border border-pink-200 bg-pink-50 p-6">
                   <h2 className="flex items-center gap-2 text-xl font-extrabold text-slate-900">
-                    <span>🔒</span>
+                    <FaLock className="text-pink-600" />
                     <span>Users Login</span>
                   </h2>
 
-                  <form className="mt-5 space-y-3">
-                    <div>
-                      <input
-                        type="email"
-                        placeholder="Email Address"
-                        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none placeholder:text-slate-400 focus:border-pink-500"
-                      />
-                    </div>
+                  <form className="mt-5 space-y-4" onSubmit={handleEmailLogin}>
+                    <AuthInput
+                      id="hero-email"
+                      label="Email address"
+                      type="email"
+                      value={loginForm.email}
+                      onChange={(e) =>
+                        setLoginForm((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                      placeholder="name@example.com"
+                      error={loginErrors.email}
+                      required
+                      icon={<FaEnvelope />}
+                      autoComplete="email"
+                    />
 
-                    <div>
-                      <input
-                        type="password"
-                        placeholder="Password"
-                        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none placeholder:text-slate-400 focus:border-pink-500"
-                      />
-                    </div>
+                    <AuthInput
+                      id="hero-password"
+                      label="Password"
+                      type={showPassword ? "text" : "password"}
+                      value={loginForm.password}
+                      onChange={(e) =>
+                        setLoginForm((prev) => ({
+                          ...prev,
+                          password: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter your password"
+                      error={loginErrors.password}
+                      required
+                      icon={<FaLock />}
+                      autoComplete="current-password"
+                      rightElement={
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          className="rounded-full p-2 text-slate-400 transition hover:bg-white hover:text-pink-600"
+                          aria-label={
+                            showPassword ? "Hide password" : "Show password"
+                          }
+                        >
+                          {showPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                      }
+                    />
 
                     <div className="text-right">
                       <button
                         type="button"
-                        className="text-sm font-medium text-slate-600 transition hover:text-pink-600"
+                        onClick={openResetFlow}
+                        className="text-sm font-semibold text-slate-600 transition hover:text-pink-600"
                       >
                         Forgot password?
                       </button>
                     </div>
 
-                    <button
-                      type="submit"
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-pink-600 px-4 py-3 text-base font-extrabold text-white transition hover:bg-pink-700"
-                    >
-                      Secure Sign In
-                      <span>→</span>
-                    </button>
+                    <AuthButton type="submit" loading={loginLoading}>
+                      <span>Secure Sign In</span>
+                      <FaArrowRight />
+                    </AuthButton>
                   </form>
 
+                  <AuthNotification
+                    visible={loginNotice.visible}
+                    type={loginNotice.type}
+                    title={loginNotice.title}
+                    message={loginNotice.message}
+                  />
+
                   <div className="my-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    <div className="h-px flex-1 bg-pink-200"></div>
+                    <div className="h-px flex-1 bg-pink-200" />
                     <span>New to CTMerchant?</span>
-                    <div className="h-px flex-1 bg-pink-200"></div>
+                    <div className="h-px flex-1 bg-pink-200" />
                   </div>
 
                   <button
                     type="button"
+                    onClick={() => navigate("/create-account")}
                     className="w-full rounded-xl border-2 border-pink-200 bg-white px-4 py-3 text-base font-bold text-slate-900 transition hover:bg-pink-100"
                   >
                     Create Account
                   </button>
 
                   <div className="my-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    <div className="h-px flex-1 bg-pink-200"></div>
+                    <div className="h-px flex-1 bg-pink-200" />
                     <span>Or continue with</span>
-                    <div className="h-px flex-1 bg-pink-200"></div>
+                    <div className="h-px flex-1 bg-pink-200" />
                   </div>
 
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-3 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 sm:gap-3 sm:px-4 sm:text-sm"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 48 48"
-                      className="h-5 w-5"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fill="#FFC107"
-                        d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.215 36 24 36c-6.627 0-12-5.373-12-12S17.373 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
-                      />
-                      <path
-                        fill="#FF3D00"
-                        d="M6.306 14.691l6.571 4.819C14.655 16.108 19.005 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4c-7.682 0-14.347 4.337-17.694 10.691z"
-                      />
-                      <path
-                        fill="#4CAF50"
-                        d="M24 44c5.176 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.144 35.091 26.646 36 24 36c-5.194 0-9.624-3.329-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
-                      />
-                      <path
-                        fill="#1976D2"
-                        d="M43.611 20.083H42V20H24v8h11.303c-.793 2.237-2.231 4.166-4.084 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
-                      />
-                    </svg>
-                    <span>Continue with Google</span>
-                  </button>
+                  <div className="space-y-3">
+                    <div
+                      id="google-signin-home"
+                      className="flex min-h-[44px] items-center justify-center"
+                    />
+                    {!googleReady || googleLoading ? (
+                      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-500">
+                        {googleLoading
+                          ? "Signing in with Google..."
+                          : "Loading Google sign-in..."}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <AuthNotification
+                    visible={resetNotice.visible}
+                    type={resetNotice.type}
+                    title={resetNotice.title}
+                    message={resetNotice.message}
+                  />
                 </div>
               </div>
 
@@ -236,7 +737,147 @@ function Home() {
           </div>
         </div>
       </section>
+
+      {resetEmailOpen ? (
+        <SimpleModal
+          title="Reset Password"
+          subtitle="Enter your email address to receive a 6-digit recovery code."
+          onClose={() => setResetEmailOpen(false)}
+        >
+          <div className="space-y-4">
+            <AuthInput
+              id="reset-email"
+              label="Registered email"
+              type="email"
+              value={resetEmailForm.email}
+              onChange={(e) =>
+                setResetEmailForm({ email: e.target.value })
+              }
+              placeholder="name@example.com"
+              error={resetEmailErrors.email}
+              required
+              icon={<FaEnvelope />}
+            />
+
+            <AuthButton onClick={handleSendResetCode} loading={sendingReset}>
+              Send Reset Code
+            </AuthButton>
+
+            <button
+              type="button"
+              onClick={() => setResetEmailOpen(false)}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </SimpleModal>
+      ) : null}
+
+      {resetPasswordOpen ? (
+        <SimpleModal
+          title="Create New Password"
+          subtitle="Enter the 6-digit code we sent to your email."
+          onClose={() => setResetPasswordOpen(false)}
+        >
+          <div className="space-y-4">
+            <AuthInput
+              id="reset-token"
+              label="6-digit recovery code"
+              value={resetPasswordForm.token}
+              onChange={(e) =>
+                setResetPasswordForm((prev) => ({
+                  ...prev,
+                  token: e.target.value,
+                }))
+              }
+              placeholder="123456"
+              error={resetPasswordErrors.token}
+              required
+              icon={<FaHashtag />}
+              maxLength={6}
+            />
+
+            <AuthInput
+              id="reset-new-password"
+              label="New password"
+              type="password"
+              value={resetPasswordForm.newPassword}
+              onChange={(e) =>
+                setResetPasswordForm((prev) => ({
+                  ...prev,
+                  newPassword: e.target.value,
+                }))
+              }
+              placeholder="Enter new password"
+              error={resetPasswordErrors.newPassword}
+              required
+              icon={<FaLock />}
+            />
+
+            <AuthInput
+              id="reset-confirm-password"
+              label="Confirm password"
+              type="password"
+              value={resetPasswordForm.confirmPassword}
+              onChange={(e) =>
+                setResetPasswordForm((prev) => ({
+                  ...prev,
+                  confirmPassword: e.target.value,
+                }))
+              }
+              placeholder="Confirm new password"
+              error={resetPasswordErrors.confirmPassword}
+              required
+              icon={<FaLock />}
+            />
+
+            <AuthButton onClick={handleResetPassword} loading={resettingPassword}>
+              Confirm & Reset Password
+            </AuthButton>
+
+            <button
+              type="button"
+              onClick={() => setResetPasswordOpen(false)}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </SimpleModal>
+      ) : null}
+
+      <CompleteProfileModal
+        open={profileModalOpen}
+        onClose={handleProfileModalClose}
+        userId={pendingProfileUser?.id}
+        fullName={pendingProfileUser?.fullName || ""}
+        onCompleted={handleProfileCompleted}
+      />
     </MainLayout>
+  )
+}
+
+function SimpleModal({ title, subtitle, children, onClose }) {
+  return (
+    <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-[28px] border border-pink-100 bg-white p-6 shadow-2xl">
+        <div className="mb-4">
+          <h2 className="text-xl font-extrabold text-slate-900">{title}</h2>
+          <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+        </div>
+
+        {children}
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute left-[-9999px]"
+          aria-hidden="true"
+          tabIndex={-1}
+        />
+      </div>
+    </div>
   )
 }
 
