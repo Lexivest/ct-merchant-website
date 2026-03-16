@@ -8,20 +8,15 @@ import {
   FaEyeSlash,
   FaHashtag,
   FaLock,
-  FaMapPin,
-  FaPhone,
   FaSearch,
 } from "react-icons/fa"
 import MainLayout from "../layouts/MainLayout"
-import RepoSearchBar from "../components/RepoSearchBar"
 import AuthInput from "../components/auth/AuthInput"
 import AuthButton from "../components/auth/AuthButton"
 import AuthNotification from "../components/auth/AuthNotification"
 import CompleteProfileModal from "../components/auth/CompleteProfileModal"
 import useAuthSession from "../hooks/useAuthSession"
 import {
-  fetchOpenCities,
-  fetchAreasByCity,
   sendPasswordResetCode,
   signInWithGoogleIdToken,
   signInWithPassword,
@@ -121,9 +116,7 @@ function Home() {
     if (!user) return
     if (suspended) return
 
-    if (profile && profileComplete) {
-      navigate("/user-dashboard", { replace: true })
-    } else {
+    if (!profileComplete) {
       setPendingProfileUser({
         id: user.id,
         fullName: profile?.full_name || user.user_metadata?.full_name || "",
@@ -131,7 +124,7 @@ function Home() {
       setNeedsProfileCompletion(true)
       setProfileModalOpen(true)
     }
-  }, [user, profile, profileComplete, suspended, navigate])
+  }, [user, profile, profileComplete, suspended])
 
   useEffect(() => {
     const clientId =
@@ -245,9 +238,7 @@ function Home() {
           title: "Login successful",
           message: "Opening your dashboard...",
         })
-        setTimeout(() => {
-          navigate("/user-dashboard")
-        }, 900)
+        navigate("/user-dashboard", { replace: true })
       } else {
         setPendingProfileUser({
           id: signedInUser.id,
@@ -325,9 +316,7 @@ function Home() {
           title: "Google sign-in successful",
           message: "Opening your dashboard...",
         })
-        setTimeout(() => {
-          navigate("/user-dashboard")
-        }, 900)
+        navigate("/user-dashboard", { replace: true })
       } else {
         setPendingProfileUser({
           id: signedInUser.id,
@@ -457,9 +446,7 @@ function Home() {
       title: "Profile completed",
       message: "Opening your dashboard...",
     })
-    setTimeout(() => {
-      navigate("/user-dashboard")
-    }, 800)
+    navigate("/user-dashboard", { replace: true })
   }
 
   async function handleProfileModalClose() {
@@ -750,9 +737,7 @@ function Home() {
               label="Registered email"
               type="email"
               value={resetEmailForm.email}
-              onChange={(e) =>
-                setResetEmailForm({ email: e.target.value })
-              }
+              onChange={(e) => setResetEmailForm({ email: e.target.value })}
               placeholder="name@example.com"
               error={resetEmailErrors.email}
               required
