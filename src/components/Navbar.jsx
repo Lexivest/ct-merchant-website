@@ -24,7 +24,7 @@ function Navbar() {
         </div>
       </div>
 
-      <div className="relative border-b border-slate-200 bg-white text-slate-800">
+      <div className="relative border-b-2 border-pink-200 bg-white text-slate-800">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
           <Link
             to="/"
@@ -102,7 +102,7 @@ function Navbar() {
               className="fixed inset-0 z-40 bg-black/30 lg:hidden"
               aria-label="Close mobile menu overlay"
             />
-            <div className="absolute inset-x-0 top-full z-50 border-t border-slate-200 bg-white px-4 py-3 shadow-xl lg:hidden">
+            <div className="absolute inset-x-0 top-full z-50 border-t border-pink-100 bg-white px-4 py-3 shadow-xl lg:hidden">
               <nav className="flex flex-col gap-2">
                 {navLinks.map((link) => (
                   <Link
@@ -118,7 +118,7 @@ function Navbar() {
                 <Link
                   to="/staff-portal"
                   onClick={closeMenu}
-                  className="mt-2 inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="mt-2 px-3 py-3 text-sm font-bold text-pink-600 transition hover:bg-pink-50"
                 >
                   Staff Portal
                 </Link>

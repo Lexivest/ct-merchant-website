@@ -248,7 +248,7 @@ function Services() {
                     </p>
 
                     <Link
-                      to="/help-support"
+                      to="/contact"
                       className="mt-6 inline-flex items-center justify-center rounded-xl bg-pink-600 px-6 py-3 text-sm font-extrabold text-white shadow-[0_2px_5px_rgba(219,39,119,0.3)] transition hover:-translate-y-0.5 hover:bg-pink-700"
                     >
                       Contact Support

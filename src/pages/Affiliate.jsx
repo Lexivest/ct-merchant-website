@@ -223,7 +223,7 @@ function Affiliate() {
 
                     <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                       <Link
-                        to="/help-support"
+                        to="/contact"
                         className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-pink-600 px-6 py-3 text-sm font-extrabold text-white shadow-[0_2px_5px_rgba(219,39,119,0.3)] transition hover:bg-pink-700"
                       >
                         <span>Contact Us</span>

@@ -41,7 +41,7 @@ function Home() {
     <MainLayout>
       <section className="bg-pink-50 px-4 py-4 md:py-5">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2 lg:items-stretch">
-          <div className="flex h-full flex-col gap-6">
+          <div className="order-1 flex h-full flex-col gap-6">
             <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">
               <div className="min-h-[260px] overflow-hidden rounded-[24px] border border-pink-100 bg-[url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg')] bg-cover bg-top shadow-lg md:min-h-[420px]">
                 <div className="flex min-h-[260px] items-end md:min-h-[420px]">
