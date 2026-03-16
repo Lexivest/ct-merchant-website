@@ -27,7 +27,6 @@ import {
 import Cropper from "cropperjs"
 import "cropperjs/dist/cropper.css"
 import MainLayout from "../layouts/MainLayout"
-import AuthButton from "../components/auth/AuthButton"
 import AuthNotification from "../components/auth/AuthNotification"
 import CompleteProfileModal from "../components/auth/CompleteProfileModal"
 import useAuthSession from "../hooks/useAuthSession"
@@ -90,18 +89,11 @@ function UserDashboard() {
   const [avatarBlob, setAvatarBlob] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState("")
   const [cropModalOpen, setCropModalOpen] = useState(false)
+
   const cropImageRef = useRef(null)
   const cropperRef = useRef(null)
-  const promoIntervalRef = useRef(null)
   const inactivityTimerRef = useRef(null)
   const fileInputRef = useRef(null)
-
-  const cacheKey = useMemo(() => {
-    return user?.id ? `ctm_dashboard_v31_${user.id}` : ""
-  }, [user?.id])
-
-  const currentProfile = dashboardData.profile || profile
-  const currentUserShop = dashboardData.myShop
 
   useEffect(() => {
     const tab = searchParams.get("tab")
@@ -143,26 +135,26 @@ function UserDashboard() {
 
     resetInactivityTimer()
     const events = ["mousemove", "keydown", "scroll", "click", "touchstart"]
-    events.forEach((eventName) =>
-      document.addEventListener(eventName, resetInactivityTimer, {
-        passive: true,
-      })
+    events.forEach((name) =>
+      document.addEventListener(name, resetInactivityTimer, { passive: true })
     )
 
     loadDashboard()
 
     return () => {
-      events.forEach((eventName) =>
-        document.removeEventListener(eventName, resetInactivityTimer)
+      events.forEach((name) =>
+        document.removeEventListener(name, resetInactivityTimer)
       )
       clearTimeout(inactivityTimerRef.current)
-      clearInterval(promoIntervalRef.current)
     }
   }, [loading, user, profile, profileComplete, suspended])
 
   useEffect(() => {
     if (!cropModalOpen || !cropImageRef.current) return
-    if (cropperRef.current) cropperRef.current.destroy()
+
+    if (cropperRef.current) {
+      cropperRef.current.destroy()
+    }
 
     cropperRef.current = new Cropper(cropImageRef.current, {
       aspectRatio: 1,
@@ -180,24 +172,23 @@ function UserDashboard() {
     }
   }, [cropModalOpen])
 
+  function resetInactivityTimer() {
+    clearTimeout(inactivityTimerRef.current)
+    inactivityTimerRef.current = setTimeout(async () => {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith("ctm_")) localStorage.removeItem(key)
+      })
+      await signOutUser()
+      navigate("/", { replace: true })
+    }, INACTIVITY_LIMIT)
+  }
+
   async function loadDashboard() {
     if (!user) return
 
     try {
       setDashboardLoading(true)
       setDashboardError("")
-
-      if (cacheKey) {
-        const cached = localStorage.getItem(cacheKey)
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached)
-            setDashboardData(parsed)
-          } catch {
-            // ignore bad cache
-          }
-        }
-      }
 
       const profileRes = await supabase
         .from("profiles")
@@ -209,20 +200,17 @@ function UserDashboard() {
 
       if (!profileRes.data || !profileRes.data.city_id) {
         await signOutUser()
-        localStorage.removeItem(cacheKey)
         navigate("/", { replace: true })
         return
       }
 
       if (profileRes.data.is_suspended === true) {
         await signOutUser()
-        localStorage.removeItem(cacheKey)
         navigate("/", { replace: true })
         return
       }
 
       const cityId = profileRes.data.city_id
-      const areaId = profileRes.data.area_id
 
       const [
         promosRes,
@@ -273,11 +261,11 @@ function UserDashboard() {
       if (areasRes.error) throw areasRes.error
       if (shopsRes.error) throw shopsRes.error
       if (notificationsRes.error) throw notificationsRes.error
-      if (wishlistRes.error) throw wishlistRes.error
       if (myShopRes.error) throw myShopRes.error
+      if (wishlistRes.error) throw wishlistRes.error
 
-      const shopIds = (shopsRes.data || []).map((shop) => shop.id)
       let products = []
+      const shopIds = (shopsRes.data || []).map((shop) => shop.id)
 
       if (shopIds.length > 0) {
         const productsRes = await supabase
@@ -292,7 +280,7 @@ function UserDashboard() {
         products = productsRes.data || []
       }
 
-      const nextData = {
+      setDashboardData({
         profile: profileRes.data,
         promos: promosRes.data || [],
         announcements: announcementsRes.data || [],
@@ -305,19 +293,7 @@ function UserDashboard() {
         wishlistCount: wishlistRes.count || 0,
         unread: (notificationsRes.data || []).filter((item) => !item.is_read)
           .length,
-      }
-
-      setDashboardData(nextData)
-      setSearchArea("all")
-      setCategoryFilter("all")
-
-      if (cacheKey) {
-        localStorage.setItem(cacheKey, JSON.stringify(nextData))
-      }
-
-      if (areaId && !searchParams.get("tab")) {
-        setActiveTab("market")
-      }
+      })
     } catch (err) {
       setDashboardError(
         err.message || "Could not load dashboard data. Please refresh."
@@ -327,22 +303,11 @@ function UserDashboard() {
     }
   }
 
-  function resetInactivityTimer() {
-    clearTimeout(inactivityTimerRef.current)
-    inactivityTimerRef.current = setTimeout(async () => {
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith("ctm_")) localStorage.removeItem(key)
-      })
-      await signOutUser()
-      navigate("/", { replace: true })
-    }, INACTIVITY_LIMIT)
-  }
-
   async function handleProfileCompleted() {
     try {
       if (!user) return
-      const freshProfile = await fetchProfileByUserId(user.id)
 
+      const freshProfile = await fetchProfileByUserId(user.id)
       if (!freshProfile?.city_id || !freshProfile?.area_id) {
         throw new Error("Profile completion could not be verified.")
       }
@@ -354,7 +319,6 @@ function UserDashboard() {
         title: "Profile completed",
         message: "Your dashboard is now ready.",
       })
-
       await loadDashboard()
     } catch (err) {
       setNotice({
@@ -456,6 +420,7 @@ function UserDashboard() {
     navigate("/shop-registration")
   }
 
+  const currentProfile = dashboardData.profile
   const sortedAreas = useMemo(() => {
     const areas = [...(dashboardData.areas || [])]
     const userAreaId = dashboardData.profile?.area_id
@@ -481,9 +446,10 @@ function UserDashboard() {
     return shops
   }, [dashboardData.shops, searchArea, categoryFilter])
 
-  const featuredShops = useMemo(() => {
-    return filteredShops.filter((shop) => shop.is_featured)
-  }, [filteredShops])
+  const featuredShops = useMemo(
+    () => filteredShops.filter((shop) => shop.is_featured),
+    [filteredShops]
+  )
 
   const groupedShopsByArea = useMemo(() => {
     return sortedAreas
@@ -494,17 +460,6 @@ function UserDashboard() {
       .filter((group) => group.shops.length > 0)
   }, [sortedAreas, filteredShops])
 
-  const categoryChips = useMemo(() => {
-    return dashboardData.categories || []
-  }, [dashboardData.categories])
-
-  const suggestionSource = useMemo(() => {
-    return {
-      shops: dashboardData.shops || [],
-      products: dashboardData.products || [],
-    }
-  }, [dashboardData.shops, dashboardData.products])
-
   const tickerText = useMemo(() => {
     if (!dashboardData.announcements?.length) return ""
     return dashboardData.announcements.map((item) => item.message).join(" • ")
@@ -513,38 +468,18 @@ function UserDashboard() {
   const shopCardMeta = useMemo(() => {
     const shop = dashboardData.myShop
 
-    if (!shop) {
-      return {
-        title: "Register Shop",
-        icon: <FaStore />,
-      }
-    }
-
-    if (shop.is_open === false) {
-      return {
-        title: "Locked",
-        icon: <FaLock />,
-      }
-    }
-
+    if (!shop) return { title: "Register Shop", icon: <FaStore /> }
+    if (shop.is_open === false) return { title: "Locked", icon: <FaLock /> }
     if (shop.status === "pending") {
       return {
         title: "Pending",
         icon: <FaCircleNotch className="animate-spin" />,
       }
     }
-
     if (shop.status === "rejected") {
-      return {
-        title: "Rejected",
-        icon: <FaCircleExclamation />,
-      }
+      return { title: "Rejected", icon: <FaCircleExclamation /> }
     }
-
-    return {
-      title: "My Shop",
-      icon: <FaStore />,
-    }
+    return { title: "My Shop", icon: <FaStore /> }
   }, [dashboardData.myShop])
 
   function updateSuggestions(value, mode) {
@@ -557,7 +492,7 @@ function UserDashboard() {
 
     const suggestions = []
 
-    suggestionSource.shops.forEach((shop) => {
+    ;(dashboardData.shops || []).forEach((shop) => {
       if (shop.name?.toLowerCase().includes(q)) {
         suggestions.push({
           text: shop.name,
@@ -567,7 +502,7 @@ function UserDashboard() {
       }
     })
 
-    suggestionSource.products.forEach((product) => {
+    ;(dashboardData.products || []).forEach((product) => {
       const productName = product.name || product.product_name || product.title
       if (productName?.toLowerCase().includes(q)) {
         suggestions.push({
@@ -579,7 +514,6 @@ function UserDashboard() {
     })
 
     const next = suggestions.slice(0, 6)
-
     if (mode === "desktop") setSearchSuggestionsDesktop(next)
     else setSearchSuggestionsMobile(next)
   }
@@ -600,11 +534,6 @@ function UserDashboard() {
       setSearchSuggestionsMobile([])
     }
     navigate(`/search?q=${encodeURIComponent(text)}`)
-  }
-
-  function navigateArea(areaId) {
-    if (areaId === "all") return
-    navigate(`/area?id=${areaId}`)
   }
 
   function navigateCategory(name) {
@@ -732,12 +661,11 @@ function UserDashboard() {
             .remove([match[1].split("?")[0]])
         }
       } catch {
-        // ignore old avatar cleanup failures
+        // ignore cleanup failure
       }
     }
 
     const fileName = `${user.id}_${Date.now()}.jpg`
-
     const uploadRes = await supabase.storage
       .from("avatars")
       .upload(fileName, avatarBlob, {
@@ -746,7 +674,6 @@ function UserDashboard() {
       })
 
     if (uploadRes.error) throw uploadRes.error
-
     return supabase.storage.from("avatars").getPublicUrl(fileName).data.publicUrl
   }
 
@@ -879,13 +806,16 @@ function UserDashboard() {
     )
   }
 
-  if (loading || dashboardLoading) {
+  if (loading || dashboardLoading || !dashboardData.profile) {
     return (
       <MainLayout>
         <section className="min-h-screen bg-[#E3E6E6] px-4 py-8">
           <div className="mx-auto max-w-[1600px]">
             <div className="bg-white px-4 py-16 text-center">
               <FaCircleNotch className="mx-auto animate-spin text-[2.5rem] text-pink-600" />
+              <p className="mt-4 text-sm font-bold text-[#565959]">
+                Loading marketplace...
+              </p>
             </div>
           </div>
         </section>
@@ -893,17 +823,15 @@ function UserDashboard() {
     )
   }
 
-  if (!user) return null
-
   return (
     <MainLayout>
       <div className="bg-[#E3E6E6] text-[#0F1111]">
-        <header className="sticky top-0 z-[1000] flex flex-col bg-[#131921] text-white">
-          <div className="mx-auto flex w-full max-w-[1600px] items-center gap-4 px-4 py-[10px] max-[1024px]:justify-between max-[1024px]:gap-2 max-[1024px]:px-3 max-[1024px]:py-2">
+        <header className="amz-header sticky top-0 z-[1000] flex flex-col bg-[#131921] text-white">
+          <div className="amz-mobile-scroll-row mx-auto flex w-full max-w-[1600px] items-center gap-4 px-4 py-[10px] max-[1024px]:justify-between max-[1024px]:gap-2 max-[1024px]:px-3 max-[1024px]:py-2">
             <img
               src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"
+              className="amz-logo h-[38px] cursor-pointer rounded object-contain"
               alt="Logo"
-              className="h-[38px] cursor-pointer rounded object-contain"
               onClick={() => window.location.reload()}
             />
 
@@ -928,7 +856,6 @@ function UserDashboard() {
                 </select>
 
                 <input
-                  type="text"
                   className="amz-search-input min-w-0 flex-1 border-none px-4 text-base text-[#0F1111] outline-none"
                   placeholder="Search shops and products..."
                   value={searchInputDesktop}
@@ -1050,7 +977,6 @@ function UserDashboard() {
               </select>
 
               <input
-                type="text"
                 className="amz-search-input min-w-0 flex-1 border-none px-4 text-base text-[#0F1111] outline-none"
                 placeholder="Search CTMerchant..."
                 value={searchInputMobile}
@@ -1098,13 +1024,10 @@ function UserDashboard() {
             <select
               className="amz-category-filter mr-3 max-w-[130px] cursor-pointer rounded border border-white/40 bg-transparent px-2 py-1 text-[0.85rem] font-semibold text-white outline-none hover:border-white"
               value={categoryFilter}
-              onChange={(e) => {
-                setCategoryFilter(e.target.value)
-                if (e.target.value !== "all") navigateCategory(e.target.value)
-              }}
+              onChange={(e) => setCategoryFilter(e.target.value)}
             >
               <option value="all">All Categories</option>
-              {categoryChips.map((category) => (
+              {(dashboardData.categories || []).map((category) => (
                 <option key={category.id || category.name} value={category.name}>
                   {category.name}
                 </option>
@@ -1145,10 +1068,7 @@ function UserDashboard() {
               ) : null}
 
               {featuredShops.length > 0 ? (
-                <div
-                  id="featured-section"
-                  className="area-block-wrap mb-2 bg-white pt-4"
-                >
+                <div className="area-block-wrap mb-2 bg-white pt-4">
                   <h2 className="sec-title mb-3 flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 text-[1.35rem] font-extrabold text-[#0F1111]">
                     Featured Shops{" "}
                     <span className="text-[0.85em] font-bold text-pink-600">
@@ -1162,10 +1082,7 @@ function UserDashboard() {
               ) : null}
 
               {groupedShopsByArea.map(({ area, shops }) => (
-                <div
-                  key={area.id}
-                  className="area-block-wrap mb-2 bg-white pt-4"
-                >
+                <div key={area.id} className="area-block-wrap mb-2 bg-white pt-4">
                   <h2 className="sec-title mb-3 flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 text-[1.35rem] font-extrabold text-[#0F1111]">
                     {area.id === dashboardData.profile?.area_id ? (
                       <>
@@ -1185,13 +1102,13 @@ function UserDashboard() {
                 </div>
               ))}
 
-              {categoryChips.length > 0 ? (
+              {(dashboardData.categories || []).length > 0 ? (
                 <div className="cat-section-wrap mb-2 bg-white pt-4">
                   <h2 className="sec-title mb-3 flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 text-[1.35rem] font-extrabold text-[#0F1111]">
                     Browse Categories
                   </h2>
                   <div className="cat-grid flex flex-wrap gap-3 px-4 pb-6">
-                    {categoryChips.map((category) => {
+                    {(dashboardData.categories || []).map((category) => {
                       const matchingShopIds = (dashboardData.shops || [])
                         .filter((shop) => shop.category === category.name)
                         .map((shop) => shop.id)
@@ -1239,19 +1156,11 @@ function UserDashboard() {
                 </h2>
 
                 <div className="svc-grid grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4">
-                  <div className="svc-card rounded-lg border border-[#D5D9D9] bg-white px-4 py-5 text-center transition hover:bg-[#F7F7F7]">
-                    <button
-                      type="button"
-                      className="w-full"
-                      onClick={handleShopClick}
-                    >
-                      <div className="svc-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center text-[1.4rem] text-[#565959]">
-                        {shopCardMeta.icon}
-                      </div>
-                      <strong>{shopCardMeta.title}</strong>
-                    </button>
-                  </div>
-
+                  <SvcCard
+                    icon={shopCardMeta.icon}
+                    title={shopCardMeta.title}
+                    onClick={handleShopClick}
+                  />
                   <SvcCard
                     icon={<FaHeart style={{ color: "#db2777" }} />}
                     title="Wishlist"
@@ -1296,10 +1205,7 @@ function UserDashboard() {
           {activeTab === "profile" ? (
             <div className="screen active">
               {!profileEditOpen ? (
-                <div
-                  id="profile-view"
-                  className="mx-auto my-5 max-w-[600px] rounded-lg border border-[#D5D9D9] bg-white p-10 text-center"
-                >
+                <div className="mx-auto my-5 max-w-[600px] rounded-lg border border-[#D5D9D9] bg-white p-10 text-center">
                   <img
                     src={
                       currentProfile?.avatar_url ||
@@ -1316,9 +1222,7 @@ function UserDashboard() {
                   <p className="mb-1 font-medium text-[#565959]">
                     {currentProfile?.phone || ""}
                   </p>
-                  <p className="mb-6 text-[0.95rem] text-[#565959]">
-                    {user.email}
-                  </p>
+                  <p className="mb-6 text-[0.95rem] text-[#565959]">{user.email}</p>
                   <div className="flex justify-center gap-3">
                     <button className="btn-brand" onClick={openProfileEdit}>
                       Edit Profile
@@ -1329,10 +1233,7 @@ function UserDashboard() {
                   </div>
                 </div>
               ) : (
-                <div
-                  id="profile-edit"
-                  className="mx-auto my-5 max-w-[600px] rounded-lg border border-[#D5D9D9] bg-white p-[30px]"
-                >
+                <div className="mx-auto my-5 max-w-[600px] rounded-lg border border-[#D5D9D9] bg-white p-[30px]">
                   <h3 className="mb-6 text-[1.4rem] font-extrabold">
                     Edit Profile
                   </h3>
@@ -1407,9 +1308,9 @@ function UserDashboard() {
                       onChange={(e) => handleProfileCityChange(e.target.value)}
                     >
                       <option value="">Select City</option>
-                      {dashboardData.profile?.city_id && dashboardData.profile?.cities?.name ? (
-                        <option value={dashboardData.profile.city_id}>
-                          {dashboardData.profile.cities.name}
+                      {currentProfile?.city_id && currentProfile?.cities?.name ? (
+                        <option value={currentProfile.city_id}>
+                          {currentProfile.cities.name}
                         </option>
                       ) : null}
                     </select>
@@ -1446,17 +1347,13 @@ function UserDashboard() {
 
                   <div className="flex gap-3">
                     <button
-                      id="btn-save"
                       className="btn-brand flex-1"
                       onClick={saveProfile}
                       disabled={profileSaving}
                     >
                       {profileSaving ? "Saving..." : "Save Changes"}
                     </button>
-                    <button
-                      className="btn-brand-alt flex-1"
-                      onClick={cancelProfileEdit}
-                    >
+                    <button className="btn-brand-alt flex-1" onClick={cancelProfileEdit}>
                       Cancel
                     </button>
                   </div>
@@ -1472,10 +1369,7 @@ function UserDashboard() {
                   Alerts & Notifications
                 </h2>
 
-                <div
-                  id="notif-list"
-                  className="flex max-w-[800px] flex-col gap-3"
-                >
+                <div className="flex max-w-[800px] flex-col gap-3">
                   {dashboardData.notifications.length === 0 ? (
                     <p className="text-[#565959]">No notifications yet</p>
                   ) : (
@@ -1568,7 +1462,6 @@ function PromoSlider({ promos }) {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % promos.length)
     }, 8000)
-
     return () => clearInterval(interval)
   }, [promos])
 
