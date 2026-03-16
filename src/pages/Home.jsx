@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   FaArrowRight,
-  FaCircleInfo,
+  FaInfoCircle,
   FaEnvelope,
   FaEye,
   FaEyeSlash,
@@ -545,7 +545,7 @@ function Home() {
                     </button>
                   </div>
                   <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-amber-300">
-                    <FaCircleInfo />
+                    <FaInfoCircle />
                     Search by unique ID, for example 209234
                   </p>
                 </div>
