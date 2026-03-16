@@ -43,9 +43,9 @@ function Home() {
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2 lg:items-stretch">
           <div className="flex h-full flex-col gap-6">
             <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">
-              <div className="min-h-[280px] overflow-hidden rounded-[24px] border border-pink-100 bg-[url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg')] bg-cover bg-top shadow-lg md:min-h-[420px]">
-                <div className="flex min-h-[280px] items-end md:min-h-[420px]">
-                  <div className="flex w-full flex-wrap justify-center gap-4 border-t border-white/20 bg-slate-900/70 px-4 py-4 text-sm font-semibold text-white backdrop-blur-md">
+              <div className="min-h-[260px] overflow-hidden rounded-[24px] border border-pink-100 bg-[url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg')] bg-cover bg-top shadow-lg md:min-h-[420px]">
+                <div className="flex min-h-[260px] items-end md:min-h-[420px]">
+                  <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/55 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur-sm md:gap-4 md:py-4 md:text-sm">
                     <span className="flex items-center gap-2">
                       <span className="text-emerald-400">●</span> Commerce
                     </span>
@@ -60,7 +60,7 @@ function Home() {
               </div>
             </div>
 
-            <div className="flex-1 rounded-[28px] bg-pink-200 p-1 shadow-sm">
+            <div className="order-3 flex-1 rounded-[28px] bg-pink-200 p-1 shadow-sm lg:order-none">
               <div className="h-full rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
                 <span className="inline-block rounded-full border border-pink-200 bg-pink-50 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-pink-700">
                   Repository of Shops, Products and Services
@@ -92,11 +92,13 @@ function Home() {
             </div>
           </div>
 
-          <div className="h-full rounded-[28px] bg-pink-200 p-1 shadow-sm">
+          <div className="order-2 h-full rounded-[28px] bg-pink-200 p-1 shadow-sm lg:order-none">
             <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
               <div className="min-h-[34px] text-lg font-extrabold text-slate-900 md:text-2xl">
                 {phrases[phraseIndex].slice(0, charIndex)}
-                <span className="ml-1 inline-block animate-pulse text-pink-600">|</span>
+                <span className="ml-1 inline-block animate-pulse text-pink-600">
+                  |
+                </span>
               </div>
 
               <p className="mt-4 max-w-xl text-base font-medium leading-7 text-slate-600">
