@@ -24,7 +24,7 @@ function Navbar() {
         </div>
       </div>
 
-      <div className="border-b border-slate-200 bg-white text-slate-800">
+      <div className="relative border-b border-slate-200 bg-white text-slate-800">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
           <Link
             to="/"
@@ -77,11 +77,7 @@ function Navbar() {
                 strokeWidth="2"
                 className="h-5 w-5"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             ) : (
               <svg
@@ -92,39 +88,43 @@ function Navbar() {
                 strokeWidth="2"
                 className="h-5 w-5"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             )}
           </button>
         </div>
 
         {mobileOpen && (
-          <div className="border-t border-slate-200 bg-white px-4 py-3 shadow-sm lg:hidden">
-            <nav className="flex flex-col gap-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={closeMenu}
-                  className="rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-pink-50 hover:text-pink-600"
-                >
-                  {link.label}
-                </Link>
-              ))}
+          <>
+            <button
+              type="button"
+              onClick={closeMenu}
+              className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+              aria-label="Close mobile menu overlay"
+            />
+            <div className="absolute inset-x-0 top-full z-50 border-t border-slate-200 bg-white px-4 py-3 shadow-xl lg:hidden">
+              <nav className="flex flex-col gap-2">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={closeMenu}
+                    className="rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-pink-50 hover:text-pink-600"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
 
-              <Link
-                to="/staff-portal"
-                onClick={closeMenu}
-                className="mt-2 inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-              >
-                Staff Portal
-              </Link>
-            </nav>
-          </div>
+                <Link
+                  to="/staff-portal"
+                  onClick={closeMenu}
+                  className="mt-2 inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  Staff Portal
+                </Link>
+              </nav>
+            </div>
+          </>
         )}
       </div>
     </header>
