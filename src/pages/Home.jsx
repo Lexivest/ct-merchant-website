@@ -142,13 +142,30 @@ function Home() {
 
                   <button
                     type="button"
-                    className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-3 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 sm:gap-3 sm:px-4 sm:text-sm"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
-                      <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.215 36 24 36c-6.627 0-12-5.373-12-12S17.373 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
-                      <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 16.108 19.005 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4c-7.682 0-14.347 4.337-17.694 10.691z" />
-                      <path fill="#4CAF50" d="M24 44c5.176 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.144 35.091 26.646 36 24 36c-5.194 0-9.624-3.329-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
-                      <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.793 2.237-2.231 4.166-4.084 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 48 48"
+                      className="h-5 w-5"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fill="#FFC107"
+                        d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.215 36 24 36c-6.627 0-12-5.373-12-12S17.373 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
+                      />
+                      <path
+                        fill="#FF3D00"
+                        d="M6.306 14.691l6.571 4.819C14.655 16.108 19.005 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4c-7.682 0-14.347 4.337-17.694 10.691z"
+                      />
+                      <path
+                        fill="#4CAF50"
+                        d="M24 44c5.176 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.144 35.091 26.646 36 24 36c-5.194 0-9.624-3.329-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
+                      />
+                      <path
+                        fill="#1976D2"
+                        d="M43.611 20.083H42V20H24v8h11.303c-.793 2.237-2.231 4.166-4.084 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
+                      />
                     </svg>
                     <span>Continue with Google</span>
                   </button>
@@ -157,26 +174,30 @@ function Home() {
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div className="rounded-[22px] bg-pink-200 p-1">
-                  <div className="rounded-[18px] border border-pink-100 bg-slate-50 p-4">
+                  <div className="flex items-center gap-3 rounded-[18px] border border-pink-100 bg-slate-50 p-4">
                     <div className="text-2xl">🛡️</div>
-                    <h3 className="mt-3 text-lg font-extrabold text-slate-900">
-                      100% Verified
-                    </h3>
-                    <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Physical Shops Only
-                    </p>
+                    <div>
+                      <h3 className="text-lg font-extrabold text-slate-900">
+                        100% Verified
+                      </h3>
+                      <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Physical Shops Only
+                      </p>
+                    </div>
                   </div>
                 </div>
 
                 <div className="rounded-[22px] bg-pink-200 p-1">
-                  <div className="rounded-[18px] border border-pink-100 bg-slate-50 p-4">
+                  <div className="flex items-center gap-3 rounded-[18px] border border-pink-100 bg-slate-50 p-4">
                     <div className="text-2xl">🤝</div>
-                    <h3 className="mt-3 text-lg font-extrabold text-slate-900">
-                      Zero Fraud
-                    </h3>
-                    <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Secure Marketplace
-                    </p>
+                    <div>
+                      <h3 className="text-lg font-extrabold text-slate-900">
+                        Zero Fraud
+                      </h3>
+                      <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+                        Secure Marketplace
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
