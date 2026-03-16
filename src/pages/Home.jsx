@@ -40,59 +40,26 @@ function Home() {
   return (
     <MainLayout>
       <section className="bg-pink-50 px-4 py-4 md:py-5">
-        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2 lg:items-stretch">
-          <div className="order-1 flex h-full flex-col gap-6">
-            <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">
-              <div className="min-h-[260px] overflow-hidden rounded-[24px] border border-pink-100 bg-[url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg')] bg-cover bg-top shadow-lg md:min-h-[420px]">
-                <div className="flex min-h-[260px] items-end md:min-h-[420px]">
-                  <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/55 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur-sm md:gap-4 md:py-4 md:text-sm">
-                    <span className="flex items-center gap-2">
-                      <span className="text-emerald-400">●</span> Commerce
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <span className="text-pink-400">●</span> Discover Locally
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <span className="text-sky-400">●</span> Unique ID
-                    </span>
-                  </div>
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
+          <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-1 lg:row-start-1">
+            <div className="min-h-[260px] overflow-hidden rounded-[24px] border border-pink-100 bg-[url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg')] bg-cover bg-top shadow-lg md:min-h-[420px]">
+              <div className="flex min-h-[260px] items-end md:min-h-[420px]">
+                <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/55 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur-sm md:gap-4 md:py-4 md:text-sm">
+                  <span className="flex items-center gap-2">
+                    <span className="text-emerald-400">●</span> Commerce
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-pink-400">●</span> Discover Locally
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-sky-400">●</span> Unique ID
+                  </span>
                 </div>
-              </div>
-            </div>
-
-            <div className="order-3 flex-1 rounded-[28px] bg-pink-200 p-1 shadow-sm lg:order-none">
-              <div className="h-full rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
-                <span className="inline-block rounded-full border border-pink-200 bg-pink-50 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-pink-700">
-                  Repository of Shops, Products and Services
-                </span>
-
-                <h2 className="mt-4 text-2xl font-extrabold text-slate-900 md:text-3xl">
-                  Grow Your Physical Shop Digitally
-                </h2>
-
-                <p className="mt-4 text-base leading-8 text-slate-600">
-                  CTMerchant is a structured repository of shops, products, and
-                  services within a city. We onboard and physically verify
-                  merchants to reduce fraudulent online claims and help customers
-                  discover real businesses around them.
-                </p>
-
-                <p className="mt-4 text-base leading-8 text-slate-600">
-                  Our platform helps consumers compare shops, products, and
-                  options before visiting a store, creating a better balance
-                  between digital convenience and physical marketplace reality.
-                </p>
-
-                <ul className="mt-6 space-y-3 text-sm font-semibold text-slate-700 md:text-base">
-                  <li>✓ Get a verified digital storefront</li>
-                  <li>✓ Unique CTMerchant ID to share</li>
-                  <li>✓ Be discovered in city repository search</li>
-                </ul>
               </div>
             </div>
           </div>
 
-          <div className="order-2 h-full rounded-[28px] bg-pink-200 p-1 shadow-sm lg:order-none">
+          <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-2 lg:row-span-2 lg:row-start-1">
             <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
               <div className="min-h-[34px] text-lg font-extrabold text-slate-900 md:text-2xl">
                 {phrases[phraseIndex].slice(0, charIndex)}
@@ -213,8 +180,37 @@ function Home() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <div className="mt-auto"></div>
+          <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-1 lg:row-start-2">
+            <div className="h-full rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
+              <span className="inline-block rounded-full border border-pink-200 bg-pink-50 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-pink-700">
+                Repository of Shops, Products and Services
+              </span>
+
+              <h2 className="mt-4 text-2xl font-extrabold text-slate-900 md:text-3xl">
+                Grow Your Physical Shop Digitally
+              </h2>
+
+              <p className="mt-4 text-base leading-8 text-slate-600">
+                CTMerchant is a structured repository of shops, products, and
+                services within a city. We onboard and physically verify
+                merchants to reduce fraudulent online claims and help customers
+                discover real businesses around them.
+              </p>
+
+              <p className="mt-4 text-base leading-8 text-slate-600">
+                Our platform helps consumers compare shops, products, and
+                options before visiting a store, creating a better balance
+                between digital convenience and physical marketplace reality.
+              </p>
+
+              <ul className="mt-6 space-y-3 text-sm font-semibold text-slate-700 md:text-base">
+                <li>✓ Get a verified digital storefront</li>
+                <li>✓ Unique CTMerchant ID to share</li>
+                <li>✓ Be discovered in city repository search</li>
+              </ul>
             </div>
           </div>
         </div>
