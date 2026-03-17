@@ -18,6 +18,39 @@
   }
 }
 
+@keyframes ticker {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+@keyframes pulse-badge {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0);
+  }
+}
+
+@keyframes highlight-price {
+  0%,
+  100% {
+    color: #db2777;
+    text-shadow: none;
+  }
+  50% {
+    color: #ff0055;
+    text-shadow: 0 0 6px rgba(219, 39, 119, 0.4);
+  }
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -43,4 +76,209 @@ button {
 img {
   display: block;
   max-width: 100%;
+}
+
+.h-scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 16px;
+  padding: 4px 16px 20px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.h-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.area-block-wrap,
+.cat-section-wrap {
+  background-color: #fff;
+  padding-top: 16px;
+  margin-bottom: 8px;
+}
+
+.sec-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f1111;
+  margin: 0 0 12px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sec-title::-webkit-scrollbar {
+  display: none;
+}
+
+.sec-title::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 22px;
+  background: #db2777;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.premium-shop-card-wrap {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.premium-shop-card {
+  background: #fff;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  height: 100%;
+  border-radius: 8px;
+  border: 1px solid #d5d9d9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition:
+    background 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+
+.premium-shop-card:hover {
+  background: #fcfcfc;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+  border-color: #b0b5b5;
+}
+
+.shop-card-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f1111;
+  margin-bottom: 16px;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.shop-image-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  flex: 1;
+  width: 100%;
+}
+
+.shop-grid-item-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.shop-grid-item {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #f7f7f7;
+  display: block;
+  overflow: hidden;
+  border-radius: 4px;
+  position: relative;
+}
+
+.shop-grid-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.shop-grid-item.empty {
+  border: 1px dashed #d5d9d9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-grid-caption {
+  display: flex;
+  flex-direction: column;
+}
+
+.sg-name {
+  font-size: 0.75rem;
+  color: #0f1111;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sg-price {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #db2777;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sg-price-old {
+  text-decoration: line-through;
+  color: #888c8c;
+  font-size: 0.65rem;
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.shop-cta {
+  font-size: 0.85rem;
+  color: #007185;
+  font-weight: 600;
+  display: inline-flex;
+  text-decoration: none;
+  margin-top: auto;
+}
+
+.premium-shop-card:hover .shop-cta {
+  color: #c40000;
+  text-decoration: underline;
+}
+
+.grid-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 4px;
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.flash-offer {
+  animation: pulse-badge 1.5s infinite ease-in-out;
+}
+
+.flash-price {
+  animation: highlight-price 1.5s infinite ease-in-out;
+}
+
+.cat-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0 16px 24px;
 }
