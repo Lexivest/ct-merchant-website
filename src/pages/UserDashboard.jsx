@@ -203,7 +203,7 @@ function UserDashboard() {
       })
       clearTimeout(inactivityTimerRef.current)
     }
-  }, [loading, user, profile, profileComplete, suspended])
+  }, [loading, user, profile, profileComplete, suspended, navigate])
 
   useEffect(() => {
     function handleDocumentClick(event) {
@@ -853,7 +853,7 @@ function UserDashboard() {
     }
   }
 
-  if ((!dashboardData.profile && loading) || (!dashboardData.profile && dashboardLoading)) {
+  if (!dashboardData.profile && (loading || dashboardLoading)) {
     return (
       <DashboardShimmer
         label={loading ? "Loading session..." : "Loading marketplace..."}
