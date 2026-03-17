@@ -11,6 +11,10 @@ import Terms from "./pages/Terms"
 import CreateAccount from "./pages/CreateAccount"
 import UserDashboard from "./pages/UserDashboard"
 import ShopRegistration from "./pages/ShopRegistration"
+import DashboardAbout from "./pages/dashboard/DashboardAbout"
+import DashboardServices from "./pages/dashboard/DashboardServices"
+import DashboardCareers from "./pages/dashboard/DashboardCareers"
+import DashboardSupport from "./pages/dashboard/DashboardSupport"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import useAuthSession from "./hooks/useAuthSession"
 
@@ -47,6 +51,60 @@ function App() {
         element={
           <ProtectedDashboardRoute>
             <UserDashboard />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/user-dashboard/about"
+        element={
+          <ProtectedDashboardRoute>
+            <DashboardAbout />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/user-dashboard/services"
+        element={
+          <ProtectedDashboardRoute>
+            <DashboardServices />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/user-dashboard/careers"
+        element={
+          <ProtectedDashboardRoute>
+            <DashboardCareers />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/user-dashboard/support"
+        element={
+          <ProtectedDashboardRoute>
+            <DashboardSupport />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/user-dashboard/faq"
+        element={
+          <ProtectedDashboardRoute>
+            <DashboardSupport />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/user-dashboard/report-abuse"
+        element={
+          <ProtectedDashboardRoute>
+            <DashboardSupport />
           </ProtectedDashboardRoute>
         }
       />

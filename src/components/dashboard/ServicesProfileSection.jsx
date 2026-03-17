@@ -88,32 +88,32 @@ function ServicesProfileSection({
             <ServiceCard
               icon={<FaHeadset style={{ color: "#007185" }} />}
               title="Support"
-              onClick={() => onNavigate("/contact")}
+              onClick={() => onNavigate("/user-dashboard/support")}
             />
             <ServiceCard
               icon={<FaCircleQuestion style={{ color: "#007185" }} />}
               title="FAQ"
-              onClick={() => onNavigate("/faq")}
+              onClick={() => onNavigate("/user-dashboard/faq")}
             />
             <ServiceCard
               icon={<FaTriangleExclamation style={{ color: "#C40000" }} />}
               title="Report Abuse"
-              onClick={() => onNavigate("/report-abuse")}
+              onClick={() => onNavigate("/user-dashboard/report-abuse")}
             />
             <ServiceCard
               icon={<FaBriefcase style={{ color: "#007185" }} />}
               title="Careers"
-              onClick={() => onNavigate("/careers?src=dash")}
+              onClick={() => onNavigate("/user-dashboard/careers")}
             />
             <ServiceCard
               icon={<FaBuilding style={{ color: "#007185" }} />}
               title="About Us"
-              onClick={() => onNavigate("/about?src=dash")}
+              onClick={() => onNavigate("/user-dashboard/about")}
             />
             <ServiceCard
               icon={<FaLayerGroup style={{ color: "#007185" }} />}
               title="Our Services"
-              onClick={() => onNavigate("/services?src=dash")}
+              onClick={() => onNavigate("/user-dashboard/services")}
             />
           </div>
         </div>
@@ -272,7 +272,10 @@ function ServicesProfileSection({
               >
                 {profileSaving ? "Saving..." : "Save Changes"}
               </button>
-              <button className="btn-brand-alt flex-1" onClick={cancelProfileEdit}>
+              <button
+                className="btn-brand-alt flex-1"
+                onClick={cancelProfileEdit}
+              >
                 Cancel
               </button>
             </div>
