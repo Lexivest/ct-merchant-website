@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
   FaArrowLeft,
-  FaBuilding,
   FaCity,
+  FaCircleCheck,
   FaEnvelope,
   FaEye,
   FaEyeSlash,
@@ -28,10 +28,7 @@ import {
   signUpWithEmail,
   updateLastActiveIp,
 } from "../lib/auth"
-import { supabase } from "../lib/supabase"
-import {
-  validateSignupForm,
-} from "../lib/validators"
+import { validateSignupForm } from "../lib/validators"
 
 function CreateAccount() {
   const navigate = useNavigate()
@@ -67,6 +64,7 @@ function CreateAccount() {
 
   const [termsOpen, setTermsOpen] = useState(false)
   const [termsScrolledBottom, setTermsScrolledBottom] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [pendingProfileUser, setPendingProfileUser] = useState(null)
@@ -195,6 +193,7 @@ function CreateAccount() {
       title: "",
       message: "",
     })
+    setTermsScrolledBottom(false)
     setTermsOpen(true)
   }
 
@@ -218,20 +217,7 @@ function CreateAccount() {
       })
 
       setTermsOpen(false)
-      setNotice({
-        visible: true,
-        type: "success",
-        title: "Account created",
-        message: "Your account was created successfully. Opening sign in...",
-      })
-
-      setTimeout(() => {
-        navigate("/", {
-          state: {
-            prefillEmail: form.email,
-          },
-        })
-      }, 1200)
+      setShowSuccess(true)
     } catch (error) {
       setTermsOpen(false)
       setNotice({
@@ -243,6 +229,15 @@ function CreateAccount() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  function closeSuccess() {
+    setShowSuccess(false)
+    navigate("/", {
+      state: {
+        prefillEmail: form.email,
+      },
+    })
   }
 
   async function handleGoogleCredentialResponse(response) {
@@ -341,306 +336,328 @@ function CreateAccount() {
   }
 
   return (
-    <MainLayout>
-      <section className="min-h-screen bg-pink-50 px-4 py-8">
-        <div className="mx-auto max-w-md">
-          <Link
-            to="/"
-            className="mb-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:border-pink-200 hover:bg-pink-50 hover:text-pink-700"
-          >
-            <FaArrowLeft />
-            <span>Back</span>
-          </Link>
+    <>
+      <MainLayout>
+        <section className="min-h-screen bg-pink-50 px-4 py-8">
+          <div className="mx-auto max-w-md">
+            <Link
+              to="/"
+              className="mb-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:border-pink-200 hover:bg-pink-50 hover:text-pink-700"
+            >
+              <FaArrowLeft />
+              <span>Back</span>
+            </Link>
 
-          <div className="mb-5 text-center">
-            <img
-              src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"
-              alt="CTMerchant Logo"
-              className="mx-auto h-24 w-auto rounded-xl object-contain"
-            />
+            <div className="mb-5 text-center">
+              <img
+                src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"
+                alt="CTMerchant Logo"
+                className="mx-auto h-24 w-auto rounded-xl object-contain"
+              />
+            </div>
+
+            <div className="rounded-[28px] border border-pink-100 bg-white p-6 shadow-xl md:p-8">
+              <h1 className="text-2xl font-extrabold text-slate-900">
+                Create Account
+              </h1>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Join the professional merchant network.
+              </p>
+
+              <div className="mt-5 space-y-3">
+                <div
+                  id="google-signup-button"
+                  className="flex min-h-[44px] items-center justify-center"
+                />
+                {!googleReady || googleLoading ? (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-500">
+                    {googleLoading
+                      ? "Signing up with Google..."
+                      : "Loading Google sign-up..."}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="my-6 flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <div className="h-px flex-1 bg-slate-200" />
+                <span>Or sign up with email</span>
+                <div className="h-px flex-1 bg-slate-200" />
+              </div>
+
+              <form className="space-y-4" onSubmit={handleSubmitStart}>
+                <AuthInput
+                  id="signup-fullname"
+                  label="Full Name"
+                  value={form.fullName}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      fullName: e.target.value,
+                    }))
+                  }
+                  placeholder="First and Last Name"
+                  error={errors.fullName}
+                  required
+                  icon={<FaUser />}
+                  minLength={2}
+                />
+
+                <AuthInput
+                  id="signup-phone"
+                  label="Phone Number"
+                  value={form.phone}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      phone: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g. 08012345678"
+                  error={errors.phone}
+                  required
+                  icon={<FaPhone />}
+                />
+
+                <AuthInput
+                  id="signup-email"
+                  label="Work Email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      email: e.target.value,
+                    }))
+                  }
+                  placeholder="name@company.com"
+                  error={errors.email}
+                  required
+                  icon={<FaEnvelope />}
+                  autoComplete="email"
+                />
+
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="signup-city"
+                    className="text-sm font-bold text-slate-800"
+                  >
+                    Select City <span className="ml-1 text-pink-600">*</span>
+                  </label>
+
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                      <FaCity />
+                    </span>
+                    <select
+                      id="signup-city"
+                      value={form.cityId}
+                      onChange={handleCityChange}
+                      disabled={loadingCities}
+                      className="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-pink-500 focus:ring-4 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                    >
+                      <option value="">
+                        {loadingCities ? "Loading cities..." : "Select your city"}
+                      </option>
+                      {cities.map((city) => (
+                        <option key={city.id} value={city.id}>
+                          {city.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {errors.cityId ? (
+                    <p className="text-xs font-semibold text-red-600">
+                      {errors.cityId}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="signup-area"
+                    className="text-sm font-bold text-slate-800"
+                  >
+                    Select Area <span className="ml-1 text-pink-600">*</span>
+                  </label>
+
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                      <FaMapPin />
+                    </span>
+                    <select
+                      id="signup-area"
+                      value={form.areaId}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          areaId: e.target.value,
+                        }))
+                      }
+                      disabled={!form.cityId || loadingAreas}
+                      className="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-pink-500 focus:ring-4 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                    >
+                      <option value="">
+                        {!form.cityId
+                          ? "Select city first"
+                          : loadingAreas
+                          ? "Loading areas..."
+                          : "Select your area"}
+                      </option>
+                      {areas.map((area) => (
+                        <option key={area.id} value={area.id}>
+                          {area.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {errors.areaId ? (
+                    <p className="text-xs font-semibold text-red-600">
+                      {errors.areaId}
+                    </p>
+                  ) : null}
+                </div>
+
+                <AuthInput
+                  id="signup-password"
+                  label="Password"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      password: e.target.value,
+                    }))
+                  }
+                  placeholder="At least 6 characters"
+                  error={errors.password}
+                  required
+                  icon={<FaLock />}
+                  autoComplete="new-password"
+                  minLength={6}
+                  rightElement={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  }
+                />
+
+                <AuthInput
+                  id="signup-confirm-password"
+                  label="Confirm Password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={form.confirmPassword}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      confirmPassword: e.target.value,
+                    }))
+                  }
+                  placeholder="Re-enter password"
+                  error={errors.confirmPassword}
+                  required
+                  icon={<FaLock />}
+                  autoComplete="new-password"
+                  minLength={6}
+                  rightElement={
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600"
+                      aria-label={
+                        showConfirmPassword
+                          ? "Hide confirm password"
+                          : "Show confirm password"
+                      }
+                    >
+                      {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  }
+                />
+
+                <AuthButton type="submit" loading={submitting}>
+                  Continue
+                </AuthButton>
+              </form>
+
+              <AuthNotification
+                visible={notice.visible}
+                type={notice.type}
+                title={notice.title}
+                message={notice.message}
+              />
+
+              <div className="mt-6 border-t border-slate-100 pt-5 text-center text-sm text-slate-600">
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate("/")}
+                  className="font-extrabold text-pink-600 transition hover:text-pink-700 hover:underline"
+                >
+                  Sign In
+                </button>
+              </div>
+
+              <div className="mt-3 text-center text-xs font-semibold text-slate-500">
+                {currentErrorsCount > 0
+                  ? `${currentErrorsCount} field${
+                      currentErrorsCount > 1 ? "s" : ""
+                    } still need attention.`
+                  : "Your details look good."}
+              </div>
+            </div>
           </div>
+        </section>
 
-          <div className="rounded-[28px] border border-pink-100 bg-white p-6 shadow-xl md:p-8">
-            <h1 className="text-2xl font-extrabold text-slate-900">
-              Create Account
-            </h1>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Join the professional merchant network.
-            </p>
+        {termsOpen ? (
+          <TermsPrivacyModal
+            onClose={() => setTermsOpen(false)}
+            onConfirm={executeEmailSignup}
+            confirmLoading={submitting}
+            confirmDisabled={!termsScrolledBottom}
+            onScrolledBottom={() => setTermsScrolledBottom(true)}
+          />
+        ) : null}
 
-            <div className="mt-5 space-y-3">
-              <div
-                id="google-signup-button"
-                className="flex min-h-[44px] items-center justify-center"
-              />
-              {!googleReady || googleLoading ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-500">
-                  {googleLoading
-                    ? "Signing up with Google..."
-                    : "Loading Google sign-up..."}
-                </div>
-              ) : null}
+        <CompleteProfileModal
+          open={profileModalOpen}
+          onClose={handleProfileModalClose}
+          userId={pendingProfileUser?.id}
+          fullName={pendingProfileUser?.fullName || ""}
+          onCompleted={handleProfileCompleted}
+        />
+      </MainLayout>
+
+      {showSuccess ? (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-[350px] rounded-[20px] bg-white p-8 text-center shadow-2xl">
+            <FaCircleCheck className="mx-auto mb-4 text-5xl text-green-600" />
+            <div className="mb-2 text-xl font-extrabold text-slate-900">
+              Account Created
             </div>
-
-            <div className="my-6 flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-slate-500">
-              <div className="h-px flex-1 bg-slate-200" />
-              <span>Or sign up with email</span>
-              <div className="h-px flex-1 bg-slate-200" />
+            <div className="mb-6 text-sm leading-6 text-slate-500">
+              Your account has been created successfully. Continue to sign in
+              with your email and password.
             </div>
-
-            <form className="space-y-4" onSubmit={handleSubmitStart}>
-              <AuthInput
-                id="signup-fullname"
-                label="Full Name"
-                value={form.fullName}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    fullName: e.target.value,
-                  }))
-                }
-                placeholder="First and Last Name"
-                error={errors.fullName}
-                required
-                icon={<FaUser />}
-                minLength={2}
-              />
-
-              <AuthInput
-                id="signup-phone"
-                label="Phone Number"
-                value={form.phone}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    phone: e.target.value,
-                  }))
-                }
-                placeholder="e.g. 08012345678"
-                error={errors.phone}
-                required
-                icon={<FaPhone />}
-              />
-
-              <AuthInput
-                id="signup-email"
-                label="Work Email"
-                type="email"
-                value={form.email}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    email: e.target.value,
-                  }))
-                }
-                placeholder="name@company.com"
-                error={errors.email}
-                required
-                icon={<FaEnvelope />}
-                autoComplete="email"
-              />
-
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="signup-city"
-                  className="text-sm font-bold text-slate-800"
-                >
-                  Select City <span className="ml-1 text-pink-600">*</span>
-                </label>
-
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                    <FaCity />
-                  </span>
-                  <select
-                    id="signup-city"
-                    value={form.cityId}
-                    onChange={handleCityChange}
-                    disabled={loadingCities}
-                    className="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-pink-500 focus:ring-4 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-                  >
-                    <option value="">
-                      {loadingCities ? "Loading cities..." : "Select your city"}
-                    </option>
-                    {cities.map((city) => (
-                      <option key={city.id} value={city.id}>
-                        {city.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {errors.cityId ? (
-                  <p className="text-xs font-semibold text-red-600">
-                    {errors.cityId}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="signup-area"
-                  className="text-sm font-bold text-slate-800"
-                >
-                  Select Area <span className="ml-1 text-pink-600">*</span>
-                </label>
-
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                    <FaMapPin />
-                  </span>
-                  <select
-                    id="signup-area"
-                    value={form.areaId}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        areaId: e.target.value,
-                      }))
-                    }
-                    disabled={!form.cityId || loadingAreas}
-                    className="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-pink-500 focus:ring-4 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-                  >
-                    <option value="">
-                      {!form.cityId
-                        ? "Select city first"
-                        : loadingAreas
-                        ? "Loading areas..."
-                        : "Select your area"}
-                    </option>
-                    {areas.map((area) => (
-                      <option key={area.id} value={area.id}>
-                        {area.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {errors.areaId ? (
-                  <p className="text-xs font-semibold text-red-600">
-                    {errors.areaId}
-                  </p>
-                ) : null}
-              </div>
-
-              <AuthInput
-                id="signup-password"
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                value={form.password}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    password: e.target.value,
-                  }))
-                }
-                placeholder="At least 6 characters"
-                error={errors.password}
-                required
-                icon={<FaLock />}
-                autoComplete="new-password"
-                minLength={6}
-                rightElement={
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600"
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </button>
-                }
-              />
-
-              <AuthInput
-                id="signup-confirm-password"
-                label="Confirm Password"
-                type={showConfirmPassword ? "text" : "password"}
-                value={form.confirmPassword}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    confirmPassword: e.target.value,
-                  }))
-                }
-                placeholder="Re-enter password"
-                error={errors.confirmPassword}
-                required
-                icon={<FaLock />}
-                autoComplete="new-password"
-                minLength={6}
-                rightElement={
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowConfirmPassword((prev) => !prev)
-                    }
-                    className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600"
-                    aria-label={
-                      showConfirmPassword
-                        ? "Hide confirm password"
-                        : "Show confirm password"
-                    }
-                  >
-                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                  </button>
-                }
-              />
-
-              <AuthButton type="submit" loading={submitting}>
-                Continue
-              </AuthButton>
-            </form>
-
-            <AuthNotification
-              visible={notice.visible}
-              type={notice.type}
-              title={notice.title}
-              message={notice.message}
-            />
-
-            <div className="mt-6 border-t border-slate-100 pt-5 text-center text-sm text-slate-600">
-              Already have an account?{" "}
-              <button
-                type="button"
-                onClick={() => navigate("/")}
-                className="font-extrabold text-pink-600 transition hover:text-pink-700 hover:underline"
-              >
-                Sign In
-              </button>
-            </div>
-
-            <div className="mt-3 text-center text-xs font-semibold text-slate-500">
-              {currentErrorsCount > 0
-                ? `${currentErrorsCount} field${
-                    currentErrorsCount > 1 ? "s" : ""
-                  } still need attention.`
-                : "Your details look good."}
-            </div>
+            <button
+              type="button"
+              onClick={closeSuccess}
+              className="w-full rounded-xl bg-slate-100 px-4 py-3 font-bold text-slate-900 transition hover:bg-slate-200"
+            >
+              Go to Sign In
+            </button>
           </div>
         </div>
-      </section>
-
-      {termsOpen ? (
-        <TermsPrivacyModal
-          onClose={() => setTermsOpen(false)}
-          onConfirm={executeEmailSignup}
-          confirmLoading={submitting}
-          confirmDisabled={!termsScrolledBottom}
-          onScrolledBottom={() => setTermsScrolledBottom(true)}
-        />
       ) : null}
-
-      <CompleteProfileModal
-        open={profileModalOpen}
-        onClose={handleProfileModalClose}
-        userId={pendingProfileUser?.id}
-        fullName={pendingProfileUser?.fullName || ""}
-        onCompleted={handleProfileCompleted}
-      />
-    </MainLayout>
+    </>
   )
 }
 
