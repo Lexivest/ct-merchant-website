@@ -17,6 +17,55 @@ import NotificationsSection from "../components/dashboard/NotificationsSection"
 const MAX_FILE_SIZE = 500000
 const INACTIVITY_LIMIT = 15 * 60 * 1000
 
+function DashboardShimmer({ label = "Loading dashboard..." }) {
+  return (
+    <section className="min-h-screen bg-[#E3E6E6] px-4 py-4">
+      <div className="mx-auto max-w-[1600px] animate-pulse">
+        <div className="mb-4 rounded-md bg-[#131921] px-4 py-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded bg-white/20" />
+            <div className="h-10 flex-1 rounded bg-white/15" />
+            <div className="h-10 w-24 rounded bg-white/15" />
+            <div className="h-10 w-24 rounded bg-white/15" />
+            <div className="h-10 w-10 rounded-full bg-white/20" />
+          </div>
+          <div className="mt-3 h-10 rounded bg-white/10" />
+        </div>
+
+        <div className="mb-4 h-[180px] rounded-lg bg-white" />
+
+        <div className="mb-4 rounded-lg bg-white p-4">
+          <div className="mb-4 h-6 w-56 rounded bg-slate-200" />
+          <div className="flex gap-4 overflow-hidden">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="min-w-[280px] max-w-[340px] flex-1 rounded-lg border border-slate-200 bg-white p-4"
+              >
+                <div className="mb-4 h-5 w-3/4 rounded bg-slate-200" />
+                <div className="grid grid-cols-2 gap-3">
+                  {Array.from({ length: 4 }).map((__, i) => (
+                    <div key={i}>
+                      <div className="aspect-square rounded bg-slate-200" />
+                      <div className="mt-2 h-3 rounded bg-slate-200" />
+                      <div className="mt-2 h-3 w-2/3 rounded bg-slate-200" />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 h-4 w-24 rounded bg-slate-200" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-center text-sm font-semibold text-[#565959]">
+          {label}
+        </p>
+      </div>
+    </section>
+  )
+}
+
 function UserDashboard() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -751,15 +800,9 @@ function UserDashboard() {
 
   if (loading || dashboardLoading || !dashboardData.profile) {
     return (
-      <section className="min-h-screen bg-[#E3E6E6] px-4 py-8">
-        <div className="mx-auto max-w-[1600px]">
-          <div className="bg-white px-4 py-16 text-center">
-            <p className="text-sm font-bold text-[#565959]">
-              Loading marketplace...
-            </p>
-          </div>
-        </div>
-      </section>
+      <DashboardShimmer
+        label={loading ? "Loading session..." : "Loading marketplace..."}
+      />
     )
   }
 
