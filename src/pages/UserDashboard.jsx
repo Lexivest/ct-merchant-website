@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import Cropper from "cropperjs"
 import "cropperjs/dist/cropper.css"
 
-import MainLayout from "../layouts/MainLayout"
 import AuthNotification from "../components/auth/AuthNotification"
 import CompleteProfileModal from "../components/auth/CompleteProfileModal"
 import useAuthSession from "../hooks/useAuthSession"
@@ -136,9 +135,12 @@ function UserDashboard() {
   useEffect(() => {
     function handleDocumentClick(event) {
       const target = event.target
+      if (!(target instanceof Element)) return
+
       if (!target.closest(".desktop-search-wrap")) {
         setSearchSuggestionsDesktop([])
       }
+
       if (!target.closest(".mobile-search-wrap")) {
         setSearchSuggestionsMobile([])
       }
@@ -749,145 +751,139 @@ function UserDashboard() {
 
   if (loading || dashboardLoading || !dashboardData.profile) {
     return (
-      <MainLayout>
-        <section className="min-h-screen bg-[#E3E6E6] px-4 py-8">
-          <div className="mx-auto max-w-[1600px]">
-            <div className="bg-white px-4 py-16 text-center">
-              <p className="text-sm font-bold text-[#565959]">
-                Loading marketplace...
-              </p>
-            </div>
+      <section className="min-h-screen bg-[#E3E6E6] px-4 py-8">
+        <div className="mx-auto max-w-[1600px]">
+          <div className="bg-white px-4 py-16 text-center">
+            <p className="text-sm font-bold text-[#565959]">
+              Loading marketplace...
+            </p>
           </div>
-        </section>
-      </MainLayout>
+        </div>
+      </section>
     )
   }
 
   return (
-    <MainLayout>
-      <div className="bg-[#E3E6E6] text-[#0F1111]">
-        <DashboardHeader
-          activeTab={activeTab}
-          currentProfile={currentProfile}
-          user={user}
-          sortedAreas={sortedAreas}
-          categories={dashboardData.categories}
-          searchArea={searchArea}
-          setSearchArea={setSearchArea}
-          categoryFilter={categoryFilter}
-          setCategoryFilter={setCategoryFilter}
-          tickerText={tickerText}
-          searchInputDesktop={searchInputDesktop}
-          setSearchInputDesktop={setSearchInputDesktop}
-          searchInputMobile={searchInputMobile}
-          setSearchInputMobile={setSearchInputMobile}
-          searchSuggestionsDesktop={searchSuggestionsDesktop}
-          searchSuggestionsMobile={searchSuggestionsMobile}
-          updateSuggestions={updateSuggestions}
-          executeSearch={executeSearch}
-          applySuggestion={applySuggestion}
-          switchScreen={switchScreen}
-          unread={dashboardData.unread}
-          onShopIndex={() => navigate("/shop-index")}
+    <div className="bg-[#E3E6E6] text-[#0F1111]">
+      <DashboardHeader
+        activeTab={activeTab}
+        currentProfile={currentProfile}
+        user={user}
+        sortedAreas={sortedAreas}
+        categories={dashboardData.categories}
+        searchArea={searchArea}
+        setSearchArea={setSearchArea}
+        categoryFilter={categoryFilter}
+        setCategoryFilter={setCategoryFilter}
+        tickerText={tickerText}
+        searchInputDesktop={searchInputDesktop}
+        setSearchInputDesktop={setSearchInputDesktop}
+        searchInputMobile={searchInputMobile}
+        setSearchInputMobile={setSearchInputMobile}
+        searchSuggestionsDesktop={searchSuggestionsDesktop}
+        searchSuggestionsMobile={searchSuggestionsMobile}
+        updateSuggestions={updateSuggestions}
+        executeSearch={executeSearch}
+        applySuggestion={applySuggestion}
+        switchScreen={switchScreen}
+        unread={dashboardData.unread}
+        onShopIndex={() => navigate("/shop-index")}
+      />
+
+      <main className="content-body mx-auto w-full max-w-[1600px] pb-10">
+        <AuthNotification
+          visible={Boolean(error || dashboardError || notice.visible)}
+          type={dashboardError || error ? "error" : notice.type}
+          title={dashboardError || error ? "Dashboard issue" : notice.title}
+          message={
+            dashboardError || error ? dashboardError || error : notice.message
+          }
         />
 
-        <main className="content-body mx-auto w-full max-w-[1600px] pb-10">
-          <AuthNotification
-            visible={Boolean(error || dashboardError || notice.visible)}
-            type={dashboardError || error ? "error" : notice.type}
-            title={dashboardError || error ? "Dashboard issue" : notice.title}
-            message={
-              dashboardError || error
-                ? dashboardError || error
-                : notice.message
-            }
+        {activeTab === "market" && (
+          <MarketSection
+            dashboardData={dashboardData}
+            featuredShops={featuredShops}
+            groupedShopsByArea={groupedShopsByArea}
+            navigateCategory={navigateCategory}
           />
+        )}
 
-          {activeTab === "market" && (
-            <MarketSection
-              dashboardData={dashboardData}
-              featuredShops={featuredShops}
-              groupedShopsByArea={groupedShopsByArea}
-              navigateCategory={navigateCategory}
-            />
-          )}
+        {activeTab === "services" && (
+          <ServicesProfileSection
+            mode="services"
+            user={user}
+            currentProfile={currentProfile}
+            profileEditOpen={profileEditOpen}
+            openProfileEdit={openProfileEdit}
+            cancelProfileEdit={cancelProfileEdit}
+            handleLogout={handleLogout}
+            handleShopClick={handleShopClick}
+            shopCardMeta={shopCardMeta}
+            wishlistCount={dashboardData.wishlistCount}
+            onNavigate={navigate}
+            profileEditForm={profileEditForm}
+            setProfileEditForm={setProfileEditForm}
+            profileEditCities={profileEditCities}
+            profileEditAreas={profileEditAreas}
+            profileEditError={profileEditError}
+            profileSaving={profileSaving}
+            handleProfileCityChange={handleProfileCityChange}
+            saveProfile={saveProfile}
+            fileInputRef={fileInputRef}
+            avatarPreview={avatarPreview}
+            onAvatarSelect={onAvatarSelect}
+            cropModalOpen={cropModalOpen}
+            cropImageRef={cropImageRef}
+            closeAvatarCropModal={closeAvatarCropModal}
+            applyAvatarCrop={applyAvatarCrop}
+          />
+        )}
 
-          {activeTab === "services" && (
-            <ServicesProfileSection
-              mode="services"
-              user={user}
-              currentProfile={currentProfile}
-              profileEditOpen={profileEditOpen}
-              openProfileEdit={openProfileEdit}
-              cancelProfileEdit={cancelProfileEdit}
-              handleLogout={handleLogout}
-              handleShopClick={handleShopClick}
-              shopCardMeta={shopCardMeta}
-              wishlistCount={dashboardData.wishlistCount}
-              onNavigate={navigate}
-              profileEditForm={profileEditForm}
-              setProfileEditForm={setProfileEditForm}
-              profileEditCities={profileEditCities}
-              profileEditAreas={profileEditAreas}
-              profileEditError={profileEditError}
-              profileSaving={profileSaving}
-              handleProfileCityChange={handleProfileCityChange}
-              saveProfile={saveProfile}
-              fileInputRef={fileInputRef}
-              avatarPreview={avatarPreview}
-              onAvatarSelect={onAvatarSelect}
-              cropModalOpen={cropModalOpen}
-              cropImageRef={cropImageRef}
-              closeAvatarCropModal={closeAvatarCropModal}
-              applyAvatarCrop={applyAvatarCrop}
-            />
-          )}
+        {activeTab === "profile" && (
+          <ServicesProfileSection
+            mode="profile"
+            user={user}
+            currentProfile={currentProfile}
+            profileEditOpen={profileEditOpen}
+            openProfileEdit={openProfileEdit}
+            cancelProfileEdit={cancelProfileEdit}
+            handleLogout={handleLogout}
+            handleShopClick={handleShopClick}
+            shopCardMeta={shopCardMeta}
+            wishlistCount={dashboardData.wishlistCount}
+            onNavigate={navigate}
+            profileEditForm={profileEditForm}
+            setProfileEditForm={setProfileEditForm}
+            profileEditCities={profileEditCities}
+            profileEditAreas={profileEditAreas}
+            profileEditError={profileEditError}
+            profileSaving={profileSaving}
+            handleProfileCityChange={handleProfileCityChange}
+            saveProfile={saveProfile}
+            fileInputRef={fileInputRef}
+            avatarPreview={avatarPreview}
+            onAvatarSelect={onAvatarSelect}
+            cropModalOpen={cropModalOpen}
+            cropImageRef={cropImageRef}
+            closeAvatarCropModal={closeAvatarCropModal}
+            applyAvatarCrop={applyAvatarCrop}
+          />
+        )}
 
-          {activeTab === "profile" && (
-            <ServicesProfileSection
-              mode="profile"
-              user={user}
-              currentProfile={currentProfile}
-              profileEditOpen={profileEditOpen}
-              openProfileEdit={openProfileEdit}
-              cancelProfileEdit={cancelProfileEdit}
-              handleLogout={handleLogout}
-              handleShopClick={handleShopClick}
-              shopCardMeta={shopCardMeta}
-              wishlistCount={dashboardData.wishlistCount}
-              onNavigate={navigate}
-              profileEditForm={profileEditForm}
-              setProfileEditForm={setProfileEditForm}
-              profileEditCities={profileEditCities}
-              profileEditAreas={profileEditAreas}
-              profileEditError={profileEditError}
-              profileSaving={profileSaving}
-              handleProfileCityChange={handleProfileCityChange}
-              saveProfile={saveProfile}
-              fileInputRef={fileInputRef}
-              avatarPreview={avatarPreview}
-              onAvatarSelect={onAvatarSelect}
-              cropModalOpen={cropModalOpen}
-              cropImageRef={cropImageRef}
-              closeAvatarCropModal={closeAvatarCropModal}
-              applyAvatarCrop={applyAvatarCrop}
-            />
-          )}
+        {activeTab === "notifications" && (
+          <NotificationsSection notifications={dashboardData.notifications} />
+        )}
+      </main>
 
-          {activeTab === "notifications" && (
-            <NotificationsSection notifications={dashboardData.notifications} />
-          )}
-        </main>
-
-        <CompleteProfileModal
-          open={profileModalOpen}
-          onClose={handleProfileModalClose}
-          userId={user?.id}
-          fullName={profile?.full_name || user?.user_metadata?.full_name || ""}
-          onCompleted={handleProfileCompleted}
-        />
-      </div>
-    </MainLayout>
+      <CompleteProfileModal
+        open={profileModalOpen}
+        onClose={handleProfileModalClose}
+        userId={user?.id}
+        fullName={profile?.full_name || user?.user_metadata?.full_name || ""}
+        onCompleted={handleProfileCompleted}
+      />
+    </div>
   )
 }
 
