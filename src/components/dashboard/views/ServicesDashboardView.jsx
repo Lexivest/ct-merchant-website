@@ -1,5 +1,4 @@
 import { FaArrowLeft } from "react-icons/fa6"
-import { Link } from "react-router-dom"
 
 const services = [
   {
@@ -124,7 +123,7 @@ const services = [
   },
 ]
 
-function ServicesDashboardView({ onBack }) {
+function ServicesDashboardView({ onBack, onOpenSupport }) {
   return (
     <div className="screen active">
       <section className="bg-pink-50 px-4 py-5 md:py-6">
@@ -221,12 +220,13 @@ function ServicesDashboardView({ onBack }) {
                       commerce.
                     </p>
 
-                    <Link
-                      to="/user-dashboard/support"
+                    <button
+                      type="button"
+                      onClick={onOpenSupport}
                       className="mt-6 inline-flex items-center justify-center rounded-xl bg-pink-600 px-6 py-3 text-sm font-extrabold text-white shadow-[0_2px_5px_rgba(219,39,119,0.3)] transition hover:-translate-y-0.5 hover:bg-pink-700"
                     >
                       Contact Support
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </div>

@@ -17,6 +17,9 @@ import AboutDashboardView from "./views/AboutDashboardView"
 import ServicesDashboardView from "./views/ServicesDashboardView"
 import CareersDashboardView from "./views/CareersDashboardView"
 import SupportDashboardView from "./views/SupportDashboardView"
+import AbuseReportDashboardView from "./views/AbuseReportDashboardView"
+import WishlistDashboardView from "./views/WishlistDashboardView"
+import FaqDashboardView from "./views/FaqDashboardView"
 
 function ServiceCard({ icon, title, subtitle, onClick }) {
   return (
@@ -77,7 +80,12 @@ function ServicesProfileSection({
     }
 
     if (serviceView === "services-info") {
-      return <ServicesDashboardView onBack={() => setServiceView("menu")} />
+      return (
+        <ServicesDashboardView
+          onBack={() => setServiceView("menu")}
+          onOpenSupport={() => setServiceView("support")}
+        />
+      )
     }
 
     if (serviceView === "careers") {
@@ -95,18 +103,30 @@ function ServicesProfileSection({
 
     if (serviceView === "faq") {
       return (
-        <SupportDashboardView
-          mode="faq"
+        <FaqDashboardView
           onBack={() => setServiceView("menu")}
+          onOpenSupport={() => setServiceView("support")}
         />
       )
     }
 
     if (serviceView === "report-abuse") {
       return (
-        <SupportDashboardView
-          mode="report-abuse"
+        <AbuseReportDashboardView
           onBack={() => setServiceView("menu")}
+          user={user}
+        />
+      )
+    }
+
+    if (serviceView === "wishlist") {
+      return (
+        <WishlistDashboardView
+          onBack={() => setServiceView("menu")}
+          user={user}
+          onOpenProduct={(productId) =>
+            onNavigate(`/product-detail?id=${productId}`)
+          }
         />
       )
     }
@@ -128,7 +148,7 @@ function ServicesProfileSection({
               icon={<FaHeart style={{ color: "#db2777" }} />}
               title="Wishlist"
               subtitle={`${wishlistCount || 0} items`}
-              onClick={() => onNavigate("/wishlist")}
+              onClick={() => setServiceView("wishlist")}
             />
             <ServiceCard
               icon={<FaHeadset style={{ color: "#007185" }} />}
