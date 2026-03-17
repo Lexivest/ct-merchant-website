@@ -11,6 +11,13 @@ import Terms from "./pages/Terms"
 import CreateAccount from "./pages/CreateAccount"
 import UserDashboard from "./pages/UserDashboard"
 import ShopRegistration from "./pages/ShopRegistration"
+import Area from "./pages/Area"
+import Cat from "./pages/Cat"
+import Search from "./pages/Search"
+import ShopDetail from "./pages/ShopDetail"
+import ProductDetail from "./pages/ProductDetail"
+import ShopIndex from "./pages/ShopIndex"
+import MerchantDiscovery from "./pages/MerchantDiscovery"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import useAuthSession from "./hooks/useAuthSession"
 
@@ -42,6 +49,9 @@ function App() {
       <Route path="/terms" element={<Terms />} />
       <Route path="/create-account" element={<CreateAccount />} />
 
+      <Route path="/reposearch" element={<MerchantDiscovery />} />
+      <Route path="/shop-detail" element={<ShopDetail />} />
+
       <Route
         path="/user-dashboard"
         element={
@@ -56,6 +66,51 @@ function App() {
         element={
           <ProtectedDashboardRoute>
             <ShopRegistration />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/area"
+        element={
+          <ProtectedDashboardRoute>
+            <Area />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/cat"
+        element={
+          <ProtectedDashboardRoute>
+            <Cat />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/search"
+        element={
+          <ProtectedDashboardRoute>
+            <Search />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/product-detail"
+        element={
+          <ProtectedDashboardRoute>
+            <ProductDetail />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/shop-index"
+        element={
+          <ProtectedDashboardRoute>
+            <ShopIndex />
           </ProtectedDashboardRoute>
         }
       />

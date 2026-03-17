@@ -112,8 +112,6 @@ function UserDashboard() {
   const [searchInputMobile, setSearchInputMobile] = useState("")
   const [searchSuggestionsDesktop, setSearchSuggestionsDesktop] = useState([])
   const [searchSuggestionsMobile, setSearchSuggestionsMobile] = useState([])
-  const [searchArea, setSearchArea] = useState("all")
-  const [categoryFilter, setCategoryFilter] = useState("all")
 
   const [profileEditOpen, setProfileEditOpen] = useState(false)
   const [profileEditForm, setProfileEditForm] = useState({
@@ -538,33 +536,19 @@ function UserDashboard() {
     })
   }, [dashboardData.areas, dashboardData.profile?.area_id])
 
-  const filteredShops = useMemo(() => {
-    let shops = [...(dashboardData.shops || [])]
-
-    if (searchArea !== "all") {
-      shops = shops.filter((shop) => String(shop.area_id) === String(searchArea))
-    }
-
-    if (categoryFilter !== "all") {
-      shops = shops.filter((shop) => shop.category === categoryFilter)
-    }
-
-    return shops
-  }, [dashboardData.shops, searchArea, categoryFilter])
-
   const featuredShops = useMemo(
-    () => filteredShops.filter((shop) => shop.is_featured),
-    [filteredShops]
+    () => (dashboardData.shops || []).filter((shop) => shop.is_featured),
+    [dashboardData.shops]
   )
 
   const groupedShopsByArea = useMemo(() => {
     return sortedAreas
       .map((area) => ({
         area,
-        shops: filteredShops.filter((shop) => shop.area_id === area.id),
+        shops: (dashboardData.shops || []).filter((shop) => shop.area_id === area.id),
       }))
       .filter((group) => group.shops.length > 0)
-  }, [sortedAreas, filteredShops])
+  }, [sortedAreas, dashboardData.shops])
 
   const tickerText = useMemo(() => {
     if (!dashboardData.announcements?.length) return ""
@@ -639,6 +623,11 @@ function UserDashboard() {
     }
 
     navigate(`/search?q=${encodeURIComponent(text)}`)
+  }
+
+  function navigateArea(id) {
+    if (id === "all") return
+    navigate(`/area?id=${encodeURIComponent(id)}`)
   }
 
   function navigateCategory(name) {
@@ -869,10 +858,10 @@ function UserDashboard() {
         user={user}
         sortedAreas={sortedAreas}
         categories={dashboardData.categories}
-        searchArea={searchArea}
-        setSearchArea={setSearchArea}
-        categoryFilter={categoryFilter}
-        setCategoryFilter={setCategoryFilter}
+        searchArea="all"
+        setSearchArea={navigateArea}
+        categoryFilter="all"
+        setCategoryFilter={navigateCategory}
         tickerText={tickerText}
         searchInputDesktop={searchInputDesktop}
         setSearchInputDesktop={setSearchInputDesktop}

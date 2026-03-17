@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { supabase } from "../lib/supabase"
 
 const DAILY_LIMIT = 15
@@ -15,6 +15,9 @@ function AiAssistantWidget() {
   const [input, setInput] = useState("")
   const [isSending, setIsSending] = useState(false)
 
+  const messagesEndRef = useRef(null)
+  const scrollContainerRef = useRef(null)
+
   const usage = useMemo(() => {
     const today = new Date().toISOString().split("T")[0]
     const raw = localStorage.getItem("ctm_ai_anon_usage")
@@ -27,6 +30,19 @@ function AiAssistantWidget() {
 
     return parsed
   }, [isOpen, messages.length])
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      })
+    }, 50)
+
+    return () => clearTimeout(timer)
+  }, [messages, isSending, isOpen])
 
   const toggleChat = () => {
     setIsOpen((prev) => !prev)
@@ -171,7 +187,10 @@ function AiAssistantWidget() {
           </button>
         </div>
 
-        <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-3">
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-3"
+        >
           {messages.map((message, index) => (
             <div
               key={index}
@@ -192,6 +211,8 @@ function AiAssistantWidget() {
               Typing...
             </div>
           ) : null}
+
+          <div ref={messagesEndRef} />
         </div>
 
         <div className="border-t border-slate-200 bg-white p-3">

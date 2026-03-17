@@ -68,6 +68,7 @@ function DashboardHeader({
   useEffect(() => {
     function handleClickOutside(event) {
       const target = event.target
+      if (!(target instanceof Node)) return
 
       if (
         desktopAreaRef.current &&
@@ -140,7 +141,7 @@ function DashboardHeader({
           <div className="amz-search-block flex h-[42px] w-full overflow-visible rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
             <div
               ref={desktopAreaRef}
-              className="relative border-r border-r-[#CDD2D3]"
+              className="relative shrink-0 border-r border-r-[#CDD2D3]"
             >
               <button
                 type="button"
@@ -211,6 +212,7 @@ function DashboardHeader({
             />
 
             <button
+              type="button"
               className="amz-search-btn flex w-[52px] items-center justify-center border-none bg-pink-600 text-[1.2rem] text-white transition hover:bg-pink-700"
               onClick={() => executeSearch("desktop")}
             >
@@ -312,7 +314,7 @@ function DashboardHeader({
         <div className="amz-search-block flex h-[42px] w-full overflow-visible rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
           <div
             ref={mobileAreaRef}
-            className="relative border-r border-r-[#CDD2D3]"
+            className="relative shrink-0 border-r border-r-[#CDD2D3]"
           >
             <button
               type="button"
@@ -383,6 +385,7 @@ function DashboardHeader({
           />
 
           <button
+            type="button"
             className="amz-search-btn flex w-[52px] items-center justify-center border-none bg-pink-600 text-[1.2rem] text-white transition hover:bg-pink-700"
             onClick={() => executeSearch("mobile")}
           >
