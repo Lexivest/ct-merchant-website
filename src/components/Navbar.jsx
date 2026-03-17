@@ -37,7 +37,7 @@ function Navbar() {
               alt="CTMerchant Logo"
               className="h-10 w-10 rounded-lg object-cover"
             />
-            <span className="truncate text-sm font-extrabold tracking-wide md:text-base">
+            <span className="truncate text-sm font-extrabold tracking-wide text-slate-900 md:text-base">
               CTMerchant
             </span>
           </Link>
@@ -47,7 +47,7 @@ function Navbar() {
               <Link
                 key={link.to}
                 to={link.to}
-                className="text-sm font-semibold text-slate-700 transition hover:text-pink-600"
+                className="text-sm font-semibold text-slate-700 no-underline transition hover:text-pink-600"
               >
                 {link.label}
               </Link>
@@ -55,7 +55,7 @@ function Navbar() {
 
             <Link
               to="/staff-portal"
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white no-underline shadow-sm transition hover:bg-slate-800"
             >
               Staff Portal
             </Link>
@@ -77,7 +77,11 @@ function Navbar() {
                 strokeWidth="2"
                 className="h-5 w-5"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             ) : (
               <svg
@@ -88,7 +92,11 @@ function Navbar() {
                 strokeWidth="2"
                 className="h-5 w-5"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             )}
           </button>
@@ -109,7 +117,7 @@ function Navbar() {
                     key={link.to}
                     to={link.to}
                     onClick={closeMenu}
-                    className="rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-pink-50 hover:text-pink-600"
+                    className="rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 no-underline transition hover:bg-pink-50 hover:text-pink-600"
                   >
                     {link.label}
                   </Link>
@@ -118,7 +126,7 @@ function Navbar() {
                 <Link
                   to="/staff-portal"
                   onClick={closeMenu}
-                  className="mt-2 px-3 py-3 text-sm font-bold text-pink-600 transition hover:bg-pink-50"
+                  className="mt-2 inline-flex items-center justify-center rounded-xl bg-slate-900 px-3 py-3 text-sm font-bold text-white no-underline transition hover:bg-slate-800"
                 >
                   Staff Portal
                 </Link>
