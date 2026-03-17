@@ -1,7 +1,9 @@
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   FaArrowDownAZ,
   FaBell,
   FaBox,
+  FaChevronDown,
   FaHouse,
   FaLocationDot,
   FaMagnifyingGlass,
@@ -39,9 +41,84 @@ function DashboardHeader({
       currentProfile?.full_name || user?.email || "User"
     )}`
 
+  const [desktopAreaOpen, setDesktopAreaOpen] = useState(false)
+  const [mobileAreaOpen, setMobileAreaOpen] = useState(false)
+  const [categoryOpen, setCategoryOpen] = useState(false)
+
+  const desktopAreaRef = useRef(null)
+  const mobileAreaRef = useRef(null)
+  const categoryRef = useRef(null)
+
+  const selectedAreaLabel = useMemo(() => {
+    if (searchArea === "all") return "All Areas"
+    const found = sortedAreas.find(
+      (area) => String(area.id) === String(searchArea)
+    )
+    return found?.name || "All Areas"
+  }, [searchArea, sortedAreas])
+
+  const selectedCategoryLabel = useMemo(() => {
+    if (categoryFilter === "all") return "All Categories"
+    const found = (categories || []).find(
+      (category) => category.name === categoryFilter
+    )
+    return found?.name || "All Categories"
+  }, [categoryFilter, categories])
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      const target = event.target
+
+      if (
+        desktopAreaRef.current &&
+        !desktopAreaRef.current.contains(target)
+      ) {
+        setDesktopAreaOpen(false)
+      }
+
+      if (
+        mobileAreaRef.current &&
+        !mobileAreaRef.current.contains(target)
+      ) {
+        setMobileAreaOpen(false)
+      }
+
+      if (categoryRef.current && !categoryRef.current.contains(target)) {
+        setCategoryOpen(false)
+      }
+    }
+
+    function handleEscape(event) {
+      if (event.key === "Escape") {
+        setDesktopAreaOpen(false)
+        setMobileAreaOpen(false)
+        setCategoryOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("keydown", handleEscape)
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("keydown", handleEscape)
+    }
+  }, [])
+
   function renderSuggestionIcon(icon) {
     if (icon === "product") return <FaBox />
     return <FaStore />
+  }
+
+  function selectArea(value) {
+    setSearchArea(value)
+    setDesktopAreaOpen(false)
+    setMobileAreaOpen(false)
+  }
+
+  function selectCategory(value) {
+    setCategoryFilter(value)
+    setCategoryOpen(false)
   }
 
   return (
@@ -60,19 +137,65 @@ function DashboardHeader({
         </div>
 
         <div className="desktop-search-wrap mobile-hide relative mx-4 hidden flex-1 min-[1025px]:block">
-          <div className="amz-search-block flex h-[42px] w-full overflow-hidden rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
-            <select
-              className="amz-search-select max-w-[140px] cursor-pointer border-none border-r border-r-[#CDD2D3] bg-[#F3F4F6] px-3 text-[0.85rem] font-semibold text-[#555] outline-none hover:bg-[#DADADA] hover:text-[#0F1111]"
-              value={searchArea}
-              onChange={(e) => setSearchArea(e.target.value)}
+          <div className="amz-search-block flex h-[42px] w-full overflow-visible rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
+            <div
+              ref={desktopAreaRef}
+              className="relative border-r border-r-[#CDD2D3]"
             >
-              <option value="all">All Areas</option>
-              {sortedAreas.map((area) => (
-                <option key={area.id} value={area.id}>
-                  {area.name}
-                </option>
-              ))}
-            </select>
+              <button
+                type="button"
+                className="flex h-full max-w-[140px] items-center gap-2 bg-[#F3F4F6] px-3 text-[0.85rem] font-semibold text-[#555] transition hover:bg-[#DADADA] hover:text-[#0F1111]"
+                onClick={() => {
+                  setDesktopAreaOpen((prev) => !prev)
+                  setMobileAreaOpen(false)
+                  setCategoryOpen(false)
+                }}
+              >
+                <span className="truncate">{selectedAreaLabel}</span>
+                <FaChevronDown
+                  className={`shrink-0 text-[0.7rem] transition ${
+                    desktopAreaOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              <div
+                className={`absolute left-0 top-[calc(100%+8px)] z-[3000] w-[240px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-all duration-200 ${
+                  desktopAreaOpen
+                    ? "pointer-events-auto translate-y-0 opacity-100"
+                    : "pointer-events-none -translate-y-2 opacity-0"
+                }`}
+              >
+                <div className="max-h-[280px] overflow-y-auto py-2">
+                  <button
+                    type="button"
+                    className={`block w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                      searchArea === "all"
+                        ? "bg-pink-50 text-pink-700"
+                        : "text-slate-700"
+                    }`}
+                    onClick={() => selectArea("all")}
+                  >
+                    All Areas
+                  </button>
+
+                  {sortedAreas.map((area) => (
+                    <button
+                      key={area.id}
+                      type="button"
+                      className={`block w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                        String(searchArea) === String(area.id)
+                          ? "bg-pink-50 text-pink-700"
+                          : "text-slate-700"
+                      }`}
+                      onClick={() => selectArea(String(area.id))}
+                    >
+                      {area.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
 
             <input
               className="amz-search-input min-w-0 flex-1 border-none px-4 text-base text-[#0F1111] outline-none"
@@ -126,7 +249,9 @@ function DashboardHeader({
           title="Repository"
         >
           <FaHouse className="text-[1.1rem]" />
-          <span className="mobile-hide hidden min-[1025px]:inline">Repository</span>
+          <span className="mobile-hide hidden min-[1025px]:inline">
+            Repository
+          </span>
         </div>
 
         <div
@@ -137,7 +262,9 @@ function DashboardHeader({
           title="Dashboard"
         >
           <FaTableCellsLarge className="text-[1.1rem]" />
-          <span className="mobile-hide hidden min-[1025px]:inline">Dashboard</span>
+          <span className="mobile-hide hidden min-[1025px]:inline">
+            Dashboard
+          </span>
         </div>
 
         <div
@@ -182,19 +309,65 @@ function DashboardHeader({
       </div>
 
       <div className="mobile-search-wrap relative mx-4 mb-[10px] block w-[calc(100%-32px)] min-[1025px]:hidden">
-        <div className="amz-search-block flex h-[42px] w-full overflow-hidden rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
-          <select
-            className="amz-search-select max-w-[100px] cursor-pointer border-none border-r border-r-[#CDD2D3] bg-[#F3F4F6] px-2 text-[0.85rem] font-semibold text-[#555] outline-none"
-            value={searchArea}
-            onChange={(e) => setSearchArea(e.target.value)}
+        <div className="amz-search-block flex h-[42px] w-full overflow-visible rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
+          <div
+            ref={mobileAreaRef}
+            className="relative border-r border-r-[#CDD2D3]"
           >
-            <option value="all">All Areas</option>
-            {sortedAreas.map((area) => (
-              <option key={area.id} value={area.id}>
-                {area.name}
-              </option>
-            ))}
-          </select>
+            <button
+              type="button"
+              className="flex h-full max-w-[110px] items-center gap-2 bg-[#F3F4F6] px-2 text-[0.85rem] font-semibold text-[#555]"
+              onClick={() => {
+                setMobileAreaOpen((prev) => !prev)
+                setDesktopAreaOpen(false)
+                setCategoryOpen(false)
+              }}
+            >
+              <span className="truncate">{selectedAreaLabel}</span>
+              <FaChevronDown
+                className={`shrink-0 text-[0.7rem] transition ${
+                  mobileAreaOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            <div
+              className={`absolute left-0 top-[calc(100%+8px)] z-[3000] w-[260px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-all duration-200 ${
+                mobileAreaOpen
+                  ? "pointer-events-auto translate-y-0 opacity-100"
+                  : "pointer-events-none -translate-y-2 opacity-0"
+              }`}
+            >
+              <div className="max-h-[280px] overflow-y-auto py-2">
+                <button
+                  type="button"
+                  className={`block w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                    searchArea === "all"
+                      ? "bg-pink-50 text-pink-700"
+                      : "text-slate-700"
+                  }`}
+                  onClick={() => selectArea("all")}
+                >
+                  All Areas
+                </button>
+
+                {sortedAreas.map((area) => (
+                  <button
+                    key={area.id}
+                    type="button"
+                    className={`block w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                      String(searchArea) === String(area.id)
+                        ? "bg-pink-50 text-pink-700"
+                        : "text-slate-700"
+                    }`}
+                    onClick={() => selectArea(String(area.id))}
+                  >
+                    {area.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
 
           <input
             className="amz-search-input min-w-0 flex-1 border-none px-4 text-base text-[#0F1111] outline-none"
@@ -241,18 +414,61 @@ function DashboardHeader({
       </div>
 
       <div className="amz-sub-header flex items-center bg-[#232F3E] px-4 py-2 text-[0.9rem] font-semibold text-white">
-        <select
-          className="amz-category-filter mr-3 max-w-[130px] cursor-pointer rounded border border-white/40 bg-transparent px-2 py-1 text-[0.85rem] font-semibold text-white outline-none hover:border-white"
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-        >
-          <option value="all">All Categories</option>
-          {(categories || []).map((category) => (
-            <option key={category.id || category.name} value={category.name}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+        <div ref={categoryRef} className="relative mr-3">
+          <button
+            type="button"
+            className="flex max-w-[160px] items-center gap-2 rounded border border-white/40 bg-transparent px-2 py-1 text-[0.85rem] font-semibold text-white transition hover:border-white"
+            onClick={() => {
+              setCategoryOpen((prev) => !prev)
+              setDesktopAreaOpen(false)
+              setMobileAreaOpen(false)
+            }}
+          >
+            <span className="truncate">{selectedCategoryLabel}</span>
+            <FaChevronDown
+              className={`shrink-0 text-[0.7rem] transition ${
+                categoryOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          <div
+            className={`absolute left-0 top-[calc(100%+8px)] z-[3000] w-[260px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-all duration-200 ${
+              categoryOpen
+                ? "pointer-events-auto translate-y-0 opacity-100"
+                : "pointer-events-none -translate-y-2 opacity-0"
+            }`}
+          >
+            <div className="max-h-[280px] overflow-y-auto py-2">
+              <button
+                type="button"
+                className={`block w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                  categoryFilter === "all"
+                    ? "bg-pink-50 text-pink-700"
+                    : "text-slate-700"
+                }`}
+                onClick={() => selectCategory("all")}
+              >
+                All Categories
+              </button>
+
+              {(categories || []).map((category) => (
+                <button
+                  key={category.id || category.name}
+                  type="button"
+                  className={`block w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                    categoryFilter === category.name
+                      ? "bg-pink-50 text-pink-700"
+                      : "text-slate-700"
+                  }`}
+                  onClick={() => selectCategory(category.name)}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {tickerText ? (
           <div className="ticker-wrapper relative flex flex-1 items-center gap-3 overflow-hidden">
