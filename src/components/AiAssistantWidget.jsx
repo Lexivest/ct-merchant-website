@@ -1,4 +1,7 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import { supabase } from "../lib/supabase"
+
+const DAILY_LIMIT = 15
 
 function AiAssistantWidget() {
   const [isOpen, setIsOpen] = useState(false)
@@ -10,58 +13,112 @@ function AiAssistantWidget() {
     },
   ])
   const [input, setInput] = useState("")
+  const [isSending, setIsSending] = useState(false)
+
+  const usage = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0]
+    const raw = localStorage.getItem("ctm_ai_anon_usage")
+    let parsed = raw ? JSON.parse(raw) : { date: today, count: 0 }
+
+    if (parsed.date !== today) {
+      parsed = { date: today, count: 0 }
+      localStorage.setItem("ctm_ai_anon_usage", JSON.stringify(parsed))
+    }
+
+    return parsed
+  }, [isOpen, messages.length])
 
   const toggleChat = () => {
     setIsOpen((prev) => !prev)
   }
 
-  const handleSend = () => {
+  const saveUsage = (nextCount) => {
+    const today = new Date().toISOString().split("T")[0]
+    localStorage.setItem(
+      "ctm_ai_anon_usage",
+      JSON.stringify({
+        date: today,
+        count: nextCount,
+      })
+    )
+  }
+
+  const handleSend = async () => {
     const trimmed = input.trim()
-    if (!trimmed) return
+    if (!trimmed || isSending) return
+
+    if (usage.count >= DAILY_LIMIT) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "error",
+          content:
+            "You have reached the free daily limit of 15 messages. This limit prevents system abuse. Please check back tomorrow.",
+        },
+      ])
+      setInput("")
+      return
+    }
 
     const userMessage = {
       role: "user",
       content: trimmed,
     }
 
-    const lower = trimmed.toLowerCase()
-
-    let reply =
-      "Thanks for your message. Our AI connection will be added next. For now, you can explore CTMerchant, search the repository, or create an account."
-
-    if (lower.includes("create account") || lower.includes("sign up")) {
-      reply =
-        "To join CTMerchant, use the Create Account button on the homepage. After registration, merchants can proceed with shop setup and verification."
-    } else if (
-      lower.includes("how it works") ||
-      lower.includes("platform works") ||
-      lower.includes("what is ctmerchant")
-    ) {
-      reply =
-        "CTMerchant is a digital repository of physical shops, products, and services within a city. Merchants are onboarded and verified so buyers can discover trusted local businesses."
-    } else if (
-      lower.includes("merchant") ||
-      lower.includes("shop") ||
-      lower.includes("register")
-    ) {
-      reply =
-        "Merchants create an account, register their shop, complete physical verification, and then receive a unique CTMerchant profile and ID."
-    } else if (
-      lower.includes("search") ||
-      lower.includes("repository") ||
-      lower.includes("id")
-    ) {
-      reply =
-        "You can search the repository using a merchant's unique ID. This helps users quickly find verified businesses."
-    }
-
-    const assistantMessage = {
-      role: "assistant",
-      content: reply,
-    }
-
-    setMessages((prev) => [...prev, userMessage, assistantMessage])
+    const nextMessages = [...messages, userMessage]
+    setMessages(nextMessages)
     setInput("")
+    setIsSending(true)
+
+    try {
+      const history = nextMessages
+        .filter((item) => item.role === "user" || item.role === "assistant")
+        .slice(-6)
+        .map((item) => ({
+          role: item.role,
+          content: item.content,
+        }))
+
+      const { data, error } = await supabase.functions.invoke("ai-assistant", {
+        body: {
+          query: trimmed,
+          history,
+        },
+      })
+
+      if (error) {
+        throw new Error(error.message || "Could not reach AI server.")
+      }
+
+      const reply =
+        data?.reply?.trim() || "No response received from the assistant."
+
+      const isErrorReply =
+        reply.startsWith("Error:") || reply.startsWith("System")
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: isErrorReply ? "error" : "assistant",
+          content: reply,
+        },
+      ])
+
+      if (!isErrorReply) {
+        saveUsage(usage.count + 1)
+      }
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "error",
+          content:
+            error.message || "Connection Error: Could not reach AI server.",
+        },
+      ])
+    } finally {
+      setIsSending(false)
+    }
   }
 
   const handleKeyDown = (event) => {
@@ -96,7 +153,7 @@ function AiAssistantWidget() {
       </div>
 
       <div
-        className={`fixed bottom-36 right-6 z-40 flex h-[360px] w-[min(320px,calc(100vw-3rem))] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 ${
+        className={`fixed bottom-36 right-6 z-40 flex h-[360px] w-[calc(100%-3rem)] max-w-[320px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 ${
           isOpen
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none translate-y-5 opacity-0"
@@ -121,15 +178,27 @@ function AiAssistantWidget() {
               className={`max-w-[85%] rounded-2xl px-3 py-2.5 text-sm leading-5 ${
                 message.role === "assistant"
                   ? "rounded-bl-sm border border-slate-200 bg-white text-slate-800"
+                  : message.role === "error"
+                  ? "mx-auto border border-red-200 bg-red-50 text-center text-red-700"
                   : "ml-auto rounded-br-sm bg-emerald-600 text-white"
               }`}
             >
               {message.content}
             </div>
           ))}
+
+          {isSending ? (
+            <div className="max-w-[85%] rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-3 py-2.5 text-sm leading-5 text-slate-500">
+              Typing...
+            </div>
+          ) : null}
         </div>
 
         <div className="border-t border-slate-200 bg-white p-3">
+          <div className="mb-2 text-[11px] font-semibold text-slate-400">
+            {Math.max(0, DAILY_LIMIT - usage.count)} free messages left today
+          </div>
+
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -143,7 +212,8 @@ function AiAssistantWidget() {
             <button
               type="button"
               onClick={handleSend}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white transition hover:bg-emerald-700"
+              disabled={isSending}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               ➤
             </button>

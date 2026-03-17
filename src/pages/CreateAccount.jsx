@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom"
 import {
   FaArrowLeft,
   FaCity,
-  FaCircleCheck,
   FaEnvelope,
   FaEye,
   FaEyeSlash,
@@ -14,6 +13,7 @@ import {
   FaUser,
   FaUserCheck,
 } from "react-icons/fa"
+import { FaCircleCheck } from "react-icons/fa6"
 import AuthButton from "../components/auth/AuthButton"
 import AuthInput from "../components/auth/AuthInput"
 import AuthNotification from "../components/auth/AuthNotification"
