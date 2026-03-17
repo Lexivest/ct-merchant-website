@@ -28,7 +28,7 @@ function Navbar() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
           <Link
             to="/"
-            className="flex items-center gap-3"
+            className="flex min-w-0 items-center gap-3"
             title="Home Screen"
             onClick={closeMenu}
           >
@@ -37,7 +37,7 @@ function Navbar() {
               alt="CTMerchant Logo"
               className="h-10 w-10 rounded-lg object-cover"
             />
-            <span className="text-sm font-extrabold tracking-wide md:text-base">
+            <span className="truncate text-sm font-extrabold tracking-wide md:text-base">
               CTMerchant
             </span>
           </Link>

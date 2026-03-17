@@ -96,7 +96,7 @@ function AiAssistantWidget() {
       </div>
 
       <div
-        className={`fixed bottom-36 right-6 z-40 flex h-[360px] w-[calc(100%-3rem)] max-w-[320px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 ${
+        className={`fixed bottom-36 right-6 z-40 flex h-[360px] w-[min(320px,calc(100vw-3rem))] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 ${
           isOpen
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none translate-y-5 opacity-0"

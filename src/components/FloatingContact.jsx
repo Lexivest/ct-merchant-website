@@ -63,7 +63,7 @@ function FloatingContact() {
       </button>
 
       <div
-        className={`fixed bottom-34 left-6 z-40 w-[calc(100%-3rem)] max-w-[290px] overflow-hidden rounded-2xl border border-pink-100 bg-white shadow-2xl transition-all duration-300 ${
+        className={`fixed bottom-[8.5rem] left-6 z-40 w-[calc(100vw-3rem)] max-w-[290px] overflow-hidden rounded-2xl border border-pink-100 bg-white shadow-2xl transition-all duration-300 ${
           isOpen
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none translate-y-5 opacity-0"

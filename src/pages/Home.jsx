@@ -149,7 +149,7 @@ function Home() {
           size: "large",
           shape: "rectangular",
           logo_alignment: "left",
-          width: 340,
+          width: "100%",
         })
       }
 
@@ -640,7 +640,7 @@ function Home() {
                   <div className="space-y-3">
                     <div
                       id="google-signin-home"
-                      className="flex min-h-[44px] items-center justify-center"
+                      className="flex min-h-[44px] w-full overflow-hidden items-center justify-center"
                     />
                     {!googleReady || googleLoading ? (
                       <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-500">
