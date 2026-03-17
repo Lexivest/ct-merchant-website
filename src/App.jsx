@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom"
+import { Routes, Route, Outlet } from "react-router-dom"
 import Home from "./pages/Home"
 import About from "./pages/About"
 import Services from "./pages/Services"
@@ -18,16 +18,14 @@ import DashboardSupport from "./pages/dashboard/DashboardSupport"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import useAuthSession from "./hooks/useAuthSession"
 
-function ProtectedDashboardRoute({ children }) {
+function ProtectedDashboardLayout() {
   const { loading, user, suspended } = useAuthSession()
 
-  if (loading) {
-    return children
-  }
+  if (loading) return <Outlet />
 
   return (
     <ProtectedRoute isAllowed={Boolean(user) && !suspended} redirectTo="/">
-      {children}
+      <Outlet />
     </ProtectedRoute>
   )
 }
@@ -46,77 +44,19 @@ function App() {
       <Route path="/terms" element={<Terms />} />
       <Route path="/create-account" element={<CreateAccount />} />
 
-      <Route
-        path="/user-dashboard"
-        element={
-          <ProtectedDashboardRoute>
-            <UserDashboard />
-          </ProtectedDashboardRoute>
-        }
-      />
-
-      <Route
-        path="/user-dashboard/about"
-        element={
-          <ProtectedDashboardRoute>
-            <DashboardAbout />
-          </ProtectedDashboardRoute>
-        }
-      />
-
-      <Route
-        path="/user-dashboard/services"
-        element={
-          <ProtectedDashboardRoute>
-            <DashboardServices />
-          </ProtectedDashboardRoute>
-        }
-      />
-
-      <Route
-        path="/user-dashboard/careers"
-        element={
-          <ProtectedDashboardRoute>
-            <DashboardCareers />
-          </ProtectedDashboardRoute>
-        }
-      />
-
-      <Route
-        path="/user-dashboard/support"
-        element={
-          <ProtectedDashboardRoute>
-            <DashboardSupport />
-          </ProtectedDashboardRoute>
-        }
-      />
-
-      <Route
-        path="/user-dashboard/faq"
-        element={
-          <ProtectedDashboardRoute>
-            <DashboardSupport />
-          </ProtectedDashboardRoute>
-        }
-      />
-
-      <Route
-        path="/user-dashboard/report-abuse"
-        element={
-          <ProtectedDashboardRoute>
-            <DashboardSupport />
-          </ProtectedDashboardRoute>
-        }
-      />
-
-      <Route
-        path="/shop-registration"
-        element={
-          <ProtectedDashboardRoute>
-            <ShopRegistration />
-          </ProtectedDashboardRoute>
-        }
-      />
+      <Route element={<ProtectedDashboardLayout />}>
+        <Route path="/user-dashboard" element={<UserDashboard />} />
+        <Route path="/user-dashboard/about" element={<DashboardAbout />} />
+        <Route path="/user-dashboard/services" element={<DashboardServices />} />
+        <Route path="/user-dashboard/careers" element={<DashboardCareers />} />
+        <Route path="/user-dashboard/support" element={<DashboardSupport />} />
+        <Route path="/user-dashboard/faq" element={<DashboardSupport />} />
+        <Route
+          path="/user-dashboard/report-abuse"
+          element={<DashboardSupport />}
+        />
+        <Route path="/shop-registration" element={<ShopRegistration />} />
+      </Route>
     </Routes>
   )
 }

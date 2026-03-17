@@ -13,6 +13,10 @@ import {
   FaStore,
   FaTriangleExclamation,
 } from "react-icons/fa6"
+import AboutDashboardView from "./views/AboutDashboardView"
+import ServicesDashboardView from "./views/ServicesDashboardView"
+import CareersDashboardView from "./views/CareersDashboardView"
+import SupportDashboardView from "./views/SupportDashboardView"
 
 function ServiceCard({ icon, title, subtitle, onClick }) {
   return (
@@ -39,6 +43,8 @@ function renderShopMetaIcon(status) {
 
 function ServicesProfileSection({
   mode,
+  serviceView,
+  setServiceView,
   user,
   currentProfile,
   profileEditOpen,
@@ -66,6 +72,45 @@ function ServicesProfileSection({
   applyAvatarCrop,
 }) {
   if (mode === "services") {
+    if (serviceView === "about") {
+      return <AboutDashboardView onBack={() => setServiceView("menu")} />
+    }
+
+    if (serviceView === "services-info") {
+      return <ServicesDashboardView onBack={() => setServiceView("menu")} />
+    }
+
+    if (serviceView === "careers") {
+      return <CareersDashboardView onBack={() => setServiceView("menu")} />
+    }
+
+    if (serviceView === "support") {
+      return (
+        <SupportDashboardView
+          mode="support"
+          onBack={() => setServiceView("menu")}
+        />
+      )
+    }
+
+    if (serviceView === "faq") {
+      return (
+        <SupportDashboardView
+          mode="faq"
+          onBack={() => setServiceView("menu")}
+        />
+      )
+    }
+
+    if (serviceView === "report-abuse") {
+      return (
+        <SupportDashboardView
+          mode="report-abuse"
+          onBack={() => setServiceView("menu")}
+        />
+      )
+    }
+
     return (
       <div className="screen active">
         <div className="tool-block-wrap bg-white px-4 py-6">
@@ -88,32 +133,32 @@ function ServicesProfileSection({
             <ServiceCard
               icon={<FaHeadset style={{ color: "#007185" }} />}
               title="Support"
-              onClick={() => onNavigate("/user-dashboard/support")}
+              onClick={() => setServiceView("support")}
             />
             <ServiceCard
               icon={<FaCircleQuestion style={{ color: "#007185" }} />}
               title="FAQ"
-              onClick={() => onNavigate("/user-dashboard/faq")}
+              onClick={() => setServiceView("faq")}
             />
             <ServiceCard
               icon={<FaTriangleExclamation style={{ color: "#C40000" }} />}
               title="Report Abuse"
-              onClick={() => onNavigate("/user-dashboard/report-abuse")}
+              onClick={() => setServiceView("report-abuse")}
             />
             <ServiceCard
               icon={<FaBriefcase style={{ color: "#007185" }} />}
               title="Careers"
-              onClick={() => onNavigate("/user-dashboard/careers")}
+              onClick={() => setServiceView("careers")}
             />
             <ServiceCard
               icon={<FaBuilding style={{ color: "#007185" }} />}
               title="About Us"
-              onClick={() => onNavigate("/user-dashboard/about")}
+              onClick={() => setServiceView("about")}
             />
             <ServiceCard
               icon={<FaLayerGroup style={{ color: "#007185" }} />}
               title="Our Services"
-              onClick={() => onNavigate("/user-dashboard/services")}
+              onClick={() => setServiceView("services-info")}
             />
           </div>
         </div>

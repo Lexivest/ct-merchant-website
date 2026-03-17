@@ -1,15 +1,18 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import DashboardHeader from "../../components/dashboard/DashboardHeader"
-import { supabase } from "../../lib/supabase"
+import { Link } from "react-router-dom"
+import { FaArrowLeft } from "react-icons/fa6"
+import { supabase } from "../../../lib/supabase"
 
-function DashboardSupport() {
-  const navigate = useNavigate()
-
+function SupportDashboardView({ onBack, mode = "support" }) {
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
-    subject: "General Inquiry",
+    subject:
+      mode === "faq"
+        ? "General Inquiry"
+        : mode === "report-abuse"
+        ? "Report an Issue"
+        : "Merchant Support",
     message: "",
   })
 
@@ -19,6 +22,32 @@ function DashboardSupport() {
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const pageMeta = {
+    support: {
+      eyebrow: "Support",
+      title: "Contact Us",
+      introTitle: "Get In Touch",
+      introText:
+        "Our team is ready to assist you. Reach out through the contact form below or use our direct contact channels for merchant support and general inquiries.",
+    },
+    faq: {
+      eyebrow: "Help Center",
+      title: "FAQ & Support",
+      introTitle: "Frequently Asked Questions",
+      introText:
+        "Need help with your account, shop listing, dashboard access, or support request? Send us a message and our team will guide you.",
+    },
+    "report-abuse": {
+      eyebrow: "Safety",
+      title: "Report Abuse",
+      introTitle: "Report a Concern",
+      introText:
+        "Use this channel to report suspicious listings, abusive conduct, impersonation, false business claims, or any marketplace safety concern.",
+    },
+  }
+
+  const currentMeta = pageMeta[mode] || pageMeta.support
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -65,7 +94,12 @@ function DashboardSupport() {
       setFormData({
         full_name: "",
         email: "",
-        subject: "General Inquiry",
+        subject:
+          mode === "faq"
+            ? "General Inquiry"
+            : mode === "report-abuse"
+            ? "Report an Issue"
+            : "Merchant Support",
         message: "",
       })
     } catch (error) {
@@ -79,39 +113,8 @@ function DashboardSupport() {
   }
 
   return (
-    <div className="min-h-screen bg-[#E3E6E6] text-[#0F1111]">
-      <DashboardHeader
-        activeTab="services"
-        currentProfile={null}
-        user={null}
-        sortedAreas={[]}
-        categories={[]}
-        searchArea="all"
-        setSearchArea={() => {}}
-        categoryFilter="all"
-        setCategoryFilter={() => {}}
-        tickerText=""
-        searchInputDesktop=""
-        setSearchInputDesktop={() => {}}
-        searchInputMobile=""
-        setSearchInputMobile={() => {}}
-        searchSuggestionsDesktop={[]}
-        searchSuggestionsMobile={[]}
-        updateSuggestions={() => {}}
-        executeSearch={() => {}}
-        applySuggestion={() => {}}
-        switchScreen={(tab) => {
-          if (tab === "services") navigate("/user-dashboard?tab=services")
-          else if (tab === "market") navigate("/user-dashboard?tab=market")
-          else if (tab === "notifications")
-            navigate("/user-dashboard?tab=notifications")
-          else if (tab === "profile") navigate("/user-dashboard?tab=profile")
-        }}
-        unread={0}
-        onShopIndex={() => navigate("/shop-index")}
-      />
-
-      <section className="px-4 py-5 md:py-6">
+    <div className="screen active">
+      <section className="bg-pink-50 px-4 py-5 md:py-6">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">
             <div className="rounded-[24px] border border-pink-100 bg-white">
@@ -119,32 +122,19 @@ function DashboardSupport() {
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
-                    onClick={() => navigate("/user-dashboard?tab=services")}
+                    onClick={onBack}
                     className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:bg-pink-600"
                     aria-label="Go back"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="h-5 w-5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 18l-6-6 6-6"
-                      />
-                    </svg>
+                    <FaArrowLeft />
                   </button>
 
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.25em] text-pink-300">
-                      Support
+                      {currentMeta.eyebrow}
                     </p>
                     <h1 className="text-xl font-extrabold md:text-2xl">
-                      Contact Us
+                      {currentMeta.title}
                     </h1>
                   </div>
                 </div>
@@ -172,12 +162,10 @@ function DashboardSupport() {
 
                     <div>
                       <h2 className="text-base font-extrabold text-slate-900 md:text-lg">
-                        Get In Touch
+                        {currentMeta.introTitle}
                       </h2>
                       <p className="mt-2 text-sm leading-7 text-slate-600 md:text-[15px]">
-                        Our team is ready to assist you. Reach out through the
-                        contact form below or use our direct contact channels
-                        for merchant support and general inquiries.
+                        {currentMeta.introText}
                       </p>
                     </div>
                   </div>
@@ -474,4 +462,4 @@ function DashboardSupport() {
   )
 }
 
-export default DashboardSupport
+export default SupportDashboardView

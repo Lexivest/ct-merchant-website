@@ -17,6 +17,25 @@ import NotificationsSection from "../components/dashboard/NotificationsSection"
 const MAX_FILE_SIZE = 500000
 const INACTIVITY_LIMIT = 15 * 60 * 1000
 
+const EMPTY_DASHBOARD_DATA = {
+  profile: null,
+  promos: [],
+  announcements: [],
+  categories: [],
+  areas: [],
+  shops: [],
+  products: [],
+  notifications: [],
+  myShop: null,
+  wishlistCount: 0,
+  unread: 0,
+}
+
+let dashboardCache = {
+  userId: "",
+  data: null,
+}
+
 function DashboardShimmer({ label = "Loading dashboard..." }) {
   return (
     <section className="min-h-screen bg-[#E3E6E6] px-4 py-4">
@@ -73,7 +92,8 @@ function UserDashboard() {
     useAuthSession()
 
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "market")
-  const [dashboardLoading, setDashboardLoading] = useState(true)
+  const [serviceView, setServiceView] = useState("menu")
+  const [dashboardLoading, setDashboardLoading] = useState(!dashboardCache.data)
   const [dashboardError, setDashboardError] = useState("")
   const [notice, setNotice] = useState({
     visible: false,
@@ -84,19 +104,9 @@ function UserDashboard() {
 
   const [profileModalOpen, setProfileModalOpen] = useState(false)
 
-  const [dashboardData, setDashboardData] = useState({
-    profile: null,
-    promos: [],
-    announcements: [],
-    categories: [],
-    areas: [],
-    shops: [],
-    products: [],
-    notifications: [],
-    myShop: null,
-    wishlistCount: 0,
-    unread: 0,
-  })
+  const [dashboardData, setDashboardData] = useState(
+    dashboardCache.data || EMPTY_DASHBOARD_DATA
+  )
 
   const [searchInputDesktop, setSearchInputDesktop] = useState("")
   const [searchInputMobile, setSearchInputMobile] = useState("")
@@ -128,7 +138,12 @@ function UserDashboard() {
 
   useEffect(() => {
     const tab = searchParams.get("tab")
-    if (tab) setActiveTab(tab)
+    if (tab) {
+      setActiveTab(tab)
+      if (tab === "services") {
+        setServiceView("menu")
+      }
+    }
   }, [searchParams])
 
   useEffect(() => {
@@ -171,7 +186,16 @@ function UserDashboard() {
       document.addEventListener(name, resetInactivityTimer, { passive: true })
     })
 
-    loadDashboard()
+    const hasWarmCache =
+      dashboardCache.userId === user.id && Boolean(dashboardCache.data?.profile)
+
+    if (hasWarmCache) {
+      setDashboardData(dashboardCache.data)
+      setDashboardLoading(false)
+      loadDashboard({ silent: true })
+    } else {
+      loadDashboard({ silent: false })
+    }
 
     return () => {
       events.forEach((name) => {
@@ -222,22 +246,42 @@ function UserDashboard() {
     }
   }, [cropModalOpen])
 
+  function setAndCacheDashboardData(nextData) {
+    setDashboardData(nextData)
+    if (user?.id) {
+      dashboardCache = {
+        userId: user.id,
+        data: nextData,
+      }
+    }
+  }
+
+  function clearDashboardCache() {
+    dashboardCache = {
+      userId: "",
+      data: null,
+    }
+  }
+
   function resetInactivityTimer() {
     clearTimeout(inactivityTimerRef.current)
     inactivityTimerRef.current = setTimeout(async () => {
       Object.keys(localStorage).forEach((key) => {
         if (key.startsWith("ctm_")) localStorage.removeItem(key)
       })
+      clearDashboardCache()
       await signOutUser()
       navigate("/", { replace: true })
     }, INACTIVITY_LIMIT)
   }
 
-  async function loadDashboard() {
+  async function loadDashboard({ silent = false } = {}) {
     if (!user) return
 
     try {
-      setDashboardLoading(true)
+      if (!silent) {
+        setDashboardLoading(true)
+      }
       setDashboardError("")
 
       const profileRes = await supabase
@@ -249,12 +293,14 @@ function UserDashboard() {
       if (profileRes.error) throw profileRes.error
 
       if (!profileRes.data || !profileRes.data.city_id) {
+        clearDashboardCache()
         await signOutUser()
         navigate("/", { replace: true })
         return
       }
 
       if (profileRes.data.is_suspended === true) {
+        clearDashboardCache()
         await signOutUser()
         navigate("/", { replace: true })
         return
@@ -330,7 +376,7 @@ function UserDashboard() {
         products = productsRes.data || []
       }
 
-      setDashboardData({
+      const nextData = {
         profile: profileRes.data,
         promos: promosRes.data || [],
         announcements: announcementsRes.data || [],
@@ -343,7 +389,9 @@ function UserDashboard() {
         wishlistCount: wishlistRes.count || 0,
         unread: (notificationsRes.data || []).filter((item) => !item.is_read)
           .length,
-      })
+      }
+
+      setAndCacheDashboardData(nextData)
     } catch (err) {
       setDashboardError(
         err.message || "Could not load dashboard data. Please refresh."
@@ -369,7 +417,7 @@ function UserDashboard() {
         title: "Profile completed",
         message: "Your dashboard is now ready.",
       })
-      await loadDashboard()
+      await loadDashboard({ silent: true })
     } catch (err) {
       setNotice({
         visible: true,
@@ -382,6 +430,7 @@ function UserDashboard() {
 
   async function handleProfileModalClose() {
     setProfileModalOpen(false)
+    clearDashboardCache()
     await signOutUser()
     navigate("/", { replace: true })
   }
@@ -390,6 +439,7 @@ function UserDashboard() {
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith("ctm_")) localStorage.removeItem(key)
     })
+    clearDashboardCache()
     await signOutUser()
     navigate("/", { replace: true })
   }
@@ -397,14 +447,16 @@ function UserDashboard() {
   async function markNotificationsRead() {
     if (!user || dashboardData.unread === 0) return
 
-    setDashboardData((prev) => ({
-      ...prev,
+    const nextData = {
+      ...dashboardData,
       unread: 0,
-      notifications: prev.notifications.map((item) => ({
+      notifications: dashboardData.notifications.map((item) => ({
         ...item,
         is_read: true,
       })),
-    }))
+    }
+
+    setAndCacheDashboardData(nextData)
 
     await supabase
       .from("notifications")
@@ -415,6 +467,9 @@ function UserDashboard() {
 
   function switchScreen(tab) {
     setActiveTab(tab)
+    if (tab === "services") {
+      setServiceView("menu")
+    }
     if (tab === "notifications") {
       markNotificationsRead()
     }
@@ -783,7 +838,7 @@ function UserDashboard() {
 
       if (res.error) throw res.error
 
-      await loadDashboard()
+      await loadDashboard({ silent: true })
       setProfileEditOpen(false)
       setNotice({
         visible: true,
@@ -798,7 +853,7 @@ function UserDashboard() {
     }
   }
 
-  if (loading || dashboardLoading || !dashboardData.profile) {
+  if ((!dashboardData.profile && loading) || (!dashboardData.profile && dashboardLoading)) {
     return (
       <DashboardShimmer
         label={loading ? "Loading session..." : "Loading marketplace..."}
@@ -855,6 +910,8 @@ function UserDashboard() {
         {activeTab === "services" && (
           <ServicesProfileSection
             mode="services"
+            serviceView={serviceView}
+            setServiceView={setServiceView}
             user={user}
             currentProfile={currentProfile}
             profileEditOpen={profileEditOpen}
@@ -886,6 +943,8 @@ function UserDashboard() {
         {activeTab === "profile" && (
           <ServicesProfileSection
             mode="profile"
+            serviceView={serviceView}
+            setServiceView={setServiceView}
             user={user}
             currentProfile={currentProfile}
             profileEditOpen={profileEditOpen}

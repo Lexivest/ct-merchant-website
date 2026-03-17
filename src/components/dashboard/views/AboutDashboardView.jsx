@@ -1,43 +1,10 @@
-import { Link, useNavigate } from "react-router-dom"
-import DashboardHeader from "../../components/dashboard/DashboardHeader"
+import { FaArrowLeft } from "react-icons/fa6"
+import { Link } from "react-router-dom"
 
-function DashboardAbout() {
-  const navigate = useNavigate()
-
+function AboutDashboardView({ onBack }) {
   return (
-    <div className="min-h-screen bg-[#E3E6E6] text-[#0F1111]">
-      <DashboardHeader
-        activeTab="services"
-        currentProfile={null}
-        user={null}
-        sortedAreas={[]}
-        categories={[]}
-        searchArea="all"
-        setSearchArea={() => {}}
-        categoryFilter="all"
-        setCategoryFilter={() => {}}
-        tickerText=""
-        searchInputDesktop=""
-        setSearchInputDesktop={() => {}}
-        searchInputMobile=""
-        setSearchInputMobile={() => {}}
-        searchSuggestionsDesktop={[]}
-        searchSuggestionsMobile={[]}
-        updateSuggestions={() => {}}
-        executeSearch={() => {}}
-        applySuggestion={() => {}}
-        switchScreen={(tab) => {
-          if (tab === "services") navigate("/user-dashboard?tab=services")
-          else if (tab === "market") navigate("/user-dashboard?tab=market")
-          else if (tab === "notifications")
-            navigate("/user-dashboard?tab=notifications")
-          else if (tab === "profile") navigate("/user-dashboard?tab=profile")
-        }}
-        unread={0}
-        onShopIndex={() => navigate("/shop-index")}
-      />
-
-      <section className="px-4 py-5 md:py-6">
+    <div className="screen active">
+      <section className="bg-pink-50 px-4 py-5 md:py-6">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">
             <div className="rounded-[24px] border border-pink-100 bg-white">
@@ -45,24 +12,11 @@ function DashboardAbout() {
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
-                    onClick={() => navigate("/user-dashboard?tab=services")}
+                    onClick={onBack}
                     className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:bg-pink-600"
                     aria-label="Go back"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="h-5 w-5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 18l-6-6 6-6"
-                      />
-                    </svg>
+                    <FaArrowLeft />
                   </button>
 
                   <div>
@@ -292,19 +246,8 @@ function DashboardAbout() {
                         title="Board of Directors"
                         role="Governing Body"
                         icon={
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            className="h-5 w-5"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zm11 14v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"
-                            />
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zm11 14v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
                           </svg>
                         }
                       />
@@ -316,19 +259,8 @@ function DashboardAbout() {
                         title="Chief Executive Officer"
                         role="Director General"
                         icon={
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            className="h-5 w-5"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0"
-                            />
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 9a7 7 0 0114 0" />
                           </svg>
                         }
                       />
@@ -340,19 +272,8 @@ function DashboardAbout() {
                         title="Chief Operating Officer"
                         role="Operations Management"
                         icon={
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            className="h-5 w-5"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M14 9V5a2 2 0 00-2-2H5a2 2 0 00-2 2v7a2 2 0 002 2h4m5-5h5m0 0l-2-2m2 2l-2 2m-5 2v4a2 2 0 002 2h5a2 2 0 002-2v-5a2 2 0 00-2-2h-4"
-                            />
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M14 9V5a2 2 0 00-2-2H5a2 2 0 00-2 2v7a2 2 0 002 2h4m5-5h5m0 0l-2-2m2 2l-2 2m-5 2v4a2 2 0 002 2h5a2 2 0 002-2v-5a2 2 0 00-2-2h-4" />
                           </svg>
                         }
                       />
@@ -372,19 +293,8 @@ function DashboardAbout() {
                             role="Head of Technology"
                             subRole="Developers & Support"
                             icon={
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                className="h-5 w-5"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M4 7h16M7 4v16m10-9h3m-3 4h3M4 17h5"
-                                />
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M7 4v16m10-9h3m-3 4h3M4 17h5" />
                               </svg>
                             }
                           />
@@ -394,19 +304,8 @@ function DashboardAbout() {
                             title="Finance & Accounts"
                             role="Head of Department"
                             icon={
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                className="h-5 w-5"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7H14.5a3.5 3.5 0 010 7H6"
-                                />
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7H14.5a3.5 3.5 0 010 7H6" />
                               </svg>
                             }
                           />
@@ -417,19 +316,8 @@ function DashboardAbout() {
                             role="City Administrators"
                             subRole="Zonal Reps"
                             icon={
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                className="h-5 w-5"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M3 21h18M5 21V8l7-4 7 4v13M9 12h.01M15 12h.01M9 16h.01M15 16h.01"
-                                />
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V8l7-4 7 4v13M9 12h.01M15 12h.01M9 16h.01M15 16h.01" />
                               </svg>
                             }
                           />
@@ -440,19 +328,8 @@ function DashboardAbout() {
                             role="Head of Marketing"
                             subRole="Field Marketers"
                             icon={
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                className="h-5 w-5"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M3 11l18-5v12l-18-5v-2zm0 0v6"
-                                />
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 11l18-5v12l-18-5v-2zm0 0v6" />
                               </svg>
                             }
                           />
@@ -463,20 +340,9 @@ function DashboardAbout() {
                     <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-4">
                       <div className="flex items-start gap-3">
                         <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            className="h-5 w-5"
-                          >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
                             <circle cx="12" cy="12" r="10" />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 8h.01M11 12h1v4h1"
-                            />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8h.01M11 12h1v4h1" />
                           </svg>
                         </div>
 
@@ -530,7 +396,9 @@ function OrgCard({ tier, title, role, icon, subRole }) {
 
   return (
     <div className="relative mx-auto w-full max-w-[280px]">
-      {tier === "dept" ? <div className="mx-auto h-6 w-px bg-slate-300 md:hidden" /> : null}
+      {tier === "dept" ? (
+        <div className="mx-auto h-6 w-px bg-slate-300 md:hidden" />
+      ) : null}
 
       <div
         className={`rounded-2xl border border-slate-200 border-t-4 ${currentTier.border} bg-white p-5 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
@@ -559,4 +427,4 @@ function OrgCard({ tier, title, role, icon, subRole }) {
   )
 }
 
-export default DashboardAbout
+export default AboutDashboardView

@@ -1,6 +1,5 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import DashboardHeader from "../../components/dashboard/DashboardHeader"
+import { FaArrowLeft } from "react-icons/fa6"
 
 const jobs = [
   {
@@ -85,8 +84,7 @@ const jobs = [
   },
 ]
 
-function DashboardCareers() {
-  const navigate = useNavigate()
+function CareersDashboardView({ onBack }) {
   const [selectedJob, setSelectedJob] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -102,39 +100,8 @@ function DashboardCareers() {
   }
 
   return (
-    <div className="min-h-screen bg-[#E3E6E6] text-[#0F1111]">
-      <DashboardHeader
-        activeTab="services"
-        currentProfile={null}
-        user={null}
-        sortedAreas={[]}
-        categories={[]}
-        searchArea="all"
-        setSearchArea={() => {}}
-        categoryFilter="all"
-        setCategoryFilter={() => {}}
-        tickerText=""
-        searchInputDesktop=""
-        setSearchInputDesktop={() => {}}
-        searchInputMobile=""
-        setSearchInputMobile={() => {}}
-        searchSuggestionsDesktop={[]}
-        searchSuggestionsMobile={[]}
-        updateSuggestions={() => {}}
-        executeSearch={() => {}}
-        applySuggestion={() => {}}
-        switchScreen={(tab) => {
-          if (tab === "services") navigate("/user-dashboard?tab=services")
-          else if (tab === "market") navigate("/user-dashboard?tab=market")
-          else if (tab === "notifications")
-            navigate("/user-dashboard?tab=notifications")
-          else if (tab === "profile") navigate("/user-dashboard?tab=profile")
-        }}
-        unread={0}
-        onShopIndex={() => navigate("/shop-index")}
-      />
-
-      <section className="px-4 py-5 md:py-6">
+    <div className="screen active">
+      <section className="bg-pink-50 px-4 py-5 md:py-6">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">
             <div className="rounded-[24px] border border-pink-100 bg-white">
@@ -142,24 +109,11 @@ function DashboardCareers() {
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
-                    onClick={() => navigate("/user-dashboard?tab=services")}
+                    onClick={onBack}
                     className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:bg-pink-600"
                     aria-label="Go back"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="h-5 w-5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 18l-6-6 6-6"
-                      />
-                    </svg>
+                    <FaArrowLeft />
                   </button>
 
                   <div>
@@ -348,4 +302,4 @@ function DashboardCareers() {
   )
 }
 
-export default DashboardCareers
+export default CareersDashboardView
