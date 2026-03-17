@@ -18,14 +18,7 @@ function ProtectedDashboardRoute({ children }) {
   const { loading, user, suspended } = useAuthSession()
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-pink-50 px-4">
-        <div className="rounded-3xl border border-pink-100 bg-white px-8 py-10 text-center shadow-lg">
-          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-pink-200 border-t-pink-600" />
-          <p className="text-sm font-bold text-slate-700">Loading session...</p>
-        </div>
-      </div>
-    )
+    return children
   }
 
   return (
