@@ -24,9 +24,12 @@ import useAuthSession from "./hooks/useAuthSession"
 function ProtectedDashboardRoute({ children }) {
   const { loading, session, user, suspended } = useAuthSession()
 
+  if (loading && !session && !user) {
+    return null
+  }
+
   return (
     <ProtectedRoute
-      loading={loading}
       isAllowed={Boolean(session) && Boolean(user) && !suspended}
       redirectTo="/"
     >

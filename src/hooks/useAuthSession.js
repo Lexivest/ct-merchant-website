@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { supabase } from "../lib/supabase"
 import {
   fetchProfileByUserId,
@@ -22,7 +22,7 @@ function writeCachedProfile(profile) {
   try {
     localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile))
   } catch {
-    // ignore cache write failure
+    // ignore
   }
 }
 
@@ -30,29 +30,32 @@ function clearCachedProfile() {
   try {
     localStorage.removeItem(PROFILE_CACHE_KEY)
   } catch {
-    // ignore cache clear failure
+    // ignore
   }
 }
 
 function useAuthSession() {
-  const [state, setState] = useState({
-    loading: true,
-    authResolved: false,
-    session: null,
-    user: null,
-    profile: readCachedProfile(),
-    profileComplete: false,
-    suspended: false,
-    isOffline: !navigator.onLine,
-    error: "",
+  const hasResolvedOnce = useRef(false)
+
+  const [state, setState] = useState(() => {
+    const cachedProfile = readCachedProfile()
+
+    return {
+      loading: true,
+      session: null,
+      user: null,
+      profile: cachedProfile,
+      profileComplete: isProfileComplete(cachedProfile),
+      suspended: isProfileSuspended(cachedProfile),
+      error: "",
+      isOffline: !navigator.onLine,
+    }
   })
 
   useEffect(() => {
     let mounted = true
 
-    async function load() {
-      const offline = !navigator.onLine
-
+    async function load({ preserveAuth = true } = {}) {
       try {
         const session = await getSession()
         const user = session?.user || null
@@ -64,26 +67,31 @@ function useAuthSession() {
 
           setState({
             loading: false,
-            authResolved: true,
             session: null,
             user: null,
             profile: null,
             profileComplete: false,
             suspended: false,
-            isOffline: offline,
             error: "",
+            isOffline: !navigator.onLine,
           })
+
+          hasResolvedOnce.current = true
           return
         }
 
+        const prevProfile = readCachedProfile()
+
         setState((prev) => ({
           ...prev,
-          loading: true,
-          authResolved: true,
+          loading: !hasResolvedOnce.current,
           session,
           user,
-          isOffline: offline,
           error: "",
+          isOffline: !navigator.onLine,
+          profile: prev.profile || prevProfile,
+          profileComplete: isProfileComplete(prev.profile || prevProfile),
+          suspended: isProfileSuspended(prev.profile || prevProfile),
         }))
 
         try {
@@ -97,14 +105,13 @@ function useAuthSession() {
 
           setState({
             loading: false,
-            authResolved: true,
             session,
             user,
             profile: profile || null,
             profileComplete: isProfileComplete(profile),
             suspended: isProfileSuspended(profile),
-            isOffline: !navigator.onLine,
             error: "",
+            isOffline: !navigator.onLine,
           })
         } catch (profileError) {
           if (!mounted) return
@@ -112,64 +119,94 @@ function useAuthSession() {
           const cachedProfile = readCachedProfile()
 
           setState((prev) => ({
+            ...prev,
             loading: false,
-            authResolved: true,
             session,
             user,
             profile: prev.profile || cachedProfile,
             profileComplete: isProfileComplete(prev.profile || cachedProfile),
             suspended: isProfileSuspended(prev.profile || cachedProfile),
+            error: "",
             isOffline: !navigator.onLine,
-            error: profileError.message || "Profile could not be refreshed.",
           }))
         }
+
+        hasResolvedOnce.current = true
       } catch (error) {
         if (!mounted) return
 
-        const cachedProfile = readCachedProfile()
+        if (preserveAuth) {
+          const cachedProfile = readCachedProfile()
 
-        setState((prev) => ({
-          loading: false,
-          authResolved: true,
-          session: prev.session,
-          user: prev.user,
-          profile: prev.profile || cachedProfile,
-          profileComplete: isProfileComplete(prev.profile || cachedProfile),
-          suspended: isProfileSuspended(prev.profile || cachedProfile),
-          isOffline: !navigator.onLine,
-          error: error.message || "Could not load session.",
-        }))
+          setState((prev) => ({
+            ...prev,
+            loading: false,
+            profile: prev.profile || cachedProfile,
+            profileComplete: isProfileComplete(prev.profile || cachedProfile),
+            suspended: isProfileSuspended(prev.profile || cachedProfile),
+            error: "",
+            isOffline: !navigator.onLine,
+          }))
+        } else {
+          setState({
+            loading: false,
+            session: null,
+            user: null,
+            profile: null,
+            profileComplete: false,
+            suspended: false,
+            error: error.message || "Could not load session.",
+            isOffline: !navigator.onLine,
+          })
+        }
+
+        hasResolvedOnce.current = true
       }
     }
 
-    function handleOnline() {
+    load({ preserveAuth: true })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return
 
-      setState((prev) => ({
-        ...prev,
-        isOffline: false,
-      }))
+      if (event === "SIGNED_OUT" || !session?.user) {
+        clearCachedProfile()
 
-      load()
+        setState({
+          loading: false,
+          session: null,
+          user: null,
+          profile: null,
+          profileComplete: false,
+          suspended: false,
+          error: "",
+          isOffline: !navigator.onLine,
+        })
+
+        hasResolvedOnce.current = true
+        return
+      }
+
+      load({ preserveAuth: true })
+    })
+
+    const handleOnline = () => {
+      if (!mounted) return
+      setState((prev) => ({ ...prev, isOffline: false }))
+      load({ preserveAuth: true })
     }
 
-    function handleOffline() {
+    const handleOffline = () => {
       if (!mounted) return
-
       setState((prev) => ({
         ...prev,
         isOffline: true,
         loading: false,
+        error: "",
       }))
     }
-
-    load()
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      load()
-    })
 
     window.addEventListener("online", handleOnline)
     window.addEventListener("offline", handleOffline)
