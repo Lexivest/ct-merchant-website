@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CRITICAL OFFLINE FIX: 
+  This prevents mobile browsers (Chrome/Safari) from triggering their native 
+  "pull-to-refresh" action, which would otherwise force a hard reload, 
+  break the SPA state, and kick offline users to a generic browser error screen.
+*/
+html, body {
+  overscroll-behavior-y: none;
+}
+
 @keyframes headerScroll {
   0% {
     transform: translateX(0);
