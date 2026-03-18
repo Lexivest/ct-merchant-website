@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { supabase } from "../lib/supabase"
 import {
   fetchProfileByUserId,
@@ -7,6 +7,17 @@ import {
 } from "../lib/auth"
 
 const PROFILE_CACHE_KEY = "ctmerchant_profile_cache"
+
+// 1. GLOBAL MEMORY CACHE
+// This preserves the auth state across page navigations.
+// It completely eliminates the "loading spinner flash" when hitting the back button.
+let globalAuthMemory = {
+  isResolved: false,
+  session: null,
+  user: null,
+  profile: null,
+  suspended: false,
+}
 
 function readCachedProfile() {
   try {
@@ -34,11 +45,22 @@ function clearCachedProfile() {
 }
 
 function useAuthSession() {
-  const hasResolvedOnce = useRef(false)
-
   const [state, setState] = useState(() => {
-    const cachedProfile = readCachedProfile()
+    // 2. SYNCHRONOUS MEMORY READ
+    // If the memory is warm (user is navigating back), return it instantly to bypass all loaders.
+    if (globalAuthMemory.isResolved) {
+      return {
+        loading: false,
+        session: globalAuthMemory.session,
+        user: globalAuthMemory.user,
+        profile: globalAuthMemory.profile,
+        suspended: globalAuthMemory.suspended,
+        error: "",
+        isOffline: !navigator.onLine,
+      }
+    }
 
+    const cachedProfile = readCachedProfile()
     return {
       loading: true,
       session: null,
@@ -50,10 +72,25 @@ function useAuthSession() {
     }
   })
 
+  // Helper to keep React state and Global memory perfectly in sync
+  function syncState(updates) {
+    if (updates.loading === false) {
+      globalAuthMemory = {
+        ...globalAuthMemory,
+        isResolved: true,
+        session: updates.session !== undefined ? updates.session : globalAuthMemory.session,
+        user: updates.user !== undefined ? updates.user : globalAuthMemory.user,
+        profile: updates.profile !== undefined ? updates.profile : globalAuthMemory.profile,
+        suspended: updates.suspended !== undefined ? updates.suspended : globalAuthMemory.suspended,
+      }
+    }
+    setState((prev) => ({ ...prev, ...updates }))
+  }
+
   useEffect(() => {
     let mounted = true
 
-    async function load({ preserveAuth = true } = {}) {
+    async function load() {
       try {
         const session = await getSession()
         const user = session?.user || null
@@ -62,33 +99,17 @@ function useAuthSession() {
 
         if (!user) {
           clearCachedProfile()
-
-          setState({
+          globalAuthMemory = { isResolved: true, session: null, user: null, profile: null, suspended: false }
+          syncState({
             loading: false,
             session: null,
             user: null,
             profile: null,
             suspended: false,
             error: "",
-            isOffline: !navigator.onLine,
           })
-
-          hasResolvedOnce.current = true
           return
         }
-
-        const prevProfile = readCachedProfile()
-
-        setState((prev) => ({
-          ...prev,
-          loading: true,
-          session,
-          user,
-          error: "",
-          isOffline: !navigator.onLine,
-          profile: prev.profile || prevProfile,
-          suspended: isProfileSuspended(prev.profile || prevProfile),
-        }))
 
         try {
           let profile = await fetchProfileByUserId(user.id)
@@ -104,64 +125,40 @@ function useAuthSession() {
             writeCachedProfile(profile)
           }
 
-          setState({
+          syncState({
             loading: false,
             session,
             user,
             profile: profile || null,
             suspended: isProfileSuspended(profile),
             error: "",
-            isOffline: !navigator.onLine,
           })
         } catch (profileError) {
           if (!mounted) return
-
           const cachedProfile = readCachedProfile()
-
-          setState((prev) => ({
-            ...prev,
+          syncState({
             loading: false,
             session,
             user,
-            profile: prev.profile || cachedProfile,
-            suspended: isProfileSuspended(prev.profile || cachedProfile),
+            profile: cachedProfile,
+            suspended: isProfileSuspended(cachedProfile),
             error: "",
-            isOffline: !navigator.onLine,
-          }))
-        }
-
-        hasResolvedOnce.current = true
-      } catch (error) {
-        if (!mounted) return
-
-        if (preserveAuth) {
-          const cachedProfile = readCachedProfile()
-
-          setState((prev) => ({
-            ...prev,
-            loading: false,
-            profile: prev.profile || cachedProfile,
-            suspended: isProfileSuspended(prev.profile || cachedProfile),
-            error: "",
-            isOffline: !navigator.onLine,
-          }))
-        } else {
-          setState({
-            loading: false,
-            session: null,
-            user: null,
-            profile: null,
-            suspended: false,
-            error: error.message || "Could not load session.",
-            isOffline: !navigator.onLine,
           })
         }
-
-        hasResolvedOnce.current = true
+      } catch (error) {
+        if (!mounted) return
+        const cachedProfile = readCachedProfile()
+        syncState({
+          loading: false,
+          profile: cachedProfile,
+          suspended: isProfileSuspended(cachedProfile),
+          error: "",
+        })
       }
     }
 
-    load({ preserveAuth: true })
+    // Always fetch in the background to ensure session hasn't expired
+    load()
 
     const {
       data: { subscription },
@@ -170,38 +167,30 @@ function useAuthSession() {
 
       if (event === "SIGNED_OUT" || !session?.user) {
         clearCachedProfile()
-
-        setState({
+        globalAuthMemory = { isResolved: true, session: null, user: null, profile: null, suspended: false }
+        syncState({
           loading: false,
           session: null,
           user: null,
           profile: null,
           suspended: false,
           error: "",
-          isOffline: !navigator.onLine,
         })
-
-        hasResolvedOnce.current = true
         return
       }
 
-      load({ preserveAuth: true })
+      load()
     })
 
     const handleOnline = () => {
       if (!mounted) return
-      setState((prev) => ({ ...prev, isOffline: false }))
-      load({ preserveAuth: true })
+      syncState({ isOffline: false })
+      load()
     }
 
     const handleOffline = () => {
       if (!mounted) return
-      setState((prev) => ({
-        ...prev,
-        isOffline: true,
-        loading: false,
-        error: "",
-      }))
+      syncState({ isOffline: true })
     }
 
     window.addEventListener("online", handleOnline)

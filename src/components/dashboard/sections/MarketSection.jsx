@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaChevronRight, FaImage } from "react-icons/fa6"
+// IMPORT OUR NEW SHIMMERS
+import { ShimmerBlock, ShimmerCard } from "../../common/Shimmers"
 
 function PromoSlider({ promos }) {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -119,9 +121,11 @@ function ShopCard({ shop, products, onOpenShop }) {
 
 function MarketSection({
   dashboardData,
-  featuredShops,
-  groupedShopsByArea,
+  featuredShops = [],
+  groupedShopsByArea = [],
   navigateCategory,
+  loading, // NEW PROP
+  error    // NEW PROP
 }) {
   const navigate = useNavigate()
 
@@ -129,6 +133,44 @@ function MarketSection({
     navigate(`/shop-detail?id=${shopId}`)
   }
 
+  // 1. PROFESSIONAL ERROR STATE (Only shows if no cache is available)
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm font-semibold text-red-600 shadow-sm">
+          <i className="fa-solid fa-wifi mr-2"></i> 
+          {error}
+        </div>
+      </div>
+    )
+  }
+
+  // 2. PROFESSIONAL SHIMMER STATE (Mirrors the actual layout)
+  if (loading || !dashboardData) {
+    return (
+      <div className="screen active w-full pb-8 bg-slate-50">
+        {/* Promo Skeleton */}
+        <ShimmerBlock className="mb-4 h-[280px] w-full rounded-none max-[768px]:h-[180px]" />
+        
+        {/* Featured Shops Skeleton */}
+        <div className="area-block-wrap mb-2 bg-white pt-4">
+          <div className="mb-3 px-4">
+            <ShimmerBlock className="h-8 w-[200px] rounded-md" />
+          </div>
+          <div className="flex gap-4 overflow-hidden px-4 pb-5 pt-1">
+            <div className="min-w-[280px] w-[85vw] max-w-[340px] shrink-0">
+              <ShimmerCard />
+            </div>
+            <div className="min-w-[280px] w-[85vw] max-w-[340px] shrink-0">
+              <ShimmerCard />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 3. ACTUAL RENDER
   return (
     <div className="screen active">
       {dashboardData.promos?.length > 0 ? (

@@ -24,11 +24,11 @@ import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 
 function ProtectedDashboardRoute({ children }) {
-  const { loading, session, user, profile, suspended } = useAuthSession()
+  // Destructure isOffline from our auth hook
+  const { loading, session, user, profile, suspended, isOffline } = useAuthSession()
 
-  // Wait for the entire session and profile fetch to resolve before rendering anything.
-  // This prevents the split-second flash of the CompleteProfileModal.
-  if (loading) {
+  // 1. Network-Aware Spinner: If offline, bypass the spinner to prevent getting stuck
+  if (loading && !isOffline) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-pink-200 border-t-pink-600"></div>
@@ -36,14 +36,15 @@ function ProtectedDashboardRoute({ children }) {
     )
   }
 
-  const isAllowed = Boolean(session) && Boolean(user) && !suspended
+  // 2. Prevent "Offline Kick": Allow access if normal conditions are met, OR if offline with a cached user
+  const isAllowed = (Boolean(session) && Boolean(user) && !suspended) || (isOffline && Boolean(user))
 
-  // By the time the code reaches here, loading is false, meaning the profile fetch is 100% complete.
   const needsProfileSetup = user && (!profile || !isProfileComplete(profile))
 
   return (
     <ProtectedRoute isAllowed={isAllowed} redirectTo="/">
-      {needsProfileSetup ? (
+      {/* 3. Don't force profile setup while offline (they can't save anyway) */}
+      {needsProfileSetup && !isOffline ? (
         <div className="min-h-screen bg-slate-50">
           <CompleteProfileModal
             open={true}
@@ -59,7 +60,16 @@ function ProtectedDashboardRoute({ children }) {
           />
         </div>
       ) : (
-        children
+        <>
+          {/* 4. Professional Global Offline Banner */}
+          {isOffline && (
+            <div className="sticky top-0 z-[999] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm">
+              <i className="fa-solid fa-wifi-slash mr-2"></i>
+              You are currently offline. Showing cached data.
+            </div>
+          )}
+          {children}
+        </>
       )}
     </ProtectedRoute>
   )
@@ -68,6 +78,7 @@ function ProtectedDashboardRoute({ children }) {
 function App() {
   return (
     <Routes>
+      {/* PUBLIC ROUTES */}
       <Route path="/" element={<Home />} />
       <Route path="/about" element={<About />} />
       <Route path="/services" element={<Services />} />
@@ -81,7 +92,9 @@ function App() {
 
       <Route path="/reposearch" element={<MerchantDiscovery />} />
       <Route path="/shop-detail" element={<ShopDetail />} />
+      <Route path="/product-detail" element={<ProductDetail />} />
 
+      {/* PROTECTED DASHBOARD ROUTES */}
       <Route
         path="/user-dashboard"
         element={
@@ -123,15 +136,6 @@ function App() {
         element={
           <ProtectedDashboardRoute>
             <Search />
-          </ProtectedDashboardRoute>
-        }
-      />
-
-      <Route
-        path="/product-detail"
-        element={
-          <ProtectedDashboardRoute>
-            <ProductDetail />
           </ProtectedDashboardRoute>
         }
       />

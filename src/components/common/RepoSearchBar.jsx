@@ -7,9 +7,12 @@ function RepoSearchBar() {
   const [merchantId, setMerchantId] = useState("")
 
   function handleSearch() {
-    const value = merchantId.trim()
+    // 1. Trim and normalize the ID to uppercase to match the visual UI
+    const value = merchantId.trim().toUpperCase()
     if (!value) return
-    navigate(`/merchant-discovery?merchantId=${encodeURIComponent(value)}`)
+    
+    // 2. FIXED ROUTE: Navigate to /reposearch as defined in App.jsx
+    navigate(`/reposearch?merchantId=${encodeURIComponent(value)}`)
   }
 
   return (

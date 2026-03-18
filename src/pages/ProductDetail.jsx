@@ -17,6 +17,40 @@ import {
 } from "react-icons/fa6"
 import { FaWhatsapp } from "react-icons/fa"
 import { supabase } from "../lib/supabase"
+import useAuthSession from "../hooks/useAuthSession"
+import useCachedFetch from "../hooks/useCachedFetch"
+import { ShimmerBlock } from "../components/common/Shimmers"
+
+// --- PROFESSIONAL SHIMMER COMPONENT ---
+function ProductDetailShimmer() {
+  return (
+    <div className="min-h-screen bg-[#E3E6E6] pb-[90px]">
+      <header className="sticky top-0 z-[100] flex items-center justify-between bg-[#131921] px-4 py-3 shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <ShimmerBlock className="h-6 w-6 rounded bg-white/20" />
+          <div className="flex flex-col gap-1">
+            <ShimmerBlock className="h-5 w-32 rounded bg-white/20" />
+            <ShimmerBlock className="h-3 w-20 rounded bg-white/10" />
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-4">
+          <ShimmerBlock className="h-6 w-6 rounded bg-white/20" />
+          <ShimmerBlock className="h-6 w-6 rounded bg-white/20" />
+        </div>
+      </header>
+
+      <div className="mx-auto flex w-full max-w-[1200px] flex-col lg:flex-row lg:gap-6 lg:p-10">
+        <div className="lg:flex-1">
+          <ShimmerBlock className="aspect-square w-full rounded-none bg-white lg:rounded-lg" />
+        </div>
+        <div className="mt-2 flex flex-col gap-4 px-4 lg:mt-0 lg:flex-[1.2] lg:px-0">
+          <ShimmerBlock className="h-12 w-full max-w-[400px] rounded-lg bg-white p-6" />
+          <ShimmerBlock className="h-[250px] w-full rounded-lg bg-white p-6" />
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function ProductDetail() {
   const navigate = useNavigate()
@@ -26,29 +60,114 @@ function ProductDetail() {
   const productId = searchParams.get("id")
   const shopSrc = searchParams.get("shop_src")
 
-  const [loading, setLoading] = useState(true)
-  const [showError, setShowError] = useState(false)
+  // 1. Unified Auth State
+  const { user, loading: authLoading } = useAuthSession()
 
-  const [currentUser, setCurrentUser] = useState(null)
-  const [currentProduct, setCurrentProduct] = useState(null)
-  const [currentShop, setCurrentShop] = useState(null)
-  const [recommendations, setRecommendations] = useState([])
+  // 2. Extracted Data Fetching Logic for Hook
+  const fetchProductData = async () => {
+    const { data: product, error: productError } = await supabase
+      .from("products")
+      .select("*")
+      .eq("id", productId)
+      .single()
 
+    if (productError || !product) {
+      throw new Error("Product fetch failed.")
+    }
+
+    let shop = null
+    let recs = []
+    let initialWishlist = false
+
+    const tasks = []
+
+    if (product.shop_id) {
+      tasks.push(
+        supabase
+          .from("shops")
+          .select("id, name, whatsapp, phone, address, city_id, areas(name), cities(name)")
+          .eq("id", product.shop_id)
+          .maybeSingle()
+          .then((res) => {
+            if (res.data) shop = res.data
+          })
+      )
+    }
+
+    if (product.category) {
+      tasks.push(
+        supabase
+          .from("products")
+          .select("id, name, price, discount_price, image_url")
+          .eq("category", product.category)
+          .neq("id", product.id)
+          .eq("is_available", true)
+          .limit(10)
+          .then((res) => {
+            if (res.data) recs = res.data
+          })
+      )
+    }
+
+    if (user?.id) {
+      tasks.push(
+        supabase
+          .from("wishlist")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("product_id", productId)
+          .maybeSingle()
+          .then((res) => {
+            initialWishlist = Boolean(res.data)
+          })
+      )
+    }
+
+    await Promise.all(tasks)
+
+    return { product, shop, recommendations: recs, initialWishlist }
+  }
+
+  // 3. Smart Caching Hook
+  const cacheKey = `prod_detail_${productId}_${user?.id || 'anon'}`
+  const { data, loading: dataLoading, error, isOffline } = useCachedFetch(
+    cacheKey,
+    fetchProductData,
+    { dependencies: [productId, user?.id], ttl: 1000 * 60 * 5 }
+  )
+
+  // 4. Local Optimistic States
   const [selectedImage, setSelectedImage] = useState("")
   const [isInWishlist, setIsInWishlist] = useState(false)
   const [securityModalOpen, setSecurityModalOpen] = useState(false)
 
+  // Chat States
   const [chatOpen, setChatOpen] = useState(false)
   const [chatInput, setChatInput] = useState("")
   const [chatHistory, setChatHistory] = useState([])
   const [chatMessages, setChatMessages] = useState([
     {
       role: "assistant",
-      content:
-        "Hi! I'm the CTMerchant Assistant. What would you like to know about this product?",
+      content: "Hi! I'm the CTMerchant Assistant. What would you like to know about this product?",
     },
   ])
   const [sendingChat, setSendingChat] = useState(false)
+
+  // Computed Values from Cache
+  const currentProduct = data?.product
+  const currentShop = data?.shop
+  const recommendations = data?.recommendations || []
+
+  // Sync optimistic states once data arrives
+  useEffect(() => {
+    if (data) {
+      setIsInWishlist(data.initialWishlist)
+      if (!selectedImage && data.product?.image_url) {
+        setSelectedImage(data.product.image_url)
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data])
 
   const galleryImages = useMemo(() => {
     const images = [
@@ -85,35 +204,24 @@ function ProductDetail() {
   }, [currentProduct])
 
   const stockMeta = useMemo(() => {
-    if (!currentProduct) {
-      return { text: "", className: "text-slate-500" }
-    }
+    if (!currentProduct) return { text: "", className: "text-slate-500" }
 
     if (stockCount <= 0) {
-      return {
-        text: "Currently unavailable.",
-        className: "text-slate-500",
-      }
+      return { text: "Currently unavailable.", className: "text-slate-500" }
     }
 
     if (stockCount <= 5 || hasDiscount) {
       return {
-        text: `${stockCount} in stock${
-          hasDiscount ? " - hurry now promo ends soon" : ""
-        }`,
+        text: `${stockCount} in stock${hasDiscount ? " - hurry now promo ends soon" : ""}`,
         className: "text-[#B12704]",
       }
     }
 
-    return {
-      text: `${stockCount} in stock`,
-      className: "text-[#007185]",
-    }
+    return { text: `${stockCount} in stock`, className: "text-[#007185]" }
   }, [currentProduct, stockCount, hasDiscount])
 
   const technicalAttributes = useMemo(() => {
     if (!currentProduct?.attributes) return {}
-
     const attrs = { ...currentProduct.attributes }
     delete attrs["Key Features"]
     delete attrs["What's in the Box"]
@@ -122,204 +230,75 @@ function ProductDetail() {
   }, [currentProduct])
 
   useEffect(() => {
-    async function bootstrap() {
-      if (!productId) {
-        setShowError(true)
-        setLoading(false)
-        return
-      }
-
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (session?.user) {
-          setCurrentUser(session.user)
-        }
-
-        const cacheKey = `ctm_prod_v40_${productId}`
-        const cached = localStorage.getItem(cacheKey)
-
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached)
-            hydrateUI(parsed)
-          } catch {
-            // ignore cache parse errors
-          }
-        }
-
-        const freshData = await fetchFreshData(session?.user || null)
-        localStorage.setItem(cacheKey, JSON.stringify(freshData))
-        hydrateUI(freshData)
-
-        if (session?.user) {
-          await checkWishlistStatus(session.user.id)
-        }
-      } catch (error) {
-        console.error(error)
-        setShowError(true)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    bootstrap()
-  }, [productId])
-
-  useEffect(() => {
     if (!chatBodyRef.current) return
     chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight
   }, [chatMessages, sendingChat, chatOpen])
-
-  async function fetchFreshData() {
-    const { data: product, error: productError } = await supabase
-      .from("products")
-      .select("*")
-      .eq("id", productId)
-      .single()
-
-    if (productError || !product) {
-      throw new Error("Product fetch failed.")
-    }
-
-    let shop = null
-    let recs = []
-
-    if (product.shop_id) {
-      const { data: shopData } = await supabase
-        .from("shops")
-        .select(
-          "id, name, whatsapp, phone, address, city_id, areas(name), cities(name)"
-        )
-        .eq("id", product.shop_id)
-        .maybeSingle()
-
-      if (shopData) {
-        shop = shopData
-      }
-    }
-
-    if (product.category) {
-      const { data: recData } = await supabase
-        .from("products")
-        .select("id, name, price, discount_price, image_url")
-        .eq("category", product.category)
-        .neq("id", product.id)
-        .eq("is_available", true)
-        .limit(10)
-
-      recs = recData || []
-    }
-
-    return {
-      product,
-      shop,
-      recommendations: recs,
-    }
-  }
-
-  function hydrateUI(data) {
-    setCurrentProduct(data.product || null)
-    setCurrentShop(data.shop || null)
-    setRecommendations(data.recommendations || [])
-    setSelectedImage(
-      data.product?.image_url ||
-        "https://via.placeholder.com/800x800?text=No+Image"
-    )
-  }
-
-  async function checkWishlistStatus(userId) {
-    try {
-      const { data } = await supabase
-        .from("wishlist")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("product_id", productId)
-        .maybeSingle()
-
-      setIsInWishlist(Boolean(data))
-    } catch (error) {
-      console.error("Wishlist check error", error)
-    }
-  }
 
   function goBack() {
     if (shopSrc) {
       navigate(`/shop-detail?id=${shopSrc}`)
       return
     }
-
-    if (
-      document.referrer &&
-      document.referrer.includes(window.location.hostname)
-    ) {
+    if (document.referrer && document.referrer.includes(window.location.hostname)) {
       navigate(-1)
       return
     }
-
     if (currentProduct?.shop_id) {
       navigate(`/shop-detail?id=${currentProduct.shop_id}`)
       return
     }
-
     navigate("/user-dashboard")
   }
 
   async function toggleWishlist() {
-    if (!currentUser) {
+    if (!user) {
       window.alert("Please login to save items to your wishlist.")
       return
     }
 
     const next = !isInWishlist
-    setIsInWishlist(next)
+    setIsInWishlist(next) // Optimistic update
 
     try {
       if (next) {
         const { data: existingItems, error: fetchError } = await supabase
           .from("wishlist")
           .select("id")
-          .eq("user_id", currentUser.id)
+          .eq("user_id", user.id)
           .order("created_at", { ascending: true })
 
         if (fetchError) throw fetchError
 
+        // Limit wishlist items per user to prevent abuse
         if (existingItems && existingItems.length >= 5) {
           const numToDelete = existingItems.length - 4
-          const idsToDelete = existingItems
-            .slice(0, numToDelete)
-            .map((item) => item.id)
+          const idsToDelete = existingItems.slice(0, numToDelete).map((item) => item.id)
 
           if (idsToDelete.length > 0) {
             const { error: deleteError } = await supabase
               .from("wishlist")
               .delete()
               .in("id", idsToDelete)
-
             if (deleteError) throw deleteError
           }
         }
 
         const { error: insertError } = await supabase.from("wishlist").insert({
-          user_id: currentUser.id,
+          user_id: user.id,
           product_id: productId,
         })
-
         if (insertError) throw insertError
       } else {
         const { error: removeError } = await supabase
           .from("wishlist")
           .delete()
-          .eq("user_id", currentUser.id)
+          .eq("user_id", user.id)
           .eq("product_id", productId)
-
         if (removeError) throw removeError
       }
     } catch (error) {
       console.error("Wishlist error:", error)
-      setIsInWishlist(!next)
+      setIsInWishlist(!next) // Rollback
       window.alert("Failed to update wishlist.")
     }
   }
@@ -330,11 +309,11 @@ function ProductDetail() {
       return
     }
 
-    if (currentUser && currentShop) {
+    if (user && currentShop) {
       supabase
         .from("call_clicks")
         .insert({
-          clicker_id: currentUser.id,
+          clicker_id: user.id,
           shop_id: currentShop.id,
           product_id: parseInt(productId, 10),
         })
@@ -363,26 +342,20 @@ function ProductDetail() {
     if (!currentShop?.whatsapp || !currentProduct) return
 
     let phone = currentShop.whatsapp.replace(/\D/g, "")
-    if (phone.startsWith("0")) {
-      phone = `234${phone.slice(1)}`
-    }
+    if (phone.startsWith("0")) phone = `234${phone.slice(1)}`
 
     const price = currentProduct.discount_price || currentProduct.price
     const message = `Hello *${currentShop.name}*, I found this on CTMerchant. I am interested in: ${currentProduct.name} (₦${Number(
       price || 0
     ).toLocaleString()})`
 
-    window.open(
-      `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
-      "_blank",
-      "noopener,noreferrer"
-    )
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer")
 
     if (currentShop?.id) {
       try {
         await supabase.from("whatsapp_clicks").insert({
           shop_id: currentShop.id,
-          clicker_id: currentUser ? currentUser.id : null,
+          clicker_id: user ? user.id : null,
           product_id: parseInt(productId, 10),
         })
       } catch (error) {
@@ -396,11 +369,8 @@ function ProductDetail() {
 
     const title = currentProduct.name || "Product"
     const priceText =
-      currentProduct.discount_price &&
-      Number(currentProduct.discount_price) < Number(currentProduct.price)
-        ? `₦${Number(currentProduct.discount_price).toLocaleString()} (Special Offer: Was ₦${Number(
-            currentProduct.price
-          ).toLocaleString()}, -${discountPercent}% OFF)`
+      currentProduct.discount_price && Number(currentProduct.discount_price) < Number(currentProduct.price)
+        ? `₦${Number(currentProduct.discount_price).toLocaleString()} (Special Offer: Was ₦${Number(currentProduct.price).toLocaleString()}, -${discountPercent}% OFF)`
         : `₦${Number(currentProduct.price || 0).toLocaleString()}`
 
     const shopName = currentShop?.name || "our shop"
@@ -411,15 +381,12 @@ function ProductDetail() {
     try {
       if (navigator.share) {
         let file = null
-
         if (currentProduct.image_url) {
           try {
             const response = await fetch(currentProduct.image_url)
             const blob = await response.blob()
             file = new File([blob], "product.jpg", { type: blob.type })
-          } catch {
-            // ignore image fetch error
-          }
+          } catch { /* ignore image fetch error */ }
         }
 
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -445,21 +412,17 @@ function ProductDetail() {
     if (!text || sendingChat || !currentProduct) return
 
     const nextUserMessage = { role: "user", content: text }
-
     setChatMessages((prev) => [...prev, nextUserMessage])
     setChatHistory((prev) => [...prev, nextUserMessage])
     setChatInput("")
     setSendingChat(true)
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      const { data: { session } } = await supabase.auth.getSession()
 
       const headers = {
         "Content-Type": "application/json",
-        apikey:
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow",
+        apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow",
       }
 
       if (session?.access_token) {
@@ -485,22 +448,13 @@ function ProductDetail() {
         }
       )
 
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`Server returned ${response.status}`)
 
-      const data = await response.json()
-      const reply = data.reply || "No response received."
-      const isError =
-        reply.startsWith("Error:") ||
-        reply.startsWith("System") ||
-        reply.startsWith("Config")
+      const resData = await response.json()
+      const reply = resData.reply || "No response received."
+      const isError = reply.startsWith("Error:") || reply.startsWith("System") || reply.startsWith("Config")
 
-      const assistantMessage = {
-        role: isError ? "error" : "assistant",
-        content: reply,
-      }
-
+      const assistantMessage = { role: isError ? "error" : "assistant", content: reply }
       setChatMessages((prev) => [...prev, assistantMessage])
 
       if (!isError) {
@@ -513,10 +467,7 @@ function ProductDetail() {
     } catch (error) {
       setChatMessages((prev) => [
         ...prev,
-        {
-          role: "error",
-          content: `Connection Error: ${error.message}`,
-        },
+        { role: "error", content: `Connection Error: ${error.message}` },
       ])
     } finally {
       setSendingChat(false)
@@ -528,28 +479,16 @@ function ProductDetail() {
   }
 
   function renderMiniRecommendation(product) {
-    const itemHasDiscount =
-      product.discount_price && Number(product.discount_price) < Number(product.price)
-
+    const itemHasDiscount = product.discount_price && Number(product.discount_price) < Number(product.price)
     const itemDiscountPercent = itemHasDiscount
-      ? Math.round(
-          ((Number(product.price) - Number(product.discount_price)) /
-            Number(product.price)) *
-            100
-        )
+      ? Math.round(((Number(product.price) - Number(product.discount_price)) / Number(product.price)) * 100)
       : 0
 
     return (
       <div
         key={product.id}
         className="mini-card flex w-[150px] shrink-0 cursor-pointer flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition hover:border-pink-600 hover:shadow-[0_4px_8px_rgba(0,0,0,0.05)]"
-        onClick={() =>
-          navigate(
-            `/product-detail?id=${product.id}${
-              currentShop?.id ? `&shop_src=${currentShop.id}` : ""
-            }`
-          )
-        }
+        onClick={() => navigate(`/product-detail?id=${product.id}${currentShop?.id ? `&shop_src=${currentShop.id}` : ""}`)}
       >
         <div className="mini-img-wrap relative aspect-square w-full bg-white">
           {itemHasDiscount ? (
@@ -559,10 +498,7 @@ function ProductDetail() {
           ) : null}
 
           <img
-            src={
-              product.image_url ||
-              "https://via.placeholder.com/400x400?text=No+Image"
-            }
+            src={product.image_url || "https://via.placeholder.com/400x400?text=No+Image"}
             alt={product.name}
             loading="lazy"
             className="h-full w-full object-contain"
@@ -574,7 +510,6 @@ function ProductDetail() {
           <div className="mini-title mb-1 line-clamp-2 text-[0.8rem] font-semibold leading-[1.3] text-[#0F1111]">
             {product.name}
           </div>
-
           <div className="mini-price text-[0.95rem] font-extrabold text-pink-600">
             {itemHasDiscount ? (
               <>
@@ -592,32 +527,27 @@ function ProductDetail() {
     )
   }
 
-  if (loading && !currentProduct) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#E3E6E6]">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-11 w-11 animate-spin rounded-full border-4 border-pink-100 border-t-pink-600" />
-          <span className="font-semibold text-[#0F1111]">Loading Product...</span>
-        </div>
-      </div>
-    )
+  // --- EARLY RETURNS (Loading, Errors) ---
+  if (!productId) {
+    navigate("/user-dashboard", { replace: true })
+    return null
   }
 
-  if (showError || !currentProduct) {
+  if (authLoading || (dataLoading && !data)) {
+    return <ProductDetailShimmer />
+  }
+
+  if (error && !data) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#E3E6E6] px-4">
         <div className="text-center">
           <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-700" />
-          <h3 className="mb-2 text-2xl font-extrabold text-[#0F1111]">
-            Product Not Found
-          </h3>
-          <p className="text-slate-600">
-            The item you are looking for may have been removed.
-          </p>
+          <h3 className="mb-2 text-2xl font-extrabold text-[#0F1111]">Product Not Found</h3>
+          <p className="text-slate-600">{error}</p>
           <button
             type="button"
             onClick={() => navigate("/user-dashboard")}
-            className="mt-5 rounded-md border border-slate-300 bg-white px-6 py-3 font-semibold"
+            className="mt-5 rounded-md border border-slate-300 bg-white px-6 py-3 font-semibold shadow-sm transition hover:bg-slate-50"
           >
             Go Back
           </button>
@@ -629,20 +559,21 @@ function ProductDetail() {
   return (
     <>
       <div className="mx-auto flex min-h-screen max-w-[1200px] flex-col bg-[#E3E6E6] pb-[90px]">
-        <header className="sticky top-0 z-[100] flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
+        {/* Offline Notice */}
+        {isOffline && (
+          <div className="sticky top-0 z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm">
+            <i className="fa-solid fa-wifi-slash mr-2"></i>
+            You are currently offline. Showing cached product details.
+          </div>
+        )}
+        
+        <header className={`sticky ${isOffline ? 'top-[36px]' : 'top-0'} z-[100] flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]`}>
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <button
-              type="button"
-              onClick={goBack}
-              className="shrink-0 text-[1.2rem] transition hover:text-pink-500"
-            >
+            <button type="button" onClick={goBack} className="shrink-0 text-[1.2rem] transition hover:text-pink-500">
               <FaArrowLeft />
             </button>
-
             <div className="flex min-w-0 flex-col">
-              <span className="truncate text-[1.05rem] font-bold">
-                Product Details
-              </span>
+              <span className="truncate text-[1.05rem] font-bold">Product Details</span>
               <span className="flex items-center gap-1 text-[0.75rem] font-semibold text-slate-300">
                 <FaLocationDot />
                 {currentShop?.areas?.name || "Loading..."}
@@ -655,14 +586,11 @@ function ProductDetail() {
               id="wishlist-btn"
               type="button"
               onClick={toggleWishlist}
-              className={`text-[1.2rem] transition ${
-                isInWishlist ? "text-pink-500" : "text-white hover:text-pink-500"
-              }`}
+              className={`text-[1.2rem] transition ${isInWishlist ? "text-pink-500" : "text-white hover:text-pink-500"}`}
               aria-label="Add to Wishlist"
             >
               <FaHeart />
             </button>
-
             <button
               type="button"
               onClick={shareProductWithImage}
@@ -686,11 +614,8 @@ function ProductDetail() {
                   ) : null}
 
                   <img
-                    src={
-                      selectedImage ||
-                      "https://via.placeholder.com/800x800?text=No+Image"
-                    }
-                    alt={currentProduct.name}
+                    src={selectedImage || "https://via.placeholder.com/800x800?text=No+Image"}
+                    alt={currentProduct?.name || "Product"}
                     className="block h-full w-full object-contain"
                     style={{ mixBlendMode: "multiply" }}
                   />
@@ -721,25 +646,22 @@ function ProductDetail() {
             <section className="content-block mb-2 bg-white px-5 py-6 lg:mb-6 lg:rounded-lg lg:border lg:border-slate-300 lg:shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
               <span
                 className={`mb-3 inline-block rounded px-3 py-1 text-[0.75rem] font-extrabold uppercase tracking-[0.5px] ${
-                  currentProduct.condition === "Fairly Used"
+                  currentProduct?.condition === "Fairly Used"
                     ? "border border-orange-300 bg-orange-50 text-[#C40000]"
                     : "border border-slate-300 bg-slate-100 text-[#007185]"
                 }`}
               >
-                {currentProduct.condition || "New"}
+                {currentProduct?.condition || "New"}
               </span>
 
               <h1 className="mb-2 text-[1.4rem] font-extrabold leading-[1.3] text-[#0F1111]">
-                {currentProduct.name}
+                {currentProduct?.name}
               </h1>
 
               <div className="mb-2 flex flex-wrap items-baseline gap-3">
                 <span className="text-[2rem] font-extrabold text-pink-600 lg:text-[2.2rem]">
-                  {hasDiscount
-                    ? formatCurrency(currentProduct.discount_price)
-                    : formatCurrency(currentProduct.price)}
+                  {hasDiscount ? formatCurrency(currentProduct.discount_price) : formatCurrency(currentProduct?.price)}
                 </span>
-
                 {hasDiscount ? (
                   <span className="text-[1rem] font-medium text-slate-500 line-through lg:text-[1.2rem]">
                     {formatCurrency(currentProduct.price)}
@@ -754,11 +676,10 @@ function ProductDetail() {
 
             <section className="content-block mb-2 flex-1 bg-white px-5 py-6 lg:mb-6 lg:rounded-lg lg:border lg:border-slate-300 lg:shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
               <div className="flex flex-col gap-6">
-                {currentProduct.attributes?.["Key Features"] ? (
+                {currentProduct?.attributes?.["Key Features"] ? (
                   <div>
                     <div className="mb-2 flex items-center border-b-2 border-slate-100 pb-1.5 text-[1.05rem] font-extrabold text-[#0F1111]">
-                      <FaStar className="mr-2 text-pink-600" />
-                      Key Features
+                      <FaStar className="mr-2 text-pink-600" /> Key Features
                     </div>
                     <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-slate-600">
                       {currentProduct.attributes["Key Features"]}
@@ -771,40 +692,28 @@ function ProductDetail() {
                     Full Description
                   </div>
                   <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-slate-600">
-                    {currentProduct.description ||
-                      "No description provided by the merchant."}
+                    {currentProduct?.description || "No description provided by the merchant."}
                   </p>
                 </div>
 
                 {Object.keys(technicalAttributes).length > 0 ? (
                   <div className="overflow-hidden rounded-md border border-slate-300">
                     {Object.entries(technicalAttributes).map(([key, value]) => {
-                      const cleanKey = key
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (char) => char.toUpperCase())
-
+                      const cleanKey = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
                       return (
-                        <div
-                          key={key}
-                          className="flex border-b border-slate-300 bg-white px-4 py-3 last:border-b-0"
-                        >
-                          <span className="flex-1 text-[0.9rem] font-bold text-[#0F1111]">
-                            {cleanKey}
-                          </span>
-                          <span className="flex-[2] text-[0.9rem] font-medium text-slate-600">
-                            {String(value)}
-                          </span>
+                        <div key={key} className="flex border-b border-slate-300 bg-white px-4 py-3 last:border-b-0">
+                          <span className="flex-1 text-[0.9rem] font-bold text-[#0F1111]">{cleanKey}</span>
+                          <span className="flex-[2] text-[0.9rem] font-medium text-slate-600">{String(value)}</span>
                         </div>
                       )
                     })}
                   </div>
                 ) : null}
 
-                {currentProduct.attributes?.["What's in the Box"] ? (
+                {currentProduct?.attributes?.["What's in the Box"] ? (
                   <div>
                     <div className="mb-2 flex items-center border-b-2 border-slate-100 pb-1.5 text-[1.05rem] font-extrabold text-[#0F1111]">
-                      <FaBoxOpen className="mr-2 text-pink-600" />
-                      What's in the Box
+                      <FaBoxOpen className="mr-2 text-pink-600" /> What's in the Box
                     </div>
                     <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-slate-600">
                       {currentProduct.attributes["What's in the Box"]}
@@ -812,11 +721,10 @@ function ProductDetail() {
                   </div>
                 ) : null}
 
-                {currentProduct.attributes?.Warranty ? (
+                {currentProduct?.attributes?.Warranty ? (
                   <div>
                     <div className="mb-2 flex items-center border-b-2 border-slate-100 pb-1.5 text-[1.05rem] font-extrabold text-[#0F1111]">
-                      <FaShieldHalved className="mr-2 text-pink-600" />
-                      Warranty
+                      <FaShieldHalved className="mr-2 text-pink-600" /> Warranty
                     </div>
                     <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-slate-600">
                       {currentProduct.attributes.Warranty}
@@ -830,13 +738,11 @@ function ProductDetail() {
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-[0.5px] text-pink-600">
                 Retailer Information
               </div>
-
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
                 <div className="mb-2 flex items-center font-extrabold text-[#0F1111]">
                   <FaMapPin className="mr-2 text-pink-600" />
                   <span>{currentShop?.name || "Loading..."}</span>
                 </div>
-
                 <div className="flex items-start text-[0.9rem] text-slate-600">
                   <FaLocationDot className="mr-2 mt-1 shrink-0 text-slate-400" />
                   <span className="leading-6">{currentShop?.address || "..."}</span>
@@ -852,8 +758,7 @@ function ProductDetail() {
                     className="min-w-[140px] flex-1 rounded-lg bg-[#007185] px-4 py-3.5 text-[1.05rem] font-bold text-white transition hover:bg-[#005A6A] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                   >
                     <span className="inline-flex items-center gap-2">
-                      <FaPhone />
-                      {stockCount > 0 ? "Call Seller" : "Out of Stock"}
+                      <FaPhone /> {stockCount > 0 ? "Call Seller" : "Out of Stock"}
                     </span>
                   </button>
 
@@ -864,8 +769,7 @@ function ProductDetail() {
                     className="min-w-[140px] flex-1 rounded-lg bg-[#25D366] px-4 py-3.5 text-[1.05rem] font-bold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                   >
                     <span className="inline-flex items-center gap-2">
-                      <FaWhatsapp />
-                      {stockCount > 0 ? "WhatsApp" : "Out of Stock"}
+                      <FaWhatsapp /> {stockCount > 0 ? "WhatsApp" : "Out of Stock"}
                     </span>
                   </button>
                 </div>
@@ -873,9 +777,7 @@ function ProductDetail() {
 
               <button
                 type="button"
-                onClick={() =>
-                  currentShop?.id ? navigate(`/shop-detail?id=${currentShop.id}`) : null
-                }
+                onClick={() => (currentShop?.id ? navigate(`/shop-detail?id=${currentShop.id}`) : null)}
                 className="mt-3 w-full rounded-lg border border-slate-300 bg-transparent px-4 py-3 font-bold text-[#0F1111] transition hover:border-slate-400 hover:bg-white"
               >
                 View Full Shop Catalog
@@ -886,9 +788,7 @@ function ProductDetail() {
 
         {recommendations.length > 0 ? (
           <section className="mt-2 bg-white px-5 py-6 lg:mt-0 lg:rounded-lg lg:border lg:border-slate-300 lg:shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-            <h2 className="mb-4 text-[1.05rem] font-extrabold text-[#0F1111]">
-              Recommended For You
-            </h2>
+            <h2 className="mb-4 text-[1.05rem] font-extrabold text-[#0F1111]">Recommended For You</h2>
             <div className="flex gap-4 overflow-x-auto pb-3">
               {recommendations.map(renderMiniRecommendation)}
             </div>
@@ -896,6 +796,7 @@ function ProductDetail() {
         ) : null}
       </div>
 
+      {/* CHAT AI BUTTON & MODAL */}
       <div className="fixed bottom-5 right-5 z-[4000] flex flex-col items-center gap-1.5">
         <button
           type="button"
@@ -911,29 +812,19 @@ function ProductDetail() {
 
       <div
         className={`fixed bottom-[90px] right-5 z-[4000] flex h-[500px] w-[350px] flex-col overflow-hidden rounded-lg border border-slate-300 bg-white shadow-[0_10px_25px_rgba(0,0,0,0.15)] transition-all duration-300 max-[480px]:bottom-0 max-[480px]:left-0 max-[480px]:right-0 max-[480px]:h-[85vh] max-[480px]:w-full max-[480px]:rounded-b-none ${
-          chatOpen
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none translate-y-5 opacity-0"
+          chatOpen ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-5 opacity-0"
         }`}
       >
         <div className="flex items-center justify-between bg-[#131921] px-4 py-3 text-white">
           <span className="font-bold">
-            <FaRobot className="mr-2 inline" />
-            Product Concierge
+            <FaRobot className="mr-2 inline" /> Product Concierge
           </span>
-          <button
-            type="button"
-            onClick={toggleChat}
-            className="border-none bg-transparent text-[1.2rem] text-white"
-          >
+          <button type="button" onClick={toggleChat} className="border-none bg-transparent text-[1.2rem] text-white">
             <FaXmark />
           </button>
         </div>
 
-        <div
-          ref={chatBodyRef}
-          className="flex flex-1 flex-col gap-3 overflow-y-auto bg-slate-50 p-4"
-        >
+        <div ref={chatBodyRef} className="flex flex-1 flex-col gap-3 overflow-y-auto bg-slate-50 p-4">
           {chatMessages.map((message, index) => (
             <div
               key={`${message.role}-${index}`}
@@ -962,9 +853,7 @@ function ProductDetail() {
               type="text"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") sendMsg()
-              }}
+              onKeyDown={(e) => { if (e.key === "Enter") sendMsg() }}
               placeholder="Type a message..."
               className="flex-1 rounded border border-slate-400 px-3 py-2.5 text-[0.9rem] outline-none focus:border-pink-600 focus:shadow-[0_0_0_2px_rgba(219,39,119,0.1)]"
             />
@@ -976,10 +865,8 @@ function ProductDetail() {
               <FaPaperPlane />
             </button>
           </div>
-
           <div className="text-[0.75rem] text-slate-600">
-            AI can make mistakes. Please verify important details directly with
-            the merchant.
+            AI can make mistakes. Please verify important details directly with the merchant.
           </div>
         </div>
       </div>
@@ -990,16 +877,10 @@ function ProductDetail() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-pink-100">
               <FaShieldHalved className="text-[1.8rem] text-pink-600" />
             </div>
-
-            <h3 className="mb-3 text-[1.25rem] font-extrabold text-[#0F1111]">
-              Security Notice
-            </h3>
-
+            <h3 className="mb-3 text-[1.25rem] font-extrabold text-[#0F1111]">Security Notice</h3>
             <p className="text-[0.9rem] leading-6 text-slate-600">
-              To protect merchants from spam, your User ID will be securely
-              recorded. Please ensure this inquiry is business-related.
+              To protect merchants from spam, your User ID will be securely recorded. Please ensure this inquiry is business-related.
             </p>
-
             <div className="mt-6 flex gap-3">
               <button
                 type="button"

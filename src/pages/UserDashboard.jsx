@@ -87,7 +87,8 @@ function DashboardShimmer({ label = "Loading dashboard..." }) {
 function UserDashboard() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { loading, user, profile, suspended, error } = useAuthSession()
+  // 1. Hook into the global offline state
+  const { loading, user, profile, suspended, error, isOffline } = useAuthSession()
 
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "market")
   const [serviceView, setServiceView] = useState("menu")
@@ -311,6 +312,12 @@ function UserDashboard() {
       }
       setDashboardError("")
 
+      // 2. Offline check early return
+      if (!navigator.onLine && dashboardCache.data) {
+        setDashboardData(dashboardCache.data)
+        return
+      }
+
       const profileRes = await supabase
         .from("profiles")
         .select("*, cities(name)")
@@ -420,9 +427,12 @@ function UserDashboard() {
 
       setAndCacheDashboardData(nextData)
     } catch (err) {
-      setDashboardError(
-        err.message || "Could not load dashboard data. Please refresh."
-      )
+      // 3. Graceful Degradation: If fetch fails but we have cached data, suppress the ugly error.
+      if (dashboardCache.data || dashboardData?.profile) {
+        console.warn("Background sync failed. Using cached dashboard data.");
+      } else {
+        setDashboardError("Unable to fetch data. Please check your network connection.")
+      }
     } finally {
       setDashboardLoading(false)
     }
@@ -837,6 +847,7 @@ function UserDashboard() {
     }
   }
 
+  // 4. Fallback Shimmer ONLY on first absolute cold load when no cache exists
   if (!dashboardData.profile && (loading || dashboardLoading)) {
     return (
       <DashboardShimmer
@@ -873,13 +884,13 @@ function UserDashboard() {
       />
 
       <main className="content-body mx-auto w-full max-w-[1600px] pb-10">
+        
+        {/* We only show AuthNotification if it's NOT a data loading error. Data errors are now handled gracefully by the components. */}
         <AuthNotification
-          visible={Boolean(error || dashboardError || notice.visible)}
-          type={dashboardError || error ? "error" : notice.type}
-          title={dashboardError || error ? "Dashboard issue" : notice.title}
-          message={
-            dashboardError || error ? dashboardError || error : notice.message
-          }
+          visible={Boolean(error || notice.visible)}
+          type={error ? "error" : notice.type}
+          title={error ? "Session Issue" : notice.title}
+          message={error || notice.message}
         />
 
         {activeTab === "market" && (
@@ -888,6 +899,8 @@ function UserDashboard() {
             featuredShops={featuredShops}
             groupedShopsByArea={groupedShopsByArea}
             navigateCategory={navigateCategory}
+            loading={dashboardLoading} // Passed down to trigger Shimmers
+            error={dashboardError}     // Passed down to trigger Network error UI
           />
         )}
 
