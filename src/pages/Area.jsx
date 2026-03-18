@@ -11,11 +11,15 @@ import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerList } from "../components/common/Shimmers"
+import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 
 function Area() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const areaId = searchParams.get("id")
+
+  // Apply pull-to-refresh prevention
+  usePreventPullToRefresh()
 
   // 1. Unified Auth State
   const { user, loading: authLoading, isOffline } = useAuthSession()
@@ -146,13 +150,22 @@ function Area() {
           <div className="flex flex-col items-center justify-center rounded-lg border border-[#D5D9D9] bg-white px-5 py-16 text-center text-[#888C8C]">
             <FaTriangleExclamation className="mb-4 text-[2.5rem] text-[#C40000]" />
             <span className="font-semibold text-[#0F1111]">{dataError}</span>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="mt-4 text-base font-bold text-pink-600 transition hover:text-pink-700"
-            >
-              Tap to Retry
-            </button>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-[#0F1111] transition hover:bg-slate-50"
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-pink-600 transition hover:bg-slate-50"
+              >
+                Tap to Retry
+              </button>
+            </div>
           </div>
         ) : filteredShops.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-5 py-16 text-center text-[#888C8C]">
