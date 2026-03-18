@@ -13,9 +13,12 @@ import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerList } from "../components/common/Shimmers"
+import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 
 function ShopIndex() {
   const navigate = useNavigate()
+
+  usePreventPullToRefresh()
 
   // 1. Unified Auth State
   const { user, profile, loading: authLoading, isOffline } = useAuthSession()

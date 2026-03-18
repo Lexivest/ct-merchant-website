@@ -12,6 +12,7 @@ import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock, ShimmerCard } from "../components/common/Shimmers"
+import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function SearchShimmer() {
@@ -47,6 +48,8 @@ function Search() {
 
   const initialQuery = searchParams.get("q") || ""
   const [query, setQuery] = useState(initialQuery)
+
+  usePreventPullToRefresh()
 
   // 1. Unified Auth State
   const { user, profile, loading: authLoading, isOffline } = useAuthSession()
