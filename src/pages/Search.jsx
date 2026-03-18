@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -6,107 +6,90 @@ import {
   FaChevronRight,
   FaCircleCheck,
   FaMagnifyingGlass,
+  FaTriangleExclamation,
 } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
+import useAuthSession from "../hooks/useAuthSession"
+import useCachedFetch from "../hooks/useCachedFetch"
+import { ShimmerBlock, ShimmerCard } from "../components/common/Shimmers"
+
+// --- PROFESSIONAL SHIMMER COMPONENT ---
+function SearchShimmer() {
+  return (
+    <div className="flex flex-col items-center justify-center py-10 w-full max-w-[1600px] mx-auto px-5">
+      <div className="w-full mb-8">
+        <ShimmerBlock className="mb-4 h-8 w-64 rounded bg-slate-200" />
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
+          <ShimmerCard />
+          <ShimmerCard />
+          <ShimmerCard />
+        </div>
+      </div>
+      <div className="w-full">
+        <ShimmerBlock className="mb-4 h-8 w-64 rounded bg-slate-200" />
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-white p-2">
+              <ShimmerBlock className="aspect-square w-full rounded-md" />
+              <ShimmerBlock className="h-4 w-3/4 rounded" />
+              <ShimmerBlock className="h-4 w-1/2 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function Search() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
   const initialQuery = searchParams.get("q") || ""
-
-  const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState(initialQuery)
-  const [currentUser, setCurrentUser] = useState(null)
-  const [allShops, setAllShops] = useState([])
-  const [allProducts, setAllProducts] = useState([])
-  const [shopContextProducts, setShopContextProducts] = useState([])
 
-  useEffect(() => {
-    async function bootstrap() {
-      try {
-        setLoading(true)
+  // 1. Unified Auth State
+  const { user, profile, loading: authLoading, isOffline } = useAuthSession()
 
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
+  // 2. Extracted Data Fetching Logic for Hook
+  const fetchSearchData = async () => {
+    if (!profile?.city_id) return { shops: [], products: [] }
 
-        if (!session?.user) {
-          navigate("/", { replace: true })
-          return
-        }
+    const { data: shops } = await supabase
+      .from("shops")
+      .select("*")
+      .eq("city_id", profile.city_id)
+      .order("name", { ascending: true })
 
-        setCurrentUser(session.user)
+    const safeShops = Array.isArray(shops) ? shops : []
+    const shopIds = safeShops.map((shop) => shop.id)
 
-        const cacheKey = Object.keys(localStorage).find((key) =>
-          key.startsWith("ctm_dashboard_")
-        )
+    let safeProducts = []
+    if (shopIds.length > 0) {
+      const { data: products } = await supabase
+        .from("products")
+        .select("*")
+        .in("shop_id", shopIds)
+        .eq("is_available", true)
 
-        if (cacheKey) {
-          try {
-            const cached = JSON.parse(localStorage.getItem(cacheKey) || "{}")
-            const cachedShops = Array.isArray(cached.shops) ? cached.shops : []
-            const cachedProducts = Array.isArray(cached.products)
-              ? cached.products
-              : []
-
-            setAllShops(cachedShops)
-            setAllProducts(cachedProducts)
-            setShopContextProducts(cachedProducts)
-            setLoading(false)
-            return
-          } catch {
-            // fall through to database
-          }
-        }
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("city_id")
-          .eq("id", session.user.id)
-          .single()
-
-        if (!profile?.city_id) {
-          setAllShops([])
-          setAllProducts([])
-          setShopContextProducts([])
-          setLoading(false)
-          return
-        }
-
-        const { data: shops } = await supabase
-          .from("shops")
-          .select("*")
-          .eq("city_id", profile.city_id)
-          .order("name", { ascending: true })
-
-        const safeShops = Array.isArray(shops) ? shops : []
-        setAllShops(safeShops)
-
-        const shopIds = safeShops.map((shop) => shop.id)
-
-        if (shopIds.length > 0) {
-          const { data: products } = await supabase
-            .from("products")
-            .select("*")
-            .in("shop_id", shopIds)
-            .eq("is_available", true)
-
-          const safeProducts = Array.isArray(products) ? products : []
-          setAllProducts(safeProducts)
-          setShopContextProducts(safeProducts)
-        } else {
-          setAllProducts([])
-          setShopContextProducts([])
-        }
-      } finally {
-        setLoading(false)
-      }
+      safeProducts = Array.isArray(products) ? products : []
     }
 
-    bootstrap()
-  }, [navigate])
+    return { shops: safeShops, products: safeProducts }
+  }
 
+  // 3. Smart Caching Hook
+  const cacheKey = `search_data_city_${profile?.city_id || 'none'}`
+  const { data, loading: dataLoading, error: dataError } = useCachedFetch(
+    cacheKey,
+    fetchSearchData,
+    { dependencies: [profile?.city_id], ttl: 1000 * 60 * 30 } // Cache search data for 30 minutes
+  )
+
+  const allShops = data?.shops || []
+  const allProducts = data?.products || []
+
+  // 4. Memoized Filtering
   const normalizedQuery = useMemo(
     () => String(query || "").trim().toLowerCase(),
     [query]
@@ -157,11 +140,11 @@ function Search() {
   function runSearch() {
     const trimmed = query.trim()
     if (!trimmed) return
-    navigate(`/search?q=${encodeURIComponent(trimmed)}`)
+    navigate(`/search?q=${encodeURIComponent(trimmed)}`, { replace: true })
   }
 
   function buildShopCard(shop) {
-    const products = shopContextProducts
+    const shopProducts = allProducts
       .filter(
         (item) =>
           item.shop_id === shop.id &&
@@ -171,7 +154,7 @@ function Search() {
       .slice(0, 4)
 
     const cells = Array.from({ length: 4 }).map((_, index) => {
-      const item = products[index]
+      const item = shopProducts[index]
 
       if (!item) {
         return (
@@ -323,10 +306,24 @@ function Search() {
     )
   }
 
+  // Gatekeeper Redirect
+  if (!authLoading && !user) {
+    navigate("/", { replace: true })
+    return null
+  }
+
   const hasResults = matchedShops.length > 0 || matchedProducts.length > 0
 
   return (
     <div className="min-h-screen bg-[#E3E6E6]">
+      {/* Offline Banner */}
+      {isOffline && (
+        <div className="z-[1001] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200">
+          <i className="fa-solid fa-wifi-slash mr-2"></i>
+          You are offline. Showing cached search results.
+        </div>
+      )}
+
       <header className="sticky top-0 z-[1000] bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <div className="mx-auto flex w-full max-w-[1600px] items-center gap-4 px-4 py-[10px]">
           <button
@@ -360,12 +357,19 @@ function Search() {
       </header>
 
       <main className="mx-auto w-full max-w-[1600px] px-5 py-6">
-        {loading ? (
+        {authLoading || (dataLoading && !data) ? (
+          <SearchShimmer />
+        ) : dataError && !data ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="mb-4 h-11 w-11 animate-spin rounded-full border-4 border-pink-100 border-t-pink-600" />
-            <span className="font-semibold text-[#0F1111]">
-              Searching repository...
-            </span>
+            <FaTriangleExclamation className="mb-4 text-[2.5rem] text-red-700" />
+            <span className="font-semibold text-[#0F1111]">{dataError}</span>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-4 border-none bg-transparent text-base font-bold text-pink-600"
+            >
+              Tap to Retry
+            </button>
           </div>
         ) : (
           <>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -10,67 +10,47 @@ import {
   FaTriangleExclamation,
 } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
+import useAuthSession from "../hooks/useAuthSession"
+import useCachedFetch from "../hooks/useCachedFetch"
+import { ShimmerList } from "../components/common/Shimmers"
 
 function ShopIndex() {
   const navigate = useNavigate()
 
-  const [loading, setLoading] = useState(true)
-  const [errorMessage, setErrorMessage] = useState("")
-  const [headerTitle, setHeaderTitle] = useState("Shop Index")
+  // 1. Unified Auth State
+  const { user, profile, loading: authLoading, isOffline } = useAuthSession()
   const [searchInput, setSearchInput] = useState("")
-  const [allShops, setAllShops] = useState([])
 
-  useEffect(() => {
-    async function fetchIndex() {
-      try {
-        setLoading(true)
-        setErrorMessage("")
-
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (!session?.user) {
-          navigate("/", { replace: true })
-          return
-        }
-
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("city_id, cities(name)")
-          .eq("id", session.user.id)
-          .single()
-
-        if (profileError) throw profileError
-
-        if (!profile?.city_id) {
-          setErrorMessage("City data not found. Please complete your profile.")
-          return
-        }
-
-        setHeaderTitle(`${profile.cities?.name || "City"} Directory`)
-
-        const { data: shops, error: shopsError } = await supabase
-          .from("shops")
-          .select("*")
-          .eq("city_id", profile.city_id)
-          .order("name", { ascending: true })
-
-        if (shopsError) throw shopsError
-
-        setAllShops(Array.isArray(shops) ? shops : [])
-      } catch (error) {
-        console.error(error)
-        setErrorMessage(error.message || "Failed to load directory.")
-      } finally {
-        setLoading(false)
-      }
+  // 2. Extracted Data Fetching Logic for Hook
+  const fetchDirectory = async () => {
+    if (!profile?.city_id) {
+      throw new Error("City data not found. Please complete your profile.")
     }
 
-    fetchIndex()
-  }, [navigate])
+    const { data: shops, error: shopsError } = await supabase
+      .from("shops")
+      .select("*")
+      .eq("city_id", profile.city_id)
+      .order("name", { ascending: true })
 
+    if (shopsError) throw shopsError
+
+    return shops || []
+  }
+
+  // 3. Smart Caching Hook
+  const cacheKey = `directory_city_${profile?.city_id || 'none'}`
+  const { data: allShops, loading: dataLoading, error: dataError } = useCachedFetch(
+    cacheKey,
+    fetchDirectory,
+    { dependencies: [profile?.city_id], ttl: 1000 * 60 * 30 } // Cache directory for 30 minutes
+  )
+
+  const headerTitle = profile?.cities?.name ? `${profile.cities.name} Directory` : "Shop Directory"
+
+  // 4. Memoized Search Filtering
   const filteredShops = useMemo(() => {
+    if (!allShops) return []
     const query = String(searchInput || "").trim().toLowerCase()
 
     if (!query) return allShops
@@ -104,8 +84,22 @@ function ShopIndex() {
     return rawId.includes("-") ? rawId.split("-").pop() : rawId
   }
 
+  // Redirect if not authenticated (Gatekeeper backup)
+  if (!authLoading && !user) {
+    navigate("/", { replace: true })
+    return null
+  }
+
   return (
     <div className="flex h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
+      {/* Offline Banner */}
+      {isOffline && (
+        <div className="z-[60] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200">
+          <i className="fa-solid fa-wifi-slash mr-2"></i>
+          You are offline. Showing cached directory.
+        </div>
+      )}
+
       <div className="sticky top-0 z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <header className="mx-auto flex w-full max-w-[800px] items-center gap-4 px-4 py-3 text-white">
           <button
@@ -142,15 +136,14 @@ function ShopIndex() {
       </div>
 
       <div className="mx-auto w-full max-w-[800px] flex-1 overflow-y-auto px-4 py-5">
-        {loading ? (
-          <div className="flex h-full flex-col items-center justify-center px-5 text-center text-slate-400">
-            <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-pink-100 border-t-pink-600" />
-            <span className="font-semibold">Loading Directory...</span>
+        {authLoading || (dataLoading && !allShops) ? (
+          <div className="pt-2">
+            <ShimmerList />
           </div>
-        ) : errorMessage ? (
+        ) : dataError && !allShops ? (
           <div className="flex h-full flex-col items-center justify-center px-5 text-center">
             <FaTriangleExclamation className="mb-4 text-[2.5rem] text-red-700" />
-            <span className="font-semibold text-[#0F1111]">{errorMessage}</span>
+            <span className="font-semibold text-[#0F1111]">{dataError}</span>
             <button
               type="button"
               onClick={() => window.location.reload()}

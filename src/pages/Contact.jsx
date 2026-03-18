@@ -2,9 +2,13 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 import { supabase } from "../lib/supabase"
+import useAuthSession from "../hooks/useAuthSession"
 
 function Contact() {
   const navigate = useNavigate()
+  
+  // 1. Hook into our global offline detection
+  const { isOffline } = useAuthSession()
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -34,6 +38,15 @@ function Contact() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+
+    // 2. Proactive Offline Guard
+    if (isOffline) {
+      setStatus({
+        type: "error",
+        message: "Network Offline: Please connect to the internet to send a message.",
+      })
+      return
+    }
 
     const emailPattern = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
 
@@ -84,11 +97,19 @@ function Contact() {
 
   return (
     <MainLayout>
+      {/* 3. Global Offline Banner */}
+      {isOffline && (
+        <div className="z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200 flex items-center justify-center gap-2">
+          <i className="fa-solid fa-wifi-slash"></i>
+          You are currently offline. Reconnect to send a message.
+        </div>
+      )}
+      
       <section className="bg-pink-50 px-4 py-5 md:py-6">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">
             <div className="rounded-[24px] border border-pink-100 bg-white">
-              <div className="border-b border-pink-100 bg-slate-950 px-5 py-4 text-white md:px-6">
+              <div className="border-b border-pink-100 bg-slate-950 px-5 py-4 text-white md:px-6 rounded-t-[24px]">
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
@@ -199,7 +220,7 @@ function Contact() {
                               value={formData.full_name}
                               onChange={handleChange}
                               required
-                              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-pink-500 focus:bg-white"
+                              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-pink-500 focus:bg-white focus:ring-2 focus:ring-pink-100"
                             />
                           </div>
 
@@ -215,7 +236,7 @@ function Contact() {
                               required
                               pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$"
                               title="Please enter a valid email address (e.g., name@example.com)"
-                              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-pink-500 focus:bg-white"
+                              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-pink-500 focus:bg-white focus:ring-2 focus:ring-pink-100"
                             />
                           </div>
                         </div>
@@ -228,7 +249,7 @@ function Contact() {
                             name="subject"
                             value={formData.subject}
                             onChange={handleChange}
-                            className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-pink-500 focus:bg-white"
+                            className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-2 focus:ring-pink-100"
                           >
                             <option value="General Inquiry">General Inquiry</option>
                             <option value="Merchant Support">Merchant Support</option>
@@ -246,14 +267,15 @@ function Contact() {
                             onChange={handleChange}
                             required
                             rows="5"
-                            className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-pink-500 focus:bg-white"
+                            className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-pink-500 focus:bg-white focus:ring-2 focus:ring-pink-100"
                           />
                         </div>
 
+                        {/* 4. Disable Button while Offline */}
                         <button
                           type="submit"
-                          disabled={isSubmitting}
-                          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-pink-600 px-6 py-3.5 text-sm font-extrabold text-white shadow-[0_8px_20px_rgba(219,39,119,0.28)] transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-70"
+                          disabled={isSubmitting || isOffline}
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-pink-600 px-6 py-3.5 text-sm font-extrabold text-white shadow-[0_8px_20px_rgba(219,39,119,0.28)] transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-70 disabled:shadow-none"
                         >
                           <span>{isSubmitting ? "Sending..." : "Send Message"}</span>
                           <span>{isSubmitting ? "⟳" : "➜"}</span>
@@ -406,7 +428,7 @@ function Contact() {
                           href="https://www.google.com/maps/search/?api=1&query=10.457,7.472"
                           target="_blank"
                           rel="noreferrer"
-                          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-extrabold text-slate-900 transition hover:bg-slate-50"
+                          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-extrabold text-slate-900 transition hover:bg-slate-50 hover:border-slate-400"
                         >
                           <span>📍</span>
                           <span>Navigate to Office</span>
@@ -428,7 +450,7 @@ function Contact() {
                         <div className="mt-4">
                           <Link
                             to="/services"
-                            className="inline-flex items-center gap-2 text-sm font-extrabold text-pink-600 transition hover:text-pink-700"
+                            className="inline-flex items-center gap-2 text-sm font-extrabold text-pink-600 transition hover:text-pink-700 hover:underline"
                           >
                             <span>Explore Platform Services</span>
                             <span>→</span>

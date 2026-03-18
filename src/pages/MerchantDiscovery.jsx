@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -10,53 +10,67 @@ import {
 } from "react-icons/fa6"
 import { FaWhatsapp } from "react-icons/fa"
 import { supabase } from "../lib/supabase"
+import useCachedFetch from "../hooks/useCachedFetch"
+import { ShimmerBlock } from "../components/common/Shimmers"
+
+// --- PROFESSIONAL SHIMMER COMPONENT ---
+function MerchantDiscoveryShimmer() {
+  return (
+    <div className="w-full max-w-[420px] overflow-hidden rounded-lg border border-[#D5D9D9] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+      <ShimmerBlock className="h-[100px] w-full rounded-none" />
+      <div className="-mt-10 px-6 pb-6 flex flex-col items-center text-center">
+        <ShimmerBlock className="relative z-10 mb-4 h-20 w-20 rounded-lg border-[3px] border-white shadow" />
+        <ShimmerBlock className="mb-2 h-8 w-3/4 rounded" />
+        <ShimmerBlock className="mb-6 h-4 w-1/2 rounded" />
+        <ShimmerBlock className="mb-6 h-12 w-full rounded" />
+        <div className="mb-6 flex w-full gap-3">
+          <ShimmerBlock className="h-12 flex-1 rounded-md" />
+          <ShimmerBlock className="h-12 flex-1 rounded-md" />
+        </div>
+        <ShimmerBlock className="h-20 w-full rounded-md" />
+      </div>
+    </div>
+  )
+}
 
 function MerchantDiscovery() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const merchantId = searchParams.get("merchantId")?.trim() || ""
 
-  const [loading, setLoading] = useState(true)
-  const [errorMessage, setErrorMessage] = useState("")
-  const [shop, setShop] = useState(null)
-  const [profile, setProfile] = useState(null)
-
-  useEffect(() => {
-    async function fetchMerchant() {
-      if (!merchantId) {
-        setErrorMessage("No Merchant ID provided.")
-        setLoading(false)
-        return
-      }
-
-      try {
-        setLoading(true)
-        setErrorMessage("")
-
-        const { data, error } = await supabase.functions.invoke("repo-search", {
-          body: { merchantId },
-        })
-
-        if (error) {
-          throw new Error("Service unavailable. Please try again.")
-        }
-
-        if (data?.error || data?.not_found || !data?.shop) {
-          throw new Error("Merchant not found in repository.")
-        }
-
-        setShop(data.shop)
-        setProfile(data.profile || null)
-      } catch (err) {
-        setErrorMessage(err.message || "An unexpected error occurred.")
-      } finally {
-        setLoading(false)
-      }
+  // 1. Data Fetching Logic for Edge Function
+  const fetchMerchant = async () => {
+    if (!merchantId) {
+      throw new Error("No Merchant ID provided.")
     }
 
-    fetchMerchant()
-  }, [merchantId])
+    const { data, error } = await supabase.functions.invoke("repo-search", {
+      body: { merchantId },
+    })
 
+    if (error) {
+      throw new Error("Service unavailable. Please try again.")
+    }
+
+    if (data?.error || data?.not_found || !data?.shop) {
+      throw new Error("Merchant not found in repository.")
+    }
+
+    return data
+  }
+
+  // 2. Smart Caching Hook
+  const cacheKey = `merchant_discovery_${merchantId || 'empty'}`
+  const { data, loading, error: dataError, isOffline } = useCachedFetch(
+    cacheKey,
+    fetchMerchant,
+    { dependencies: [merchantId], ttl: 1000 * 60 * 60 } // Cache results for 1 hour
+  )
+
+  const shop = data?.shop || null
+  const profile = data?.profile || null
+
+  // Helper Functions
   function getLogo() {
     if (!shop) return ""
     return (
@@ -86,7 +100,15 @@ function MerchantDiscovery() {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6]">
-      <header className="sticky top-0 z-[100] w-full bg-[#131921] text-white shadow">
+      {/* Offline Banner */}
+      {isOffline && (
+        <div className="sticky top-0 z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200">
+          <i className="fa-solid fa-wifi-slash mr-2"></i>
+          You are offline. Showing cached merchant details.
+        </div>
+      )}
+
+      <header className={`sticky ${isOffline ? 'top-[36px]' : 'top-0'} z-[100] w-full bg-[#131921] text-white shadow`}>
         <div className="mx-auto flex w-full max-w-[600px] items-center gap-4 px-4 py-3">
           <button
             type="button"
@@ -103,20 +125,15 @@ function MerchantDiscovery() {
       </header>
 
       <main className="flex justify-center px-5 py-10">
-        {loading ? (
-          <div className="w-full max-w-[420px] rounded-lg border border-[#D5D9D9] bg-white px-5 py-16 text-center shadow-sm">
-            <div className="mx-auto mb-5 h-11 w-11 animate-spin rounded-full border-4 border-pink-100 border-t-pink-600" />
-            <h3 className="font-extrabold text-[#0F1111]">
-              Scanning Repository...
-            </h3>
-          </div>
-        ) : errorMessage ? (
+        {loading && !data ? (
+          <MerchantDiscoveryShimmer />
+        ) : dataError && !data ? (
           <div className="w-full max-w-[420px] rounded-lg border border-[#D5D9D9] bg-white px-5 py-16 text-center shadow-sm">
             <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-700" />
-            <h3 className="mb-2 font-extrabold text-[#0F1111]">
+            <h3 className="mb-2 text-xl font-extrabold text-[#0F1111]">
               Merchant Not Found
             </h3>
-            <p className="text-[0.95rem] text-slate-600">{errorMessage}</p>
+            <p className="text-[0.95rem] text-slate-600">{dataError}</p>
             <button
               type="button"
               onClick={handleBack}

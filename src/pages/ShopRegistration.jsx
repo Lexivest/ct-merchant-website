@@ -5,26 +5,25 @@ import {
   FaArrowLeft,
   FaArrowRight,
   FaBriefcase,
-  FaBuilding,
   FaCheck,
-  FaCircleExclamation,
-  FaCircleNotch,
   FaCity,
   FaFileContract,
   FaGlobe,
-  FaIdCard,
   FaLocationDot,
   FaMapPin,
   FaPhone,
   FaShieldHalved,
   FaShop,
   FaStore,
+  FaTriangleExclamation,
 } from "react-icons/fa6"
 import MainLayout from "../layouts/MainLayout"
 import AuthButton from "../components/auth/AuthButton"
 import AuthNotification from "../components/auth/AuthNotification"
 import useAuthSession from "../hooks/useAuthSession"
+import useCachedFetch from "../hooks/useCachedFetch"
 import { supabase } from "../lib/supabase"
+import { ShimmerBlock } from "../components/common/Shimmers"
 
 const MAX_FILE_SIZE = 512000
 const DESC_MIN_WORDS = 30
@@ -60,17 +59,91 @@ function validUrl(value) {
   }
 }
 
+// --- PROFESSIONAL SHIMMER COMPONENT ---
+function ShopRegistrationShimmer() {
+  return (
+    <MainLayout>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-pink-100 to-purple-100 px-4 py-6">
+        <div className="mx-auto max-w-3xl">
+          <div className="mb-6 flex items-center gap-4">
+            <ShimmerBlock className="h-12 w-12 rounded-2xl" />
+            <div>
+              <ShimmerBlock className="mb-2 h-8 w-48 rounded" />
+              <ShimmerBlock className="h-4 w-64 rounded" />
+            </div>
+          </div>
+          <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-2xl md:p-8">
+            <ShimmerBlock className="mb-6 h-6 w-48 rounded" />
+            <ShimmerBlock className="mb-8 h-[140px] w-full rounded-2xl" />
+            <ShimmerBlock className="mb-6 h-6 w-48 rounded" />
+            <ShimmerBlock className="mb-5 h-14 w-full rounded-2xl" />
+            <div className="mb-5 grid grid-cols-2 gap-5">
+              <ShimmerBlock className="h-14 w-full rounded-2xl" />
+              <ShimmerBlock className="h-14 w-full rounded-2xl" />
+            </div>
+            <ShimmerBlock className="mb-8 h-[150px] w-full rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    </MainLayout>
+  )
+}
+
 function ShopRegistration() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const shopId = searchParams.get("id")
   const isEdit = Boolean(shopId)
 
-  const { loading, user, profile, profileComplete, suspended } = useAuthSession()
+  // 1. Unified Auth State (Suspended/Complete logic is handled by ProtectedDashboardRoute)
+  const { loading: authLoading, user, profile, isOffline } = useAuthSession()
 
-  const [bootLoading, setBootLoading] = useState(true)
+  // 2. Data Fetching Logic for Hook
+  const fetchFormData = async () => {
+    if (!profile?.city_id) throw new Error("Profile not fully configured.")
+
+    const tasks = [
+      supabase.from("categories").select("name").order("name"),
+      supabase.from("areas").select("id, name").eq("city_id", profile.city_id).order("name"),
+    ]
+
+    let existingData = null
+
+    if (isEdit && shopId) {
+      tasks.push(
+        supabase.from("shops").select("*").eq("id", shopId).maybeSingle()
+      )
+    }
+
+    const results = await Promise.all(tasks)
+    
+    if (results[0].error) throw results[0].error
+    if (results[1].error) throw results[1].error
+
+    if (isEdit && shopId) {
+      if (results[2].error) throw results[2].error
+      existingData = results[2].data
+      if (!existingData) throw new Error("Shop not found.")
+    }
+
+    return {
+      categories: results[0].data || [],
+      areas: results[1].data || [],
+      shop: existingData,
+    }
+  }
+
+  // 3. Smart Caching Hook
+  const cacheKey = isEdit ? `shop_reg_edit_${shopId}` : `shop_reg_new_${profile?.city_id}`
+  const { data, loading: dataLoading, error: dataError } = useCachedFetch(
+    cacheKey,
+    fetchFormData,
+    { dependencies: [profile?.city_id, shopId, isEdit], ttl: 1000 * 60 * 60 } // Cache form data for 1 hour
+  )
+
   const [submitting, setSubmitting] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
+  const [hasHydrated, setHasHydrated] = useState(false)
 
   const [categories, setCategories] = useState([])
   const [areas, setAreas] = useState([])
@@ -128,118 +201,67 @@ function ShopRegistration() {
   const descWords = useMemo(() => countWords(form.desc), [form.desc])
   const addressWords = useMemo(() => countWords(form.address), [form.address])
 
+  // 4. Hydrate Form State ONCE when data arrives
   useEffect(() => {
-    if (loading) return
+    if (data && !hasHydrated) {
+      setCategories(data.categories)
+      setAreas(data.areas)
 
-    if (!user) {
-      navigate("/", { replace: true })
-      return
-    }
-
-    if (suspended) {
-      setNotice({
-        visible: true,
-        type: "error",
-        title: "Access restricted",
-        message:
-          "Your account is restricted. You cannot register or edit a shop.",
-      })
-      setBootLoading(false)
-      return
-    }
-
-    if (!profileComplete || !profile?.city_id) {
-      setNotice({
-        visible: true,
-        type: "error",
-        title: "Profile incomplete",
-        message: "Complete your account profile before registering a shop.",
-      })
-      setBootLoading(false)
-      return
-    }
-
-    initialize()
-  }, [loading, user, suspended, profileComplete, profile])
-
-  async function initialize() {
-    try {
-      setBootLoading(true)
-
-      const [categoriesRes, areasRes] = await Promise.all([
-        supabase.from("categories").select("name").order("name"),
-        supabase
-          .from("areas")
-          .select("id, name")
-          .eq("city_id", profile.city_id)
-          .order("name"),
-      ])
-
-      if (categoriesRes.error) throw categoriesRes.error
-      if (areasRes.error) throw areasRes.error
-
-      setCategories(categoriesRes.data || [])
-      setAreas(areasRes.data || [])
-
-      if (isEdit) {
-        const { data, error } = await supabase
-          .from("shops")
-          .select("*")
-          .eq("id", shopId)
-          .maybeSingle()
-
-        if (error) throw error
-        if (!data) throw new Error("Shop not found.")
-
-        setExistingShop(data)
+      if (isEdit && data.shop) {
+        const s = data.shop
+        setExistingShop(s)
         setForm({
-          name: data.name || "",
-          businessType: data.business_type || "Individual/Enterprise",
-          category: data.category || "",
-          desc: data.description || "",
-          areaId: data.area_id ? String(data.area_id) : "",
-          address: data.address || "",
-          lat: data.latitude ?? "",
-          lng: data.longitude ?? "",
-          cacNumber: data.cac_number || "",
-          idType: data.id_type || "National ID Card",
-          idNumber: data.id_number || "",
-          website: data.website_url || "",
-          phone: data.phone || "",
-          whatsapp: data.whatsapp || "",
-          facebook: data.facebook_url || "",
-          instagram: data.instagram_url || "",
-          twitter: data.twitter_url || "",
-          tiktok: data.tiktok_url || "",
+          name: s.name || "",
+          businessType: s.business_type || "Individual/Enterprise",
+          category: s.category || "",
+          desc: s.description || "",
+          areaId: s.area_id ? String(s.area_id) : "",
+          address: s.address || "",
+          lat: s.latitude ?? "",
+          lng: s.longitude ?? "",
+          cacNumber: s.cac_number || "",
+          idType: s.id_type || "National ID Card",
+          idNumber: s.id_number || "",
+          website: s.website_url || "",
+          phone: s.phone || "",
+          whatsapp: s.whatsapp || "",
+          facebook: s.facebook_url || "",
+          instagram: s.instagram_url || "",
+          twitter: s.twitter_url || "",
+          tiktok: s.tiktok_url || "",
         })
 
         setPreviews({
-          storefront: data.storefront_url || "",
-          idCard: data.id_card_url || "",
-          cac: data.cac_certificate_url || "",
-          logo: data.image_url || "",
+          storefront: s.storefront_url || "",
+          idCard: s.id_card_url || "",
+          cac: s.cac_certificate_url || "",
+          logo: s.image_url || "",
         })
 
-        if (data.status === "rejected" && data.rejection_reason) {
+        if (s.status === "rejected" && s.rejection_reason) {
           setNotice({
             visible: true,
             type: "warning",
             title: "Correction required",
-            message: data.rejection_reason,
+            message: s.rejection_reason,
           })
         }
       }
-    } catch (error) {
+      setHasHydrated(true)
+    }
+  }, [data, hasHydrated, isEdit])
+
+  // Show data loading error
+  useEffect(() => {
+    if (dataError) {
       setNotice({
         visible: true,
         type: "error",
         title: "Could not load form",
-        message: error.message || "Please try again.",
+        message: dataError,
       })
-    } finally {
-      setBootLoading(false)
     }
-  }
+  }, [dataError])
 
   function validateForm() {
     if (!form.name.trim() || form.name.trim().length < 3) {
@@ -429,6 +451,17 @@ function ShopRegistration() {
   }
 
   async function submitApplication() {
+    if (isOffline) {
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Network Offline",
+        message: "You cannot submit an application while offline.",
+      })
+      setReviewOpen(false)
+      return
+    }
+
     try {
       setSubmitting(true)
 
@@ -517,6 +550,11 @@ function ShopRegistration() {
 
       setReviewOpen(false)
 
+      // Invalidate dashboard cache manually so new shop shows up
+      try {
+        localStorage.removeItem("ctm_dashboard_cache")
+      } catch(e) {}
+
       setTimeout(() => {
         navigate("/user-dashboard")
       }, 1200)
@@ -533,15 +571,25 @@ function ShopRegistration() {
     }
   }
 
-  if (loading || bootLoading) {
+  // --- RENDERING LOGIC ---
+  if (authLoading || (dataLoading && !data)) {
+    return <ShopRegistrationShimmer />
+  }
+
+  if (dataError && !data) {
     return (
       <MainLayout>
         <div className="flex min-h-[70vh] items-center justify-center bg-pink-50 px-4">
           <div className="rounded-[28px] border border-pink-100 bg-white px-8 py-10 text-center shadow-xl">
-            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-pink-200 border-t-pink-600" />
-            <p className="text-sm font-extrabold text-slate-700">
-              Loading registration form...
-            </p>
+            <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-600" />
+            <h3 className="mb-2 text-xl font-extrabold text-slate-800">Connection Error</h3>
+            <p className="text-sm font-semibold text-slate-600 mb-6">{dataError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="rounded-lg bg-pink-600 px-6 py-2 font-bold text-white transition hover:bg-pink-700"
+            >
+              Try Again
+            </button>
           </div>
         </div>
       </MainLayout>
@@ -554,6 +602,14 @@ function ShopRegistration() {
     <MainLayout>
       <section className="min-h-screen bg-gradient-to-br from-indigo-100 via-pink-100 to-purple-100 px-4 py-6">
         <div className="mx-auto max-w-3xl">
+          {/* Offline Notice */}
+          {isOffline && (
+            <div className="mb-4 rounded-xl bg-amber-100 px-4 py-3 text-sm font-bold text-amber-800 shadow-sm border border-amber-200 flex items-center gap-2">
+              <i className="fa-solid fa-wifi-slash"></i>
+              You are currently offline. You can view the form, but cannot submit until reconnected.
+            </div>
+          )}
+
           <div className="mb-6 flex items-center gap-4">
             <button
               type="button"
@@ -986,13 +1042,7 @@ function FieldBlock({ label, children }) {
   )
 }
 
-function InputWithIcon({
-  icon,
-  value,
-  onChange,
-  placeholder,
-  disabled = false,
-}) {
+function InputWithIcon({ icon, value, onChange, placeholder, disabled = false }) {
   return (
     <div className="relative">
       <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">

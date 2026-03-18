@@ -38,6 +38,9 @@ const phrases = [
 function Home() {
   const navigate = useNavigate()
 
+  // --- IMAGE PRELOAD STATE ---
+  const [bannerLoaded, setBannerLoaded] = useState(false)
+
   const [phraseIndex, setPhraseIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -142,6 +145,7 @@ function Home() {
     }, 300)
 
     return () => clearInterval(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const currentPhraseText = useMemo(
@@ -169,17 +173,23 @@ function Home() {
   async function handleEmailLogin(event) {
     event.preventDefault()
 
+    // Offline Guard
+    if (!navigator.onLine) {
+      setLoginNotice({
+        visible: true,
+        type: "error",
+        title: "Network Offline",
+        message: "Please connect to the internet to sign in.",
+      })
+      return
+    }
+
     const errors = validateLogin()
     if (Object.keys(errors).length > 0) return
 
     try {
       setLoginLoading(true)
-      setLoginNotice({
-        visible: false,
-        type: "info",
-        title: "",
-        message: "",
-      })
+      setLoginNotice({ visible: false, type: "info", title: "", message: "" })
 
       const result = await signInWithPassword({
         email: loginForm.email,
@@ -203,9 +213,7 @@ function Home() {
 
       if (currentProfile.data?.is_suspended === true) {
         await signOutUser()
-        throw new Error(
-          "Your account has been restricted. Please contact support."
-        )
+        throw new Error("Your account has been restricted. Please contact support.")
       }
 
       await updateLastActiveIp(signedInUser.id, result.ipData.ip)
@@ -222,9 +230,7 @@ function Home() {
         visible: true,
         type: "error",
         title: "Login failed",
-        message:
-          error.message ||
-          "We could not sign you in. Check your connection and try again.",
+        message: error.message || "We could not sign you in. Check your connection and try again.",
       })
     } finally {
       setLoginLoading(false)
@@ -232,6 +238,16 @@ function Home() {
   }
 
   async function handleGoogleCredentialResponse(response) {
+    if (!navigator.onLine) {
+      setLoginNotice({
+        visible: true,
+        type: "error",
+        title: "Network Offline",
+        message: "Please connect to the internet to sign in.",
+      })
+      return
+    }
+
     if (!response?.credential) {
       setLoginNotice({
         visible: true,
@@ -244,12 +260,7 @@ function Home() {
 
     try {
       setGoogleLoading(true)
-      setLoginNotice({
-        visible: false,
-        type: "info",
-        title: "",
-        message: "",
-      })
+      setLoginNotice({ visible: false, type: "info", title: "", message: "" })
 
       const result = await signInWithGoogleIdToken(response.credential)
       const signedInUser = result.auth?.user || result.auth?.session?.user
@@ -270,9 +281,7 @@ function Home() {
 
       if (currentProfile.data?.is_suspended === true) {
         await signOutUser()
-        throw new Error(
-          "Your account has been restricted. Please contact support."
-        )
+        throw new Error("Your account has been restricted. Please contact support.")
       }
 
       await updateLastActiveIp(signedInUser.id, result.ipData.ip)
@@ -297,33 +306,31 @@ function Home() {
   }
 
   function openResetFlow() {
-    setResetNotice({
-      visible: false,
-      type: "info",
-      title: "",
-      message: "",
-    })
+    setResetNotice({ visible: false, type: "info", title: "", message: "" })
     setResetEmailErrors({})
     setResetPasswordErrors({})
-    setResetEmailForm({
-      email: loginForm.email || "",
-    })
+    setResetEmailForm({ email: loginForm.email || "" })
     setResetEmailOpen(true)
   }
 
   async function handleSendResetCode() {
+    if (!navigator.onLine) {
+      setResetNotice({
+        visible: true,
+        type: "error",
+        title: "Network Offline",
+        message: "Please connect to the internet to reset your password.",
+      })
+      return
+    }
+
     const errors = validateResetRequestForm(resetEmailForm)
     setResetEmailErrors(errors)
     if (Object.keys(errors).length > 0) return
 
     try {
       setSendingReset(true)
-      setResetNotice({
-        visible: false,
-        type: "info",
-        title: "",
-        message: "",
-      })
+      setResetNotice({ visible: false, type: "info", title: "", message: "" })
 
       await sendPasswordResetCode(resetEmailForm.email)
 
@@ -349,18 +356,23 @@ function Home() {
   }
 
   async function handleResetPassword() {
+    if (!navigator.onLine) {
+      setResetNotice({
+        visible: true,
+        type: "error",
+        title: "Network Offline",
+        message: "Please connect to the internet to confirm your new password.",
+      })
+      return
+    }
+
     const errors = validateResetPasswordForm(resetPasswordForm)
     setResetPasswordErrors(errors)
     if (Object.keys(errors).length > 0) return
 
     try {
       setResettingPassword(true)
-      setResetNotice({
-        visible: false,
-        type: "info",
-        title: "",
-        message: "",
-      })
+      setResetNotice({ visible: false, type: "info", title: "", message: "" })
 
       await verifyRecoveryCodeAndResetPassword({
         email: resetEmailForm.email,
@@ -404,8 +416,21 @@ function Home() {
       <section className="bg-pink-50 px-4 py-4 md:py-5">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-1 lg:row-start-1">
-            <div className="min-h-[260px] overflow-hidden rounded-[24px] border border-pink-100 bg-[url('https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg')] bg-cover bg-top shadow-lg md:min-h-[420px]">
-              <div className="flex min-h-[260px] items-end md:min-h-[420px]">
+            
+            {/* OPTIMIZED IMAGE CONTAINER */}
+            <div className="relative min-h-[260px] overflow-hidden rounded-[24px] border border-pink-100 bg-slate-900 shadow-lg md:min-h-[420px]">
+              {/* Actual Image Tag for priority loading and fade-in */}
+              <img 
+                src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" 
+                alt="Commerce Banner" 
+                fetchpriority="high"
+                onLoad={() => setBannerLoaded(true)}
+                className={`absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-700 ease-in-out ${
+                  bannerLoaded ? "opacity-100" : "opacity-0"
+                }`}
+              />
+              
+              <div className="relative z-10 flex h-full min-h-[260px] flex-col justify-end md:min-h-[420px]">
                 <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/55 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur-sm md:gap-4 md:py-4 md:text-sm">
                   <span className="flex items-center gap-2">
                     <span className="text-emerald-400">●</span> Commerce
@@ -419,6 +444,7 @@ function Home() {
                 </div>
               </div>
             </div>
+
           </div>
 
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-2 lg:row-span-2 lg:row-start-1">

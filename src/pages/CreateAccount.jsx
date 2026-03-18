@@ -26,9 +26,50 @@ import {
   updateLastActiveIp,
 } from "../lib/auth"
 import { validateSignupForm } from "../lib/validators"
+import useCachedFetch from "../hooks/useCachedFetch"
+import useAuthSession from "../hooks/useAuthSession"
+import { ShimmerBlock } from "../components/common/Shimmers"
+
+// --- PROFESSIONAL SHIMMER COMPONENT ---
+function CreateAccountShimmer() {
+  return (
+    <MainLayout>
+      <section className="min-h-screen bg-pink-50 px-4 py-8">
+        <div className="mx-auto max-w-md">
+          <ShimmerBlock className="mb-6 h-10 w-24 rounded-xl" />
+          <ShimmerBlock className="mx-auto mb-5 h-24 w-24 rounded-xl" />
+          <div className="rounded-[28px] border border-pink-100 bg-white p-6 shadow-xl md:p-8">
+            <ShimmerBlock className="mb-2 h-8 w-48 rounded" />
+            <ShimmerBlock className="mb-6 h-4 w-64 rounded" />
+            <ShimmerBlock className="mb-8 h-[44px] w-full rounded" />
+            <ShimmerBlock className="mb-6 h-4 w-full rounded" />
+            
+            <div className="space-y-4">
+              <ShimmerBlock className="h-14 w-full rounded-2xl" />
+              <ShimmerBlock className="h-14 w-full rounded-2xl" />
+              <ShimmerBlock className="h-14 w-full rounded-2xl" />
+              <ShimmerBlock className="h-14 w-full rounded-2xl" />
+            </div>
+            <ShimmerBlock className="mt-8 h-12 w-full rounded-xl" />
+          </div>
+        </div>
+      </section>
+    </MainLayout>
+  )
+}
 
 function CreateAccount() {
   const navigate = useNavigate()
+
+  // 1. Unified Auth & Network State
+  const { user, loading: authLoading, isOffline } = useAuthSession()
+
+  // Redirect authenticated users away from signup
+  useEffect(() => {
+    if (user) {
+      navigate("/user-dashboard", { replace: true })
+    }
+  }, [user, navigate])
 
   const [form, setForm] = useState({
     fullName: "",
@@ -40,11 +81,27 @@ function CreateAccount() {
     confirmPassword: "",
   })
 
+  // 2. Reactive Cached Fetching for Locations
+  const { data: citiesData, loading: loadingCities } = useCachedFetch(
+    "open_cities",
+    fetchOpenCities,
+    { ttl: 1000 * 60 * 60 * 24 } // Cache for 24 hours
+  )
+  const cities = citiesData || []
+
+  // Areas fetch reactively whenever form.cityId changes
+  const areaCacheKey = form.cityId ? `areas_city_${form.cityId}` : "areas_none"
+  const { data: areasData, loading: loadingAreas } = useCachedFetch(
+    areaCacheKey,
+    async () => {
+      if (!form.cityId) return []
+      return await fetchAreasByCity(form.cityId)
+    },
+    { dependencies: [form.cityId], ttl: 1000 * 60 * 60 * 24 }
+  )
+  const areas = areasData || []
+
   const [errors, setErrors] = useState({})
-  const [cities, setCities] = useState([])
-  const [areas, setAreas] = useState([])
-  const [loadingCities, setLoadingCities] = useState(false)
-  const [loadingAreas, setLoadingAreas] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [googleReady, setGoogleReady] = useState(false)
@@ -63,27 +120,7 @@ function CreateAccount() {
   const [termsScrolledBottom, setTermsScrolledBottom] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
-  useEffect(() => {
-    async function loadCities() {
-      try {
-        setLoadingCities(true)
-        const data = await fetchOpenCities()
-        setCities(data)
-      } catch (error) {
-        setNotice({
-          visible: true,
-          type: "error",
-          title: "Could not load cities",
-          message: error.message || "Please refresh and try again.",
-        })
-      } finally {
-        setLoadingCities(false)
-      }
-    }
-
-    loadCities()
-  }, [])
-
+  // Initialize Google Sign-in
   useEffect(() => {
     const clientId =
       "237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com"
@@ -122,6 +159,7 @@ function CreateAccount() {
     }, 300)
 
     return () => clearInterval(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const currentErrorsCount = useMemo(
@@ -129,13 +167,13 @@ function CreateAccount() {
     [errors]
   )
 
-  async function handleCityChange(event) {
+  function handleCityChange(event) {
     const cityId = event.target.value
 
     setForm((prev) => ({
       ...prev,
       cityId,
-      areaId: "",
+      areaId: "", // Reset area when city changes
     }))
 
     setErrors((prev) => ({
@@ -143,26 +181,6 @@ function CreateAccount() {
       cityId: "",
       areaId: "",
     }))
-
-    if (!cityId) {
-      setAreas([])
-      return
-    }
-
-    try {
-      setLoadingAreas(true)
-      const data = await fetchAreasByCity(cityId)
-      setAreas(data)
-    } catch (error) {
-      setNotice({
-        visible: true,
-        type: "error",
-        title: "Could not load areas",
-        message: error.message || "Please try again.",
-      })
-    } finally {
-      setLoadingAreas(false)
-    }
   }
 
   function handleSubmitStart(event) {
@@ -181,25 +199,26 @@ function CreateAccount() {
       return
     }
 
-    setNotice({
-      visible: false,
-      type: "info",
-      title: "",
-      message: "",
-    })
+    setNotice({ visible: false, type: "info", title: "", message: "" })
     setTermsScrolledBottom(false)
     setTermsOpen(true)
   }
 
   async function executeEmailSignup() {
+    if (isOffline) {
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Network Offline",
+        message: "Please connect to the internet to create your account.",
+      })
+      setTermsOpen(false)
+      return
+    }
+
     try {
       setSubmitting(true)
-      setNotice({
-        visible: false,
-        type: "info",
-        title: "",
-        message: "",
-      })
+      setNotice({ visible: false, type: "info", title: "", message: "" })
 
       await signUpWithEmail({
         fullName: form.fullName,
@@ -228,13 +247,21 @@ function CreateAccount() {
   function closeSuccess() {
     setShowSuccess(false)
     navigate("/", {
-      state: {
-        prefillEmail: form.email,
-      },
+      state: { prefillEmail: form.email },
     })
   }
 
   async function handleGoogleCredentialResponse(response) {
+    if (isOffline) {
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Network Offline",
+        message: "Please connect to the internet to sign up with Google.",
+      })
+      return
+    }
+
     if (!response?.credential) {
       setNotice({
         visible: true,
@@ -247,12 +274,7 @@ function CreateAccount() {
 
     try {
       setGoogleLoading(true)
-      setNotice({
-        visible: false,
-        type: "info",
-        title: "",
-        message: "",
-      })
+      setNotice({ visible: false, type: "info", title: "", message: "" })
 
       const result = await signInWithGoogleIdToken(response.credential)
       const signedInUser = result.auth?.user || result.auth?.session?.user
@@ -285,11 +307,24 @@ function CreateAccount() {
     }
   }
 
+  // Render Shimmer while checking auth status or initially grabbing cities
+  if (authLoading || (loadingCities && cities.length === 0)) {
+    return <CreateAccountShimmer />
+  }
+
   return (
     <>
       <MainLayout>
         <section className="min-h-screen bg-pink-50 px-4 py-8">
           <div className="mx-auto max-w-md">
+            {/* Offline Banner */}
+            {isOffline && (
+              <div className="mb-4 rounded-xl bg-amber-100 px-4 py-3 text-sm font-bold text-amber-800 shadow-sm border border-amber-200 flex items-center gap-2">
+                <i className="fa-solid fa-wifi-slash"></i>
+                You are offline. Reconnect to create your account.
+              </div>
+            )}
+
             <Link
               to="/"
               className="mb-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:border-pink-200 hover:bg-pink-50 hover:text-pink-700"
@@ -533,7 +568,7 @@ function CreateAccount() {
                   }
                 />
 
-                <AuthButton type="submit" loading={submitting}>
+                <AuthButton type="submit" loading={submitting} disabled={isOffline}>
                   Continue
                 </AuthButton>
               </form>
@@ -572,7 +607,7 @@ function CreateAccount() {
             onClose={() => setTermsOpen(false)}
             onConfirm={executeEmailSignup}
             confirmLoading={submitting}
-            confirmDisabled={!termsScrolledBottom}
+            confirmDisabled={!termsScrolledBottom || isOffline}
             onScrolledBottom={() => setTermsScrolledBottom(true)}
           />
         ) : null}

@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
+import useAuthSession from "../hooks/useAuthSession"
 
 const benefits = [
   "Expanded visibility for local commercial data and businesses.",
@@ -9,6 +10,9 @@ const benefits = [
 
 function Affiliate() {
   const navigate = useNavigate()
+
+  // Hook into our global offline detection
+  const { isOffline } = useAuthSession()
 
   const handleBack = () => {
     const ref = document.referrer.toLowerCase()
@@ -23,11 +27,19 @@ function Affiliate() {
 
   return (
     <MainLayout>
+      {/* Global Offline Banner */}
+      {isOffline && (
+        <div className="z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200 flex items-center justify-center gap-2">
+          <i className="fa-solid fa-wifi-slash"></i>
+          You are currently offline. Some links and contact features may be unavailable.
+        </div>
+      )}
+
       <section className="bg-pink-50 px-4 py-5 md:py-6">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">
             <div className="rounded-[24px] border border-pink-100 bg-white">
-              <div className="border-b border-pink-100 bg-slate-950 px-5 py-4 text-white md:px-6">
+              <div className="border-b border-pink-100 bg-slate-950 px-5 py-4 text-white md:px-6 rounded-t-[24px]">
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
@@ -134,65 +146,6 @@ function Affiliate() {
                 </div>
 
                 <div className="mt-6 rounded-3xl bg-pink-200 p-1 shadow-sm">
-                  <div className="rounded-[22px] border border-pink-100 bg-white p-6 md:p-7">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          className="h-5 w-5"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M3 17l6-6 4 4 8-8"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M14 7h7v7"
-                          />
-                        </svg>
-                      </div>
-
-                      <h2 className="text-xl font-extrabold text-slate-900">
-                        Why Affiliate With CTMerchant?
-                      </h2>
-                    </div>
-
-                    <ul className="mt-5 space-y-4">
-                      {benefits.map((benefit) => (
-                        <li key={benefit} className="flex items-start gap-3">
-                          <div className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                              className="h-4 w-4"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                          </div>
-
-                          <span className="text-sm font-medium leading-7 text-slate-800 md:text-[15px]">
-                            {benefit}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="mt-6 rounded-3xl bg-pink-200 p-1 shadow-sm">
                   <div className="rounded-[22px] border border-pink-100 bg-slate-50 p-6 text-center md:p-8">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-pink-50 text-pink-600 shadow-sm">
                       <svg
@@ -206,7 +159,7 @@ function Affiliate() {
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          d="M3 8l9 6 9-6M5 19h14a2 2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                         />
                       </svg>
                     </div>

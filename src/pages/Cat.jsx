@@ -1,82 +1,96 @@
-import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { FaArrowLeft, FaChevronRight, FaStoreSlash, FaTriangleExclamation, FaLayerGroup } from "react-icons/fa6"
+import {
+  FaArrowLeft,
+  FaChevronRight,
+  FaStoreSlash,
+  FaTriangleExclamation,
+  FaLayerGroup,
+} from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
+import useAuthSession from "../hooks/useAuthSession"
+import useCachedFetch from "../hooks/useCachedFetch"
+import { ShimmerBlock, ShimmerCard } from "../components/common/Shimmers"
+
+// --- PROFESSIONAL SHIMMER COMPONENT ---
+function CatShimmer({ catName }) {
+  return (
+    <div className="flex flex-col items-center justify-center pt-6 w-full">
+      <div className="w-full mb-6 flex items-center gap-3">
+        <ShimmerBlock className="h-12 w-12 rounded-lg" />
+        <div>
+          <ShimmerBlock className="mb-2 h-8 w-48 rounded" />
+          <ShimmerBlock className="h-4 w-32 rounded" />
+        </div>
+      </div>
+      <div className="w-full grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
+        <ShimmerCard />
+        <ShimmerCard />
+        <ShimmerCard />
+        <ShimmerCard />
+      </div>
+    </div>
+  )
+}
 
 function Cat() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const catName = searchParams.get("name")
 
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
-  const [shops, setShops] = useState([])
-  const [products, setProducts] = useState([])
+  // 1. Unified Auth State
+  const { user, profile, loading: authLoading, isOffline } = useAuthSession()
 
-  useEffect(() => {
-    async function fetchCategoryData() {
-      if (!catName) {
-        navigate(-1)
-        return
-      }
+  // Gatekeeper Redirect
+  if (!authLoading && (!user || !catName)) {
+    navigate(-1)
+    return null
+  }
 
-      try {
-        setLoading(true)
-        setError("")
+  // 2. Extracted Data Fetching Logic for Hook
+  const fetchCategoryData = async () => {
+    if (!profile?.city_id) throw new Error("City not found")
 
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
+    const { data: shopsData, error: shopsError } = await supabase
+      .from("shops")
+      .select("*")
+      .eq("city_id", profile.city_id)
+      .eq("category", catName)
+      .eq("is_verified", true)
+      .order("name", { ascending: true })
 
-        if (!session?.user) {
-          navigate("/")
-          return
-        }
+    if (shopsError) throw shopsError
 
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("city_id")
-          .eq("id", session.user.id)
-          .single()
+    let productsData = []
+    if ((shopsData || []).length > 0) {
+      const shopIds = shopsData.map((shop) => shop.id)
+      const { data: prods, error: productsError } = await supabase
+        .from("products")
+        .select("*")
+        .in("shop_id", shopIds)
+        .eq("is_available", true)
 
-        if (profileError) throw profileError
-        if (!profile?.city_id) throw new Error("City not found")
-
-        const { data: shopsData, error: shopsError } = await supabase
-          .from("shops")
-          .select("*")
-          .eq("city_id", profile.city_id)
-          .eq("category", catName)
-          .eq("is_verified", true)
-          .order("name", { ascending: true })
-
-        if (shopsError) throw shopsError
-
-        let productsData = []
-        if ((shopsData || []).length > 0) {
-          const shopIds = shopsData.map((shop) => shop.id)
-          const { data: prods, error: productsError } = await supabase
-            .from("products")
-            .select("*")
-            .in("shop_id", shopIds)
-            .eq("is_available", true)
-
-          if (productsError) throw productsError
-          productsData = prods || []
-        }
-
-        setShops(shopsData || [])
-        setProducts(productsData)
-        document.title = `${catName} | CTMerchant`
-      } catch (err) {
-        setError(err.message || "Failed to load category data.")
-      } finally {
-        setLoading(false)
-      }
+      if (productsError) throw productsError
+      productsData = prods || []
     }
 
-    fetchCategoryData()
-  }, [catName, navigate])
+    return { shops: shopsData || [], products: productsData }
+  }
+
+  // 3. Smart Caching Hook
+  const cacheKey = `cat_${catName}_city_${profile?.city_id || 'none'}`
+  const { data, loading: dataLoading, error: dataError } = useCachedFetch(
+    cacheKey,
+    fetchCategoryData,
+    { dependencies: [catName, profile?.city_id], ttl: 1000 * 60 * 15 } // Cache for 15 minutes
+  )
+
+  const shops = data?.shops || []
+  const products = data?.products || []
+
+  // Set document title safely
+  if (catName) {
+    document.title = `${catName} | CTMerchant`
+  }
 
   function buildShopGrid(shop) {
     const p = products
@@ -145,7 +159,15 @@ function Cat() {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] text-[#0F1111]">
-      <header className="sticky top-0 z-50 bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
+      {/* Offline Banner */}
+      {isOffline && (
+        <div className="z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200">
+          <i className="fa-solid fa-wifi-slash mr-2"></i>
+          You are offline. Showing cached category data.
+        </div>
+      )}
+
+      <header className={`sticky ${isOffline ? 'top-[36px]' : 'top-0'} z-50 bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]`}>
         <div className="mx-auto flex w-full max-w-[1200px] items-center gap-4 px-4 py-3">
           <button
             type="button"
@@ -162,20 +184,17 @@ function Cat() {
       </header>
 
       <main className="mx-auto w-full max-w-[1200px] flex-1 px-5 py-6">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center bg-transparent px-5 py-24 text-center">
-            <div className="mb-4 h-11 w-11 animate-spin rounded-full border-4 border-pink-100 border-t-pink-600" />
-            <span className="font-semibold text-[#0F1111]">Loading Shops...</span>
-          </div>
-        ) : error ? (
+        {authLoading || (dataLoading && !data) ? (
+          <CatShimmer catName={catName} />
+        ) : dataError && !data ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-[#D5D9D9] bg-white px-5 py-16 text-center text-[#888C8C]">
             <FaTriangleExclamation className="mb-4 text-[2.5rem] text-[#C40000]" />
             <span className="text-[1.2rem] font-extrabold text-[#0F1111]">An error occurred</span>
-            <span className="mt-1 text-sm">{error}</span>
+            <span className="mt-1 text-sm">{dataError}</span>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold"
+              className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-pink-600 transition hover:bg-slate-50"
             >
               Tap to Retry
             </button>
@@ -204,7 +223,7 @@ function Cat() {
                 <button
                   type="button"
                   onClick={() => navigate(-1)}
-                  className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold"
+                  className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-[#0F1111] transition hover:bg-slate-50"
                 >
                   Go Back
                 </button>
