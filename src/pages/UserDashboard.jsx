@@ -9,10 +9,10 @@ import useAuthSession from "../hooks/useAuthSession"
 import { fetchProfileByUserId, signOutUser } from "../lib/auth"
 import { supabase } from "../lib/supabase"
 
-import DashboardHeader from "../components/dashboard/layout/DashboardHeader";
-import MarketSection from "../components/dashboard/sections/MarketSection";
-import ServicesProfileSection from "../components/dashboard/sections/ServicesProfileSection";
-import NotificationsSection from "../components/dashboard/sections/NotificationsSection";
+import DashboardHeader from "../components/dashboard/layout/DashboardHeader"
+import MarketSection from "../components/dashboard/sections/MarketSection"
+import ServicesProfileSection from "../components/dashboard/sections/ServicesProfileSection"
+import NotificationsSection from "../components/dashboard/sections/NotificationsSection"
 
 const MAX_FILE_SIZE = 500000
 const INACTIVITY_LIMIT = 15 * 60 * 1000
@@ -85,6 +85,10 @@ function DashboardShimmer({ label = "Loading dashboard..." }) {
   )
 }
 
+function isCompleteProfile(profileData) {
+  return Boolean(profileData?.city_id && profileData?.area_id)
+}
+
 function UserDashboard() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -103,6 +107,7 @@ function UserDashboard() {
   })
 
   const [profileModalOpen, setProfileModalOpen] = useState(false)
+  const [profileResolved, setProfileResolved] = useState(false)
 
   const [dashboardData, setDashboardData] = useState(
     dashboardCache.data || EMPTY_DASHBOARD_DATA
@@ -153,53 +158,101 @@ function UserDashboard() {
   }, [activeTab, setSearchParams])
 
   useEffect(() => {
-    if (loading) return
+    let cancelled = false
+    let attachedEvents = false
 
-    if (!user) {
-      navigate("/", { replace: true })
-      return
-    }
-
-    if (suspended) {
-      setDashboardLoading(false)
-      setNotice({
-        visible: true,
-        type: "error",
-        title: "Account restricted",
-        message: "Your account has been restricted. Please contact support.",
-      })
-      return
-    }
-
-    if (!profile || !profileComplete) {
-      setProfileModalOpen(true)
-      setDashboardLoading(false)
-      return
-    }
-
-    resetInactivityTimer()
     const events = ["mousemove", "keydown", "scroll", "click", "touchstart"]
 
-    events.forEach((name) => {
-      document.addEventListener(name, resetInactivityTimer, { passive: true })
-    })
-
-    const hasWarmCache =
-      dashboardCache.userId === user.id && Boolean(dashboardCache.data?.profile)
-
-    if (hasWarmCache) {
-      setDashboardData(dashboardCache.data)
-      setDashboardLoading(false)
-      loadDashboard({ silent: true })
-    } else {
-      loadDashboard({ silent: false })
+    function attachActivityListeners() {
+      if (attachedEvents) return
+      resetInactivityTimer()
+      events.forEach((name) => {
+        document.addEventListener(name, resetInactivityTimer, { passive: true })
+      })
+      attachedEvents = true
     }
 
-    return () => {
+    function detachActivityListeners() {
+      if (!attachedEvents) return
       events.forEach((name) => {
         document.removeEventListener(name, resetInactivityTimer)
       })
+      attachedEvents = false
       clearTimeout(inactivityTimerRef.current)
+    }
+
+    async function initialize() {
+      if (loading) return
+
+      if (!user) {
+        navigate("/", { replace: true })
+        return
+      }
+
+      if (suspended) {
+        setProfileResolved(true)
+        setDashboardLoading(false)
+        setNotice({
+          visible: true,
+          type: "error",
+          title: "Account restricted",
+          message: "Your account has been restricted. Please contact support.",
+        })
+        return
+      }
+
+      let resolvedProfile = profile
+      let resolvedProfileComplete = profileComplete
+
+      if (!resolvedProfile || !resolvedProfileComplete) {
+        try {
+          const freshProfile = await fetchProfileByUserId(user.id)
+          if (cancelled) return
+
+          resolvedProfile = freshProfile
+          resolvedProfileComplete = isCompleteProfile(freshProfile)
+        } catch {
+          const cachedProfile =
+            dashboardCache.userId === user.id ? dashboardCache.data?.profile : null
+
+          if (cachedProfile) {
+            resolvedProfile = cachedProfile
+            resolvedProfileComplete = isCompleteProfile(cachedProfile)
+          }
+        }
+      }
+
+      if (cancelled) return
+
+      if (!resolvedProfile || !resolvedProfileComplete) {
+        setProfileResolved(true)
+        setProfileModalOpen(true)
+        setDashboardLoading(false)
+        return
+      }
+
+      setProfileModalOpen(false)
+      setProfileResolved(true)
+
+      attachActivityListeners()
+
+      const hasWarmCache =
+        dashboardCache.userId === user.id && Boolean(dashboardCache.data?.profile)
+
+      if (hasWarmCache) {
+        setDashboardData(dashboardCache.data)
+        setDashboardLoading(false)
+        loadDashboard({ silent: true })
+      } else {
+        loadDashboard({ silent: false })
+      }
+    }
+
+    initialize()
+
+    return () => {
+      cancelled = true
+      detachActivityListeners()
     }
   }, [loading, user, profile, profileComplete, suspended, navigate])
 
@@ -409,6 +462,7 @@ function UserDashboard() {
       }
 
       setProfileModalOpen(false)
+      setProfileResolved(true)
       setNotice({
         visible: true,
         type: "success",
@@ -523,18 +577,18 @@ function UserDashboard() {
     navigate("/shop-registration")
   }
 
-  const currentProfile = dashboardData.profile
+  const currentProfile = dashboardData.profile || profile
 
   const sortedAreas = useMemo(() => {
     const areas = [...(dashboardData.areas || [])]
-    const userAreaId = dashboardData.profile?.area_id
+    const userAreaId = currentProfile?.area_id
 
     return areas.sort((a, b) => {
       if (a.id === userAreaId) return -1
       if (b.id === userAreaId) return 1
       return a.name.localeCompare(b.name)
     })
-  }, [dashboardData.areas, dashboardData.profile?.area_id])
+  }, [dashboardData.areas, currentProfile?.area_id])
 
   const featuredShops = useMemo(
     () => (dashboardData.shops || []).filter((shop) => shop.is_featured),
@@ -829,6 +883,8 @@ function UserDashboard() {
 
       await loadDashboard({ silent: true })
       setProfileEditOpen(false)
+      setProfileModalOpen(false)
+      setProfileResolved(true)
       setNotice({
         visible: true,
         type: "success",
@@ -840,6 +896,14 @@ function UserDashboard() {
     } finally {
       setProfileSaving(false)
     }
+  }
+
+  if (!profileResolved && (loading || dashboardLoading || !dashboardData.profile)) {
+    return (
+      <DashboardShimmer
+        label={loading ? "Loading session..." : "Loading marketplace..."}
+      />
+    )
   }
 
   if (!dashboardData.profile && (loading || dashboardLoading)) {
