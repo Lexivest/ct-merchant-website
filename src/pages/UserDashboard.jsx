@@ -106,8 +106,7 @@ function UserDashboard() {
     message: "",
   })
 
-  const [profileModalOpen, setProfileModalOpen] = useState(false)
-  const [profileResolved, setProfileResolved] = useState(false)
+  const [profileCheckStatus, setProfileCheckStatus] = useState("checking")
 
   const [dashboardData, setDashboardData] = useState(
     dashboardCache.data || EMPTY_DASHBOARD_DATA
@@ -190,7 +189,7 @@ function UserDashboard() {
       }
 
       if (suspended) {
-        setProfileResolved(true)
+        setProfileCheckStatus("complete")
         setDashboardLoading(false)
         setNotice({
           visible: true,
@@ -225,15 +224,12 @@ function UserDashboard() {
       if (cancelled) return
 
       if (!resolvedProfile || !resolvedProfileComplete) {
-        setProfileResolved(true)
-        setProfileModalOpen(true)
+        setProfileCheckStatus("incomplete")
         setDashboardLoading(false)
         return
       }
 
-      setProfileModalOpen(false)
-      setProfileResolved(true)
-
+      setProfileCheckStatus("complete")
       attachActivityListeners()
 
       const hasWarmCache =
@@ -461,8 +457,7 @@ function UserDashboard() {
         throw new Error("Profile completion could not be verified.")
       }
 
-      setProfileModalOpen(false)
-      setProfileResolved(true)
+      setProfileCheckStatus("complete")
       setNotice({
         visible: true,
         type: "success",
@@ -481,7 +476,6 @@ function UserDashboard() {
   }
 
   async function handleProfileModalClose() {
-    setProfileModalOpen(false)
     clearDashboardCache()
     await signOutUser()
     navigate("/", { replace: true })
@@ -883,8 +877,7 @@ function UserDashboard() {
 
       await loadDashboard({ silent: true })
       setProfileEditOpen(false)
-      setProfileModalOpen(false)
-      setProfileResolved(true)
+      setProfileCheckStatus("complete")
       setNotice({
         visible: true,
         type: "success",
@@ -898,7 +891,7 @@ function UserDashboard() {
     }
   }
 
-  if (!profileResolved && (loading || dashboardLoading || !dashboardData.profile)) {
+  if (profileCheckStatus === "checking") {
     return (
       <DashboardShimmer
         label={loading ? "Loading session..." : "Loading marketplace..."}
@@ -1032,7 +1025,7 @@ function UserDashboard() {
       </main>
 
       <CompleteProfileModal
-        open={profileModalOpen}
+        open={profileCheckStatus === "incomplete"}
         onClose={handleProfileModalClose}
         userId={user?.id}
         fullName={profile?.full_name || user?.user_metadata?.full_name || ""}
