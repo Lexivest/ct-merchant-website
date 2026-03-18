@@ -128,7 +128,7 @@ function StaffPortal() {
 
           <div className="mt-8 border-t border-slate-200 pt-6 text-center">
             <p className="text-sm font-medium text-slate-500">
-              Powered by CT-MERCHANT LTD.
+              Powered by CT-Tech.
             </p>
 
             <Link
