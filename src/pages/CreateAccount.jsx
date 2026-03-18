@@ -17,14 +17,11 @@ import { FaCircleCheck } from "react-icons/fa6"
 import AuthButton from "../components/auth/AuthButton"
 import AuthInput from "../components/auth/AuthInput"
 import AuthNotification from "../components/auth/AuthNotification"
-import CompleteProfileModal from "../components/auth/CompleteProfileModal"
 import MainLayout from "../layouts/MainLayout"
 import {
   fetchAreasByCity,
   fetchOpenCities,
-  fetchProfileByUserId,
   signInWithGoogleIdToken,
-  signOutUser,
   signUpWithEmail,
   updateLastActiveIp,
 } from "../lib/auth"
@@ -65,9 +62,6 @@ function CreateAccount() {
   const [termsOpen, setTermsOpen] = useState(false)
   const [termsScrolledBottom, setTermsScrolledBottom] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
-
-  const [profileModalOpen, setProfileModalOpen] = useState(false)
-  const [pendingProfileUser, setPendingProfileUser] = useState(null)
 
   useEffect(() => {
     async function loadCities() {
@@ -267,35 +261,18 @@ function CreateAccount() {
         throw new Error("Google sign-up did not return a valid user.")
       }
 
-      const profile = await fetchProfileByUserId(signedInUser.id)
+      await updateLastActiveIp(signedInUser.id, result.ipData.ip)
+      setNotice({
+        visible: true,
+        type: "success",
+        title: "Google sign-up successful",
+        message: "Opening your dashboard...",
+      })
 
-      if (profile?.is_suspended === true) {
-        await signOutUser()
-        throw new Error(
-          "Your account has been restricted. Please contact support."
-        )
-      }
-
-      if (profile?.city_id && profile?.area_id) {
-        await updateLastActiveIp(signedInUser.id, result.ipData.ip)
-        setNotice({
-          visible: true,
-          type: "success",
-          title: "Google sign-up successful",
-          message: "Opening your dashboard...",
-        })
-
-        setTimeout(() => {
-          navigate("/user-dashboard")
-        }, 900)
-      } else {
-        setPendingProfileUser({
-          id: signedInUser.id,
-          fullName:
-            profile?.full_name || signedInUser.user_metadata?.full_name || "",
-        })
-        setProfileModalOpen(true)
-      }
+      setTimeout(() => {
+        navigate("/user-dashboard")
+      }, 900)
+      
     } catch (error) {
       setNotice({
         visible: true,
@@ -305,33 +282,6 @@ function CreateAccount() {
       })
     } finally {
       setGoogleLoading(false)
-    }
-  }
-
-  async function handleProfileCompleted() {
-    setProfileModalOpen(false)
-    setNotice({
-      visible: true,
-      type: "success",
-      title: "Profile completed",
-      message: "Opening your dashboard...",
-    })
-    setTimeout(() => {
-      navigate("/user-dashboard")
-    }, 900)
-  }
-
-  async function handleProfileModalClose() {
-    setProfileModalOpen(false)
-    if (pendingProfileUser?.id) {
-      await signOutUser()
-      setPendingProfileUser(null)
-      setNotice({
-        visible: true,
-        type: "warning",
-        title: "Setup cancelled",
-        message: "You were signed out because profile setup was not completed.",
-      })
     }
   }
 
@@ -627,13 +577,6 @@ function CreateAccount() {
           />
         ) : null}
 
-        <CompleteProfileModal
-          open={profileModalOpen}
-          onClose={handleProfileModalClose}
-          userId={pendingProfileUser?.id}
-          fullName={pendingProfileUser?.fullName || ""}
-          onCompleted={handleProfileCompleted}
-        />
       </MainLayout>
 
       {showSuccess ? (

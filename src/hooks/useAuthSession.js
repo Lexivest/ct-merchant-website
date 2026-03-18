@@ -3,7 +3,6 @@ import { supabase } from "../lib/supabase"
 import {
   fetchProfileByUserId,
   getSession,
-  isProfileComplete,
   isProfileSuspended,
 } from "../lib/auth"
 
@@ -45,7 +44,6 @@ function useAuthSession() {
       session: null,
       user: null,
       profile: cachedProfile,
-      profileComplete: isProfileComplete(cachedProfile),
       suspended: isProfileSuspended(cachedProfile),
       error: "",
       isOffline: !navigator.onLine,
@@ -70,7 +68,6 @@ function useAuthSession() {
             session: null,
             user: null,
             profile: null,
-            profileComplete: false,
             suspended: false,
             error: "",
             isOffline: !navigator.onLine,
@@ -84,18 +81,22 @@ function useAuthSession() {
 
         setState((prev) => ({
           ...prev,
-          loading: !hasResolvedOnce.current,
+          loading: true,
           session,
           user,
           error: "",
           isOffline: !navigator.onLine,
           profile: prev.profile || prevProfile,
-          profileComplete: isProfileComplete(prev.profile || prevProfile),
           suspended: isProfileSuspended(prev.profile || prevProfile),
         }))
 
         try {
-          const profile = await fetchProfileByUserId(user.id)
+          let profile = await fetchProfileByUserId(user.id)
+          
+          if (!profile) {
+            await new Promise((resolve) => setTimeout(resolve, 800))
+            profile = await fetchProfileByUserId(user.id)
+          }
 
           if (!mounted) return
 
@@ -108,7 +109,6 @@ function useAuthSession() {
             session,
             user,
             profile: profile || null,
-            profileComplete: isProfileComplete(profile),
             suspended: isProfileSuspended(profile),
             error: "",
             isOffline: !navigator.onLine,
@@ -124,7 +124,6 @@ function useAuthSession() {
             session,
             user,
             profile: prev.profile || cachedProfile,
-            profileComplete: isProfileComplete(prev.profile || cachedProfile),
             suspended: isProfileSuspended(prev.profile || cachedProfile),
             error: "",
             isOffline: !navigator.onLine,
@@ -142,7 +141,6 @@ function useAuthSession() {
             ...prev,
             loading: false,
             profile: prev.profile || cachedProfile,
-            profileComplete: isProfileComplete(prev.profile || cachedProfile),
             suspended: isProfileSuspended(prev.profile || cachedProfile),
             error: "",
             isOffline: !navigator.onLine,
@@ -153,7 +151,6 @@ function useAuthSession() {
             session: null,
             user: null,
             profile: null,
-            profileComplete: false,
             suspended: false,
             error: error.message || "Could not load session.",
             isOffline: !navigator.onLine,
@@ -179,7 +176,6 @@ function useAuthSession() {
           session: null,
           user: null,
           profile: null,
-          profileComplete: false,
           suspended: false,
           error: "",
           isOffline: !navigator.onLine,

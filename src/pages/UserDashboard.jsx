@@ -4,7 +4,6 @@ import Cropper from "cropperjs"
 import "cropperjs/dist/cropper.css"
 
 import AuthNotification from "../components/auth/AuthNotification"
-import CompleteProfileModal from "../components/auth/CompleteProfileModal"
 import useAuthSession from "../hooks/useAuthSession"
 import { fetchProfileByUserId, signOutUser } from "../lib/auth"
 import { supabase } from "../lib/supabase"
@@ -85,15 +84,10 @@ function DashboardShimmer({ label = "Loading dashboard..." }) {
   )
 }
 
-function isCompleteProfile(profileData) {
-  return Boolean(profileData?.city_id && profileData?.area_id)
-}
-
 function UserDashboard() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { loading, user, profile, profileComplete, suspended, error } =
-    useAuthSession()
+  const { loading, user, profile, suspended, error } = useAuthSession()
 
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "market")
   const [serviceView, setServiceView] = useState("menu")
@@ -105,8 +99,6 @@ function UserDashboard() {
     title: "",
     message: "",
   })
-
-  const [profileCheckStatus, setProfileCheckStatus] = useState("checking")
 
   const [dashboardData, setDashboardData] = useState(
     dashboardCache.data || EMPTY_DASHBOARD_DATA
@@ -189,7 +181,6 @@ function UserDashboard() {
       }
 
       if (suspended) {
-        setProfileCheckStatus("complete")
         setDashboardLoading(false)
         setNotice({
           visible: true,
@@ -201,35 +192,24 @@ function UserDashboard() {
       }
 
       let resolvedProfile = profile
-      let resolvedProfileComplete = profileComplete
 
-      if (!resolvedProfile || !resolvedProfileComplete) {
+      if (!resolvedProfile) {
         try {
           const freshProfile = await fetchProfileByUserId(user.id)
           if (cancelled) return
-
           resolvedProfile = freshProfile
-          resolvedProfileComplete = isCompleteProfile(freshProfile)
         } catch {
           const cachedProfile =
             dashboardCache.userId === user.id ? dashboardCache.data?.profile : null
 
           if (cachedProfile) {
             resolvedProfile = cachedProfile
-            resolvedProfileComplete = isCompleteProfile(cachedProfile)
           }
         }
       }
 
       if (cancelled) return
 
-      if (!resolvedProfile || !resolvedProfileComplete) {
-        setProfileCheckStatus("incomplete")
-        setDashboardLoading(false)
-        return
-      }
-
-      setProfileCheckStatus("complete")
       attachActivityListeners()
 
       const hasWarmCache =
@@ -250,7 +230,7 @@ function UserDashboard() {
       cancelled = true
       detachActivityListeners()
     }
-  }, [loading, user, profile, profileComplete, suspended, navigate])
+  }, [loading, user, profile, suspended, navigate])
 
   useEffect(() => {
     function handleDocumentClick(event) {
@@ -446,39 +426,6 @@ function UserDashboard() {
     } finally {
       setDashboardLoading(false)
     }
-  }
-
-  async function handleProfileCompleted() {
-    try {
-      if (!user) return
-
-      const freshProfile = await fetchProfileByUserId(user.id)
-      if (!freshProfile?.city_id || !freshProfile?.area_id) {
-        throw new Error("Profile completion could not be verified.")
-      }
-
-      setProfileCheckStatus("complete")
-      setNotice({
-        visible: true,
-        type: "success",
-        title: "Profile completed",
-        message: "Your dashboard is now ready.",
-      })
-      await loadDashboard({ silent: true })
-    } catch (err) {
-      setNotice({
-        visible: true,
-        type: "error",
-        title: "Setup verification failed",
-        message: err.message || "Please try again.",
-      })
-    }
-  }
-
-  async function handleProfileModalClose() {
-    clearDashboardCache()
-    await signOutUser()
-    navigate("/", { replace: true })
   }
 
   async function handleLogout() {
@@ -877,7 +824,6 @@ function UserDashboard() {
 
       await loadDashboard({ silent: true })
       setProfileEditOpen(false)
-      setProfileCheckStatus("complete")
       setNotice({
         visible: true,
         type: "success",
@@ -889,14 +835,6 @@ function UserDashboard() {
     } finally {
       setProfileSaving(false)
     }
-  }
-
-  if (profileCheckStatus === "checking") {
-    return (
-      <DashboardShimmer
-        label={loading ? "Loading session..." : "Loading marketplace..."}
-      />
-    )
   }
 
   if (!dashboardData.profile && (loading || dashboardLoading)) {
@@ -1023,14 +961,6 @@ function UserDashboard() {
           <NotificationsSection notifications={dashboardData.notifications} />
         )}
       </main>
-
-      <CompleteProfileModal
-        open={profileCheckStatus === "incomplete"}
-        onClose={handleProfileModalClose}
-        userId={user?.id}
-        fullName={profile?.full_name || user?.user_metadata?.full_name || ""}
-        onCompleted={handleProfileCompleted}
-      />
     </div>
   )
 }

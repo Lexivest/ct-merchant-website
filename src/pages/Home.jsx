@@ -14,8 +14,6 @@ import MainLayout from "../layouts/MainLayout"
 import AuthInput from "../components/auth/AuthInput"
 import AuthButton from "../components/auth/AuthButton"
 import AuthNotification from "../components/auth/AuthNotification"
-import CompleteProfileModal from "../components/auth/CompleteProfileModal"
-import useAuthSession from "../hooks/useAuthSession"
 import {
   sendPasswordResetCode,
   signInWithGoogleIdToken,
@@ -39,7 +37,6 @@ const phrases = [
 
 function Home() {
   const navigate = useNavigate()
-  const { user, profile, profileComplete, suspended } = useAuthSession()
 
   const [phraseIndex, setPhraseIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
@@ -58,9 +55,6 @@ function Home() {
     title: "",
     message: "",
   })
-
-  const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false)
-  const [pendingProfileUser, setPendingProfileUser] = useState(null)
 
   const [resetEmailOpen, setResetEmailOpen] = useState(false)
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false)
@@ -83,8 +77,6 @@ function Home() {
 
   const [googleReady, setGoogleReady] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
-
-  const [profileModalOpen, setProfileModalOpen] = useState(false)
 
   const [repoSearchValue, setRepoSearchValue] = useState("")
 
@@ -111,20 +103,6 @@ function Home() {
 
     return () => clearTimeout(timer)
   }, [charIndex, isDeleting, phraseIndex])
-
-  useEffect(() => {
-    if (!user) return
-    if (suspended) return
-
-    if (!profileComplete) {
-      setPendingProfileUser({
-        id: user.id,
-        fullName: profile?.full_name || user.user_metadata?.full_name || "",
-      })
-      setNeedsProfileCompletion(true)
-      setProfileModalOpen(true)
-    }
-  }, [user, profile, profileComplete, suspended])
 
   useEffect(() => {
     const clientId =
@@ -230,26 +208,15 @@ function Home() {
         )
       }
 
-      if (currentProfile.data?.city_id && currentProfile.data?.area_id) {
-        await updateLastActiveIp(signedInUser.id, result.ipData.ip)
-        setLoginNotice({
-          visible: true,
-          type: "success",
-          title: "Login successful",
-          message: "Opening your dashboard...",
-        })
-        navigate("/user-dashboard", { replace: true })
-      } else {
-        setPendingProfileUser({
-          id: signedInUser.id,
-          fullName:
-            currentProfile.data?.full_name ||
-            signedInUser.user_metadata?.full_name ||
-            "",
-        })
-        setNeedsProfileCompletion(true)
-        setProfileModalOpen(true)
-      }
+      await updateLastActiveIp(signedInUser.id, result.ipData.ip)
+      setLoginNotice({
+        visible: true,
+        type: "success",
+        title: "Login successful",
+        message: "Opening your dashboard...",
+      })
+      navigate("/user-dashboard", { replace: true })
+      
     } catch (error) {
       setLoginNotice({
         visible: true,
@@ -308,26 +275,15 @@ function Home() {
         )
       }
 
-      if (currentProfile.data?.city_id && currentProfile.data?.area_id) {
-        await updateLastActiveIp(signedInUser.id, result.ipData.ip)
-        setLoginNotice({
-          visible: true,
-          type: "success",
-          title: "Google sign-in successful",
-          message: "Opening your dashboard...",
-        })
-        navigate("/user-dashboard", { replace: true })
-      } else {
-        setPendingProfileUser({
-          id: signedInUser.id,
-          fullName:
-            currentProfile.data?.full_name ||
-            signedInUser.user_metadata?.full_name ||
-            "",
-        })
-        setNeedsProfileCompletion(true)
-        setProfileModalOpen(true)
-      }
+      await updateLastActiveIp(signedInUser.id, result.ipData.ip)
+      setLoginNotice({
+        visible: true,
+        type: "success",
+        title: "Google sign-in successful",
+        message: "Opening your dashboard...",
+      })
+      navigate("/user-dashboard", { replace: true })
+      
     } catch (error) {
       setLoginNotice({
         visible: true,
@@ -434,33 +390,6 @@ function Home() {
       })
     } finally {
       setResettingPassword(false)
-    }
-  }
-
-  function handleProfileCompleted() {
-    setProfileModalOpen(false)
-    setNeedsProfileCompletion(false)
-    setLoginNotice({
-      visible: true,
-      type: "success",
-      title: "Profile completed",
-      message: "Opening your dashboard...",
-    })
-    navigate("/user-dashboard", { replace: true })
-  }
-
-  async function handleProfileModalClose() {
-    setProfileModalOpen(false)
-    if (needsProfileCompletion) {
-      await signOutUser()
-      setNeedsProfileCompletion(false)
-      setPendingProfileUser(null)
-      setLoginNotice({
-        visible: true,
-        type: "warning",
-        title: "Setup cancelled",
-        message: "You were signed out because profile setup was not completed.",
-      })
     }
   }
 
@@ -831,14 +760,6 @@ function Home() {
           </div>
         </SimpleModal>
       ) : null}
-
-      <CompleteProfileModal
-        open={profileModalOpen}
-        onClose={handleProfileModalClose}
-        userId={pendingProfileUser?.id}
-        fullName={pendingProfileUser?.fullName || ""}
-        onCompleted={handleProfileCompleted}
-      />
     </MainLayout>
   )
 }
