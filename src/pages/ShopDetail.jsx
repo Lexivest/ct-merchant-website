@@ -30,6 +30,7 @@ import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock } from "../components/common/Shimmers"
+import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function ShopDetailShimmer() {
@@ -70,6 +71,8 @@ function ShopDetail() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const shopId = searchParams.get("id")
+
+  usePreventPullToRefresh()
 
   // 1. Unified Auth State
   const { user, loading: authLoading } = useAuthSession()
