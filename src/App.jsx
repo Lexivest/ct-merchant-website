@@ -22,14 +22,14 @@ import ProtectedRoute from "./components/auth/ProtectedRoute"
 import useAuthSession from "./hooks/useAuthSession"
 
 function ProtectedDashboardRoute({ children }) {
-  const { loading, user, suspended } = useAuthSession()
-
-  if (loading) {
-    return children
-  }
+  const { loading, session, user, suspended } = useAuthSession()
 
   return (
-    <ProtectedRoute isAllowed={Boolean(user) && !suspended} redirectTo="/">
+    <ProtectedRoute
+      loading={loading}
+      isAllowed={Boolean(session) && Boolean(user) && !suspended}
+      redirectTo="/"
+    >
       {children}
     </ProtectedRoute>
   )

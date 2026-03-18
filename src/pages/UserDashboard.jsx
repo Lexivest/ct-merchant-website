@@ -9,10 +9,10 @@ import useAuthSession from "../hooks/useAuthSession"
 import { fetchProfileByUserId, signOutUser } from "../lib/auth"
 import { supabase } from "../lib/supabase"
 
-import DashboardHeader from "../components/dashboard/DashboardHeader"
-import MarketSection from "../components/dashboard/MarketSection"
-import ServicesProfileSection from "../components/dashboard/ServicesProfileSection"
-import NotificationsSection from "../components/dashboard/NotificationsSection"
+import DashboardHeader from "../components/dashboard/layout/DashboardHeader";
+import MarketSection from "../components/dashboard/sections/MarketSection";
+import ServicesProfileSection from "../components/dashboard/sections/ServicesProfileSection";
+import NotificationsSection from "../components/dashboard/sections/NotificationsSection";
 
 const MAX_FILE_SIZE = 500000
 const INACTIVITY_LIMIT = 15 * 60 * 1000

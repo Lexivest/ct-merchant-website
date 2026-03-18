@@ -13,13 +13,14 @@ import {
   FaStore,
   FaTriangleExclamation,
 } from "react-icons/fa6"
-import AboutDashboardView from "./views/AboutDashboardView"
-import ServicesDashboardView from "./views/ServicesDashboardView"
-import CareersDashboardView from "./views/CareersDashboardView"
-import SupportDashboardView from "./views/SupportDashboardView"
-import AbuseReportDashboardView from "./views/AbuseReportDashboardView"
-import WishlistDashboardView from "./views/WishlistDashboardView"
-import FaqDashboardView from "./views/FaqDashboardView"
+import AboutDashboardView from "../../../features/dashboard/views/AboutDashboardView";
+import ServicesDashboardView from "../../../features/dashboard/views/ServicesDashboardView";
+import CareersDashboardView from "../../../features/dashboard/views/CareersDashboardView";
+import SupportDashboardView from "../../../features/dashboard/views/SupportDashboardView";
+import AbuseReportDashboardView from "../../../features/dashboard/views/AbuseReportDashboardView";
+import FaqDashboardView from "../../../features/dashboard/views/FaqDashboardView";
+import WishlistDashboardView from "../../../features/dashboard/views/WishlistDashboardView";
+
 
 function ServiceCard({ icon, title, subtitle, onClick }) {
   return (
