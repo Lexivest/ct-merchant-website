@@ -20,17 +20,15 @@ import ShopIndex from "./pages/ShopIndex"
 import MerchantDiscovery from "./pages/MerchantDiscovery"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import useAuthSession from "./hooks/useAuthSession"
-
-// --- NEW IMPORTS FOR GOOGLE PROFILE GATEKEEPER ---
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 
 function ProtectedDashboardRoute({ children }) {
-  // 1. Added 'profile' to the destructured hook
   const { loading, session, user, profile, suspended } = useAuthSession()
 
-  // 2. Added a spinner so the screen doesn't sit blank during initial load
-  if (loading && !session && !user) {
+  // Wait for the entire session and profile fetch to resolve before rendering anything.
+  // This prevents the split-second flash of the CompleteProfileModal.
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-pink-200 border-t-pink-600"></div>
@@ -40,12 +38,11 @@ function ProtectedDashboardRoute({ children }) {
 
   const isAllowed = Boolean(session) && Boolean(user) && !suspended
 
-  // 3. The Gatekeeper Check: User is logged in, but profile is missing core data
+  // By the time the code reaches here, loading is false, meaning the profile fetch is 100% complete.
   const needsProfileSetup = user && (!profile || !isProfileComplete(profile))
 
   return (
     <ProtectedRoute isAllowed={isAllowed} redirectTo="/">
-      {/* 4. If they need setup, hijack the route with the modal. Otherwise, render children. */}
       {needsProfileSetup ? (
         <div className="min-h-screen bg-slate-50">
           <CompleteProfileModal
@@ -53,12 +50,10 @@ function ProtectedDashboardRoute({ children }) {
             userId={user.id}
             fullName={user.user_metadata?.full_name || ""}
             onClose={async () => {
-              // Bailout if they cancel
               await signOutUser()
               window.location.href = "/"
             }}
             onCompleted={() => {
-              // Force reload to update session hook with fresh profile
               window.location.reload()
             }}
           />
