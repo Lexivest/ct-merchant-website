@@ -5,8 +5,7 @@ import html2canvas from "html2canvas";
 import {
   FaArrowLeft,
   FaBullhorn,
-  FaCheckCircle,
-  FaCircleCheck,
+  FaCircleInfo,
   FaCircleNotch,
   FaDownload,
   FaFacebookF,
@@ -176,7 +175,8 @@ export default function MerchantIDCard() {
   const avatarUrl = profileData?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profileData?.full_name || shopData.name)}`;
   const proprietorName = profileData?.full_name || "Authorized Merchant";
   const currentYear = new Date().getFullYear();
-  const shopUrl = `https://ctmerchant.com.ng/shop-detail.html?id=${shopData.id}`;
+  const shopUrlText = `www.ctmerchant.com.ng/shop-detail?id=${shopData.id}`;
+  const shopUrl = `https://${shopUrlText}`;
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-[#F3F4F6] text-[#0F1111]">
@@ -206,51 +206,56 @@ export default function MerchantIDCard() {
             <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="WM" className="h-full w-full object-contain" crossOrigin="anonymous" />
           </div>
 
-          <div className="relative z-10 flex h-full flex-col">
-            <div className="mb-2 flex items-start justify-between">
-              <div className="flex flex-col gap-0.5">
-                <div className="max-w-[240px] text-[1.05rem] font-black uppercase leading-tight tracking-wide text-[#db2777]">
+          <div className="relative z-10 flex h-full flex-col justify-between">
+            
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              {/* Centralized Header Text */}
+              <div className="flex flex-col items-center text-center gap-0.5 ml-8">
+                <div className="max-w-[200px] text-[0.9rem] font-black uppercase leading-tight tracking-wide text-[#db2777]">
                   CTMerchant {shopData.cities?.name || "Local"} Repo
                 </div>
-                <div className="text-[0.6rem] font-bold tracking-wide text-[#FBBF24]">www.ctmerchant.com.ng</div>
-                
-                <div className="mt-2 flex items-center gap-1.5">
-                  <div className="h-[18px] w-[18px] rounded bg-white p-[1px]">
-                    <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" className="h-full w-full object-contain" crossOrigin="anonymous" />
-                  </div>
-                  <span className="flex items-center gap-1 text-[0.7rem] font-extrabold uppercase tracking-widest text-[#10B981]">
-                    <FaCircleCheck /> Verified Merchant
-                  </span>
-                </div>
+                <div className="text-[0.55rem] font-bold tracking-wide text-[#FBBF24]">www.ctmerchant.com.ng</div>
               </div>
-              <img src={avatarUrl} alt="Profile" className="h-16 w-16 flex-shrink-0 rounded-lg border-2 border-white/80 bg-[#E2E8F0] object-cover shadow-md" crossOrigin="anonymous" />
+
+              {/* Smaller Profile Pic */}
+              <img src={avatarUrl} alt="Profile" className="h-14 w-14 flex-shrink-0 rounded-lg border-2 border-white/80 bg-[#E2E8F0] object-cover shadow-md" crossOrigin="anonymous" />
             </div>
 
-            <div className="mt-2 flex flex-col gap-2.5">
+            {/* Business Details (Moved up, clearer) */}
+            <div className="flex flex-col gap-2.5 mt-2">
               <div className="flex flex-col">
-                <span className="mb-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-[#94A3B8]">Business Name</span>
-                <span className="max-w-[270px] truncate text-[1.1rem] font-extrabold text-white">{shopData.name}</span>
+                <span className="mb-0.5 text-[0.55rem] font-bold uppercase tracking-wide text-[#94A3B8]">Business Name</span>
+                <span className="max-w-[270px] truncate text-[1rem] font-extrabold text-white">{shopData.name}</span>
               </div>
               <div className="flex flex-col">
-                <span className="mb-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-[#94A3B8]">Proprietor</span>
-                <span className="max-w-[270px] truncate text-[0.95rem] font-bold text-white">{proprietorName}</span>
+                <span className="mb-0.5 text-[0.55rem] font-bold uppercase tracking-wide text-[#94A3B8]">Proprietor</span>
+                <span className="max-w-[270px] truncate text-[0.85rem] font-bold text-white">{proprietorName}</span>
               </div>
 
-              <div className="mt-1 flex gap-8">
+              <div className="mt-0.5 flex gap-8">
                 <div className="flex flex-col">
-                  <span className="mb-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-[#94A3B8]">ID No.</span>
-                  <span className="font-mono text-[1.15rem] tracking-wide text-[#FBBF24]">{shopData.unique_id || 'PENDING'}</span>
+                  <span className="mb-0.5 text-[0.55rem] font-bold uppercase tracking-wide text-[#94A3B8]">ID No.</span>
+                  <span className="font-mono text-[1.05rem] tracking-wide text-[#FBBF24]">{shopData.unique_id || 'PENDING'}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="mb-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-[#94A3B8]">Expiry</span>
-                  <span className="text-[0.95rem] font-bold text-white">{currentYear + 1}</span>
+                  <span className="mb-0.5 text-[0.55rem] font-bold uppercase tracking-wide text-[#94A3B8]">Expiry</span>
+                  <span className="text-[0.85rem] font-bold text-white">{currentYear + 1}</span>
                 </div>
               </div>
             </div>
 
-            {/* QR CODE */}
-            <div className="absolute bottom-0 right-0 flex h-16 w-16 items-center justify-center overflow-hidden rounded-md bg-white p-1 shadow-lg">
-              <QRCodeSVG value={shopUrl} size={56} level="M" />
+            {/* Footer Text & QR CODE */}
+            <div className="relative h-16 w-full flex items-end">
+              {/* Added Small Font Footer text */}
+              <div className="flex-1 text-center pr-16 text-[0.5rem] font-medium text-[#94A3B8]">
+                Visit <span className="text-white">{shopUrlText}</span> or scan QR
+              </div>
+              
+              {/* Slightly Smaller QR CODE */}
+              <div className="absolute bottom-0 right-0 flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-md bg-white p-1 shadow-lg">
+                <QRCodeSVG value={shopUrl} size={52} level="M" />
+              </div>
             </div>
           </div>
         </div>
