@@ -170,13 +170,14 @@ function DashboardHeader({
                 <div className="max-h-[280px] overflow-y-auto py-2">
                   <button
                     type="button"
-                    className={`block w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                    className={`flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
                       searchArea === "all"
                         ? "bg-pink-50 text-pink-700"
                         : "text-slate-700"
                     }`}
                     onClick={() => selectArea("all")}
                   >
+                    <span className={`h-[6px] w-[6px] rounded-full ${searchArea === "all" ? "bg-pink-600" : "bg-slate-300"}`}></span>
                     All Areas
                   </button>
 
@@ -184,14 +185,15 @@ function DashboardHeader({
                     <button
                       key={area.id}
                       type="button"
-                      className={`block w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                      className={`flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
                         String(searchArea) === String(area.id)
                           ? "bg-pink-50 text-pink-700"
                           : "text-slate-700"
                       }`}
                       onClick={() => selectArea(String(area.id))}
                     >
-                      {area.name}
+                      <span className={`h-[6px] w-[6px] rounded-full shrink-0 ${String(searchArea) === String(area.id) ? "bg-pink-600" : "bg-slate-300"}`}></span>
+                      <span className="truncate">{area.name}</span>
                     </button>
                   ))}
                 </div>
@@ -343,13 +345,14 @@ function DashboardHeader({
               <div className="max-h-[280px] overflow-y-auto py-2">
                 <button
                   type="button"
-                  className={`block w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                  className={`flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
                     searchArea === "all"
                       ? "bg-pink-50 text-pink-700"
                       : "text-slate-700"
                   }`}
                   onClick={() => selectArea("all")}
                 >
+                  <span className={`h-[6px] w-[6px] rounded-full ${searchArea === "all" ? "bg-pink-600" : "bg-slate-300"}`}></span>
                   All Areas
                 </button>
 
@@ -357,14 +360,15 @@ function DashboardHeader({
                   <button
                     key={area.id}
                     type="button"
-                    className={`block w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                    className={`flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
                       String(searchArea) === String(area.id)
                         ? "bg-pink-50 text-pink-700"
                         : "text-slate-700"
                     }`}
                     onClick={() => selectArea(String(area.id))}
                   >
-                    {area.name}
+                    <span className={`h-[6px] w-[6px] rounded-full shrink-0 ${String(searchArea) === String(area.id) ? "bg-pink-600" : "bg-slate-300"}`}></span>
+                    <span className="truncate">{area.name}</span>
                   </button>
                 ))}
               </div>
@@ -445,13 +449,14 @@ function DashboardHeader({
             <div className="max-h-[280px] overflow-y-auto py-2">
               <button
                 type="button"
-                className={`block w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                className={`flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
                   categoryFilter === "all"
                     ? "bg-pink-50 text-pink-700"
                     : "text-slate-700"
                 }`}
                 onClick={() => selectCategory("all")}
               >
+                <span className={`h-[6px] w-[6px] rounded-full ${categoryFilter === "all" ? "bg-pink-600" : "bg-slate-300"}`}></span>
                 All Categories
               </button>
 
@@ -459,14 +464,15 @@ function DashboardHeader({
                 <button
                   key={category.id || category.name}
                   type="button"
-                  className={`block w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                  className={`flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
                     categoryFilter === category.name
                       ? "bg-pink-50 text-pink-700"
                       : "text-slate-700"
                   }`}
                   onClick={() => selectCategory(category.name)}
                 >
-                  {category.name}
+                  <span className={`h-[6px] w-[6px] rounded-full shrink-0 ${categoryFilter === category.name ? "bg-pink-600" : "bg-slate-300"}`}></span>
+                  <span className="truncate">{category.name}</span>
                 </button>
               ))}
             </div>
