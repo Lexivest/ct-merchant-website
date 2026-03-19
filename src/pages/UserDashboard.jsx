@@ -385,7 +385,7 @@ function UserDashboard() {
     }
 
     if (shopData.status === "approved") {
-      navigate("/merchant-dashboard")
+      navigate("/vendor-panel")
       return
     }
 

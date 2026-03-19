@@ -18,7 +18,7 @@ import ShopDetail from "./pages/ShopDetail"
 import ProductDetail from "./pages/ProductDetail"
 import ShopIndex from "./pages/ShopIndex"
 import MerchantDiscovery from "./pages/MerchantDiscovery"
-import MerchantDashboard from "./pages/MerchantDashboard" // <-- NEW IMPORT
+import VendorsPanel from "./pages/VendorsPanel" // <-- UPDATED IMPORT
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
@@ -110,12 +110,12 @@ function App() {
         }
       />
 
-      {/* NEW MERCHANT DASHBOARD ROUTE */}
+      {/* NEW VENDORS PANEL ROUTE */}
       <Route
-        path="/merchant-dashboard"
+        path="/vendor-panel"
         element={
           <ProtectedDashboardRoute>
-            <MerchantDashboard />
+            <VendorsPanel />
           </ProtectedDashboardRoute>
         }
       />
