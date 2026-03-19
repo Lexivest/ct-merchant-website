@@ -39,11 +39,10 @@ const phrases = [
 function Home() {
   const navigate = useNavigate()
 
-  // 1. Hook into global auth state to solve the logout/login race condition
+  // Hook into global auth state
   const { user, isOffline } = useAuthSession()
 
   // Auto-redirect logged-in users to dashboard.
-  // This guarantees we only navigate AFTER the global memory knows the user is logged in.
   useEffect(() => {
     if (user) {
       navigate("/user-dashboard", { replace: true })
@@ -220,13 +219,18 @@ function Home() {
       }
 
       await updateLastActiveIp(signedInUser.id, result.ipData.ip)
+      
       setLoginNotice({
         visible: true,
         type: "success",
         title: "Login successful",
         message: "Opening your dashboard...",
       })
-      // Navigation is now handled smoothly by the useEffect
+      
+      // CRITICAL FIX: Force a hard redirect to obliterate stale SPA state
+      setTimeout(() => {
+        window.location.href = "/user-dashboard"
+      }, 600)
       
     } catch (error) {
       setLoginNotice({
@@ -287,13 +291,18 @@ function Home() {
       }
 
       await updateLastActiveIp(signedInUser.id, result.ipData.ip)
+      
       setLoginNotice({
         visible: true,
         type: "success",
         title: "Google sign-in successful",
         message: "Opening your dashboard...",
       })
-      // Navigation is now handled smoothly by the useEffect
+
+      // CRITICAL FIX: Force a hard redirect to obliterate stale SPA state
+      setTimeout(() => {
+        window.location.href = "/user-dashboard"
+      }, 600)
       
     } catch (error) {
       setLoginNotice({
