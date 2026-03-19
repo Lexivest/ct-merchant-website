@@ -6,7 +6,7 @@ import {
   FaArrowLeft,
   FaBullhorn,
   FaCheckCircle,
-  FaCircleInfo,
+  FaCircleCheck,
   FaCircleNotch,
   FaDownload,
   FaFacebookF,
@@ -219,7 +219,7 @@ export default function MerchantIDCard() {
                     <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="Logo" className="h-full w-full object-contain" crossOrigin="anonymous" />
                   </div>
                   <span className="flex items-center gap-1 text-[0.7rem] font-extrabold uppercase tracking-widest text-[#10B981]">
-                    <FaCheckCircle /> Verified Merchant
+                    <FaCircleCheck /> Verified Merchant
                   </span>
                 </div>
               </div>
