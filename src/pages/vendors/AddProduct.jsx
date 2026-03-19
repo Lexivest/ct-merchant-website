@@ -7,6 +7,7 @@ import {
   FaBoxesPacking,
   FaCamera,
   FaCheck,
+  FaChevronDown,
   FaCircleNotch,
   FaExpand,
   FaImage,
@@ -31,6 +32,63 @@ const techCats = ["Mobile Phones & Accessories", "Computers & IT Services", "Ele
 const fashionCats = ["Fashion & Apparel"];
 const consumablesCats = ["Groceries & Supermarkets", "Beauty & Personal Care", "Pharmacies & Health Shops", "Food & Drinks", "Agriculture & Agro-Allied"];
 const propertyCats = ["Real Estate & Properties", "Hotels & Accommodations"];
+
+// --- CUSTOM DROPDOWN COMPONENT (Bypasses Mobile OS Native Fullscreen Menus) ---
+function CustomSelect({ value, onChange, options, placeholder, className }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex cursor-pointer items-center justify-between bg-white transition-all ${className} ${
+          isOpen ? "border-[#db2777] ring-2 ring-[#db2777]/20" : ""
+        }`}
+      >
+        <span className={value ? "text-[#0F1111]" : "text-[#888C8C]"}>
+          {value || placeholder}
+        </span>
+        <FaChevronDown
+          className={`text-xs text-[#888C8C] transition-transform duration-200 ${
+            isOpen ? "rotate-180 text-[#db2777]" : ""
+          }`}
+        />
+      </div>
+      {isOpen && (
+        <ul className="absolute left-0 top-full z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-[#D5D9D9] bg-white py-1 shadow-xl animate-[slideDown_0.2s_ease]">
+          {options.map((opt) => (
+            <li
+              key={opt.value}
+              onClick={() => {
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              className={`cursor-pointer px-4 py-3 text-[0.95rem] transition-colors hover:bg-pink-50 ${
+                value === opt.value
+                  ? "bg-pink-50 font-extrabold text-[#db2777]"
+                  : "font-medium text-[#0F1111]"
+              }`}
+            >
+              {opt.label}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -136,9 +194,13 @@ export default function AddProduct() {
     setDynamicAttrs((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleCategoryChange = (e) => {
-    setForm((prev) => ({ ...prev, category: e.target.value }));
-    setDynamicAttrs({}); // Reset attrs on cat change
+  const handleCategoryChange = (val) => {
+    setForm((prev) => ({ ...prev, category: val }));
+    setDynamicAttrs({}); 
+  };
+
+  const handleConditionChange = (val) => {
+    setForm((prev) => ({ ...prev, condition: val }));
   };
 
   // --- STUDIO LOGIC ---
@@ -194,7 +256,6 @@ export default function AddProduct() {
     ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
     ctx.drawImage(croppedCanvas, 0, 0);
 
-    // Watermark
     ctx.filter = "none";
     ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
     ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
@@ -206,7 +267,6 @@ export default function AddProduct() {
     ctx.textBaseline = "bottom";
     ctx.fillText("Verified CTMerchant", 780, 780);
 
-    // Compress to < 100KB
     let quality = 0.92;
     const attemptCompress = () => {
       finalCanvas.toBlob(
@@ -249,6 +309,10 @@ export default function AddProduct() {
       alert("You must be online to upload a product.");
       return;
     }
+    if (!form.category) {
+      alert("Please select a category.");
+      return;
+    }
     if (!blobs[1]) {
       alert("Main Image is required.");
       return;
@@ -269,13 +333,11 @@ export default function AddProduct() {
         discountPrice = priceVal - priceVal * (perc / 100);
       }
 
-      // Merge standard textareas into attributes JSON
       const finalAttrs = { ...dynamicAttrs };
       if (form.key_features.trim()) finalAttrs["Key Features"] = form.key_features.trim();
       if (form.box_content.trim()) finalAttrs["What's in the Box"] = form.box_content.trim();
       if (form.warranty.trim()) finalAttrs["Warranty"] = form.warranty.trim();
 
-      // Upload Images
       const uploadPromises = [1, 2, 3].map(async (idx) => {
         if (!blobs[idx]) return null;
         const fName = `${user.id}_${Date.now()}_img${idx}.jpg`;
@@ -286,7 +348,6 @@ export default function AddProduct() {
 
       const [url1, url2, url3] = await Promise.all(uploadPromises);
 
-      // Insert DB
       const { error: insertError } = await supabase.from("products").insert({
         shop_id: parseInt(shopId),
         name: form.name.trim(),
@@ -316,7 +377,6 @@ export default function AddProduct() {
     }
   };
 
-  // --- LIVE PREVIEW CALCS ---
   const livePrice = parseFloat(form.price) || 0;
   const liveDiscPerc = parseFloat(form.discountPercent) || 0;
   const isLiveDiscValid = form.isDiscount && form.condition !== "Fairly Used" && liveDiscPerc > 0 && liveDiscPerc <= 20;
@@ -339,6 +399,12 @@ export default function AddProduct() {
           <div className="rounded-xl border border-red-200 bg-white p-8 shadow-sm">
             <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-600" />
             <h3 className="font-bold text-slate-900">{error}</h3>
+            <button
+              onClick={() => navigate(-1)}
+              className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-[#0F1111] transition hover:bg-slate-50"
+            >
+              Go Back
+            </button>
           </div>
         </div>
       </div>
@@ -360,6 +426,17 @@ export default function AddProduct() {
       </div>
     );
   }
+
+  const categoryOptions = [
+    ...techCats.map(c => ({ value: c, label: c })),
+    ...fashionCats.map(c => ({ value: c, label: c })),
+    ...consumablesCats.map(c => ({ value: c, label: c })),
+    ...propertyCats.map(c => ({ value: c, label: c })),
+    { value: "Logistics & Delivery", label: "Logistics & Delivery" },
+    { value: "Education & Training", label: "Education & Training" },
+    { value: "Artisans", label: "Artisans" },
+    { value: "Other", label: "Other" }
+  ];
 
   return (
     <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] pb-12">
@@ -446,20 +523,16 @@ export default function AddProduct() {
             </div>
           </div>
 
-          {/* CATEGORY & DYNAMIC */}
+          {/* CATEGORY (CUSTOM DROPDOWN) */}
           <div className="mb-5">
             <label className="mb-1.5 block text-[0.9rem] font-bold">Category</label>
-            <select id="category" value={form.category} onChange={handleCategoryChange} required className="w-full rounded border border-[#888C8C] bg-white p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20">
-              <option value="" disabled>Select a Category...</option>
-              {techCats.map(c => <option key={c} value={c}>{c}</option>)}
-              {fashionCats.map(c => <option key={c} value={c}>{c}</option>)}
-              {consumablesCats.map(c => <option key={c} value={c}>{c}</option>)}
-              {propertyCats.map(c => <option key={c} value={c}>{c}</option>)}
-              <option value="Logistics & Delivery">Logistics & Delivery</option>
-              <option value="Education & Training">Education & Training</option>
-              <option value="Artisans">Artisans</option>
-              <option value="Other">Other</option>
-            </select>
+            <CustomSelect
+              value={form.category}
+              onChange={handleCategoryChange}
+              options={categoryOptions}
+              placeholder="Select a Category..."
+              className="rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]"
+            />
           </div>
 
           {/* DYNAMIC FIELDS BLOCK */}
@@ -467,10 +540,10 @@ export default function AddProduct() {
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Technical Specifications</div>
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Brand</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-sm" placeholder="Apple" onChange={e => handleAttrChange('Brand', e.target.value)} /></div>
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Model</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-sm" placeholder="iPhone 14" onChange={e => handleAttrChange('Model', e.target.value)} /></div>
-                <div><label className="mb-1 block text-[0.85rem] font-bold">RAM</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-sm" placeholder="8GB" onChange={e => handleAttrChange('RAM', e.target.value)} /></div>
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Storage</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-sm" placeholder="256GB" onChange={e => handleAttrChange('Storage', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Brand</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="Apple" onChange={e => handleAttrChange('Brand', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Model</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="iPhone 14" onChange={e => handleAttrChange('Model', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">RAM</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="8GB" onChange={e => handleAttrChange('RAM', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Storage</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="256GB" onChange={e => handleAttrChange('Storage', e.target.value)} /></div>
               </div>
             </div>
           )}
@@ -478,12 +551,22 @@ export default function AddProduct() {
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Apparel Details</div>
               <div className="grid grid-cols-2 gap-4">
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Brand</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-sm" onChange={e => handleAttrChange('Brand', e.target.value)} /></div>
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Size</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-sm" onChange={e => handleAttrChange('Size', e.target.value)} /></div>
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Gender</label>
-                  <select className="w-full rounded border border-[#888C8C] p-2 text-sm bg-white" onChange={e => handleAttrChange('Gender', e.target.value)}>
-                    <option value="">Select...</option><option value="Unisex">Unisex</option><option value="Men">Men</option><option value="Women">Women</option><option value="Kids">Kids</option>
-                  </select>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Brand</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Brand', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Size</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Size', e.target.value)} /></div>
+                <div className="col-span-2">
+                  <label className="mb-1 block text-[0.85rem] font-bold">Target Audience (Gender)</label>
+                  <CustomSelect
+                    value={dynamicAttrs['Gender'] || ""}
+                    onChange={(val) => handleAttrChange('Gender', val)}
+                    options={[
+                      { value: "Unisex", label: "Unisex" },
+                      { value: "Men", label: "Men" },
+                      { value: "Women", label: "Women" },
+                      { value: "Kids", label: "Kids" }
+                    ]}
+                    placeholder="Select Target..."
+                    className="rounded border border-[#888C8C] p-2 text-[0.95rem]"
+                  />
                 </div>
               </div>
             </div>
@@ -492,9 +575,31 @@ export default function AddProduct() {
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Product Details</div>
               <div className="grid grid-cols-2 gap-4">
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Brand/Maker</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-sm" onChange={e => handleAttrChange('Brand', e.target.value)} /></div>
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Weight/Vol</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-sm" onChange={e => handleAttrChange('Weight', e.target.value)} /></div>
-                <div className="col-span-2"><label className="mb-1 block text-[0.85rem] font-bold text-red-600">Expiry Date *</label><input type="date" required className="w-full rounded border border-[#888C8C] p-2 text-sm" onChange={e => handleAttrChange('Expiry Date', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Brand/Maker</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Brand', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Weight/Vol</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Weight', e.target.value)} /></div>
+                <div className="col-span-2"><label className="mb-1 block text-[0.85rem] font-bold text-red-600">Expiry Date *</label><input type="date" required className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Expiry Date', e.target.value)} /></div>
+              </div>
+            </div>
+          )}
+          {propertyCats.includes(form.category) && (
+            <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
+              <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Property Details</div>
+              <div className="grid grid-cols-1 gap-4">
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Property Type</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="e.g. 2 Bed Flat" onChange={e => handleAttrChange('Property Type', e.target.value)} /></div>
+                <div>
+                  <label className="mb-1 block text-[0.85rem] font-bold">Payment Cycle</label>
+                  <CustomSelect
+                    value={dynamicAttrs['Payment Cycle'] || ""}
+                    onChange={(val) => handleAttrChange('Payment Cycle', val)}
+                    options={[
+                      { value: "Per Year", label: "Per Year" },
+                      { value: "Per Month", label: "Per Month" },
+                      { value: "Per Night", label: "Per Night (Hotels)" }
+                    ]}
+                    placeholder="Select Cycle..."
+                    className="rounded border border-[#888C8C] p-2 text-[0.95rem]"
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -516,12 +621,18 @@ export default function AddProduct() {
             </div>
           </div>
 
+          {/* CONDITION (CUSTOM DROPDOWN) */}
           <div className="mb-5">
             <label className="mb-1.5 block text-[0.9rem] font-bold">Condition</label>
-            <select id="condition" value={form.condition} onChange={handleInputChange} className="w-full rounded border border-[#888C8C] bg-white p-3 text-[1rem] focus:border-[#db2777] focus:outline-none">
-              <option value="New">New</option>
-              <option value="Fairly Used">Fairly Used</option>
-            </select>
+            <CustomSelect
+              value={form.condition}
+              onChange={handleConditionChange}
+              options={[
+                { value: "New", label: "New" },
+                { value: "Fairly Used", label: "Fairly Used" }
+              ]}
+              className="rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]"
+            />
           </div>
 
           {/* DISCOUNT SECTION */}
