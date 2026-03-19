@@ -586,16 +586,10 @@ function ShopRegistration() {
           <p className="text-sm font-semibold text-slate-600 mb-6">{dataError}</p>
           <div className="flex justify-center gap-3">
             <button
-              onClick={() => navigate("/user-dashboard")}
-              className="rounded-xl border border-slate-200 bg-white px-6 py-2.5 font-bold text-slate-700 transition hover:bg-slate-50"
+              onClick={() => navigate(-1)}
+              className="rounded-xl border border-slate-200 bg-white px-8 py-3 font-bold text-slate-700 transition hover:bg-slate-50"
             >
               Go Back
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              className="rounded-xl bg-pink-600 px-6 py-2.5 font-bold text-white transition hover:bg-pink-700"
-            >
-              Try Again
             </button>
           </div>
         </div>

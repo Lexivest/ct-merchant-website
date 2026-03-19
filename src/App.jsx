@@ -23,6 +23,8 @@ import ProtectedRoute from "./components/auth/ProtectedRoute"
 import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import { isProfileComplete, signOutUser } from "./lib/auth"
+import ImageOptimizer from "./pages/vendors/ImageOptimizer"
+import AddProduct from "./pages/vendors/AddProduct"
 
 function ProtectedDashboardRoute({ children }) {
   const { loading, session, user, profile, suspended, isOffline } = useAuthSession()
@@ -102,6 +104,15 @@ function App() {
       />
 
       <Route
+  path="/merchant-add-product"
+  element={
+    <ProtectedDashboardRoute>
+      <AddProduct />
+    </ProtectedDashboardRoute>
+  }
+/>
+
+      <Route
         path="/shop-registration"
         element={
           <ProtectedDashboardRoute>
@@ -146,6 +157,15 @@ function App() {
           </ProtectedDashboardRoute>
         }
       />
+
+      <Route
+  path="/ct-studio"
+  element={
+    <ProtectedDashboardRoute>
+      <ImageOptimizer />
+    </ProtectedDashboardRoute>
+  }
+/>
 
       <Route
         path="/shop-index"
