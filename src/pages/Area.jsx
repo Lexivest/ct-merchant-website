@@ -21,8 +21,8 @@ function Area() {
   // Apply pull-to-refresh prevention
   usePreventPullToRefresh()
 
-  // 1. Unified Auth State
-  const { user, loading: authLoading, isOffline } = useAuthSession()
+  // 1. Unified Auth State (isOffline removed to rely on global wrapper)
+  const { user, loading: authLoading } = useAuthSession()
   const [query, setQuery] = useState("")
 
   // Gatekeeper Redirect
@@ -98,15 +98,7 @@ function Area() {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] text-[#0F1111]">
-      {/* Offline Banner */}
-      {isOffline && (
-        <div className="z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200">
-          <i className="fa-solid fa-wifi-slash mr-2"></i>
-          You are offline. Showing cached area data.
-        </div>
-      )}
-
-      <div className={`sticky ${isOffline ? 'top-[36px]' : 'top-0'} z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]`}>
+      <div className="sticky top-0 z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <header className="mx-auto flex w-full max-w-[800px] items-center gap-4 px-4 py-3 text-white">
           <button
             type="button"
@@ -150,22 +142,13 @@ function Area() {
           <div className="flex flex-col items-center justify-center rounded-lg border border-[#D5D9D9] bg-white px-5 py-16 text-center text-[#888C8C]">
             <FaTriangleExclamation className="mb-4 text-[2.5rem] text-[#C40000]" />
             <span className="font-semibold text-[#0F1111]">{dataError}</span>
-            <div className="mt-5 flex gap-3">
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-[#0F1111] transition hover:bg-slate-50"
-              >
-                Go Back
-              </button>
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-pink-600 transition hover:bg-slate-50"
-              >
-                Tap to Retry
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-[#0F1111] transition hover:bg-slate-50"
+            >
+              Go Back
+            </button>
           </div>
         ) : filteredShops.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-5 py-16 text-center text-[#888C8C]">

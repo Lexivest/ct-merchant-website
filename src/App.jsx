@@ -24,16 +24,12 @@ import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 
 function ProtectedDashboardRoute({ children }) {
-  // Destructure isOffline from our auth hook
   const { loading, session, user, profile, suspended, isOffline } = useAuthSession()
 
-  // 1. Network-Aware Spinner: If offline, bypass the spinner to prevent getting stuck
+  // 1. By returning children directly during loading, we let the individual
+  // pages render their own beautiful Shimmer skeletons instead of a generic spinner!
   if (loading && !isOffline) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-pink-200 border-t-pink-600"></div>
-      </div>
-    )
+    return <>{children}</>
   }
 
   // 2. Prevent "Offline Kick": Allow access if normal conditions are met, OR if offline with a cached user

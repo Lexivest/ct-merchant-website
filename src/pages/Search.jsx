@@ -51,8 +51,8 @@ function Search() {
 
   usePreventPullToRefresh()
 
-  // 1. Unified Auth State
-  const { user, profile, loading: authLoading, isOffline } = useAuthSession()
+  // 1. Unified Auth State (isOffline removed to rely on global wrapper)
+  const { user, profile, loading: authLoading } = useAuthSession()
 
   // 2. Extracted Data Fetching Logic for Hook
   const fetchSearchData = async () => {
@@ -319,14 +319,6 @@ function Search() {
 
   return (
     <div className="min-h-screen bg-[#E3E6E6]">
-      {/* Offline Banner */}
-      {isOffline && (
-        <div className="z-[1001] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200">
-          <i className="fa-solid fa-wifi-slash mr-2"></i>
-          You are offline. Showing cached search results.
-        </div>
-      )}
-
       <header className="sticky top-0 z-[1000] bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <div className="mx-auto flex w-full max-w-[1600px] items-center gap-4 px-4 py-[10px]">
           <button
@@ -368,10 +360,10 @@ function Search() {
             <span className="font-semibold text-[#0F1111]">{dataError}</span>
             <button
               type="button"
-              onClick={() => window.location.reload()}
-              className="mt-4 border-none bg-transparent text-base font-bold text-pink-600"
+              onClick={() => navigate(-1)}
+              className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-[#0F1111] transition hover:bg-slate-50"
             >
-              Tap to Retry
+              Go Back
             </button>
           </div>
         ) : (

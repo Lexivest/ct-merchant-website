@@ -28,6 +28,7 @@ import {
   validateResetPasswordForm,
   validateResetRequestForm,
 } from "../lib/validators"
+import useAuthSession from "../hooks/useAuthSession"
 
 const phrases = [
   "Verified Merchants",
@@ -38,17 +39,23 @@ const phrases = [
 function Home() {
   const navigate = useNavigate()
 
-  // --- IMAGE PRELOAD STATE ---
-  const [bannerLoaded, setBannerLoaded] = useState(false)
+  // 1. Hook into global auth state to solve the logout/login race condition
+  const { user, isOffline } = useAuthSession()
 
+  // Auto-redirect logged-in users to dashboard.
+  // This guarantees we only navigate AFTER the global memory knows the user is logged in.
+  useEffect(() => {
+    if (user) {
+      navigate("/user-dashboard", { replace: true })
+    }
+  }, [user, navigate])
+
+  const [bannerLoaded, setBannerLoaded] = useState(false)
   const [phraseIndex, setPhraseIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const [loginForm, setLoginForm] = useState({
-    email: "",
-    password: "",
-  })
+  const [loginForm, setLoginForm] = useState({ email: "", password: "" })
   const [loginErrors, setLoginErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
   const [loginLoading, setLoginLoading] = useState(false)
@@ -155,17 +162,14 @@ function Home() {
 
   function validateLogin() {
     const errors = {}
-
     if (!loginForm.email.trim()) {
       errors.email = "Email address is required."
     } else if (!isValidEmail(loginForm.email)) {
       errors.email = "Enter a valid email address."
     }
-
     if (!loginForm.password) {
       errors.password = "Password is required."
     }
-
     setLoginErrors(errors)
     return errors
   }
@@ -173,8 +177,7 @@ function Home() {
   async function handleEmailLogin(event) {
     event.preventDefault()
 
-    // Offline Guard
-    if (!navigator.onLine) {
+    if (isOffline) {
       setLoginNotice({
         visible: true,
         type: "error",
@@ -223,7 +226,7 @@ function Home() {
         title: "Login successful",
         message: "Opening your dashboard...",
       })
-      navigate("/user-dashboard", { replace: true })
+      // Navigation is now handled smoothly by the useEffect
       
     } catch (error) {
       setLoginNotice({
@@ -232,13 +235,12 @@ function Home() {
         title: "Login failed",
         message: error.message || "We could not sign you in. Check your connection and try again.",
       })
-    } finally {
       setLoginLoading(false)
     }
   }
 
   async function handleGoogleCredentialResponse(response) {
-    if (!navigator.onLine) {
+    if (isOffline) {
       setLoginNotice({
         visible: true,
         type: "error",
@@ -291,7 +293,7 @@ function Home() {
         title: "Google sign-in successful",
         message: "Opening your dashboard...",
       })
-      navigate("/user-dashboard", { replace: true })
+      // Navigation is now handled smoothly by the useEffect
       
     } catch (error) {
       setLoginNotice({
@@ -300,7 +302,6 @@ function Home() {
         title: "Google sign-in failed",
         message: error.message || "Please try again.",
       })
-    } finally {
       setGoogleLoading(false)
     }
   }
@@ -314,7 +315,7 @@ function Home() {
   }
 
   async function handleSendResetCode() {
-    if (!navigator.onLine) {
+    if (isOffline) {
       setResetNotice({
         visible: true,
         type: "error",
@@ -356,7 +357,7 @@ function Home() {
   }
 
   async function handleResetPassword() {
-    if (!navigator.onLine) {
+    if (isOffline) {
       setResetNotice({
         visible: true,
         type: "error",
@@ -416,10 +417,7 @@ function Home() {
       <section className="bg-pink-50 px-4 py-4 md:py-5">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-1 lg:row-start-1">
-            
-            {/* OPTIMIZED IMAGE CONTAINER */}
             <div className="relative min-h-[260px] overflow-hidden rounded-[24px] border border-pink-100 bg-slate-900 shadow-lg md:min-h-[420px]">
-              {/* Actual Image Tag for priority loading and fade-in */}
               <img 
                 src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" 
                 alt="Commerce Banner" 
@@ -444,7 +442,6 @@ function Home() {
                 </div>
               </div>
             </div>
-
           </div>
 
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-2 lg:row-span-2 lg:row-start-1">

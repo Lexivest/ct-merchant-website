@@ -21,7 +21,7 @@ function ShopIndex() {
   usePreventPullToRefresh()
 
   // 1. Unified Auth State
-  const { user, profile, loading: authLoading, isOffline } = useAuthSession()
+  const { user, profile, loading: authLoading } = useAuthSession()
   const [searchInput, setSearchInput] = useState("")
 
   // 2. Extracted Data Fetching Logic for Hook
@@ -95,14 +95,6 @@ function ShopIndex() {
 
   return (
     <div className="flex h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
-      {/* Offline Banner */}
-      {isOffline && (
-        <div className="z-[60] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200">
-          <i className="fa-solid fa-wifi-slash mr-2"></i>
-          You are offline. Showing cached directory.
-        </div>
-      )}
-
       <div className="sticky top-0 z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <header className="mx-auto flex w-full max-w-[800px] items-center gap-4 px-4 py-3 text-white">
           <button
@@ -149,10 +141,10 @@ function ShopIndex() {
             <span className="font-semibold text-[#0F1111]">{dataError}</span>
             <button
               type="button"
-              onClick={() => window.location.reload()}
-              className="mt-4 border-none bg-transparent text-base font-bold text-pink-600"
+              onClick={() => navigate(-1)}
+              className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-[#0F1111] transition hover:bg-slate-50"
             >
-              Tap to Retry
+              Go Back
             </button>
           </div>
         ) : filteredShops.length === 0 ? (
