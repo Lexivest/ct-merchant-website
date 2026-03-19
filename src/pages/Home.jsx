@@ -39,15 +39,21 @@ const phrases = [
 function Home() {
   const navigate = useNavigate()
 
-  // Hook into global auth state
+  // 1. Hook into global auth state
   const { user, isOffline } = useAuthSession()
 
-  // Auto-redirect logged-in users to dashboard.
+  // 2. Smooth Auto-Redirect
+  // This waits for the global state to confirm the user is logged in, 
+  // waits a tiny fraction of a second for the profile data to settle, 
+  // and then seamlessly transitions without rebooting the browser.
   useEffect(() => {
-    if (user) {
-      navigate("/user-dashboard", { replace: true })
+    if (user && !isOffline) {
+      const timer = setTimeout(() => {
+        navigate("/user-dashboard", { replace: true })
+      }, 150)
+      return () => clearTimeout(timer)
     }
-  }, [user, navigate])
+  }, [user, isOffline, navigate])
 
   const [bannerLoaded, setBannerLoaded] = useState(false)
   const [phraseIndex, setPhraseIndex] = useState(0)
@@ -227,10 +233,7 @@ function Home() {
         message: "Opening your dashboard...",
       })
       
-      // CRITICAL FIX: Force a hard redirect to obliterate stale SPA state
-      setTimeout(() => {
-        window.location.href = "/user-dashboard"
-      }, 600)
+      // The useEffect at the top of the file will now handle the navigation smoothly!
       
     } catch (error) {
       setLoginNotice({
@@ -299,10 +302,7 @@ function Home() {
         message: "Opening your dashboard...",
       })
 
-      // CRITICAL FIX: Force a hard redirect to obliterate stale SPA state
-      setTimeout(() => {
-        window.location.href = "/user-dashboard"
-      }, 600)
+      // The useEffect at the top of the file will now handle the navigation smoothly!
       
     } catch (error) {
       setLoginNotice({
