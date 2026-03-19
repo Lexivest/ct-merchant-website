@@ -25,6 +25,12 @@ import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 import ImageOptimizer from "./pages/vendors/ImageOptimizer"
 import AddProduct from "./pages/vendors/AddProduct"
+import EditProduct from "./pages/vendors/EditProduct"
+import MerchantProducts from "./pages/vendors/MerchantProducts"
+import MerchantBanner from "./pages/vendors/MerchantBanner"
+import MerchantSettings from "./pages/vendors/MerchantSettings"
+import MerchantNews from "./pages/vendors/MerchantNews"
+import MerchantIDCard from "./pages/vendors/MerchantIDCard"
 
 function ProtectedDashboardRoute({ children }) {
   const { loading, session, user, profile, suspended, isOffline } = useAuthSession()
@@ -102,6 +108,59 @@ function App() {
           </ProtectedDashboardRoute>
         }
       />
+
+      <Route
+  path="/merchant-id-card"
+  element={
+    <ProtectedDashboardRoute>
+      <MerchantIDCard />
+    </ProtectedDashboardRoute>
+  }
+/>
+
+<Route
+  path="/merchant-news"
+  element={
+    <ProtectedDashboardRoute>
+      <MerchantNews />
+    </ProtectedDashboardRoute>
+  }
+/>
+      <Route
+  path="/merchant-settings"
+  element={
+    <ProtectedDashboardRoute>
+      <MerchantSettings />
+    </ProtectedDashboardRoute>
+  }
+/>
+
+      <Route
+  path="/merchant-banner"
+  element={
+    <ProtectedDashboardRoute>
+      <MerchantBanner />
+    </ProtectedDashboardRoute>
+  }
+/>
+
+      <Route
+  path="/merchant-products"
+  element={
+    <ProtectedDashboardRoute>
+      <MerchantProducts />
+    </ProtectedDashboardRoute>
+  }
+/>
+
+      <Route
+  path="/merchant-edit-product"
+  element={
+    <ProtectedDashboardRoute>
+      <EditProduct />
+    </ProtectedDashboardRoute>
+  }
+/>
 
       <Route
   path="/merchant-add-product"
