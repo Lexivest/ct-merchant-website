@@ -5,7 +5,9 @@ import "cropperjs/dist/cropper.css"
 
 import AuthNotification from "../components/auth/AuthNotification"
 import useAuthSession from "../hooks/useAuthSession"
-import { fetchProfileByUserId, signOutUser } from "../lib/auth"
+import useCachedFetch from "../hooks/useCachedFetch"
+import useMyShop from "../hooks/useMyShop" // <-- Import our new logic file
+import { signOutUser } from "../lib/auth"
 import { supabase } from "../lib/supabase"
 
 import DashboardHeader from "../components/dashboard/layout/DashboardHeader"
@@ -25,14 +27,8 @@ const EMPTY_DASHBOARD_DATA = {
   shops: [],
   products: [],
   notifications: [],
-  myShop: null,
   wishlistCount: 0,
   unread: 0,
-}
-
-let dashboardCache = {
-  userId: "",
-  data: null,
 }
 
 function DashboardShimmer({ label = "Loading dashboard..." }) {
@@ -87,23 +83,100 @@ function DashboardShimmer({ label = "Loading dashboard..." }) {
 function UserDashboard() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  // 1. Hook into the global offline state
-  const { loading, user, profile, suspended, error, isOffline } = useAuthSession()
+
+  const { loading: authLoading, user, profile, suspended, isOffline } = useAuthSession()
+  
+  // Use our new isolated tracking logic for the shop card
+  const { shopData, shopMeta } = useMyShop()
+
+  const fetchDashboardData = async () => {
+    if (!user?.id) throw new Error("Authentication required")
+
+    let currentProfile = profile
+    if (!currentProfile?.city_id) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*, cities(name)")
+        .eq("id", user.id)
+        .single()
+      if (error) throw error
+      currentProfile = data
+    }
+
+    if (!currentProfile?.city_id) throw new Error("Profile not completed")
+    if (currentProfile.is_suspended) throw new Error("Account restricted")
+
+    const cityId = currentProfile.city_id
+
+    const [
+      promosRes,
+      announcementsRes,
+      categoriesRes,
+      areasRes,
+      shopsRes,
+      notificationsRes,
+      wishlistRes,
+    ] = await Promise.all([
+      supabase.from("promo_banners").select("*").order("created_at", { ascending: false }),
+      supabase.from("announcements").select("*").order("created_at", { ascending: false }),
+      supabase.from("categories").select("*").order("name"),
+      supabase.from("areas").select("*").eq("city_id", cityId).order("name"),
+      supabase.from("shops").select("*").eq("city_id", cityId).order("is_verified", { ascending: false }).order("id", { ascending: true }),
+      supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
+      supabase.from("wishlist").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+    ])
+
+    let products = []
+    const shopIds = (shopsRes.data || []).map((shop) => shop.id)
+
+    if (shopIds.length > 0) {
+      const productsRes = await supabase
+        .from("products")
+        .select("*")
+        .in("shop_id", shopIds)
+        .eq("is_available", true)
+        .limit(500)
+        .order("id", { ascending: true })
+
+      if (!productsRes.error) products = productsRes.data || []
+    }
+
+    return {
+      profile: currentProfile,
+      promos: promosRes.data || [],
+      announcements: announcementsRes.data || [],
+      categories: categoriesRes.data || [],
+      areas: areasRes.data || [],
+      shops: shopsRes.data || [],
+      products,
+      notifications: notificationsRes.data || [],
+      wishlistCount: wishlistRes.count || 0,
+      unread: (notificationsRes.data || []).filter((item) => !item.is_read).length,
+    }
+  }
+
+  const { data: fetchedData, loading: dataLoading, error: dataError } = useCachedFetch(
+    "dashboard_cache",
+    fetchDashboardData,
+    { dependencies: [user?.id, profile?.city_id], ttl: 1000 * 60 * 15 }
+  )
+
+  const [localData, setLocalData] = useState(EMPTY_DASHBOARD_DATA)
+
+  useEffect(() => {
+    if (fetchedData) {
+      setLocalData(fetchedData)
+    }
+  }, [fetchedData])
 
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "market")
   const [serviceView, setServiceView] = useState("menu")
-  const [dashboardLoading, setDashboardLoading] = useState(!dashboardCache.data)
-  const [dashboardError, setDashboardError] = useState("")
   const [notice, setNotice] = useState({
     visible: false,
     type: "info",
     title: "",
     message: "",
   })
-
-  const [dashboardData, setDashboardData] = useState(
-    dashboardCache.data || EMPTY_DASHBOARD_DATA
-  )
 
   const [searchInputDesktop, setSearchInputDesktop] = useState("")
   const [searchInputMobile, setSearchInputMobile] = useState("")
@@ -132,6 +205,20 @@ function UserDashboard() {
   const fileInputRef = useRef(null)
 
   useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/", { replace: true })
+    }
+    if (suspended) {
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Account restricted",
+        message: "Your account has been restricted. Please contact support.",
+      })
+    }
+  }, [authLoading, user, suspended, navigate])
+
+  useEffect(() => {
     const tab = searchParams.get("tab")
     if (tab) {
       setActiveTab(tab)
@@ -150,88 +237,37 @@ function UserDashboard() {
   }, [activeTab, setSearchParams])
 
   useEffect(() => {
-    let cancelled = false
-    let attachedEvents = false
-
+    let attached = false
     const events = ["mousemove", "keydown", "scroll", "click", "touchstart"]
 
-    function attachActivityListeners() {
-      if (attachedEvents) return
-      resetInactivityTimer()
-      events.forEach((name) => {
-        document.addEventListener(name, resetInactivityTimer, { passive: true })
-      })
-      attachedEvents = true
-    }
-
-    function detachActivityListeners() {
-      if (!attachedEvents) return
-      events.forEach((name) => {
-        document.removeEventListener(name, resetInactivityTimer)
-      })
-      attachedEvents = false
+    function resetInactivityTimer() {
       clearTimeout(inactivityTimerRef.current)
-    }
-
-    async function initialize() {
-      if (loading) return
-
-      if (!user) {
-        navigate("/", { replace: true })
-        return
-      }
-
-      if (suspended) {
-        setDashboardLoading(false)
-        setNotice({
-          visible: true,
-          type: "error",
-          title: "Account restricted",
-          message: "Your account has been restricted. Please contact support.",
+      inactivityTimerRef.current = setTimeout(async () => {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith("ctm_")) localStorage.removeItem(key)
         })
-        return
-      }
-
-      let resolvedProfile = profile
-
-      if (!resolvedProfile) {
-        try {
-          const freshProfile = await fetchProfileByUserId(user.id)
-          if (cancelled) return
-          resolvedProfile = freshProfile
-        } catch {
-          const cachedProfile =
-            dashboardCache.userId === user.id ? dashboardCache.data?.profile : null
-
-          if (cachedProfile) {
-            resolvedProfile = cachedProfile
-          }
-        }
-      }
-
-      if (cancelled) return
-
-      attachActivityListeners()
-
-      const hasWarmCache =
-        dashboardCache.userId === user.id && Boolean(dashboardCache.data?.profile)
-
-      if (hasWarmCache) {
-        setDashboardData(dashboardCache.data)
-        setDashboardLoading(false)
-        loadDashboard({ silent: true })
-      } else {
-        loadDashboard({ silent: false })
-      }
+        await signOutUser()
+        navigate("/", { replace: true })
+      }, INACTIVITY_LIMIT)
     }
 
-    initialize()
-
-    return () => {
-      cancelled = true
-      detachActivityListeners()
+    function attach() {
+      if (attached) return
+      resetInactivityTimer()
+      events.forEach((name) => document.addEventListener(name, resetInactivityTimer, { passive: true }))
+      attached = true
     }
-  }, [loading, user, profile, suspended, navigate])
+
+    function detach() {
+      if (!attached) return
+      events.forEach((name) => document.removeEventListener(name, resetInactivityTimer))
+      clearTimeout(inactivityTimerRef.current)
+      attached = false
+    }
+
+    attach()
+    return detach
+  }, [navigate])
 
   useEffect(() => {
     function handleDocumentClick(event) {
@@ -241,7 +277,6 @@ function UserDashboard() {
       if (!target.closest(".desktop-search-wrap")) {
         setSearchSuggestionsDesktop([])
       }
-
       if (!target.closest(".mobile-search-wrap")) {
         setSearchSuggestionsMobile([])
       }
@@ -274,192 +309,25 @@ function UserDashboard() {
     }
   }, [cropModalOpen])
 
-  function setAndCacheDashboardData(nextData) {
-    setDashboardData(nextData)
-    if (user?.id) {
-      dashboardCache = {
-        userId: user.id,
-        data: nextData,
-      }
-    }
-  }
-
-  function clearDashboardCache() {
-    dashboardCache = {
-      userId: "",
-      data: null,
-    }
-  }
-
-  function resetInactivityTimer() {
-    clearTimeout(inactivityTimerRef.current)
-    inactivityTimerRef.current = setTimeout(async () => {
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith("ctm_")) localStorage.removeItem(key)
-      })
-      clearDashboardCache()
-      await signOutUser()
-      navigate("/", { replace: true })
-    }, INACTIVITY_LIMIT)
-  }
-
-  async function loadDashboard({ silent = false } = {}) {
-    if (!user) return
-
-    try {
-      if (!silent) {
-        setDashboardLoading(true)
-      }
-      setDashboardError("")
-
-      // 2. Offline check early return
-      if (!navigator.onLine && dashboardCache.data) {
-        setDashboardData(dashboardCache.data)
-        return
-      }
-
-      const profileRes = await supabase
-        .from("profiles")
-        .select("*, cities(name)")
-        .eq("id", user.id)
-        .maybeSingle()
-
-      if (profileRes.error) throw profileRes.error
-
-      if (!profileRes.data || !profileRes.data.city_id) {
-        clearDashboardCache()
-        await signOutUser()
-        navigate("/", { replace: true })
-        return
-      }
-
-      if (profileRes.data.is_suspended === true) {
-        clearDashboardCache()
-        await signOutUser()
-        navigate("/", { replace: true })
-        return
-      }
-
-      const cityId = profileRes.data.city_id
-
-      const [
-        promosRes,
-        announcementsRes,
-        categoriesRes,
-        areasRes,
-        shopsRes,
-        notificationsRes,
-        myShopRes,
-        wishlistRes,
-      ] = await Promise.all([
-        supabase
-          .from("promo_banners")
-          .select("*")
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("announcements")
-          .select("*")
-          .order("created_at", { ascending: false }),
-        supabase.from("categories").select("*").order("name"),
-        supabase.from("areas").select("*").eq("city_id", cityId).order("name"),
-        supabase
-          .from("shops")
-          .select("*")
-          .eq("city_id", cityId)
-          .order("is_verified", { ascending: false })
-          .order("id", { ascending: true }),
-        supabase
-          .from("notifications")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(20),
-        supabase
-          .from("shops")
-          .select("id, status, rejection_reason, is_open")
-          .eq("owner_id", user.id)
-          .maybeSingle(),
-        supabase
-          .from("wishlist")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id),
-      ])
-
-      if (promosRes.error) throw promosRes.error
-      if (announcementsRes.error) throw announcementsRes.error
-      if (categoriesRes.error) throw categoriesRes.error
-      if (areasRes.error) throw areasRes.error
-      if (shopsRes.error) throw shopsRes.error
-      if (notificationsRes.error) throw notificationsRes.error
-      if (myShopRes.error) throw myShopRes.error
-      if (wishlistRes.error) throw wishlistRes.error
-
-      let products = []
-      const shopIds = (shopsRes.data || []).map((shop) => shop.id)
-
-      if (shopIds.length > 0) {
-        const productsRes = await supabase
-          .from("products")
-          .select("*")
-          .in("shop_id", shopIds)
-          .eq("is_available", true)
-          .limit(500)
-          .order("id", { ascending: true })
-
-        if (productsRes.error) throw productsRes.error
-        products = productsRes.data || []
-      }
-
-      const nextData = {
-        profile: profileRes.data,
-        promos: promosRes.data || [],
-        announcements: announcementsRes.data || [],
-        categories: categoriesRes.data || [],
-        areas: areasRes.data || [],
-        shops: shopsRes.data || [],
-        products,
-        notifications: notificationsRes.data || [],
-        myShop: myShopRes.data || null,
-        wishlistCount: wishlistRes.count || 0,
-        unread: (notificationsRes.data || []).filter((item) => !item.is_read)
-          .length,
-      }
-
-      setAndCacheDashboardData(nextData)
-    } catch (err) {
-      // 3. Graceful Degradation: If fetch fails but we have cached data, suppress the ugly error.
-      if (dashboardCache.data || dashboardData?.profile) {
-        console.warn("Background sync failed. Using cached dashboard data.");
-      } else {
-        setDashboardError("Unable to fetch data. Please check your network connection.")
-      }
-    } finally {
-      setDashboardLoading(false)
-    }
-  }
-
   async function handleLogout() {
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith("ctm_")) localStorage.removeItem(key)
     })
-    clearDashboardCache()
     await signOutUser()
     navigate("/", { replace: true })
   }
 
   async function markNotificationsRead() {
-    if (!user || dashboardData.unread === 0) return
+    if (!user || localData.unread === 0) return
 
-    const nextData = {
-      ...dashboardData,
+    setLocalData((prev) => ({
+      ...prev,
       unread: 0,
-      notifications: dashboardData.notifications.map((item) => ({
+      notifications: prev.notifications.map((item) => ({
         ...item,
         is_read: true,
       })),
-    }
-
-    setAndCacheDashboardData(nextData)
+    }))
 
     await supabase
       .from("notifications")
@@ -478,49 +346,45 @@ function UserDashboard() {
     }
   }
 
+  // Updated purely to rely on our new isolated shopData hook
   function handleShopClick() {
-    const shop = dashboardData.myShop
-
-    if (!shop) {
+    if (!shopData) {
       navigate("/shop-registration")
       return
     }
 
-    if (shop.is_open === false) {
+    if (shopData.is_open === false) {
       setNotice({
         visible: true,
         type: "error",
         title: "Shop access restricted",
-        message:
-          "Your shop access has been restricted. Please contact support.",
+        message: "Your shop access has been restricted. Please contact support.",
       })
       return
     }
 
-    if (shop.status === "pending") {
+    if (shopData.status === "pending") {
       setNotice({
         visible: true,
         type: "warning",
         title: "Application pending",
-        message:
-          "Your shop application is currently being reviewed. Please check back later.",
+        message: "Your shop application is currently being reviewed. Please check back later.",
       })
       return
     }
 
-    if (shop.status === "rejected") {
+    if (shopData.status === "rejected") {
       setNotice({
         visible: true,
         type: "warning",
         title: "Correction required",
-        message:
-          shop.rejection_reason || "Please update your details and resubmit.",
+        message: shopData.rejection_reason || "Please update your details and resubmit.",
       })
-      navigate(`/shop-registration?id=${shop.id}`)
+      navigate(`/shop-registration?id=${shopData.id}`)
       return
     }
 
-    if (shop.status === "approved") {
+    if (shopData.status === "approved") {
       navigate("/merchant-dashboard")
       return
     }
@@ -528,10 +392,10 @@ function UserDashboard() {
     navigate("/shop-registration")
   }
 
-  const currentProfile = dashboardData.profile || profile
+  const currentProfile = localData.profile || profile
 
   const sortedAreas = useMemo(() => {
-    const areas = [...(dashboardData.areas || [])]
+    const areas = [...(localData.areas || [])]
     const userAreaId = currentProfile?.area_id
 
     return areas.sort((a, b) => {
@@ -539,38 +403,26 @@ function UserDashboard() {
       if (b.id === userAreaId) return 1
       return a.name.localeCompare(b.name)
     })
-  }, [dashboardData.areas, currentProfile?.area_id])
+  }, [localData.areas, currentProfile?.area_id])
 
   const featuredShops = useMemo(
-    () => (dashboardData.shops || []).filter((shop) => shop.is_featured),
-    [dashboardData.shops]
+    () => (localData.shops || []).filter((shop) => shop.is_featured),
+    [localData.shops]
   )
 
   const groupedShopsByArea = useMemo(() => {
     return sortedAreas
       .map((area) => ({
         area,
-        shops: (dashboardData.shops || []).filter((shop) => shop.area_id === area.id),
+        shops: (localData.shops || []).filter((shop) => shop.area_id === area.id),
       }))
       .filter((group) => group.shops.length > 0)
-  }, [sortedAreas, dashboardData.shops])
+  }, [sortedAreas, localData.shops])
 
   const tickerText = useMemo(() => {
-    if (!dashboardData.announcements?.length) return ""
-    return dashboardData.announcements.map((item) => item.message).join(" • ")
-  }, [dashboardData.announcements])
-
-  const shopCardMeta = useMemo(() => {
-    const shop = dashboardData.myShop
-
-    if (!shop) return { title: "Register Shop", status: "default" }
-    if (shop.is_open === false) return { title: "Locked", status: "locked" }
-    if (shop.status === "pending") return { title: "Pending", status: "pending" }
-    if (shop.status === "rejected") {
-      return { title: "Rejected", status: "rejected" }
-    }
-    return { title: "My Shop", status: "approved" }
-  }, [dashboardData.myShop])
+    if (!localData.announcements?.length) return ""
+    return localData.announcements.map((item) => item.message).join(" • ")
+  }, [localData.announcements])
 
   function updateSuggestions(value, mode) {
     const q = value.trim().toLowerCase()
@@ -583,7 +435,7 @@ function UserDashboard() {
 
     const suggestions = []
 
-    ;(dashboardData.shops || []).forEach((shop) => {
+    ;(localData.shops || []).forEach((shop) => {
       if (shop.name?.toLowerCase().includes(q)) {
         suggestions.push({
           text: shop.name,
@@ -593,7 +445,7 @@ function UserDashboard() {
       }
     })
 
-    ;(dashboardData.products || []).forEach((product) => {
+    ;(localData.products || []).forEach((product) => {
       const productName = product.name || product.product_name || product.title
       if (productName?.toLowerCase().includes(q)) {
         suggestions.push({
@@ -641,7 +493,7 @@ function UserDashboard() {
   }
 
   async function openProfileEdit() {
-    const p = dashboardData.profile
+    const p = localData.profile
     if (!p) return
 
     setProfileEditForm({
@@ -767,9 +619,9 @@ function UserDashboard() {
   }
 
   async function uploadAvatarProcess() {
-    if (!avatarBlob || !user) return dashboardData.profile?.avatar_url || null
+    if (!avatarBlob || !user) return localData.profile?.avatar_url || null
 
-    const oldUrl = dashboardData.profile?.avatar_url
+    const oldUrl = localData.profile?.avatar_url
 
     if (oldUrl && oldUrl.includes("/avatars/")) {
       try {
@@ -832,28 +684,17 @@ function UserDashboard() {
 
       if (res.error) throw res.error
 
-      await loadDashboard({ silent: true })
-      setProfileEditOpen(false)
-      setNotice({
-        visible: true,
-        type: "success",
-        title: "Profile updated",
-        message: "Your profile changes have been saved.",
-      })
+      localStorage.removeItem("ctm_dashboard_cache")
+      window.location.reload()
+      
     } catch (err) {
       setProfileEditError(err.message || "Error updating profile.")
-    } finally {
       setProfileSaving(false)
     }
   }
 
-  // 4. Fallback Shimmer ONLY on first absolute cold load when no cache exists
-  if (!dashboardData.profile && (loading || dashboardLoading)) {
-    return (
-      <DashboardShimmer
-        label={loading ? "Loading session..." : "Loading marketplace..."}
-      />
-    )
+  if (authLoading || (dataLoading && !fetchedData)) {
+    return <DashboardShimmer label="Loading marketplace..." />
   }
 
   return (
@@ -863,7 +704,7 @@ function UserDashboard() {
         currentProfile={currentProfile}
         user={user}
         sortedAreas={sortedAreas}
-        categories={dashboardData.categories}
+        categories={localData.categories}
         searchArea="all"
         setSearchArea={navigateArea}
         categoryFilter="all"
@@ -879,28 +720,26 @@ function UserDashboard() {
         executeSearch={executeSearch}
         applySuggestion={applySuggestion}
         switchScreen={switchScreen}
-        unread={dashboardData.unread}
+        unread={localData.unread}
         onShopIndex={() => navigate("/shop-index")}
       />
 
       <main className="content-body mx-auto w-full max-w-[1600px] pb-10">
-        
-        {/* We only show AuthNotification if it's NOT a data loading error. Data errors are now handled gracefully by the components. */}
         <AuthNotification
-          visible={Boolean(error || notice.visible)}
-          type={error ? "error" : notice.type}
-          title={error ? "Session Issue" : notice.title}
-          message={error || notice.message}
+          visible={Boolean(dataError || notice.visible)}
+          type={dataError ? "error" : notice.type}
+          title={dataError ? "Session Issue" : notice.title}
+          message={dataError || notice.message}
         />
 
         {activeTab === "market" && (
           <MarketSection
-            dashboardData={dashboardData}
+            dashboardData={localData}
             featuredShops={featuredShops}
             groupedShopsByArea={groupedShopsByArea}
             navigateCategory={navigateCategory}
-            loading={dashboardLoading} // Passed down to trigger Shimmers
-            error={dashboardError}     // Passed down to trigger Network error UI
+            loading={dataLoading} 
+            error={dataError} 
           />
         )}
 
@@ -916,8 +755,8 @@ function UserDashboard() {
             cancelProfileEdit={cancelProfileEdit}
             handleLogout={handleLogout}
             handleShopClick={handleShopClick}
-            shopCardMeta={shopCardMeta}
-            wishlistCount={dashboardData.wishlistCount}
+            shopCardMeta={shopMeta} /* PASSED THE ISOLATED META HERE */
+            wishlistCount={localData.wishlistCount}
             onNavigate={navigate}
             profileEditForm={profileEditForm}
             setProfileEditForm={setProfileEditForm}
@@ -949,8 +788,8 @@ function UserDashboard() {
             cancelProfileEdit={cancelProfileEdit}
             handleLogout={handleLogout}
             handleShopClick={handleShopClick}
-            shopCardMeta={shopCardMeta}
-            wishlistCount={dashboardData.wishlistCount}
+            shopCardMeta={shopMeta} /* PASSED THE ISOLATED META HERE */
+            wishlistCount={localData.wishlistCount}
             onNavigate={navigate}
             profileEditForm={profileEditForm}
             setProfileEditForm={setProfileEditForm}
@@ -971,7 +810,7 @@ function UserDashboard() {
         )}
 
         {activeTab === "notifications" && (
-          <NotificationsSection notifications={dashboardData.notifications} />
+          <NotificationsSection notifications={localData.notifications} />
         )}
       </main>
     </div>

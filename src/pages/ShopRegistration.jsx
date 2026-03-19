@@ -17,11 +17,11 @@ import {
   FaStore,
   FaTriangleExclamation,
 } from "react-icons/fa6"
-import MainLayout from "../layouts/MainLayout"
 import AuthButton from "../components/auth/AuthButton"
 import AuthNotification from "../components/auth/AuthNotification"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
+import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { supabase } from "../lib/supabase"
 import { ShimmerBlock } from "../components/common/Shimmers"
 
@@ -62,30 +62,28 @@ function validUrl(value) {
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function ShopRegistrationShimmer() {
   return (
-    <MainLayout>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-pink-100 to-purple-100 px-4 py-6">
-        <div className="mx-auto max-w-3xl">
-          <div className="mb-6 flex items-center gap-4">
-            <ShimmerBlock className="h-12 w-12 rounded-2xl" />
-            <div>
-              <ShimmerBlock className="mb-2 h-8 w-48 rounded" />
-              <ShimmerBlock className="h-4 w-64 rounded" />
-            </div>
-          </div>
-          <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-2xl md:p-8">
-            <ShimmerBlock className="mb-6 h-6 w-48 rounded" />
-            <ShimmerBlock className="mb-8 h-[140px] w-full rounded-2xl" />
-            <ShimmerBlock className="mb-6 h-6 w-48 rounded" />
-            <ShimmerBlock className="mb-5 h-14 w-full rounded-2xl" />
-            <div className="mb-5 grid grid-cols-2 gap-5">
-              <ShimmerBlock className="h-14 w-full rounded-2xl" />
-              <ShimmerBlock className="h-14 w-full rounded-2xl" />
-            </div>
-            <ShimmerBlock className="mb-8 h-[150px] w-full rounded-2xl" />
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-pink-100 to-purple-100 px-4 py-6">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-6 flex items-center gap-4">
+          <ShimmerBlock className="h-12 w-12 rounded-2xl" />
+          <div>
+            <ShimmerBlock className="mb-2 h-8 w-48 rounded" />
+            <ShimmerBlock className="h-4 w-64 rounded" />
           </div>
         </div>
+        <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-2xl md:p-8">
+          <ShimmerBlock className="mb-6 h-6 w-48 rounded" />
+          <ShimmerBlock className="mb-8 h-[140px] w-full rounded-2xl" />
+          <ShimmerBlock className="mb-6 h-6 w-48 rounded" />
+          <ShimmerBlock className="mb-5 h-14 w-full rounded-2xl" />
+          <div className="mb-5 grid grid-cols-2 gap-5">
+            <ShimmerBlock className="h-14 w-full rounded-2xl" />
+            <ShimmerBlock className="h-14 w-full rounded-2xl" />
+          </div>
+          <ShimmerBlock className="mb-8 h-[150px] w-full rounded-2xl" />
+        </div>
       </div>
-    </MainLayout>
+    </div>
   )
 }
 
@@ -94,6 +92,9 @@ function ShopRegistration() {
   const [searchParams] = useSearchParams()
   const shopId = searchParams.get("id")
   const isEdit = Boolean(shopId)
+
+  // Prevent pull-to-refresh so users don't lose their form data
+  usePreventPullToRefresh()
 
   // 1. Unified Auth State (Suspended/Complete logic is handled by ProtectedDashboardRoute)
   const { loading: authLoading, user, profile, isOffline } = useAuthSession()
@@ -578,29 +579,35 @@ function ShopRegistration() {
 
   if (dataError && !data) {
     return (
-      <MainLayout>
-        <div className="flex min-h-[70vh] items-center justify-center bg-pink-50 px-4">
-          <div className="rounded-[28px] border border-pink-100 bg-white px-8 py-10 text-center shadow-xl">
-            <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-600" />
-            <h3 className="mb-2 text-xl font-extrabold text-slate-800">Connection Error</h3>
-            <p className="text-sm font-semibold text-slate-600 mb-6">{dataError}</p>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-100 via-pink-100 to-purple-100 px-4">
+        <div className="rounded-[28px] border border-pink-100 bg-white px-8 py-10 text-center shadow-xl w-full max-w-md">
+          <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-600" />
+          <h3 className="mb-2 text-xl font-extrabold text-slate-800">Connection Error</h3>
+          <p className="text-sm font-semibold text-slate-600 mb-6">{dataError}</p>
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={() => navigate("/user-dashboard")}
+              className="rounded-xl border border-slate-200 bg-white px-6 py-2.5 font-bold text-slate-700 transition hover:bg-slate-50"
+            >
+              Go Back
+            </button>
             <button
               onClick={() => window.location.reload()}
-              className="rounded-lg bg-pink-600 px-6 py-2 font-bold text-white transition hover:bg-pink-700"
+              className="rounded-xl bg-pink-600 px-6 py-2.5 font-bold text-white transition hover:bg-pink-700"
             >
               Try Again
             </button>
           </div>
         </div>
-      </MainLayout>
+      </div>
     )
   }
 
   if (!user || !profile) return null
 
   return (
-    <MainLayout>
-      <section className="min-h-screen bg-gradient-to-br from-indigo-100 via-pink-100 to-purple-100 px-4 py-6">
+    <div className="relative min-h-screen bg-gradient-to-br from-indigo-100 via-pink-100 to-purple-100 pb-12">
+      <section className="px-4 py-6 md:py-8">
         <div className="mx-auto max-w-3xl">
           {/* Offline Notice */}
           {isOffline && (
@@ -623,7 +630,7 @@ function ShopRegistration() {
               <h1 className="text-2xl font-extrabold text-slate-900">
                 {isEdit ? "Correct Application" : "Register Shop"}
               </h1>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm font-medium text-slate-600">
                 Complete your merchant registration details.
               </p>
             </div>
@@ -641,7 +648,7 @@ function ShopRegistration() {
             className="rounded-[28px] border border-white/70 bg-white p-6 shadow-2xl md:p-8"
           >
             <SectionTitle icon={<FaStore />} tone="purple" title="Store Front Image" />
-            <p className="mb-4 text-center text-sm text-slate-500">
+            <p className="mb-4 text-center text-sm font-medium text-slate-500">
               Upload a clear, portrait-oriented photo of your shop exterior.
             </p>
 
@@ -709,7 +716,7 @@ function ShopRegistration() {
                     setForm((prev) => ({ ...prev, desc: e.target.value }))
                   }
                   placeholder="Give detailed information about what you sell, the services you provide, and what makes your business unique..."
-                  className="min-h-[150px] w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
+                  className="min-h-[150px] w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
                 />
                 <WordCounter
                   count={descWords}
@@ -775,7 +782,7 @@ function ShopRegistration() {
                       setForm((prev) => ({ ...prev, lat: e.target.value }))
                     }
                     placeholder="e.g. 9.08"
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
                   />
                 </FieldBlock>
 
@@ -788,7 +795,7 @@ function ShopRegistration() {
                       setForm((prev) => ({ ...prev, lng: e.target.value }))
                     }
                     placeholder="e.g. 7.49"
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
                   />
                 </FieldBlock>
               </div>
@@ -849,7 +856,7 @@ function ShopRegistration() {
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, idNumber: e.target.value }))
                     }
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
                   />
                 </FieldBlock>
               </div>
@@ -929,7 +936,7 @@ function ShopRegistration() {
                       setForm((prev) => ({ ...prev, facebook: e.target.value }))
                     }
                     placeholder="e.g. www.facebook.com/yourshop"
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
                   />
                 </FieldBlock>
 
@@ -943,7 +950,7 @@ function ShopRegistration() {
                       }))
                     }
                     placeholder="e.g. www.instagram.com/yourshop"
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
                   />
                 </FieldBlock>
               </div>
@@ -956,7 +963,7 @@ function ShopRegistration() {
                       setForm((prev) => ({ ...prev, twitter: e.target.value }))
                     }
                     placeholder="e.g. x.com/yourshop"
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
                   />
                 </FieldBlock>
 
@@ -967,7 +974,7 @@ function ShopRegistration() {
                       setForm((prev) => ({ ...prev, tiktok: e.target.value }))
                     }
                     placeholder="e.g. www.tiktok.com/@yourshop"
-                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100"
                   />
                 </FieldBlock>
               </div>
@@ -1001,7 +1008,7 @@ function ShopRegistration() {
           isEdit={isEdit}
         />
       ) : null}
-    </MainLayout>
+    </div>
   )
 }
 
@@ -1053,7 +1060,7 @@ function InputWithIcon({ icon, value, onChange, placeholder, disabled = false })
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
-        className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 py-4 pl-12 pr-4 text-sm text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+        className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 py-4 pl-12 pr-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-slate-100"
       />
     </div>
   )
@@ -1113,7 +1120,7 @@ function ReviewModal({
         <h2 className="text-2xl font-extrabold text-slate-900">
           Review Application
         </h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm font-medium text-slate-500">
           Please ensure all details are correct before submitting.
         </p>
 

@@ -18,6 +18,7 @@ import ShopDetail from "./pages/ShopDetail"
 import ProductDetail from "./pages/ProductDetail"
 import ShopIndex from "./pages/ShopIndex"
 import MerchantDiscovery from "./pages/MerchantDiscovery"
+import MerchantDashboard from "./pages/MerchantDashboard" // <-- NEW IMPORT
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
@@ -105,6 +106,16 @@ function App() {
         element={
           <ProtectedDashboardRoute>
             <ShopRegistration />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      {/* NEW MERCHANT DASHBOARD ROUTE */}
+      <Route
+        path="/merchant-dashboard"
+        element={
+          <ProtectedDashboardRoute>
+            <MerchantDashboard />
           </ProtectedDashboardRoute>
         }
       />
