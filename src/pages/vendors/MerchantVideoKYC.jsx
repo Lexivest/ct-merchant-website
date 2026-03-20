@@ -68,7 +68,7 @@ export default function MerchantVideoKYC() {
 
         if (shop.is_verified || shop.kyc_status === 'approved') {
           alert("Your shop is already verified!");
-          navigate("/merchant-dashboard", { replace: true });
+          navigate("/vendor-panel", { replace: true });
           return;
         }
 
@@ -148,7 +148,7 @@ export default function MerchantVideoKYC() {
       }
     } catch (err) {
       console.error("Permission denied", err);
-      if (err.code === 1 || err.message.includes("User denied Geolocation") || err.message.includes("location")) {
+      if (err.code === 1 || err.message?.includes("User denied Geolocation") || err.message?.includes("location")) {
         setError("Location access is required for KYC fraud prevention. Please enable GPS permissions for this site and reload.");
       } else {
         setError("Camera and microphone access is required. Please check your browser permissions and reload.");
@@ -252,7 +252,7 @@ export default function MerchantVideoKYC() {
 
       const { data: { publicUrl } } = supabase.storage.from('kyc_videos').getPublicUrl(filePath);
 
-      // B. Update Shop KYC Status
+      // B. Update Shop KYC Status 
       setUploadStatus("Finalizing submission...");
       
       const { data: updatedShop, error: dbErr } = await supabase
@@ -260,7 +260,7 @@ export default function MerchantVideoKYC() {
         .update({ 
           kyc_status: 'submitted', 
           kyc_video_url: publicUrl, 
-          rejection_reason: null
+          rejection_reason: null // Reset any previous rejections
         })
         .eq('owner_id', user.id)
         .select();
@@ -269,7 +269,7 @@ export default function MerchantVideoKYC() {
       if (!updatedShop || updatedShop.length === 0) throw new Error("Security Blocked Update. Contact Support.");
 
       alert("Video Uploaded Successfully! Our admins will review your shop and activate your Digital ID card within 24 hours.");
-      navigate("/merchant-dashboard", { replace: true });
+      navigate("/vendor-panel", { replace: true });
 
     } catch (err) {
       console.error(err);
@@ -294,7 +294,7 @@ export default function MerchantVideoKYC() {
     return (
       <div className="flex h-screen flex-col bg-[#131921] text-white">
         <header className="flex w-full items-center gap-4 bg-[#131921] p-4 shadow-md">
-          <button onClick={() => navigate("/merchant-dashboard")} className="text-xl transition hover:text-[#db2777]"><FaArrowLeft /></button>
+          <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]"><FaArrowLeft /></button>
           <div className="text-[1.15rem] font-bold">Verification Error</div>
         </header>
         <div className="flex flex-1 items-center justify-center p-5 text-center">
@@ -302,7 +302,7 @@ export default function MerchantVideoKYC() {
             <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-500" />
             <h3 className="mb-2 font-bold text-white">Setup Failed</h3>
             <p className="text-sm text-[#CBD5E1] max-w-sm mx-auto">{error}</p>
-            <button onClick={() => navigate("/merchant-dashboard")} className="mt-5 rounded-md border border-[#334155] bg-[#0F172A] px-6 py-2.5 font-semibold transition hover:bg-[#1E293B]">Go Back</button>
+            <button onClick={() => navigate("/vendor-panel")} className="mt-5 rounded-md border border-[#334155] bg-[#0F172A] px-6 py-2.5 font-semibold transition hover:bg-[#1E293B]">Go Back</button>
           </div>
         </div>
       </div>
@@ -316,7 +316,7 @@ export default function MerchantVideoKYC() {
     <div className="flex min-h-screen flex-col items-center bg-black text-white">
       
       <header className="sticky top-0 z-40 flex w-full items-center gap-4 bg-[#131921] p-4 shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
-        <button onClick={() => navigate("/merchant-dashboard")} className="text-xl transition hover:text-[#db2777]"><FaArrowLeft /></button>
+        <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]"><FaArrowLeft /></button>
         <div className="text-[1.15rem] font-bold">Video KYC Verification</div>
       </header>
 
