@@ -61,42 +61,24 @@ function CreateAccountShimmer() {
 function CreateAccount() {
   const navigate = useNavigate()
 
-  // 1. Unified Auth & Network State
   const { user, loading: authLoading, isOffline } = useAuthSession()
 
-  // Redirect authenticated users away from signup
   useEffect(() => {
-    if (user) {
-      navigate("/user-dashboard", { replace: true })
-    }
+    if (user) navigate("/user-dashboard", { replace: true })
   }, [user, navigate])
 
   const [form, setForm] = useState({
-    fullName: "",
-    phone: "",
-    email: "",
-    cityId: "",
-    areaId: "",
-    password: "",
-    confirmPassword: "",
+    fullName: "", phone: "", email: "", cityId: "", areaId: "", password: "", confirmPassword: "",
   })
 
-  // 2. Reactive Cached Fetching for Locations
   const { data: citiesData, loading: loadingCities } = useCachedFetch(
-    "open_cities",
-    fetchOpenCities,
-    { ttl: 1000 * 60 * 60 * 24 }
+    "open_cities", fetchOpenCities, { ttl: 1000 * 60 * 60 * 24 }
   )
   const cities = citiesData || []
 
-  // Areas fetch reactively whenever form.cityId changes
   const areaCacheKey = form.cityId ? `areas_city_${form.cityId}` : "areas_none"
   const { data: areasData, loading: loadingAreas } = useCachedFetch(
-    areaCacheKey,
-    async () => {
-      if (!form.cityId) return []
-      return await fetchAreasByCity(form.cityId)
-    },
+    areaCacheKey, async () => form.cityId ? await fetchAreasByCity(form.cityId) : [],
     { dependencies: [form.cityId], ttl: 1000 * 60 * 60 * 24 }
   )
   const areas = areasData || []
@@ -109,54 +91,29 @@ function CreateAccount() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  const [notice, setNotice] = useState({
-    visible: false,
-    type: "info",
-    title: "",
-    message: "",
-  })
+  const [notice, setNotice] = useState({ visible: false, type: "info", title: "", message: "" })
 
   // --- Terms & Flow State ---
   const [termsOpen, setTermsOpen] = useState(false)
   const [termsScrolledBottom, setTermsScrolledBottom] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [pendingAuthMethod, setPendingAuthMethod] = useState("email") // 'email' | 'google'
+  const [pendingGoogleCredential, setPendingGoogleCredential] = useState(null)
 
-  // --- Pro-tip: Use a Ref for the Google callback to avoid stale React state closures ---
+  // --- GOOGLE AUTHENTICATION CALLBACK (STEP 1) ---
   const googleCallbackRef = useRef()
-
   googleCallbackRef.current = async (response) => {
     if (isOffline) {
-      setNotice({ visible: true, type: "error", title: "Network Offline", message: "Please connect to the internet to sign up with Google." })
+      setNotice({ visible: true, type: "error", title: "Network Offline", message: "Please connect to the internet to sign up." })
       return
     }
+    if (!response?.credential) return
 
-    if (!response?.credential) {
-      setNotice({ visible: true, type: "error", title: "Google sign-up failed", message: "No Google credential was received." })
-      return
-    }
-
-    setTermsOpen(false) // Close modal instantly upon clicking Google
-
-    try {
-      setGoogleLoading(true)
-      setNotice({ visible: false, type: "info", title: "", message: "" })
-
-      const result = await signInWithGoogleIdToken(response.credential)
-      const signedInUser = result.auth?.user || result.auth?.session?.user
-
-      if (!signedInUser) throw new Error("Google sign-up did not return a valid user.")
-
-      await updateLastActiveIp(signedInUser.id, result.ipData.ip)
-      setNotice({ visible: true, type: "success", title: "Google sign-up successful", message: "Opening your dashboard..." })
-
-      setTimeout(() => navigate("/user-dashboard"), 900)
-      
-    } catch (error) {
-      setNotice({ visible: true, type: "error", title: "Google sign-up failed", message: error.message || "Please try again." })
-    } finally {
-      setGoogleLoading(false)
-    }
+    // Google has authenticated them. Now we pause and show the Terms Modal.
+    setPendingGoogleCredential(response.credential)
+    setPendingAuthMethod("google")
+    setTermsScrolledBottom(false)
+    setTermsOpen(true)
   }
 
   // Initialize Google Sign-in Globally
@@ -168,11 +125,17 @@ function CreateAccount() {
 
       window.google.accounts.id.initialize({
         client_id: clientId,
-        callback: (res) => googleCallbackRef.current(res), // Use the Ref to ensure fresh state
+        callback: (res) => googleCallbackRef.current(res),
         auto_select: false,
         cancel_on_tap_outside: true,
       })
 
+      const button = document.getElementById("google-signup-button")
+      if (button && button.childNodes.length === 0) {
+        window.google.accounts.id.renderButton(button, {
+          type: "standard", theme: "outline", text: "continue_with", size: "large", shape: "rectangular", logo_alignment: "left", width: 340,
+        })
+      }
       setGoogleReady(true)
     }
 
@@ -189,12 +152,11 @@ function CreateAccount() {
   const currentErrorsCount = useMemo(() => Object.keys(errors).length, [errors])
 
   function handleCityChange(event) {
-    const cityId = event.target.value
-    setForm((prev) => ({ ...prev, cityId, areaId: "" }))
+    setForm((prev) => ({ ...prev, cityId: event.target.value, areaId: "" }))
     setErrors((prev) => ({ ...prev, cityId: "", areaId: "" }))
   }
 
-  // --- Start Email Flow ---
+  // --- EMAIL AUTHENTICATION VALIDATION (STEP 1) ---
   function handleSubmitStart(event) {
     event.preventDefault()
     const nextErrors = validateSignupForm(form)
@@ -211,35 +173,24 @@ function CreateAccount() {
     setTermsOpen(true)
   }
 
-  // --- Start Google Flow ---
-  function handleGoogleStart() {
-    setNotice({ visible: false, type: "info", title: "", message: "" })
-    setPendingAuthMethod("google")
-    setTermsScrolledBottom(false)
-    setTermsOpen(true)
+  // --- MASTER TERMS CONFIRMATION (STEP 2) ---
+  function handleAcceptTerms() {
+    if (pendingAuthMethod === "email") {
+      executeEmailSignup()
+    } else if (pendingAuthMethod === "google") {
+      executeGoogleSignup()
+    }
   }
 
-  // --- Execute Email Sign Up ---
+  // --- EXECUTE EMAIL (FINAL) ---
   async function executeEmailSignup() {
-    if (isOffline) {
-      setNotice({ visible: true, type: "error", title: "Network Offline", message: "Please connect to the internet to create your account." })
-      setTermsOpen(false)
-      return
-    }
+    if (isOffline) return
 
     try {
       setSubmitting(true)
-      setNotice({ visible: false, type: "info", title: "", message: "" })
-
       await signUpWithEmail({
-        fullName: form.fullName,
-        phone: form.phone,
-        email: form.email,
-        password: form.password,
-        cityId: form.cityId,
-        areaId: form.areaId,
+        fullName: form.fullName, phone: form.phone, email: form.email, password: form.password, cityId: form.cityId, areaId: form.areaId,
       })
-
       setTermsOpen(false)
       setShowSuccess(true)
     } catch (error) {
@@ -250,14 +201,42 @@ function CreateAccount() {
     }
   }
 
+  // --- EXECUTE GOOGLE (FINAL) ---
+  async function executeGoogleSignup() {
+    if (isOffline || !pendingGoogleCredential) return
+
+    try {
+      setSubmitting(true) // Triggers loading spinner on modal button
+      setGoogleLoading(true)
+
+      const result = await signInWithGoogleIdToken(pendingGoogleCredential)
+      const signedInUser = result.auth?.user || result.auth?.session?.user
+
+      if (!signedInUser) throw new Error("Google sign-up did not return a valid user.")
+
+      await updateLastActiveIp(signedInUser.id, result.ipData.ip)
+      
+      setTermsOpen(false)
+      setNotice({ visible: true, type: "success", title: "Google sign-up successful", message: "Opening your dashboard..." })
+
+      setTimeout(() => navigate("/user-dashboard"), 900)
+      
+    } catch (error) {
+      setTermsOpen(false)
+      setNotice({ visible: true, type: "error", title: "Google sign-up failed", message: error.message || "Please try again." })
+    } finally {
+      setSubmitting(false)
+      setGoogleLoading(false)
+      setPendingGoogleCredential(null)
+    }
+  }
+
   function closeSuccess() {
     setShowSuccess(false)
     navigate("/", { state: { prefillEmail: form.email } })
   }
 
-  if (authLoading || (loadingCities && cities.length === 0)) {
-    return <CreateAccountShimmer />
-  }
+  if (authLoading || (loadingCities && cities.length === 0)) return <CreateAccountShimmer />
 
   return (
     <>
@@ -267,14 +246,12 @@ function CreateAccount() {
             
             {isOffline && (
               <div className="mb-4 rounded-xl bg-amber-100 px-4 py-3 text-sm font-bold text-amber-800 shadow-sm border border-amber-200 flex items-center gap-2">
-                <i className="fa-solid fa-wifi-slash"></i>
-                You are offline. Reconnect to create your account.
+                <i className="fa-solid fa-wifi-slash"></i> You are offline. Reconnect to create your account.
               </div>
             )}
 
             <Link to="/" className="mb-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:border-pink-200 hover:bg-pink-50 hover:text-pink-700">
-              <FaArrowLeft />
-              <span>Back</span>
+              <FaArrowLeft /><span>Back</span>
             </Link>
 
             <div className="mb-5 text-center">
@@ -286,21 +263,12 @@ function CreateAccount() {
               <p className="mt-2 text-sm leading-6 text-slate-500">Join the professional merchant network.</p>
 
               <div className="mt-5 space-y-3">
-                {/* CUSTOM GOOGLE BUTTON (Intercepts click to show terms) */}
-                <button
-                  type="button"
-                  disabled={!googleReady || googleLoading}
-                  onClick={handleGoogleStart}
-                  className="flex h-[44px] w-full items-center justify-center gap-3 rounded-lg border border-[#747775] bg-white px-4 font-medium text-[#1f1f1f] shadow-sm transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
-                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                  </svg>
-                  {googleLoading ? "Connecting..." : "Continue with Google"}
-                </button>
+                <div id="google-signup-button" className="flex min-h-[44px] items-center justify-center" />
+                {!googleReady || googleLoading ? (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-500">
+                    {googleLoading ? "Completing sign-up..." : "Loading Google sign-up..."}
+                  </div>
+                ) : null}
               </div>
 
               <div className="my-6 flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -359,9 +327,11 @@ function CreateAccount() {
 
         {termsOpen && (
           <TermsPrivacyModal
-            pendingAuthMethod={pendingAuthMethod}
-            onClose={() => setTermsOpen(false)}
-            onConfirm={executeEmailSignup}
+            onClose={() => {
+              setTermsOpen(false)
+              setPendingGoogleCredential(null)
+            }}
+            onConfirm={handleAcceptTerms}
             confirmLoading={submitting}
             confirmDisabled={!termsScrolledBottom || isOffline}
             onScrolledBottom={() => setTermsScrolledBottom(true)}
@@ -390,29 +360,12 @@ function TermsPrivacyModal({
   confirmLoading,
   confirmDisabled,
   onScrolledBottom,
-  pendingAuthMethod,
 }) {
   function handleScroll(event) {
     const el = event.currentTarget
     const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 12
     if (atBottom) onScrolledBottom()
   }
-
-  // Inject the actual Google button into the modal once they scroll to the bottom
-  useEffect(() => {
-    if (pendingAuthMethod === "google" && !confirmDisabled && window.google) {
-      const btn = document.getElementById("modal-google-button")
-      if (btn && btn.childNodes.length === 0) {
-        window.google.accounts.id.renderButton(btn, {
-          type: "standard",
-          theme: "outline",
-          size: "large",
-          width: 320, // Forces the google button to fit the container
-          text: "continue_with"
-        })
-      }
-    }
-  }, [pendingAuthMethod, confirmDisabled])
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
@@ -458,25 +411,10 @@ function TermsPrivacyModal({
         </div>
 
         <div className="mt-4 space-y-3">
-          
-          {/* DYNAMIC BUTTON LOGIC */}
-          {pendingAuthMethod === "google" ? (
-             confirmDisabled ? (
-               <AuthButton disabled={true}>
-                 <FaUserCheck />
-                 <span>Scroll down to continue</span>
-               </AuthButton>
-             ) : (
-               <div className="flex justify-center w-full min-h-[44px]">
-                 <div id="modal-google-button" />
-               </div>
-             )
-          ) : (
-            <AuthButton onClick={onConfirm} loading={confirmLoading} disabled={confirmDisabled}>
-              <FaUserCheck />
-              <span>I Agree & Create Account</span>
-            </AuthButton>
-          )}
+          <AuthButton onClick={onConfirm} loading={confirmLoading} disabled={confirmDisabled}>
+            <FaUserCheck />
+            <span>I Agree & Create Account</span>
+          </AuthButton>
 
           <button type="button" onClick={onClose} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50">
             Cancel Setup
