@@ -116,9 +116,14 @@ function CreateAccount() {
     message: "",
   })
 
+  // --- TERMS AND CONDITIONS STATE ---
   const [termsOpen, setTermsOpen] = useState(false)
   const [termsScrolledBottom, setTermsScrolledBottom] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  
+  // Track which signup method to fire after T&C accepted
+  const [pendingAuthMethod, setPendingAuthMethod] = useState(null) // 'email' | 'google'
+  const [pendingGoogleCredential, setPendingGoogleCredential] = useState(null)
 
   // Initialize Google Sign-in
   useEffect(() => {
@@ -183,6 +188,7 @@ function CreateAccount() {
     }))
   }
 
+  // --- 1. EMAIL FLOW: Pause for Terms ---
   function handleSubmitStart(event) {
     event.preventDefault()
 
@@ -200,21 +206,52 @@ function CreateAccount() {
     }
 
     setNotice({ visible: false, type: "info", title: "", message: "" })
+    setPendingAuthMethod("email")
     setTermsScrolledBottom(false)
     setTermsOpen(true)
   }
 
-  async function executeEmailSignup() {
+  // --- 2. GOOGLE FLOW: Pause for Terms ---
+  function handleGoogleCredentialResponse(response) {
     if (isOffline) {
       setNotice({
         visible: true,
         type: "error",
         title: "Network Offline",
-        message: "Please connect to the internet to create your account.",
+        message: "Please connect to the internet to sign up with Google.",
       })
-      setTermsOpen(false)
       return
     }
+
+    if (!response?.credential) {
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Google sign-up failed",
+        message: "No Google credential was received.",
+      })
+      return
+    }
+
+    setNotice({ visible: false, type: "info", title: "", message: "" })
+    setPendingGoogleCredential(response.credential)
+    setPendingAuthMethod("google")
+    setTermsScrolledBottom(false)
+    setTermsOpen(true)
+  }
+
+  // --- 3. MASTER TERMS CONFIRMATION ---
+  function handleAcceptTerms() {
+    if (pendingAuthMethod === "email") {
+      executeEmailSignup()
+    } else if (pendingAuthMethod === "google") {
+      executeGoogleSignup()
+    }
+  }
+
+  // --- EXECUTE EMAIL ---
+  async function executeEmailSignup() {
+    if (isOffline) return
 
     try {
       setSubmitting(true)
@@ -244,39 +281,16 @@ function CreateAccount() {
     }
   }
 
-  function closeSuccess() {
-    setShowSuccess(false)
-    navigate("/", {
-      state: { prefillEmail: form.email },
-    })
-  }
-
-  async function handleGoogleCredentialResponse(response) {
-    if (isOffline) {
-      setNotice({
-        visible: true,
-        type: "error",
-        title: "Network Offline",
-        message: "Please connect to the internet to sign up with Google.",
-      })
-      return
-    }
-
-    if (!response?.credential) {
-      setNotice({
-        visible: true,
-        type: "error",
-        title: "Google sign-up failed",
-        message: "No Google credential was received.",
-      })
-      return
-    }
+  // --- EXECUTE GOOGLE ---
+  async function executeGoogleSignup() {
+    if (isOffline || !pendingGoogleCredential) return
 
     try {
+      setSubmitting(true) // Reusing the same loading state for the modal UI
       setGoogleLoading(true)
       setNotice({ visible: false, type: "info", title: "", message: "" })
 
-      const result = await signInWithGoogleIdToken(response.credential)
+      const result = await signInWithGoogleIdToken(pendingGoogleCredential)
       const signedInUser = result.auth?.user || result.auth?.session?.user
 
       if (!signedInUser) {
@@ -284,6 +298,8 @@ function CreateAccount() {
       }
 
       await updateLastActiveIp(signedInUser.id, result.ipData.ip)
+      
+      setTermsOpen(false)
       setNotice({
         visible: true,
         type: "success",
@@ -296,6 +312,7 @@ function CreateAccount() {
       }, 900)
       
     } catch (error) {
+      setTermsOpen(false)
       setNotice({
         visible: true,
         type: "error",
@@ -303,8 +320,17 @@ function CreateAccount() {
         message: error.message || "Please try again.",
       })
     } finally {
+      setSubmitting(false)
       setGoogleLoading(false)
+      setPendingGoogleCredential(null)
     }
+  }
+
+  function closeSuccess() {
+    setShowSuccess(false)
+    navigate("/", {
+      state: { prefillEmail: form.email },
+    })
   }
 
   // Render Shimmer while checking auth status or initially grabbing cities
@@ -568,7 +594,7 @@ function CreateAccount() {
                   }
                 />
 
-                <AuthButton type="submit" loading={submitting} disabled={isOffline}>
+                <AuthButton type="submit" loading={submitting && pendingAuthMethod === 'email'} disabled={isOffline}>
                   Continue
                 </AuthButton>
               </form>
@@ -604,8 +630,11 @@ function CreateAccount() {
 
         {termsOpen ? (
           <TermsPrivacyModal
-            onClose={() => setTermsOpen(false)}
-            onConfirm={executeEmailSignup}
+            onClose={() => {
+              setTermsOpen(false)
+              setPendingGoogleCredential(null)
+            }}
+            onConfirm={handleAcceptTerms}
             confirmLoading={submitting}
             confirmDisabled={!termsScrolledBottom || isOffline}
             onScrolledBottom={() => setTermsScrolledBottom(true)}
