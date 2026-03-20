@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { FaCity, FaMapPin, FaPhone, FaTimes } from "react-icons/fa"
+import { FaCity, FaMapPin, FaPhone, FaTimes, FaFileContract, FaUserCheck } from "react-icons/fa"
 import AuthInput from "./AuthInput"
 import AuthButton from "./AuthButton"
 import AuthNotification from "./AuthNotification"
@@ -35,8 +35,14 @@ function CompleteProfileModal({
     message: "",
   })
 
+  // --- Terms & Conditions State ---
+  const [termsScrolledBottom, setTermsScrolledBottom] = useState(false)
+
   useEffect(() => {
     if (!open) return
+
+    // Reset terms scroll state when modal opens
+    setTermsScrolledBottom(false)
 
     async function loadCities() {
       try {
@@ -80,6 +86,13 @@ function CompleteProfileModal({
     } finally {
       setLoadingAreas(false)
     }
+  }
+
+  function handleScroll(event) {
+    const el = event.currentTarget
+    // Add a tiny buffer (12px) to make it easier to trigger on mobile
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 12
+    if (atBottom) setTermsScrolledBottom(true)
   }
 
   function handleSubmitErrorMap() {
@@ -127,15 +140,15 @@ function CompleteProfileModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-[28px] border border-pink-100 bg-white p-6 shadow-2xl">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 px-4 py-6 backdrop-blur-sm overflow-y-auto">
+      <div className="w-full max-w-md my-auto rounded-[28px] border border-pink-100 bg-white p-6 shadow-2xl">
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-extrabold text-slate-900">
               Complete your profile
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              We need a few more details before opening your dashboard.
+              We need a few more details to finalize your account.
             </p>
           </div>
 
@@ -245,6 +258,41 @@ function CompleteProfileModal({
             ) : null}
           </div>
 
+          {/* --- TERMS AND CONDITIONS BLOCK --- */}
+          <div className="pt-2">
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-800">
+              <FaFileContract className="text-pink-600" />
+              Agreements & Policies
+            </h3>
+            <div
+              onScroll={handleScroll}
+              className="h-40 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs leading-6 text-slate-700"
+            >
+              <h4 className="mb-2 text-sm font-bold text-slate-900">Privacy Policy</h4>
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-slate-500">Last Updated: March 2026</p>
+              <p>This policy explains how CTMerchant collects, uses, and protects personal information in compliance with the Nigeria Data Protection Regulation and platform rules.</p>
+              <p className="mt-2">CTMerchant operates a digital repository that lists physical shops, products, and locations for discovery and informational purposes only.</p>
+              <p className="mt-2">We collect limited information necessary to operate the platform, including account details, business listing information, general location information, and technical usage data needed for security and performance.</p>
+              <p className="mt-2">We use collected information to provide and secure the repository, display accurate listings, support communication between users and shops, and improve platform performance.</p>
+              <p className="mt-2">CTMerchant does not sell personal data and does not process payments or financial transactions for merchants.</p>
+              
+              <hr className="my-4 border-slate-200" />
+
+              <h4 className="mb-2 text-sm font-bold text-slate-900">Terms of Use</h4>
+              <p>These terms govern access to and use of the CTMerchant digital repository platform.</p>
+              <p className="mt-2">CTMerchant is not an online marketplace, broker, delivery service, escrow service, or seller. We do not facilitate payments, deliveries, or commercial transactions.</p>
+              <p className="mt-2">Users and merchants are responsible for the accuracy of information they provide and must independently verify details, pricing, availability, and quality before engaging in any transaction.</p>
+              <p className="mt-2">Listings are informational only and may change at any time. CTMerchant does not guarantee seller response times, stock availability, or transaction fulfillment.</p>
+              <p className="mt-2 font-semibold text-pink-700">By completing your profile, you agree to these policies and platform conditions.</p>
+            </div>
+            
+            {!termsScrolledBottom && (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-center text-[11px] font-bold text-amber-800">
+                Scroll to the bottom of the terms to unlock setup.
+              </div>
+            )}
+          </div>
+
           <AuthNotification
             visible={notice.visible}
             type={notice.type}
@@ -253,8 +301,19 @@ function CompleteProfileModal({
           />
 
           <div className="pt-2">
-            <AuthButton onClick={handleSubmit} loading={saving}>
-              Finish setup
+            <AuthButton 
+              onClick={handleSubmit} 
+              loading={saving}
+              disabled={!termsScrolledBottom}
+            >
+              {termsScrolledBottom ? (
+                <>
+                  <FaUserCheck />
+                  <span>I Agree & Finish Setup</span>
+                </>
+              ) : (
+                <span>Scroll down to continue</span>
+              )}
             </AuthButton>
           </div>
         </div>
