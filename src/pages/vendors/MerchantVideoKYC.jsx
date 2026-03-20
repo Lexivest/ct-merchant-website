@@ -3,11 +3,9 @@ import { useNavigate } from "react-router-dom";
 import {
   FaArrowLeft,
   FaCloudArrowUp,
-  FaLocationCrosshairs,
   FaMicrophone,
   FaShieldHalved,
   FaTriangleExclamation,
-  FaMapLocationDot,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
@@ -23,23 +21,35 @@ export default function MerchantVideoKYC() {
   const [error, setError] = useState(null);
   const [shopData, setShopData] = useState(null);
   const [profileName, setProfileName] = useState("Merchant");
-  const [location, setLocation] = useState(null); // { lat, lng, city }
+  const [location, setLocation] = useState(null); // { lat, lng }
 
   // Recording State
   const [recordingState, setRecordingState] = useState("ready"); // 'ready' | 'recording' | 'recorded' | 'uploading'
   const [timeLeft, setTimeLeft] = useState(60);
   const [uploadStatus, setUploadStatus] = useState("");
-  const [currentDateTime, setCurrentDateTime] = useState(new Date().toLocaleString());
+  const [currentDateTime, setCurrentDateTime] = useState("");
 
   // Refs for DOM elements and Media objects
-  const liveVideoRef = useRef(null);
-  const playbackVideoRef = useRef(null);
+  const rawVideoRef = useRef(null); // Hidden video taking raw camera feed
+  const canvasRef = useRef(null);   // Visible canvas drawing video + text
+  const playbackVideoRef = useRef(null); // Visible video for playback
+  
   const streamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const recordedBlobRef = useRef(null);
+  
   const timerIntervalRef = useRef(null);
   const clockIntervalRef = useRef(null);
+  const animationFrameId = useRef(null);
+
+  // Refs for Canvas Animation Loop to avoid stale state closures
+  const locationRef = useRef(null);
+  const dateRef = useRef("");
+
+  // Sync state to refs for the animation loop
+  useEffect(() => { locationRef.current = location; }, [location]);
+  useEffect(() => { dateRef.current = currentDateTime; }, [currentDateTime]);
 
   // 1. Initial Data Fetch & Validation
   useEffect(() => {
@@ -87,71 +97,54 @@ export default function MerchantVideoKYC() {
     if (!authLoading) init();
 
     // Start Live Clock
-    clockIntervalRef.current = setInterval(() => {
+    const updateClock = () => {
       setCurrentDateTime(new Date().toLocaleString('en-GB', { 
         day: '2-digit', month: 'short', year: 'numeric', 
         hour: '2-digit', minute: '2-digit', second: '2-digit' 
       }));
-    }, 1000);
+    };
+    updateClock();
+    clockIntervalRef.current = setInterval(updateClock, 1000);
 
     // Cleanup function
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
+      if (streamRef.current) streamRef.current.getTracks().forEach((track) => track.stop());
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);
+      if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
     };
   }, [user, authLoading, isOffline, navigate]);
 
 
-  // 2. Permissions & Camera Logic
+  // 2. Permissions, Camera, and CANVAS BURNING Logic
   const requestPermissionsAndStart = async () => {
     try {
-      // Step A: Request GPS Location (High Accuracy)
+      // Step A: Request GPS Location
       if (!navigator.geolocation) throw new Error("Geolocation is not supported by your browser.");
-      
       const pos = await new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 });
       });
       
       const lat = pos.coords.latitude.toFixed(6);
       const lng = pos.coords.longitude.toFixed(6);
+      setLocation({ lat, lng });
 
-      setLocation({ lat, lng, city: "Detecting city..." });
-
-      // Step B: Reverse Geocode via OpenStreetMap (Targeting Major City)
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`);
-        if (res.ok) {
-          const data = await res.json();
-          const address = data.address || {};
-          
-          // Prioritize city, then state (which acts as a major city indicator in many regions), then fallback to town/county
-          let detectedCity = address.city || address.state || address.town || address.county || "Unknown Area";
-          
-          // Clean up formatting (e.g., converts "Kaduna State" -> "Kaduna")
-          detectedCity = detectedCity.replace(' State', '').trim();
-          
-          setLocation(prev => ({ ...prev, city: detectedCity }));
-        } else {
-          setLocation(prev => ({ ...prev, city: "City unavailable" }));
-        }
-      } catch (e) {
-        console.warn("Reverse geocoding failed:", e);
-        setLocation(prev => ({ ...prev, city: "City unavailable" }));
-      }
-
-      // Step C: Request Camera & Mic
+      // Step B: Request Camera & Mic
       const constraints = {
         audio: true,
         video: { facingMode: "environment", width: { ideal: 640, max: 854 }, height: { ideal: 480, max: 480 } }
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
-      if (liveVideoRef.current) {
-        liveVideoRef.current.srcObject = stream;
+      
+      if (rawVideoRef.current) {
+        rawVideoRef.current.srcObject = stream;
+        rawVideoRef.current.play(); // Ensure hidden video plays
       }
+
+      // Step C: Start the Canvas Drawing Loop
+      startCanvasLoop();
+
     } catch (err) {
       console.error("Permission denied", err);
       if (err.code === 1 || err.message?.includes("User denied Geolocation") || err.message?.includes("location")) {
@@ -162,6 +155,54 @@ export default function MerchantVideoKYC() {
     }
   };
 
+  // The engine that "burns" the text into the video frames
+  const startCanvasLoop = () => {
+    const drawFrame = () => {
+      const video = rawVideoRef.current;
+      const canvas = canvasRef.current;
+
+      if (video && canvas && video.readyState >= 2 && recordingState !== 'recorded') {
+        const ctx = canvas.getContext('2d');
+        
+        // Sync canvas resolution to the camera's actual output resolution
+        if (canvas.width !== video.videoWidth) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+        }
+
+        // 1. Draw the raw video frame
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // 2. Draw the Watermark Background Box
+        ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+        ctx.fillRect(10, canvas.height - 80, 260, 70);
+
+        // 3. Draw the Date/Time
+        ctx.fillStyle = "#38BDF8"; // Light blue
+        ctx.font = "bold 16px monospace";
+        ctx.fillText(dateRef.current, 20, canvas.height - 55);
+
+        // 4. Draw the Coordinates
+        if (locationRef.current) {
+          ctx.fillStyle = "#A3E635"; // Green
+          ctx.font = "bold 14px monospace";
+          ctx.fillText(`LAT: ${locationRef.current.lat}`, 20, canvas.height - 35);
+          ctx.fillText(`LNG: ${locationRef.current.lng}`, 20, canvas.height - 15);
+        } else {
+          ctx.fillStyle = "#FBBF24"; // Yellow
+          ctx.font = "bold 14px monospace";
+          ctx.fillText("Acquiring GPS...", 20, canvas.height - 25);
+        }
+      }
+      
+      // Loop
+      animationFrameId.current = requestAnimationFrame(drawFrame);
+    };
+    
+    // Kick off the loop
+    drawFrame();
+  };
+
   const handleRecordToggle = () => {
     if (recordingState === "recording") stopRecording();
     else if (recordingState === "ready") startRecording();
@@ -170,14 +211,22 @@ export default function MerchantVideoKYC() {
   const startRecording = () => {
     recordedChunksRef.current = [];
     
+    // IMPORTANT: Capture the stream from the CANVAS, not the raw camera
+    const canvasStream = canvasRef.current.captureStream(30); // 30 FPS
+    
+    // Extract the audio track from the raw camera stream and mix it with the canvas video
+    const audioTrack = streamRef.current.getAudioTracks()[0];
+    const combinedStream = new MediaStream([canvasStream.getVideoTracks()[0]]);
+    if (audioTrack) combinedStream.addTrack(audioTrack);
+
     let options = { mimeType: 'video/webm;codecs=vp8,opus' };
     if (!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/mp4' };
-    options.videoBitsPerSecond = 500000;
+    options.videoBitsPerSecond = 1000000; // Bumped bitrate slightly for clearer text
 
     try {
-      mediaRecorderRef.current = new MediaRecorder(streamRef.current, options);
+      mediaRecorderRef.current = new MediaRecorder(combinedStream, options);
     } catch (e) {
-      mediaRecorderRef.current = new MediaRecorder(streamRef.current);
+      mediaRecorderRef.current = new MediaRecorder(combinedStream);
     }
 
     mediaRecorderRef.current.ondataavailable = (event) => {
@@ -212,9 +261,11 @@ export default function MerchantVideoKYC() {
   };
 
   const processVideo = () => {
+    // Stop raw camera tracks
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
     }
+    if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
 
     const mimeType = recordedChunksRef.current[0]?.type || 'video/mp4';
     const blob = new Blob(recordedChunksRef.current, { type: mimeType });
@@ -243,7 +294,7 @@ export default function MerchantVideoKYC() {
 
     try {
       setRecordingState("uploading");
-      setUploadStatus("Uploading video to secure vault... Please wait.");
+      setUploadStatus("Uploading burned video to secure vault...");
 
       const ext = recordedBlobRef.current.type.includes('mp4') ? 'mp4' : 'webm';
       const fileName = `kyc_video.${ext}`;
@@ -353,15 +404,15 @@ export default function MerchantVideoKYC() {
           </>
         )}
 
+        {/* Hidden Raw Video Feed */}
+        <video ref={rawVideoRef} className="hidden" muted playsInline autoPlay />
+
         <div className="relative flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-[#334155] bg-[#0F172A] shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
           
-          {/* Live Camera View */}
-          <video 
-            ref={liveVideoRef} 
+          {/* Visible Canvas playing the stamped footage */}
+          <canvas 
+            ref={canvasRef} 
             className={`h-full w-full object-cover ${recordingState === 'ready' || recordingState === 'recording' ? 'block' : 'hidden'}`}
-            autoPlay 
-            playsInline 
-            muted 
           />
           
           {/* Playback View */}
@@ -371,28 +422,6 @@ export default function MerchantVideoKYC() {
             playsInline 
             controls 
           />
-
-          {/* GPS, City & Timestamp Overlay (Permanently visible on the video) */}
-          {(recordingState === 'ready' || recordingState === 'recording') && (
-            <div className="absolute bottom-3 left-3 z-10 rounded-md bg-black/60 p-2 text-left font-mono text-[0.6rem] font-bold text-white shadow-md backdrop-blur-sm">
-              <div className="text-[#38BDF8]">{currentDateTime}</div>
-              {location ? (
-                <>
-                  <div className="mt-0.5 text-[#FBBF24]">
-                    <FaMapLocationDot className="inline mr-1" />
-                    {location.city}
-                  </div>
-                  <div className="mt-0.5 text-[#A3E635]">
-                    <FaLocationCrosshairs className="inline mr-1" />
-                    LAT {location.lat} <br />
-                    LNG {location.lng}
-                  </div>
-                </>
-              ) : (
-                <div className="mt-0.5 text-[#FBBF24] animate-pulse">Acquiring GPS...</div>
-              )}
-            </div>
-          )}
 
           {/* Recording Timer & UI */}
           {(recordingState === 'ready' || recordingState === 'recording') && (
