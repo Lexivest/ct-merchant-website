@@ -32,6 +32,10 @@ import MerchantSettings from "./pages/vendors/MerchantSettings"
 import MerchantNews from "./pages/vendors/MerchantNews"
 import MerchantIDCard from "./pages/vendors/MerchantIDCard"
 import MerchantPromoBanner from "./pages/vendors/MerchantPromoBanner"
+import MerchantAnalytics from "./pages/vendors/MerchantAnalytics"
+import MerchantPayment from "./pages/vendors/MerchantPayment"
+import MerchantServiceFee from "./pages/vendors/MerchantServiceFee"
+import MerchantVideoKYC from "./pages/vendors/MerchantVideoKYC"
 
 function ProtectedDashboardRoute({ children }) {
   const { loading, session, user, profile, suspended, isOffline } = useAuthSession()
@@ -111,10 +115,46 @@ function App() {
       />
 
       <Route
+  path="/remita"
+  element={
+    <ProtectedDashboardRoute>
+      <MerchantPayment />
+    </ProtectedDashboardRoute>
+  }
+/>
+
+<Route
+  path="/merchant-video-kyc"
+  element={
+    <ProtectedDashboardRoute>
+      <MerchantVideoKYC />
+    </ProtectedDashboardRoute>
+  }
+/>
+
+      <Route
   path="/merchant-promo-banner"  // <--- Add "merchant-" here!
   element={
     <ProtectedDashboardRoute>
       <MerchantPromoBanner />
+    </ProtectedDashboardRoute>
+  }
+/>
+
+<Route
+  path="/merchant-service-fee"
+  element={
+    <ProtectedDashboardRoute>
+      <MerchantServiceFee />
+    </ProtectedDashboardRoute>
+  }
+/>
+
+<Route
+  path="/merchant-analytics"
+  element={
+    <ProtectedDashboardRoute>
+      <MerchantAnalytics />
     </ProtectedDashboardRoute>
   }
 />
