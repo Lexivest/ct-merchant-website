@@ -31,6 +31,7 @@ import MerchantBanner from "./pages/vendors/MerchantBanner"
 import MerchantSettings from "./pages/vendors/MerchantSettings"
 import MerchantNews from "./pages/vendors/MerchantNews"
 import MerchantIDCard from "./pages/vendors/MerchantIDCard"
+import MerchantPromoBanner from "./pages/vendors/MerchantPromoBanner"
 
 function ProtectedDashboardRoute({ children }) {
   const { loading, session, user, profile, suspended, isOffline } = useAuthSession()
@@ -108,6 +109,15 @@ function App() {
           </ProtectedDashboardRoute>
         }
       />
+
+      <Route
+  path="/promo-banner"
+  element={
+    <ProtectedDashboardRoute>
+      <MerchantPromoBanner />
+    </ProtectedDashboardRoute>
+  }
+/>
 
       <Route
   path="/merchant-id-card"

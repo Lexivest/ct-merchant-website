@@ -222,7 +222,7 @@ export default function MerchantIDCard() {
               <img src={avatarUrl} alt="Profile" className="h-14 w-14 flex-shrink-0 rounded-lg border-2 border-white/80 bg-[#E2E8F0] object-cover shadow-md" crossOrigin="anonymous" />
             </div>
 
-            {/* Business Details (Moved up, clearer) */}
+            {/* Business Details */}
             <div className="flex flex-col gap-2.5 mt-2">
               <div className="flex flex-col">
                 <span className="mb-0.5 text-[0.55rem] font-bold uppercase tracking-wide text-[#94A3B8]">Business Name</span>
@@ -247,12 +247,11 @@ export default function MerchantIDCard() {
 
             {/* Footer Text & QR CODE */}
             <div className="relative h-16 w-full flex items-end">
-              {/* Added Small Font Footer text */}
-              <div className="flex-1 text-center pr-16 text-[0.5rem] font-medium text-[#94A3B8]">
-                Visit <span className="text-white">{shopUrlText}</span> or scan QR
+              {/* FIXED: Footer text color matches ID number (#FBBF24) */}
+              <div className="flex-1 text-center pr-16 text-[0.5rem] font-extrabold text-[#FBBF24]">
+                Visit <span className="text-white font-medium">{shopUrlText}</span> or scan QR
               </div>
               
-              {/* Slightly Smaller QR CODE */}
               <div className="absolute bottom-0 right-0 flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-md bg-white p-1 shadow-lg">
                 <QRCodeSVG value={shopUrl} size={52} level="M" />
               </div>
