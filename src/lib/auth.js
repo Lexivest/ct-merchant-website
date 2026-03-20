@@ -6,20 +6,17 @@ import {
 
 export async function getClientIpData() {
   try {
-    const response = await fetch("https://1.1.1.1/cdn-cgi/trace")
-    const text = await response.text()
-
-    const parsed = text.split("\n").reduce((acc, line) => {
-      const [key, value] = line.split("=")
-      if (key) acc[key] = value
-      return acc
-    }, {})
+    // Calling the secure Server-Side RPC instead of the Cloudflare trace
+    const { data, error } = await supabase.rpc('get_network_info')
+    
+    if (error) throw error
 
     return {
-      ip: parsed.ip || "unknown",
-      country: parsed.loc || "unknown",
+      ip: data?.ip || "unknown",
+      country: data?.country || "unknown",
     }
-  } catch {
+  } catch (error) {
+    console.error("Failed to fetch secure network info:", error.message)
     return {
       ip: "unknown",
       country: "unknown",
@@ -72,8 +69,42 @@ export async function getSession() {
   return session
 }
 
+// Upgraded to act as the Global Logout & Cache Cleaner
 export async function signOutUser() {
-  await supabase.auth.signOut()
+  try {
+    // 1. Invalidate session on the server
+    await supabase.auth.signOut()
+
+    // 2. Wipe Local Storage safely (only our app's keys)
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (
+        key && (
+          key.startsWith("sb-") ||
+          key.startsWith("vendor_panel_") ||
+          key.startsWith("shop_detail_") ||
+          key.startsWith("open_cities") ||
+          key.startsWith("areas_") ||
+          key.includes("ctm_")
+        )
+      ) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+    // 3. Clear session storage
+    sessionStorage.clear();
+
+    // 4. Hard redirect to flush React's in-memory state
+    window.location.href = "/";
+  } catch (error) {
+    console.error("Error during logout:", error);
+    sessionStorage.clear();
+    window.location.href = "/";
+  }
 }
 
 export async function signInWithPassword({ email, password }) {
