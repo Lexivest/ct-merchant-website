@@ -4,7 +4,6 @@ import { QRCodeSVG } from "qrcode.react";
 import html2canvas from "html2canvas";
 import {
   FaArrowLeft,
-  FaCircleCheck,
   FaCircleNotch,
   FaDownload,
   FaFacebookF,
@@ -93,29 +92,29 @@ export default function MerchantPromoBanner() {
         }
         setShopData(shop);
 
-        // 2. Fetch Latest 4 Approved Products
+        // 2. Fetch Latest 6 Approved Products
         const { data: products, error: prodErr } = await supabase
           .from("products")
           .select("image_url")
           .eq("shop_id", shop.id)
           .eq("is_approved", true)
-          .limit(4);
+          .limit(6);
 
         if (prodErr) throw prodErr;
 
-        // Ensure we always have exactly 4 images for the grid
+        // Ensure we always have exactly 6 images for the grid
         const fallbackImg = "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop";
         let finalImages = [];
         
         if (!products || products.length === 0) {
-          finalImages = [fallbackImg, fallbackImg, fallbackImg, fallbackImg];
+          finalImages = Array(6).fill(fallbackImg);
         } else {
           const avail = products.map(p => p.image_url).filter(url => url);
           if (avail.length === 0) {
-            finalImages = [fallbackImg, fallbackImg, fallbackImg, fallbackImg];
+            finalImages = Array(6).fill(fallbackImg);
           } else {
-            // Repeat available images to fill the 4 slots
-            for (let i = 0; i < 4; i++) {
+            // Repeat available images to fill the 6 slots
+            for (let i = 0; i < 6; i++) {
               finalImages.push(avail[i % avail.length]);
             }
           }
@@ -215,7 +214,8 @@ export default function MerchantPromoBanner() {
   }
 
   const displayAddress = shopData.address || "Registered Business Address";
-  const shopUrl = `https://ctmerchant.com.ng/shop-detail?id=${shopData.id}`;
+  const shopUrlText = `www.ctmerchant.com.ng/shop-detail?id=${shopData.id}`;
+  const shopUrl = `https://${shopUrlText}`;
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-[#F3F4F6] text-[#0F1111]">
@@ -240,23 +240,23 @@ export default function MerchantPromoBanner() {
           className="relative h-[450px] w-[800px] origin-top overflow-hidden bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.2)] max-[850px]:-mb-[45px] max-[850px]:scale-[0.9] max-[750px]:-mb-[90px] max-[750px]:scale-[0.8] max-[650px]:-mb-[135px] max-[650px]:scale-[0.7] max-[550px]:-mb-[200px] max-[550px]:scale-[0.55] max-[450px]:-mb-[260px] max-[450px]:scale-[0.42] max-[360px]:-mb-[280px] max-[360px]:scale-[0.38]"
           ref={bannerRef}
         >
-          {/* DYNAMIC 4-GRID PRODUCT COLLAGE */}
-          <div className="absolute left-0 top-0 z-10 grid h-[calc(100%-50px)] w-[52%] grid-cols-2 grid-rows-2 gap-[3px] bg-white">
+          {/* DYNAMIC 6-GRID PRODUCT COLLAGE (Shrunk to fit perfectly alongside gradient) */}
+          <div className="absolute left-0 top-0 z-10 grid h-[calc(100%-50px)] w-[56%] grid-cols-3 grid-rows-2 gap-2 bg-white p-2.5 pr-10">
             {productImages.map((imgUrl, idx) => (
-              <div key={idx} className="relative h-full w-full overflow-hidden bg-[#E2E8F0]">
-                <img crossOrigin="anonymous" src={imgUrl} alt={`Product ${idx}`} className="h-full w-full object-cover" />
+              <div key={idx} className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-md border border-[#E2E8F0] bg-[#F8FAFC] p-1 shadow-sm">
+                <img crossOrigin="anonymous" src={imgUrl} alt={`Product ${idx}`} className="h-full w-full object-contain mix-blend-darken" />
               </div>
             ))}
           </div>
           
           {/* SHARP DIAGONAL CUT OVERLAY */}
           <div 
-            className="absolute right-0 top-0 z-20 h-[calc(100%-50px)] w-[60%]"
-            style={{ background: 'linear-gradient(105deg, transparent 0%, transparent 15%, #FBBF24 15.1%, #FBBF24 16.5%, #003B95 16.6%, #001E50 100%)' }}
+            className="absolute right-0 top-0 z-20 h-[calc(100%-50px)] w-[52%]"
+            style={{ background: 'linear-gradient(105deg, transparent 0%, transparent 10%, #FBBF24 10.1%, #FBBF24 12%, #003B95 12.1%, #001E50 100%)' }}
           ></div>
           
           {/* THE ADVERTISING CONTENT */}
-          <div className="absolute right-[15px] top-[20px] z-30 flex h-[calc(100%-70px)] w-[390px] flex-col items-center text-center">
+          <div className="absolute right-[15px] top-[20px] z-30 flex h-[calc(100%-70px)] w-[370px] flex-col items-center text-center">
             
             <div className="mb-[2px] text-[1rem] font-bold uppercase tracking-[1px] text-[#E2E8F0]">Shop Online With Us On</div>
             <div className="mb-2 text-[1.55rem] font-black leading-tight text-white drop-shadow-md">
@@ -272,7 +272,7 @@ export default function MerchantPromoBanner() {
             </div>
 
             {/* ROW FOR QR CODE AND ID BOX */}
-            <div className="mb-3 flex w-full items-stretch justify-center gap-3">
+            <div className="mb-4 flex w-full items-stretch justify-center gap-3">
               {/* QR Code */}
               <div className="flex h-[90px] w-[90px] shrink-0 flex-col items-center rounded-lg border-[3px] border-[#FBBF24] bg-white p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
                 <div className="mb-0.5 text-[0.55rem] font-black uppercase text-[#003B95]">Scan Here</div>
@@ -289,21 +289,15 @@ export default function MerchantPromoBanner() {
             </div>
 
             {/* SHOP ADDRESS */}
-            <div className="mb-auto line-clamp-2 px-2.5 text-[0.8rem] font-semibold leading-[1.3] text-[#CBD5E1] drop-shadow-sm">
+            <div className="mb-auto mt-2 line-clamp-2 px-2.5 text-[0.8rem] font-semibold leading-[1.3] text-[#CBD5E1] drop-shadow-sm">
               <FaLocationDot className="mr-1 text-[#FBBF24] inline" /> {displayAddress}
-            </div>
-
-            {/* VERIFIED SHOP BADGE */}
-            <div className="mb-2 flex items-center gap-2 text-[0.9rem] font-extrabold uppercase text-[#34D399] drop-shadow-md">
-              <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" crossOrigin="anonymous" alt="Logo" className="h-[18px] w-[18px] rounded-[4px] shadow-[0_0_0_1px_white]" />
-              <FaCircleCheck /> Verified Physical Shop
             </div>
 
           </div>
 
           {/* BOTTOM ADVERTISING STRIP */}
-          <div className="absolute bottom-0 left-0 z-[40] flex h-[50px] w-full items-center justify-center border-t-[4px] border-[#FBBF24] bg-[#001E50] text-[1.15rem] font-semibold text-white shadow-[0_-4px_10px_rgba(0,0,0,0.3)]">
-            Visit <span className="mx-1.5 font-extrabold text-[#FBBF24]">www.ctmerchant.com.ng</span> to view our full catalog!
+          <div className="absolute bottom-0 left-0 z-[40] flex h-[50px] w-full items-center justify-center border-t-[4px] border-[#FBBF24] bg-[#001E50] text-[0.95rem] font-semibold text-white shadow-[0_-4px_10px_rgba(0,0,0,0.3)]">
+            Visit <span className="mx-1.5 font-extrabold text-[#FBBF24] tracking-wide">{shopUrlText}</span> or scan QR!
           </div>
 
         </div>

@@ -111,7 +111,7 @@ function App() {
       />
 
       <Route
-  path="/promo-banner"
+  path="/merchant-promo-banner"  // <--- Add "merchant-" here!
   element={
     <ProtectedDashboardRoute>
       <MerchantPromoBanner />
