@@ -120,13 +120,19 @@ export default function MerchantVideoKYC() {
 
       setLocation({ lat, lng, city: "Detecting city..." });
 
-      // Step B: Reverse Geocode via OpenStreetMap (Free, No API Key)
+      // Step B: Reverse Geocode via OpenStreetMap (Targeting Major City)
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`);
         if (res.ok) {
           const data = await res.json();
-          // Extract the most accurate general area name available
-          const detectedCity = data.address?.city || data.address?.town || data.address?.county || data.address?.state || "Unknown Area";
+          const address = data.address || {};
+          
+          // Prioritize city, then state (which acts as a major city indicator in many regions), then fallback to town/county
+          let detectedCity = address.city || address.state || address.town || address.county || "Unknown Area";
+          
+          // Clean up formatting (e.g., converts "Kaduna State" -> "Kaduna")
+          detectedCity = detectedCity.replace(' State', '').trim();
+          
           setLocation(prev => ({ ...prev, city: detectedCity }));
         } else {
           setLocation(prev => ({ ...prev, city: "City unavailable" }));
@@ -252,7 +258,7 @@ export default function MerchantVideoKYC() {
 
       const { data: { publicUrl } } = supabase.storage.from('kyc_videos').getPublicUrl(filePath);
 
-      // B. Update Shop KYC Status 
+      // B. Update Shop KYC Status
       setUploadStatus("Finalizing submission...");
       
       const { data: updatedShop, error: dbErr } = await supabase
@@ -260,7 +266,7 @@ export default function MerchantVideoKYC() {
         .update({ 
           kyc_status: 'submitted', 
           kyc_video_url: publicUrl, 
-          rejection_reason: null // Reset any previous rejections
+          rejection_reason: null
         })
         .eq('owner_id', user.id)
         .select();
