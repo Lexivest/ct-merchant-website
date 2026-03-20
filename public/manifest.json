@@ -1,0 +1,15 @@
+{
+  "short_name": "CTMerchant",
+  "name": "CTMerchant Dashboard",
+  "icons": [
+    {
+      "src": "https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg",
+      "type": "image/jpeg",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#131921",
+  "background_color": "#F3F4F6"
+}
