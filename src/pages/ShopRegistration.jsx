@@ -19,7 +19,7 @@ import {
   FaShieldHalved,
   FaShop,
   FaStore,
-  FaTimes,
+  FaXmark,
   FaTriangleExclamation,
 } from "react-icons/fa6"
 import Cropper from "react-cropper"
@@ -884,7 +884,7 @@ function CropModal({ config, onClose, onCrop }) {
     <div className="fixed inset-0 z-[300] flex flex-col bg-slate-950">
       <div className="flex items-center justify-between bg-black/50 p-4 text-white">
         <h3 className="flex items-center gap-2 font-bold"><FaCropSimple /> Adjust Image</h3>
-        <button onClick={onClose} className="text-2xl hover:text-pink-400"><FaTimes /></button>
+        <button onClick={onClose} className="text-2xl hover:text-pink-400"><FaXmark /></button>
       </div>
       <div className="flex-1 overflow-hidden p-4">
         <Cropper
