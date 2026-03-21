@@ -18,11 +18,13 @@ import ShopDetail from "./pages/ShopDetail"
 import ProductDetail from "./pages/ProductDetail"
 import ShopIndex from "./pages/ShopIndex"
 import MerchantDiscovery from "./pages/MerchantDiscovery"
-import VendorsPanel from "./pages/VendorsPanel" // <-- UPDATED IMPORT
+import VendorsPanel from "./pages/VendorsPanel"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import { isProfileComplete, signOutUser } from "./lib/auth"
+import SubscriptionGuard from "./components/auth/SubscriptionGuard" // <-- IMPORTED GUARD
+
 import ImageOptimizer from "./pages/vendors/ImageOptimizer"
 import AddProduct from "./pages/vendors/AddProduct"
 import EditProduct from "./pages/vendors/EditProduct"
@@ -115,111 +117,140 @@ function App() {
       />
 
       <Route
-  path="/remita"
-  element={
-    <ProtectedDashboardRoute>
-      <MerchantPayment />
-    </ProtectedDashboardRoute>
-  }
-/>
-
-<Route
-  path="/merchant-video-kyc"
-  element={
-    <ProtectedDashboardRoute>
-      <MerchantVideoKYC />
-    </ProtectedDashboardRoute>
-  }
-/>
+        path="/remita"
+        element={
+          <ProtectedDashboardRoute>
+            <MerchantPayment />
+          </ProtectedDashboardRoute>
+        }
+      />
 
       <Route
-  path="/merchant-promo-banner"  // <--- Add "merchant-" here!
-  element={
-    <ProtectedDashboardRoute>
-      <MerchantPromoBanner />
-    </ProtectedDashboardRoute>
-  }
-/>
+        path="/merchant-video-kyc"
+        element={
+          <ProtectedDashboardRoute>
+            <MerchantVideoKYC />
+          </ProtectedDashboardRoute>
+        }
+      />
 
-<Route
-  path="/merchant-service-fee"
-  element={
-    <ProtectedDashboardRoute>
-      <MerchantServiceFee />
-    </ProtectedDashboardRoute>
-  }
-/>
-
-<Route
-  path="/merchant-analytics"
-  element={
-    <ProtectedDashboardRoute>
-      <MerchantAnalytics />
-    </ProtectedDashboardRoute>
-  }
-/>
+      {/* --- LOCKED PREMIUM ROUTES START HERE --- */}
+      <Route
+        path="/merchant-promo-banner"
+        element={
+          <ProtectedDashboardRoute>
+            <SubscriptionGuard>
+              <MerchantPromoBanner />
+            </SubscriptionGuard>
+          </ProtectedDashboardRoute>
+        }
+      />
 
       <Route
-  path="/merchant-id-card"
-  element={
-    <ProtectedDashboardRoute>
-      <MerchantIDCard />
-    </ProtectedDashboardRoute>
-  }
-/>
-
-<Route
-  path="/merchant-news"
-  element={
-    <ProtectedDashboardRoute>
-      <MerchantNews />
-    </ProtectedDashboardRoute>
-  }
-/>
-      <Route
-  path="/merchant-settings"
-  element={
-    <ProtectedDashboardRoute>
-      <MerchantSettings />
-    </ProtectedDashboardRoute>
-  }
-/>
+        path="/merchant-id-card"
+        element={
+          <ProtectedDashboardRoute>
+            <SubscriptionGuard>
+              <MerchantIDCard />
+            </SubscriptionGuard>
+          </ProtectedDashboardRoute>
+        }
+      />
 
       <Route
-  path="/merchant-banner"
-  element={
-    <ProtectedDashboardRoute>
-      <MerchantBanner />
-    </ProtectedDashboardRoute>
-  }
-/>
+        path="/merchant-settings"
+        element={
+          <ProtectedDashboardRoute>
+            <SubscriptionGuard>
+              <MerchantSettings />
+            </SubscriptionGuard>
+          </ProtectedDashboardRoute>
+        }
+      />
 
       <Route
-  path="/merchant-products"
-  element={
-    <ProtectedDashboardRoute>
-      <MerchantProducts />
-    </ProtectedDashboardRoute>
-  }
-/>
+        path="/merchant-banner"
+        element={
+          <ProtectedDashboardRoute>
+            <SubscriptionGuard>
+              <MerchantBanner />
+            </SubscriptionGuard>
+          </ProtectedDashboardRoute>
+        }
+      />
 
       <Route
-  path="/merchant-edit-product"
-  element={
-    <ProtectedDashboardRoute>
-      <EditProduct />
-    </ProtectedDashboardRoute>
-  }
-/>
+        path="/merchant-products"
+        element={
+          <ProtectedDashboardRoute>
+            <SubscriptionGuard>
+              <MerchantProducts />
+            </SubscriptionGuard>
+          </ProtectedDashboardRoute>
+        }
+      />
 
       <Route
-  path="/merchant-add-product"
-  element={
-    <ProtectedDashboardRoute>
-      <AddProduct />
-    </ProtectedDashboardRoute>
-  }
-/>
+        path="/merchant-edit-product"
+        element={
+          <ProtectedDashboardRoute>
+            <SubscriptionGuard>
+              <EditProduct />
+            </SubscriptionGuard>
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/merchant-add-product"
+        element={
+          <ProtectedDashboardRoute>
+            <SubscriptionGuard>
+              <AddProduct />
+            </SubscriptionGuard>
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/ct-studio"
+        element={
+          <ProtectedDashboardRoute>
+            <SubscriptionGuard>
+              <ImageOptimizer />
+            </SubscriptionGuard>
+          </ProtectedDashboardRoute>
+        }
+      />
+      {/* --- LOCKED PREMIUM ROUTES END HERE --- */}
+
+      {/* --- UNLOCKED / FREE ROUTES --- */}
+      <Route
+        path="/service-fee"
+        element={
+          <ProtectedDashboardRoute>
+            <MerchantServiceFee />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/merchant-analytics"
+        element={
+          <ProtectedDashboardRoute>
+            <MerchantAnalytics />
+          </ProtectedDashboardRoute>
+        }
+      />
+
+      <Route
+        path="/merchant-news"
+        element={
+          <ProtectedDashboardRoute>
+            <MerchantNews />
+          </ProtectedDashboardRoute>
+        }
+      />
 
       <Route
         path="/shop-registration"
@@ -230,7 +261,6 @@ function App() {
         }
       />
 
-      {/* NEW VENDORS PANEL ROUTE */}
       <Route
         path="/vendor-panel"
         element={
@@ -266,15 +296,6 @@ function App() {
           </ProtectedDashboardRoute>
         }
       />
-
-      <Route
-  path="/ct-studio"
-  element={
-    <ProtectedDashboardRoute>
-      <ImageOptimizer />
-    </ProtectedDashboardRoute>
-  }
-/>
 
       <Route
         path="/shop-index"

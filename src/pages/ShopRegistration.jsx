@@ -350,7 +350,6 @@ function ShopRegistration() {
     const error = validateForm()
     if (error) {
       setNotice({ visible: true, type: "error", title: "Form validation failed", message: error })
-      // HTML LEGACY: Scroll to top of form so user sees the error
       window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }
@@ -468,6 +467,18 @@ function ShopRegistration() {
   async function uploadFile(fileOrBlob, bucket, folder, oldUrl = "") {
     if (!fileOrBlob) return oldUrl || null
 
+    if (oldUrl) {
+      try {
+        const match = oldUrl.match(new RegExp(`/(?:public|authenticated)/${bucket}/(.+)`))
+        if (match && match[1]) {
+          const oldPath = match[1].split('?')[0]
+          await supabase.storage.from(bucket).remove([oldPath])
+        }
+      } catch (e) {
+        console.warn("Failed to delete orphaned file from storage:", e)
+      }
+    }
+
     const extension = fileOrBlob.name?.split(".").pop() || "jpg"
     const path = `${folder}/${user.id}_${Date.now()}.${extension}`
 
@@ -581,7 +592,6 @@ function ShopRegistration() {
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-indigo-100 via-pink-100 to-purple-100 pb-12">
       
-      {/* HIDDEN FILE INPUT */}
       <input ref={hiddenInputRef} type="file" className="hidden" onChange={handleHiddenFileChange} />
 
       <section className="px-4 py-6 md:py-8">
@@ -604,7 +614,6 @@ function ShopRegistration() {
 
           <AuthNotification visible={notice.visible} type={notice.type} title={notice.title} message={notice.message} />
 
-          {/* HTML LEGACY: Stop execution if city is closed */}
           {cityData && cityData.is_open === false ? (
             <div className="rounded-[28px] border border-amber-200 bg-amber-50 p-6 shadow-xl md:p-8 text-center">
               <FaCity className="mx-auto mb-4 text-5xl text-amber-500" />
@@ -691,7 +700,6 @@ function ShopRegistration() {
               <SectionTitle icon={<FaShieldHalved />} tone="blue" title="Identity & Legal" rightText="Private" />
 
               <div className="grid gap-5">
-                {/* HTML LEGACY: Dynamic RC/BN Labels */}
                 <FieldBlock label={form.businessType === "Limited Liability (Ltd)" ? <span>RC Number <span className="ml-1 text-pink-600">*</span></span> : "BN Number (Optional)"}>
                   <InputWithIcon icon={<FaFileContract />} value={form.cacNumber} onChange={(e) => setForm((prev) => ({ ...prev, cacNumber: e.target.value }))} placeholder="If applicable" />
                 </FieldBlock>
@@ -742,7 +750,6 @@ function ShopRegistration() {
 
               <div className="grid gap-5">
                 <FieldBlock label="Business Website (Optional)">
-                  {/* HTML LEGACY: onBlur formatter handles automatic https:// injection */}
                   <InputWithIcon icon={<FaGlobe />} value={form.website} onChange={(e) => setForm((prev) => ({ ...prev, website: e.target.value }))} onBlur={handleUrlBlur("website")} placeholder="e.g. www.yourshop.com" />
                 </FieldBlock>
 
@@ -796,7 +803,7 @@ function ShopRegistration() {
           storefrontPreview={renderPreview("storefront")}
           idPreview={renderPreview("idCard")}
           cacPreview={renderPreview("cac")}
-          showCac={form.businessType === "Limited Liability (Ltd)" && Boolean(previews.cac || files.cac)}
+          showCac={Boolean(previews.cac || files.cac)}
           onClose={() => setReviewOpen(false)}
           onConfirm={submitApplication}
           loading={submitting}
