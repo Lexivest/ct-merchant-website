@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -72,7 +72,9 @@ function CreateAccount() {
   }, [user, navigate])
 
   const [form, setForm] = useState({
-    fullName: "",
+    surname: "",
+    middleName: "",
+    firstName: "",
     phone: "",
     email: "",
     cityId: "",
@@ -116,12 +118,15 @@ function CreateAccount() {
     message: "",
   })
 
+  // --- Terms & Flow State ---
   const [termsOpen, setTermsOpen] = useState(false)
   const [termsScrolledBottom, setTermsScrolledBottom] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [pendingAuthMethod, setPendingAuthMethod] = useState("email") 
 
   // --- GOOGLE CALLBACK ---
-  async function handleGoogleCredentialResponse(response) {
+  const googleCallbackRef = useRef()
+  googleCallbackRef.current = async (response) => {
     if (isOffline) {
       setNotice({ visible: true, type: "error", title: "Network Offline", message: "Please connect to the internet to sign up with Google." })
       return
@@ -131,6 +136,8 @@ function CreateAccount() {
       setNotice({ visible: true, type: "error", title: "Google sign-up failed", message: "No Google credential was received." })
       return
     }
+
+    setTermsOpen(false)
 
     try {
       setGoogleLoading(true)
@@ -163,7 +170,7 @@ function CreateAccount() {
 
       window.google.accounts.id.initialize({
         client_id: clientId,
-        callback: handleGoogleCredentialResponse,
+        callback: (res) => googleCallbackRef.current(res),
         auto_select: false,
         cancel_on_tap_outside: true,
       })
@@ -191,12 +198,11 @@ function CreateAccount() {
     }, 300)
 
     return () => clearInterval(timer)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const currentErrorsCount = useMemo(() => Object.keys(errors).length, [errors])
   
-  const isFormEmpty = !form.fullName && !form.phone && !form.email && !form.cityId && !form.areaId && !form.password && !form.confirmPassword;
+  const isFormEmpty = !form.surname && !form.firstName && !form.phone && !form.email && !form.cityId && !form.areaId && !form.password && !form.confirmPassword;
 
   function handleCityChange(event) {
     const cityId = event.target.value
@@ -204,10 +210,25 @@ function CreateAccount() {
     setErrors((prev) => ({ ...prev, cityId: "", areaId: "" }))
   }
 
+  // --- START EMAIL FLOW ---
   function handleSubmitStart(event) {
     event.preventDefault()
 
-    const nextErrors = validateSignupForm(form)
+    let localErrors = {}
+    if (!form.surname.trim() || form.surname.trim().length < 2) {
+      localErrors.surname = "Surname must be at least 2 characters."
+    }
+    if (!form.firstName.trim() || form.firstName.trim().length < 2) {
+      localErrors.firstName = "First name must be at least 2 characters."
+    }
+
+    const combinedFullName = [form.surname.trim(), form.middleName.trim(), form.firstName.trim()].filter(Boolean).join(" ")
+    const validationPayload = { ...form, fullName: combinedFullName }
+    
+    const externalErrors = validateSignupForm(validationPayload)
+    delete externalErrors.fullName // We handle name validation locally to split the UI feedback
+
+    const nextErrors = { ...localErrors, ...externalErrors }
     setErrors(nextErrors)
 
     if (Object.keys(nextErrors).length > 0) {
@@ -216,10 +237,20 @@ function CreateAccount() {
     }
 
     setNotice({ visible: false, type: "info", title: "", message: "" })
+    setPendingAuthMethod("email")
     setTermsScrolledBottom(false)
     setTermsOpen(true)
   }
 
+  // --- START GOOGLE FLOW ---
+  function handleStartGoogle() {
+    setNotice({ visible: false, type: "info", title: "", message: "" })
+    setPendingAuthMethod("google")
+    setTermsScrolledBottom(false)
+    setTermsOpen(true)
+  }
+
+  // --- EXECUTE EMAIL (Called from Modal) ---
   async function executeEmailSignup() {
     if (isOffline) {
       setNotice({ visible: true, type: "error", title: "Network Offline", message: "Please connect to the internet to create your account." })
@@ -231,8 +262,10 @@ function CreateAccount() {
       setSubmitting(true)
       setNotice({ visible: false, type: "info", title: "", message: "" })
 
+      const combinedFullName = [form.surname.trim(), form.middleName.trim(), form.firstName.trim()].filter(Boolean).join(" ")
+
       await signUpWithEmail({
-        fullName: form.fullName,
+        fullName: combinedFullName,
         phone: form.phone,
         email: form.email,
         password: form.password,
@@ -286,12 +319,20 @@ function CreateAccount() {
               <p className="mt-2 text-sm leading-6 text-slate-500">Join the professional merchant network.</p>
 
               <div className="mt-5 space-y-3">
-                <div id="google-signup-button" className="flex min-h-[44px] items-center justify-center" />
-                {!googleReady || googleLoading ? (
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-500">
-                    {googleLoading ? "Completing sign-up..." : "Loading Google sign-up..."}
-                  </div>
-                ) : null}
+                <button
+                  type="button"
+                  disabled={!googleReady || googleLoading}
+                  onClick={handleStartGoogle}
+                  className="flex h-[44px] w-full items-center justify-center gap-3 rounded-lg border border-[#747775] bg-white px-4 font-medium text-[#1f1f1f] shadow-sm transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                  </svg>
+                  {googleLoading ? "Completing sign-up..." : "Continue with Google"}
+                </button>
               </div>
 
               <div className="my-6 flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -301,9 +342,14 @@ function CreateAccount() {
               </div>
 
               <form className="space-y-4" onSubmit={handleSubmitStart}>
-                <AuthInput id="signup-fullname" label="Full Name" value={form.fullName} onChange={(e) => setForm((prev) => ({ ...prev, fullName: e.target.value }))} placeholder="First and Last Name" error={errors.fullName} required icon={<FaUser />} minLength={2} />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <AuthInput id="signup-surname" label="Surname" value={form.surname} onChange={(e) => setForm((prev) => ({ ...prev, surname: e.target.value }))} placeholder="e.g. Adebayo" error={errors.surname} required icon={<FaUser />} minLength={2} />
+                  <AuthInput id="signup-firstname" label="First Name" value={form.firstName} onChange={(e) => setForm((prev) => ({ ...prev, firstName: e.target.value }))} placeholder="e.g. John" error={errors.firstName} required icon={<FaUser />} minLength={2} />
+                </div>
+                
+                <AuthInput id="signup-middlename" label="Middle Name (Optional)" value={form.middleName} onChange={(e) => setForm((prev) => ({ ...prev, middleName: e.target.value }))} placeholder="e.g. Olamide" error={errors.middleName} icon={<FaUser />} />
                 <AuthInput id="signup-phone" label="Phone Number" value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} placeholder="e.g. 08012345678" error={errors.phone} required icon={<FaPhone />} />
-                <AuthInput id="signup-email" label="Work Email" type="email" value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} placeholder="name@company.com" error={errors.email} required icon={<FaEnvelope />} autoComplete="email" />
+                <AuthInput id="signup-email" label="Email" type="email" value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} placeholder="example@email.com" error={errors.email} required icon={<FaEnvelope />} autoComplete="email" />
 
                 <div className="flex flex-col gap-2">
                   <label htmlFor="signup-city" className="text-sm font-bold text-slate-800">Select City <span className="ml-1 text-pink-600">*</span></label>
@@ -332,7 +378,7 @@ function CreateAccount() {
                 <AuthInput id="signup-password" label="Password" type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))} placeholder="At least 6 characters" error={errors.password} required icon={<FaLock />} autoComplete="new-password" minLength={6} rightElement={<button type="button" onClick={() => setShowPassword((prev) => !prev)} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600">{showPassword ? <FaEyeSlash /> : <FaEye />}</button>} />
                 <AuthInput id="signup-confirm-password" label="Confirm Password" type={showConfirmPassword ? "text" : "password"} value={form.confirmPassword} onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))} placeholder="Re-enter password" error={errors.confirmPassword} required icon={<FaLock />} autoComplete="new-password" minLength={6} rightElement={<button type="button" onClick={() => setShowConfirmPassword((prev) => !prev)} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600">{showConfirmPassword ? <FaEyeSlash /> : <FaEye />}</button>} />
 
-                <AuthButton type="submit" loading={submitting} disabled={isOffline}>Continue</AuthButton>
+                <AuthButton type="submit" loading={submitting && pendingAuthMethod === 'email'} disabled={isOffline}>Continue</AuthButton>
               </form>
 
               <AuthNotification visible={notice.visible} type={notice.type} title={notice.title} message={notice.message} />
@@ -354,6 +400,7 @@ function CreateAccount() {
 
         {termsOpen && (
           <TermsPrivacyModal
+            pendingAuthMethod={pendingAuthMethod}
             onClose={() => setTermsOpen(false)}
             onConfirm={executeEmailSignup}
             confirmLoading={submitting}
@@ -384,12 +431,31 @@ function TermsPrivacyModal({
   confirmLoading,
   confirmDisabled,
   onScrolledBottom,
+  pendingAuthMethod,
 }) {
+  const googleWrapperRef = useRef(null)
+
   function handleScroll(event) {
     const el = event.currentTarget
     const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 12
     if (atBottom) onScrolledBottom()
   }
+
+  useEffect(() => {
+    if (pendingAuthMethod === "google" && !confirmDisabled && window.google && googleWrapperRef.current) {
+      try {
+        window.google.accounts.id.renderButton(googleWrapperRef.current, {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          width: 320,
+          text: "continue_with"
+        })
+      } catch (err) {
+        console.error("Google button render error:", err)
+      }
+    }
+  }, [pendingAuthMethod, confirmDisabled])
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
@@ -435,10 +501,24 @@ function TermsPrivacyModal({
         </div>
 
         <div className="mt-4 space-y-3">
-          <AuthButton onClick={onConfirm} loading={confirmLoading} disabled={confirmDisabled}>
-            <FaUserCheck />
-            <span>I Agree & Create Account</span>
-          </AuthButton>
+          
+          {pendingAuthMethod === "google" ? (
+             confirmDisabled ? (
+               <AuthButton disabled={true}>
+                 <FaUserCheck />
+                 <span>Scroll down to unlock Google Sign-in</span>
+               </AuthButton>
+             ) : (
+               <div className="flex justify-center w-full min-h-[44px]">
+                 <div ref={googleWrapperRef} />
+               </div>
+             )
+          ) : (
+            <AuthButton onClick={onConfirm} loading={confirmLoading} disabled={confirmDisabled}>
+              <FaUserCheck />
+              <span>I Agree & Create Account</span>
+            </AuthButton>
+          )}
 
           <button type="button" onClick={onClose} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50">
             Cancel Setup
