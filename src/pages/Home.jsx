@@ -437,8 +437,10 @@ function Home() {
     <MainLayout>
       <section className="bg-pink-50 px-4 py-4 md:py-5">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
-          <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-1 lg:row-start-1">
-            <div className="relative min-h-[260px] overflow-hidden rounded-[24px] border border-pink-100 bg-slate-900 shadow-lg md:min-h-[420px]">
+          
+          {/* --- CAROUSEL CONTAINER (UPDATED FOR MOBILE FULL-BLEED) --- */}
+          <div className="-mx-4 -mt-4 mb-2 bg-pink-200 p-0 shadow-sm md:m-0 md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
+            <div className="relative min-h-[360px] overflow-hidden rounded-none border-b border-pink-100 bg-slate-900 shadow-lg md:min-h-[420px] md:rounded-[24px] md:border">
               
               {/* --- DYNAMIC FADING CAROUSEL --- */}
               {bannerImages.map((imgSrc, index) => (
@@ -447,17 +449,17 @@ function Home() {
                   src={imgSrc} 
                   alt={`Commerce Banner ${index + 1}`} 
                   fetchpriority={index === 0 ? "high" : "auto"}
-                  className={`absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-1000 ease-in-out ${
+                  className={`absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-[2500ms] ease-in-out ${
                     currentBanner === index ? "opacity-100" : "opacity-0"
                   }`}
                 />
               ))}
               
-              {/* Gradient Overlay to ensure text is always readable regardless of image color */}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent z-[5]"></div>
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 z-[5] bg-gradient-to-t from-slate-950/90 via-slate-900/20 to-transparent"></div>
               
-              <div className="relative z-10 flex h-full min-h-[260px] flex-col justify-end md:min-h-[420px]">
-                <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/55 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur-sm md:gap-4 md:py-4 md:text-sm">
+              <div className="relative z-10 flex h-full min-h-[360px] flex-col justify-end md:min-h-[420px]">
+                <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-4 md:py-4 md:text-sm">
                   <span className="flex items-center gap-2">
                     <span className="text-emerald-400">●</span> Commerce
                   </span>
