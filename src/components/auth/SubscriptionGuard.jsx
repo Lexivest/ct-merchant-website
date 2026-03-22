@@ -56,7 +56,7 @@ export default function SubscriptionGuard({ children }) {
 
   // THE KICK: If expired, bounce them directly to the billing page!
   if (!isActive) {
-    return <Navigate to="/merchant-service-fee" replace />;
+    return <Navigate to="/service-fee" replace />;
   }
 
   return children;

@@ -2,6 +2,13 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import HeaderMarquee from "./HeaderMarquee"
 
+// --- LOCAL ASSET IMPORT ---
+// OLD INCORRECT PATH:
+// import ctmLogo from "../assets/images/logo.jpg";
+
+// NEW CORRECT PATH:
+import ctmLogo from "../../assets/images/logo.jpg";
+
 const navLinks = [
   { label: "Home", to: "/" },
   { label: "About", to: "/about" },
@@ -32,8 +39,9 @@ function Navbar() {
             title="Home Screen"
             onClick={closeMenu}
           >
+            {/* --- LOCAL ASSET USAGE --- */}
             <img
-              src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"
+              src={ctmLogo}
               alt="CTMerchant Logo"
               className="h-10 w-10 rounded-lg object-cover"
             />

@@ -30,6 +30,13 @@ import {
 } from "../lib/validators"
 import useAuthSession from "../hooks/useAuthSession"
 
+// --- LOCAL ASSET IMPORTS FOR CAROUSEL ---
+import banner1 from "../assets/images/banner1.jpg"
+import banner2 from "../assets/images/banner2.jpg"
+import banner3 from "../assets/images/banner3.jpg"
+
+const bannerImages = [banner1, banner2, banner3]
+
 const phrases = [
   "Verified Merchants",
   "Safe and Secure",
@@ -43,9 +50,6 @@ function Home() {
   const { user, isOffline } = useAuthSession()
 
   // 2. Smooth Auto-Redirect
-  // This waits for the global state to confirm the user is logged in, 
-  // waits a tiny fraction of a second for the profile data to settle, 
-  // and then seamlessly transitions without rebooting the browser.
   useEffect(() => {
     if (user && !isOffline) {
       const timer = setTimeout(() => {
@@ -55,7 +59,19 @@ function Home() {
     }
   }, [user, isOffline, navigate])
 
-  const [bannerLoaded, setBannerLoaded] = useState(false)
+  // --- BANNER CAROUSEL STATE & TIMER ---
+  const [currentBanner, setCurrentBanner] = useState(0)
+
+  useEffect(() => {
+    // Change the image every 5 seconds (5000ms)
+    const bannerTimer = setInterval(() => {
+      setCurrentBanner((prev) => (prev + 1) % bannerImages.length)
+    }, 5000)
+    
+    // Clean up the timer if the user navigates away from the page
+    return () => clearInterval(bannerTimer)
+  }, [])
+
   const [phraseIndex, setPhraseIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -233,8 +249,6 @@ function Home() {
         message: "Opening your dashboard...",
       })
       
-      // The useEffect at the top of the file will now handle the navigation smoothly!
-      
     } catch (error) {
       setLoginNotice({
         visible: true,
@@ -302,8 +316,6 @@ function Home() {
         message: "Opening your dashboard...",
       })
 
-      // The useEffect at the top of the file will now handle the navigation smoothly!
-      
     } catch (error) {
       setLoginNotice({
         visible: true,
@@ -427,15 +439,22 @@ function Home() {
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-1 lg:row-start-1">
             <div className="relative min-h-[260px] overflow-hidden rounded-[24px] border border-pink-100 bg-slate-900 shadow-lg md:min-h-[420px]">
-              <img 
-                src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/ct%20web%20banner%20opt.jpg" 
-                alt="Commerce Banner" 
-                fetchpriority="high"
-                onLoad={() => setBannerLoaded(true)}
-                className={`absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-700 ease-in-out ${
-                  bannerLoaded ? "opacity-100" : "opacity-0"
-                }`}
-              />
+              
+              {/* --- DYNAMIC FADING CAROUSEL --- */}
+              {bannerImages.map((imgSrc, index) => (
+                <img 
+                  key={index}
+                  src={imgSrc} 
+                  alt={`Commerce Banner ${index + 1}`} 
+                  fetchpriority={index === 0 ? "high" : "auto"}
+                  className={`absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-1000 ease-in-out ${
+                    currentBanner === index ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              ))}
+              
+              {/* Gradient Overlay to ensure text is always readable regardless of image color */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent z-[5]"></div>
               
               <div className="relative z-10 flex h-full min-h-[260px] flex-col justify-end md:min-h-[420px]">
                 <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/55 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur-sm md:gap-4 md:py-4 md:text-sm">

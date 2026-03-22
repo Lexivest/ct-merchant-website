@@ -227,22 +227,18 @@ export default function MerchantServiceFee() {
             <h2 className="mb-3 text-[1.8rem] font-black text-[#2E1065] leading-none">{currentPlan.replace('_', ' ')}</h2>
             
             <div className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[0.9rem] font-bold ${
-              isActive ? "bg-[#DCFCE7] text-[#16A34A]" : 
-              isFreeTrial ? "bg-[#F1F5F9] text-[#64748B]" : 
-              "bg-[#FEE2E2] text-[#DC2626]"
+              isActive ? "bg-[#DCFCE7] text-[#16A34A]" : "bg-[#FEE2E2] text-[#DC2626]"
             }`}>
-              {isActive ? <><FaCircleCheck /> ACTIVE</> : 
-               isFreeTrial ? <><FaCircleInfo /> FREE TIER</> : 
-               <><FaCircleXmark /> EXPIRED</>}
+              {isActive ? <><FaCircleCheck /> {isFreeTrial ? "ACTIVE TRIAL" : "ACTIVE"}</> : <><FaCircleXmark /> EXPIRED</>}
             </div>
           </div>
           
           <div className="text-left sm:text-right">
-            <div className={`text-[2.5rem] font-black leading-none ${!isActive && !isFreeTrial ? 'text-[#DC2626]' : isFreeTrial ? 'text-[#64748B]' : 'text-[#0F172A]'}`}>
-              {isFreeTrial ? "Not Subscribed" : `${Math.max(0, daysLeft)} Days Left`}
+            <div className={`text-[2.5rem] font-black leading-none ${!isActive ? 'text-[#DC2626]' : 'text-[#0F172A]'}`}>
+              {!isActive ? "Expired" : `${Math.max(0, daysLeft)} Days Left`}
             </div>
             <div className="mt-1 text-[0.9rem] font-semibold text-[#64748B]">
-              {isFreeTrial ? "Please choose a plan below." : `Valid Until: ${formattedExpiry}`}
+              {!isActive ? "Please choose a plan below to unlock your tools." : `Valid Until: ${formattedExpiry}`}
             </div>
           </div>
         </div>
