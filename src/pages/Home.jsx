@@ -63,10 +63,10 @@ function Home() {
   const [currentBanner, setCurrentBanner] = useState(0)
 
   useEffect(() => {
-    // Change the image every 5 seconds (5000ms)
+    // Change the image every 7.5 seconds (7500ms)
     const bannerTimer = setInterval(() => {
       setCurrentBanner((prev) => (prev + 1) % bannerImages.length)
-    }, 5000)
+    }, 7500)
     
     // Clean up the timer if the user navigates away from the page
     return () => clearInterval(bannerTimer)
