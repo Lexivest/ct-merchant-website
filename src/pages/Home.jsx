@@ -439,8 +439,9 @@ function Home() {
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
           
           {/* --- CAROUSEL CONTAINER (UPDATED FOR MOBILE FULL-BLEED) --- */}
+          {/* --- CAROUSEL CONTAINER (BALANCED FULL-BLEED) --- */}
           <div className="-mx-4 -mt-4 mb-2 bg-pink-200 p-0 shadow-sm md:m-0 md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
-            <div className="relative min-h-[360px] overflow-hidden rounded-none border-b border-pink-100 bg-slate-900 shadow-lg md:min-h-[420px] md:rounded-[24px] md:border">
+            <div className="relative min-h-[280px] sm:min-h-[320px] md:min-h-[420px] overflow-hidden rounded-none border-b border-pink-100 bg-slate-900 shadow-lg md:rounded-[24px] md:border">
               
               {/* --- DYNAMIC FADING CAROUSEL --- */}
               {bannerImages.map((imgSrc, index) => (
@@ -449,7 +450,8 @@ function Home() {
                   src={imgSrc} 
                   alt={`Commerce Banner ${index + 1}`} 
                   fetchpriority={index === 0 ? "high" : "auto"}
-                  className={`absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-[2500ms] ease-in-out ${
+                  // Changed from object-top to object-center for better side visibility
+                  className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-[2500ms] ease-in-out ${
                     currentBanner === index ? "opacity-100" : "opacity-0"
                   }`}
                 />
@@ -458,7 +460,7 @@ function Home() {
               {/* Gradient Overlay */}
               <div className="absolute inset-0 z-[5] bg-gradient-to-t from-slate-950/90 via-slate-900/20 to-transparent"></div>
               
-              <div className="relative z-10 flex h-full min-h-[360px] flex-col justify-end md:min-h-[420px]">
+              <div className="relative z-10 flex h-full min-h-[280px] sm:min-h-[320px] md:min-h-[420px] flex-col justify-end">
                 <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-4 md:py-4 md:text-sm">
                   <span className="flex items-center gap-2">
                     <span className="text-emerald-400">●</span> Commerce
@@ -473,6 +475,7 @@ function Home() {
               </div>
             </div>
           </div>
+         
 
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-2 lg:row-span-2 lg:row-start-1">
             <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
