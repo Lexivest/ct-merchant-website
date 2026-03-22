@@ -6,7 +6,10 @@ import {
   FaArrowLeft,
   FaBox,
   FaCloudArrowUp,
+  FaCompress,
+  FaCrop,
   FaDownload,
+  FaExpand,
   FaImage,
   FaMicrochip,
   FaPanorama,
@@ -15,7 +18,6 @@ import {
   FaWandMagicSparkles,
 } from "react-icons/fa6";
 
-// NOTICE: Updated relative paths for the new folder structure!
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 
@@ -30,6 +32,7 @@ export default function ImageOptimizer() {
   const { user, loading: authLoading } = useAuthSession();
 
   const [mode, setMode] = useState("product"); // 'product' | 'banner'
+  const [fitMode, setFitMode] = useState("cover"); // 'cover' (Crop edges) | 'contain' (White padding)
   const [imageSrc, setImageSrc] = useState("");
   const [fileName, setFileName] = useState("");
   const [originalSize, setOriginalSize] = useState(0);
@@ -85,6 +88,7 @@ export default function ImageOptimizer() {
     setOriginalSize(0);
     setBrightness(100);
     setContrast(100);
+    setFitMode("cover");
     resetOutput();
   };
 
@@ -101,24 +105,43 @@ export default function ImageOptimizer() {
       targetH = BANNER_MAX_H;
     }
 
+    // Get the raw cropped region without forcing target dimensions yet
     const croppedCanvas = cropper.getCroppedCanvas({
-      width: targetW,
-      height: targetH,
       fillColor: "#FFFFFF",
       imageSmoothingEnabled: true,
       imageSmoothingQuality: "high",
     });
+
+    if (!croppedCanvas) return;
 
     const finalCanvas = document.createElement("canvas");
     finalCanvas.width = targetW;
     finalCanvas.height = targetH;
     const ctx = finalCanvas.getContext("2d");
 
-    // Apply Lighting Filters natively to canvas
-    ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-    ctx.drawImage(croppedCanvas, 0, 0);
+    // 1. Fill entire background with white (Crucial for Padding mode)
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, targetW, targetH);
 
-    // PERMANENT WATERMARK LOGIC
+    // 2. Apply Lighting Filters
+    ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
+
+    // 3. Draw the image based on the selected Fit Mode
+    if (fitMode === "contain") {
+      // PADDING LOGIC: Calculate scaling to fit within target dimensions while keeping aspect ratio
+      const scale = Math.min(targetW / croppedCanvas.width, targetH / croppedCanvas.height);
+      const scaledW = croppedCanvas.width * scale;
+      const scaledH = croppedCanvas.height * scale;
+      const dx = (targetW - scaledW) / 2; // Center horizontally
+      const dy = (targetH - scaledH) / 2; // Center vertically
+      
+      ctx.drawImage(croppedCanvas, dx, dy, scaledW, scaledH);
+    } else {
+      // CROP LOGIC: Stretch the cropped area to fill the target (Cropper forces the aspect ratio to match anyway)
+      ctx.drawImage(croppedCanvas, 0, 0, targetW, targetH);
+    }
+
+    // 4. PERMANENT WATERMARK LOGIC
     ctx.filter = "none";
     ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
     ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
@@ -130,7 +153,7 @@ export default function ImageOptimizer() {
     ctx.textBaseline = "bottom";
     ctx.fillText("CTMerchant", targetW - 20, targetH - 20);
 
-    // AUTO-TUNING COMPRESSION LOOP
+    // 5. AUTO-TUNING COMPRESSION LOOP
     let quality = 0.92;
     const maxBytes = mode === "product" ? 100 * 1024 : 200 * 1024;
 
@@ -202,7 +225,7 @@ export default function ImageOptimizer() {
           
           <div>
             <div className="mb-3 border-b border-[#334155] pb-2 text-sm font-extrabold uppercase tracking-wide text-[#94a3b8]">
-              1. Select Format
+              1. Dimensions
             </div>
             <div className="flex gap-2 rounded-lg border border-[#334155] bg-[#0f172a] p-1">
               <button
@@ -226,7 +249,31 @@ export default function ImageOptimizer() {
 
           <div>
             <div className="mb-3 border-b border-[#334155] pb-2 text-sm font-extrabold uppercase tracking-wide text-[#94a3b8]">
-              2. Lighting Fixes
+              2. Fitting Logic
+            </div>
+            <div className="flex gap-2 rounded-lg border border-[#334155] bg-[#0f172a] p-1">
+              <button
+                onClick={() => setFitMode("cover")}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-md p-2 text-xs font-bold transition-all ${
+                  fitMode === "cover" ? "bg-[#1e293b] text-[#db2777] shadow-sm" : "text-[#94a3b8] hover:text-white"
+                }`}
+              >
+                <FaCrop /> Fill (Crop)
+              </button>
+              <button
+                onClick={() => setFitMode("contain")}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-md p-2 text-xs font-bold transition-all ${
+                  fitMode === "contain" ? "bg-[#1e293b] text-[#db2777] shadow-sm" : "text-[#94a3b8] hover:text-white"
+                }`}
+              >
+                <FaCompress /> Pad (White)
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-3 border-b border-[#334155] pb-2 text-sm font-extrabold uppercase tracking-wide text-[#94a3b8]">
+              3. Lighting Fixes
             </div>
             <div className="mb-4 flex flex-col gap-1.5">
               <div className="flex justify-between text-sm font-semibold">
@@ -254,7 +301,7 @@ export default function ImageOptimizer() {
 
           <div>
             <div className="mb-3 border-b border-[#334155] pb-2 text-sm font-extrabold uppercase tracking-wide text-[#94a3b8]">
-              3. Branding
+              4. Branding
             </div>
             <div className="flex items-start gap-2.5 rounded-lg border border-[rgba(219,39,119,0.2)] bg-[rgba(219,39,119,0.1)] p-3">
               <FaShieldHalved className="mt-0.5 shrink-0 text-[#db2777]" />
@@ -292,15 +339,18 @@ export default function ImageOptimizer() {
             </div>
           ) : (
             <div className="flex h-full w-full items-center justify-center p-5">
+              {/* Note the added 'key' prop: This forces the Cropper to re-initialize perfectly when switching modes */}
               <Cropper
+                key={`${mode}-${fitMode}`}
                 ref={cropperRef}
                 src={imageSrc}
                 style={{ height: "100%", width: "100%", filter: `brightness(${brightness}%) contrast(${contrast}%)` }}
-                aspectRatio={mode === "product" ? 1 : 16 / 9}
+                // If "cover", force the exact shape (1:1 or 16:9). If "contain", let them draw any shape (NaN)
+                aspectRatio={fitMode === "cover" ? (mode === "product" ? 1 : 16 / 9) : NaN}
                 viewMode={1}
                 dragMode="move"
                 background={false}
-                autoCropArea={0.9}
+                autoCropArea={1}
                 responsive={true}
                 checkOrientation={false}
               />
@@ -315,7 +365,7 @@ export default function ImageOptimizer() {
           </div>
           
           <div 
-            className="mb-5 flex w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-[#334155] bg-[#0f172a]"
+            className="mb-5 flex w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-[#334155] bg-white"
             style={{ aspectRatio: mode === "product" ? "1/1" : "16/9" }}
           >
             {finalPreview ? (
