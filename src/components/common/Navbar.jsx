@@ -3,11 +3,7 @@ import { Link } from "react-router-dom"
 import HeaderMarquee from "./HeaderMarquee"
 
 // --- LOCAL ASSET IMPORT ---
-// OLD INCORRECT PATH:
-// import ctmLogo from "../assets/images/logo.jpg";
-
-// NEW CORRECT PATH:
-import ctmLogo from "../../assets/images/logo.jpg";
+import ctmLogo from "../../assets/images/logo.jpg"
 
 const navLinks = [
   { label: "Home", to: "/" },
@@ -32,21 +28,24 @@ function Navbar() {
       </div>
 
       <div className="relative border-b-2 border-pink-200 bg-white text-slate-800">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
+        {/* Adjusted padding: py-2 on mobile, py-3 on desktop */}
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2 md:gap-4 md:py-3">
+          
           <Link
             to="/"
-            className="flex min-w-0 items-center gap-3"
+            className="flex min-w-0 items-center gap-2 md:gap-3"
             title="Home Screen"
             onClick={closeMenu}
           >
-            {/* --- LOCAL ASSET USAGE --- */}
+            {/* Adjusted logo size: 8x8 on mobile, 10x10 on desktop */}
             <img
               src={ctmLogo}
               alt="CTMerchant Logo"
-              className="h-10 w-10 rounded-lg object-cover"
+              className="h-8 w-8 rounded-lg object-cover md:h-10 md:w-10"
             />
+            {/* Value Proposition Text */}
             <span className="truncate text-sm font-extrabold tracking-wide text-slate-900 md:text-base">
-              CTMerchant
+              Best Deals Near You!
             </span>
           </Link>
 
@@ -72,7 +71,7 @@ function Navbar() {
           <button
             type="button"
             onClick={() => setMobileOpen((prev) => !prev)}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 lg:hidden"
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 md:py-2 lg:hidden"
             aria-label="Toggle mobile menu"
             aria-expanded={mobileOpen}
           >
