@@ -30,6 +30,9 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import useAuthSession from "../hooks/useAuthSession"
 import { ShimmerBlock } from "../components/common/Shimmers"
 
+// --- LOCAL ASSET IMPORT ---
+import ctmLogo from "../assets/images/logo.jpg"
+
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function CreateAccountShimmer() {
   return (
@@ -311,7 +314,8 @@ function CreateAccount() {
             </Link>
 
             <div className="mb-5 text-center">
-              <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="CTMerchant Logo" className="mx-auto h-24 w-auto rounded-xl object-contain" />
+              {/* --- LOCAL ASSET USAGE --- */}
+              <img src={ctmLogo} alt="CTMerchant Logo" className="mx-auto h-24 w-auto rounded-xl object-contain" />
             </div>
 
             <div className="rounded-[28px] border border-pink-100 bg-white p-6 shadow-xl md:p-8">

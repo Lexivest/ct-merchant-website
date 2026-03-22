@@ -17,6 +17,9 @@ import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 
+// --- LOCAL ASSET IMPORT ---
+import ctmLogo from "../../assets/images/logo.jpg"
+
 export default function MerchantIDCard() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
@@ -198,12 +201,12 @@ export default function MerchantIDCard() {
 
         {/* --- THE DIGITAL ID CARD --- */}
         <div className="relative mb-8 overflow-hidden rounded-xl border border-white/15 bg-gradient-to-br from-[#0F172A] to-[#1E1B4B] p-5 text-white shadow-[0_15px_30px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.2)] transform sm:scale-100 scale-95" 
-             style={{ width: "380px", height: "240px", transformOrigin: "top center" }} 
-             ref={cardRef}>
+              style={{ width: "380px", height: "240px", transformOrigin: "top center" }} 
+              ref={cardRef}>
           
-          {/* Watermark */}
+          {/* Watermark (UPDATED TO LOCAL ASSET) */}
           <div className="pointer-events-none absolute left-1/2 top-1/2 h-[180px] w-[180px] -translate-x-1/2 -translate-y-1/2 opacity-5">
-            <img src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg" alt="WM" className="h-full w-full object-contain" crossOrigin="anonymous" />
+            <img src={ctmLogo} alt="WM" className="h-full w-full object-contain" crossOrigin="anonymous" />
           </div>
 
           <div className="relative z-10 flex h-full flex-col justify-between">

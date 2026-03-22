@@ -11,6 +11,9 @@ import {
   FaTableCellsLarge,
 } from "react-icons/fa6"
 
+// --- LOCAL ASSET IMPORT ---
+import ctmLogo from "../../../assets/images/logo.jpg";
+
 function DashboardHeader({
   activeTab,
   currentProfile,
@@ -125,8 +128,10 @@ function DashboardHeader({
   return (
     <header className="amz-header sticky top-0 z-[1000] flex flex-col bg-[#131921] text-white">
       <div className="amz-mobile-scroll-row mx-auto flex w-full max-w-[1600px] items-center gap-4 px-4 py-[10px] max-[1024px]:justify-between max-[1024px]:gap-2 max-[1024px]:px-3 max-[1024px]:py-2">
+        
+        {/* --- LOCAL ASSET USAGE --- */}
         <img
-          src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"
+          src={ctmLogo}
           className="amz-logo h-[38px] cursor-pointer rounded object-contain"
           alt="Logo"
           onClick={() => window.location.reload()}
