@@ -8,6 +8,7 @@ import {
   FaDownload,
   FaTriangleExclamation,
   FaWhatsapp,
+  FaShareNodes
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
@@ -136,7 +137,7 @@ export default function StaffIDGenerator() {
     });
   };
 
-  const handleDownload = async () => {
+  const handleDownloadOnly = async () => {
     try {
       setDownloading(true);
       const blob = await generateCardBlob();
@@ -158,24 +159,46 @@ export default function StaffIDGenerator() {
     }
   };
 
-  const handleWhatsAppNotify = () => {
-    let phone = shopData?.phone || "";
+  // --- NEW NATIVE SHARE ENGINE ---
+  const handleNativeShare = async () => {
+    try {
+      setDownloading(true);
+      const blob = await generateCardBlob();
+      
+      // Package blob as a physical file
+      const file = new File([blob], `CTM_BUSINESS_ID_${uniqueId}.jpg`, { type: "image/jpeg" });
+      const msg = `Hello ${proprietorName}, your official CT-Merchant Business ID for *"${businessName}"* is ready. Unique ID: *${uniqueId}*.`;
 
-    if (!phone) {
-      alert("No merchant phone number found.");
-      return;
+      // Check if device supports native file sharing (Mobile Apps, Safari, Edge)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'CTMerchant Business ID',
+          text: msg,
+          files: [file]
+        });
+      } else {
+        // Fallback for incompatible desktop browsers
+        alert("Native sharing is not supported on this browser. The file will be downloaded instead.");
+        handleDownloadOnly();
+        
+        // Open standard text WhatsApp as a fallback
+        let phone = shopData?.phone || "";
+        if (phone.startsWith("0")) phone = `234${phone.slice(1)}`;
+        if (phone) {
+          setTimeout(() => {
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
+          }, 500);
+        }
+      }
+    } catch (err) {
+      // Ignore AbortError (happens if the user clicks "cancel" on the share sheet)
+      if (err.name !== 'AbortError') {
+        console.error("Error sharing:", err);
+        alert("Failed to share ID card directly. Please use the download button.");
+      }
+    } finally {
+      setDownloading(false);
     }
-
-    if (phone.startsWith("0")) {
-      phone = `234${phone.slice(1)}`;
-    }
-
-    const msg = `Hello ${proprietorName}, your official CT-Merchant Business ID for *"${businessName}"* is ready. Unique ID: *${uniqueId}*.`;
-
-    window.open(
-      `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,
-      "_blank"
-    );
   };
 
   if (loading) {
@@ -228,7 +251,7 @@ export default function StaffIDGenerator() {
         {/* Glass Action Buttons */}
         <div className="mb-10 flex w-full gap-4">
           <button
-            onClick={handleDownload}
+            onClick={handleDownloadOnly}
             disabled={downloading}
             className="group flex flex-1 flex-col items-center justify-center rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md p-5 shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all hover:bg-white/20 hover:border-pink-500/50 hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
@@ -237,18 +260,23 @@ export default function StaffIDGenerator() {
             ) : (
               <FaDownload className="mb-2 text-2xl text-pink-400 group-hover:scale-110 transition-transform" />
             )}
-            <span className="text-xs font-black uppercase tracking-wider text-white">
+            <span className="text-xs font-black uppercase tracking-wider text-white mt-1 text-center">
               Save HD Asset
             </span>
           </button>
 
           <button
-            onClick={handleWhatsAppNotify}
-            className="group flex flex-1 flex-col items-center justify-center rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md p-5 shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all hover:bg-white/20 hover:border-emerald-500/50 hover:-translate-y-1"
+            onClick={handleNativeShare}
+            disabled={downloading}
+            className="group flex flex-1 flex-col items-center justify-center rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md p-5 shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all hover:bg-white/20 hover:border-emerald-500/50 hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
-            <FaWhatsapp className="mb-2 text-2xl text-emerald-400 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-black uppercase tracking-wider text-white">
-              Dispatch to User
+             {downloading ? (
+              <FaCircleNotch className="mb-2 animate-spin text-2xl text-emerald-400" />
+            ) : (
+              <FaShareNodes className="mb-2 text-2xl text-emerald-400 group-hover:scale-110 transition-transform" />
+            )}
+            <span className="text-xs font-black uppercase tracking-wider text-white mt-1 text-center">
+              Share Direct
             </span>
           </button>
         </div>
@@ -267,7 +295,7 @@ export default function StaffIDGenerator() {
             WebkitBackdropFilter: "blur(20px)",
           }}
         >
-          {/* Vibrant Glowing Orbs (Behind the glass data) */}
+          {/* Vibrant Glowing Orbs */}
           <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden mix-blend-multiply">
             <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-pink-400/30 blur-3xl" />
             <div className="absolute -bottom-10 -left-10 h-48 w-48 rounded-full bg-indigo-500/30 blur-3xl" />
@@ -277,7 +305,6 @@ export default function StaffIDGenerator() {
             </div>
           </div>
 
-          {/* Card Header (Deep Glass, Centered Text, Logo Left) */}
           <div className="relative z-10 flex min-h-[56px] items-center justify-center bg-indigo-950/80 backdrop-blur-sm px-4 py-2 text-white border-b border-white/30 shadow-sm">
             <img
               src={ctmLogo}
@@ -298,92 +325,46 @@ export default function StaffIDGenerator() {
             </div>
           </div>
 
-          {/* Card Body */}
           <div className="relative z-10 flex h-[184px] px-4 py-3">
-            {/* Left Data Column (Bigger Fonts) */}
             <div className="flex-1 pr-3 flex flex-col justify-center">
               <div className="grid grid-cols-2 gap-x-4 gap-y-3.5">
                 <div className="min-w-0">
-                  <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">
-                    Business Name
-                  </p>
-                  <p className="mt-0.5 line-clamp-2 text-[0.85rem] font-extrabold leading-tight text-indigo-950">
-                    {businessName}
-                  </p>
+                  <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">Business Name</p>
+                  <p className="mt-0.5 line-clamp-2 text-[0.85rem] font-extrabold leading-tight text-indigo-950">{businessName}</p>
                 </div>
-
                 <div className="min-w-0">
-                  <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">
-                    Proprietor
-                  </p>
-                  <p className="mt-0.5 line-clamp-2 text-[0.75rem] font-bold leading-tight text-indigo-950">
-                    {proprietorName}
-                  </p>
+                  <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">Proprietor</p>
+                  <p className="mt-0.5 line-clamp-2 text-[0.75rem] font-bold leading-tight text-indigo-950">{proprietorName}</p>
                 </div>
-
                 <div className="min-w-0">
-                  <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">
-                    Category
-                  </p>
-                  <p className="mt-0.5 line-clamp-2 text-[0.75rem] font-bold leading-tight text-pink-700">
-                    {categoryName}
-                  </p>
+                  <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">Category</p>
+                  <p className="mt-0.5 line-clamp-2 text-[0.75rem] font-bold leading-tight text-pink-700">{categoryName}</p>
                 </div>
-
                 <div className="min-w-0">
-                  <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">
-                    Valid Until
-                  </p>
-                  <p className="mt-0.5 text-[0.75rem] font-black leading-tight text-indigo-700">
-                    {formattedExpiry}
-                  </p>
+                  <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">Valid Until</p>
+                  <p className="mt-0.5 text-[0.75rem] font-black leading-tight text-indigo-700">{formattedExpiry}</p>
                 </div>
               </div>
-
               <div className="mt-4 min-w-0 border-t border-indigo-900/10 pt-2.5">
-                <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">
-                  Verified Address
-                </p>
-                <p className="mt-0.5 line-clamp-2 text-[0.7rem] font-semibold italic leading-tight text-indigo-950/80">
-                  {addressText}
-                </p>
+                <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">Verified Address</p>
+                <p className="mt-0.5 line-clamp-2 text-[0.7rem] font-semibold italic leading-tight text-indigo-950/80">{addressText}</p>
               </div>
             </div>
 
-            {/* Right Media Column */}
             <div className="flex w-[105px] flex-col items-center justify-between border-l border-indigo-900/10 pl-3 py-0.5">
               <div className="w-full text-center">
-                <p className="text-[0.45rem] font-black uppercase tracking-[0.14em] text-indigo-900/60">
-                  ID Number
-                </p>
-                <p className="text-[0.75rem] font-black text-pink-600 break-all font-mono tracking-tighter">
-                  {uniqueId}
-                </p>
+                <p className="text-[0.45rem] font-black uppercase tracking-[0.14em] text-indigo-900/60">ID Number</p>
+                <p className="text-[0.75rem] font-black text-pink-600 break-all font-mono tracking-tighter">{uniqueId}</p>
               </div>
-
               <div className="rounded-xl bg-white/50 backdrop-blur-md p-1 shadow-sm border border-white/60">
-                <img
-                  src={merchantAvatar}
-                  alt={proprietorName}
-                  className="h-[60px] w-[60px] rounded-lg object-cover shadow-inner"
-                  crossOrigin="anonymous"
-                />
+                <img src={merchantAvatar} alt={proprietorName} className="h-[60px] w-[60px] rounded-lg object-cover shadow-inner" crossOrigin="anonymous" />
               </div>
-
               <div className="rounded-xl bg-white/60 backdrop-blur-md p-1 shadow-sm border border-white/60">
-                <QRCodeSVG
-                  value={verificationUrl}
-                  size={60}
-                  level="H"
-                  includeMargin={false}
-                  bgColor="transparent"
-                  fgColor="#1e1b4b"
-                />
+                <QRCodeSVG value={verificationUrl} size={60} level="H" includeMargin={false} bgColor="transparent" fgColor="#1e1b4b" />
               </div>
             </div>
           </div>
 
-          {/* Footer (Frosted Glass) */}
           <div className="absolute bottom-0 left-0 right-0 border-t border-white/40 bg-white/40 backdrop-blur-md px-3 py-1.5 shadow-inner">
             <p className="text-center text-[0.45rem] font-bold leading-tight text-indigo-950/70">
               Disclaimer: CTMerchant is not liable for transactions or disputes arising from dealings by the holder of this card.
