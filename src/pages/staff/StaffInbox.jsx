@@ -17,7 +17,7 @@ export default function StaffInbox() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
 
-  const [activeTab, setActiveTab] = useState("contact"); // 'contact' | 'abuse'
+  const [activeTab, setActiveTab] = useState("contact"); 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -132,25 +132,25 @@ export default function StaffInbox() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-slate-50 font-sans">
+    <div className="flex h-[100dvh] flex-col bg-slate-50 font-sans">
       
       {/* HEADER */}
-      <header className="flex flex-shrink-0 items-center justify-between border-b border-[#334155] bg-[#020617] px-6 py-4 shadow-md z-10">
-        <div className="flex items-center gap-4">
+      <header className="flex flex-shrink-0 items-center justify-between border-b border-[#334155] bg-[#020617] px-4 py-4 sm:px-6 shadow-md z-10">
+        <div className="flex items-center gap-3 sm:gap-4">
           <button onClick={() => navigate("/staff-dashboard")} className="text-xl text-white transition-colors hover:text-pink-500">
             <FaArrowLeft />
           </button>
-          <div className="flex items-center gap-2 text-lg font-black tracking-wide text-white">
+          <div className="flex items-center gap-2 text-base sm:text-lg font-black tracking-wide text-white">
             <FaEnvelopeOpenText className="text-pink-500" /> SUPPORT INBOX
           </div>
         </div>
       </header>
 
       {/* TABS */}
-      <div className="flex bg-white border-b border-slate-200 px-6 shadow-sm overflow-x-auto custom-scrollbar">
+      <div className="flex bg-white border-b border-slate-200 px-2 sm:px-6 shadow-sm overflow-x-auto custom-scrollbar flex-shrink-0">
         <button
           onClick={() => setActiveTab("contact")}
-          className={`flex items-center gap-2 px-6 py-4 text-sm font-bold transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-4 text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
             activeTab === "contact" ? "border-b-2 border-blue-600 text-blue-700" : "text-slate-500 hover:text-slate-800"
           }`}
         >
@@ -158,7 +158,7 @@ export default function StaffInbox() {
         </button>
         <button
           onClick={() => setActiveTab("abuse")}
-          className={`flex items-center gap-2 px-6 py-4 text-sm font-bold transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-4 text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
             activeTab === "abuse" ? "border-b-2 border-rose-600 text-rose-700" : "text-slate-500 hover:text-slate-800"
           }`}
         >
@@ -167,10 +167,10 @@ export default function StaffInbox() {
       </div>
 
       {/* MAIN SPLIT VIEW */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         
         {/* LEFT: TICKET LIST */}
-        <div className="w-full lg:w-1/3 flex-shrink-0 border-r border-slate-200 bg-white overflow-y-auto custom-scrollbar">
+        <div className={`w-full lg:w-1/3 flex-shrink-0 border-r border-slate-200 bg-white overflow-y-auto custom-scrollbar absolute inset-0 lg:relative z-10 transition-transform duration-300 ${selectedItem ? "-translate-x-full lg:translate-x-0" : "translate-x-0"}`}>
           {loading ? (
             <div className="flex h-40 items-center justify-center">
               <FaCircleNotch className="animate-spin text-2xl text-indigo-500" />
@@ -192,7 +192,7 @@ export default function StaffInbox() {
                     onClick={() => setSelectedItem(item)}
                     className={`cursor-pointer p-4 transition-all border-l-4 ${
                       isSelected 
-                        ? (isContact ? "bg-blue-50 border-blue-600" : "bg-rose-50 border-rose-600") 
+                        ? (isContact ? "bg-blue-50 border-blue-600 hidden lg:block" : "bg-rose-50 border-rose-600 hidden lg:block") 
                         : (isContact ? "hover:bg-blue-50/50 border-transparent" : "hover:bg-rose-50/50 border-transparent")
                     }`}
                   >
@@ -227,50 +227,61 @@ export default function StaffInbox() {
           )}
         </div>
 
-        {/* RIGHT: TICKET DETAILS */}
-        <div className="hidden lg:flex flex-1 flex-col bg-slate-50 overflow-y-auto custom-scrollbar relative">
+        {/* RIGHT: TICKET DETAILS (Mobile Overlay & Desktop Pane) */}
+        <div className={`w-full lg:flex-1 flex flex-col bg-slate-50 overflow-y-auto custom-scrollbar absolute inset-0 lg:relative z-20 transition-transform duration-300 ${selectedItem ? "translate-x-0" : "translate-x-full lg:translate-x-0 lg:flex"}`}>
           {selectedItem ? (
-            <div className="p-8 max-w-3xl mx-auto w-full">
+            <div className="p-4 sm:p-8 max-w-3xl mx-auto w-full pb-20 lg:pb-8">
               
+              {/* Mobile Back Button */}
+              <button 
+                onClick={() => setSelectedItem(null)}
+                className="lg:hidden mb-4 flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-800"
+              >
+                <FaArrowLeft /> Back to list
+              </button>
+
               {/* EXPLICIT CONTEXT BANNER */}
-              <div className={`rounded-xl p-4 mb-6 shadow-sm border flex items-center gap-3 ${
+              <div className={`rounded-xl p-4 mb-4 sm:mb-6 shadow-sm border flex items-center gap-3 ${
                 activeTab === "contact" 
                   ? "bg-blue-50 border-blue-200 text-blue-800" 
                   : "bg-rose-50 border-rose-200 text-rose-800"
               }`}>
-                {activeTab === "contact" ? <FaEnvelope className="text-2xl" /> : <FaShieldHalved className="text-2xl" />}
+                {activeTab === "contact" ? <FaEnvelope className="text-xl sm:text-2xl flex-shrink-0" /> : <FaShieldHalved className="text-xl sm:text-2xl flex-shrink-0" />}
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-widest">
+                  <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest">
                     {activeTab === "contact" ? "Standard Public Inquiry" : "Critical Abuse Report"}
                   </h3>
-                  <p className="text-xs font-medium opacity-80">
-                    {activeTab === "contact" ? "Respond via email if applicable." : "Review details carefully before taking moderation action."}
+                  <p className="text-[0.65rem] sm:text-xs font-medium opacity-80 mt-0.5">
+                    {activeTab === "contact" ? "Respond via email if applicable." : "Review carefully before taking moderation action."}
                   </p>
                 </div>
               </div>
 
               {/* Header Info */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-6">
-                <div className="flex justify-between items-start mb-6 border-b border-slate-100 pb-6">
-                  <div>
-                    <h2 className="text-2xl font-black text-slate-900 mb-2">
-                      {activeTab === "contact" ? selectedItem.subject : `Violation Category: ${selectedItem.category}`}
-                    </h2>
-                    <div className="flex flex-col gap-1 text-sm mt-3">
+              <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 mb-4 sm:mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start mb-6 border-b border-slate-100 pb-4 sm:pb-6 gap-3">
+                  <div className="w-full">
+                    <div className="flex justify-between items-start mb-2">
+                      <h2 className="text-lg sm:text-2xl font-black text-slate-900 pr-2">
+                        {activeTab === "contact" ? selectedItem.subject : `Violation: ${selectedItem.category}`}
+                      </h2>
+                      <div className="sm:hidden flex-shrink-0">{renderStatusBadge(selectedItem.status)}</div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-1.5 text-xs sm:text-sm mt-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-black text-slate-400 uppercase tracking-wider text-xs w-16">From:</span>
-                        <span className="font-bold text-slate-800">
+                        <span className="font-black text-slate-400 uppercase tracking-wider text-[0.65rem] sm:text-xs w-12 sm:w-16 flex-shrink-0">From:</span>
+                        <span className="font-bold text-slate-800 truncate">
                           {activeTab === "contact" ? selectedItem.full_name : selectedItem.profiles?.full_name || "Unknown Identity"}
                         </span>
                       </div>
                       
-                      {/* FIX: SAFELY DISPLAYING THE REPORTER EMAIL FOR BOTH TABS */}
                       {(activeTab === "contact" || selectedItem.reporter_email) && (
                         <div className="flex items-center gap-2">
-                          <span className="font-black text-slate-400 uppercase tracking-wider text-xs w-16">Email:</span>
+                          <span className="font-black text-slate-400 uppercase tracking-wider text-[0.65rem] sm:text-xs w-12 sm:w-16 flex-shrink-0">Email:</span>
                           <a 
                             href={`mailto:${activeTab === "contact" ? selectedItem.email : selectedItem.reporter_email}`} 
-                            className="font-bold text-blue-600 hover:underline"
+                            className="font-bold text-blue-600 hover:underline truncate"
                           >
                             {activeTab === "contact" ? selectedItem.email : selectedItem.reporter_email}
                           </a>
@@ -278,55 +289,55 @@ export default function StaffInbox() {
                       )}
                     </div>
                   </div>
-                  <div>{renderStatusBadge(selectedItem.status)}</div>
+                  <div className="hidden sm:block flex-shrink-0">{renderStatusBadge(selectedItem.status)}</div>
                 </div>
 
                 {activeTab === "abuse" && selectedItem.target_name && (
-                  <div className="mb-6 bg-red-600 text-white p-4 rounded-xl shadow-inner flex items-center gap-3">
-                     <FaTriangleExclamation className="text-2xl text-red-200" /> 
-                     <div>
-                       <p className="text-[0.65rem] font-black uppercase tracking-widest text-red-200">Reported Target</p>
-                       <p className="text-base font-bold">{selectedItem.target_name}</p>
+                  <div className="mb-6 bg-red-600 text-white p-3 sm:p-4 rounded-xl shadow-inner flex items-center gap-3">
+                     <FaTriangleExclamation className="text-2xl text-red-200 flex-shrink-0" /> 
+                     <div className="min-w-0">
+                       <p className="text-[0.6rem] sm:text-[0.65rem] font-black uppercase tracking-widest text-red-200">Reported Target</p>
+                       <p className="text-sm sm:text-base font-bold truncate">{selectedItem.target_name}</p>
                      </div>
                   </div>
                 )}
 
                 {/* The Message Body */}
-                <div className="relative">
-                  <span className="absolute -top-3 left-4 bg-white px-2 text-[0.65rem] font-black uppercase tracking-widest text-slate-400">
+                <div className="relative mt-2">
+                  <span className="absolute -top-2.5 left-4 bg-white px-2 text-[0.6rem] sm:text-[0.65rem] font-black uppercase tracking-widest text-slate-400">
                     Message Payload
                   </span>
-                  <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap bg-slate-50/50 p-6 pt-5 rounded-xl border border-slate-200 leading-relaxed font-medium">
+                  <div className="text-sm sm:text-base text-slate-700 whitespace-pre-wrap bg-slate-50/50 p-4 sm:p-6 pt-5 rounded-xl border border-slate-200 leading-relaxed font-medium">
                     {activeTab === "contact" ? selectedItem.message : selectedItem.details}
                   </div>
                 </div>
               </div>
 
-              {/* Action Bar */}
-              <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
-                <div className="flex gap-3">
+              {/* Action Bar - Sticks to bottom on mobile */}
+              <div className="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:left-auto lg:right-auto bg-white lg:rounded-2xl p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] lg:shadow-sm border-t lg:border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0 z-30">
+                <div className="flex gap-2 w-full sm:w-auto">
                   <button
                     onClick={() => updateStatus(selectedItem.id, activeTab === "contact" ? "read" : "in_progress", activeTab)}
                     disabled={updating}
-                    className="px-5 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-black uppercase tracking-widest transition disabled:opacity-50"
+                    className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-[0.65rem] sm:text-xs font-black uppercase tracking-widest transition disabled:opacity-50 text-center"
                   >
-                    Mark Reviewed
+                    Review
                   </button>
                   <button
                     onClick={() => updateStatus(selectedItem.id, "resolved", activeTab)}
                     disabled={updating}
-                    className="px-5 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-xs font-black uppercase tracking-widest transition disabled:opacity-50"
+                    className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-[0.65rem] sm:text-xs font-black uppercase tracking-widest transition disabled:opacity-50 text-center"
                   >
-                    Mark Resolved
+                    Resolve
                   </button>
                 </div>
 
                 <button
                   onClick={() => handleReply(
-                    activeTab === "contact" ? selectedItem.email : selectedItem.reporter_email, // <-- Safe reply mapping
+                    activeTab === "contact" ? selectedItem.email : selectedItem.reporter_email,
                     activeTab === "contact" ? selectedItem.subject : `Regarding your Abuse Report`
                   )}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-[#0f172a] text-white hover:bg-[#1e293b] rounded-lg text-xs font-black uppercase tracking-widest shadow-md transition"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-[#0f172a] text-white hover:bg-[#1e293b] rounded-lg text-[0.7rem] sm:text-xs font-black uppercase tracking-widest shadow-md transition"
                 >
                   <FaReply /> Reply directly
                 </button>
@@ -334,7 +345,7 @@ export default function StaffInbox() {
 
             </div>
           ) : (
-            <div className="flex h-full flex-col items-center justify-center text-slate-300">
+            <div className="hidden lg:flex h-full flex-col items-center justify-center text-slate-300">
               <FaEnvelopeOpenText className="text-7xl mb-4 opacity-30" />
               <p className="text-lg font-bold text-slate-400">Select a ticket to view details</p>
             </div>
@@ -344,7 +355,10 @@ export default function StaffInbox() {
       
       {/* Scrollbar Styles */}
       <style dangerouslySetOrigin={{__html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        @media (min-width: 1024px) {
+          .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
