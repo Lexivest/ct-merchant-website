@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { supabase } from "../../lib/supabase";
-import { FaEnvelope } from "react-icons/fa6"; // <-- Added the envelope icon
+import { FaEnvelope } from "react-icons/fa6";
 
 function FloatingContact() {
   const [isOpen, setIsOpen] = useState(false)
@@ -96,17 +96,17 @@ function FloatingContact() {
 
   return (
     <>
-      {/* --- THE NEW PILL-SHAPED MESSAGE BUTTON --- */}
-<button
-  type="button"
-  onClick={togglePopup}
-  title="Need Help? Contact Support"
-  className="fixed bottom-20 left-6 z-40 flex items-center gap-2.5 rounded-full bg-pink-600 px-5 py-3.5 text-sm font-extrabold text-white shadow-[0_10px_25px_rgba(219,39,119,0.35)] transition-all duration-300 hover:scale-105 hover:bg-pink-700 hover:shadow-[0_10px_35px_rgba(219,39,119,0.45)] group"
->
-  {/* Removed group-hover:rotate-12 to keep icon straight */}
-  <FaEnvelope className="text-lg transition-transform" />
-  <span className="tracking-wide">Message Us</span>
-</button>
+      {/* --- CORRECTED PILL-SHAPED MESSAGE BUTTON --- */}
+      <button
+        type="button"
+        onClick={togglePopup}
+        title="Need Help? Contact Support"
+        className="fixed bottom-20 left-6 z-40 flex items-center gap-2.5 rounded-full bg-pink-600 px-5 py-3.5 text-sm font-extrabold text-white shadow-[0_10px_25px_rgba(219,39,119,0.35)] transition-all duration-300 hover:scale-105 hover:bg-pink-700 hover:shadow-[0_10px_35px_rgba(219,39,119,0.45)] group"
+      >
+        {/* Rotation removed to keep icon straight */}
+        <FaEnvelope className="text-lg transition-transform" />
+        <span className="tracking-wide">Message Us</span>
+      </button>
 
       {/* --- THE POPUP CONTACT FORM --- */}
       <div
