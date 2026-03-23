@@ -2,6 +2,9 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabase"
 
+// --- LOCAL ASSET IMPORT ---
+import ctmLogo from "../assets/images/logo.jpg"
+
 function StaffPortal() {
   const navigate = useNavigate()
 
@@ -65,8 +68,9 @@ function StaffPortal() {
       <div className="w-full max-w-md rounded-[28px] bg-pink-200 p-1 shadow-[0_20px_50px_rgba(0,0,0,0.25)]">
         <div className="rounded-[24px] border border-pink-100 bg-white p-8 md:p-10">
           <div className="text-center">
+            {/* --- LOCAL LOGO APPLIED --- */}
             <img
-              src="https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg"
+              src={ctmLogo}
               alt="CT-Merchant Logo"
               className="mx-auto h-20 w-20 rounded-2xl object-cover shadow-sm"
             />

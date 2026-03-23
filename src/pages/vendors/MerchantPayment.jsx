@@ -7,6 +7,7 @@ import {
   FaIdCardClip,
   FaLocationDot,
   FaVideo,
+  FaTicket,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
@@ -26,6 +27,9 @@ export default function MerchantPayment() {
   const [processing, setProcessing] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
   const [statusError, setStatusError] = useState(false);
+  
+  // PROMO STATE
+  const [promoCode, setPromoCode] = useState("");
   
   const [shopDetails, setShopDetails] = useState(null);
 
@@ -57,7 +61,6 @@ export default function MerchantPayment() {
       try {
         setLoading(true);
 
-        // Check if Shop is already verified
         const { data: shop, error: shopErr } = await supabase.from("shops").select("*").eq("id", urlShopId).single();
         if (shopErr || !shop) throw new Error("Shop not found");
 
@@ -67,7 +70,6 @@ export default function MerchantPayment() {
           return;
         }
 
-        // Check if payment was already made
         const { data: paymentRecord } = await supabase
           .from("physical_verification_payments")
           .select("id")
@@ -86,7 +88,6 @@ export default function MerchantPayment() {
           return;
         }
 
-        // Fetch Profile for additional details
         const { data: profile, error: profErr } = await supabase.from("profiles").select("*, cities(name)").eq("id", user.id).single();
         if (profErr || !profile) throw new Error("Profile not found");
 
@@ -132,10 +133,20 @@ export default function MerchantPayment() {
       if (data?.error) throw new Error(data.error);
 
       setStatusError(false);
-      setStatusMsg("✅ Payment Successful! Redirecting you to record your KYC Video...");
+      
+     if (gateway === 'promo') {
+        setStatusMsg("🎉 Promo Code Accepted! Fee Waived. Redirecting...");
+      } else {
+        setStatusMsg("✅ Payment Successful! Redirecting you to record your KYC Video...");
+      }
       
       setTimeout(() => {
-        navigate("/merchant-video-kyc");
+        // --- 1. THE CACHE BUSTER: Destroy the stale dashboard cache ---
+        localStorage.removeItem(`vendor_panel_${user.id}`);
+        sessionStorage.removeItem(`vendor_panel_${user.id}`);
+        
+        // --- 2. THE ROUTER FIX: Pass the shop_id to the KYC video page ---
+        navigate(`/merchant-video-kyc?shop_id=${urlShopId}`);
       }, 3500);
 
     } catch (error) {
@@ -146,7 +157,13 @@ export default function MerchantPayment() {
     }
   };
 
-  // 4. Paystack Flow
+  // 4. Promo Code Flow
+  const handleApplyPromo = () => {
+    if (promoCode.length !== 6) return;
+    verifyPaymentOnBackend(promoCode, "promo");
+  };
+
+  // 5. Paystack Flow
   const payWithPaystack = () => {
     if (!shopDetails || !window.PaystackPop) return alert("Payment system is initializing. Please wait a moment.");
     
@@ -167,7 +184,7 @@ export default function MerchantPayment() {
     handler.openIframe();
   };
 
-  // 5. Remita Flow
+  // 6. Remita Flow
   const payWithRemita = () => {
     if (!shopDetails || !window.RmPaymentEngine) return alert("Payment system is initializing. Please wait a moment.");
     
@@ -199,7 +216,6 @@ export default function MerchantPayment() {
 
     paymentEngine.showPaymentWidget();
   };
-
 
   if (authLoading || loading) {
     return (
@@ -261,10 +277,35 @@ export default function MerchantPayment() {
           Your video must clearly prove your shop operates here. <strong>If you do not have a physical shop, DO NOT PAY, please contact support.</strong> This fee is strictly non-refundable.
         </div>
 
-        {/* GATEWAYS */}
+        {/* GATEWAYS & PROMO */}
         {!processing && !statusMsg && (
           <div className="mb-4 border-t border-dashed border-[#E2E8F0] pt-5">
-            <div className="mb-3 text-[0.85rem] font-bold uppercase tracking-widest text-[#64748B]">Select Payment Gateway</div>
+            
+            {/* PROMO CODE SECTION */}
+            <div className="mb-5 rounded-xl border border-[#E2E8F0] bg-white p-4 text-left shadow-sm">
+              <label className="mb-2 flex items-center gap-2 text-[0.85rem] font-bold text-[#64748B]">
+                <FaTicket className="text-[#D97706]" /> Have a Promo Code?
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  maxLength={6}
+                  placeholder="6-DIGIT CODE"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  className="flex-1 rounded-lg border border-[#CBD5E1] bg-[#F8FAFC] px-4 py-2 font-mono text-[1.05rem] font-bold tracking-widest text-[#0F172A] outline-none transition focus:border-[#D97706] focus:bg-white focus:ring-2 focus:ring-[#FEF3C7]"
+                />
+                <button
+                  onClick={handleApplyPromo}
+                  disabled={promoCode.length !== 6 || processing}
+                  className="rounded-lg bg-[#0F172A] px-5 py-2 font-bold text-white transition hover:bg-[#1E293B] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-3 text-[0.85rem] font-bold uppercase tracking-widest text-[#64748B]">Or Pay Securely</div>
             
             <button 
               onClick={payWithPaystack} 
@@ -284,7 +325,7 @@ export default function MerchantPayment() {
 
         {/* STATUS MESSAGE */}
         {statusMsg && (
-          <div className={`mt-4 text-[0.95rem] font-bold ${statusError ? 'text-[#DC2626]' : 'text-[#059669]'}`}>
+          <div className={`mt-4 rounded-xl p-4 text-[0.95rem] font-bold ${statusError ? 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]' : 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'}`}>
             {statusMsg}
           </div>
         )}
@@ -292,7 +333,7 @@ export default function MerchantPayment() {
         {/* CANCEL BUTTON */}
         {!processing && (
           <button 
-            onClick={() => navigate("/merchant-dashboard")} 
+            onClick={() => navigate("/vendor-panel")} 
             className="mt-4 text-[0.95rem] font-semibold text-[#64748B] hover:text-[#0F172A] hover:underline"
           >
             Cancel and Return

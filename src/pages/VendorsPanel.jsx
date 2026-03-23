@@ -67,10 +67,12 @@ function VendorsPanel() {
   
   const { user, loading: authLoading, isOffline } = useAuthSession()
 
+  // We add local state overrides for realtime updates without breaking the cache
+  const [realtimeShop, setRealtimeShop] = useState(null)
+  const [realtimeRejectedCount, setRealtimeRejectedCount] = useState(null)
+
   const fetchMerchantData = async () => {
     if (!user) throw new Error("Authentication required")
-    
-    // FIX: Throw an explicit error to trigger the cache fallback or error UI
     if (isOffline) throw new Error("Network offline") 
 
     // 1. Check Profile Suspension
@@ -88,16 +90,15 @@ function VendorsPanel() {
     // 2. Fetch Shop Data
     const { data: shopData, error: shopErr } = await supabase
       .from("shops")
-      .select("*")
+      .select("*, is_subscription_active")
       .eq("owner_id", user.id)
       .maybeSingle()
 
     if (shopErr) throw shopErr
     if (!shopData) {
-      throw new Error("SHOP_NOT_FOUND") // Handled below to redirect
+      throw new Error("SHOP_NOT_FOUND")
     }
 
-    // Check if application was rejected (but not related to KYC)
     if (shopData.status === "rejected" && shopData.kyc_status !== "rejected") {
       throw new Error("Your shop application was rejected. Please contact support.")
     }
@@ -127,11 +128,46 @@ function VendorsPanel() {
     }
   }
 
-  const { data, loading, error } = useCachedFetch(
+  const { data, loading, error, mutate } = useCachedFetch(
     `vendor_panel_${user?.id}`,
     fetchMerchantData,
-    { dependencies: [user?.id, isOffline], ttl: 1000 * 60 * 5 } // Re-fetch when connection restores
+    { dependencies: [user?.id, isOffline], ttl: 1000 * 60 * 5 } 
   )
+
+  // --- REALTIME SUBSCRIPTIONS ---
+  useEffect(() => {
+    if (!user || !data?.shop?.id || isOffline) return;
+
+    const shopId = data.shop.id;
+
+    // Listen for Shop Changes (KYC Approvals, Suspensions)
+    const shopChannel = supabase.channel(`public:shops:id=eq.${shopId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'shops', filter: `id=eq.${shopId}` },
+        (payload) => {
+          setRealtimeShop(payload.new);
+        }
+      )
+      .subscribe();
+
+    // Listen for Product Changes (Rejections)
+    const productChannel = supabase.channel(`public:products:shop_id=eq.${shopId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products', filter: `shop_id=eq.${shopId}` },
+        () => {
+          // If a product changes, trigger a silent re-fetch of the main cache
+          mutate(); 
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(shopChannel);
+      supabase.removeChannel(productChannel);
+    };
+  }, [user, data?.shop?.id, isOffline, mutate]);
 
   // Handle implicit redirects for missing shops
   useEffect(() => {
@@ -145,7 +181,6 @@ function VendorsPanel() {
     return <VendorsPanelShimmer />
   }
 
-  // If the error isn't the specific redirect error we caught above
   if (error && error !== "SHOP_NOT_FOUND" && !data) {
     return (
       <div className="flex h-screen flex-col bg-[#F3F4F6]">
@@ -178,9 +213,14 @@ function VendorsPanel() {
 
   if (!data?.shop) return null
 
-  const { shop, rejectedProductCount, hasPaidFee } = data
-  const isVerified = shop.is_verified || shop.kyc_status === "approved"
-  const isSuspended = shop.is_open === false
+  // Use realtime overrides if they exist, otherwise fallback to cache
+  const activeShop = realtimeShop || data.shop;
+  const activeRejectedCount = realtimeRejectedCount !== null ? realtimeRejectedCount : data.rejectedProductCount;
+  
+  const hasPaidFee = data.hasPaidFee;
+  const isVerified = activeShop.is_verified || activeShop.kyc_status === "approved";
+  const isSuspended = activeShop.is_open === false;
+  const isSubscriptionActive = activeShop.is_subscription_active === true;
 
   const handleCardClick = (path, action) => {
     if (isOffline) {
@@ -225,24 +265,24 @@ function VendorsPanel() {
         {/* WELCOME SECTION */}
         <div className="mb-8">
           <h1 className="mb-1 text-[1.8rem] font-extrabold leading-[1.2] text-[#0F1111]">
-            Manage {shop.name}
+            Manage {activeShop.name}
           </h1>
           <p className="text-[0.95rem] font-medium text-[#565959]">
             Control your inventory and shop presence.
           </p>
 
-          {shop.status === "pending" && (
+          {activeShop.status === "pending" && (
             <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-[#FDE68A] border-l-4 border-l-[#D97706] bg-[#FEF3C7] px-4 py-3 text-[0.9rem] font-semibold leading-[1.4] text-[#92400E]">
               <FaTriangleExclamation className="shrink-0 text-[1.2rem]" />
               <span>Your shop application is pending digital approval.</span>
             </div>
           )}
 
-          {shop.kyc_status === "rejected" && (
+          {activeShop.kyc_status === "rejected" && (
             <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-[#FECACA] border-l-4 border-l-[#DC2626] bg-[#FEE2E2] px-4 py-3 text-[0.9rem] font-semibold leading-[1.4] text-[#991B1B]">
               <FaVideoSlash className="shrink-0 text-[1.2rem]" />
               <span>
-                KYC REJECTED: {shop.rejection_reason || "Your video did not meet our standards."} Please click the red "Record Video" card below to try again.
+                KYC REJECTED: {activeShop.rejection_reason || "Your video did not meet our standards."} Please click the red "Record Video" card below to try again.
               </span>
             </div>
           )}
@@ -264,22 +304,27 @@ function VendorsPanel() {
             title="Add Product"
             icon={<FaRegSquarePlus />}
             colorClass="bg-[#DCFCE7] text-[#16A34A]"
-            onClick={() => handleCardClick(`/merchant-add-product?shop_id=${shop.id}`)}
+            isLocked={!isSubscriptionActive}
+            onClick={
+              isSubscriptionActive 
+                ? () => handleCardClick(`/merchant-add-product?shop_id=${activeShop.id}`) 
+                : () => alert("🔒 Please activate your Service Fee Subscription to add new products.")
+            }
           />
 
           <DashCard
             title="Edit Products"
             icon={<FaPenToSquare />}
             colorClass="bg-[#DBEAFE] text-[#2563EB]"
-            badge={rejectedProductCount}
-            onClick={() => handleCardClick(`/merchant-products?shop_id=${shop.id}`)}
+            badge={activeRejectedCount}
+            onClick={() => handleCardClick(`/merchant-products?shop_id=${activeShop.id}`)}
           />
 
           <DashCard
             title="Shop Banner"
             icon={<FaCamera />}
             colorClass="bg-[#F3E8FF] text-[#9333EA]"
-            onClick={() => handleCardClick(`/merchant-banner?shop_id=${shop.id}`)}
+            onClick={() => handleCardClick(`/merchant-banner?shop_id=${activeShop.id}`)}
           />
 
           <DashCard
@@ -294,14 +339,14 @@ function VendorsPanel() {
             title="Shop Settings"
             icon={<FaGear />}
             colorClass="bg-[#FFEDD5] text-[#EA580C]"
-            onClick={() => handleCardClick(`/merchant-settings?shop_id=${shop.id}`)}
+            onClick={() => handleCardClick(`/merchant-settings?shop_id=${activeShop.id}`)}
           />
 
           <DashCard
             title="Post News"
             icon={<FaBullhorn />}
             colorClass="bg-[#FEE2E2] text-[#DC2626]"
-            onClick={() => handleCardClick(`/merchant-news?shop_id=${shop.id}`)}
+            onClick={() => handleCardClick(`/merchant-news?shop_id=${activeShop.id}`)}
           />
 
           {isSuspended ? (
@@ -317,16 +362,17 @@ function VendorsPanel() {
               title="View Shop"
               icon={<FaEye />}
               colorClass="bg-[#E0E7FF] text-[#4F46E5]"
-              onClick={() => handleCardClick(`/shop-detail?id=${shop.id}`)}
+              onClick={() => handleCardClick(`/shop-detail?id=${activeShop.id}`)}
             />
           )}
 
+          {/* --- OFFICIAL ID CARD LOCK --- */}
           <DashCard
-            title="Digital ID Card"
-            subtitle="QR Code & Share"
+            title="Official ID Card"
+            subtitle="Issued by Staff"
             icon={<FaAddressCard />}
             colorClass="bg-[#FAE8FF] text-[#C026D3]"
-            onClick={() => handleCardClick(`/merchant-id-card?shop_id=${shop.id}`)}
+            onClick={() => alert("Your Official CT-Merchant ID Card is issued by the Verification Team directly to your registered WhatsApp or Email after physical approval. Please check your inbox or contact support if you have not received it.")}
           />
 
           <DashCard
@@ -334,14 +380,19 @@ function VendorsPanel() {
             subtitle="Print & Broadcast"
             icon={<FaImage />}
             colorClass="bg-[#D1FAE5] text-[#059669]"
-            onClick={() => handleCardClick(`/merchant-promo-banner?shop_id=${shop.id}`)}
+            isLocked={!isSubscriptionActive}
+            onClick={
+              isSubscriptionActive 
+                ? () => handleCardClick(`/merchant-promo-banner?shop_id=${activeShop.id}`) 
+                : () => alert("🔒 Please activate your Service Fee Subscription to access Promo Banners.")
+            }
           />
 
           <DashCard
             title="Analytics"
             icon={<FaChartLine />}
             colorClass="bg-[#CCFBF1] text-[#0D9488]"
-            onClick={() => handleCardClick(`/merchant-analytics?shop_id=${shop.id}`)}
+            onClick={() => handleCardClick(`/merchant-analytics?shop_id=${activeShop.id}`)}
           />
 
           {/* Verification / KYC Card */}
@@ -351,10 +402,10 @@ function VendorsPanel() {
               subtitle="Active"
               icon={<FaCheckDouble />}
               colorClass="bg-[#DCFCE7] text-[#16A34A]"
-              onClick={() => handleCardClick(null, () => alert("Your shop is physically verified and your Digital ID is active!"))}
+              onClick={() => handleCardClick(null, () => alert("Your shop is physically verified!"))}
             />
           ) : hasPaidFee ? (
-            shop.kyc_status === "submitted" ? (
+            activeShop.kyc_status === "submitted" ? (
               <DashCard
                 title="KYC Pending"
                 subtitle="Under Review"
@@ -362,13 +413,13 @@ function VendorsPanel() {
                 isLocked={true}
                 onClick={() => alert("We are currently reviewing your Video KYC! We will notify you once approved.")}
               />
-            ) : shop.kyc_status === "rejected" ? (
+            ) : activeShop.kyc_status === "rejected" ? (
               <DashCard
                 title="Re-record Video"
                 subtitle="Action Required"
                 icon={<FaVideo />}
                 colorClass="bg-[#FEE2E2] text-[#DC2626]"
-                onClick={() => handleCardClick(`/merchant-video-kyc?shop_id=${shop.id}`)}
+                onClick={() => handleCardClick(`/merchant-video-kyc?shop_id=${activeShop.id}`)}
               />
             ) : (
               <DashCard
@@ -376,7 +427,7 @@ function VendorsPanel() {
                 subtitle="Action Required"
                 icon={<FaVideo />}
                 colorClass="bg-[#FEE2E2] text-[#DC2626]"
-                onClick={() => handleCardClick(`/merchant-video-kyc?shop_id=${shop.id}`)}
+                onClick={() => handleCardClick(`/merchant-video-kyc?shop_id=${activeShop.id}`)}
               />
             )
           ) : (
@@ -384,7 +435,7 @@ function VendorsPanel() {
               title="Digital ID & KYC"
               icon={<FaBuildingCircleCheck />}
               colorClass="bg-[#FEF3C7] text-[#D97706]"
-              onClick={() => handleCardClick(`/remita?shop_id=${shop.id}`)}
+              onClick={() => handleCardClick(`/remita?shop_id=${activeShop.id}`)}
             />
           )}
 
@@ -394,7 +445,7 @@ function VendorsPanel() {
               title="Service Fee"
               icon={<FaFileInvoiceDollar />}
               colorClass="bg-pink-100 text-pink-600"
-              onClick={() => handleCardClick(`/service-fee?shop_id=${shop.id}`)}
+              onClick={() => handleCardClick(`/service-fee?shop_id=${activeShop.id}`)}
             />
           ) : (
             <DashCard

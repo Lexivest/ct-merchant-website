@@ -1,11 +1,16 @@
-import { Routes, Route } from "react-router-dom"
+import { Routes, Route, Link } from "react-router-dom" // <-- Added Link here!
 import Home from "./pages/Home"
 import About from "./pages/About"
 import Services from "./pages/Services"
 import Affiliate from "./pages/Affiliate"
 import Careers from "./pages/Careers"
 import Contact from "./pages/Contact"
+
 import StaffPortal from "./pages/StaffPortal"
+import StaffDashboard from "./pages/StaffDashboard" 
+import StaffIDGenerator from "./pages/staff/StaffIDGenerator" 
+import StaffInbox from "./pages/staff/StaffInbox" // <-- Adjust path if you saved it differently
+
 import Privacy from "./pages/Privacy"
 import Terms from "./pages/Terms"
 import CreateAccount from "./pages/CreateAccount"
@@ -19,20 +24,21 @@ import ProductDetail from "./pages/ProductDetail"
 import ShopIndex from "./pages/ShopIndex"
 import MerchantDiscovery from "./pages/MerchantDiscovery"
 import VendorsPanel from "./pages/VendorsPanel"
+
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import { isProfileComplete, signOutUser } from "./lib/auth"
-import SubscriptionGuard from "./components/auth/SubscriptionGuard" // <-- IMPORTED GUARD
+import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
 
-import ImageOptimizer from "./pages/vendors/ImageOptimizer"
+// --- IMPORTS ---
+import ImageOptimizer from "./pages/vendors/ImageOptimizer" // We will use this file for the new Staff Studio
 import AddProduct from "./pages/vendors/AddProduct"
 import EditProduct from "./pages/vendors/EditProduct"
 import MerchantProducts from "./pages/vendors/MerchantProducts"
 import MerchantBanner from "./pages/vendors/MerchantBanner"
 import MerchantSettings from "./pages/vendors/MerchantSettings"
 import MerchantNews from "./pages/vendors/MerchantNews"
-import MerchantIDCard from "./pages/vendors/MerchantIDCard"
 import MerchantPromoBanner from "./pages/vendors/MerchantPromoBanner"
 import MerchantAnalytics from "./pages/vendors/MerchantAnalytics"
 import MerchantPayment from "./pages/vendors/MerchantPayment"
@@ -42,20 +48,15 @@ import MerchantVideoKYC from "./pages/vendors/MerchantVideoKYC"
 function ProtectedDashboardRoute({ children }) {
   const { loading, session, user, profile, suspended, isOffline } = useAuthSession()
 
-  // 1. By returning children directly during loading, we let the individual
-  // pages render their own beautiful Shimmer skeletons instead of a generic spinner!
   if (loading && !isOffline) {
     return <>{children}</>
   }
 
-  // 2. Prevent "Offline Kick": Allow access if normal conditions are met, OR if offline with a cached user
   const isAllowed = (Boolean(session) && Boolean(user) && !suspended) || (isOffline && Boolean(user))
-
   const needsProfileSetup = user && (!profile || !isProfileComplete(profile))
 
   return (
     <ProtectedRoute isAllowed={isAllowed} redirectTo="/">
-      {/* 3. Don't force profile setup while offline (they can't save anyway) */}
       {needsProfileSetup && !isOffline ? (
         <div className="min-h-screen bg-slate-50">
           <CompleteProfileModal
@@ -73,7 +74,6 @@ function ProtectedDashboardRoute({ children }) {
         </div>
       ) : (
         <>
-          {/* 4. Professional Global Offline Banner */}
           {isOffline && (
             <div className="sticky top-0 z-[999] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm">
               <i className="fa-solid fa-wifi-slash mr-2"></i>
@@ -97,7 +97,14 @@ function App() {
       <Route path="/affiliate" element={<Affiliate />} />
       <Route path="/careers" element={<Careers />} />
       <Route path="/contact" element={<Contact />} />
+      
+      {/* --- STAFF ROUTES --- */}
       <Route path="/staff-portal" element={<StaffPortal />} />
+      <Route path="/staff-dashboard" element={<StaffDashboard />} />
+      <Route path="/staff-issue-id" element={<StaffIDGenerator />} />
+      <Route path="/staff-studio" element={<ImageOptimizer />} /> {/* <-- MOVED CT STUDIO HERE */}
+      <Route path="/staff-inbox" element={<StaffInbox />} /> {/* <-- ADD THIS */}
+
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/create-account" element={<CreateAccount />} />
@@ -141,17 +148,6 @@ function App() {
           <ProtectedDashboardRoute>
             <SubscriptionGuard>
               <MerchantPromoBanner />
-            </SubscriptionGuard>
-          </ProtectedDashboardRoute>
-        }
-      />
-
-      <Route
-        path="/merchant-id-card"
-        element={
-          <ProtectedDashboardRoute>
-            <SubscriptionGuard>
-              <MerchantIDCard />
             </SubscriptionGuard>
           </ProtectedDashboardRoute>
         }
@@ -211,17 +207,7 @@ function App() {
           </ProtectedDashboardRoute>
         }
       />
-
-      <Route
-        path="/ct-studio"
-        element={
-          <ProtectedDashboardRoute>
-            <SubscriptionGuard>
-              <ImageOptimizer />
-            </SubscriptionGuard>
-          </ProtectedDashboardRoute>
-        }
-      />
+      {/* Old CT Studio Route Removed From Here! */}
       {/* --- LOCKED PREMIUM ROUTES END HERE --- */}
 
       {/* --- UNLOCKED / FREE ROUTES --- */}
@@ -304,6 +290,21 @@ function App() {
             <ShopIndex />
           </ProtectedDashboardRoute>
         }
+      />
+
+      {/* --- CATCH-ALL 404 ROUTE --- */}
+      <Route 
+        path="*" 
+        element={
+          <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6 text-center">
+            <h1 className="mb-4 text-6xl font-black text-pink-600">404</h1>
+            <h2 className="mb-2 text-2xl font-bold text-slate-900">Page Not Found</h2>
+            <p className="mb-8 max-w-md text-slate-500">The page you are looking for doesn't exist or has been moved.</p>
+            <Link to="/" className="rounded-xl bg-pink-600 px-6 py-3 font-bold text-white transition hover:bg-pink-700">
+              Return Home
+            </Link>
+          </div>
+        } 
       />
     </Routes>
   )

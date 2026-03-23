@@ -6,12 +6,10 @@ import {
   FaEnvelope,
   FaEye,
   FaEyeSlash,
-  FaFileContract,
   FaLock,
   FaMapPin,
   FaPhone,
   FaUser,
-  FaUserCheck,
 } from "react-icons/fa"
 import { FaCircleCheck } from "react-icons/fa6"
 import AuthButton from "../components/auth/AuthButton"
@@ -108,8 +106,9 @@ function CreateAccount() {
 
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
+  
   const [googleLoading, setGoogleLoading] = useState(false)
-  const [googleReady, setGoogleReady] = useState(false)
+  const googleButtonRef = useRef(null)
 
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -121,11 +120,7 @@ function CreateAccount() {
     message: "",
   })
 
-  // --- Terms & Flow State ---
-  const [termsOpen, setTermsOpen] = useState(false)
-  const [termsScrolledBottom, setTermsScrolledBottom] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
-  const [pendingAuthMethod, setPendingAuthMethod] = useState("email") 
 
   // --- GOOGLE CALLBACK ---
   const googleCallbackRef = useRef()
@@ -139,8 +134,6 @@ function CreateAccount() {
       setNotice({ visible: true, type: "error", title: "Google sign-up failed", message: "No Google credential was received." })
       return
     }
-
-    setTermsOpen(false)
 
     try {
       setGoogleLoading(true)
@@ -164,7 +157,7 @@ function CreateAccount() {
     }
   }
 
-  // Initialize Standard Google Sign-in
+  // --- Initialize Standard Google Sign-in ---
   useEffect(() => {
     const clientId = "237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com"
 
@@ -178,9 +171,9 @@ function CreateAccount() {
         cancel_on_tap_outside: true,
       })
 
-      const button = document.getElementById("google-signup-button")
-      if (button && button.childNodes.length === 0) {
-        window.google.accounts.id.renderButton(button, {
+      // Render the official Google button directly into the DOM ref
+      if (googleButtonRef.current) {
+        window.google.accounts.id.renderButton(googleButtonRef.current, {
           type: "standard",
           theme: "outline",
           text: "continue_with",
@@ -190,7 +183,6 @@ function CreateAccount() {
           width: 340,
         })
       }
-      setGoogleReady(true)
     }
 
     const timer = setInterval(() => {
@@ -213,9 +205,14 @@ function CreateAccount() {
     setErrors((prev) => ({ ...prev, cityId: "", areaId: "" }))
   }
 
-  // --- START EMAIL FLOW ---
-  function handleSubmitStart(event) {
+  // --- DIRECT EMAIL SIGNUP EXECUTION ---
+  async function handleEmailSignup(event) {
     event.preventDefault()
+
+    if (isOffline) {
+      setNotice({ visible: true, type: "error", title: "Network Offline", message: "Please connect to the internet to create your account." })
+      return
+    }
 
     let localErrors = {}
     if (!form.surname.trim() || form.surname.trim().length < 2) {
@@ -229,7 +226,7 @@ function CreateAccount() {
     const validationPayload = { ...form, fullName: combinedFullName }
     
     const externalErrors = validateSignupForm(validationPayload)
-    delete externalErrors.fullName // We handle name validation locally to split the UI feedback
+    delete externalErrors.fullName // Handled locally
 
     const nextErrors = { ...localErrors, ...externalErrors }
     setErrors(nextErrors)
@@ -239,33 +236,9 @@ function CreateAccount() {
       return
     }
 
-    setNotice({ visible: false, type: "info", title: "", message: "" })
-    setPendingAuthMethod("email")
-    setTermsScrolledBottom(false)
-    setTermsOpen(true)
-  }
-
-  // --- START GOOGLE FLOW ---
-  function handleStartGoogle() {
-    setNotice({ visible: false, type: "info", title: "", message: "" })
-    setPendingAuthMethod("google")
-    setTermsScrolledBottom(false)
-    setTermsOpen(true)
-  }
-
-  // --- EXECUTE EMAIL (Called from Modal) ---
-  async function executeEmailSignup() {
-    if (isOffline) {
-      setNotice({ visible: true, type: "error", title: "Network Offline", message: "Please connect to the internet to create your account." })
-      setTermsOpen(false)
-      return
-    }
-
     try {
       setSubmitting(true)
       setNotice({ visible: false, type: "info", title: "", message: "" })
-
-      const combinedFullName = [form.surname.trim(), form.middleName.trim(), form.firstName.trim()].filter(Boolean).join(" ")
 
       await signUpWithEmail({
         fullName: combinedFullName,
@@ -276,10 +249,8 @@ function CreateAccount() {
         areaId: form.areaId,
       })
 
-      setTermsOpen(false)
       setShowSuccess(true)
     } catch (error) {
-      setTermsOpen(false)
       setNotice({ visible: true, type: "error", title: "Registration failed", message: error.message || "Please try again." })
     } finally {
       setSubmitting(false)
@@ -314,7 +285,6 @@ function CreateAccount() {
             </Link>
 
             <div className="mb-5 text-center">
-              {/* --- LOCAL ASSET USAGE --- */}
               <img src={ctmLogo} alt="CTMerchant Logo" className="mx-auto h-24 w-auto rounded-xl object-contain" />
             </div>
 
@@ -322,21 +292,21 @@ function CreateAccount() {
               <h1 className="text-2xl font-extrabold text-slate-900">Create Account</h1>
               <p className="mt-2 text-sm leading-6 text-slate-500">Join the professional merchant network.</p>
 
-              <div className="mt-5 space-y-3">
-                <button
-                  type="button"
-                  disabled={!googleReady || googleLoading}
-                  onClick={handleStartGoogle}
-                  className="flex h-[44px] w-full items-center justify-center gap-3 rounded-lg border border-[#747775] bg-white px-4 font-medium text-[#1f1f1f] shadow-sm transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
-                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                  </svg>
-                  {googleLoading ? "Completing sign-up..." : "Continue with Google"}
-                </button>
+              <div className="mt-5 space-y-3 flex flex-col items-center">
+                {/* --- IMPLICIT GOOGLE CONSENT --- */}
+                <div className="w-full flex justify-center min-h-[44px] relative">
+                  {googleLoading && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-white/80 backdrop-blur-sm">
+                      <span className="text-sm font-bold text-slate-600 animate-pulse">Setting up your account...</span>
+                    </div>
+                  )}
+                  <div ref={googleButtonRef}></div>
+                </div>
+                
+                <p className="mt-1 px-2 text-center text-[0.75rem] leading-relaxed text-slate-500">
+                  By continuing with Google, you agree to CTMerchant's <br className="hidden sm:block"/>
+                  <a href="/terms" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Terms of Use</a> and <a href="/privacy" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Privacy Policy</a>.
+                </p>
               </div>
 
               <div className="my-6 flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -345,7 +315,7 @@ function CreateAccount() {
                 <div className="h-px flex-1 bg-slate-200" />
               </div>
 
-              <form className="space-y-4" onSubmit={handleSubmitStart}>
+              <form className="space-y-4" onSubmit={handleEmailSignup}>
                 <div className="grid gap-4 md:grid-cols-2">
                   <AuthInput id="signup-surname" label="Surname" value={form.surname} onChange={(e) => setForm((prev) => ({ ...prev, surname: e.target.value }))} placeholder="e.g. Adebayo" error={errors.surname} required icon={<FaUser />} minLength={2} />
                   <AuthInput id="signup-firstname" label="First Name" value={form.firstName} onChange={(e) => setForm((prev) => ({ ...prev, firstName: e.target.value }))} placeholder="e.g. John" error={errors.firstName} required icon={<FaUser />} minLength={2} />
@@ -382,7 +352,13 @@ function CreateAccount() {
                 <AuthInput id="signup-password" label="Password" type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))} placeholder="At least 6 characters" error={errors.password} required icon={<FaLock />} autoComplete="new-password" minLength={6} rightElement={<button type="button" onClick={() => setShowPassword((prev) => !prev)} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600">{showPassword ? <FaEyeSlash /> : <FaEye />}</button>} />
                 <AuthInput id="signup-confirm-password" label="Confirm Password" type={showConfirmPassword ? "text" : "password"} value={form.confirmPassword} onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))} placeholder="Re-enter password" error={errors.confirmPassword} required icon={<FaLock />} autoComplete="new-password" minLength={6} rightElement={<button type="button" onClick={() => setShowConfirmPassword((prev) => !prev)} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600">{showConfirmPassword ? <FaEyeSlash /> : <FaEye />}</button>} />
 
-                <AuthButton type="submit" loading={submitting && pendingAuthMethod === 'email'} disabled={isOffline}>Continue</AuthButton>
+                <div className="pt-2">
+                  <AuthButton type="submit" loading={submitting} disabled={isOffline}>Create Account</AuthButton>
+                  <p className="mt-3 text-center text-[0.75rem] leading-relaxed text-slate-500">
+                    By clicking Create Account, you agree to our <br className="hidden sm:block"/>
+                    <a href="/terms" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Terms of Use</a> and <a href="/privacy" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Privacy Policy</a>.
+                  </p>
+                </div>
               </form>
 
               <AuthNotification visible={notice.visible} type={notice.type} title={notice.title} message={notice.message} />
@@ -401,18 +377,6 @@ function CreateAccount() {
             </div>
           </div>
         </section>
-
-        {termsOpen && (
-          <TermsPrivacyModal
-            pendingAuthMethod={pendingAuthMethod}
-            onClose={() => setTermsOpen(false)}
-            onConfirm={executeEmailSignup}
-            confirmLoading={submitting}
-            confirmDisabled={!termsScrolledBottom || isOffline}
-            onScrolledBottom={() => setTermsScrolledBottom(true)}
-          />
-        )}
-
       </MainLayout>
 
       {showSuccess && (
@@ -426,110 +390,6 @@ function CreateAccount() {
         </div>
       )}
     </>
-  )
-}
-
-function TermsPrivacyModal({
-  onClose,
-  onConfirm,
-  confirmLoading,
-  confirmDisabled,
-  onScrolledBottom,
-  pendingAuthMethod,
-}) {
-  const googleWrapperRef = useRef(null)
-
-  function handleScroll(event) {
-    const el = event.currentTarget
-    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 12
-    if (atBottom) onScrolledBottom()
-  }
-
-  useEffect(() => {
-    if (pendingAuthMethod === "google" && !confirmDisabled && window.google && googleWrapperRef.current) {
-      try {
-        window.google.accounts.id.renderButton(googleWrapperRef.current, {
-          type: "standard",
-          theme: "outline",
-          size: "large",
-          width: 320,
-          text: "continue_with"
-        })
-      } catch (err) {
-        console.error("Google button render error:", err)
-      }
-    }
-  }, [pendingAuthMethod, confirmDisabled])
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
-      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-[28px] border border-pink-100 bg-white p-6 shadow-2xl">
-        <div className="mb-4">
-          <h2 className="flex items-center gap-2 text-xl font-extrabold text-slate-900">
-            <FaFileContract className="text-pink-600" />
-            Agreements & Policies
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Please read through and scroll to the bottom before creating your account.
-          </p>
-        </div>
-
-        <div onScroll={handleScroll} className="min-h-[260px] flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">
-          <h3 className="mb-3 text-lg font-extrabold text-slate-900">Privacy Policy</h3>
-          <p className="mb-4 text-xs font-bold uppercase tracking-wide text-slate-500">Last Updated: March 2026</p>
-
-          <p>This policy explains how CTMerchant collects, uses, and protects personal information in compliance with the Nigeria Data Protection Regulation and platform rules.</p>
-          <p className="mt-3">CTMerchant operates a digital repository that lists physical shops, products, and locations for discovery and informational purposes only.</p>
-          <p className="mt-3">We collect limited information necessary to operate the platform, including account details, business listing information, general location information, and technical usage data needed for security and performance.</p>
-          <p className="mt-3">We use collected information to provide and secure the repository, display accurate listings, support communication between users and shops, and improve platform performance.</p>
-          <p className="mt-3">CTMerchant does not sell personal data and does not process payments or financial transactions for merchants.</p>
-          <p className="mt-3">Data may only be shared with trusted infrastructure providers, through user-initiated contact with merchants, or when required by law.</p>
-          <p className="mt-3">You may request access, correction, or deletion of your data through CTMerchant support.</p>
-
-          <hr className="my-6 border-slate-200" />
-
-          <h3 className="mb-3 text-lg font-extrabold text-slate-900">Terms of Use</h3>
-          <p className="mb-4 text-xs font-bold uppercase tracking-wide text-slate-500">Effective Date: March 2026</p>
-
-          <p>These terms govern access to and use of the CTMerchant digital repository platform.</p>
-          <p className="mt-3">CTMerchant is not an online marketplace, broker, delivery service, escrow service, or seller. We do not facilitate payments, deliveries, or commercial transactions.</p>
-          <p className="mt-3">Users and merchants are responsible for the accuracy of information they provide and must independently verify details, pricing, availability, and quality before engaging in any transaction.</p>
-          <p className="mt-3">Listings are informational only and may change at any time. CTMerchant does not guarantee seller response times, stock availability, or transaction fulfillment.</p>
-          <p className="mt-3">A verified status on CTMerchant relates to physical existence and location confirmation only. It does not constitute endorsement or a guarantee of product quality, legality, tax compliance, or business standing.</p>
-          <p className="mt-3">To the maximum extent permitted by law, CTMerchant is not liable for losses, disputes, defective goods, or failed transactions between buyers and sellers discovered through the repository.</p>
-          <p className="mt-3 font-semibold text-pink-700">By creating an account, you agree to these policies and platform conditions.</p>
-        </div>
-
-        <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-bold text-amber-800">
-          Scroll to the bottom to unlock account creation.
-        </div>
-
-        <div className="mt-4 space-y-3">
-          
-          {pendingAuthMethod === "google" ? (
-             confirmDisabled ? (
-               <AuthButton disabled={true}>
-                 <FaUserCheck />
-                 <span>Scroll down to unlock Google Sign-in</span>
-               </AuthButton>
-             ) : (
-               <div className="flex justify-center w-full min-h-[44px]">
-                 <div ref={googleWrapperRef} />
-               </div>
-             )
-          ) : (
-            <AuthButton onClick={onConfirm} loading={confirmLoading} disabled={confirmDisabled}>
-              <FaUserCheck />
-              <span>I Agree & Create Account</span>
-            </AuthButton>
-          )}
-
-          <button type="button" onClick={onClose} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50">
-            Cancel Setup
-          </button>
-        </div>
-      </div>
-    </div>
   )
 }
 

@@ -72,9 +72,10 @@ export default function MerchantServiceFee() {
         currentShopId = shopLookup.id;
       }
 
+      // --- THE FIX: Fetching the secure backend boolean ---
       const { data: shop, error: shopErr } = await supabase
         .from("shops")
-        .select("id, subscription_end_date, subscription_plan")
+        .select("id, subscription_end_date, subscription_plan, is_subscription_active")
         .eq("id", currentShopId)
         .maybeSingle();
 
@@ -197,16 +198,18 @@ export default function MerchantServiceFee() {
     );
   }
 
-  // Derived State Calcs
+  // --- THE FIX: Sanitized Derived State Calcs ---
   const currentPlan = shopData.subscription_plan || "Free Trial";
-  const endDate = new Date(shopData.subscription_end_date || new Date());
-  const today = new Date();
-  const timeDiff = endDate.getTime() - today.getTime();
-  const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
-  const formattedExpiry = endDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-
-  const isActive = daysLeft > 0;
   const isFreeTrial = currentPlan === "Free Trial";
+  
+  // Rely exclusively on the backend for access logic
+  const isActive = shopData.is_subscription_active === true; 
+  
+  // Safely format the static date string for display
+  const endDate = new Date(shopData.subscription_end_date);
+  const formattedExpiry = endDate.toLocaleDateString(undefined, { 
+    year: 'numeric', month: 'long', day: 'numeric' 
+  });
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-5 text-[#1E293B]">
@@ -234,8 +237,9 @@ export default function MerchantServiceFee() {
           </div>
           
           <div className="text-left sm:text-right">
-            <div className={`text-[2.5rem] font-black leading-none ${!isActive ? 'text-[#DC2626]' : 'text-[#0F172A]'}`}>
-              {!isActive ? "Expired" : `${Math.max(0, daysLeft)} Days Left`}
+            {/* --- THE FIX: Replaced Vulnerable Countdown --- */}
+            <div className={`text-[2.5rem] font-black leading-none ${!isActive ? 'text-[#DC2626]' : 'text-[#16A34A]'}`}>
+              {!isActive ? "Locked" : "Active Access"}
             </div>
             <div className="mt-1 text-[0.9rem] font-semibold text-[#64748B]">
               {!isActive ? "Please choose a plan below to unlock your tools." : `Valid Until: ${formattedExpiry}`}

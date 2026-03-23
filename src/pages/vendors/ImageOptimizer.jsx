@@ -4,16 +4,20 @@ import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
 import {
   FaArrowLeft,
+  FaArrowsLeftRight,
+  FaArrowsRotate,
+  FaArrowsUpDown,
   FaBox,
   FaCloudArrowUp,
   FaCompress,
   FaCrop,
   FaDownload,
-  FaExpand,
+  FaDroplet,
   FaImage,
   FaMicrochip,
   FaPanorama,
   FaRotateLeft,
+  FaRotateRight,
   FaShieldHalved,
   FaWandMagicSparkles,
 } from "react-icons/fa6";
@@ -21,25 +25,36 @@ import {
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 
-const MAX_UPLOAD_SIZE = 4 * 1024 * 1024; // 4MB
+const MAX_UPLOAD_SIZE = 6 * 1024 * 1024; // Upped to 6MB for staff
 const PRODUCT_MAX = 800; // 800x800
 const BANNER_MAX_W = 1280; // 1280x720
 const BANNER_MAX_H = 720;
 
-export default function ImageOptimizer() {
+export default function StaffStudio() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
   const { user, loading: authLoading } = useAuthSession();
 
   const [mode, setMode] = useState("product"); // 'product' | 'banner'
-  const [fitMode, setFitMode] = useState("cover"); // 'cover' (Crop edges) | 'contain' (White padding)
+  const [fitMode, setFitMode] = useState("cover"); // 'cover' | 'contain'
   const [imageSrc, setImageSrc] = useState("");
   const [fileName, setFileName] = useState("");
   const [originalSize, setOriginalSize] = useState(0);
 
+  // --- Color Correction State ---
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
+  const [saturation, setSaturation] = useState(100);
 
+  // --- Transform State ---
+  const [scaleX, setScaleX] = useState(1);
+  const [scaleY, setScaleY] = useState(1);
+
+  // --- Watermark State ---
+  const [watermarkEnabled, setWatermarkEnabled] = useState(true);
+  const [watermarkText, setWatermarkText] = useState("CTMerchant");
+
+  // --- Output State ---
   const [finalPreview, setFinalPreview] = useState(null);
   const [stats, setStats] = useState({ newSize: "-- KB", dim: "-- x --", savings: "Awaiting processing...", color: "#10b981" });
 
@@ -47,27 +62,17 @@ export default function ImageOptimizer() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/");
-    }
+    if (!authLoading && !user) navigate("/");
   }, [authLoading, user, navigate]);
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      alert("Please select a valid image file.");
-      return;
-    }
-
-    if (file.size > MAX_UPLOAD_SIZE) {
-      alert("File is too large! The maximum allowed upload size is 4MB.");
-      return;
-    }
+    if (!file.type.startsWith("image/")) return alert("Please select a valid image file.");
+    if (file.size > MAX_UPLOAD_SIZE) return alert("File is too large! Maximum 6MB.");
 
     setOriginalSize(file.size);
-    setFileName(file.name.replace(/\.[^/.]+$/, "")); // Strip extension
+    setFileName(file.name.replace(/\.[^/.]+$/, ""));
     
     const reader = new FileReader();
     reader.onload = () => {
@@ -75,7 +80,7 @@ export default function ImageOptimizer() {
       resetOutput();
     };
     reader.readAsDataURL(file);
-    e.target.value = ""; // Reset input
+    e.target.value = ""; 
   };
 
   const resetOutput = () => {
@@ -88,24 +93,39 @@ export default function ImageOptimizer() {
     setOriginalSize(0);
     setBrightness(100);
     setContrast(100);
+    setSaturation(100);
+    setScaleX(1);
+    setScaleY(1);
     setFitMode("cover");
     resetOutput();
   };
 
+  // --- Live Transformations ---
+  const rotateImage = (degree) => {
+    if (cropperRef.current?.cropper) cropperRef.current.cropper.rotate(degree);
+  };
+
+  const flipImage = (axis) => {
+    if (!cropperRef.current?.cropper) return;
+    if (axis === 'x') {
+      const newScale = scaleX === 1 ? -1 : 1;
+      setScaleX(newScale);
+      cropperRef.current.cropper.scaleX(newScale);
+    } else {
+      const newScale = scaleY === 1 ? -1 : 1;
+      setScaleY(newScale);
+      cropperRef.current.cropper.scaleY(newScale);
+    }
+  };
+
+  // --- Processing Engine ---
   const processImage = () => {
     if (!cropperRef.current || !cropperRef.current.cropper) return;
     const cropper = cropperRef.current.cropper;
 
-    let targetW, targetH;
-    if (mode === "product") {
-      targetW = PRODUCT_MAX;
-      targetH = PRODUCT_MAX;
-    } else {
-      targetW = BANNER_MAX_W;
-      targetH = BANNER_MAX_H;
-    }
+    let targetW = mode === "product" ? PRODUCT_MAX : BANNER_MAX_W;
+    let targetH = mode === "product" ? PRODUCT_MAX : BANNER_MAX_H;
 
-    // Get the raw cropped region without forcing target dimensions yet
     const croppedCanvas = cropper.getCroppedCanvas({
       fillColor: "#FFFFFF",
       imageSmoothingEnabled: true,
@@ -119,79 +139,71 @@ export default function ImageOptimizer() {
     finalCanvas.height = targetH;
     const ctx = finalCanvas.getContext("2d");
 
-    // 1. Fill entire background with white (Crucial for Padding mode)
+    // 1. Fill Background
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, targetW, targetH);
 
-    // 2. Apply Lighting Filters
-    ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
+    // 2. Apply Deep Color Correction Filters
+    ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
 
-    // 3. Draw the image based on the selected Fit Mode
+    // 3. Draw Image (Fit vs Fill)
     if (fitMode === "contain") {
-      // PADDING LOGIC: Calculate scaling to fit within target dimensions while keeping aspect ratio
       const scale = Math.min(targetW / croppedCanvas.width, targetH / croppedCanvas.height);
       const scaledW = croppedCanvas.width * scale;
       const scaledH = croppedCanvas.height * scale;
-      const dx = (targetW - scaledW) / 2; // Center horizontally
-      const dy = (targetH - scaledH) / 2; // Center vertically
-      
+      const dx = (targetW - scaledW) / 2; 
+      const dy = (targetH - scaledH) / 2; 
       ctx.drawImage(croppedCanvas, dx, dy, scaledW, scaledH);
     } else {
-      // CROP LOGIC: Stretch the cropped area to fill the target (Cropper forces the aspect ratio to match anyway)
       ctx.drawImage(croppedCanvas, 0, 0, targetW, targetH);
     }
 
-    // 4. PERMANENT WATERMARK LOGIC
-    ctx.filter = "none";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
-    ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
-    ctx.shadowBlur = 4;
-    ctx.shadowOffsetX = 1;
-    ctx.shadowOffsetY = 1;
-    ctx.font = 'bold 24px "Plus Jakarta Sans", sans-serif';
-    ctx.textAlign = "right";
-    ctx.textBaseline = "bottom";
-    ctx.fillText("CTMerchant", targetW - 20, targetH - 20);
+    // 4. Advanced Watermark Logic
+    if (watermarkEnabled && watermarkText.trim() !== "") {
+      ctx.filter = "none"; // Reset filter so watermark isn't saturated/contrasted
+      ctx.fillStyle = "rgba(255, 255, 255, 0.6)"; // More opaque for pro use
+      ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+      ctx.shadowBlur = 5;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 1;
+      ctx.font = '900 28px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(watermarkText.trim(), targetW - 20, targetH - 20);
+    }
 
-    // 5. AUTO-TUNING COMPRESSION LOOP
-    let quality = 0.92;
-    const maxBytes = mode === "product" ? 100 * 1024 : 200 * 1024;
+    // 5. Compression Engine
+    let quality = 0.95;
+    const maxBytes = mode === "product" ? 120 * 1024 : 250 * 1024; // Slightly higher ceiling for staff
 
     const attemptCompress = () => {
-      finalCanvas.toBlob(
-        (blob) => {
-          if (!blob) return;
+      finalCanvas.toBlob((blob) => {
+        if (!blob) return;
 
-          if (blob.size <= maxBytes || quality <= 0.4) {
-            // Success
-            setFinalPreview(URL.createObjectURL(blob));
-            
-            const savedBytes = originalSize - blob.size;
-            let savingsMsg = "Image optimized for web.";
-            let savingsCol = "#94a3b8";
-            
-            if (savedBytes > 0) {
-              const percent = Math.round((savedBytes / originalSize) * 100);
-              savingsMsg = `🎉 You saved ${percent}%!`;
-              savingsCol = "#10b981";
-            }
-
-            setStats({
-              newSize: (blob.size / 1024).toFixed(1) + " KB",
-              dim: `${targetW} x ${targetH}`,
-              savings: savingsMsg,
-              color: savingsCol
-            });
-
-          } else {
-            // Reduce quality and try again recursively
-            quality -= 0.05;
-            attemptCompress();
+        if (blob.size <= maxBytes || quality <= 0.4) {
+          setFinalPreview(URL.createObjectURL(blob));
+          
+          const savedBytes = originalSize - blob.size;
+          let savingsMsg = "Optimized for platform.";
+          let savingsCol = "#94a3b8";
+          
+          if (savedBytes > 0) {
+            const percent = Math.round((savedBytes / originalSize) * 100);
+            savingsMsg = `✅ Saved ${percent}%`;
+            savingsCol = "#10b981";
           }
-        },
-        "image/jpeg",
-        quality
-      );
+
+          setStats({
+            newSize: (blob.size / 1024).toFixed(1) + " KB",
+            dim: `${targetW} x ${targetH}`,
+            savings: savingsMsg,
+            color: savingsCol
+          });
+        } else {
+          quality -= 0.05;
+          attemptCompress();
+        }
+      }, "image/jpeg", quality);
     };
 
     attemptCompress();
@@ -200,123 +212,159 @@ export default function ImageOptimizer() {
   if (authLoading) return null;
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0f172a] text-[#f8fafc]">
+    <div className="flex min-h-screen flex-col bg-[#0f172a] text-[#f8fafc] font-sans">
       
       {/* HEADER */}
-      <header className="sticky top-0 z-50 flex items-center justify-between border-b border-[#334155] bg-[#020617] px-5 py-3">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate("/vendor-panel")} className="text-xl transition-colors hover:text-[#db2777]">
+      <header className="sticky top-0 z-50 flex items-center justify-between border-b border-[#334155] bg-[#020617] px-5 py-3 shadow-lg">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate("/staff-dashboard")} className="text-xl transition-colors hover:text-pink-500">
             <FaArrowLeft />
           </button>
-          <div className="flex items-center gap-2 text-lg font-extrabold">
-            <FaWandMagicSparkles className="text-[#db2777]" /> CT Studio
+          <div className="flex items-center gap-2 text-lg font-black tracking-wide">
+            <FaWandMagicSparkles className="text-pink-500" /> STAFF STUDIO
           </div>
         </div>
-        <div className="hidden text-xs font-semibold text-[#94a3b8] sm:block">
-          Zero Server Cost • Local Processing
+        <div className="hidden text-[0.65rem] font-black uppercase tracking-[0.2em] text-[#94a3b8] sm:block">
+          Master Quality Control
         </div>
       </header>
 
       {/* STUDIO LAYOUT */}
       <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
         
-        {/* LEFT: CONTROLS */}
-        <div className="flex w-full flex-shrink-0 flex-col gap-6 overflow-y-auto border-b border-[#334155] bg-[#1e293b] p-5 lg:w-[320px] lg:border-b-0 lg:border-r">
+        {/* LEFT: MASTER CONTROLS */}
+        <div className="flex w-full flex-shrink-0 flex-col gap-6 overflow-y-auto border-b border-[#334155] bg-[#1e293b] p-5 lg:w-[340px] lg:border-b-0 lg:border-r custom-scrollbar">
           
+          {/* Section 1: Frame */}
           <div>
-            <div className="mb-3 border-b border-[#334155] pb-2 text-sm font-extrabold uppercase tracking-wide text-[#94a3b8]">
-              1. Dimensions
+            <div className="mb-3 text-xs font-black uppercase tracking-[0.15em] text-[#94a3b8]">
+              1. Output Frame
             </div>
-            <div className="flex gap-2 rounded-lg border border-[#334155] bg-[#0f172a] p-1">
+            <div className="flex gap-2 rounded-xl border border-[#334155] bg-[#0f172a] p-1.5 shadow-inner">
               <button
                 onClick={() => setMode("product")}
-                className={`flex flex-1 flex-col items-center gap-1 rounded-md p-2.5 text-xs font-bold transition-all ${
-                  mode === "product" ? "bg-[#1e293b] text-[#db2777] shadow-sm" : "text-[#94a3b8] hover:text-white"
+                className={`flex flex-1 flex-col items-center gap-1.5 rounded-lg p-2 text-[0.65rem] font-black uppercase tracking-wider transition-all ${
+                  mode === "product" ? "bg-[#1e293b] text-pink-500 shadow" : "text-[#94a3b8] hover:text-white"
                 }`}
               >
-                <FaBox className="text-lg" /> Product (1:1)
+                <FaBox className="text-base" /> Product 1:1
               </button>
               <button
                 onClick={() => setMode("banner")}
-                className={`flex flex-1 flex-col items-center gap-1 rounded-md p-2.5 text-xs font-bold transition-all ${
-                  mode === "banner" ? "bg-[#1e293b] text-[#db2777] shadow-sm" : "text-[#94a3b8] hover:text-white"
+                className={`flex flex-1 flex-col items-center gap-1.5 rounded-lg p-2 text-[0.65rem] font-black uppercase tracking-wider transition-all ${
+                  mode === "banner" ? "bg-[#1e293b] text-pink-500 shadow" : "text-[#94a3b8] hover:text-white"
                 }`}
               >
-                <FaPanorama className="text-lg" /> Banner (16:9)
+                <FaPanorama className="text-base" /> Banner 16:9
               </button>
             </div>
-          </div>
-
-          <div>
-            <div className="mb-3 border-b border-[#334155] pb-2 text-sm font-extrabold uppercase tracking-wide text-[#94a3b8]">
-              2. Fitting Logic
-            </div>
-            <div className="flex gap-2 rounded-lg border border-[#334155] bg-[#0f172a] p-1">
+            
+            <div className="mt-2 flex gap-2">
               <button
                 onClick={() => setFitMode("cover")}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-md p-2 text-xs font-bold transition-all ${
-                  fitMode === "cover" ? "bg-[#1e293b] text-[#db2777] shadow-sm" : "text-[#94a3b8] hover:text-white"
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#334155] p-2 text-xs font-bold transition-all ${
+                  fitMode === "cover" ? "bg-[#334155] text-white" : "bg-transparent text-[#94a3b8] hover:bg-[#334155]/50 hover:text-white"
                 }`}
               >
-                <FaCrop /> Fill (Crop)
+                <FaCrop /> Fill Cut
               </button>
               <button
                 onClick={() => setFitMode("contain")}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-md p-2 text-xs font-bold transition-all ${
-                  fitMode === "contain" ? "bg-[#1e293b] text-[#db2777] shadow-sm" : "text-[#94a3b8] hover:text-white"
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#334155] p-2 text-xs font-bold transition-all ${
+                  fitMode === "contain" ? "bg-[#334155] text-white" : "bg-transparent text-[#94a3b8] hover:bg-[#334155]/50 hover:text-white"
                 }`}
               >
-                <FaCompress /> Pad (White)
+                <FaCompress /> Add Padding
               </button>
             </div>
           </div>
 
+          {/* Section 2: Transform */}
           <div>
-            <div className="mb-3 border-b border-[#334155] pb-2 text-sm font-extrabold uppercase tracking-wide text-[#94a3b8]">
-              3. Lighting Fixes
+            <div className="mb-3 text-xs font-black uppercase tracking-[0.15em] text-[#94a3b8]">
+              2. Transform
             </div>
-            <div className="mb-4 flex flex-col gap-1.5">
-              <div className="flex justify-between text-sm font-semibold">
-                <span>Brightness</span> <span>{brightness}%</span>
-              </div>
-              <input
-                type="range"
-                min="50" max="150" value={brightness}
-                onChange={(e) => setBrightness(e.target.value)}
-                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[#334155] accent-[#db2777]"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <div className="flex justify-between text-sm font-semibold">
-                <span>Contrast</span> <span>{contrast}%</span>
-              </div>
-              <input
-                type="range"
-                min="50" max="150" value={contrast}
-                onChange={(e) => setContrast(e.target.value)}
-                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[#334155] accent-[#db2777]"
-              />
+            <div className="grid grid-cols-4 gap-2">
+              <button onClick={() => rotateImage(-90)} className="flex flex-col items-center gap-1 rounded-lg bg-[#334155] p-2 text-[#94a3b8] hover:bg-[#475569] hover:text-white transition">
+                <FaRotateLeft /> <span className="text-[0.55rem] font-black uppercase">-90°</span>
+              </button>
+              <button onClick={() => rotateImage(90)} className="flex flex-col items-center gap-1 rounded-lg bg-[#334155] p-2 text-[#94a3b8] hover:bg-[#475569] hover:text-white transition">
+                <FaRotateRight /> <span className="text-[0.55rem] font-black uppercase">+90°</span>
+              </button>
+              <button onClick={() => flipImage('x')} className="flex flex-col items-center gap-1 rounded-lg bg-[#334155] p-2 text-[#94a3b8] hover:bg-[#475569] hover:text-white transition">
+                <FaArrowsLeftRight /> <span className="text-[0.55rem] font-black uppercase">Flip X</span>
+              </button>
+              <button onClick={() => flipImage('y')} className="flex flex-col items-center gap-1 rounded-lg bg-[#334155] p-2 text-[#94a3b8] hover:bg-[#475569] hover:text-white transition">
+                <FaArrowsUpDown /> <span className="text-[0.55rem] font-black uppercase">Flip Y</span>
+              </button>
             </div>
           </div>
 
+          {/* Section 3: Color Grading */}
           <div>
-            <div className="mb-3 border-b border-[#334155] pb-2 text-sm font-extrabold uppercase tracking-wide text-[#94a3b8]">
-              4. Branding
+            <div className="mb-3 text-xs font-black uppercase tracking-[0.15em] text-[#94a3b8]">
+              3. Color Grading
             </div>
-            <div className="flex items-start gap-2.5 rounded-lg border border-[rgba(219,39,119,0.2)] bg-[rgba(219,39,119,0.1)] p-3">
-              <FaShieldHalved className="mt-0.5 shrink-0 text-[#db2777]" />
-              <p className="text-xs font-medium leading-relaxed text-[#f8fafc]">
-                All exported images carry a subtle <strong>CTMerchant</strong> watermark to protect our copyright across platforms.
-              </p>
+            <div className="flex flex-col gap-4 rounded-xl border border-[#334155] bg-[#0f172a] p-4">
+              
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between text-xs font-bold text-slate-300">
+                  <span className="flex items-center gap-1.5"><FaDroplet className="text-blue-400" /> Saturation</span> <span>{saturation}%</span>
+                </div>
+                <input type="range" min="0" max="200" value={saturation} onChange={(e) => setSaturation(e.target.value)} className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[#334155] accent-blue-500" />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between text-xs font-bold text-slate-300">
+                  <span className="flex items-center gap-1.5"><FaImage className="text-yellow-400" /> Brightness</span> <span>{brightness}%</span>
+                </div>
+                <input type="range" min="50" max="150" value={brightness} onChange={(e) => setBrightness(e.target.value)} className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[#334155] accent-yellow-500" />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between text-xs font-bold text-slate-300">
+                  <span className="flex items-center gap-1.5"><FaArrowsLeftRight className="text-white" /> Contrast</span> <span>{contrast}%</span>
+                </div>
+                <input type="range" min="50" max="150" value={contrast} onChange={(e) => setContrast(e.target.value)} className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[#334155] accent-white" />
+              </div>
+
+            </div>
+          </div>
+
+          {/* Section 4: Watermark Control */}
+          <div>
+            <div className="mb-3 text-xs font-black uppercase tracking-[0.15em] text-[#94a3b8]">
+              4. Watermark Settings
+            </div>
+            <div className="rounded-xl border border-[#334155] bg-[#0f172a] p-4">
+              <label className="flex items-center gap-3 cursor-pointer mb-3">
+                <input 
+                  type="checkbox" 
+                  checked={watermarkEnabled} 
+                  onChange={(e) => setWatermarkEnabled(e.target.checked)}
+                  className="w-4 h-4 accent-pink-600 cursor-pointer"
+                />
+                <span className="text-sm font-bold text-white">Apply Watermark</span>
+              </label>
+              
+              {watermarkEnabled && (
+                <input 
+                  type="text" 
+                  value={watermarkText} 
+                  onChange={(e) => setWatermarkText(e.target.value)}
+                  placeholder="Watermark text..."
+                  className="w-full bg-[#1e293b] border border-[#334155] text-white rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-pink-500 transition"
+                />
+              )}
             </div>
           </div>
 
           <button
             onClick={processImage}
             disabled={!imageSrc}
-            className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-[#10b981] p-3.5 text-base font-extrabold text-white shadow-[0_4px_10px_rgba(16,185,129,0.3)] transition-all hover:-translate-y-0.5 hover:bg-[#059669] disabled:cursor-not-allowed disabled:bg-[#334155] disabled:text-[#94a3b8] disabled:shadow-none disabled:hover:translate-y-0"
+            className="mt-auto flex w-full items-center justify-center gap-2 rounded-xl bg-pink-600 p-4 text-sm font-black uppercase tracking-wider text-white shadow-[0_4px_15px_rgba(219,39,119,0.3)] transition-all hover:-translate-y-0.5 hover:bg-pink-700 disabled:cursor-not-allowed disabled:bg-[#334155] disabled:text-[#94a3b8] disabled:shadow-none disabled:hover:translate-y-0"
           >
-            <FaMicrochip /> Process & Compress
+            <FaMicrochip className="text-lg" /> Render Output
           </button>
         </div>
 
@@ -327,68 +375,81 @@ export default function ImageOptimizer() {
         >
           {!imageSrc ? (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[rgba(15,23,42,0.9)] p-5 text-center">
-              <FaCloudArrowUp className="mb-5 text-6xl text-[#334155]" />
+              <div className="bg-[#1e293b] p-6 rounded-full border-4 border-[#334155] mb-6">
+                 <FaCloudArrowUp className="text-5xl text-pink-500" />
+              </div>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 rounded-lg bg-[#db2777] px-8 py-4 text-lg font-extrabold text-white shadow-[0_4px_15px_rgba(219,39,119,0.4)] transition-transform hover:-translate-y-0.5 hover:bg-[#be185d]"
+                className="flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-black uppercase tracking-widest text-[#0f172a] shadow-lg transition-transform hover:-translate-y-0.5 hover:bg-slate-200"
               >
-                <FaImage /> Select Photo
+                <FaImage className="text-lg" /> Select Source Image
               </button>
-              <p className="mt-4 text-sm text-[#94a3b8]">High-res photos accepted (Max 4MB). Processed locally.</p>
+              <p className="mt-5 text-xs font-bold uppercase tracking-widest text-[#94a3b8]">Formats: JPG, PNG, WEBP • Max 6MB</p>
               <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileUpload} />
             </div>
           ) : (
-            <div className="flex h-full w-full items-center justify-center p-5">
-              {/* Note the added 'key' prop: This forces the Cropper to re-initialize perfectly when switching modes */}
-              <Cropper
-                key={`${mode}-${fitMode}`}
-                ref={cropperRef}
-                src={imageSrc}
-                style={{ height: "100%", width: "100%", filter: `brightness(${brightness}%) contrast(${contrast}%)` }}
-                // If "cover", force the exact shape (1:1 or 16:9). If "contain", let them draw any shape (NaN)
-                aspectRatio={fitMode === "cover" ? (mode === "product" ? 1 : 16 / 9) : NaN}
-                viewMode={1}
-                dragMode="move"
-                background={false}
-                autoCropArea={1}
-                responsive={true}
-                checkOrientation={false}
-              />
+            <div className="flex h-full w-full items-center justify-center p-4 sm:p-8">
+              <div className="w-full h-full shadow-[0_0_40px_rgba(0,0,0,0.5)] rounded-lg overflow-hidden border border-white/10">
+                <Cropper
+                  key={`${mode}-${fitMode}`}
+                  ref={cropperRef}
+                  src={imageSrc}
+                  style={{ 
+                    height: "100%", 
+                    width: "100%", 
+                    filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)` 
+                  }}
+                  aspectRatio={fitMode === "cover" ? (mode === "product" ? 1 : 16 / 9) : NaN}
+                  viewMode={1}
+                  dragMode="move"
+                  background={false}
+                  autoCropArea={1}
+                  responsive={true}
+                  checkOrientation={false}
+                  guides={true}
+                />
+              </div>
             </div>
           )}
         </div>
 
-        {/* RIGHT: OUTPUT */}
-        <div className="flex w-full flex-shrink-0 flex-col border-t border-[#334155] bg-[#1e293b] p-5 lg:w-[340px] lg:border-l lg:border-t-0 overflow-y-auto">
-          <div className="mb-3 border-b border-[#334155] pb-2 text-sm font-extrabold uppercase tracking-wide text-[#94a3b8]">
-            Web-Ready Output
+        {/* RIGHT: OUTPUT INSPECTOR */}
+        <div className="flex w-full flex-shrink-0 flex-col border-t border-[#334155] bg-[#1e293b] p-5 lg:w-[320px] lg:border-l lg:border-t-0 overflow-y-auto custom-scrollbar">
+          <div className="mb-4 flex items-center justify-between border-b border-[#334155] pb-2">
+            <div className="text-xs font-black uppercase tracking-[0.15em] text-[#94a3b8]">
+              Final Inspector
+            </div>
+            <FaShieldHalved className="text-[#10b981]" />
           </div>
           
           <div 
-            className="mb-5 flex w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-[#334155] bg-white"
+            className="mb-6 flex w-full items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[#334155] bg-[#0f172a] shadow-inner relative group"
             style={{ aspectRatio: mode === "product" ? "1/1" : "16/9" }}
           >
             {finalPreview ? (
               <img src={finalPreview} alt="Processed output" className="h-full w-full object-contain" />
             ) : (
-              <FaImage className="text-5xl text-[#334155]" />
+              <div className="text-center text-[#334155]">
+                 <FaImage className="mx-auto text-4xl mb-2" />
+                 <span className="text-[0.65rem] font-bold uppercase tracking-widest">No Render Yet</span>
+              </div>
             )}
           </div>
 
-          <div className="mb-5 rounded-lg border border-[#334155] bg-[#0f172a] p-4">
-            <div className="mb-2 flex justify-between text-sm">
-              <span className="text-[#94a3b8]">Original File Size:</span>
-              <span className="font-extrabold text-white">{originalSize ? (originalSize / 1024).toFixed(1) + " KB" : "-- KB"}</span>
+          <div className="mb-6 rounded-xl border border-[#334155] bg-[#0f172a] p-4 shadow-sm">
+            <div className="mb-2.5 flex justify-between text-xs font-bold">
+              <span className="text-[#94a3b8]">Raw Source Size:</span>
+              <span className="text-white">{originalSize ? (originalSize / 1024).toFixed(1) + " KB" : "-- KB"}</span>
             </div>
-            <div className="mb-2 flex justify-between text-sm">
-              <span className="text-[#94a3b8]">Processed Size:</span>
-              <span className="font-extrabold text-[#db2777]">{stats.newSize}</span>
+            <div className="mb-2.5 flex justify-between text-xs font-bold">
+              <span className="text-[#94a3b8]">Optimized Size:</span>
+              <span className="text-pink-500">{stats.newSize}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-[#94a3b8]">Output Dimensions:</span>
-              <span className="font-extrabold text-white">{stats.dim}</span>
+            <div className="flex justify-between text-xs font-bold">
+              <span className="text-[#94a3b8]">Target Resolution:</span>
+              <span className="text-white">{stats.dim}</span>
             </div>
-            <div className="mt-3 border-t border-[#334155] pt-3 text-center text-lg font-extrabold" style={{ color: stats.color }}>
+            <div className="mt-4 rounded-lg bg-[#1e293b] py-2 text-center text-xs font-black uppercase tracking-wider" style={{ color: stats.color }}>
               {stats.savings}
             </div>
           </div>
@@ -396,22 +457,39 @@ export default function ImageOptimizer() {
           {finalPreview && (
             <a
               href={finalPreview}
-              download={`${fileName || 'ctmerchant'}-optimized.jpg`}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#db2777] p-3.5 text-base font-extrabold text-white shadow-[0_4px_10px_rgba(219,39,119,0.3)] transition-colors hover:bg-[#be185d]"
+              download={`${fileName || 'ctm-asset'}-verified.jpg`}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#10b981] p-3.5 text-sm font-black uppercase tracking-wider text-white shadow-[0_4px_15px_rgba(16,185,129,0.2)] transition-colors hover:bg-[#059669]"
             >
-              <FaDownload /> Download Web-Ready
+              <FaDownload className="text-lg" /> Download Asset
             </a>
           )}
           
           <button 
             onClick={handleStartOver}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-[#334155] p-2.5 text-sm font-semibold transition-colors hover:bg-[#334155]"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#334155] p-3 text-xs font-black uppercase tracking-wider text-[#94a3b8] transition-colors hover:bg-[#334155] hover:text-white"
           >
-            <FaRotateLeft /> Start Over
+            <FaRotateLeft /> Reset Workspace
           </button>
         </div>
 
       </div>
+      
+      {/* Global CSS for custom scrollbars to make it look like a native app */}
+      <style dangerouslySetOrigin={{__html: `
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #0f172a;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #334155;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #475569;
+        }
+      `}} />
     </div>
   );
 }

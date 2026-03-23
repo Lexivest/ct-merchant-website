@@ -18,25 +18,25 @@ export default function SubscriptionGuard({ children }) {
       }
       
       try {
+        // --- THE FIX: Fetch the secure server-side boolean ---
         const { data, error } = await supabase
           .from("shops")
-          .select("subscription_end_date")
+          .select("is_subscription_active")
           .eq("owner_id", user.id)
           .maybeSingle();
 
         if (error) throw error;
 
-        if (data && data.subscription_end_date) {
-          const endDate = new Date(data.subscription_end_date);
-          const today = new Date();
-          // Active ONLY if the end date is in the future
-          setIsActive(endDate > today);
+        // --- THE FIX: Unconditionally trust the backend ---
+        if (data && data.is_subscription_active !== null) {
+          setIsActive(data.is_subscription_active === true);
         } else {
-          // If no date exists for some reason, lock them out to be safe
+          // If no data exists for some reason, lock them out to be safe
           setIsActive(false);
         }
       } catch (err) {
         console.error("Failed to verify subscription status:", err);
+        setIsActive(false);
       } finally {
         setChecking(false);
       }
