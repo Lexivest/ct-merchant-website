@@ -1,4 +1,4 @@
-import { Routes, Route, Link } from "react-router-dom" // <-- Added Link here!
+import { Routes, Route, Link } from "react-router-dom"
 import Home from "./pages/Home"
 import About from "./pages/About"
 import Services from "./pages/Services"
@@ -45,11 +45,49 @@ import MerchantPayment from "./pages/vendors/MerchantPayment"
 import MerchantServiceFee from "./pages/vendors/MerchantServiceFee"
 import MerchantVideoKYC from "./pages/vendors/MerchantVideoKYC"
 
+function RouteLoadingScreen({
+  title = "Loading your page",
+  message = "Please wait while we prepare the next screen.",
+}) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
+      <div className="w-full max-w-md rounded-[28px] border border-pink-100 bg-white p-8 text-center shadow-xl">
+        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-pink-100 border-t-pink-600" />
+        <h2 className="mt-5 text-2xl font-black text-slate-900">{title}</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-500">{message}</p>
+      </div>
+    </div>
+  )
+}
+
+function NotFoundPage() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6 text-center">
+      <h1 className="mb-4 text-6xl font-black text-pink-600">404</h1>
+      <h2 className="mb-2 text-2xl font-bold text-slate-900">Page Not Found</h2>
+      <p className="mb-8 max-w-md text-slate-500">
+        The page you are looking for does not exist or may have moved.
+      </p>
+      <Link
+        to="/"
+        className="rounded-xl bg-pink-600 px-6 py-3 font-bold text-white transition hover:bg-pink-700"
+      >
+        Return Home
+      </Link>
+    </div>
+  )
+}
+
 function ProtectedDashboardRoute({ children }) {
   const { loading, session, user, profile, suspended, isOffline } = useAuthSession()
 
   if (loading && !isOffline) {
-    return <>{children}</>
+    return (
+      <RouteLoadingScreen
+        title="Checking your session"
+        message="We are confirming your access before opening this dashboard."
+      />
+    )
   }
 
   const isAllowed = (Boolean(session) && Boolean(user) && !suspended) || (isOffline && Boolean(user))
@@ -293,18 +331,9 @@ function App() {
       />
 
       {/* --- CATCH-ALL 404 ROUTE --- */}
-      <Route 
-        path="*" 
-        element={
-          <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6 text-center">
-            <h1 className="mb-4 text-6xl font-black text-pink-600">404</h1>
-            <h2 className="mb-2 text-2xl font-bold text-slate-900">Page Not Found</h2>
-            <p className="mb-8 max-w-md text-slate-500">The page you are looking for doesn't exist or has been moved.</p>
-            <Link to="/" className="rounded-xl bg-pink-600 px-6 py-3 font-bold text-white transition hover:bg-pink-700">
-              Return Home
-            </Link>
-          </div>
-        } 
+      <Route
+        path="*"
+        element={<NotFoundPage />}
       />
     </Routes>
   )

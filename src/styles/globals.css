@@ -53,6 +53,20 @@
   }
 }
 
+@keyframes route-progress-slide {
+  0% {
+    transform: scaleX(0.08);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -64,6 +78,10 @@ body {
   background: #f8fafc;
   color: #1e293b;
   -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 @layer base {
@@ -285,4 +303,23 @@ img {
   flex-wrap: wrap;
   gap: 12px;
   padding: 0 16px 24px;
+}
+
+.route-progress {
+  pointer-events: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9999;
+  height: 3px;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left;
+  opacity: 0;
+  background: linear-gradient(90deg, #db2777, #fb7185, #f59e0b);
+  box-shadow: 0 0 16px rgba(219, 39, 119, 0.35);
+}
+
+.route-progress-active {
+  animation: route-progress-slide 320ms ease-out forwards;
 }
