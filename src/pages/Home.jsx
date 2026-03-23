@@ -9,6 +9,8 @@ import {
   FaHashtag,
   FaLock,
   FaSearch,
+  FaFileContract,
+  FaUserCheck,
 } from "react-icons/fa"
 import MainLayout from "../layouts/MainLayout"
 import AuthInput from "../components/auth/AuthInput"
@@ -105,7 +107,10 @@ function Home() {
 
   const [googleReady, setGoogleReady] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
-  const googleButtonRef = useRef(null)
+
+  // --- TERMS & CONDITIONS STATE ---
+  const [termsOpen, setTermsOpen] = useState(false)
+  const [termsScrolledBottom, setTermsScrolledBottom] = useState(false)
 
   const [repoSearchValue, setRepoSearchValue] = useState("")
 
@@ -156,6 +161,8 @@ function Home() {
       return
     }
 
+    setTermsOpen(false) // Close modal upon success
+
     try {
       setGoogleLoading(true)
       setLoginNotice({ visible: false, type: "info", title: "", message: "" })
@@ -202,7 +209,7 @@ function Home() {
     }
   }
 
-  // --- Initialize Standard Google Sign-in ---
+  // Initialize Standard Google Sign-in
   useEffect(() => {
     const clientId =
       "237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com"
@@ -217,17 +224,6 @@ function Home() {
         cancel_on_tap_outside: true,
       })
 
-      // Render the official Google button into our placeholder ref
-      if (googleButtonRef.current) {
-        window.google.accounts.id.renderButton(googleButtonRef.current, {
-          type: "standard",
-          theme: "outline",
-          size: "large",
-          text: "continue_with",
-          width: 320, 
-        })
-      }
-
       setGoogleReady(true)
     }
 
@@ -240,6 +236,12 @@ function Home() {
 
     return () => clearInterval(timer)
   }, [])
+
+  function handleStartGoogle() {
+    setLoginNotice({ visible: false, type: "info", title: "", message: "" })
+    setTermsScrolledBottom(false)
+    setTermsOpen(true)
+  }
 
   const currentPhraseText = useMemo(
     () => phrases[phraseIndex].slice(0, charIndex),
@@ -436,6 +438,7 @@ function Home() {
       <section className="bg-pink-50 px-4 py-4 md:py-5">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
           
+          {/* --- CAROUSEL CONTAINER (BALANCED FULL-BLEED) --- */}
           {/* --- CAROUSEL CONTAINER (BALANCED FULL-BLEED WITH WHITE BG) --- */}
           <div className="-mx-4 -mt-4 mb-2 bg-pink-200 p-0 shadow-sm md:m-0 md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
             <div className="relative min-h-[280px] sm:min-h-[320px] md:min-h-[420px] overflow-hidden rounded-none border-b border-pink-100 bg-white shadow-lg md:rounded-[24px] md:border">
@@ -453,7 +456,7 @@ function Home() {
                 />
               ))}
               
-              {/* Lighter Gradient Overlay */}
+              {/* Lighter Gradient Overlay (Only dark at the very bottom for text legibility) */}
               <div className="absolute inset-0 z-[5] bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
               
               <div className="relative z-10 flex h-full min-h-[280px] sm:min-h-[320px] md:min-h-[420px] flex-col justify-end">
@@ -618,23 +621,30 @@ function Home() {
                     <div className="h-px flex-1 bg-pink-200" />
                   </div>
 
-                  <div className="space-y-3 flex flex-col items-center">
-                    {/* --- THE FIX: Direct Google Button with Implicit Consent --- */}
-                    <div className="w-full flex justify-center min-h-[44px] relative">
-                      {googleLoading && (
-                        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-white/80 backdrop-blur-sm">
-                          <span className="text-sm font-bold text-slate-600 animate-pulse">Signing in...</span>
-                        </div>
-                      )}
-                      <div ref={googleButtonRef}></div>
-                    </div>
-                    
-                    <p className="mt-2 px-2 text-center text-[0.75rem] leading-relaxed text-slate-500">
-                      By continuing with Google, you agree to CTMerchant's <br className="hidden sm:block"/>
-                      <a href="/terms" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Terms of Use</a> and <a href="/privacy" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Privacy Policy</a>.
-                    </p>
+                  <div className="space-y-3">
+                    {/* CUSTOM GOOGLE BUTTON TRIGGERS MODAL */}
+                    <button
+                      type="button"
+                      disabled={!googleReady || googleLoading}
+                      onClick={handleStartGoogle}
+                      className="flex h-[44px] w-full items-center justify-center gap-3 rounded-lg border border-[#747775] bg-white px-4 font-medium text-[#1f1f1f] shadow-sm transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                      </svg>
+                      {googleLoading ? "Signing in..." : "Continue with Google"}
+                    </button>
                   </div>
 
+                  <AuthNotification
+                    visible={resetNotice.visible}
+                    type={resetNotice.type}
+                    title={resetNotice.title}
+                    message={resetNotice.message}
+                  />
                 </div>
               </div>
 
@@ -809,6 +819,16 @@ function Home() {
           </div>
         </SimpleModal>
       ) : null}
+
+      {/* --- TERMS & PRIVACY MODAL --- */}
+      {termsOpen && (
+        <TermsPrivacyModal
+          onClose={() => setTermsOpen(false)}
+          confirmDisabled={!termsScrolledBottom || isOffline}
+          onScrolledBottom={() => setTermsScrolledBottom(true)}
+        />
+      )}
+
     </MainLayout>
   )
 }
@@ -831,6 +851,102 @@ function SimpleModal({ title, subtitle, children, onClose }) {
           aria-hidden="true"
           tabIndex={-1}
         />
+      </div>
+    </div>
+  )
+}
+
+// --- EXTRACTED MODAL COMPONENT (Just like CreateAccount.jsx) ---
+function TermsPrivacyModal({
+  onClose,
+  confirmDisabled,
+  onScrolledBottom,
+}) {
+  const googleWrapperRef = useRef(null)
+
+  function handleScroll(event) {
+    const el = event.currentTarget
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 12
+    if (atBottom) onScrolledBottom()
+  }
+
+  useEffect(() => {
+    // Only render the real Google button once they scroll to the bottom
+    if (!confirmDisabled && window.google && googleWrapperRef.current) {
+      try {
+        window.google.accounts.id.renderButton(googleWrapperRef.current, {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          width: 320,
+          text: "continue_with"
+        })
+      } catch (err) {
+        console.error("Google button render error:", err)
+      }
+    }
+  }, [confirmDisabled])
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
+      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-[28px] border border-pink-100 bg-white p-6 shadow-2xl">
+        <div className="mb-4">
+          <h2 className="flex items-center gap-2 text-xl font-extrabold text-slate-900">
+            <FaFileContract className="text-pink-600" />
+            Agreements & Policies
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Please read through and scroll to the bottom before continuing.
+          </p>
+        </div>
+
+        <div onScroll={handleScroll} className="min-h-[260px] flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">
+          <h3 className="mb-3 text-lg font-extrabold text-slate-900">Privacy Policy</h3>
+          <p className="mb-4 text-xs font-bold uppercase tracking-wide text-slate-500">Last Updated: March 2026</p>
+
+          <p>This policy explains how CTMerchant collects, uses, and protects personal information in compliance with the Nigeria Data Protection Regulation and platform rules.</p>
+          <p className="mt-3">CTMerchant operates a digital repository that lists physical shops, products, and locations for discovery and informational purposes only.</p>
+          <p className="mt-3">We collect limited information necessary to operate the platform, including account details, business listing information, general location information, and technical usage data needed for security and performance.</p>
+          <p className="mt-3">We use collected information to provide and secure the repository, display accurate listings, support communication between users and shops, and improve platform performance.</p>
+          <p className="mt-3">CTMerchant does not sell personal data and does not process payments or financial transactions for merchants.</p>
+          <p className="mt-3">Data may only be shared with trusted infrastructure providers, through user-initiated contact with merchants, or when required by law.</p>
+          <p className="mt-3">You may request access, correction, or deletion of your data through CTMerchant support.</p>
+
+          <hr className="my-6 border-slate-200" />
+
+          <h3 className="mb-3 text-lg font-extrabold text-slate-900">Terms of Use</h3>
+          <p className="mb-4 text-xs font-bold uppercase tracking-wide text-slate-500">Effective Date: March 2026</p>
+
+          <p>These terms govern access to and use of the CTMerchant digital repository platform.</p>
+          <p className="mt-3">CTMerchant is not an online marketplace, broker, delivery service, escrow service, or seller. We do not facilitate payments, deliveries, or commercial transactions.</p>
+          <p className="mt-3">Users and merchants are responsible for the accuracy of information they provide and must independently verify details, pricing, availability, and quality before engaging in any transaction.</p>
+          <p className="mt-3">Listings are informational only and may change at any time. CTMerchant does not guarantee seller response times, stock availability, or transaction fulfillment.</p>
+          <p className="mt-3">A verified status on CTMerchant relates to physical existence and location confirmation only. It does not constitute endorsement or a guarantee of product quality, legality, tax compliance, or business standing.</p>
+          <p className="mt-3">To the maximum extent permitted by law, CTMerchant is not liable for losses, disputes, defective goods, or failed transactions between buyers and sellers discovered through the repository.</p>
+          <p className="mt-3 font-semibold text-pink-700">By continuing, you agree to these policies and platform conditions.</p>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-bold text-amber-800">
+          Scroll to the bottom to unlock Google Sign-in.
+        </div>
+
+        <div className="mt-4 space-y-3">
+          
+          {confirmDisabled ? (
+            <button disabled={true} className="flex h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-slate-200 font-bold text-slate-400 opacity-70 cursor-not-allowed">
+              <FaUserCheck />
+              <span>Scroll down to unlock</span>
+            </button>
+          ) : (
+            <div className="flex justify-center w-full min-h-[44px]">
+              <div ref={googleWrapperRef} />
+            </div>
+          )}
+
+          <button type="button" onClick={onClose} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50">
+            Cancel Sign-in
+          </button>
+        </div>
       </div>
     </div>
   )
