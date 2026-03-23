@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { supabase } from "../../lib/supabase";
-import { FaEnvelope } from "react-icons/fa6"; // <-- Added the envelope icon
 
 function FloatingContact() {
   const [isOpen, setIsOpen] = useState(false)
@@ -96,18 +95,15 @@ function FloatingContact() {
 
   return (
     <>
-      {/* --- THE NEW PILL-SHAPED MESSAGE BUTTON --- */}
       <button
         type="button"
         onClick={togglePopup}
         title="Need Help? Contact Support"
-        className="fixed bottom-20 left-6 z-40 flex items-center gap-2.5 rounded-full bg-pink-600 px-5 py-3.5 text-sm font-extrabold text-white shadow-[0_10px_25px_rgba(219,39,119,0.35)] transition-all duration-300 hover:scale-105 hover:bg-pink-700 hover:shadow-[0_10px_35px_rgba(219,39,119,0.45)] group"
+        className="fixed bottom-20 left-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-pink-600 text-2xl text-white shadow-[0_10px_25px_rgba(219,39,119,0.35)] transition hover:scale-105 hover:bg-pink-700"
       >
-        <FaEnvelope className="text-lg transition-transform group-hover:rotate-12" />
-        <span className="tracking-wide">Message Us</span>
+        🎧
       </button>
 
-      {/* --- THE POPUP CONTACT FORM --- */}
       <div
         className={`fixed bottom-36 left-6 z-40 w-[calc(100%-3rem)] max-w-[290px] overflow-hidden rounded-2xl border border-pink-100 bg-white shadow-2xl transition-all duration-300 ${
           isOpen
