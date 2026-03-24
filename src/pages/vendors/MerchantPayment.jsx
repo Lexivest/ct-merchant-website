@@ -11,17 +11,23 @@ import {
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
+import {
+  PAYSTACK_PUBLIC_KEY,
+  PAYSTACK_SCRIPT_URL,
+  REMITA_PUBLIC_KEY,
+  REMITA_SCRIPT_URL,
+  generateTransactionRef,
+  normalizePromoCode,
+} from "../../lib/paymentConfig";
 
 const FEE_AMOUNT = 5000;
-const PAYSTACK_KEY = "pk_test_f681256d9c1bc10964457c68fb2381e6451ed2b9";
-const REMITA_KEY = "QzAwMDAyNzEyNTl8MTEwNjE4Njc3NzR8M2RjY2NlYTg4YzhjNWQzMTc4ZTA1NTZkYmViYzhmOTQzM2I0ZTU2Y2Q5Y2E4OWM1ZGI0MjI1YTUzYTNhZjJhMzk1YjcwZWQ3N2ZhMWQwZWM4M2IwZDMyZDUxZTZhNTBiZjZiYTgxMGI1MGEyZTIwMWQxZDRhZDFhMTU4MjZhNTc=";
 
 export default function MerchantPayment() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
 
-  const { user, loading: authLoading } = useAuthSession();
+  const { user, loading: authLoading, isOffline } = useAuthSession();
 
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -35,16 +41,26 @@ export default function MerchantPayment() {
 
   // 1. Dynamically Load Payment Scripts
   useEffect(() => {
+    let cancelled = false
+
     const loadScript = (src) => {
       if (document.querySelector(`script[src="${src}"]`)) return;
       const script = document.createElement("script");
       script.src = src;
       script.async = true;
+      script.onerror = () => {
+        if (cancelled) return
+        setStatusError(true)
+        setStatusMsg("Could not initialize payment gateway script. Please retry.")
+      }
       document.body.appendChild(script);
     };
 
-    loadScript("https://js.paystack.co/v1/inline.js");
-    loadScript("https://remitademo.net/payment/v1/remita-pay-inline.bundle.js");
+    loadScript(PAYSTACK_SCRIPT_URL);
+    loadScript(REMITA_SCRIPT_URL);
+    return () => {
+      cancelled = true
+    }
   }, []);
 
   // 2. Fetch Data & Validate Status
@@ -52,21 +68,34 @@ export default function MerchantPayment() {
     async function init() {
       if (!user) return;
       
-      if (!urlShopId) {
+      if (isOffline) {
+        setStatusError(true)
+        setStatusMsg("You are offline. Reconnect to continue with payment.")
+        setLoading(false)
+        return
+      }
+
+      const parsedShopId = Number(urlShopId)
+      if (!urlShopId || !Number.isFinite(parsedShopId) || parsedShopId <= 0) {
         alert("Shop ID is missing.");
-        navigate("/merchant-dashboard");
+        navigate("/vendor-panel");
         return;
       }
 
       try {
         setLoading(true);
 
-        const { data: shop, error: shopErr } = await supabase.from("shops").select("*").eq("id", urlShopId).single();
-        if (shopErr || !shop) throw new Error("Shop not found");
+        const { data: shop, error: shopErr } = await supabase
+          .from("shops")
+          .select("*")
+          .eq("id", urlShopId)
+          .eq("owner_id", user.id)
+          .maybeSingle();
+        if (shopErr || !shop) throw new Error("Shop not found or access denied");
 
         if (shop.is_verified) {
           alert("Your shop is already fully verified!");
-          navigate("/merchant-dashboard");
+          navigate("/vendor-panel");
           return;
         }
 
@@ -80,10 +109,10 @@ export default function MerchantPayment() {
         if (paymentRecord) {
           if (shop.status === "pending_kyc_review") {
             alert("We are currently reviewing your Video KYC! We will notify you once approved.");
-            navigate("/merchant-dashboard");
+            navigate("/vendor-panel");
           } else {
             alert("You have already paid the fee! Let's get your Video KYC recorded.");
-            navigate("/merchant-video-kyc");
+            navigate(`/merchant-video-kyc?shop_id=${shop.id}`);
           }
           return;
         }
@@ -102,18 +131,20 @@ export default function MerchantPayment() {
       } catch (err) {
         console.error(err);
         alert("Error loading payment details: " + err.message);
-        navigate("/merchant-dashboard");
+        navigate("/vendor-panel");
       } finally {
         setLoading(false);
       }
     }
 
     if (!authLoading) init();
-  }, [user, authLoading, urlShopId, navigate]);
+  }, [user, authLoading, isOffline, urlShopId, navigate]);
 
 
   // 3. Backend Verification Handler
   const verifyPaymentOnBackend = async (txId, gateway) => {
+    if (!txId || processing) return
+
     try {
       setProcessing(true);
       setStatusMsg("");
@@ -122,9 +153,7 @@ export default function MerchantPayment() {
       const { data, error } = await supabase.functions.invoke("verify-remita", {
         body: {
           transactionId: txId,
-          merchantName: shopDetails.merchantName,
-          shopName: shopDetails.shopName,
-          cityName: shopDetails.cityName,
+          shopId: Number(urlShopId),
           gateway: gateway,
         }
       });
@@ -159,26 +188,28 @@ export default function MerchantPayment() {
 
   // 4. Promo Code Flow
   const handleApplyPromo = () => {
-    if (promoCode.length !== 6) return;
-    verifyPaymentOnBackend(promoCode, "promo");
+    if (processing) return
+    const normalizedCode = normalizePromoCode(promoCode)
+    if (!/^[A-Z0-9]{6}$/.test(normalizedCode)) return
+    verifyPaymentOnBackend(normalizedCode, "promo");
   };
 
   // 5. Paystack Flow
   const payWithPaystack = () => {
+    if (processing) return
     if (!shopDetails || !window.PaystackPop) return alert("Payment system is initializing. Please wait a moment.");
     
     const handler = window.PaystackPop.setup({
-      key: PAYSTACK_KEY,
+      key: PAYSTACK_PUBLIC_KEY,
       email: shopDetails.email,
       amount: FEE_AMOUNT * 100, // in kobo
       currency: "NGN",
-      ref: "CTM-VERIFY-" + Date.now(),
+      ref: generateTransactionRef("CTM-VERIFY"),
       callback: function (response) {
-        setProcessing(true);
-        verifyPaymentOnBackend(response.reference, "paystack");
+        verifyPaymentOnBackend(response?.reference || response?.trxref, "paystack");
       },
       onClose: function () {
-        console.log("Paystack window closed.");
+        // User closed payment window without completing payment.
       },
     });
     handler.openIframe();
@@ -186,15 +217,16 @@ export default function MerchantPayment() {
 
   // 6. Remita Flow
   const payWithRemita = () => {
+    if (processing) return
     if (!shopDetails || !window.RmPaymentEngine) return alert("Payment system is initializing. Please wait a moment.");
     
     const names = shopDetails.merchantName.split(" ");
     const firstName = names[0];
     const lastName = names.slice(1).join(" ") || "Merchant";
-    const transactionId = "CTM-VERIFY-" + Date.now();
+    const transactionId = generateTransactionRef("CTM-VERIFY");
 
     const paymentEngine = window.RmPaymentEngine.init({
-      key: REMITA_KEY,
+      key: REMITA_PUBLIC_KEY,
       customerId: shopDetails.email,
       firstName: firstName,
       lastName: lastName,
@@ -203,14 +235,13 @@ export default function MerchantPayment() {
       narration: "CT-Merchant Digital ID & KYC",
       transactionId: transactionId,
       onSuccess: function (response) {
-        setProcessing(true);
-        verifyPaymentOnBackend(response.transactionId, "remita");
+        verifyPaymentOnBackend(response?.transactionId, "remita");
       },
       onError: function (response) {
         alert("Payment failed or cancelled.");
       },
       onClose: function () {
-        console.log("Remita window closed");
+        // User closed payment window without completing payment.
       },
     });
 
@@ -292,7 +323,7 @@ export default function MerchantPayment() {
                   maxLength={6}
                   placeholder="6-DIGIT CODE"
                   value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  onChange={(e) => setPromoCode(normalizePromoCode(e.target.value))}
                   className="flex-1 rounded-lg border border-[#CBD5E1] bg-[#F8FAFC] px-4 py-2 font-mono text-[1.05rem] font-bold tracking-widest text-[#0F172A] outline-none transition focus:border-[#D97706] focus:bg-white focus:ring-2 focus:ring-[#FEF3C7]"
                 />
                 <button

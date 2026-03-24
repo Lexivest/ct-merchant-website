@@ -5,7 +5,6 @@ import {
   FaBuildingColumns,
   FaCheck,
   FaCircleCheck,
-  FaCircleInfo,
   FaCircleNotch,
   FaCircleXmark,
   FaCreditCard,
@@ -14,9 +13,18 @@ import {
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
+import {
+  PAYSTACK_PUBLIC_KEY,
+  PAYSTACK_SCRIPT_URL,
+  REMITA_PUBLIC_KEY,
+  REMITA_SCRIPT_URL,
+  generateTransactionRef,
+} from "../../lib/paymentConfig";
 
-const PAYSTACK_KEY = "pk_test_f681256d9c1bc10964457c68fb2381e6451ed2b9";
-const REMITA_KEY = "QzAwMDAyNzEyNTl8MTEwNjE4Njc3NzR8M2RjY2NlYTg4YzhjNWQzMTc4ZTA1NTZkYmViYzhmOTQzM2I0ZTU2Y2Q5Y2E4OWM1ZGI0MjI1YTUzYTNhZjJhMzk1YjcwZWQ3N2ZhMWQwZWM4M2IwZDMyZDUxZTZhNTBiZjZiYTgxMGI1MGEyZTIwMWQxZDRhZDFhMTU4MjZhNTc=";
+const PLAN_OPTIONS = Object.freeze({
+  "6_Months": Object.freeze({ label: "6 Months", amount: 6000 }),
+  "1_Year": Object.freeze({ label: "1 Year", amount: 10000 }),
+})
 
 export default function MerchantServiceFee() {
   const navigate = useNavigate();
@@ -35,19 +43,29 @@ export default function MerchantServiceFee() {
   
   // Gateway Modal State
   const [gatewayModalOpen, setGatewayModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(null); // { plan: '6_Months', amount: 6000 }
+  const [selectedPlanKey, setSelectedPlanKey] = useState(null);
 
   // 1. Dynamically Load Scripts
   useEffect(() => {
+    let cancelled = false
+
     const loadScript = (src) => {
       if (document.querySelector(`script[src="${src}"]`)) return;
       const script = document.createElement("script");
       script.src = src;
       script.async = true;
+      script.onerror = () => {
+        if (cancelled) return
+        setError("Could not initialize payment gateway script. Please refresh and retry.")
+      }
       document.body.appendChild(script);
     };
-    loadScript("https://js.paystack.co/v1/inline.js");
-    loadScript("https://remitademo.net/payment/v1/remita-pay-inline.bundle.js");
+    loadScript(PAYSTACK_SCRIPT_URL);
+    loadScript(REMITA_SCRIPT_URL);
+
+    return () => {
+      cancelled = true
+    }
   }, []);
 
   // 2. Fetch Subscription Data
@@ -72,11 +90,11 @@ export default function MerchantServiceFee() {
         currentShopId = shopLookup.id;
       }
 
-      // --- THE FIX: Fetching the secure backend boolean ---
       const { data: shop, error: shopErr } = await supabase
         .from("shops")
         .select("id, subscription_end_date, subscription_plan, is_subscription_active")
         .eq("id", currentShopId)
+        .eq("owner_id", user.id)
         .maybeSingle();
 
       if (shopErr || !shop) throw new Error("Could not load shop details.");
@@ -95,7 +113,14 @@ export default function MerchantServiceFee() {
   }, [user, authLoading, urlShopId, isOffline]);
 
   // 3. Backend Verification Handler
-  const verifySubscriptionOnBackend = async (txId, plan, amount, gateway) => {
+  const verifySubscriptionOnBackend = async (txId, planKey, gateway) => {
+    if (!txId || processing || !shopData?.id) return
+    const selectedPlan = PLAN_OPTIONS[planKey]
+    if (!selectedPlan) {
+      alert("Invalid subscription plan selected.")
+      return
+    }
+
     try {
       setProcessing(true);
       setGatewayModalOpen(false);
@@ -104,8 +129,7 @@ export default function MerchantServiceFee() {
         body: {
           transactionId: txId,
           shopId: shopData.id,
-          plan: plan,
-          amount: amount,
+          plan: planKey,
           gateway: gateway,
         }
       });
@@ -126,21 +150,28 @@ export default function MerchantServiceFee() {
 
   // 4. Payment Flows
   const handleGatewaySelection = (gateway) => {
+    if (processing) return
+    const selectedPlan = PLAN_OPTIONS[selectedPlanKey]
     if (!selectedPlan) return;
     
     if (gateway === "paystack") {
       if (!window.PaystackPop) return alert("Payment system initializing. Please wait.");
       
       const handler = window.PaystackPop.setup({
-        key: PAYSTACK_KEY,
+        key: PAYSTACK_PUBLIC_KEY,
         email: user.email,
         amount: selectedPlan.amount * 100, // kobo
         currency: "NGN",
-        ref: "CTM-" + Date.now(),
+        ref: generateTransactionRef("CTM-SUB"),
         callback: function (response) {
-          verifySubscriptionOnBackend(response.reference, selectedPlan.plan, selectedPlan.amount, "paystack");
+          const txRef = response?.reference || response?.trxref
+          if (!txRef) {
+            alert("Could not read payment reference. Please contact support with your payment receipt.")
+            return
+          }
+          verifySubscriptionOnBackend(txRef, selectedPlanKey, "paystack");
         },
-        onClose: function () { console.log("Paystack closed"); },
+        onClose: function () {},
       });
       handler.openIframe();
       setGatewayModalOpen(false);
@@ -148,21 +179,22 @@ export default function MerchantServiceFee() {
     } else if (gateway === "remita") {
       if (!window.RmPaymentEngine) return alert("Payment system initializing. Please wait.");
       
-      const transactionId = "CTM-" + Date.now();
+      const transactionId = generateTransactionRef("CTM-SUB");
       const paymentEngine = window.RmPaymentEngine.init({
-        key: REMITA_KEY,
+        key: REMITA_PUBLIC_KEY,
         customerId: user.email,
         firstName: firstName,
         lastName: "",
         email: user.email,
         amount: selectedPlan.amount,
-        narration: `CT-Merchant ${selectedPlan.plan.replace("_", " ")}`,
+        narration: `CT-Merchant ${selectedPlan.label}`,
         transactionId: transactionId,
         onSuccess: function (response) {
-          verifySubscriptionOnBackend(response.transactionId, selectedPlan.plan, selectedPlan.amount, "remita");
+          const txRef = response?.transactionId || transactionId
+          verifySubscriptionOnBackend(txRef, selectedPlanKey, "remita");
         },
         onError: function () { alert("Payment failed."); },
-        onClose: function () { console.log("Remita closed"); },
+        onClose: function () {},
       });
       paymentEngine.showPaymentWidget();
       setGatewayModalOpen(false);
@@ -198,18 +230,20 @@ export default function MerchantServiceFee() {
     );
   }
 
-  // --- THE FIX: Sanitized Derived State Calcs ---
   const currentPlan = shopData.subscription_plan || "Free Trial";
   const isFreeTrial = currentPlan === "Free Trial";
   
-  // Rely exclusively on the backend for access logic
   const isActive = shopData.is_subscription_active === true; 
   
-  // Safely format the static date string for display
-  const endDate = new Date(shopData.subscription_end_date);
-  const formattedExpiry = endDate.toLocaleDateString(undefined, { 
-    year: 'numeric', month: 'long', day: 'numeric' 
-  });
+  const endDate = shopData.subscription_end_date ? new Date(shopData.subscription_end_date) : null
+  const hasValidEndDate = endDate instanceof Date && !Number.isNaN(endDate.getTime())
+  const formattedExpiry = hasValidEndDate
+    ? endDate.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "Unknown"
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-5 text-[#1E293B]">
@@ -266,7 +300,7 @@ export default function MerchantServiceFee() {
 
             <button 
               disabled={isActive}
-              onClick={() => { setSelectedPlan({ plan: '6_Months', amount: 6000 }); setGatewayModalOpen(true); }}
+              onClick={() => { setSelectedPlanKey("6_Months"); setGatewayModalOpen(true); }}
               className="w-full rounded-xl bg-[#F1F5F9] p-3.5 text-[1rem] font-extrabold text-[#1E293B] transition hover:bg-[#2E1065] hover:text-white disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8] disabled:hover:bg-[#E2E8F0] disabled:hover:text-[#94A3B8]"
             >
               {isActive && currentPlan === '6_Months' ? <><FaCheck className="inline mr-1" /> Active Plan</> : isActive ? "Deactivated" : "Subscribe 6 Months"}
@@ -288,7 +322,7 @@ export default function MerchantServiceFee() {
 
             <button 
               disabled={isActive}
-              onClick={() => { setSelectedPlan({ plan: '1_Year', amount: 10000 }); setGatewayModalOpen(true); }}
+              onClick={() => { setSelectedPlanKey("1_Year"); setGatewayModalOpen(true); }}
               className={`w-full rounded-xl p-3.5 text-[1rem] font-extrabold transition disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8] ${isActive ? "bg-[#F1F5F9] text-[#1E293B]" : "bg-[#2E1065] text-white hover:bg-[#4c1d95]"}`}
             >
               {isActive && currentPlan === '1_Year' ? <><FaCheck className="inline mr-1" /> Active Plan</> : isActive ? "Deactivated" : "Subscribe 1 Year"}
@@ -305,11 +339,11 @@ export default function MerchantServiceFee() {
             <h2 className="mb-2 text-[1.3rem] font-black text-[#0F172A]">Select Payment Method</h2>
             <p className="mb-6 text-[0.95rem] text-[#64748B]">Choose how you want to securely pay for your subscription.</p>
 
-            <button onClick={() => handleGatewaySelection("paystack")} className="mb-3 flex w-full items-center justify-center gap-3 rounded-xl border-2 border-[#E2E8F0] bg-white p-4 text-[1.05rem] font-bold text-[#0F172A] transition hover:-translate-y-0.5 hover:border-[#2E1065] hover:bg-[#F8FAFC]">
+            <button disabled={processing} onClick={() => handleGatewaySelection("paystack")} className="mb-3 flex w-full items-center justify-center gap-3 rounded-xl border-2 border-[#E2E8F0] bg-white p-4 text-[1.05rem] font-bold text-[#0F172A] transition hover:-translate-y-0.5 hover:border-[#2E1065] hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:border-[#E2E8F0] disabled:hover:bg-white">
               <FaCreditCard className="text-xl text-[#0BA4DB]" /> Pay with Paystack
             </button>
             
-            <button onClick={() => handleGatewaySelection("remita")} className="mb-2 flex w-full items-center justify-center gap-3 rounded-xl border-2 border-[#E2E8F0] bg-white p-4 text-[1.05rem] font-bold text-[#0F172A] transition hover:-translate-y-0.5 hover:border-[#2E1065] hover:bg-[#F8FAFC]">
+            <button disabled={processing} onClick={() => handleGatewaySelection("remita")} className="mb-2 flex w-full items-center justify-center gap-3 rounded-xl border-2 border-[#E2E8F0] bg-white p-4 text-[1.05rem] font-bold text-[#0F172A] transition hover:-translate-y-0.5 hover:border-[#2E1065] hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:border-[#E2E8F0] disabled:hover:bg-white">
               <FaBuildingColumns className="text-xl text-[#E15B26]" /> Pay with Remita
             </button>
 
@@ -317,7 +351,7 @@ export default function MerchantServiceFee() {
               Cancel
             </button>
           </div>
-          <style dangerouslySetOrigin={{__html: `@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }`}}/>
+          <style dangerouslySetInnerHTML={{__html: `@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }`}}/>
         </div>
       )}
 
