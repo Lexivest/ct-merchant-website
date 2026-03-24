@@ -10,6 +10,7 @@ import {
   FaTicket,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
+import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions";
 import useAuthSession from "../../hooks/useAuthSession";
 import {
   PAYSTACK_PUBLIC_KEY,
@@ -21,6 +22,29 @@ import {
 } from "../../lib/paymentConfig";
 
 const FEE_AMOUNT = 5000;
+
+async function extractFunctionErrorMessage(error, fallback = "Verification failed") {
+  if (!error) return fallback
+  const rawMessage = typeof error.message === "string" ? error.message : ""
+
+  const context = error.context
+  if (context && typeof context.clone === "function") {
+    try {
+      const asJson = await context.clone().json()
+      if (asJson && typeof asJson.error === "string" && asJson.error.trim()) {
+        return asJson.error
+      }
+    } catch (_) {}
+
+    try {
+      const asText = await context.clone().text()
+      if (asText && asText.trim()) return asText.trim()
+    } catch (_) {}
+  }
+
+  if (rawMessage.trim()) return rawMessage
+  return fallback
+}
 
 export default function MerchantPayment() {
   const navigate = useNavigate();
@@ -150,15 +174,16 @@ export default function MerchantPayment() {
       setStatusMsg("");
       setStatusError(false);
 
-      const { data, error } = await supabase.functions.invoke("verify-remita", {
-        body: {
-          transactionId: txId,
-          shopId: Number(urlShopId),
-          gateway: gateway,
-        }
+      const { data, error } = await invokeEdgeFunctionAuthed("verify-remita", {
+        transactionId: txId,
+        shopId: Number(urlShopId),
+        gateway: gateway,
       });
 
-      if (error) throw new Error(error.message || "Verification failed");
+      if (error) {
+        const detailedMessage = await extractFunctionErrorMessage(error, "Verification failed")
+        throw new Error(detailedMessage)
+      }
       if (data?.error) throw new Error(data.error);
 
       setStatusError(false);

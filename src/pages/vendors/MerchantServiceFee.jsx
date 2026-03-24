@@ -11,6 +11,7 @@ import {
   FaTriangleExclamation,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
+import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import {
@@ -26,6 +27,49 @@ const PLAN_OPTIONS = Object.freeze({
   "1_Year": Object.freeze({ label: "1 Year", amount: 10000 }),
 })
 
+const NON_RETRYABLE_ERROR_HINTS = [
+  "unauthorized",
+  "invalid",
+  "required",
+  "not found",
+  "access denied",
+  "must be physically verified",
+  "missing",
+]
+
+async function extractFunctionErrorMessage(error, fallback = "Verification failed") {
+  if (!error) return fallback
+  const rawMessage = typeof error.message === "string" ? error.message : ""
+
+  const context = error.context
+  if (context && typeof context.clone === "function") {
+    try {
+      const asJson = await context.clone().json()
+      if (asJson && typeof asJson.error === "string" && asJson.error.trim()) {
+        return asJson.error
+      }
+    } catch (_) {}
+
+    try {
+      const asText = await context.clone().text()
+      if (asText && asText.trim()) return asText.trim()
+    } catch (_) {}
+  }
+
+  if (rawMessage.trim()) return rawMessage
+  return fallback
+}
+
+function shouldRetryVerification(message) {
+  const normalized = String(message || "").toLowerCase()
+  if (!normalized) return true
+  return !NON_RETRYABLE_ERROR_HINTS.some((hint) => normalized.includes(hint))
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 export default function MerchantServiceFee() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
@@ -37,6 +81,7 @@ export default function MerchantServiceFee() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [processing, setProcessing] = useState(false);
+  const [processingNote, setProcessingNote] = useState("Please do not close this window.");
   
   const [shopData, setShopData] = useState(null);
   const [firstName, setFirstName] = useState("Merchant");
@@ -112,6 +157,51 @@ export default function MerchantServiceFee() {
     if (!authLoading) fetchSubscription();
   }, [user, authLoading, urlShopId, isOffline]);
 
+  const runSubscriptionVerificationWithRetry = async (txId, planKey, gateway) => {
+    setProcessing(true);
+    setProcessingNote("Please do not close this window.");
+    setGatewayModalOpen(false);
+
+    const maxAttempts = gateway === "remita" ? 4 : 2
+    let lastErrorMessage = "Verification failed"
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      setProcessingNote(
+        attempt === 1
+          ? "Please do not close this window."
+          : `Finalizing payment confirmation... (attempt ${attempt}/${maxAttempts})`,
+      )
+
+      const { data, error } = await invokeEdgeFunctionAuthed("verify-service-fee", {
+        transactionId: txId,
+        shopId: shopData.id,
+        plan: planKey,
+        gateway: gateway,
+      });
+
+      if (!error && !data?.error) {
+        alert(`Subscription successful via ${gateway.toUpperCase()}!`);
+        fetchSubscription(); // Reload the UI to reflect new dates
+        return
+      }
+
+      if (error) {
+        lastErrorMessage = await extractFunctionErrorMessage(error, "Verification failed")
+      } else if (data?.error) {
+        lastErrorMessage = data.error
+      }
+
+      const hasAttemptsLeft = attempt < maxAttempts
+      if (!hasAttemptsLeft || !shouldRetryVerification(lastErrorMessage)) {
+        throw new Error(lastErrorMessage)
+      }
+
+      await wait(1200 * attempt)
+    }
+
+    throw new Error(lastErrorMessage)
+  }
+
   // 3. Backend Verification Handler
   const verifySubscriptionOnBackend = async (txId, planKey, gateway) => {
     if (!txId || processing || !shopData?.id) return
@@ -122,29 +212,13 @@ export default function MerchantServiceFee() {
     }
 
     try {
-      setProcessing(true);
-      setGatewayModalOpen(false);
-
-      const { data, error } = await supabase.functions.invoke("verify-service-fee", {
-        body: {
-          transactionId: txId,
-          shopId: shopData.id,
-          plan: planKey,
-          gateway: gateway,
-        }
-      });
-
-      if (error) throw new Error(error.message || "Verification failed");
-      if (data?.error) throw new Error(data.error);
-
-      alert(`✅ Subscription Successful via ${gateway.toUpperCase()}!`);
-      fetchSubscription(); // Reload the UI to reflect new dates
-
+      await runSubscriptionVerificationWithRetry(txId, planKey, gateway)
     } catch (err) {
       console.error(err);
-      alert("⚠️ Error: " + (err.message || "Verification failed"));
+      alert("Error: " + (err.message || "Verification failed"));
     } finally {
       setProcessing(false);
+      setProcessingNote("Please do not close this window.");
     }
   };
 
@@ -360,7 +434,7 @@ export default function MerchantServiceFee() {
         <div className="fixed inset-0 z-[3000] flex flex-col items-center justify-center bg-black/80 text-white backdrop-blur-md">
           <FaCircleNotch className="mb-5 animate-spin text-5xl" />
           <h2 className="mb-2 text-xl font-bold">Processing Securely...</h2>
-          <p className="font-medium text-slate-300">Please do not close this window.</p>
+          <p className="font-medium text-slate-300">{processingNote}</p>
         </div>
       )}
 
