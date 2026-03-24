@@ -28,17 +28,13 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import useAuthSession from "../hooks/useAuthSession"
 import { ShimmerBlock } from "../components/common/Shimmers"
 
-// --- LOCAL ASSET IMPORT ---
-import ctmLogo from "../assets/images/logo.jpg"
-
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function CreateAccountShimmer() {
   return (
     <MainLayout>
-      <section className="min-h-screen bg-pink-50 px-4 py-8">
+      <section className="min-h-screen bg-pink-50 px-4 py-0">
         <div className="mx-auto max-w-md">
           <ShimmerBlock className="mb-6 h-10 w-24 rounded-xl" />
-          <ShimmerBlock className="mx-auto mb-5 h-24 w-24 rounded-xl" />
           <div className="rounded-[28px] border border-pink-100 bg-white p-6 shadow-xl md:p-8">
             <ShimmerBlock className="mb-2 h-8 w-48 rounded" />
             <ShimmerBlock className="mb-6 h-4 w-64 rounded" />
@@ -157,12 +153,16 @@ function CreateAccount() {
     }
   }
 
+  const showLoadingScreen = authLoading || (loadingCities && cities.length === 0)
+
   // --- Initialize Standard Google Sign-in ---
   useEffect(() => {
+    if (showLoadingScreen) return
+
     const clientId = "237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com"
 
-    function initializeGoogle() {
-      if (!window.google?.accounts?.id) return
+    function mountGoogleButton() {
+      if (!window.google?.accounts?.id || !googleButtonRef.current) return false
 
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -171,29 +171,34 @@ function CreateAccount() {
         cancel_on_tap_outside: true,
       })
 
-      // Render the official Google button directly into the DOM ref
-      if (googleButtonRef.current) {
-        window.google.accounts.id.renderButton(googleButtonRef.current, {
-          type: "standard",
-          theme: "outline",
-          text: "continue_with",
-          size: "large",
-          shape: "rectangular",
-          logo_alignment: "left",
-          width: 340,
-        })
-      }
+      const isMobile = window.matchMedia("(max-width: 640px)").matches
+      googleButtonRef.current.innerHTML = ""
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: "standard",
+        theme: "outline",
+        text: "continue_with",
+        size: isMobile ? "medium" : "large",
+        shape: "rectangular",
+        logo_alignment: "left",
+        width: isMobile ? 280 : 340,
+      })
+
+      return true
     }
 
-    const timer = setInterval(() => {
-      if (window.google?.accounts?.id) {
-        initializeGoogle()
-        clearInterval(timer)
-      }
-    }, 300)
+    const mounted = mountGoogleButton()
+    const timer = mounted
+      ? null
+      : setInterval(() => {
+          if (mountGoogleButton()) {
+            clearInterval(timer)
+          }
+        }, 250)
 
-    return () => clearInterval(timer)
-  }, [])
+    return () => {
+      if (timer) clearInterval(timer)
+    }
+  }, [showLoadingScreen])
 
   const currentErrorsCount = useMemo(() => Object.keys(errors).length, [errors])
   
@@ -262,14 +267,14 @@ function CreateAccount() {
     navigate("/", { state: { prefillEmail: form.email } })
   }
 
-  if (authLoading || (loadingCities && cities.length === 0)) {
+  if (showLoadingScreen) {
     return <CreateAccountShimmer />
   }
 
   return (
     <>
       <MainLayout>
-        <section className="min-h-screen bg-pink-50 px-4 py-8">
+        <section className="min-h-screen bg-pink-50 px-4 py-0">
           <div className="mx-auto max-w-md">
             
             {isOffline && (
@@ -283,10 +288,6 @@ function CreateAccount() {
               <FaArrowLeft />
               <span>Back</span>
             </Link>
-
-            <div className="mb-5 text-center">
-              <img src={ctmLogo} alt="CTMerchant Logo" className="mx-auto h-24 w-auto rounded-xl object-contain" />
-            </div>
 
             <div className="rounded-[28px] border border-pink-100 bg-white p-6 shadow-xl md:p-8">
               <h1 className="text-2xl font-extrabold text-slate-900">Create Account</h1>

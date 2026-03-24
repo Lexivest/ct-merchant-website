@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 
 function About() {
@@ -7,7 +7,7 @@ function About() {
 
   const handleBack = () => {
     if (searchParams.get("src") === "dash") {
-      navigate("/dashboard?tab=services")
+      navigate("/user-dashboard?tab=services")
       return
     }
 
@@ -463,14 +463,8 @@ function About() {
                           Communications with executive staff are prioritized
                           strictly on institutional relevance and maintained in
                           line with corporate privacy protocols. For direct
-                          inquiries, please use the{" "}
-                          <Link
-                            to="/help-support"
-                            className="font-extrabold text-amber-700 underline underline-offset-2"
-                          >
-                            Support Center
-                          </Link>
-                          .
+                          inquiries, please use the official support channels
+                          listed in the Contact page.
                         </p>
                       </div>
                     </div>

@@ -2,12 +2,6 @@ import { Link, useNavigate } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 import useAuthSession from "../hooks/useAuthSession"
 
-const benefits = [
-  "Expanded visibility for local commercial data and businesses.",
-  "Participation in a secure, neutral discovery infrastructure.",
-  "Direct alignment with city-scale digital economy and growth initiatives.",
-]
-
 function Affiliate() {
   const navigate = useNavigate()
 
@@ -18,7 +12,7 @@ function Affiliate() {
     const ref = document.referrer.toLowerCase()
 
     if (ref.includes("user-dashboard") || ref.includes("merchant-dashboard")) {
-      navigate("/dashboard?tab=services")
+      navigate("/user-dashboard?tab=services")
       return
     }
 

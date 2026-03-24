@@ -131,7 +131,7 @@ function Services() {
     const ref = document.referrer.toLowerCase()
 
     if (ref.includes("user-dashboard") || ref.includes("merchant-dashboard")) {
-      navigate("/dashboard?tab=services")
+      navigate("/user-dashboard?tab=services")
       return
     }
 

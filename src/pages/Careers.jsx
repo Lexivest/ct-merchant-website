@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 
@@ -94,7 +94,7 @@ function Careers() {
     const ref = document.referrer.toLowerCase()
 
     if (ref.includes("user-dashboard") || ref.includes("merchant-dashboard")) {
-      navigate("/dashboard?tab=services")
+      navigate("/user-dashboard?tab=services")
       return
     }
 
@@ -104,13 +104,18 @@ function Careers() {
   const openClosedNotice = (jobTitle) => {
     setSelectedJob(jobTitle)
     setIsModalOpen(true)
-    document.body.style.overflow = "hidden"
   }
 
   const closeModal = () => {
     setIsModalOpen(false)
-    document.body.style.overflow = ""
   }
+
+  useEffect(() => {
+    document.body.style.overflow = isModalOpen ? "hidden" : ""
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [isModalOpen])
 
   return (
     <MainLayout>

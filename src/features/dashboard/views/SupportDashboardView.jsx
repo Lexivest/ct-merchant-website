@@ -1,10 +1,9 @@
-import { useState } from "react"
+﻿import { useState } from "react"
 import { createPortal } from "react-dom"
-import { Link } from "react-router-dom"
 import { FaArrowLeft, FaCircleCheck } from "react-icons/fa6"
 import { supabase } from "../../../lib/supabase"
 
-function SupportDashboardView({ onBack, mode = "support" }) {
+function SupportDashboardView({ onBack, onOpenServices, mode = "support" }) {
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
@@ -85,7 +84,7 @@ function SupportDashboardView({ onBack, mode = "support" }) {
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    const emailPattern = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
     if (!emailPattern.test(formData.email.trim())) {
       setStatus({
@@ -287,7 +286,7 @@ function SupportDashboardView({ onBack, mode = "support" }) {
                             className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-pink-600 px-6 py-3.5 text-sm font-extrabold text-white shadow-[0_8px_20px_rgba(219,39,119,0.28)] transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-70"
                           >
                             <span>{isSubmitting ? "Sending..." : "Send Message"}</span>
-                            <span>{isSubmitting ? "⟳" : "➜"}</span>
+                            <span>{isSubmitting ? "âŸ³" : "âžœ"}</span>
                           </button>
 
                           {status.message ? (
@@ -439,7 +438,7 @@ function SupportDashboardView({ onBack, mode = "support" }) {
                             rel="noreferrer"
                             className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-extrabold text-slate-900 transition hover:bg-slate-50"
                           >
-                            <span>📍</span>
+                            <span>ðŸ“</span>
                             <span>Navigate to Office</span>
                           </a>
                         </div>
@@ -457,13 +456,20 @@ function SupportDashboardView({ onBack, mode = "support" }) {
                           </p>
 
                           <div className="mt-4">
-                            <Link
-                              to="/user-dashboard/services"
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (onOpenServices) {
+                                  onOpenServices()
+                                  return
+                                }
+                                onBack?.()
+                              }}
                               className="inline-flex items-center gap-2 text-sm font-extrabold text-pink-600 transition hover:text-pink-700"
                             >
                               <span>Explore Platform Services</span>
-                              <span>→</span>
-                            </Link>
+                              <span>-&gt;</span>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -504,3 +510,4 @@ function SupportDashboardView({ onBack, mode = "support" }) {
 }
 
 export default SupportDashboardView
+

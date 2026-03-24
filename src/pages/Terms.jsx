@@ -7,7 +7,7 @@ function Terms() {
 
   const handleBack = () => {
     if (searchParams.get("src") === "dash") {
-      navigate("/dashboard?tab=services")
+      navigate("/user-dashboard?tab=services")
       return
     }
 

@@ -1,5 +1,4 @@
 import { FaArrowLeft } from "react-icons/fa6"
-import { Link } from "react-router-dom"
 
 function AboutDashboardView({ onBack }) {
   return (
@@ -350,14 +349,8 @@ function AboutDashboardView({ onBack }) {
                           Communications with executive staff are prioritized
                           strictly on institutional relevance and maintained in
                           line with corporate privacy protocols. For direct
-                          inquiries, please use the{" "}
-                          <Link
-                            to="/user-dashboard/support"
-                            className="font-extrabold text-amber-700 underline underline-offset-2"
-                          >
-                            Support Center
-                          </Link>
-                          .
+                          inquiries, please use the support channels from the
+                          dashboard service menu.
                         </p>
                       </div>
                     </div>

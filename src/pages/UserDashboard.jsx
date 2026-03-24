@@ -31,6 +31,18 @@ const EMPTY_DASHBOARD_DATA = {
   unread: 0,
 }
 
+const ALLOWED_TABS = new Set(["market", "services", "profile", "notifications"])
+const ALLOWED_SERVICE_VIEWS = new Set([
+  "menu",
+  "about",
+  "services-info",
+  "careers",
+  "support",
+  "faq",
+  "report-abuse",
+  "wishlist",
+])
+
 function DashboardShimmer({ label = "Loading dashboard..." }) {
   return (
     <section className="min-h-screen bg-[#E3E6E6] px-4 py-4">
@@ -84,7 +96,7 @@ function UserDashboard() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const { loading: authLoading, user, profile, suspended, isOffline } = useAuthSession()
+  const { loading: authLoading, user, profile, suspended } = useAuthSession()
   
   // Use our new isolated tracking logic for the shop card
   const { shopData, shopMeta } = useMyShop()
@@ -169,8 +181,14 @@ function UserDashboard() {
     }
   }, [fetchedData])
 
-  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "market")
-  const [serviceView, setServiceView] = useState("menu")
+  const tabParam = searchParams.get("tab")
+  const activeTab = ALLOWED_TABS.has(tabParam) ? tabParam : "market"
+  const viewParam = searchParams.get("view")
+  const serviceView =
+    activeTab === "services" && ALLOWED_SERVICE_VIEWS.has(viewParam)
+      ? viewParam
+      : "menu"
+
   const [notice, setNotice] = useState({
     visible: false,
     type: "info",
@@ -217,24 +235,6 @@ function UserDashboard() {
       })
     }
   }, [authLoading, user, suspended, navigate])
-
-  useEffect(() => {
-    const tab = searchParams.get("tab")
-    if (tab) {
-      setActiveTab(tab)
-      if (tab === "services") {
-        setServiceView("menu")
-      }
-    }
-  }, [searchParams])
-
-  useEffect(() => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev)
-      next.set("tab", activeTab)
-      return next
-    })
-  }, [activeTab, setSearchParams])
 
   useEffect(() => {
     let attached = false
@@ -336,11 +336,36 @@ function UserDashboard() {
       .eq("is_read", false)
   }
 
+  function updateDashboardLocation({ tab, view }, { replace = false } = {}) {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (tab) next.set("tab", tab)
+        else next.delete("tab")
+
+        if (view) next.set("view", view)
+        else next.delete("view")
+
+        return next
+      },
+      { replace }
+    )
+  }
+
+  function handleServiceViewChange(nextView) {
+    updateDashboardLocation({
+      tab: "services",
+      view: nextView === "menu" ? null : nextView,
+    })
+  }
+
   function switchScreen(tab) {
-    setActiveTab(tab)
     if (tab === "services") {
-      setServiceView("menu")
+      updateDashboardLocation({ tab: "services", view: null })
+    } else {
+      updateDashboardLocation({ tab, view: null })
     }
+
     if (tab === "notifications") {
       markNotificationsRead()
     }
@@ -747,7 +772,7 @@ function UserDashboard() {
           <ServicesProfileSection
             mode="services"
             serviceView={serviceView}
-            setServiceView={setServiceView}
+            setServiceView={handleServiceViewChange}
             user={user}
             currentProfile={currentProfile}
             profileEditOpen={profileEditOpen}
@@ -780,7 +805,7 @@ function UserDashboard() {
           <ServicesProfileSection
             mode="profile"
             serviceView={serviceView}
-            setServiceView={setServiceView}
+            setServiceView={handleServiceViewChange}
             user={user}
             currentProfile={currentProfile}
             profileEditOpen={profileEditOpen}

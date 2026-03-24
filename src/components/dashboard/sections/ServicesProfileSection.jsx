@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import {
   FaBriefcase,
   FaBuilding,
@@ -75,6 +76,14 @@ function ServicesProfileSection({
   closeAvatarCropModal,
   applyAvatarCrop,
 }) {
+  useEffect(() => {
+    if (mode !== "services") return
+
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }, [mode, serviceView])
+
   if (mode === "services") {
     if (serviceView === "about") {
       return <AboutDashboardView onBack={() => setServiceView("menu")} />
@@ -98,6 +107,7 @@ function ServicesProfileSection({
         <SupportDashboardView
           mode="support"
           onBack={() => setServiceView("menu")}
+          onOpenServices={() => setServiceView("services-info")}
         />
       )
     }
