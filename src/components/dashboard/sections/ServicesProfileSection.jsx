@@ -21,7 +21,11 @@ import SupportDashboardView from "../../../features/dashboard/views/SupportDashb
 import AbuseReportDashboardView from "../../../features/dashboard/views/AbuseReportDashboardView";
 import FaqDashboardView from "../../../features/dashboard/views/FaqDashboardView";
 import WishlistDashboardView from "../../../features/dashboard/views/WishlistDashboardView";
+import { UPLOAD_RULES, getAcceptValue, getRuleLabel } from "../../../lib/uploadRules";
 
+const AVATAR_RULE = UPLOAD_RULES.avatars
+const AVATAR_ACCEPT = getAcceptValue(AVATAR_RULE, "image/jpeg,image/png")
+const AVATAR_RULE_LABEL = getRuleLabel(AVATAR_RULE)
 
 function ServiceCard({ icon, title, subtitle, onClick }) {
   return (
@@ -76,6 +80,10 @@ function ServicesProfileSection({
   closeAvatarCropModal,
   applyAvatarCrop,
 }) {
+  const profileFallbackAvatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+    currentProfile?.full_name || "User"
+  )}`
+
   useEffect(() => {
     if (mode !== "services") return
 
@@ -205,12 +213,14 @@ function ServicesProfileSection({
             <img
               src={
                 currentProfile?.avatar_url ||
-                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                  currentProfile?.full_name || "User"
-                )}`
+                profileFallbackAvatar
               }
               alt="Avatar"
               className="mx-auto mb-4 h-[120px] w-[120px] rounded-full border-2 border-[#D5D9D9] object-cover"
+              onError={(event) => {
+                event.currentTarget.onerror = null
+                event.currentTarget.src = profileFallbackAvatar
+              }}
             />
             <h2 className="mb-2 text-[1.8rem] font-extrabold text-[#0F1111]">
               {currentProfile?.full_name || "Loading..."}
@@ -252,12 +262,12 @@ function ServicesProfileSection({
                 ref={fileInputRef}
                 type="file"
                 hidden
-                accept="image/jpeg,image/png"
+                accept={AVATAR_ACCEPT}
                 onChange={onAvatarSelect}
               />
 
               <p className="mt-2 text-[0.8rem] font-semibold text-[#565959]">
-                Tap photo to update (Max 500KB | JPG/PNG)
+                {`Tap photo to update (${AVATAR_RULE_LABEL})`}
               </p>
             </div>
 
@@ -364,7 +374,7 @@ function ServicesProfileSection({
           <div className="crop-header-bar flex items-center justify-between bg-black/50 px-5 py-5 text-white">
             <div className="crop-title text-[1.2rem] font-bold">
               <FaCropSimple className="mr-2 inline" />
-              Adjust Avatar
+              Adjust Avatar (Optional)
             </div>
             <button
               type="button"
@@ -386,7 +396,7 @@ function ServicesProfileSection({
 
           <div className="crop-footer-bar flex justify-center gap-4 bg-black/50 p-5">
             <button className="btn-brand-alt" onClick={closeAvatarCropModal}>
-              Cancel
+              Use Without Crop
             </button>
             <button className="btn-brand" onClick={applyAvatarCrop}>
               Apply Crop

@@ -10,6 +10,12 @@ import {
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
+import { UPLOAD_RULES, formatBytes, getRuleLabel } from "../../lib/uploadRules";
+
+const KYC_VIDEO_RULE = UPLOAD_RULES.kycVideos;
+const KYC_VIDEO_BUCKET = KYC_VIDEO_RULE.bucket;
+const KYC_VIDEO_MAX_BYTES = KYC_VIDEO_RULE.maxBytes;
+const KYC_VIDEO_RULE_LABEL = getRuleLabel(KYC_VIDEO_RULE);
 
 export default function MerchantVideoKYC() {
   const navigate = useNavigate();
@@ -38,6 +44,7 @@ export default function MerchantVideoKYC() {
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const recordedBlobRef = useRef(null);
+  const uploadInFlightRef = useRef(false);
   
   const timerIntervalRef = useRef(null);
   const clockIntervalRef = useRef(null);
@@ -50,6 +57,19 @@ export default function MerchantVideoKYC() {
   // Sync state to refs for the animation loop
   useEffect(() => { locationRef.current = location; }, [location]);
   useEffect(() => { dateRef.current = currentDateTime; }, [currentDateTime]);
+
+  const getStoragePathFromUrl = (url, bucket) => {
+    if (!url) return null;
+    try {
+      const cleanUrl = String(url).split("?")[0];
+      const escapedBucket = bucket.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+      const regex = new RegExp(`/storage/v1/object/(?:public|authenticated)/${escapedBucket}/(.+)$`);
+      const match = cleanUrl.match(regex);
+      return match?.[1] || null;
+    } catch {
+      return null;
+    }
+  };
 
   // 1. Initial Data Fetch & Validation
   useEffect(() => {
@@ -70,7 +90,7 @@ export default function MerchantVideoKYC() {
 
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
-          .select("id, name, unique_id, is_verified, kyc_status")
+          .select("id, name, unique_id, is_verified, kyc_status, kyc_video_url")
           .eq("owner_id", user.id)
           .maybeSingle();
 
@@ -289,25 +309,38 @@ export default function MerchantVideoKYC() {
 
   // 3. Upload Logic
   const uploadVideo = async () => {
+    if (uploadInFlightRef.current || recordingState === "uploading") return;
     if (!recordedBlobRef.current) return;
     if (isOffline) return alert("You must be online to upload.");
+    if (!shopData?.id) return alert("Shop data is not ready. Please retry.");
+    if (recordedBlobRef.current.size > KYC_VIDEO_MAX_BYTES) {
+      return alert(
+        `Video exceeds upload limit (${formatBytes(
+          recordedBlobRef.current.size
+        )}). Please retake with shorter duration or lower quality. Allowed: ${KYC_VIDEO_RULE_LABEL}.`
+      );
+    }
+
+    let uploadedPath = null;
 
     try {
+      uploadInFlightRef.current = true;
       setRecordingState("uploading");
       setUploadStatus("Uploading burned video to secure vault...");
 
       const ext = recordedBlobRef.current.type.includes('mp4') ? 'mp4' : 'webm';
-      const fileName = `kyc_video.${ext}`;
+      const fileName = `kyc_video_${Date.now()}.${ext}`;
       const filePath = `${user.id}/${fileName}`;
 
       // A. Upload to Storage
       const { error: uploadErr } = await supabase.storage
-        .from('kyc_videos')
-        .upload(filePath, recordedBlobRef.current, { cacheControl: '3600', upsert: true });
+        .from(KYC_VIDEO_BUCKET)
+        .upload(filePath, recordedBlobRef.current, { cacheControl: '3600', upsert: false });
 
       if (uploadErr) throw new Error(`Storage Error: ${uploadErr.message}`);
+      uploadedPath = filePath;
 
-      const { data: { publicUrl } } = supabase.storage.from('kyc_videos').getPublicUrl(filePath);
+      const { data: { publicUrl } } = supabase.storage.from(KYC_VIDEO_BUCKET).getPublicUrl(filePath);
 
       // B. Update Shop KYC Status
       setUploadStatus("Finalizing submission...");
@@ -325,13 +358,32 @@ export default function MerchantVideoKYC() {
       if (dbErr) throw new Error(`Database Error: ${dbErr.message}`);
       if (!updatedShop || updatedShop.length === 0) throw new Error("Security Blocked Update. Contact Support.");
 
+      const oldVideoPath = getStoragePathFromUrl(shopData?.kyc_video_url, KYC_VIDEO_BUCKET);
+      if (oldVideoPath && oldVideoPath !== filePath) {
+        const { error: cleanupError } = await supabase.storage
+          .from(KYC_VIDEO_BUCKET)
+          .remove([oldVideoPath]);
+        if (cleanupError) {
+          console.warn("Old KYC video cleanup failed:", cleanupError);
+        }
+      }
+
       alert("Video Uploaded Successfully! Our admins will review your shop and activate your Digital ID card within 24 hours.");
+      uploadInFlightRef.current = false;
       navigate("/vendor-panel", { replace: true });
 
     } catch (err) {
+      if (uploadedPath) {
+        try {
+          await supabase.storage.from(KYC_VIDEO_BUCKET).remove([uploadedPath]);
+        } catch (cleanupErr) {
+          console.warn("Rollback cleanup failed for KYC upload:", cleanupErr);
+        }
+      }
       console.error(err);
       alert(`Upload Failed!\n\nReason: ${err.message}`);
       setRecordingState("recorded"); // Let them try submitting again
+      uploadInFlightRef.current = false;
     }
   };
 
@@ -390,6 +442,7 @@ export default function MerchantVideoKYC() {
                 <li>Show your face and your physical shop items.</li>
                 <li>Read the text in the yellow box below out loud.</li>
                 <li>You have exactly 60 seconds. Keep it short!</li>
+                <li>{`Upload limit: ${KYC_VIDEO_RULE_LABEL}.`}</li>
               </ul>
             </div>
 

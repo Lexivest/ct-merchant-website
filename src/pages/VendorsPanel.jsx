@@ -513,12 +513,12 @@ function DashCard({ title, subtitle, icon, colorClass, badge, isLocked, onClick 
           </div>
         )}
 
-        <style dangerouslySetOrigin={{__html: `
-          @keyframes popIn {
-            from { transform: scale(0); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-          }
-        `}}/>
+        <style
+          dangerouslySetInnerHTML={{
+            __html:
+              "@keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }",
+          }}
+        />
       </div>
     </div>
   )

@@ -19,9 +19,14 @@ import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
+import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 
-const MAX_UPLOAD_SIZE = 4 * 1024 * 1024; // 4MB
-const BANNER_MAX_BYTES = 200 * 1024; // 200KB
+const BANNER_RULE = UPLOAD_RULES.shopBanners;
+const BANNER_BUCKET = BANNER_RULE.bucket;
+const BANNER_MAX_BYTES = BANNER_RULE.maxBytes;
+const BANNER_INPUT_MAX_BYTES = 4 * 1024 * 1024;
+const BANNER_ACCEPT = getAcceptValue(BANNER_RULE, "image/*");
+const BANNER_RULE_LABEL = getRuleLabel(BANNER_RULE);
 const TARGET_W = 1280;
 const TARGET_H = 720;
 
@@ -77,6 +82,19 @@ export default function MerchantBanner() {
   const [tempImage, setTempImage] = useState("");
   const cropperRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  const getBannerPathFromUrl = (url) => {
+    if (!url) return null;
+    try {
+      const cleanUrl = String(url).split("?")[0];
+      const escapedBucket = BANNER_BUCKET.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+      const regex = new RegExp(`/storage/v1/object/(?:public|authenticated)/${escapedBucket}/(.+)$`, "i");
+      const match = cleanUrl.match(regex);
+      return match?.[1] || null;
+    } catch {
+      return null;
+    }
+  };
 
   useEffect(() => {
     async function init() {
@@ -134,8 +152,8 @@ export default function MerchantBanner() {
       alert("Please upload a valid image file.");
       return;
     }
-    if (file.size > MAX_UPLOAD_SIZE) {
-      alert("File is too large! Max 4MB.");
+    if (file.size > BANNER_INPUT_MAX_BYTES) {
+      alert(`File is too large. Max input size is ${formatBytes(BANNER_INPUT_MAX_BYTES)}.`);
       return;
     }
 
@@ -170,12 +188,14 @@ export default function MerchantBanner() {
       canvas.toBlob(
         (blob) => {
           if (!blob) return;
-          if (blob.size <= BANNER_MAX_BYTES || quality <= 0.2) {
+          if (blob.size <= BANNER_MAX_BYTES) {
             setActiveBlob(blob);
             setShouldDeleteOld(true);
             setPreviewUrl(URL.createObjectURL(blob));
             setStatus("new");
             closeStudio();
+          } else if (quality <= 0.2) {
+            alert(`Unable to compress this banner under ${formatBytes(BANNER_MAX_BYTES)}. Try a simpler image.`);
           } else {
             quality -= 0.15;
             attemptCompress();
@@ -198,6 +218,7 @@ export default function MerchantBanner() {
 
   // --- SUBMIT ---
   const handleSave = async () => {
+    if (saving) return;
     if (isOffline) {
       alert("You must be online to save changes.");
       return;
@@ -210,39 +231,24 @@ export default function MerchantBanner() {
     try {
       setSaving(true);
 
-      // 1. Garbage Collection
-      if (shouldDeleteOld && existingBanners.length > 0) {
-        const pathsToDelete = [];
-        const idsToDelete = [];
+      const idsToDelete = [];
+      const pathsToDelete = [];
+      existingBanners.forEach((banner) => {
+        if (banner?.id) idsToDelete.push(banner.id);
+        const oldPath = getBannerPathFromUrl(banner?.content_data);
+        if (oldPath) pathsToDelete.push(oldPath);
+      });
 
-        existingBanners.forEach((b) => {
-          idsToDelete.push(b.id);
-          if (b.content_data && b.content_data.includes("/shops-banner-storage/")) {
-            try {
-              const fileName = decodeURIComponent(new URL(b.content_data).pathname.split("/").pop());
-              if (fileName) pathsToDelete.push(`${shopId}/${fileName}`);
-            } catch (e) {}
-          }
-        });
-
-        if (pathsToDelete.length > 0) {
-          await supabase.storage.from("shops-banner-storage").remove(pathsToDelete);
-        }
-        if (idsToDelete.length > 0) {
-          await supabase.from("shop_banners_news").delete().in("id", idsToDelete);
-        }
-      }
-
-      // 2. Upload New
+      // 1. Upload & insert new banner first (prevents blank state if upload fails)
       if (activeBlob) {
         const fName = `${shopId}/${Date.now()}_banner.jpg`;
         const { error: uploadError } = await supabase.storage
-          .from("shops-banner-storage")
+          .from(BANNER_BUCKET)
           .upload(fName, activeBlob, { contentType: "image/jpeg", upsert: false });
 
         if (uploadError) throw uploadError;
 
-        const { data } = supabase.storage.from("shops-banner-storage").getPublicUrl(fName);
+        const { data } = supabase.storage.from(BANNER_BUCKET).getPublicUrl(fName);
 
         // 3. Insert Record
         const { error: dbError } = await supabase.from("shop_banners_news").insert({
@@ -253,10 +259,33 @@ export default function MerchantBanner() {
           status: "pending",
         });
 
-        if (dbError) throw dbError;
+        if (dbError) {
+          await supabase.storage.from(BANNER_BUCKET).remove([fName]);
+          throw dbError;
+        }
         setSuccessMode("upload");
       } else {
         setSuccessMode("delete");
+      }
+
+      // 2. Cleanup old records/files after successful insert or delete action
+      if (shouldDeleteOld && idsToDelete.length > 0) {
+        const { error: deleteRowsError } = await supabase
+          .from("shop_banners_news")
+          .delete()
+          .in("id", idsToDelete);
+
+        if (deleteRowsError) throw deleteRowsError;
+      }
+
+      if (shouldDeleteOld && pathsToDelete.length > 0) {
+        const uniquePaths = [...new Set(pathsToDelete)];
+        const { error: cleanupError } = await supabase.storage
+          .from(BANNER_BUCKET)
+          .remove(uniquePaths);
+        if (cleanupError) {
+          console.warn("Old banner storage cleanup failed:", cleanupError);
+        }
       }
 
       setShowSuccess(true);
@@ -266,6 +295,7 @@ export default function MerchantBanner() {
 
     } catch (err) {
       alert("Error saving banner: " + err.message);
+    } finally {
       setSaving(false);
     }
   };
@@ -313,7 +343,7 @@ export default function MerchantBanner() {
             <FaPanorama className="text-[#007185]" /> Landscape Shop Banner
           </h4>
           <p className="text-[0.85rem] text-[#475569] leading-relaxed">
-            Upload <strong>1 Landscape Banner</strong> to feature your shop. To ensure fast loading speeds, images over <strong>200KB</strong> will be automatically compressed. All banners are reviewed by an admin.
+            {`Upload 1 landscape banner. Max input ${formatBytes(BANNER_INPUT_MAX_BYTES)}; final upload ${BANNER_RULE_LABEL}. All banners are reviewed by an admin.`}
           </p>
         </div>
 
@@ -322,7 +352,7 @@ export default function MerchantBanner() {
             onClick={() => !previewUrl && fileInputRef.current?.click()}
             className={`relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden rounded-xl border-2 transition-colors ${previewUrl ? "cursor-default border-[#D5D9D9] bg-white shadow-sm" : "cursor-pointer border-dashed border-[#888C8C] bg-[#F7F7F7] hover:border-[#db2777] hover:bg-[#fdf2f8]"}`}
           >
-            <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileSelect} />
+            <input type="file" ref={fileInputRef} hidden accept={BANNER_ACCEPT} onChange={handleFileSelect} />
             
             {previewUrl ? (
               <>
@@ -349,7 +379,7 @@ export default function MerchantBanner() {
             ) : (
               <div className="text-center p-5">
                 <FaImage className="mx-auto mb-3 text-5xl text-[#888C8C]" />
-                <span className="text-[0.9rem] font-bold leading-relaxed text-[#565959]">Tap to Upload Banner<br/>(Landscape, Max 200KB)</span>
+                <span className="text-[0.9rem] font-bold leading-relaxed text-[#565959]">{`Tap to Upload Banner (Landscape, ${BANNER_RULE_LABEL})`}</span>
               </div>
             )}
           </div>
@@ -408,7 +438,7 @@ export default function MerchantBanner() {
             <div className={`mx-auto h-7 w-7 animate-spin rounded-full border-4 ${successMode === 'delete' ? 'border-[#DC2626]/30 border-t-[#DC2626]' : 'border-[#db2777]/30 border-t-[#db2777]'}`}></div>
             <p className={`mt-4 text-[0.8rem] font-bold ${successMode === 'delete' ? 'text-[#565959]' : 'text-[#db2777]'}`}>Redirecting to dashboard...</p>
           </div>
-          <style dangerouslySetOrigin={{__html: `@keyframes scaleUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }`}}/>
+          <style dangerouslySetInnerHTML={{ __html: "@keyframes scaleUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }" }} />
         </div>
       )}
     </div>

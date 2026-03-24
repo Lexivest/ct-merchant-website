@@ -114,6 +114,7 @@ export default function MerchantNews() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     if (isOffline) return alert("You must be online to submit news.");
 
     try {
@@ -148,6 +149,7 @@ export default function MerchantNews() {
 
     } catch (err) {
       alert("Submission failed: " + err.message);
+    } finally {
       setSubmitting(false);
     }
   };

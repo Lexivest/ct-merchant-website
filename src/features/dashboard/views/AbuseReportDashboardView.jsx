@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { supabase } from "../../../lib/supabase";
-import { FaArrowLeft, FaShieldHalved, FaCircleNotch, FaCircleCheck } from "react-icons/fa6";
+import { FaArrowLeft, FaShieldHalved, FaCircleNotch, FaTriangleExclamation } from "react-icons/fa6";
+import { useGlobalFeedback } from "../../../components/common/GlobalFeedbackProvider";
 
 export default function AbuseReportDashboardView({ onBack, user }) {
   const [targetName, setTargetName] = useState("");
@@ -9,7 +10,7 @@ export default function AbuseReportDashboardView({ onBack, user }) {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [isSuccess, setIsSuccess] = useState(false);
+  const { notify } = useGlobalFeedback();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,10 +35,15 @@ export default function AbuseReportDashboardView({ onBack, user }) {
 
       if (error) throw error;
 
-      setIsSuccess(true);
       setTargetName("");
       setCategory("");
       setDetails("");
+      notify({
+        type: "success",
+        title: "Report Submitted Successfully",
+        message:
+          "Thank you for helping keep CTMerchant safe. Our trust and safety team will review your report immediately.",
+      });
 
     } catch (err) {
       console.error("Error submitting abuse report:", err);
@@ -46,26 +52,6 @@ export default function AbuseReportDashboardView({ onBack, user }) {
       setIsSubmitting(false);
     }
   };
-
-  if (isSuccess) {
-    return (
-      <div className="screen active">
-        <div className="bg-white px-4 py-8 text-center rounded-lg border border-[#D5D9D9] max-w-[600px] mx-auto mt-6">
-          <FaCircleCheck className="mx-auto text-5xl text-[#059669] mb-4" />
-          <h2 className="text-[1.5rem] font-extrabold text-[#0F1111] mb-2">Report Submitted Successfully</h2>
-          <p className="text-[0.95rem] text-[#565959] mb-8 leading-relaxed max-w-md mx-auto">
-            Thank you for helping keep CTMerchant safe. Our trust and safety team will review your report immediately.
-          </p>
-          <button 
-            onClick={onBack}
-            className="w-full sm:w-auto px-8 py-3 rounded-lg bg-[#F7CA00] border border-[#F2C200] font-bold text-[#0F1111] shadow-[0_1px_2px_rgba(15,17,17,0.15)] hover:bg-[#F3D03E]"
-          >
-            Return to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="screen active">

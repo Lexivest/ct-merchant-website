@@ -44,6 +44,9 @@ function DashboardHeader({
     `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
       currentProfile?.full_name || user?.email || "User"
     )}`
+  const fallbackAvatarSrc = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+    currentProfile?.full_name || user?.email || "User"
+  )}`
 
   const [desktopAreaOpen, setDesktopAreaOpen] = useState(false)
   const [mobileAreaOpen, setMobileAreaOpen] = useState(false)
@@ -306,6 +309,10 @@ function DashboardHeader({
             src={avatarSrc}
             className="header-avatar ml-1 h-[34px] w-[34px] rounded-full bg-white object-cover"
             alt="Avatar"
+            onError={(event) => {
+              event.currentTarget.onerror = null
+              event.currentTarget.src = fallbackAvatarSrc
+            }}
           />
         </div>
 

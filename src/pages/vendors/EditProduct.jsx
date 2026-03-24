@@ -24,8 +24,14 @@ import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
+import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 
-const MAX_UPLOAD_SIZE = 4 * 1024 * 1024;
+const PRODUCT_RULE = UPLOAD_RULES.products;
+const PRODUCT_BUCKET = PRODUCT_RULE.bucket;
+const PRODUCT_MAX_BYTES = PRODUCT_RULE.maxBytes;
+const PRODUCT_INPUT_MAX_BYTES = 4 * 1024 * 1024;
+const PRODUCT_ACCEPT = getAcceptValue(PRODUCT_RULE, "image/*");
+const PRODUCT_RULE_LABEL = getRuleLabel(PRODUCT_RULE);
 const MAX_SPECIAL_OFFERS = 2;
 
 const techCats = ["Mobile Phones & Accessories", "Computers & IT Services", "Electronics & Appliances"];
@@ -268,7 +274,9 @@ export default function EditProduct() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) return alert("Please upload a valid image file.");
-    if (file.size > MAX_UPLOAD_SIZE) return alert("File is too large! Max 4MB.");
+    if (file.size > PRODUCT_INPUT_MAX_BYTES) {
+      return alert(`File is too large. Max input size is ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}.`);
+    }
 
     setActiveSlot(slot);
     setTempSize(file.size);
@@ -348,7 +356,7 @@ export default function EditProduct() {
     const attemptCompress = () => {
       finalCanvas.toBlob((blob) => {
           if (!blob) return;
-          if (blob.size <= 100 * 1024 || quality <= 0.4) {
+          if (blob.size <= PRODUCT_MAX_BYTES) {
             setBlobs((prev) => ({ ...prev, [activeSlot]: blob }));
             setDeletedSlots((prev) => ({ ...prev, [activeSlot]: false }));
             setPreviews((prev) => ({ ...prev, [activeSlot]: URL.createObjectURL(blob) }));
@@ -358,6 +366,8 @@ export default function EditProduct() {
             else setSavings((prev) => ({ ...prev, [activeSlot]: "Ready" }));
             
             closeStudio();
+          } else if (quality <= 0.4) {
+            alert(`Unable to compress this image under ${formatBytes(PRODUCT_MAX_BYTES)}. Try a simpler image.`);
           } else {
             quality -= 0.05;
             attemptCompress();
@@ -378,11 +388,16 @@ export default function EditProduct() {
   // --- SUBMIT ---
   const handleUpdate = async (e) => {
     e.preventDefault();
+    if (submitting || deleting) return;
     if (isOffline) return alert("You must be online to update a product.");
     if (!form.category) return alert("Please select a category.");
     
     const hasMainImage = (existingUrls[1] && !deletedSlots[1]) || blobs[1];
     if (!hasMainImage) return alert("The Main Image (Box 1) is strictly required!");
+    const oversizedSlot = [1, 2, 3].find((slot) => blobs[slot] && blobs[slot].size > PRODUCT_MAX_BYTES);
+    if (oversizedSlot) {
+      return alert(`Image ${oversizedSlot} exceeds ${formatBytes(PRODUCT_MAX_BYTES)} after processing. Please re-crop.`);
+    }
     
     if (form.isDiscount && activeOffersCount >= MAX_SPECIAL_OFFERS && (!productData.discount_price || productData.discount_price >= productData.price)) {
       return alert("Security Block: You already have the maximum of 2 Special Offers active.");
@@ -407,9 +422,9 @@ export default function EditProduct() {
       const uploadPromises = [1, 2, 3].map(async (idx) => {
         if (!blobs[idx]) return null;
         const fName = `${user.id}_${Date.now()}_img${idx}.jpg`;
-        const { error: upErr } = await supabase.storage.from("products").upload(fName, blobs[idx], { contentType: "image/jpeg", upsert: false });
+        const { error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], { contentType: "image/jpeg", upsert: false });
         if (upErr) throw upErr;
-        return supabase.storage.from("products").getPublicUrl(fName).data.publicUrl;
+        return supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl;
       });
 
       const [url1, url2, url3] = await Promise.all(uploadPromises);
@@ -449,7 +464,7 @@ export default function EditProduct() {
         }
       });
       if (pathsToDelete.length > 0) {
-        await supabase.storage.from("products").remove(pathsToDelete);
+        await supabase.storage.from(PRODUCT_BUCKET).remove(pathsToDelete);
       }
 
       setSuccessMode("update");
@@ -463,6 +478,7 @@ export default function EditProduct() {
   };
 
   const deleteProduct = async () => {
+    if (submitting || deleting) return;
     if (isOffline) return alert("You must be online to delete a product.");
     if (!window.confirm("Are you sure you want to permanently delete this product? This action cannot be undone.")) return;
     
@@ -471,7 +487,7 @@ export default function EditProduct() {
       
       const pathsToDelete = [];
       [productData.image_url, productData.image_url_2, productData.image_url_3].forEach(url => {
-        if(url && url.includes('/products/')) {
+        if(url && url.includes(`/${PRODUCT_BUCKET}/`)) {
           try {
             const fileName = decodeURIComponent(new URL(url).pathname.split('/').pop());
             if(fileName) pathsToDelete.push(fileName);
@@ -480,7 +496,7 @@ export default function EditProduct() {
       });
       
       if(pathsToDelete.length > 0) {
-        await supabase.storage.from('products').remove(pathsToDelete);
+        await supabase.storage.from(PRODUCT_BUCKET).remove(pathsToDelete);
       }
       
       const { error } = await supabase.from('products').delete().eq('id', productId);
@@ -555,7 +571,9 @@ export default function EditProduct() {
 
         <div className="mb-6 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-4">
           <h4 className="mb-2 flex items-center gap-2 text-[0.95rem] font-extrabold"><FaWandMagicSparkles className="text-[#db2777]" /> Powered by CT Studio</h4>
-          <p className="text-[0.85rem] text-[#475569] leading-relaxed">Tap an image slot below to open the studio. We auto-compress your images (Max 4MB input) to perfectly balance data savings and high resolution.</p>
+          <p className="text-[0.85rem] text-[#475569] leading-relaxed">
+            {`Tap an image slot below to open the studio. Max input ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}; final upload ${PRODUCT_RULE_LABEL}.`}
+          </p>
         </div>
 
         <form onSubmit={handleUpdate} className="rounded-xl border border-[#D5D9D9] bg-white p-6 shadow-sm">
@@ -568,7 +586,7 @@ export default function EditProduct() {
                 onClick={() => !previews[slot] && fileInputRefs[slot].current?.click()}
                 className={`relative flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed transition-colors ${slot === 1 ? (previews[1] ? "border-[#db2777] bg-white" : "border-[#db2777] bg-[#fdf2f8]") : (previews[slot] ? "border-slate-300 bg-white" : "border-[#888C8C] bg-[#F7F7F7] hover:border-[#db2777]")}`}
               >
-                <input type="file" ref={fileInputRefs[slot]} hidden accept="image/*" onChange={(e) => handleFileSelect(e, slot)} />
+                <input type="file" ref={fileInputRefs[slot]} hidden accept={PRODUCT_ACCEPT} onChange={(e) => handleFileSelect(e, slot)} />
                 
                 {previews[slot] ? (
                   <>
@@ -860,7 +878,7 @@ export default function EditProduct() {
             <div className={`mx-auto h-7 w-7 animate-spin rounded-full border-4 ${successMode === 'delete' ? 'border-[#DC2626]/30 border-t-[#DC2626]' : 'border-[#db2777]/30 border-t-[#db2777]'}`}></div>
             <p className={`mt-4 text-[0.8rem] font-bold ${successMode === 'delete' ? 'text-[#565959]' : 'text-[#db2777]'}`}>Redirecting to dashboard...</p>
           </div>
-          <style dangerouslySetOrigin={{__html: `@keyframes scaleUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }`}}/>
+          <style dangerouslySetInnerHTML={{ __html: "@keyframes scaleUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }" }} />
         </div>
       )}
     </div>

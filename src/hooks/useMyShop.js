@@ -2,14 +2,71 @@ import { useEffect, useState, useCallback } from "react"
 import { supabase } from "../lib/supabase"
 import useAuthSession from "./useAuthSession"
 
+const SHOP_CACHE_KEY_PREFIX = "ctm_my_shop_"
+
+function getShopCacheKey(userId) {
+  return `${SHOP_CACHE_KEY_PREFIX}${userId || "guest"}`
+}
+
+function readCachedShop(userId) {
+  if (!userId) return null
+  try {
+    const raw = localStorage.getItem(getShopCacheKey(userId))
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function writeCachedShop(userId, value) {
+  if (!userId || !value) return
+  try {
+    localStorage.setItem(getShopCacheKey(userId), JSON.stringify(value))
+  } catch {
+    // ignore cache write failures
+  }
+}
+
+function clearCachedShop(userId) {
+  if (!userId) return
+  try {
+    localStorage.removeItem(getShopCacheKey(userId))
+  } catch {
+    // ignore cache cleanup failures
+  }
+}
+
+function buildMetaFromShop(shopData) {
+  if (!shopData) return { title: "Register Shop", status: "default" }
+  if (shopData.is_open === false) return { title: "Locked", status: "locked" }
+  if (shopData.status === "pending") return { title: "Pending", status: "pending" }
+  if (shopData.status === "rejected") return { title: "Rejected", status: "rejected" }
+  return { title: "My Shop", status: "approved" }
+}
+
 export default function useMyShop() {
   const { user, isOffline } = useAuthSession()
-  const [shopData, setShopData] = useState(null)
+  const [shopData, setShopData] = useState(() => readCachedShop(user?.id))
   const [dataError, setDataError] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [hasResolvedOnline, setHasResolvedOnline] = useState(false)
   
   // Default fallback state
   const [shopMeta, setShopMeta] = useState({ title: "Checking...", status: "locked" })
+
+  useEffect(() => {
+    if (!user?.id) {
+      setShopData(null)
+      setHasResolvedOnline(false)
+      setLoading(false)
+      return
+    }
+
+    const cached = readCachedShop(user.id)
+    setShopData(cached)
+    setHasResolvedOnline(false)
+    setLoading(false)
+  }, [user?.id])
 
   const fetchShop = useCallback(async () => {
     if (!user?.id) {
@@ -29,6 +86,12 @@ export default function useMyShop() {
       if (error) throw error
 
       setShopData(data)
+      setHasResolvedOnline(true)
+      if (data) {
+        writeCachedShop(user.id, data)
+      } else {
+        clearCachedShop(user.id)
+      }
     } catch (err) {
       console.error("Error fetching user shop status:", err)
       setDataError(true)
@@ -46,12 +109,14 @@ export default function useMyShop() {
 
   // ROBUST STATE INTERCEPTION (Handles Offline & Network Errors)
   useEffect(() => {
+    const resolvedMeta = buildMetaFromShop(shopData)
+
     // 1. Completely offline
     if (isOffline) {
       setShopMeta({ 
-        title: shopData ? "My Shop" : "Shop Status", 
-        status: "locked",
-        subtitle: "Offline Mode" 
+        title: shopData ? resolvedMeta.title : "Shop Status", 
+        status: shopData ? resolvedMeta.status : "locked",
+        subtitle: shopData ? "Offline (cached status)" : "Offline Mode" 
       })
       return
     }
@@ -67,24 +132,34 @@ export default function useMyShop() {
     }
 
     // 3. Actively fetching for the first time
-    if (loading && !shopData) {
+    if (loading && !shopData && !hasResolvedOnline) {
       setShopMeta({ title: "Checking...", status: "locked" })
       return
     }
 
-    // 4. Normal Operating Logic
-    if (!shopData) {
-      setShopMeta({ title: "Register Shop", status: "default" })
-    } else if (shopData.is_open === false) {
-      setShopMeta({ title: "Locked", status: "locked" })
-    } else if (shopData.status === "pending") {
-      setShopMeta({ title: "Pending", status: "pending" })
-    } else if (shopData.status === "rejected") {
-      setShopMeta({ title: "Rejected", status: "rejected" })
-    } else {
-      setShopMeta({ title: "My Shop", status: "approved" })
+    // 4. No confirmed result yet: stay neutral (prevents wrong "Register Shop" on weak network)
+    if (!shopData && !hasResolvedOnline) {
+      setShopMeta({ title: "Shop Status", status: "locked", subtitle: "Checking status..." })
+      return
     }
-  }, [shopData, isOffline, dataError, loading])
 
-  return { shopData, shopMeta, loading, dataError, refetchShop: fetchShop }
+    // 5. Confirmed no shop
+    if (!shopData && hasResolvedOnline) {
+      setShopMeta({ title: "Register Shop", status: "default" })
+      return
+    }
+
+    // 6. Resolved shop state
+    setShopMeta(resolvedMeta)
+  }, [shopData, isOffline, dataError, loading, hasResolvedOnline])
+
+  return {
+    shopData,
+    shopMeta,
+    loading,
+    dataError,
+    hasResolvedOnline,
+    canRegisterShop: hasResolvedOnline && !shopData && !isOffline && !dataError,
+    refetchShop: fetchShop,
+  }
 }

@@ -1,14 +1,12 @@
 import { useState } from "react"
-import { supabase } from "../../lib/supabase";
+import { FaHeadset } from "react-icons/fa6"
+import { supabase } from "../../lib/supabase"
+import { useGlobalFeedback } from "./GlobalFeedbackProvider"
 
 function FloatingContact() {
   const [isOpen, setIsOpen] = useState(false)
-  const [status, setStatus] = useState({
-    type: "",
-    message: "",
-  })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [successModalOpen, setSuccessModalOpen] = useState(false)
+  const { notify } = useGlobalFeedback()
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -18,9 +16,6 @@ function FloatingContact() {
 
   const togglePopup = () => {
     setIsOpen((prev) => !prev)
-    if (!isOpen) {
-      setStatus({ type: "", message: "" })
-    }
   }
 
   const handleChange = (event) => {
@@ -48,8 +43,9 @@ function FloatingContact() {
       !formData.email.trim() ||
       !formData.message.trim()
     ) {
-      setStatus({
+      notify({
         type: "error",
+        title: "Missing Details",
         message: "Please fill in your name, email, and message.",
       })
       return
@@ -58,8 +54,9 @@ function FloatingContact() {
     const emailPattern = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
 
     if (!emailPattern.test(formData.email.trim())) {
-      setStatus({
+      notify({
         type: "error",
+        title: "Invalid Email",
         message: "Please enter a valid email address.",
       })
       return
@@ -67,7 +64,6 @@ function FloatingContact() {
 
     try {
       setIsSubmitting(true)
-      setStatus({ type: "", message: "" })
 
       const payload = {
         full_name: formData.fullName.trim(),
@@ -82,10 +78,16 @@ function FloatingContact() {
 
       resetForm()
       setIsOpen(false)
-      setSuccessModalOpen(true)
+      notify({
+        type: "success",
+        title: "Message Sent",
+        message:
+          "Thank you for contacting CTMerchant. Our team has received your message and will respond as soon as possible.",
+      })
     } catch (error) {
-      setStatus({
+      notify({
         type: "error",
+        title: "Message Not Sent",
         message: error.message || "Could not send message. Please try again.",
       })
     } finally {
@@ -101,7 +103,7 @@ function FloatingContact() {
         title="Need Help? Contact Support"
         className="fixed bottom-20 left-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-pink-600 text-2xl text-white shadow-[0_10px_25px_rgba(219,39,119,0.35)] transition hover:scale-105 hover:bg-pink-700"
       >
-        🎧
+        <FaHeadset />
       </button>
 
       <div
@@ -119,7 +121,7 @@ function FloatingContact() {
             onClick={togglePopup}
             className="text-lg text-white/70 transition hover:text-white"
           >
-            ×
+            &times;
           </button>
         </div>
 
@@ -182,50 +184,16 @@ function FloatingContact() {
             />
           </div>
 
-          {status.message ? (
-            <div
-              className={`rounded-lg px-3 py-2 text-[11px] font-medium ${
-                status.type === "success"
-                  ? "border border-green-200 bg-green-50 text-green-700"
-                  : "border border-red-200 bg-red-50 text-red-700"
-              }`}
-            >
-              {status.message}
-            </div>
-          ) : null}
-
           <button
             type="submit"
             disabled={isSubmitting}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-[13px] font-extrabold text-white transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isSubmitting ? "Sending..." : "Send Message"}
-            <span>{isSubmitting ? "⟳" : "→"}</span>
+            <span>{isSubmitting ? "..." : "->"}</span>
           </button>
         </form>
       </div>
-
-      {successModalOpen ? (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-[350px] rounded-[20px] bg-white p-8 text-center shadow-2xl">
-            <div className="mx-auto mb-4 text-5xl text-green-600">✓</div>
-            <div className="mb-2 text-xl font-extrabold text-slate-900">
-              Message Sent
-            </div>
-            <div className="mb-6 text-sm leading-6 text-slate-500">
-              Thank you for contacting CTMerchant. Our team has received your
-              message and will respond as soon as possible.
-            </div>
-            <button
-              type="button"
-              onClick={() => setSuccessModalOpen(false)}
-              className="w-full rounded-xl bg-slate-100 px-4 py-3 font-bold text-slate-900 transition hover:bg-slate-200"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      ) : null}
     </>
   )
 }

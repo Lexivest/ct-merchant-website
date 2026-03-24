@@ -31,9 +31,23 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { supabase } from "../lib/supabase"
+import {
+  UPLOAD_RULES,
+  formatBytes,
+  getAcceptValue,
+  getRuleLabel,
+} from "../lib/uploadRules"
 import { ShimmerBlock } from "../components/common/Shimmers"
 
-const MAX_FILE_SIZE = 512000
+const STOREFRONT_RULE = UPLOAD_RULES.storefronts
+const LOGO_RULE = UPLOAD_RULES.brandAssets
+const ID_DOCUMENT_RULE = UPLOAD_RULES.idDocuments
+const CAC_DOCUMENT_RULE = UPLOAD_RULES.cacDocuments
+const STOREFRONT_BUCKET = STOREFRONT_RULE.bucket
+const LOGO_BUCKET = LOGO_RULE.bucket
+const ID_DOCUMENT_BUCKET = ID_DOCUMENT_RULE.bucket
+const CAC_DOCUMENT_BUCKET = CAC_DOCUMENT_RULE.bucket
+const MAX_FILE_SIZE = Math.max(ID_DOCUMENT_RULE.maxBytes, CAC_DOCUMENT_RULE.maxBytes)
 const DESC_MIN_WORDS = 30
 const DESC_MAX_WORDS = 150
 const ADDR_MIN_WORDS = 5
@@ -256,6 +270,19 @@ function ShopRegistration() {
   const [actionSheet, setActionSheet] = useState({ isOpen: false, targetId: null, acceptsPdf: false, ratio: null })
   const [cropConfig, setCropConfig] = useState({ isOpen: false, targetId: null, src: "", ratio: null })
 
+  const storefrontRuleLabel = getRuleLabel(STOREFRONT_RULE)
+  const logoRuleLabel = getRuleLabel(LOGO_RULE)
+  const idRuleLabel = getRuleLabel(ID_DOCUMENT_RULE)
+  const cacRuleLabel = getRuleLabel(CAC_DOCUMENT_RULE)
+
+  function getRuleForTargetId(targetId) {
+    if (targetId === "storefront") return STOREFRONT_RULE
+    if (targetId === "logo") return LOGO_RULE
+    if (targetId === "idCard") return ID_DOCUMENT_RULE
+    if (targetId === "cac") return CAC_DOCUMENT_RULE
+    return null
+  }
+
   const descWords = useMemo(() => countWords(form.desc), [form.desc])
   const addressWords = useMemo(() => countWords(form.address), [form.address])
 
@@ -347,6 +374,7 @@ function ShopRegistration() {
 
   function openReview(event) {
     event.preventDefault()
+    if (submitting) return
     const error = validateForm()
     if (error) {
       setNotice({ visible: true, type: "error", title: "Form validation failed", message: error })
@@ -365,13 +393,14 @@ function ShopRegistration() {
   const handleActionSelection = (mode) => {
     const input = hiddenInputRef.current
     if (!input) return
+    const targetRule = getRuleForTargetId(actionSheet.targetId)
 
     input.value = "" 
     if (mode === "camera") {
-      input.setAttribute("accept", "image/*")
+      input.setAttribute("accept", getAcceptValue(targetRule, "image/*"))
       input.setAttribute("capture", "environment")
     } else if (mode === "gallery") {
-      input.setAttribute("accept", "image/*")
+      input.setAttribute("accept", getAcceptValue(targetRule, "image/*"))
       input.removeAttribute("capture")
     } else if (mode === "pdf") {
       input.setAttribute("accept", "application/pdf")
@@ -387,10 +416,17 @@ function ShopRegistration() {
     if (!file) return
 
     const { targetId, ratio } = actionSheet
+    const targetRule = getRuleForTargetId(targetId)
 
     if (file.type === "application/pdf") {
-      if (file.size > MAX_FILE_SIZE) {
-        setNotice({ visible: true, type: "error", title: "PDF too large", message: "Maximum allowed PDF size is 500KB." })
+      const maxPdfBytes = targetRule?.maxBytes || MAX_FILE_SIZE
+      if (file.size > maxPdfBytes) {
+        setNotice({
+          visible: true,
+          type: "error",
+          title: "PDF too large",
+          message: `Maximum allowed PDF size is ${formatBytes(maxPdfBytes)}.`,
+        })
         window.scrollTo({ top: 0, behavior: "smooth" })
         return
       }
@@ -408,8 +444,14 @@ function ShopRegistration() {
       } else {
         try {
           const compressedBlob = await compressFullImage(file)
-          if (compressedBlob.size > MAX_FILE_SIZE) {
-            setNotice({ visible: true, type: "error", title: "Image too detailed", message: "Could not compress image enough. Try a lower resolution photo." })
+          const maxImageBytes = targetRule?.maxBytes || MAX_FILE_SIZE
+          if (compressedBlob.size > maxImageBytes) {
+            setNotice({
+              visible: true,
+              type: "error",
+              title: "Image too detailed",
+              message: `Could not compress image enough. Please keep it under ${formatBytes(maxImageBytes)}.`,
+            })
             window.scrollTo({ top: 0, behavior: "smooth" })
             return
           }
@@ -423,8 +465,15 @@ function ShopRegistration() {
   }
 
   const onCropComplete = (blob) => {
-    if (blob.size > MAX_FILE_SIZE) {
-      setNotice({ visible: true, type: "error", title: "Crop too large", message: "Try cropping a smaller area to reduce file size." })
+    const targetRule = getRuleForTargetId(cropConfig.targetId)
+    const maxCropBytes = targetRule?.maxBytes || MAX_FILE_SIZE
+    if (blob.size > maxCropBytes) {
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Crop too large",
+        message: `Try cropping a smaller area to reduce file size below ${formatBytes(maxCropBytes)}.`,
+      })
       window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }
@@ -464,18 +513,26 @@ function ShopRegistration() {
     return <img src={value} alt={key} className="h-full min-h-[140px] w-full rounded-2xl object-cover" />
   }
 
-  async function uploadFile(fileOrBlob, bucket, folder, oldUrl = "") {
-    if (!fileOrBlob) return oldUrl || null
+  function getStoragePathFromUrl(url, bucket) {
+    if (!url) return null
+    try {
+      const cleanUrl = String(url).split("?")[0]
+      const escapedBucket = bucket.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")
+      const regex = new RegExp(`/storage/v1/object/(?:public|authenticated)/${escapedBucket}/(.+)$`)
+      const match = cleanUrl.match(regex)
+      return match?.[1] || null
+    } catch {
+      return null
+    }
+  }
 
-    if (oldUrl) {
-      try {
-        const match = oldUrl.match(new RegExp(`/(?:public|authenticated)/${bucket}/(.+)`))
-        if (match && match[1]) {
-          const oldPath = match[1].split('?')[0]
-          await supabase.storage.from(bucket).remove([oldPath])
-        }
-      } catch (e) {
-        console.warn("Failed to delete orphaned file from storage:", e)
+  async function uploadFile(fileOrBlob, bucket, folder, oldUrl = "") {
+    if (!fileOrBlob) {
+      return {
+        url: oldUrl || null,
+        bucket,
+        oldPath: null,
+        newPath: null,
       }
     }
 
@@ -492,15 +549,23 @@ function ShopRegistration() {
     if (uploadError) throw uploadError
 
     const { data } = supabase.storage.from(bucket).getPublicUrl(path)
-    
-    if (bucket === 'id-documents' || bucket === 'cac-documents') {
-        return data.publicUrl.replace('/public/', '/authenticated/')
+    const publicUrl = data?.publicUrl || null
+    const oldPath = getStoragePathFromUrl(oldUrl, bucket)
+    const finalUrl =
+      bucket === ID_DOCUMENT_BUCKET || bucket === CAC_DOCUMENT_BUCKET
+        ? publicUrl?.replace("/public/", "/authenticated/")
+        : publicUrl
+
+    return {
+      url: finalUrl,
+      bucket,
+      oldPath,
+      newPath: path,
     }
-    
-    return data.publicUrl
   }
 
   async function submitApplication() {
+    if (submitting) return
     if (isOffline) {
       setNotice({ visible: true, type: "error", title: "Network Offline", message: "You cannot submit an application while offline." })
       setReviewOpen(false)
@@ -508,13 +573,19 @@ function ShopRegistration() {
       return
     }
 
+    const uploadedFiles = []
+
     try {
       setSubmitting(true)
 
-      const storefrontUrl = await uploadFile(files.storefront, "storefronts", "covers", existingShop?.storefront_url)
-      const idCardUrl = await uploadFile(files.idCard, "id-documents", "ids", existingShop?.id_card_url)
-      const cacUrl = await uploadFile(files.cac, "cac-documents", "cac", existingShop?.cac_certificate_url)
-      const logoUrl = await uploadFile(files.logo, "brand-assets", "logos", existingShop?.image_url)
+      const storefrontUpload = await uploadFile(files.storefront, STOREFRONT_BUCKET, "covers", existingShop?.storefront_url)
+      uploadedFiles.push(storefrontUpload)
+      const idCardUpload = await uploadFile(files.idCard, ID_DOCUMENT_BUCKET, "ids", existingShop?.id_card_url)
+      uploadedFiles.push(idCardUpload)
+      const cacUpload = await uploadFile(files.cac, CAC_DOCUMENT_BUCKET, "cac", existingShop?.cac_certificate_url)
+      uploadedFiles.push(cacUpload)
+      const logoUpload = await uploadFile(files.logo, LOGO_BUCKET, "logos", existingShop?.image_url)
+      uploadedFiles.push(logoUpload)
 
       const payload = {
         owner_id: user.id,
@@ -532,10 +603,10 @@ function ShopRegistration() {
         id_type: form.idType,
         id_number: form.idNumber.trim(),
         cac_number: form.cacNumber.trim() || null,
-        image_url: logoUrl,
-        storefront_url: storefrontUrl,
-        id_card_url: idCardUrl,
-        cac_certificate_url: cacUrl,
+        image_url: logoUpload.url,
+        storefront_url: storefrontUpload.url,
+        id_card_url: idCardUpload.url,
+        cac_certificate_url: cacUpload.url,
         facebook_url: form.facebook ? formatUrl(form.facebook) : null,
         instagram_url: form.instagram ? formatUrl(form.instagram) : null,
         twitter_url: form.twitter ? formatUrl(form.twitter) : null,
@@ -557,6 +628,23 @@ function ShopRegistration() {
         setNotice({ visible: true, type: "success", title: "Application submitted", message: "You will be notified once your shop is approved." })
       }
 
+      const oldFilesByBucket = new Map()
+      uploadedFiles.forEach((item) => {
+        if (!item?.bucket || !item.oldPath || !item.newPath || item.oldPath === item.newPath) return
+        if (!oldFilesByBucket.has(item.bucket)) oldFilesByBucket.set(item.bucket, [])
+        oldFilesByBucket.get(item.bucket).push(item.oldPath)
+      })
+
+      try {
+        await Promise.all(
+          Array.from(oldFilesByBucket.entries()).map(([bucket, paths]) =>
+            supabase.storage.from(bucket).remove([...new Set(paths)])
+          )
+        )
+      } catch (cleanupError) {
+        console.warn("Old shop file cleanup failed:", cleanupError)
+      }
+
       setReviewOpen(false)
       window.scrollTo({ top: 0, behavior: "smooth" })
 
@@ -564,6 +652,23 @@ function ShopRegistration() {
 
       setTimeout(() => navigate("/user-dashboard"), 1200)
     } catch (error) {
+      const uploadedPathsByBucket = new Map()
+      uploadedFiles.forEach((item) => {
+        if (!item?.bucket || !item.newPath) return
+        if (!uploadedPathsByBucket.has(item.bucket)) uploadedPathsByBucket.set(item.bucket, [])
+        uploadedPathsByBucket.get(item.bucket).push(item.newPath)
+      })
+
+      try {
+        await Promise.all(
+          Array.from(uploadedPathsByBucket.entries()).map(([bucket, paths]) =>
+            supabase.storage.from(bucket).remove([...new Set(paths)])
+          )
+        )
+      } catch (cleanupError) {
+        console.warn("Rollback cleanup failed for new shop files:", cleanupError)
+      }
+
       setNotice({ visible: true, type: "error", title: "Submission failed", message: error.message || "Please try again." })
       setReviewOpen(false)
       window.scrollTo({ top: 0, behavior: "smooth" })
@@ -626,11 +731,13 @@ function ShopRegistration() {
             <form onSubmit={openReview} className="rounded-[28px] border border-white/70 bg-white p-6 shadow-2xl md:p-8">
               
               <SectionTitle icon={<FaStore />} tone="purple" title="Store Front Image" />
-              <p className="mb-4 text-center text-sm font-medium text-slate-500">Upload a clear, portrait-oriented photo of your shop exterior.</p>
+              <p className="mb-4 text-center text-sm font-medium text-slate-500">
+                {`Upload a clear, portrait-oriented photo of your shop exterior (${storefrontRuleLabel}).`}
+              </p>
 
               <UploadCard
                 title="Cover Photo"
-                subtitle="Required, Max 500KB"
+                subtitle={`Required | ${storefrontRuleLabel}`}
                 onClick={() => triggerActionSheet("storefront", false, 3 / 4)}
                 preview={renderPreview("storefront")}
                 isPortrait
@@ -706,7 +813,11 @@ function ShopRegistration() {
 
                 <UploadCard
                   title={form.businessType === "Limited Liability (Ltd)" ? <span>CAC Certificate <span className="ml-1 text-pink-600">*</span></span> : "CAC Certificate"}
-                  subtitle={form.businessType === "Limited Liability (Ltd)" ? "Required for Ltd. PDF/Image, Max 500KB" : "Optional for enterprise. PDF/Image, Max 500KB"}
+                  subtitle={
+                    form.businessType === "Limited Liability (Ltd)"
+                      ? `Required for Ltd | ${cacRuleLabel}`
+                      : `Optional for enterprise | ${cacRuleLabel}`
+                  }
                   onClick={() => triggerActionSheet("cac", true, null)}
                   preview={renderPreview("cac")}
                 />
@@ -728,14 +839,14 @@ function ShopRegistration() {
 
                 <UploadCard
                   title={<span>Official ID Document <span className="ml-1 text-pink-600">*</span></span>}
-                  subtitle="Required. PDF/Image, Max 500KB"
+                  subtitle={`Required | ${idRuleLabel}`}
                   onClick={() => triggerActionSheet("idCard", true, null)}
                   preview={renderPreview("idCard")}
                 />
 
                 <UploadCard
                   title="Brand Logo"
-                  subtitle="Optional. Square Image only, Max 500KB"
+                  subtitle={`Optional square image | ${logoRuleLabel}`}
                   onClick={() => triggerActionSheet("logo", false, 1)}
                   preview={renderPreview("logo")}
                   isSquare
@@ -888,7 +999,7 @@ function ActionSheet({ sheet, onClose, onSelect }) {
           </button>
           {sheet.acceptsPdf && (
             <button onClick={() => onSelect("pdf")} className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4 text-left font-bold text-slate-800 transition hover:bg-slate-100">
-              <FaFilePdf className="text-xl text-red-500" /> Upload PDF Document
+              <FaFilePdf className="text-xl text-red-500" /> {`Upload PDF (${formatBytes(MAX_FILE_SIZE)} max)`}
             </button>
           )}
           <button onClick={onClose} className="mt-2 rounded-2xl bg-slate-200 p-4 font-bold text-slate-600 transition hover:bg-slate-300">Cancel</button>

@@ -9,16 +9,21 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import useMyShop from "../hooks/useMyShop" // <-- Import our new logic file
 import { signOutUser } from "../lib/auth"
 import { supabase } from "../lib/supabase"
+import { UPLOAD_RULES, formatBytes } from "../lib/uploadRules"
 
 import DashboardHeader from "../components/dashboard/layout/DashboardHeader"
 import MarketSection from "../components/dashboard/sections/MarketSection"
 import ServicesProfileSection from "../components/dashboard/sections/ServicesProfileSection"
 import NotificationsSection from "../components/dashboard/sections/NotificationsSection"
 
-const MAX_FILE_SIZE = 500000
+const AVATAR_RULE = UPLOAD_RULES.avatars
+const MAX_FILE_SIZE = AVATAR_RULE.maxBytes
 const MAX_SOURCE_FILE_SIZE = 10 * 1024 * 1024
 const INACTIVITY_LIMIT = 15 * 60 * 1000
-const ALLOWED_AVATAR_MIME_TYPES = new Set(["image/jpeg", "image/png"])
+const ALLOWED_AVATAR_MIME_TYPES = new Set(AVATAR_RULE.allowedMime)
+const AVATAR_BUCKET = AVATAR_RULE.bucket
+const AVATAR_WIDTH_STEPS = [900, 760, 640, 520, 420, 360]
+const AVATAR_QUALITY_STEPS = [0.92, 0.86, 0.8, 0.74, 0.68, 0.62, 0.56]
 
 const EMPTY_DASHBOARD_DATA = {
   profile: null,
@@ -101,7 +106,7 @@ function UserDashboard() {
   const { loading: authLoading, user, profile, suspended } = useAuthSession()
   
   // Use our new isolated tracking logic for the shop card
-  const { shopData, shopMeta } = useMyShop()
+  const { shopData, shopMeta, canRegisterShop, loading: shopLoading } = useMyShop()
 
   const fetchDashboardData = async () => {
     if (!user?.id) throw new Error("Authentication required")
@@ -307,8 +312,19 @@ function UserDashboard() {
       aspectRatio: 1,
       viewMode: 2,
       background: false,
-      autoCropArea: 1,
+      autoCropArea: 0.9,
       responsive: true,
+      dragMode: "move",
+      guides: true,
+      highlight: true,
+      cropBoxMovable: true,
+      cropBoxResizable: true,
+      movable: true,
+      zoomOnTouch: true,
+      zoomOnWheel: true,
+      minCropBoxWidth: 120,
+      minCropBoxHeight: 120,
+      toggleDragModeOnDblclick: false,
     })
 
     return () => {
@@ -390,6 +406,15 @@ function UserDashboard() {
   // Updated purely to rely on our new isolated shopData hook
   function handleShopClick() {
     if (!shopData) {
+      if (!canRegisterShop || shopLoading || shopMeta.status === "locked") {
+        setNotice({
+          visible: true,
+          type: "warning",
+          title: "Status still syncing",
+          message: "We could not confirm your shop status yet. Please check your connection and try again.",
+        })
+        return
+      }
       navigate("/shop-registration")
       return
     }
@@ -607,9 +632,11 @@ function UserDashboard() {
     }
   }
 
-  function onAvatarSelect(event) {
+  async function onAvatarSelect(event) {
     const file = event.target.files?.[0]
     if (!file) return
+    setProfileEditError("")
+    setAvatarBlob(null)
 
     if (!ALLOWED_AVATAR_MIME_TYPES.has(file.type)) {
       setProfileEditError("Only JPG and PNG images are supported.")
@@ -623,12 +650,44 @@ function UserDashboard() {
       return
     }
 
+    try {
+      const fallbackBlob = await buildCompressedAvatarBlobFromFile(file)
+
+      if (!fallbackBlob) {
+        setProfileEditError("Could not process this image. Please try another JPG or PNG file.")
+        event.target.value = ""
+        return
+      }
+
+      if (fallbackBlob.size > MAX_FILE_SIZE) {
+        setProfileEditError(
+          `Image is too large (${Math.round(
+            fallbackBlob.size / 1024
+          )}KB). Maximum allowed size is ${formatBytes(MAX_FILE_SIZE)} for JPG/PNG avatars.`
+        )
+        event.target.value = ""
+        return
+      }
+
+      // Keep an upload-ready blob even if the user closes the crop modal.
+      setAvatarBlob(fallbackBlob)
+    } catch (error) {
+      setProfileEditError(error.message || "Could not process this image.")
+      event.target.value = ""
+      return
+    }
+
     const reader = new FileReader()
+    reader.onerror = () => {
+      setProfileEditError("Could not read this file. Please try another JPG or PNG image.")
+      event.target.value = ""
+    }
     reader.onload = (e) => {
       if (e.target?.result) {
         setAvatarPreview(e.target.result)
         setCropModalOpen(true)
       }
+      event.target.value = ""
     }
     reader.readAsDataURL(file)
   }
@@ -653,6 +712,59 @@ function UserDashboard() {
     })
   }
 
+  async function buildCompressedAvatarBlobFromFile(file) {
+    const imageUrl = URL.createObjectURL(file)
+
+    try {
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image()
+        img.onload = () => resolve(img)
+        img.onerror = () =>
+          reject(new Error("Could not load the selected image. Please try another file."))
+        img.src = imageUrl
+      })
+
+      const longestEdge = Math.max(image.naturalWidth || 0, image.naturalHeight || 0)
+      if (!longestEdge) {
+        throw new Error("Selected image is invalid.")
+      }
+
+      let smallestBlob = null
+
+      for (const targetLongestEdge of AVATAR_WIDTH_STEPS) {
+        const ratio = Math.min(1, targetLongestEdge / longestEdge)
+        const width = Math.max(1, Math.round(image.naturalWidth * ratio))
+        const height = Math.max(1, Math.round(image.naturalHeight * ratio))
+
+        const canvas = document.createElement("canvas")
+        canvas.width = width
+        canvas.height = height
+
+        const context = canvas.getContext("2d")
+        if (!context) continue
+
+        context.imageSmoothingEnabled = true
+        context.imageSmoothingQuality = "high"
+        context.drawImage(image, 0, 0, width, height)
+
+        for (const quality of AVATAR_QUALITY_STEPS) {
+          const nextBlob = await canvasToBlob(canvas, "image/jpeg", quality)
+          if (!smallestBlob || nextBlob.size < smallestBlob.size) {
+            smallestBlob = nextBlob
+          }
+
+          if (nextBlob.size <= MAX_FILE_SIZE) {
+            return nextBlob
+          }
+        }
+      }
+
+      return smallestBlob
+    } finally {
+      URL.revokeObjectURL(imageUrl)
+    }
+  }
+
   function setGeneratedAvatarPreview(blob) {
     if (generatedAvatarPreviewRef.current) {
       URL.revokeObjectURL(generatedAvatarPreviewRef.current)
@@ -663,15 +775,112 @@ function UserDashboard() {
     setAvatarPreview(previewUrl)
   }
 
+  function isAvatarColumnMissingError(error) {
+    const message = String(error?.message || "").toLowerCase()
+    const details = String(error?.details || "").toLowerCase()
+    const hint = String(error?.hint || "").toLowerCase()
+    return (
+      (message.includes("avatar_url") && message.includes("column")) ||
+      (details.includes("avatar_url") && details.includes("column")) ||
+      (hint.includes("avatar_url") && hint.includes("column"))
+    )
+  }
+
+  function extractAvatarStoragePath(value) {
+    if (!value || typeof value !== "string") return null
+    const cleaned = value.split("?")[0]
+
+    if (!cleaned.startsWith("http")) {
+      return cleaned
+    }
+
+    const match = cleaned.match(
+      /\/storage\/v1\/object\/(?:public|authenticated|sign)\/avatars\/(.+)$/i
+    )
+
+    return match?.[1] || null
+  }
+
+  function formatSupabaseError(error, fallback = "Unexpected error") {
+    if (!error) return fallback
+    if (typeof error === "string") return error
+
+    const message = String(error.message || "").trim()
+    const details = String(error.details || "").trim()
+    const hint = String(error.hint || "").trim()
+    const code = String(error.code || error.statusCode || error.status || "").trim()
+
+    const parts = [message || fallback]
+    if (details) parts.push(`details: ${details}`)
+    if (hint) parts.push(`hint: ${hint}`)
+    if (code) parts.push(`code: ${code}`)
+    return parts.join(" | ")
+  }
+
+  async function hasAvatarColumnInProfiles() {
+    if (!user?.id) return false
+
+    const probe = await supabase
+      .from("profiles")
+      .select("id, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle()
+
+    if (probe.error) {
+      if (isAvatarColumnMissingError(probe.error)) {
+        return false
+      }
+
+      const fromCurrentProfile = Boolean(
+        currentProfile &&
+          Object.prototype.hasOwnProperty.call(currentProfile, "avatar_url")
+      )
+
+      console.warn(
+        "Could not verify profiles.avatar_url explicitly; falling back to loaded profile shape.",
+        probe.error
+      )
+      return fromCurrentProfile
+    }
+
+    return Boolean(
+      probe.data &&
+        Object.prototype.hasOwnProperty.call(probe.data, "avatar_url")
+    )
+  }
+
+  function getAvatarUploadFailureMessage(uploadErrors) {
+    const combined = uploadErrors
+      .map(({ filePath, error, stage }) => {
+        const label = stage ? `${stage} ${filePath}` : filePath
+        return `${label}: ${formatSupabaseError(error, "Upload failed")}`
+      })
+      .join(" | ")
+
+    const normalized = combined.toLowerCase()
+
+    if (
+      normalized.includes("row-level security") ||
+      normalized.includes("not allowed") ||
+      normalized.includes("permission denied")
+    ) {
+      return `Avatar upload was blocked by storage permissions (RLS). Please allow authenticated users to upload into their folder in the '${AVATAR_BUCKET}' bucket. ${combined}`
+    }
+
+    if (normalized.includes("bucket") && normalized.includes("not found")) {
+      return `Avatar upload failed because the '${AVATAR_BUCKET}' bucket was not found.`
+    }
+
+    return `Could not upload avatar. ${combined}`
+  }
+
   async function buildCompressedAvatarBlob() {
     const cropper = cropperRef.current
     if (!cropper) return null
 
-    const widthSteps = [900, 760, 640, 520, 420, 360]
-    const qualitySteps = [0.92, 0.86, 0.8, 0.74, 0.68, 0.62, 0.56]
     let smallestBlob = null
 
-    for (const width of widthSteps) {
+    for (const width of AVATAR_WIDTH_STEPS) {
       const canvas = cropper.getCroppedCanvas({
         width,
         height: width,
@@ -681,7 +890,7 @@ function UserDashboard() {
 
       if (!canvas) continue
 
-      for (const quality of qualitySteps) {
+      for (const quality of AVATAR_QUALITY_STEPS) {
         const nextBlob = await canvasToBlob(canvas, "image/jpeg", quality)
         if (!smallestBlob || nextBlob.size < smallestBlob.size) {
           smallestBlob = nextBlob
@@ -710,7 +919,7 @@ function UserDashboard() {
         setProfileEditError(
           `Image is too large (${Math.round(
             blob.size / 1024
-          )}KB). Maximum allowed size is 500KB for JPG/PNG avatars.`
+          )}KB). Maximum allowed size is ${formatBytes(MAX_FILE_SIZE)} for JPG/PNG avatars.`
         )
         return
       }
@@ -725,47 +934,72 @@ function UserDashboard() {
   }
 
   async function uploadAvatarProcess() {
-    if (!avatarBlob || !user) return localData.profile?.avatar_url || null
-
-    const oldUrl = localData.profile?.avatar_url
-
-    if (oldUrl && oldUrl.includes("/avatars/")) {
-      try {
-        const match = oldUrl.match(/(?:public|authenticated)\/avatars\/(.+)/)
-        if (match?.[1]) {
-          await supabase.storage
-            .from("avatars")
-            .remove([match[1].split("?")[0]])
-        }
-      } catch {
-        // ignore cleanup failure
+    if (!avatarBlob || !user) {
+      return {
+        avatarUrl: localData.profile?.avatar_url || null,
+        uploadedPath: null,
+        oldPath: extractAvatarStoragePath(localData.profile?.avatar_url),
       }
     }
+
+    const oldPath = extractAvatarStoragePath(localData.profile?.avatar_url)
 
     const timestamp = Date.now()
     const uploadPaths = [
       `${user.id}/avatar_${timestamp}.jpg`,
+      `${user.id}/avatar.jpg`,
       `${user.id}_avatar_${timestamp}.jpg`,
     ]
     const uploadErrors = []
 
     for (const filePath of uploadPaths) {
-      const uploadRes = await supabase.storage
-        .from("avatars")
-        .upload(filePath, avatarBlob, {
-          contentType: "image/jpeg",
-          upsert: true,
-          cacheControl: "3600",
+      let uploadRes
+      try {
+        uploadRes = await supabase.storage
+          .from(AVATAR_BUCKET)
+          .upload(filePath, avatarBlob, {
+            contentType: "image/jpeg",
+            upsert: true,
+            cacheControl: "3600",
+          })
+      } catch (error) {
+        uploadErrors.push({
+          filePath,
+          stage: "upload",
+          error,
         })
-
-      if (!uploadRes.error) {
-        return supabase.storage.from("avatars").getPublicUrl(filePath).data.publicUrl
+        continue
       }
 
-      uploadErrors.push(uploadRes.error.message || "Upload failed")
+      if (!uploadRes.error) {
+        const publicUrl = supabase.storage
+          .from(AVATAR_BUCKET)
+          .getPublicUrl(filePath).data.publicUrl
+
+        if (!publicUrl) {
+          uploadErrors.push({
+            filePath,
+            stage: "url",
+            error: new Error("Upload succeeded but public URL could not be generated."),
+          })
+          continue
+        }
+
+        return {
+          avatarUrl: publicUrl,
+          uploadedPath: filePath,
+          oldPath,
+        }
+      }
+
+      uploadErrors.push({
+        filePath,
+        stage: "upload",
+        error: uploadRes.error,
+      })
     }
 
-    throw new Error(`Could not upload avatar. ${uploadErrors.join(" | ")}`)
+    throw new Error(getAvatarUploadFailureMessage(uploadErrors))
   }
 
   async function saveProfile() {
@@ -788,20 +1022,54 @@ function UserDashboard() {
       setProfileSaving(true)
       setProfileEditError("")
 
-      const avatarUrl = await uploadAvatarProcess()
+      const avatarColumnExists = await hasAvatarColumnInProfiles()
+
+      if (avatarBlob && !avatarColumnExists) {
+        throw new Error(
+          "Schema mismatch detected: profiles.avatar_url column is missing, so avatar uploads cannot be saved to profile records."
+        )
+      }
+
+      const uploadResult = avatarBlob
+        ? await uploadAvatarProcess()
+        : {
+            avatarUrl: localData.profile?.avatar_url || null,
+            uploadedPath: null,
+            oldPath: extractAvatarStoragePath(localData.profile?.avatar_url),
+          }
+      const avatarUrl = uploadResult.avatarUrl
+
+      const updatePayload = {
+        full_name: fullName,
+        phone,
+        city_id: parseInt(profileEditForm.city_id, 10),
+        area_id: parseInt(profileEditForm.area_id, 10),
+      }
+
+      if (avatarColumnExists) {
+        updatePayload.avatar_url = avatarUrl
+      }
 
       const res = await supabase
         .from("profiles")
-        .update({
-          full_name: fullName,
-          phone,
-          city_id: parseInt(profileEditForm.city_id, 10),
-          area_id: parseInt(profileEditForm.area_id, 10),
-          avatar_url: avatarUrl,
-        })
+        .update(updatePayload)
         .eq("id", user.id)
 
       if (res.error) throw res.error
+
+      if (
+        uploadResult.oldPath &&
+        uploadResult.uploadedPath &&
+        uploadResult.oldPath !== uploadResult.uploadedPath
+      ) {
+        const cleanupRes = await supabase.storage
+          .from(AVATAR_BUCKET)
+          .remove([uploadResult.oldPath])
+
+        if (cleanupRes.error) {
+          console.warn("Old avatar cleanup failed:", cleanupRes.error)
+        }
+      }
 
       localStorage.removeItem("ctm_dashboard_cache")
 
@@ -838,7 +1106,15 @@ function UserDashboard() {
       setAvatarBlob(null)
       
     } catch (err) {
-      setProfileEditError(err.message || "Error updating profile.")
+      const message = formatSupabaseError(err, "Error updating profile.")
+      console.error("Profile save failed:", err)
+      setProfileEditError(message)
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Profile update failed",
+        message,
+      })
     } finally {
       setProfileSaving(false)
     }

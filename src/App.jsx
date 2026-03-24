@@ -16,6 +16,7 @@ import CreateAccount from "./pages/CreateAccount"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
+import OnlineRouteGuard from "./components/common/OnlineRouteGuard"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
 
@@ -132,6 +133,19 @@ function ProtectedDashboardRoute({ children }) {
 }
 
 function App() {
+  const withOnlineGuard = (element, options = {}) => (
+    <OnlineRouteGuard {...options}>{element}</OnlineRouteGuard>
+  )
+
+  const withProtectedOnlineGuard = (element, options = {}) => (
+    <ProtectedDashboardRoute>
+      {withOnlineGuard(element, {
+        backTo: "/user-dashboard?tab=market",
+        ...options,
+      })}
+    </ProtectedDashboardRoute>
+  )
+
   return (
     <Suspense
       fallback={
@@ -161,9 +175,18 @@ function App() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/create-account" element={<CreateAccount />} />
 
-        <Route path="/reposearch" element={<MerchantDiscovery />} />
-        <Route path="/shop-detail" element={<ShopDetail />} />
-        <Route path="/product-detail" element={<ProductDetail />} />
+        <Route
+          path="/reposearch"
+          element={withOnlineGuard(<MerchantDiscovery />)}
+        />
+        <Route
+          path="/shop-detail"
+          element={withOnlineGuard(<ShopDetail />)}
+        />
+        <Route
+          path="/product-detail"
+          element={withOnlineGuard(<ProductDetail />)}
+        />
 
         {/* PROTECTED DASHBOARD ROUTES */}
         <Route
@@ -177,170 +200,114 @@ function App() {
 
         <Route
           path="/remita"
-          element={
-            <ProtectedDashboardRoute>
-              <MerchantPayment />
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(<MerchantPayment />)}
         />
 
         <Route
           path="/merchant-video-kyc"
-          element={
-            <ProtectedDashboardRoute>
-              <MerchantVideoKYC />
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(<MerchantVideoKYC />)}
         />
 
         {/* --- LOCKED PREMIUM ROUTES START HERE --- */}
         <Route
           path="/merchant-promo-banner"
-          element={
-            <ProtectedDashboardRoute>
-              <SubscriptionGuard>
-                <MerchantPromoBanner />
-              </SubscriptionGuard>
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(
+            <SubscriptionGuard>
+              <MerchantPromoBanner />
+            </SubscriptionGuard>
+          )}
         />
 
         <Route
           path="/merchant-settings"
-          element={
-            <ProtectedDashboardRoute>
-              <SubscriptionGuard>
-                <MerchantSettings />
-              </SubscriptionGuard>
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(
+            <SubscriptionGuard>
+              <MerchantSettings />
+            </SubscriptionGuard>
+          )}
         />
 
         <Route
           path="/merchant-banner"
-          element={
-            <ProtectedDashboardRoute>
-              <SubscriptionGuard>
-                <MerchantBanner />
-              </SubscriptionGuard>
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(
+            <SubscriptionGuard>
+              <MerchantBanner />
+            </SubscriptionGuard>
+          )}
         />
 
         <Route
           path="/merchant-products"
-          element={
-            <ProtectedDashboardRoute>
-              <SubscriptionGuard>
-                <MerchantProducts />
-              </SubscriptionGuard>
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(
+            <SubscriptionGuard>
+              <MerchantProducts />
+            </SubscriptionGuard>
+          )}
         />
 
         <Route
           path="/merchant-edit-product"
-          element={
-            <ProtectedDashboardRoute>
-              <SubscriptionGuard>
-                <EditProduct />
-              </SubscriptionGuard>
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(
+            <SubscriptionGuard>
+              <EditProduct />
+            </SubscriptionGuard>
+          )}
         />
 
         <Route
           path="/merchant-add-product"
-          element={
-            <ProtectedDashboardRoute>
-              <SubscriptionGuard>
-                <AddProduct />
-              </SubscriptionGuard>
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(
+            <SubscriptionGuard>
+              <AddProduct />
+            </SubscriptionGuard>
+          )}
         />
         {/* --- LOCKED PREMIUM ROUTES END HERE --- */}
 
         {/* --- UNLOCKED / FREE ROUTES --- */}
         <Route
           path="/service-fee"
-          element={
-            <ProtectedDashboardRoute>
-              <MerchantServiceFee />
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(<MerchantServiceFee />)}
         />
 
         <Route
           path="/merchant-analytics"
-          element={
-            <ProtectedDashboardRoute>
-              <MerchantAnalytics />
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(<MerchantAnalytics />)}
         />
 
         <Route
           path="/merchant-news"
-          element={
-            <ProtectedDashboardRoute>
-              <MerchantNews />
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(<MerchantNews />)}
         />
 
         <Route
           path="/shop-registration"
-          element={
-            <ProtectedDashboardRoute>
-              <ShopRegistration />
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(<ShopRegistration />)}
         />
 
         <Route
           path="/vendor-panel"
-          element={
-            <ProtectedDashboardRoute>
-              <VendorsPanel />
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(<VendorsPanel />)}
         />
 
         <Route
           path="/area"
-          element={
-            <ProtectedDashboardRoute>
-              <Area />
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(<Area />)}
         />
 
         <Route
           path="/cat"
-          element={
-            <ProtectedDashboardRoute>
-              <Cat />
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(<Cat />)}
         />
 
         <Route
           path="/search"
-          element={
-            <ProtectedDashboardRoute>
-              <Search />
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(<Search />)}
         />
 
         <Route
           path="/shop-index"
-          element={
-            <ProtectedDashboardRoute>
-              <ShopIndex />
-            </ProtectedDashboardRoute>
-          }
+          element={withProtectedOnlineGuard(<ShopIndex />)}
         />
 
         {/* --- CATCH-ALL 404 ROUTE --- */}
