@@ -71,16 +71,24 @@ export async function getSession() {
 
 // Upgraded to act as the Global Logout & Cache Cleaner
 export async function signOutUser() {
+  let signOutError = null
+
   try {
     // 1. Invalidate session on the server
     await supabase.auth.signOut()
+  } catch (error) {
+    signOutError = error
+    console.error("Error during logout:", error)
+  }
 
+  try {
     // 2. Wipe Local Storage safely (only our app's keys)
-    const keysToRemove = [];
+    const keysToRemove = []
     for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
+      const key = localStorage.key(i)
       if (
-        key && (
+        key &&
+        (
           key.startsWith("sb-") ||
           key.startsWith("vendor_panel_") ||
           key.startsWith("shop_detail_") ||
@@ -89,21 +97,20 @@ export async function signOutUser() {
           key.includes("ctm_")
         )
       ) {
-        keysToRemove.push(key);
+        keysToRemove.push(key)
       }
     }
-    
-    keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+    keysToRemove.forEach((key) => localStorage.removeItem(key))
 
     // 3. Clear session storage
-    sessionStorage.clear();
-
-    // 4. Hard redirect to flush React's in-memory state
-    window.location.href = "/";
+    sessionStorage.clear()
   } catch (error) {
-    console.error("Error during logout:", error);
-    sessionStorage.clear();
-    window.location.href = "/";
+    console.error("Error during client cleanup:", error)
+  }
+
+  if (signOutError) {
+    console.warn("Continuing local logout cleanup after sign-out error.")
   }
 }
 

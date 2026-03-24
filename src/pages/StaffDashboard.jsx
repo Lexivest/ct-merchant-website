@@ -122,7 +122,7 @@ export default function StaffDashboard() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     await supabase.auth.signOut();
-    window.location.href = "/staff-portal";
+    navigate("/staff-portal", { replace: true });
   };
 
   if (fetchingStaff) {

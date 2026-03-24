@@ -1,4 +1,5 @@
-import { Routes, Route, Link } from "react-router-dom"
+import { Suspense, lazy, useState } from "react"
+import { Routes, Route, Link, useNavigate } from "react-router-dom"
 import Home from "./pages/Home"
 import About from "./pages/About"
 import Services from "./pages/Services"
@@ -7,23 +8,10 @@ import Careers from "./pages/Careers"
 import Contact from "./pages/Contact"
 
 import StaffPortal from "./pages/StaffPortal"
-import StaffDashboard from "./pages/StaffDashboard" 
-import StaffIDGenerator from "./pages/staff/StaffIDGenerator" 
-import StaffInbox from "./pages/staff/StaffInbox" // <-- Adjust path if you saved it differently
 
 import Privacy from "./pages/Privacy"
 import Terms from "./pages/Terms"
 import CreateAccount from "./pages/CreateAccount"
-import UserDashboard from "./pages/UserDashboard"
-import ShopRegistration from "./pages/ShopRegistration"
-import Area from "./pages/Area"
-import Cat from "./pages/Cat"
-import Search from "./pages/Search"
-import ShopDetail from "./pages/ShopDetail"
-import ProductDetail from "./pages/ProductDetail"
-import ShopIndex from "./pages/ShopIndex"
-import MerchantDiscovery from "./pages/MerchantDiscovery"
-import VendorsPanel from "./pages/VendorsPanel"
 
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import useAuthSession from "./hooks/useAuthSession"
@@ -32,18 +20,31 @@ import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
 
 // --- IMPORTS ---
-import ImageOptimizer from "./pages/vendors/ImageOptimizer" // We will use this file for the new Staff Studio
-import AddProduct from "./pages/vendors/AddProduct"
-import EditProduct from "./pages/vendors/EditProduct"
-import MerchantProducts from "./pages/vendors/MerchantProducts"
-import MerchantBanner from "./pages/vendors/MerchantBanner"
-import MerchantSettings from "./pages/vendors/MerchantSettings"
-import MerchantNews from "./pages/vendors/MerchantNews"
-import MerchantPromoBanner from "./pages/vendors/MerchantPromoBanner"
-import MerchantAnalytics from "./pages/vendors/MerchantAnalytics"
-import MerchantPayment from "./pages/vendors/MerchantPayment"
-import MerchantServiceFee from "./pages/vendors/MerchantServiceFee"
-import MerchantVideoKYC from "./pages/vendors/MerchantVideoKYC"
+const StaffDashboard = lazy(() => import("./pages/StaffDashboard"))
+const StaffIDGenerator = lazy(() => import("./pages/staff/StaffIDGenerator"))
+const StaffInbox = lazy(() => import("./pages/staff/StaffInbox"))
+const UserDashboard = lazy(() => import("./pages/UserDashboard"))
+const ShopRegistration = lazy(() => import("./pages/ShopRegistration"))
+const Area = lazy(() => import("./pages/Area"))
+const Cat = lazy(() => import("./pages/Cat"))
+const Search = lazy(() => import("./pages/Search"))
+const ShopDetail = lazy(() => import("./pages/ShopDetail"))
+const ProductDetail = lazy(() => import("./pages/ProductDetail"))
+const ShopIndex = lazy(() => import("./pages/ShopIndex"))
+const MerchantDiscovery = lazy(() => import("./pages/MerchantDiscovery"))
+const VendorsPanel = lazy(() => import("./pages/VendorsPanel"))
+const ImageOptimizer = lazy(() => import("./pages/vendors/ImageOptimizer"))
+const AddProduct = lazy(() => import("./pages/vendors/AddProduct"))
+const EditProduct = lazy(() => import("./pages/vendors/EditProduct"))
+const MerchantProducts = lazy(() => import("./pages/vendors/MerchantProducts"))
+const MerchantBanner = lazy(() => import("./pages/vendors/MerchantBanner"))
+const MerchantSettings = lazy(() => import("./pages/vendors/MerchantSettings"))
+const MerchantNews = lazy(() => import("./pages/vendors/MerchantNews"))
+const MerchantPromoBanner = lazy(() => import("./pages/vendors/MerchantPromoBanner"))
+const MerchantAnalytics = lazy(() => import("./pages/vendors/MerchantAnalytics"))
+const MerchantPayment = lazy(() => import("./pages/vendors/MerchantPayment"))
+const MerchantServiceFee = lazy(() => import("./pages/vendors/MerchantServiceFee"))
+const MerchantVideoKYC = lazy(() => import("./pages/vendors/MerchantVideoKYC"))
 
 function RouteLoadingScreen({
   title = "Loading your page",
@@ -79,6 +80,8 @@ function NotFoundPage() {
 }
 
 function ProtectedDashboardRoute({ children }) {
+  const navigate = useNavigate()
+  const [completedProfileUserId, setCompletedProfileUserId] = useState(null)
   const { loading, session, user, profile, suspended, isOffline } = useAuthSession()
 
   if (loading && !isOffline) {
@@ -91,7 +94,10 @@ function ProtectedDashboardRoute({ children }) {
   }
 
   const isAllowed = (Boolean(session) && Boolean(user) && !suspended) || (isOffline && Boolean(user))
-  const needsProfileSetup = user && (!profile || !isProfileComplete(profile))
+  const needsProfileSetup =
+    user &&
+    completedProfileUserId !== user.id &&
+    (!profile || !isProfileComplete(profile))
 
   return (
     <ProtectedRoute isAllowed={isAllowed} redirectTo="/">
@@ -103,10 +109,10 @@ function ProtectedDashboardRoute({ children }) {
             fullName={user.user_metadata?.full_name || ""}
             onClose={async () => {
               await signOutUser()
-              window.location.href = "/"
+              navigate("/", { replace: true })
             }}
             onCompleted={() => {
-              window.location.reload()
+              setCompletedProfileUserId(user.id)
             }}
           />
         </div>
@@ -127,215 +133,223 @@ function ProtectedDashboardRoute({ children }) {
 
 function App() {
   return (
-    <Routes>
-      {/* PUBLIC ROUTES */}
-      <Route path="/" element={<Home />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/services" element={<Services />} />
-      <Route path="/affiliate" element={<Affiliate />} />
-      <Route path="/careers" element={<Careers />} />
-      <Route path="/contact" element={<Contact />} />
-      
-      {/* --- STAFF ROUTES --- */}
-      <Route path="/staff-portal" element={<StaffPortal />} />
-      <Route path="/staff-dashboard" element={<StaffDashboard />} />
-      <Route path="/staff-issue-id" element={<StaffIDGenerator />} />
-      <Route path="/staff-studio" element={<ImageOptimizer />} /> {/* <-- MOVED CT STUDIO HERE */}
-      <Route path="/staff-inbox" element={<StaffInbox />} /> {/* <-- ADD THIS */}
+    <Suspense
+      fallback={
+        <RouteLoadingScreen
+          title="Loading page"
+          message="Please wait while we prepare this screen."
+        />
+      }
+    >
+      <Routes>
+        {/* PUBLIC ROUTES */}
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/affiliate" element={<Affiliate />} />
+        <Route path="/careers" element={<Careers />} />
+        <Route path="/contact" element={<Contact />} />
+        
+        {/* --- STAFF ROUTES --- */}
+        <Route path="/staff-portal" element={<StaffPortal />} />
+        <Route path="/staff-dashboard" element={<StaffDashboard />} />
+        <Route path="/staff-issue-id" element={<StaffIDGenerator />} />
+        <Route path="/staff-studio" element={<ImageOptimizer />} />
+        <Route path="/staff-inbox" element={<StaffInbox />} />
 
-      <Route path="/privacy" element={<Privacy />} />
-      <Route path="/terms" element={<Terms />} />
-      <Route path="/create-account" element={<CreateAccount />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/create-account" element={<CreateAccount />} />
 
-      <Route path="/reposearch" element={<MerchantDiscovery />} />
-      <Route path="/shop-detail" element={<ShopDetail />} />
-      <Route path="/product-detail" element={<ProductDetail />} />
+        <Route path="/reposearch" element={<MerchantDiscovery />} />
+        <Route path="/shop-detail" element={<ShopDetail />} />
+        <Route path="/product-detail" element={<ProductDetail />} />
 
-      {/* PROTECTED DASHBOARD ROUTES */}
-      <Route
-        path="/user-dashboard"
-        element={
-          <ProtectedDashboardRoute>
-            <UserDashboard />
-          </ProtectedDashboardRoute>
-        }
-      />
+        {/* PROTECTED DASHBOARD ROUTES */}
+        <Route
+          path="/user-dashboard"
+          element={
+            <ProtectedDashboardRoute>
+              <UserDashboard />
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/remita"
-        element={
-          <ProtectedDashboardRoute>
-            <MerchantPayment />
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/remita"
+          element={
+            <ProtectedDashboardRoute>
+              <MerchantPayment />
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/merchant-video-kyc"
-        element={
-          <ProtectedDashboardRoute>
-            <MerchantVideoKYC />
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/merchant-video-kyc"
+          element={
+            <ProtectedDashboardRoute>
+              <MerchantVideoKYC />
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      {/* --- LOCKED PREMIUM ROUTES START HERE --- */}
-      <Route
-        path="/merchant-promo-banner"
-        element={
-          <ProtectedDashboardRoute>
-            <SubscriptionGuard>
-              <MerchantPromoBanner />
-            </SubscriptionGuard>
-          </ProtectedDashboardRoute>
-        }
-      />
+        {/* --- LOCKED PREMIUM ROUTES START HERE --- */}
+        <Route
+          path="/merchant-promo-banner"
+          element={
+            <ProtectedDashboardRoute>
+              <SubscriptionGuard>
+                <MerchantPromoBanner />
+              </SubscriptionGuard>
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/merchant-settings"
-        element={
-          <ProtectedDashboardRoute>
-            <SubscriptionGuard>
-              <MerchantSettings />
-            </SubscriptionGuard>
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/merchant-settings"
+          element={
+            <ProtectedDashboardRoute>
+              <SubscriptionGuard>
+                <MerchantSettings />
+              </SubscriptionGuard>
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/merchant-banner"
-        element={
-          <ProtectedDashboardRoute>
-            <SubscriptionGuard>
-              <MerchantBanner />
-            </SubscriptionGuard>
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/merchant-banner"
+          element={
+            <ProtectedDashboardRoute>
+              <SubscriptionGuard>
+                <MerchantBanner />
+              </SubscriptionGuard>
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/merchant-products"
-        element={
-          <ProtectedDashboardRoute>
-            <SubscriptionGuard>
-              <MerchantProducts />
-            </SubscriptionGuard>
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/merchant-products"
+          element={
+            <ProtectedDashboardRoute>
+              <SubscriptionGuard>
+                <MerchantProducts />
+              </SubscriptionGuard>
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/merchant-edit-product"
-        element={
-          <ProtectedDashboardRoute>
-            <SubscriptionGuard>
-              <EditProduct />
-            </SubscriptionGuard>
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/merchant-edit-product"
+          element={
+            <ProtectedDashboardRoute>
+              <SubscriptionGuard>
+                <EditProduct />
+              </SubscriptionGuard>
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/merchant-add-product"
-        element={
-          <ProtectedDashboardRoute>
-            <SubscriptionGuard>
-              <AddProduct />
-            </SubscriptionGuard>
-          </ProtectedDashboardRoute>
-        }
-      />
-      {/* Old CT Studio Route Removed From Here! */}
-      {/* --- LOCKED PREMIUM ROUTES END HERE --- */}
+        <Route
+          path="/merchant-add-product"
+          element={
+            <ProtectedDashboardRoute>
+              <SubscriptionGuard>
+                <AddProduct />
+              </SubscriptionGuard>
+            </ProtectedDashboardRoute>
+          }
+        />
+        {/* --- LOCKED PREMIUM ROUTES END HERE --- */}
 
-      {/* --- UNLOCKED / FREE ROUTES --- */}
-      <Route
-        path="/service-fee"
-        element={
-          <ProtectedDashboardRoute>
-            <MerchantServiceFee />
-          </ProtectedDashboardRoute>
-        }
-      />
+        {/* --- UNLOCKED / FREE ROUTES --- */}
+        <Route
+          path="/service-fee"
+          element={
+            <ProtectedDashboardRoute>
+              <MerchantServiceFee />
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/merchant-analytics"
-        element={
-          <ProtectedDashboardRoute>
-            <MerchantAnalytics />
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/merchant-analytics"
+          element={
+            <ProtectedDashboardRoute>
+              <MerchantAnalytics />
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/merchant-news"
-        element={
-          <ProtectedDashboardRoute>
-            <MerchantNews />
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/merchant-news"
+          element={
+            <ProtectedDashboardRoute>
+              <MerchantNews />
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/shop-registration"
-        element={
-          <ProtectedDashboardRoute>
-            <ShopRegistration />
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/shop-registration"
+          element={
+            <ProtectedDashboardRoute>
+              <ShopRegistration />
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/vendor-panel"
-        element={
-          <ProtectedDashboardRoute>
-            <VendorsPanel />
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/vendor-panel"
+          element={
+            <ProtectedDashboardRoute>
+              <VendorsPanel />
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/area"
-        element={
-          <ProtectedDashboardRoute>
-            <Area />
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/area"
+          element={
+            <ProtectedDashboardRoute>
+              <Area />
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/cat"
-        element={
-          <ProtectedDashboardRoute>
-            <Cat />
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/cat"
+          element={
+            <ProtectedDashboardRoute>
+              <Cat />
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/search"
-        element={
-          <ProtectedDashboardRoute>
-            <Search />
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/search"
+          element={
+            <ProtectedDashboardRoute>
+              <Search />
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      <Route
-        path="/shop-index"
-        element={
-          <ProtectedDashboardRoute>
-            <ShopIndex />
-          </ProtectedDashboardRoute>
-        }
-      />
+        <Route
+          path="/shop-index"
+          element={
+            <ProtectedDashboardRoute>
+              <ShopIndex />
+            </ProtectedDashboardRoute>
+          }
+        />
 
-      {/* --- CATCH-ALL 404 ROUTE --- */}
-      <Route
-        path="*"
-        element={<NotFoundPage />}
-      />
-    </Routes>
+        {/* --- CATCH-ALL 404 ROUTE --- */}
+        <Route
+          path="*"
+          element={<NotFoundPage />}
+        />
+      </Routes>
+    </Suspense>
   )
 }
 

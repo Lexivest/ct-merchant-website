@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaHeart } from "react-icons/fa6"
 import { supabase } from "../../../lib/supabase"
 
 function WishlistDashboardView({ onBack, user, onOpenProduct }) {
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState([])
 
@@ -109,7 +111,7 @@ function WishlistDashboardView({ onBack, user, onOpenProduct }) {
                     onClick={() =>
                       onOpenProduct
                         ? onOpenProduct(product.id)
-                        : window.location.assign(`/product-detail?id=${product.id}`)
+                        : navigate(`/product-detail?id=${product.id}`)
                     }
                     className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-1 hover:border-[#2E1065] hover:shadow-md"
                   >

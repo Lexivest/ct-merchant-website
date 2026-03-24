@@ -16,7 +16,9 @@ import ServicesProfileSection from "../components/dashboard/sections/ServicesPro
 import NotificationsSection from "../components/dashboard/sections/NotificationsSection"
 
 const MAX_FILE_SIZE = 500000
+const MAX_SOURCE_FILE_SIZE = 10 * 1024 * 1024
 const INACTIVITY_LIMIT = 15 * 60 * 1000
+const ALLOWED_AVATAR_MIME_TYPES = new Set(["image/jpeg", "image/png"])
 
 const EMPTY_DASHBOARD_DATA = {
   profile: null,
@@ -221,6 +223,14 @@ function UserDashboard() {
   const cropperRef = useRef(null)
   const inactivityTimerRef = useRef(null)
   const fileInputRef = useRef(null)
+  const generatedAvatarPreviewRef = useRef("")
+
+  function clearGeneratedAvatarPreview() {
+    if (generatedAvatarPreviewRef.current) {
+      URL.revokeObjectURL(generatedAvatarPreviewRef.current)
+      generatedAvatarPreviewRef.current = ""
+    }
+  }
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -308,6 +318,12 @@ function UserDashboard() {
       }
     }
   }, [cropModalOpen])
+
+  useEffect(() => {
+    return () => {
+      clearGeneratedAvatarPreview()
+    }
+  }, [])
 
   async function handleLogout() {
     Object.keys(localStorage).forEach((key) => {
@@ -521,6 +537,7 @@ function UserDashboard() {
     const p = localData.profile
     if (!p) return
 
+    clearGeneratedAvatarPreview()
     setProfileEditForm({
       full_name: p.full_name || "",
       phone: p.phone || "",
@@ -561,6 +578,7 @@ function UserDashboard() {
   }
 
   function cancelProfileEdit() {
+    clearGeneratedAvatarPreview()
     setProfileEditOpen(false)
     setProfileEditError("")
     setAvatarBlob(null)
@@ -593,8 +611,15 @@ function UserDashboard() {
     const file = event.target.files?.[0]
     if (!file) return
 
-    if (!file.type.startsWith("image/")) {
-      setProfileEditError("Please upload a valid image file.")
+    if (!ALLOWED_AVATAR_MIME_TYPES.has(file.type)) {
+      setProfileEditError("Only JPG and PNG images are supported.")
+      event.target.value = ""
+      return
+    }
+
+    if (file.size > MAX_SOURCE_FILE_SIZE) {
+      setProfileEditError("Image is too large. Please use a file under 10MB.")
+      event.target.value = ""
       return
     }
 
@@ -612,35 +637,91 @@ function UserDashboard() {
     setCropModalOpen(false)
   }
 
-  function applyAvatarCrop() {
-    if (!cropperRef.current) return
+  function canvasToBlob(canvas, type, quality) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Could not process the selected image."))
+            return
+          }
+          resolve(blob)
+        },
+        type,
+        quality
+      )
+    })
+  }
 
-    cropperRef.current
-      .getCroppedCanvas({
-        width: 600,
+  function setGeneratedAvatarPreview(blob) {
+    if (generatedAvatarPreviewRef.current) {
+      URL.revokeObjectURL(generatedAvatarPreviewRef.current)
+    }
+
+    const previewUrl = URL.createObjectURL(blob)
+    generatedAvatarPreviewRef.current = previewUrl
+    setAvatarPreview(previewUrl)
+  }
+
+  async function buildCompressedAvatarBlob() {
+    const cropper = cropperRef.current
+    if (!cropper) return null
+
+    const widthSteps = [900, 760, 640, 520, 420, 360]
+    const qualitySteps = [0.92, 0.86, 0.8, 0.74, 0.68, 0.62, 0.56]
+    let smallestBlob = null
+
+    for (const width of widthSteps) {
+      const canvas = cropper.getCroppedCanvas({
+        width,
+        height: width,
         imageSmoothingEnabled: true,
         imageSmoothingQuality: "high",
       })
-      .toBlob(
-        (blob) => {
-          if (!blob) return
 
-          if (blob.size > MAX_FILE_SIZE) {
-            setProfileEditError(
-              `Image is too large (${Math.round(
-                blob.size / 1024
-              )}KB). Maximum allowed size is 500KB.`
-            )
-            return
-          }
+      if (!canvas) continue
 
-          setAvatarBlob(blob)
-          setAvatarPreview(URL.createObjectURL(blob))
-          setCropModalOpen(false)
-        },
-        "image/jpeg",
-        0.85
-      )
+      for (const quality of qualitySteps) {
+        const nextBlob = await canvasToBlob(canvas, "image/jpeg", quality)
+        if (!smallestBlob || nextBlob.size < smallestBlob.size) {
+          smallestBlob = nextBlob
+        }
+
+        if (nextBlob.size <= MAX_FILE_SIZE) {
+          return nextBlob
+        }
+      }
+    }
+
+    return smallestBlob
+  }
+
+  async function applyAvatarCrop() {
+    if (!cropperRef.current) return
+
+    try {
+      const blob = await buildCompressedAvatarBlob()
+      if (!blob) {
+        setProfileEditError("Could not process this image. Please try another JPG or PNG file.")
+        return
+      }
+
+      if (blob.size > MAX_FILE_SIZE) {
+        setProfileEditError(
+          `Image is too large (${Math.round(
+            blob.size / 1024
+          )}KB). Maximum allowed size is 500KB for JPG/PNG avatars.`
+        )
+        return
+      }
+
+      setAvatarBlob(blob)
+      setGeneratedAvatarPreview(blob)
+      setCropModalOpen(false)
+      setProfileEditError("")
+    } catch (error) {
+      setProfileEditError(error.message || "Could not process the selected image.")
+    }
   }
 
   async function uploadAvatarProcess() {
@@ -661,17 +742,30 @@ function UserDashboard() {
       }
     }
 
-    const fileName = `${user.id}_${Date.now()}.jpg`
-    const uploadRes = await supabase.storage
-      .from("avatars")
-      .upload(fileName, avatarBlob, {
-        contentType: "image/jpeg",
-        upsert: false,
-      })
+    const timestamp = Date.now()
+    const uploadPaths = [
+      `${user.id}/avatar_${timestamp}.jpg`,
+      `${user.id}_avatar_${timestamp}.jpg`,
+    ]
+    const uploadErrors = []
 
-    if (uploadRes.error) throw uploadRes.error
+    for (const filePath of uploadPaths) {
+      const uploadRes = await supabase.storage
+        .from("avatars")
+        .upload(filePath, avatarBlob, {
+          contentType: "image/jpeg",
+          upsert: true,
+          cacheControl: "3600",
+        })
 
-    return supabase.storage.from("avatars").getPublicUrl(fileName).data.publicUrl
+      if (!uploadRes.error) {
+        return supabase.storage.from("avatars").getPublicUrl(filePath).data.publicUrl
+      }
+
+      uploadErrors.push(uploadRes.error.message || "Upload failed")
+    }
+
+    throw new Error(`Could not upload avatar. ${uploadErrors.join(" | ")}`)
   }
 
   async function saveProfile() {
@@ -710,10 +804,42 @@ function UserDashboard() {
       if (res.error) throw res.error
 
       localStorage.removeItem("ctm_dashboard_cache")
-      window.location.reload()
+
+      const refreshedProfileRes = await supabase
+        .from("profiles")
+        .select("*, cities(name)")
+        .eq("id", user.id)
+        .maybeSingle()
+
+      const refreshedProfile =
+        refreshedProfileRes.data ||
+        {
+          ...(localData.profile || {}),
+          full_name: fullName,
+          phone,
+          city_id: parseInt(profileEditForm.city_id, 10),
+          area_id: parseInt(profileEditForm.area_id, 10),
+          avatar_url: avatarUrl,
+        }
+
+      setLocalData((prev) => ({
+        ...prev,
+        profile: refreshedProfile,
+      }))
+
+      setNotice({
+        visible: true,
+        type: "success",
+        title: "Profile updated",
+        message: "Your changes have been saved successfully.",
+      })
+      setProfileEditOpen(false)
+      clearGeneratedAvatarPreview()
+      setAvatarBlob(null)
       
     } catch (err) {
       setProfileEditError(err.message || "Error updating profile.")
+    } finally {
       setProfileSaving(false)
     }
   }
@@ -747,6 +873,7 @@ function UserDashboard() {
         switchScreen={switchScreen}
         unread={localData.unread}
         onShopIndex={() => navigate("/shop-index")}
+        onLogoClick={() => switchScreen("market")}
       />
 
       <main className="content-body mx-auto w-full max-w-[1600px] pb-10">

@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+﻿import { useEffect } from "react"
 import {
   FaBriefcase,
   FaBuilding,
@@ -252,12 +252,12 @@ function ServicesProfileSection({
                 ref={fileInputRef}
                 type="file"
                 hidden
-                accept="image/*"
+                accept="image/jpeg,image/png"
                 onChange={onAvatarSelect}
               />
 
               <p className="mt-2 text-[0.8rem] font-semibold text-[#565959]">
-                Tap photo to update (Max 500KB)
+                Tap photo to update (Max 500KB | JPG/PNG)
               </p>
             </div>
 
@@ -371,7 +371,7 @@ function ServicesProfileSection({
               onClick={closeAvatarCropModal}
               className="border-none bg-transparent text-[1.5rem] text-white"
             >
-              ×
+              x
             </button>
           </div>
 
@@ -399,3 +399,4 @@ function ServicesProfileSection({
 }
 
 export default ServicesProfileSection
+

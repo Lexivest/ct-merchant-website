@@ -37,6 +37,7 @@ function DashboardHeader({
   switchScreen,
   unread,
   onShopIndex,
+  onLogoClick,
 }) {
   const avatarSrc =
     currentProfile?.avatar_url ||
@@ -134,7 +135,7 @@ function DashboardHeader({
           src={ctmLogo}
           className="amz-logo h-[38px] cursor-pointer rounded object-contain"
           alt="Logo"
-          onClick={() => window.location.reload()}
+          onClick={() => onLogoClick?.()}
         />
 
         <div className="amz-location mobile-hide hidden items-center gap-[6px] rounded border border-transparent px-3 py-2 text-[0.95rem] font-bold text-white transition hover:border-white min-[1025px]:flex">
