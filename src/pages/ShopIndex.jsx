@@ -14,6 +14,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerList } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
+import StableImage from "../components/common/StableImage"
 
 function ShopIndex() {
   const navigate = useNavigate()
@@ -169,11 +170,11 @@ function ShopIndex() {
                 className="mb-3 flex cursor-pointer items-center gap-4 rounded-lg border border-[#D5D9D9] bg-white p-4 shadow-[0_2px_4px_rgba(0,0,0,0.02)] transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-[0_4px_10px_rgba(0,0,0,0.08)] active:scale-[0.98]"
               >
                 {imageUrl ? (
-                  <img
+                  <StableImage
                     src={imageUrl}
                     alt={shop.name}
-                    loading="lazy"
-                    className="h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white object-contain p-1"
+                    containerClassName="h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white"
+                    className="h-full w-full object-contain p-1"
                   />
                 ) : (
                   <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-pink-200 bg-pink-50 text-[1.4rem] font-extrabold text-pink-600">

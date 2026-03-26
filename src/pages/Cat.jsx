@@ -11,6 +11,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock, ShimmerCard } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
+import StableImage from "../components/common/StableImage"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function CatShimmer({ catName }) {
@@ -115,7 +116,12 @@ function Cat() {
         items.push(
           <div key={`${shop.id}-${i}`} className="flex w-full flex-col gap-1 overflow-hidden">
             <div className="relative block aspect-square overflow-hidden rounded bg-[#F7F7F7]">
-              <img src={item.image_url} alt={prodName} className="h-full w-full object-cover" loading="lazy" />
+              <StableImage
+                src={item.image_url}
+                alt={prodName}
+                containerClassName="h-full w-full bg-[#F7F7F7]"
+                className="h-full w-full object-cover"
+              />
               {hasDiscount ? (
                 <div className="absolute left-1 top-1 rounded bg-[#DC2626] px-1 py-[2px] text-[0.65rem] font-extrabold text-white">
                   -{percent}%

@@ -3,14 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { FaChevronRight, FaImage } from "react-icons/fa6"
 // IMPORT OUR NEW SHIMMERS
 import { ShimmerBlock, ShimmerCard } from "../../common/Shimmers"
-
-const FALLBACK_IMAGE =
-  "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Crect width='100%25' height='100%25' fill='%23F1F5F9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2364748B' font-family='Arial' font-size='44'%3EImage%20Unavailable%3C/text%3E%3C/svg%3E"
-
-function handleImageError(event) {
-  event.currentTarget.onerror = null
-  event.currentTarget.src = FALLBACK_IMAGE
-}
+import StableImage from "../../common/StableImage"
 
 function PromoSlider({ promos }) {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -36,12 +29,11 @@ function PromoSlider({ promos }) {
             idx === currentSlide ? "z-[2] opacity-100" : "z-[1] opacity-0"
           }`}
         >
-          <img
+          <StableImage
             src={promo.image_url}
             alt="Promo Banner"
+            containerClassName="h-full w-full bg-[#0F1111]"
             className="block h-full w-full object-contain object-center bg-[#0F1111]"
-            loading="lazy"
-            onError={handleImageError}
           />
         </div>
       ))}
@@ -86,7 +78,12 @@ function ShopCard({ shop, products, onOpenShop }) {
     return (
         <div key={`${shop.id}-${item.id}-${index}`} className="shop-grid-item-wrap">
         <div className="shop-grid-item">
-          <img src={item.image_url} alt={name} loading="lazy" onError={handleImageError} />
+          <StableImage
+            src={item.image_url}
+            alt={name}
+            containerClassName="h-full w-full bg-[#F8FAFC]"
+            className="h-full w-full object-contain p-2"
+          />
           {discounted ? (
             <div className="grid-badge flash-offer">-{discountPct}%</div>
           ) : null}
@@ -267,12 +264,11 @@ function MarketSection({
                   className="cat-chip flex cursor-pointer items-center gap-[10px] rounded-[50px] border border-[#D5D9D9] bg-white px-4 py-[6px] pl-[6px] transition hover:-translate-y-[2px] hover:border-pink-600 hover:bg-[#F7F7F7]"
                   onClick={() => navigateCategory(category.name)}
                 >
-                  <img
+                  <StableImage
                     src={imageUrl}
                     alt={category.name}
-                    className="h-8 w-8 rounded-full border border-[#E5E7EB] object-contain bg-white"
-                    loading="lazy"
-                    onError={handleImageError}
+                    containerClassName="h-8 w-8 rounded-full border border-[#E5E7EB] bg-white"
+                    className="h-8 w-8 rounded-full object-contain bg-white"
                   />
                   <span className="text-[0.85rem] font-bold text-[#0F1111]">
                     {category.name}

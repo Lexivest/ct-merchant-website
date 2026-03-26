@@ -21,6 +21,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
+import StableImage from "../components/common/StableImage"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function ProductDetailShimmer() {
@@ -500,12 +501,11 @@ function ProductDetail() {
             </div>
           ) : null}
 
-          <img
-            src={product.image_url || "https://via.placeholder.com/400x400?text=No+Image"}
+          <StableImage
+            src={product.image_url}
             alt={product.name}
-            loading="lazy"
-            className="h-full w-full object-contain"
-            style={{ mixBlendMode: "multiply" }}
+            containerClassName="h-full w-full bg-white"
+            className="h-full w-full object-contain mix-blend-multiply"
           />
         </div>
 
@@ -616,28 +616,34 @@ function ProductDetail() {
                     </div>
                   ) : null}
 
-                  <img
-                    src={selectedImage || "https://via.placeholder.com/800x800?text=No+Image"}
+                  <StableImage
+                    src={selectedImage}
                     alt={currentProduct?.name || "Product"}
-                    className="block h-full w-full object-contain"
-                    style={{ mixBlendMode: "multiply" }}
+                    containerClassName="h-full w-full bg-[#F7F7F7]"
+                    className="block h-full w-full object-contain mix-blend-multiply"
                   />
                 </div>
 
                 {galleryImages.length > 1 ? (
                   <div className="flex w-full gap-3 overflow-x-auto p-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {galleryImages.map((image) => (
-                      <img
+                      <button
+                        type="button"
                         key={image}
-                        src={image}
-                        alt="Thumbnail"
                         onClick={() => setSelectedImage(image)}
-                        className={`h-[60px] w-[60px] shrink-0 cursor-pointer rounded-md object-cover transition ${
+                        className={`h-[60px] w-[60px] shrink-0 overflow-hidden rounded-md transition ${
                           selectedImage === image
                             ? "border-2 border-pink-600 shadow-[0_2px_8px_rgba(219,39,119,0.2)]"
                             : "border-2 border-transparent"
                         }`}
-                      />
+                      >
+                        <StableImage
+                          src={image}
+                          alt="Thumbnail"
+                          containerClassName="h-full w-full bg-white"
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
                     ))}
                   </div>
                 ) : null}

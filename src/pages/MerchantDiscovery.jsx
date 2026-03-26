@@ -11,6 +11,7 @@ import { FaWhatsapp } from "react-icons/fa"
 import { supabase } from "../lib/supabase"
 import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock } from "../components/common/Shimmers"
+import StableImage from "../components/common/StableImage"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function MerchantDiscoveryShimmer() {
@@ -149,9 +150,10 @@ function MerchantDiscovery() {
 
             <div className="-mt-10 px-6 pb-6 text-center">
               <div className="relative mx-auto h-20 w-20 overflow-hidden rounded-lg border-[3px] border-white bg-slate-50 shadow">
-                <img
+                <StableImage
                   src={getLogo()}
                   alt={shop.name}
+                  containerClassName="h-full w-full bg-white"
                   className="h-full w-full object-contain bg-white p-1"
                 />
               </div>

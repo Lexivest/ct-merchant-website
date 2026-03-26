@@ -13,6 +13,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerList } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
+import StableImage from "../components/common/StableImage"
 
 function Area() {
   const navigate = useNavigate()
@@ -161,10 +162,11 @@ function Area() {
                     className="mb-3 flex cursor-pointer items-center gap-4 rounded-lg border border-[#D5D9D9] bg-white p-4 shadow-[0_2px_4px_rgba(0,0,0,0.02)] transition hover:translate-y-[-2px] hover:border-[#B0B5B5] hover:shadow-[0_4px_10px_rgba(0,0,0,0.08)] active:scale-[0.98]"
                   >
                     {displayImg ? (
-                      <img
+                      <StableImage
                         src={displayImg}
                         alt={shop.name}
-                        className="h-16 w-16 shrink-0 rounded-lg border border-[#E5E7EB] bg-white object-contain p-1"
+                        containerClassName="h-16 w-16 shrink-0 rounded-lg border border-[#E5E7EB] bg-white"
+                        className="h-full w-full object-contain p-1"
                       />
                     ) : (
                       <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-pink-200 bg-pink-100 text-[1.4rem] font-extrabold text-pink-600">

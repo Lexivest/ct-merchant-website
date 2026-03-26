@@ -31,6 +31,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
+import StableImage from "../components/common/StableImage"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function ShopDetailShimmer() {
@@ -394,10 +395,10 @@ function ShopDetail() {
         onClick={() => navigate(`/product-detail?id=${product.id}`)}
       >
         <div className="prod-img-wrap relative aspect-square w-full overflow-hidden bg-white">
-          <img
-            src={product.image_url || "https://via.placeholder.com/300"}
+          <StableImage
+            src={product.image_url}
             alt={product.name}
-            loading="lazy"
+            containerClassName="h-full w-full bg-white"
             className="prod-img h-full w-full object-contain transition duration-300 hover:scale-105"
           />
           {hasDiscount ? (
@@ -609,10 +610,11 @@ function ShopDetail() {
 
         {shopBanner ? (
           <div className="mx-auto max-w-[1000px] px-4 pb-0 pt-6">
-            <img
+            <StableImage
               src={shopBanner}
               alt="Shop Banner"
-              className="block aspect-video max-h-[400px] w-full rounded-xl border border-slate-300 bg-slate-100 object-cover shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+              containerClassName="aspect-video max-h-[400px] w-full rounded-xl border border-slate-300 bg-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+              className="block h-full w-full object-cover"
             />
           </div>
         ) : null}
@@ -683,10 +685,11 @@ function ShopDetail() {
                   </div>
 
                   <div className="flex justify-center">
-                    <img
+                    <StableImage
                       src={currentShop.storefront_url}
                       alt="Store Front"
-                      className="aspect-[3/4] w-full max-w-[360px] rounded-lg border border-slate-300 bg-slate-50 object-cover"
+                      containerClassName="aspect-[3/4] w-full max-w-[360px] rounded-lg border border-slate-300 bg-slate-50"
+                      className="h-full w-full object-cover"
                     />
                   </div>
                 </div>
@@ -719,10 +722,11 @@ function ShopDetail() {
             <div>
               <div className="mb-6 rounded-lg border border-slate-300 bg-white p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
                 <div className="mb-3 flex items-start gap-4">
-                  <img
+                  <StableImage
                     src={shopLogo}
                     alt="Shop Logo"
-                    className="h-[72px] w-[72px] shrink-0 rounded-lg border border-slate-300 bg-white object-cover"
+                    containerClassName="h-[72px] w-[72px] shrink-0 rounded-lg border border-slate-300 bg-white"
+                    className="h-full w-full object-cover"
                   />
 
                   <div className="min-w-0 flex-1">
