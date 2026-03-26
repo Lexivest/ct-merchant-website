@@ -27,6 +27,7 @@ import "cropperjs/dist/cropper.css"
 
 import AuthButton from "../components/auth/AuthButton"
 import AuthNotification from "../components/auth/AuthNotification"
+import CameraCaptureModal from "../components/common/CameraCaptureModal"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
@@ -52,6 +53,8 @@ const DESC_MIN_WORDS = 30
 const DESC_MAX_WORDS = 150
 const ADDR_MIN_WORDS = 5
 const ADDR_MAX_WORDS = 50
+
+const DEFAULT_CAMERA_RATIO = 3 / 4
 
 function countWords(value) {
   return String(value || "")
@@ -125,6 +128,27 @@ const compressFullImage = (file) => {
     img.onerror = () => reject(new Error("Failed to read image"))
     img.src = URL.createObjectURL(file)
   })
+}
+
+function buildCameraProfile(ratioInput) {
+  const ratio = Number(ratioInput)
+  const safeRatio = Number.isFinite(ratio) && ratio > 0 ? ratio : DEFAULT_CAMERA_RATIO
+
+  if (safeRatio >= 1) {
+    const targetWidth = 1280
+    return {
+      aspectRatio: safeRatio,
+      targetWidth,
+      targetHeight: Math.round(targetWidth / safeRatio),
+    }
+  }
+
+  const targetHeight = 1280
+  return {
+    aspectRatio: safeRatio,
+    targetWidth: Math.round(targetHeight * safeRatio),
+    targetHeight,
+  }
 }
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
@@ -267,8 +291,13 @@ function ShopRegistration() {
 
   // --- CT STUDIO UPLOAD & CROP STATE ---
   const hiddenInputRef = useRef(null)
-  const [actionSheet, setActionSheet] = useState({ isOpen: false, targetId: null, acceptsPdf: false, ratio: null })
+  const pickerContextRef = useRef({ targetId: null, ratio: null })
   const [cropConfig, setCropConfig] = useState({ isOpen: false, targetId: null, src: "", ratio: null })
+  const [cameraCapture, setCameraCapture] = useState({
+    open: false,
+    targetId: null,
+    ratio: DEFAULT_CAMERA_RATIO,
+  })
 
   const storefrontRuleLabel = getRuleLabel(STOREFRONT_RULE)
   const logoRuleLabel = getRuleLabel(LOGO_RULE)
@@ -285,6 +314,10 @@ function ShopRegistration() {
 
   const descWords = useMemo(() => countWords(form.desc), [form.desc])
   const addressWords = useMemo(() => countWords(form.address), [form.address])
+  const activeCameraProfile = useMemo(
+    () => buildCameraProfile(cameraCapture.ratio),
+    [cameraCapture.ratio],
+  )
 
   useEffect(() => {
     if (data && !hasHydrated) {
@@ -386,36 +419,59 @@ function ShopRegistration() {
   }
 
   // --- CT STUDIO FILE PIPELINE ---
-  const triggerActionSheet = (targetId, acceptsPdf, ratio) => {
-    setActionSheet({ isOpen: true, targetId, acceptsPdf, ratio })
-  }
-
-  const handleActionSelection = (mode) => {
+  const openImagePicker = (targetId, ratio = null) => {
     const input = hiddenInputRef.current
     if (!input) return
-    const targetRule = getRuleForTargetId(actionSheet.targetId)
+    const targetRule = getRuleForTargetId(targetId)
 
-    input.value = "" 
-    if (mode === "camera") {
-      input.setAttribute("accept", getAcceptValue(targetRule, "image/*"))
-      input.setAttribute("capture", "environment")
-    } else if (mode === "gallery") {
-      input.setAttribute("accept", getAcceptValue(targetRule, "image/*"))
-      input.removeAttribute("capture")
-    } else if (mode === "pdf") {
-      input.setAttribute("accept", "application/pdf")
-      input.removeAttribute("capture")
-    }
-
-    setActionSheet({ ...actionSheet, isOpen: false })
+    pickerContextRef.current = { targetId, ratio }
+    input.value = ""
+    input.setAttribute("accept", getAcceptValue(targetRule, "image/*"))
+    input.removeAttribute("capture")
     input.click()
+  }
+
+  const openNativeCameraPicker = (targetId, ratio = null) => {
+    const input = hiddenInputRef.current
+    if (!input) return
+    const targetRule = getRuleForTargetId(targetId)
+
+    pickerContextRef.current = { targetId, ratio }
+    input.value = ""
+    input.setAttribute("accept", getAcceptValue(targetRule, "image/*"))
+    input.setAttribute("capture", "environment")
+    input.click()
+  }
+
+  const openPdfPicker = (targetId) => {
+    const input = hiddenInputRef.current
+    if (!input) return
+
+    pickerContextRef.current = { targetId, ratio: null }
+    input.value = ""
+    input.setAttribute("accept", "application/pdf")
+    input.removeAttribute("capture")
+    input.click()
+  }
+
+  const openCustomCamera = (targetId, ratio) => {
+    setCameraCapture({
+      open: true,
+      targetId,
+      ratio: Number.isFinite(Number(ratio)) && Number(ratio) > 0 ? Number(ratio) : DEFAULT_CAMERA_RATIO,
+    })
+  }
+
+  const closeCustomCamera = () => {
+    setCameraCapture({ open: false, targetId: null, ratio: DEFAULT_CAMERA_RATIO })
   }
 
   const handleHiddenFileChange = async (event) => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    const { targetId, ratio } = actionSheet
+    const { targetId, ratio } = pickerContextRef.current
+    if (!targetId) return
     const targetRule = getRuleForTargetId(targetId)
 
     if (file.type === "application/pdf") {
@@ -461,6 +517,40 @@ function ShopRegistration() {
           window.scrollTo({ top: 0, behavior: "smooth" })
         }
       }
+    }
+  }
+
+  const handleCameraCapture = async ({ blob }) => {
+    const { targetId } = cameraCapture
+    closeCustomCamera()
+    if (!blob || !targetId) return
+
+    try {
+      const targetRule = getRuleForTargetId(targetId)
+      const maxImageBytes = targetRule?.maxBytes || MAX_FILE_SIZE
+      const sourceFile = new File([blob], `${targetId}_camera_${Date.now()}.jpg`, { type: "image/jpeg" })
+      const compressedBlob = await compressFullImage(sourceFile)
+
+      if (compressedBlob.size > maxImageBytes) {
+        setNotice({
+          visible: true,
+          type: "error",
+          title: "Image too detailed",
+          message: `Could not compress image enough. Please keep it under ${formatBytes(maxImageBytes)}.`,
+        })
+        window.scrollTo({ top: 0, behavior: "smooth" })
+        return
+      }
+
+      saveFileState(targetId, compressedBlob, URL.createObjectURL(compressedBlob), "image/jpeg")
+    } catch {
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Camera processing failed",
+        message: "Could not process captured image. Please retry.",
+      })
+      window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
 
@@ -738,7 +828,8 @@ function ShopRegistration() {
               <UploadCard
                 title="Cover Photo"
                 subtitle={`Required | ${storefrontRuleLabel}`}
-                onClick={() => triggerActionSheet("storefront", false, 3 / 4)}
+                onFileClick={() => openImagePicker("storefront", 3 / 4)}
+                onCameraClick={() => openCustomCamera("storefront", 3 / 4)}
                 preview={renderPreview("storefront")}
                 isPortrait
               />
@@ -818,7 +909,9 @@ function ShopRegistration() {
                       ? `Required for Ltd | ${cacRuleLabel}`
                       : `Optional for enterprise | ${cacRuleLabel}`
                   }
-                  onClick={() => triggerActionSheet("cac", true, null)}
+                  onFileClick={() => openImagePicker("cac", null)}
+                  onCameraClick={() => openNativeCameraPicker("cac", null)}
+                  onPdfClick={() => openPdfPicker("cac")}
                   preview={renderPreview("cac")}
                 />
 
@@ -840,14 +933,17 @@ function ShopRegistration() {
                 <UploadCard
                   title={<span>Official ID Document <span className="ml-1 text-pink-600">*</span></span>}
                   subtitle={`Required | ${idRuleLabel}`}
-                  onClick={() => triggerActionSheet("idCard", true, null)}
+                  onFileClick={() => openImagePicker("idCard", null)}
+                  onCameraClick={() => openNativeCameraPicker("idCard", null)}
+                  onPdfClick={() => openPdfPicker("idCard")}
                   preview={renderPreview("idCard")}
                 />
 
                 <UploadCard
                   title="Brand Logo"
                   subtitle={`Optional square image | ${logoRuleLabel}`}
-                  onClick={() => triggerActionSheet("logo", false, 1)}
+                  onFileClick={() => openImagePicker("logo", 1)}
+                  onCameraClick={() => openCustomCamera("logo", 1)}
                   preview={renderPreview("logo")}
                   isSquare
                 />
@@ -903,7 +999,13 @@ function ShopRegistration() {
         </div>
       </section>
 
-      <ActionSheet sheet={actionSheet} onClose={() => setActionSheet({ ...actionSheet, isOpen: false })} onSelect={handleActionSelection} />
+      <CameraCaptureModal
+        open={cameraCapture.open}
+        title="Capture Registration Image"
+        profile={activeCameraProfile}
+        onClose={closeCustomCamera}
+        onCapture={handleCameraCapture}
+      />
       <CropModal config={cropConfig} onClose={() => setCropConfig({ isOpen: false, targetId: null, src: "", ratio: null })} onCrop={onCropComplete} />
 
       {reviewOpen && (
@@ -963,10 +1065,19 @@ function WordCounter({ count, min, max }) {
   return <div className={`text-right text-xs font-bold ${valid ? "text-emerald-600" : "text-red-500"}`}>{count} words (Min: {min}, Max: {max})</div>
 }
 
-function UploadCard({ title, subtitle, onClick, preview, isPortrait, isSquare }) {
+function UploadCard({
+  title,
+  subtitle,
+  onFileClick,
+  onCameraClick,
+  onPdfClick,
+  preview,
+  isPortrait,
+  isSquare,
+}) {
   return (
-    <div onClick={onClick} className={`cursor-pointer mx-auto ${isPortrait ? 'w-full max-w-[240px]' : isSquare ? 'w-full max-w-[200px]' : 'w-full'}`}>
-      <div className={`rounded-[24px] border-2 border-dashed border-slate-300 bg-slate-50 p-5 transition hover:border-pink-300 hover:bg-pink-50 ${isPortrait ? 'aspect-[3/4]' : isSquare ? 'aspect-square' : ''}`}>
+    <div className={`mx-auto ${isPortrait ? 'w-full max-w-[240px]' : isSquare ? 'w-full max-w-[200px]' : 'w-full'}`}>
+      <div className={`rounded-[24px] border-2 border-dashed border-slate-300 bg-slate-50 p-5 ${isPortrait ? 'aspect-[3/4]' : isSquare ? 'aspect-square' : ''}`}>
         {preview ? (
           <div className="h-full w-full">{preview}</div>
         ) : (
@@ -978,31 +1089,33 @@ function UploadCard({ title, subtitle, onClick, preview, isPortrait, isSquare })
       <div className="mt-3 text-center">
         <p className="text-sm font-extrabold text-slate-800">{title}</p>
         <p className="mt-1 text-xs font-semibold text-slate-500">{subtitle}</p>
-      </div>
-    </div>
-  )
-}
-
-// --- CUSTOM ACTION SHEET ---
-function ActionSheet({ sheet, onClose, onSelect }) {
-  if (!sheet.isOpen) return null
-  return (
-    <div className="fixed inset-0 z-[200] flex items-end justify-center bg-slate-900/60 px-4 pb-6 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md animate-slide-up rounded-3xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <h3 className="mb-6 text-lg font-extrabold text-slate-900">Choose File Source</h3>
-        <div className="flex flex-col gap-3">
-          <button onClick={() => onSelect("camera")} className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4 text-left font-bold text-slate-800 transition hover:bg-slate-100">
-            <FaCamera className="text-xl text-blue-500" /> Take a Photo
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={onFileClick}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-[0.7rem] font-extrabold uppercase tracking-wide text-slate-700 transition hover:bg-slate-50"
+          >
+            <FaImage className="text-[0.8rem]" />
+            File
           </button>
-          <button onClick={() => onSelect("gallery")} className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4 text-left font-bold text-slate-800 transition hover:bg-slate-100">
-            <FaImage className="text-xl text-emerald-500" /> Choose from Gallery
+          <button
+            type="button"
+            onClick={onCameraClick}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-[0.7rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-slate-700"
+          >
+            <FaCamera className="text-[0.8rem]" />
+            Camera
           </button>
-          {sheet.acceptsPdf && (
-            <button onClick={() => onSelect("pdf")} className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4 text-left font-bold text-slate-800 transition hover:bg-slate-100">
-              <FaFilePdf className="text-xl text-red-500" /> {`Upload PDF (${formatBytes(MAX_FILE_SIZE)} max)`}
+          {onPdfClick ? (
+            <button
+              type="button"
+              onClick={onPdfClick}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-[0.7rem] font-extrabold uppercase tracking-wide text-red-700 transition hover:bg-red-100"
+            >
+              <FaFilePdf className="text-[0.8rem]" />
+              PDF
             </button>
-          )}
-          <button onClick={onClose} className="mt-2 rounded-2xl bg-slate-200 p-4 font-bold text-slate-600 transition hover:bg-slate-300">Cancel</button>
+          ) : null}
         </div>
       </div>
     </div>

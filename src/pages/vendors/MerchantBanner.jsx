@@ -395,8 +395,7 @@ export default function MerchantBanner() {
 
         <div className="relative w-full">
           <div
-            onClick={() => !previewUrl && fileInputRef.current?.click()}
-            className={`relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden rounded-xl border-2 transition-colors ${previewUrl ? "cursor-default border-[#D5D9D9] bg-white shadow-sm" : "cursor-pointer border-dashed border-[#888C8C] bg-[#F7F7F7] hover:border-[#db2777] hover:bg-[#fdf2f8]"}`}
+            className={`relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden rounded-xl border-2 transition-colors ${previewUrl ? "border-[#D5D9D9] bg-white shadow-sm" : "border-dashed border-[#888C8C] bg-[#F7F7F7]"}`}
           >
             <input type="file" ref={fileInputRef} hidden accept={BANNER_ACCEPT} onChange={handleFileSelect} />
             
@@ -425,7 +424,7 @@ export default function MerchantBanner() {
             ) : (
               <div className="text-center p-5">
                 <FaImage className="mx-auto mb-3 text-5xl text-[#888C8C]" />
-                <span className="text-[0.9rem] font-bold leading-relaxed text-[#565959]">{`Tap to Upload Banner (Landscape, ${BANNER_RULE_LABEL})`}</span>
+                <span className="text-[0.9rem] font-bold leading-relaxed text-[#565959]">{`Use File or Camera below (Landscape, ${BANNER_RULE_LABEL})`}</span>
               </div>
             )}
           </div>
