@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from "react"
+import { Suspense, lazy, useEffect, useState } from "react"
 import { Routes, Route, Link, useNavigate } from "react-router-dom"
 import Home from "./pages/Home"
 import About from "./pages/About"
@@ -20,32 +20,160 @@ import OnlineRouteGuard from "./components/common/OnlineRouteGuard"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
 
+function isChunkLoadFailure(error) {
+  const message = String(error?.message || error || "").toLowerCase()
+  return (
+    message.includes("failed to fetch dynamically imported module") ||
+    message.includes("importing a module script failed") ||
+    message.includes("failed to load module script") ||
+    message.includes("chunkloaderror") ||
+    message.includes("loading chunk")
+  )
+}
+
+function ChunkRouteFallback({ pageLabel = "this page" }) {
+  const [isOffline, setIsOffline] = useState(() => {
+    if (typeof navigator === "undefined") return false
+    return !navigator.onLine
+  })
+
+  useEffect(() => {
+    function handleOnline() {
+      setIsOffline(false)
+    }
+    function handleOffline() {
+      setIsOffline(true)
+    }
+
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
+    return () => {
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+    }
+  }, [])
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
+      <div className="w-full max-w-lg rounded-[28px] border border-amber-200 bg-white p-8 text-center shadow-xl">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-3xl text-amber-700">
+          !
+        </div>
+        <h1 className="mt-5 text-3xl font-black text-slate-900">
+          {isOffline ? "You are offline" : "Page load interrupted"}
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          {isOffline
+            ? `This screen (${pageLabel}) was not fully cached before your connection dropped. Reconnect and reload to continue.`
+            : `We could not load assets required for ${pageLabel}. Reload the app to continue.`}
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="flex-1 rounded-2xl bg-slate-900 px-5 py-3 font-bold text-white transition hover:bg-slate-800"
+          >
+            Reload app
+          </button>
+          <Link
+            to="/"
+            className="flex-1 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 font-bold text-amber-800 transition hover:bg-amber-100"
+          >
+            Go home
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function resilientLazy(importer, options = {}) {
+  return lazy(async () => {
+    try {
+      return await importer()
+    } catch (error) {
+      if (!isChunkLoadFailure(error)) throw error
+
+      const pageLabel = options.pageLabel || "this page"
+      return {
+        default: function ResilientChunkFallback() {
+          return <ChunkRouteFallback pageLabel={pageLabel} />
+        },
+      }
+    }
+  })
+}
+
 // --- IMPORTS ---
-const StaffDashboard = lazy(() => import("./pages/StaffDashboard"))
-const StaffIDGenerator = lazy(() => import("./pages/staff/StaffIDGenerator"))
-const StaffInbox = lazy(() => import("./pages/staff/StaffInbox"))
-const UserDashboard = lazy(() => import("./pages/UserDashboard"))
-const ShopRegistration = lazy(() => import("./pages/ShopRegistration"))
-const Area = lazy(() => import("./pages/Area"))
-const Cat = lazy(() => import("./pages/Cat"))
-const Search = lazy(() => import("./pages/Search"))
-const ShopDetail = lazy(() => import("./pages/ShopDetail"))
-const ProductDetail = lazy(() => import("./pages/ProductDetail"))
-const ShopIndex = lazy(() => import("./pages/ShopIndex"))
-const MerchantDiscovery = lazy(() => import("./pages/MerchantDiscovery"))
-const VendorsPanel = lazy(() => import("./pages/VendorsPanel"))
-const ImageOptimizer = lazy(() => import("./pages/vendors/ImageOptimizer"))
-const AddProduct = lazy(() => import("./pages/vendors/AddProduct"))
-const EditProduct = lazy(() => import("./pages/vendors/EditProduct"))
-const MerchantProducts = lazy(() => import("./pages/vendors/MerchantProducts"))
-const MerchantBanner = lazy(() => import("./pages/vendors/MerchantBanner"))
-const MerchantSettings = lazy(() => import("./pages/vendors/MerchantSettings"))
-const MerchantNews = lazy(() => import("./pages/vendors/MerchantNews"))
-const MerchantPromoBanner = lazy(() => import("./pages/vendors/MerchantPromoBanner"))
-const MerchantAnalytics = lazy(() => import("./pages/vendors/MerchantAnalytics"))
-const MerchantPayment = lazy(() => import("./pages/vendors/MerchantPayment"))
-const MerchantServiceFee = lazy(() => import("./pages/vendors/MerchantServiceFee"))
-const MerchantVideoKYC = lazy(() => import("./pages/vendors/MerchantVideoKYC"))
+const StaffDashboard = resilientLazy(() => import("./pages/StaffDashboard"), {
+  pageLabel: "staff dashboard",
+})
+const StaffIDGenerator = resilientLazy(() => import("./pages/staff/StaffIDGenerator"), {
+  pageLabel: "staff ID generator",
+})
+const StaffInbox = resilientLazy(() => import("./pages/staff/StaffInbox"), {
+  pageLabel: "staff inbox",
+})
+const UserDashboard = resilientLazy(() => import("./pages/UserDashboard"), {
+  pageLabel: "user dashboard",
+})
+const ShopRegistration = resilientLazy(() => import("./pages/ShopRegistration"), {
+  pageLabel: "shop registration",
+})
+const Area = resilientLazy(() => import("./pages/Area"), { pageLabel: "area view" })
+const Cat = resilientLazy(() => import("./pages/Cat"), { pageLabel: "category view" })
+const Search = resilientLazy(() => import("./pages/Search"), { pageLabel: "search" })
+const ShopDetail = resilientLazy(() => import("./pages/ShopDetail"), {
+  pageLabel: "shop details",
+})
+const ProductDetail = resilientLazy(() => import("./pages/ProductDetail"), {
+  pageLabel: "product details",
+})
+const ShopIndex = resilientLazy(() => import("./pages/ShopIndex"), {
+  pageLabel: "market index",
+})
+const MerchantDiscovery = resilientLazy(() => import("./pages/MerchantDiscovery"), {
+  pageLabel: "merchant profile",
+})
+const VendorsPanel = resilientLazy(() => import("./pages/VendorsPanel"), {
+  pageLabel: "vendor panel",
+})
+const ImageOptimizer = resilientLazy(() => import("./pages/vendors/ImageOptimizer"), {
+  pageLabel: "image optimizer",
+})
+const AddProduct = resilientLazy(() => import("./pages/vendors/AddProduct"), {
+  pageLabel: "add product",
+})
+const EditProduct = resilientLazy(() => import("./pages/vendors/EditProduct"), {
+  pageLabel: "edit product",
+})
+const MerchantProducts = resilientLazy(() => import("./pages/vendors/MerchantProducts"), {
+  pageLabel: "merchant products",
+})
+const MerchantBanner = resilientLazy(() => import("./pages/vendors/MerchantBanner"), {
+  pageLabel: "shop banner",
+})
+const MerchantSettings = resilientLazy(() => import("./pages/vendors/MerchantSettings"), {
+  pageLabel: "merchant settings",
+})
+const MerchantNews = resilientLazy(() => import("./pages/vendors/MerchantNews"), {
+  pageLabel: "merchant news",
+})
+const MerchantPromoBanner = resilientLazy(() => import("./pages/vendors/MerchantPromoBanner"), {
+  pageLabel: "promo banner",
+})
+const MerchantAnalytics = resilientLazy(() => import("./pages/vendors/MerchantAnalytics"), {
+  pageLabel: "merchant analytics",
+})
+const MerchantPayment = resilientLazy(() => import("./pages/vendors/MerchantPayment"), {
+  pageLabel: "payment page",
+})
+const MerchantServiceFee = resilientLazy(() => import("./pages/vendors/MerchantServiceFee"), {
+  pageLabel: "service fee page",
+})
+const MerchantVideoKYC = resilientLazy(() => import("./pages/vendors/MerchantVideoKYC"), {
+  pageLabel: "video verification",
+})
 
 function RouteLoadingScreen({
   title = "Loading your page",
@@ -84,6 +212,39 @@ function ProtectedDashboardRoute({ children }) {
   const navigate = useNavigate()
   const [completedProfileUserId, setCompletedProfileUserId] = useState(null)
   const { loading, session, user, profile, suspended, isOffline } = useAuthSession()
+
+  useEffect(() => {
+    if (!user || isOffline) return undefined
+
+    let cancelled = false
+    const preload = () => {
+      if (cancelled) return
+      Promise.allSettled([
+        import("./pages/vendors/AddProduct"),
+        import("./pages/vendors/EditProduct"),
+        import("./pages/vendors/MerchantBanner"),
+        import("./pages/ShopRegistration"),
+        import("./pages/vendors/MerchantProducts"),
+        import("./pages/vendors/MerchantNews"),
+      ]).catch(() => {
+        // Best-effort preloading only. Route-level fallback still handles misses.
+      })
+    }
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(preload, { timeout: 2500 })
+      return () => {
+        cancelled = true
+        if ("cancelIdleCallback" in window) window.cancelIdleCallback(idleId)
+      }
+    }
+
+    const timerId = window.setTimeout(preload, 700)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timerId)
+    }
+  }, [user?.id, isOffline])
 
   if (loading && !isOffline) {
     return (
