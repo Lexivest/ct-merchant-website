@@ -461,7 +461,11 @@ export default function AddProduct() {
       const uploadPromises = [1, 2, 3].map(async (idx) => {
         if (!blobs[idx]) return null;
         const fName = `${user.id}_${Date.now()}_img${idx}.jpg`;
-        const { error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], { contentType: "image/jpeg", upsert: false });
+        const { error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], {
+          contentType: "image/jpeg",
+          upsert: false,
+          cacheControl: "31536000",
+        });
         if (upErr) throw upErr;
         return supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl;
       });

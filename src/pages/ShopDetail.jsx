@@ -249,6 +249,32 @@ function ShopDetail() {
     return `${cityName} Repository of shops, products and services`
   }, [approvedNews, currentShop])
 
+  // Warm key images to improve first render on unstable networks.
+  useEffect(() => {
+    const urls = [
+      shopBanner,
+      currentShop?.storefront_url,
+      currentShop?.image_url,
+      ...products.slice(0, 16).map((p) => p?.image_url),
+    ]
+      .filter(Boolean)
+      .filter((url, index, arr) => arr.indexOf(url) === index)
+
+    if (urls.length === 0) return undefined
+
+    const timer = window.setTimeout(() => {
+      urls.forEach((url) => {
+        const img = new Image()
+        img.decoding = "async"
+        img.src = url
+      })
+    }, 120)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [shopBanner, currentShop?.storefront_url, currentShop?.image_url, products])
+
   // Map Initialization
   useEffect(() => {
     if (!currentShop?.latitude || !currentShop?.longitude || !mapRef.current) return
@@ -615,6 +641,9 @@ function ShopDetail() {
               alt="Shop Banner"
               containerClassName="aspect-video max-h-[400px] w-full rounded-xl border border-slate-300 bg-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
               className="block h-full w-full object-cover"
+              loading="eager"
+              fetchPriority="high"
+              slowLoadMs={2200}
             />
           </div>
         ) : null}
@@ -690,6 +719,8 @@ function ShopDetail() {
                       alt="Store Front"
                       containerClassName="aspect-[3/4] w-full max-w-[360px] rounded-lg border border-slate-300 bg-slate-50"
                       className="h-full w-full object-cover"
+                      loading="eager"
+                      slowLoadMs={2200}
                     />
                   </div>
                 </div>
@@ -727,6 +758,9 @@ function ShopDetail() {
                     alt="Shop Logo"
                     containerClassName="h-[72px] w-[72px] shrink-0 rounded-lg border border-slate-300 bg-white"
                     className="h-full w-full object-cover"
+                    loading="eager"
+                    fetchPriority="high"
+                    slowLoadMs={1800}
                   />
 
                   <div className="min-w-0 flex-1">

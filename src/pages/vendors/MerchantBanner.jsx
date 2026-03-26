@@ -290,7 +290,11 @@ export default function MerchantBanner() {
         const fName = `${shopId}/${Date.now()}_banner.jpg`;
         const { error: uploadError } = await supabase.storage
           .from(BANNER_BUCKET)
-          .upload(fName, activeBlob, { contentType: "image/jpeg", upsert: false });
+          .upload(fName, activeBlob, {
+            contentType: "image/jpeg",
+            upsert: false,
+            cacheControl: "31536000",
+          });
 
         if (uploadError) throw uploadError;
 

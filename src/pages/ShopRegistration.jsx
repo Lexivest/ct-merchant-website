@@ -634,6 +634,7 @@ function ShopRegistration() {
       .upload(path, fileOrBlob, {
         upsert: false,
         contentType: fileOrBlob.type || "image/jpeg",
+        cacheControl: "31536000",
       })
 
     if (uploadError) throw uploadError

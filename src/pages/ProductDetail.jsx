@@ -183,6 +183,29 @@ function ProductDetail() {
     return [...new Set(images)]
   }, [currentProduct])
 
+  useEffect(() => {
+    const urls = [
+      ...galleryImages,
+      ...recommendations.slice(0, 10).map((item) => item?.image_url),
+    ]
+      .filter(Boolean)
+      .filter((url, index, arr) => arr.indexOf(url) === index)
+
+    if (urls.length === 0) return undefined
+
+    const timer = window.setTimeout(() => {
+      urls.forEach((url) => {
+        const img = new Image()
+        img.decoding = "async"
+        img.src = url
+      })
+    }, 120)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [galleryImages, recommendations])
+
   const hasDiscount = useMemo(() => {
     if (!currentProduct) return false
     return (
@@ -621,6 +644,9 @@ function ProductDetail() {
                     alt={currentProduct?.name || "Product"}
                     containerClassName="h-full w-full bg-[#F7F7F7]"
                     className="block h-full w-full object-contain mix-blend-multiply"
+                    loading="eager"
+                    fetchPriority="high"
+                    slowLoadMs={2200}
                   />
                 </div>
 

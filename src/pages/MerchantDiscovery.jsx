@@ -155,6 +155,9 @@ function MerchantDiscovery() {
                   alt={shop.name}
                   containerClassName="h-full w-full bg-white"
                   className="h-full w-full object-contain bg-white p-1"
+                  loading="eager"
+                  fetchPriority="high"
+                  slowLoadMs={1800}
                 />
               </div>
 
