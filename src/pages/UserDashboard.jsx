@@ -174,8 +174,9 @@ function UserDashboard() {
     }
   }
 
+  const dashboardCacheKey = `dashboard_cache_${user?.id || "guest"}_${profile?.city_id || "none"}`
   const { data: fetchedData, loading: dataLoading, error: dataError } = useCachedFetch(
-    "dashboard_cache",
+    dashboardCacheKey,
     fetchDashboardData,
     { dependencies: [user?.id, profile?.city_id], ttl: 1000 * 60 * 15 }
   )

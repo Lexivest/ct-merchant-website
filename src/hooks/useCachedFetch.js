@@ -3,6 +3,19 @@ import { useState, useEffect, useRef } from "react"
 // Global memory cache to prevent redundant network requests across page navigations
 const globalCache = new Map()
 
+export function clearCachedFetchStore(predicate) {
+  if (typeof predicate !== "function") {
+    globalCache.clear()
+    return
+  }
+
+  for (const key of globalCache.keys()) {
+    if (predicate(key)) {
+      globalCache.delete(key)
+    }
+  }
+}
+
 export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   const { 
     ttl = 1000 * 60 * 5, // 5-minute default cache lifespan

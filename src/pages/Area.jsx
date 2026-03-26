@@ -164,7 +164,7 @@ function Area() {
                       <img
                         src={displayImg}
                         alt={shop.name}
-                        className="h-16 w-16 shrink-0 rounded-lg border border-[#E5E7EB] object-cover"
+                        className="h-16 w-16 shrink-0 rounded-lg border border-[#E5E7EB] bg-white object-contain p-1"
                       />
                     ) : (
                       <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-pink-200 bg-pink-100 text-[1.4rem] font-extrabold text-pink-600">

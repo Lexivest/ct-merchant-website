@@ -60,6 +60,7 @@ export default function MerchantPayment() {
   
   // PROMO STATE
   const [promoCode, setPromoCode] = useState("");
+  const canApplyPromo = normalizePromoCode(promoCode).length === 6 && !processing
   
   const [shopDetails, setShopDetails] = useState(null);
 
@@ -349,14 +350,19 @@ export default function MerchantPayment() {
                   placeholder="6-DIGIT CODE"
                   value={promoCode}
                   onChange={(e) => setPromoCode(normalizePromoCode(e.target.value))}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && canApplyPromo) {
+                      handleApplyPromo()
+                    }
+                  }}
                   className="flex-1 rounded-lg border border-[#CBD5E1] bg-[#F8FAFC] px-4 py-2 font-mono text-[1.05rem] font-bold tracking-widest text-[#0F172A] outline-none transition focus:border-[#D97706] focus:bg-white focus:ring-2 focus:ring-[#FEF3C7]"
                 />
                 <button
                   onClick={handleApplyPromo}
-                  disabled={promoCode.length !== 6 || processing}
+                  disabled={!canApplyPromo}
                   className="rounded-lg bg-[#0F172A] px-5 py-2 font-bold text-white transition hover:bg-[#1E293B] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Apply
+                  Activate Code
                 </button>
               </div>
             </div>

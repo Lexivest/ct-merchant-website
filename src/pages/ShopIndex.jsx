@@ -173,7 +173,7 @@ function ShopIndex() {
                     src={imageUrl}
                     alt={shop.name}
                     loading="lazy"
-                    className="h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-slate-50 object-cover"
+                    className="h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white object-contain p-1"
                   />
                 ) : (
                   <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-pink-200 bg-pink-50 text-[1.4rem] font-extrabold text-pink-600">

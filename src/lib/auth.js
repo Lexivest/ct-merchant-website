@@ -3,6 +3,7 @@ import {
   normalizeEmail,
   normalizePhone,
 } from "./validators"
+import { clearCachedFetchStore } from "../hooks/useCachedFetch"
 
 export async function getClientIpData() {
   try {
@@ -94,6 +95,7 @@ export async function signOutUser() {
           key.startsWith("shop_detail_") ||
           key.startsWith("open_cities") ||
           key.startsWith("areas_") ||
+          key.startsWith("ctmerchant_") ||
           key.includes("ctm_")
         )
       ) {
@@ -105,6 +107,9 @@ export async function signOutUser() {
 
     // 3. Clear session storage
     sessionStorage.clear()
+
+    // 4. Clear in-memory query cache used by useCachedFetch
+    clearCachedFetchStore()
   } catch (error) {
     console.error("Error during client cleanup:", error)
   }

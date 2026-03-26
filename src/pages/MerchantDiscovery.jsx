@@ -2,7 +2,6 @@ import { useMemo } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
-  FaCircleCheck,
   FaLocationDot,
   FaMobileScreen,
   FaStore,
@@ -69,6 +68,8 @@ function MerchantDiscovery() {
 
   const shop = data?.shop || null
   const profile = data?.profile || null
+  const statusLabel = shop?.is_verified ? "Physically Verified" : "Approved Listing"
+  const statusToneClass = shop?.is_verified ? "text-[#007185]" : "text-[#B45309]"
 
   // Helper Functions
   function getLogo() {
@@ -151,7 +152,7 @@ function MerchantDiscovery() {
                 <img
                   src={getLogo()}
                   alt={shop.name}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain bg-white p-1"
                 />
               </div>
 
@@ -164,13 +165,10 @@ function MerchantDiscovery() {
               <div className="mt-4">
                 <h2 className="flex items-center justify-center gap-2 text-[1.4rem] font-extrabold text-[#0F1111]">
                   <span>{shop.name}</span>
-                  {shop.is_verified ? (
-                    <FaCircleCheck className="text-[#007185]" />
-                  ) : null}
                 </h2>
 
                 <p className="mt-1 text-[0.9rem] font-medium text-slate-600">
-                  Proprietor: {profile?.full_name || "Verified Merchant"}
+                  Proprietor: {profile?.full_name || "Registered Merchant"}
                 </p>
               </div>
 
@@ -199,9 +197,8 @@ function MerchantDiscovery() {
                   <span className="mb-1 block text-[0.7rem] font-extrabold uppercase text-slate-500">
                     Status
                   </span>
-                  <span className="block whitespace-nowrap text-[0.9rem] font-bold text-[#007185]">
-                    <FaCircleCheck className="mr-1 inline" />
-                    Verified
+                  <span className={`block whitespace-nowrap text-[0.9rem] font-bold ${statusToneClass}`}>
+                    {statusLabel}
                   </span>
                 </div>
               </div>

@@ -14,6 +14,14 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock, ShimmerCard } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 
+const FALLBACK_IMAGE =
+  "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Crect width='100%25' height='100%25' fill='%23F1F5F9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2364748B' font-family='Arial' font-size='44'%3EImage%20Unavailable%3C/text%3E%3C/svg%3E"
+
+function handleImageError(event) {
+  event.currentTarget.onerror = null
+  event.currentTarget.src = FALLBACK_IMAGE
+}
+
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function SearchShimmer() {
   return (
@@ -185,7 +193,7 @@ function Search() {
       return (
         <div key={`${shop.id}-${item.id}-${index}`} className="shop-grid-item-wrap">
           <div className="shop-grid-item">
-            <img src={item.image_url} alt={name} loading="lazy" />
+            <img src={item.image_url} alt={name} loading="lazy" onError={handleImageError} />
             {hasDiscount ? (
               <div className="grid-badge flash-offer">-{percent}%</div>
             ) : null}
@@ -263,10 +271,11 @@ function Search() {
       >
         <div className="prod-img-wrap relative aspect-square w-full overflow-hidden bg-[#F7F7F7]">
           <img
-            src={product.image_url || "https://via.placeholder.com/300"}
+            src={product.image_url || FALLBACK_IMAGE}
             alt={name}
             loading="lazy"
             className="prod-img h-full w-full object-contain p-2"
+            onError={handleImageError}
           />
 
           {hasDiscount ? (
