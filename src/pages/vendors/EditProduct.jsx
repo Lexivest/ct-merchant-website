@@ -601,25 +601,31 @@ export default function EditProduct() {
             {[1, 2, 3].map((slot) => (
               <div
                 key={slot}
-                onClick={() => !previews[slot] && fileInputRefs[slot].current?.click()}
-                className={`relative flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed transition-colors ${slot === 1 ? (previews[1] ? "border-[#db2777] bg-white" : "border-[#db2777] bg-[#fdf2f8]") : (previews[slot] ? "border-slate-300 bg-white" : "border-[#888C8C] bg-[#F7F7F7] hover:border-[#db2777]")}`}
+                className={`relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed transition-colors ${slot === 1 ? (previews[1] ? "border-[#db2777] bg-white" : "border-[#db2777] bg-[#fdf2f8]") : (previews[slot] ? "border-slate-300 bg-white" : "border-[#888C8C] bg-[#F7F7F7]")}`}
               >
                 <input type="file" ref={fileInputRefs[slot]} hidden accept={PRODUCT_ACCEPT} onChange={(e) => handleFileSelect(e, slot)} />
                 
                 {previews[slot] ? (
                   <>
                     <img src={previews[slot]} className="absolute inset-0 h-full w-full object-contain bg-white z-10" alt={`Slot ${slot}`} />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCameraSlot(slot);
-                      }}
-                      className="absolute left-1 top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-[#0F172A] text-white shadow-md transition hover:scale-110 hover:bg-[#1E293B]"
-                      title="Capture from camera"
-                    >
-                      <FaCamera size={11} />
-                    </button>
+                    <div className="absolute left-1 top-1 z-20 flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRefs[slot].current?.click()}
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#0F172A] shadow-md transition hover:scale-110"
+                        title="Pick from files"
+                      >
+                        <FaImage size={11} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCameraSlot(slot)}
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0F172A] text-white shadow-md transition hover:scale-110 hover:bg-[#1E293B]"
+                        title="Capture from camera"
+                      >
+                        <FaCamera size={11} />
+                      </button>
+                    </div>
                     <button type="button" onClick={(e) => removeImage(e, slot)} className="absolute right-1 top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-md transition hover:scale-110 hover:bg-red-700">
                       <FaTrashCan size={12} />
                     </button>
@@ -635,16 +641,22 @@ export default function EditProduct() {
                     <span className={`text-center text-[0.7rem] font-bold leading-tight ${slot === 1 ? "text-[#db2777]" : "text-[#565959]"}`}>
                       {slot === 1 ? "Main Image\n(Required)" : slot === 2 ? "Extra Angle\n(Optional)" : "Label/Box\n(Optional)"}
                     </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCameraSlot(slot);
-                      }}
-                      className="mt-2 rounded-md border border-[#334155] bg-[#0F172A] px-2 py-1 text-[0.6rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1E293B]"
-                    >
-                      Camera
-                    </button>
+                    <div className="mt-2 flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRefs[slot].current?.click()}
+                        className="rounded-md border border-[#334155] bg-white px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-[#0F172A] transition hover:bg-slate-50"
+                      >
+                        File
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCameraSlot(slot)}
+                        className="rounded-md border border-[#334155] bg-[#0F172A] px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1E293B]"
+                      >
+                        Camera
+                      </button>
+                    </div>
                   </>
                 )}
               </div>
