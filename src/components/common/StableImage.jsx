@@ -16,6 +16,17 @@ function StableImage({
   const [currentSrc, setCurrentSrc] = useState(src || fallbackSrc)
   const [loaded, setLoaded] = useState(false)
 
+  const isMobileBrowser =
+    typeof navigator !== "undefined" &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent || "",
+    )
+
+  // Mobile browsers are often aggressive/inconsistent with lazy loading in scroll containers.
+  // Force eager on mobile for reliability.
+  const resolvedLoading =
+    loading === "lazy" && isMobileBrowser ? "eager" : loading
+
   useEffect(() => {
     setCurrentSrc(src || fallbackSrc)
     setLoaded(false)
@@ -44,8 +55,8 @@ function StableImage({
       <img
         src={currentSrc}
         alt={alt}
-        loading={loading}
-        decoding="async"
+        loading={resolvedLoading}
+        decoding="auto"
         fetchPriority={fetchPriority}
         draggable={false}
         className={className}
