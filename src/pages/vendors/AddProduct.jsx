@@ -23,12 +23,20 @@ import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
+import CameraCaptureModal from "../../components/common/CameraCaptureModal";
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
+import { IMAGE_PROFILES } from "../../lib/imageProfiles";
+import {
+  canvasToBlobWithMaxBytes,
+  fileToDataUrl,
+  padImageToAspectDataUrl,
+} from "../../lib/imagePipeline";
 
 const PRODUCT_RULE = UPLOAD_RULES.products;
+const PRODUCT_PROFILE = IMAGE_PROFILES.product;
 const PRODUCT_BUCKET = PRODUCT_RULE.bucket;
 const PRODUCT_MAX_BYTES = PRODUCT_RULE.maxBytes;
-const PRODUCT_INPUT_MAX_BYTES = 4 * 1024 * 1024;
+const PRODUCT_INPUT_MAX_BYTES = PRODUCT_PROFILE.maxInputBytes;
 const PRODUCT_ACCEPT = getAcceptValue(PRODUCT_RULE, "image/*");
 const PRODUCT_RULE_LABEL = getRuleLabel(PRODUCT_RULE);
 const MAX_PRODUCTS_LIMIT = 30;
@@ -197,11 +205,13 @@ export default function AddProduct() {
 
   // Studio State
   const [studioOpen, setStudioOpen] = useState(false);
+  const [cameraSlot, setCameraSlot] = useState(null);
   const [activeSlot, setActiveSlot] = useState(null);
   const [tempImage, setTempImage] = useState("");
   const [tempSize, setTempSize] = useState(0);
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
+  const [isFitting, setIsFitting] = useState(false);
   const cropperRef = useRef(null);
   const fileInputRefs = {
     1: useRef(null),
@@ -272,8 +282,7 @@ export default function AddProduct() {
   };
 
   // --- STUDIO LOGIC ---
-  const handleFileSelect = (e, slot) => {
-    const file = e.target.files?.[0];
+  const openStudioForFile = async (file, slot) => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
@@ -285,17 +294,37 @@ export default function AddProduct() {
       return;
     }
 
+    const src = await fileToDataUrl(file);
     setActiveSlot(slot);
     setTempSize(file.size);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setTempImage(ev.target.result);
-      setBrightness(100);
-      setContrast(100);
-      setStudioOpen(true);
-    };
-    reader.readAsDataURL(file);
+    setTempImage(src);
+    setBrightness(100);
+    setContrast(100);
+    setStudioOpen(true);
+  };
+
+  const handleFileSelect = async (e, slot) => {
+    const file = e.target.files?.[0];
     e.target.value = ""; // Reset
+    if (!file) return;
+
+    try {
+      await openStudioForFile(file, slot);
+    } catch (error) {
+      alert(error?.message || "Could not open selected image.");
+    }
+  };
+
+  const handleCameraCapture = async ({ blob }) => {
+    if (!blob || !cameraSlot) return;
+
+    try {
+      const file = new File([blob], `camera_${Date.now()}.jpg`, { type: "image/jpeg" });
+      await openStudioForFile(file, cameraSlot);
+      setCameraSlot(null);
+    } catch (error) {
+      alert(error?.message || "Could not process captured image.");
+    }
   };
 
   const closeStudio = () => {
@@ -304,22 +333,42 @@ export default function AddProduct() {
     setActiveSlot(null);
   };
 
-  const applyCrop = () => {
+  const applyWhiteBorders = async () => {
+    if (!tempImage) return;
+    setIsFitting(true);
+    try {
+      const fitted = await padImageToAspectDataUrl(tempImage, PRODUCT_PROFILE.aspectRatio);
+      setTempImage(fitted);
+      if (cropperRef.current?.cropper) {
+        cropperRef.current.cropper.replace(fitted);
+      }
+    } catch (error) {
+      alert(error?.message || "Could not auto-fit image.");
+    } finally {
+      setIsFitting(false);
+    }
+  };
+
+  const applyCrop = async () => {
     if (!cropperRef.current?.cropper) return;
     const cropper = cropperRef.current.cropper;
 
     const croppedCanvas = cropper.getCroppedCanvas({
-      width: 800,
-      height: 800,
+      width: PRODUCT_PROFILE.targetWidth,
+      height: PRODUCT_PROFILE.targetHeight,
       fillColor: "#FFFFFF",
       imageSmoothingEnabled: true,
       imageSmoothingQuality: "high",
     });
 
     const finalCanvas = document.createElement("canvas");
-    finalCanvas.width = 800;
-    finalCanvas.height = 800;
+    finalCanvas.width = PRODUCT_PROFILE.targetWidth;
+    finalCanvas.height = PRODUCT_PROFILE.targetHeight;
     const ctx = finalCanvas.getContext("2d");
+    if (!ctx) {
+      alert("Could not initialize image editor canvas.");
+      return;
+    }
 
     ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
     ctx.drawImage(croppedCanvas, 0, 0);
@@ -333,36 +382,31 @@ export default function AddProduct() {
     ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    ctx.fillText("Verified CTMerchant", 780, 780);
+    ctx.fillText("Verified CTMerchant", PRODUCT_PROFILE.targetWidth - 20, PRODUCT_PROFILE.targetHeight - 20);
 
-    let quality = 0.92;
-    const attemptCompress = () => {
-      finalCanvas.toBlob(
-        (blob) => {
-          if (!blob) return;
-          if (blob.size <= PRODUCT_MAX_BYTES) {
-            setBlobs((prev) => ({ ...prev, [activeSlot]: blob }));
-            setPreviews((prev) => ({ ...prev, [activeSlot]: URL.createObjectURL(blob) }));
-            
-            const saved = tempSize - blob.size;
-            if (saved > 0) {
-              setSavings((prev) => ({ ...prev, [activeSlot]: `Saved ${Math.round((saved / tempSize) * 100)}%` }));
-            } else {
-              setSavings((prev) => ({ ...prev, [activeSlot]: "Ready" }));
-            }
-            closeStudio();
-          } else if (quality <= 0.4) {
-            alert(`Unable to compress this image under ${formatBytes(PRODUCT_MAX_BYTES)}. Try a simpler image.`);
-          } else {
-            quality -= 0.05;
-            attemptCompress();
-          }
-        },
-        "image/jpeg",
-        quality
-      );
-    };
-    attemptCompress();
+    const blob = await canvasToBlobWithMaxBytes(finalCanvas, {
+      maxBytes: PRODUCT_MAX_BYTES,
+      mimeType: PRODUCT_PROFILE.outputMimeType,
+      qualityStart: PRODUCT_PROFILE.qualityStart,
+      qualityFloor: PRODUCT_PROFILE.qualityFloor,
+      qualityStep: PRODUCT_PROFILE.qualityStep,
+    });
+
+    if (!blob) {
+      alert(`Unable to compress this image under ${formatBytes(PRODUCT_MAX_BYTES)}. Try a simpler image.`);
+      return;
+    }
+
+    setBlobs((prev) => ({ ...prev, [activeSlot]: blob }));
+    setPreviews((prev) => ({ ...prev, [activeSlot]: URL.createObjectURL(blob) }));
+
+    const saved = tempSize - blob.size;
+    if (saved > 0) {
+      setSavings((prev) => ({ ...prev, [activeSlot]: `Saved ${Math.round((saved / tempSize) * 100)}%` }));
+    } else {
+      setSavings((prev) => ({ ...prev, [activeSlot]: "Ready" }));
+    }
+    closeStudio();
   };
 
   const removeImage = (e, slot) => {
@@ -522,7 +566,7 @@ export default function AddProduct() {
         <div className="mb-6 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-4">
           <h4 className="mb-2 flex items-center gap-2 text-[0.95rem] font-extrabold"><FaWandMagicSparkles className="text-[#db2777]" /> Powered by CT Studio</h4>
           <p className="text-[0.85rem] text-[#475569] leading-relaxed">
-            {`Tap an image slot below to open the studio. Max input ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}; final upload ${PRODUCT_RULE_LABEL}.`}
+            {`Use Gallery or Camera for each slot. Camera includes zoom support where available. Max input ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}; final upload ${PRODUCT_RULE_LABEL}.`}
           </p>
         </div>
 
@@ -541,6 +585,17 @@ export default function AddProduct() {
                 {previews[slot] ? (
                   <>
                     <img src={previews[slot]} className="absolute inset-0 h-full w-full object-contain bg-white z-10" alt={`Slot ${slot}`} />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCameraSlot(slot);
+                      }}
+                      className="absolute left-1 top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-[#0F172A] text-white shadow-md transition hover:scale-110 hover:bg-[#1E293B]"
+                      title="Capture from camera"
+                    >
+                      <FaCamera size={11} />
+                    </button>
                     <button type="button" onClick={(e) => removeImage(e, slot)} className="absolute right-1 top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-md transition hover:scale-110 hover:bg-red-700">
                       <FaTrashCan size={12} />
                     </button>
@@ -556,6 +611,16 @@ export default function AddProduct() {
                     <span className={`text-center text-[0.7rem] font-bold leading-tight ${slot === 1 ? "text-[#db2777]" : "text-[#565959]"}`}>
                       {slot === 1 ? "Main Image\n(Required)" : slot === 2 ? "Extra Angle\n(Optional)" : "Label/Box\n(Optional)"}
                     </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCameraSlot(slot);
+                      }}
+                      className="mt-2 rounded-md border border-[#334155] bg-[#0F172A] px-2 py-1 text-[0.6rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1E293B]"
+                    >
+                      Camera
+                    </button>
                   </>
                 )}
               </div>
@@ -568,7 +633,7 @@ export default function AddProduct() {
             <div className="w-[140px] overflow-hidden rounded-md border border-[#E5E7EB] bg-white p-2 shadow-md">
               <div className="relative mb-1 flex aspect-square items-center justify-center overflow-hidden rounded border border-dashed border-[#D5D9D9] bg-[#F7F7F7]">
                 {previews[1] ? (
-                  <img src={previews[1]} className="h-full w-full object-cover" alt="Preview" />
+                  <img src={previews[1]} className="h-full w-full object-contain bg-white" alt="Preview" />
                 ) : (
                   <FaImage className="text-3xl text-[#D5D9D9]" />
                 )}
@@ -792,6 +857,14 @@ export default function AddProduct() {
               <div className="rounded-lg border border-[#10b981]/20 bg-[#10b981]/10 p-3 text-center text-[0.85rem] font-semibold text-[#10b981]">
                 <FaExpand className="inline mr-1" /> Drag and zoom the image to fill the square completely.
               </div>
+
+              <div>
+                <div className="mb-3 border-b border-[#334155] pb-2 text-[0.8rem] font-extrabold uppercase tracking-wide text-[#94a3b8]">Framing Mode</div>
+                <button onClick={applyWhiteBorders} disabled={isFitting} className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#db2777] bg-transparent p-3 font-bold text-[#db2777] transition hover:bg-[rgba(219,39,119,0.1)]">
+                  {isFitting ? <FaCircleNotch className="animate-spin" /> : <FaExpand />} Auto Fit (Keep All Edges)
+                </button>
+                <p className="mt-1.5 text-[0.75rem] leading-relaxed text-[#94a3b8]">Adds white padding so no part of the product image is cut off in marketplace slots.</p>
+              </div>
               
               <div>
                 <div className="mb-3 border-b border-[#334155] pb-2 text-[0.8rem] font-extrabold uppercase tracking-wide text-[#94a3b8]">Lighting Fixes</div>
@@ -813,6 +886,14 @@ export default function AddProduct() {
           </div>
         </div>
       )}
+
+      <CameraCaptureModal
+        open={cameraSlot !== null}
+        title="Capture Product Photo"
+        profile={PRODUCT_PROFILE}
+        onClose={() => setCameraSlot(null)}
+        onCapture={handleCameraCapture}
+      />
 
       {/* SUCCESS MODAL */}
       {showSuccess && (

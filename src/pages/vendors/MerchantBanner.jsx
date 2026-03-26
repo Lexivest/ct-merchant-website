@@ -4,6 +4,7 @@ import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
 import {
   FaArrowLeft,
+  FaCamera,
   FaCheck,
   FaCircleNotch,
   FaCropSimple,
@@ -18,17 +19,26 @@ import {
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
+import CameraCaptureModal from "../../components/common/CameraCaptureModal";
 import { ShimmerBlock } from "../../components/common/Shimmers";
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
+import { IMAGE_PROFILES } from "../../lib/imageProfiles";
+import {
+  canvasToBlobWithMaxBytes,
+  fileToDataUrl,
+  padImageToAspectDataUrl,
+  renderCanvasToTarget,
+} from "../../lib/imagePipeline";
 
 const BANNER_RULE = UPLOAD_RULES.shopBanners;
+const BANNER_PROFILE = IMAGE_PROFILES.shopBanner;
 const BANNER_BUCKET = BANNER_RULE.bucket;
 const BANNER_MAX_BYTES = BANNER_RULE.maxBytes;
-const BANNER_INPUT_MAX_BYTES = 4 * 1024 * 1024;
+const BANNER_INPUT_MAX_BYTES = BANNER_PROFILE.maxInputBytes;
 const BANNER_ACCEPT = getAcceptValue(BANNER_RULE, "image/*");
 const BANNER_RULE_LABEL = getRuleLabel(BANNER_RULE);
-const TARGET_W = 1280;
-const TARGET_H = 720;
+const TARGET_W = BANNER_PROFILE.targetWidth;
+const TARGET_H = BANNER_PROFILE.targetHeight;
 
 // --- SHIMMER COMPONENT ---
 function BannerShimmer() {
@@ -79,7 +89,10 @@ export default function MerchantBanner() {
 
   // Studio State
   const [studioOpen, setStudioOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [tempImage, setTempImage] = useState("");
+  const [fitMode, setFitMode] = useState("contain");
+  const [isFitting, setIsFitting] = useState(false);
   const cropperRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -144,26 +157,41 @@ export default function MerchantBanner() {
   }, [user, authLoading, shopId, isOffline]);
 
   // --- STUDIO LOGIC ---
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
+  const openStudioForFile = async (file) => {
     if (!file) return;
-
     if (!file.type.startsWith("image/")) {
-      alert("Please upload a valid image file.");
-      return;
+      throw new Error("Please upload a valid image file.");
     }
     if (file.size > BANNER_INPUT_MAX_BYTES) {
-      alert(`File is too large. Max input size is ${formatBytes(BANNER_INPUT_MAX_BYTES)}.`);
-      return;
+      throw new Error(`File is too large. Max input size is ${formatBytes(BANNER_INPUT_MAX_BYTES)}.`);
     }
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setTempImage(ev.target.result);
-      setStudioOpen(true);
-    };
-    reader.readAsDataURL(file);
+    const src = await fileToDataUrl(file);
+    setTempImage(src);
+    setFitMode("contain");
+    setStudioOpen(true);
+  };
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
     e.target.value = "";
+    if (!file) return;
+    try {
+      await openStudioForFile(file);
+    } catch (error) {
+      alert(error?.message || "Could not open selected image.");
+    }
+  };
+
+  const handleCameraCapture = async ({ blob }) => {
+    if (!blob) return;
+    try {
+      const file = new File([blob], `banner_camera_${Date.now()}.jpg`, { type: "image/jpeg" });
+      await openStudioForFile(file);
+      setCameraOpen(false);
+    } catch (error) {
+      alert(error?.message || "Could not process captured image.");
+    }
   };
 
   const closeStudio = () => {
@@ -171,41 +199,59 @@ export default function MerchantBanner() {
     setTempImage("");
   };
 
-  const applyCrop = () => {
+  const applyAutoFit = async () => {
+    if (!tempImage) return;
+    setIsFitting(true);
+    try {
+      const fitted = await padImageToAspectDataUrl(tempImage, BANNER_PROFILE.aspectRatio);
+      setTempImage(fitted);
+      if (cropperRef.current?.cropper) {
+        cropperRef.current.cropper.replace(fitted);
+      }
+      setFitMode("contain");
+    } catch (error) {
+      alert(error?.message || "Could not auto-fit banner.");
+    } finally {
+      setIsFitting(false);
+    }
+  };
+
+  const applyCrop = async () => {
     if (!cropperRef.current?.cropper) return;
     const cropper = cropperRef.current.cropper;
 
-    const canvas = cropper.getCroppedCanvas({
-      width: TARGET_W,
-      height: TARGET_H,
+    const sourceCanvas = cropper.getCroppedCanvas({
       fillColor: "#FFFFFF",
       imageSmoothingEnabled: true,
       imageSmoothingQuality: "high",
     });
+    if (!sourceCanvas) return;
 
-    let quality = 0.8;
-    const attemptCompress = () => {
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) return;
-          if (blob.size <= BANNER_MAX_BYTES) {
-            setActiveBlob(blob);
-            setShouldDeleteOld(true);
-            setPreviewUrl(URL.createObjectURL(blob));
-            setStatus("new");
-            closeStudio();
-          } else if (quality <= 0.2) {
-            alert(`Unable to compress this banner under ${formatBytes(BANNER_MAX_BYTES)}. Try a simpler image.`);
-          } else {
-            quality -= 0.15;
-            attemptCompress();
-          }
-        },
-        "image/jpeg",
-        quality
-      );
-    };
-    attemptCompress();
+    const finalCanvas = renderCanvasToTarget(sourceCanvas, {
+      targetWidth: TARGET_W,
+      targetHeight: TARGET_H,
+      fitMode,
+      background: "#FFFFFF",
+    });
+
+    const blob = await canvasToBlobWithMaxBytes(finalCanvas, {
+      maxBytes: BANNER_MAX_BYTES,
+      mimeType: BANNER_PROFILE.outputMimeType,
+      qualityStart: BANNER_PROFILE.qualityStart,
+      qualityFloor: BANNER_PROFILE.qualityFloor,
+      qualityStep: BANNER_PROFILE.qualityStep,
+    });
+
+    if (!blob) {
+      alert(`Unable to compress this banner under ${formatBytes(BANNER_MAX_BYTES)}. Try a simpler image.`);
+      return;
+    }
+
+    setActiveBlob(blob);
+    setShouldDeleteOld(true);
+    setPreviewUrl(URL.createObjectURL(blob));
+    setStatus("new");
+    closeStudio();
   };
 
   const removeImage = (e) => {
@@ -343,7 +389,7 @@ export default function MerchantBanner() {
             <FaPanorama className="text-[#007185]" /> Landscape Shop Banner
           </h4>
           <p className="text-[0.85rem] text-[#475569] leading-relaxed">
-            {`Upload 1 landscape banner. Max input ${formatBytes(BANNER_INPUT_MAX_BYTES)}; final upload ${BANNER_RULE_LABEL}. All banners are reviewed by an admin.`}
+            {`Upload from Gallery or Camera. Camera includes zoom support where available. Max input ${formatBytes(BANNER_INPUT_MAX_BYTES)}; final upload ${BANNER_RULE_LABEL}. All banners are reviewed by an admin.`}
           </p>
         </div>
 
@@ -356,7 +402,7 @@ export default function MerchantBanner() {
             
             {previewUrl ? (
               <>
-                <img src={previewUrl} className="absolute inset-0 h-full w-full object-cover z-0" alt="Banner Preview" />
+                <img src={previewUrl} className="absolute inset-0 h-full w-full bg-white object-contain z-0" alt="Banner Preview" />
                 <button 
                   type="button" 
                   onClick={removeImage} 
@@ -382,6 +428,24 @@ export default function MerchantBanner() {
                 <span className="text-[0.9rem] font-bold leading-relaxed text-[#565959]">{`Tap to Upload Banner (Landscape, ${BANNER_RULE_LABEL})`}</span>
               </div>
             )}
+          </div>
+
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="rounded-md border border-[#334155] bg-white px-3 py-2 text-[0.75rem] font-extrabold uppercase tracking-wide text-[#0F172A] transition hover:bg-slate-50"
+            >
+              Upload File
+            </button>
+            <button
+              type="button"
+              onClick={() => setCameraOpen(true)}
+              className="flex items-center gap-2 rounded-md border border-[#1E293B] bg-[#0F172A] px-3 py-2 text-[0.75rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1E293B]"
+            >
+              <FaCamera />
+              Use Camera
+            </button>
           </div>
         </div>
 
@@ -414,6 +478,38 @@ export default function MerchantBanner() {
             <div className="text-center text-[0.85rem] font-medium text-white">
               <FaHandPointer className="inline mr-1" /> Drag to move. Pinch to zoom in/out.
             </div>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setFitMode("contain")}
+                className={`rounded-lg border px-3 py-2 text-[0.75rem] font-extrabold uppercase tracking-wide transition ${
+                  fitMode === "contain"
+                    ? "border-[#10B981] bg-[#10B981] text-white"
+                    : "border-[#94A3B8] bg-transparent text-[#E2E8F0] hover:bg-white/10"
+                }`}
+              >
+                Fit (No Cut)
+              </button>
+              <button
+                type="button"
+                onClick={() => setFitMode("cover")}
+                className={`rounded-lg border px-3 py-2 text-[0.75rem] font-extrabold uppercase tracking-wide transition ${
+                  fitMode === "cover"
+                    ? "border-[#DB2777] bg-[#DB2777] text-white"
+                    : "border-[#94A3B8] bg-transparent text-[#E2E8F0] hover:bg-white/10"
+                }`}
+              >
+                Fill (Crop)
+              </button>
+              <button
+                type="button"
+                onClick={applyAutoFit}
+                disabled={isFitting}
+                className="rounded-lg border border-[#334155] bg-[#111827] px-3 py-2 text-[0.75rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1F2937] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isFitting ? "Fitting..." : "Auto Fit Source"}
+              </button>
+            </div>
             <div className="flex items-center justify-center gap-4">
               <button onClick={closeStudio} className="rounded-lg bg-[#374151] px-6 py-3 font-semibold text-white transition hover:bg-[#4B5563]">Cancel</button>
               <button onClick={applyCrop} className="flex items-center gap-2 rounded-lg bg-[#db2777] px-8 py-3 font-extrabold text-white shadow-md transition hover:bg-[#be185d]">Apply Crop</button>
@@ -421,6 +517,14 @@ export default function MerchantBanner() {
           </div>
         </div>
       )}
+
+      <CameraCaptureModal
+        open={cameraOpen}
+        title="Capture Shop Banner"
+        profile={BANNER_PROFILE}
+        onClose={() => setCameraOpen(false)}
+        onCapture={handleCameraCapture}
+      />
 
       {/* SUCCESS MODAL */}
       {showSuccess && (
