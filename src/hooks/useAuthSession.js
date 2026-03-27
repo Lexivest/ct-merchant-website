@@ -20,6 +20,7 @@ let globalAuthMemory = {
   user: null,
   profile: null,
   suspended: false,
+  profileLoaded: false,
 }
 
 function getIsOffline() {
@@ -139,6 +140,7 @@ function useAuthSession() {
         user: globalAuthMemory.user,
         profile: globalAuthMemory.profile,
         suspended: globalAuthMemory.suspended,
+        profileLoaded: globalAuthMemory.profileLoaded,
         error: "",
         isOffline: getIsOffline(),
       }
@@ -159,6 +161,7 @@ function useAuthSession() {
       profile: cachedProfile || null,
       suspended:
         isProfileSuspended(cachedProfile) || Boolean(authSnapshot?.suspended),
+      profileLoaded: Boolean(cachedProfile),
       error: "",
       isOffline: getIsOffline(),
     }
@@ -172,6 +175,10 @@ function useAuthSession() {
       user: updates.user !== undefined ? updates.user : globalAuthMemory.user,
       profile: updates.profile !== undefined ? updates.profile : globalAuthMemory.profile,
       suspended: updates.suspended !== undefined ? updates.suspended : globalAuthMemory.suspended,
+      profileLoaded:
+        updates.profileLoaded !== undefined
+          ? updates.profileLoaded
+          : globalAuthMemory.profileLoaded,
       isResolved: updates.loading === false ? true : globalAuthMemory.isResolved,
     }
 
@@ -192,6 +199,10 @@ function useAuthSession() {
           user: finalUser,
           profile: finalProfile,
           suspended: finalSuspended,
+          profileLoaded:
+            updates.profileLoaded !== undefined
+              ? updates.profileLoaded
+              : globalAuthMemory.profileLoaded,
         })
       }
     }
@@ -221,6 +232,7 @@ function useAuthSession() {
               user: snapshot.user,
               profile: snapshot.profile || null,
               suspended: isProfileSuspended(snapshot.profile) || Boolean(snapshot.suspended),
+              profileLoaded: Boolean(snapshot.profile),
               error: "",
             })
             return
@@ -242,6 +254,7 @@ function useAuthSession() {
             user: null,
             profile: null,
             suspended: false,
+            profileLoaded: false,
             error: "",
           })
           return
@@ -265,6 +278,7 @@ function useAuthSession() {
           user,
           profile: cachedProfileForUser || null,
           suspended: isProfileSuspended(cachedProfileForUser),
+          profileLoaded: Boolean(cachedProfileForUser),
           error: "",
         })
 
@@ -290,6 +304,7 @@ function useAuthSession() {
             user,
             profile: profile || cachedProfileForUser || null,
             suspended: isProfileSuspended(profile || cachedProfileForUser),
+            profileLoaded: true,
             error: "",
           })
         } catch {
@@ -301,6 +316,7 @@ function useAuthSession() {
             user,
             profile: fallbackProfile || null,
             suspended: isProfileSuspended(fallbackProfile),
+            profileLoaded: true,
             error: "",
           })
         }
@@ -315,6 +331,7 @@ function useAuthSession() {
             profile: offlineSnapshot.profile || null,
             suspended:
               isProfileSuspended(offlineSnapshot.profile) || Boolean(offlineSnapshot.suspended),
+            profileLoaded: Boolean(offlineSnapshot.profile),
             error: "",
           })
           return
@@ -326,6 +343,7 @@ function useAuthSession() {
           user: null,
           profile: null,
           suspended: false,
+          profileLoaded: false,
           error: "",
         })
       }
@@ -349,6 +367,7 @@ function useAuthSession() {
           user: null,
           profile: null,
           suspended: false,
+          profileLoaded: false,
         }
         syncState({
           loading: false,
@@ -356,6 +375,7 @@ function useAuthSession() {
           user: null,
           profile: null,
           suspended: false,
+          profileLoaded: false,
           error: "",
         })
         return
@@ -368,6 +388,7 @@ function useAuthSession() {
         user: session.user,
         profile: cachedProfile || null,
         suspended: isProfileSuspended(cachedProfile),
+        profileLoaded: Boolean(cachedProfile),
         error: "",
       })
 
