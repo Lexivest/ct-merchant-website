@@ -1,14 +1,22 @@
 {
   "short_name": "CTMerchant",
-  "name": "CTMerchant Dashboard",
+  "name": "CTMerchant | Repository of Shops, Products and Services",
+  "description": "Discover verified physical shops, products, and services across your city.",
   "icons": [
     {
-      "src": "https://goodtvrhszsnhcyigfoi.supabase.co/storage/v1/object/public/ctm_web_files/CT-Merchant.jpg",
+      "src": "/ctm-logo.jpg",
       "type": "image/jpeg",
-      "sizes": "192x192 512x512"
+      "sizes": "192x192"
+    },
+    {
+      "src": "/ctm-logo.jpg",
+      "type": "image/jpeg",
+      "sizes": "512x512",
+      "purpose": "any"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "theme_color": "#131921",
   "background_color": "#F3F4F6"
