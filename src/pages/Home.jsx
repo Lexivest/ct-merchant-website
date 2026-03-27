@@ -48,17 +48,17 @@ function Home() {
   const navigate = useNavigate()
 
   // 1. Hook into global auth state
-  const { user, isOffline } = useAuthSession()
+  const { user, profile, suspended, profileLoaded, isOffline } = useAuthSession()
 
   // 2. Smooth Auto-Redirect
   useEffect(() => {
-    if (user && !isOffline) {
+    if (user && profileLoaded && profile && !suspended && !isOffline) {
       const timer = setTimeout(() => {
         navigate("/user-dashboard", { replace: true })
       }, 150)
       return () => clearTimeout(timer)
     }
-  }, [user, isOffline, navigate])
+  }, [user, profile, profileLoaded, suspended, isOffline, navigate])
 
   // --- BANNER CAROUSEL STATE & TIMER ---
   const [currentBanner, setCurrentBanner] = useState(0)
@@ -180,7 +180,7 @@ function Home() {
 
       if (currentProfile.data?.is_suspended === true) {
         await signOutUser()
-        throw new Error("Your account has been restricted. Please contact support.")
+        throw new Error("Your account is suspended. Please contact support.")
       }
 
       await updateLastActiveIp(signedInUser.id, result.ipData.ip)
@@ -193,11 +193,13 @@ function Home() {
       })
 
     } catch (error) {
+      const message = error.message || "Please try again."
+      const isSuspendedMessage = /suspended|restricted/i.test(message)
       setLoginNotice({
         visible: true,
         type: "error",
-        title: "Google sign-in failed",
-        message: error.message || "Please try again.",
+        title: isSuspendedMessage ? "Account suspended" : "Google sign-in failed",
+        message,
       })
       setGoogleLoading(false)
     }
@@ -308,7 +310,7 @@ function Home() {
 
       if (currentProfile.data?.is_suspended === true) {
         await signOutUser()
-        throw new Error("Your account has been restricted. Please contact support.")
+        throw new Error("Your account is suspended. Please contact support.")
       }
 
       await updateLastActiveIp(signedInUser.id, result.ipData.ip)
@@ -321,11 +323,13 @@ function Home() {
       })
       
     } catch (error) {
+      const message = error.message || "We could not sign you in. Check your connection and try again."
+      const isSuspendedMessage = /suspended|restricted/i.test(message)
       setLoginNotice({
         visible: true,
         type: "error",
-        title: "Login failed",
-        message: error.message || "We could not sign you in. Check your connection and try again.",
+        title: isSuspendedMessage ? "Account suspended" : "Login failed",
+        message,
       })
       setLoginLoading(false)
     }
@@ -537,6 +541,17 @@ function Home() {
                     <FaLock className="text-pink-600" />
                     <span>Users Login</span>
                   </h2>
+
+                  {user && profileLoaded && suspended ? (
+                    <div className="mt-4">
+                      <AuthNotification
+                        visible
+                        type="error"
+                        title="Account suspended"
+                        message="Your account has been suspended. Please contact support."
+                      />
+                    </div>
+                  ) : null}
 
                   <form className="mt-5 space-y-4" onSubmit={handleEmailLogin}>
                     <AuthInput
