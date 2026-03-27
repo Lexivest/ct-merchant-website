@@ -542,17 +542,6 @@ function Home() {
                     <span>Users Login</span>
                   </h2>
 
-                  {user && profileLoaded && suspended ? (
-                    <div className="mt-4">
-                      <AuthNotification
-                        visible
-                        type="error"
-                        title="Account suspended"
-                        message="Your account has been suspended. Please contact support."
-                      />
-                    </div>
-                  ) : null}
-
                   <form className="mt-5 space-y-4" onSubmit={handleEmailLogin}>
                     <AuthInput
                       id="hero-email"
