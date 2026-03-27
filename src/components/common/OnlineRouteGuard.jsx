@@ -11,10 +11,15 @@ function OnlineRouteGuard({
     if (typeof navigator === "undefined") return false
     return !navigator.onLine
   })
+  const [retryArmed, setRetryArmed] = useState(false)
 
   useEffect(() => {
     function handleOnline() {
       setIsOffline(false)
+      if (retryArmed) {
+        window.location.reload()
+      }
+      setRetryArmed(false)
     }
 
     function handleOffline() {
@@ -28,7 +33,7 @@ function OnlineRouteGuard({
       window.removeEventListener("online", handleOnline)
       window.removeEventListener("offline", handleOffline)
     }
-  }, [])
+  }, [retryArmed])
 
   if (!isOffline) return children
 
@@ -46,9 +51,12 @@ function OnlineRouteGuard({
           <button
             type="button"
             onClick={() => {
-              if (typeof navigator !== "undefined") {
-                setIsOffline(!navigator.onLine)
+              if (typeof navigator === "undefined") return
+              if (navigator.onLine) {
+                window.location.reload()
+                return
               }
+              setRetryArmed(true)
             }}
             className="flex-1 rounded-2xl bg-slate-900 px-5 py-3 font-bold text-white transition hover:bg-slate-800"
           >
@@ -61,6 +69,11 @@ function OnlineRouteGuard({
             Go back
           </Link>
         </div>
+        {retryArmed ? (
+          <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+            Waiting for internet connection. This page will retry automatically once you are online.
+          </div>
+        ) : null}
       </div>
     </div>
   )

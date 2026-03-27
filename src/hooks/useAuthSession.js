@@ -9,6 +9,7 @@ import { clearCachedFetchStore } from "./useCachedFetch"
 
 const PROFILE_CACHE_KEY_PREFIX = "ctmerchant_profile_cache_"
 const PROFILE_CACHE_ACTIVE_USER_KEY = "ctmerchant_profile_cache_active_user"
+const AUTH_SNAPSHOT_KEY = "ctmerchant_auth_snapshot_v1"
 
 // 1. GLOBAL MEMORY CACHE
 // This preserves the auth state across page navigations.
@@ -21,12 +22,18 @@ let globalAuthMemory = {
   suspended: false,
 }
 
+function getIsOffline() {
+  if (typeof navigator === "undefined") return false
+  return !navigator.onLine
+}
+
 function getProfileCacheKey(userId) {
   return `${PROFILE_CACHE_KEY_PREFIX}${userId}`
 }
 
 function readCachedProfile(userId) {
   if (!userId) return null
+  if (typeof localStorage === "undefined") return null
   try {
     const raw = localStorage.getItem(getProfileCacheKey(userId))
     return raw ? JSON.parse(raw) : null
@@ -37,6 +44,7 @@ function readCachedProfile(userId) {
 
 function writeCachedProfile(userId, profile) {
   if (!userId || !profile) return
+  if (typeof localStorage === "undefined") return
   try {
     localStorage.setItem(getProfileCacheKey(userId), JSON.stringify(profile))
     localStorage.setItem(PROFILE_CACHE_ACTIVE_USER_KEY, userId)
@@ -46,6 +54,7 @@ function writeCachedProfile(userId, profile) {
 }
 
 function clearCachedProfile(userId) {
+  if (typeof localStorage === "undefined") return
   try {
     if (userId) {
       localStorage.removeItem(getProfileCacheKey(userId))
@@ -70,6 +79,55 @@ function clearCachedProfile(userId) {
   }
 }
 
+function readAuthSnapshot() {
+  if (typeof localStorage === "undefined") return null
+  try {
+    const raw = localStorage.getItem(AUTH_SNAPSHOT_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed || !parsed.user?.id) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function writeAuthSnapshot(snapshot) {
+  if (typeof localStorage === "undefined") return
+  if (!snapshot?.user?.id) return
+  try {
+    const payload = {
+      session: snapshot.session || null,
+      user: snapshot.user,
+      profile: snapshot.profile || null,
+      suspended: Boolean(snapshot.suspended),
+      updatedAt: Date.now(),
+    }
+    localStorage.setItem(AUTH_SNAPSHOT_KEY, JSON.stringify(payload))
+  } catch {
+    // ignore
+  }
+}
+
+function clearAuthSnapshot() {
+  if (typeof localStorage === "undefined") return
+  try {
+    localStorage.removeItem(AUTH_SNAPSHOT_KEY)
+  } catch {
+    // ignore
+  }
+}
+
+function getSnapshotWithCachedProfile() {
+  const snapshot = readAuthSnapshot()
+  if (!snapshot?.user?.id) return null
+  const cachedProfile = readCachedProfile(snapshot.user.id)
+  return {
+    ...snapshot,
+    profile: cachedProfile || snapshot.profile || null,
+  }
+}
+
 function useAuthSession() {
   const [state, setState] = useState(() => {
     // 2. SYNCHRONOUS MEMORY READ
@@ -82,42 +140,73 @@ function useAuthSession() {
         profile: globalAuthMemory.profile,
         suspended: globalAuthMemory.suspended,
         error: "",
-        isOffline: !navigator.onLine,
+        isOffline: getIsOffline(),
       }
     }
 
-    const activeCachedUserId = localStorage.getItem(PROFILE_CACHE_ACTIVE_USER_KEY)
-    const cachedProfile = readCachedProfile(activeCachedUserId)
+    const authSnapshot = getSnapshotWithCachedProfile()
+    const activeCachedUserId =
+      authSnapshot?.user?.id ||
+      (typeof localStorage !== "undefined"
+        ? localStorage.getItem(PROFILE_CACHE_ACTIVE_USER_KEY)
+        : null)
+    const cachedProfile =
+      authSnapshot?.profile || readCachedProfile(activeCachedUserId)
     return {
       loading: true,
-      session: null,
-      user: null,
-      profile: cachedProfile,
-      suspended: isProfileSuspended(cachedProfile),
+      session: authSnapshot?.session || null,
+      user: authSnapshot?.user || null,
+      profile: cachedProfile || null,
+      suspended:
+        isProfileSuspended(cachedProfile) || Boolean(authSnapshot?.suspended),
       error: "",
-      isOffline: !navigator.onLine,
+      isOffline: getIsOffline(),
     }
   })
 
   // Helper to keep React state and Global memory perfectly in sync
   function syncState(updates) {
+    globalAuthMemory = {
+      ...globalAuthMemory,
+      session: updates.session !== undefined ? updates.session : globalAuthMemory.session,
+      user: updates.user !== undefined ? updates.user : globalAuthMemory.user,
+      profile: updates.profile !== undefined ? updates.profile : globalAuthMemory.profile,
+      suspended: updates.suspended !== undefined ? updates.suspended : globalAuthMemory.suspended,
+      isResolved: updates.loading === false ? true : globalAuthMemory.isResolved,
+    }
+
     if (updates.loading === false) {
-      globalAuthMemory = {
-        ...globalAuthMemory,
-        isResolved: true,
-        session: updates.session !== undefined ? updates.session : globalAuthMemory.session,
-        user: updates.user !== undefined ? updates.user : globalAuthMemory.user,
-        profile: updates.profile !== undefined ? updates.profile : globalAuthMemory.profile,
-        suspended: updates.suspended !== undefined ? updates.suspended : globalAuthMemory.suspended,
+      const finalUser = updates.user !== undefined ? updates.user : globalAuthMemory.user
+      if (finalUser?.id) {
+        const finalSession =
+          updates.session !== undefined ? updates.session : globalAuthMemory.session
+        const finalProfile =
+          updates.profile !== undefined ? updates.profile : globalAuthMemory.profile
+        const finalSuspended =
+          updates.suspended !== undefined
+            ? updates.suspended
+            : globalAuthMemory.suspended
+
+        writeAuthSnapshot({
+          session: finalSession,
+          user: finalUser,
+          profile: finalProfile,
+          suspended: finalSuspended,
+        })
       }
     }
+
     setState((prev) => ({ ...prev, ...updates }))
   }
 
   useEffect(() => {
     let mounted = true
 
-    async function load() {
+    async function load(options = {}) {
+      const { forceNetwork = false } = options
+      const isOfflineNow = getIsOffline()
+      const snapshot = getSnapshotWithCachedProfile()
+
       try {
         const session = await getSession()
         const user = session?.user || null
@@ -125,9 +214,28 @@ function useAuthSession() {
         if (!mounted) return
 
         if (!user) {
+          if (snapshot?.user) {
+            syncState({
+              loading: false,
+              session: snapshot.session || null,
+              user: snapshot.user,
+              profile: snapshot.profile || null,
+              suspended: isProfileSuspended(snapshot.profile) || Boolean(snapshot.suspended),
+              error: "",
+            })
+            return
+          }
+
           clearCachedProfile()
           clearCachedFetchStore()
-          globalAuthMemory = { isResolved: true, session: null, user: null, profile: null, suspended: false }
+          clearAuthSnapshot()
+          globalAuthMemory = {
+            isResolved: true,
+            session: null,
+            user: null,
+            profile: null,
+            suspended: false,
+          }
           syncState({
             loading: false,
             session: null,
@@ -139,19 +247,34 @@ function useAuthSession() {
           return
         }
 
-        const previousUserId = globalAuthMemory.user?.id || null
+        const previousUserId = globalAuthMemory.user?.id || snapshot?.user?.id || null
         if (previousUserId && previousUserId !== user.id) {
           clearCachedProfile(previousUserId)
           clearCachedFetchStore()
+          clearAuthSnapshot()
         }
 
-        const cachedProfileForUser = readCachedProfile(user.id)
+        const cachedProfileForUser =
+          readCachedProfile(user.id) ||
+          (snapshot?.user?.id === user.id ? snapshot.profile : null)
+
+        // Unblock UI fast with cached profile (if any), then refresh in background.
+        syncState({
+          loading: false,
+          session,
+          user,
+          profile: cachedProfileForUser || null,
+          suspended: isProfileSuspended(cachedProfileForUser),
+          error: "",
+        })
+
+        if (isOfflineNow && !forceNetwork) return
 
         try {
           let profile = await fetchProfileByUserId(user.id)
           
           if (!profile) {
-            await new Promise((resolve) => setTimeout(resolve, 800))
+            await new Promise((resolve) => setTimeout(resolve, 500))
             profile = await fetchProfileByUserId(user.id)
           }
 
@@ -165,30 +288,44 @@ function useAuthSession() {
             loading: false,
             session,
             user,
-            profile: profile || null,
-            suspended: isProfileSuspended(profile),
+            profile: profile || cachedProfileForUser || null,
+            suspended: isProfileSuspended(profile || cachedProfileForUser),
             error: "",
           })
-        } catch (profileError) {
+        } catch {
           if (!mounted) return
-          const cachedProfile = cachedProfileForUser
+          const fallbackProfile = readCachedProfile(user.id) || cachedProfileForUser
           syncState({
             loading: false,
             session,
             user,
-            profile: cachedProfile,
-            suspended: isProfileSuspended(cachedProfile),
+            profile: fallbackProfile || null,
+            suspended: isProfileSuspended(fallbackProfile),
             error: "",
           })
         }
-      } catch (error) {
+      } catch {
         if (!mounted) return
-        const activeCachedUserId = localStorage.getItem(PROFILE_CACHE_ACTIVE_USER_KEY)
-        const cachedProfile = readCachedProfile(activeCachedUserId)
+        const offlineSnapshot = getSnapshotWithCachedProfile()
+        if (offlineSnapshot?.user) {
+          syncState({
+            loading: false,
+            session: offlineSnapshot.session || null,
+            user: offlineSnapshot.user,
+            profile: offlineSnapshot.profile || null,
+            suspended:
+              isProfileSuspended(offlineSnapshot.profile) || Boolean(offlineSnapshot.suspended),
+            error: "",
+          })
+          return
+        }
+
         syncState({
           loading: false,
-          profile: cachedProfile,
-          suspended: isProfileSuspended(cachedProfile),
+          session: null,
+          user: null,
+          profile: null,
+          suspended: false,
           error: "",
         })
       }
@@ -205,7 +342,14 @@ function useAuthSession() {
       if (event === "SIGNED_OUT" || !session?.user) {
         clearCachedProfile()
         clearCachedFetchStore()
-        globalAuthMemory = { isResolved: true, session: null, user: null, profile: null, suspended: false }
+        clearAuthSnapshot()
+        globalAuthMemory = {
+          isResolved: true,
+          session: null,
+          user: null,
+          profile: null,
+          suspended: false,
+        }
         syncState({
           loading: false,
           session: null,
@@ -217,13 +361,23 @@ function useAuthSession() {
         return
       }
 
-      load()
+      const cachedProfile = readCachedProfile(session.user.id)
+      syncState({
+        loading: false,
+        session,
+        user: session.user,
+        profile: cachedProfile || null,
+        suspended: isProfileSuspended(cachedProfile),
+        error: "",
+      })
+
+      load({ forceNetwork: true })
     })
 
     const handleOnline = () => {
       if (!mounted) return
       syncState({ isOffline: false })
-      load()
+      load({ forceNetwork: true })
     }
 
     const handleOffline = () => {

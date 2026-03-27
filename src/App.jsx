@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from "react"
-import { Routes, Route, Link, useNavigate } from "react-router-dom"
+import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom"
 import Home from "./pages/Home"
 import About from "./pages/About"
 import Services from "./pages/Services"
@@ -13,7 +13,6 @@ import Privacy from "./pages/Privacy"
 import Terms from "./pages/Terms"
 import CreateAccount from "./pages/CreateAccount"
 
-import ProtectedRoute from "./components/auth/ProtectedRoute"
 import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import OnlineRouteGuard from "./components/common/OnlineRouteGuard"
@@ -23,12 +22,47 @@ import SubscriptionGuard from "./components/auth/SubscriptionGuard"
 function isChunkLoadFailure(error) {
   const message = String(error?.message || error || "").toLowerCase()
   return (
+    message.includes("error loading dynamically imported module") ||
     message.includes("failed to fetch dynamically imported module") ||
     message.includes("importing a module script failed") ||
     message.includes("failed to load module script") ||
     message.includes("chunkloaderror") ||
     message.includes("loading chunk")
   )
+}
+
+function hasLikelyActiveSession() {
+  if (typeof localStorage === "undefined") return false
+
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (!key || !key.startsWith("sb-") || !key.includes("auth-token")) continue
+      const raw = localStorage.getItem(key)
+      if (!raw) continue
+
+      const parsed = JSON.parse(raw)
+      if (parsed?.access_token) return true
+      if (parsed?.currentSession?.access_token) return true
+      if (Array.isArray(parsed) && parsed[0]?.access_token) return true
+    }
+  } catch {
+    return false
+  }
+
+  return false
+}
+
+function getChunkFallbackRoute() {
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/staff")) {
+    return { to: "/staff-portal", label: "Go to staff portal" }
+  }
+
+  if (hasLikelyActiveSession()) {
+    return { to: "/user-dashboard?tab=market", label: "Go to dashboard" }
+  }
+
+  return { to: "/", label: "Go home" }
 }
 
 function ChunkRouteFallback({ pageLabel = "this page" }) {
@@ -53,6 +87,8 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
     }
   }, [])
 
+  const fallbackRoute = getChunkFallbackRoute()
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <div className="w-full max-w-lg rounded-[28px] border border-amber-200 bg-white p-8 text-center shadow-xl">
@@ -76,10 +112,10 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
             Reload app
           </button>
           <Link
-            to="/"
+            to={fallbackRoute.to}
             className="flex-1 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 font-bold text-amber-800 transition hover:bg-amber-100"
           >
-            Go home
+            {fallbackRoute.label}
           </Link>
         </div>
       </div>
@@ -208,10 +244,41 @@ function NotFoundPage() {
   )
 }
 
+function SuspendedAccountGate({ onLogout }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
+      <div className="w-full max-w-lg rounded-[28px] border border-rose-200 bg-white p-8 text-center shadow-xl">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-100 text-3xl text-rose-700">
+          !
+        </div>
+        <h1 className="mt-5 text-3xl font-black text-slate-900">Account Restricted</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          Your account is currently restricted. Please contact support and our team will assist you.
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <Link
+            to="/contact"
+            className="flex-1 rounded-2xl bg-slate-900 px-5 py-3 font-bold text-white transition hover:bg-slate-800"
+          >
+            Contact support
+          </Link>
+          <button
+            type="button"
+            onClick={onLogout}
+            className="flex-1 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 font-bold text-rose-700 transition hover:bg-rose-100"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ProtectedDashboardRoute({ children }) {
   const navigate = useNavigate()
   const [completedProfileUserId, setCompletedProfileUserId] = useState(null)
-  const { loading, session, user, profile, suspended, isOffline } = useAuthSession()
+  const { loading, user, profile, suspended, isOffline } = useAuthSession()
 
   useEffect(() => {
     if (!user || isOffline) return undefined
@@ -246,23 +313,28 @@ function ProtectedDashboardRoute({ children }) {
     }
   }, [user?.id, isOffline])
 
-  if (loading && !isOffline) {
+  if (!loading && !user) {
+    return <Navigate to="/" replace />
+  }
+
+  if (!loading && user && suspended) {
     return (
-      <RouteLoadingScreen
-        title="Checking your session"
-        message="We are confirming your access before opening this dashboard."
+      <SuspendedAccountGate
+        onLogout={async () => {
+          await signOutUser()
+          navigate("/", { replace: true })
+        }}
       />
     )
   }
 
-  const isAllowed = (Boolean(session) && Boolean(user) && !suspended) || (isOffline && Boolean(user))
   const needsProfileSetup =
     user &&
     completedProfileUserId !== user.id &&
     (!profile || !isProfileComplete(profile))
 
   return (
-    <ProtectedRoute isAllowed={isAllowed} redirectTo="/">
+    <>
       {needsProfileSetup && !isOffline ? (
         <div className="min-h-screen bg-slate-50">
           <CompleteProfileModal
@@ -280,7 +352,7 @@ function ProtectedDashboardRoute({ children }) {
         </div>
       ) : (
         <>
-          {isOffline && (
+          {isOffline && user && (
             <div className="sticky top-0 z-[999] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm">
               <i className="fa-solid fa-wifi-slash mr-2"></i>
               You are currently offline. Showing cached data.
@@ -289,7 +361,7 @@ function ProtectedDashboardRoute({ children }) {
           {children}
         </>
       )}
-    </ProtectedRoute>
+    </>
   )
 }
 

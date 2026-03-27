@@ -19,7 +19,6 @@ import NotificationsSection from "../components/dashboard/sections/Notifications
 const AVATAR_RULE = UPLOAD_RULES.avatars
 const MAX_FILE_SIZE = AVATAR_RULE.maxBytes
 const MAX_SOURCE_FILE_SIZE = 10 * 1024 * 1024
-const INACTIVITY_LIMIT = 15 * 60 * 1000
 const ALLOWED_AVATAR_MIME_TYPES = new Set(AVATAR_RULE.allowedMime)
 const AVATAR_BUCKET = AVATAR_RULE.bucket
 const AVATAR_WIDTH_STEPS = [900, 760, 640, 520, 420, 360]
@@ -227,7 +226,6 @@ function UserDashboard() {
 
   const cropImageRef = useRef(null)
   const cropperRef = useRef(null)
-  const inactivityTimerRef = useRef(null)
   const fileInputRef = useRef(null)
   const generatedAvatarPreviewRef = useRef("")
 
@@ -251,39 +249,6 @@ function UserDashboard() {
       })
     }
   }, [authLoading, user, suspended, navigate])
-
-  useEffect(() => {
-    let attached = false
-    const events = ["mousemove", "keydown", "scroll", "click", "touchstart"]
-
-    function resetInactivityTimer() {
-      clearTimeout(inactivityTimerRef.current)
-      inactivityTimerRef.current = setTimeout(async () => {
-        Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith("ctm_")) localStorage.removeItem(key)
-        })
-        await signOutUser()
-        navigate("/", { replace: true })
-      }, INACTIVITY_LIMIT)
-    }
-
-    function attach() {
-      if (attached) return
-      resetInactivityTimer()
-      events.forEach((name) => document.addEventListener(name, resetInactivityTimer, { passive: true }))
-      attached = true
-    }
-
-    function detach() {
-      if (!attached) return
-      events.forEach((name) => document.removeEventListener(name, resetInactivityTimer))
-      clearTimeout(inactivityTimerRef.current)
-      attached = false
-    }
-
-    attach()
-    return detach
-  }, [navigate])
 
   useEffect(() => {
     function handleDocumentClick(event) {
