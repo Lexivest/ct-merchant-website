@@ -14,6 +14,7 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock, ShimmerCard } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
+import PageSeo from "../components/common/PageSeo"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function SearchShimmer() {
@@ -325,6 +326,16 @@ function Search() {
 
   return (
     <div className="min-h-screen bg-[#E3E6E6]">
+      <PageSeo
+        title={
+          normalizedQuery
+            ? `Search results for "${query}" | CTMerchant`
+            : "Search Shops and Products | CTMerchant"
+        }
+        description="Search verified shops and products in your local CTMerchant marketplace."
+        canonicalPath="/search"
+        noindex
+      />
       <header className="sticky top-0 z-[1000] bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <div className="mx-auto flex w-full max-w-[1600px] items-center gap-4 px-4 py-[10px]">
           <button

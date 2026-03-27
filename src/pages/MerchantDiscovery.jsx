@@ -12,6 +12,7 @@ import { supabase } from "../lib/supabase"
 import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock } from "../components/common/Shimmers"
 import StableImage from "../components/common/StableImage"
+import PageSeo from "../components/common/PageSeo"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function MerchantDiscoveryShimmer() {
@@ -102,6 +103,15 @@ function MerchantDiscovery() {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6]">
+      <PageSeo
+        title={shop?.name ? `${shop.name} | CTMerchant Merchant Profile` : "Merchant Profile | CTMerchant"}
+        description={
+          shop?.description ||
+          "Discover verified merchant profiles, contact details, and storefront information on CTMerchant."
+        }
+        canonicalPath={`/reposearch${merchantId ? `?merchantId=${encodeURIComponent(merchantId)}` : ""}`}
+        image={getLogo()}
+      />
       {/* Offline Banner */}
       {isOffline && (
         <div className="sticky top-0 z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200">

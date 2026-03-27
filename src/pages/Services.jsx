@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
+import PageSeo from "../components/common/PageSeo"
 
 const services = [
   {
@@ -140,6 +141,11 @@ function Services() {
 
   return (
     <MainLayout>
+      <PageSeo
+        title="CTMerchant Services | Merchant Discovery Tools"
+        description="Explore CTMerchant's marketplace services for merchant indexing, product visibility, data accuracy, and discovery insights."
+        canonicalPath="/services"
+      />
       <section className="bg-pink-50 px-4 py-5 md:py-6">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">

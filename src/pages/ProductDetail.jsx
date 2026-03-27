@@ -22,6 +22,7 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
+import PageSeo from "../components/common/PageSeo"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function ProductDetailShimmer() {
@@ -561,6 +562,19 @@ function ProductDetail() {
 
   return (
     <>
+      <PageSeo
+        title={
+          currentProduct?.name
+            ? `${currentProduct.name} | CTMerchant Product`
+            : "Product Details | CTMerchant"
+        }
+        description={
+          currentProduct?.description ||
+          "View product details, prices, availability, and merchant contact options on CTMerchant."
+        }
+        canonicalPath={`/product-detail${productId ? `?id=${encodeURIComponent(productId)}` : ""}`}
+        image={selectedImage || currentProduct?.image_url || "/ctm-logo.jpg"}
+      />
       <div className="mx-auto flex min-h-screen max-w-[1200px] flex-col bg-[#E3E6E6] pb-[90px]">
         {/* Offline Notice */}
         {isOffline && (

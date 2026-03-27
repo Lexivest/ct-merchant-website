@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -14,6 +14,7 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerList } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
+import PageSeo from "../components/common/PageSeo"
 
 function Area() {
   const navigate = useNavigate()
@@ -70,13 +71,6 @@ function Area() {
   const areaName = data?.areaName || ""
   const shops = data?.shops || []
 
-  // Update document title safely when data resolves
-  useEffect(() => {
-    if (areaName) {
-      document.title = `${areaName} | CTMerchant`
-    }
-  }, [areaName])
-
   function getDisplayImage(shop) {
     if (shop.image_url) return shop.image_url
     if (shop.store_front_url) return shop.store_front_url
@@ -86,6 +80,11 @@ function Area() {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] text-[#0F1111]">
+      <PageSeo
+        title={`${areaName || "Area"} Shops | CTMerchant`}
+        description={`Browse verified shops and local merchants in ${areaName || "this area"} on CTMerchant.`}
+        canonicalPath={`/area${areaId ? `?id=${encodeURIComponent(areaId)}` : ""}`}
+      />
       <header className="sticky top-0 z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <div className="mx-auto flex w-full max-w-[800px] items-center gap-4 px-4 py-3 text-white">
           <button

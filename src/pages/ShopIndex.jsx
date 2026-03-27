@@ -15,6 +15,7 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerList } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
+import PageSeo from "../components/common/PageSeo"
 
 function ShopIndex() {
   const navigate = useNavigate()
@@ -96,6 +97,11 @@ function ShopIndex() {
 
   return (
     <div className="flex h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
+      <PageSeo
+        title={`${headerTitle} | CTMerchant`}
+        description="Browse verified shops in your city on the CTMerchant directory."
+        canonicalPath="/shop-index"
+      />
       <div className="sticky top-0 z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <header className="mx-auto flex w-full max-w-[800px] items-center gap-4 px-4 py-3 text-white">
           <button

@@ -1,5 +1,6 @@
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
+import PageSeo from "../components/common/PageSeo"
 
 function Privacy() {
   const navigate = useNavigate()
@@ -16,6 +17,11 @@ function Privacy() {
 
   return (
     <MainLayout>
+      <PageSeo
+        title="Privacy Policy | CTMerchant"
+        description="Read how CTMerchant collects, uses, and protects user and merchant data across the platform."
+        canonicalPath="/privacy"
+      />
       <section className="bg-pink-50 px-4 py-5 md:py-6">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">

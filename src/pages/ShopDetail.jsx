@@ -32,6 +32,7 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
+import PageSeo from "../components/common/PageSeo"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function ShopDetailShimmer() {
@@ -558,6 +559,15 @@ function ShopDetail() {
 
   return (
     <div className="min-h-screen bg-[#E3E6E6] pb-10">
+      <PageSeo
+        title={currentShop?.name ? `${currentShop.name} | CTMerchant Shop` : "Shop Details | CTMerchant"}
+        description={
+          currentShop?.description ||
+          "View verified shop details, contact options, maps, and available products on CTMerchant."
+        }
+        canonicalPath={`/shop-detail${shopId ? `?id=${encodeURIComponent(shopId)}` : ""}`}
+        image={shopBanner || shopLogo}
+      />
       <div className="mx-auto max-w-[1600px]">
         {/* Offline Banner */}
         {isOffline && (

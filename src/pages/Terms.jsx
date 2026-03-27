@@ -1,5 +1,6 @@
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
+import PageSeo from "../components/common/PageSeo"
 
 function Terms() {
   const navigate = useNavigate()
@@ -16,6 +17,11 @@ function Terms() {
 
   return (
     <MainLayout>
+      <PageSeo
+        title="Terms of Use | CTMerchant"
+        description="Review the terms and usage rules that govern CTMerchant accounts, listings, and platform access."
+        canonicalPath="/terms"
+      />
       <section className="bg-pink-50 px-4 py-5 md:py-6">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">

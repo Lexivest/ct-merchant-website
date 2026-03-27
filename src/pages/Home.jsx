@@ -14,6 +14,7 @@ import MainLayout from "../layouts/MainLayout"
 import AuthInput from "../components/auth/AuthInput"
 import AuthButton from "../components/auth/AuthButton"
 import AuthNotification from "../components/auth/AuthNotification"
+import PageSeo from "../components/common/PageSeo"
 import {
   sendPasswordResetCode,
   signInWithGoogleIdToken,
@@ -438,6 +439,11 @@ function Home() {
 
   return (
     <MainLayout>
+      <PageSeo
+        title="CTMerchant | Repository of Shops, Products and Services"
+        description="Discover verified physical shops, browse local products, and connect with real merchants across your city."
+        canonicalPath="/"
+      />
       <section className="bg-pink-50 px-4 py-4 md:py-5">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
           

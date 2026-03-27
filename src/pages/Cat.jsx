@@ -12,6 +12,7 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock, ShimmerCard } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
+import PageSeo from "../components/common/PageSeo"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function CatShimmer({ catName }) {
@@ -92,11 +93,6 @@ function Cat() {
   const shops = data?.shops || []
   const products = data?.products || []
 
-  // Set document title safely
-  if (catName) {
-    document.title = `${catName} | CTMerchant`
-  }
-
   function buildShopGrid(shop) {
     const p = products
       .filter((x) => x.shop_id === shop.id && x.image_url && x.condition !== "Fairly Used")
@@ -169,6 +165,11 @@ function Cat() {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] text-[#0F1111]">
+      <PageSeo
+        title={`${catName || "Category"} Shops | CTMerchant`}
+        description={`Discover verified shops and products in the ${catName || "selected"} category on CTMerchant.`}
+        canonicalPath={`/cat${catName ? `?name=${encodeURIComponent(catName)}` : ""}`}
+      />
       <header className="sticky top-0 z-50 bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <div className="mx-auto flex w-full max-w-[1200px] items-center gap-4 px-4 py-3">
           <button

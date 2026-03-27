@@ -16,6 +16,7 @@ import AuthButton from "../components/auth/AuthButton"
 import AuthInput from "../components/auth/AuthInput"
 import AuthNotification from "../components/auth/AuthNotification"
 import MainLayout from "../layouts/MainLayout"
+import PageSeo from "../components/common/PageSeo"
 import {
   fetchAreasByCity,
   fetchOpenCities,
@@ -274,6 +275,12 @@ function CreateAccount() {
   return (
     <>
       <MainLayout>
+        <PageSeo
+          title="Create Account | CTMerchant"
+          description="Create a CTMerchant account to discover verified shops, manage your profile, and access merchant tools."
+          canonicalPath="/create-account"
+          noindex
+        />
         <section className="min-h-screen bg-pink-50 px-4 py-0">
           <div className="mx-auto max-w-md">
             

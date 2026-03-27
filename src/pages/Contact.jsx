@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
+import PageSeo from "../components/common/PageSeo"
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
 
@@ -97,6 +98,11 @@ function Contact() {
 
   return (
     <MainLayout>
+      <PageSeo
+        title="Contact CTMerchant | Support and Enquiries"
+        description="Send enquiries, requests, or partnership questions to the CTMerchant team."
+        canonicalPath="/contact"
+      />
       {/* 3. Global Offline Banner */}
       {isOffline && (
         <div className="z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200 flex items-center justify-center gap-2">

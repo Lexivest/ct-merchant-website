@@ -1,5 +1,6 @@
 import { useNavigate, useSearchParams } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
+import PageSeo from "../components/common/PageSeo"
 
 function About() {
   const navigate = useNavigate()
@@ -16,6 +17,11 @@ function About() {
 
   return (
     <MainLayout>
+      <PageSeo
+        title="About CTMerchant | Company Profile"
+        description="Learn how CTMerchant organizes verified physical shops, products, and services into a trusted local discovery network."
+        canonicalPath="/about"
+      />
       <section className="bg-pink-50 px-4 py-5 md:py-6">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm">

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 import useAuthSession from "../hooks/useAuthSession"
+import PageSeo from "../components/common/PageSeo"
 
 function Affiliate() {
   const navigate = useNavigate()
@@ -21,6 +22,11 @@ function Affiliate() {
 
   return (
     <MainLayout>
+      <PageSeo
+        title="Affiliate Program | CTMerchant"
+        description="Join the CTMerchant affiliate program and help merchants and shoppers discover verified local businesses."
+        canonicalPath="/affiliate"
+      />
       {/* Global Offline Banner */}
       {isOffline && (
         <div className="z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200 flex items-center justify-center gap-2">
