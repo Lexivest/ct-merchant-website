@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from "react"
-import { Routes, Route, Link, Navigate, useLocation, useNavigate } from "react-router-dom"
+import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom"
 import Home from "./pages/Home"
 import About from "./pages/About"
 import Services from "./pages/Services"
@@ -184,62 +184,17 @@ function RouteLoadingScreen({
   )
 }
 
-function DashboardHandoffShell() {
+function AccountCheckShell() {
   return (
-    <div className="min-h-screen bg-[#E3E6E6] px-4 py-4">
-      <div className="mx-auto max-w-[1600px] animate-pulse">
-        <div className="mb-4 rounded-md bg-[#131921] px-4 py-4 shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-white/15" />
-            <div className="h-10 flex-1 rounded bg-white/10" />
-            <div className="h-10 w-24 rounded bg-white/10" />
-            <div className="h-10 w-24 rounded bg-white/10" />
-          </div>
-          <div className="mt-3 h-10 rounded bg-white/10" />
-        </div>
-
-        <div className="mb-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="mb-3 h-4 w-24 rounded bg-slate-200" />
-              <div className="h-24 rounded bg-slate-100" />
-              <div className="mt-3 h-4 w-3/4 rounded bg-slate-200" />
-              <div className="mt-2 h-3 w-1/2 rounded bg-slate-200" />
-            </div>
-          ))}
-        </div>
-
-        <div className="mb-4 grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
-          <div className="rounded-lg bg-white p-4 shadow-sm">
-            <div className="mb-4 h-6 w-40 rounded bg-slate-200" />
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {Array.from({ length: 8 }).map((_, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="aspect-square rounded bg-slate-100" />
-                  <div className="h-3 w-3/4 rounded bg-slate-200" />
-                  <div className="h-3 w-1/2 rounded bg-slate-200" />
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-lg bg-white p-4 shadow-sm">
-            <div className="mb-4 h-6 w-32 rounded bg-slate-200" />
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3">
-                  <div className="h-12 w-12 rounded-full bg-slate-100" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 w-3/4 rounded bg-slate-200" />
-                    <div className="h-3 w-1/2 rounded bg-slate-200" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <p className="text-center text-sm font-semibold text-[#565959]">
-          Preparing your dashboard...
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
+      <div className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-xl">
+        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-pink-100 border-t-pink-600" />
+        <h1 className="mt-5 text-3xl font-black text-slate-900">Checking your account</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          Please wait while we confirm your account status and load your profile securely.
+        </p>
+        <p className="mt-3 text-sm leading-6 text-slate-500">
+          If your account is restricted, we will show a support message instead of the dashboard.
         </p>
       </div>
     </div>
@@ -297,10 +252,8 @@ function SuspendedAccountGate({ onLogout }) {
 
 function ProtectedDashboardRoute({ children }) {
   const navigate = useNavigate()
-  const location = useLocation()
   const [completedProfileUserId, setCompletedProfileUserId] = useState(null)
   const { loading, user, profile, suspended, isOffline, profileLoaded } = useAuthSession()
-  const isDashboardRoute = location.pathname === "/user-dashboard"
 
   useEffect(() => {
     if (!user || isOffline) return undefined
@@ -350,15 +303,15 @@ function ProtectedDashboardRoute({ children }) {
     )
   }
 
+  if (user && !profileLoaded) {
+    return <AccountCheckShell />
+  }
+
   const needsProfileSetup =
     user &&
     profileLoaded &&
     completedProfileUserId !== user.id &&
     (!profile || !isProfileComplete(profile))
-
-  if (isDashboardRoute && user && !profileLoaded) {
-    return <DashboardHandoffShell />
-  }
 
   return (
     <>
