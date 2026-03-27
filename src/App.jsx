@@ -31,40 +31,6 @@ function isChunkLoadFailure(error) {
   )
 }
 
-function hasLikelyActiveSession() {
-  if (typeof localStorage === "undefined") return false
-
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (!key || !key.startsWith("sb-") || !key.includes("auth-token")) continue
-      const raw = localStorage.getItem(key)
-      if (!raw) continue
-
-      const parsed = JSON.parse(raw)
-      if (parsed?.access_token) return true
-      if (parsed?.currentSession?.access_token) return true
-      if (Array.isArray(parsed) && parsed[0]?.access_token) return true
-    }
-  } catch {
-    return false
-  }
-
-  return false
-}
-
-function getChunkFallbackRoute() {
-  if (typeof window !== "undefined" && window.location.pathname.startsWith("/staff")) {
-    return { to: "/staff-portal", label: "Go to staff portal" }
-  }
-
-  if (hasLikelyActiveSession()) {
-    return { to: "/user-dashboard?tab=market", label: "Go to dashboard" }
-  }
-
-  return { to: "/", label: "Go home" }
-}
-
 function ChunkRouteFallback({ pageLabel = "this page" }) {
   const [isOffline, setIsOffline] = useState(() => {
     if (typeof navigator === "undefined") return false
@@ -86,8 +52,6 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
       window.removeEventListener("offline", handleOffline)
     }
   }, [])
-
-  const fallbackRoute = getChunkFallbackRoute()
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
@@ -111,12 +75,6 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
           >
             Reload app
           </button>
-          <Link
-            to={fallbackRoute.to}
-            className="flex-1 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 font-bold text-amber-800 transition hover:bg-amber-100"
-          >
-            {fallbackRoute.label}
-          </Link>
         </div>
       </div>
     </div>
@@ -441,10 +399,7 @@ function App() {
 
   const withProtectedOnlineGuard = (element, options = {}) => (
     <ProtectedDashboardRoute>
-      {withOnlineGuard(element, {
-        backTo: "/user-dashboard?tab=market",
-        ...options,
-      })}
+      {withOnlineGuard(element, options)}
     </ProtectedDashboardRoute>
   )
 

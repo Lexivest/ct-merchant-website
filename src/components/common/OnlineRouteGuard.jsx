@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
 
 function OnlineRouteGuard({
   children,
-  backTo = "/",
   title = "Internet connection required",
-  message = "This page needs an active internet connection to load correctly.",
+  message = "You are offline. Cached content remains available while we wait for your connection to return.",
 }) {
   const [isOffline, setIsOffline] = useState(() => {
     if (typeof navigator === "undefined") return false
@@ -38,16 +36,19 @@ function OnlineRouteGuard({
   if (!isOffline) return children
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
-      <div className="w-full max-w-lg rounded-[28px] border border-amber-200 bg-white p-8 text-center shadow-xl">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-3xl text-amber-700">
-          !
-        </div>
+    <div className="relative">
+      <div className="sticky top-0 z-[999] border-b border-amber-200 bg-amber-50/95 px-4 py-3 text-amber-950 shadow-sm backdrop-blur">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-8 w-8 flex-none items-center justify-center rounded-full bg-amber-100 text-base font-black text-amber-700">
+              !
+            </div>
+            <div>
+              <p className="text-sm font-bold">{title}</p>
+              <p className="text-xs leading-5 text-amber-900/80">{message}</p>
+            </div>
+          </div>
 
-        <h1 className="mt-5 text-3xl font-black text-slate-900">{title}</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">{message}</p>
-
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
             onClick={() => {
@@ -58,23 +59,18 @@ function OnlineRouteGuard({
               }
               setRetryArmed(true)
             }}
-            className="flex-1 rounded-2xl bg-slate-900 px-5 py-3 font-bold text-white transition hover:bg-slate-800"
+            className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-800 sm:self-center"
           >
             Retry
           </button>
-          <Link
-            to={backTo}
-            className="flex-1 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 font-bold text-amber-800 transition hover:bg-amber-100"
-          >
-            Go back
-          </Link>
         </div>
         {retryArmed ? (
-          <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-            Waiting for internet connection. This page will retry automatically once you are online.
+          <div className="mx-auto mt-3 max-w-[1600px] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-900">
+            Waiting for internet connection. We will refresh automatically once you are back online.
           </div>
         ) : null}
       </div>
+      {children}
     </div>
   )
 }

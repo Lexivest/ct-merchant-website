@@ -12,48 +12,9 @@ function isChunkLoadFailure(error) {
   )
 }
 
-function hasLikelyActiveSession() {
-  if (typeof localStorage === "undefined") return false
-
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (!key || !key.startsWith("sb-") || !key.includes("auth-token")) continue
-
-      const raw = localStorage.getItem(key)
-      if (!raw) continue
-
-      const parsed = JSON.parse(raw)
-      if (parsed?.access_token) return true
-      if (parsed?.currentSession?.access_token) return true
-      if (Array.isArray(parsed) && parsed[0]?.access_token) return true
-    }
-  } catch {
-    return false
-  }
-
-  return false
-}
-
-function getSafeRoute() {
-  const path = typeof window !== "undefined" ? window.location.pathname : "/"
-  const hasSession = hasLikelyActiveSession()
-
-  if (path.startsWith("/staff")) {
-    return { to: "/staff-portal", label: "Go to staff portal" }
-  }
-
-  if (hasSession) {
-    return { to: "/user-dashboard?tab=market", label: "Go to dashboard" }
-  }
-
-  return { to: "/", label: "Go home" }
-}
-
 function ErrorFallback({ error, onRetry, retryArmed }) {
   const chunkLoadFailure = isChunkLoadFailure(error)
   const isOffline = typeof navigator !== "undefined" ? !navigator.onLine : false
-  const safeRoute = getSafeRoute()
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
@@ -87,7 +48,7 @@ function ErrorFallback({ error, onRetry, retryArmed }) {
           </div>
         ) : null}
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-6 flex flex-col gap-3">
           <button
             type="button"
             onClick={onRetry}
@@ -95,12 +56,6 @@ function ErrorFallback({ error, onRetry, retryArmed }) {
           >
             {chunkLoadFailure ? "Reload app" : "Retry page"}
           </button>
-          <a
-            href={safeRoute.to}
-            className="flex-1 rounded-2xl border border-pink-200 bg-pink-50 px-5 py-3 font-bold text-pink-700 transition hover:bg-pink-100"
-          >
-            {safeRoute.label}
-          </a>
         </div>
       </div>
     </div>
