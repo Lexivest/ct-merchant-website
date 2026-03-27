@@ -13,8 +13,8 @@ import {
 import MainLayout from "../layouts/MainLayout"
 import AuthInput from "../components/auth/AuthInput"
 import AuthButton from "../components/auth/AuthButton"
-import AuthNotification from "../components/auth/AuthNotification"
 import PageSeo from "../components/common/PageSeo"
+import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import {
   sendPasswordResetCode,
   signInWithGoogleIdToken,
@@ -49,6 +49,7 @@ function Home() {
 
   // 1. Hook into global auth state
   const { user, profile, suspended, profileLoaded, isOffline } = useAuthSession()
+  const { notify } = useGlobalFeedback()
 
   // 2. Smooth Auto-Redirect
   useEffect(() => {
@@ -78,12 +79,6 @@ function Home() {
   const [loginErrors, setLoginErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
   const [loginLoading, setLoginLoading] = useState(false)
-  const [loginNotice, setLoginNotice] = useState({
-    visible: false,
-    type: "info",
-    title: "",
-    message: "",
-  })
 
   const [resetEmailOpen, setResetEmailOpen] = useState(false)
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false)
@@ -97,12 +92,6 @@ function Home() {
   const [resetPasswordErrors, setResetPasswordErrors] = useState({})
   const [sendingReset, setSendingReset] = useState(false)
   const [resettingPassword, setResettingPassword] = useState(false)
-  const [resetNotice, setResetNotice] = useState({
-    visible: false,
-    type: "info",
-    title: "",
-    message: "",
-  })
 
   const [googleReady, setGoogleReady] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -138,8 +127,7 @@ function Home() {
   const googleCallbackRef = useRef()
   googleCallbackRef.current = async (response) => {
     if (isOffline) {
-      setLoginNotice({
-        visible: true,
+      notify({
         type: "error",
         title: "Network Offline",
         message: "Please connect to the internet to sign in.",
@@ -148,8 +136,7 @@ function Home() {
     }
 
     if (!response?.credential) {
-      setLoginNotice({
-        visible: true,
+      notify({
         type: "error",
         title: "Google sign-in failed",
         message: "No Google credential was received.",
@@ -159,7 +146,6 @@ function Home() {
 
     try {
       setGoogleLoading(true)
-      setLoginNotice({ visible: false, type: "info", title: "", message: "" })
 
       const result = await signInWithGoogleIdToken(response.credential)
       const signedInUser = result.auth?.user || result.auth?.session?.user
@@ -184,19 +170,18 @@ function Home() {
       }
 
       await updateLastActiveIp(signedInUser.id, result.ipData.ip)
-      
-      setLoginNotice({
-        visible: true,
+
+      notify({
         type: "success",
         title: "Google sign-in successful",
         message: "Opening your dashboard...",
+        autoCloseMs: 1400,
       })
 
     } catch (error) {
       const message = error.message || "Please try again."
       const isSuspendedMessage = /suspended|restricted/i.test(message)
-      setLoginNotice({
-        visible: true,
+      notify({
         type: "error",
         title: isSuspendedMessage ? "Account suspended" : "Google sign-in failed",
         message,
@@ -272,8 +257,7 @@ function Home() {
     event.preventDefault()
 
     if (isOffline) {
-      setLoginNotice({
-        visible: true,
+      notify({
         type: "error",
         title: "Network Offline",
         message: "Please connect to the internet to sign in.",
@@ -286,7 +270,6 @@ function Home() {
 
     try {
       setLoginLoading(true)
-      setLoginNotice({ visible: false, type: "info", title: "", message: "" })
 
       const result = await signInWithPassword({
         email: loginForm.email,
@@ -314,19 +297,18 @@ function Home() {
       }
 
       await updateLastActiveIp(signedInUser.id, result.ipData.ip)
-      
-      setLoginNotice({
-        visible: true,
+
+      notify({
         type: "success",
         title: "Login successful",
         message: "Opening your dashboard...",
+        autoCloseMs: 1400,
       })
       
     } catch (error) {
       const message = error.message || "We could not sign you in. Check your connection and try again."
       const isSuspendedMessage = /suspended|restricted/i.test(message)
-      setLoginNotice({
-        visible: true,
+      notify({
         type: "error",
         title: isSuspendedMessage ? "Account suspended" : "Login failed",
         message,
@@ -336,7 +318,6 @@ function Home() {
   }
 
   function openResetFlow() {
-    setResetNotice({ visible: false, type: "info", title: "", message: "" })
     setResetEmailErrors({})
     setResetPasswordErrors({})
     setResetEmailForm({ email: loginForm.email || "" })
@@ -345,8 +326,7 @@ function Home() {
 
   async function handleSendResetCode() {
     if (isOffline) {
-      setResetNotice({
-        visible: true,
+      notify({
         type: "error",
         title: "Network Offline",
         message: "Please connect to the internet to reset your password.",
@@ -360,22 +340,20 @@ function Home() {
 
     try {
       setSendingReset(true)
-      setResetNotice({ visible: false, type: "info", title: "", message: "" })
 
       await sendPasswordResetCode(resetEmailForm.email)
 
-      setResetNotice({
-        visible: true,
+      notify({
         type: "success",
         title: "Recovery code sent",
         message: "Check your email for the 6-digit recovery code.",
+        autoCloseMs: 1400,
       })
 
       setResetEmailOpen(false)
       setResetPasswordOpen(true)
     } catch (error) {
-      setResetNotice({
-        visible: true,
+      notify({
         type: "error",
         title: "Could not send code",
         message: error.message || "Please try again.",
@@ -387,8 +365,7 @@ function Home() {
 
   async function handleResetPassword() {
     if (isOffline) {
-      setResetNotice({
-        visible: true,
+      notify({
         type: "error",
         title: "Network Offline",
         message: "Please connect to the internet to confirm your new password.",
@@ -402,7 +379,6 @@ function Home() {
 
     try {
       setResettingPassword(true)
-      setResetNotice({ visible: false, type: "info", title: "", message: "" })
 
       await verifyRecoveryCodeAndResetPassword({
         email: resetEmailForm.email,
@@ -410,11 +386,11 @@ function Home() {
         newPassword: resetPasswordForm.newPassword,
       })
 
-      setResetNotice({
-        visible: true,
+      notify({
         type: "success",
         title: "Password updated",
         message: "You can now sign in with your new password.",
+        autoCloseMs: 1400,
       })
 
       setResetPasswordOpen(false)
@@ -424,8 +400,7 @@ function Home() {
         password: "",
       }))
     } catch (error) {
-      setResetNotice({
-        visible: true,
+      notify({
         type: "error",
         title: "Reset failed",
         message: error.message || "Please try again.",
@@ -607,13 +582,6 @@ function Home() {
                     </AuthButton>
                   </form>
 
-                  <AuthNotification
-                    visible={loginNotice.visible}
-                    type={loginNotice.type}
-                    title={loginNotice.title}
-                    message={loginNotice.message}
-                  />
-
                   <div className="my-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
                     <div className="h-px flex-1 bg-pink-200" />
                     <span>New to CTMerchant?</span>
@@ -670,12 +638,6 @@ function Home() {
                     </p>
                   </div>
 
-                  <AuthNotification
-                    visible={resetNotice.visible}
-                    type={resetNotice.type}
-                    title={resetNotice.title}
-                    message={resetNotice.message}
-                  />
                 </div>
               </div>
 
