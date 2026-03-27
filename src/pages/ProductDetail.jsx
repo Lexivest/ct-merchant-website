@@ -576,15 +576,7 @@ function ProductDetail() {
         image={selectedImage || currentProduct?.image_url || "/ctm-logo.jpg"}
       />
       <div className="mx-auto flex min-h-screen max-w-[1200px] flex-col bg-[#E3E6E6] pb-[90px]">
-        {/* Offline Notice */}
-        {isOffline && (
-          <div className="sticky top-0 z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm">
-            <i className="fa-solid fa-wifi-slash mr-2"></i>
-            You are currently offline. Showing cached product details.
-          </div>
-        )}
-        
-        <header className={`sticky ${isOffline ? 'top-[36px]' : 'top-0'} z-[100] flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]`}>
+        <header className="sticky top-0 z-[100] flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <button type="button" onClick={goBack} className="shrink-0 text-[1.2rem] transition hover:text-pink-500">
               <FaArrowLeft />

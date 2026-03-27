@@ -569,15 +569,7 @@ function ShopDetail() {
         image={shopBanner || shopLogo}
       />
       <div className="mx-auto max-w-[1600px]">
-        {/* Offline Banner */}
-        {isOffline && (
-          <div className="sticky top-0 z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm">
-            <i className="fa-solid fa-wifi-slash mr-2"></i>
-            You are currently offline. Showing cached shop details.
-          </div>
-        )}
-        
-        <header className={`sticky ${isOffline ? 'top-[36px]' : 'top-0'} z-[100] flex flex-col bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]`}>
+        <header className="sticky top-0 z-[100] flex flex-col bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex min-w-0 items-center gap-3">
               <button

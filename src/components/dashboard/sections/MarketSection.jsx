@@ -141,7 +141,7 @@ function MarketSection({
   }
 
   // 1. PROFESSIONAL ERROR STATE (Only shows if no cache is available)
-  if (error) {
+  if (error && !dashboardData) {
     return (
       <div className="p-6">
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm font-semibold text-red-600 shadow-sm">

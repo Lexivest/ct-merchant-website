@@ -251,6 +251,16 @@ function UserDashboard() {
   }, [authLoading, user, suspended, navigate])
 
   useEffect(() => {
+    if (!notice.visible) return undefined
+
+    const timerId = window.setTimeout(() => {
+      setNotice((prev) => (prev.visible ? { ...prev, visible: false } : prev))
+    }, 6500)
+
+    return () => window.clearTimeout(timerId)
+  }, [notice.visible, notice.title, notice.message, notice.type])
+
+  useEffect(() => {
     function handleDocumentClick(event) {
       const target = event.target
       if (!(target instanceof Element)) return
@@ -369,6 +379,11 @@ function UserDashboard() {
     }
   }
 
+  useEffect(() => {
+    setNotice((prev) => (prev.visible ? { ...prev, visible: false } : prev))
+    setProfileEditError("")
+  }, [activeTab, serviceView, user?.id])
+
   // Updated purely to rely on our new isolated shopData hook
   function handleShopClick() {
     if (!shopData) {
@@ -425,6 +440,7 @@ function UserDashboard() {
   }
 
   const currentProfile = localData.profile || profile
+  const dashboardDataError = activeTab === "market" && !fetchedData ? dataError : ""
 
   const sortedAreas = useMemo(() => {
     const areas = [...(localData.areas || [])]
@@ -1120,12 +1136,11 @@ function UserDashboard() {
 
       <main className="content-body mx-auto w-full max-w-[1600px] pb-10">
         <AuthNotification
-          visible={Boolean(dataError || notice.visible)}
-          type={dataError ? "error" : notice.type}
-          title={dataError ? "Session Issue" : notice.title}
-          message={dataError || notice.message}
+          visible={Boolean(dashboardDataError || notice.visible)}
+          type={dashboardDataError ? "error" : notice.type}
+          title={dashboardDataError ? "Session Issue" : notice.title}
+          message={dashboardDataError || notice.message}
         />
-
         {activeTab === "market" && (
           <MarketSection
             dashboardData={localData}

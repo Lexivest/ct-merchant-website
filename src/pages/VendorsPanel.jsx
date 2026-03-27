@@ -236,14 +236,6 @@ function VendorsPanel() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
-      {/* Offline Banner */}
-      {isOffline && (
-        <div className="z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200">
-          <i className="fa-solid fa-wifi-slash mr-2"></i>
-          You are offline. Showing cached dashboard data.
-        </div>
-      )}
-
       {/* HEADER */}
       <header className="sticky top-0 z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <div className="mx-auto flex w-full max-w-[1000px] items-center gap-4 px-4 py-3 text-white">

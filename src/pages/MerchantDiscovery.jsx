@@ -112,15 +112,7 @@ function MerchantDiscovery() {
         canonicalPath={`/reposearch${merchantId ? `?merchantId=${encodeURIComponent(merchantId)}` : ""}`}
         image={getLogo()}
       />
-      {/* Offline Banner */}
-      {isOffline && (
-        <div className="sticky top-0 z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200">
-          <i className="fa-solid fa-wifi-slash mr-2"></i>
-          You are offline. Showing cached merchant details.
-        </div>
-      )}
-
-      <header className={`sticky ${isOffline ? 'top-[36px]' : 'top-0'} z-[100] w-full bg-[#131921] text-white shadow`}>
+      <header className="sticky top-0 z-[100] w-full bg-[#131921] text-white shadow">
         <div className="mx-auto flex w-full max-w-[600px] items-center gap-4 px-4 py-3">
           <button
             type="button"

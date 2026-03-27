@@ -379,12 +379,6 @@ function ProtectedDashboardRoute({ children }) {
         </div>
       ) : (
         <>
-          {isOffline && user && (
-            <div className="sticky top-0 z-[999] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm">
-              <i className="fa-solid fa-wifi-slash mr-2"></i>
-              You are currently offline. Showing cached data.
-            </div>
-          )}
           {children}
         </>
       )}

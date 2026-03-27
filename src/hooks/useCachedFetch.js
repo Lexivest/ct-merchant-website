@@ -2,6 +2,40 @@ import { useState, useEffect, useRef } from "react"
 
 // Global memory cache to prevent redundant network requests across page navigations
 const globalCache = new Map()
+const activeFetchers = new Map()
+let globalListenersAttached = false
+
+function refreshAllActiveFetches() {
+  for (const fetcher of activeFetchers.values()) {
+    fetcher({ force: true })
+  }
+}
+
+function ensureGlobalFetchListeners() {
+  if (typeof window === "undefined" || globalListenersAttached) return
+  globalListenersAttached = true
+
+  const handleResume = () => {
+    if (typeof navigator !== "undefined" && navigator.onLine) {
+      refreshAllActiveFetches()
+    }
+  }
+
+  const handleVisibilityChange = () => {
+    if (
+      typeof document !== "undefined" &&
+      document.visibilityState === "visible" &&
+      typeof navigator !== "undefined" &&
+      navigator.onLine
+    ) {
+      refreshAllActiveFetches()
+    }
+  }
+
+  window.addEventListener("online", handleResume)
+  window.addEventListener("focus", handleResume)
+  document.addEventListener("visibilitychange", handleVisibilityChange)
+}
 
 export function clearCachedFetchStore(predicate) {
   if (typeof predicate !== "function") {
@@ -26,6 +60,10 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   const isOfflineRef = useRef(!navigator.onLine)
   const errorRef = useRef(null)
 
+  useEffect(() => {
+    ensureGlobalFetchListeners()
+  }, [])
+
   // 1. SYNCHRONOUS CACHE READ
   // By reading the map directly during render, we never suffer from stale useState data
   // when the queryKey changes (like when user.id resolves).
@@ -38,20 +76,24 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   useEffect(() => {
     let isMounted = true
 
-    const fetchData = async () => {
+    const fetchData = async ({ force = false } = {}) => {
       // Offline Check
       if (!navigator.onLine) {
         isOfflineRef.current = true
         if (globalCache.has(queryKey)) {
+          errorRef.current = null
           if (isMounted) setTick(t => t + 1)
           return
         }
+        errorRef.current = "Unable to connect. Please check your network connection."
+        if (isMounted) setTick(t => t + 1)
+        return
       }
 
       isOfflineRef.current = false
       errorRef.current = null
       
-      if (!globalCache.has(queryKey)) {
+      if (force || !globalCache.has(queryKey)) {
          if (isMounted) setTick(t => t + 1) // Force render to show loading shimmer
       }
 
@@ -66,6 +108,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
         if (isMounted) {
           if (globalCache.has(queryKey)) {
             console.warn(`Background fetch failed for ${queryKey}, falling back to cache.`)
+            errorRef.current = null
           } else {
             errorRef.current = "Unable to connect. Please check your network connection."
           }
@@ -81,15 +124,20 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       fetchData()
     }
 
+    activeFetchers.set(queryKey, fetchData)
+
     // Real-time Network Listeners
     const handleOffline = () => {
       isOfflineRef.current = true
+      if (globalCache.has(queryKey)) {
+        errorRef.current = null
+      }
       if (isMounted) setTick(t => t + 1)
     }
     
     const handleOnline = () => {
       isOfflineRef.current = false
-      fetchData()
+      fetchData({ force: true })
     }
 
     window.addEventListener("offline", handleOffline)
@@ -99,6 +147,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       isMounted = false
       window.removeEventListener("offline", handleOffline)
       window.removeEventListener("online", handleOnline)
+      activeFetchers.delete(queryKey)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...dependencies, queryKey])
