@@ -615,6 +615,14 @@ function ProductDetail() {
           </div>
         </header>
 
+        {!isLoggedIn ? (
+          <div className="px-4 pt-4">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-[0.9rem] font-semibold text-blue-900">
+              Login to view phone, WhatsApp, and merchant contact options. Product details and address stay visible.
+            </div>
+          </div>
+        ) : null}
+
         <div className="main-layout flex w-full flex-col lg:flex-row lg:gap-6 lg:bg-transparent lg:p-10">
           <div className="left-col lg:flex-1">
             <section className="content-block mb-2 overflow-hidden bg-white !p-0 lg:mb-6 lg:rounded-lg lg:border lg:border-slate-300 lg:shadow-[0_2px_8px_rgba(0,0,0,0.04)]">

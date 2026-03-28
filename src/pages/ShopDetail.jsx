@@ -647,6 +647,14 @@ function ShopDetail() {
           </div>
         ) : null}
 
+        {!isLoggedIn ? (
+          <div className="mx-auto max-w-[1000px] px-4 pt-6">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-[0.9rem] font-semibold text-blue-900">
+              Login to view phone, WhatsApp, and social contacts. Public shop details and address remain visible.
+            </div>
+          </div>
+        ) : null}
+
         {specialProducts.length > 0 ? (
           <section className="mb-2 border-y border-slate-300 bg-white px-4 py-6">
             <h2 className="mb-4 flex items-center gap-3 text-[1.35rem] font-extrabold text-[#0F1111]">

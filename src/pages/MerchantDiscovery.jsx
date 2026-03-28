@@ -1,33 +1,23 @@
-import { useEffect, useMemo } from "react"
+import { useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
-  FaLocationDot,
-  FaMobileScreen,
   FaTriangleExclamation,
 } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
 import useCachedFetch from "../hooks/useCachedFetch"
-import { ShimmerBlock } from "../components/common/Shimmers"
-import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
-// --- PROFESSIONAL SHIMMER COMPONENT ---
-function MerchantDiscoveryShimmer() {
+function OpeningShopScreen() {
   return (
-    <div className="w-full max-w-[420px] overflow-hidden rounded-lg border border-[#D5D9D9] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-      <ShimmerBlock className="h-[100px] w-full rounded-none" />
-      <div className="-mt-10 px-6 pb-6 flex flex-col items-center text-center">
-        <ShimmerBlock className="relative z-10 mb-4 h-20 w-20 rounded-lg border-[3px] border-white shadow" />
-        <ShimmerBlock className="mb-2 h-8 w-3/4 rounded" />
-        <ShimmerBlock className="mb-6 h-4 w-1/2 rounded" />
-        <ShimmerBlock className="mb-6 h-12 w-full rounded" />
-        <div className="mb-6 flex w-full gap-3">
-          <ShimmerBlock className="h-12 flex-1 rounded-md" />
-          <ShimmerBlock className="h-12 flex-1 rounded-md" />
-        </div>
-        <ShimmerBlock className="h-20 w-full rounded-md" />
+    <div className="flex min-h-screen items-center justify-center bg-[#F3F4F6] px-4 py-10">
+      <div className="w-full max-w-md rounded-2xl border border-[#D5D9D9] bg-white px-6 py-10 text-center shadow-sm">
+        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-pink-100 border-t-pink-600" />
+        <h2 className="mt-5 text-2xl font-black text-[#0F1111]">Opening shop</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Please wait while we open the merchant shop directly.
+        </p>
       </div>
     </div>
   )
@@ -68,25 +58,12 @@ function MerchantDiscovery() {
   )
 
   const shop = data?.shop || null
-  const profile = data?.profile || null
-  const statusLabel = shop?.is_verified ? "Physically Verified" : "Approved Listing"
-  const statusToneClass = shop?.is_verified ? "text-[#007185]" : "text-[#B45309]"
 
   useEffect(() => {
     if (shop?.id) {
       navigate(`/shop-detail?id=${shop.id}`, { replace: true })
     }
   }, [navigate, shop?.id])
-
-  // Helper Functions
-  function getLogo() {
-    if (!shop) return ""
-    return (
-      shop.storefront_url ||
-      shop.image_url ||
-      "https://via.placeholder.com/150"
-    )
-  }
 
   function handleBack() {
     navigate("/")
@@ -121,7 +98,7 @@ function MerchantDiscovery() {
 
       <main className="flex justify-center px-5 py-10">
         {loading && !data ? (
-          <MerchantDiscoveryShimmer />
+          <OpeningShopScreen />
         ) : dataError && !data ? (
           <div className="w-full max-w-[420px] rounded-lg border border-[#D5D9D9] bg-white px-5 py-16 text-center shadow-sm">
             <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-700" />
@@ -138,86 +115,7 @@ function MerchantDiscovery() {
             </button>
           </div>
         ) : shop ? (
-          <div className="w-full max-w-[420px] overflow-hidden rounded-lg border border-[#D5D9D9] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-            <div className="h-[100px] bg-[#232F3E]" />
-
-            <div className="-mt-10 px-6 pb-6 text-center">
-              <div className="relative mx-auto h-20 w-20 overflow-hidden rounded-lg border-[3px] border-white bg-slate-50 shadow">
-                <StableImage
-                  src={getLogo()}
-                  alt={shop.name}
-                  containerClassName="h-full w-full bg-white"
-                  className="h-full w-full object-contain bg-white p-1"
-                />
-              </div>
-
-              <div
-                className={`relative mx-auto -mt-4 h-4 w-4 translate-x-8 rounded-full border-2 border-white ${
-                  shop.is_verified ? "bg-green-600" : "bg-red-700"
-                }`}
-              />
-
-              <div className="mt-4">
-                <h2 className="flex items-center justify-center gap-2 text-[1.4rem] font-extrabold text-[#0F1111]">
-                  <span>{shop.name}</span>
-                </h2>
-
-                <p className="mt-1 text-[0.9rem] font-medium text-slate-600">
-                  Proprietor: {profile?.full_name || "Registered Merchant"}
-                </p>
-              </div>
-
-              <div className="my-4 flex flex-wrap justify-center gap-2">
-                <span className="rounded border border-pink-200 bg-pink-100 px-3 py-1 text-[0.75rem] font-extrabold tracking-[0.5px] text-pink-600">
-                  {shop.unique_id || "ID Pending"}
-                </span>
-
-                <span className="flex items-center gap-1 rounded border border-[#D5D9D9] bg-slate-50 px-3 py-1 text-[0.8rem] font-semibold text-slate-600">
-                  <FaLocationDot className="text-pink-600" />
-                  {shop.cities?.name || "Local"}
-                </span>
-              </div>
-
-              <div className="mb-6 flex rounded-md border border-[#D5D9D9] bg-slate-50 p-3 text-left">
-                <div className="min-w-0 flex-1 px-3">
-                  <span className="mb-1 block text-[0.7rem] font-extrabold uppercase text-slate-500">
-                    Address
-                  </span>
-                  <span className="block break-words whitespace-normal text-[0.9rem] font-bold leading-5 text-[#0F1111]">
-                    {shop.address || "Address not listed"}
-                  </span>
-                </div>
-
-                <div className="shrink-0 border-l border-[#D5D9D9] px-3">
-                  <span className="mb-1 block text-[0.7rem] font-extrabold uppercase text-slate-500">
-                    Status
-                  </span>
-                  <span className={`block whitespace-nowrap text-[0.9rem] font-bold ${statusToneClass}`}>
-                    {statusLabel}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mb-6 flex items-center justify-center gap-2 rounded-md bg-pink-50 px-4 py-3 font-bold text-pink-700">
-                Opening shop...
-              </div>
-
-              <div className="flex items-center gap-4 rounded-md border border-[#D5D9D9] bg-slate-50 p-4 text-left">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#D5D9D9] bg-white text-[#007185] shadow-sm">
-                  <FaMobileScreen />
-                </div>
-
-                <div>
-                  <p className="text-[0.95rem] font-extrabold text-[#0F1111]">
-                    Full Experience
-                  </p>
-                  <p className="mt-1 text-[0.8rem] text-slate-600">
-                    Access live inventory directly via the CT-Merchant portal.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <OpeningShopScreen />
         ) : null}
       </main>
     </div>
