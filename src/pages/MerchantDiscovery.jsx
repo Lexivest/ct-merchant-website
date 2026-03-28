@@ -1,13 +1,11 @@
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
   FaLocationDot,
   FaMobileScreen,
-  FaStore,
   FaTriangleExclamation,
 } from "react-icons/fa6"
-import { FaWhatsapp } from "react-icons/fa"
 import { supabase } from "../lib/supabase"
 import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock } from "../components/common/Shimmers"
@@ -74,6 +72,12 @@ function MerchantDiscovery() {
   const statusLabel = shop?.is_verified ? "Physically Verified" : "Approved Listing"
   const statusToneClass = shop?.is_verified ? "text-[#007185]" : "text-[#B45309]"
 
+  useEffect(() => {
+    if (shop?.id) {
+      navigate(`/shop-detail?id=${shop.id}`, { replace: true })
+    }
+  }, [navigate, shop?.id])
+
   // Helper Functions
   function getLogo() {
     if (!shop) return ""
@@ -84,22 +88,8 @@ function MerchantDiscovery() {
     )
   }
 
-  function getWhatsappUrl() {
-    if (!shop?.whatsapp) return ""
-    let num = shop.whatsapp.replace(/\D/g, "")
-    if (num.startsWith("0")) {
-      num = `234${num.slice(1)}`
-    }
-    return `https://wa.me/${num}`
-  }
-
   function handleBack() {
     navigate("/")
-  }
-
-  function handleViewShop() {
-    if (!shop?.id) return
-    navigate(`/shop-detail?id=${shop.id}`)
   }
 
   return (
@@ -148,10 +138,7 @@ function MerchantDiscovery() {
             </button>
           </div>
         ) : shop ? (
-          <div
-            className="w-full max-w-[420px] cursor-pointer overflow-hidden rounded-lg border border-[#D5D9D9] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
-            onClick={handleViewShop}
-          >
+          <div className="w-full max-w-[420px] overflow-hidden rounded-lg border border-[#D5D9D9] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
             <div className="h-[100px] bg-[#232F3E]" />
 
             <div className="-mt-10 px-6 pb-6 text-center">
@@ -211,31 +198,8 @@ function MerchantDiscovery() {
                 </div>
               </div>
 
-              <div
-                className={`mb-6 grid gap-3 ${
-                  shop.whatsapp ? "grid-cols-2" : "grid-cols-1"
-                }`}
-              >
-                {shop.whatsapp ? (
-                  <a
-                    href={getWhatsappUrl()}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-center gap-2 rounded-md bg-[#25D366] px-4 py-3 font-bold text-white shadow transition hover:-translate-y-0.5 hover:bg-green-600"
-                  >
-                    <FaWhatsapp className="text-[1.1rem]" />
-                    Chat
-                  </a>
-                ) : null}
-
-                <button
-                  type="button"
-                  onClick={handleViewShop}
-                  className="flex items-center justify-center gap-2 rounded-md bg-pink-600 px-4 py-3 font-bold text-white shadow transition hover:-translate-y-0.5 hover:bg-pink-700"
-                >
-                  <FaStore className="text-[1rem]" />
-                  View Shop
-                </button>
+              <div className="mb-6 flex items-center justify-center gap-2 rounded-md bg-pink-50 px-4 py-3 font-bold text-pink-700">
+                Opening shop...
               </div>
 
               <div className="flex items-center gap-4 rounded-md border border-[#D5D9D9] bg-slate-50 p-4 text-left">
