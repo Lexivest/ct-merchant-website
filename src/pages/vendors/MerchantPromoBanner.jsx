@@ -217,6 +217,7 @@ export default function MerchantPromoBanner() {
   const displayAddress = shopData.address || "Registered Business Address";
   const shopUrlText = `www.ctmerchant.com.ng/shop-detail?id=${shopData.id}`;
   const shopUrl = `https://${shopUrlText}`;
+  const websiteText = "www.ctmerchant.com.ng";
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-[#F3F4F6] text-[#0F1111]">
@@ -293,7 +294,7 @@ export default function MerchantPromoBanner() {
 
           {/* BOTTOM ADVERTISING STRIP */}
           <div className="absolute bottom-0 left-0 z-[40] flex h-[48px] w-full items-center justify-center border-t-[4px] border-[#FBBF24] bg-[#001E50] text-[1.1rem] font-semibold text-white shadow-[0_-4px_10px_rgba(0,0,0,0.3)]">
-            Visit <span className="mx-1.5 font-extrabold text-[#FBBF24] tracking-wide">{shopUrlText.replace("/shop-detail", "")}</span> or scan barcode
+            Visit <span className="mx-1.5 font-extrabold text-[#FBBF24] tracking-wide">{websiteText}</span> or scan barcode
           </div>
 
         </div>
