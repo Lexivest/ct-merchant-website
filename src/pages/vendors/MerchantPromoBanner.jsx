@@ -265,8 +265,8 @@ export default function MerchantPromoBanner() {
               {shopData.category ? shopData.category : "Shop & Retail"}
             </div>
 
-            <div className="mb-3 line-clamp-2 px-2.5 text-[1.15rem] font-semibold leading-[1.3] text-[#CBD5E1] drop-shadow-sm">
-              <FaLocationDot className="mr-1 inline text-[#FBBF24]" /> {displayAddress}
+            <div className="mb-3 px-2.5 text-[1.05rem] font-semibold leading-[1.35] text-[#CBD5E1] drop-shadow-sm">
+              <FaLocationDot className="mr-1 inline align-text-top text-[#FBBF24]" /> {displayAddress}
             </div>
 
             <div className="mb-1 text-[1rem] font-bold uppercase tracking-[1px] text-[#E2E8F0]">
@@ -276,15 +276,15 @@ export default function MerchantPromoBanner() {
               CTMerchant <span className="text-[#FBBF24]">{shopData.cities?.name || "Local"}</span> Repo
             </div>
 
-            <div className="mb-3 text-[1.55rem] font-black leading-none tracking-[1px] text-white drop-shadow-lg">
-              ID: {shopData.unique_id || "PENDING"}
-            </div>
+            <div className="mt-1 flex w-full items-center justify-center gap-3">
+              <div className="shrink-0 text-right text-[0.8rem] font-black uppercase leading-tight tracking-[0.6px] text-[#FBBF24] drop-shadow-lg">
+                <span className="whitespace-nowrap">ID: {shopData.unique_id || "PENDING"}</span>
+              </div>
 
-            <div className="flex w-full justify-center">
-              <div className="flex h-[118px] w-[118px] flex-col items-center justify-center rounded-lg border-[3px] border-[#FBBF24] bg-white p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
-                <div className="mb-1 text-[0.7rem] font-black uppercase text-[#003B95]">Barcode</div>
-                <div className="flex h-full w-full items-center justify-center overflow-hidden">
-                  <QRCodeSVG value={shopUrl} size={86} fgColor="#003B95" level="M" />
+              <div className="flex shrink-0 flex-col items-center rounded-lg border-[3px] border-[#FBBF24] bg-white p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
+                <div className="mb-1 text-[0.65rem] font-black uppercase text-[#003B95]">Barcode</div>
+                <div className="flex h-[76px] w-[76px] items-center justify-center overflow-hidden">
+                  <QRCodeSVG value={shopUrl} size={70} fgColor="#003B95" level="M" />
                 </div>
               </div>
             </div>
