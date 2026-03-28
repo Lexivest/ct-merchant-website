@@ -430,45 +430,14 @@ function Home() {
       />
       <section className="overflow-x-hidden bg-pink-50 px-4 py-4 md:py-5">
         <div className="mx-auto grid w-full max-w-7xl min-w-0 gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
-          <div className="mb-2 min-w-0 bg-pink-200 p-0 shadow-sm md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
-            <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
-              <div className="relative aspect-video w-full max-h-[400px] overflow-hidden bg-white">
-                {bannerImages.map((imgSrc, index) => (
-                  <img
-                    key={index}
-                    src={imgSrc}
-                    alt={`Commerce Banner ${index + 1}`}
-                    fetchpriority={index === 0 ? "high" : "auto"}
-                    className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-[2500ms] ease-in-out ${
-                      currentBanner === index ? "opacity-100" : "opacity-0"
-                    }`}
-                  />
-                ))}
-              </div>
-
-              <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-4 md:py-4 md:text-sm">
-                <span>Commerce</span>
-                <span>Discover Locally</span>
-                <span>Unique ID</span>
-              </div>
-            </div>
-          </div>
-
           <div className="min-w-0 rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-2 lg:row-span-2 lg:row-start-1">
             <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
-              <div className="min-h-[34px] text-lg font-extrabold text-slate-900 md:text-2xl">
-                {currentPhraseText}
-                <span className="ml-1 inline-block animate-pulse text-pink-600">|</span>
-              </div>
-
-              <p className="mt-4 max-w-xl text-base font-medium leading-7 text-slate-600">
-                We provide a digital repository of physical shops, their products, and locations within a city.
-              </p>
-
-              <div className="mt-6 rounded-[22px] bg-pink-200 p-1">
-                <div className="rounded-[18px] bg-slate-900 p-5 text-white">
-                  <p className="mb-2 text-sm font-bold text-amber-300">Search Repository</p>
-                  <div className="relative">
+              <div className="rounded-[22px] bg-pink-200 p-1">
+                <div className="rounded-[18px] border border-pink-100 bg-slate-50 p-4">
+                  <p className="mb-2 text-sm font-bold text-pink-600">
+                    Search Repository
+                  </p>
+                  <div className="flex h-[42px] overflow-hidden rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
                     <input
                       type="text"
                       value={repoSearchValue}
@@ -477,23 +446,28 @@ function Home() {
                         if (e.key === "Enter") handleRepoSearch()
                       }}
                       placeholder="Enter Merchant ID..."
-                      className="w-full rounded-full border border-white/20 bg-white/10 px-5 py-3 pr-12 text-sm text-white outline-none placeholder:text-white/50 focus:border-pink-400 focus:ring-4 focus:ring-pink-500/20"
+                      className="min-w-0 flex-1 border-none px-4 text-base text-[#0F1111] outline-none"
                     />
                     <button
                       type="button"
                       onClick={handleRepoSearch}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 transition hover:text-pink-300"
+                      className="flex w-[52px] items-center justify-center bg-pink-600 text-white transition hover:bg-pink-700"
                       aria-label="Search repository"
                     >
                       <FaSearch />
                     </button>
                   </div>
-                  <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-amber-300">
-                    <FaInfoCircle />
-                    Search by unique ID, for example 209234
-                  </p>
                 </div>
               </div>
+
+              <div className="min-h-[34px] text-lg font-extrabold text-slate-900 md:text-2xl">
+                {currentPhraseText}
+                <span className="ml-1 inline-block animate-pulse text-pink-600">|</span>
+              </div>
+
+              <p className="mt-4 max-w-xl text-base font-medium leading-7 text-slate-600">
+                We provide a digital repository of physical shops, their products, and locations within a city.
+              </p>
 
               <div className="mt-6 rounded-[22px] bg-pink-200 p-1">
                 <div className="rounded-[18px] border border-pink-200 bg-pink-50 p-6">
@@ -613,6 +587,39 @@ function Home() {
                     </p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-2 min-w-0 bg-pink-200 p-0 shadow-sm md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
+            <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
+              <div className="relative aspect-video w-full max-h-[400px] overflow-hidden bg-white">
+                {bannerImages.map((imgSrc, index) => (
+                  <img
+                    key={index}
+                    src={imgSrc}
+                    alt={`Commerce Banner ${index + 1}`}
+                    fetchpriority={index === 0 ? "high" : "auto"}
+                    className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-[2500ms] ease-in-out ${
+                      currentBanner === index ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <div className="flex w-full flex-wrap justify-center gap-4 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-5 md:py-4 md:text-sm">
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  Commerce
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-pink-400" />
+                  Discover Locally
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-sky-400" />
+                  Unique ID
+                </span>
               </div>
             </div>
           </div>
