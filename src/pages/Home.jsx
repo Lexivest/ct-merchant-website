@@ -434,7 +434,7 @@ function Home() {
           {/* --- CAROUSEL CONTAINER (BALANCED FULL-BLEED) --- */}
           {/* --- CAROUSEL CONTAINER (BALANCED FULL-BLEED WITH WHITE BG) --- */}
           <div className="mb-2 min-w-0 bg-pink-200 p-0 shadow-sm md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
-            <div className="relative min-h-[280px] overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg sm:min-h-[320px] md:min-h-[420px]">
+            <div className="relative aspect-video w-full max-h-[400px] overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
               
               {/* --- DYNAMIC FADING CAROUSEL --- */}
               {bannerImages.map((imgSrc, index) => (
@@ -452,7 +452,7 @@ function Home() {
               {/* Lighter Gradient Overlay (Only dark at the very bottom for text legibility) */}
               <div className="absolute inset-0 z-[5] bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
               
-              <div className="relative z-10 flex h-full min-h-[280px] flex-col justify-end sm:min-h-[320px] md:min-h-[420px]">
+              <div className="relative z-10 flex h-full min-h-0 flex-col justify-end">
                 <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-4 md:py-4 md:text-sm">
                   <span className="flex items-center gap-2">
                     <span className="text-emerald-400">●</span> Commerce
