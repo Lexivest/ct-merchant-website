@@ -430,64 +430,44 @@ function Home() {
       />
       <section className="overflow-x-hidden bg-pink-50 px-4 py-4 md:py-5">
         <div className="mx-auto grid w-full max-w-7xl min-w-0 gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
-          
-          {/* --- CAROUSEL CONTAINER (BALANCED FULL-BLEED) --- */}
-          {/* --- CAROUSEL CONTAINER (BALANCED FULL-BLEED WITH WHITE BG) --- */}
           <div className="mb-2 min-w-0 bg-pink-200 p-0 shadow-sm md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
-            <div className="relative aspect-video w-full max-h-[400px] overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
-              
-              {/* --- DYNAMIC FADING CAROUSEL --- */}
-              {bannerImages.map((imgSrc, index) => (
-                <img 
-                  key={index}
-                  src={imgSrc} 
-                  alt={`Commerce Banner ${index + 1}`} 
-                  fetchpriority={index === 0 ? "high" : "auto"}
-                  className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-[2500ms] ease-in-out ${
-                    currentBanner === index ? "opacity-100" : "opacity-0"
-                  }`}
-                />
-              ))}
-              
-              {/* Lighter Gradient Overlay (Only dark at the very bottom for text legibility) */}
-              <div className="absolute inset-0 z-[5] bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
-              
-              <div className="relative z-10 flex h-full min-h-0 flex-col justify-end">
-                <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-4 md:py-4 md:text-sm">
-                  <span className="flex items-center gap-2">
-                    <span className="text-emerald-400">●</span> Commerce
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className="text-pink-400">●</span> Discover Locally
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className="text-sky-400">●</span> Unique ID
-                  </span>
-                </div>
+            <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
+              <div className="relative aspect-video w-full max-h-[400px] overflow-hidden bg-white">
+                {bannerImages.map((imgSrc, index) => (
+                  <img
+                    key={index}
+                    src={imgSrc}
+                    alt={`Commerce Banner ${index + 1}`}
+                    fetchpriority={index === 0 ? "high" : "auto"}
+                    className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-[2500ms] ease-in-out ${
+                      currentBanner === index ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-4 md:py-4 md:text-sm">
+                <span>Commerce</span>
+                <span>Discover Locally</span>
+                <span>Unique ID</span>
               </div>
             </div>
           </div>
-          {/* --- END CAROUSEL CONTAINER --- */}
 
           <div className="min-w-0 rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-2 lg:row-span-2 lg:row-start-1">
             <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
               <div className="min-h-[34px] text-lg font-extrabold text-slate-900 md:text-2xl">
                 {currentPhraseText}
-                <span className="ml-1 inline-block animate-pulse text-pink-600">
-                  |
-                </span>
+                <span className="ml-1 inline-block animate-pulse text-pink-600">|</span>
               </div>
 
               <p className="mt-4 max-w-xl text-base font-medium leading-7 text-slate-600">
-                We provide a digital repository of physical shops, their
-                products, and locations within a city.
+                We provide a digital repository of physical shops, their products, and locations within a city.
               </p>
 
               <div className="mt-6 rounded-[22px] bg-pink-200 p-1">
                 <div className="rounded-[18px] bg-slate-900 p-5 text-white">
-                  <p className="mb-2 text-sm font-bold text-amber-300">
-                    Search Repository
-                  </p>
+                  <p className="mb-2 text-sm font-bold text-amber-300">Search Repository</p>
                   <div className="relative">
                     <input
                       type="text"
@@ -562,9 +542,7 @@ function Home() {
                           type="button"
                           onClick={() => setShowPassword((prev) => !prev)}
                           className="rounded-full p-2 text-slate-400 transition hover:bg-white hover:text-pink-600"
-                          aria-label={
-                            showPassword ? "Hide password" : "Show password"
-                          }
+                          aria-label={showPassword ? "Hide password" : "Show password"}
                         >
                           {showPassword ? <FaEyeSlash /> : <FaEye />}
                         </button>
@@ -623,55 +601,16 @@ function Home() {
                     </div>
 
                     <p className="px-2 text-center text-[0.75rem] leading-relaxed text-slate-500">
-                      By continuing with Google, you agree to CTMerchant's{" "}
-                      <a
-                        href="/terms"
-                        target="_blank"
-                        className="font-semibold text-slate-600 underline transition hover:text-pink-600"
-                      >
+                      By continuing with Google, you agree to CTMerchant's{' '}
+                      <a href="/terms" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">
                         Terms of Use
-                      </a>{" "}
-                      and{" "}
-                      <a
-                        href="/privacy"
-                        target="_blank"
-                        className="font-semibold text-slate-600 underline transition hover:text-pink-600"
-                      >
+                      </a>{' '}
+                      and{' '}
+                      <a href="/privacy" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">
                         Privacy Policy
                       </a>
                       .
                     </p>
-                  </div>
-
-                </div>
-              </div>
-
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-[22px] bg-pink-200 p-1">
-                  <div className="flex items-center gap-3 rounded-[18px] border border-pink-100 bg-slate-50 p-4">
-                    <div className="text-2xl">🛡️</div>
-                    <div>
-                      <h3 className="text-lg font-extrabold text-slate-900">
-                        100% Verified
-                      </h3>
-                      <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-                        Physical Shops Only
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-[22px] bg-pink-200 p-1">
-                  <div className="flex items-center gap-3 rounded-[18px] border border-pink-100 bg-slate-50 p-4">
-                    <div className="text-2xl">🤝</div>
-                    <div>
-                      <h3 className="text-lg font-extrabold text-slate-900">
-                        Zero Fraud
-                      </h3>
-                      <p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-                        Secure Marketplace
-                      </p>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -689,22 +628,17 @@ function Home() {
               </h2>
 
               <p className="mt-4 text-base leading-8 text-slate-600">
-                CTMerchant is a structured repository of shops, products, and
-                services within a city. We onboard and physically verify
-                merchants to reduce fraudulent online claims and help customers
-                discover real businesses around them.
+                CTMerchant is a structured repository of shops, products, and services within a city. We onboard and physically verify merchants to reduce fraudulent online claims and help customers discover real businesses around them.
               </p>
 
               <p className="mt-4 text-base leading-8 text-slate-600">
-                Our platform helps consumers compare shops, products, and
-                options before visiting a store, creating a better balance
-                between digital convenience and physical marketplace reality.
+                Our platform helps consumers compare shops, products, and options before visiting a store, creating a better balance between digital convenience and physical marketplace reality.
               </p>
 
               <ul className="mt-6 space-y-3 text-sm font-semibold text-slate-700 md:text-base">
-                <li>✓ Get a verified digital storefront</li>
-                <li>✓ Unique CTMerchant ID to share</li>
-                <li>✓ Be discovered in city repository search</li>
+                <li>Get a verified digital storefront</li>
+                <li>Unique CTMerchant ID to share</li>
+                <li>Be discovered in city repository search</li>
               </ul>
             </div>
           </div>
