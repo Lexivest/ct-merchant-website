@@ -150,7 +150,10 @@ function MerchantDiscovery() {
             </button>
           </div>
         ) : shop ? (
-          <div className="w-full max-w-[420px] overflow-hidden rounded-lg border border-[#D5D9D9] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+          <div
+            className="w-full max-w-[420px] cursor-pointer overflow-hidden rounded-lg border border-[#D5D9D9] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+            onClick={handleViewShop}
+          >
             <div className="h-[100px] bg-[#232F3E]" />
 
             <div className="-mt-10 px-6 pb-6 text-center">

@@ -438,6 +438,22 @@ function ShopDetail() {
 
   function renderSocialButtons() {
     if (!currentShop) return null
+    if (!isLoggedIn) {
+      return (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <p className="text-[0.9rem] font-semibold text-slate-700">
+            Login to view phone, WhatsApp, and other social contacts.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="mt-3 inline-flex items-center justify-center rounded-md bg-pink-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-pink-700"
+          >
+            Login to Continue
+          </button>
+        </div>
+      )
+    }
     const links = []
 
     if (currentShop.whatsapp) {
@@ -559,6 +575,7 @@ function ShopDetail() {
       currentShop?.name || "Shop"
     )}`
   const isVerified = Boolean(currentShop?.is_verified)
+  const isLoggedIn = Boolean(user?.id)
 
   return (
     <div className="min-h-screen bg-[#E3E6E6] pb-10">
