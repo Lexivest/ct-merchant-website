@@ -292,8 +292,8 @@ export default function MerchantPromoBanner() {
           </div>
 
           {/* BOTTOM ADVERTISING STRIP */}
-          <div className="absolute bottom-0 left-0 z-[40] flex h-[40px] w-full items-center justify-center border-t-[4px] border-[#FBBF24] bg-[#001E50] text-[1rem] font-semibold text-white shadow-[0_-4px_10px_rgba(0,0,0,0.3)]">
-            Visit <span className="mx-1.5 font-extrabold text-[#FBBF24] tracking-wide">{shopUrlText.replace("/shop-detail", "")}</span> or scan barcode!
+          <div className="absolute bottom-0 left-0 z-[40] flex h-[48px] w-full items-center justify-center border-t-[4px] border-[#FBBF24] bg-[#001E50] text-[1.1rem] font-semibold text-white shadow-[0_-4px_10px_rgba(0,0,0,0.3)]">
+            Visit <span className="mx-1.5 font-extrabold text-[#FBBF24] tracking-wide">{shopUrlText.replace("/shop-detail", "")}</span> or scan barcode
           </div>
 
         </div>
