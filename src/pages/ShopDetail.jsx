@@ -445,20 +445,7 @@ function ShopDetail() {
   function renderSocialButtons() {
     if (!currentShop) return null
     if (!isLoggedIn) {
-      return (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <p className="text-[0.9rem] font-semibold text-slate-700">
-            Login to view phone, WhatsApp, and other social contacts.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="mt-3 inline-flex items-center justify-center rounded-md bg-pink-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-pink-700"
-          >
-            Login to Continue
-          </button>
-        </div>
-      )
+      return null
     }
     const links = []
 
@@ -649,8 +636,17 @@ function ShopDetail() {
 
         {!isLoggedIn ? (
           <div className="mx-auto max-w-[1000px] px-4 pt-6">
-            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-[0.9rem] font-semibold text-blue-900">
-              Login to view phone, WhatsApp, and social contacts. Public shop details and address remain visible.
+            <div className="flex flex-col gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[0.9rem] font-semibold text-blue-900">
+                Login to contact seller.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="inline-flex items-center justify-center rounded-md bg-pink-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-pink-700"
+              >
+                Login
+              </button>
             </div>
           </div>
         ) : null}

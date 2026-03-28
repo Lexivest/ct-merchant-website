@@ -617,8 +617,17 @@ function ProductDetail() {
 
         {!isLoggedIn ? (
           <div className="px-4 pt-4">
-            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-[0.9rem] font-semibold text-blue-900">
-              Login to view phone, WhatsApp, and merchant contact options. Product details and address stay visible.
+            <div className="flex flex-col gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[0.9rem] font-semibold text-blue-900">
+                Login to contact seller.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="inline-flex items-center justify-center rounded-md bg-pink-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-pink-700"
+              >
+                Login
+              </button>
             </div>
           </div>
         ) : null}
@@ -776,45 +785,30 @@ function ProductDetail() {
                 </div>
               </div>
 
-              {currentShop ? (
-                isLoggedIn ? (
-                  <div className="mt-5 flex w-full flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={callMerchant}
-                      disabled={!currentShop.phone || stockCount <= 0}
-                      className="min-w-[140px] flex-1 rounded-lg bg-[#007185] px-4 py-3.5 text-[1.05rem] font-bold text-white transition hover:bg-[#005A6A] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        <FaPhone /> {stockCount > 0 ? "Call Seller" : "Out of Stock"}
-                      </span>
-                    </button>
+              {currentShop && isLoggedIn ? (
+                <div className="mt-5 flex w-full flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={callMerchant}
+                    disabled={!currentShop.phone || stockCount <= 0}
+                    className="min-w-[140px] flex-1 rounded-lg bg-[#007185] px-4 py-3.5 text-[1.05rem] font-bold text-white transition hover:bg-[#005A6A] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <FaPhone /> {stockCount > 0 ? "Call Seller" : "Out of Stock"}
+                    </span>
+                  </button>
 
-                    <button
-                      type="button"
-                      onClick={showSecurityModal}
-                      disabled={!currentShop.whatsapp || stockCount <= 0}
-                      className="min-w-[140px] flex-1 rounded-lg bg-[#25D366] px-4 py-3.5 text-[1.05rem] font-bold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        <FaWhatsapp /> {stockCount > 0 ? "WhatsApp" : "Out of Stock"}
-                      </span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-[0.95rem] font-semibold text-slate-700">
-                      Login to view phone, WhatsApp, and other merchant contacts.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => navigate("/")}
-                      className="mt-3 rounded-lg bg-pink-600 px-4 py-3 font-bold text-white transition hover:bg-pink-700"
-                    >
-                      Login to Continue
-                    </button>
-                  </div>
-                )
+                  <button
+                    type="button"
+                    onClick={showSecurityModal}
+                    disabled={!currentShop.whatsapp || stockCount <= 0}
+                    className="min-w-[140px] flex-1 rounded-lg bg-[#25D366] px-4 py-3.5 text-[1.05rem] font-bold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <FaWhatsapp /> {stockCount > 0 ? "WhatsApp" : "Out of Stock"}
+                    </span>
+                  </button>
+                </div>
               ) : null}
 
               <button
