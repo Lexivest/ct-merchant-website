@@ -205,7 +205,7 @@ export default function StaffIDGenerator() {
   if (loading) {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-[#0B0F19]">
-        <FaCircleNotch className="h-10 w-10 animate-spin text-pink-500" />
+        <FaCircleNotch className="h-10 w-10 animate-spin text-pink-400" />
         <p className="mt-4 text-sm font-semibold text-slate-300">
           Minting glass asset...
         </p>
@@ -215,8 +215,8 @@ export default function StaffIDGenerator() {
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-[#0B0F19] p-5 text-center">
-        <FaTriangleExclamation className="mb-4 text-4xl text-rose-500" />
+        <div className="flex h-screen flex-col items-center justify-center bg-[#0B0F19] p-5 text-center">
+        <FaTriangleExclamation className="mb-4 text-4xl text-pink-400" />
         <p className="font-bold text-white">{error}</p>
         <button
           onClick={() => window.location.reload()}
@@ -232,7 +232,7 @@ export default function StaffIDGenerator() {
     <div className="flex min-h-screen flex-col items-center bg-[#0B0F19] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900 via-[#0B0F19] to-[#0B0F19] pb-20 font-sans selection:bg-pink-500/30">
       
       {/* Glass Header */}
-      <header className="flex w-full items-center gap-4 bg-white/5 backdrop-blur-lg border-b border-white/10 px-4 py-4 text-white shadow-lg sticky top-0 z-50">
+      <header className="sticky top-0 z-50 flex w-full items-center gap-4 border-b border-white/10 bg-white/5 px-4 py-4 text-white shadow-lg backdrop-blur-lg">
         <button
           onClick={() => navigate("/staff-dashboard")}
           className="rounded-full p-2 transition hover:bg-white/10"
@@ -240,10 +240,10 @@ export default function StaffIDGenerator() {
           <FaArrowLeft />
         </button>
         <div>
-          <div className="text-sm font-black uppercase tracking-widest bg-gradient-to-r from-pink-400 to-indigo-300 bg-clip-text text-transparent">
+          <div className="bg-gradient-to-r from-pink-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-sm font-black uppercase tracking-widest text-transparent">
             Issuance Terminal
           </div>
-          <div className="text-[11px] font-medium text-white/60 tracking-wider">Premium Business Credential</div>
+          <div className="text-[11px] font-medium tracking-wider text-white/60">Premium Business Credential</div>
         </div>
       </header>
 
@@ -254,12 +254,12 @@ export default function StaffIDGenerator() {
           <button
             onClick={handleDownloadOnly}
             disabled={downloading}
-            className="group flex flex-1 flex-col items-center justify-center rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md p-5 shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all hover:bg-white/20 hover:border-pink-500/50 hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+            className="group flex flex-1 flex-col items-center justify-center rounded-3xl border border-white/20 bg-gradient-to-br from-white/12 via-white/8 to-white/6 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all hover:-translate-y-1 hover:border-pink-400/50 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
             {downloading ? (
-              <FaCircleNotch className="mb-2 animate-spin text-2xl text-pink-400" />
+              <FaCircleNotch className="mb-2 animate-spin text-2xl text-fuchsia-300" />
             ) : (
-              <FaDownload className="mb-2 text-2xl text-pink-400 group-hover:scale-110 transition-transform" />
+              <FaDownload className="mb-2 text-2xl text-fuchsia-300 transition-transform group-hover:scale-110" />
             )}
             <span className="text-xs font-black uppercase tracking-wider text-white mt-1 text-center">
               Save HD Asset
@@ -269,12 +269,12 @@ export default function StaffIDGenerator() {
           <button
             onClick={handleNativeShare}
             disabled={downloading}
-            className="group flex flex-1 flex-col items-center justify-center rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md p-5 shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all hover:bg-white/20 hover:border-emerald-500/50 hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+            className="group flex flex-1 flex-col items-center justify-center rounded-3xl border border-white/20 bg-gradient-to-br from-white/12 via-white/8 to-white/6 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all hover:-translate-y-1 hover:border-emerald-400/50 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
              {downloading ? (
-              <FaCircleNotch className="mb-2 animate-spin text-2xl text-emerald-400" />
+              <FaCircleNotch className="mb-2 animate-spin text-2xl text-emerald-300" />
             ) : (
-              <FaShareNodes className="mb-2 text-2xl text-emerald-400 group-hover:scale-110 transition-transform" />
+              <FaShareNodes className="mb-2 text-2xl text-emerald-300 transition-transform group-hover:scale-110" />
             )}
             <span className="text-xs font-black uppercase tracking-wider text-white mt-1 text-center">
               Share Direct
@@ -290,23 +290,23 @@ export default function StaffIDGenerator() {
             width: "430px",
             height: "270px",
             borderRadius: "16px",
-            border: "1px solid rgba(255, 255, 255, 0.4)",
-            background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.6) 100%)",
+            border: "1px solid rgba(255, 255, 255, 0.45)",
+            background: "linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 248, 255, 0.75) 35%, rgba(241, 245, 255, 0.68) 100%)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
           }}
         >
           {/* Vibrant Glowing Orbs */}
           <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden mix-blend-multiply">
-            <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-pink-400/30 blur-3xl" />
+            <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-pink-400/35 blur-3xl" />
             <div className="absolute -bottom-10 -left-10 h-48 w-48 rounded-full bg-indigo-500/30 blur-3xl" />
-            <div className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-400/20 blur-2xl" />
+            <div className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-400/20 blur-2xl" />
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[110px] font-black leading-none text-white/40 drop-shadow-md">
               CTM
             </div>
           </div>
 
-          <div className="relative z-10 flex min-h-[56px] items-center justify-center bg-indigo-950/80 backdrop-blur-sm px-4 py-2 text-white border-b border-white/30 shadow-sm">
+          <div className="relative z-10 flex min-h-[56px] items-center justify-center border-b border-white/30 bg-gradient-to-r from-indigo-950/90 via-purple-950/85 to-fuchsia-950/85 px-4 py-2 text-white shadow-sm backdrop-blur-sm">
             <img
               src={ctmLogo}
               alt="CTMerchant Logo"
@@ -314,8 +314,8 @@ export default function StaffIDGenerator() {
               crossOrigin="anonymous"
             />
             <div className="text-center leading-none">
-              <p className="text-[0.85rem] font-black uppercase tracking-[0.15em] drop-shadow-sm">
-                CTMerchant <span className="text-pink-400">{cityName}</span> Branch
+              <p className="bg-gradient-to-r from-pink-200 via-fuchsia-200 to-indigo-200 bg-clip-text text-[0.85rem] font-black uppercase tracking-[0.15em] text-transparent drop-shadow-sm">
+                CTMerchant <span className="text-pink-300">{cityName}</span> Branch
               </p>
               <p className="mt-1 text-[0.55rem] font-extrabold uppercase tracking-[0.25em] text-white/90">
                 Business ID Card
