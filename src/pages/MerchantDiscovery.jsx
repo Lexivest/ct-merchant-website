@@ -13,6 +13,7 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import { ShimmerBlock } from "../components/common/Shimmers"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function MerchantDiscoveryShimmer() {
@@ -135,15 +136,17 @@ function MerchantDiscovery() {
           <div className="w-full max-w-[420px] rounded-lg border border-[#D5D9D9] bg-white px-5 py-16 text-center shadow-sm">
             <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-700" />
             <h3 className="mb-2 text-xl font-extrabold text-[#0F1111]">
-              Merchant Not Found
+              Network unavailable
             </h3>
-            <p className="text-[0.95rem] text-slate-600">{dataError}</p>
+            <p className="text-[0.95rem] text-slate-600">
+              {getFriendlyErrorMessage(dataError, "Retry to load this merchant.")}
+            </p>
             <button
               type="button"
               onClick={handleBack}
               className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-3 font-semibold text-[#0F1111] shadow-sm transition hover:bg-slate-50"
             >
-              Go Back
+              Retry
             </button>
           </div>
         ) : shop ? (

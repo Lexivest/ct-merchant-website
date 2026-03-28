@@ -14,6 +14,7 @@ import useAuthSession from "../../hooks/useAuthSession";
 import useCachedFetch from "../../hooks/useCachedFetch";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function MerchantProductsShimmer() {
@@ -123,8 +124,8 @@ export default function MerchantProducts() {
         <div className="flex flex-1 items-center justify-center p-5 text-center">
           <div className="rounded-xl border border-red-200 bg-white p-8 shadow-sm">
             <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-600" />
-            <h3 className="font-bold text-slate-900">{error === "Failed to fetch" ? "Network offline" : "Connection Error"}</h3>
-            <button onClick={() => navigate("/vendor-panel")} className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold transition hover:bg-slate-50">Go Back</button>
+            <h3 className="font-bold text-slate-900">{getFriendlyErrorMessage(error, "Network unavailable. Retry.")}</h3>
+            <button onClick={() => navigate("/vendor-panel")} className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold transition hover:bg-slate-50">Retry</button>
           </div>
         </div>
       </div>
@@ -138,7 +139,7 @@ export default function MerchantProducts() {
       {isOffline && (
         <div className="z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200">
           <i className="fa-solid fa-wifi-slash mr-2"></i>
-          You are offline. Showing cached inventory.
+          Network unavailable. Retry.
         </div>
       )}
 

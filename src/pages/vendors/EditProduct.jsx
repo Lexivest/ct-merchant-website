@@ -25,6 +25,7 @@ import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
 import CameraCaptureModal from "../../components/common/CameraCaptureModal";
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 import { IMAGE_PROFILES } from "../../lib/imageProfiles";
 import {
@@ -243,7 +244,7 @@ export default function EditProduct() {
         setPreviews({ 1: urls[1] || "", 2: urls[2] || "", 3: urls[3] || "" });
 
       } catch (err) {
-        setError(err.message);
+        setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
       } finally {
         setLoading(false);
       }
@@ -304,7 +305,7 @@ export default function EditProduct() {
     try {
       await openStudioForFile(file, slot);
     } catch (error) {
-      alert(error?.message || "Could not open selected image.");
+      alert(getFriendlyErrorMessage(error, "Could not open selected image."));
     }
   };
 
@@ -315,7 +316,7 @@ export default function EditProduct() {
       await openStudioForFile(file, cameraSlot);
       setCameraSlot(null);
     } catch (error) {
-      alert(error?.message || "Could not process captured image.");
+      alert(getFriendlyErrorMessage(error, "Could not process captured image."));
     }
   };
 
@@ -335,7 +336,7 @@ export default function EditProduct() {
         cropperRef.current.cropper.replace(fitted);
       }
     } catch (error) {
-      alert(error?.message || "Could not auto-fit image.");
+      alert(getFriendlyErrorMessage(error, "Could not auto-fit image."));
     } finally {
       setIsFitting(false);
     }
@@ -494,7 +495,7 @@ export default function EditProduct() {
       setTimeout(() => navigate("/vendor-panel"), 2500);
 
     } catch (err) {
-      alert(err.message || "Update failed.");
+      alert(getFriendlyErrorMessage(err, "Update failed."));
       setSubmitting(false);
     }
   };
@@ -529,7 +530,7 @@ export default function EditProduct() {
       setTimeout(() => navigate("/vendor-panel"), 2500);
 
     } catch (err) {
-      alert("Failed to delete product: " + err.message);
+      alert(getFriendlyErrorMessage(err, "Failed to delete product."));
       setDeleting(false);
     }
   };

@@ -55,7 +55,7 @@ export default function StaffDashboard() {
         fetchShops();
 
       } catch (err) {
-        console.error(err.message);
+        console.error(err);
         await supabase.auth.signOut();
         navigate("/staff-portal", { replace: true });
       } finally {

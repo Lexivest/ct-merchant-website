@@ -26,6 +26,7 @@ import useAuthSession from "../../hooks/useAuthSession";
 import useCachedFetch from "../../hooks/useCachedFetch";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 
 // --- SHIMMER COMPONENT ---
 function SettingsShimmer() {
@@ -127,7 +128,7 @@ export default function MerchantSettings() {
         setIsLocked(shopData.status === "approved");
 
       } catch (err) {
-        setError(err.message);
+        setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
       } finally {
         setLoading(false);
       }
@@ -172,7 +173,7 @@ export default function MerchantSettings() {
       navigate("/vendor-panel");
 
     } catch (err) {
-      alert("Update failed: " + err.message);
+      alert(getFriendlyErrorMessage(err, "Update failed. Please retry."));
       setSaving(false);
     }
   };

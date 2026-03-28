@@ -24,6 +24,7 @@ import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
 import CameraCaptureModal from "../../components/common/CameraCaptureModal";
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 import { IMAGE_PROFILES } from "../../lib/imageProfiles";
 import {
@@ -253,7 +254,7 @@ export default function AddProduct() {
         setActiveOffersCount(discountRes.count || 0);
 
       } catch (err) {
-        setError(err.message);
+        setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
       } finally {
         setLoading(false);
       }
@@ -311,7 +312,7 @@ export default function AddProduct() {
     try {
       await openStudioForFile(file, slot);
     } catch (error) {
-      alert(error?.message || "Could not open selected image.");
+      alert(getFriendlyErrorMessage(error, "Could not open selected image."));
     }
   };
 
@@ -323,7 +324,7 @@ export default function AddProduct() {
       await openStudioForFile(file, cameraSlot);
       setCameraSlot(null);
     } catch (error) {
-      alert(error?.message || "Could not process captured image.");
+      alert(getFriendlyErrorMessage(error, "Could not process captured image."));
     }
   };
 
@@ -343,7 +344,7 @@ export default function AddProduct() {
         cropperRef.current.cropper.replace(fitted);
       }
     } catch (error) {
-      alert(error?.message || "Could not auto-fit image.");
+      alert(getFriendlyErrorMessage(error, "Could not auto-fit image."));
     } finally {
       setIsFitting(false);
     }
@@ -496,7 +497,7 @@ export default function AddProduct() {
       }, 2500);
 
     } catch (err) {
-      alert(err.message || "Upload failed.");
+      alert(getFriendlyErrorMessage(err, "Upload failed."));
       setSubmitting(false);
     }
   };

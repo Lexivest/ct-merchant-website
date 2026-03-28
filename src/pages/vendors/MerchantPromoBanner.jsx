@@ -17,6 +17,7 @@ import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 
 // --- SHIMMER COMPONENT ---
 function PromoBannerShimmer() {
@@ -122,7 +123,7 @@ export default function MerchantPromoBanner() {
         setProductImages(finalImages);
 
       } catch (err) {
-        setError(err.message);
+        setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
       } finally {
         setLoading(false);
       }

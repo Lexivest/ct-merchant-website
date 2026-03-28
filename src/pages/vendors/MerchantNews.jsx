@@ -12,6 +12,7 @@ import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 
 // --- SHIMMER COMPONENT ---
 function NewsShimmer() {
@@ -95,7 +96,7 @@ export default function MerchantNews() {
         }
 
       } catch (err) {
-        setError(err.message);
+        setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
       } finally {
         setLoading(false);
       }
@@ -148,7 +149,7 @@ export default function MerchantNews() {
       navigate("/vendor-panel");
 
     } catch (err) {
-      alert("Submission failed: " + err.message);
+      alert(getFriendlyErrorMessage(err, "Submission failed. Please retry."));
     } finally {
       setSubmitting(false);
     }

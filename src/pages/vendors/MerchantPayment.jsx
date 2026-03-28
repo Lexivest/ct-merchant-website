@@ -12,6 +12,7 @@ import {
 import { supabase } from "../../lib/supabase";
 import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions";
 import useAuthSession from "../../hooks/useAuthSession";
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import {
   PAYSTACK_PUBLIC_KEY,
   PAYSTACK_SCRIPT_URL,
@@ -76,7 +77,7 @@ export default function MerchantPayment() {
       script.onerror = () => {
         if (cancelled) return
         setStatusError(true)
-        setStatusMsg("Could not initialize payment gateway script. Please retry.")
+        setStatusMsg("Payment gateway unavailable. Retry.")
       }
       document.body.appendChild(script);
     };
@@ -95,7 +96,7 @@ export default function MerchantPayment() {
       
       if (isOffline) {
         setStatusError(true)
-        setStatusMsg("You are offline. Reconnect to continue with payment.")
+        setStatusMsg("Network unavailable. Retry.")
         setLoading(false)
         return
       }
@@ -119,7 +120,7 @@ export default function MerchantPayment() {
         if (shopErr || !shop) throw new Error("Shop not found or access denied");
 
         if (shop.is_verified) {
-          alert("Your shop is already fully verified!");
+          alert("Your shop is already verified.");
           navigate("/vendor-panel");
           return;
         }
@@ -155,7 +156,7 @@ export default function MerchantPayment() {
 
       } catch (err) {
         console.error(err);
-        alert("Error loading payment details: " + err.message);
+        alert(getFriendlyErrorMessage(err, "Could not load payment details. Retry."));
         navigate("/vendor-panel");
       } finally {
         setLoading(false);
@@ -207,7 +208,7 @@ export default function MerchantPayment() {
     } catch (error) {
       console.error(error);
       setStatusError(true);
-      setStatusMsg("⚠️ " + (error.message || "Verification failed"));
+      setStatusMsg(getFriendlyErrorMessage(error, "Verification failed."));
       setProcessing(false);
     }
   };

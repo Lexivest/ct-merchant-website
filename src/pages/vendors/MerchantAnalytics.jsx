@@ -13,6 +13,7 @@ import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 
 // --- FORMATTER ---
 const formatNumber = (num) => {
@@ -116,7 +117,7 @@ export default function MerchantAnalytics() {
       setStats({ views, clicks, likes, conversion: conversionRate });
 
     } catch (err) {
-      if (!isRefresh) setError(err.message);
+      if (!isRefresh) setError(getFriendlyErrorMessage(err, "Could not load analytics. Retry."));
       else alert("Failed to refresh statistics.");
     } finally {
       if (isRefresh) setRefreshing(false);

@@ -33,6 +33,7 @@ import { ShimmerBlock } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function ShopDetailShimmer() {
@@ -535,15 +536,17 @@ function ShopDetail() {
         <div className="mx-auto max-w-3xl px-4 py-24 text-center">
           <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-700" />
           <h3 className="mb-2 text-2xl font-extrabold text-[#0F1111]">
-            Shop Not Found
+            Network unavailable
           </h3>
-          <p className="text-slate-600">{error}</p>
+          <p className="text-slate-600">
+            {getFriendlyErrorMessage(error, "Retry to load this shop.")}
+          </p>
           <button
             type="button"
             onClick={() => navigate("/user-dashboard")}
             className="mt-6 rounded-lg border border-slate-300 bg-white px-6 py-3 font-bold text-slate-900 shadow-sm transition hover:bg-slate-50"
           >
-            Back to Home
+            Retry
           </button>
         </div>
       </div>

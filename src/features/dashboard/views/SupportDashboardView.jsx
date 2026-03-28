@@ -115,7 +115,7 @@ function SupportDashboardView({ onBack, onOpenServices, mode = "support" }) {
     } catch (error) {
       setStatus({
         type: "error",
-        message: `FAILED: ${error.message || "Unknown error"}`,
+        message: getFriendlyErrorMessage(error, "Could not send message. Please try again."),
       })
     } finally {
       setIsSubmitting(false)

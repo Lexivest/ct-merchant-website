@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 import PageSeo from "../components/common/PageSeo"
 import { supabase } from "../lib/supabase"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import useAuthSession from "../hooks/useAuthSession"
 
 function Contact() {
@@ -89,7 +90,7 @@ function Contact() {
     } catch (error) {
       setStatus({
         type: "error",
-        message: `FAILED: ${error.message || "Unknown error"}`,
+        message: getFriendlyErrorMessage(error, "Could not send message. Please try again."),
       })
     } finally {
       setIsSubmitting(false)

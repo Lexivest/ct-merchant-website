@@ -8,6 +8,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import useMyShop from "../hooks/useMyShop" // <-- Import our new logic file
 import { signOutUser } from "../lib/auth"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import { supabase } from "../lib/supabase"
 import { UPLOAD_RULES, formatBytes } from "../lib/uploadRules"
 
@@ -654,7 +655,7 @@ function UserDashboard() {
       // Keep an upload-ready blob even if the user closes the crop modal.
       setAvatarBlob(fallbackBlob)
     } catch (error) {
-      setProfileEditError(error.message || "Could not process this image.")
+      setProfileEditError(getFriendlyErrorMessage(error, "Could not process this image. Please retry."))
       event.target.value = ""
       return
     }
@@ -784,19 +785,7 @@ function UserDashboard() {
   }
 
   function formatSupabaseError(error, fallback = "Unexpected error") {
-    if (!error) return fallback
-    if (typeof error === "string") return error
-
-    const message = String(error.message || "").trim()
-    const details = String(error.details || "").trim()
-    const hint = String(error.hint || "").trim()
-    const code = String(error.code || error.statusCode || error.status || "").trim()
-
-    const parts = [message || fallback]
-    if (details) parts.push(`details: ${details}`)
-    if (hint) parts.push(`hint: ${hint}`)
-    if (code) parts.push(`code: ${code}`)
-    return parts.join(" | ")
+    return getFriendlyErrorMessage(error, fallback)
   }
 
   async function hasAvatarColumnInProfiles() {
@@ -911,7 +900,7 @@ function UserDashboard() {
       setCropModalOpen(false)
       setProfileEditError("")
     } catch (error) {
-      setProfileEditError(error.message || "Could not process the selected image.")
+      setProfileEditError(getFriendlyErrorMessage(error, "Could not process the selected image. Please retry."))
     }
   }
 
@@ -1088,7 +1077,7 @@ function UserDashboard() {
       setAvatarBlob(null)
       
     } catch (err) {
-      const message = formatSupabaseError(err, "Error updating profile.")
+      const message = formatSupabaseError(err, "Could not save profile. Please retry.")
       console.error("Profile save failed:", err)
       setProfileEditError(message)
       setNotice({

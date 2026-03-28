@@ -21,6 +21,7 @@ import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import CameraCaptureModal from "../../components/common/CameraCaptureModal";
 import { ShimmerBlock } from "../../components/common/Shimmers";
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 import { IMAGE_PROFILES } from "../../lib/imageProfiles";
 import {
@@ -148,7 +149,7 @@ export default function MerchantBanner() {
         }
 
       } catch (err) {
-        setError(err.message);
+        setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
       } finally {
         setLoading(false);
       }
@@ -179,7 +180,7 @@ export default function MerchantBanner() {
     try {
       await openStudioForFile(file);
     } catch (error) {
-      alert(error?.message || "Could not open selected image.");
+      alert(getFriendlyErrorMessage(error, "Could not open selected image."));
     }
   };
 
@@ -190,7 +191,7 @@ export default function MerchantBanner() {
       await openStudioForFile(file);
       setCameraOpen(false);
     } catch (error) {
-      alert(error?.message || "Could not process captured image.");
+      alert(getFriendlyErrorMessage(error, "Could not process captured image."));
     }
   };
 
@@ -210,7 +211,7 @@ export default function MerchantBanner() {
       }
       setFitMode("contain");
     } catch (error) {
-      alert(error?.message || "Could not auto-fit banner.");
+      alert(getFriendlyErrorMessage(error, "Could not auto-fit banner."));
     } finally {
       setIsFitting(false);
     }
@@ -344,7 +345,7 @@ export default function MerchantBanner() {
       }, 2500);
 
     } catch (err) {
-      alert("Error saving banner: " + err.message);
+      alert(getFriendlyErrorMessage(err, "Could not save banner."));
     } finally {
       setSaving(false);
     }

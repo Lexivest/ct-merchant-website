@@ -14,6 +14,7 @@ import { supabase } from "../../lib/supabase";
 import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import {
   PAYSTACK_PUBLIC_KEY,
   PAYSTACK_SCRIPT_URL,
@@ -101,7 +102,7 @@ export default function MerchantServiceFee() {
       script.async = true;
       script.onerror = () => {
         if (cancelled) return
-        setError("Could not initialize payment gateway script. Please refresh and retry.")
+        setError("Payment gateway unavailable. Retry.")
       }
       document.body.appendChild(script);
     };
@@ -117,7 +118,7 @@ export default function MerchantServiceFee() {
   const fetchSubscription = async () => {
     if (!user) return;
     if (isOffline) {
-      setError("Network offline. Please connect to the internet to view subscription details.");
+      setError("Network unavailable. Retry.");
       setLoading(false);
       return;
     }
@@ -146,8 +147,8 @@ export default function MerchantServiceFee() {
       
       setShopData(shop);
 
-    } catch (err) {
-      setError(err.message);
+      } catch (err) {
+      setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
     } finally {
       setLoading(false);
     }
@@ -215,7 +216,7 @@ export default function MerchantServiceFee() {
       await runSubscriptionVerificationWithRetry(txId, planKey, gateway)
     } catch (err) {
       console.error(err);
-      alert("Error: " + (err.message || "Verification failed"));
+      alert(getFriendlyErrorMessage(err, "Verification failed."));
     } finally {
       setProcessing(false);
       setProcessingNote("Please do not close this window.");
@@ -240,7 +241,7 @@ export default function MerchantServiceFee() {
         callback: function (response) {
           const txRef = response?.reference || response?.trxref
           if (!txRef) {
-            alert("Could not read payment reference. Please contact support with your payment receipt.")
+            alert("Could not read payment reference. Please retry.")
             return
           }
           verifySubscriptionOnBackend(txRef, selectedPlanKey, "paystack");
@@ -267,7 +268,7 @@ export default function MerchantServiceFee() {
           const txRef = response?.transactionId || transactionId
           verifySubscriptionOnBackend(txRef, selectedPlanKey, "remita");
         },
-        onError: function () { alert("Payment failed."); },
+        onError: function () { alert("Payment failed. Retry."); },
         onClose: function () {},
       });
       paymentEngine.showPaymentWidget();

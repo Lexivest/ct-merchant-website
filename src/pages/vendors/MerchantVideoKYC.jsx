@@ -10,6 +10,7 @@ import {
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getRuleLabel } from "../../lib/uploadRules";
 
 const KYC_VIDEO_RULE = UPLOAD_RULES.kycVideos;
@@ -76,7 +77,7 @@ export default function MerchantVideoKYC() {
     async function init() {
       if (!user) return;
       if (isOffline) {
-        setError("Network offline. Please connect to the internet to complete KYC.");
+        setError("Network unavailable. Retry.");
         setLoading(false);
         return;
       }
@@ -108,7 +109,7 @@ export default function MerchantVideoKYC() {
         await requestPermissionsAndStart();
 
       } catch (err) {
-        setError(err.message);
+        setError(getFriendlyErrorMessage(err, "Could not load KYC details. Retry."));
       } finally {
         setLoading(false);
       }
@@ -381,7 +382,7 @@ export default function MerchantVideoKYC() {
         }
       }
       console.error(err);
-      alert(`Upload Failed!\n\nReason: ${err.message}`);
+      alert(getFriendlyErrorMessage(err, "Upload failed. Please retry."));
       setRecordingState("recorded"); // Let them try submitting again
       uploadInFlightRef.current = false;
     }

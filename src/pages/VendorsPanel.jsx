@@ -27,6 +27,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { ShimmerBlock } from "../components/common/Shimmers"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function VendorsPanelShimmer() {
@@ -197,13 +198,13 @@ function VendorsPanel() {
             <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-600" />
             <h3 className="mb-2 text-xl font-extrabold text-slate-900">Connection Error</h3>
             <p className="mb-6 text-sm font-medium text-slate-600">
-              {error === "Failed to fetch" || error === "Network offline" ? "Network offline. Please check your internet connection." : error}
+              {getFriendlyErrorMessage(error, "Network unavailable. Retry.")}
             </p>
             <button
               onClick={() => navigate(-1)}
               className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-[#0F1111] transition hover:bg-slate-50"
             >
-              Go Back
+              Retry
             </button>
           </div>
         </div>

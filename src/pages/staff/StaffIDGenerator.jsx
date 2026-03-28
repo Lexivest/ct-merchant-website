@@ -11,6 +11,7 @@ import {
   FaShareNodes
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import ctmLogo from "../../assets/images/logo.jpg";
 
@@ -76,7 +77,7 @@ export default function StaffIDGenerator() {
         setShopData(shop);
         
       } catch (err) {
-        setError(err.message || "Failed to load merchant data.");
+        setError(getFriendlyErrorMessage(err, "Failed to load merchant data."));
       } finally {
         setLoading(false);
       }

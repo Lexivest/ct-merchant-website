@@ -32,6 +32,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { supabase } from "../lib/supabase"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import {
   UPLOAD_RULES,
   formatBytes,
@@ -410,7 +411,12 @@ function ShopRegistration() {
     if (submitting) return
     const error = validateForm()
     if (error) {
-      setNotice({ visible: true, type: "error", title: "Form validation failed", message: error })
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Please check the form",
+        message: getFriendlyErrorMessage(error, "Please fix the highlighted fields and retry."),
+      })
       window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }
@@ -513,7 +519,12 @@ function ShopRegistration() {
           }
           saveFileState(targetId, compressedBlob, URL.createObjectURL(compressedBlob), "image/jpeg")
         } catch (e) {
-          setNotice({ visible: true, type: "error", title: "Compression Failed", message: "Failed to process the image." })
+          setNotice({
+            visible: true,
+            type: "error",
+            title: "Image unavailable",
+            message: getFriendlyErrorMessage(e, "Could not process the image. Please retry."),
+          })
           window.scrollTo({ top: 0, behavior: "smooth" })
         }
       }
@@ -547,8 +558,8 @@ function ShopRegistration() {
       setNotice({
         visible: true,
         type: "error",
-        title: "Camera processing failed",
-        message: "Could not process captured image. Please retry.",
+        title: "Image unavailable",
+        message: "Could not process the captured image. Please retry.",
       })
       window.scrollTo({ top: 0, behavior: "smooth" })
     }
@@ -760,7 +771,12 @@ function ShopRegistration() {
         console.warn("Rollback cleanup failed for new shop files:", cleanupError)
       }
 
-      setNotice({ visible: true, type: "error", title: "Submission failed", message: error.message || "Please try again." })
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Submission failed",
+        message: getFriendlyErrorMessage(error, "Please retry."),
+      })
       setReviewOpen(false)
       window.scrollTo({ top: 0, behavior: "smooth" })
     } finally {
@@ -776,8 +792,8 @@ function ShopRegistration() {
         <div className="w-full max-w-md rounded-[28px] border border-pink-100 bg-white px-8 py-10 text-center shadow-xl">
           <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-600" />
           <h3 className="mb-2 text-xl font-extrabold text-slate-800">Connection Error</h3>
-          <p className="mb-6 text-sm font-semibold text-slate-600">{dataError}</p>
-          <button onClick={() => navigate(-1)} className="rounded-xl border border-slate-200 bg-white px-8 py-3 font-bold text-slate-700 transition hover:bg-slate-50">Go Back</button>
+          <p className="mb-6 text-sm font-semibold text-slate-600">{getFriendlyErrorMessage(dataError, "Retry to load this page.")}</p>
+          <button onClick={() => navigate(-1)} className="rounded-xl border border-slate-200 bg-white px-8 py-3 font-bold text-slate-700 transition hover:bg-slate-50">Retry</button>
         </div>
       </div>
     )

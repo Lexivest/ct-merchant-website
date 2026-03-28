@@ -30,6 +30,7 @@ import {
   validateResetRequestForm,
 } from "../lib/validators"
 import useAuthSession from "../hooks/useAuthSession"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // --- LOCAL ASSET IMPORTS FOR CAROUSEL ---
 import banner1 from "../assets/images/banner1.jpg"
@@ -179,7 +180,7 @@ function Home() {
       })
 
     } catch (error) {
-      const message = error.message || "Please try again."
+      const message = getFriendlyErrorMessage(error, "Please try again.")
       const isSuspendedMessage = /suspended|restricted/i.test(message)
       notify({
         type: "error",
@@ -306,7 +307,7 @@ function Home() {
       })
       
     } catch (error) {
-      const message = error.message || "We could not sign you in. Check your connection and try again."
+      const message = getFriendlyErrorMessage(error, "We could not sign you in. Check your connection and try again.")
       const isSuspendedMessage = /suspended|restricted/i.test(message)
       notify({
         type: "error",
@@ -356,7 +357,7 @@ function Home() {
       notify({
         type: "error",
         title: "Could not send code",
-        message: error.message || "Please try again.",
+        message: getFriendlyErrorMessage(error, "Please try again."),
       })
     } finally {
       setSendingReset(false)
@@ -403,7 +404,7 @@ function Home() {
       notify({
         type: "error",
         title: "Reset failed",
-        message: error.message || "Please try again.",
+        message: getFriendlyErrorMessage(error, "Please try again."),
       })
     } finally {
       setResettingPassword(false)

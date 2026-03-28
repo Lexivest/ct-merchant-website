@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { supabase } from "../../lib/supabase";
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 
 const DAILY_LIMIT = 15
 
@@ -103,7 +104,7 @@ function AiAssistantWidget() {
       })
 
       if (error) {
-        throw new Error(error.message || "Could not reach AI server.")
+        throw new Error(getFriendlyErrorMessage(error, "Could not reach AI server."))
       }
 
       const reply =
@@ -129,7 +130,7 @@ function AiAssistantWidget() {
         {
           role: "error",
           content:
-            error.message || "Connection Error: Could not reach AI server.",
+            getFriendlyErrorMessage(error, "Could not reach AI server."),
         },
       ])
     } finally {

@@ -23,30 +23,11 @@ function ErrorFallback({ error, onRetry, retryArmed }) {
           !
         </div>
         <h1 className="mt-5 text-3xl font-black text-slate-900">
-          {chunkLoadFailure
-            ? isOffline
-              ? "You are offline"
-              : "Page load interrupted"
-            : "Something went wrong"}
+          {chunkLoadFailure || isOffline ? "Network unavailable" : "Something went wrong"}
         </h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          {chunkLoadFailure
-            ? isOffline
-              ? "This screen was not available locally before your connection dropped. Reconnect and reload to continue."
-              : "We could not load the required page assets. Reload the app to continue."
-            : "We hit an unexpected problem while loading this page. You can retry the view or return to the home page."}
+          Retry to continue.
         </p>
-
-        {!chunkLoadFailure && error?.message ? (
-          <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900">
-            {error.message}
-          </div>
-        ) : null}
-        {chunkLoadFailure && retryArmed ? (
-          <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-left text-sm text-blue-900">
-            Connection is still offline. We will retry as soon as your internet is restored.
-          </div>
-        ) : null}
 
         <div className="mt-6 flex flex-col gap-3">
           <button
@@ -54,7 +35,18 @@ function ErrorFallback({ error, onRetry, retryArmed }) {
             onClick={onRetry}
             className="flex-1 rounded-2xl bg-slate-900 px-5 py-3 font-bold text-white transition hover:bg-slate-800"
           >
-            {chunkLoadFailure ? "Reload app" : "Retry page"}
+            Retry
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                window.history.back()
+              }
+            }}
+            className="flex-1 rounded-2xl border border-pink-200 bg-pink-50 px-5 py-3 font-bold text-pink-700 transition hover:bg-pink-100"
+          >
+            Back
           </button>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { FaHeadset } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { useGlobalFeedback } from "./GlobalFeedbackProvider"
 
 function FloatingContact() {
@@ -88,7 +89,7 @@ function FloatingContact() {
       notify({
         type: "error",
         title: "Message Not Sent",
-        message: error.message || "Could not send message. Please try again.",
+        message: getFriendlyErrorMessage(error, "Could not send message. Please try again."),
       })
     } finally {
       setIsSubmitting(false)

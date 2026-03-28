@@ -3,6 +3,7 @@ import { FaCity, FaMapPin, FaPhone, FaTimes } from "react-icons/fa"
 import AuthInput from "./AuthInput"
 import AuthButton from "./AuthButton"
 import AuthNotification from "./AuthNotification"
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import {
   fetchOpenCities,
   fetchAreasByCity,
@@ -49,7 +50,7 @@ function CompleteProfileModal({
           visible: true,
           type: "error",
           title: "Could not load cities",
-          message: error.message || "Please try again.",
+          message: getFriendlyErrorMessage(error, "Please try again."),
         })
       } finally {
         setLoadingCities(false)
@@ -75,7 +76,7 @@ function CompleteProfileModal({
         visible: true,
         type: "error",
         title: "Could not load areas",
-        message: error.message || "Please try again.",
+        message: getFriendlyErrorMessage(error, "Please try again."),
       })
     } finally {
       setLoadingAreas(false)
@@ -117,7 +118,7 @@ function CompleteProfileModal({
         visible: true,
         type: "error",
         title: "Setup failed",
-        message: error.message || "Please try again.",
+        message: getFriendlyErrorMessage(error, "Please try again."),
       })
     } finally {
       setSaving(false)

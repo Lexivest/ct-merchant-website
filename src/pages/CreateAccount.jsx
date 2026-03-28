@@ -28,6 +28,7 @@ import { validateSignupForm } from "../lib/validators"
 import useCachedFetch from "../hooks/useCachedFetch"
 import useAuthSession from "../hooks/useAuthSession"
 import { ShimmerBlock } from "../components/common/Shimmers"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function CreateAccountShimmer() {
@@ -148,7 +149,12 @@ function CreateAccount() {
       setTimeout(() => navigate("/user-dashboard"), 900)
       
     } catch (error) {
-      setNotice({ visible: true, type: "error", title: "Google sign-up failed", message: error.message || "Please try again." })
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Google sign-up failed",
+        message: getFriendlyErrorMessage(error, "Please try again."),
+      })
     } finally {
       setGoogleLoading(false)
     }
@@ -257,7 +263,12 @@ function CreateAccount() {
 
       setShowSuccess(true)
     } catch (error) {
-      setNotice({ visible: true, type: "error", title: "Registration failed", message: error.message || "Please try again." })
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Registration failed",
+        message: getFriendlyErrorMessage(error, "Please try again."),
+      })
     } finally {
       setSubmitting(false)
     }

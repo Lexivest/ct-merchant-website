@@ -23,6 +23,7 @@ import { ShimmerBlock } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function ProductDetailShimmer() {
@@ -472,7 +473,7 @@ function ProductDetail() {
     } catch (error) {
       setChatMessages((prev) => [
         ...prev,
-        { role: "error", content: `Connection Error: ${error.message}` },
+        { role: "error", content: getFriendlyErrorMessage(error, "Connection Error.") },
       ])
     } finally {
       setSendingChat(false)
@@ -546,14 +547,18 @@ function ProductDetail() {
       <div className="flex min-h-screen items-center justify-center bg-[#E3E6E6] px-4">
         <div className="text-center">
           <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-700" />
-          <h3 className="mb-2 text-2xl font-extrabold text-[#0F1111]">Product Not Found</h3>
-          <p className="text-slate-600">{error}</p>
+          <h3 className="mb-2 text-2xl font-extrabold text-[#0F1111]">
+            Network unavailable
+          </h3>
+          <p className="text-slate-600">
+            {getFriendlyErrorMessage(error, "Retry to load this product.")}
+          </p>
           <button
             type="button"
             onClick={() => navigate("/user-dashboard")}
             className="mt-5 rounded-md border border-slate-300 bg-white px-6 py-3 font-semibold shadow-sm transition hover:bg-slate-50"
           >
-            Go Back
+            Retry
           </button>
         </div>
       </div>
