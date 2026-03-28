@@ -250,55 +250,50 @@ export default function MerchantPromoBanner() {
             ))}
           </div>
           
-          {/* SHARP DIAGONAL CUT OVERLAY */}
+          {/* RIGHT PANEL WITH SOFTER LOWER CURVE */}
           <div 
-            className="absolute right-0 top-0 z-20 h-[calc(100%-50px)] w-[52%]"
-            style={{ background: 'linear-gradient(105deg, transparent 0%, transparent 10%, #FBBF24 10.1%, #FBBF24 12%, #003B95 12.1%, #001E50 100%)' }}
+            className="absolute right-0 top-0 z-20 h-[calc(100%-50px)] w-[48%] rounded-bl-[170px] border-l-[8px] border-[#FBBF24] bg-gradient-to-b from-[#003B95] via-[#003B95] to-[#001E50]"
           ></div>
           
           {/* THE ADVERTISING CONTENT */}
-          <div className="absolute right-[15px] top-[20px] z-30 flex h-[calc(100%-70px)] w-[370px] flex-col items-center text-center">
-            
-            <div className="mb-[2px] text-[1rem] font-bold uppercase tracking-[1px] text-[#E2E8F0]">Shop Online With Us On</div>
-            <div className="mb-2 text-[1.55rem] font-black leading-tight text-white drop-shadow-md">
-              CTMerchant <span className="text-[#FBBF24]">{shopData.cities?.name || "Local"}</span> Repo
-            </div>
-            
-            <div className="mb-3 w-full line-clamp-2 text-[2.3rem] font-black uppercase leading-[1.1] text-white drop-shadow-lg">
+          <div className="absolute right-[15px] top-[20px] z-30 flex h-[calc(100%-40px)] w-[370px] flex-col items-center text-center">
+            <div className="mb-3 w-full line-clamp-2 text-[1.2rem] font-black uppercase leading-[1.05] text-white drop-shadow-lg">
               {shopData.name}
             </div>
-            
-            <div className="mb-5 rounded-full border-2 border-white bg-[#EA580C] px-5 py-1.5 text-[0.9rem] font-extrabold uppercase tracking-[0.5px] text-white shadow-[0_6px_12px_rgba(234,88,12,0.4)]">
-              {shopData.category || "Shop & Retail"}
+
+            <div className="mb-3 rounded-full border-2 border-white bg-[#EA580C] px-5 py-1.5 text-[1.15rem] font-semibold leading-tight text-white shadow-[0_6px_12px_rgba(234,88,12,0.4)]">
+              {shopData.category ? shopData.category : "Shop & Retail"}
             </div>
 
-            {/* ROW FOR QR CODE AND ID BOX */}
-            <div className="mb-4 flex w-full items-stretch justify-center gap-3">
-              {/* QR Code */}
-              <div className="flex h-[90px] w-[90px] shrink-0 flex-col items-center rounded-lg border-[3px] border-[#FBBF24] bg-white p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
-                <div className="mb-0.5 text-[0.55rem] font-black uppercase text-[#003B95]">Scan Here</div>
+            <div className="mb-3 line-clamp-2 px-2.5 text-[1.15rem] font-semibold leading-[1.3] text-[#CBD5E1] drop-shadow-sm">
+              <FaLocationDot className="mr-1 inline text-[#FBBF24]" /> {displayAddress}
+            </div>
+
+            <div className="mb-1 text-[1rem] font-bold uppercase tracking-[1px] text-[#E2E8F0]">
+              Shop Online With Us On
+            </div>
+            <div className="mb-3 text-[1.55rem] font-black leading-tight text-white drop-shadow-md">
+              CTMerchant <span className="text-[#FBBF24]">{shopData.cities?.name || "Local"}</span> Repo
+            </div>
+
+            <div className="mb-3 text-[1.55rem] font-black uppercase leading-none tracking-[1px] text-white drop-shadow-lg">
+              ID-{shopData.unique_id || "PENDING"}
+            </div>
+
+            <div className="flex w-full justify-center">
+              <div className="flex h-[118px] w-[118px] flex-col items-center justify-center rounded-lg border-[3px] border-[#FBBF24] bg-white p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
+                <div className="mb-1 text-[0.7rem] font-black uppercase text-[#003B95]">Barcode</div>
                 <div className="flex h-full w-full items-center justify-center overflow-hidden">
-                  <QRCodeSVG value={shopUrl} size={70} fgColor="#003B95" level="M" />
+                  <QRCodeSVG value={shopUrl} size={86} fgColor="#003B95" level="M" />
                 </div>
               </div>
-
-              {/* Highlight Box */}
-              <div className="flex flex-1 flex-col items-center justify-center rounded-xl border-[3px] border-white bg-gradient-to-b from-[#FDE68A] to-[#F59E0B] px-4 py-2 shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
-                <div className="mb-1 text-[0.75rem] font-extrabold uppercase leading-[1.1] text-[#92400E]">Search Merchant ID</div>
-                <div className="font-mono text-[1.8rem] font-black leading-none tracking-[1px] text-[#78350F]">{shopData.unique_id || 'PENDING'}</div>
-              </div>
-            </div>
-
-            {/* SHOP ADDRESS */}
-            <div className="mb-auto mt-2 line-clamp-2 px-2.5 text-[0.8rem] font-semibold leading-[1.3] text-[#CBD5E1] drop-shadow-sm">
-              <FaLocationDot className="mr-1 text-[#FBBF24] inline" /> {displayAddress}
             </div>
 
           </div>
 
           {/* BOTTOM ADVERTISING STRIP */}
-          <div className="absolute bottom-0 left-0 z-[40] flex h-[50px] w-full items-center justify-center border-t-[4px] border-[#FBBF24] bg-[#001E50] text-[0.95rem] font-semibold text-white shadow-[0_-4px_10px_rgba(0,0,0,0.3)]">
-            Visit <span className="mx-1.5 font-extrabold text-[#FBBF24] tracking-wide">{shopUrlText}</span> or scan QR!
+          <div className="absolute bottom-0 left-0 z-[40] flex h-[40px] w-full items-center justify-center border-t-[4px] border-[#FBBF24] bg-[#001E50] text-[0.9rem] font-semibold text-white shadow-[0_-4px_10px_rgba(0,0,0,0.3)]">
+            Visit <span className="mx-1.5 font-extrabold text-[#FBBF24] tracking-wide">{shopUrlText}</span> or scan barcode!
           </div>
 
         </div>
