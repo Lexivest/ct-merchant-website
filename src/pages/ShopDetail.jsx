@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
-  FaAddressBook,
   FaArrowLeft,
   FaBoxOpen,
   FaBullhorn,
@@ -822,19 +821,6 @@ function ShopDetail() {
                   {currentShop?.description ||
                     "No description provided by the merchant."}
                 </p>
-              </div>
-
-              <div className="rounded-lg border border-slate-300 bg-white p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-                <div className="mb-3 flex items-center gap-2 border-b border-slate-200 pb-2 text-base font-extrabold text-[#0F1111]">
-                  <FaAddressBook className="text-[#007185]" />
-                  Connect with us
-                </div>
-
-                <p className="mb-3 text-[0.85rem] text-slate-600">
-                  Tap an icon below to reach out or verify our profiles.
-                </p>
-
-                <div className="flex flex-wrap gap-3">{renderSocialButtons()}</div>
               </div>
             </div>
           </div>

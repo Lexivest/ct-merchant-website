@@ -169,12 +169,21 @@ function ProductDetail() {
   useEffect(() => {
     if (data) {
       setIsInWishlist(data.initialWishlist)
-      if (!selectedImage && data.product?.image_url) {
-        setSelectedImage(data.product.image_url)
-      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data])
+
+  useEffect(() => {
+    if (!currentProduct) return
+
+    const nextImage =
+      currentProduct.image_url ||
+      currentProduct.image_url_2 ||
+      currentProduct.image_url_3 ||
+      ""
+
+    setSelectedImage(nextImage)
+  }, [currentProduct?.id])
 
   const galleryImages = useMemo(() => {
     const images = [
