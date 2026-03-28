@@ -73,12 +73,11 @@ function MerchantDiscovery() {
     <div className="min-h-screen bg-[#F3F4F6]">
       <PageSeo
         title={shop?.name ? `${shop.name} | CTMerchant Merchant Profile` : "Merchant Profile | CTMerchant"}
-        description={
+      description={
           shop?.description ||
           "Discover verified merchant profiles, contact details, and storefront information on CTMerchant."
         }
         canonicalPath={`/reposearch${merchantId ? `?merchantId=${encodeURIComponent(merchantId)}` : ""}`}
-        image={getLogo()}
       />
       <header className="sticky top-0 z-[100] w-full bg-[#131921] text-white shadow">
         <div className="mx-auto flex w-full max-w-[600px] items-center gap-4 px-4 py-3">
