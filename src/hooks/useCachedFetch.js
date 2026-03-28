@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // Global memory cache to prevent redundant network requests across page navigations
 const globalCache = new Map()
@@ -85,7 +86,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
           if (isMounted) setTick(t => t + 1)
           return
         }
-        errorRef.current = "Unable to connect. Please check your network connection."
+        errorRef.current = "Network unavailable. Retry."
         if (isMounted) setTick(t => t + 1)
         return
       }
@@ -110,7 +111,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
             console.warn(`Background fetch failed for ${queryKey}, falling back to cache.`)
             errorRef.current = null
           } else {
-            errorRef.current = "Unable to connect. Please check your network connection."
+            errorRef.current = getFriendlyErrorMessage(err, "Something went wrong. Please try again.")
           }
           setTick(t => t + 1)
         }

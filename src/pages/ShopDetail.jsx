@@ -102,89 +102,95 @@ function ShopDetail() {
     let fetchedApprovedNews = []
     let fetchedShopBanner = ""
     let fetchedHasLiked = false
-
     const tasks = []
 
     if (shopData.city_id) {
       tasks.push(
         supabase
-          .from("cities")
-          .select("name")
-          .eq("id", shopData.city_id)
-          .maybeSingle()
-          .then((res) => { if (res.data?.name) cityName = res.data.name })
+        .from("cities")
+        .select("name")
+        .eq("id", shopData.city_id)
+        .maybeSingle()
+        .then((res) => {
+          if (res.data?.name) cityName = res.data.name
+        })
+        .catch(() => {})
       )
     }
 
     tasks.push(
       supabase
-        .from("products")
-        .select("*")
-        .eq("shop_id", shopId)
-        .eq("is_available", true)
-        .order("id", { ascending: true })
-        .then((res) => {
-          if (res.error) throw res.error
-          fetchedProducts = res.data || []
-        })
+      .from("products")
+      .select("*")
+      .eq("shop_id", shopId)
+      .eq("is_available", true)
+      .order("id", { ascending: true })
+      .then((res) => {
+        if (!res.error) fetchedProducts = res.data || []
+      })
+      .catch(() => {})
     )
 
     tasks.push(
       supabase
-        .from("shop_likes")
-        .select("id", { count: "exact", head: true })
-        .eq("shop_id", shopId)
-        .then((res) => {
-          if (res.error) throw res.error
-          fetchedLikeCount = res.count || 0
-        })
+      .from("shop_likes")
+      .select("id", { count: "exact", head: true })
+      .eq("shop_id", shopId)
+      .then((res) => {
+        if (!res.error) fetchedLikeCount = res.count || 0
+      })
+      .catch(() => {})
     )
 
     tasks.push(
       supabase
-        .from("shop_banners_news")
-        .select("content_type, content_data")
-        .eq("shop_id", shopId)
-        .eq("status", "approved")
-        .order("created_at", { ascending: false })
-        .then((res) => {
-          if (res.error) throw res.error
-          const rows = res.data || []
-          fetchedApprovedNews = rows
-            .filter((item) => item.content_type === "news")
-            .map((item) => item.content_data)
-            .filter(Boolean)
+      .from("shop_banners_news")
+      .select("content_type, content_data")
+      .eq("shop_id", shopId)
+      .eq("status", "approved")
+      .order("created_at", { ascending: false })
+      .then((res) => {
+        if (res.error) return
+        const rows = res.data || []
+        fetchedApprovedNews = rows
+          .filter((item) => item.content_type === "news")
+          .map((item) => item.content_data)
+          .filter(Boolean)
 
-          const banners = rows.filter((item) => item.content_type === "banner")
-          if (banners.length > 0) {
-            fetchedShopBanner = banners[0]?.content_data || ""
-          }
-        })
+        const banners = rows.filter((item) => item.content_type === "banner")
+        if (banners.length > 0) {
+          fetchedShopBanner = banners[0]?.content_data || ""
+        }
+      })
+      .catch(() => {})
     )
 
     if (user?.id) {
       tasks.push(
         supabase
-          .from("shop_likes")
-          .select("id")
-          .eq("shop_id", shopId)
-          .eq("user_id", user.id)
-          .maybeSingle()
-          .then((res) => {
-            fetchedHasLiked = Boolean(res.data)
-          })
+        .from("shop_likes")
+        .select("id")
+        .eq("shop_id", shopId)
+        .eq("user_id", user.id)
+        .maybeSingle()
+        .then((res) => {
+          fetchedHasLiked = Boolean(res.data)
+        })
+        .catch(() => {})
       )
 
       if (user.id !== shopData.owner_id) {
-        supabase
+        tasks.push(
+          supabase
           .from("shop_views")
           .insert({ shop_id: shopId, viewer_id: user.id })
           .then(() => {})
           .catch(() => {})
+        )
       }
     }
 
-    await Promise.all(tasks)
+    await Promise.allSettled(tasks)
 
     return {
       shop: { ...shopData, cities: { name: cityName } },
@@ -552,14 +558,14 @@ function ShopDetail() {
         <div className="mx-auto max-w-3xl px-4 py-24 text-center">
           <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-700" />
           <h3 className="mb-2 text-2xl font-extrabold text-[#0F1111]">
-            Network unavailable
+            Could not load this shop
           </h3>
           <p className="text-slate-600">
             {getFriendlyErrorMessage(error, "Retry to load this shop.")}
           </p>
           <button
             type="button"
-            onClick={() => navigate("/user-dashboard")}
+            onClick={() => window.location.reload()}
             className="mt-6 rounded-lg border border-slate-300 bg-white px-6 py-3 font-bold text-slate-900 shadow-sm transition hover:bg-slate-50"
           >
             Retry

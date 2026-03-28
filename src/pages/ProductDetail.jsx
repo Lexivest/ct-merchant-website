@@ -548,15 +548,13 @@ function ProductDetail() {
       <div className="flex min-h-screen items-center justify-center bg-[#E3E6E6] px-4">
         <div className="text-center">
           <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-700" />
-          <h3 className="mb-2 text-2xl font-extrabold text-[#0F1111]">
-            Network unavailable
-          </h3>
+          <h3 className="mb-2 text-2xl font-extrabold text-[#0F1111]">Could not load this product</h3>
           <p className="text-slate-600">
             {getFriendlyErrorMessage(error, "Retry to load this product.")}
           </p>
           <button
             type="button"
-            onClick={() => navigate("/user-dashboard")}
+            onClick={() => window.location.reload()}
             className="mt-5 rounded-md border border-slate-300 bg-white px-6 py-3 font-semibold shadow-sm transition hover:bg-slate-50"
           >
             Retry
