@@ -33,11 +33,10 @@ import useAuthSession from "../hooks/useAuthSession"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // --- LOCAL ASSET IMPORTS FOR CAROUSEL ---
-import banner1 from "../assets/hero.png"
 import banner2 from "../assets/images/banner2.jpg"
 import banner3 from "../assets/images/banner3.jpg"
 
-const bannerImages = [banner1, banner2, banner3]
+const bannerImages = [banner2, banner3]
 
 const phrases = [
   "Verified Merchants",
@@ -70,6 +69,13 @@ function Home() {
       setCurrentBanner((prev) => (prev + 1) % bannerImages.length)
     }, 7500)
     return () => clearInterval(bannerTimer)
+  }, [])
+
+  useEffect(() => {
+    bannerImages.forEach((src) => {
+      const preload = new Image()
+      preload.src = src
+    })
   }, [])
 
   const [phraseIndex, setPhraseIndex] = useState(0)
@@ -430,6 +436,36 @@ function Home() {
       />
       <section className="overflow-x-hidden bg-pink-50 px-4 py-4 md:py-5">
         <div className="mx-auto grid w-full max-w-7xl min-w-0 gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
+          <div className="mb-2 min-w-0 bg-pink-200 p-0 shadow-sm md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
+            <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
+              <div className="relative aspect-video w-full max-h-[400px] overflow-hidden bg-white">
+                <img
+                  key={currentBanner}
+                  src={bannerImages[currentBanner] || bannerImages[0]}
+                  alt={`Commerce Banner ${currentBanner + 1}`}
+                  fetchPriority={currentBanner === 0 ? "high" : "auto"}
+                  className="absolute inset-0 h-full w-full object-cover object-center"
+                  loading={currentBanner === 0 ? "eager" : "lazy"}
+                />
+              </div>
+
+              <div className="flex w-full flex-wrap justify-center gap-4 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-5 md:py-4 md:text-sm">
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  Commerce
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-pink-400" />
+                  Discover Locally
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-sky-400" />
+                  Unique ID
+                </span>
+              </div>
+            </div>
+          </div>
+
           <div className="min-w-0 rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-2 lg:row-span-2 lg:row-start-1">
             <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
               <div className="rounded-[22px] bg-pink-200 p-1">
@@ -587,39 +623,6 @@ function Home() {
                     </p>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-2 min-w-0 bg-pink-200 p-0 shadow-sm md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
-            <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
-              <div className="relative aspect-video w-full max-h-[400px] overflow-hidden bg-white">
-                {bannerImages.map((imgSrc, index) => (
-                  <img
-                    key={index}
-                    src={imgSrc}
-                    alt={`Commerce Banner ${index + 1}`}
-                    fetchpriority={index === 0 ? "high" : "auto"}
-                    className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-[2500ms] ease-in-out ${
-                      currentBanner === index ? "opacity-100" : "opacity-0"
-                    }`}
-                  />
-                ))}
-              </div>
-
-              <div className="flex w-full flex-wrap justify-center gap-4 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-5 md:py-4 md:text-sm">
-                <span className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  Commerce
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-pink-400" />
-                  Discover Locally
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-sky-400" />
-                  Unique ID
-                </span>
               </div>
             </div>
           </div>
