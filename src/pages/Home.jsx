@@ -424,13 +424,13 @@ function Home() {
         description="Discover verified physical shops, browse local products, and connect with real merchants across your city."
         canonicalPath="/"
       />
-      <section className="bg-pink-50 px-4 py-4 md:py-5">
+      <section className="overflow-x-hidden bg-pink-50 px-4 py-4 md:py-5">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
           
           {/* --- CAROUSEL CONTAINER (BALANCED FULL-BLEED) --- */}
           {/* --- CAROUSEL CONTAINER (BALANCED FULL-BLEED WITH WHITE BG) --- */}
-          <div className="-mx-4 -mt-4 mb-2 bg-pink-200 p-0 shadow-sm md:m-0 md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
-            <div className="relative min-h-[280px] sm:min-h-[320px] md:min-h-[420px] overflow-hidden rounded-none border-b border-pink-100 bg-white shadow-lg md:rounded-[24px] md:border">
+          <div className="mb-2 bg-pink-200 p-0 shadow-sm md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
+            <div className="relative min-h-[280px] overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg sm:min-h-[320px] md:min-h-[420px]">
               
               {/* --- DYNAMIC FADING CAROUSEL --- */}
               {bannerImages.map((imgSrc, index) => (
@@ -448,7 +448,7 @@ function Home() {
               {/* Lighter Gradient Overlay (Only dark at the very bottom for text legibility) */}
               <div className="absolute inset-0 z-[5] bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
               
-              <div className="relative z-10 flex h-full min-h-[280px] sm:min-h-[320px] md:min-h-[420px] flex-col justify-end">
+              <div className="relative z-10 flex h-full min-h-[280px] flex-col justify-end sm:min-h-[320px] md:min-h-[420px]">
                 <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-4 md:py-4 md:text-sm">
                   <span className="flex items-center gap-2">
                     <span className="text-emerald-400">●</span> Commerce

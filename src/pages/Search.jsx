@@ -380,7 +380,7 @@ function Search() {
               onClick={() => navigate(-1)}
               className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-[#0F1111] transition hover:bg-slate-50"
             >
-              Go Back
+              Back
             </button>
           </div>
         ) : (

@@ -412,7 +412,7 @@ export default function MerchantVideoKYC() {
             <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-500" />
             <h3 className="mb-2 font-bold text-white">Setup Failed</h3>
             <p className="text-sm text-[#CBD5E1] max-w-sm mx-auto">{error}</p>
-            <button onClick={() => navigate("/vendor-panel")} className="mt-5 rounded-md border border-[#334155] bg-[#0F172A] px-6 py-2.5 font-semibold transition hover:bg-[#1E293B]">Go Back</button>
+            <button onClick={() => navigate("/vendor-panel")} className="mt-5 rounded-md border border-[#334155] bg-[#0F172A] px-6 py-2.5 font-semibold transition hover:bg-[#1E293B]">Back</button>
           </div>
         </div>
       </div>
