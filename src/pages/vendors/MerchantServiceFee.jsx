@@ -298,7 +298,7 @@ export default function MerchantServiceFee() {
             <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-600" />
             <h3 className="mb-2 font-bold text-slate-900">Failed to load</h3>
             <p className="text-sm text-slate-600">{error}</p>
-            <button onClick={() => navigate("/vendor-panel")} className="mt-5 w-full rounded-md border border-[#E2E8F0] bg-[#F1F5F9] px-6 py-3 font-bold text-[#1E293B] transition hover:bg-[#E2E8F0]">Go Back</button>
+            <button onClick={() => window.location.reload()} className="mt-5 w-full rounded-md border border-[#E2E8F0] bg-[#F1F5F9] px-6 py-3 font-bold text-[#1E293B] transition hover:bg-[#E2E8F0]">Retry</button>
           </div>
         </div>
       </div>

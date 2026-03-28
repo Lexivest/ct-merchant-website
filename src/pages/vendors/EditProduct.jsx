@@ -547,12 +547,12 @@ export default function EditProduct() {
   if (error) {
     return (
       <div className="flex h-screen flex-col bg-[#F3F4F6]">
-        <header className="bg-[#131921] px-4 py-3 text-white"><button onClick={() => navigate(-1)}><FaArrowLeft /></button></header>
+        <header className="bg-[#131921] px-4 py-3 text-white"><button onClick={() => window.location.reload()}><FaArrowLeft /></button></header>
         <div className="flex flex-1 items-center justify-center p-5 text-center">
           <div className="rounded-xl border border-red-200 bg-white p-8 shadow-sm">
             <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-600" />
             <h3 className="font-bold text-slate-900">{error}</h3>
-            <button onClick={() => navigate(-1)} className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold transition hover:bg-slate-50">Go Back</button>
+            <button onClick={() => window.location.reload()} className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold transition hover:bg-slate-50">Retry</button>
           </div>
         </div>
       </div>

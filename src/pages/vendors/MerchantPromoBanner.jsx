@@ -207,7 +207,7 @@ export default function MerchantPromoBanner() {
             <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-600" />
             <h3 className="mb-2 font-bold text-slate-900">Cannot Generate Banner</h3>
             <p className="text-sm text-slate-600 max-w-sm mx-auto">{error}</p>
-            <button onClick={() => navigate("/vendor-panel")} className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold transition hover:bg-slate-50">Go Back</button>
+            <button onClick={() => window.location.reload()} className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold transition hover:bg-slate-50">Retry</button>
           </div>
         </div>
       </div>

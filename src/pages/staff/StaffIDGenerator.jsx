@@ -219,10 +219,10 @@ export default function StaffIDGenerator() {
         <FaTriangleExclamation className="mb-4 text-4xl text-rose-500" />
         <p className="font-bold text-white">{error}</p>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => window.location.reload()}
           className="mt-4 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 px-6 py-2 text-white shadow-sm hover:bg-white/20 transition"
         >
-          Go Back
+          Retry
         </button>
       </div>
     );

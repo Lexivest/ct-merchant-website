@@ -793,7 +793,7 @@ function ShopRegistration() {
           <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-600" />
           <h3 className="mb-2 text-xl font-extrabold text-slate-800">Connection Error</h3>
           <p className="mb-6 text-sm font-semibold text-slate-600">{getFriendlyErrorMessage(dataError, "Retry to load this page.")}</p>
-          <button onClick={() => navigate(-1)} className="rounded-xl border border-slate-200 bg-white px-8 py-3 font-bold text-slate-700 transition hover:bg-slate-50">Retry</button>
+          <button onClick={() => window.location.reload()} className="rounded-xl border border-slate-200 bg-white px-8 py-3 font-bold text-slate-700 transition hover:bg-slate-50">Retry</button>
         </div>
       </div>
     )
