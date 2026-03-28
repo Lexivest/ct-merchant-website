@@ -196,8 +196,8 @@ function Home() {
     const clientId =
       "237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com"
 
-    function mountGoogleButton() {
-      if (!window.google?.accounts?.id || !googleButtonRef.current) return false
+      function mountGoogleButton() {
+        if (!window.google?.accounts?.id || !googleButtonRef.current) return false
 
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -207,6 +207,10 @@ function Home() {
       })
 
       googleButtonRef.current.innerHTML = ""
+      const buttonWidth = Math.max(
+        240,
+        Math.min(340, googleButtonRef.current.parentElement?.clientWidth || 320)
+      )
       window.google.accounts.id.renderButton(googleButtonRef.current, {
         type: "standard",
         theme: "outline",
@@ -214,7 +218,7 @@ function Home() {
         size: "large",
         shape: "rectangular",
         logo_alignment: "left",
-        width: 320,
+        width: buttonWidth,
       })
 
       setGoogleReady(true)
@@ -425,11 +429,11 @@ function Home() {
         canonicalPath="/"
       />
       <section className="overflow-x-hidden bg-pink-50 px-4 py-4 md:py-5">
-        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
+        <div className="mx-auto grid w-full max-w-7xl min-w-0 gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
           
           {/* --- CAROUSEL CONTAINER (BALANCED FULL-BLEED) --- */}
           {/* --- CAROUSEL CONTAINER (BALANCED FULL-BLEED WITH WHITE BG) --- */}
-          <div className="mb-2 bg-pink-200 p-0 shadow-sm md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
+          <div className="mb-2 min-w-0 bg-pink-200 p-0 shadow-sm md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
             <div className="relative min-h-[280px] overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg sm:min-h-[320px] md:min-h-[420px]">
               
               {/* --- DYNAMIC FADING CAROUSEL --- */}
@@ -465,7 +469,7 @@ function Home() {
           </div>
           {/* --- END CAROUSEL CONTAINER --- */}
 
-          <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <div className="min-w-0 rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-2 lg:row-span-2 lg:row-start-1">
             <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
               <div className="min-h-[34px] text-lg font-extrabold text-slate-900 md:text-2xl">
                 {currentPhraseText}
