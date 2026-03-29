@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabase"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
@@ -78,6 +78,63 @@ function formatPageLabel(path) {
     .join(" / ")
 }
 
+const lagosDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Africa/Lagos",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+})
+
+function formatLagosDateKey(value) {
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return ""
+
+  const parts = lagosDateFormatter.formatToParts(date)
+  const year = parts.find((part) => part.type === "year")?.value
+  const month = parts.find((part) => part.type === "month")?.value
+  const day = parts.find((part) => part.type === "day")?.value
+
+  if (!year || !month || !day) return ""
+  return `${year}-${month}-${day}`
+}
+
+function buildVisitTimeline(data, windowDays) {
+  const safeData = Array.isArray(data) ? data : []
+  const byDay = new Map(
+    safeData.map((item) => [
+      String(item.visit_date),
+      {
+        ...item,
+        total_visits: Number(item.total_visits) || 0,
+        unique_visitors: Number(item.unique_visitors) || 0,
+        authenticated_visits: Number(item.authenticated_visits) || 0,
+      },
+    ])
+  )
+
+  const totalDays = Math.max(Number(windowDays) || 0, 1)
+  const days = []
+  const now = new Date()
+
+  for (let offset = totalDays - 1; offset >= 0; offset -= 1) {
+    const date = new Date(now)
+    date.setDate(now.getDate() - offset)
+    const key = formatLagosDateKey(date)
+    const existing = byDay.get(key)
+
+    days.push(
+      existing || {
+        visit_date: key,
+        total_visits: 0,
+        unique_visitors: 0,
+        authenticated_visits: 0,
+      }
+    )
+  }
+
+  return days
+}
+
 function VisitTrendChart({ data }) {
   const safeData = Array.isArray(data) ? data : []
   const maxVisits = safeData.reduce((max, item) => Math.max(max, Number(item.total_visits) || 0), 0)
@@ -92,11 +149,11 @@ function VisitTrendChart({ data }) {
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex h-56 items-end gap-2">
+      <div className="flex h-56 items-end justify-between gap-2">
         {safeData.map((item, index) => {
           const totalVisits = Number(item.total_visits) || 0
           const height = maxVisits > 0 ? Math.max((totalVisits / maxVisits) * 100, totalVisits > 0 ? 12 : 4) : 4
-          const labelDate = new Date(item.visit_date)
+          const labelDate = new Date(`${item.visit_date}T12:00:00`)
           const showLabel =
             safeData.length <= 8 ||
             index === 0 ||
@@ -104,7 +161,7 @@ function VisitTrendChart({ data }) {
             index % Math.ceil(safeData.length / 6) === 0
 
           return (
-            <div key={item.visit_date} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+            <div key={item.visit_date} className="flex min-w-0 flex-1 max-w-[24px] flex-col items-center gap-2">
               <div className="text-[11px] font-semibold text-slate-400">{totalVisits}</div>
               <div className="flex h-44 w-full items-end">
                 <div
@@ -343,10 +400,11 @@ export default function StaffDashboard() {
     `https://ui-avatars.com/api/?name=${encodeURIComponent(staffData.full_name)}&background=2E1065&color=fff&size=150&font-size=0.4`
 
   const visibleUsers = inactiveOnly ? userActivity.filter((item) => item.is_inactive) : userActivity
-  const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Lagos" })
-  const visitsToday = visitStats.find((item) => item.visit_date === todayKey)?.total_visits || 0
-  const uniqueVisitorsToday = visitStats.find((item) => item.visit_date === todayKey)?.unique_visitors || 0
-  const totalVisitsInWindow = visitStats.reduce((sum, item) => sum + (Number(item.total_visits) || 0), 0)
+  const visitTimeline = useMemo(() => buildVisitTimeline(visitStats, visitWindow), [visitStats, visitWindow])
+  const todayKey = formatLagosDateKey(new Date())
+  const visitsToday = visitTimeline.find((item) => item.visit_date === todayKey)?.total_visits || 0
+  const uniqueVisitorsToday = visitTimeline.find((item) => item.visit_date === todayKey)?.unique_visitors || 0
+  const totalVisitsInWindow = visitTimeline.reduce((sum, item) => sum + (Number(item.total_visits) || 0), 0)
   const totalInactiveUsers = userActivity.filter((item) => item.is_inactive).length
 
   const citySummaryMap = new Map()
@@ -496,17 +554,17 @@ export default function StaffDashboard() {
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <div className="text-xs font-bold uppercase tracking-wide text-slate-400">Unique Visitors</div>
                     <div className="mt-2 text-2xl font-black text-slate-900">
-                      {visitStats.reduce((sum, item) => sum + (Number(item.unique_visitors) || 0), 0)}
+                      {visitTimeline.reduce((sum, item) => sum + (Number(item.unique_visitors) || 0), 0)}
                     </div>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <div className="text-xs font-bold uppercase tracking-wide text-slate-400">Authenticated Visits</div>
                     <div className="mt-2 text-2xl font-black text-slate-900">
-                      {visitStats.reduce((sum, item) => sum + (Number(item.authenticated_visits) || 0), 0)}
+                      {visitTimeline.reduce((sum, item) => sum + (Number(item.authenticated_visits) || 0), 0)}
                     </div>
                   </div>
                 </div>
-                <VisitTrendChart data={visitStats} />
+                <VisitTrendChart data={visitTimeline} />
               </>
             )}
           </div>
