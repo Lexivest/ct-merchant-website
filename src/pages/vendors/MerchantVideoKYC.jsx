@@ -4,6 +4,7 @@ import {
   FaArrowLeft,
   FaCamera,
   FaCloudArrowUp,
+  FaLocationCrosshairs,
   FaLocationDot,
   FaMicrophone,
   FaRotateRight,
@@ -16,6 +17,7 @@ import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getRuleLabel } from "../../lib/uploadRules";
+import logoImage from "../../assets/images/logo.jpg";
 
 const KYC_VIDEO_RULE = UPLOAD_RULES.kycVideos;
 const KYC_VIDEO_BUCKET = KYC_VIDEO_RULE.bucket;
@@ -33,6 +35,7 @@ export default function MerchantVideoKYC() {
   const [pageError, setPageError] = useState(null);
   const [shopData, setShopData] = useState(null);
   const [profileName, setProfileName] = useState("Merchant");
+  const [cityName, setCityName] = useState("");
   const [location, setLocation] = useState(null); // { lat, lng }
   const [setupState, setSetupState] = useState("idle"); // 'idle' | 'requesting' | 'ready' | 'failed'
   const [setupError, setSetupError] = useState("");
@@ -62,10 +65,12 @@ export default function MerchantVideoKYC() {
   // Refs for Canvas Animation Loop to avoid stale state closures
   const locationRef = useRef(null);
   const dateRef = useRef("");
+  const cityRef = useRef("");
 
   // Sync state to refs for the animation loop
   useEffect(() => { locationRef.current = location; }, [location]);
   useEffect(() => { dateRef.current = currentDateTime; }, [currentDateTime]);
+  useEffect(() => { cityRef.current = cityName; }, [cityName]);
 
   const stopActiveMedia = useCallback(() => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
@@ -120,13 +125,17 @@ export default function MerchantVideoKYC() {
         setLoading(true);
         setPageError(null);
 
-        const { data: profile, error: profErr } = await supabase.from("profiles").select("full_name, is_suspended").eq("id", user.id).maybeSingle();
+        const { data: profile, error: profErr } = await supabase
+          .from("profiles")
+          .select("full_name, is_suspended, city_id")
+          .eq("id", user.id)
+          .maybeSingle();
         if (profErr || profile?.is_suspended) throw new Error("Account restricted.");
         if (profile?.full_name) setProfileName(profile.full_name);
 
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
-          .select("id, name, unique_id, is_verified, kyc_status, kyc_video_url")
+          .select("id, name, unique_id, city_id, is_verified, kyc_status, kyc_video_url")
           .eq("owner_id", user.id)
           .maybeSingle();
 
@@ -139,6 +148,16 @@ export default function MerchantVideoKYC() {
         }
 
         setShopData(shop);
+
+        const resolvedCityId = shop?.city_id || profile?.city_id;
+        if (resolvedCityId) {
+          const { data: city } = await supabase
+            .from("cities")
+            .select("name")
+            .eq("id", resolvedCityId)
+            .maybeSingle();
+          if (city?.name) setCityName(city.name);
+        }
 
       } catch (err) {
         setPageError(getFriendlyErrorMessage(err, "Could not load KYC details. Retry."));
@@ -210,9 +229,9 @@ export default function MerchantVideoKYC() {
       stopActiveMedia();
       setSetupState("failed");
       if (err.code === 1 || err.message?.includes("User denied Geolocation") || err.message?.includes("location")) {
-        setSetupError("Location access is required for KYC. Please enable GPS permission and tap retry.");
+        setSetupError("Please allow location access and retry.");
       } else {
-        setSetupError("Camera and microphone access are required. Please allow access and tap retry.");
+        setSetupError("Please allow camera and microphone access and retry.");
       }
     }
   }, [stopActiveMedia]);
@@ -243,23 +262,30 @@ export default function MerchantVideoKYC() {
 
         // 2. Draw the Watermark Background Box
         ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-        ctx.fillRect(10, canvas.height - 80, 260, 70);
+        ctx.fillRect(10, canvas.height - 98, 300, 88);
 
         // 3. Draw the Date/Time
         ctx.fillStyle = "#38BDF8"; // Light blue
-        ctx.font = "bold 16px monospace";
-        ctx.fillText(dateRef.current, 20, canvas.height - 55);
+        ctx.font = "bold 15px monospace";
+        ctx.fillText(dateRef.current, 20, canvas.height - 68);
 
-        // 4. Draw the Coordinates
+        // 4. Draw the City
+        if (cityRef.current) {
+          ctx.fillStyle = "#FBBF24";
+          ctx.font = "bold 14px monospace";
+          ctx.fillText(`CITY: ${cityRef.current}`, 20, canvas.height - 46);
+        }
+
+        // 5. Draw the Coordinates
         if (locationRef.current) {
           ctx.fillStyle = "#A3E635"; // Green
-          ctx.font = "bold 14px monospace";
-          ctx.fillText(`LAT: ${locationRef.current.lat}`, 20, canvas.height - 35);
-          ctx.fillText(`LNG: ${locationRef.current.lng}`, 20, canvas.height - 15);
+          ctx.font = "bold 13px monospace";
+          ctx.fillText(`LAT: ${locationRef.current.lat}`, 20, canvas.height - 24);
+          ctx.fillText(`LNG: ${locationRef.current.lng}`, 160, canvas.height - 24);
         } else {
           ctx.fillStyle = "#FBBF24"; // Yellow
           ctx.font = "bold 14px monospace";
-          ctx.fillText("Acquiring GPS...", 20, canvas.height - 25);
+          ctx.fillText("Acquiring GPS...", 20, canvas.height - 24);
         }
       }
       
@@ -477,9 +503,6 @@ export default function MerchantVideoKYC() {
     );
   }
 
-  const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-  const scriptText = `"My name is ${profileName}, today is ${today}, and this is my physical shop ${shopData?.name} on CTMerchant."`;
-
   return (
     <div className="flex min-h-screen flex-col items-center bg-black text-white">
       
@@ -489,6 +512,33 @@ export default function MerchantVideoKYC() {
       </header>
 
       <main className="flex w-full max-w-[600px] flex-1 flex-col p-5">
+        <div className="mb-4 rounded-2xl border border-[#334155] bg-[#111827] px-4 py-3 shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
+          <div className="flex items-center gap-3">
+            <img
+              src={logoImage}
+              alt="CTMerchant"
+              className="h-12 w-12 rounded-xl border border-white/10 object-cover"
+            />
+            <div className="min-w-0">
+              <div className="text-[0.78rem] font-bold uppercase tracking-[0.18em] text-[#FBBF24]">
+                CTMerchant Secure Verification
+              </div>
+              <div className="truncate text-[1rem] font-extrabold text-white">
+                Hi, {profileName}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8rem] font-medium text-[#CBD5E1]">
+                {cityName ? (
+                  <span className="inline-flex items-center gap-1">
+                    <FaLocationCrosshairs className="text-[#38BDF8]" /> {cityName}
+                  </span>
+                ) : null}
+                {shopData?.name ? (
+                  <span className="truncate text-[#94A3B8]">{shopData.name}</span>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
         
         {recordingState !== "recorded" && recordingState !== "uploading" && (
           <>
@@ -497,21 +547,12 @@ export default function MerchantVideoKYC() {
                 <FaShieldHalved /> Secure Verification
               </h4>
               <ul className="list-inside list-disc text-[0.85rem] leading-relaxed text-[#CBD5E1]">
-                <li>Ensure your device Location (GPS) is turned ON.</li>
-                <li>Show your face and your physical shop items.</li>
-                <li>Read the text in the yellow box below out loud.</li>
-                <li>You have exactly 60 seconds. Keep it short!</li>
+                <li>Show your storefront and your products.</li>
+                <li>Tell us about your business.</li>
+                <li>Showing yourself in the video capture is optional, but it can speed up verification.</li>
+                <li>You have 60 seconds only.</li>
                 <li>{`Upload limit: ${KYC_VIDEO_RULE_LABEL}.`}</li>
               </ul>
-            </div>
-
-            <div className="mb-5 rounded-xl border-2 border-dashed border-[#FBBF24] bg-[#0F172A] p-4 text-center shadow-[0_4px_15px_rgba(251,191,36,0.15)]">
-              <div className="mb-2 flex items-center justify-center gap-2 text-[0.85rem] font-extrabold uppercase tracking-[1px] text-[#FBBF24]">
-                <FaMicrophone /> Read This Aloud:
-              </div>
-              <div className="text-[1.1rem] font-bold leading-relaxed text-white">
-                {scriptText}
-              </div>
             </div>
           </>
         )}
@@ -551,13 +592,8 @@ export default function MerchantVideoKYC() {
                 <p className="text-[0.9rem] leading-relaxed text-[#CBD5E1]">
                   {setupState === "requesting"
                     ? "Please complete the browser permission prompt. Once access is granted, the camera will start here."
-                    : "KYC video needs your location, camera, and microphone before recording can start."}
+                    : "Turn on the required permissions to start your KYC video."}
                 </p>
-                {setupError ? (
-                  <div className="mt-4 rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-[0.85rem] font-semibold text-red-200">
-                    {setupError}
-                  </div>
-                ) : null}
                 <div className="mt-5 grid grid-cols-1 gap-3">
                   <button
                     type="button"
@@ -568,6 +604,11 @@ export default function MerchantVideoKYC() {
                     <FaCamera />
                     {setupState === "requesting" ? "Waiting..." : "Enable Camera and Location"}
                   </button>
+                  {setupError ? (
+                    <p className="text-center text-[0.8rem] font-medium text-[#FCA5A5]">
+                      {setupError}
+                    </p>
+                  ) : null}
                   <div className="flex items-center justify-center gap-4 text-[0.78rem] font-semibold text-[#94A3B8]">
                     <span className="inline-flex items-center gap-1"><FaLocationDot /> GPS</span>
                     <span className="inline-flex items-center gap-1"><FaCamera /> Camera</span>
