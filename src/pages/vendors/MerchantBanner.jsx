@@ -135,6 +135,18 @@ export default function MerchantBanner() {
           setShopId(shop.id);
         }
 
+        const { data: shopAccess, error: shopAccessErr } = await supabase
+          .from("shops")
+          .select("id")
+          .eq("id", currentShopId)
+          .eq("owner_id", user.id)
+          .maybeSingle();
+
+        if (shopAccessErr || !shopAccess) throw new Error("Shop not found or access denied.");
+        if (String(shopId) !== String(shopAccess.id || currentShopId)) {
+          setShopId(String(shopAccess.id));
+        }
+
         const { data: banners, error: bannerErr } = await supabase
           .from("shop_banners_news")
           .select("*")

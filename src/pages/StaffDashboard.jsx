@@ -43,6 +43,26 @@ function formatInactivity(days) {
   return `${months} month${months === 1 ? "" : "s"}`
 }
 
+function formatActivityNote(days, isInactive, hasLoggedIn) {
+  if (!hasLoggedIn) {
+    return "No login recorded yet"
+  }
+
+  if (days == null) {
+    return "Recent activity unknown"
+  }
+
+  if (isInactive) {
+    return `Inactive for ${formatInactivity(days)}`
+  }
+
+  if (days < 1) {
+    return "Active today"
+  }
+
+  return `Active ${formatInactivity(days)} ago`
+}
+
 function normaliseShopList(shops) {
   return Array.isArray(shops) ? shops : []
 }
@@ -653,8 +673,12 @@ export default function StaffDashboard() {
                             <div className="mt-1 text-xs text-slate-500">{item.state_name || "Unassigned"}</div>
                           </td>
                           <td className="px-5 py-4">
-                            <div className="font-semibold text-slate-900">{formatDateTime(item.last_sign_in_at)}</div>
-                            <div className="mt-1 text-xs text-slate-500">Inactive for {formatInactivity(item.inactivity_days)}</div>
+                            <div className="font-semibold text-slate-900">
+                              {formatDateTime(item.last_sign_in_at || item.last_seen_at)}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              {formatActivityNote(item.inactivity_days, item.is_inactive, Boolean(item.last_sign_in_at))}
+                            </div>
                           </td>
                           <td className="px-5 py-4">
                             <div className="flex flex-col items-start gap-2">

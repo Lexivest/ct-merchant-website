@@ -77,10 +77,22 @@ export default function MerchantProducts() {
       setActiveShopId(shop.id);
     }
 
+    const { data: shopAccess, error: accessErr } = await supabase
+      .from("shops")
+      .select("id")
+      .eq("id", shopIdToUse)
+      .eq("owner_id", user.id)
+      .maybeSingle();
+
+    if (accessErr || !shopAccess) throw new Error("SHOP_NOT_FOUND");
+    if (String(activeShopId || "") !== String(shopAccess.id)) {
+      setActiveShopId(String(shopAccess.id));
+    }
+
     const { data: products, error } = await supabase
       .from("products")
       .select("*")
-      .eq("shop_id", shopIdToUse)
+      .eq("shop_id", shopAccess.id)
       .order("created_at", { ascending: false });
 
     if (error) throw error;

@@ -110,7 +110,12 @@ export default function MerchantSettings() {
           setShopId(shop.id);
         }
 
-        const { data: shopData, error: shopErr } = await supabase.from("shops").select("*").eq("id", currentShopId).maybeSingle();
+        const { data: shopData, error: shopErr } = await supabase
+          .from("shops")
+          .select("*")
+          .eq("id", currentShopId)
+          .eq("owner_id", user.id)
+          .maybeSingle();
         if (shopErr || !shopData) throw new Error("Could not load shop data.");
 
         setForm({
@@ -169,7 +174,11 @@ export default function MerchantSettings() {
         tiktok_url: cleanVal(form.tiktok),
       };
 
-      const { error: updateError } = await supabase.from("shops").update(updates).eq("id", shopId);
+      const { error: updateError } = await supabase
+        .from("shops")
+        .update(updates)
+        .eq("id", shopId)
+        .eq("owner_id", user.id);
       if (updateError) throw updateError;
 
       // Invalidate cache

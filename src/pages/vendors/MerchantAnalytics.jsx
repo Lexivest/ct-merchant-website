@@ -91,6 +91,16 @@ export default function MerchantAnalytics() {
         setShopId(shopLookup.id);
       }
 
+      const { data: shopAccess, error: shopAccessErr } = await supabase
+        .from("shops")
+        .select("id")
+        .eq("id", currentShopId)
+        .eq("owner_id", user.id)
+        .maybeSingle();
+
+      if (shopAccessErr || !shopAccess) throw new Error("Shop not found or access denied.");
+      currentShopId = shopAccess.id;
+
       // Fault-Tolerant Fetching Wrapper
       const safeCountFetch = async (table) => {
         try {

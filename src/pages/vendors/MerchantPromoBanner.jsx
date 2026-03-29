@@ -123,6 +123,7 @@ export default function MerchantPromoBanner() {
           .from("shops")
           .select("id, name, unique_id, category, is_verified, address, cities(name)")
           .eq("id", currentShopId)
+          .eq("owner_id", user.id)
           .maybeSingle();
 
         if (shopErr || !shop) throw new Error("Could not load shop details.");

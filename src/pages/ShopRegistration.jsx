@@ -192,6 +192,7 @@ function ShopRegistration() {
 
   const fetchFormData = async () => {
     if (!profile?.city_id) throw new Error("Profile not fully configured.")
+    if (!user?.id) throw new Error("Authentication required.")
 
     const tasks = [
       supabase.from("categories").select("name").order("name"),
@@ -202,7 +203,14 @@ function ShopRegistration() {
     let existingData = null
 
     if (isEdit && shopId) {
-      tasks.push(supabase.from("shops").select("*").eq("id", shopId).maybeSingle())
+      tasks.push(
+        supabase
+          .from("shops")
+          .select("*")
+          .eq("id", shopId)
+          .eq("owner_id", user.id)
+          .maybeSingle()
+      )
     }
 
     const results = await Promise.all(tasks)
@@ -214,7 +222,7 @@ function ShopRegistration() {
     if (isEdit && shopId) {
       if (results[3].error) throw results[3].error
       existingData = results[3].data
-      if (!existingData) throw new Error("Shop not found.")
+      if (!existingData) throw new Error("Shop not found or access denied.")
     }
 
     return {
@@ -225,11 +233,13 @@ function ShopRegistration() {
     }
   }
 
-  const cacheKey = isEdit ? `shop_reg_edit_${shopId}` : `shop_reg_new_${profile?.city_id}`
+  const cacheKey = isEdit
+    ? `shop_reg_edit_${user?.id || "guest"}_${shopId}`
+    : `shop_reg_new_${user?.id || "guest"}_${profile?.city_id}`
   const { data, loading: dataLoading, error: dataError } = useCachedFetch(
     cacheKey,
     fetchFormData,
-    { dependencies: [profile?.city_id, shopId, isEdit], ttl: 1000 * 60 * 60 }
+    { dependencies: [user?.id, profile?.city_id, shopId, isEdit], ttl: 1000 * 60 * 60 }
   )
 
   const [submitting, setSubmitting] = useState(false)
@@ -690,7 +700,6 @@ function ShopRegistration() {
       uploadedFiles.push(logoUpload)
 
       const payload = {
-        owner_id: user.id,
         name: form.name.trim(),
         description: form.desc.trim(),
         business_type: form.businessType,
@@ -719,12 +728,19 @@ function ShopRegistration() {
       }
 
       if (isEdit && existingShop?.id) {
-        const { error } = await supabase.from("shops").update(payload).eq("id", existingShop.id)
+        const { error } = await supabase
+          .from("shops")
+          .update(payload)
+          .eq("id", existingShop.id)
+          .eq("owner_id", user.id)
         if (error) throw error
 
         setNotice({ visible: true, type: "success", title: "Correction submitted", message: "Your shop is pending approval again." })
       } else {
-        const { error } = await supabase.from("shops").insert(payload)
+        const { error } = await supabase.from("shops").insert({
+          ...payload,
+          owner_id: user.id,
+        })
         if (error) throw error
 
         setNotice({ visible: true, type: "success", title: "Application submitted", message: "You will be notified once your shop is approved." })
