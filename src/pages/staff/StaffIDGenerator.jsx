@@ -13,6 +13,7 @@ import { supabase } from "../../lib/supabase";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import ctmLogo from "../../assets/images/logo.jpg";
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 
 function wrapTextLines(input, maxCharsPerLine, maxLines) {
   const text = String(input || "").trim().replace(/\s+/g, " ");
@@ -80,6 +81,7 @@ function openWhatsAppChat(phone, message) {
 export default function StaffIDGenerator() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
+  const { notify } = useGlobalFeedback();
 
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
@@ -173,7 +175,7 @@ export default function StaffIDGenerator() {
   const businessName = shopData?.name || "Unnamed Business";
   const proprietorName = profileData?.full_name || "Merchant";
   const categoryName = shopData?.category || "General";
-  const addressText = shopData?.address || "Verified physical location";
+  const addressText = shopData?.address || "Registered physical location";
   const uniqueId = shopData?.unique_id || "PENDING";
   const whatsappNumber = useMemo(() => normalizeWhatsAppNumber(shopData?.phone), [shopData?.phone]);
   const exportBusinessLines = useMemo(() => wrapTextLines(businessName, 18, 2), [businessName]);
@@ -221,7 +223,11 @@ export default function StaffIDGenerator() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
-      alert("Failed to generate ID file.");
+      notify({
+        type: "error",
+        title: "Download failed",
+        message: "We could not generate the ID file. Please try again.",
+      });
     } finally {
       setActiveAction(null);
     }
@@ -243,13 +249,21 @@ export default function StaffIDGenerator() {
         });
       } else {
         openWhatsAppChat(whatsappNumber, msg);
-        alert("This browser cannot attach the ID image directly, so we opened the merchant's WhatsApp chat with the message filled in. Use Save HD Asset if you need to send the image itself.");
+        notify({
+          type: "info",
+          title: "WhatsApp opened",
+          message: "This browser could not attach the ID image directly, so we opened the merchant's WhatsApp chat with the message filled in. Use Save HD Asset if you need the image file.",
+        });
       }
     } catch (err) {
       if (err.name !== "AbortError") {
         console.error("Error sharing:", err);
         openWhatsAppChat(whatsappNumber, msg);
-        alert("Direct image sharing was not available on this device, so we opened the merchant's WhatsApp chat instead.");
+        notify({
+          type: "info",
+          title: "WhatsApp opened",
+          message: "Direct image sharing was not available on this device, so we opened the merchant's WhatsApp chat instead.",
+        });
       }
     } finally {
       setActiveAction(null);
@@ -419,7 +433,7 @@ export default function StaffIDGenerator() {
                     </div>
                   </div>
                   <div className="mt-3 min-w-0 border-t border-slate-200 pt-2.5">
-                    <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Verified Address</p>
+                    <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Address</p>
                     <div className="mt-1 text-[0.62rem] font-semibold italic leading-[1.26] text-slate-700">
                       {exportAddressLines.map((line, index) => (
                         <span key={`address-${index}`} className="block min-h-[0.78rem]">
@@ -521,7 +535,7 @@ export default function StaffIDGenerator() {
                 </div>
               </div>
               <div className="mt-4 min-w-0 border-t border-indigo-900/10 pt-2.5">
-                <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">Verified Address</p>
+                <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">Address</p>
                 <p className="mt-0.5 max-h-[2rem] overflow-hidden text-[0.7rem] font-semibold italic leading-[1.15] text-indigo-950/80">{addressText}</p>
               </div>
             </div>

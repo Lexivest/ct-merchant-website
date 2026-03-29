@@ -27,6 +27,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { ShimmerBlock } from "../components/common/Shimmers"
+import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
@@ -63,6 +64,7 @@ function VendorsPanelShimmer() {
 
 function VendorsPanel() {
   const navigate = useNavigate()
+  const { notify } = useGlobalFeedback()
   
   usePreventPullToRefresh()
   
@@ -225,7 +227,7 @@ function VendorsPanel() {
 
   const handleCardClick = (path, action) => {
     if (isOffline) {
-      alert("You must be connected to the internet to perform this action.")
+      notify({ type: "error", title: "Network unavailable", message: "You must be connected to the internet to perform this action." })
       return
     }
     if (action) {
@@ -301,7 +303,7 @@ function VendorsPanel() {
             onClick={
               isSubscriptionActive 
                 ? () => handleCardClick(`/merchant-add-product?shop_id=${activeShop.id}`) 
-                : () => alert("🔒 Please activate your Service Fee Subscription to add new products.")
+                : () => notify({ type: "error", title: "Subscription required", message: "Please activate your service fee subscription to add new products." })
             }
           />
 
@@ -348,7 +350,7 @@ function VendorsPanel() {
               subtitle="Suspended"
               icon={<FaStoreSlash />}
               isLocked={true}
-              onClick={() => alert("🔒 Your shop access has been restricted by administration.")}
+              onClick={() => notify({ type: "error", title: "Shop restricted", message: "Your shop access has been restricted by administration." })}
             />
           ) : (
             <DashCard
@@ -365,7 +367,11 @@ function VendorsPanel() {
             subtitle="Issued by Staff"
             icon={<FaAddressCard />}
             colorClass="bg-[#FAE8FF] text-[#C026D3]"
-            onClick={() => alert("Your Official CT-Merchant ID Card is issued by the Verification Team directly to your registered WhatsApp or Email after physical approval. Please check your inbox or contact support if you have not received it.")}
+            onClick={() => notify({
+              type: "info",
+              title: "Official ID card",
+              message: "Your official CTMerchant ID card is issued by the approval team directly to your registered WhatsApp or email after physical approval. Please check your inbox or contact support if you have not received it.",
+            })}
           />
 
           <DashCard
@@ -377,7 +383,7 @@ function VendorsPanel() {
             onClick={
               isSubscriptionActive 
                 ? () => handleCardClick(`/merchant-promo-banner?shop_id=${activeShop.id}`) 
-                : () => alert("🔒 Please activate your Service Fee Subscription to access Promo Banners.")
+                : () => notify({ type: "error", title: "Subscription required", message: "Please activate your service fee subscription to access promo banners." })
             }
           />
 
@@ -391,11 +397,11 @@ function VendorsPanel() {
           {/* Verification / KYC Card */}
           {isVerified ? (
             <DashCard
-              title="Verified Shop"
+              title="Approved Shop"
               subtitle="Active"
               icon={<FaCheckDouble />}
               colorClass="bg-[#DCFCE7] text-[#16A34A]"
-              onClick={() => handleCardClick(null, () => alert("Your shop is physically verified!"))}
+              onClick={() => handleCardClick(null, () => notify({ type: "success", title: "Shop approved", message: "Your shop has completed physical approval." }))}
             />
           ) : hasPaidFee ? (
             activeShop.kyc_status === "submitted" ? (
@@ -404,7 +410,7 @@ function VendorsPanel() {
                 subtitle="Under Review"
                 icon={<FaHourglassHalf />}
                 isLocked={true}
-                onClick={() => alert("We are currently reviewing your Video KYC! We will notify you once approved.")}
+                onClick={() => notify({ type: "info", title: "KYC in review", message: "We are currently reviewing your video KYC. We will notify you once approved." })}
               />
             ) : activeShop.kyc_status === "rejected" ? (
               <DashCard
@@ -443,10 +449,10 @@ function VendorsPanel() {
           ) : (
             <DashCard
               title="Service Fee"
-              subtitle="Verification Req."
+              subtitle="Approval Req."
               icon={<FaLock />}
               isLocked={true}
-              onClick={() => alert("🔒 You cannot subscribe to a service plan until your shop passes KYC Verification.")}
+              onClick={() => notify({ type: "error", title: "Approval required", message: "You cannot subscribe to a service plan until your shop passes KYC approval." })}
             />
           )}
 

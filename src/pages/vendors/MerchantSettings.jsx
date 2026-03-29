@@ -26,6 +26,7 @@ import useAuthSession from "../../hooks/useAuthSession";
 import useCachedFetch from "../../hooks/useCachedFetch";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 
 // --- SHIMMER COMPONENT ---
@@ -59,6 +60,7 @@ function SettingsShimmer() {
 export default function MerchantSettings() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
+  const { notify } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
 
@@ -144,7 +146,10 @@ export default function MerchantSettings() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (isOffline) return alert("You must be online to save changes.");
+    if (isOffline) {
+      notify({ type: "error", title: "Network unavailable", message: "You must be online to save changes." });
+      return;
+    }
 
     try {
       setSaving(true);
@@ -173,7 +178,7 @@ export default function MerchantSettings() {
       navigate("/vendor-panel");
 
     } catch (err) {
-      alert(getFriendlyErrorMessage(err, "Update failed. Please retry."));
+      notify({ type: "error", title: "Update failed", message: getFriendlyErrorMessage(err, "Update failed. Please retry.") });
       setSaving(false);
     }
   };

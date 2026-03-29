@@ -13,6 +13,7 @@ import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 
 // --- FORMATTER ---
@@ -58,6 +59,7 @@ function AnalyticsShimmer() {
 export default function MerchantAnalytics() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
+  const { notify } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
 
@@ -73,7 +75,7 @@ export default function MerchantAnalytics() {
   const fetchStats = async (isRefresh = false) => {
     if (isOffline) {
       if (!isRefresh) setError("Network offline. Please connect to the internet to view analytics.");
-      else alert("You must be online to refresh statistics.");
+      else notify({ type: "error", title: "Network unavailable", message: "You must be online to refresh statistics." });
       return;
     }
 
@@ -118,7 +120,7 @@ export default function MerchantAnalytics() {
 
     } catch (err) {
       if (!isRefresh) setError(getFriendlyErrorMessage(err, "Could not load analytics. Retry."));
-      else alert("Failed to refresh statistics.");
+      else notify({ type: "error", title: "Refresh failed", message: "We could not refresh the statistics. Please try again." });
     } finally {
       if (isRefresh) setRefreshing(false);
       else setLoading(false);

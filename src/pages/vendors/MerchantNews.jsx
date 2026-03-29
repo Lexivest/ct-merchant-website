@@ -12,6 +12,7 @@ import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 
 // --- SHIMMER COMPONENT ---
@@ -42,6 +43,7 @@ function NewsShimmer() {
 export default function MerchantNews() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
+  const { notify } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
 
@@ -116,7 +118,10 @@ export default function MerchantNews() {
   const handleSave = async (e) => {
     e.preventDefault();
     if (submitting) return;
-    if (isOffline) return alert("You must be online to submit news.");
+    if (isOffline) {
+      notify({ type: "error", title: "Network unavailable", message: "You must be online to submit news." });
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -132,7 +137,7 @@ export default function MerchantNews() {
 
       // 2. Insert new (if not empty)
       if (text.length === 0) {
-        alert("News removed successfully!");
+        notify({ type: "success", title: "News removed", message: "Your shop news has been removed successfully." });
       } else {
         const { error: insertError } = await supabase.from("shop_banners_news").insert({
           shop_id: shopId,
@@ -143,13 +148,13 @@ export default function MerchantNews() {
         });
 
         if (insertError) throw insertError;
-        alert("News submitted for admin approval!");
+        notify({ type: "success", title: "News submitted", message: "Your shop news was submitted for admin approval." });
       }
 
       navigate("/vendor-panel");
 
     } catch (err) {
-      alert(getFriendlyErrorMessage(err, "Submission failed. Please retry."));
+      notify({ type: "error", title: "Submission failed", message: getFriendlyErrorMessage(err, "Submission failed. Please retry.") });
     } finally {
       setSubmitting(false);
     }

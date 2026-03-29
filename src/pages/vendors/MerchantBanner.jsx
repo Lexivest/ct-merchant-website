@@ -21,6 +21,7 @@ import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import CameraCaptureModal from "../../components/common/CameraCaptureModal";
 import { ShimmerBlock } from "../../components/common/Shimmers";
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 import { IMAGE_PROFILES } from "../../lib/imageProfiles";
@@ -66,6 +67,7 @@ function BannerShimmer() {
 export default function MerchantBanner() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
+  const { notify } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
 
@@ -180,7 +182,7 @@ export default function MerchantBanner() {
     try {
       await openStudioForFile(file);
     } catch (error) {
-      alert(getFriendlyErrorMessage(error, "Could not open selected image."));
+      notify({ type: "error", title: "Image unavailable", message: getFriendlyErrorMessage(error, "Could not open the selected image.") });
     }
   };
 
@@ -191,7 +193,7 @@ export default function MerchantBanner() {
       await openStudioForFile(file);
       setCameraOpen(false);
     } catch (error) {
-      alert(getFriendlyErrorMessage(error, "Could not process captured image."));
+      notify({ type: "error", title: "Capture failed", message: getFriendlyErrorMessage(error, "Could not process the captured image.") });
     }
   };
 
@@ -211,7 +213,7 @@ export default function MerchantBanner() {
       }
       setFitMode("contain");
     } catch (error) {
-      alert(getFriendlyErrorMessage(error, "Could not auto-fit banner."));
+      notify({ type: "error", title: "Auto-fit failed", message: getFriendlyErrorMessage(error, "Could not auto-fit the banner.") });
     } finally {
       setIsFitting(false);
     }
@@ -244,7 +246,11 @@ export default function MerchantBanner() {
     });
 
     if (!blob) {
-      alert(`Unable to compress this banner under ${formatBytes(BANNER_MAX_BYTES)}. Try a simpler image.`);
+      notify({
+        type: "error",
+        title: "Compression failed",
+        message: `We could not compress this banner under ${formatBytes(BANNER_MAX_BYTES)}. Please try a simpler image.`,
+      });
       return;
     }
 
@@ -267,7 +273,7 @@ export default function MerchantBanner() {
   const handleSave = async () => {
     if (saving) return;
     if (isOffline) {
-      alert("You must be online to save changes.");
+      notify({ type: "error", title: "Network unavailable", message: "You must be online to save changes." });
       return;
     }
     if (!shouldDeleteOld && !activeBlob) {
@@ -345,7 +351,7 @@ export default function MerchantBanner() {
       }, 2500);
 
     } catch (err) {
-      alert(getFriendlyErrorMessage(err, "Could not save banner."));
+      notify({ type: "error", title: "Save failed", message: getFriendlyErrorMessage(err, "Could not save the banner.") });
     } finally {
       setSaving(false);
     }

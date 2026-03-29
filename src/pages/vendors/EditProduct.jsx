@@ -25,9 +25,15 @@ import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
 import CameraCaptureModal from "../../components/common/CameraCaptureModal";
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 import { IMAGE_PROFILES } from "../../lib/imageProfiles";
+import {
+  loadProductCategoryRows,
+  resolveProductCategoryGroup,
+  toProductCategoryOptions,
+} from "../../lib/productCategories";
 import {
   canvasToBlobWithMaxBytes,
   fileToDataUrl,
@@ -42,23 +48,6 @@ const PRODUCT_INPUT_MAX_BYTES = PRODUCT_PROFILE.maxInputBytes;
 const PRODUCT_ACCEPT = getAcceptValue(PRODUCT_RULE, "image/*");
 const PRODUCT_RULE_LABEL = getRuleLabel(PRODUCT_RULE);
 const MAX_SPECIAL_OFFERS = 2;
-
-const techCats = ["Mobile Phones & Accessories", "Computers & IT Services", "Electronics & Appliances"];
-const fashionCats = ["Fashion & Apparel"];
-const consumablesCats = ["Groceries & Supermarkets", "Beauty & Personal Care", "Pharmacies & Health Shops", "Food & Drinks", "Agriculture & Agro-Allied"];
-const propertyCats = ["Real Estate & Properties", "Hotels & Accommodations"];
-const fallbackCategoryOptions = [
-  ...techCats,
-  ...fashionCats,
-  ...consumablesCats,
-  ...propertyCats,
-  "Home & Kitchen",
-  "Sports",
-  "Health & Fitness",
-  "Logistics & Delivery",
-  "Education & Training",
-  "Artisans",
-];
 
 // --- SHIMMER COMPONENT ---
 function EditProductShimmer() {
@@ -135,6 +124,7 @@ function CustomSelect({ value, onChange, options, placeholder, className, disabl
 export default function EditProduct() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
+  const { notify, confirm } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const productId = searchParams.get("id");
 
@@ -150,7 +140,7 @@ export default function EditProduct() {
 
   const [productData, setProductData] = useState(null);
   const [activeOffersCount, setActiveOffersCount] = useState(0);
-  const [categoryOptionsData, setCategoryOptionsData] = useState([]);
+  const [categoryRows, setCategoryRows] = useState([]);
 
   // Form State
   const [form, setForm] = useState({
@@ -208,14 +198,13 @@ export default function EditProduct() {
         const { data: profile } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).maybeSingle();
         if (profile?.is_suspended) throw new Error("Account restricted.");
 
-        const [{ data: prod, error: prodErr }, { data: categoryRows, error: categoryErr }] = await Promise.all([
+        const [{ data: prod, error: prodErr }, loadedCategoryRows] = await Promise.all([
           supabase.from("products").select("*").eq("id", productId).maybeSingle(),
-          supabase.from("categories").select("name").order("name"),
+          loadProductCategoryRows(supabase),
         ]);
 
         if (prodErr || !prod) throw new Error("Product not found.");
-        if (categoryErr) throw categoryErr;
-        setCategoryOptionsData((categoryRows || []).map((item) => item.name).filter(Boolean));
+        setCategoryRows(loadedCategoryRows);
 
         const { data: shop } = await supabase.from("shops").select("id, is_open").eq("id", prod.shop_id).eq("owner_id", user.id).maybeSingle();
         if (!shop) throw new Error("Access denied to this product's shop.");
@@ -324,7 +313,7 @@ export default function EditProduct() {
     try {
       await openStudioForFile(file, slot);
     } catch (error) {
-      alert(getFriendlyErrorMessage(error, "Could not open selected image."));
+      notify({ type: "error", title: "Image unavailable", message: getFriendlyErrorMessage(error, "Could not open the selected image.") });
     }
   };
 
@@ -335,7 +324,7 @@ export default function EditProduct() {
       await openStudioForFile(file, cameraSlot);
       setCameraSlot(null);
     } catch (error) {
-      alert(getFriendlyErrorMessage(error, "Could not process captured image."));
+      notify({ type: "error", title: "Capture failed", message: getFriendlyErrorMessage(error, "Could not process the captured image.") });
     }
   };
 
@@ -355,7 +344,7 @@ export default function EditProduct() {
         cropperRef.current.cropper.replace(fitted);
       }
     } catch (error) {
-      alert(getFriendlyErrorMessage(error, "Could not auto-fit image."));
+      notify({ type: "error", title: "Auto-fit failed", message: getFriendlyErrorMessage(error, "Could not auto-fit the image.") });
     } finally {
       setIsFitting(false);
     }
@@ -374,7 +363,7 @@ export default function EditProduct() {
     finalCanvas.width = PRODUCT_PROFILE.targetWidth; finalCanvas.height = PRODUCT_PROFILE.targetHeight;
     const ctx = finalCanvas.getContext("2d");
     if (!ctx) {
-      alert("Could not initialize image editor canvas.");
+      notify({ type: "error", title: "Editor unavailable", message: "Could not initialize the image editor canvas." });
       return;
     }
 
@@ -390,7 +379,7 @@ export default function EditProduct() {
     ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    ctx.fillText("Verified CTMerchant", PRODUCT_PROFILE.targetWidth - 20, PRODUCT_PROFILE.targetHeight - 20);
+    ctx.fillText("CTMerchant", PRODUCT_PROFILE.targetWidth - 20, PRODUCT_PROFILE.targetHeight - 20);
 
     const blob = await canvasToBlobWithMaxBytes(finalCanvas, {
       maxBytes: PRODUCT_MAX_BYTES,
@@ -400,7 +389,11 @@ export default function EditProduct() {
       qualityStep: PRODUCT_PROFILE.qualityStep,
     });
     if (!blob) {
-      alert(`Unable to compress this image under ${formatBytes(PRODUCT_MAX_BYTES)}. Try a simpler image.`);
+      notify({
+        type: "error",
+        title: "Compression failed",
+        message: `We could not compress this image under ${formatBytes(PRODUCT_MAX_BYTES)}. Please try a simpler image.`,
+      });
       return;
     }
 
@@ -427,18 +420,37 @@ export default function EditProduct() {
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (submitting || deleting) return;
-    if (isOffline) return alert("You must be online to update a product.");
-    if (!form.category) return alert("Please select a category.");
+    if (isOffline) {
+      notify({ type: "error", title: "Network unavailable", message: "You must be online to update a product." });
+      return;
+    }
+    if (!form.category) {
+      notify({ type: "error", title: "Category required", message: "Please select a category before continuing." });
+      return;
+    }
     
     const hasMainImage = (existingUrls[1] && !deletedSlots[1]) || blobs[1];
-    if (!hasMainImage) return alert("The Main Image (Box 1) is strictly required!");
+    if (!hasMainImage) {
+      notify({ type: "error", title: "Main image required", message: "The main image in Box 1 is required before you can save this product." });
+      return;
+    }
     const oversizedSlot = [1, 2, 3].find((slot) => blobs[slot] && blobs[slot].size > PRODUCT_MAX_BYTES);
     if (oversizedSlot) {
-      return alert(`Image ${oversizedSlot} exceeds ${formatBytes(PRODUCT_MAX_BYTES)} after processing. Please re-crop.`);
+      notify({
+        type: "error",
+        title: "Image too large",
+        message: `Image ${oversizedSlot} exceeds ${formatBytes(PRODUCT_MAX_BYTES)} after processing. Please re-crop it.`,
+      });
+      return;
     }
     
     if (form.isDiscount && activeOffersCount >= MAX_SPECIAL_OFFERS && (!productData.discount_price || productData.discount_price >= productData.price)) {
-      return alert("Security Block: You already have the maximum of 2 Special Offers active.");
+      notify({
+        type: "error",
+        title: "Offer limit reached",
+        message: "You already have the maximum of 2 special offers active.",
+      });
+      return;
     }
 
     try {
@@ -514,15 +526,25 @@ export default function EditProduct() {
       setTimeout(() => navigate("/vendor-panel"), 2500);
 
     } catch (err) {
-      alert(getFriendlyErrorMessage(err, "Update failed."));
+      notify({ type: "error", title: "Update failed", message: getFriendlyErrorMessage(err, "Update failed.") });
       setSubmitting(false);
     }
   };
 
   const deleteProduct = async () => {
     if (submitting || deleting) return;
-    if (isOffline) return alert("You must be online to delete a product.");
-    if (!window.confirm("Are you sure you want to permanently delete this product? This action cannot be undone.")) return;
+    if (isOffline) {
+      notify({ type: "error", title: "Network unavailable", message: "You must be online to delete a product." });
+      return;
+    }
+    const approved = await confirm({
+      type: "error",
+      title: "Delete product?",
+      message: "Are you sure you want to permanently delete this product? This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Keep product",
+    });
+    if (!approved) return;
     
     try {
       setDeleting(true);
@@ -549,7 +571,7 @@ export default function EditProduct() {
       setTimeout(() => navigate("/vendor-panel"), 2500);
 
     } catch (err) {
-      alert(getFriendlyErrorMessage(err, "Failed to delete product."));
+      notify({ type: "error", title: "Delete failed", message: getFriendlyErrorMessage(err, "Failed to delete product.") });
       setDeleting(false);
     }
   };
@@ -559,14 +581,14 @@ export default function EditProduct() {
   const liveDiscPerc = parseFloat(form.discountPercent) || 0;
   const isLiveDiscValid = form.isDiscount && form.condition !== "Fairly Used" && liveDiscPerc > 0 && liveDiscPerc <= 20;
   const liveFinalPrice = isLiveDiscValid ? livePrice - livePrice * (liveDiscPerc / 100) : livePrice;
-  const categoryOptions = useMemo(() => {
-    const source = categoryOptionsData.length > 0 ? categoryOptionsData : fallbackCategoryOptions;
-    const unique = Array.from(new Set(source.map((item) => String(item || "").trim()).filter(Boolean)));
-    const withCurrent = form.category && !unique.includes(form.category) ? [...unique, form.category] : unique;
-    return withCurrent
-      .filter((item) => item.toLowerCase() !== "other")
-      .map((item) => ({ value: item, label: item }));
-  }, [categoryOptionsData, form.category]);
+  const categoryOptions = useMemo(
+    () => toProductCategoryOptions(categoryRows, form.category),
+    [categoryRows, form.category],
+  );
+  const categoryGroup = useMemo(
+    () => resolveProductCategoryGroup(form.category, categoryRows),
+    [form.category, categoryRows],
+  );
 
 
   if (authLoading || loading) return <EditProductShimmer />;
@@ -732,7 +754,7 @@ export default function EditProduct() {
           </div>
 
           {/* DYNAMIC FIELDS BLOCK */}
-          {techCats.includes(form.category) && (
+          {categoryGroup === "tech" && (
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Technical Specifications</div>
               <div className="grid grid-cols-2 gap-4 mb-4">
@@ -743,7 +765,7 @@ export default function EditProduct() {
               </div>
             </div>
           )}
-          {fashionCats.includes(form.category) && (
+          {categoryGroup === "fashion" && (
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Apparel Details</div>
               <div className="grid grid-cols-2 gap-4">
@@ -762,7 +784,7 @@ export default function EditProduct() {
               </div>
             </div>
           )}
-          {consumablesCats.includes(form.category) && (
+          {categoryGroup === "consumables" && (
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Product Details</div>
               <div className="grid grid-cols-2 gap-4">
@@ -772,7 +794,7 @@ export default function EditProduct() {
               </div>
             </div>
           )}
-          {propertyCats.includes(form.category) && (
+          {categoryGroup === "property" && (
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Property Details</div>
               <div className="grid grid-cols-1 gap-4">

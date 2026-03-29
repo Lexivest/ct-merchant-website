@@ -23,6 +23,7 @@ import { ShimmerBlock } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
@@ -58,6 +59,7 @@ function ProductDetailShimmer() {
 
 function ProductDetail() {
   const navigate = useNavigate()
+  const { notify } = useGlobalFeedback()
   const [searchParams] = useSearchParams()
   const chatBodyRef = useRef(null)
 
@@ -268,7 +270,7 @@ function ProductDetail() {
 
   async function toggleWishlist() {
     if (!user) {
-      window.alert("Please login to save items to your wishlist.")
+      notify({ type: "info", title: "Login required", message: "Please login to save items to your wishlist." })
       return
     }
 
@@ -315,13 +317,13 @@ function ProductDetail() {
     } catch (error) {
       console.error("Wishlist error:", error)
       setIsInWishlist(!next) // Rollback
-      window.alert("Failed to update wishlist.")
+      notify({ type: "error", title: "Wishlist update failed", message: "We could not update your wishlist. Please try again." })
     }
   }
 
   async function callMerchant() {
     if (!currentShop?.phone) {
-      window.alert("No phone number provided.")
+      notify({ type: "error", title: "Phone unavailable", message: "This merchant has not provided a phone number." })
       return
     }
 
@@ -342,7 +344,7 @@ function ProductDetail() {
 
   function showSecurityModal() {
     if (!currentShop?.whatsapp) {
-      window.alert("This merchant hasn't provided a WhatsApp number.")
+      notify({ type: "error", title: "WhatsApp unavailable", message: "This merchant has not provided a WhatsApp number." })
       return
     }
     setSecurityModalOpen(true)
@@ -412,7 +414,7 @@ function ProductDetail() {
         }
       } else {
         await navigator.clipboard.writeText(`${text}\n${url}`)
-        window.alert("Link copied to clipboard!")
+        notify({ type: "success", title: "Link copied", message: "The product link was copied to your clipboard." })
       }
     } catch (error) {
       console.error("Error sharing:", error)

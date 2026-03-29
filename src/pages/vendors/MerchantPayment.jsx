@@ -12,6 +12,7 @@ import {
 import { supabase } from "../../lib/supabase";
 import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions";
 import useAuthSession from "../../hooks/useAuthSession";
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import {
   PAYSTACK_PUBLIC_KEY,
@@ -51,6 +52,7 @@ export default function MerchantPayment() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
+  const { notify } = useGlobalFeedback();
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
@@ -103,7 +105,7 @@ export default function MerchantPayment() {
 
       const parsedShopId = Number(urlShopId)
       if (!urlShopId || !Number.isFinite(parsedShopId) || parsedShopId <= 0) {
-        alert("Shop ID is missing.");
+        notify({ type: "error", title: "Shop unavailable", message: "Shop ID is missing." });
         navigate("/vendor-panel");
         return;
       }
@@ -120,7 +122,7 @@ export default function MerchantPayment() {
         if (shopErr || !shop) throw new Error("Shop not found or access denied");
 
         if (shop.is_verified) {
-          alert("Your shop is already verified.");
+          notify({ type: "info", title: "Already approved", message: "Your shop has already completed this verification step." });
           navigate("/vendor-panel");
           return;
         }
@@ -134,10 +136,10 @@ export default function MerchantPayment() {
 
         if (paymentRecord) {
           if (shop.status === "pending_kyc_review") {
-            alert("We are currently reviewing your Video KYC! We will notify you once approved.");
+            notify({ type: "info", title: "KYC in review", message: "We are currently reviewing your video KYC. We will notify you once approved." });
             navigate("/vendor-panel");
           } else {
-            alert("You have already paid the fee! Let's get your Video KYC recorded.");
+            notify({ type: "success", title: "Payment already confirmed", message: "Your payment is already confirmed. Let's record your video KYC." });
             navigate(`/merchant-video-kyc?shop_id=${shop.id}`);
           }
           return;
@@ -156,7 +158,7 @@ export default function MerchantPayment() {
 
       } catch (err) {
         console.error(err);
-        alert(getFriendlyErrorMessage(err, "Could not load payment details. Retry."));
+        notify({ type: "error", title: "Checkout unavailable", message: getFriendlyErrorMessage(err, "Could not load payment details. Please try again.") });
         navigate("/vendor-panel");
       } finally {
         setLoading(false);
@@ -224,7 +226,10 @@ export default function MerchantPayment() {
   // 5. Paystack Flow
   const payWithPaystack = () => {
     if (processing) return
-    if (!shopDetails || !window.PaystackPop) return alert("Payment system is initializing. Please wait a moment.");
+    if (!shopDetails || !window.PaystackPop) {
+      notify({ type: "info", title: "Payment system loading", message: "The payment system is still initializing. Please wait a moment and try again." });
+      return;
+    }
     
     const handler = window.PaystackPop.setup({
       key: PAYSTACK_PUBLIC_KEY,
@@ -245,7 +250,10 @@ export default function MerchantPayment() {
   // 6. Remita Flow
   const payWithRemita = () => {
     if (processing) return
-    if (!shopDetails || !window.RmPaymentEngine) return alert("Payment system is initializing. Please wait a moment.");
+    if (!shopDetails || !window.RmPaymentEngine) {
+      notify({ type: "info", title: "Payment system loading", message: "The payment system is still initializing. Please wait a moment and try again." });
+      return;
+    }
     
     const names = shopDetails.merchantName.split(" ");
     const firstName = names[0];
@@ -265,7 +273,7 @@ export default function MerchantPayment() {
         verifyPaymentOnBackend(response?.transactionId, "remita");
       },
       onError: function (response) {
-        alert("Payment failed or cancelled.");
+        notify({ type: "error", title: "Payment not completed", message: "The payment was cancelled or could not be completed." });
       },
       onClose: function () {
         // User closed payment window without completing payment.

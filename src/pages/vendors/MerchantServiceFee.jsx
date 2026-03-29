@@ -14,6 +14,7 @@ import { supabase } from "../../lib/supabase";
 import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import {
   PAYSTACK_PUBLIC_KEY,
@@ -74,6 +75,7 @@ function wait(ms) {
 export default function MerchantServiceFee() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
+  const { notify } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
 
@@ -181,7 +183,11 @@ export default function MerchantServiceFee() {
       });
 
       if (!error && !data?.error) {
-        alert(`Subscription successful via ${gateway.toUpperCase()}!`);
+        notify({
+          type: "success",
+          title: "Subscription confirmed",
+          message: `Your subscription was confirmed via ${gateway.toUpperCase()}.`,
+        });
         fetchSubscription(); // Reload the UI to reflect new dates
         return
       }
@@ -208,7 +214,7 @@ export default function MerchantServiceFee() {
     if (!txId || processing || !shopData?.id) return
     const selectedPlan = PLAN_OPTIONS[planKey]
     if (!selectedPlan) {
-      alert("Invalid subscription plan selected.")
+      notify({ type: "error", title: "Invalid plan", message: "Please select a valid subscription plan." })
       return
     }
 
@@ -216,7 +222,7 @@ export default function MerchantServiceFee() {
       await runSubscriptionVerificationWithRetry(txId, planKey, gateway)
     } catch (err) {
       console.error(err);
-      alert(getFriendlyErrorMessage(err, "Verification failed."));
+      notify({ type: "error", title: "Verification failed", message: getFriendlyErrorMessage(err, "Verification failed.") });
     } finally {
       setProcessing(false);
       setProcessingNote("Please do not close this window.");
@@ -230,7 +236,10 @@ export default function MerchantServiceFee() {
     if (!selectedPlan) return;
     
     if (gateway === "paystack") {
-      if (!window.PaystackPop) return alert("Payment system initializing. Please wait.");
+      if (!window.PaystackPop) {
+        notify({ type: "info", title: "Payment system loading", message: "The payment system is still initializing. Please wait and try again." });
+        return;
+      }
       
       const handler = window.PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
@@ -241,7 +250,7 @@ export default function MerchantServiceFee() {
         callback: function (response) {
           const txRef = response?.reference || response?.trxref
           if (!txRef) {
-            alert("Could not read payment reference. Please retry.")
+            notify({ type: "error", title: "Reference missing", message: "We could not read the payment reference. Please retry." })
             return
           }
           verifySubscriptionOnBackend(txRef, selectedPlanKey, "paystack");
@@ -252,7 +261,10 @@ export default function MerchantServiceFee() {
       setGatewayModalOpen(false);
 
     } else if (gateway === "remita") {
-      if (!window.RmPaymentEngine) return alert("Payment system initializing. Please wait.");
+      if (!window.RmPaymentEngine) {
+        notify({ type: "info", title: "Payment system loading", message: "The payment system is still initializing. Please wait and try again." });
+        return;
+      }
       
       const transactionId = generateTransactionRef("CTM-SUB");
       const paymentEngine = window.RmPaymentEngine.init({
@@ -268,7 +280,9 @@ export default function MerchantServiceFee() {
           const txRef = response?.transactionId || transactionId
           verifySubscriptionOnBackend(txRef, selectedPlanKey, "remita");
         },
-        onError: function () { alert("Payment failed. Retry."); },
+        onError: function () {
+          notify({ type: "error", title: "Payment failed", message: "The payment could not be completed. Please try again." });
+        },
         onClose: function () {},
       });
       paymentEngine.showPaymentWidget();

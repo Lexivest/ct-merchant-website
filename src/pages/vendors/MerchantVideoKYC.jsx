@@ -1,15 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaArrowLeft,
+  FaCamera,
   FaCloudArrowUp,
+  FaLocationDot,
   FaMicrophone,
+  FaRotateRight,
   FaShieldHalved,
   FaTriangleExclamation,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getRuleLabel } from "../../lib/uploadRules";
 
@@ -21,14 +25,18 @@ const KYC_VIDEO_RULE_LABEL = getRuleLabel(KYC_VIDEO_RULE);
 export default function MerchantVideoKYC() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
+  const { notify } = useGlobalFeedback();
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
   // Data State
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [pageError, setPageError] = useState(null);
   const [shopData, setShopData] = useState(null);
   const [profileName, setProfileName] = useState("Merchant");
   const [location, setLocation] = useState(null); // { lat, lng }
+  const [setupState, setSetupState] = useState("idle"); // 'idle' | 'requesting' | 'ready' | 'failed'
+  const [setupError, setSetupError] = useState("");
+  const [hasAutoStartedSetup, setHasAutoStartedSetup] = useState(false);
 
   // Recording State
   const [recordingState, setRecordingState] = useState("ready"); // 'ready' | 'recording' | 'recorded' | 'uploading'
@@ -59,6 +67,32 @@ export default function MerchantVideoKYC() {
   useEffect(() => { locationRef.current = location; }, [location]);
   useEffect(() => { dateRef.current = currentDateTime; }, [currentDateTime]);
 
+  const stopActiveMedia = useCallback(() => {
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+    timerIntervalRef.current = null;
+    animationFrameId.current = null;
+
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {
+        // Ignore recorder shutdown errors during resets.
+      }
+    }
+    mediaRecorderRef.current = null;
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+    }
+    streamRef.current = null;
+
+    if (rawVideoRef.current) {
+      rawVideoRef.current.pause();
+      rawVideoRef.current.srcObject = null;
+    }
+  }, []);
+
   const getStoragePathFromUrl = (url, bucket) => {
     if (!url) return null;
     try {
@@ -77,13 +111,14 @@ export default function MerchantVideoKYC() {
     async function init() {
       if (!user) return;
       if (isOffline) {
-        setError("Network unavailable. Retry.");
+        setPageError("Network unavailable. Retry.");
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
+        setPageError(null);
 
         const { data: profile, error: profErr } = await supabase.from("profiles").select("full_name, is_suspended").eq("id", user.id).maybeSingle();
         if (profErr || profile?.is_suspended) throw new Error("Account restricted.");
@@ -98,18 +133,15 @@ export default function MerchantVideoKYC() {
         if (shopErr || !shop) throw new Error("Shop not found.");
 
         if (shop.is_verified || shop.kyc_status === 'approved') {
-          alert("Your shop is already verified!");
+          notify({ type: "info", title: "Already approved", message: "Your shop has already completed this verification step." });
           navigate("/vendor-panel", { replace: true });
           return;
         }
 
         setShopData(shop);
-        
-        // Request Permissions (Location first, then Camera)
-        await requestPermissionsAndStart();
 
       } catch (err) {
-        setError(getFriendlyErrorMessage(err, "Could not load KYC details. Retry."));
+        setPageError(getFriendlyErrorMessage(err, "Could not load KYC details. Retry."));
       } finally {
         setLoading(false);
       }
@@ -129,17 +161,20 @@ export default function MerchantVideoKYC() {
 
     // Cleanup function
     return () => {
-      if (streamRef.current) streamRef.current.getTracks().forEach((track) => track.stop());
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      stopActiveMedia();
       if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);
-      if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
     };
-  }, [user, authLoading, isOffline, navigate]);
+  }, [user, authLoading, isOffline, navigate, notify, stopActiveMedia]);
 
 
   // 2. Permissions, Camera, and CANVAS BURNING Logic
-  const requestPermissionsAndStart = async () => {
+  const requestPermissionsAndStart = useCallback(async () => {
     try {
+      stopActiveMedia();
+      setSetupState("requesting");
+      setSetupError("");
+      setLocation(null);
+
       // Step A: Request GPS Location
       if (!navigator.geolocation) throw new Error("Geolocation is not supported by your browser.");
       const pos = await new Promise((resolve, reject) => {
@@ -160,21 +195,33 @@ export default function MerchantVideoKYC() {
       
       if (rawVideoRef.current) {
         rawVideoRef.current.srcObject = stream;
-        rawVideoRef.current.play(); // Ensure hidden video plays
+        await new Promise((resolve) => {
+          rawVideoRef.current.onloadedmetadata = () => resolve();
+        });
+        await rawVideoRef.current.play().catch(() => undefined);
       }
 
       // Step C: Start the Canvas Drawing Loop
       startCanvasLoop();
+      setSetupState("ready");
 
     } catch (err) {
       console.error("Permission denied", err);
+      stopActiveMedia();
+      setSetupState("failed");
       if (err.code === 1 || err.message?.includes("User denied Geolocation") || err.message?.includes("location")) {
-        setError("Location access is required for KYC fraud prevention. Please enable GPS permissions for this site and reload.");
+        setSetupError("Location access is required for KYC. Please enable GPS permission and tap retry.");
       } else {
-        setError("Camera and microphone access is required. Please check your browser permissions and reload.");
+        setSetupError("Camera and microphone access are required. Please allow access and tap retry.");
       }
     }
-  };
+  }, [stopActiveMedia]);
+
+  useEffect(() => {
+    if (loading || pageError || !shopData || isOffline || hasAutoStartedSetup) return;
+    setHasAutoStartedSetup(true);
+    requestPermissionsAndStart();
+  }, [loading, pageError, shopData, isOffline, hasAutoStartedSetup, requestPermissionsAndStart]);
 
   // The engine that "burns" the text into the video frames
   const startCanvasLoop = () => {
@@ -283,10 +330,7 @@ export default function MerchantVideoKYC() {
 
   const processVideo = () => {
     // Stop raw camera tracks
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-    }
-    if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+    stopActiveMedia();
 
     const mimeType = recordedChunksRef.current[0]?.type || 'video/mp4';
     const blob = new Blob(recordedChunksRef.current, { type: mimeType });
@@ -305,6 +349,7 @@ export default function MerchantVideoKYC() {
     recordedBlobRef.current = null;
     recordedChunksRef.current = [];
     if (playbackVideoRef.current) playbackVideoRef.current.src = "";
+    setSetupState("idle");
     await requestPermissionsAndStart();
   };
 
@@ -312,14 +357,23 @@ export default function MerchantVideoKYC() {
   const uploadVideo = async () => {
     if (uploadInFlightRef.current || recordingState === "uploading") return;
     if (!recordedBlobRef.current) return;
-    if (isOffline) return alert("You must be online to upload.");
-    if (!shopData?.id) return alert("Shop data is not ready. Please retry.");
+    if (isOffline) {
+      notify({ type: "error", title: "Network unavailable", message: "You must be online to upload." });
+      return;
+    }
+    if (!shopData?.id) {
+      notify({ type: "error", title: "Shop unavailable", message: "Shop data is not ready yet. Please retry." });
+      return;
+    }
     if (recordedBlobRef.current.size > KYC_VIDEO_MAX_BYTES) {
-      return alert(
-        `Video exceeds upload limit (${formatBytes(
+      notify({
+        type: "error",
+        title: "Video too large",
+        message: `The video exceeds the upload limit (${formatBytes(
           recordedBlobRef.current.size
-        )}). Please retake with shorter duration or lower quality. Allowed: ${KYC_VIDEO_RULE_LABEL}.`
-      );
+        )}). Please retake it with shorter duration or lower quality. Allowed: ${KYC_VIDEO_RULE_LABEL}.`,
+      });
+      return;
     }
 
     let uploadedPath = null;
@@ -369,7 +423,11 @@ export default function MerchantVideoKYC() {
         }
       }
 
-      alert("Video Uploaded Successfully! Our admins will review your shop and activate your Digital ID card within 24 hours.");
+      notify({
+        type: "success",
+        title: "Video uploaded",
+        message: "Your video was uploaded successfully. Our team will review your shop and issue your digital ID card after approval.",
+      });
       uploadInFlightRef.current = false;
       navigate("/vendor-panel", { replace: true });
 
@@ -382,7 +440,7 @@ export default function MerchantVideoKYC() {
         }
       }
       console.error(err);
-      alert(getFriendlyErrorMessage(err, "Upload failed. Please retry."));
+      notify({ type: "error", title: "Upload failed", message: getFriendlyErrorMessage(err, "Upload failed. Please retry.") });
       setRecordingState("recorded"); // Let them try submitting again
       uploadInFlightRef.current = false;
     }
@@ -400,7 +458,7 @@ export default function MerchantVideoKYC() {
     );
   }
 
-  if (error) {
+  if (pageError) {
     return (
       <div className="flex h-screen flex-col bg-[#131921] text-white">
         <header className="flex w-full items-center gap-4 bg-[#131921] p-4 shadow-md">
@@ -411,7 +469,7 @@ export default function MerchantVideoKYC() {
           <div className="rounded-xl border border-red-800 bg-[#1E293B] p-8 shadow-sm">
             <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-500" />
             <h3 className="mb-2 font-bold text-white">Setup Failed</h3>
-            <p className="text-sm text-[#CBD5E1] max-w-sm mx-auto">{error}</p>
+            <p className="text-sm text-[#CBD5E1] max-w-sm mx-auto">{pageError}</p>
             <button onClick={() => navigate("/vendor-panel")} className="mt-5 rounded-md border border-[#334155] bg-[#0F172A] px-6 py-2.5 font-semibold transition hover:bg-[#1E293B]">Back</button>
           </div>
         </div>
@@ -466,7 +524,7 @@ export default function MerchantVideoKYC() {
           {/* Visible Canvas playing the stamped footage */}
           <canvas 
             ref={canvasRef} 
-            className={`h-full w-full object-cover ${recordingState === 'ready' || recordingState === 'recording' ? 'block' : 'hidden'}`}
+            className={`h-full w-full object-cover ${recordingState === 'ready' || recordingState === 'recording' ? 'block' : 'hidden'} ${setupState === 'ready' ? '' : 'opacity-20'}`}
           />
           
           {/* Playback View */}
@@ -477,6 +535,49 @@ export default function MerchantVideoKYC() {
             controls 
           />
 
+          {recordingState === "ready" && setupState !== "ready" && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/65 p-5 text-center backdrop-blur-sm">
+              <div className="w-full max-w-[340px] rounded-2xl border border-[#334155] bg-[#111827]/95 p-5 shadow-xl">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#1F2937] text-[#FBBF24]">
+                  {setupState === "requesting" ? (
+                    <FaRotateRight className="animate-spin text-2xl" />
+                  ) : (
+                    <FaShieldHalved className="text-2xl" />
+                  )}
+                </div>
+                <h3 className="mb-2 text-[1.05rem] font-extrabold text-white">
+                  {setupState === "requesting" ? "Waiting for permissions" : "Enable camera and location"}
+                </h3>
+                <p className="text-[0.9rem] leading-relaxed text-[#CBD5E1]">
+                  {setupState === "requesting"
+                    ? "Please complete the browser permission prompt. Once access is granted, the camera will start here."
+                    : "KYC video needs your location, camera, and microphone before recording can start."}
+                </p>
+                {setupError ? (
+                  <div className="mt-4 rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-[0.85rem] font-semibold text-red-200">
+                    {setupError}
+                  </div>
+                ) : null}
+                <div className="mt-5 grid grid-cols-1 gap-3">
+                  <button
+                    type="button"
+                    onClick={requestPermissionsAndStart}
+                    disabled={setupState === "requesting"}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-[#db2777] px-4 py-3 font-bold text-white transition hover:bg-[#be185d] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <FaCamera />
+                    {setupState === "requesting" ? "Waiting..." : "Enable Camera and Location"}
+                  </button>
+                  <div className="flex items-center justify-center gap-4 text-[0.78rem] font-semibold text-[#94A3B8]">
+                    <span className="inline-flex items-center gap-1"><FaLocationDot /> GPS</span>
+                    <span className="inline-flex items-center gap-1"><FaCamera /> Camera</span>
+                    <span className="inline-flex items-center gap-1"><FaMicrophone /> Mic</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Recording Timer & UI */}
           {(recordingState === 'ready' || recordingState === 'recording') && (
             <>
@@ -506,10 +607,10 @@ export default function MerchantVideoKYC() {
           {(recordingState === "ready" || recordingState === "recording") && (
             <button 
               onClick={handleRecordToggle}
-              disabled={!location}
-              className={`flex h-[70px] w-[70px] items-center justify-center rounded-full border-4 border-white bg-transparent transition-all ${recordingState === 'recording' ? 'scale-95' : ''} ${!location ? 'opacity-50 cursor-not-allowed border-gray-500' : ''}`}
+              disabled={!location || setupState !== "ready"}
+              className={`flex h-[70px] w-[70px] items-center justify-center rounded-full border-4 border-white bg-transparent transition-all ${recordingState === 'recording' ? 'scale-95' : ''} ${!location || setupState !== "ready" ? 'opacity-50 cursor-not-allowed border-gray-500' : ''}`}
             >
-              <div className={`rounded-full bg-[#DC2626] transition-all ${recordingState === 'recording' ? 'h-[30px] w-[30px] rounded-md' : 'h-[50px] w-[50px]'} ${!location ? 'bg-gray-500' : ''}`}></div>
+              <div className={`rounded-full bg-[#DC2626] transition-all ${recordingState === 'recording' ? 'h-[30px] w-[30px] rounded-md' : 'h-[50px] w-[50px]'} ${!location || setupState !== "ready" ? 'bg-gray-500' : ''}`}></div>
             </button>
           )}
 

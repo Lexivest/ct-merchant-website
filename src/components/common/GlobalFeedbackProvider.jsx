@@ -23,10 +23,12 @@ function normalizePayload(payload) {
     const message = String(payload.message || payload.text || "")
     const type = payload.type || inferType(message)
     return {
+      kind: payload.kind || "notice",
       type,
       title: payload.title || (type === "success" ? "Success" : type === "error" ? "Action Failed" : "Notice"),
       message,
       confirmText: payload.confirmText || "Continue",
+      cancelText: payload.cancelText || "Cancel",
       autoCloseMs: Number(payload.autoCloseMs) > 0 ? Number(payload.autoCloseMs) : null,
     }
   }
@@ -34,10 +36,12 @@ function normalizePayload(payload) {
   const message = String(payload ?? "")
   const type = inferType(message)
   return {
+    kind: "notice",
     type,
     title: type === "success" ? "Success" : type === "error" ? "Action Failed" : "Notice",
     message,
     confirmText: "Continue",
+    cancelText: "Cancel",
     autoCloseMs: null,
   }
 }
@@ -71,6 +75,7 @@ function GlobalFeedbackModal({ item, onClose }) {
   if (!item) return null
 
   const tone = modalTone(item.type)
+  const isConfirm = item.kind === "confirm"
 
   return (
     <div
@@ -98,13 +103,32 @@ function GlobalFeedbackModal({ item, onClose }) {
           {item.message || "Operation completed."}
         </p>
 
-        <button
-          type="button"
-          onClick={onClose}
-          className={`w-full rounded-xl px-4 py-3 text-sm font-extrabold text-white transition ${tone.button}`}
-        >
-          {item.confirmText}
-        </button>
+        {isConfirm ? (
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => onClose(false)}
+              className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50"
+            >
+              {item.cancelText}
+            </button>
+            <button
+              type="button"
+              onClick={() => onClose(true)}
+              className={`flex-1 rounded-xl px-4 py-3 text-sm font-extrabold text-white transition ${tone.button}`}
+            >
+              {item.confirmText}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onClose(true)}
+            className={`w-full rounded-xl px-4 py-3 text-sm font-extrabold text-white transition ${tone.button}`}
+          >
+            {item.confirmText}
+          </button>
+        )}
       </div>
     </div>
   )
@@ -119,6 +143,14 @@ export function useGlobalFeedback() {
       if (typeof window !== "undefined" && typeof window.alert === "function") {
         window.alert(typeof payload === "string" ? payload : payload?.message || "")
       }
+    },
+    confirm(payload) {
+      if (typeof window !== "undefined" && typeof window.confirm === "function") {
+        return Promise.resolve(
+          window.confirm(typeof payload === "string" ? payload : payload?.message || "")
+        )
+      }
+      return Promise.resolve(false)
     },
   }
 }
@@ -146,13 +178,36 @@ function GlobalFeedbackProvider({ children }) {
     })
   }, [])
 
-  const closeActive = useCallback(() => {
+  const confirm = useCallback((payload) => {
+    const item = normalizePayload({
+      ...(
+        payload && typeof payload === "object"
+          ? payload
+          : { message: payload }
+      ),
+      kind: "confirm",
+      autoCloseMs: null,
+    })
+
+    return new Promise((resolve) => {
+      queueRef.current.push({ ...item, resolve })
+      setActiveItem((current) => {
+        if (current) return current
+        return queueRef.current.shift() || null
+      })
+    })
+  }, [])
+
+  const closeActive = useCallback((result = true) => {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
       timerRef.current = null
     }
+    if (activeItem?.kind === "confirm" && typeof activeItem.resolve === "function") {
+      activeItem.resolve(result)
+    }
     showNext()
-  }, [showNext])
+  }, [activeItem, showNext])
 
   useEffect(() => {
     if (timerRef.current) {
@@ -191,7 +246,7 @@ function GlobalFeedbackProvider({ children }) {
     }
   }, [notify])
 
-  const value = useMemo(() => ({ notify }), [notify])
+  const value = useMemo(() => ({ notify, confirm }), [notify, confirm])
 
   return (
     <GlobalFeedbackContext.Provider value={value}>

@@ -32,6 +32,7 @@ import { ShimmerBlock } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
@@ -71,6 +72,7 @@ function ShopDetailShimmer() {
 
 function ShopDetail() {
   const navigate = useNavigate()
+  const { notify } = useGlobalFeedback()
   const [searchParams] = useSearchParams()
   const shopId = searchParams.get("id")
 
@@ -305,7 +307,7 @@ function ShopDetail() {
 
   async function toggleLike() {
     if (!user?.id) {
-      window.alert("Please sign in to like shops.")
+      notify({ type: "info", title: "Login required", message: "Please sign in to like shops." })
       return
     }
 
@@ -329,12 +331,13 @@ function ShopDetail() {
           .delete()
           .eq("shop_id", shopId)
           .eq("user_id", user.id)
-        if (error) throw error
+      if (error) throw error
       }
     } catch {
       // Rollback on fail
       setHasLiked(!nextLiked)
       setLikeCount(likeCount)
+      notify({ type: "error", title: "Action failed", message: "We could not update your shop like. Please try again." })
     }
   }
 
@@ -379,7 +382,7 @@ function ShopDetail() {
         return
       }
       await navigator.clipboard.writeText(window.location.href)
-      window.alert("Link copied to clipboard!")
+      notify({ type: "success", title: "Link copied", message: "The shop link was copied to your clipboard." })
     } catch { /* ignore */ }
   }
 
@@ -766,7 +769,7 @@ function ShopDetail() {
                       {isVerified ? (
                         <FaCircleCheck
                           className="text-[1.1rem] text-[#007185]"
-                          title="Verified Shop"
+                          title="Approved Shop"
                         />
                       ) : null}
                     </div>

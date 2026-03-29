@@ -24,9 +24,15 @@ import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
 import CameraCaptureModal from "../../components/common/CameraCaptureModal";
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 import { IMAGE_PROFILES } from "../../lib/imageProfiles";
+import {
+  loadProductCategoryRows,
+  resolveProductCategoryGroup,
+  toProductCategoryOptions,
+} from "../../lib/productCategories";
 import {
   canvasToBlobWithMaxBytes,
   fileToDataUrl,
@@ -42,24 +48,6 @@ const PRODUCT_ACCEPT = getAcceptValue(PRODUCT_RULE, "image/*");
 const PRODUCT_RULE_LABEL = getRuleLabel(PRODUCT_RULE);
 const MAX_PRODUCTS_LIMIT = 30;
 const MAX_SPECIAL_OFFERS = 2;
-
-// Dynamic Category Mappings
-const techCats = ["Mobile Phones & Accessories", "Computers & IT Services", "Electronics & Appliances"];
-const fashionCats = ["Fashion & Apparel"];
-const consumablesCats = ["Groceries & Supermarkets", "Beauty & Personal Care", "Pharmacies & Health Shops", "Food & Drinks", "Agriculture & Agro-Allied"];
-const propertyCats = ["Real Estate & Properties", "Hotels & Accommodations"];
-const fallbackCategoryOptions = [
-  ...techCats,
-  ...fashionCats,
-  ...consumablesCats,
-  ...propertyCats,
-  "Home & Kitchen",
-  "Sports",
-  "Health & Fitness",
-  "Logistics & Delivery",
-  "Education & Training",
-  "Artisans",
-];
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function AddProductShimmer() {
@@ -182,6 +170,7 @@ function CustomSelect({ value, onChange, options, placeholder, className }) {
 export default function AddProduct() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
+  const { notify } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const shopId = searchParams.get("shop_id");
 
@@ -193,7 +182,7 @@ export default function AddProduct() {
   const [activeOffersCount, setActiveOffersCount] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [categoryOptionsData, setCategoryOptionsData] = useState([]);
+  const [categoryRows, setCategoryRows] = useState([]);
 
   // Form State
   const [form, setForm] = useState({
@@ -258,15 +247,15 @@ export default function AddProduct() {
         if (shop.is_open === false) throw new Error("Shop is suspended.");
 
         // Check Limits
-        const [prodRes, discountRes, categoriesRes] = await Promise.all([
+        const [prodRes, discountRes, loadedCategoryRows] = await Promise.all([
           supabase.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shopId),
           supabase.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shopId).not("discount_price", "is", null),
-          supabase.from("categories").select("name").order("name"),
+          loadProductCategoryRows(supabase),
         ]);
 
         if (prodRes.count >= MAX_PRODUCTS_LIMIT) setLimitReached(true);
         setActiveOffersCount(discountRes.count || 0);
-        setCategoryOptionsData((categoriesRes.data || []).map((item) => item.name).filter(Boolean));
+        setCategoryRows(loadedCategoryRows);
 
       } catch (err) {
         setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
@@ -302,11 +291,15 @@ export default function AddProduct() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Please upload a valid image file.");
+      notify({ type: "error", title: "Invalid image", message: "Please upload a valid image file." });
       return;
     }
     if (file.size > PRODUCT_INPUT_MAX_BYTES) {
-      alert(`File is too large. Max input size is ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}.`);
+      notify({
+        type: "error",
+        title: "Image too large",
+        message: `The selected file exceeds the maximum input size of ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}.`,
+      });
       return;
     }
 
@@ -327,7 +320,7 @@ export default function AddProduct() {
     try {
       await openStudioForFile(file, slot);
     } catch (error) {
-      alert(getFriendlyErrorMessage(error, "Could not open selected image."));
+      notify({ type: "error", title: "Image unavailable", message: getFriendlyErrorMessage(error, "Could not open the selected image.") });
     }
   };
 
@@ -339,7 +332,7 @@ export default function AddProduct() {
       await openStudioForFile(file, cameraSlot);
       setCameraSlot(null);
     } catch (error) {
-      alert(getFriendlyErrorMessage(error, "Could not process captured image."));
+      notify({ type: "error", title: "Capture failed", message: getFriendlyErrorMessage(error, "Could not process the captured image.") });
     }
   };
 
@@ -359,7 +352,7 @@ export default function AddProduct() {
         cropperRef.current.cropper.replace(fitted);
       }
     } catch (error) {
-      alert(getFriendlyErrorMessage(error, "Could not auto-fit image."));
+      notify({ type: "error", title: "Auto-fit failed", message: getFriendlyErrorMessage(error, "Could not auto-fit the image.") });
     } finally {
       setIsFitting(false);
     }
@@ -382,7 +375,7 @@ export default function AddProduct() {
     finalCanvas.height = PRODUCT_PROFILE.targetHeight;
     const ctx = finalCanvas.getContext("2d");
     if (!ctx) {
-      alert("Could not initialize image editor canvas.");
+      notify({ type: "error", title: "Editor unavailable", message: "Could not initialize the image editor canvas." });
       return;
     }
 
@@ -398,7 +391,7 @@ export default function AddProduct() {
     ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    ctx.fillText("Verified CTMerchant", PRODUCT_PROFILE.targetWidth - 20, PRODUCT_PROFILE.targetHeight - 20);
+    ctx.fillText("CTMerchant", PRODUCT_PROFILE.targetWidth - 20, PRODUCT_PROFILE.targetHeight - 20);
 
     const blob = await canvasToBlobWithMaxBytes(finalCanvas, {
       maxBytes: PRODUCT_MAX_BYTES,
@@ -409,7 +402,11 @@ export default function AddProduct() {
     });
 
     if (!blob) {
-      alert(`Unable to compress this image under ${formatBytes(PRODUCT_MAX_BYTES)}. Try a simpler image.`);
+      notify({
+        type: "error",
+        title: "Compression failed",
+        message: `We could not compress this image under ${formatBytes(PRODUCT_MAX_BYTES)}. Please try a simpler image.`,
+      });
       return;
     }
 
@@ -437,24 +434,32 @@ export default function AddProduct() {
     e.preventDefault();
     if (submitting) return;
     if (isOffline) {
-      alert("You must be online to upload a product.");
+      notify({ type: "error", title: "Network unavailable", message: "You must be online to upload a product." });
       return;
     }
     if (!form.category) {
-      alert("Please select a category.");
+      notify({ type: "error", title: "Category required", message: "Please select a category before continuing." });
       return;
     }
     if (!blobs[1]) {
-      alert("Main Image is required.");
+      notify({ type: "error", title: "Main image required", message: "The main image is required before you can submit this product." });
       return;
     }
     const oversizedSlot = [1, 2, 3].find((slot) => blobs[slot] && blobs[slot].size > PRODUCT_MAX_BYTES);
     if (oversizedSlot) {
-      alert(`Image ${oversizedSlot} exceeds ${formatBytes(PRODUCT_MAX_BYTES)} after processing. Please re-crop.`);
+      notify({
+        type: "error",
+        title: "Image too large",
+        message: `Image ${oversizedSlot} exceeds ${formatBytes(PRODUCT_MAX_BYTES)} after processing. Please re-crop it.`,
+      });
       return;
     }
     if (form.isDiscount && activeOffersCount >= MAX_SPECIAL_OFFERS) {
-      alert("Security Block: You already have the maximum of 2 Special Offers active.");
+      notify({
+        type: "error",
+        title: "Offer limit reached",
+        message: "You already have the maximum of 2 special offers active.",
+      });
       return;
     }
 
@@ -512,7 +517,7 @@ export default function AddProduct() {
       }, 2500);
 
     } catch (err) {
-      alert(getFriendlyErrorMessage(err, "Upload failed."));
+      notify({ type: "error", title: "Upload failed", message: getFriendlyErrorMessage(err, "Upload failed.") });
       setSubmitting(false);
     }
   };
@@ -521,13 +526,11 @@ export default function AddProduct() {
   const liveDiscPerc = parseFloat(form.discountPercent) || 0;
   const isLiveDiscValid = form.isDiscount && form.condition !== "Fairly Used" && liveDiscPerc > 0 && liveDiscPerc <= 20;
   const liveFinalPrice = isLiveDiscValid ? livePrice - livePrice * (liveDiscPerc / 100) : livePrice;
-  const categoryOptions = useMemo(() => {
-    const source = categoryOptionsData.length > 0 ? categoryOptionsData : fallbackCategoryOptions;
-    const unique = Array.from(new Set(source.map((item) => String(item || "").trim()).filter(Boolean)));
-    return unique
-      .filter((item) => item.toLowerCase() !== "other")
-      .map((item) => ({ value: item, label: item }));
-  }, [categoryOptionsData]);
+  const categoryOptions = useMemo(() => toProductCategoryOptions(categoryRows), [categoryRows]);
+  const categoryGroup = useMemo(
+    () => resolveProductCategoryGroup(form.category, categoryRows),
+    [form.category, categoryRows],
+  );
 
 
   if (authLoading || loading) {
@@ -703,7 +706,7 @@ export default function AddProduct() {
           </div>
 
           {/* DYNAMIC FIELDS BLOCK */}
-          {techCats.includes(form.category) && (
+          {categoryGroup === "tech" && (
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Technical Specifications</div>
               <div className="grid grid-cols-2 gap-4 mb-4">
@@ -714,7 +717,7 @@ export default function AddProduct() {
               </div>
             </div>
           )}
-          {fashionCats.includes(form.category) && (
+          {categoryGroup === "fashion" && (
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Apparel Details</div>
               <div className="grid grid-cols-2 gap-4">
@@ -738,7 +741,7 @@ export default function AddProduct() {
               </div>
             </div>
           )}
-          {consumablesCats.includes(form.category) && (
+          {categoryGroup === "consumables" && (
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Product Details</div>
               <div className="grid grid-cols-2 gap-4">
@@ -748,7 +751,7 @@ export default function AddProduct() {
               </div>
             </div>
           )}
-          {propertyCats.includes(form.category) && (
+          {categoryGroup === "property" && (
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Property Details</div>
               <div className="grid grid-cols-1 gap-4">

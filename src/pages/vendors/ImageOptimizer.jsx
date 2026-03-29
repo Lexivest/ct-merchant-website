@@ -22,6 +22,7 @@ import {
 } from "react-icons/fa6";
 
 import { supabase } from "../../lib/supabase"; // Strict staff auth
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 
 const MAX_UPLOAD_SIZE = 6 * 1024 * 1024; // 6MB for staff
@@ -32,6 +33,7 @@ const BANNER_MAX_H = 720;
 export default function StaffStudio() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
+  const { notify } = useGlobalFeedback();
   
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -90,8 +92,14 @@ export default function StaffStudio() {
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) return alert("Please select a valid image file.");
-    if (file.size > MAX_UPLOAD_SIZE) return alert("File is too large! Maximum 6MB.");
+    if (!file.type.startsWith("image/")) {
+      notify({ type: "error", title: "Invalid image", message: "Please select a valid image file." });
+      return;
+    }
+    if (file.size > MAX_UPLOAD_SIZE) {
+      notify({ type: "error", title: "File too large", message: "File is too large. Maximum allowed size is 6MB." });
+      return;
+    }
 
     setOriginalSize(file.size);
     setFileName(file.name.replace(/\.[^/.]+$/, ""));
@@ -420,7 +428,7 @@ export default function StaffStudio() {
           </div>
 
           {finalPreview && (
-            <a href={finalPreview} download={`${fileName || 'ctm-asset'}-verified.jpg`} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#10b981] p-3.5 text-xs sm:text-sm font-black uppercase tracking-wider text-white shadow-[0_4px_15px_rgba(16,185,129,0.2)] transition-colors hover:bg-[#059669]">
+            <a href={finalPreview} download={`${fileName || 'ctm-asset'}-optimized.jpg`} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#10b981] p-3.5 text-xs sm:text-sm font-black uppercase tracking-wider text-white shadow-[0_4px_15px_rgba(16,185,129,0.2)] transition-colors hover:bg-[#059669]">
               <FaDownload className="text-lg" /> Download Asset
             </a>
           )}
