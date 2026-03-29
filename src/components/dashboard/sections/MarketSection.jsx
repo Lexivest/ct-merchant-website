@@ -21,7 +21,7 @@ function PromoSlider({ promos }) {
   if (!promos?.length) return null
 
   return (
-    <div className="promo-banner-slider relative mb-4 aspect-video w-full max-h-[400px] overflow-hidden bg-[#0F1111]">
+    <div className="promo-banner-slider relative mb-4 aspect-video w-full max-h-[400px] overflow-hidden bg-white">
       {promos.map((promo, idx) => (
         <div
           key={promo.id || idx}
@@ -32,8 +32,8 @@ function PromoSlider({ promos }) {
           <StableImage
             src={promo.image_url}
             alt="Promo Banner"
-            containerClassName="h-full w-full bg-[#0F1111]"
-            className="block h-full w-full object-contain object-center bg-[#0F1111]"
+            containerClassName="h-full w-full bg-white"
+            className="block h-full w-full object-cover object-center bg-white"
           />
         </div>
       ))}
