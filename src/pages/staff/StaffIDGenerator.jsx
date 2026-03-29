@@ -339,111 +339,118 @@ export default function StaffIDGenerator() {
         <div className="fixed -left-[10000px] top-0 z-[-1] pointer-events-none opacity-0">
           <div
             ref={exportCardRef}
-            className="relative overflow-hidden bg-white text-[#0f172a]"
+            className="relative flex items-center justify-center overflow-hidden bg-white text-[#0f172a]"
             style={{
-              width: "430px",
-              height: "270px",
-              borderRadius: "16px",
-              border: "1px solid #cbd5e1",
+              width: "470px",
+              height: "310px",
+              padding: "20px",
             }}
           >
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,#fdf2f8_0%,#eef2ff_48%,#ffffff_100%)]" />
-            <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-[#f9a8d4]/35" />
-            <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-[#818cf8]/25" />
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[92px] font-black leading-none text-slate-200/70">
-              CTM
-            </div>
-
-            <div className="relative z-10 flex min-h-[56px] items-center justify-center border-b border-[#cbd5e1] bg-[linear-gradient(90deg,#1e1b4b_0%,#4c1d95_55%,#be185d_100%)] px-4 py-2 text-white">
-              <img
-                src={ctmLogo}
-                alt="CTMerchant Logo"
-                className="absolute left-4 h-[34px] w-[34px] rounded-md border border-white/25 bg-white object-cover p-0.5"
-                crossOrigin="anonymous"
-              />
-              <div className="text-center leading-none">
-                <p className="text-[0.85rem] font-black uppercase tracking-[0.15em] text-white">
-                  CTMerchant <span className="text-[#fbcfe8]">{cityName}</span> Branch
-                </p>
-                <p className="mt-1 text-[0.55rem] font-extrabold uppercase tracking-[0.25em] text-white">
-                  Business ID Card
-                </p>
-                <p className="mt-0.5 text-[0.45rem] font-bold uppercase tracking-[0.1em] text-slate-200">
-                  www.ctmerchant.com.ng
-                </p>
-              </div>
-            </div>
-
-            <div className="relative z-10 flex h-[184px] px-4 py-3">
-              <div className="flex flex-1 flex-col justify-start pr-3">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                  <div className="min-w-0">
-                    <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Business Name</p>
-                    <div className="mt-1 text-[0.74rem] font-extrabold leading-[1.24] text-slate-900">
-                      {exportBusinessLines.map((line, index) => (
-                        <span key={`business-${index}`} className="block min-h-[0.92rem]">
-                          {line}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Proprietor</p>
-                    <div className="mt-1 text-[0.68rem] font-bold leading-[1.24] text-slate-900">
-                      {exportProprietorLines.map((line, index) => (
-                        <span key={`proprietor-${index}`} className="block min-h-[0.84rem]">
-                          {line}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Category</p>
-                    <div className="mt-1 text-[0.68rem] font-bold leading-[1.24] text-[#be185d]">
-                      {exportCategoryLines.map((line, index) => (
-                        <span key={`category-${index}`} className="block min-h-[0.84rem]">
-                          {line}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Valid Until</p>
-                    <p className="mt-0.5 text-[0.75rem] font-black leading-tight text-[#4338ca]">{formattedExpiry}</p>
-                  </div>
-                </div>
-                <div className="mt-3 min-w-0 border-t border-slate-200 pt-2.5">
-                  <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Verified Address</p>
-                  <div className="mt-1 text-[0.62rem] font-semibold italic leading-[1.26] text-slate-700">
-                    {exportAddressLines.map((line, index) => (
-                      <span key={`address-${index}`} className="block min-h-[0.78rem]">
-                        {line}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+            <div
+              className="relative h-[270px] w-[430px] overflow-hidden bg-white"
+              style={{
+                borderRadius: "16px",
+                border: "1px solid #cbd5e1",
+              }}
+            >
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,#fdf2f8_0%,#eef2ff_48%,#ffffff_100%)]" />
+              <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-[#f9a8d4]/35" />
+              <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-[#818cf8]/25" />
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[92px] font-black leading-none text-slate-200/70">
+                CTM
               </div>
 
-              <div className="flex w-[105px] flex-col items-center justify-between border-l border-slate-200 pl-3 py-0.5">
-                <div className="w-full rounded-lg bg-white/90 px-1 py-1 text-center shadow-sm">
-                  <p className="text-[0.45rem] font-black uppercase tracking-[0.14em] text-slate-500">ID Number</p>
-                  <p className="mt-1 break-all font-mono text-[0.66rem] font-black leading-[1.1] tracking-[-0.02em] text-[#be185d]">
-                    {uniqueId}
+              <div className="relative z-10 flex min-h-[56px] items-center justify-center border-b border-[#cbd5e1] bg-[linear-gradient(90deg,#1e1b4b_0%,#4c1d95_55%,#be185d_100%)] px-4 py-2 text-white">
+                <img
+                  src={ctmLogo}
+                  alt="CTMerchant Logo"
+                  className="absolute left-4 h-[34px] w-[34px] rounded-md border border-white/25 bg-white object-cover p-0.5"
+                  crossOrigin="anonymous"
+                />
+                <div className="text-center leading-none">
+                  <p className="text-[0.85rem] font-black uppercase tracking-[0.15em] text-white">
+                    CTMerchant <span className="text-[#fbcfe8]">{cityName}</span> Branch
+                  </p>
+                  <p className="mt-1 text-[0.55rem] font-extrabold uppercase tracking-[0.25em] text-white">
+                    Business ID Card
+                  </p>
+                  <p className="mt-0.5 text-[0.45rem] font-bold uppercase tracking-[0.1em] text-slate-200">
+                    www.ctmerchant.com.ng
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-                  <img src={merchantAvatar} alt={proprietorName} className="h-[60px] w-[60px] rounded-lg object-cover" crossOrigin="anonymous" />
+              </div>
+
+              <div className="relative z-10 flex h-[184px] px-4 py-3">
+                <div className="flex flex-1 flex-col justify-start pr-3">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                    <div className="min-w-0">
+                      <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Business Name</p>
+                      <div className="mt-1 text-[0.74rem] font-extrabold leading-[1.24] text-slate-900">
+                        {exportBusinessLines.map((line, index) => (
+                          <span key={`business-${index}`} className="block min-h-[0.92rem]">
+                            {line}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Proprietor</p>
+                      <div className="mt-1 text-[0.68rem] font-bold leading-[1.24] text-slate-900">
+                        {exportProprietorLines.map((line, index) => (
+                          <span key={`proprietor-${index}`} className="block min-h-[0.84rem]">
+                            {line}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Category</p>
+                      <div className="mt-1 text-[0.68rem] font-bold leading-[1.24] text-[#be185d]">
+                        {exportCategoryLines.map((line, index) => (
+                          <span key={`category-${index}`} className="block min-h-[0.84rem]">
+                            {line}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Valid Until</p>
+                      <p className="mt-0.5 text-[0.75rem] font-black leading-tight text-[#4338ca]">{formattedExpiry}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 min-w-0 border-t border-slate-200 pt-2.5">
+                    <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Verified Address</p>
+                    <div className="mt-1 text-[0.62rem] font-semibold italic leading-[1.26] text-slate-700">
+                      {exportAddressLines.map((line, index) => (
+                        <span key={`address-${index}`} className="block min-h-[0.78rem]">
+                          {line}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-                  <QRCodeSVG value={verificationUrl} size={60} level="H" includeMargin={true} bgColor="#ffffff" fgColor="#1e1b4b" />
+
+                <div className="flex w-[105px] flex-col items-center justify-between border-l border-slate-200 pl-3 py-0.5">
+                  <div className="w-full rounded-lg bg-white/90 px-1 py-1 text-center shadow-sm">
+                    <p className="text-[0.45rem] font-black uppercase tracking-[0.14em] text-slate-500">ID Number</p>
+                    <p className="mt-1 break-all font-mono text-[0.66rem] font-black leading-[1.1] tracking-[-0.02em] text-[#be185d]">
+                      {uniqueId}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                    <img src={merchantAvatar} alt={proprietorName} className="h-[60px] w-[60px] rounded-lg object-cover" crossOrigin="anonymous" />
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                    <QRCodeSVG value={verificationUrl} size={60} level="H" includeMargin={true} bgColor="#ffffff" fgColor="#1e1b4b" />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 px-3 py-1.5">
-              <p className="text-center text-[0.45rem] font-bold leading-tight text-slate-600">
-                Disclaimer: CTMerchant is not liable for transactions or disputes arising from dealings by the holder of this card.
-              </p>
+              <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 px-3 py-1.5">
+                <p className="text-center text-[0.45rem] font-bold leading-tight text-slate-600">
+                  Disclaimer: CTMerchant is not liable for transactions or disputes arising from dealings by the holder of this card.
+                </p>
+              </div>
             </div>
           </div>
         </div>
