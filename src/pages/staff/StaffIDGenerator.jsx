@@ -301,7 +301,7 @@ export default function StaffIDGenerator() {
         </div>
       </header>
 
-      <main className="mt-10 flex w-full max-w-[560px] flex-col items-center px-5">
+      <main className="mt-10 flex w-full max-w-[560px] flex-col items-center px-5 max-[460px]:px-3 max-[380px]:px-2">
         
         {/* Glass Action Buttons */}
         <div className="mb-10 flex w-full gap-4">
@@ -449,10 +449,10 @@ export default function StaffIDGenerator() {
         </div>
 
         {/* --- THE COLOURFUL GLASS ID CARD --- */}
-        <div className="flex h-[270px] w-full items-start justify-center overflow-visible max-[460px]:h-[248px] max-[420px]:h-[226px] max-[380px]:h-[204px]">
+        <div className="flex h-[270px] w-full items-start justify-center overflow-visible max-[460px]:h-[258px] max-[420px]:h-[242px] max-[380px]:h-[224px]">
           <div
             ref={cardRef}
-            className="relative origin-top overflow-hidden shadow-[0_15px_50px_rgba(0,0,0,0.4)] max-[460px]:scale-[0.92] max-[420px]:scale-[0.84] max-[380px]:scale-[0.76]"
+            className="relative origin-top overflow-hidden shadow-[0_15px_50px_rgba(0,0,0,0.4)] max-[460px]:scale-[0.96] max-[420px]:scale-[0.9] max-[380px]:scale-[0.83]"
             style={{
               width: "430px",
               height: "270px",
