@@ -449,19 +449,20 @@ export default function StaffIDGenerator() {
         </div>
 
         {/* --- THE COLOURFUL GLASS ID CARD --- */}
-        <div
-          ref={cardRef}
-          className="relative overflow-hidden shadow-[0_15px_50px_rgba(0,0,0,0.4)]"
-          style={{
-            width: "430px",
-            height: "270px",
-            borderRadius: "16px",
-            border: "1px solid rgba(255, 255, 255, 0.45)",
-            background: "linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 248, 255, 0.75) 35%, rgba(241, 245, 255, 0.68) 100%)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-          }}
-        >
+        <div className="flex h-[270px] w-full items-start justify-center overflow-visible max-[460px]:h-[248px] max-[420px]:h-[226px] max-[380px]:h-[204px]">
+          <div
+            ref={cardRef}
+            className="relative origin-top overflow-hidden shadow-[0_15px_50px_rgba(0,0,0,0.4)] max-[460px]:scale-[0.92] max-[420px]:scale-[0.84] max-[380px]:scale-[0.76]"
+            style={{
+              width: "430px",
+              height: "270px",
+              borderRadius: "16px",
+              border: "1px solid rgba(255, 255, 255, 0.45)",
+              background: "linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 248, 255, 0.75) 35%, rgba(241, 245, 255, 0.68) 100%)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+            }}
+          >
           {/* Vibrant Glowing Orbs */}
           <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden mix-blend-multiply">
             <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-pink-400/35 blur-3xl" />
@@ -536,6 +537,7 @@ export default function StaffIDGenerator() {
             <p className="text-center text-[0.45rem] font-bold leading-tight text-indigo-950/70">
               Disclaimer: CTMerchant is not liable for transactions or disputes arising from dealings by the holder of this card.
             </p>
+          </div>
           </div>
         </div>
 
