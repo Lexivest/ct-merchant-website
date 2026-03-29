@@ -117,7 +117,7 @@ export default function StaffIDGenerator() {
     if (!cardRef.current) throw new Error("Card element not found.");
 
     const canvas = await html2canvas(cardRef.current, {
-      scale: 4,
+      scale: 5,
       useCORS: true,
       backgroundColor: "#ffffff",
       logging: false,
@@ -132,8 +132,7 @@ export default function StaffIDGenerator() {
           }
           resolve(blob);
         },
-        "image/jpeg",
-        1.0
+        "image/png"
       );
     });
   };
@@ -146,7 +145,7 @@ export default function StaffIDGenerator() {
 
       const link = document.createElement("a");
       link.href = url;
-      link.download = `CTM_BUSINESS_ID_${uniqueId}.jpg`;
+      link.download = `CTM_BUSINESS_ID_${uniqueId}.png`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -167,7 +166,7 @@ export default function StaffIDGenerator() {
       const blob = await generateCardBlob();
       
       // Package blob as a physical file
-      const file = new File([blob], `CTM_BUSINESS_ID_${uniqueId}.jpg`, { type: "image/jpeg" });
+      const file = new File([blob], `CTM_BUSINESS_ID_${uniqueId}.png`, { type: "image/png" });
       const msg = `Hello ${proprietorName}, your official CT-Merchant Business ID for *"${businessName}"* is ready. Unique ID: *${uniqueId}*.`;
 
       // Check if device supports native file sharing (Mobile Apps, Safari, Edge)
@@ -331,15 +330,15 @@ export default function StaffIDGenerator() {
               <div className="grid grid-cols-2 gap-x-4 gap-y-3.5">
                 <div className="min-w-0">
                   <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">Business Name</p>
-                  <p className="mt-0.5 line-clamp-2 text-[0.85rem] font-extrabold leading-tight text-indigo-950">{businessName}</p>
+                  <p className="mt-0.5 max-h-[2.2rem] overflow-hidden text-[0.85rem] font-extrabold leading-[1.12] text-indigo-950">{businessName}</p>
                 </div>
                 <div className="min-w-0">
                   <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">Proprietor</p>
-                  <p className="mt-0.5 line-clamp-2 text-[0.75rem] font-bold leading-tight text-indigo-950">{proprietorName}</p>
+                  <p className="mt-0.5 max-h-[2rem] overflow-hidden text-[0.75rem] font-bold leading-[1.15] text-indigo-950">{proprietorName}</p>
                 </div>
                 <div className="min-w-0">
                   <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">Category</p>
-                  <p className="mt-0.5 line-clamp-2 text-[0.75rem] font-bold leading-tight text-pink-700">{categoryName}</p>
+                  <p className="mt-0.5 max-h-[2rem] overflow-hidden text-[0.75rem] font-bold leading-[1.15] text-pink-700">{categoryName}</p>
                 </div>
                 <div className="min-w-0">
                   <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">Valid Until</p>
@@ -348,7 +347,7 @@ export default function StaffIDGenerator() {
               </div>
               <div className="mt-4 min-w-0 border-t border-indigo-900/10 pt-2.5">
                 <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-indigo-900/60 drop-shadow-sm">Verified Address</p>
-                <p className="mt-0.5 line-clamp-2 text-[0.7rem] font-semibold italic leading-tight text-indigo-950/80">{addressText}</p>
+                <p className="mt-0.5 max-h-[2rem] overflow-hidden text-[0.7rem] font-semibold italic leading-[1.15] text-indigo-950/80">{addressText}</p>
               </div>
             </div>
 
@@ -361,7 +360,7 @@ export default function StaffIDGenerator() {
                 <img src={merchantAvatar} alt={proprietorName} className="h-[60px] w-[60px] rounded-lg object-cover shadow-inner" crossOrigin="anonymous" />
               </div>
               <div className="rounded-xl bg-white/60 backdrop-blur-md p-1 shadow-sm border border-white/60">
-                <QRCodeSVG value={verificationUrl} size={60} level="H" includeMargin={false} bgColor="transparent" fgColor="#1e1b4b" />
+                <QRCodeSVG value={verificationUrl} size={60} level="H" includeMargin={true} bgColor="transparent" fgColor="#1e1b4b" />
               </div>
             </div>
           </div>

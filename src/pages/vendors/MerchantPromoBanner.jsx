@@ -137,13 +137,14 @@ export default function MerchantPromoBanner() {
     if (!bannerRef.current) throw new Error("Banner element not found.");
     
     const canvas = await html2canvas(bannerRef.current, {
-      scale: 3, // High-res export
+      scale: 4,
       useCORS: true,
       backgroundColor: "#003B95",
+      logging: false,
     });
 
     return new Promise((resolve) => {
-      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.95);
+      canvas.toBlob((blob) => resolve(blob), "image/png");
     });
   };
 
@@ -154,7 +155,7 @@ export default function MerchantPromoBanner() {
       const textContent = `Visit my shop "${shopData.name}" on www.ctmerchant.com.ng\n\nSearch my ID: ${shopData.unique_id} or scan the QR code on my banner.\n\n[Type your top products here...]`;
       
       const blob = await generateBannerBlob();
-      const file = new File([blob], `CTMerchant_Banner_${shopData.unique_id}.jpg`, { type: "image/jpeg" });
+      const file = new File([blob], `CTMerchant_Banner_${shopData.unique_id}.png`, { type: "image/png" });
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
@@ -185,7 +186,7 @@ export default function MerchantPromoBanner() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `CTMerchant_Banner_${shopData.unique_id}.jpg`;
+      link.download = `CTMerchant_Banner_${shopData.unique_id}.png`;
       link.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -258,7 +259,7 @@ export default function MerchantPromoBanner() {
           
           {/* THE ADVERTISING CONTENT */}
           <div className="absolute right-[15px] top-[20px] z-30 flex h-[calc(100%-40px)] w-[370px] flex-col items-center text-center">
-            <div className="mb-3 w-full line-clamp-2 text-[1.2rem] font-black uppercase leading-[1.05] text-white drop-shadow-lg">
+            <div className="mb-3 max-h-[58px] w-full overflow-hidden px-1 text-[1.16rem] font-black uppercase leading-[1.18] text-white drop-shadow-lg">
               {shopData.name}
             </div>
 
@@ -284,8 +285,8 @@ export default function MerchantPromoBanner() {
 
               <div className="flex shrink-0 flex-col items-center rounded-lg border-[3px] border-[#FBBF24] bg-white p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
                 <div className="mb-1 text-[0.65rem] font-black uppercase text-[#003B95]">Barcode</div>
-                <div className="flex h-[76px] w-[76px] items-center justify-center overflow-hidden">
-                  <QRCodeSVG value={shopUrl} size={70} fgColor="#003B95" level="M" />
+                <div className="flex h-[92px] w-[92px] items-center justify-center overflow-hidden">
+                  <QRCodeSVG value={shopUrl} size={84} fgColor="#003B95" level="H" includeMargin={true} bgColor="#ffffff" />
                 </div>
               </div>
             </div>
