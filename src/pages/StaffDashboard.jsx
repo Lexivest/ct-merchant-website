@@ -108,6 +108,7 @@ function buildVisitTimeline(data, windowDays) {
         total_visits: Number(item.total_visits) || 0,
         unique_visitors: Number(item.unique_visitors) || 0,
         authenticated_visits: Number(item.authenticated_visits) || 0,
+        total_sessions: Number(item.total_sessions) || 0,
       },
     ])
   )
@@ -128,6 +129,7 @@ function buildVisitTimeline(data, windowDays) {
         total_visits: 0,
         unique_visitors: 0,
         authenticated_visits: 0,
+        total_sessions: 0,
       }
     )
   }
@@ -402,9 +404,11 @@ export default function StaffDashboard() {
   const visibleUsers = inactiveOnly ? userActivity.filter((item) => item.is_inactive) : userActivity
   const visitTimeline = buildVisitTimeline(visitStats, visitWindow)
   const todayKey = formatLagosDateKey(new Date())
-  const visitsToday = visitTimeline.find((item) => item.visit_date === todayKey)?.total_visits || 0
+  const pageVisitsToday = visitTimeline.find((item) => item.visit_date === todayKey)?.total_visits || 0
   const uniqueVisitorsToday = visitTimeline.find((item) => item.visit_date === todayKey)?.unique_visitors || 0
+  const sessionsToday = visitTimeline.find((item) => item.visit_date === todayKey)?.total_sessions || 0
   const totalVisitsInWindow = visitTimeline.reduce((sum, item) => sum + (Number(item.total_visits) || 0), 0)
+  const totalSessionsInWindow = visitTimeline.reduce((sum, item) => sum + (Number(item.total_sessions) || 0), 0)
   const totalInactiveUsers = userActivity.filter((item) => item.is_inactive).length
 
   const citySummaryMap = new Map()
@@ -507,9 +511,11 @@ export default function StaffDashboard() {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
               <FaChartLine className="text-xl text-blue-700" />
             </div>
-            <div className="text-3xl font-black text-slate-900">{visitsToday}</div>
-            <h3 className="mt-2 text-lg font-bold text-[#0F172A]">Visits Today</h3>
-            <p className="text-sm text-slate-500">{uniqueVisitorsToday} unique visitors today.</p>
+            <div className="text-3xl font-black text-slate-900">{pageVisitsToday}</div>
+            <h3 className="mt-2 text-lg font-bold text-[#0F172A]">Page Visits Today</h3>
+            <p className="text-sm text-slate-500">
+              {uniqueVisitorsToday} unique visitors, {sessionsToday} sessions today.
+            </p>
           </div>
         </div>
 
@@ -517,8 +523,8 @@ export default function StaffDashboard() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-xl font-black text-slate-900">Website Visit Stats</h2>
-                <p className="text-sm text-slate-500">Daily traffic trend for the last {visitWindow} days.</p>
+                <h2 className="text-xl font-black text-slate-900">Website Traffic</h2>
+                <p className="text-sm text-slate-500">Daily page visits for the last {visitWindow} days.</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {[7, 30, 90].map((days) => (
@@ -548,7 +554,7 @@ export default function StaffDashboard() {
               <>
                 <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="rounded-2xl bg-slate-50 p-4">
-                    <div className="text-xs font-bold uppercase tracking-wide text-slate-400">Total Visits</div>
+                    <div className="text-xs font-bold uppercase tracking-wide text-slate-400">Page Visits</div>
                     <div className="mt-2 text-2xl font-black text-slate-900">{totalVisitsInWindow}</div>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
@@ -558,10 +564,8 @@ export default function StaffDashboard() {
                     </div>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
-                    <div className="text-xs font-bold uppercase tracking-wide text-slate-400">Authenticated Visits</div>
-                    <div className="mt-2 text-2xl font-black text-slate-900">
-                      {visitTimeline.reduce((sum, item) => sum + (Number(item.authenticated_visits) || 0), 0)}
-                    </div>
+                    <div className="text-xs font-bold uppercase tracking-wide text-slate-400">Sessions</div>
+                    <div className="mt-2 text-2xl font-black text-slate-900">{totalSessionsInWindow}</div>
                   </div>
                 </div>
                 <VisitTrendChart data={visitTimeline} />
