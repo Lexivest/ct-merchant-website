@@ -51,6 +51,14 @@ function wrapTextLines(input, maxCharsPerLine, maxLines) {
   return lines.slice(0, maxLines);
 }
 
+function normalizeWhatsAppNumber(input) {
+  const digits = String(input || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("234")) return digits;
+  if (digits.startsWith("0")) return `234${digits.slice(1)}`;
+  return digits;
+}
+
 export default function StaffIDGenerator() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
@@ -149,6 +157,7 @@ export default function StaffIDGenerator() {
   const categoryName = shopData?.category || "General";
   const addressText = shopData?.address || "Verified physical location";
   const uniqueId = shopData?.unique_id || "PENDING";
+  const whatsappNumber = useMemo(() => normalizeWhatsAppNumber(shopData?.phone), [shopData?.phone]);
   const exportBusinessLines = useMemo(() => wrapTextLines(businessName, 18, 2), [businessName]);
   const exportProprietorLines = useMemo(() => wrapTextLines(proprietorName, 18, 2), [proprietorName]);
   const exportCategoryLines = useMemo(() => wrapTextLines(categoryName, 19, 2), [categoryName]);
@@ -214,8 +223,21 @@ export default function StaffIDGenerator() {
           files: [file],
         });
       } else {
-        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
-        alert("This browser cannot attach the ID image directly to WhatsApp. Use Save HD Asset if you need to send the card image.");
+        const webWhatsAppUrl = whatsappNumber
+          ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`
+          : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+
+        if (whatsappNumber) {
+          const appWhatsAppUrl = `whatsapp://send?phone=${whatsappNumber}&text=${encodeURIComponent(msg)}`;
+          window.location.href = appWhatsAppUrl;
+          setTimeout(() => {
+            window.open(webWhatsAppUrl, "_blank", "noopener,noreferrer");
+          }, 700);
+        } else {
+          window.open(webWhatsAppUrl, "_blank", "noopener,noreferrer");
+        }
+
+        alert("This browser cannot attach the ID image directly, so we opened the merchant's WhatsApp chat with the message filled in. Use Save HD Asset if you need to send the image itself.");
       }
     } catch (err) {
       if (err.name !== "AbortError") {
