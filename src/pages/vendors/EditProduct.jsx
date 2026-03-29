@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
@@ -47,6 +47,18 @@ const techCats = ["Mobile Phones & Accessories", "Computers & IT Services", "Ele
 const fashionCats = ["Fashion & Apparel"];
 const consumablesCats = ["Groceries & Supermarkets", "Beauty & Personal Care", "Pharmacies & Health Shops", "Food & Drinks", "Agriculture & Agro-Allied"];
 const propertyCats = ["Real Estate & Properties", "Hotels & Accommodations"];
+const fallbackCategoryOptions = [
+  ...techCats,
+  ...fashionCats,
+  ...consumablesCats,
+  ...propertyCats,
+  "Home & Kitchen",
+  "Sports",
+  "Health & Fitness",
+  "Logistics & Delivery",
+  "Education & Training",
+  "Artisans",
+];
 
 // --- SHIMMER COMPONENT ---
 function EditProductShimmer() {
@@ -138,6 +150,7 @@ export default function EditProduct() {
 
   const [productData, setProductData] = useState(null);
   const [activeOffersCount, setActiveOffersCount] = useState(0);
+  const [categoryOptionsData, setCategoryOptionsData] = useState([]);
 
   // Form State
   const [form, setForm] = useState({
@@ -195,8 +208,14 @@ export default function EditProduct() {
         const { data: profile } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).maybeSingle();
         if (profile?.is_suspended) throw new Error("Account restricted.");
 
-        const { data: prod, error: prodErr } = await supabase.from("products").select("*").eq("id", productId).maybeSingle();
+        const [{ data: prod, error: prodErr }, { data: categoryRows, error: categoryErr }] = await Promise.all([
+          supabase.from("products").select("*").eq("id", productId).maybeSingle(),
+          supabase.from("categories").select("name").order("name"),
+        ]);
+
         if (prodErr || !prod) throw new Error("Product not found.");
+        if (categoryErr) throw categoryErr;
+        setCategoryOptionsData((categoryRows || []).map((item) => item.name).filter(Boolean));
 
         const { data: shop } = await supabase.from("shops").select("id, is_open").eq("id", prod.shop_id).eq("owner_id", user.id).maybeSingle();
         if (!shop) throw new Error("Access denied to this product's shop.");
@@ -540,6 +559,14 @@ export default function EditProduct() {
   const liveDiscPerc = parseFloat(form.discountPercent) || 0;
   const isLiveDiscValid = form.isDiscount && form.condition !== "Fairly Used" && liveDiscPerc > 0 && liveDiscPerc <= 20;
   const liveFinalPrice = isLiveDiscValid ? livePrice - livePrice * (liveDiscPerc / 100) : livePrice;
+  const categoryOptions = useMemo(() => {
+    const source = categoryOptionsData.length > 0 ? categoryOptionsData : fallbackCategoryOptions;
+    const unique = Array.from(new Set(source.map((item) => String(item || "").trim()).filter(Boolean)));
+    const withCurrent = form.category && !unique.includes(form.category) ? [...unique, form.category] : unique;
+    return withCurrent
+      .filter((item) => item.toLowerCase() !== "other")
+      .map((item) => ({ value: item, label: item }));
+  }, [categoryOptionsData, form.category]);
 
 
   if (authLoading || loading) return <EditProductShimmer />;
@@ -558,17 +585,6 @@ export default function EditProduct() {
       </div>
     );
   }
-
-  const categoryOptions = [
-    ...techCats.map(c => ({ value: c, label: c })),
-    ...fashionCats.map(c => ({ value: c, label: c })),
-    ...consumablesCats.map(c => ({ value: c, label: c })),
-    ...propertyCats.map(c => ({ value: c, label: c })),
-    { value: "Logistics & Delivery", label: "Logistics & Delivery" },
-    { value: "Education & Training", label: "Education & Training" },
-    { value: "Artisans", label: "Artisans" },
-    { value: "Other", label: "Other" }
-  ];
 
   return (
     <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] pb-12">

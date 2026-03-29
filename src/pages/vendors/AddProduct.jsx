@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
@@ -48,6 +48,18 @@ const techCats = ["Mobile Phones & Accessories", "Computers & IT Services", "Ele
 const fashionCats = ["Fashion & Apparel"];
 const consumablesCats = ["Groceries & Supermarkets", "Beauty & Personal Care", "Pharmacies & Health Shops", "Food & Drinks", "Agriculture & Agro-Allied"];
 const propertyCats = ["Real Estate & Properties", "Hotels & Accommodations"];
+const fallbackCategoryOptions = [
+  ...techCats,
+  ...fashionCats,
+  ...consumablesCats,
+  ...propertyCats,
+  "Home & Kitchen",
+  "Sports",
+  "Health & Fitness",
+  "Logistics & Delivery",
+  "Education & Training",
+  "Artisans",
+];
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function AddProductShimmer() {
@@ -181,6 +193,7 @@ export default function AddProduct() {
   const [activeOffersCount, setActiveOffersCount] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [categoryOptionsData, setCategoryOptionsData] = useState([]);
 
   // Form State
   const [form, setForm] = useState({
@@ -245,13 +258,15 @@ export default function AddProduct() {
         if (shop.is_open === false) throw new Error("Shop is suspended.");
 
         // Check Limits
-        const [prodRes, discountRes] = await Promise.all([
+        const [prodRes, discountRes, categoriesRes] = await Promise.all([
           supabase.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shopId),
           supabase.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shopId).not("discount_price", "is", null),
+          supabase.from("categories").select("name").order("name"),
         ]);
 
         if (prodRes.count >= MAX_PRODUCTS_LIMIT) setLimitReached(true);
         setActiveOffersCount(discountRes.count || 0);
+        setCategoryOptionsData((categoriesRes.data || []).map((item) => item.name).filter(Boolean));
 
       } catch (err) {
         setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
@@ -506,6 +521,13 @@ export default function AddProduct() {
   const liveDiscPerc = parseFloat(form.discountPercent) || 0;
   const isLiveDiscValid = form.isDiscount && form.condition !== "Fairly Used" && liveDiscPerc > 0 && liveDiscPerc <= 20;
   const liveFinalPrice = isLiveDiscValid ? livePrice - livePrice * (liveDiscPerc / 100) : livePrice;
+  const categoryOptions = useMemo(() => {
+    const source = categoryOptionsData.length > 0 ? categoryOptionsData : fallbackCategoryOptions;
+    const unique = Array.from(new Set(source.map((item) => String(item || "").trim()).filter(Boolean)));
+    return unique
+      .filter((item) => item.toLowerCase() !== "other")
+      .map((item) => ({ value: item, label: item }));
+  }, [categoryOptionsData]);
 
 
   if (authLoading || loading) {
@@ -547,17 +569,6 @@ export default function AddProduct() {
       </div>
     );
   }
-
-  const categoryOptions = [
-    ...techCats.map(c => ({ value: c, label: c })),
-    ...fashionCats.map(c => ({ value: c, label: c })),
-    ...consumablesCats.map(c => ({ value: c, label: c })),
-    ...propertyCats.map(c => ({ value: c, label: c })),
-    { value: "Logistics & Delivery", label: "Logistics & Delivery" },
-    { value: "Education & Training", label: "Education & Training" },
-    { value: "Artisans", label: "Artisans" },
-    { value: "Other", label: "Other" }
-  ];
 
   return (
     <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] pb-12">

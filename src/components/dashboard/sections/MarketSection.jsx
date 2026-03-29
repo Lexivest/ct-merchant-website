@@ -21,7 +21,7 @@ function PromoSlider({ promos }) {
   if (!promos?.length) return null
 
   return (
-    <div className="promo-banner-slider relative mb-4 h-[280px] overflow-hidden bg-[#0F1111] max-[768px]:h-[180px]">
+    <div className="promo-banner-slider relative mb-4 aspect-video w-full max-h-[400px] overflow-hidden bg-[#0F1111]">
       {promos.map((promo, idx) => (
         <div
           key={promo.id || idx}
@@ -157,7 +157,7 @@ function MarketSection({
     return (
       <div className="screen active w-full pb-8 bg-slate-50">
         {/* Promo Skeleton */}
-        <ShimmerBlock className="mb-4 h-[280px] w-full rounded-none max-[768px]:h-[180px]" />
+        <ShimmerBlock className="mb-4 aspect-video w-full max-h-[400px] rounded-none" />
         
         {/* Featured Shops Skeleton */}
         <div className="area-block-wrap mb-2 bg-white pt-4">
