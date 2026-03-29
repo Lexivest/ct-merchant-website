@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabase"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
@@ -400,7 +400,7 @@ export default function StaffDashboard() {
     `https://ui-avatars.com/api/?name=${encodeURIComponent(staffData.full_name)}&background=2E1065&color=fff&size=150&font-size=0.4`
 
   const visibleUsers = inactiveOnly ? userActivity.filter((item) => item.is_inactive) : userActivity
-  const visitTimeline = useMemo(() => buildVisitTimeline(visitStats, visitWindow), [visitStats, visitWindow])
+  const visitTimeline = buildVisitTimeline(visitStats, visitWindow)
   const todayKey = formatLagosDateKey(new Date())
   const visitsToday = visitTimeline.find((item) => item.visit_date === todayKey)?.total_visits || 0
   const uniqueVisitorsToday = visitTimeline.find((item) => item.visit_date === todayKey)?.unique_visitors || 0
