@@ -59,6 +59,24 @@ function normalizeWhatsAppNumber(input) {
   return digits;
 }
 
+function openWhatsAppChat(phone, message) {
+  const encoded = encodeURIComponent(message);
+  const webWhatsAppUrl = phone
+    ? `https://wa.me/${phone}?text=${encoded}`
+    : `https://wa.me/?text=${encoded}`;
+
+  if (phone) {
+    const appWhatsAppUrl = `whatsapp://send?phone=${phone}&text=${encoded}`;
+    window.location.href = appWhatsAppUrl;
+    setTimeout(() => {
+      window.open(webWhatsAppUrl, "_blank", "noopener,noreferrer");
+    }, 700);
+    return;
+  }
+
+  window.open(webWhatsAppUrl, "_blank", "noopener,noreferrer");
+}
+
 export default function StaffIDGenerator() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
@@ -210,11 +228,12 @@ export default function StaffIDGenerator() {
   };
 
   const handleWhatsAppShare = async () => {
+    const msg = `Hello ${proprietorName}, your official CTMerchant Business ID for "${businessName}" is ready. ID: ${uniqueId}.`;
+
     try {
       setActiveAction("whatsapp");
       const blob = await generateCardBlob();
       const file = new File([blob], `CTM_BUSINESS_ID_${uniqueId}.png`, { type: "image/png" });
-      const msg = `Hello ${proprietorName}, your official CTMerchant Business ID for "${businessName}" is ready. ID: ${uniqueId}.`;
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
@@ -223,26 +242,14 @@ export default function StaffIDGenerator() {
           files: [file],
         });
       } else {
-        const webWhatsAppUrl = whatsappNumber
-          ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`
-          : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-
-        if (whatsappNumber) {
-          const appWhatsAppUrl = `whatsapp://send?phone=${whatsappNumber}&text=${encodeURIComponent(msg)}`;
-          window.location.href = appWhatsAppUrl;
-          setTimeout(() => {
-            window.open(webWhatsAppUrl, "_blank", "noopener,noreferrer");
-          }, 700);
-        } else {
-          window.open(webWhatsAppUrl, "_blank", "noopener,noreferrer");
-        }
-
+        openWhatsAppChat(whatsappNumber, msg);
         alert("This browser cannot attach the ID image directly, so we opened the merchant's WhatsApp chat with the message filled in. Use Save HD Asset if you need to send the image itself.");
       }
     } catch (err) {
       if (err.name !== "AbortError") {
         console.error("Error sharing:", err);
-        alert("Failed to share to WhatsApp. Please try again.");
+        openWhatsAppChat(whatsappNumber, msg);
+        alert("Direct image sharing was not available on this device, so we opened the merchant's WhatsApp chat instead.");
       }
     } finally {
       setActiveAction(null);
