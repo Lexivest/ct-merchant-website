@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import html2canvas from "html2canvas";
@@ -18,6 +18,43 @@ import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
+
+function wrapTextLines(input, maxCharsPerLine, maxLines) {
+  const text = String(input || "").trim().replace(/\s+/g, " ");
+  if (!text) return [""];
+
+  const words = text.split(" ");
+  const lines = [];
+  let current = "";
+  let index = 0;
+
+  for (; index < words.length; index += 1) {
+    const word = words[index];
+    const next = current ? `${current} ${word}` : word;
+    if (next.length <= maxCharsPerLine || !current) {
+      current = next;
+      continue;
+    }
+
+    lines.push(current);
+    current = word;
+
+    if (lines.length === maxLines - 1) break;
+  }
+
+  const remainingWords = lines.length === maxLines - 1
+    ? [current, ...words.slice(index + 1)].filter(Boolean).join(" ")
+    : current;
+
+  if (remainingWords) {
+    const clipped = remainingWords.length > maxCharsPerLine
+      ? `${remainingWords.slice(0, Math.max(0, maxCharsPerLine - 1)).trimEnd()}...`
+      : remainingWords;
+    lines.push(clipped);
+  }
+
+  return lines.slice(0, maxLines);
+}
 
 // --- SHIMMER COMPONENT ---
 function PromoBannerShimmer() {
@@ -57,6 +94,7 @@ export default function MerchantPromoBanner() {
   const [productImages, setProductImages] = useState([]);
 
   const bannerRef = useRef(null);
+  const exportBannerRef = useRef(null);
 
   useEffect(() => {
     async function fetchBannerData() {
@@ -134,9 +172,9 @@ export default function MerchantPromoBanner() {
 
 
   const generateBannerBlob = async () => {
-    if (!bannerRef.current) throw new Error("Banner element not found.");
+    if (!exportBannerRef.current) throw new Error("Banner element not found.");
     
-    const canvas = await html2canvas(bannerRef.current, {
+    const canvas = await html2canvas(exportBannerRef.current, {
       scale: 4,
       useCORS: true,
       backgroundColor: "#003B95",
@@ -197,6 +235,14 @@ export default function MerchantPromoBanner() {
     }
   };
 
+  const displayAddress = shopData?.address || "Registered Business Address";
+  const shopUrlText = `www.ctmerchant.com.ng/shop-detail?id=${shopData?.id ?? ""}`;
+  const shopUrl = `https://${shopUrlText}`;
+  const websiteText = "www.ctmerchant.com.ng";
+  const exportShopNameLines = useMemo(() => wrapTextLines(shopData?.name || "", 22, 2), [shopData?.name]);
+  const exportCategoryLines = useMemo(() => wrapTextLines(shopData?.category || "Shop & Retail", 24, 2), [shopData?.category]);
+  const exportAddressLines = useMemo(() => wrapTextLines(displayAddress, 34, 2), [displayAddress]);
+
   if (authLoading || loading) return <PromoBannerShimmer />;
 
   if (error) {
@@ -215,11 +261,6 @@ export default function MerchantPromoBanner() {
     );
   }
 
-  const displayAddress = shopData.address || "Registered Business Address";
-  const shopUrlText = `www.ctmerchant.com.ng/shop-detail?id=${shopData.id}`;
-  const shopUrl = `https://${shopUrlText}`;
-  const websiteText = "www.ctmerchant.com.ng";
-
   return (
     <div className="flex min-h-screen flex-col items-center bg-[#F3F4F6] text-[#0F1111]">
       <header className="sticky top-0 z-40 flex w-full items-center gap-4 bg-[#131921] px-4 py-3 text-white shadow-sm">
@@ -236,6 +277,76 @@ export default function MerchantPromoBanner() {
           <p className="text-[0.85rem] leading-relaxed text-[#475569]">
             We automatically pulled your latest products to create this high-resolution banner. It is perfect for printing as a flex banner for your physical shop or broadcasting on WhatsApp.
           </p>
+        </div>
+
+        <div className="fixed -left-[10000px] top-0 z-[-1] pointer-events-none opacity-0">
+          <div
+            ref={exportBannerRef}
+            className="relative h-[450px] w-[800px] overflow-hidden bg-[#003B95] text-white"
+          >
+            <div className="absolute left-0 top-0 z-10 grid h-[402px] w-[56%] grid-cols-3 grid-rows-2 gap-2 bg-white p-2.5 pr-10">
+              {productImages.map((imgUrl, idx) => (
+                <div key={`export-${idx}`} className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-md border border-[#E2E8F0] bg-[#F8FAFC] p-1">
+                  <img crossOrigin="anonymous" src={imgUrl} alt={`Export Product ${idx}`} className="h-full w-full object-contain" />
+                </div>
+              ))}
+            </div>
+
+            <div className="absolute right-0 top-0 z-20 h-[402px] w-[48%] rounded-bl-[170px] border-l-[8px] border-[#FBBF24] bg-[#002f7a]" />
+
+            <div className="absolute right-[15px] top-[20px] z-30 flex h-[362px] w-[370px] flex-col items-center text-center">
+              <div className="mb-3 w-full px-1 text-[1rem] font-black uppercase leading-[1.18] text-white">
+                {exportShopNameLines.map((line, index) => (
+                  <span key={`export-shop-${index}`} className="block min-h-[1.15rem]">
+                    {line}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mb-3 inline-flex max-w-[320px] flex-col items-center justify-center gap-0.5 self-center rounded-full border-2 border-white bg-[#EA580C] px-8 py-2 text-center text-[0.94rem] font-semibold leading-[1.08] text-white">
+                {exportCategoryLines.map((line, index) => (
+                  <span key={`export-category-${index}`} className="block">
+                    {line}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mb-3 px-2.5 text-[0.9rem] font-semibold leading-[1.3] text-[#E2E8F0]">
+                <FaLocationDot className="mr-1 inline align-text-top text-[#FBBF24]" />
+                <div className="inline-block align-top text-left">
+                  {exportAddressLines.map((line, index) => (
+                    <span key={`export-address-${index}`} className="block min-h-[1rem]">
+                      {line}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-1 text-[0.92rem] font-bold uppercase tracking-[0.08em] text-[#E2E8F0]">
+                Shop Online With Us On
+              </div>
+              <div className="mb-3 text-[1.38rem] font-black leading-tight text-white">
+                CTMerchant <span className="text-[#FBBF24]">{shopData?.cities?.name || "Local"}</span> Repo
+              </div>
+
+              <div className="mt-1 flex w-full items-center justify-center gap-3">
+                <div className="shrink-0 text-right text-[0.78rem] font-black uppercase leading-tight tracking-[0.05em] text-[#FBBF24]">
+                  <span className="whitespace-nowrap">ID: {shopData?.unique_id || "PENDING"}</span>
+                </div>
+
+                <div className="flex shrink-0 flex-col items-center rounded-lg border-[3px] border-[#FBBF24] bg-white p-1.5">
+                  <div className="mb-1 text-[0.65rem] font-black uppercase text-[#003B95]">Barcode</div>
+                  <div className="flex h-[92px] w-[92px] items-center justify-center overflow-hidden">
+                    <QRCodeSVG value={shopUrl} size={84} fgColor="#003B95" level="H" includeMargin={true} bgColor="#ffffff" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute bottom-0 left-0 z-[40] flex h-[48px] w-full items-center justify-center border-t-[4px] border-[#FBBF24] bg-[#001E50] text-[1.1rem] font-semibold text-white">
+              Visit <span className="mx-1.5 font-extrabold text-[#FBBF24]">{websiteText}</span> or scan barcode
+            </div>
+          </div>
         </div>
 
         {/* --- THE REDESIGNED PROMO BANNER --- */}
@@ -263,7 +374,7 @@ export default function MerchantPromoBanner() {
               {shopData.name}
             </div>
 
-            <div className="mb-3 rounded-full border-2 border-white bg-[#EA580C] px-5 py-1.5 text-[1.15rem] font-semibold leading-tight text-white shadow-[0_6px_12px_rgba(234,88,12,0.4)]">
+            <div className="mb-3 inline-flex max-w-[330px] flex-col items-center justify-center gap-0.5 self-center rounded-full border-2 border-white bg-[#EA580C] px-8 py-2 text-center text-[1.02rem] font-semibold leading-[1.08] text-white shadow-[0_6px_12px_rgba(234,88,12,0.4)]">
               {shopData.category ? shopData.category : "Shop & Retail"}
             </div>
 

@@ -7,13 +7,49 @@ import {
   FaCircleNotch,
   FaDownload,
   FaTriangleExclamation,
-  FaWhatsapp,
-  FaShareNodes
+  FaWhatsapp
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import ctmLogo from "../../assets/images/logo.jpg";
+
+function wrapTextLines(input, maxCharsPerLine, maxLines) {
+  const text = String(input || "").trim().replace(/\s+/g, " ");
+  if (!text) return [""];
+
+  const words = text.split(" ");
+  const lines = [];
+  let current = "";
+  let index = 0;
+
+  for (; index < words.length; index += 1) {
+    const word = words[index];
+    const next = current ? `${current} ${word}` : word;
+    if (next.length <= maxCharsPerLine || !current) {
+      current = next;
+      continue;
+    }
+
+    lines.push(current);
+    current = word;
+
+    if (lines.length === maxLines - 1) break;
+  }
+
+  const remainingWords = lines.length === maxLines - 1
+    ? [current, ...words.slice(index + 1)].filter(Boolean).join(" ")
+    : current;
+
+  if (remainingWords) {
+    const clipped = remainingWords.length > maxCharsPerLine
+      ? `${remainingWords.slice(0, Math.max(0, maxCharsPerLine - 1)).trimEnd()}...`
+      : remainingWords;
+    lines.push(clipped);
+  }
+
+  return lines.slice(0, maxLines);
+}
 
 export default function StaffIDGenerator() {
   const navigate = useNavigate();
@@ -25,12 +61,13 @@ export default function StaffIDGenerator() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [downloading, setDownloading] = useState(false);
+  const [activeAction, setActiveAction] = useState(null);
   const [shopData, setShopData] = useState(null);
   const [profileData, setProfileData] = useState(null);
   const [cityName, setCityName] = useState("Local");
 
   const cardRef = useRef(null);
+  const exportCardRef = useRef(null);
 
   useEffect(() => {
     async function fetchMerchantData() {
@@ -112,11 +149,15 @@ export default function StaffIDGenerator() {
   const categoryName = shopData?.category || "General";
   const addressText = shopData?.address || "Verified physical location";
   const uniqueId = shopData?.unique_id || "PENDING";
+  const exportBusinessLines = useMemo(() => wrapTextLines(businessName, 18, 2), [businessName]);
+  const exportProprietorLines = useMemo(() => wrapTextLines(proprietorName, 18, 2), [proprietorName]);
+  const exportCategoryLines = useMemo(() => wrapTextLines(categoryName, 19, 2), [categoryName]);
+  const exportAddressLines = useMemo(() => wrapTextLines(addressText, 42, 3), [addressText]);
 
   const generateCardBlob = async () => {
-    if (!cardRef.current) throw new Error("Card element not found.");
+    if (!exportCardRef.current) throw new Error("Card element not found.");
 
-    const canvas = await html2canvas(cardRef.current, {
+    const canvas = await html2canvas(exportCardRef.current, {
       scale: 5,
       useCORS: true,
       backgroundColor: "#ffffff",
@@ -139,7 +180,7 @@ export default function StaffIDGenerator() {
 
   const handleDownloadOnly = async () => {
     try {
-      setDownloading(true);
+      setActiveAction("download");
       const blob = await generateCardBlob();
       const url = URL.createObjectURL(blob);
 
@@ -155,49 +196,34 @@ export default function StaffIDGenerator() {
       console.error(err);
       alert("Failed to generate ID file.");
     } finally {
-      setDownloading(false);
+      setActiveAction(null);
     }
   };
 
-  // --- NEW NATIVE SHARE ENGINE ---
-  const handleNativeShare = async () => {
+  const handleWhatsAppShare = async () => {
     try {
-      setDownloading(true);
+      setActiveAction("whatsapp");
       const blob = await generateCardBlob();
-      
-      // Package blob as a physical file
       const file = new File([blob], `CTM_BUSINESS_ID_${uniqueId}.png`, { type: "image/png" });
-      const msg = `Hello ${proprietorName}, your official CT-Merchant Business ID for *"${businessName}"* is ready. Unique ID: *${uniqueId}*.`;
+      const msg = `Hello ${proprietorName}, your official CTMerchant Business ID for "${businessName}" is ready. ID: ${uniqueId}.`;
 
-      // Check if device supports native file sharing (Mobile Apps, Safari, Edge)
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: 'CTMerchant Business ID',
+          title: "CTMerchant Business ID",
           text: msg,
-          files: [file]
+          files: [file],
         });
       } else {
-        // Fallback for incompatible desktop browsers
-        alert("Native sharing is not supported on this browser. The file will be downloaded instead.");
-        handleDownloadOnly();
-        
-        // Open standard text WhatsApp as a fallback
-        let phone = shopData?.phone || "";
-        if (phone.startsWith("0")) phone = `234${phone.slice(1)}`;
-        if (phone) {
-          setTimeout(() => {
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
-          }, 500);
-        }
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+        alert("This browser cannot attach the ID image directly to WhatsApp. Use Save HD Asset if you need to send the card image.");
       }
     } catch (err) {
-      // Ignore AbortError (happens if the user clicks "cancel" on the share sheet)
-      if (err.name !== 'AbortError') {
+      if (err.name !== "AbortError") {
         console.error("Error sharing:", err);
-        alert("Failed to share ID card directly. Please use the download button.");
+        alert("Failed to share to WhatsApp. Please try again.");
       }
     } finally {
-      setDownloading(false);
+      setActiveAction(null);
     }
   };
 
@@ -252,10 +278,10 @@ export default function StaffIDGenerator() {
         <div className="mb-10 flex w-full gap-4">
           <button
             onClick={handleDownloadOnly}
-            disabled={downloading}
+            disabled={activeAction !== null}
             className="group flex flex-1 flex-col items-center justify-center rounded-3xl border border-white/20 bg-gradient-to-br from-white/12 via-white/8 to-white/6 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all hover:-translate-y-1 hover:border-pink-400/50 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
-            {downloading ? (
+            {activeAction === "download" ? (
               <FaCircleNotch className="mb-2 animate-spin text-2xl text-fuchsia-300" />
             ) : (
               <FaDownload className="mb-2 text-2xl text-fuchsia-300 transition-transform group-hover:scale-110" />
@@ -266,19 +292,131 @@ export default function StaffIDGenerator() {
           </button>
 
           <button
-            onClick={handleNativeShare}
-            disabled={downloading}
+            onClick={handleWhatsAppShare}
+            disabled={activeAction !== null}
             className="group flex flex-1 flex-col items-center justify-center rounded-3xl border border-white/20 bg-gradient-to-br from-white/12 via-white/8 to-white/6 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all hover:-translate-y-1 hover:border-emerald-400/50 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
-             {downloading ? (
+             {activeAction === "whatsapp" ? (
               <FaCircleNotch className="mb-2 animate-spin text-2xl text-emerald-300" />
             ) : (
-              <FaShareNodes className="mb-2 text-2xl text-emerald-300 transition-transform group-hover:scale-110" />
+              <FaWhatsapp className="mb-2 text-2xl text-emerald-300 transition-transform group-hover:scale-110" />
             )}
             <span className="text-xs font-black uppercase tracking-wider text-white mt-1 text-center">
-              Share Direct
+              Share To WhatsApp
             </span>
           </button>
+        </div>
+
+        <div className="fixed -left-[10000px] top-0 z-[-1] pointer-events-none opacity-0">
+          <div
+            ref={exportCardRef}
+            className="relative overflow-hidden bg-white text-[#0f172a]"
+            style={{
+              width: "430px",
+              height: "270px",
+              borderRadius: "16px",
+              border: "1px solid #cbd5e1",
+            }}
+          >
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,#fdf2f8_0%,#eef2ff_48%,#ffffff_100%)]" />
+            <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-[#f9a8d4]/35" />
+            <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-[#818cf8]/25" />
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[92px] font-black leading-none text-slate-200/70">
+              CTM
+            </div>
+
+            <div className="relative z-10 flex min-h-[56px] items-center justify-center border-b border-[#cbd5e1] bg-[linear-gradient(90deg,#1e1b4b_0%,#4c1d95_55%,#be185d_100%)] px-4 py-2 text-white">
+              <img
+                src={ctmLogo}
+                alt="CTMerchant Logo"
+                className="absolute left-4 h-[34px] w-[34px] rounded-md border border-white/25 bg-white object-cover p-0.5"
+                crossOrigin="anonymous"
+              />
+              <div className="text-center leading-none">
+                <p className="text-[0.85rem] font-black uppercase tracking-[0.15em] text-white">
+                  CTMerchant <span className="text-[#fbcfe8]">{cityName}</span> Branch
+                </p>
+                <p className="mt-1 text-[0.55rem] font-extrabold uppercase tracking-[0.25em] text-white">
+                  Business ID Card
+                </p>
+                <p className="mt-0.5 text-[0.45rem] font-bold uppercase tracking-[0.1em] text-slate-200">
+                  www.ctmerchant.com.ng
+                </p>
+              </div>
+            </div>
+
+            <div className="relative z-10 flex h-[184px] px-4 py-3">
+              <div className="flex flex-1 flex-col justify-start pr-3">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                  <div className="min-w-0">
+                    <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Business Name</p>
+                    <div className="mt-1 text-[0.74rem] font-extrabold leading-[1.24] text-slate-900">
+                      {exportBusinessLines.map((line, index) => (
+                        <span key={`business-${index}`} className="block min-h-[0.92rem]">
+                          {line}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Proprietor</p>
+                    <div className="mt-1 text-[0.68rem] font-bold leading-[1.24] text-slate-900">
+                      {exportProprietorLines.map((line, index) => (
+                        <span key={`proprietor-${index}`} className="block min-h-[0.84rem]">
+                          {line}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Category</p>
+                    <div className="mt-1 text-[0.68rem] font-bold leading-[1.24] text-[#be185d]">
+                      {exportCategoryLines.map((line, index) => (
+                        <span key={`category-${index}`} className="block min-h-[0.84rem]">
+                          {line}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Valid Until</p>
+                    <p className="mt-0.5 text-[0.75rem] font-black leading-tight text-[#4338ca]">{formattedExpiry}</p>
+                  </div>
+                </div>
+                <div className="mt-3 min-w-0 border-t border-slate-200 pt-2.5">
+                  <p className="text-[0.48rem] font-black uppercase tracking-[0.22em] text-slate-500">Verified Address</p>
+                  <div className="mt-1 text-[0.62rem] font-semibold italic leading-[1.26] text-slate-700">
+                    {exportAddressLines.map((line, index) => (
+                      <span key={`address-${index}`} className="block min-h-[0.78rem]">
+                        {line}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex w-[105px] flex-col items-center justify-between border-l border-slate-200 pl-3 py-0.5">
+                <div className="w-full rounded-lg bg-white/90 px-1 py-1 text-center shadow-sm">
+                  <p className="text-[0.45rem] font-black uppercase tracking-[0.14em] text-slate-500">ID Number</p>
+                  <p className="mt-1 break-all font-mono text-[0.66rem] font-black leading-[1.1] tracking-[-0.02em] text-[#be185d]">
+                    {uniqueId}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                  <img src={merchantAvatar} alt={proprietorName} className="h-[60px] w-[60px] rounded-lg object-cover" crossOrigin="anonymous" />
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                  <QRCodeSVG value={verificationUrl} size={60} level="H" includeMargin={true} bgColor="#ffffff" fgColor="#1e1b4b" />
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 px-3 py-1.5">
+              <p className="text-center text-[0.45rem] font-bold leading-tight text-slate-600">
+                Disclaimer: CTMerchant is not liable for transactions or disputes arising from dealings by the holder of this card.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* --- THE COLOURFUL GLASS ID CARD --- */}
