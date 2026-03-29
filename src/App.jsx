@@ -16,6 +16,7 @@ import CreateAccount from "./pages/CreateAccount"
 import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import OnlineRouteGuard from "./components/common/OnlineRouteGuard"
+import SiteVisitTracker from "./components/common/SiteVisitTracker"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
 
@@ -359,6 +360,7 @@ function App() {
         />
       }
     >
+      <SiteVisitTracker />
       <Routes>
         {/* PUBLIC ROUTES */}
         <Route path="/" element={<Home />} />
