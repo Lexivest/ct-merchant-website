@@ -37,6 +37,24 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
     if (typeof navigator === "undefined") return false
     return !navigator.onLine
   })
+  const [isRetrying, setIsRetrying] = useState(false)
+  const retryKey =
+    typeof window === "undefined"
+      ? ""
+      : `ctm_chunk_retry_${window.location.pathname}_${pageLabel.replace(/\s+/g, "_")}`
+
+  function retryPage(forceManual = false) {
+    if (typeof window === "undefined") return
+    if (forceManual && retryKey) {
+      try {
+        window.sessionStorage.removeItem(retryKey)
+      } catch (error) {
+        console.warn("Could not clear chunk retry key", error)
+      }
+    }
+    setIsRetrying(true)
+    window.location.reload()
+  }
 
   useEffect(() => {
     function handleOnline() {
@@ -54,6 +72,31 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
     }
   }, [])
 
+  useEffect(() => {
+    if (typeof window === "undefined" || isOffline || !retryKey) return
+
+    let alreadyRetried = false
+    try {
+      alreadyRetried = window.sessionStorage.getItem(retryKey) === "1"
+    } catch (error) {
+      console.warn("Could not read chunk retry key", error)
+    }
+
+    if (alreadyRetried) return
+
+    try {
+      window.sessionStorage.setItem(retryKey, "1")
+    } catch (error) {
+      console.warn("Could not write chunk retry key", error)
+    }
+
+    const timer = window.setTimeout(() => {
+      retryPage(false)
+    }, 700)
+
+    return () => window.clearTimeout(timer)
+  }, [isOffline, retryKey])
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <div className="w-full max-w-lg rounded-[28px] border border-amber-200 bg-white p-8 text-center shadow-xl">
@@ -61,20 +104,20 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
           !
         </div>
         <h1 className="mt-5 text-3xl font-black text-slate-900">
-          {isOffline ? "You are offline" : "Page load interrupted"}
+          {isOffline ? "Network unavailable" : "Something happened"}
         </h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">
           {isOffline
-            ? `This screen (${pageLabel}) was not fully cached before your connection dropped. Reconnect and reload to continue.`
-            : `We could not load assets required for ${pageLabel}. Reload the app to continue.`}
+            ? "Reconnect and retry to continue."
+            : `We could not open ${pageLabel} right now. Retry to continue.`}
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={() => retryPage(true)}
             className="flex-1 rounded-2xl bg-slate-900 px-5 py-3 font-bold text-white transition hover:bg-slate-800"
           >
-            Reload app
+            {isRetrying ? "Retrying..." : "Retry"}
           </button>
         </div>
       </div>
