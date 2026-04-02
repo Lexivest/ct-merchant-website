@@ -564,12 +564,12 @@ function Home() {
                 </div>
               </div>
 
-              <div className="min-h-[34px] text-lg font-extrabold text-slate-900 md:text-2xl">
+              <div className="mt-4 min-h-[28px] text-lg font-extrabold leading-tight text-slate-900 md:min-h-[32px] md:text-2xl">
                 {currentPhraseText}
                 <span className="ml-1 inline-block animate-pulse text-pink-600">|</span>
               </div>
 
-              <p className="mt-4 max-w-xl text-base font-medium leading-7 text-slate-600">
+              <p className="mt-2 max-w-xl text-base font-medium leading-7 text-slate-600">
                 We provide a digital repository of physical shops, their products, and locations within a city.
               </p>
 
