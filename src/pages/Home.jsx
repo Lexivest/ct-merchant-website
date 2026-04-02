@@ -457,6 +457,31 @@ function Home() {
         canonicalPath="/"
       />
       <section className="overflow-x-hidden bg-pink-50 px-4 py-4 md:py-5">
+        <div className="mx-auto mb-4 w-full max-w-7xl lg:hidden">
+          <div className="overflow-hidden rounded-[22px] border border-pink-100 bg-white p-2 shadow-sm">
+            <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-transparent bg-pink-50 transition focus-within:border-pink-600">
+              <input
+                type="text"
+                value={repoSearchValue}
+                onChange={(e) => setRepoSearchValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleRepoSearch()
+                }}
+                placeholder="Search Repository"
+                className="min-w-0 flex-1 border-none bg-transparent px-4 text-base font-medium text-[#0F1111] outline-none placeholder:text-slate-500"
+              />
+              <button
+                type="button"
+                onClick={handleRepoSearch}
+                className="flex w-[56px] items-center justify-center bg-pink-600 text-white transition hover:bg-pink-700"
+                aria-label="Search repository"
+              >
+                <FaSearch />
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="mx-auto grid w-full max-w-7xl min-w-0 gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
           <div className="mb-2 min-w-0 bg-pink-200 p-0 shadow-sm md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
             <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
@@ -490,11 +515,8 @@ function Home() {
 
           <div className="min-w-0 rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-2 lg:row-span-2 lg:row-start-1">
             <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
-              <div className="rounded-[22px] bg-pink-200 p-1">
+              <div className="hidden rounded-[22px] bg-pink-200 p-1 lg:block">
                 <div className="rounded-[18px] border border-pink-100 bg-slate-50 p-4">
-                  <p className="mb-2 text-sm font-bold text-pink-600">
-                    Search Repository
-                  </p>
                   <div className="flex h-[42px] overflow-hidden rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
                     <input
                       type="text"
@@ -503,8 +525,8 @@ function Home() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleRepoSearch()
                       }}
-                      placeholder="Enter Merchant ID..."
-                      className="min-w-0 flex-1 border-none px-4 text-base text-[#0F1111] outline-none"
+                      placeholder="Search Repository"
+                      className="min-w-0 flex-1 border-none px-4 text-base text-[#0F1111] outline-none placeholder:text-slate-500"
                     />
                     <button
                       type="button"

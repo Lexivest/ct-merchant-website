@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { FaHeadset } from "react-icons/fa6"
+import { FaHeadset, FaEnvelope } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { useGlobalFeedback } from "./GlobalFeedbackProvider"
@@ -98,14 +98,19 @@ function FloatingContact() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={togglePopup}
-        title="Need Help? Contact Support"
-        className="fixed bottom-20 left-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-pink-600 text-2xl text-white shadow-[0_10px_25px_rgba(219,39,119,0.35)] transition hover:scale-105 hover:bg-pink-700"
-      >
-        <FaHeadset />
-      </button>
+      <div className="fixed bottom-20 left-6 z-40 flex flex-col items-center gap-1.5">
+        <button
+          type="button"
+          onClick={togglePopup}
+          title="Need Help? Contact Support"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-pink-600 text-[1.35rem] text-white shadow-[0_10px_25px_rgba(219,39,119,0.35)] transition hover:scale-105 hover:bg-pink-700"
+        >
+          <FaEnvelope />
+        </button>
+        <span className="pointer-events-none whitespace-nowrap rounded-xl border border-pink-100 bg-white px-2.5 py-1 text-[0.7rem] font-extrabold text-pink-600 shadow-sm">
+          Message Us
+        </span>
+      </div>
 
       <div
         className={`fixed bottom-36 left-6 z-40 w-[calc(100%-3rem)] max-w-[290px] overflow-hidden rounded-2xl border border-pink-100 bg-white shadow-2xl transition-all duration-300 ${
@@ -115,7 +120,10 @@ function FloatingContact() {
         }`}
       >
         <div className="flex items-center justify-between bg-slate-900 px-3.5 py-2.5 text-white">
-          <span className="text-[13px] font-bold">Message Us</span>
+          <span className="flex items-center gap-2 text-[13px] font-bold">
+            <FaHeadset />
+            Message Us
+          </span>
 
           <button
             type="button"
