@@ -662,7 +662,7 @@ function ProductDetail() {
                   />
                 </div>
 
-                {galleryImages.length > 1 ? (
+                {galleryImages.length > 0 || (currentShop && isLoggedIn) ? (
                   <div className="flex w-full gap-3 overflow-x-auto p-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {galleryImages.map((image) => (
                       <button
@@ -683,6 +683,30 @@ function ProductDetail() {
                         />
                       </button>
                     ))}
+
+                    {currentShop && isLoggedIn ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={showSecurityModal}
+                          disabled={!currentShop.whatsapp || stockCount <= 0}
+                          title={stockCount > 0 ? "Contact seller on WhatsApp" : "Out of stock"}
+                          className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-md bg-[#25D366] text-[1.4rem] text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                        >
+                          <FaWhatsapp />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={callMerchant}
+                          disabled={!currentShop.phone || stockCount <= 0}
+                          title={stockCount > 0 ? "Call seller" : "Out of stock"}
+                          className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-md bg-[#007185] text-[1.2rem] text-white transition hover:bg-[#005A6A] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                        >
+                          <FaPhone />
+                        </button>
+                      </>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -795,33 +819,6 @@ function ProductDetail() {
                   <span className="leading-6">{currentShop?.address || "..."}</span>
                 </div>
               </div>
-
-              {currentShop && isLoggedIn ? (
-                <div className="mt-5 flex w-full flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={callMerchant}
-                    disabled={!currentShop.phone || stockCount <= 0}
-                    className="min-w-[140px] flex-1 rounded-lg bg-[#007185] px-4 py-3.5 text-[1.05rem] font-bold text-white transition hover:bg-[#005A6A] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <FaPhone /> {stockCount > 0 ? "Call Seller" : "Out of Stock"}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={showSecurityModal}
-                    disabled={!currentShop.whatsapp || stockCount <= 0}
-                    className="min-w-[140px] flex-1 rounded-lg bg-[#25D366] px-4 py-3.5 text-[1.05rem] font-bold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <FaWhatsapp /> {stockCount > 0 ? "WhatsApp" : "Out of Stock"}
-                    </span>
-                  </button>
-                </div>
-              ) : null}
-
               <button
                 type="button"
                 onClick={() => (currentShop?.id ? navigate(`/shop-detail?id=${currentShop.id}`) : null)}
