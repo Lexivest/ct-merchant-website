@@ -151,6 +151,7 @@ function Home() {
   const googleButtonRef = useRef(null)
 
   const [repoSearchValue, setRepoSearchValue] = useState("")
+  const [repoSearchLoading, setRepoSearchLoading] = useState(false)
 
   useEffect(() => {
     const currentPhrase = phrases[phraseIndex]
@@ -467,10 +468,54 @@ function Home() {
     }
   }
 
-  function handleRepoSearch() {
+  async function handleRepoSearch() {
     const value = repoSearchValue.trim()
-    if (!value) return
-    navigate(`/reposearch?merchantId=${encodeURIComponent(value)}`)
+    if (!value || repoSearchLoading) return
+
+    if (isOffline) {
+      notify({
+        type: "error",
+        title: "Network Offline",
+        message: "Please connect to the internet to search the repository.",
+      })
+      return
+    }
+
+    try {
+      setRepoSearchLoading(true)
+
+      const { data, error } = await supabase.functions.invoke("repo-search", {
+        body: { merchantId: value },
+      })
+
+      if (error) {
+        throw new Error("Service unavailable. Please try again.")
+      }
+
+      if (data?.shop?.id) {
+        navigate(`/shop-detail?id=${data.shop.id}`)
+        return
+      }
+
+      if (data?.error || data?.not_found || !data?.shop) {
+        notify({
+          type: "info",
+          title: "Shop not found",
+          message: "We could not find any shop with that repository ID.",
+        })
+        return
+      }
+
+      navigate(`/reposearch?merchantId=${encodeURIComponent(value)}`)
+    } catch (error) {
+      notify({
+        type: "error",
+        title: "Repository search failed",
+        message: getFriendlyErrorMessage(error, "Please try again."),
+      })
+    } finally {
+      setRepoSearchLoading(false)
+    }
   }
 
   return (
@@ -497,10 +542,11 @@ function Home() {
               <button
                 type="button"
                 onClick={handleRepoSearch}
+                disabled={repoSearchLoading}
                 className="flex w-[56px] items-center justify-center bg-pink-600 text-white transition hover:bg-pink-700"
                 aria-label="Search repository"
               >
-                <FaSearch />
+                {repoSearchLoading ? "..." : <FaSearch />}
               </button>
             </div>
           </div>
@@ -555,10 +601,11 @@ function Home() {
                     <button
                       type="button"
                       onClick={handleRepoSearch}
+                      disabled={repoSearchLoading}
                       className="flex w-[52px] items-center justify-center bg-pink-600 text-white transition hover:bg-pink-700"
                       aria-label="Search repository"
                     >
-                      <FaSearch />
+                      {repoSearchLoading ? "..." : <FaSearch />}
                     </button>
                   </div>
                 </div>
