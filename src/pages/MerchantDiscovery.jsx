@@ -5,16 +5,14 @@ import { supabase } from "../lib/supabase"
 import useCachedFetch from "../hooks/useCachedFetch"
 import PageSeo from "../components/common/PageSeo"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
+import { ShimmerList } from "../components/common/Shimmers"
 
-function OpeningShopScreen() {
+function RepoSearchShimmer() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F3F4F6] px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-[#D5D9D9] bg-white px-6 py-10 text-center shadow-sm">
-        <div className="mx-auto h-2 w-24 animate-pulse rounded-full bg-pink-100" />
-        <h2 className="mt-5 text-2xl font-black text-[#0F1111]">Opening shop</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          Please wait while we open the merchant shop directly.
-        </p>
+    <div className="w-full max-w-[720px] pt-2">
+      <ShimmerList />
+      <div className="pt-5 text-center">
+        <p className="text-sm font-semibold text-slate-500">Loading shop...</p>
       </div>
     </div>
   )
@@ -48,7 +46,7 @@ function MerchantDiscovery() {
 
   // 2. Smart Caching Hook
   const cacheKey = `merchant_discovery_${merchantId || 'empty'}`
-  const { data, loading, error: dataError, isOffline } = useCachedFetch(
+  const { data, loading, error: dataError } = useCachedFetch(
     cacheKey,
     fetchMerchant,
     { dependencies: [merchantId], ttl: 1000 * 60 * 60 } // Cache results for 1 hour
@@ -94,11 +92,11 @@ function MerchantDiscovery() {
 
       <main className="flex justify-center px-5 py-10">
         {loading && !data ? (
-          <OpeningShopScreen />
+          <RepoSearchShimmer />
         ) : dataError && !data ? (
           <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} className="w-full max-w-[420px]" />
         ) : shop ? (
-          <OpeningShopScreen />
+          <RepoSearchShimmer />
         ) : null}
       </main>
     </div>

@@ -404,6 +404,10 @@ function App() {
     </ProtectedDashboardRoute>
   )
 
+  const withProtectedRoute = (element) => (
+    <ProtectedDashboardRoute>{element}</ProtectedDashboardRoute>
+  )
+
   return (
     <Suspense
       fallback={
@@ -436,7 +440,7 @@ function App() {
 
         <Route
           path="/reposearch"
-          element={withOnlineGuard(<MerchantDiscovery />)}
+          element={<MerchantDiscovery />}
         />
         <Route
           path="/shop-detail"
@@ -551,22 +555,22 @@ function App() {
 
         <Route
           path="/area"
-          element={withProtectedOnlineGuard(<Area />)}
+          element={withProtectedRoute(<Area />)}
         />
 
         <Route
           path="/cat"
-          element={withProtectedOnlineGuard(<Cat />)}
+          element={withProtectedRoute(<Cat />)}
         />
 
         <Route
           path="/search"
-          element={withProtectedOnlineGuard(<Search />)}
+          element={withProtectedRoute(<Search />)}
         />
 
         <Route
           path="/shop-index"
-          element={withProtectedOnlineGuard(<ShopIndex />)}
+          element={withProtectedRoute(<ShopIndex />)}
         />
 
         {/* --- CATCH-ALL 404 ROUTE --- */}

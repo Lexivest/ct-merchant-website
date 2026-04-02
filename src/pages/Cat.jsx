@@ -3,7 +3,6 @@ import {
   FaArrowLeft,
   FaChevronRight,
   FaStoreSlash,
-  FaTriangleExclamation,
   FaLayerGroup,
 } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
@@ -13,6 +12,7 @@ import { ShimmerBlock, ShimmerCard } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function CatShimmer({ catName }) {
@@ -190,18 +190,7 @@ function Cat() {
         {authLoading || (dataLoading && !data) ? (
           <CatShimmer catName={catName} />
         ) : dataError && !data ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-[#D5D9D9] bg-white px-5 py-16 text-center text-[#888C8C]">
-            <FaTriangleExclamation className="mb-4 text-[2.5rem] text-[#C40000]" />
-            <span className="text-[1.2rem] font-extrabold text-[#0F1111]">An error occurred</span>
-            <span className="mt-1 text-sm">{dataError}</span>
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-[#0F1111] transition hover:bg-slate-50"
-            >
-              Back
-            </button>
-          </div>
+          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} />
         ) : (
           <>
             <div className="mb-6 flex items-center gap-3">

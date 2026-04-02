@@ -7,7 +7,6 @@ import {
   FaLocationDot,
   FaMagnifyingGlass,
   FaStoreSlash,
-  FaTriangleExclamation,
 } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
@@ -16,6 +15,7 @@ import { ShimmerList } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 
 function ShopIndex() {
   const navigate = useNavigate()
@@ -143,17 +143,7 @@ function ShopIndex() {
             <ShimmerList />
           </div>
         ) : dataError && !allShops ? (
-          <div className="flex h-full flex-col items-center justify-center px-5 text-center">
-            <FaTriangleExclamation className="mb-4 text-[2.5rem] text-red-700" />
-            <span className="font-semibold text-[#0F1111]">{dataError}</span>
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-[#0F1111] transition hover:bg-slate-50"
-            >
-              Back
-            </button>
-          </div>
+          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} />
         ) : filteredShops.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center px-5 text-center text-slate-400">
             <FaStoreSlash className="mb-4 text-5xl opacity-30" />

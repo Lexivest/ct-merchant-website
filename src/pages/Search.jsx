@@ -6,7 +6,6 @@ import {
   FaChevronRight,
   FaCircleCheck,
   FaMagnifyingGlass,
-  FaTriangleExclamation,
 } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
@@ -15,6 +14,7 @@ import { ShimmerBlock, ShimmerCard } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function SearchShimmer() {
@@ -372,17 +372,7 @@ function Search() {
         {authLoading || (dataLoading && !data) ? (
           <SearchShimmer />
         ) : dataError && !data ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <FaTriangleExclamation className="mb-4 text-[2.5rem] text-red-700" />
-            <span className="font-semibold text-[#0F1111]">{dataError}</span>
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-[#0F1111] transition hover:bg-slate-50"
-            >
-              Back
-            </button>
-          </div>
+          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} />
         ) : (
           <>
             <h2 className="mb-6 text-[1.1rem] font-semibold text-slate-600">
