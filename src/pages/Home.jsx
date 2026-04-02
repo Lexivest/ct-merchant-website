@@ -10,6 +10,7 @@ import {
   FaLock,
   FaSearch,
 } from "react-icons/fa"
+import { FaFacebookF, FaXTwitter, FaYoutube } from "react-icons/fa6"
 import MainLayout from "../layouts/MainLayout"
 import AuthInput from "../components/auth/AuthInput"
 import AuthButton from "../components/auth/AuthButton"
@@ -42,6 +43,27 @@ const phrases = [
   "Verified Merchants",
   "Safe and Secure",
   "Boost Your Business",
+]
+
+const socialLinks = [
+  {
+    label: "Facebook",
+    href: "https://www.facebook.com/share/17V9mqeTkv/",
+    icon: FaFacebookF,
+    accent: "bg-[#1877F2]",
+  },
+  {
+    label: "YouTube",
+    href: "https://www.youtube.com/@CTMerchantNG",
+    icon: FaYoutube,
+    accent: "bg-[#FF0000]",
+  },
+  {
+    label: "X",
+    href: "https://x.com/CTMerchantNG",
+    icon: FaXTwitter,
+    accent: "bg-slate-900",
+  },
 ]
 
 function Home() {
@@ -650,6 +672,51 @@ function Home() {
                 <li>Unique CTMerchant ID to share</li>
                 <li>Be discovered in city repository search</li>
               </ul>
+
+              <div className="mt-8 rounded-[22px] border border-pink-100 bg-pink-50 p-5">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-sm font-extrabold uppercase tracking-[0.2em] text-pink-600">
+                      Follow CTMerchant
+                    </p>
+                    <h3 className="mt-1 text-lg font-extrabold text-slate-900">
+                      Stay connected across our official channels
+                    </h3>
+                  </div>
+                  <p className="text-sm text-slate-500">
+                    News, updates, highlights, and marketplace stories.
+                  </p>
+                </div>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  {socialLinks.map((item) => {
+                    const Icon = item.icon
+                    return (
+                      <a
+                        key={item.label}
+                        href={item.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group flex items-center gap-3 rounded-2xl border border-pink-100 bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-200 hover:shadow-md"
+                      >
+                        <span
+                          className={`flex h-11 w-11 items-center justify-center rounded-2xl text-lg text-white ${item.accent}`}
+                        >
+                          <Icon />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-sm font-extrabold text-slate-900">
+                            {item.label}
+                          </span>
+                          <span className="block truncate text-xs font-medium text-slate-500 group-hover:text-pink-600">
+                            Open channel
+                          </span>
+                        </span>
+                      </a>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </div>
