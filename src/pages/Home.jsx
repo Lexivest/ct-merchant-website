@@ -66,6 +66,30 @@ const socialLinks = [
   },
 ]
 
+const testimonials = [
+  {
+    type: "Merchant",
+    quote:
+      "Placeholder testimonial: CTMerchant helped more customers discover my shop and ask for products before visiting.",
+    author: "Merchant Name",
+    detail: "Fashion Retailer, Jos",
+  },
+  {
+    type: "User",
+    quote:
+      "Placeholder testimonial: I was able to compare options quickly and confirm the shop location before stepping out.",
+    author: "Customer Name",
+    detail: "Marketplace User, Kaduna",
+  },
+  {
+    type: "Merchant",
+    quote:
+      "Placeholder testimonial: Sharing my CTMerchant ID and storefront made my business look more organized and trustworthy.",
+    author: "Business Owner",
+    detail: "Home Essentials Store, Plateau",
+  },
+]
+
 function Home() {
   const navigate = useNavigate()
 
@@ -674,26 +698,39 @@ function Home() {
           <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-1 lg:row-start-2">
             <div className="h-full rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
               <span className="inline-block rounded-full border border-pink-200 bg-pink-50 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-pink-700">
-                Repository of Shops, Products and Services
+                Testimonials
               </span>
 
               <h2 className="mt-4 text-2xl font-extrabold text-slate-900 md:text-3xl">
-                Grow Your Physical Shop Digitally
+                What Merchants And Users Are Saying
               </h2>
 
               <p className="mt-4 text-base leading-8 text-slate-600">
-                CTMerchant is a structured repository of shops, products, and services within a city. We onboard and physically verify merchants to reduce fraudulent online claims and help customers discover real businesses around them.
+                Placeholder feedback from real merchants and customers will appear here as the platform continues to grow.
               </p>
 
-              <p className="mt-4 text-base leading-8 text-slate-600">
-                Our platform helps consumers compare shops, products, and options before visiting a store, creating a better balance between digital convenience and physical marketplace reality.
-              </p>
-
-              <ul className="mt-6 space-y-3 text-sm font-semibold text-slate-700 md:text-base">
-                <li>Get a verified digital storefront</li>
-                <li>Unique CTMerchant ID to share</li>
-                <li>Be discovered in city repository search</li>
-              </ul>
+              <div className="mt-6 space-y-4">
+                {testimonials.map((item) => (
+                  <div
+                    key={`${item.type}-${item.author}`}
+                    className="rounded-[22px] border border-pink-100 bg-pink-50 p-5"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="inline-flex rounded-full bg-white px-3 py-1 text-[0.7rem] font-extrabold uppercase tracking-[0.18em] text-pink-600">
+                        {item.type}
+                      </span>
+                      <FaInfoCircle className="shrink-0 text-pink-400" />
+                    </div>
+                    <p className="mt-4 text-base font-medium leading-8 text-slate-700">
+                      "{item.quote}"
+                    </p>
+                    <div className="mt-4">
+                      <div className="text-sm font-extrabold text-slate-900">{item.author}</div>
+                      <div className="text-sm text-slate-500">{item.detail}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
               <div className="mt-8 rounded-[22px] border border-pink-100 bg-pink-50 p-5">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
