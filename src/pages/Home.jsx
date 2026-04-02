@@ -491,7 +491,7 @@ function Home() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleRepoSearch()
                 }}
-                placeholder="Search Repository"
+                placeholder="Enter ID to view online stores"
                 className="min-w-0 flex-1 border-none bg-transparent px-4 text-base font-medium text-[#0F1111] outline-none placeholder:text-slate-500"
               />
               <button
@@ -549,7 +549,7 @@ function Home() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleRepoSearch()
                       }}
-                      placeholder="Search Repository"
+                      placeholder="Enter ID to view online stores"
                       className="min-w-0 flex-1 border-none px-4 text-base text-[#0F1111] outline-none placeholder:text-slate-500"
                     />
                     <button
