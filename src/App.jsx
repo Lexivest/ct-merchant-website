@@ -17,6 +17,7 @@ import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import OnlineRouteGuard from "./components/common/OnlineRouteGuard"
 import SiteVisitTracker from "./components/common/SiteVisitTracker"
+import RetryingNotice from "./components/common/RetryingNotice"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
 
@@ -98,30 +99,15 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
   }, [isOffline, retryKey])
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
-      <div className="w-full max-w-lg rounded-[28px] border border-amber-200 bg-white p-8 text-center shadow-xl">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-3xl text-amber-700">
-          !
-        </div>
-        <h1 className="mt-5 text-3xl font-black text-slate-900">
-          {isOffline ? "Network unavailable" : "Something happened"}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          {isOffline
-            ? "Reconnect and retry to continue."
-            : `We could not open ${pageLabel} right now. Retry to continue.`}
-        </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <button
-            type="button"
-            onClick={() => retryPage(true)}
-            className="flex-1 rounded-2xl bg-slate-900 px-5 py-3 font-bold text-white transition hover:bg-slate-800"
-          >
-            {isRetrying ? "Retrying..." : "Retry"}
-          </button>
-        </div>
-      </div>
-    </div>
+    <RetryingNotice
+      message={
+        isRetrying
+          ? "Network unavailable, retrying..."
+          : isOffline
+            ? "Network unavailable, retrying..."
+            : "Something happened, retrying..."
+      }
+    />
   )
 }
 

@@ -4,6 +4,7 @@ import { FaChevronRight, FaImage } from "react-icons/fa6"
 // IMPORT OUR NEW SHIMMERS
 import { ShimmerBlock, ShimmerCard } from "../../common/Shimmers"
 import StableImage from "../../common/StableImage"
+import RetryingNotice, { getRetryingMessage } from "../../common/RetryingNotice"
 
 function PromoSlider({ promos }) {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -136,24 +137,26 @@ function MarketSection({
 }) {
   const navigate = useNavigate()
 
+  const dashboardShellEmpty =
+    !dashboardData ||
+    (!dashboardData.profile &&
+      (dashboardData.promos || []).length === 0 &&
+      (dashboardData.categories || []).length === 0 &&
+      (dashboardData.areas || []).length === 0 &&
+      (dashboardData.shops || []).length === 0 &&
+      (dashboardData.products || []).length === 0)
+
   function openShop(shopId) {
     navigate(`/shop-detail?id=${shopId}`)
   }
 
   // 1. PROFESSIONAL ERROR STATE (Only shows if no cache is available)
-  if (error && !dashboardData) {
-    return (
-      <div className="p-6">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm font-semibold text-red-600 shadow-sm">
-          <i className="fa-solid fa-wifi mr-2"></i> 
-          {error}
-        </div>
-      </div>
-    )
+  if (error && dashboardShellEmpty) {
+    return <RetryingNotice fullScreen={false} message={getRetryingMessage(error)} />
   }
 
   // 2. PROFESSIONAL SHIMMER STATE (Mirrors the actual layout)
-  if (loading || !dashboardData) {
+  if (loading || (!dashboardData && !error)) {
     return (
       <div className="screen active w-full pb-8 bg-slate-50">
         {/* Promo Skeleton */}

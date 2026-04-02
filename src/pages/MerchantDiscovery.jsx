@@ -1,13 +1,10 @@
 import { useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import {
-  FaArrowLeft,
-  FaTriangleExclamation,
-} from "react-icons/fa6"
+import { FaArrowLeft } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
 import useCachedFetch from "../hooks/useCachedFetch"
 import PageSeo from "../components/common/PageSeo"
-import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 
 function OpeningShopScreen() {
   return (
@@ -99,20 +96,7 @@ function MerchantDiscovery() {
         {loading && !data ? (
           <OpeningShopScreen />
         ) : dataError && !data ? (
-          <div className="w-full max-w-[420px] rounded-lg border border-[#D5D9D9] bg-white px-5 py-16 text-center shadow-sm">
-            <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-700" />
-            <h3 className="mb-2 text-xl font-extrabold text-[#0F1111]">Could not load this merchant</h3>
-            <p className="text-[0.95rem] text-slate-600">
-              {getFriendlyErrorMessage(dataError, "Retry to load this merchant.")}
-            </p>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-3 font-semibold text-[#0F1111] shadow-sm transition hover:bg-slate-50"
-            >
-              Retry
-            </button>
-          </div>
+          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} className="w-full max-w-[420px]" />
         ) : shop ? (
           <OpeningShopScreen />
         ) : null}

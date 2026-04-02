@@ -12,7 +12,6 @@ import {
   FaShareNodes,
   FaShieldHalved,
   FaStar,
-  FaTriangleExclamation,
   FaXmark,
 } from "react-icons/fa6"
 import { FaWhatsapp } from "react-icons/fa"
@@ -23,6 +22,7 @@ import { ShimmerBlock } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
@@ -555,24 +555,7 @@ function ProductDetail() {
   }
 
   if (error && !data) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#E3E6E6] px-4">
-        <div className="text-center">
-          <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-700" />
-          <h3 className="mb-2 text-2xl font-extrabold text-[#0F1111]">Could not load this product</h3>
-          <p className="text-slate-600">
-            {getFriendlyErrorMessage(error, "Retry to load this product.")}
-          </p>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="mt-5 rounded-md border border-slate-300 bg-white px-6 py-3 font-semibold shadow-sm transition hover:bg-slate-50"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    )
+    return <RetryingNotice message={getRetryingMessage(error)} />
   }
 
   return (

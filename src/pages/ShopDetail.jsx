@@ -32,8 +32,8 @@ import { ShimmerBlock } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
-import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function ShopDetailShimmer() {
@@ -542,26 +542,7 @@ function ShopDetail() {
 
   // Show Error only if data fails to fetch and there is no cache
   if (error && !data) {
-    return (
-      <div className="min-h-screen bg-[#E3E6E6]">
-        <div className="mx-auto max-w-3xl px-4 py-24 text-center">
-          <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-700" />
-          <h3 className="mb-2 text-2xl font-extrabold text-[#0F1111]">
-            Could not load this shop
-          </h3>
-          <p className="text-slate-600">
-            {getFriendlyErrorMessage(error, "Retry to load this shop.")}
-          </p>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="mt-6 rounded-lg border border-slate-300 bg-white px-6 py-3 font-bold text-slate-900 shadow-sm transition hover:bg-slate-50"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    )
+    return <RetryingNotice message={getRetryingMessage(error)} />
   }
 
   const shopLogo =
