@@ -204,11 +204,35 @@ function RouteLoadingScreen({
   message = "Please wait while we prepare the next screen.",
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
-      <div className="w-full max-w-md rounded-[28px] border border-pink-100 bg-white p-8 text-center shadow-xl">
-        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-pink-100 border-t-pink-600" />
-        <h2 className="mt-5 text-2xl font-black text-slate-900">{title}</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-500">{message}</p>
+    <div className="min-h-screen bg-[#E3E6E6] px-4 py-6">
+      <div className="mx-auto max-w-[1200px]">
+        <div className="mb-4 flex items-center justify-between rounded-xl bg-[#131921] px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="h-6 w-6 animate-pulse rounded bg-white/20" />
+            <div className="h-5 w-36 animate-pulse rounded bg-white/20" />
+          </div>
+          <div className="h-6 w-6 animate-pulse rounded bg-white/20" />
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <div className="aspect-video w-full animate-pulse rounded-xl bg-slate-200" />
+          <div className="mt-4 h-6 w-52 animate-pulse rounded bg-slate-200" />
+          <div className="mt-3 h-4 w-72 max-w-full animate-pulse rounded bg-slate-100" />
+          <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((item) => (
+              <div key={item} className="space-y-2">
+                <div className="aspect-square animate-pulse rounded-lg bg-slate-100" />
+                <div className="h-4 w-3/4 animate-pulse rounded bg-slate-100" />
+                <div className="h-4 w-1/2 animate-pulse rounded bg-slate-100" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="px-2 py-5 text-center">
+          <h2 className="text-xl font-black text-slate-900">{title}</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-500">{message}</p>
+        </div>
       </div>
     </div>
   )
@@ -218,7 +242,7 @@ function AccountCheckShell() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <div className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-xl">
-        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-pink-100 border-t-pink-600" />
+        <div className="mx-auto h-2 w-28 animate-pulse rounded-full bg-pink-100" />
         <h1 className="mt-5 text-3xl font-black text-slate-900">Checking your account</h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">
           Please wait while we confirm your account status and load your profile securely.
@@ -416,11 +440,11 @@ function App() {
         />
         <Route
           path="/shop-detail"
-          element={withOnlineGuard(<ShopDetail />)}
+          element={<ShopDetail />}
         />
         <Route
           path="/product-detail"
-          element={withOnlineGuard(<ProductDetail />)}
+          element={<ProductDetail />}
         />
 
         {/* PROTECTED DASHBOARD ROUTES */}

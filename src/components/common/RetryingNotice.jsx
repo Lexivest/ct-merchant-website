@@ -28,8 +28,8 @@ function RetryingNotice({
 
   return (
     <div className={`${wrapperClass} ${className}`.trim()}>
-      <div className="text-center">
-        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-pink-100 border-t-pink-600" />
+      <div className="w-full max-w-sm text-center">
+        <div className="mx-auto h-2 w-24 animate-pulse rounded-full bg-pink-100" />
         <p className="mt-4 text-sm font-semibold text-slate-500">{message}</p>
       </div>
     </div>

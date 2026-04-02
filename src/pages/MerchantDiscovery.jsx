@@ -10,7 +10,7 @@ function OpeningShopScreen() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F3F4F6] px-4 py-10">
       <div className="w-full max-w-md rounded-2xl border border-[#D5D9D9] bg-white px-6 py-10 text-center shadow-sm">
-        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-pink-100 border-t-pink-600" />
+        <div className="mx-auto h-2 w-24 animate-pulse rounded-full bg-pink-100" />
         <h2 className="mt-5 text-2xl font-black text-[#0F1111]">Opening shop</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
           Please wait while we open the merchant shop directly.
