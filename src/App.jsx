@@ -550,7 +550,7 @@ function App() {
 
         <Route
           path="/vendor-panel"
-          element={withProtectedOnlineGuard(<VendorsPanel />)}
+          element={withProtectedRoute(<VendorsPanel />)}
         />
 
         <Route

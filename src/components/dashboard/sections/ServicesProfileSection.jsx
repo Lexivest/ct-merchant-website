@@ -29,14 +29,18 @@ const AVATAR_RULE_LABEL = getRuleLabel(AVATAR_RULE)
 
 function ServiceCard({ icon, title, subtitle, onClick }) {
   return (
-    <div className="svc-card rounded-lg border border-[#D5D9D9] bg-white px-4 py-5 text-center transition hover:bg-[#F7F7F7]">
-      <button type="button" className="w-full" onClick={onClick}>
-        <div className="svc-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center text-[1.4rem] text-[#565959]">
+    <div className="svc-card rounded-[22px] bg-pink-200 p-1 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:bg-pink-300 hover:shadow-[0_8px_16px_rgba(219,39,119,0.15)]">
+      <button
+        type="button"
+        className="flex h-full min-h-[128px] w-full flex-col items-center justify-center rounded-[18px] border border-pink-100 bg-white px-4 py-5 text-center"
+        onClick={onClick}
+      >
+        <div className="svc-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-pink-50 text-[1.4rem] text-[#565959] shadow-[inset_0_0_0_1px_rgba(244,114,182,0.12)]">
           {icon}
         </div>
-        <strong>{title}</strong>
+        <strong className="text-[0.95rem] font-extrabold text-[#0F1111]">{title}</strong>
         {subtitle ? (
-          <div className="mt-1 text-[0.8rem] text-[#565959]">{subtitle}</div>
+          <div className="mt-1 text-[0.8rem] font-semibold text-[#565959]">{subtitle}</div>
         ) : null}
       </button>
     </div>

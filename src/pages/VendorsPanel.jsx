@@ -27,8 +27,8 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { ShimmerBlock } from "../components/common/Shimmers"
+import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
-import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function VendorsPanelShimmer() {
@@ -76,7 +76,6 @@ function VendorsPanel() {
 
   const fetchMerchantData = async () => {
     if (!user) throw new Error("Authentication required")
-    if (isOffline) throw new Error("Network offline") 
 
     // 1. Check Profile Suspension
     const { data: profile, error: profileErr } = await supabase
@@ -134,7 +133,7 @@ function VendorsPanel() {
   const { data, loading, error, mutate } = useCachedFetch(
     `vendor_panel_${user?.id}`,
     fetchMerchantData,
-    { dependencies: [user?.id, isOffline], ttl: 1000 * 60 * 5 } 
+    { dependencies: [user?.id], ttl: 1000 * 60 * 5 } 
   )
 
   // --- REALTIME SUBSCRIPTIONS ---
@@ -185,33 +184,7 @@ function VendorsPanel() {
   }
 
   if (error && error !== "SHOP_NOT_FOUND" && !data) {
-    return (
-      <div className="flex h-screen flex-col bg-[#F3F4F6]">
-        <header className="sticky top-0 z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
-          <div className="mx-auto flex w-full max-w-[1000px] items-center gap-4 px-4 py-3 text-white">
-            <button onClick={() => navigate("/user-dashboard")} className="p-1 text-[1.2rem] transition hover:text-pink-500">
-              <FaArrowLeft />
-            </button>
-            <div className="text-[1.15rem] font-bold tracking-[0.5px]">Error</div>
-          </div>
-        </header>
-        <div className="flex flex-1 items-center justify-center px-5">
-          <div className="rounded-[24px] border border-red-200 bg-white p-8 text-center shadow-lg w-full max-w-md">
-            <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-600" />
-            <h3 className="mb-2 text-xl font-extrabold text-slate-900">Connection Error</h3>
-            <p className="mb-6 text-sm font-medium text-slate-600">
-              {getFriendlyErrorMessage(error, "Network unavailable. Retry.")}
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold text-[#0F1111] transition hover:bg-slate-50"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+    return <RetryingNotice message={getRetryingMessage(error)} />
   }
 
   if (!data?.shop) return null
