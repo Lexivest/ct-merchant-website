@@ -1,3 +1,5 @@
+import { memo } from "react"
+
 function ScrollingTicker({
   text,
   className = "",
@@ -27,4 +29,4 @@ function ScrollingTicker({
   )
 }
 
-export default ScrollingTicker
+export default memo(ScrollingTicker)

@@ -57,6 +57,7 @@
   position: relative;
   width: 100%;
   overflow: hidden;
+  contain: layout paint;
 }
 
 .ctm-marquee-track {
@@ -65,6 +66,8 @@
   align-items: center;
   gap: 0;
   will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
   animation-name: headerScroll;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
@@ -76,6 +79,7 @@
   align-items: center;
   white-space: nowrap;
   padding-right: 2.5rem;
+  transform: translateZ(0);
 }
 
 @keyframes route-progress-slide {
