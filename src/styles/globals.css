@@ -53,6 +53,31 @@
   }
 }
 
+.ctm-marquee {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.ctm-marquee-track {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: 0;
+  will-change: transform;
+  animation-name: headerScroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.ctm-marquee-copy {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  white-space: nowrap;
+  padding-right: 2.5rem;
+}
+
 @keyframes route-progress-slide {
   0% {
     transform: scaleX(0.08);

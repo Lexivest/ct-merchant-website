@@ -10,6 +10,7 @@ import {
   FaStore,
   FaTableCellsLarge,
 } from "react-icons/fa6"
+import ScrollingTicker from "../../common/ScrollingTicker"
 
 // --- LOCAL ASSET IMPORT ---
 import ctmLogo from "../../../assets/images/logo.jpg";
@@ -493,19 +494,13 @@ function DashboardHeader({
         </div>
 
         {tickerText ? (
-          <div className="ticker-wrapper relative flex flex-1 items-center gap-3 overflow-hidden">
-            <div
-              className="ticker-content whitespace-nowrap pl-[100%] text-white"
-              style={{
-                animation: `ticker ${Math.max(
-                  40,
-                  tickerText.length * 0.4
-                )}s linear infinite`,
-              }}
-            >
-              {tickerText}
-            </div>
-          </div>
+          <ScrollingTicker
+            text={tickerText}
+            className="ticker-wrapper relative flex-1"
+            textClassName="text-white"
+            minDuration={28}
+            speedFactor={0.22}
+          />
         ) : null}
       </div>
     </header>

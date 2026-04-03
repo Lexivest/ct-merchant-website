@@ -33,6 +33,7 @@ import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
+import ScrollingTicker from "../components/common/ScrollingTicker"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
@@ -593,14 +594,13 @@ function ShopDetail() {
             <div className="bg-[#232F3E] px-4 py-2 text-white">
               <div className="relative flex items-center gap-3 overflow-hidden">
                 <FaBullhorn className="shrink-0 text-pink-500" />
-                <div
-                  className="whitespace-nowrap pl-[100%]"
-                  style={{
-                    animation: `ticker ${Math.max(40, tickerText.length * 0.4)}s linear infinite`,
-                  }}
-                >
-                  {tickerText}
-                </div>
+                <ScrollingTicker
+                  text={tickerText}
+                  className="flex-1"
+                  textClassName="text-white"
+                  minDuration={28}
+                  speedFactor={0.22}
+                />
               </div>
             </div>
           ) : null}
