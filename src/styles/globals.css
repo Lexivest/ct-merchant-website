@@ -58,6 +58,7 @@
   width: 100%;
   overflow: hidden;
   contain: layout paint;
+  --ctm-ticker-speed-factor: 1;
 }
 
 .ctm-marquee-track {
@@ -71,6 +72,7 @@
   animation-name: headerScroll;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
+  animation-duration: calc(var(--ctm-ticker-duration, 28s) * var(--ctm-ticker-speed-factor));
 }
 
 .ctm-marquee-copy {
@@ -80,6 +82,24 @@
   white-space: nowrap;
   padding-right: 2.5rem;
   transform: translateZ(0);
+}
+
+@media (max-width: 768px) {
+  .ctm-marquee {
+    --ctm-ticker-speed-factor: 1.45;
+  }
+
+  .ctm-marquee-copy {
+    padding-right: 2rem;
+    font-weight: 600;
+    text-rendering: optimizeSpeed;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctm-marquee {
+    --ctm-ticker-speed-factor: 1.8;
+  }
 }
 
 @keyframes route-progress-slide {

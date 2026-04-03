@@ -15,7 +15,7 @@ function ScrollingTicker({
     <div className={`ctm-marquee ${className}`.trim()}>
       <div
         className="ctm-marquee-track"
-        style={{ animationDuration: `${duration}s` }}
+        style={{ "--ctm-ticker-duration": `${duration}s` }}
       >
         <span className={`ctm-marquee-copy ${textClassName}`.trim()}>{text}</span>
         <span
