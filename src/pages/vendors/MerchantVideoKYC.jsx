@@ -36,6 +36,39 @@ function getInitials(name) {
   return parts.map((part) => part[0]?.toUpperCase() || "").join("");
 }
 
+async function resolveBrowserLocationLabel(lat, lng, fallback = "") {
+  try {
+    const response = await fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lng)}&localityLanguage=en`
+    );
+    if (!response.ok) throw new Error("Reverse geocode failed");
+
+    const payload = await response.json();
+    const area =
+      payload?.locality ||
+      payload?.city ||
+      payload?.principalSubdivisionCode?.split("-")?.[1] ||
+      payload?.localityInfo?.administrative?.find?.((item) => item?.order === 5)?.name ||
+      fallback ||
+      "";
+    const state =
+      payload?.principalSubdivision ||
+      payload?.localityInfo?.administrative?.find?.((item) => item?.order === 4)?.name ||
+      "";
+
+    if (!area && !state) return fallback || "";
+    if (!state) return area || fallback || "";
+
+    const normalizedArea = String(area || "").trim().toLowerCase();
+    const normalizedState = String(state || "").trim().toLowerCase();
+    if (!normalizedArea || normalizedArea === normalizedState) return state;
+
+    return `${area} / ${state}`;
+  } catch {
+    return fallback || "";
+  }
+}
+
 export default function MerchantVideoKYC() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
@@ -226,6 +259,10 @@ export default function MerchantVideoKYC() {
       const lat = pos.coords.latitude.toFixed(6);
       const lng = pos.coords.longitude.toFixed(6);
       setLocation({ lat, lng });
+      const resolvedLabel = await resolveBrowserLocationLabel(lat, lng, cityName || shopData?.cities?.name || "");
+      if (resolvedLabel) {
+        setCityName(resolvedLabel);
+      }
 
       // Step B: Request Camera & Mic
       const constraints = {
@@ -262,7 +299,7 @@ export default function MerchantVideoKYC() {
         setSetupError("Please allow camera and microphone access and retry.");
       }
     }
-  }, [stopActiveMedia]);
+  }, [cityName, shopData?.cities?.name, stopActiveMedia]);
 
   useEffect(() => {
     if (loading || pageError || !shopData || isOffline || hasAutoStartedSetup) return;
@@ -568,9 +605,15 @@ export default function MerchantVideoKYC() {
 
           <div className="min-w-0 flex-1">
             <div className="truncate text-[1rem] font-extrabold text-[#F9A8D4]">Hello, {profileName}</div>
-            <div className="text-[0.82rem] font-semibold uppercase tracking-[0.14em] text-[#FBBF24]">
-              Shop/Store Verification
+            <div className="text-[0.74rem] font-semibold text-[#FBBF24]">
+              shop/store verification
             </div>
+            {shopData?.name ? (
+              <div className="truncate text-[0.8rem] text-[#CBD5E1]">{shopData.name}</div>
+            ) : null}
+            {cityName ? (
+              <div className="truncate text-[0.75rem] text-[#94A3B8]">{cityName}</div>
+            ) : null}
           </div>
 
           <img
@@ -703,19 +746,6 @@ export default function MerchantVideoKYC() {
             </div>
           ) : null}
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[0.82rem] text-[#CBD5E1]">
-            <div className="mb-1 font-semibold uppercase tracking-[0.12em] text-[#FBBF24]">Verification Details</div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1">
-              {cityName ? <span>{cityName}</span> : null}
-              {location ? <span>{`LAT ${location.lat}`}</span> : null}
-              {location ? <span>{`LNG ${location.lng}`}</span> : null}
-              {shopData?.name ? <span>{shopData.name}</span> : null}
-              <span>{currentDateTime}</span>
-            </div>
-            <div className="mt-2 text-[0.78rem] text-[#94A3B8]">
-              Show your shop and products in a {MAX_KYC_SECONDS}-second video. Limit: {KYC_VIDEO_RULE_LABEL}.
-            </div>
-          </div>
         </div>
 
       </main>
