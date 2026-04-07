@@ -1111,7 +1111,9 @@ function ShopDetail() {
                 <button
                   key={section.key}
                   type="button"
-                  onClick={() => setActiveInfoSection(section.key)}
+                  onClick={() =>
+                    setActiveInfoSection((current) => (current === section.key ? null : section.key))
+                  }
                   className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[0.8rem] font-extrabold transition ${
                     activeInfoSection === section.key
                       ? "border-pink-200 bg-pink-50 text-pink-600"
@@ -1130,8 +1132,8 @@ function ShopDetail() {
               <StableImage
                 src={currentShop.storefront_url}
                 alt="Store Front"
-                containerClassName="aspect-[4/3] w-full overflow-hidden rounded-[18px] border border-slate-200 bg-slate-50"
-                className="h-full w-full object-cover"
+                containerClassName="flex min-h-[240px] w-full items-center justify-center overflow-hidden rounded-[18px] border border-slate-200 bg-slate-50 p-2"
+                className="max-h-[560px] w-full object-contain"
               />
             </div>
           ) : null}
