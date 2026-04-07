@@ -39,6 +39,7 @@ import PageSeo from "../components/common/PageSeo"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 import ScrollingTicker from "../components/common/ScrollingTicker"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function ShopDetailShimmer() {
@@ -809,8 +810,18 @@ function ShopDetail() {
         status: "pending",
       }
 
+      console.log("[shop.community] insert start", payload)
+
       const { error: insertError } = await supabase.from("shop_comments").insert(payload)
-      if (insertError) throw insertError
+      if (insertError) {
+        console.log("[shop.community] insert failed", {
+          message: insertError.message,
+          details: insertError.details,
+          hint: insertError.hint,
+          code: insertError.code,
+        })
+        throw insertError
+      }
 
       setCommentBody("")
       setReplyTarget(null)
@@ -830,7 +841,7 @@ function ShopDetail() {
       notify({
         type: "error",
         title: "Could not submit comment",
-        message: "Please try again in a moment.",
+        message: getFriendlyErrorMessage(err, "Please try again in a moment."),
       })
     } finally {
       setSubmittingComment(false)
