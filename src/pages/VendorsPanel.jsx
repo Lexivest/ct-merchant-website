@@ -19,7 +19,6 @@ import {
   FaTriangleExclamation,
   FaVideo,
   FaVideoSlash,
-  FaWandMagicSparkles,
 } from "react-icons/fa6"
 import { FaRegSquarePlus } from "react-icons/fa6"
 import RetryingNotice, {
@@ -310,8 +309,18 @@ function VendorsPanel() {
             icon={<FaPenToSquare />}
             colorClass="bg-[#DBEAFE] text-[#2563EB]"
             badge={activeRejectedCount}
-            onClick={() =>
-              handleCardClick(`/merchant-products?shop_id=${activeShop.id}`)
+            isLocked={!isSubscriptionActive}
+            onClick={
+              isSubscriptionActive
+                ? () =>
+                    handleCardClick(`/merchant-products?shop_id=${activeShop.id}`)
+                : () =>
+                    notify({
+                      type: "error",
+                      title: "Subscription required",
+                      message:
+                        "Please activate your service fee subscription to edit products.",
+                    })
             }
           />
 
@@ -322,14 +331,6 @@ function VendorsPanel() {
             onClick={() =>
               handleCardClick(`/merchant-banner?shop_id=${activeShop.id}`)
             }
-          />
-
-          <DashCard
-            title="CT Studio"
-            subtitle="Photo Editor"
-            icon={<FaWandMagicSparkles />}
-            colorClass="bg-[#CFFAFE] text-[#0891B2]"
-            onClick={() => handleCardClick("/ct-studio")}
           />
 
           <DashCard
@@ -415,8 +416,18 @@ function VendorsPanel() {
             title="Analytics"
             icon={<FaChartLine />}
             colorClass="bg-[#CCFBF1] text-[#0D9488]"
-            onClick={() =>
-              handleCardClick(`/merchant-analytics?shop_id=${activeShop.id}`)
+            isLocked={!isSubscriptionActive}
+            onClick={
+              isSubscriptionActive
+                ? () =>
+                    handleCardClick(`/merchant-analytics?shop_id=${activeShop.id}`)
+                : () =>
+                    notify({
+                      type: "error",
+                      title: "Subscription required",
+                      message:
+                        "Please activate your service fee subscription to access analytics.",
+                    })
             }
           />
 

@@ -242,20 +242,20 @@ export default function MerchantServiceFee() {
           <div className="text-[1.25rem] font-bold">Service Fee Portal</div>
         </div>
 
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-5 rounded-[20px] border border-[#E2E8F0] bg-white p-6 shadow-sm sm:flex-nowrap">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5 shadow-sm sm:flex-nowrap sm:p-6">
           <div>
-            <h3 className="mb-1 text-[1.1rem] text-[#64748B]">Current Plan</h3>
-            <h2 className="mb-3 text-[1.8rem] font-black leading-none text-[#2E1065]">{currentPlan.replace("_", " ")}</h2>
-            <div className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[0.9rem] font-bold ${isActive ? "bg-[#DCFCE7] text-[#16A34A]" : "bg-[#FEE2E2] text-[#DC2626]"}`}>
+            <h3 className="mb-1 text-[0.95rem] font-semibold text-[#64748B] sm:text-[1rem]">Current Plan</h3>
+            <h2 className="mb-3 text-[1.45rem] font-black leading-[1.05] text-[#2E1065] sm:text-[1.65rem]">{currentPlan.replace("_", " ")}</h2>
+            <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.78rem] font-bold sm:px-4 sm:py-2 sm:text-[0.85rem] ${isActive ? "bg-[#DCFCE7] text-[#16A34A]" : "bg-[#FEE2E2] text-[#DC2626]"}`}>
               {isActive ? <><FaCircleCheck /> {isFreeTrial ? "ACTIVE TRIAL" : "ACTIVE"}</> : <><FaCircleXmark /> EXPIRED</>}
             </div>
           </div>
 
-          <div className="text-left sm:text-right">
-            <div className={`text-[2.5rem] font-black leading-none ${!isActive ? "text-[#DC2626]" : "text-[#16A34A]"}`}>
+          <div className="max-w-[280px] text-left sm:max-w-[250px] sm:text-right">
+            <div className={`text-[1.8rem] font-black leading-none sm:text-[2.1rem] ${!isActive ? "text-[#DC2626]" : "text-[#16A34A]"}`}>
               {!isActive ? "Locked" : "Active"}
             </div>
-            <div className="mt-1 text-[0.9rem] font-semibold text-[#64748B]">
+            <div className="mt-1 text-[0.8rem] font-semibold leading-[1.35] text-[#64748B] sm:text-[0.88rem]">
               {!isActive ? "Please choose a plan below to unlock your tools." : `Valid Until: ${formattedExpiry}`}
             </div>
           </div>

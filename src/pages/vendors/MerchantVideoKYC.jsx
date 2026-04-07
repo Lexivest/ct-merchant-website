@@ -535,6 +535,12 @@ export default function MerchantVideoKYC() {
         title: "Video uploaded",
         message: "Your video was uploaded successfully. Our team will review your shop and issue your digital ID card after approval.",
       });
+      try {
+        localStorage.removeItem(`vendor_panel_${user.id}`);
+        sessionStorage.removeItem(`vendor_panel_${user.id}`);
+      } catch (cacheError) {
+        console.warn("Vendor panel cache clear failed:", cacheError);
+      }
       uploadInFlightRef.current = false;
       navigate("/vendor-panel", { replace: true });
 
