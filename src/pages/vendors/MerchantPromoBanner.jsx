@@ -93,12 +93,18 @@ function PromoBannerArtwork({
   className = "",
   exportMode = false,
 }) {
-  const tileClass = exportMode ? "h-[160px]" : "h-[160px]";
+  const shellClass = exportMode ? "w-[800px]" : "w-full max-w-[800px]";
+  const tileClass = exportMode ? "h-[160px]" : "aspect-square";
+  const titleClass = exportMode ? "text-[1.12rem]" : "text-[clamp(0.95rem,2.3vw,1.12rem)]";
+  const categoryClass = exportMode ? "text-[0.96rem]" : "text-[clamp(0.82rem,1.9vw,0.96rem)]";
+  const addressClass = exportMode ? "text-[0.92rem]" : "text-[clamp(0.78rem,1.8vw,0.92rem)]";
+  const cityClass = exportMode ? "text-[1.45rem]" : "text-[clamp(1.05rem,3vw,1.45rem)]";
+  const idValueClass = exportMode ? "text-[1.02rem]" : "text-[clamp(0.88rem,2vw,1.02rem)]";
+  const footerClass = exportMode ? "text-[0.96rem]" : "text-[clamp(0.82rem,1.8vw,0.96rem)]";
 
   return (
     <div
-      className={`overflow-hidden rounded-[26px] bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.16)] ${className}`}
-      style={exportMode ? { width: 800 } : undefined}
+      className={`overflow-hidden rounded-[26px] bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.16)] ${shellClass} ${className}`}
     >
       <div className="flex flex-wrap gap-[6px] bg-white p-[6px]">
         {productImages.map((imgUrl, index) => (
@@ -117,7 +123,7 @@ function PromoBannerArtwork({
       </div>
 
       <div className="flex flex-col items-center gap-3 px-[18px] py-5 text-center">
-        <div className="w-full text-[1.12rem] font-black leading-[1.18] text-white">
+        <div className={`w-full font-black leading-[1.18] text-white ${titleClass}`}>
           {shopNameLines.map((line, index) => (
             <span key={`shop-${index}`} className="block min-h-[1.2rem]">
               {line}
@@ -125,7 +131,7 @@ function PromoBannerArtwork({
           ))}
         </div>
 
-        <div className="inline-flex max-w-[330px] flex-col items-center justify-center rounded-full bg-[#EA580C] px-6 py-2 text-[0.96rem] font-extrabold leading-[1.12] text-white">
+        <div className={`inline-flex max-w-[330px] flex-col items-center justify-center rounded-full bg-[#EA580C] px-6 py-2 font-extrabold leading-[1.12] text-white ${categoryClass}`}>
           {categoryLines.map((line, index) => (
             <span key={`category-${index}`} className="block">
               {line}
@@ -135,7 +141,7 @@ function PromoBannerArtwork({
 
         <div className="flex max-w-[520px] items-start justify-center gap-2 px-3 text-center">
           <FaLocationDot className="mt-[2px] shrink-0 text-[0.95rem] text-[#FBBF24]" />
-          <div className="text-[0.92rem] font-semibold leading-[1.35] text-[#E2E8F0]">
+          <div className={`font-semibold leading-[1.35] text-[#E2E8F0] ${addressClass}`}>
             {addressLines.map((line, index) => (
               <span key={`address-${index}`} className="block">
                 {line}
@@ -144,16 +150,16 @@ function PromoBannerArtwork({
           </div>
         </div>
 
-        <div className="text-[1.45rem] font-black leading-tight text-white">
+        <div className={`font-black leading-tight text-white ${cityClass}`}>
           CTMerchant <span className="text-[#FBBF24]">{cityName}</span> Repo
         </div>
 
         <div className="rounded-[16px] border-2 border-[#FBBF24] bg-white/10 px-5 py-3">
           <div className="text-[0.72rem] font-black uppercase tracking-[0.12em] text-[#FBBF24]">ID</div>
-          <div className="text-[1.02rem] font-black text-white">{uniqueId}</div>
+          <div className={`font-black text-white ${idValueClass}`}>{uniqueId}</div>
         </div>
 
-        <div className="mt-1 flex w-full items-center justify-center border-t-2 border-[#FBBF24] pt-3 text-[0.96rem] font-black text-white">
+        <div className={`mt-1 flex w-full items-center justify-center border-t-2 border-[#FBBF24] pt-3 font-black text-white ${footerClass}`}>
           {websiteText}
         </div>
       </div>
@@ -392,8 +398,7 @@ export default function MerchantPromoBanner() {
         </div>
 
         <div className="w-full rounded-[26px] border border-slate-200 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
-          <div className="mx-auto w-fit origin-top max-[860px]:-mb-[52px] max-[860px]:scale-[0.88] max-[760px]:-mb-[108px] max-[760px]:scale-[0.76] max-[660px]:-mb-[162px] max-[660px]:scale-[0.64] max-[560px]:-mb-[244px] max-[560px]:scale-[0.48] max-[440px]:-mb-[296px] max-[440px]:scale-[0.4]">
-            <div ref={bannerRef}>
+          <div className="mx-auto w-full max-w-[800px]" ref={bannerRef}>
               <PromoBannerArtwork
                 productImages={productImages}
                 shopNameLines={shopNameLines}
@@ -402,9 +407,7 @@ export default function MerchantPromoBanner() {
                 cityName={cityName}
                 uniqueId={uniqueId}
                 websiteText={websiteText}
-                className="w-[800px]"
               />
-            </div>
           </div>
         </div>
 
