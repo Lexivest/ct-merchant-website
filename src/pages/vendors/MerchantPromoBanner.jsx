@@ -378,9 +378,9 @@ export default function MerchantPromoBanner() {
           </div>
         </div>
 
-        <div className="w-full rounded-[26px] border border-slate-200 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+        <div className="w-full rounded-[26px] bg-[#003B95] shadow-[0_15px_30px_rgba(0,0,0,0.12)]">
           <div
-            className="relative mx-auto h-[450px] w-[800px] origin-top overflow-hidden rounded-[26px] bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.2)] max-[860px]:-mb-[45px] max-[860px]:scale-[0.9] max-[760px]:-mb-[90px] max-[760px]:scale-[0.8] max-[660px]:-mb-[135px] max-[660px]:scale-[0.7] max-[560px]:-mb-[200px] max-[560px]:scale-[0.55] max-[460px]:-mb-[260px] max-[460px]:scale-[0.42] max-[380px]:-mb-[280px] max-[380px]:scale-[0.38]"
+            className="relative mx-auto h-[450px] w-[800px] origin-top overflow-hidden rounded-[26px] bg-[#003B95] text-white max-[860px]:-mb-[45px] max-[860px]:scale-[0.9] max-[760px]:-mb-[90px] max-[760px]:scale-[0.8] max-[660px]:-mb-[135px] max-[660px]:scale-[0.7] max-[560px]:-mb-[200px] max-[560px]:scale-[0.55] max-[460px]:-mb-[260px] max-[460px]:scale-[0.42] max-[380px]:-mb-[280px] max-[380px]:scale-[0.38]"
             ref={bannerRef}
           >
             <div className="absolute left-0 top-0 z-10 grid h-[calc(100%-50px)] w-[56%] grid-cols-3 grid-rows-2 gap-2 bg-white p-2.5 pr-10">
@@ -436,11 +436,11 @@ export default function MerchantPromoBanner() {
         <div className="w-full rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
           <div className="text-[0.92rem] font-black text-slate-900">Native promo flow status</div>
           <p className="mt-2 text-[0.86rem] leading-6 text-slate-500">
-            Preview generation is aligned to the Expo version. You can now broadcast or save the promo banner from this page using the same visual structure as the Android app.
+            The native promo engine now mirrors the app flow by pulling your verified shop details and latest approved product images into one printable promo layout.
           </p>
         </div>
 
-        <div className="flex w-full flex-col gap-3 rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
+        <div className="flex w-full flex-col gap-3 sm:flex-row">
           <button
             onClick={handleShare}
             disabled={sharing}
@@ -452,18 +452,17 @@ export default function MerchantPromoBanner() {
               </>
             )}
           </button>
-
-          <div className="rounded-[16px] border border-[#FECACA] bg-[#FFF5F5] px-4 py-3 text-center text-[0.82rem] leading-relaxed text-[#6b7280]">
-            <strong>Pro tip:</strong> save this banner in high quality and send it to a local printing press if you want a physical flex banner for your storefront.
-          </div>
-
           <button
             onClick={handleDownload}
             disabled={downloading}
-            className="flex w-full items-center justify-center gap-2 rounded-[18px] border border-slate-300 bg-white p-3.5 font-bold text-[#0F1111] transition hover:border-slate-400 hover:bg-[#F7FAFA] disabled:cursor-not-allowed disabled:opacity-70"
+            className="flex w-full items-center justify-center gap-2 rounded-[18px] border border-slate-300 bg-white p-3.5 font-bold text-[#0F1111] shadow-[0_10px_24px_rgba(15,23,42,0.06)] transition hover:border-slate-400 hover:bg-[#F7FAFA] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {downloading ? <><FaCircleNotch className="animate-spin" /> Saving...</> : <><FaDownload /> Save Image in High Quality</>}
           </button>
+        </div>
+
+        <div className="w-full rounded-[18px] border border-[#FECACA] bg-[#FFF5F5] px-4 py-3 text-center text-[0.82rem] leading-relaxed text-[#6b7280] shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+          <strong>Pro tip:</strong> save this banner in high quality and send it to a local printing press if you want a physical flex banner for your storefront.
         </div>
       </main>
     </div>
