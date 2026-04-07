@@ -4,11 +4,9 @@ import {
   FaArrowLeft,
   FaCamera,
   FaCloudArrowUp,
-  FaLocationCrosshairs,
   FaLocationDot,
   FaMicrophone,
   FaRotateRight,
-  FaShieldHalved,
   FaTriangleExclamation,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
@@ -27,6 +25,16 @@ const MAX_KYC_SECONDS = 60;
 const TARGET_KYC_FRAME_RATE = 24;
 const TARGET_KYC_VIDEO_BITRATE = 220000;
 
+function getInitials(name) {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+  if (!parts.length) return "CT";
+  return parts.map((part) => part[0]?.toUpperCase() || "").join("");
+}
+
 export default function MerchantVideoKYC() {
   const navigate = useNavigate();
   usePreventPullToRefresh();
@@ -38,6 +46,7 @@ export default function MerchantVideoKYC() {
   const [pageError, setPageError] = useState(null);
   const [shopData, setShopData] = useState(null);
   const [profileName, setProfileName] = useState("Merchant");
+  const [profileAvatar, setProfileAvatar] = useState("");
   const [cityName, setCityName] = useState("");
   const [location, setLocation] = useState(null); // { lat, lng }
   const [setupState, setSetupState] = useState("idle"); // 'idle' | 'requesting' | 'ready' | 'failed'
@@ -138,15 +147,16 @@ export default function MerchantVideoKYC() {
 
         const { data: profile, error: profErr } = await supabase
           .from("profiles")
-          .select("full_name, is_suspended, city_id")
+          .select("full_name, avatar_url, is_suspended, city_id")
           .eq("id", user.id)
           .maybeSingle();
         if (profErr || profile?.is_suspended) throw new Error("Account restricted.");
         if (profile?.full_name) setProfileName(profile.full_name);
+        if (profile?.avatar_url) setProfileAvatar(profile.avatar_url);
 
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
-          .select("id, name, unique_id, address, city_id, is_verified, kyc_status, kyc_video_url, cities(name)")
+          .select("id, name, unique_id, address, city_id, is_verified, kyc_status, kyc_video_url, rejection_reason, cities(name)")
           .eq("owner_id", user.id)
           .maybeSingle();
 
@@ -537,63 +547,51 @@ export default function MerchantVideoKYC() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-black text-white">
-      
-      <header className="sticky top-0 z-40 flex w-full items-center gap-4 bg-[#131921] p-4 shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
-        <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]"><FaArrowLeft /></button>
-        <div className="text-[1.15rem] font-bold">Video KYC Verification</div>
-      </header>
+    <div className="min-h-screen bg-[#050816] text-white">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0B1020]/95 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-[700px] items-center gap-3 px-4 py-4">
+          <button
+            onClick={() => navigate("/vendor-panel")}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[1rem] transition hover:bg-white/10"
+          >
+            <FaArrowLeft />
+          </button>
 
-      <main className="flex w-full max-w-[600px] flex-1 flex-col p-5">
-        <div className="mb-4 rounded-2xl border border-[#334155] bg-[#111827] px-4 py-3 shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
-          <div className="flex items-center gap-3">
-            <img
-              src={logoImage}
-              alt="CTMerchant"
-              className="h-12 w-12 rounded-xl border border-white/10 object-cover"
-            />
-            <div className="min-w-0">
-              <div className="text-[0.78rem] font-bold uppercase tracking-[0.18em] text-[#FBBF24]">
-                CTMerchant Secure Verification
-              </div>
-              <div className="truncate text-[1rem] font-extrabold text-white">
-                Hi, {profileName}
-              </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8rem] font-medium text-[#CBD5E1]">
-                {cityName ? (
-                  <span className="inline-flex items-center gap-1">
-                    <FaLocationCrosshairs className="text-[#38BDF8]" /> {cityName}
-                  </span>
-                ) : null}
-                {shopData?.name ? (
-                  <span className="truncate text-[#94A3B8]">{shopData.name}</span>
-                ) : null}
-              </div>
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#1A2237] text-[0.85rem] font-bold text-[#F9A8D4]">
+            {profileAvatar ? (
+              <img src={profileAvatar} alt={profileName} className="h-full w-full object-cover" />
+            ) : (
+              <span>{getInitials(profileName)}</span>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[1rem] font-extrabold text-[#F9A8D4]">Hello, {profileName}</div>
+            <div className="text-[0.82rem] font-semibold uppercase tracking-[0.14em] text-[#FBBF24]">
+              Shop/Store Verification
             </div>
           </div>
+
+          <img
+            src={logoImage}
+            alt="CTMerchant"
+            className="h-11 w-11 shrink-0 rounded-full border border-white/10 object-cover"
+          />
         </div>
-        
-        {recordingState !== "recorded" && recordingState !== "uploading" && (
-          <>
-            <div className="mb-4 rounded-xl border border-[#334155] bg-[#1E293B] p-4">
-              <h4 className="mb-2 flex items-center gap-2 text-[1.05rem] font-bold text-[#38BDF8]">
-                <FaShieldHalved /> Secure Verification
-              </h4>
-              <ul className="list-inside list-disc text-[0.85rem] leading-relaxed text-[#CBD5E1]">
-                <li>Show your storefront and your products.</li>
-                <li>Tell us about your business.</li>
-                <li>Showing yourself in the video capture is optional, but it can speed up verification.</li>
-                <li>You have {MAX_KYC_SECONDS} seconds only.</li>
-                <li>{`Upload limit: ${KYC_VIDEO_RULE_LABEL}.`}</li>
-              </ul>
-            </div>
-          </>
-        )}
+      </header>
+
+      <main className="mx-auto flex w-full max-w-[700px] flex-1 flex-col px-4 pb-10 pt-4">
+        {shopData?.rejection_reason ? (
+          <div className="mb-4 rounded-2xl border border-[#7F1D1D] bg-[#2A1014] px-4 py-3 text-[0.88rem] text-[#FECACA] shadow-[0_10px_24px_rgba(0,0,0,0.22)]">
+            <div className="mb-1 font-bold uppercase tracking-[0.12em] text-[#FCA5A5]">Rejection Reason</div>
+            <div>{shopData.rejection_reason}</div>
+          </div>
+        ) : null}
 
         {/* Hidden Raw Video Feed */}
         <video ref={rawVideoRef} className="hidden" muted playsInline autoPlay />
 
-        <div className="relative flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-[#334155] bg-[#0F172A] shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+        <div className="relative flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-[#08101E] shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
           
           {/* Visible Canvas playing the stamped footage */}
           <canvas 
@@ -611,7 +609,7 @@ export default function MerchantVideoKYC() {
 
           {recordingState === "ready" && setupState !== "ready" && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/65 p-5 text-center backdrop-blur-sm">
-              <div className="w-full max-w-[340px] rounded-2xl border border-[#334155] bg-[#111827]/95 p-5 shadow-xl">
+              <div className="w-full max-w-[340px] rounded-3xl border border-white/10 bg-[#10192B]/95 p-5 shadow-xl">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#1F2937] text-[#FBBF24]">
                   {setupState === "requesting" ? (
                     <FaRotateRight className="animate-spin text-2xl" />
@@ -653,18 +651,11 @@ export default function MerchantVideoKYC() {
           )}
           
           {/* Recording Timer & UI */}
-          {(recordingState === 'ready' || recordingState === 'recording') && (
-            <>
-              {recordingState === 'recording' && (
-                <div className="absolute right-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-red-600/90 px-2.5 py-1 text-[0.8rem] font-extrabold shadow-[0_2px_10px_rgba(220,38,38,0.5)] animate-[pulse_1.5s_infinite]">
-                  <div className="h-2 w-2 rounded-full bg-white"></div> REC
-                </div>
-              )}
-              <div className={`absolute bottom-5 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/70 px-4 py-1.5 font-mono text-[1.2rem] font-extrabold ${timeLeft <= 10 ? 'text-red-500' : 'text-white'}`}>
-                00:{timeLeft.toString().padStart(2, '0')}
-              </div>
-            </>
-          )}
+          {recordingState === 'recording' ? (
+            <div className="absolute right-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-red-600/90 px-2.5 py-1 text-[0.8rem] font-extrabold shadow-[0_2px_10px_rgba(220,38,38,0.5)] animate-[pulse_1.5s_infinite]">
+              <div className="h-2 w-2 rounded-full bg-white"></div> REC
+            </div>
+          ) : null}
 
           {/* Uploading Overlay */}
           {recordingState === "uploading" && (
@@ -676,36 +667,54 @@ export default function MerchantVideoKYC() {
         </div>
 
         {/* CONTROLS */}
-        <div className="mt-5 flex flex-col items-center gap-4 pb-10">
-          
-          {(recordingState === "ready" || recordingState === "recording") && (
-            <button 
-              onClick={handleRecordToggle}
-              disabled={!location || setupState !== "ready"}
-              className={`flex h-[70px] w-[70px] items-center justify-center rounded-full border-4 border-white bg-transparent transition-all ${recordingState === 'recording' ? 'scale-95' : ''} ${!location || setupState !== "ready" ? 'opacity-50 cursor-not-allowed border-gray-500' : ''}`}
-            >
-              <div className={`rounded-full bg-[#DC2626] transition-all ${recordingState === 'recording' ? 'h-[30px] w-[30px] rounded-md' : 'h-[50px] w-[50px]'} ${!location || setupState !== "ready" ? 'bg-gray-500' : ''}`}></div>
-            </button>
-          )}
+        <div className="mt-4 flex flex-col gap-4 pb-10">
+          <div className="flex items-center justify-between gap-3">
+            <div className={`inline-flex min-w-[90px] items-center justify-center rounded-full border border-white/10 bg-white/5 px-4 py-2 font-mono text-[0.95rem] font-extrabold ${timeLeft <= 10 ? 'text-red-400' : 'text-white'}`}>
+              00:{timeLeft.toString().padStart(2, '0')}
+            </div>
 
-          {recordingState === "recorded" && (
-            <>
-              <button 
+            {(recordingState === "ready" || recordingState === "recording") ? (
+              <button
+                onClick={handleRecordToggle}
+                disabled={!location || setupState !== "ready"}
+                className={`flex h-[58px] w-[58px] items-center justify-center rounded-full border-4 border-white bg-transparent transition-all ${recordingState === 'recording' ? 'scale-95' : ''} ${!location || setupState !== "ready" ? 'cursor-not-allowed border-gray-500 opacity-50' : ''}`}
+              >
+                <div className={`rounded-full bg-[#DC2626] transition-all ${recordingState === 'recording' ? 'h-[24px] w-[24px] rounded-md' : 'h-[40px] w-[40px]'} ${!location || setupState !== "ready" ? 'bg-gray-500' : ''}`}></div>
+              </button>
+            ) : null}
+          </div>
+
+          {recordingState === "recorded" ? (
+            <div className="flex items-center gap-3">
+              <button
                 onClick={uploadVideo}
-                className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-[#10B981] p-4 text-[1.05rem] font-extrabold text-white shadow-[0_4px_10px_rgba(16,185,129,0.3)] transition hover:bg-[#059669]"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#10B981] px-4 py-3 text-[0.9rem] font-bold text-white shadow-[0_4px_10px_rgba(16,185,129,0.3)] transition hover:bg-[#059669]"
               >
-                <FaCloudArrowUp /> Submit Video for Approval
+                <FaCloudArrowUp /> Submit
               </button>
 
-              <button 
+              <button
                 onClick={resetStudio}
-                className="text-[0.9rem] font-bold text-[#94A3B8] underline transition hover:text-white"
+                className="flex-1 rounded-xl border border-[#f472b6]/50 bg-transparent px-4 py-3 text-[0.85rem] font-semibold text-[#f472b6] transition hover:bg-[#f472b6]/10"
               >
-                Retake Video
+                Retake
               </button>
-            </>
-          )}
+            </div>
+          ) : null}
 
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[0.82rem] text-[#CBD5E1]">
+            <div className="mb-1 font-semibold uppercase tracking-[0.12em] text-[#FBBF24]">Verification Details</div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {cityName ? <span>{cityName}</span> : null}
+              {location ? <span>{`LAT ${location.lat}`}</span> : null}
+              {location ? <span>{`LNG ${location.lng}`}</span> : null}
+              {shopData?.name ? <span>{shopData.name}</span> : null}
+              <span>{currentDateTime}</span>
+            </div>
+            <div className="mt-2 text-[0.78rem] text-[#94A3B8]">
+              Show your shop and products in a {MAX_KYC_SECONDS}-second video. Limit: {KYC_VIDEO_RULE_LABEL}.
+            </div>
+          </div>
         </div>
 
       </main>
