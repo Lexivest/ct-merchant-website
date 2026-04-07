@@ -87,7 +87,6 @@ function PromoBannerArtwork({
   shopNameLines,
   categoryLines,
   addressLines,
-  cityName,
   uniqueId,
   websiteText,
   className = "",
@@ -104,11 +103,11 @@ function PromoBannerArtwork({
     <div
       className={`overflow-hidden rounded-[26px] bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.16)] ${shellClass} ${className}`}
     >
-      <div className="flex flex-wrap gap-[6px] bg-white p-[6px]">
+      <div className="grid grid-cols-3 gap-[6px] bg-white p-[6px]">
         {productImages.map((imgUrl, index) => (
           <div
             key={`${imgUrl}-${index}-${exportMode ? "export" : "preview"}`}
-            className={`w-[calc(33.333%-4px)] overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] ${tileClass}`}
+            className={`overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] ${tileClass}`}
           >
             <img
               crossOrigin="anonymous"
@@ -120,7 +119,7 @@ function PromoBannerArtwork({
         ))}
       </div>
 
-      <div className="flex flex-col items-center gap-3 px-[18px] py-5 text-center">
+      <div className="flex flex-col items-center gap-2.5 px-[18px] py-5 text-center">
         <div className={`w-full font-black leading-[1.18] text-white ${titleClass}`}>
           {shopNameLines.map((line, index) => (
             <span key={`shop-${index}`} className="block min-h-[1.2rem]">
@@ -129,12 +128,12 @@ function PromoBannerArtwork({
           ))}
         </div>
 
-        <div className={`inline-flex max-w-[360px] items-center justify-center rounded-full bg-[#EA580C] px-6 py-2 font-extrabold leading-[1.12] text-white ${categoryClass}`}>
-          <span className="block truncate">{categoryLines.join(" ")}</span>
+        <div className={`inline-flex max-w-[88%] items-center justify-center rounded-full bg-[#EA580C] px-5 py-2 font-extrabold leading-[1.1] text-white ${categoryClass}`}>
+          <span className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap">{categoryLines.join(" ")}</span>
         </div>
 
         <div className="flex max-w-[520px] items-start justify-center gap-2 px-3 text-center">
-          <FaLocationDot className="mt-[2px] shrink-0 text-[0.95rem] text-[#FBBF24]" />
+          <FaLocationDot className="mt-[2px] shrink-0 text-[0.9rem] text-[#FBBF24]" />
           <div className={`font-semibold leading-[1.35] text-[#E2E8F0] ${addressClass}`}>
             {addressLines.map((line, index) => (
               <span key={`address-${index}`} className="block">
@@ -144,7 +143,7 @@ function PromoBannerArtwork({
           </div>
         </div>
 
-        <div className="text-[clamp(0.84rem,1.9vw,0.98rem)] font-black text-[#FBBF24]">
+        <div className="text-[clamp(0.82rem,1.8vw,0.96rem)] font-black text-[#FBBF24]">
           Repo ID: <span className="text-white">{uniqueId}</span>
         </div>
 
