@@ -60,12 +60,14 @@ function wrapTextLines(input, maxCharsPerLine, maxLines) {
 function PromoBannerShimmer() {
   return (
     <div className="flex min-h-screen flex-col bg-[#F4F7FB] text-[#0F1111]">
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[860px] items-center gap-4">
-          <div className="text-xl opacity-40"><FaArrowLeft /></div>
+      <header className="px-4 py-4">
+        <div className="mx-auto flex w-full max-w-[860px] items-center gap-4 rounded-[24px] bg-[#111827] px-4 py-4 text-white shadow-[0_14px_30px_rgba(15,23,42,0.18)]">
+          <div className="flex h-[42px] w-[42px] items-center justify-center rounded-[16px] bg-white/10 text-[1rem] opacity-60">
+            <FaArrowLeft />
+          </div>
           <div className="min-w-0">
-            <div className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-slate-400">Merchant</div>
-            <div className="text-[1.15rem] font-bold opacity-50">Shop Promo Banner</div>
+            <div className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#f472b6]">Merchant</div>
+            <div className="text-[1.2rem] font-black opacity-60">Shop Promo Banner</div>
           </div>
         </div>
       </header>
