@@ -45,20 +45,24 @@ const TARGET_H = BANNER_PROFILE.targetHeight;
 // --- SHIMMER COMPONENT ---
 function BannerShimmer() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
-      <header className="sticky top-0 z-40 flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="text-xl opacity-50"><FaArrowLeft /></div>
-          <div className="text-[1.15rem] font-bold opacity-50">Shop Banner</div>
+    <div className="flex min-h-screen flex-col bg-[#F4F7FB] text-[#0F1111]">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-[620px] items-center gap-4">
+          <div className="text-xl opacity-40"><FaArrowLeft /></div>
+          <div className="min-w-0">
+            <div className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-slate-400">Merchant</div>
+            <div className="text-[1.15rem] font-bold opacity-50">Shop Banner</div>
+          </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-[600px] p-5">
-        <div className="mb-6 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-          <ShimmerBlock className="mb-2 h-5 w-48 rounded" />
+      <main className="mx-auto w-full max-w-[620px] p-5">
+        <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+          <ShimmerBlock className="mb-2 h-4 w-24 rounded-full" />
+          <ShimmerBlock className="mb-3 h-6 w-44 rounded" />
           <ShimmerBlock className="h-4 w-full rounded" />
-          <ShimmerBlock className="mt-1 h-4 w-3/4 rounded" />
+          <ShimmerBlock className="mt-2 h-4 w-3/4 rounded" />
+          <ShimmerBlock className="mt-5 aspect-video w-full rounded-[22px]" />
         </div>
-        <ShimmerBlock className="aspect-video w-full rounded-xl" />
       </main>
     </div>
   );
@@ -388,89 +392,106 @@ export default function MerchantBanner() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
-      <header className="sticky top-0 z-40 flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-sm">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]">
-            <FaArrowLeft />
+    <div className="flex min-h-screen flex-col bg-[#F4F7FB] text-[#0F1111]">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-[620px] items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <button onClick={() => navigate("/vendor-panel")} className="text-xl text-slate-700 transition hover:text-[#db2777]">
+              <FaArrowLeft />
+            </button>
+            <div className="min-w-0">
+              <div className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-slate-400">Merchant</div>
+              <div className="truncate text-[1.15rem] font-bold text-slate-900">Shop Banner</div>
+            </div>
+          </div>
+          <button 
+            onClick={handleSave} 
+            disabled={saving}
+            className="flex items-center gap-2 rounded-xl border border-[#be185d] bg-[#db2777] px-4 py-2 text-[0.88rem] font-extrabold text-white shadow-[0_8px_20px_rgba(219,39,119,0.22)] transition hover:bg-[#be185d] disabled:cursor-not-allowed disabled:border-[#D5D9D9] disabled:bg-[#E3E6E6] disabled:text-[#888C8C] disabled:shadow-none"
+          >
+            {saving ? <><FaCircleNotch className="animate-spin" /> Saving</> : <><FaCheck /> Save</>}
           </button>
-          <div className="text-[1.15rem] font-bold">Shop Banner</div>
         </div>
-        <button 
-          onClick={handleSave} 
-          disabled={saving}
-          className="flex items-center gap-2 rounded-md border border-[#be185d] bg-[#db2777] px-4 py-1.5 text-[0.95rem] font-bold text-white shadow-[0_2px_5px_rgba(219,39,119,0.3)] transition hover:bg-[#be185d] disabled:cursor-not-allowed disabled:border-[#D5D9D9] disabled:bg-[#E3E6E6] disabled:text-[#888C8C] disabled:shadow-none"
-        >
-          {saving ? <><FaCircleNotch className="animate-spin" /> Saving</> : <><FaCheck /> Save</>}
-        </button>
       </header>
 
-      <main className="mx-auto w-full max-w-[600px] flex-1 p-5">
-        
-        <div className="mb-6 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-          <h4 className="mb-2 flex items-center gap-2 text-[0.95rem] font-extrabold text-[#0F1111]">
-            <FaPanorama className="text-[#007185]" /> Landscape Shop Banner
-          </h4>
-          <p className="text-[0.85rem] text-[#475569] leading-relaxed">
-            {`Upload from Gallery or Camera. Camera includes zoom support where available. Max input ${formatBytes(BANNER_INPUT_MAX_BYTES)}; final upload ${BANNER_RULE_LABEL}. All banners are reviewed by an admin.`}
-          </p>
-        </div>
+      <main className="mx-auto w-full max-w-[620px] flex-1 p-5">
+        <div className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+          <div className="mb-4">
+            <div className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-slate-400">
+              Merchant Banner
+            </div>
+            <h2 className="mt-1 flex items-center gap-2 text-[1.2rem] font-extrabold text-slate-900">
+              <FaPanorama className="text-[#007185]" />
+              Landscape shop banner
+            </h2>
+            <p className="mt-2 text-[0.9rem] leading-6 text-slate-500">
+              {`Upload from Gallery or Camera. Camera includes zoom support where available. Max input ${formatBytes(BANNER_INPUT_MAX_BYTES)}; final upload ${BANNER_RULE_LABEL}. All banners are reviewed by an admin.`}
+            </p>
+          </div>
 
-        <div className="relative w-full">
-          <div
-            className={`relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden rounded-xl border-2 transition-colors ${previewUrl ? "border-[#D5D9D9] bg-white shadow-sm" : "border-dashed border-[#888C8C] bg-[#F7F7F7]"}`}
-          >
-            <input type="file" ref={fileInputRef} hidden accept={BANNER_ACCEPT} onChange={handleFileSelect} />
-            
-            {previewUrl ? (
-              <>
-                <img src={previewUrl} className="absolute inset-0 h-full w-full bg-white object-contain z-0" alt="Banner Preview" />
-                <button 
-                  type="button" 
-                  onClick={removeImage} 
-                  className="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white shadow-md transition hover:scale-110 hover:bg-red-700"
-                >
-                  <FaTrashCan />
-                </button>
-                
-                {status && (
-                  <div className={`absolute left-3 top-3 z-10 rounded-md border px-3 py-1.5 text-[0.75rem] font-extrabold shadow-sm backdrop-blur-sm ${
-                    status === "pending" ? "border-[#FDE68A] bg-[#FEF3C7]/95 text-[#D97706]" :
-                    status === "approved" ? "border-[#A7F3D0] bg-[#D1FAE5]/95 text-[#059669]" :
-                    status === "rejected" ? "border-[#FECACA] bg-[#FEE2E2]/95 text-[#DC2626]" :
-                    "border-[#D5D9D9] bg-[#F3F4F6]/95 text-[#0F1111]"
-                  }`}>
-                    {status === "pending" ? "PENDING APPROVAL" : status === "approved" ? "APPROVED" : status === "rejected" ? "REJECTED" : "UNSAVED CHANGES"}
+          <div className="relative w-full">
+            <div
+              className={`relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden rounded-[24px] border transition-colors ${
+                previewUrl ? "border-slate-200 bg-[#F8FAFC] shadow-[inset_0_0_0_1px_rgba(226,232,240,0.5)]" : "border-dashed border-slate-300 bg-[#F8FAFC]"
+              }`}
+            >
+              <input type="file" ref={fileInputRef} hidden accept={BANNER_ACCEPT} onChange={handleFileSelect} />
+              
+              {previewUrl ? (
+                <>
+                  <img src={previewUrl} className="absolute inset-0 z-0 h-full w-full bg-white object-contain" alt="Banner Preview" />
+                  <button 
+                    type="button" 
+                    onClick={removeImage} 
+                    className="absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-white shadow-md transition hover:scale-105 hover:bg-red-700"
+                  >
+                    <FaTrashCan />
+                  </button>
+                  
+                  {status && (
+                    <div className={`absolute left-3 top-3 z-10 rounded-full border px-3 py-1.5 text-[0.68rem] font-extrabold shadow-sm backdrop-blur-sm ${
+                      status === "pending" ? "border-[#FDE68A] bg-[#FEF3C7]/95 text-[#D97706]" :
+                      status === "approved" ? "border-[#A7F3D0] bg-[#D1FAE5]/95 text-[#059669]" :
+                      status === "rejected" ? "border-[#FECACA] bg-[#FEE2E2]/95 text-[#DC2626]" :
+                      "border-[#D5D9D9] bg-[#F3F4F6]/95 text-[#0F1111]"
+                    }`}>
+                      {status === "pending" ? "PENDING APPROVAL" : status === "approved" ? "APPROVED" : status === "rejected" ? "REJECTED" : "UNSAVED"}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center p-5">
+                  <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-[0_4px_14px_rgba(15,23,42,0.08)]">
+                    <FaImage className="text-3xl text-[#94A3B8]" />
                   </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center p-5">
-                <FaImage className="mx-auto mb-3 text-5xl text-[#888C8C]" />
-                <span className="text-[0.9rem] font-bold leading-relaxed text-[#565959]">{`Use File or Camera below (Landscape, ${BANNER_RULE_LABEL})`}</span>
-              </div>
-            )}
+                  <span className="text-[0.9rem] font-bold leading-relaxed text-[#565959]">
+                    Tap below to choose banner image
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-[0.78rem] font-extrabold uppercase tracking-wide text-[#0F172A] transition hover:bg-slate-50"
+              >
+                Upload File
+              </button>
+              <button
+                type="button"
+                onClick={() => setCameraOpen(true)}
+                className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0F172A] px-4 py-2.5 text-[0.78rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1E293B]"
+              >
+                <FaCamera />
+                Use Camera
+              </button>
+            </div>
           </div>
 
-          <div className="mt-3 flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="rounded-md border border-[#334155] bg-white px-3 py-2 text-[0.75rem] font-extrabold uppercase tracking-wide text-[#0F172A] transition hover:bg-slate-50"
-            >
-              Upload File
-            </button>
-            <button
-              type="button"
-              onClick={() => setCameraOpen(true)}
-              className="flex items-center gap-2 rounded-md border border-[#1E293B] bg-[#0F172A] px-3 py-2 text-[0.75rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1E293B]"
-            >
-              <FaCamera />
-              Use Camera
-            </button>
-          </div>
+          {saveError ? <div className="mt-4 text-[0.82rem] font-bold text-[#DC2626]">{saveError}</div> : null}
         </div>
-
       </main>
 
       {/* STUDIO OVERLAY (16:9 STRICT) */}
