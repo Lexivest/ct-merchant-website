@@ -4,6 +4,7 @@ import {
   FaArrowLeft,
   FaBoxOpen,
   FaBullhorn,
+  FaChevronDown,
   FaCircleCheck,
   FaCircleInfo,
   FaComments,
@@ -283,6 +284,7 @@ function ShopDetail() {
   const [selectedProductId, setSelectedProductId] = useState("")
   const [replyTarget, setReplyTarget] = useState(null)
   const [submittingComment, setSubmittingComment] = useState(false)
+  const [commentProductPickerOpen, setCommentProductPickerOpen] = useState(false)
 
   // Sync optimistic state when cached data resolves
   useEffect(() => {
@@ -295,6 +297,7 @@ function ShopDetail() {
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const communityRef = useRef(null)
+  const commentProductPickerRef = useRef(null)
 
   // Computed Values
   const currentShop = data?.shop
@@ -306,12 +309,36 @@ function ShopDetail() {
     [comments]
   )
   const commentThreads = useMemo(() => buildCommentThreads(comments), [comments])
+  const selectedCommentProduct = useMemo(() => {
+    if (!selectedProductId) return null
+    return (
+      products.find((item) => String(item.id) === String(selectedProductId)) ||
+      commentProducts[String(selectedProductId)] ||
+      null
+    )
+  }, [commentProducts, products, selectedProductId])
 
   useEffect(() => {
     if (!preselectedProductId) return
     if (!products.some((product) => String(product.id) === String(preselectedProductId))) return
     setSelectedProductId(String(preselectedProductId))
   }, [preselectedProductId, products])
+
+  useEffect(() => {
+    function handleOutsideClick(event) {
+      if (!commentProductPickerRef.current?.contains(event.target)) {
+        setCommentProductPickerOpen(false)
+      }
+    }
+
+    if (commentProductPickerOpen) {
+      document.addEventListener("mousedown", handleOutsideClick)
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick)
+    }
+  }, [commentProductPickerOpen])
 
   const fetchComments = useMemo(
     () => async () => {
@@ -362,7 +389,7 @@ function ShopDetail() {
           productIds.length > 0
             ? supabase
                 .from("products")
-                .select("id, name")
+                .select("id, name, image_url")
                 .in("id", productIds)
             : Promise.resolve({ data: [] }),
         ])
@@ -740,6 +767,20 @@ function ShopDetail() {
       products.find((item) => String(item.id) === String(comment.product_id))?.name ||
       ""
     )
+  }
+
+  function getCommentProductMeta(comment) {
+    if (!comment?.product_id) return null
+    return (
+      commentProducts[String(comment.product_id)] ||
+      products.find((item) => String(item.id) === String(comment.product_id)) ||
+      null
+    )
+  }
+
+  function openProductDetail(productId) {
+    if (!productId) return
+    navigate(`/product-detail?id=${productId}`)
   }
 
   function openAbuseReport(comment) {
@@ -1165,13 +1206,6 @@ function ShopDetail() {
                 {replyTarget ? `Commenting on ${replyTarget.authorName}'s thread` : "Start a thread"}
               </div>
 
-              {selectedProductId ? (
-                <div className="inline-flex items-center rounded-full bg-pink-100 px-3 py-1 text-[0.72rem] font-bold text-pink-600">
-                  {commentProducts[selectedProductId]?.name ||
-                    products.find((item) => String(item.id) === String(selectedProductId))?.name ||
-                    "Selected Product"}
-                </div>
-              ) : null}
             </div>
 
             {replyTarget ? (
@@ -1202,6 +1236,130 @@ function ShopDetail() {
               </div>
             ) : (
               <>
+                <div ref={commentProductPickerRef} className="mb-3">
+                  <div className="mb-1.5 text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+                    Product Reference
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCommentProductPickerOpen((open) => !open)}
+                    className="flex w-full items-center justify-between rounded-[18px] border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-pink-200"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      {selectedCommentProduct?.image_url ? (
+                        <img
+                          src={selectedCommentProduct.image_url}
+                          alt={selectedCommentProduct.name || "Selected product"}
+                          className="h-11 w-11 rounded-xl border border-slate-200 object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-500">
+                          <FaBoxOpen />
+                        </div>
+                      )}
+
+                      <div className="min-w-0">
+                        <div className="text-[0.74rem] font-bold uppercase tracking-[0.1em] text-slate-400">
+                          Attached Product
+                        </div>
+                        <div className="truncate text-[0.87rem] font-bold text-[#0F1111]">
+                          {selectedCommentProduct?.name || "General shop service"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <FaChevronDown
+                      className={`shrink-0 text-[0.82rem] text-slate-400 transition ${
+                        commentProductPickerOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {commentProductPickerOpen ? (
+                    <div className="mt-2 overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-[0_16px_40px_rgba(15,23,42,0.08)]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedProductId("")
+                          setCommentProductPickerOpen(false)
+                        }}
+                        className="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-3 text-left transition hover:bg-slate-50"
+                      >
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-500">
+                          <FaBoxOpen />
+                        </div>
+                        <div>
+                          <div className="text-[0.86rem] font-bold text-[#0F1111]">General shop service</div>
+                          <div className="text-[0.75rem] text-slate-500">No specific product attached</div>
+                        </div>
+                      </button>
+
+                      <div className="max-h-[280px] overflow-y-auto">
+                        {products.map((product) => (
+                          <button
+                            key={product.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedProductId(String(product.id))
+                              setCommentProductPickerOpen(false)
+                            }}
+                            className="flex w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-slate-50"
+                          >
+                            <img
+                              src={product.image_url || ""}
+                              alt={product.name}
+                              className="h-11 w-11 rounded-xl border border-slate-200 object-cover"
+                            />
+                            <div className="min-w-0">
+                              <div className="truncate text-[0.86rem] font-bold text-[#0F1111]">{product.name}</div>
+                              <div className="text-[0.74rem] text-slate-500">Attach this product to the thread</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                {selectedCommentProduct ? (
+                  <div className="mb-3 rounded-[18px] border border-pink-100 bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+                    <div className="flex items-start gap-3">
+                      <button
+                        type="button"
+                        onClick={() => openProductDetail(selectedCommentProduct.id)}
+                        className="overflow-hidden rounded-xl border border-slate-200 transition hover:opacity-90"
+                      >
+                        <StableImage
+                          src={selectedCommentProduct.image_url}
+                          alt={selectedCommentProduct.name}
+                          containerClassName="h-[74px] w-[74px] bg-white"
+                          className="h-full w-full object-contain"
+                        />
+                      </button>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-pink-600">
+                          Visual Reference
+                        </div>
+                        <div className="mt-1 text-[0.9rem] font-extrabold text-[#0F1111]">
+                          {selectedCommentProduct.name}
+                        </div>
+                        <div className="mt-1 text-[0.78rem] leading-5 text-slate-500">
+                          This image will help readers and moderators know which product the thread is referring to.
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openProductDetail(selectedCommentProduct.id)}
+                          className="mt-2 inline-flex items-center gap-1.5 text-[0.76rem] font-bold text-pink-600 transition hover:text-pink-700"
+                        >
+                          <FaBoxOpen className="text-[0.7rem]" />
+                          Open product
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
                 <textarea
                   value={commentBody}
                   onChange={(event) => setCommentBody(event.target.value)}
@@ -1215,7 +1373,11 @@ function ShopDetail() {
                 />
 
                 <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="text-[0.78rem] font-medium text-slate-500">
+                    {commentBody.trim().length}/500 · Public after approval
+                  </div>
+
+                  <div className="hidden">
                     <select
                       value={selectedProductId}
                       onChange={(event) => setSelectedProductId(event.target.value)}
@@ -1284,6 +1446,7 @@ function ShopDetail() {
               {commentThreads.map((comment) => {
                 const author = getCommentAuthor(comment)
                 const productLabel = getCommentProductLabel(comment)
+                const productMeta = getCommentProductMeta(comment)
                 const isOwnPending = comment.user_id === user?.id && comment.status !== "approved"
 
                 return (
@@ -1324,9 +1487,20 @@ function ShopDetail() {
                             </span>
                           ) : null}
                           {productLabel ? (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-slate-600">
+                            <button
+                              type="button"
+                              onClick={() => openProductDetail(comment.product_id)}
+                              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-slate-600 transition hover:bg-slate-200"
+                            >
+                              {productMeta?.image_url ? (
+                                <img
+                                  src={productMeta.image_url}
+                                  alt={productLabel}
+                                  className="h-4 w-4 rounded-full object-cover"
+                                />
+                              ) : null}
                               {productLabel}
-                            </span>
+                            </button>
                           ) : null}
                         </div>
 

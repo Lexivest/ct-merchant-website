@@ -3,6 +3,7 @@ import { FaCircleCheck, FaCircleNotch, FaComments, FaEye, FaReply } from "react-
 import { supabase } from "../../lib/supabase"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
+import StableImage from "../../components/common/StableImage"
 import {
   SectionHeading,
   StaffPortalShell,
@@ -52,7 +53,7 @@ export default function StaffCommunity() {
           ? supabase.from("shops").select("id, name, unique_id, owner_id").in("id", shopIds)
           : Promise.resolve({ data: [] }),
         productIds.length
-          ? supabase.from("products").select("id, name").in("id", productIds)
+          ? supabase.from("products").select("id, name, image_url").in("id", productIds)
           : Promise.resolve({ data: [] }),
         userIds.length
           ? supabase.from("profiles").select("id, full_name, avatar_url").in("id", userIds)
@@ -82,6 +83,7 @@ export default function StaffCommunity() {
           shop_unique_id: shop?.unique_id || "",
           shop_owner_id: shop?.owner_id || null,
           product_name: product?.name || "",
+          product_image_url: product?.image_url || "",
           author_name: profile?.full_name || "CTMerchant User",
           author_avatar_url: profile?.avatar_url || "",
           is_owner_comment: Boolean(shop?.owner_id && shop.owner_id === comment.user_id),
@@ -253,8 +255,15 @@ export default function StaffCommunity() {
                     <td className="px-6 py-4">
                       <div className="max-w-[360px]">
                         <div className="line-clamp-2 font-semibold text-slate-900">{thread.root.body}</div>
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                          <span className="rounded-full bg-slate-100 px-2.5 py-1 font-bold text-slate-600">
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                          <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-2 py-1 font-bold text-slate-600">
+                            {thread.root.product_image_url ? (
+                              <img
+                                src={thread.root.product_image_url}
+                                alt={thread.root.product_name || "Product"}
+                                className="h-5 w-5 rounded-full object-cover"
+                              />
+                            ) : null}
                             {thread.root.product_name || "General shop service"}
                           </span>
                           <span className="rounded-full bg-slate-100 px-2.5 py-1 font-bold text-slate-600">
@@ -337,7 +346,18 @@ export default function StaffCommunity() {
                           {comment.is_owner_comment ? <span className="rounded-full bg-pink-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-pink-600">Shop Owner</span> : null}
                           <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getCommentStatusBadge(comment.status)}`}>{comment.status}</span>
                           {comment.parent_id ? <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500"><FaReply /> Comment</span> : null}
-                          {comment.product_name ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">{comment.product_name}</span> : null}
+                          {comment.product_name ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                              {comment.product_image_url ? (
+                                <img
+                                  src={comment.product_image_url}
+                                  alt={comment.product_name}
+                                  className="h-4 w-4 rounded-full object-cover"
+                                />
+                              ) : null}
+                              {comment.product_name}
+                            </span>
+                          ) : null}
                         </div>
                         <div className="mt-0.5 text-[11px] font-medium text-slate-400">{formatDateTime(comment.created_at)}</div>
                         <div className="mt-2 whitespace-pre-wrap text-[0.88rem] leading-6 text-slate-700">{comment.body}</div>
@@ -381,6 +401,29 @@ export default function StaffCommunity() {
                   <div className="space-y-3 text-sm text-slate-700">
                     <div><div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Shop</div><div className="mt-1 font-semibold text-slate-900">{selectedCommentThread.root.shop_name}</div></div>
                     <div><div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Shop ID</div><div className="mt-1 font-mono font-semibold text-slate-900">{selectedCommentThread.root.shop_unique_id || "Unassigned"}</div></div>
+                    {selectedCommentThread.root.product_name ? (
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Product Context</div>
+                        <div className="mt-2 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3">
+                          {selectedCommentThread.root.product_image_url ? (
+                            <StableImage
+                              src={selectedCommentThread.root.product_image_url}
+                              alt={selectedCommentThread.root.product_name}
+                              containerClassName="h-14 w-14 overflow-hidden rounded-xl bg-white"
+                              className="h-full w-full object-contain"
+                            />
+                          ) : (
+                            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+                              <FaComments />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="truncate font-semibold text-slate-900">{selectedCommentThread.root.product_name}</div>
+                            <div className="mt-1 text-xs text-slate-500">Linked product for this discussion thread</div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
                     <div><div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Latest Activity</div><div className="mt-1 font-semibold text-slate-900">{formatDateTime(selectedCommentThread.latestAt)}</div></div>
                   </div>
                 </div>
