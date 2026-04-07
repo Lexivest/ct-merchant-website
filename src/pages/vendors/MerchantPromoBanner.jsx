@@ -96,10 +96,8 @@ function PromoBannerArtwork({
   const shellClass = exportMode ? "w-[800px]" : "w-full max-w-[800px]";
   const tileClass = exportMode ? "h-[160px]" : "aspect-square";
   const titleClass = exportMode ? "text-[1.12rem]" : "text-[clamp(0.95rem,2.3vw,1.12rem)]";
-  const categoryClass = exportMode ? "text-[0.96rem]" : "text-[clamp(0.82rem,1.9vw,0.96rem)]";
+  const categoryClass = exportMode ? "text-[0.92rem]" : "text-[clamp(0.78rem,1.7vw,0.92rem)]";
   const addressClass = exportMode ? "text-[0.92rem]" : "text-[clamp(0.78rem,1.8vw,0.92rem)]";
-  const cityClass = exportMode ? "text-[1.45rem]" : "text-[clamp(1.05rem,3vw,1.45rem)]";
-  const idValueClass = exportMode ? "text-[1.02rem]" : "text-[clamp(0.88rem,2vw,1.02rem)]";
   const footerClass = exportMode ? "text-[0.96rem]" : "text-[clamp(0.82rem,1.8vw,0.96rem)]";
 
   return (
@@ -131,12 +129,8 @@ function PromoBannerArtwork({
           ))}
         </div>
 
-        <div className={`inline-flex max-w-[330px] flex-col items-center justify-center rounded-full bg-[#EA580C] px-6 py-2 font-extrabold leading-[1.12] text-white ${categoryClass}`}>
-          {categoryLines.map((line, index) => (
-            <span key={`category-${index}`} className="block">
-              {line}
-            </span>
-          ))}
+        <div className={`inline-flex max-w-[360px] items-center justify-center rounded-full bg-[#EA580C] px-6 py-2 font-extrabold leading-[1.12] text-white ${categoryClass}`}>
+          <span className="block truncate">{categoryLines.join(" ")}</span>
         </div>
 
         <div className="flex max-w-[520px] items-start justify-center gap-2 px-3 text-center">
@@ -150,13 +144,8 @@ function PromoBannerArtwork({
           </div>
         </div>
 
-        <div className={`font-black leading-tight text-white ${cityClass}`}>
-          CTMerchant <span className="text-[#FBBF24]">{cityName}</span> Repo
-        </div>
-
-        <div className="rounded-[16px] border-2 border-[#FBBF24] bg-white/10 px-5 py-3">
-          <div className="text-[0.72rem] font-black uppercase tracking-[0.12em] text-[#FBBF24]">ID</div>
-          <div className={`font-black text-white ${idValueClass}`}>{uniqueId}</div>
+        <div className="text-[clamp(0.84rem,1.9vw,0.98rem)] font-black text-[#FBBF24]">
+          Repo ID: <span className="text-white">{uniqueId}</span>
         </div>
 
         <div className={`mt-1 flex w-full items-center justify-center border-t-2 border-[#FBBF24] pt-3 font-black text-white ${footerClass}`}>
