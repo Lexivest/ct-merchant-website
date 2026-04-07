@@ -59,19 +59,24 @@ function wrapTextLines(input, maxCharsPerLine, maxLines) {
 // --- SHIMMER COMPONENT ---
 function PromoBannerShimmer() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
-      <header className="sticky top-0 z-40 flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="text-xl opacity-50"><FaArrowLeft /></div>
-          <div className="text-[1.15rem] font-bold opacity-50">Shop Promo Banner</div>
+    <div className="flex min-h-screen flex-col bg-[#F4F7FB] text-[#0F1111]">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-[860px] items-center gap-4">
+          <div className="text-xl opacity-40"><FaArrowLeft /></div>
+          <div className="min-w-0">
+            <div className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-slate-400">Merchant</div>
+            <div className="text-[1.15rem] font-bold opacity-50">Shop Promo Banner</div>
+          </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-[840px] flex-1 flex-col items-center p-5 pb-12">
-        <div className="mb-6 w-full max-w-[800px] rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-4 shadow-sm border-l-4 border-l-[#db2777]">
-          <ShimmerBlock className="mb-2 h-5 w-48 rounded" />
+      <main className="mx-auto flex w-full max-w-[860px] flex-1 flex-col items-center p-5 pb-12">
+        <div className="w-full rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+          <ShimmerBlock className="mb-2 h-4 w-24 rounded-full" />
+          <ShimmerBlock className="mb-3 h-6 w-52 rounded" />
           <ShimmerBlock className="h-4 w-full rounded" />
+          <ShimmerBlock className="mt-2 h-4 w-3/4 rounded" />
+          <ShimmerBlock className="mt-6 aspect-video w-full rounded-[22px]" />
         </div>
-        <ShimmerBlock className="aspect-video w-full max-w-[800px] rounded-xl" />
       </main>
     </div>
   );
@@ -248,8 +253,8 @@ export default function MerchantPromoBanner() {
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col bg-[#F3F4F6]">
-        <header className="bg-[#131921] px-4 py-3 text-white"><button onClick={() => navigate("/vendor-panel")}><FaArrowLeft /></button></header>
+      <div className="flex h-screen flex-col bg-[#F4F7FB]">
+        <header className="border-b border-slate-200 bg-white px-4 py-3 text-slate-900"><button onClick={() => navigate("/vendor-panel")}><FaArrowLeft /></button></header>
         <div className="flex flex-1 items-center justify-center p-5 text-center">
           <div className="rounded-xl border border-red-200 bg-white p-8 shadow-sm">
             <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-600" />
