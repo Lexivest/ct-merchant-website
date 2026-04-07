@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
-  FaArrowLeft,
   FaBoxOpen,
   FaBullhorn,
   FaChevronDown,
@@ -11,10 +10,10 @@ import {
   FaComments,
   FaFlag,
   FaGlobe,
+  FaHouse,
   FaLocationDot,
   FaMapLocationDot,
   FaPaperPlane,
-  FaShareNodes,
   FaShield,
   FaStore,
   FaTriangleExclamation,
@@ -162,6 +161,7 @@ function ShopDetail() {
     let fetchedApprovedNews = []
     let fetchedShopBanner = ""
     let fetchedHasLiked = false
+    let fetchedOwnerProfile = null
     const tasks = []
 
     if (shopData.city_id) {
@@ -175,6 +175,20 @@ function ShopDetail() {
           if (res.data?.name) cityName = res.data.name
         })
         .catch(() => {})
+      )
+    }
+
+    if (shopData.owner_id) {
+      tasks.push(
+        supabase
+          .from("profiles")
+          .select("id, full_name, avatar_url")
+          .eq("id", shopData.owner_id)
+          .maybeSingle()
+          .then((res) => {
+            if (!res.error) fetchedOwnerProfile = res.data || null
+          })
+          .catch(() => {})
       )
     }
 
@@ -259,6 +273,7 @@ function ShopDetail() {
       approvedNews: fetchedApprovedNews,
       shopBanner: fetchedShopBanner,
       hasLiked: fetchedHasLiked,
+      ownerProfile: fetchedOwnerProfile,
     }
   }
 
@@ -492,8 +507,15 @@ function ShopDetail() {
 
   // Map Initialization
   useEffect(() => {
+    if (activeInfoSection !== "map") return
     if (!currentShop?.latitude || !currentShop?.longitude || !mapRef.current) return
-    if (mapInstanceRef.current) return
+
+    if (mapInstanceRef.current) {
+      setTimeout(() => {
+        mapInstanceRef.current?.invalidateSize()
+      }, 150)
+      return
+    }
 
     const lat = Number(currentShop.latitude)
     const lng = Number(currentShop.longitude)
@@ -527,7 +549,7 @@ function ShopDetail() {
         mapInstanceRef.current = null
       }
     }
-  }, [currentShop])
+  }, [activeInfoSection, currentShop])
 
   function goBackSafe() {
     if (document.referrer && document.referrer.includes(window.location.hostname)) {
@@ -966,6 +988,10 @@ function ShopDetail() {
     `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
       currentShop?.name || "Shop"
     )}`
+  const ownerAvatarUrl = data?.ownerProfile?.avatar_url || ""
+  const ownerAvatarInitials = getNameInitials(
+    data?.ownerProfile?.full_name || currentShop?.name || "CT Merchant"
+  )
   const isVerified = Boolean(currentShop?.is_verified)
   const isLoggedIn = Boolean(user?.id)
 
@@ -982,27 +1008,37 @@ function ShopDetail() {
       />
       <div className="mx-auto max-w-[1600px]">
         <header className="sticky top-0 z-[100] flex flex-col bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex min-w-0 items-center gap-3">
+          <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center px-4 py-3">
+            <div className="flex items-center justify-start">
               <button
                 type="button"
                 onClick={goBackSafe}
                 className="shrink-0 text-[1.2rem] transition hover:text-pink-500"
+                aria-label="Go home"
               >
-                <FaArrowLeft />
+                <FaHouse />
               </button>
-              <span className="truncate text-[1.15rem] font-bold tracking-[0.5px]">
+            </div>
+
+            <div className="min-w-0 text-center">
+              <span className="block truncate text-[1.15rem] font-bold tracking-[0.5px]">
                 {currentShop?.name || "Shop Details"}
               </span>
             </div>
 
-            <button
-              type="button"
-              onClick={shareShop}
-              className="text-[1.2rem] transition hover:text-pink-500"
-            >
-              <FaShareNodes />
-            </button>
+            <div className="flex items-center justify-end">
+              {ownerAvatarUrl ? (
+                <img
+                  src={ownerAvatarUrl}
+                  alt={data?.ownerProfile?.full_name || currentShop?.name || "Shop owner"}
+                  className="h-9 w-9 rounded-full border border-white/20 object-cover"
+                />
+              ) : (
+                <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-[0.76rem] font-black text-white">
+                  {ownerAvatarInitials}
+                </div>
+              )}
+            </div>
           </div>
 
           {approvedNews.length > 0 ? (
