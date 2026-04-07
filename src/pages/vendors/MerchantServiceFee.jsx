@@ -141,7 +141,7 @@ export default function MerchantServiceFee() {
         message: `Your ${PLAN_OPTIONS[planKey]?.label || "service"} plan is now active.`,
       });
       await fetchSubscription();
-      navigate(`/merchant-service-fee?shop_id=${shopData.id}`, { replace: true });
+      navigate(`/service-fee?shop_id=${shopData.id}`, { replace: true });
     } catch (err) {
       console.error(err);
       notify({ type: "error", title: "Verification failed", message: getFriendlyErrorMessage(err, "Verification failed.") });
