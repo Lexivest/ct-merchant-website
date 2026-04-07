@@ -35,7 +35,6 @@ type ShopRecord = {
   name: string | null
   is_verified: boolean | null
   kyc_status: string | null
-  is_subscription_active: boolean | null
   subscription_end_date: string | null
 }
 
@@ -68,7 +67,9 @@ function toPositiveInt(value: unknown) {
 function normalizeRedirectUrl(value: unknown) {
   const redirectUrl = String(value || "").trim()
   if (!redirectUrl) throw new HttpError(400, "redirectUrl is required.")
-  if (!redirectUrl.startsWith("ctmerchant://")) {
+  const isAppRedirect = redirectUrl.startsWith("ctmerchant://")
+  const isWebRedirect = /^https?:\/\//i.test(redirectUrl)
+  if (!isAppRedirect && !isWebRedirect) {
     throw new HttpError(400, "Invalid redirect URL.")
   }
   return redirectUrl
@@ -124,7 +125,7 @@ serve(async (req) => {
 
     const { data: shop, error: shopError } = await adminClient
       .from("shops")
-      .select("id, owner_id, name, is_verified, kyc_status, is_subscription_active, subscription_end_date")
+      .select("id, owner_id, name, is_verified, kyc_status, subscription_end_date")
       .eq("id", shopId)
       .eq("owner_id", user.id)
       .maybeSingle<ShopRecord>()
@@ -136,7 +137,7 @@ serve(async (req) => {
       throw new HttpError(409, "Your shop must be physically verified before a service plan can be activated.")
     }
 
-    if (shop.is_subscription_active && isFutureDate(shop.subscription_end_date)) {
+    if (isFutureDate(shop.subscription_end_date)) {
       throw new HttpError(409, "Your shop already has an active subscription.")
     }
 

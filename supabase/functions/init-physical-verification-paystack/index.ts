@@ -61,7 +61,9 @@ function toPositiveInt(value: unknown) {
 function normalizeRedirectUrl(value: unknown) {
   const redirectUrl = String(value || "").trim()
   if (!redirectUrl) throw new HttpError(400, "redirectUrl is required.")
-  if (!redirectUrl.startsWith("ctmerchant://")) {
+  const isAppRedirect = redirectUrl.startsWith("ctmerchant://")
+  const isWebRedirect = /^https?:\/\//i.test(redirectUrl)
+  if (!isAppRedirect && !isWebRedirect) {
     throw new HttpError(400, "Invalid redirect URL.")
   }
   return redirectUrl

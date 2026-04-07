@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaArrowLeft,
-  FaBuildingColumns,
   FaCheck,
   FaCircleCheck,
   FaCircleNotch,
@@ -16,60 +15,40 @@ import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
-import {
-  PAYSTACK_PUBLIC_KEY,
-  PAYSTACK_SCRIPT_URL,
-  REMITA_PUBLIC_KEY,
-  REMITA_SCRIPT_URL,
-  generateTransactionRef,
-} from "../../lib/paymentConfig";
 
 const PLAN_OPTIONS = Object.freeze({
-  "6_Months": Object.freeze({ label: "6 Months", amount: 6000 }),
-  "1_Year": Object.freeze({ label: "1 Year", amount: 10000 }),
-})
-
-const NON_RETRYABLE_ERROR_HINTS = [
-  "unauthorized",
-  "invalid",
-  "required",
-  "not found",
-  "access denied",
-  "must be physically verified",
-  "missing",
-]
+  "6_Months": Object.freeze({ label: "6 Months", amount: 6000, tier: "Standard Tier", hint: "Works out to N1,000 / month" }),
+  "1_Year": Object.freeze({ label: "1 Year", amount: 10000, tier: "Professional Tier", hint: "Works out to N833 / month" }),
+});
 
 async function extractFunctionErrorMessage(error, fallback = "Verification failed") {
-  if (!error) return fallback
-  const rawMessage = typeof error.message === "string" ? error.message : ""
+  if (!error) return fallback;
+  const rawMessage = typeof error.message === "string" ? error.message : "";
 
-  const context = error.context
+  const context = error.context;
   if (context && typeof context.clone === "function") {
     try {
-      const asJson = await context.clone().json()
+      const asJson = await context.clone().json();
       if (asJson && typeof asJson.error === "string" && asJson.error.trim()) {
-        return asJson.error
+        return asJson.error;
       }
     } catch (_) {}
 
     try {
-      const asText = await context.clone().text()
-      if (asText && asText.trim()) return asText.trim()
+      const asText = await context.clone().text();
+      if (asText && asText.trim()) return asText.trim();
     } catch (_) {}
   }
 
-  if (rawMessage.trim()) return rawMessage
-  return fallback
+  if (rawMessage.trim()) return rawMessage;
+  return fallback;
 }
 
-function shouldRetryVerification(message) {
-  const normalized = String(message || "").toLowerCase()
-  if (!normalized) return true
-  return !NON_RETRYABLE_ERROR_HINTS.some((hint) => normalized.includes(hint))
-}
-
-function wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+function isFutureDate(value) {
+  if (!value) return false;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return false;
+  return parsed.getTime() > Date.now();
 }
 
 export default function MerchantServiceFee() {
@@ -78,45 +57,21 @@ export default function MerchantServiceFee() {
   const { notify } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
+  const callbackReference = searchParams.get("reference") || searchParams.get("trxref") || "";
+  const callbackPayment = searchParams.get("payment") || "";
+  const callbackPlan = searchParams.get("plan") || "";
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [processing, setProcessing] = useState(false);
+  const [startingCheckout, setStartingCheckout] = useState(false);
   const [processingNote, setProcessingNote] = useState("Please do not close this window.");
-  
   const [shopData, setShopData] = useState(null);
   const [firstName, setFirstName] = useState("Merchant");
-  
-  // Gateway Modal State
-  const [gatewayModalOpen, setGatewayModalOpen] = useState(false);
-  const [selectedPlanKey, setSelectedPlanKey] = useState(null);
+  const [handledReturnRef, setHandledReturnRef] = useState("");
 
-  // 1. Dynamically Load Scripts
-  useEffect(() => {
-    let cancelled = false
-
-    const loadScript = (src) => {
-      if (document.querySelector(`script[src="${src}"]`)) return;
-      const script = document.createElement("script");
-      script.src = src;
-      script.async = true;
-      script.onerror = () => {
-        if (cancelled) return
-        setError("Payment gateway unavailable. Retry.")
-      }
-      document.body.appendChild(script);
-    };
-    loadScript(PAYSTACK_SCRIPT_URL);
-    loadScript(REMITA_SCRIPT_URL);
-
-    return () => {
-      cancelled = true
-    }
-  }, []);
-
-  // 2. Fetch Subscription Data
   const fetchSubscription = async () => {
     if (!user) return;
     if (isOffline) {
@@ -140,16 +95,15 @@ export default function MerchantServiceFee() {
 
       const { data: shop, error: shopErr } = await supabase
         .from("shops")
-        .select("id, subscription_end_date, subscription_plan, is_subscription_active")
+        .select("id, subscription_end_date, subscription_plan, is_verified, kyc_status")
         .eq("id", currentShopId)
         .eq("owner_id", user.id)
         .maybeSingle();
 
       if (shopErr || !shop) throw new Error("Could not load shop details.");
-      
       setShopData(shop);
-
-      } catch (err) {
+      setError(null);
+    } catch (err) {
       setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
     } finally {
       setLoading(false);
@@ -160,66 +114,34 @@ export default function MerchantServiceFee() {
     if (!authLoading) fetchSubscription();
   }, [user, authLoading, urlShopId, isOffline]);
 
-  const runSubscriptionVerificationWithRetry = async (txId, planKey, gateway) => {
-    setProcessing(true);
-    setProcessingNote("Please do not close this window.");
-    setGatewayModalOpen(false);
+  const verifySubscriptionOnBackend = async (txId, planKey, gateway = "paystack", { auto = false } = {}) => {
+    if (!txId || !shopData?.id || processing) return;
 
-    const maxAttempts = gateway === "remita" ? 4 : 2
-    let lastErrorMessage = "Verification failed"
+    try {
+      setProcessing(true);
+      setStartingCheckout(false);
+      setProcessingNote(auto ? "Confirming your payment..." : "Please do not close this window.");
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-      setProcessingNote(
-        attempt === 1
-          ? "Please do not close this window."
-          : `Finalizing payment confirmation... (attempt ${attempt}/${maxAttempts})`,
-      )
-
-      const { data, error } = await invokeEdgeFunctionAuthed("verify-service-fee", {
+      const { data, error: invokeError } = await invokeEdgeFunctionAuthed("verify-service-fee", {
         transactionId: txId,
         shopId: shopData.id,
         plan: planKey,
-        gateway: gateway,
+        gateway,
       });
 
-      if (!error && !data?.error) {
-        notify({
-          type: "success",
-          title: "Subscription confirmed",
-          message: `Your subscription was confirmed via ${gateway.toUpperCase()}.`,
-        });
-        fetchSubscription(); // Reload the UI to reflect new dates
-        return
+      if (invokeError) {
+        const detailedMessage = await extractFunctionErrorMessage(invokeError, "Verification failed");
+        throw new Error(detailedMessage);
       }
+      if (data?.error) throw new Error(data.error);
 
-      if (error) {
-        lastErrorMessage = await extractFunctionErrorMessage(error, "Verification failed")
-      } else if (data?.error) {
-        lastErrorMessage = data.error
-      }
-
-      const hasAttemptsLeft = attempt < maxAttempts
-      if (!hasAttemptsLeft || !shouldRetryVerification(lastErrorMessage)) {
-        throw new Error(lastErrorMessage)
-      }
-
-      await wait(1200 * attempt)
-    }
-
-    throw new Error(lastErrorMessage)
-  }
-
-  // 3. Backend Verification Handler
-  const verifySubscriptionOnBackend = async (txId, planKey, gateway) => {
-    if (!txId || processing || !shopData?.id) return
-    const selectedPlan = PLAN_OPTIONS[planKey]
-    if (!selectedPlan) {
-      notify({ type: "error", title: "Invalid plan", message: "Please select a valid subscription plan." })
-      return
-    }
-
-    try {
-      await runSubscriptionVerificationWithRetry(txId, planKey, gateway)
+      notify({
+        type: "success",
+        title: "Subscription confirmed",
+        message: `Your ${PLAN_OPTIONS[planKey]?.label || "service"} plan is now active.`,
+      });
+      await fetchSubscription();
+      navigate(`/merchant-service-fee?shop_id=${shopData.id}`, { replace: true });
     } catch (err) {
       console.error(err);
       notify({ type: "error", title: "Verification failed", message: getFriendlyErrorMessage(err, "Verification failed.") });
@@ -229,67 +151,48 @@ export default function MerchantServiceFee() {
     }
   };
 
-  // 4. Payment Flows
-  const handleGatewaySelection = (gateway) => {
-    if (processing) return
-    const selectedPlan = PLAN_OPTIONS[selectedPlanKey]
-    if (!selectedPlan) return;
-    
-    if (gateway === "paystack") {
-      if (!window.PaystackPop) {
-        notify({ type: "info", title: "Payment system loading", message: "The payment system is still initializing. Please wait and try again." });
-        return;
-      }
-      
-      const handler = window.PaystackPop.setup({
-        key: PAYSTACK_PUBLIC_KEY,
-        email: user.email,
-        amount: selectedPlan.amount * 100, // kobo
-        currency: "NGN",
-        ref: generateTransactionRef("CTM-SUB"),
-        callback: function (response) {
-          const txRef = response?.reference || response?.trxref
-          if (!txRef) {
-            notify({ type: "error", title: "Reference missing", message: "We could not read the payment reference. Please retry." })
-            return
-          }
-          verifySubscriptionOnBackend(txRef, selectedPlanKey, "paystack");
-        },
-        onClose: function () {},
-      });
-      handler.openIframe();
-      setGatewayModalOpen(false);
+  useEffect(() => {
+    if (!shopData?.id || callbackPayment !== "service_fee" || !callbackReference || !callbackPlan) return;
+    if (!(callbackPlan in PLAN_OPTIONS)) return;
+    if (handledReturnRef === callbackReference) return;
 
-    } else if (gateway === "remita") {
-      if (!window.RmPaymentEngine) {
-        notify({ type: "info", title: "Payment system loading", message: "The payment system is still initializing. Please wait and try again." });
-        return;
-      }
-      
-      const transactionId = generateTransactionRef("CTM-SUB");
-      const paymentEngine = window.RmPaymentEngine.init({
-        key: REMITA_PUBLIC_KEY,
-        customerId: user.email,
-        firstName: firstName,
-        lastName: "",
-        email: user.email,
-        amount: selectedPlan.amount,
-        narration: `CT-Merchant ${selectedPlan.label}`,
-        transactionId: transactionId,
-        onSuccess: function (response) {
-          const txRef = response?.transactionId || transactionId
-          verifySubscriptionOnBackend(txRef, selectedPlanKey, "remita");
-        },
-        onError: function () {
-          notify({ type: "error", title: "Payment failed", message: "The payment could not be completed. Please try again." });
-        },
-        onClose: function () {},
+    setHandledReturnRef(callbackReference);
+    verifySubscriptionOnBackend(callbackReference, callbackPlan, "paystack", { auto: true });
+  }, [shopData?.id, callbackPayment, callbackReference, callbackPlan, handledReturnRef]);
+
+  const startPaystackCheckout = async (planKey) => {
+    if (processing || startingCheckout || !shopData?.id) return;
+    if (!(planKey in PLAN_OPTIONS)) return;
+
+    try {
+      setStartingCheckout(true);
+      setProcessingNote("Redirecting you to secure checkout.");
+
+      const baseUrl = `${window.location.origin}${window.location.pathname}`;
+      const redirectUrl = `${baseUrl}?shop_id=${encodeURIComponent(shopData.id)}&payment=service_fee&plan=${encodeURIComponent(planKey)}`;
+
+      const { data, error: invokeError } = await invokeEdgeFunctionAuthed("init-service-fee-paystack", {
+        shopId: shopData.id,
+        plan: planKey,
+        redirectUrl,
       });
-      paymentEngine.showPaymentWidget();
-      setGatewayModalOpen(false);
+
+      if (invokeError) {
+        const detailedMessage = await extractFunctionErrorMessage(invokeError, "Could not start payment.");
+        throw new Error(detailedMessage);
+      }
+      if (!data?.authorizationUrl) {
+        throw new Error("Could not start payment.");
+      }
+
+      window.location.assign(data.authorizationUrl);
+    } catch (err) {
+      console.error(err);
+      notify({ type: "error", title: "Checkout unavailable", message: getFriendlyErrorMessage(err, "Could not start payment.") });
+      setStartingCheckout(false);
+      setProcessingNote("Please do not close this window.");
     }
   };
-
 
   if (authLoading || loading) {
     return (
@@ -319,26 +222,19 @@ export default function MerchantServiceFee() {
     );
   }
 
-  const currentPlan = shopData.subscription_plan || "Free Trial";
+  const currentPlan = shopData?.subscription_plan || "Free Trial";
   const isFreeTrial = currentPlan === "Free Trial";
-  
-  const isActive = shopData.is_subscription_active === true; 
-  
-  const endDate = shopData.subscription_end_date ? new Date(shopData.subscription_end_date) : null
-  const hasValidEndDate = endDate instanceof Date && !Number.isNaN(endDate.getTime())
+  const isActive = isFutureDate(shopData?.subscription_end_date);
+  const isVerified = shopData?.is_verified || shopData?.kyc_status === "approved";
+  const endDate = shopData?.subscription_end_date ? new Date(shopData.subscription_end_date) : null;
+  const hasValidEndDate = endDate instanceof Date && !Number.isNaN(endDate.getTime());
   const formattedExpiry = hasValidEndDate
-    ? endDate.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : "Unknown"
+    ? endDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })
+    : "Unknown";
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-5 text-[#1E293B]">
       <div className="mx-auto w-full max-w-[800px]">
-        
-        {/* HEADER */}
         <div className="mb-6 flex items-center gap-4 rounded-2xl bg-[#2E1065] p-4 text-white shadow-sm">
           <button onClick={() => navigate("/vendor-panel")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-[1.1rem] transition hover:bg-white/30">
             <FaArrowLeft />
@@ -346,23 +242,18 @@ export default function MerchantServiceFee() {
           <div className="text-[1.25rem] font-bold">Service Fee Portal</div>
         </div>
 
-        {/* STATUS CARD */}
         <div className="mb-8 flex flex-wrap items-center justify-between gap-5 rounded-[20px] border border-[#E2E8F0] bg-white p-6 shadow-sm sm:flex-nowrap">
           <div>
             <h3 className="mb-1 text-[1.1rem] text-[#64748B]">Current Plan</h3>
-            <h2 className="mb-3 text-[1.8rem] font-black text-[#2E1065] leading-none">{currentPlan.replace('_', ' ')}</h2>
-            
-            <div className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[0.9rem] font-bold ${
-              isActive ? "bg-[#DCFCE7] text-[#16A34A]" : "bg-[#FEE2E2] text-[#DC2626]"
-            }`}>
+            <h2 className="mb-3 text-[1.8rem] font-black leading-none text-[#2E1065]">{currentPlan.replace("_", " ")}</h2>
+            <div className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[0.9rem] font-bold ${isActive ? "bg-[#DCFCE7] text-[#16A34A]" : "bg-[#FEE2E2] text-[#DC2626]"}`}>
               {isActive ? <><FaCircleCheck /> {isFreeTrial ? "ACTIVE TRIAL" : "ACTIVE"}</> : <><FaCircleXmark /> EXPIRED</>}
             </div>
           </div>
-          
+
           <div className="text-left sm:text-right">
-            {/* --- THE FIX: Replaced Vulnerable Countdown --- */}
-            <div className={`text-[2.5rem] font-black leading-none ${!isActive ? 'text-[#DC2626]' : 'text-[#16A34A]'}`}>
-              {!isActive ? "Locked" : "Active Access"}
+            <div className={`text-[2.5rem] font-black leading-none ${!isActive ? "text-[#DC2626]" : "text-[#16A34A]"}`}>
+              {!isActive ? "Locked" : "Active"}
             </div>
             <div className="mt-1 text-[0.9rem] font-semibold text-[#64748B]">
               {!isActive ? "Please choose a plan below to unlock your tools." : `Valid Until: ${formattedExpiry}`}
@@ -370,89 +261,63 @@ export default function MerchantServiceFee() {
           </div>
         </div>
 
+        {!isVerified ? (
+          <div className="mb-8 rounded-2xl border border-[#FECACA] bg-[#FEF2F2] p-5 text-[0.95rem] font-semibold text-[#991B1B]">
+            Your shop must pass physical verification before you can activate a service fee plan.
+          </div>
+        ) : null}
+
         <h2 className="mb-6 text-center text-[1.5rem] font-black text-[#0F172A]">Subscription Plans</h2>
 
-        {/* PRICING GRID */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          
-          {/* 6 MONTHS */}
-          <div className={`relative overflow-hidden rounded-[20px] border-2 bg-white p-8 text-center transition-transform hover:-translate-y-1 hover:shadow-lg ${isActive && currentPlan === '6_Months' ? 'border-[#2E1065]' : 'border-[#E2E8F0]'}`}>
-            <div className="mb-3 text-[1.2rem] font-bold text-[#64748B]">Standard Tier</div>
-            <div className="mb-2 text-[2.5rem] font-black leading-none text-[#0F172A]">₦6,000</div>
-            <div className="mb-6 text-[0.9rem] font-bold text-[#16A34A]">Works out to ₦1,000 / month</div>
-            
-            <ul className="mb-6 flex flex-col gap-3 text-left text-[0.95rem] text-[#64748B]">
-              <li><FaCheck className="inline mr-2 text-[#16A34A]" /> Continuous AI Indexing</li>
-              <li><FaCheck className="inline mr-2 text-[#16A34A]" /> Unlimited Product Updates</li>
-              <li><FaCheck className="inline mr-2 text-[#16A34A]" /> 6 Months Validity</li>
-            </ul>
+          {Object.entries(PLAN_OPTIONS).map(([planKey, plan]) => {
+            const isCurrentPlan = currentPlan === planKey;
+            const isDisabled = !isVerified || isActive || processing || startingCheckout;
 
-            <button 
-              disabled={isActive}
-              onClick={() => { setSelectedPlanKey("6_Months"); setGatewayModalOpen(true); }}
-              className="w-full rounded-xl bg-[#F1F5F9] p-3.5 text-[1rem] font-extrabold text-[#1E293B] transition hover:bg-[#2E1065] hover:text-white disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8] disabled:hover:bg-[#E2E8F0] disabled:hover:text-[#94A3B8]"
-            >
-              {isActive && currentPlan === '6_Months' ? <><FaCheck className="inline mr-1" /> Active Plan</> : isActive ? "Deactivated" : "Subscribe 6 Months"}
-            </button>
-          </div>
+            return (
+              <div
+                key={planKey}
+                className={`relative overflow-hidden rounded-[20px] border-2 bg-white p-8 text-center transition-transform hover:-translate-y-1 hover:shadow-lg ${
+                  isCurrentPlan && isActive ? "border-[#2E1065]" : "border-[#E2E8F0]"
+                }`}
+              >
+                {planKey === "1_Year" ? (
+                  <div className="absolute right-[-30px] top-[12px] rotate-45 bg-[#E11D48] px-8 py-1 text-[0.75rem] font-black tracking-widest text-white">BEST VALUE</div>
+                ) : null}
+                <div className={`mb-3 text-[1.2rem] font-bold ${planKey === "1_Year" ? "text-[#2E1065]" : "text-[#64748B]"}`}>{plan.tier}</div>
+                <div className="mb-2 text-[2.5rem] font-black leading-none text-[#0F172A]">N{plan.amount.toLocaleString()}</div>
+                <div className="mb-6 text-[0.9rem] font-bold text-[#16A34A]">{plan.hint}</div>
 
-          {/* 1 YEAR */}
-          <div className={`relative overflow-hidden rounded-[20px] border-2 bg-white p-8 text-center transition-transform hover:-translate-y-1 hover:shadow-lg ${isActive && currentPlan === '1_Year' ? 'border-[#2E1065]' : !isActive ? 'border-[#2E1065]' : 'border-[#E2E8F0]'}`}>
-            <div className="absolute right-[-30px] top-[12px] rotate-45 bg-[#E11D48] px-8 py-1 text-[0.75rem] font-black tracking-widest text-white">BEST VALUE</div>
-            <div className="mb-3 text-[1.2rem] font-bold text-[#2E1065]">Professional Tier</div>
-            <div className="mb-2 text-[2.5rem] font-black leading-none text-[#0F172A]">₦10,000</div>
-            <div className="mb-6 text-[0.9rem] font-bold text-[#16A34A]">Works out to ₦833 / month</div>
-            
-            <ul className="mb-6 flex flex-col gap-3 text-left text-[0.95rem] text-[#64748B]">
-              <li><FaCheck className="inline mr-2 text-[#16A34A]" /> Continuous AI Indexing</li>
-              <li><FaCheck className="inline mr-2 text-[#16A34A]" /> Unlimited Product Updates</li>
-              <li><FaCheck className="inline mr-2 text-[#16A34A]" /> <strong className="text-[#0F172A]">1 Full Year Validity</strong></li>
-            </ul>
+                <ul className="mb-6 flex flex-col gap-3 text-left text-[0.95rem] text-[#64748B]">
+                  <li><FaCheck className="mr-2 inline text-[#16A34A]" /> Continuous AI Indexing</li>
+                  <li><FaCheck className="mr-2 inline text-[#16A34A]" /> Unlimited Product Updates</li>
+                  <li><FaCheck className="mr-2 inline text-[#16A34A]" /> {plan.label} Validity</li>
+                </ul>
 
-            <button 
-              disabled={isActive}
-              onClick={() => { setSelectedPlanKey("1_Year"); setGatewayModalOpen(true); }}
-              className={`w-full rounded-xl p-3.5 text-[1rem] font-extrabold transition disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8] ${isActive ? "bg-[#F1F5F9] text-[#1E293B]" : "bg-[#2E1065] text-white hover:bg-[#4c1d95]"}`}
-            >
-              {isActive && currentPlan === '1_Year' ? <><FaCheck className="inline mr-1" /> Active Plan</> : isActive ? "Deactivated" : "Subscribe 1 Year"}
-            </button>
-          </div>
-
+                <button
+                  disabled={isDisabled}
+                  onClick={() => startPaystackCheckout(planKey)}
+                  className={`w-full rounded-xl p-3.5 text-[1rem] font-extrabold transition disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8] ${
+                    planKey === "1_Year" && !isDisabled
+                      ? "bg-[#2E1065] text-white hover:bg-[#4c1d95]"
+                      : "bg-[#F1F5F9] text-[#1E293B] hover:bg-[#2E1065] hover:text-white"
+                  }`}
+                >
+                  {startingCheckout ? "Opening Paystack..." : isCurrentPlan && isActive ? "Active Plan" : `Pay with Paystack`}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* GATEWAY SELECTION MODAL */}
-      {gatewayModalOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
-          <div className="w-full max-w-[400px] animate-[slideUp_0.3s_ease-out] rounded-[24px] bg-white p-8 text-center shadow-2xl">
-            <h2 className="mb-2 text-[1.3rem] font-black text-[#0F172A]">Select Payment Method</h2>
-            <p className="mb-6 text-[0.95rem] text-[#64748B]">Choose how you want to securely pay for your subscription.</p>
-
-            <button disabled={processing} onClick={() => handleGatewaySelection("paystack")} className="mb-3 flex w-full items-center justify-center gap-3 rounded-xl border-2 border-[#E2E8F0] bg-white p-4 text-[1.05rem] font-bold text-[#0F172A] transition hover:-translate-y-0.5 hover:border-[#2E1065] hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:border-[#E2E8F0] disabled:hover:bg-white">
-              <FaCreditCard className="text-xl text-[#0BA4DB]" /> Pay with Paystack
-            </button>
-            
-            <button disabled={processing} onClick={() => handleGatewaySelection("remita")} className="mb-2 flex w-full items-center justify-center gap-3 rounded-xl border-2 border-[#E2E8F0] bg-white p-4 text-[1.05rem] font-bold text-[#0F172A] transition hover:-translate-y-0.5 hover:border-[#2E1065] hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:border-[#E2E8F0] disabled:hover:bg-white">
-              <FaBuildingColumns className="text-xl text-[#E15B26]" /> Pay with Remita
-            </button>
-
-            <button onClick={() => setGatewayModalOpen(false)} className="mt-4 text-[0.95rem] font-semibold text-[#64748B] hover:text-[#0F172A] hover:underline">
-              Cancel
-            </button>
-          </div>
-          <style dangerouslySetInnerHTML={{__html: `@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }`}}/>
-        </div>
-      )}
-
-      {/* PROCESSING OVERLAY */}
-      {processing && (
+      {(processing || startingCheckout) && (
         <div className="fixed inset-0 z-[3000] flex flex-col items-center justify-center bg-black/80 text-white backdrop-blur-md">
           <FaCircleNotch className="mb-5 animate-spin text-5xl" />
-          <h2 className="mb-2 text-xl font-bold">Processing Securely...</h2>
+          <h2 className="mb-2 text-xl font-bold">{startingCheckout ? "Opening Paystack..." : "Processing Securely..."}</h2>
           <p className="font-medium text-slate-300">{processingNote}</p>
         </div>
       )}
-
     </div>
   );
 }

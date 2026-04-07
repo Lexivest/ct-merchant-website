@@ -9,8 +9,7 @@ const corsHeaders = {
 
 const EXPECTED_FEE_NAIRA = 5000
 const PAYSTACK_VERIFY_BASE_URL = "https://api.paystack.co/transaction/verify"
-const REMITA_VERIFY_BASE_URL = "https://remitademo.net/payment/v1/payment/query"
-const ALLOWED_GATEWAYS = new Set(["promo", "paystack", "remita"])
+const ALLOWED_GATEWAYS = new Set(["promo", "paystack"])
 
 class HttpError extends Error {
   status: number
@@ -89,15 +88,6 @@ function parseAmountToKobo(value: unknown) {
 
   // Most providers return amount in kobo for NGN.
   return Math.round(asNumber)
-}
-
-async function sha512Hex(value: string) {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(value)
-  const hashBuffer = await crypto.subtle.digest("SHA-512", data)
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("")
 }
 
 function safeErrorMessage(error: unknown) {
@@ -297,41 +287,6 @@ serve(async (req) => {
         }
         verified = true
       }
-    } else if (gateway === "remita") {
-      const merchantId = getEnvStrict("REMITA_MERCHANT_ID", "2547916")
-      const secretKey = getEnvStrict("REMITA_SECRET_KEY", "1946")
-      const publicKey = getEnvStrict("REMITA_PUBLIC_KEY")
-      const hashHex = await sha512Hex(`${merchantId}${transactionId}${secretKey}`)
-
-      const remitaRes = await fetch(`${REMITA_VERIFY_BASE_URL}/${encodeURIComponent(transactionId)}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          publicKey,
-          TXN_HASH: hashHex,
-        },
-      })
-
-      if (!remitaRes.ok) {
-        throw new HttpError(502, `Remita verify request failed (${remitaRes.status}).`)
-      }
-
-      const remitaData = await remitaRes.json()
-      const status = String(remitaData?.status || "")
-      const statusOk = status === "00" || status === "01"
-      const amountRaw =
-        remitaData?.amount ??
-        remitaData?.data?.amount ??
-        remitaData?.paymentDetails?.amount ??
-        remitaData?.paymentState?.amount
-      const amountNaira = Number(amountRaw)
-      const amountMatches =
-        Number.isFinite(amountNaira) && Math.round(amountNaira) === EXPECTED_FEE_NAIRA
-
-      if (!statusOk || !amountMatches) {
-        throw new HttpError(400, "Remita verification failed strict checks.")
-      }
-      verified = true
     }
 
     if (!verified) throw new HttpError(400, "Payment could not be verified.")

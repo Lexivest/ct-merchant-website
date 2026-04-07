@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  FaBuildingColumns,
   FaCircleNotch,
   FaCreditCard,
   FaIdCardClip,
@@ -14,96 +13,65 @@ import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions";
 import useAuthSession from "../../hooks/useAuthSession";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
-import {
-  PAYSTACK_PUBLIC_KEY,
-  PAYSTACK_SCRIPT_URL,
-  REMITA_PUBLIC_KEY,
-  REMITA_SCRIPT_URL,
-  generateTransactionRef,
-  normalizePromoCode,
-} from "../../lib/paymentConfig";
+import { normalizePromoCode } from "../../lib/paymentConfig";
 
 const FEE_AMOUNT = 5000;
 
 async function extractFunctionErrorMessage(error, fallback = "Verification failed") {
-  if (!error) return fallback
-  const rawMessage = typeof error.message === "string" ? error.message : ""
+  if (!error) return fallback;
+  const rawMessage = typeof error.message === "string" ? error.message : "";
 
-  const context = error.context
+  const context = error.context;
   if (context && typeof context.clone === "function") {
     try {
-      const asJson = await context.clone().json()
+      const asJson = await context.clone().json();
       if (asJson && typeof asJson.error === "string" && asJson.error.trim()) {
-        return asJson.error
+        return asJson.error;
       }
     } catch (_) {}
 
     try {
-      const asText = await context.clone().text()
-      if (asText && asText.trim()) return asText.trim()
+      const asText = await context.clone().text();
+      if (asText && asText.trim()) return asText.trim();
     } catch (_) {}
   }
 
-  if (rawMessage.trim()) return rawMessage
-  return fallback
+  if (rawMessage.trim()) return rawMessage;
+  return fallback;
 }
 
 export default function MerchantPayment() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
+  const callbackReference = searchParams.get("reference") || searchParams.get("trxref") || "";
+  const callbackPayment = searchParams.get("payment") || "";
   const { notify } = useGlobalFeedback();
-
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [startingCheckout, setStartingCheckout] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
   const [statusError, setStatusError] = useState(false);
-  
-  // PROMO STATE
   const [promoCode, setPromoCode] = useState("");
-  const canApplyPromo = normalizePromoCode(promoCode).length === 6 && !processing
-  
   const [shopDetails, setShopDetails] = useState(null);
+  const [handledReturnRef, setHandledReturnRef] = useState("");
 
-  // 1. Dynamically Load Payment Scripts
-  useEffect(() => {
-    let cancelled = false
+  const canApplyPromo = normalizePromoCode(promoCode).length === 6 && !processing && !startingCheckout;
 
-    const loadScript = (src) => {
-      if (document.querySelector(`script[src="${src}"]`)) return;
-      const script = document.createElement("script");
-      script.src = src;
-      script.async = true;
-      script.onerror = () => {
-        if (cancelled) return
-        setStatusError(true)
-        setStatusMsg("Payment gateway unavailable. Retry.")
-      }
-      document.body.appendChild(script);
-    };
-
-    loadScript(PAYSTACK_SCRIPT_URL);
-    loadScript(REMITA_SCRIPT_URL);
-    return () => {
-      cancelled = true
-    }
-  }, []);
-
-  // 2. Fetch Data & Validate Status
   useEffect(() => {
     async function init() {
       if (!user) return;
-      
+
       if (isOffline) {
-        setStatusError(true)
-        setStatusMsg("Network unavailable. Retry.")
-        setLoading(false)
-        return
+        setStatusError(true);
+        setStatusMsg("Network unavailable. Retry.");
+        setLoading(false);
+        return;
       }
 
-      const parsedShopId = Number(urlShopId)
+      const parsedShopId = Number(urlShopId);
       if (!urlShopId || !Number.isFinite(parsedShopId) || parsedShopId <= 0) {
         notify({ type: "error", title: "Shop unavailable", message: "Shop ID is missing." });
         navigate("/vendor-panel");
@@ -121,8 +89,12 @@ export default function MerchantPayment() {
           .maybeSingle();
         if (shopErr || !shop) throw new Error("Shop not found or access denied");
 
-        if (shop.is_verified) {
-          notify({ type: "info", title: "Already approved", message: "Your shop has already completed this verification step." });
+        if (shop.is_verified || shop.kyc_status === "approved") {
+          notify({
+            type: "info",
+            title: "Already approved",
+            message: "Your shop has already completed this verification step.",
+          });
           navigate("/vendor-panel");
           return;
         }
@@ -134,18 +106,30 @@ export default function MerchantPayment() {
           .eq("status", "success")
           .maybeSingle();
 
-        if (paymentRecord) {
-          if (shop.status === "pending_kyc_review") {
-            notify({ type: "info", title: "KYC in review", message: "We are currently reviewing your video KYC. We will notify you once approved." });
+        if (paymentRecord && !callbackReference) {
+          if (shop.status === "pending_kyc_review" || shop.kyc_status === "submitted") {
+            notify({
+              type: "info",
+              title: "KYC in review",
+              message: "We are currently reviewing your video KYC. We will notify you once approved.",
+            });
             navigate("/vendor-panel");
           } else {
-            notify({ type: "success", title: "Payment already confirmed", message: "Your payment is already confirmed. Let's record your video KYC." });
+            notify({
+              type: "success",
+              title: "Payment already confirmed",
+              message: "Your payment is already confirmed. Let's record your video KYC.",
+            });
             navigate(`/merchant-video-kyc?shop_id=${shop.id}`);
           }
           return;
         }
 
-        const { data: profile, error: profErr } = await supabase.from("profiles").select("*, cities(name)").eq("id", user.id).single();
+        const { data: profile, error: profErr } = await supabase
+          .from("profiles")
+          .select("*, cities(name)")
+          .eq("id", user.id)
+          .single();
         if (profErr || !profile) throw new Error("Profile not found");
 
         setShopDetails({
@@ -155,10 +139,13 @@ export default function MerchantPayment() {
           shopAddress: shop.address || "Address not provided",
           email: user.email,
         });
-
       } catch (err) {
         console.error(err);
-        notify({ type: "error", title: "Checkout unavailable", message: getFriendlyErrorMessage(err, "Could not load payment details. Please try again.") });
+        notify({
+          type: "error",
+          title: "Checkout unavailable",
+          message: getFriendlyErrorMessage(err, "Could not load payment details. Please try again."),
+        });
         navigate("/vendor-panel");
       } finally {
         setLoading(false);
@@ -166,47 +153,39 @@ export default function MerchantPayment() {
     }
 
     if (!authLoading) init();
-  }, [user, authLoading, isOffline, urlShopId, navigate]);
+  }, [user, authLoading, isOffline, urlShopId, callbackReference, navigate, notify]);
 
-
-  // 3. Backend Verification Handler
-  const verifyPaymentOnBackend = async (txId, gateway) => {
-    if (!txId || processing) return
+  const verifyPaymentOnBackend = async (txId, gateway, { auto = false } = {}) => {
+    if (!txId || processing) return;
 
     try {
       setProcessing(true);
-      setStatusMsg("");
       setStatusError(false);
+      setStatusMsg(auto ? "Confirming your payment..." : "");
 
-      const { data, error } = await invokeEdgeFunctionAuthed("verify-remita", {
+      const { data, error } = await invokeEdgeFunctionAuthed("verify-physical-paystack", {
         transactionId: txId,
         shopId: Number(urlShopId),
-        gateway: gateway,
+        gateway,
       });
 
       if (error) {
-        const detailedMessage = await extractFunctionErrorMessage(error, "Verification failed")
-        throw new Error(detailedMessage)
+        const detailedMessage = await extractFunctionErrorMessage(error, "Verification failed");
+        throw new Error(detailedMessage);
       }
       if (data?.error) throw new Error(data.error);
 
-      setStatusError(false);
-      
-     if (gateway === 'promo') {
-        setStatusMsg("🎉 Promo Code Accepted! Fee Waived. Redirecting...");
-      } else {
-        setStatusMsg("✅ Payment Successful! Redirecting you to record your KYC Video...");
-      }
-      
+      setStatusMsg(
+        gateway === "promo"
+          ? "Promo code accepted. Redirecting..."
+          : "Payment successful. Redirecting you to record your KYC video..."
+      );
+
       setTimeout(() => {
-        // --- 1. THE CACHE BUSTER: Destroy the stale dashboard cache ---
         localStorage.removeItem(`vendor_panel_${user.id}`);
         sessionStorage.removeItem(`vendor_panel_${user.id}`);
-        
-        // --- 2. THE ROUTER FIX: Pass the shop_id to the KYC video page ---
         navigate(`/merchant-video-kyc?shop_id=${urlShopId}`);
-      }, 3500);
-
+      }, 2500);
     } catch (error) {
       console.error(error);
       setStatusError(true);
@@ -215,72 +194,52 @@ export default function MerchantPayment() {
     }
   };
 
-  // 4. Promo Code Flow
+  useEffect(() => {
+    if (!user || !urlShopId || callbackPayment !== "physical" || !callbackReference) return;
+    if (handledReturnRef === callbackReference) return;
+
+    setHandledReturnRef(callbackReference);
+    verifyPaymentOnBackend(callbackReference, "paystack", { auto: true });
+  }, [user, urlShopId, callbackPayment, callbackReference, handledReturnRef]);
+
   const handleApplyPromo = () => {
-    if (processing) return
-    const normalizedCode = normalizePromoCode(promoCode)
-    if (!/^[A-Z0-9]{6}$/.test(normalizedCode)) return
+    if (processing || startingCheckout) return;
+    const normalizedCode = normalizePromoCode(promoCode);
+    if (!/^[A-Z0-9]{6}$/.test(normalizedCode)) return;
     verifyPaymentOnBackend(normalizedCode, "promo");
   };
 
-  // 5. Paystack Flow
-  const payWithPaystack = () => {
-    if (processing) return
-    if (!shopDetails || !window.PaystackPop) {
-      notify({ type: "info", title: "Payment system loading", message: "The payment system is still initializing. Please wait a moment and try again." });
-      return;
+  const payWithPaystack = async () => {
+    if (processing || startingCheckout || !shopDetails) return;
+
+    try {
+      setStartingCheckout(true);
+      setStatusError(false);
+      setStatusMsg("");
+
+      const baseUrl = `${window.location.origin}${window.location.pathname}`;
+      const redirectUrl = `${baseUrl}?shop_id=${encodeURIComponent(urlShopId)}&payment=physical`;
+
+      const { data, error } = await invokeEdgeFunctionAuthed("init-physical-verification-paystack", {
+        shopId: Number(urlShopId),
+        redirectUrl,
+      });
+
+      if (error) {
+        const detailedMessage = await extractFunctionErrorMessage(error, "Could not start payment.");
+        throw new Error(detailedMessage);
+      }
+      if (!data?.authorizationUrl) {
+        throw new Error("Could not start payment.");
+      }
+
+      window.location.assign(data.authorizationUrl);
+    } catch (payError) {
+      console.error(payError);
+      setStatusError(true);
+      setStatusMsg(getFriendlyErrorMessage(payError, "Could not start payment."));
+      setStartingCheckout(false);
     }
-    
-    const handler = window.PaystackPop.setup({
-      key: PAYSTACK_PUBLIC_KEY,
-      email: shopDetails.email,
-      amount: FEE_AMOUNT * 100, // in kobo
-      currency: "NGN",
-      ref: generateTransactionRef("CTM-VERIFY"),
-      callback: function (response) {
-        verifyPaymentOnBackend(response?.reference || response?.trxref, "paystack");
-      },
-      onClose: function () {
-        // User closed payment window without completing payment.
-      },
-    });
-    handler.openIframe();
-  };
-
-  // 6. Remita Flow
-  const payWithRemita = () => {
-    if (processing) return
-    if (!shopDetails || !window.RmPaymentEngine) {
-      notify({ type: "info", title: "Payment system loading", message: "The payment system is still initializing. Please wait a moment and try again." });
-      return;
-    }
-    
-    const names = shopDetails.merchantName.split(" ");
-    const firstName = names[0];
-    const lastName = names.slice(1).join(" ") || "Merchant";
-    const transactionId = generateTransactionRef("CTM-VERIFY");
-
-    const paymentEngine = window.RmPaymentEngine.init({
-      key: REMITA_PUBLIC_KEY,
-      customerId: shopDetails.email,
-      firstName: firstName,
-      lastName: lastName,
-      email: shopDetails.email,
-      amount: FEE_AMOUNT,
-      narration: "CT-Merchant Digital ID & KYC",
-      transactionId: transactionId,
-      onSuccess: function (response) {
-        verifyPaymentOnBackend(response?.transactionId, "remita");
-      },
-      onError: function (response) {
-        notify({ type: "error", title: "Payment not completed", message: "The payment was cancelled or could not be completed." });
-      },
-      onClose: function () {
-        // User closed payment window without completing payment.
-      },
-    });
-
-    paymentEngine.showPaymentWidget();
   };
 
   if (authLoading || loading) {
@@ -296,23 +255,21 @@ export default function MerchantPayment() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-5">
-      
       <div className="relative w-full max-w-[420px] overflow-hidden rounded-[24px] border border-[#E2E8F0] bg-white p-8 text-center shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
-        {/* Top Accent Border */}
         <div className="absolute left-0 right-0 top-0 h-1.5 bg-[#D97706]"></div>
 
         <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#FEF3C7] text-3xl text-[#D97706]">
           <FaIdCardClip />
         </div>
-        
+
         <h2 className="mb-2 text-[1.3rem] font-extrabold text-[#2E1065]">Digital ID & Promo Banner Fee</h2>
         <p className="mb-6 text-[0.95rem] leading-relaxed text-[#64748B]">
-          A one-time fee to process your Video KYC and permanently unlock your premium Digital ID Card and Custom Promo Banner.
+          A one-time fee to process your Video KYC and permanently unlock your premium Digital ID Card and custom promo banner.
         </p>
 
         <div className="mb-6 rounded-2xl bg-[#F1F5F9] p-5">
           <div className="mb-1 text-[0.85rem] font-bold uppercase tracking-widest text-[#64748B]">Total Amount</div>
-          <div className="text-4xl font-extrabold text-[#0F172A]">₦{FEE_AMOUNT.toLocaleString()}</div>
+          <div className="text-4xl font-extrabold text-[#0F172A]">N{FEE_AMOUNT.toLocaleString()}</div>
         </div>
 
         <div className="mb-6 rounded-xl border border-[#E2E8F0] bg-white p-4 text-left">
@@ -330,24 +287,19 @@ export default function MerchantPayment() {
           </div>
         </div>
 
-        {/* WARNING NOTE */}
         <div className="mb-6 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-4 text-left text-[0.85rem] leading-relaxed text-[#991B1B]">
-          <strong><FaVideo className="inline mr-1" /> Next Step: Video KYC</strong> <br />
+          <strong><FaVideo className="mr-1 inline" /> Next Step: Video KYC</strong>
+          <br />
           After payment, you will be required to record a short 60-second video of yourself inside your physical shop at this exact registered address:
-          
           <div className="my-3 flex items-start gap-2 rounded-lg border border-dashed border-[#FCA5A5] bg-white p-3 font-semibold text-[#7F1D1D]">
             <FaLocationDot className="mt-[3px] shrink-0" />
             <span>{shopDetails.shopAddress}</span>
           </div>
-
-          Your video must clearly prove your shop operates here. <strong>If you do not have a physical shop, DO NOT PAY, please contact support.</strong> This fee is strictly non-refundable.
+          Your video must clearly prove your shop operates here. <strong>If you do not have a physical shop, do not pay, please contact support.</strong> This fee is strictly non-refundable.
         </div>
 
-        {/* GATEWAYS & PROMO */}
         {!processing && !statusMsg && (
           <div className="mb-4 border-t border-dashed border-[#E2E8F0] pt-5">
-            
-            {/* PROMO CODE SECTION */}
             <div className="mb-5 rounded-xl border border-[#E2E8F0] bg-white p-4 text-left shadow-sm">
               <label className="mb-2 flex items-center gap-2 text-[0.85rem] font-bold text-[#64748B]">
                 <FaTicket className="text-[#D97706]" /> Have a Promo Code?
@@ -361,10 +313,11 @@ export default function MerchantPayment() {
                   onChange={(e) => setPromoCode(normalizePromoCode(e.target.value))}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" && canApplyPromo) {
-                      handleApplyPromo()
+                      handleApplyPromo();
                     }
                   }}
-                  className="flex-1 rounded-lg border border-[#CBD5E1] bg-[#F8FAFC] px-4 py-2 font-mono text-[1.05rem] font-bold tracking-widest text-[#0F172A] outline-none transition focus:border-[#D97706] focus:bg-white focus:ring-2 focus:ring-[#FEF3C7]"
+                  disabled={processing || startingCheckout}
+                  className="flex-1 rounded-lg border border-[#CBD5E1] bg-[#F8FAFC] px-4 py-2 font-mono text-[1.05rem] font-bold tracking-widest text-[#0F172A] outline-none transition focus:border-[#D97706] focus:bg-white focus:ring-2 focus:ring-[#FEF3C7] disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <button
                   onClick={handleApplyPromo}
@@ -377,34 +330,27 @@ export default function MerchantPayment() {
             </div>
 
             <div className="mb-3 text-[0.85rem] font-bold uppercase tracking-widest text-[#64748B]">Or Pay Securely</div>
-            
-            <button 
-              onClick={payWithPaystack} 
-              className="mb-3 flex w-full items-center justify-center gap-3 rounded-xl border-2 border-[#E2E8F0] bg-white p-4 text-[1.05rem] font-bold text-[#0F172A] transition-all hover:-translate-y-0.5 hover:border-[#2E1065] hover:bg-[#F8FAFC]"
+
+            <button
+              onClick={payWithPaystack}
+              disabled={processing || startingCheckout}
+              className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-[#E2E8F0] bg-white p-4 text-[1.05rem] font-bold text-[#0F172A] transition-all hover:-translate-y-0.5 hover:border-[#2E1065] hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:border-[#E2E8F0] disabled:hover:bg-white"
             >
-              <FaCreditCard className="text-xl text-[#0BA4DB]" /> Pay with Paystack
-            </button>
-            
-            <button 
-              onClick={payWithRemita} 
-              className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-[#E2E8F0] bg-white p-4 text-[1.05rem] font-bold text-[#0F172A] transition-all hover:-translate-y-0.5 hover:border-[#2E1065] hover:bg-[#F8FAFC]"
-            >
-              <FaBuildingColumns className="text-xl text-[#E15B26]" /> Pay with Remita
+              <FaCreditCard className="text-xl text-[#0BA4DB]" />
+              {startingCheckout ? "Opening Paystack..." : "Pay with Paystack"}
             </button>
           </div>
         )}
 
-        {/* STATUS MESSAGE */}
         {statusMsg && (
-          <div className={`mt-4 rounded-xl p-4 text-[0.95rem] font-bold ${statusError ? 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]' : 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'}`}>
+          <div className={`mt-4 rounded-xl border p-4 text-[0.95rem] font-bold ${statusError ? "border-[#FECACA] bg-[#FEF2F2] text-[#DC2626]" : "border-[#A7F3D0] bg-[#ECFDF5] text-[#059669]"}`}>
             {statusMsg}
           </div>
         )}
 
-        {/* CANCEL BUTTON */}
-        {!processing && (
-          <button 
-            onClick={() => navigate("/vendor-panel")} 
+        {!processing && !startingCheckout && (
+          <button
+            onClick={() => navigate("/vendor-panel")}
             className="mt-4 text-[0.95rem] font-semibold text-[#64748B] hover:text-[#0F172A] hover:underline"
           >
             Cancel and Return
@@ -412,15 +358,15 @@ export default function MerchantPayment() {
         )}
       </div>
 
-      {/* PROCESSING OVERLAY */}
-      {processing && (
+      {(processing || startingCheckout) && (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/70 text-white backdrop-blur-sm">
           <FaCircleNotch className="mb-5 animate-spin text-4xl" />
-          <h2 className="mb-2 text-xl font-bold">Processing Securely...</h2>
-          <p className="font-medium text-slate-200">Please do not close this window.</p>
+          <h2 className="mb-2 text-xl font-bold">{startingCheckout ? "Opening Paystack..." : "Processing Securely..."}</h2>
+          <p className="font-medium text-slate-200">
+            {startingCheckout ? "Redirecting you to secure checkout." : "Please do not close this window."}
+          </p>
         </div>
       )}
-
     </div>
   );
 }
