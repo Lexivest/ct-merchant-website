@@ -13,7 +13,6 @@ import {
   FaLocationDot,
   FaMapLocationDot,
   FaPaperPlane,
-  FaReply,
   FaShareNodes,
   FaShield,
   FaStore,
@@ -1458,7 +1457,7 @@ function ShopDetail() {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <div className="text-[0.9rem] font-extrabold text-[#0F1111]">
+                          <div className="text-[0.84rem] font-extrabold text-[#0F1111]">
                             {author.displayName}
                           </div>
                           {author.isOwner ? (
@@ -1473,7 +1472,7 @@ function ShopDetail() {
                           ) : null}
                         </div>
 
-                        <div className="mt-0.5 text-[0.73rem] font-semibold text-slate-400">
+                        <div className="mt-0.5 text-[0.71rem] font-semibold text-slate-400">
                           {formatCommentTimestamp(comment.created_at)}
                         </div>
 
@@ -1487,11 +1486,11 @@ function ShopDetail() {
                               <StableImage
                                 src={productMeta.image_url}
                                 alt={productLabel}
-                                containerClassName="h-[58px] w-[58px] overflow-hidden rounded-xl bg-white"
+                                containerClassName="h-[78px] w-[78px] overflow-hidden rounded-xl bg-white"
                                 className="h-full w-full object-contain"
                               />
                             ) : (
-                              <div className="flex h-[58px] w-[58px] items-center justify-center rounded-xl bg-white text-slate-400">
+                              <div className="flex h-[78px] w-[78px] items-center justify-center rounded-xl bg-white text-slate-400">
                                 <FaBoxOpen />
                               </div>
                             )}
@@ -1499,14 +1498,14 @@ function ShopDetail() {
                               <div className="text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-slate-400">
                                 Ref Product
                               </div>
-                              <div className="mt-1 text-[0.84rem] font-bold text-[#0F1111]">
+                              <div className="mt-1 text-[0.8rem] font-bold text-[#0F1111]">
                                 {productLabel}
                               </div>
                             </div>
                           </button>
                         ) : null}
 
-                        <div className="mt-2 whitespace-pre-wrap text-[0.9rem] leading-6 text-slate-700">
+                        <div className="mt-2 whitespace-pre-wrap text-[0.88rem] leading-6 text-slate-700">
                           {comment.body}
                         </div>
 
@@ -1583,14 +1582,13 @@ function ShopDetail() {
                         ) : null}
 
                         <div className="mt-3 border-t border-slate-100 pt-3">
-                          <div className="flex flex-wrap items-center gap-3 text-[0.76rem] font-bold">
+                          <div className="flex flex-wrap items-center gap-4 text-[0.76rem] font-bold">
                             <button
                               type="button"
                               onClick={() => beginReply(comment)}
-                              className="inline-flex items-center gap-1.5 text-slate-600 transition hover:text-pink-600"
+                              className="text-slate-600 transition hover:text-pink-600"
                             >
-                              <FaReply className="text-[0.68rem]" />
-                              Comment
+                              {comment.replies.length} comment{comment.replies.length === 1 ? "" : "s"}
                             </button>
                             <button
                               type="button"
@@ -1600,9 +1598,6 @@ function ShopDetail() {
                               <FaFlag className="text-[0.68rem]" />
                               Report Abuse
                             </button>
-                            <span className="text-slate-400">
-                              {comment.replies.length} comment{comment.replies.length === 1 ? "" : "s"}
-                            </span>
                           </div>
 
                           {isReplyingToThread ? (
