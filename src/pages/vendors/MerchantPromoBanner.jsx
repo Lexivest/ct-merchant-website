@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { QRCodeSVG } from "qrcode.react";
 import html2canvas from "html2canvas";
 import {
   FaArrowLeft,
@@ -76,9 +75,88 @@ function PromoBannerShimmer() {
           <ShimmerBlock className="mb-3 h-6 w-64 rounded" />
           <ShimmerBlock className="h-4 w-full rounded" />
           <ShimmerBlock className="mt-2 h-4 w-4/5 rounded" />
-          <ShimmerBlock className="mt-6 h-[430px] w-full rounded-[26px]" />
+          <ShimmerBlock className="mt-6 h-[520px] w-full rounded-[26px]" />
         </div>
       </main>
+    </div>
+  );
+}
+
+function PromoBannerArtwork({
+  productImages,
+  shopNameLines,
+  categoryLines,
+  addressLines,
+  cityName,
+  uniqueId,
+  websiteText,
+  className = "",
+  exportMode = false,
+}) {
+  const tileClass = exportMode ? "h-[160px]" : "h-[160px]";
+
+  return (
+    <div
+      className={`overflow-hidden rounded-[26px] bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.16)] ${className}`}
+      style={exportMode ? { width: 800 } : undefined}
+    >
+      <div className="flex flex-wrap gap-[6px] bg-white p-[6px]">
+        {productImages.map((imgUrl, index) => (
+          <div
+            key={`${imgUrl}-${index}-${exportMode ? "export" : "preview"}`}
+            className={`w-[calc(33.333%-4px)] overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] ${tileClass}`}
+          >
+            <img
+              crossOrigin="anonymous"
+              src={imgUrl}
+              alt={`Promo product ${index + 1}`}
+              className="h-full w-full object-contain"
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-col items-center gap-3 px-[18px] py-5 text-center">
+        <div className="w-full text-[1.12rem] font-black leading-[1.18] text-white">
+          {shopNameLines.map((line, index) => (
+            <span key={`shop-${index}`} className="block min-h-[1.2rem]">
+              {line}
+            </span>
+          ))}
+        </div>
+
+        <div className="inline-flex max-w-[330px] flex-col items-center justify-center rounded-full bg-[#EA580C] px-6 py-2 text-[0.96rem] font-extrabold leading-[1.12] text-white">
+          {categoryLines.map((line, index) => (
+            <span key={`category-${index}`} className="block">
+              {line}
+            </span>
+          ))}
+        </div>
+
+        <div className="flex max-w-[520px] items-start justify-center gap-2 px-3 text-center">
+          <FaLocationDot className="mt-[2px] shrink-0 text-[0.95rem] text-[#FBBF24]" />
+          <div className="text-[0.92rem] font-semibold leading-[1.35] text-[#E2E8F0]">
+            {addressLines.map((line, index) => (
+              <span key={`address-${index}`} className="block">
+                {line}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="text-[1.45rem] font-black leading-tight text-white">
+          CTMerchant <span className="text-[#FBBF24]">{cityName}</span> Repo
+        </div>
+
+        <div className="rounded-[16px] border-2 border-[#FBBF24] bg-white/10 px-5 py-3">
+          <div className="text-[0.72rem] font-black uppercase tracking-[0.12em] text-[#FBBF24]">ID</div>
+          <div className="text-[1.02rem] font-black text-white">{uniqueId}</div>
+        </div>
+
+        <div className="mt-1 flex w-full items-center justify-center border-t-2 border-[#FBBF24] pt-3 text-[0.96rem] font-black text-white">
+          {websiteText}
+        </div>
+      </div>
     </div>
   );
 }
@@ -95,7 +173,6 @@ export default function MerchantPromoBanner() {
   const [error, setError] = useState(null);
   const [sharing, setSharing] = useState(false);
   const [downloading, setDownloading] = useState(false);
-
   const [shopData, setShopData] = useState(null);
   const [productImages, setProductImages] = useState([]);
 
@@ -147,20 +224,11 @@ export default function MerchantPromoBanner() {
         if (prodErr) throw prodErr;
 
         const fallbackImg = "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop";
-        let finalImages = [];
+        const available = (products || []).map((p) => p.image_url).filter(Boolean);
+        const finalImages = available.length
+          ? Array.from({ length: 6 }, (_, index) => available[index % available.length])
+          : Array(6).fill(fallbackImg);
 
-        if (!products || products.length === 0) {
-          finalImages = Array(6).fill(fallbackImg);
-        } else {
-          const avail = products.map((p) => p.image_url).filter(Boolean);
-          if (avail.length === 0) {
-            finalImages = Array(6).fill(fallbackImg);
-          } else {
-            for (let i = 0; i < 6; i += 1) {
-              finalImages.push(avail[i % avail.length]);
-            }
-          }
-        }
         setProductImages(finalImages);
       } catch (err) {
         setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
@@ -191,7 +259,7 @@ export default function MerchantPromoBanner() {
     if (isOffline) return alert("You must be online to share.");
     try {
       setSharing(true);
-      const textContent = `Visit my shop "${shopData.name}" on www.ctmerchant.com.ng\n\nSearch my ID: ${shopData.unique_id} or scan the QR code on my banner.\n\n[Type your top products here...]`;
+      const textContent = `Visit my shop "${shopData.name}" on www.ctmerchant.com.ng\n\nSearch my ID: ${shopData.unique_id}.\n\n[Type your top products here...]`;
 
       const blob = await generateBannerBlob();
       const file = new File([blob], `CTMerchant_Banner_${shopData.unique_id}.png`, { type: "image/png" });
@@ -237,12 +305,12 @@ export default function MerchantPromoBanner() {
   };
 
   const displayAddress = shopData?.address || "Registered Business Address";
-  const shopUrlText = `www.ctmerchant.com.ng/shop-detail?id=${shopData?.id ?? ""}`;
-  const shopUrl = `https://${shopUrlText}`;
   const websiteText = "www.ctmerchant.com.ng";
-  const exportShopNameLines = useMemo(() => wrapTextLines(shopData?.name || "", 22, 2), [shopData?.name]);
-  const exportCategoryLines = useMemo(() => wrapTextLines(shopData?.category || "Shop & Retail", 24, 2), [shopData?.category]);
-  const exportAddressLines = useMemo(() => wrapTextLines(displayAddress, 34, 2), [displayAddress]);
+  const shopNameLines = useMemo(() => wrapTextLines(shopData?.name || "", 24, 2), [shopData?.name]);
+  const categoryLines = useMemo(() => wrapTextLines(shopData?.category || "Shop & Retail", 26, 2), [shopData?.category]);
+  const addressLines = useMemo(() => wrapTextLines(displayAddress, 36, 3), [displayAddress]);
+  const cityName = shopData?.cities?.name || "Local";
+  const uniqueId = shopData?.unique_id || "PENDING";
 
   if (authLoading || loading) return <PromoBannerShimmer />;
 
@@ -304,131 +372,38 @@ export default function MerchantPromoBanner() {
             </div>
           </div>
           <p className="mt-3 text-[0.92rem] leading-6 text-slate-500">
-            The promo engine pulls your verified shop identity and latest approved product images into one printable banner for WhatsApp broadcast and physical flex printing.
+            The promo engine pulls your verified shop details and latest approved product images into one printable promo layout.
           </p>
         </div>
 
         <div className="fixed -left-[10000px] top-0 z-[-1] pointer-events-none opacity-0">
-          <div
-            ref={exportBannerRef}
-            className="relative h-[450px] w-[800px] overflow-hidden bg-[#003B95] text-white"
-          >
-            <div className="absolute left-0 top-0 z-10 grid h-[402px] w-[56%] grid-cols-3 grid-rows-2 gap-2 bg-white p-2.5 pr-10">
-              {productImages.map((imgUrl, idx) => (
-                <div key={`export-${idx}`} className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-md border border-[#E2E8F0] bg-[#F8FAFC] p-1">
-                  <img crossOrigin="anonymous" src={imgUrl} alt={`Export Product ${idx}`} className="h-full w-full object-contain" />
-                </div>
-              ))}
-            </div>
-
-            <div className="absolute right-0 top-0 z-20 h-[402px] w-[48%] rounded-bl-[170px] border-l-[8px] border-[#FBBF24] bg-[#002f7a]" />
-
-            <div className="absolute right-[15px] top-[20px] z-30 flex h-[362px] w-[370px] flex-col items-center text-center">
-              <div className="mb-3 w-full px-1 text-[1rem] font-black uppercase leading-[1.18] text-white">
-                {exportShopNameLines.map((line, index) => (
-                  <span key={`export-shop-${index}`} className="block min-h-[1.15rem]">
-                    {line}
-                  </span>
-                ))}
-              </div>
-
-              <div className="mb-3 inline-flex max-w-[320px] flex-col items-center justify-center gap-0.5 self-center rounded-full border-2 border-white bg-[#EA580C] px-8 py-2 text-center text-[0.94rem] font-semibold leading-[1.08] text-white">
-                {exportCategoryLines.map((line, index) => (
-                  <span key={`export-category-${index}`} className="block">
-                    {line}
-                  </span>
-                ))}
-              </div>
-
-              <div className="mb-3 px-2.5 text-[0.9rem] font-semibold leading-[1.3] text-[#E2E8F0]">
-                <FaLocationDot className="mr-1 inline align-text-top text-[#FBBF24]" />
-                <div className="inline-block align-top text-left">
-                  {exportAddressLines.map((line, index) => (
-                    <span key={`export-address-${index}`} className="block min-h-[1rem]">
-                      {line}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mb-1 text-[0.92rem] font-bold uppercase tracking-[0.08em] text-[#E2E8F0]">
-                Shop Online With Us On
-              </div>
-              <div className="mb-3 text-[1.38rem] font-black leading-tight text-white">
-                CTMerchant <span className="text-[#FBBF24]">{shopData?.cities?.name || "Local"}</span> Repo
-              </div>
-
-              <div className="mt-1 flex w-full items-center justify-center gap-3">
-                <div className="shrink-0 text-right text-[0.78rem] font-black uppercase leading-tight tracking-[0.05em] text-[#FBBF24]">
-                  <span className="whitespace-nowrap">ID: {shopData?.unique_id || "PENDING"}</span>
-                </div>
-
-                <div className="flex shrink-0 flex-col items-center rounded-lg border-[3px] border-[#FBBF24] bg-white p-1.5">
-                  <div className="mb-1 text-[0.65rem] font-black uppercase text-[#003B95]">Barcode</div>
-                  <div className="flex h-[92px] w-[92px] items-center justify-center overflow-hidden">
-                    <QRCodeSVG value={shopUrl} size={84} fgColor="#003B95" level="H" includeMargin={true} bgColor="#ffffff" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="absolute bottom-0 left-0 z-[40] flex h-[48px] w-full items-center justify-center border-t-[4px] border-[#FBBF24] bg-[#001E50] text-[1.1rem] font-semibold text-white">
-              Visit <span className="mx-1.5 font-extrabold text-[#FBBF24]">{websiteText}</span> or scan barcode
-            </div>
+          <div ref={exportBannerRef}>
+            <PromoBannerArtwork
+              exportMode={true}
+              productImages={productImages}
+              shopNameLines={shopNameLines}
+              categoryLines={categoryLines}
+              addressLines={addressLines}
+              cityName={cityName}
+              uniqueId={uniqueId}
+              websiteText={websiteText}
+            />
           </div>
         </div>
 
-        <div className="w-full rounded-[26px] bg-[#003B95] shadow-[0_15px_30px_rgba(0,0,0,0.12)]">
-          <div
-            className="relative mx-auto h-[450px] w-[800px] origin-top overflow-hidden rounded-[26px] bg-[#003B95] text-white max-[860px]:-mb-[45px] max-[860px]:scale-[0.9] max-[760px]:-mb-[90px] max-[760px]:scale-[0.8] max-[660px]:-mb-[135px] max-[660px]:scale-[0.7] max-[560px]:-mb-[200px] max-[560px]:scale-[0.55] max-[460px]:-mb-[260px] max-[460px]:scale-[0.42] max-[380px]:-mb-[280px] max-[380px]:scale-[0.38]"
-            ref={bannerRef}
-          >
-            <div className="absolute left-0 top-0 z-10 grid h-[calc(100%-50px)] w-[56%] grid-cols-3 grid-rows-2 gap-2 bg-white p-2.5 pr-10">
-              {productImages.map((imgUrl, idx) => (
-                <div key={idx} className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-md border border-[#E2E8F0] bg-[#F8FAFC] p-1 shadow-sm">
-                  <img crossOrigin="anonymous" src={imgUrl} alt={`Product ${idx}`} className="h-full w-full object-contain mix-blend-darken" />
-                </div>
-              ))}
-            </div>
-
-            <div className="absolute right-0 top-0 z-20 h-[calc(100%-50px)] w-[48%] rounded-bl-[170px] border-l-[8px] border-[#FBBF24] bg-gradient-to-b from-[#003B95] via-[#003B95] to-[#001E50]" />
-
-            <div className="absolute right-[15px] top-[20px] z-30 flex h-[calc(100%-40px)] w-[370px] flex-col items-center text-center">
-              <div className="mb-3 max-h-[58px] w-full overflow-hidden px-1 text-[1.16rem] font-black uppercase leading-[1.18] text-white drop-shadow-lg">
-                {shopData.name}
-              </div>
-
-              <div className="mb-3 inline-flex max-w-[330px] flex-col items-center justify-center gap-0.5 self-center rounded-full border-2 border-white bg-[#EA580C] px-8 py-2 text-center text-[1.02rem] font-semibold leading-[1.08] text-white shadow-[0_6px_12px_rgba(234,88,12,0.4)]">
-                {shopData.category ? shopData.category : "Shop & Retail"}
-              </div>
-
-              <div className="mb-3 px-2.5 text-[1.05rem] font-semibold leading-[1.35] text-[#CBD5E1] drop-shadow-sm">
-                <FaLocationDot className="mr-1 inline align-text-top text-[#FBBF24]" /> {displayAddress}
-              </div>
-
-              <div className="mb-1 text-[1rem] font-bold uppercase tracking-[1px] text-[#E2E8F0]">
-                Shop Online With Us On
-              </div>
-              <div className="mb-3 text-[1.55rem] font-black leading-tight text-white drop-shadow-md">
-                CTMerchant <span className="text-[#FBBF24]">{shopData.cities?.name || "Local"}</span> Repo
-              </div>
-
-              <div className="mt-1 flex w-full items-center justify-center gap-3">
-                <div className="shrink-0 text-right text-[0.8rem] font-black uppercase leading-tight tracking-[0.6px] text-[#FBBF24] drop-shadow-lg">
-                  <span className="whitespace-nowrap">ID: {shopData.unique_id || "PENDING"}</span>
-                </div>
-
-                <div className="flex shrink-0 flex-col items-center rounded-lg border-[3px] border-[#FBBF24] bg-white p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
-                  <div className="mb-1 text-[0.65rem] font-black uppercase text-[#003B95]">Barcode</div>
-                  <div className="flex h-[92px] w-[92px] items-center justify-center overflow-hidden">
-                    <QRCodeSVG value={shopUrl} size={84} fgColor="#003B95" level="H" includeMargin={true} bgColor="#ffffff" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="absolute bottom-0 left-0 z-[40] flex h-[48px] w-full items-center justify-center border-t-[4px] border-[#FBBF24] bg-[#001E50] text-[1.1rem] font-semibold text-white shadow-[0_-4px_10px_rgba(0,0,0,0.3)]">
-              Visit <span className="mx-1.5 font-extrabold text-[#FBBF24] tracking-wide">{websiteText}</span> or scan barcode
+        <div className="w-full rounded-[26px] border border-slate-200 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+          <div className="mx-auto w-fit origin-top max-[860px]:-mb-[52px] max-[860px]:scale-[0.88] max-[760px]:-mb-[108px] max-[760px]:scale-[0.76] max-[660px]:-mb-[162px] max-[660px]:scale-[0.64] max-[560px]:-mb-[244px] max-[560px]:scale-[0.48] max-[440px]:-mb-[296px] max-[440px]:scale-[0.4]">
+            <div ref={bannerRef}>
+              <PromoBannerArtwork
+                productImages={productImages}
+                shopNameLines={shopNameLines}
+                categoryLines={categoryLines}
+                addressLines={addressLines}
+                cityName={cityName}
+                uniqueId={uniqueId}
+                websiteText={websiteText}
+                className="w-[800px]"
+              />
             </div>
           </div>
         </div>
@@ -436,7 +411,7 @@ export default function MerchantPromoBanner() {
         <div className="w-full rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
           <div className="text-[0.92rem] font-black text-slate-900">Native promo flow status</div>
           <p className="mt-2 text-[0.86rem] leading-6 text-slate-500">
-            The native promo engine now mirrors the app flow by pulling your verified shop details and latest approved product images into one printable promo layout.
+            The preview now follows the Expo layout directly: product collage first, then the shop promo card below it.
           </p>
         </div>
 
@@ -459,10 +434,6 @@ export default function MerchantPromoBanner() {
           >
             {downloading ? <><FaCircleNotch className="animate-spin" /> Saving...</> : <><FaDownload /> Save Image in High Quality</>}
           </button>
-        </div>
-
-        <div className="w-full rounded-[18px] border border-[#FECACA] bg-[#FFF5F5] px-4 py-3 text-center text-[0.82rem] leading-relaxed text-[#6b7280] shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
-          <strong>Pro tip:</strong> save this banner in high quality and send it to a local printing press if you want a physical flex banner for your storefront.
         </div>
       </main>
     </div>
