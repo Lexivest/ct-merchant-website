@@ -56,7 +56,6 @@ function wrapTextLines(input, maxCharsPerLine, maxLines) {
   return lines.slice(0, maxLines);
 }
 
-// --- SHIMMER COMPONENT ---
 function PromoBannerShimmer() {
   return (
     <div className="flex min-h-screen flex-col bg-[#F4F7FB] text-[#0F1111]">
@@ -73,11 +72,11 @@ function PromoBannerShimmer() {
       </header>
       <main className="mx-auto flex w-full max-w-[860px] flex-1 flex-col items-center p-5 pb-12">
         <div className="w-full rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
-          <ShimmerBlock className="mb-2 h-4 w-24 rounded-full" />
-          <ShimmerBlock className="mb-3 h-6 w-52 rounded" />
+          <ShimmerBlock className="mb-2 h-4 w-28 rounded-full" />
+          <ShimmerBlock className="mb-3 h-6 w-64 rounded" />
           <ShimmerBlock className="h-4 w-full rounded" />
-          <ShimmerBlock className="mt-2 h-4 w-3/4 rounded" />
-          <ShimmerBlock className="mt-6 aspect-video w-full rounded-[22px]" />
+          <ShimmerBlock className="mt-2 h-4 w-4/5 rounded" />
+          <ShimmerBlock className="mt-6 h-[430px] w-full rounded-[26px]" />
         </div>
       </main>
     </div>
@@ -96,7 +95,7 @@ export default function MerchantPromoBanner() {
   const [error, setError] = useState(null);
   const [sharing, setSharing] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  
+
   const [shopData, setShopData] = useState(null);
   const [productImages, setProductImages] = useState([]);
 
@@ -125,7 +124,6 @@ export default function MerchantPromoBanner() {
           currentShopId = shopLookup.id;
         }
 
-        // 1. Fetch Shop Details
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
           .select("id, name, unique_id, category, is_verified, address, cities(name)")
@@ -139,7 +137,6 @@ export default function MerchantPromoBanner() {
         }
         setShopData(shop);
 
-        // 2. Fetch Latest 6 Approved Products
         const { data: products, error: prodErr } = await supabase
           .from("products")
           .select("image_url")
@@ -149,25 +146,22 @@ export default function MerchantPromoBanner() {
 
         if (prodErr) throw prodErr;
 
-        // Ensure we always have exactly 6 images for the grid
         const fallbackImg = "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop";
         let finalImages = [];
-        
+
         if (!products || products.length === 0) {
           finalImages = Array(6).fill(fallbackImg);
         } else {
-          const avail = products.map(p => p.image_url).filter(url => url);
+          const avail = products.map((p) => p.image_url).filter(Boolean);
           if (avail.length === 0) {
             finalImages = Array(6).fill(fallbackImg);
           } else {
-            // Repeat available images to fill the 6 slots
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 6; i += 1) {
               finalImages.push(avail[i % avail.length]);
             }
           }
         }
         setProductImages(finalImages);
-
       } catch (err) {
         setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
       } finally {
@@ -178,10 +172,9 @@ export default function MerchantPromoBanner() {
     if (!authLoading) fetchBannerData();
   }, [user, authLoading, urlShopId, isOffline]);
 
-
   const generateBannerBlob = async () => {
     if (!exportBannerRef.current) throw new Error("Banner element not found.");
-    
+
     const canvas = await html2canvas(exportBannerRef.current, {
       scale: 4,
       useCORS: true,
@@ -199,7 +192,7 @@ export default function MerchantPromoBanner() {
     try {
       setSharing(true);
       const textContent = `Visit my shop "${shopData.name}" on www.ctmerchant.com.ng\n\nSearch my ID: ${shopData.unique_id} or scan the QR code on my banner.\n\n[Type your top products here...]`;
-      
+
       const blob = await generateBannerBlob();
       const file = new File([blob], `CTMerchant_Banner_${shopData.unique_id}.png`, { type: "image/png" });
 
@@ -256,12 +249,25 @@ export default function MerchantPromoBanner() {
   if (error) {
     return (
       <div className="flex h-screen flex-col bg-[#F4F7FB]">
-        <header className="border-b border-slate-200 bg-white px-4 py-3 text-slate-900"><button onClick={() => navigate("/vendor-panel")}><FaArrowLeft /></button></header>
+        <header className="px-4 py-4">
+          <div className="mx-auto flex w-full max-w-[860px] items-center gap-4 rounded-[24px] bg-[#111827] px-4 py-4 text-white shadow-[0_14px_30px_rgba(15,23,42,0.18)]">
+            <button
+              onClick={() => navigate("/vendor-panel")}
+              className="flex h-[42px] w-[42px] items-center justify-center rounded-[16px] bg-white/10 transition hover:bg-white/15"
+            >
+              <FaArrowLeft />
+            </button>
+            <div className="min-w-0">
+              <div className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#f472b6]">Merchant</div>
+              <div className="text-[1.2rem] font-black">Shop Promo Banner</div>
+            </div>
+          </div>
+        </header>
         <div className="flex flex-1 items-center justify-center p-5 text-center">
           <div className="rounded-xl border border-red-200 bg-white p-8 shadow-sm">
             <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-600" />
             <h3 className="mb-2 font-bold text-slate-900">Cannot Generate Banner</h3>
-            <p className="text-sm text-slate-600 max-w-sm mx-auto">{error}</p>
+            <p className="mx-auto max-w-sm text-sm text-slate-600">{error}</p>
             <button onClick={() => window.location.reload()} className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold transition hover:bg-slate-50">Retry</button>
           </div>
         </div>
@@ -270,20 +276,35 @@ export default function MerchantPromoBanner() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-[#F3F4F6] text-[#0F1111]">
-      <header className="sticky top-0 z-40 flex w-full items-center gap-4 bg-[#131921] px-4 py-3 text-white shadow-sm">
-        <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]"><FaArrowLeft /></button>
-        <div className="text-[1.15rem] font-bold">Shop Promo Banner</div>
+    <div className="flex min-h-screen flex-col items-center bg-[#F4F7FB] text-[#0F1111]">
+      <header className="sticky top-0 z-40 w-full px-4 py-4 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-[860px] items-center gap-4 rounded-[24px] bg-[#111827] px-4 py-4 text-white shadow-[0_14px_30px_rgba(15,23,42,0.18)]">
+          <button
+            onClick={() => navigate("/vendor-panel")}
+            className="flex h-[42px] w-[42px] items-center justify-center rounded-[16px] bg-white/10 text-[1rem] transition hover:bg-white/15"
+          >
+            <FaArrowLeft />
+          </button>
+          <div className="min-w-0">
+            <div className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#f472b6]">Merchant</div>
+            <div className="text-[1.35rem] font-black">Shop Promo Banner</div>
+          </div>
+        </div>
       </header>
 
-      <main className="flex w-full max-w-[840px] flex-1 flex-col items-center p-5 pb-12">
-        
-        <div className="mb-6 w-full max-w-[800px] border-l-4 border-[#db2777] bg-[#F8FAFC] p-4 shadow-sm border-y border-r border-y-[#E2E8F0] border-r-[#E2E8F0] rounded-r-lg">
-          <h4 className="mb-2 flex items-center gap-2 text-[0.95rem] font-extrabold text-[#0F1111]">
-            <FaImage className="text-[#db2777]" /> Download & Print
-          </h4>
-          <p className="text-[0.85rem] leading-relaxed text-[#475569]">
-            We automatically pulled your latest products to create this high-resolution banner. It is perfect for printing as a flex banner for your physical shop or broadcasting on WhatsApp.
+      <main className="flex w-full max-w-[860px] flex-1 flex-col items-center gap-4 px-4 pb-12">
+        <div className="w-full rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-pink-50 text-[1.2rem] text-[#db2777]">
+              <FaImage />
+            </div>
+            <div>
+              <div className="text-[1rem] font-black text-slate-900">Auto-generated from your shop</div>
+              <div className="text-[0.84rem] font-semibold text-slate-500">Native promo layout synced to web</div>
+            </div>
+          </div>
+          <p className="mt-3 text-[0.92rem] leading-6 text-slate-500">
+            The promo engine pulls your verified shop identity and latest approved product images into one printable banner for WhatsApp broadcast and physical flex printing.
           </p>
         </div>
 
@@ -357,95 +378,93 @@ export default function MerchantPromoBanner() {
           </div>
         </div>
 
-        {/* --- THE REDESIGNED PROMO BANNER --- */}
-        <div 
-          className="relative h-[450px] w-[800px] origin-top overflow-hidden bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.2)] max-[850px]:-mb-[45px] max-[850px]:scale-[0.9] max-[750px]:-mb-[90px] max-[750px]:scale-[0.8] max-[650px]:-mb-[135px] max-[650px]:scale-[0.7] max-[550px]:-mb-[200px] max-[550px]:scale-[0.55] max-[450px]:-mb-[260px] max-[450px]:scale-[0.42] max-[360px]:-mb-[280px] max-[360px]:scale-[0.38]"
-          ref={bannerRef}
-        >
-          {/* DYNAMIC 6-GRID PRODUCT COLLAGE (Shrunk to fit perfectly alongside gradient) */}
-          <div className="absolute left-0 top-0 z-10 grid h-[calc(100%-50px)] w-[56%] grid-cols-3 grid-rows-2 gap-2 bg-white p-2.5 pr-10">
-            {productImages.map((imgUrl, idx) => (
-              <div key={idx} className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-md border border-[#E2E8F0] bg-[#F8FAFC] p-1 shadow-sm">
-                <img crossOrigin="anonymous" src={imgUrl} alt={`Product ${idx}`} className="h-full w-full object-contain mix-blend-darken" />
-              </div>
-            ))}
-          </div>
-          
-          {/* RIGHT PANEL WITH SOFTER LOWER CURVE */}
-          <div 
-            className="absolute right-0 top-0 z-20 h-[calc(100%-50px)] w-[48%] rounded-bl-[170px] border-l-[8px] border-[#FBBF24] bg-gradient-to-b from-[#003B95] via-[#003B95] to-[#001E50]"
-          ></div>
-          
-          {/* THE ADVERTISING CONTENT */}
-          <div className="absolute right-[15px] top-[20px] z-30 flex h-[calc(100%-40px)] w-[370px] flex-col items-center text-center">
-            <div className="mb-3 max-h-[58px] w-full overflow-hidden px-1 text-[1.16rem] font-black uppercase leading-[1.18] text-white drop-shadow-lg">
-              {shopData.name}
+        <div className="w-full rounded-[26px] border border-slate-200 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+          <div
+            className="relative mx-auto h-[450px] w-[800px] origin-top overflow-hidden rounded-[26px] bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.2)] max-[860px]:-mb-[45px] max-[860px]:scale-[0.9] max-[760px]:-mb-[90px] max-[760px]:scale-[0.8] max-[660px]:-mb-[135px] max-[660px]:scale-[0.7] max-[560px]:-mb-[200px] max-[560px]:scale-[0.55] max-[460px]:-mb-[260px] max-[460px]:scale-[0.42] max-[380px]:-mb-[280px] max-[380px]:scale-[0.38]"
+            ref={bannerRef}
+          >
+            <div className="absolute left-0 top-0 z-10 grid h-[calc(100%-50px)] w-[56%] grid-cols-3 grid-rows-2 gap-2 bg-white p-2.5 pr-10">
+              {productImages.map((imgUrl, idx) => (
+                <div key={idx} className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-md border border-[#E2E8F0] bg-[#F8FAFC] p-1 shadow-sm">
+                  <img crossOrigin="anonymous" src={imgUrl} alt={`Product ${idx}`} className="h-full w-full object-contain mix-blend-darken" />
+                </div>
+              ))}
             </div>
 
-            <div className="mb-3 inline-flex max-w-[330px] flex-col items-center justify-center gap-0.5 self-center rounded-full border-2 border-white bg-[#EA580C] px-8 py-2 text-center text-[1.02rem] font-semibold leading-[1.08] text-white shadow-[0_6px_12px_rgba(234,88,12,0.4)]">
-              {shopData.category ? shopData.category : "Shop & Retail"}
-            </div>
+            <div className="absolute right-0 top-0 z-20 h-[calc(100%-50px)] w-[48%] rounded-bl-[170px] border-l-[8px] border-[#FBBF24] bg-gradient-to-b from-[#003B95] via-[#003B95] to-[#001E50]" />
 
-            <div className="mb-3 px-2.5 text-[1.05rem] font-semibold leading-[1.35] text-[#CBD5E1] drop-shadow-sm">
-              <FaLocationDot className="mr-1 inline align-text-top text-[#FBBF24]" /> {displayAddress}
-            </div>
-
-            <div className="mb-1 text-[1rem] font-bold uppercase tracking-[1px] text-[#E2E8F0]">
-              Shop Online With Us On
-            </div>
-            <div className="mb-3 text-[1.55rem] font-black leading-tight text-white drop-shadow-md">
-              CTMerchant <span className="text-[#FBBF24]">{shopData.cities?.name || "Local"}</span> Repo
-            </div>
-
-            <div className="mt-1 flex w-full items-center justify-center gap-3">
-              <div className="shrink-0 text-right text-[0.8rem] font-black uppercase leading-tight tracking-[0.6px] text-[#FBBF24] drop-shadow-lg">
-                <span className="whitespace-nowrap">ID: {shopData.unique_id || "PENDING"}</span>
+            <div className="absolute right-[15px] top-[20px] z-30 flex h-[calc(100%-40px)] w-[370px] flex-col items-center text-center">
+              <div className="mb-3 max-h-[58px] w-full overflow-hidden px-1 text-[1.16rem] font-black uppercase leading-[1.18] text-white drop-shadow-lg">
+                {shopData.name}
               </div>
 
-              <div className="flex shrink-0 flex-col items-center rounded-lg border-[3px] border-[#FBBF24] bg-white p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
-                <div className="mb-1 text-[0.65rem] font-black uppercase text-[#003B95]">Barcode</div>
-                <div className="flex h-[92px] w-[92px] items-center justify-center overflow-hidden">
-                  <QRCodeSVG value={shopUrl} size={84} fgColor="#003B95" level="H" includeMargin={true} bgColor="#ffffff" />
+              <div className="mb-3 inline-flex max-w-[330px] flex-col items-center justify-center gap-0.5 self-center rounded-full border-2 border-white bg-[#EA580C] px-8 py-2 text-center text-[1.02rem] font-semibold leading-[1.08] text-white shadow-[0_6px_12px_rgba(234,88,12,0.4)]">
+                {shopData.category ? shopData.category : "Shop & Retail"}
+              </div>
+
+              <div className="mb-3 px-2.5 text-[1.05rem] font-semibold leading-[1.35] text-[#CBD5E1] drop-shadow-sm">
+                <FaLocationDot className="mr-1 inline align-text-top text-[#FBBF24]" /> {displayAddress}
+              </div>
+
+              <div className="mb-1 text-[1rem] font-bold uppercase tracking-[1px] text-[#E2E8F0]">
+                Shop Online With Us On
+              </div>
+              <div className="mb-3 text-[1.55rem] font-black leading-tight text-white drop-shadow-md">
+                CTMerchant <span className="text-[#FBBF24]">{shopData.cities?.name || "Local"}</span> Repo
+              </div>
+
+              <div className="mt-1 flex w-full items-center justify-center gap-3">
+                <div className="shrink-0 text-right text-[0.8rem] font-black uppercase leading-tight tracking-[0.6px] text-[#FBBF24] drop-shadow-lg">
+                  <span className="whitespace-nowrap">ID: {shopData.unique_id || "PENDING"}</span>
+                </div>
+
+                <div className="flex shrink-0 flex-col items-center rounded-lg border-[3px] border-[#FBBF24] bg-white p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
+                  <div className="mb-1 text-[0.65rem] font-black uppercase text-[#003B95]">Barcode</div>
+                  <div className="flex h-[92px] w-[92px] items-center justify-center overflow-hidden">
+                    <QRCodeSVG value={shopUrl} size={84} fgColor="#003B95" level="H" includeMargin={true} bgColor="#ffffff" />
+                  </div>
                 </div>
               </div>
             </div>
 
+            <div className="absolute bottom-0 left-0 z-[40] flex h-[48px] w-full items-center justify-center border-t-[4px] border-[#FBBF24] bg-[#001E50] text-[1.1rem] font-semibold text-white shadow-[0_-4px_10px_rgba(0,0,0,0.3)]">
+              Visit <span className="mx-1.5 font-extrabold text-[#FBBF24] tracking-wide">{websiteText}</span> or scan barcode
+            </div>
           </div>
-
-          {/* BOTTOM ADVERTISING STRIP */}
-          <div className="absolute bottom-0 left-0 z-[40] flex h-[48px] w-full items-center justify-center border-t-[4px] border-[#FBBF24] bg-[#001E50] text-[1.1rem] font-semibold text-white shadow-[0_-4px_10px_rgba(0,0,0,0.3)]">
-            Visit <span className="mx-1.5 font-extrabold text-[#FBBF24] tracking-wide">{websiteText}</span> or scan barcode
-          </div>
-
         </div>
 
-        {/* --- ACTIONS --- */}
-        <div className="mt-10 flex w-full max-w-[400px] flex-col gap-3">
-          <button 
-            onClick={handleShare} 
+        <div className="w-full rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
+          <div className="text-[0.92rem] font-black text-slate-900">Native promo flow status</div>
+          <p className="mt-2 text-[0.86rem] leading-6 text-slate-500">
+            Preview generation is aligned to the Expo version. You can now broadcast or save the promo banner from this page using the same visual structure as the Android app.
+          </p>
+        </div>
+
+        <div className="flex w-full flex-col gap-3 rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
+          <button
+            onClick={handleShare}
             disabled={sharing}
-            className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-[#db2777] p-4 text-[1.05rem] font-extrabold text-white shadow-[0_4px_10px_rgba(219,39,119,0.3)] transition hover:-translate-y-0.5 hover:bg-[#be185d] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+            className="flex w-full items-center justify-center gap-3 rounded-[18px] bg-[#db2777] px-5 py-4 text-[1rem] font-extrabold text-white shadow-[0_10px_24px_rgba(219,39,119,0.28)] transition hover:bg-[#be185d] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {sharing ? <FaCircleNotch className="animate-spin text-xl" /> : (
               <>
-                <FaShareNodes /> Broadcast Banner to <FaWhatsapp className="text-xl ml-1" /> <FaFacebookF className="text-xl" />
+                <FaShareNodes /> Broadcast Banner <FaWhatsapp className="ml-1 text-xl" /> <FaFacebookF className="text-xl" />
               </>
             )}
           </button>
 
-          <div className="mb-3 mt-[-6px] rounded-md border-l-4 border-[#DC2626] bg-[#FEE2E2] p-2 text-center text-[0.8rem] leading-relaxed text-[#565959]">
-            <strong>💡 PRO TIP:</strong> This generates a high-quality image. Save it to your phone and send it to a local printing press to create a physical flex banner!
+          <div className="rounded-[16px] border border-[#FECACA] bg-[#FFF5F5] px-4 py-3 text-center text-[0.82rem] leading-relaxed text-[#6b7280]">
+            <strong>Pro tip:</strong> save this banner in high quality and send it to a local printing press if you want a physical flex banner for your storefront.
           </div>
 
-          <button 
-            onClick={handleDownload} 
+          <button
+            onClick={handleDownload}
             disabled={downloading}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#D5D9D9] bg-white p-3.5 font-bold text-[#0F1111] transition hover:border-[#B0B5B5] hover:bg-[#F7FAFA] disabled:cursor-not-allowed disabled:opacity-70"
+            className="flex w-full items-center justify-center gap-2 rounded-[18px] border border-slate-300 bg-white p-3.5 font-bold text-[#0F1111] transition hover:border-slate-400 hover:bg-[#F7FAFA] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {downloading ? <><FaCircleNotch className="animate-spin" /> Saving...</> : <><FaDownload /> Save Image in High Quality</>}
           </button>
         </div>
-
       </main>
     </div>
   );
