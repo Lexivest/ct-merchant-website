@@ -11,6 +11,17 @@ import {
   getStaffCommentThreads,
 } from "./StaffPortalShared"
 
+function getInitials(value) {
+  const parts = String(value || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+
+  if (!parts.length) return "CT"
+  return parts.map((part) => part[0]?.toUpperCase() || "").join("")
+}
+
 export default function StaffCommunity() {
   const { notify } = useGlobalFeedback()
   const [commentThreads, setCommentThreads] = useState([])
@@ -299,38 +310,66 @@ export default function StaffCommunity() {
             </div>
 
             <div className="grid gap-6 p-6 lg:grid-cols-[1.2fr_0.8fr]">
-              <div className="space-y-4">
+              <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
                 {selectedCommentThread.comments.map((comment) => (
-                  <div key={comment.id} className={`rounded-3xl border p-5 shadow-sm ${comment.parent_id ? "bg-slate-50 lg:ml-8" : "bg-white"}`}>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="text-base font-extrabold text-slate-900">{comment.author_name}</div>
-                      {comment.is_owner_comment ? <span className="rounded-full bg-pink-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-pink-600">Shop Owner</span> : null}
-                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${getCommentStatusBadge(comment.status)}`}>{comment.status}</span>
-                      {comment.parent_id ? <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-500"><FaReply /> Reply</span> : null}
-                    </div>
-                    <div className="mt-1 text-xs font-medium text-slate-400">{formatDateTime(comment.created_at)}</div>
-                    <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-700">{comment.body}</div>
+                  <div
+                    key={comment.id}
+                    className={`border-b border-slate-100 px-5 py-4 last:border-b-0 ${
+                      comment.parent_id ? "bg-slate-50/70" : "bg-white"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {comment.author_avatar_url ? (
+                        <img
+                          src={comment.author_avatar_url}
+                          alt={comment.author_name}
+                          className="h-10 w-10 rounded-full border border-slate-200 object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-xs font-black text-slate-700">
+                          {getInitials(comment.author_name)}
+                        </div>
+                      )}
 
-                    <div className="mt-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <div className="text-[0.92rem] font-extrabold text-slate-900">{comment.author_name}</div>
+                          {comment.is_owner_comment ? <span className="rounded-full bg-pink-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-pink-600">Shop Owner</span> : null}
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getCommentStatusBadge(comment.status)}`}>{comment.status}</span>
+                          {comment.parent_id ? <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500"><FaReply /> Comment</span> : null}
+                          {comment.product_name ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">{comment.product_name}</span> : null}
+                        </div>
+                        <div className="mt-0.5 text-[11px] font-medium text-slate-400">{formatDateTime(comment.created_at)}</div>
+                        <div className="mt-2 whitespace-pre-wrap text-[0.88rem] leading-6 text-slate-700">{comment.body}</div>
+
+                        {comment.moderation_reason ? (
+                          <div className="mt-2 rounded-2xl border border-amber-200 bg-white px-3 py-2 text-[0.75rem] font-medium text-amber-700">
+                            Moderation note: {comment.moderation_reason}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className={`mt-3 ${comment.parent_id ? "pl-[3.25rem]" : ""}`}>
                       <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Moderation Note</label>
                       <textarea
                         value={moderationDrafts[comment.id] || ""}
                         onChange={(event) => updateModerationDraft(comment.id, event.target.value)}
                         placeholder="Optional for approve/hide. Required for reject."
-                        className="min-h-[96px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 outline-none transition focus:border-pink-300 focus:ring-4 focus:ring-pink-100"
+                        className="min-h-[84px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 outline-none transition focus:border-pink-300 focus:ring-4 focus:ring-pink-100"
                       />
-                    </div>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <button type="button" onClick={() => moderateComment(comment, "approved")} disabled={moderatingCommentId === comment.id} className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-green-700 disabled:opacity-60">
-                        {moderatingCommentId === comment.id ? <FaCircleNotch className="animate-spin" /> : <FaCircleCheck />} Approve
-                      </button>
-                      <button type="button" onClick={() => moderateComment(comment, "hidden")} disabled={moderatingCommentId === comment.id} className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-900 disabled:opacity-60">
-                        Hide
-                      </button>
-                      <button type="button" onClick={() => moderateComment(comment, "rejected")} disabled={moderatingCommentId === comment.id} className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-rose-700 disabled:opacity-60">
-                        Reject
-                      </button>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button type="button" onClick={() => moderateComment(comment, "approved")} disabled={moderatingCommentId === comment.id} className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-green-700 disabled:opacity-60">
+                          {moderatingCommentId === comment.id ? <FaCircleNotch className="animate-spin" /> : <FaCircleCheck />} Approve
+                        </button>
+                        <button type="button" onClick={() => moderateComment(comment, "hidden")} disabled={moderatingCommentId === comment.id} className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-900 disabled:opacity-60">
+                          Hide
+                        </button>
+                        <button type="button" onClick={() => moderateComment(comment, "rejected")} disabled={moderatingCommentId === comment.id} className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-rose-700 disabled:opacity-60">
+                          Reject
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -353,4 +392,3 @@ export default function StaffCommunity() {
     </StaffPortalShell>
   )
 }
-
