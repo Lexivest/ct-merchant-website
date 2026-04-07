@@ -35,6 +35,12 @@ function formatDateTime(value) {
   })
 }
 
+function formatCoordinate(value) {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return "Unknown"
+  return numeric.toFixed(6)
+}
+
 function formatInactivity(days) {
   if (days == null) return "Unknown"
   if (days < 1) return "Today"
@@ -195,6 +201,7 @@ export default function StaffDashboard() {
   const [shops, setShops] = useState([])
   const [loadingShops, setLoadingShops] = useState(true)
   const [togglingId, setTogglingId] = useState(null)
+  const [selectedKycShop, setSelectedKycShop] = useState(null)
 
   const [cityOptions, setCityOptions] = useState([])
   const [selectedCityId, setSelectedCityId] = useState("all")
@@ -283,11 +290,16 @@ export default function StaffDashboard() {
           id,
           name,
           unique_id,
+          address,
           status,
           kyc_status,
+          kyc_video_url,
+          kyc_submission_meta,
+          rejection_reason,
           id_issued,
           created_at,
-          profiles ( full_name )
+          profiles ( full_name ),
+          cities ( name, state )
         `)
         .order("created_at", { ascending: false })
         .limit(50)
@@ -435,6 +447,10 @@ export default function StaffDashboard() {
     if (b.inactive !== a.inactive) return b.inactive - a.inactive
     return a.city_name.localeCompare(b.city_name)
   })
+  const selectedKycMeta =
+    selectedKycShop?.kyc_submission_meta && typeof selectedKycShop.kyc_submission_meta === "object"
+      ? selectedKycShop.kyc_submission_meta
+      : null
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-10">
@@ -889,13 +905,7 @@ export default function StaffDashboard() {
                         ) : shop.kyc_status === "submitted" ? (
                           <div className="flex justify-end">
                             <button
-                              onClick={() =>
-                                notify({
-                                  type: "info",
-                                  title: "KYC review",
-                                  message: "Video review workflow can be connected here next.",
-                                })
-                              }
+                              onClick={() => setSelectedKycShop(shop)}
                               className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-white transition hover:bg-amber-600"
                             >
                               <FaVideo /> Review KYC
@@ -920,6 +930,119 @@ export default function StaffDashboard() {
           </div>
         </div>
       </div>
+
+      {selectedKycShop && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4">
+          <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">KYC Video Review</h3>
+                <p className="text-sm text-slate-500">
+                  {selectedKycShop.name} • {selectedKycShop.unique_id || "Unassigned"}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedKycShop(null)}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="grid gap-6 p-6 lg:grid-cols-[1.35fr_0.95fr]">
+              <div className="space-y-4">
+                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-sm">
+                  {selectedKycShop.kyc_video_url ? (
+                    <video
+                      src={selectedKycShop.kyc_video_url}
+                      controls
+                      preload="metadata"
+                      className="aspect-video w-full bg-black"
+                    />
+                  ) : (
+                    <div className="flex aspect-video items-center justify-center text-sm font-semibold text-slate-400">
+                      No video attached.
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-bold text-[#2E1065]">
+                    <FaVideo className="text-[#DB2777]" />
+                    Submission Notes
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl bg-white p-4">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Merchant</div>
+                      <div className="mt-1 text-sm font-bold text-slate-900">
+                        {selectedKycMeta?.merchant_name || selectedKycShop.profiles?.full_name || "Unknown"}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-white p-4">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Submitted</div>
+                      <div className="mt-1 text-sm font-bold text-slate-900">
+                        {formatDateTime(selectedKycMeta?.submitted_at || selectedKycShop.created_at)}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-white p-4">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Recorded</div>
+                      <div className="mt-1 text-sm font-bold text-slate-900">
+                        {formatDateTime(selectedKycMeta?.recorded_at)}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-white p-4">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Location</div>
+                      <div className="mt-1 text-sm font-bold text-slate-900">
+                        {selectedKycMeta?.location_label ||
+                          selectedKycShop.cities?.name ||
+                          "Unknown location"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="mb-3 text-sm font-bold text-[#2E1065]">Shop Details</div>
+                  <div className="space-y-3 text-sm text-slate-700">
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Shop Name</div>
+                      <div className="mt-1 font-semibold text-slate-900">{selectedKycShop.name}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Address</div>
+                      <div className="mt-1 font-semibold text-slate-900">
+                        {selectedKycMeta?.shop_address || selectedKycShop.address || "No address provided"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Coordinates</div>
+                      <div className="mt-1 font-semibold text-slate-900">
+                        LAT {formatCoordinate(selectedKycMeta?.latitude)} / LNG {formatCoordinate(selectedKycMeta?.longitude)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+                  <div className="mb-2 text-sm font-bold text-amber-900">Admin Review Guidance</div>
+                  <p className="text-sm leading-6 text-amber-900/90">
+                    Confirm the storefront is visible, products are shown clearly, and the video location matches the
+                    registered shop information before approval.
+                  </p>
+                  {selectedKycShop.rejection_reason && (
+                    <div className="mt-4 rounded-2xl border border-rose-200 bg-white p-4">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-rose-400">Last Rejection Note</div>
+                      <div className="mt-1 text-sm font-semibold text-rose-700">{selectedKycShop.rejection_reason}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

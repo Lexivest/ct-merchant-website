@@ -7,10 +7,14 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 }
 
-const EXPECTED_FEE_NAIRA = 5000
+const PLAN_OPTIONS = {
+  "6_Months": { amount: 6000, monthsToAdd: 6, label: "6 Months" },
+  "1_Year": { amount: 10000, monthsToAdd: 12, label: "1 Year" },
+} as const
+
+const ALLOWED_GATEWAYS = new Set(["paystack", "remita"])
 const PAYSTACK_VERIFY_BASE_URL = "https://api.paystack.co/transaction/verify"
 const REMITA_VERIFY_BASE_URL = "https://remitademo.net/payment/v1/payment/query"
-const ALLOWED_GATEWAYS = new Set(["promo", "paystack", "remita"])
 
 class HttpError extends Error {
   status: number
@@ -24,6 +28,7 @@ class HttpError extends Error {
 type VerifyRequest = {
   transactionId?: string
   gateway?: string
+  plan?: keyof typeof PLAN_OPTIONS | string
   shopId?: number | string
 }
 
@@ -31,7 +36,22 @@ type ShopRecord = {
   id: number
   owner_id: string
   name: string | null
-  city_id: number | null
+  is_verified: boolean | null
+  kyc_status: string | null
+  subscription_end_date: string | null
+  is_subscription_active: boolean | null
+}
+
+function safeErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message
+  return String(error || "")
+}
+
+function authHeaderPreview(header: string | null) {
+  if (!header) return "missing"
+  const trimmed = header.trim()
+  if (trimmed.length <= 24) return trimmed
+  return `${trimmed.slice(0, 18)}...${trimmed.slice(-4)}`
 }
 
 function jsonResponse(body: unknown, status = 200) {
@@ -78,16 +98,17 @@ function normalizeGateway(input: unknown) {
   return gateway
 }
 
-function normalizePromoCode(input: string) {
-  return input.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6)
+function normalizePlan(input: unknown) {
+  const plan = String(input || "").trim() as keyof typeof PLAN_OPTIONS
+  if (!plan || !(plan in PLAN_OPTIONS)) {
+    throw new HttpError(400, "Invalid subscription plan.")
+  }
+  return plan
 }
 
 function parseAmountToKobo(value: unknown) {
   const asNumber = Number(value)
-  if (!Number.isFinite(asNumber)) return null
-  if (asNumber <= 0) return null
-
-  // Most providers return amount in kobo for NGN.
+  if (!Number.isFinite(asNumber) || asNumber <= 0) return null
   return Math.round(asNumber)
 }
 
@@ -100,16 +121,17 @@ async function sha512Hex(value: string) {
     .join("")
 }
 
-function safeErrorMessage(error: unknown) {
-  if (error instanceof Error) return error.message
-  return String(error || "")
+function addMonths(baseDate: Date, months: number) {
+  const next = new Date(baseDate)
+  next.setMonth(next.getMonth() + months)
+  return next
 }
 
-function authHeaderPreview(header: string | null) {
-  if (!header) return "missing"
-  const trimmed = header.trim()
-  if (trimmed.length <= 24) return trimmed
-  return `${trimmed.slice(0, 18)}...${trimmed.slice(-4)}`
+function chooseSubscriptionBaseDate(currentEndDate: string | null | undefined) {
+  if (!currentEndDate) return new Date()
+  const parsed = new Date(currentEndDate)
+  if (Number.isNaN(parsed.getTime())) return new Date()
+  return parsed.getTime() > Date.now() ? parsed : new Date()
 }
 
 serve(async (req) => {
@@ -118,18 +140,20 @@ serve(async (req) => {
 
   try {
     const payload = (await req.json()) as VerifyRequest
-    console.log("[verify-payment] request", {
+    console.log("[verify-service-fee] request", {
       rawGateway: payload?.gateway ?? null,
+      rawPlan: payload?.plan ?? null,
       rawShopId: payload?.shopId ?? null,
       hasTransactionId: Boolean(payload?.transactionId),
     })
     const gateway = normalizeGateway(payload.gateway)
     const transactionId = normalizeTxId(payload.transactionId)
+    const plan = normalizePlan(payload.plan)
     const shopId = toPositiveInt(payload.shopId)
     if (!shopId) throw new HttpError(400, "shopId is required.")
 
     const authHeader = req.headers.get("Authorization")
-    console.log("[verify-payment] auth header", {
+    console.log("[verify-service-fee] auth header", {
       hasAuthHeader: Boolean(authHeader),
       authPreview: authHeaderPreview(authHeader),
     })
@@ -138,11 +162,12 @@ serve(async (req) => {
     const supabaseUrl = getEnvStrict("SUPABASE_URL")
     const serviceRoleKey = getEnvStrict("SUPABASE_SERVICE_ROLE_KEY")
     const anonKey = getEnvStrict("SUPABASE_ANON_KEY")
-    console.log("[verify-payment] env", {
+    console.log("[verify-service-fee] env", {
       hasSupabaseUrl: Boolean(supabaseUrl),
       hasServiceRoleKey: Boolean(serviceRoleKey),
       hasAnonKey: Boolean(anonKey),
       gateway,
+      plan,
       shopId,
     })
 
@@ -155,7 +180,7 @@ serve(async (req) => {
       data: { user },
       error: authError,
     } = await authClient.auth.getUser()
-    console.log("[verify-payment] getUser", {
+    console.log("[verify-service-fee] getUser", {
       hasUser: Boolean(user),
       userId: user?.id ?? null,
       authError: authError ? safeErrorMessage(authError) : null,
@@ -164,140 +189,100 @@ serve(async (req) => {
 
     const { data: shop, error: shopError } = await adminClient
       .from("shops")
-      .select("id, owner_id, name, city_id")
+      .select("id, owner_id, name, is_verified, kyc_status, subscription_end_date, is_subscription_active")
       .eq("id", shopId)
       .eq("owner_id", user.id)
       .maybeSingle<ShopRecord>()
-    console.log("[verify-payment] shop lookup", {
+    console.log("[verify-service-fee] shop lookup", {
       foundShop: Boolean(shop),
       shopId: shop?.id ?? null,
       ownerId: shop?.owner_id ?? null,
       shopError: shopError ? safeErrorMessage(shopError) : null,
+      isVerified: shop?.is_verified ?? null,
+      kycStatus: shop?.kyc_status ?? null,
+      subscriptionEndDate: shop?.subscription_end_date ?? null,
+      isSubscriptionActive: shop?.is_subscription_active ?? null,
     })
 
     if (shopError) throw new HttpError(500, `Failed to validate shop ownership: ${shopError.message}`)
     if (!shop) throw new HttpError(403, "Shop not found or access denied.")
 
-    const { data: profile, error: profileError } = await adminClient
-      .from("profiles")
-      .select("full_name, cities(name)")
-      .eq("id", user.id)
-      .maybeSingle<{ full_name: string | null; cities?: { name: string | null } | null }>()
-    console.log("[verify-payment] profile lookup", {
-      hasProfile: Boolean(profile),
-      profileError: profileError ? safeErrorMessage(profileError) : null,
-    })
+    if (!(shop.is_verified || shop.kyc_status === "approved")) {
+      throw new HttpError(409, "Your shop must be physically verified before a service plan can be activated.")
+    }
 
-    if (profileError) throw new HttpError(500, `Failed to load merchant profile: ${profileError.message}`)
-
-    const merchantName = profile?.full_name || "Merchant"
-    const cityName = profile?.cities?.name || "Unknown City"
-    const shopName = shop.name || "Unknown Shop"
     const paymentRef = `${gateway.toUpperCase()}_${transactionId}`
-
-    // Idempotency guard.
     const { data: existingPayment, error: existingPaymentError } = await adminClient
-      .from("physical_verification_payments")
+      .from("service_fee_payments")
       .select("id, status")
       .eq("payment_ref", paymentRef)
       .maybeSingle<{ id: number; status: string }>()
-    console.log("[verify-payment] payment_ref lookup", {
+    console.log("[verify-service-fee] existing payment lookup", {
       paymentRef,
       hasExistingPayment: Boolean(existingPayment),
       existingStatus: existingPayment?.status ?? null,
       existingPaymentError: existingPaymentError ? safeErrorMessage(existingPaymentError) : null,
     })
 
-    if (existingPaymentError) {
+    if (existingPaymentError && !String(existingPaymentError.message || "").toLowerCase().includes("does not exist")) {
       throw new HttpError(500, `Failed to check existing payment: ${existingPaymentError.message}`)
     }
 
     if (existingPayment?.status === "success") {
-      return jsonResponse({ success: true, idempotent: true, message: "Payment already verified." })
+      return jsonResponse({ success: true, idempotent: true, message: "Subscription already verified." })
     }
 
     let verified = false
-    let finalAmount = EXPECTED_FEE_NAIRA
+    const planOption = PLAN_OPTIONS[plan]
 
-    if (gateway === "promo") {
-      const code = normalizePromoCode(transactionId)
-      if (code.length !== 6) throw new HttpError(400, "Promo code must be 6 alphanumeric characters.")
+    if (gateway === "paystack") {
+      const paystackSecret = getEnvStrict("PAYSTACK_SECRET_KEY", "sk_test_dummy")
+      const paystackRes = await fetch(`${PAYSTACK_VERIFY_BASE_URL}/${encodeURIComponent(transactionId)}`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${paystackSecret}` },
+      })
+      console.log("[verify-service-fee] paystack response", {
+        transactionId,
+        status: paystackRes.status,
+        ok: paystackRes.ok,
+      })
 
-      // Atomic redemption (single statement update with is_used=false predicate).
-      const { data: redeemedCode, error: redeemError } = await adminClient
-        .from("promo_codes")
-        .update({
-          is_used: true,
-          used_by: user.id,
-          used_at: new Date().toISOString(),
-        })
-        .eq("code", code)
-        .eq("is_used", false)
-        .select("id")
-        .maybeSingle<{ id: number }>()
-
-      if (redeemError) {
-        throw new HttpError(500, `Failed to redeem promo code: ${redeemError.message}`)
+      if (!paystackRes.ok) {
+        throw new HttpError(502, `Paystack verify request failed (${paystackRes.status}).`)
       }
-      if (!redeemedCode) throw new HttpError(409, "Invalid or already used promo code.")
+
+      const paystackData = await paystackRes.json()
+      const statusOk = paystackData?.status === true && paystackData?.data?.status === "success"
+      const amountKobo = parseAmountToKobo(paystackData?.data?.amount)
+      const currency = String(paystackData?.data?.currency || "").toUpperCase()
+      const customerEmail = String(paystackData?.data?.customer?.email || "").toLowerCase()
+      const reference = String(paystackData?.data?.reference || "")
+      const expectedKobo = planOption.amount * 100
+      const amountMatches = amountKobo === expectedKobo
+      const currencyMatches = currency === "NGN"
+      const emailMatches = !!user.email && customerEmail === user.email.toLowerCase()
+      const referenceMatches = reference === transactionId
+      console.log("[verify-service-fee] paystack checks", {
+        statusOk,
+        amountKobo,
+        expectedKobo,
+        amountMatches,
+        currency,
+        currencyMatches,
+        customerEmail,
+        expectedEmail: user.email?.toLowerCase?.() || null,
+        emailMatches,
+        reference,
+        transactionId,
+        referenceMatches,
+      })
+
+      if (!statusOk || !amountMatches || !currencyMatches || !emailMatches || !referenceMatches) {
+        throw new HttpError(400, "Paystack verification failed strict checks.")
+      }
 
       verified = true
-      finalAmount = 0
-    } else if (gateway === "paystack") {
-      const devBypassEnabled =
-        Deno.env.get("ALLOW_DEV_TEST_BYPASS") === "true" && !isLikelyProduction()
-
-      if (devBypassEnabled && transactionId.startsWith("DEV-TEST")) {
-        verified = true
-      } else {
-        const paystackSecret = getEnvStrict("PAYSTACK_SECRET_KEY", "sk_test_dummy")
-        const paystackRes = await fetch(`${PAYSTACK_VERIFY_BASE_URL}/${encodeURIComponent(transactionId)}`, {
-          method: "GET",
-          headers: { Authorization: `Bearer ${paystackSecret}` },
-        })
-        console.log("[verify-payment] paystack response", {
-          transactionId,
-          status: paystackRes.status,
-          ok: paystackRes.ok,
-        })
-
-        if (!paystackRes.ok) {
-          throw new HttpError(502, `Paystack verify request failed (${paystackRes.status}).`)
-        }
-
-        const paystackData = await paystackRes.json()
-        const statusOk = paystackData?.status === true && paystackData?.data?.status === "success"
-        const amountKobo = parseAmountToKobo(paystackData?.data?.amount)
-        const currency = String(paystackData?.data?.currency || "").toUpperCase()
-        const customerEmail = String(paystackData?.data?.customer?.email || "").toLowerCase()
-        const reference = String(paystackData?.data?.reference || "")
-
-        const expectedKobo = EXPECTED_FEE_NAIRA * 100
-        const amountMatches = amountKobo === expectedKobo
-        const currencyMatches = currency === "NGN"
-        const emailMatches = !!user.email && customerEmail === user.email.toLowerCase()
-        const referenceMatches = reference === transactionId
-        console.log("[verify-payment] paystack checks", {
-          statusOk,
-          amountKobo,
-          expectedKobo,
-          amountMatches,
-          currency,
-          currencyMatches,
-          customerEmail,
-          expectedEmail: user.email?.toLowerCase?.() || null,
-          emailMatches,
-          reference,
-          transactionId,
-          referenceMatches,
-        })
-
-        if (!statusOk || !amountMatches || !currencyMatches || !emailMatches || !referenceMatches) {
-          throw new HttpError(400, "Paystack verification failed strict checks.")
-        }
-        verified = true
-      }
-    } else if (gateway === "remita") {
+    } else {
       const merchantId = getEnvStrict("REMITA_MERCHANT_ID", "2547916")
       const secretKey = getEnvStrict("REMITA_SECRET_KEY", "1946")
       const publicKey = getEnvStrict("REMITA_PUBLIC_KEY")
@@ -326,45 +311,81 @@ serve(async (req) => {
         remitaData?.paymentState?.amount
       const amountNaira = Number(amountRaw)
       const amountMatches =
-        Number.isFinite(amountNaira) && Math.round(amountNaira) === EXPECTED_FEE_NAIRA
+        Number.isFinite(amountNaira) && Math.round(amountNaira) === planOption.amount
 
       if (!statusOk || !amountMatches) {
         throw new HttpError(400, "Remita verification failed strict checks.")
       }
+
       verified = true
     }
 
-    if (!verified) throw new HttpError(400, "Payment could not be verified.")
+    if (!verified) throw new HttpError(400, "Subscription payment could not be verified.")
 
-    const { error: insertError } = await adminClient
-      .from("physical_verification_payments")
-      .insert({
-        merchant_id: user.id,
-        merchant_name: merchantName,
-        shop_name: shopName,
-        city: cityName,
-        amount: finalAmount,
-        payment_ref: paymentRef,
-        status: "success",
-      })
-    console.log("[verify-payment] insert result", {
-      paymentRef,
-      insertError: insertError ? safeErrorMessage(insertError) : null,
-      finalAmount,
-      gateway,
+    const baseDate = chooseSubscriptionBaseDate(shop.subscription_end_date)
+    const subscriptionEndDate = addMonths(baseDate, planOption.monthsToAdd).toISOString()
+    console.log("[verify-service-fee] activation target", {
+      plan,
+      amount: planOption.amount,
+      monthsToAdd: planOption.monthsToAdd,
+      baseDate: baseDate.toISOString(),
+      subscriptionEndDate,
     })
 
-    if (insertError) {
-      // Unique-constraint conflict can happen in races; treat as idempotent success.
-      if (String(insertError.code) === "23505") {
-        return jsonResponse({ success: true, idempotent: true, message: "Payment already recorded." })
-      }
-      throw new HttpError(500, `Database insert failed: ${insertError.message}`)
+    const { error: updateError } = await adminClient
+      .from("shops")
+      .update({
+        subscription_plan: plan,
+        is_subscription_active: true,
+        subscription_end_date: subscriptionEndDate,
+      })
+      .eq("id", shop.id)
+      .eq("owner_id", user.id)
+    console.log("[verify-service-fee] shop update", {
+      shopId: shop.id,
+      updateError: updateError ? safeErrorMessage(updateError) : null,
+    })
+
+    if (updateError) {
+      throw new HttpError(500, `Failed to activate subscription: ${updateError.message}`)
     }
 
-    return jsonResponse({ success: true, message: "Payment verified and receipt generated." })
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .maybeSingle<{ full_name: string | null }>()
+
+    const auditInsert = await adminClient.from("service_fee_payments").insert({
+      merchant_id: user.id,
+      merchant_name: profile?.full_name || "Merchant",
+      shop_id: shop.id,
+      shop_name: shop.name || "Unknown Shop",
+      plan,
+      amount: planOption.amount,
+      payment_ref: paymentRef,
+      status: "success",
+      subscription_end_date: subscriptionEndDate,
+    })
+    console.log("[verify-service-fee] audit insert", {
+      paymentRef,
+      auditError: auditInsert.error ? safeErrorMessage(auditInsert.error) : null,
+    })
+
+    if (auditInsert.error) {
+      console.log("[verify-service-fee] audit insert skipped", {
+        message: auditInsert.error.message,
+      })
+    }
+
+    return jsonResponse({
+      success: true,
+      message: "Subscription confirmed.",
+      subscription_end_date: subscriptionEndDate,
+      plan,
+    })
   } catch (error) {
-    console.log("[verify-payment] failed", {
+    console.log("[verify-service-fee] failed", {
       status: error instanceof HttpError ? error.status : 500,
       message: safeErrorMessage(error),
     })

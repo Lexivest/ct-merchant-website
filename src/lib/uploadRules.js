@@ -4,7 +4,7 @@ const MB = 1024 * 1024
 export const UPLOAD_RULES = Object.freeze({
   kycVideos: Object.freeze({
     bucket: "kyc_videos",
-    maxBytes: 6 * MB,
+    maxBytes: 10 * MB,
     allowedMime: [],
   }),
   brandAssets: Object.freeze({

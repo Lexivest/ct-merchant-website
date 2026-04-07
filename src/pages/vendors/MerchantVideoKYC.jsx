@@ -23,6 +23,9 @@ const KYC_VIDEO_RULE = UPLOAD_RULES.kycVideos;
 const KYC_VIDEO_BUCKET = KYC_VIDEO_RULE.bucket;
 const KYC_VIDEO_MAX_BYTES = KYC_VIDEO_RULE.maxBytes;
 const KYC_VIDEO_RULE_LABEL = getRuleLabel(KYC_VIDEO_RULE);
+const MAX_KYC_SECONDS = 60;
+const TARGET_KYC_FRAME_RATE = 24;
+const TARGET_KYC_VIDEO_BITRATE = 220000;
 
 export default function MerchantVideoKYC() {
   const navigate = useNavigate();
@@ -43,7 +46,7 @@ export default function MerchantVideoKYC() {
 
   // Recording State
   const [recordingState, setRecordingState] = useState("ready"); // 'ready' | 'recording' | 'recorded' | 'uploading'
-  const [timeLeft, setTimeLeft] = useState(60);
+  const [timeLeft, setTimeLeft] = useState(MAX_KYC_SECONDS);
   const [uploadStatus, setUploadStatus] = useState("");
   const [currentDateTime, setCurrentDateTime] = useState("");
 
@@ -56,6 +59,7 @@ export default function MerchantVideoKYC() {
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const recordedBlobRef = useRef(null);
+  const playbackUrlRef = useRef("");
   const uploadInFlightRef = useRef(false);
   
   const timerIntervalRef = useRef(null);
@@ -98,6 +102,13 @@ export default function MerchantVideoKYC() {
     }
   }, []);
 
+  const clearPlaybackUrl = useCallback(() => {
+    if (playbackUrlRef.current) {
+      URL.revokeObjectURL(playbackUrlRef.current);
+      playbackUrlRef.current = "";
+    }
+  }, []);
+
   const getStoragePathFromUrl = (url, bucket) => {
     if (!url) return null;
     try {
@@ -135,7 +146,7 @@ export default function MerchantVideoKYC() {
 
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
-          .select("id, name, unique_id, city_id, is_verified, kyc_status, kyc_video_url")
+          .select("id, name, unique_id, address, city_id, is_verified, kyc_status, kyc_video_url, cities(name)")
           .eq("owner_id", user.id)
           .maybeSingle();
 
@@ -181,9 +192,10 @@ export default function MerchantVideoKYC() {
     // Cleanup function
     return () => {
       stopActiveMedia();
+      clearPlaybackUrl();
       if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);
     };
-  }, [user, authLoading, isOffline, navigate, notify, stopActiveMedia]);
+  }, [user, authLoading, isOffline, navigate, notify, stopActiveMedia, clearPlaybackUrl]);
 
 
   // 2. Permissions, Camera, and CANVAS BURNING Logic
@@ -207,7 +219,12 @@ export default function MerchantVideoKYC() {
       // Step B: Request Camera & Mic
       const constraints = {
         audio: true,
-        video: { facingMode: "environment", width: { ideal: 640, max: 854 }, height: { ideal: 480, max: 480 } }
+        video: {
+          facingMode: "environment",
+          width: { ideal: 640, max: 854 },
+          height: { ideal: 480, max: 480 },
+          frameRate: { ideal: TARGET_KYC_FRAME_RATE, max: TARGET_KYC_FRAME_RATE },
+        }
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
@@ -306,7 +323,7 @@ export default function MerchantVideoKYC() {
     recordedChunksRef.current = [];
     
     // IMPORTANT: Capture the stream from the CANVAS, not the raw camera
-    const canvasStream = canvasRef.current.captureStream(30); // 30 FPS
+    const canvasStream = canvasRef.current.captureStream(TARGET_KYC_FRAME_RATE);
     
     // Extract the audio track from the raw camera stream and mix it with the canvas video
     const audioTrack = streamRef.current.getAudioTracks()[0];
@@ -315,7 +332,7 @@ export default function MerchantVideoKYC() {
 
     let options = { mimeType: 'video/webm;codecs=vp8,opus' };
     if (!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/mp4' };
-    options.videoBitsPerSecond = 1000000; // Bumped bitrate slightly for clearer text
+    options.videoBitsPerSecond = TARGET_KYC_VIDEO_BITRATE;
 
     try {
       mediaRecorderRef.current = new MediaRecorder(combinedStream, options);
@@ -331,7 +348,7 @@ export default function MerchantVideoKYC() {
     mediaRecorderRef.current.start();
 
     setRecordingState("recording");
-    setTimeLeft(60);
+    setTimeLeft(MAX_KYC_SECONDS);
 
     timerIntervalRef.current = setInterval(() => {
       setTimeLeft((prev) => {
@@ -365,15 +382,18 @@ export default function MerchantVideoKYC() {
     setRecordingState("recorded");
     
     if (playbackVideoRef.current) {
-      playbackVideoRef.current.src = URL.createObjectURL(blob);
+      clearPlaybackUrl();
+      playbackUrlRef.current = URL.createObjectURL(blob);
+      playbackVideoRef.current.src = playbackUrlRef.current;
     }
   };
 
   const resetStudio = async () => {
     setRecordingState("ready");
-    setTimeLeft(60);
+    setTimeLeft(MAX_KYC_SECONDS);
     recordedBlobRef.current = null;
     recordedChunksRef.current = [];
+    clearPlaybackUrl();
     if (playbackVideoRef.current) playbackVideoRef.current.src = "";
     setSetupState("idle");
     await requestPermissionsAndStart();
@@ -425,12 +445,25 @@ export default function MerchantVideoKYC() {
 
       // B. Update Shop KYC Status
       setUploadStatus("Finalizing submission...");
+      const kycSubmissionMeta = {
+        submitted_at: new Date().toISOString(),
+        recorded_at: new Date().toISOString(),
+        merchant_name: profileName || user?.user_metadata?.full_name || user?.email || "Merchant",
+        shop_name: shopData?.name || "",
+        shop_unique_id: shopData?.unique_id || "",
+        shop_address: shopData?.address || "",
+        city_name: shopData?.cities?.name || "",
+        location_label: cityName || shopData?.cities?.name || "",
+        latitude: locationRef.current?.lat || "",
+        longitude: locationRef.current?.lng || "",
+      };
       
       const { data: updatedShop, error: dbErr } = await supabase
         .from('shops')
         .update({ 
           kyc_status: 'submitted', 
           kyc_video_url: publicUrl, 
+          kyc_submission_meta: kycSubmissionMeta,
           rejection_reason: null
         })
         .eq('owner_id', user.id)
@@ -550,7 +583,7 @@ export default function MerchantVideoKYC() {
                 <li>Show your storefront and your products.</li>
                 <li>Tell us about your business.</li>
                 <li>Showing yourself in the video capture is optional, but it can speed up verification.</li>
-                <li>You have 60 seconds only.</li>
+                <li>You have {MAX_KYC_SECONDS} seconds only.</li>
                 <li>{`Upload limit: ${KYC_VIDEO_RULE_LABEL}.`}</li>
               </ul>
             </div>

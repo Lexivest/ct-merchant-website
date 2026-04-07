@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Mobile app workspaces inside the web repo
+ctm_mobile_expo/
+ctm_app_mobile/
+ctm_mobile_react/
