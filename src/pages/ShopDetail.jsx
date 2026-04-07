@@ -285,6 +285,7 @@ function ShopDetail() {
   const [replyTarget, setReplyTarget] = useState(null)
   const [submittingComment, setSubmittingComment] = useState(false)
   const [commentProductPickerOpen, setCommentProductPickerOpen] = useState(false)
+  const [replyBody, setReplyBody] = useState("")
 
   // Sync optimistic state when cached data resolves
   useEffect(() => {
@@ -809,17 +810,20 @@ function ShopDetail() {
       body: comment.body,
       productId: comment.product_id ? String(comment.product_id) : "",
     })
-    setSelectedProductId(comment.product_id ? String(comment.product_id) : "")
-    requestAnimationFrame(() => {
-      communityRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-    })
+    setReplyBody("")
   }
 
   function clearReplyComposer() {
     setReplyTarget(null)
+    setReplyBody("")
   }
 
-  async function submitComment() {
+  async function submitComment({
+    body = commentBody,
+    parentId = null,
+    productId = parentId ? replyTarget?.productId || "" : selectedProductId,
+    resetComposer = true,
+  } = {}) {
     if (!isLoggedIn) {
       notify({
         type: "info",
@@ -829,7 +833,7 @@ function ShopDetail() {
       return
     }
 
-    const trimmedBody = String(commentBody || "").trim()
+    const trimmedBody = String(body || "").trim()
     if (trimmedBody.length < 3) {
       notify({
         type: "error",
@@ -853,9 +857,9 @@ function ShopDetail() {
 
       const payload = {
         shop_id: Number(shopId),
-        product_id: selectedProductId ? Number(selectedProductId) : null,
+        product_id: productId ? Number(productId) : null,
         user_id: user.id,
-        parent_id: replyTarget?.id || null,
+        parent_id: parentId,
         body: trimmedBody,
         status: "pending",
       }
@@ -873,10 +877,16 @@ function ShopDetail() {
         throw insertError
       }
 
-      setCommentBody("")
-      setReplyTarget(null)
-      if (!preselectedProductId) {
-        setSelectedProductId("")
+      if (resetComposer) {
+        if (parentId) {
+          setReplyBody("")
+          setReplyTarget(null)
+        } else {
+          setCommentBody("")
+          if (!preselectedProductId) {
+            setSelectedProductId("")
+          }
+        }
       }
 
       notify({
@@ -1203,32 +1213,10 @@ function ShopDetail() {
           <div className="mb-5 rounded-[20px] border border-slate-200 bg-[#FCFCFD] p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div className="text-[0.95rem] font-extrabold text-[#0F1111]">
-                {replyTarget ? `Commenting on ${replyTarget.authorName}'s thread` : "Start a thread"}
+                Start a thread
               </div>
 
             </div>
-
-            {replyTarget ? (
-              <div className="mb-3 rounded-2xl border border-pink-100 bg-[#FDF2F8] px-3 py-2">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <div className="text-[0.74rem] font-extrabold uppercase tracking-[0.12em] text-pink-600">
-                      Main Thread
-                    </div>
-                    <div className="mt-1 line-clamp-2 text-[0.82rem] text-slate-600">
-                      {replyTarget.body}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={clearReplyComposer}
-                    className="rounded-full border border-pink-200 bg-white px-3 py-1 text-[0.72rem] font-bold text-pink-600 transition hover:bg-pink-50"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : null}
 
             {!isLoggedIn ? (
               <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-[0.86rem] font-semibold text-blue-900">
@@ -1363,11 +1351,7 @@ function ShopDetail() {
                 <textarea
                   value={commentBody}
                   onChange={(event) => setCommentBody(event.target.value)}
-                  placeholder={
-                    replyTarget
-                      ? "Write a comment under this thread..."
-                      : "Share a shop experience, ask a question, or start a product discussion..."
-                  }
+                  placeholder="Share a shop experience, ask a question, or start a product discussion..."
                   className="min-h-[112px] w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-[0.92rem] leading-6 text-[#0F1111] outline-none transition focus:border-pink-300 focus:ring-4 focus:ring-pink-100"
                   maxLength={500}
                 />
@@ -1397,12 +1381,12 @@ function ShopDetail() {
 
                   <button
                     type="button"
-                    onClick={submitComment}
+                    onClick={() => submitComment({ body: commentBody, parentId: null, productId: selectedProductId })}
                     disabled={submittingComment}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-pink-600 px-4 py-2.5 text-[0.84rem] font-extrabold text-white transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:bg-pink-300"
                   >
                     <FaPaperPlane className="text-[0.78rem]" />
-                    {submittingComment ? "Submitting..." : replyTarget ? "Comment" : "Post"}
+                    {submittingComment ? "Submitting..." : "Post"}
                   </button>
                 </div>
               </>
@@ -1448,6 +1432,7 @@ function ShopDetail() {
                 const productLabel = getCommentProductLabel(comment)
                 const productMeta = getCommentProductMeta(comment)
                 const isOwnPending = comment.user_id === user?.id && comment.status !== "approved"
+                const isReplyingToThread = replyTarget?.id === comment.id
 
                 return (
                   <div
@@ -1486,27 +1471,40 @@ function ShopDetail() {
                               {comment.status === "pending" ? "Awaiting Review" : comment.status}
                             </span>
                           ) : null}
-                          {productLabel ? (
-                            <button
-                              type="button"
-                              onClick={() => openProductDetail(comment.product_id)}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-slate-600 transition hover:bg-slate-200"
-                            >
-                              {productMeta?.image_url ? (
-                                <img
-                                  src={productMeta.image_url}
-                                  alt={productLabel}
-                                  className="h-4 w-4 rounded-full object-cover"
-                                />
-                              ) : null}
-                              {productLabel}
-                            </button>
-                          ) : null}
                         </div>
 
                         <div className="mt-0.5 text-[0.73rem] font-semibold text-slate-400">
                           {formatCommentTimestamp(comment.created_at)}
                         </div>
+
+                        {productLabel ? (
+                          <button
+                            type="button"
+                            onClick={() => openProductDetail(comment.product_id)}
+                            className="mt-2 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-left transition hover:border-pink-200 hover:bg-white"
+                          >
+                            {productMeta?.image_url ? (
+                              <StableImage
+                                src={productMeta.image_url}
+                                alt={productLabel}
+                                containerClassName="h-[58px] w-[58px] overflow-hidden rounded-xl bg-white"
+                                className="h-full w-full object-contain"
+                              />
+                            ) : (
+                              <div className="flex h-[58px] w-[58px] items-center justify-center rounded-xl bg-white text-slate-400">
+                                <FaBoxOpen />
+                              </div>
+                            )}
+                            <div className="min-w-0 pt-1">
+                              <div className="text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+                                Ref Product
+                              </div>
+                              <div className="mt-1 text-[0.84rem] font-bold text-[#0F1111]">
+                                {productLabel}
+                              </div>
+                            </div>
+                          </button>
+                        ) : null}
 
                         <div className="mt-2 whitespace-pre-wrap text-[0.9rem] leading-6 text-slate-700">
                           {comment.body}
@@ -1517,28 +1515,6 @@ function ShopDetail() {
                             Moderation note: {comment.moderation_reason}
                           </div>
                         ) : null}
-
-                        <div className="mt-3 flex flex-wrap items-center gap-3 text-[0.76rem] font-bold">
-                          <button
-                            type="button"
-                            onClick={() => beginReply(comment)}
-                            className="inline-flex items-center gap-1.5 text-slate-600 transition hover:text-pink-600"
-                          >
-                            <FaReply className="text-[0.68rem]" />
-                            Comment
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openAbuseReport(comment)}
-                            className="inline-flex items-center gap-1.5 text-slate-500 transition hover:text-red-600"
-                          >
-                            <FaFlag className="text-[0.68rem]" />
-                            Report Abuse
-                          </button>
-                          <span className="text-slate-400">
-                            {comment.replies.length} comment{comment.replies.length === 1 ? "" : "s"}
-                          </span>
-                        </div>
 
                         {comment.replies.length > 0 ? (
                           <div className="mt-3 border-l border-slate-200 pl-4">
@@ -1598,25 +1574,6 @@ function ShopDetail() {
                                           Moderation note: {reply.moderation_reason}
                                         </div>
                                       ) : null}
-
-                                      <div className="mt-2 flex flex-wrap items-center gap-3 text-[0.72rem] font-bold">
-                                        <button
-                                          type="button"
-                                          onClick={() => beginReply(comment)}
-                                          className="inline-flex items-center gap-1.5 text-slate-600 transition hover:text-pink-600"
-                                        >
-                                          <FaReply className="text-[0.64rem]" />
-                                          Comment
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => openAbuseReport(reply)}
-                                          className="inline-flex items-center gap-1.5 text-slate-500 transition hover:text-red-600"
-                                        >
-                                          <FaFlag className="text-[0.64rem]" />
-                                          Report Abuse
-                                        </button>
-                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -1624,6 +1581,74 @@ function ShopDetail() {
                             })}
                           </div>
                         ) : null}
+
+                        <div className="mt-3 border-t border-slate-100 pt-3">
+                          <div className="flex flex-wrap items-center gap-3 text-[0.76rem] font-bold">
+                            <button
+                              type="button"
+                              onClick={() => beginReply(comment)}
+                              className="inline-flex items-center gap-1.5 text-slate-600 transition hover:text-pink-600"
+                            >
+                              <FaReply className="text-[0.68rem]" />
+                              Comment
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openAbuseReport(comment)}
+                              className="inline-flex items-center gap-1.5 text-slate-500 transition hover:text-red-600"
+                            >
+                              <FaFlag className="text-[0.68rem]" />
+                              Report Abuse
+                            </button>
+                            <span className="text-slate-400">
+                              {comment.replies.length} comment{comment.replies.length === 1 ? "" : "s"}
+                            </span>
+                          </div>
+
+                          {isReplyingToThread ? (
+                            <div className="mt-3 rounded-2xl border border-pink-100 bg-[#FCFCFD] p-3">
+                              <div className="mb-2 flex items-center justify-between gap-2">
+                                <div className="text-[0.76rem] font-extrabold uppercase tracking-[0.12em] text-pink-600">
+                                  Commenting on this thread
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={clearReplyComposer}
+                                  className="text-[0.72rem] font-bold text-slate-500 transition hover:text-pink-600"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                              <textarea
+                                value={replyBody}
+                                onChange={(event) => setReplyBody(event.target.value)}
+                                placeholder="Write a comment under this thread..."
+                                className="min-h-[88px] w-full rounded-[16px] border border-slate-200 bg-white px-3 py-3 text-[0.88rem] leading-6 text-[#0F1111] outline-none transition focus:border-pink-300 focus:ring-4 focus:ring-pink-100"
+                                maxLength={500}
+                              />
+                              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                                <div className="text-[0.75rem] font-medium text-slate-500">
+                                  {replyBody.trim().length}/500
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    submitComment({
+                                      body: replyBody,
+                                      parentId: comment.id,
+                                      productId: comment.product_id ? String(comment.product_id) : "",
+                                    })
+                                  }
+                                  disabled={submittingComment}
+                                  className="inline-flex items-center gap-2 rounded-xl bg-pink-600 px-4 py-2 text-[0.8rem] font-extrabold text-white transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:bg-pink-300"
+                                >
+                                  <FaPaperPlane className="text-[0.72rem]" />
+                                  {submittingComment ? "Submitting..." : "Comment"}
+                                </button>
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
                   </div>
