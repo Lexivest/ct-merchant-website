@@ -5,6 +5,7 @@ import {
   FaBoxOpen,
   FaBullhorn,
   FaChevronDown,
+  FaChevronRight,
   FaCircleCheck,
   FaCircleInfo,
   FaComments,
@@ -285,6 +286,8 @@ function ShopDetail() {
   const [submittingComment, setSubmittingComment] = useState(false)
   const [commentProductPickerOpen, setCommentProductPickerOpen] = useState(false)
   const [replyBody, setReplyBody] = useState("")
+  const [activeInfoSection, setActiveInfoSection] = useState("business")
+  const [expandedThreadId, setExpandedThreadId] = useState(null)
 
   // Sync optimistic state when cached data resolves
   useEffect(() => {
@@ -323,6 +326,20 @@ function ShopDetail() {
     if (!products.some((product) => String(product.id) === String(preselectedProductId))) return
     setSelectedProductId(String(preselectedProductId))
   }, [preselectedProductId, products])
+
+  useEffect(() => {
+    if (currentShop?.storefront_url) return
+    if (activeInfoSection === "storefront") {
+      setActiveInfoSection(currentShop?.latitude && currentShop?.longitude ? "map" : "business")
+    }
+  }, [activeInfoSection, currentShop?.latitude, currentShop?.longitude, currentShop?.storefront_url])
+
+  useEffect(() => {
+    if (currentShop?.latitude && currentShop?.longitude) return
+    if (activeInfoSection === "map") {
+      setActiveInfoSection(currentShop?.storefront_url ? "storefront" : "business")
+    }
+  }, [activeInfoSection, currentShop?.latitude, currentShop?.longitude, currentShop?.storefront_url])
 
   useEffect(() => {
     function handleOutsideClick(event) {
@@ -803,6 +820,7 @@ function ShopDetail() {
 
   function beginReply(comment) {
     const threadParentId = comment.parent_id || comment.id
+    setExpandedThreadId(threadParentId)
     setReplyTarget({
       id: threadParentId,
       authorName: getCommentAuthor(comment).displayName,
@@ -815,6 +833,26 @@ function ShopDetail() {
   function clearReplyComposer() {
     setReplyTarget(null)
     setReplyBody("")
+  }
+
+  function toggleThreadComments(threadId) {
+    setExpandedThreadId((current) => {
+      const nextIsClosing = current === threadId
+      if (nextIsClosing) {
+        setReplyTarget(null)
+        setReplyBody("")
+        return null
+      }
+
+      setReplyTarget({
+        id: threadId,
+        authorName: "",
+        body: "",
+        productId: "",
+      })
+      setReplyBody("")
+      return threadId
+    })
   }
 
   async function submitComment({
@@ -1062,12 +1100,136 @@ function ShopDetail() {
         ) : null}
 
         <section className="mb-2 border-y border-slate-300 bg-white px-4 py-6">
-          <h2 className="mb-5 flex items-center gap-3 text-[1.35rem] font-extrabold text-[#0F1111]">
-            <span className="inline-block h-[22px] w-[6px] rounded bg-pink-600" />
-            Merchant Information
-          </h2>
+          <div className="mb-5 flex flex-wrap items-center gap-3 overflow-x-auto border-b border-slate-200 pb-3">
+            {[
+              currentShop?.storefront_url ? { key: "storefront", label: "View Storefront", icon: <FaStore /> } : null,
+              currentShop?.latitude && currentShop?.longitude ? { key: "map", label: "View Location Map", icon: <FaMapLocationDot /> } : null,
+              { key: "business", label: "About Business", icon: <FaCircleInfo /> },
+            ]
+              .filter(Boolean)
+              .map((section) => (
+                <button
+                  key={section.key}
+                  type="button"
+                  onClick={() => setActiveInfoSection(section.key)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[0.8rem] font-extrabold transition ${
+                    activeInfoSection === section.key
+                      ? "border-pink-200 bg-pink-50 text-pink-600"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-pink-200 hover:text-pink-600"
+                  }`}
+                >
+                  {section.icon}
+                  {section.label}
+                  <FaChevronRight className={`text-[0.7rem] transition ${activeInfoSection === section.key ? "rotate-90" : ""}`} />
+                </button>
+              ))}
+          </div>
 
-          <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+          {activeInfoSection === "storefront" && currentShop?.storefront_url ? (
+            <div className="mb-4 rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
+              <StableImage
+                src={currentShop.storefront_url}
+                alt="Store Front"
+                containerClassName="aspect-[4/3] w-full overflow-hidden rounded-[18px] border border-slate-200 bg-slate-50"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ) : null}
+
+          {activeInfoSection === "map" && currentShop?.latitude && currentShop?.longitude ? (
+            <div className="mb-4 rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
+              <div
+                ref={mapRef}
+                className="h-[260px] w-full rounded-[18px] border border-slate-200 bg-slate-50"
+              />
+
+              <button
+                type="button"
+                onClick={openGoogleMaps}
+                className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-[0.82rem] font-bold text-[#0F1111] transition hover:bg-[#F7FAFA]"
+              >
+                Open in Google Maps
+                <span>↗</span>
+              </button>
+            </div>
+          ) : null}
+
+          {activeInfoSection === "business" ? (
+            <div className="mb-4 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+              <div className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
+                <div className="mb-3 flex items-start gap-4">
+                  <StableImage
+                    src={shopLogo}
+                    alt="Shop Logo"
+                    containerClassName="h-[72px] w-[72px] shrink-0 rounded-xl border border-slate-300 bg-white"
+                    className="h-full w-full object-cover"
+                  />
+
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-2 flex flex-wrap items-center gap-2 text-[1.2rem] font-extrabold leading-[1.2] text-[#0F1111]">
+                      <span>{currentShop?.name}</span>
+                      {isVerified ? (
+                        <FaCircleCheck
+                          className="text-[1rem] text-[#007185]"
+                          title="Approved Shop"
+                        />
+                      ) : null}
+                    </div>
+
+                    <div className="inline-block rounded-full bg-pink-100 px-3 py-1 text-[0.74rem] font-bold text-pink-600">
+                      {currentShop?.category}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-5 mt-4 flex items-start gap-2 text-[0.92rem] font-medium leading-6 text-slate-600">
+                  <FaLocationDot className="mt-1 shrink-0 text-pink-600" />
+                  <span>{currentShop?.address}</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <div
+                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[0.8rem] font-bold ${
+                      isVerified
+                        ? "border-[#BFE8F0] bg-[#EFF6FF] text-[#007185]"
+                        : "border-red-100 bg-red-50 text-red-700"
+                    }`}
+                  >
+                    {isVerified ? <FaShield /> : <FaTriangleExclamation />}
+                    {isVerified
+                      ? `ID: ${currentShop?.unique_id || "Verified"}`
+                      : "Pending Verification"}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={toggleLike}
+                    className={`inline-flex items-center gap-2 rounded-full border px-5 py-2 text-[0.85rem] font-bold transition ${
+                      hasLiked
+                        ? "border-pink-300 bg-white text-pink-600"
+                        : "border-slate-300 bg-white text-[#0F1111]"
+                    }`}
+                  >
+                    <span>{hasLiked ? "👍" : "👍"}</span>
+                    <span>{likeCount}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
+                <div className="mb-3 text-[0.82rem] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+                  About Business
+                </div>
+
+                <p className="text-[0.95rem] leading-7 text-[#0F1111]">
+                  {currentShop?.description ||
+                    "No description provided by the merchant."}
+                </p>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="hidden grid gap-6 lg:grid-cols-[1fr_1.2fr]">
             <div>
               {currentShop?.storefront_url ? (
                 <div className="mb-6 rounded-lg border border-slate-300 bg-white p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
@@ -1095,7 +1257,6 @@ function ShopDetail() {
                   </div>
 
                   <div
-                    ref={mapRef}
                     className="h-[220px] w-full rounded-lg border border-slate-300 bg-slate-50"
                   />
 
@@ -1431,7 +1592,7 @@ function ShopDetail() {
                 const productLabel = getCommentProductLabel(comment)
                 const productMeta = getCommentProductMeta(comment)
                 const isOwnPending = comment.user_id === user?.id && comment.status !== "approved"
-                const isReplyingToThread = replyTarget?.id === comment.id
+                const isReplyingToThread = expandedThreadId === comment.id
 
                 return (
                   <div
@@ -1515,7 +1676,7 @@ function ShopDetail() {
                           </div>
                         ) : null}
 
-                        {comment.replies.length > 0 ? (
+                        {expandedThreadId === comment.id && comment.replies.length > 0 ? (
                           <div className="mt-3 border-l border-slate-200 pl-4">
                             {comment.replies.map((reply) => {
                               const replyAuthor = getCommentAuthor(reply)
@@ -1585,7 +1746,7 @@ function ShopDetail() {
                           <div className="flex flex-wrap items-center gap-4 text-[0.76rem] font-bold">
                             <button
                               type="button"
-                              onClick={() => beginReply(comment)}
+                              onClick={() => toggleThreadComments(comment.id)}
                               className="text-slate-600 transition hover:text-pink-600"
                             >
                               {comment.replies.length} comment{comment.replies.length === 1 ? "" : "s"}
