@@ -132,6 +132,18 @@ function resilientLazy(importer, options = {}) {
 const StaffDashboard = resilientLazy(() => import("./pages/StaffDashboard"), {
   pageLabel: "staff dashboard",
 })
+const StaffTraffic = resilientLazy(() => import("./pages/staff/StaffTraffic"), {
+  pageLabel: "staff traffic",
+})
+const StaffUsers = resilientLazy(() => import("./pages/staff/StaffUsers"), {
+  pageLabel: "staff users",
+})
+const StaffCommunity = resilientLazy(() => import("./pages/staff/StaffCommunity"), {
+  pageLabel: "staff community",
+})
+const StaffVerifications = resilientLazy(() => import("./pages/staff/StaffVerifications"), {
+  pageLabel: "staff verifications",
+})
 const StaffIDGenerator = resilientLazy(() => import("./pages/staff/StaffIDGenerator"), {
   pageLabel: "staff ID generator",
 })
@@ -430,6 +442,10 @@ function App() {
         {/* --- STAFF ROUTES --- */}
         <Route path="/staff-portal" element={<StaffPortal />} />
         <Route path="/staff-dashboard" element={<StaffDashboard />} />
+        <Route path="/staff-traffic" element={<StaffTraffic />} />
+        <Route path="/staff-users" element={<StaffUsers />} />
+        <Route path="/staff-community" element={<StaffCommunity />} />
+        <Route path="/staff-verifications" element={<StaffVerifications />} />
         <Route path="/staff-issue-id" element={<StaffIDGenerator />} />
         <Route path="/staff-studio" element={<ImageOptimizer />} />
         <Route path="/staff-inbox" element={<StaffInbox />} />
