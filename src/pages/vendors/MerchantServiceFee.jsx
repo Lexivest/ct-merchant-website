@@ -114,6 +114,37 @@ export default function MerchantServiceFee() {
     if (!authLoading) fetchSubscription();
   }, [user, authLoading, urlShopId, isOffline]);
 
+  useEffect(() => {
+    if (!user?.id || !shopData?.id || isOffline) return undefined;
+
+    const channel = supabase
+      .channel(`public:shops:id=eq.${shopData.id}:service-fee`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "shops",
+          filter: `id=eq.${shopData.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === "DELETE") {
+            setShopData(null);
+            setError("Shop record is no longer available.");
+            return;
+          }
+
+          const nextShop = payload.new || null;
+          setShopData((prev) => (prev ? { ...prev, ...nextShop } : nextShop));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, shopData?.id, isOffline]);
+
   const verifySubscriptionOnBackend = async (txId, planKey, gateway = "paystack", { auto = false } = {}) => {
     if (!txId || !shopData?.id || processing) return;
 

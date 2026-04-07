@@ -107,6 +107,45 @@ export default function useMyShop() {
     }
   }, [fetchShop, isOffline])
 
+  useEffect(() => {
+    if (!user?.id || isOffline) return undefined
+
+    const channel = supabase
+      .channel(`public:shops:owner_id=eq.${user.id}:my-shop`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "shops",
+          filter: `owner_id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === "DELETE") {
+            setShopData(null)
+            clearCachedShop(user.id)
+          } else {
+            const nextShop = payload.new || null
+            setShopData(nextShop)
+            if (nextShop) {
+              writeCachedShop(user.id, nextShop)
+            } else {
+              clearCachedShop(user.id)
+            }
+          }
+
+          setDataError(false)
+          setHasResolvedOnline(true)
+          setLoading(false)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user?.id, isOffline])
+
   // ROBUST STATE INTERCEPTION (Handles Offline & Network Errors)
   useEffect(() => {
     const resolvedMeta = buildMetaFromShop(shopData)

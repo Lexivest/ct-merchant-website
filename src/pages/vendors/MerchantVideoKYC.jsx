@@ -241,6 +241,47 @@ export default function MerchantVideoKYC() {
     };
   }, [user, authLoading, isOffline, navigate, notify, stopActiveMedia, clearPlaybackUrl]);
 
+  useEffect(() => {
+    if (!user?.id || !shopData?.id || isOffline) return undefined;
+
+    const channel = supabase
+      .channel(`public:shops:id=eq.${shopData.id}:merchant-kyc`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "shops",
+          filter: `id=eq.${shopData.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === "DELETE") {
+            setPageError("Shop record is no longer available.");
+            return;
+          }
+
+          const nextShop = payload.new || null;
+          if (!nextShop) return;
+
+          setShopData((prev) => ({ ...(prev || {}), ...nextShop }));
+
+          if (nextShop.is_verified || nextShop.kyc_status === "approved") {
+            notify({
+              type: "success",
+              title: "KYC approved",
+              message: "Your shop verification has been approved.",
+            });
+            navigate("/vendor-panel", { replace: true });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, shopData?.id, isOffline, navigate, notify]);
+
 
   // 2. Permissions, Camera, and CANVAS BURNING Logic
   const requestPermissionsAndStart = useCallback(async () => {
