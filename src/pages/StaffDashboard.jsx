@@ -246,6 +246,45 @@ function VisitTrendChart({ data }) {
   )
 }
 
+function SectionHeading({ eyebrow, title, description, actions }) {
+  return (
+    <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        {eyebrow ? (
+          <div className="mb-2 text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">
+            {eyebrow}
+          </div>
+        ) : null}
+        <h2 className="text-2xl font-black text-slate-900">{title}</h2>
+        {description ? (
+          <p className="mt-2 max-w-[760px] text-sm leading-6 text-slate-500">{description}</p>
+        ) : null}
+      </div>
+      {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
+    </div>
+  )
+}
+
+function QuickActionButton({ icon, label, tone = "dark", onClick }) {
+  const toneClass =
+    tone === "pink"
+      ? "bg-[#DB2777] text-white hover:bg-pink-600"
+      : tone === "white"
+        ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+        : "bg-[#2E1065] text-white hover:bg-[#4c1d95]"
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition ${toneClass}`}
+    >
+      {icon}
+      {label}
+    </button>
+  )
+}
+
 export default function StaffDashboard() {
   const navigate = useNavigate()
   const { notify } = useGlobalFeedback()
@@ -679,7 +718,7 @@ export default function StaffDashboard() {
   const rejectedCommentTotal = commentThreads.reduce((sum, thread) => sum + thread.rejectedCount, 0)
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-10">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fdf2f8_0,#f8fafc_26%,#f8fafc_100%)] font-sans pb-12">
       <nav className="flex items-center justify-between bg-[#2E1065] px-6 py-4 text-white shadow-md">
         <div className="flex items-center gap-3">
           <FaShieldHalved className="text-2xl text-[#DB2777]" />
@@ -698,30 +737,82 @@ export default function StaffDashboard() {
       </nav>
 
       <div className="mx-auto mt-8 max-w-[1280px] px-4 sm:px-6">
-        <div className="mb-8 flex flex-col items-center gap-8 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm sm:flex-row sm:items-start">
-          <img
-            src={avatarUrl}
-            alt="Staff Avatar"
-            className="h-24 w-24 rounded-full border-4 border-slate-100 object-cover shadow-sm"
-          />
-          <div className="text-center sm:text-left">
-            <h2 className="mb-1 text-3xl font-bold text-[#2E1065]">{staffData.full_name}</h2>
-            <div className="mt-3 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-              <p className="flex items-center gap-2 font-medium text-slate-600">
-                <FaEnvelope className="text-[#DB2777]" />
-                <span>{authUser.email}</span>
-              </p>
-              <p className="flex items-center gap-2 font-medium text-slate-600">
-                <FaBuilding className="text-[#DB2777]" />
-                <span>{staffData.department || "General Operations"}</span>
-              </p>
-              <span className="inline-block rounded-full bg-purple-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-purple-800">
-                {staffData.role}
-              </span>
+        <div className="mb-8 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+          <div className="bg-[linear-gradient(135deg,#2E1065_0%,#4c1d95_45%,#DB2777_100%)] px-8 py-8 text-white">
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex flex-col items-center gap-8 sm:flex-row sm:items-start">
+                <img
+                  src={avatarUrl}
+                  alt="Staff Avatar"
+                  className="h-24 w-24 rounded-full border-4 border-white/20 object-cover shadow-sm"
+                />
+                <div className="text-center sm:text-left">
+                  <div className="text-[11px] font-black uppercase tracking-[0.24em] text-pink-200">
+                    Staff Operations Console
+                  </div>
+                  <h2 className="mt-3 text-3xl font-black text-white">{staffData.full_name}</h2>
+                  <div className="mt-4 flex flex-col items-center gap-4 text-white/85 sm:flex-row sm:flex-wrap sm:items-start">
+                    <p className="flex items-center gap-2 text-sm font-semibold">
+                      <FaEnvelope className="text-pink-200" />
+                      <span>{authUser.email}</span>
+                    </p>
+                    <p className="flex items-center gap-2 text-sm font-semibold">
+                      <FaBuilding className="text-pink-200" />
+                      <span>{staffData.department || "General Operations"}</span>
+                    </p>
+                    <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">
+                      {staffData.role}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
+                  <div className="text-[11px] font-black uppercase tracking-[0.18em] text-pink-200">Pending Comments</div>
+                  <div className="mt-2 text-3xl font-black text-white">{pendingCommentCount}</div>
+                  <div className="mt-1 text-xs font-semibold text-white/70">Community queue awaiting review</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
+                  <div className="text-[11px] font-black uppercase tracking-[0.18em] text-pink-200">Shops in Focus</div>
+                  <div className="mt-2 text-3xl font-black text-white">{shops.length}</div>
+                  <div className="mt-1 text-xs font-semibold text-white/70">Latest merchant records loaded</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
+                  <div className="text-[11px] font-black uppercase tracking-[0.18em] text-pink-200">Visits Today</div>
+                  <div className="mt-2 text-3xl font-black text-white">{pageVisitsToday}</div>
+                  <div className="mt-1 text-xs font-semibold text-white/70">{uniqueVisitorsToday} unique visitors tracked</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 bg-slate-50 px-8 py-5">
+            <div className="flex flex-wrap gap-3">
+              <QuickActionButton icon={<FaWandMagicSparkles />} label="Launch CT Studio" tone="pink" onClick={() => navigate("/staff-studio")} />
+              <QuickActionButton icon={<FaUsers />} label="Open Support Inbox" onClick={() => navigate("/staff-inbox")} />
+              <QuickActionButton
+                icon={<FaCircleNotch className={loadingShops || loadingComments ? "animate-spin" : ""} />}
+                label="Refresh Operations"
+                tone="white"
+                onClick={() => {
+                  fetchShops()
+                  fetchCommentQueue()
+                  fetchVisitStats(visitWindow)
+                  fetchUserActivity({ cityId: selectedCityId, threshold: inactiveDays })
+                }}
+              />
             </div>
           </div>
         </div>
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+
+        <SectionHeading
+          eyebrow="Overview"
+          title="Operations Snapshot"
+          description="A quick read on merchant volume, user health, and today’s platform movement."
+        />
+
+        <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
               <FaBoxOpen className="text-xl text-[#2E1065]" />
@@ -761,7 +852,13 @@ export default function StaffDashboard() {
           </div>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 gap-8 xl:grid-cols-[1.15fr,0.85fr]">
+        <SectionHeading
+          eyebrow="Insights"
+          title="Traffic And User Intelligence"
+          description="Monitor daily traffic movement, top routes, city activity patterns, and inactive-account risk from one place."
+        />
+
+        <div className="mb-10 grid grid-cols-1 gap-8 xl:grid-cols-[1.15fr,0.85fr]">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
@@ -866,7 +963,7 @@ export default function StaffDashboard() {
           </div>
         </div>
 
-        <div className="mb-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <h2 className="text-xl font-black text-slate-900">User Activity Monitor</h2>
@@ -1030,7 +1127,13 @@ export default function StaffDashboard() {
           )}
         </div>
 
-        <div className="mb-8 rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <SectionHeading
+          eyebrow="Trust & Compliance"
+          title="Community And Merchant Review"
+          description="Moderate public shop conversations and handle merchant verification decisions inside one operational zone."
+        />
+
+        <div className="mb-10 rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
           <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-lg font-extrabold text-slate-900">Community Moderation</h2>
@@ -1200,18 +1303,6 @@ export default function StaffDashboard() {
           <div className="flex flex-col items-start justify-between gap-4 border-b border-slate-200 bg-slate-50 px-6 py-4 sm:flex-row sm:items-center">
             <h2 className="text-lg font-extrabold text-slate-900">Merchant Verifications</h2>
             <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => navigate("/staff-studio")}
-                className="inline-flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-pink-700"
-              >
-                <FaWandMagicSparkles /> Launch CT Studio
-              </button>
-              <button
-                onClick={() => navigate("/staff-inbox")}
-                className="inline-flex items-center gap-2 rounded-lg bg-[#2E1065] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#4c1d95]"
-              >
-                <FaUsers /> Open Support Inbox
-              </button>
               <button onClick={fetchShops} className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-100">
                 Refresh List
               </button>
