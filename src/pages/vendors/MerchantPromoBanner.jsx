@@ -173,6 +173,43 @@ export default function MerchantPromoBanner() {
   const bannerRef = useRef(null);
   const exportBannerRef = useRef(null);
 
+  const waitForExportAssets = async (node) => {
+    if (!node) return;
+
+    if (typeof document !== "undefined" && document.fonts?.ready) {
+      try {
+        await document.fonts.ready;
+      } catch {
+        // Ignore font readiness errors and continue with capture.
+      }
+    }
+
+    const images = Array.from(node.querySelectorAll("img"));
+    await Promise.all(
+      images.map(
+        (img) =>
+          new Promise((resolve) => {
+            const finish = () => resolve();
+
+            if (img.complete && img.naturalWidth > 0) {
+              if (typeof img.decode === "function") {
+                img.decode().then(finish).catch(finish);
+              } else {
+                finish();
+              }
+              return;
+            }
+
+            img.addEventListener("load", finish, { once: true });
+            img.addEventListener("error", finish, { once: true });
+          }),
+      ),
+    );
+
+    await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+    await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+  };
+
   useEffect(() => {
     async function fetchBannerData() {
       if (!user) return;
@@ -237,11 +274,17 @@ export default function MerchantPromoBanner() {
   const generateBannerBlob = async () => {
     if (!exportBannerRef.current) throw new Error("Banner element not found.");
 
+    await waitForExportAssets(exportBannerRef.current);
+
     const canvas = await html2canvas(exportBannerRef.current, {
       scale: 4,
       useCORS: true,
       backgroundColor: "#003B95",
       logging: false,
+      width: exportBannerRef.current.scrollWidth,
+      height: exportBannerRef.current.scrollHeight,
+      windowWidth: exportBannerRef.current.scrollWidth,
+      windowHeight: exportBannerRef.current.scrollHeight,
     });
 
     return new Promise((resolve) => {
