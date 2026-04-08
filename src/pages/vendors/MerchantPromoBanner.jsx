@@ -98,31 +98,38 @@ function PromoBannerArtwork({
   const titleClass = "text-[clamp(0.95rem,2.3vw,1.12rem)]";
   const categoryClass = "text-[clamp(0.78rem,1.7vw,0.92rem)]";
   const addressClass = "text-[clamp(0.78rem,1.8vw,0.92rem)]";
-  const footerClass = "text-[clamp(0.82rem,1.8vw,0.96rem)]";
 
   return (
     <div className={`flex flex-col overflow-hidden rounded-[26px] bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.16)] ${shellClass} ${className}`}>
-      {/* HEADER: Shop Name & Verified Badge */}
-      <div className="flex items-center justify-between px-5 py-4 sm:px-6">
-        <div className="flex flex-col max-w-[65%]">
+      {/* HEADER: Shop Name & QR Code */}
+      <div className="flex items-start justify-between px-5 py-4 sm:px-6">
+        <div className="flex flex-col max-w-[65%] pt-1">
           <div className={`font-black leading-[1.1] text-white ${titleClass}`}>
             {shopNameLines.join(" ")}
           </div>
-          <div className="mt-1.5 inline-flex w-max items-center rounded-full bg-[#EA580C] px-3 py-1 font-extrabold text-white text-[0.7rem]">
+          <div className={`mt-2 w-max font-extrabold text-[#FBBF24] underline decoration-2 underline-offset-4 ${categoryClass}`}>
             {categoryLines.join(" ")}
           </div>
         </div>
-        <div className="flex flex-col items-end max-w-[35%]">
-          <div className="flex items-center gap-1 text-[0.75rem] sm:text-[0.8rem] font-black text-[#34D399]">
-            <FaCircleCheck className="shrink-0" /> <span className="text-right">VERIFIED MERCHANT</span>
+        <div className="flex flex-col items-end gap-1 max-w-[35%]">
+          <div className="flex flex-col items-center justify-center rounded-lg bg-white p-1 shadow-inner">
+            <img
+              crossOrigin="anonymous"
+              src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`}
+              alt="Shop QR Code"
+              className="h-[44px] w-[44px] sm:h-[54px] sm:w-[54px] object-cover opacity-90 mix-blend-multiply"
+            />
           </div>
-          <div className="mt-1 text-[0.75rem] font-bold text-[#93C5FD]">
+          <div className="text-[0.65rem] sm:text-[0.7rem] font-bold text-white">
+            {websiteText}
+          </div>
+          <div className="text-[0.65rem] sm:text-[0.7rem] font-bold text-[#93C5FD]">
             ID: {uniqueId}
           </div>
         </div>
       </div>
 
-      {/* PRODUCT GRID: With Overlays & Prices */}
+      {/* PRODUCT GRID: Solid Bottom Labels */}
       <div className="grid grid-cols-3 gap-[6px] bg-white p-[6px]">
         {products.map((product, index) => {
           const price = product.price || 0;
@@ -134,39 +141,39 @@ function PromoBannerArtwork({
           return (
             <div
               key={`${product.id}-${index}`}
-              className={`relative overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] ${tileClass}`}
+              className={`relative flex flex-col overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-white ${tileClass}`}
             >
-              <img
-                crossOrigin="anonymous"
-                src={product.image_url}
-                alt={product.name || `Product ${index + 1}`}
-                className="h-full w-full object-contain p-1"
-              />
+              <div className="relative flex-1 bg-[#F8FAFC] p-1">
+                <img
+                  crossOrigin="anonymous"
+                  src={product.image_url}
+                  alt={product.name || `Product ${index + 1}`}
+                  className="absolute inset-0 h-full w-full object-contain p-1"
+                />
+                {hasDiscount && (
+                  <div className="absolute left-1 top-1 rounded bg-[#DC2626] px-1.5 py-0.5 text-[0.55rem] sm:text-[0.6rem] font-extrabold text-white shadow-sm">
+                    -{percent}%
+                  </div>
+                )}
+                {product.condition === "Fairly Used" && (
+                  <div className="absolute right-1 top-1 rounded bg-[#D97706] px-1.5 py-0.5 text-[0.55rem] sm:text-[0.6rem] font-extrabold text-white shadow-sm">
+                    Used
+                  </div>
+                )}
+              </div>
               
               {(product.name || price > 0) && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-2 pt-6 text-center text-white">
+                <div className="flex flex-col justify-center border-t border-[#E2E8F0] bg-white px-1.5 py-1.5 text-center sm:px-2">
                   {product.name && (
-                    <div className="truncate text-[0.7rem] sm:text-[0.75rem] font-bold opacity-90">
+                    <div className="truncate text-[0.65rem] sm:text-[0.7rem] font-bold text-[#0F1111]">
                       {product.name}
                     </div>
                   )}
                   {price > 0 && (
-                    <div className="text-[0.8rem] sm:text-[0.9rem] font-black leading-tight text-[#FBBF24]">
+                    <div className="text-[0.7rem] sm:text-[0.75rem] font-black text-[#EA580C]">
                       ₦{Number(finalPrice).toLocaleString()}
                     </div>
                   )}
-                </div>
-              )}
-              
-              {hasDiscount && (
-                <div className="absolute left-1 top-1 rounded bg-[#DC2626] px-1.5 py-0.5 text-[0.6rem] sm:text-[0.65rem] font-extrabold text-white">
-                  -{percent}%
-                </div>
-              )}
-              
-              {product.condition === "Fairly Used" && (
-                <div className="absolute right-1 top-1 rounded bg-[#D97706] px-1.5 py-0.5 text-[0.6rem] sm:text-[0.65rem] font-extrabold text-white">
-                  Used
                 </div>
               )}
             </div>
@@ -174,7 +181,7 @@ function PromoBannerArtwork({
         })}
       </div>
 
-      {/* FOOTER: Address & Barcode */}
+      {/* FOOTER: Address & Scan Note */}
       <div className="flex items-center justify-between px-5 py-4 sm:px-6">
         <div className="flex max-w-[65%] items-start gap-2">
           <FaLocationDot className="mt-[2px] shrink-0 text-[0.9rem] sm:text-[1rem] text-[#FBBF24]" />
@@ -182,19 +189,9 @@ function PromoBannerArtwork({
             {addressLines.join(" ")}
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center rounded-lg bg-white p-1 shadow-inner">
-          <img
-            crossOrigin="anonymous"
-            src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`}
-            alt="Shop QR Code"
-            className="h-[44px] w-[44px] sm:h-[54px] sm:w-[54px] object-cover opacity-90 mix-blend-multiply"
-          />
+        <div className="max-w-[30%] text-right text-[0.65rem] sm:text-[0.7rem] font-bold text-[#93C5FD] italic leading-tight">
+          Scan QR to view<br/>shop in repository
         </div>
-      </div>
-
-      {/* BOTTOM STRIP */}
-      <div className={`flex w-full items-center justify-center bg-[#1E3A8A] py-2.5 font-black tracking-widest text-white ${footerClass}`}>
-        {websiteText}
       </div>
     </div>
   );
