@@ -105,39 +105,34 @@ function PromoBannerArtwork({
       
       {/* HEADER: Shop Name, Category, Website & QR */}
       <div className="flex items-start justify-between px-5 py-4 sm:px-6">
-        <div className="flex flex-col max-w-[60%]">
-          <div className="mb-2.5 flex items-center gap-2">
+        <div className="flex flex-1 flex-col pr-4">
+          <div className="mb-2 flex items-center gap-2">
             <img
               crossOrigin="anonymous"
               src={logoImage}
               alt="CTMerchant"
               className="h-6 w-6 rounded border border-white/20 object-cover shadow-sm sm:h-7 sm:w-7"
             />
-            <span className="text-[0.65rem] font-black uppercase tracking-widest text-white/80 sm:text-[0.7rem]">CTMerchant</span>
+            <span className="text-[0.75rem] font-bold text-white/90 sm:text-[0.85rem]">{websiteText}</span>
           </div>
-          <div className={`font-black leading-[1.2] text-white ${titleClass}`}>
+          <div className={`font-black leading-[1.1] text-white ${titleClass}`}>
             {shopNameLines.join(" ")}
           </div>
-          <div className={`mt-1 w-max font-extrabold text-[#FBBF24] underline decoration-2 underline-offset-4 ${categoryClass}`}>
+          <div className={`mt-1.5 w-max font-extrabold text-[#FBBF24] underline decoration-2 underline-offset-4 ${categoryClass}`}>
             {categoryLines.join(" ")}
           </div>
         </div>
         
-        <div className="flex items-center gap-2 sm:gap-3 max-w-[40%]">
-          <div className="flex flex-col items-end text-right">
-            <div className="text-[0.7rem] sm:text-[0.8rem] font-bold text-white">
-              {websiteText}
-            </div>
-            <div className="mt-0.5 text-[0.7rem] sm:text-[0.75rem] font-bold text-[#93C5FD]">
-              ID: {uniqueId}
-            </div>
+        <div className="flex shrink-0 flex-col items-end justify-start gap-1.5">
+          <div className="text-[0.7rem] font-bold tracking-wide text-[#93C5FD] sm:text-[0.75rem]">
+            ID: {uniqueId}
           </div>
           <div className="flex shrink-0 flex-col items-center justify-center rounded-lg bg-white p-1 shadow-inner">
             <img
               crossOrigin="anonymous"
               src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`}
               alt="Shop QR Code"
-              className="h-[40px] w-[40px] object-cover opacity-90 mix-blend-multiply sm:h-[48px] sm:w-[48px]"
+              className="h-[44px] w-[44px] object-cover opacity-90 mix-blend-multiply sm:h-[54px] sm:w-[54px]"
             />
           </div>
         </div>
