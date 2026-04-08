@@ -94,45 +94,45 @@ function PromoBannerArtwork({
   shopId,
   className = "",
 }) {
-  const shellClass = "w-full max-w-[800px]";
+  const shellClass = "w-[800px] shrink-0";
   const tileClass = "aspect-square flex flex-col";
-  const titleClass = "text-[clamp(0.95rem,2.3vw,1.12rem)]";
-  const categoryClass = "text-[clamp(0.78rem,1.7vw,0.92rem)]";
-  const addressClass = "text-[clamp(0.78rem,1.8vw,0.92rem)]";
+  const titleClass = "text-[1.4rem]";
+  const categoryClass = "text-[1rem]";
+  const addressClass = "text-[1rem]";
 
   return (
     <div className={`flex flex-col overflow-hidden rounded-[26px] bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.16)] ${shellClass} ${className}`}>
       
       {/* HEADER: Shop Name, Category, Website & QR */}
-      <div className="flex items-start justify-between px-5 py-4 sm:px-6">
+      <div className="flex items-start justify-between px-6 py-5">
         <div className="flex flex-1 flex-col pr-4">
-          <div className="mb-2 flex items-center gap-2">
+          <div className="mb-2.5 flex items-center gap-2.5">
             <img
               crossOrigin="anonymous"
               src={logoImage}
               alt="CTMerchant"
-              className="h-6 w-6 rounded border border-white/20 object-cover shadow-sm sm:h-7 sm:w-7"
+              className="h-8 w-8 rounded border border-white/20 object-cover shadow-sm"
             />
-            <span className="text-[0.75rem] font-bold text-white/90 sm:text-[0.85rem]">{websiteText}</span>
+            <span className="text-[0.95rem] font-bold text-white/90">{websiteText}</span>
           </div>
-          <div className={`font-black leading-[1.1] text-white ${titleClass}`}>
+          <div className={`font-black leading-[1.15] text-white ${titleClass}`}>
             {shopNameLines.join(" ")}
           </div>
-          <div className={`mt-1.5 w-max font-extrabold text-[#FBBF24] underline decoration-2 underline-offset-4 ${categoryClass}`}>
+          <div className={`mt-2 w-max font-extrabold text-[#FBBF24] underline decoration-2 underline-offset-4 ${categoryClass}`}>
             {categoryLines.join(" ")}
           </div>
         </div>
         
-        <div className="flex shrink-0 flex-col items-end justify-start gap-1.5">
-          <div className="text-[0.7rem] font-bold tracking-wide text-[#93C5FD] sm:text-[0.75rem]">
+        <div className="flex shrink-0 flex-col items-end justify-start gap-2">
+          <div className="text-[0.85rem] font-bold tracking-wide text-[#93C5FD]">
             ID: {uniqueId}
           </div>
-          <div className="flex shrink-0 flex-col items-center justify-center rounded-lg bg-white p-1 shadow-inner">
+          <div className="flex shrink-0 flex-col items-center justify-center rounded-lg bg-white p-1.5 shadow-inner">
             <img
               crossOrigin="anonymous"
               src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`}
               alt="Shop QR Code"
-              className="h-[44px] w-[44px] object-cover opacity-90 mix-blend-multiply sm:h-[54px] sm:w-[54px]"
+              className="h-[60px] w-[60px] object-cover opacity-90 mix-blend-multiply"
             />
           </div>
         </div>
@@ -158,17 +158,17 @@ function PromoBannerArtwork({
                   crossOrigin="anonymous"
                   src={product.image_url}
                   alt={product.name || `Product ${index + 1}`}
-                  className="h-full w-full object-contain mix-blend-multiply"
+                  className="absolute inset-0 h-full w-full object-contain mix-blend-multiply p-1"
                 />
                 
                 {hasDiscount && (
-                  <div className="absolute left-1 top-1 rounded bg-[#DC2626] px-1.5 py-0.5 text-[0.6rem] font-extrabold text-white sm:text-[0.65rem]">
+                  <div className="absolute left-1.5 top-1.5 rounded bg-[#DC2626] px-2 py-1 text-[0.75rem] font-extrabold text-white shadow-sm">
                     -{percent}%
                   </div>
                 )}
                 
                 {product.condition === "Fairly Used" && (
-                  <div className="absolute right-1 top-1 rounded bg-[#D97706] px-1.5 py-0.5 text-[0.6rem] font-extrabold text-white sm:text-[0.65rem]">
+                  <div className="absolute right-1.5 top-1.5 rounded bg-[#D97706] px-2 py-1 text-[0.75rem] font-extrabold text-white shadow-sm">
                     Used
                   </div>
                 )}
@@ -176,14 +176,14 @@ function PromoBannerArtwork({
               
               {/* Bottom: Clear Text Container */}
               {(product.name || price > 0) && (
-                <div className="w-full border-t border-slate-100 bg-white p-1.5 text-center">
+                <div className="flex flex-col justify-center w-full border-t border-[#E2E8F0] bg-white p-2.5 text-center">
                   {product.name && (
-                    <div className="truncate text-[0.65rem] font-bold text-slate-800 sm:text-[0.7rem]">
+                    <div className="truncate text-[0.85rem] font-bold text-[#0F1111]">
                       {product.name}
                     </div>
                   )}
                   {price > 0 && (
-                    <div className="mt-0.5 text-[0.7rem] font-black leading-tight text-[#003B95] sm:text-[0.75rem]">
+                    <div className="mt-1 text-[1.05rem] font-black leading-tight text-[#EA580C]">
                       ₦{Number(finalPrice).toLocaleString()}
                     </div>
                   )}
@@ -195,14 +195,14 @@ function PromoBannerArtwork({
       </div>
 
       {/* FOOTER: Address & Scan Note */}
-      <div className="flex flex-col items-center justify-center bg-[#1E3A8A] px-5 py-3 sm:px-6">
-        <div className="mb-1.5 flex w-full items-center justify-center gap-1.5 text-center">
-          <FaLocationDot className="shrink-0 text-[0.8rem] text-[#FBBF24] sm:text-[0.9rem]" />
+      <div className="flex flex-col items-center justify-center bg-[#1E3A8A] px-6 py-4">
+        <div className="mb-2 flex w-full items-center justify-center gap-2 text-center">
+          <FaLocationDot className="shrink-0 text-[1.1rem] text-[#FBBF24]" />
           <div className={`font-semibold leading-[1.3] text-white ${addressClass}`}>
             {addressLines.join(" ")}
           </div>
         </div>
-        <div className="text-[0.65rem] font-black uppercase tracking-widest text-[#93C5FD] sm:text-[0.75rem]">
+        <div className="text-[0.8rem] font-black uppercase tracking-widest text-[#93C5FD]">
           Enter ID in repo or scan to view shop
         </div>
       </div>
@@ -337,12 +337,8 @@ export default function MerchantPromoBanner() {
 
     await waitForExportAssets(bannerRef.current);
 
-    // Dynamically scale based on current screen width to ensure high-quality output
-    const currentWidth = bannerRef.current.offsetWidth;
-    const scale = currentWidth < 500 ? 4 : 3;
-
     const canvas = await html2canvas(bannerRef.current, {
-      scale,
+      scale: 2, // With a base width of 800px, x2 gives a crisp 1600px banner
       useCORS: true,
       backgroundColor: "#003B95",
       logging: false,
@@ -473,8 +469,8 @@ export default function MerchantPromoBanner() {
           </p>
         </div>
 
-        <div className="w-full rounded-[26px] border border-slate-200 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
-          <div className="mx-auto w-full max-w-[800px]" ref={bannerRef}>
+        <div className="w-full overflow-x-auto rounded-[26px] border border-slate-200 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)] custom-scrollbar">
+          <div className="w-[800px] mx-auto" ref={bannerRef}>
               <PromoBannerArtwork
                 products={products}
                 shopNameLines={shopNameLines}
