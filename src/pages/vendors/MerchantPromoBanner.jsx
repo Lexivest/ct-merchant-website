@@ -90,6 +90,7 @@ function PromoBannerArtwork({
   addressLines,
   uniqueId,
   websiteText,
+  shopId,
   className = "",
 }) {
   const shellClass = "w-full max-w-[800px]";
@@ -181,12 +182,12 @@ function PromoBannerArtwork({
             {addressLines.join(" ")}
           </div>
         </div>
-        <div className="flex max-w-[30%] flex-col items-center justify-center rounded-lg bg-white p-1.5 shadow-inner">
+        <div className="flex flex-col items-center justify-center rounded-lg bg-white p-1 shadow-inner">
           <img
             crossOrigin="anonymous"
-            src={`https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(shopNameLines.join(' ').replace(/[^a-zA-Z0-9 -]/g, '').trim().slice(0, 20) || uniqueId)}&scale=2&height=12&includetext`}
-            alt="Barcode"
-            className="h-[32px] sm:h-[36px] w-auto object-cover opacity-90 mix-blend-multiply"
+            src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`}
+            alt="Shop QR Code"
+            className="h-[44px] w-[44px] sm:h-[54px] sm:w-[54px] object-cover opacity-90 mix-blend-multiply"
           />
         </div>
       </div>
@@ -472,6 +473,7 @@ export default function MerchantPromoBanner() {
                 cityName={cityName}
                 uniqueId={uniqueId}
                 websiteText={websiteText}
+                shopId={shopData?.id}
               />
           </div>
         </div>
