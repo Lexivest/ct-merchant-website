@@ -114,6 +114,7 @@ function PromoBannerArtwork({
               className="h-8 w-8 rounded border border-white/20 object-cover shadow-sm"
             />
             <span className="text-[0.95rem] font-bold text-white/90">{websiteText}</span>
+            <span className="text-[0.95rem] font-black text-[#93C5FD]">| ID: {uniqueId}</span>
           </div>
           <div className={`font-black leading-[1.15] text-white ${titleClass}`}>
             {shopNameLines.join(" ")}
@@ -123,10 +124,7 @@ function PromoBannerArtwork({
           </div>
         </div>
         
-        <div className="flex shrink-0 flex-col items-end justify-start gap-2">
-          <div className="text-[0.85rem] font-bold tracking-wide text-[#93C5FD]">
-            ID: {uniqueId}
-          </div>
+        <div className="flex shrink-0 flex-col items-end justify-start">
           <div className="flex shrink-0 flex-col items-center justify-center rounded-lg bg-white p-1.5 shadow-inner">
             <img
               crossOrigin="anonymous"
@@ -227,6 +225,7 @@ export default function MerchantPromoBanner() {
   const [products, setProducts] = useState([]);
 
   const bannerRef = useRef(null);
+  const exportBannerRef = useRef(null);
 
   const waitForExportAssets = async (node) => {
     if (!node) return;
@@ -333,12 +332,12 @@ export default function MerchantPromoBanner() {
   }, [user, authLoading, urlShopId, isOffline]);
 
   const generateBannerBlob = async () => {
-    if (!bannerRef.current) throw new Error("Banner element not found.");
+    if (!exportBannerRef.current) throw new Error("Banner element not found.");
 
-    await waitForExportAssets(bannerRef.current);
+    await waitForExportAssets(exportBannerRef.current);
 
-    const canvas = await html2canvas(bannerRef.current, {
-      scale: 2, // With a base width of 800px, x2 gives a crisp 1600px banner
+    const canvas = await html2canvas(exportBannerRef.current, {
+      scale: 3, // Ensures a highly crisp 2400px wide export
       useCORS: true,
       backgroundColor: "#003B95",
       logging: false,
@@ -480,6 +479,21 @@ export default function MerchantPromoBanner() {
                 websiteText={websiteText}
                 shopId={shopData?.id}
               />
+          </div>
+        </div>
+
+        {/* Hidden Export Node - Prevents mobile distortion */}
+        <div className="fixed -left-[10000px] top-0 z-[-1] pointer-events-none opacity-0">
+          <div className="w-[800px]" ref={exportBannerRef}>
+            <PromoBannerArtwork
+              products={products}
+              shopNameLines={shopNameLines}
+              categoryLines={categoryLines}
+              addressLines={addressLines}
+              uniqueId={uniqueId}
+              websiteText={websiteText}
+              shopId={shopData?.id}
+            />
           </div>
         </div>
 
