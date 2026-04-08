@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -60,87 +60,58 @@ function Search() {
   const fetchSearchData = async () => {
     if (!profile?.city_id) return { shops: [], products: [] }
 
-    const { data: shops } = await supabase
-      .from("shops")
-      .select("*")
-      .eq("city_id", profile.city_id)
-      .order("name", { ascending: true })
-
-    const safeShops = Array.isArray(shops) ? shops : []
-    const shopIds = safeShops.map((shop) => shop.id)
-
-    let safeProducts = []
-    if (shopIds.length > 0) {
-      const { data: products } = await supabase
-        .from("products")
-        .select("*")
-        .in("shop_id", shopIds)
-        .eq("is_available", true)
-
-      safeProducts = Array.isArray(products) ? products : []
+    const q = initialQuery.trim().replace(/,/g, "") // Sanitize for PostgREST
+    if (!q) {
+      const { data: defaultShops } = await supabase.from("shops").select("*").eq("city_id", profile.city_id).order("name", { ascending: true }).limit(30)
+      return { shops: defaultShops || [], allProducts: [], matchedProducts: [] }
     }
 
-    return { shops: safeShops, products: safeProducts }
+    const ilikeQuery = `%${q}%`
+
+    // 1. Fast fetch of all shop IDs in the user's city
+    const { data: cityShops } = await supabase.from("shops").select("id").eq("city_id", profile.city_id)
+    const cityShopIds = (cityShops || []).map((s) => s.id)
+
+    // 2. Backend Search for Shops
+    const { data: shops, error: shopsErr } = await supabase.from("shops").select("*").eq("city_id", profile.city_id).or(`name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},description.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},address.ilike.${ilikeQuery}`).limit(50)
+    if (shopsErr) console.error("Shop search error:", shopsErr)
+
+    // 3. Backend Search for Products
+    let cleanedProducts = []
+    if (cityShopIds.length > 0) {
+      // Safely search using confirmed columns to prevent schema mismatch errors
+      const { data: products, error: prodErr } = await supabase.from("products").select("*").in("shop_id", cityShopIds).eq("is_available", true).or(`name.ilike.${ilikeQuery},description.ilike.${ilikeQuery},category.ilike.${ilikeQuery}`).limit(50)
+      if (prodErr) console.error("Product search error:", prodErr)
+      cleanedProducts = products || []
+    }
+
+    // 4. Fetch a few products for the matched shops so the shop preview cards aren't empty
+    const shopIds = (shops || []).map(s => s.id)
+    let additionalProducts = []
+    if (shopIds.length > 0) {
+      const { data: shopProds } = await supabase.from("products").select("*").in("shop_id", shopIds).eq("is_available", true).limit(100)
+      additionalProducts = shopProds || []
+    }
+
+    // Merge all products cleanly for the UI
+    const allProdsMap = new Map()
+    cleanedProducts.forEach(p => allProdsMap.set(p.id, p))
+    additionalProducts.forEach(p => allProdsMap.set(p.id, p))
+
+    return { shops: shops || [], allProducts: Array.from(allProdsMap.values()), matchedProducts: cleanedProducts }
   }
 
   // 3. Smart Caching Hook
-  const cacheKey = `search_data_city_${profile?.city_id || 'none'}`
-  const { data, loading: dataLoading, error: dataError } = useCachedFetch(
+  const cacheKey = `search_city_${profile?.city_id || 'none'}_q_${initialQuery}`
+  const { data, loading: dataLoading, error: dataError, mutate } = useCachedFetch(
     cacheKey,
     fetchSearchData,
-    { dependencies: [profile?.city_id], ttl: 1000 * 60 * 30 } // Cache search data for 30 minutes
+    { dependencies: [profile?.city_id, initialQuery], ttl: 1000 * 60 * 5 } 
   )
 
-  const allShops = data?.shops || []
-  const allProducts = data?.products || []
-
-  // 4. Memoized Filtering
-  const normalizedQuery = useMemo(
-    () => String(query || "").trim().toLowerCase(),
-    [query]
-  )
-
-  const matchedShops = useMemo(() => {
-    if (!normalizedQuery) return []
-
-    return allShops.filter((shop) => {
-      const name = String(shop?.name || "").toLowerCase()
-      const category = String(shop?.category || "").toLowerCase()
-      const description = String(shop?.description || "").toLowerCase()
-      const uniqueId = String(shop?.unique_id || "").toLowerCase()
-      const address = String(shop?.address || "").toLowerCase()
-
-      return (
-        name.includes(normalizedQuery) ||
-        category.includes(normalizedQuery) ||
-        description.includes(normalizedQuery) ||
-        uniqueId.includes(normalizedQuery) ||
-        address.includes(normalizedQuery)
-      )
-    })
-  }, [allShops, normalizedQuery])
-
-  const matchedProducts = useMemo(() => {
-    if (!normalizedQuery) return []
-
-    return allProducts.filter((product) => {
-      const name = String(
-        product?.name || product?.product_name || product?.title || ""
-      ).toLowerCase()
-      const description = String(product?.description || "").toLowerCase()
-      const category = String(product?.category || "").toLowerCase()
-      const condition = String(product?.condition || "").toLowerCase()
-      const brand = String(product?.brand || "").toLowerCase()
-
-      return (
-        name.includes(normalizedQuery) ||
-        description.includes(normalizedQuery) ||
-        category.includes(normalizedQuery) ||
-        condition.includes(normalizedQuery) ||
-        brand.includes(normalizedQuery)
-      )
-    })
-  }, [allProducts, normalizedQuery])
+  const matchedShops = data?.shops || []
+  const allProducts = data?.allProducts || []
+  const matchedProducts = data?.matchedProducts || []
 
   function runSearch() {
     const trimmed = query.trim()
@@ -328,7 +299,7 @@ function Search() {
     <div className="min-h-screen bg-[#E3E6E6]">
       <PageSeo
         title={
-          normalizedQuery
+          query.trim()
             ? `Search results for "${query}" | CTMerchant`
             : "Search Shops and Products | CTMerchant"
         }
@@ -372,7 +343,7 @@ function Search() {
         {authLoading || (dataLoading && !data) ? (
           <SearchShimmer />
         ) : dataError && !data ? (
-          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} />
+          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} onRetry={mutate} />
         ) : (
           <>
             <h2 className="mb-6 text-[1.1rem] font-semibold text-slate-600">

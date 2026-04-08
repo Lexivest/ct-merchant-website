@@ -48,7 +48,8 @@ function Area() {
         .from("shops")
         .select("*")
         .eq("area_id", areaId)
-        .order("name", { ascending: true }),
+        .order("name", { ascending: true })
+        .limit(100)
     ])
 
     if (areaError) throw areaError
@@ -62,7 +63,7 @@ function Area() {
 
   // 3. Smart Caching Hook
   const cacheKey = `area_data_${areaId || 'none'}`
-  const { data, loading: dataLoading, error: dataError } = useCachedFetch(
+  const { data, loading: dataLoading, error: dataError, mutate } = useCachedFetch(
     cacheKey,
     fetchAreaShops,
     { dependencies: [areaId], ttl: 1000 * 60 * 15 } // Cache area data for 15 minutes
@@ -107,7 +108,7 @@ function Area() {
             <ShimmerList />
           </div>
         ) : dataError && !data ? (
-          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} />
+          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} onRetry={mutate} />
         ) : (
           <>
             <div className="mb-6 flex items-center gap-3">

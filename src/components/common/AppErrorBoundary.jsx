@@ -1,4 +1,5 @@
 import { Component } from "react"
+import { isNetworkError } from "../../lib/friendlyErrors"
 
 function isChunkLoadFailure(error) {
   const message = String(error?.message || error || "").toLowerCase()
@@ -14,7 +15,19 @@ function isChunkLoadFailure(error) {
 
 function ErrorFallback({ error, onRetry, retryArmed }) {
   const chunkLoadFailure = isChunkLoadFailure(error)
+  const networkError = isNetworkError(error)
   const isOffline = typeof navigator !== "undefined" ? !navigator.onLine : false
+
+  let title = "Something went wrong"
+  let description = "An unexpected error occurred. Please try again."
+
+  if (isOffline || networkError) {
+    title = "Network unavailable"
+    description = "Please check your internet connection and retry."
+  } else if (chunkLoadFailure) {
+    title = "App Update Available"
+    description = "A new version of the app is ready. Please reload to continue."
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
@@ -23,10 +36,10 @@ function ErrorFallback({ error, onRetry, retryArmed }) {
           !
         </div>
         <h1 className="mt-5 text-3xl font-black text-slate-900">
-          {chunkLoadFailure || isOffline ? "Network unavailable" : "Something went wrong"}
+          {title}
         </h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Retry to continue.
+          {retryArmed ? "Waiting for connection to resume..." : description}
         </p>
 
         <div className="mt-6 flex flex-col gap-3">
@@ -90,12 +103,13 @@ class AppErrorBoundary extends Component {
   }
 
   handleReconnectRetry = () => {
-    if (!this.state.retryArmed || !isChunkLoadFailure(this.state.error)) return
+    if (!this.state.retryArmed) return
+    if (!isChunkLoadFailure(this.state.error) && !isNetworkError(this.state.error)) return
     if (typeof window !== "undefined") window.location.reload()
   }
 
   handleRetry = () => {
-    if (isChunkLoadFailure(this.state.error)) {
+    if (isChunkLoadFailure(this.state.error) || isNetworkError(this.state.error)) {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         this.setState({ retryArmed: true })
         return

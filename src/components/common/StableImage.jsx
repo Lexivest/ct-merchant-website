@@ -3,7 +3,35 @@ import { useEffect, useRef, useState } from "react"
 export const DEFAULT_FALLBACK_IMAGE =
   "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Crect width='100%25' height='100%25' fill='%23F1F5F9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2364748B' font-family='Arial' font-size='44'%3ECTM%3C/text%3E%3C/svg%3E"
 
+// 1. Prevent memory leaks by capping the loaded image cache
+const MAX_IMAGE_CACHE_SIZE = 500
 const loadedImageCache = new Set()
+
+// 2. Singleton Intersection Observer for extreme performance (solves the N+1 observer problem)
+const observerListeners = new WeakMap()
+let sharedObserver = null
+
+function getSharedObserver() {
+  if (typeof window === "undefined" || !("IntersectionObserver" in window)) return null
+  if (!sharedObserver) {
+    sharedObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const callback = observerListeners.get(entry.target)
+            if (callback) {
+              callback()
+              observerListeners.delete(entry.target)
+              sharedObserver.unobserve(entry.target)
+            }
+          }
+        })
+      },
+      { rootMargin: "250px 0px" }
+    )
+  }
+  return sharedObserver
+}
 
 function StableImage({
   src,
@@ -24,24 +52,18 @@ function StableImage({
     const node = rootRef.current
     if (!node) return undefined
 
-    if (!("IntersectionObserver" in window)) {
+    const observer = getSharedObserver()
+    if (!observer) {
       setIsNearViewport(true)
       return undefined
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        if (!entry?.isIntersecting) return
-        setIsNearViewport(true)
-        observer.disconnect()
-      },
-      { rootMargin: "220px 0px" }
-    )
-
+    observerListeners.set(node, () => setIsNearViewport(true))
     observer.observe(node)
+
     return () => {
-      observer.disconnect()
+      observerListeners.delete(node)
+      observer.unobserve(node)
     }
   }, [])
 
@@ -55,6 +77,13 @@ function StableImage({
 
   function handleLoad() {
     if (!displaySrc) return
+    
+    if (loadedImageCache.size >= MAX_IMAGE_CACHE_SIZE) {
+      // LRU cleanup: Remove the oldest entry to prevent RAM bloat
+      const firstKey = loadedImageCache.keys().next().value
+      loadedImageCache.delete(firstKey)
+    }
+    
     loadedImageCache.add(displaySrc)
     setReady(true)
   }

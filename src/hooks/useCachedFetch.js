@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 
 // Global memory cache to prevent redundant network requests across page navigations
 const globalCache = new Map()
 const activeFetchers = new Map()
+const MAX_CACHE_SIZE = 150 // Prevent memory leaks for heavy browsing sessions
 let globalListenersAttached = false
 
 function refreshAllActiveFetches() {
@@ -101,6 +102,12 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       try {
         const result = await fetchPromise()
         if (isMounted) {
+          if (globalCache.size >= MAX_CACHE_SIZE) {
+            // LRU cleanup: Delete the oldest cache entry (first item in the Map)
+            const firstKey = globalCache.keys().next().value
+            globalCache.delete(firstKey)
+          }
+
           globalCache.set(queryKey, { data: result, timestamp: Date.now() })
           errorRef.current = null
           setTick(t => t + 1) // Force render to show new data
@@ -153,10 +160,16 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...dependencies, queryKey])
 
+  const mutate = useCallback(() => {
+    const fetcher = activeFetchers.get(queryKey)
+    if (fetcher) fetcher({ force: true })
+  }, [queryKey])
+
   return { 
     data, 
     loading, 
     error: errorRef.current, 
-    isOffline: isOfflineRef.current 
+    isOffline: isOfflineRef.current,
+    mutate
   }
 }

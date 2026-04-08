@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   FaChartLine,
@@ -60,6 +60,7 @@ function HomeCard({ icon, title, subtitle, metric, onClick, tone = "pink" }) {
 export default function StaffDashboard() {
   const navigate = useNavigate()
   const { notify } = useGlobalFeedback()
+  const isMounted = useRef(true)
 
   const [loading, setLoading] = useState(true)
   const [summary, setSummary] = useState({
@@ -92,26 +93,31 @@ export default function StaffDashboard() {
       const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Lagos" })
       const visitsToday = visitTimeline.find((item) => item.visit_date === todayKey)?.total_visits || 0
 
-      setSummary({
-        shopCount: shopsResult.count || 0,
-        pendingComments: commentsResult.count || 0,
-        inactiveUsers: userRows.filter((item) => item.is_inactive).length,
-        visitsToday: Number(visitsToday) || 0,
-      })
+      if (isMounted.current) {
+        setSummary({
+          shopCount: shopsResult.count || 0,
+          pendingComments: commentsResult.count || 0,
+          inactiveUsers: userRows.filter((item) => item.is_inactive).length,
+          visitsToday: Number(visitsToday) || 0,
+        })
+      }
     } catch (err) {
       console.error("Error fetching staff summary:", err)
-      notify({
-        type: "error",
-        title: "Could not load staff overview",
-        message: getFriendlyErrorMessage(err, "Could not load the staff home screen. Retry."),
-      })
+      if (isMounted.current) {
+        notify({
+          type: "error",
+          title: "Could not load staff overview",
+          message: getFriendlyErrorMessage(err, "Could not load the staff home screen. Retry."),
+        })
+      }
     } finally {
-      setLoading(false)
+      if (isMounted.current) setLoading(false)
     }
   }
 
   useEffect(() => {
     fetchSummary()
+    return () => { isMounted.current = false }
   }, [])
 
   const headerActions = useMemo(
@@ -243,4 +249,3 @@ export default function StaffDashboard() {
     </StaffPortalShell>
   )
 }
-

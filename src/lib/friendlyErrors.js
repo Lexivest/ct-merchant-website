@@ -1,6 +1,11 @@
 const NETWORK_ERROR_PATTERN =
   /(failed to fetch|networkerror|network error|load failed|fetch resource|internet connection|offline|timeout|timed out|aborterror)/i
 
+export function isNetworkError(error) {
+  const rawMessage = String(error?.message || error || "").toLowerCase()
+  return NETWORK_ERROR_PATTERN.test(rawMessage)
+}
+
 export function getFriendlyErrorMessage(error, fallback = "Something went wrong. Please retry.") {
   const rawMessage = String(error?.message || error || "").trim()
   const lower = rawMessage.toLowerCase()
@@ -25,4 +30,3 @@ export function getFriendlyErrorMessage(error, fallback = "Something went wrong.
 
   return rawMessage.length > 160 ? fallback : rawMessage
 }
-

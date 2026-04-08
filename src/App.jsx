@@ -327,16 +327,8 @@ function ProtectedDashboardRoute({ children }) {
     let cancelled = false
     const preload = () => {
       if (cancelled) return
-      Promise.allSettled([
-        import("./pages/vendors/AddProduct"),
-        import("./pages/vendors/EditProduct"),
-        import("./pages/vendors/MerchantBanner"),
-        import("./pages/ShopRegistration"),
-        import("./pages/vendors/MerchantProducts"),
-        import("./pages/vendors/MerchantNews"),
-      ]).catch(() => {
-        // Best-effort preloading only. Route-level fallback still handles misses.
-      })
+      // Vendor routes preload removed to save bandwidth.
+      // 90% of standard users don't need vendor scripts downloaded in the background.
     }
 
     if (typeof window !== "undefined" && "requestIdleCallback" in window) {

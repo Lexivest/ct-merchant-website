@@ -140,7 +140,7 @@ function UserDashboard() {
       supabase.from("announcements").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
       supabase.from("areas").select("*").eq("city_id", cityId).order("name"),
-      supabase.from("shops").select("*").eq("city_id", cityId).order("is_verified", { ascending: false }).order("id", { ascending: true }),
+      supabase.from("shops").select("*").eq("city_id", cityId).order("is_featured", { ascending: false }).order("is_verified", { ascending: false }).limit(200),
       supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
       supabase.from("wishlist").select("*", { count: "exact", head: true }).eq("user_id", user.id),
     ])
@@ -154,7 +154,7 @@ function UserDashboard() {
         .select("*")
         .in("shop_id", shopIds)
         .eq("is_available", true)
-        .limit(500)
+        .limit(400)
         .order("id", { ascending: true })
 
       if (!productsRes.error) products = productsRes.data || []

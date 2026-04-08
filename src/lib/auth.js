@@ -25,19 +25,6 @@ export async function getClientIpData() {
   }
 }
 
-export async function isIpBanned(ip) {
-  if (!ip || ip === "unknown") return false
-
-  const { data, error } = await supabase
-    .from("ip_blacklist")
-    .select("ip_address")
-    .eq("ip_address", ip)
-    .maybeSingle()
-
-  if (error) return false
-  return Boolean(data)
-}
-
 export async function fetchOpenCities() {
   const { data, error } = await supabase
     .from("cities")
@@ -122,10 +109,6 @@ export async function signOutUser() {
 export async function signInWithPassword({ email, password }) {
   const ipData = await getClientIpData()
 
-  if (await isIpBanned(ipData.ip)) {
-    throw new Error("Access denied. Your network has been restricted.")
-  }
-
   const { data, error } = await supabase.auth.signInWithPassword({
     email: normalizeEmail(email),
     password,
@@ -141,10 +124,6 @@ export async function signInWithPassword({ email, password }) {
 
 export async function signInWithGoogleIdToken(idToken) {
   const ipData = await getClientIpData()
-
-  if (await isIpBanned(ipData.ip)) {
-    throw new Error("Access denied. Your network has been restricted.")
-  }
 
   const { data, error } = await supabase.auth.signInWithIdToken({
     provider: "google",
@@ -168,10 +147,6 @@ export async function signUpWithEmail({
   areaId,
 }) {
   const ipData = await getClientIpData()
-
-  if (await isIpBanned(ipData.ip)) {
-    throw new Error("Access denied. Your network has been restricted.")
-  }
 
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: normalizeEmail(email),

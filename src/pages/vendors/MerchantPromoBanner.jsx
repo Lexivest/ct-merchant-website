@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import html2canvas from "html2canvas";
 import {
   FaArrowLeft,
+  FaCircleCheck,
   FaCircleNotch,
   FaDownload,
   FaFacebookF,
@@ -83,73 +84,116 @@ function PromoBannerShimmer() {
 }
 
 function PromoBannerArtwork({
-  productImages,
+  products,
   shopNameLines,
   categoryLines,
   addressLines,
   uniqueId,
   websiteText,
   className = "",
-  exportMode = false,
 }) {
-  const shellClass = exportMode ? "w-[800px]" : "w-full max-w-[800px]";
-  const tileClass = exportMode ? "h-[160px]" : "aspect-square";
-  const titleClass = exportMode ? "text-[1.12rem]" : "text-[clamp(0.95rem,2.3vw,1.12rem)]";
-  const categoryClass = exportMode ? "text-[0.92rem]" : "text-[clamp(0.78rem,1.7vw,0.92rem)]";
-  const addressClass = exportMode ? "text-[0.92rem]" : "text-[clamp(0.78rem,1.8vw,0.92rem)]";
-  const footerClass = exportMode ? "text-[0.96rem]" : "text-[clamp(0.82rem,1.8vw,0.96rem)]";
+  const shellClass = "w-full max-w-[800px]";
+  const tileClass = "aspect-square";
+  const titleClass = "text-[clamp(0.95rem,2.3vw,1.12rem)]";
+  const categoryClass = "text-[clamp(0.78rem,1.7vw,0.92rem)]";
+  const addressClass = "text-[clamp(0.78rem,1.8vw,0.92rem)]";
+  const footerClass = "text-[clamp(0.82rem,1.8vw,0.96rem)]";
 
   return (
-    <div
-      className={`overflow-hidden rounded-[26px] bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.16)] ${shellClass} ${className}`}
-    >
-      <div className="grid grid-cols-3 gap-[6px] bg-white p-[6px]">
-        {productImages.map((imgUrl, index) => (
-          <div
-            key={`${imgUrl}-${index}-${exportMode ? "export" : "preview"}`}
-            className={`overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] ${tileClass}`}
-          >
-            <img
-              crossOrigin="anonymous"
-              src={imgUrl}
-              alt={`Promo product ${index + 1}`}
-              className="h-full w-full object-contain"
-            />
+    <div className={`flex flex-col overflow-hidden rounded-[26px] bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.16)] ${shellClass} ${className}`}>
+      {/* HEADER: Shop Name & Verified Badge */}
+      <div className="flex items-center justify-between px-5 py-4 sm:px-6">
+        <div className="flex flex-col max-w-[65%]">
+          <div className={`font-black leading-[1.1] text-white ${titleClass}`}>
+            {shopNameLines.join(" ")}
           </div>
-        ))}
+          <div className="mt-1.5 inline-flex w-max items-center rounded-full bg-[#EA580C] px-3 py-1 font-extrabold text-white text-[0.7rem]">
+            {categoryLines.join(" ")}
+          </div>
+        </div>
+        <div className="flex flex-col items-end max-w-[35%]">
+          <div className="flex items-center gap-1 text-[0.75rem] sm:text-[0.8rem] font-black text-[#34D399]">
+            <FaCircleCheck className="shrink-0" /> <span className="text-right">VERIFIED MERCHANT</span>
+          </div>
+          <div className="mt-1 text-[0.75rem] font-bold text-[#93C5FD]">
+            ID: {uniqueId}
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-col items-center gap-2.5 px-[18px] py-5 text-center">
-        <div className={`w-full font-black leading-[1.18] text-white ${titleClass}`}>
-          {shopNameLines.map((line, index) => (
-            <span key={`shop-${index}`} className="block min-h-[1.2rem]">
-              {line}
-            </span>
-          ))}
-        </div>
+      {/* PRODUCT GRID: With Overlays & Prices */}
+      <div className="grid grid-cols-3 gap-[6px] bg-white p-[6px]">
+        {products.map((product, index) => {
+          const price = product.price || 0;
+          const discount = product.discount_price;
+          const hasDiscount = discount && discount < price;
+          const percent = hasDiscount ? Math.round(((price - discount) / price) * 100) : 0;
+          const finalPrice = hasDiscount ? discount : price;
 
-        <div className={`inline-flex max-w-[88%] items-center justify-center rounded-full bg-[#EA580C] px-5 py-2 font-extrabold leading-[1.1] text-white ${categoryClass}`}>
-          <span className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap">{categoryLines.join(" ")}</span>
-        </div>
+          return (
+            <div
+              key={`${product.id}-${index}`}
+              className={`relative overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] ${tileClass}`}
+            >
+              <img
+                crossOrigin="anonymous"
+                src={product.image_url}
+                alt={product.name || `Product ${index + 1}`}
+                className="h-full w-full object-contain p-1"
+              />
+              
+              {(product.name || price > 0) && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-2 pt-6 text-center text-white">
+                  {product.name && (
+                    <div className="truncate text-[0.7rem] sm:text-[0.75rem] font-bold opacity-90">
+                      {product.name}
+                    </div>
+                  )}
+                  {price > 0 && (
+                    <div className="text-[0.8rem] sm:text-[0.9rem] font-black leading-tight text-[#FBBF24]">
+                      ₦{Number(finalPrice).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {hasDiscount && (
+                <div className="absolute left-1 top-1 rounded bg-[#DC2626] px-1.5 py-0.5 text-[0.6rem] sm:text-[0.65rem] font-extrabold text-white">
+                  -{percent}%
+                </div>
+              )}
+              
+              {product.condition === "Fairly Used" && (
+                <div className="absolute right-1 top-1 rounded bg-[#D97706] px-1.5 py-0.5 text-[0.6rem] sm:text-[0.65rem] font-extrabold text-white">
+                  Used
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
-        <div className="flex max-w-[520px] items-start justify-center gap-2 px-3 text-center">
-          <FaLocationDot className="mt-[2px] shrink-0 text-[0.9rem] text-[#FBBF24]" />
-          <div className={`font-semibold leading-[1.35] text-[#E2E8F0] ${addressClass}`}>
-            {addressLines.map((line, index) => (
-              <span key={`address-${index}`} className="block">
-                {line}
-              </span>
-            ))}
+      {/* FOOTER: Address & Barcode */}
+      <div className="flex items-center justify-between px-5 py-4 sm:px-6">
+        <div className="flex max-w-[65%] items-start gap-2">
+          <FaLocationDot className="mt-[2px] shrink-0 text-[0.9rem] sm:text-[1rem] text-[#FBBF24]" />
+          <div className={`font-semibold leading-[1.3] text-[#E2E8F0] ${addressClass}`}>
+            {addressLines.join(" ")}
           </div>
         </div>
-
-        <div className="text-[clamp(0.82rem,1.8vw,0.96rem)] font-black text-[#FBBF24]">
-          Repo ID: <span className="text-white">{uniqueId}</span>
+        <div className="flex max-w-[30%] flex-col items-center justify-center rounded-lg bg-white p-1.5 shadow-inner">
+          <img
+            crossOrigin="anonymous"
+            src={`https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(shopNameLines.join(' ').replace(/[^a-zA-Z0-9 -]/g, '').trim().slice(0, 20) || uniqueId)}&scale=2&height=12&includetext`}
+            alt="Barcode"
+            className="h-[32px] sm:h-[36px] w-auto object-cover opacity-90 mix-blend-multiply"
+          />
         </div>
+      </div>
 
-        <div className={`mt-1 flex w-full items-center justify-center border-t-2 border-[#FBBF24] pt-3 font-black text-white ${footerClass}`}>
-          {websiteText}
-        </div>
+      {/* BOTTOM STRIP */}
+      <div className={`flex w-full items-center justify-center bg-[#1E3A8A] py-2.5 font-black tracking-widest text-white ${footerClass}`}>
+        {websiteText}
       </div>
     </div>
   );
@@ -168,10 +212,9 @@ export default function MerchantPromoBanner() {
   const [sharing, setSharing] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [shopData, setShopData] = useState(null);
-  const [productImages, setProductImages] = useState([]);
+  const [products, setProducts] = useState([]);
 
   const bannerRef = useRef(null);
-  const exportBannerRef = useRef(null);
 
   const waitForExportAssets = async (node) => {
     if (!node) return;
@@ -245,22 +288,28 @@ export default function MerchantPromoBanner() {
         }
         setShopData(shop);
 
-        const { data: products, error: prodErr } = await supabase
+        const { data: prods, error: prodErr } = await supabase
           .from("products")
-          .select("image_url")
+          .select("id, name, price, discount_price, condition, image_url")
           .eq("shop_id", shop.id)
           .eq("is_approved", true)
           .limit(6);
 
         if (prodErr) throw prodErr;
 
-        const fallbackImg = "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop";
-        const available = (products || []).map((p) => p.image_url).filter(Boolean);
-        const finalImages = available.length
+        const fallbackProduct = {
+          id: "fallback",
+          name: "Featured Product",
+          price: null,
+          image_url: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop"
+        };
+        
+        const available = (prods || []).filter((p) => p.image_url);
+        const finalProducts = available.length
           ? Array.from({ length: 6 }, (_, index) => available[index % available.length])
-          : Array(6).fill(fallbackImg);
+          : Array(6).fill(fallbackProduct);
 
-        setProductImages(finalImages);
+        setProducts(finalProducts);
       } catch (err) {
         setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
       } finally {
@@ -272,19 +321,19 @@ export default function MerchantPromoBanner() {
   }, [user, authLoading, urlShopId, isOffline]);
 
   const generateBannerBlob = async () => {
-    if (!exportBannerRef.current) throw new Error("Banner element not found.");
+    if (!bannerRef.current) throw new Error("Banner element not found.");
 
-    await waitForExportAssets(exportBannerRef.current);
+    await waitForExportAssets(bannerRef.current);
 
-    const canvas = await html2canvas(exportBannerRef.current, {
-      scale: 4,
+    // Dynamically scale based on current screen width to ensure high-quality output
+    const currentWidth = bannerRef.current.offsetWidth;
+    const scale = currentWidth < 500 ? 4 : 3;
+
+    const canvas = await html2canvas(bannerRef.current, {
+      scale,
       useCORS: true,
       backgroundColor: "#003B95",
       logging: false,
-      width: exportBannerRef.current.scrollWidth,
-      height: exportBannerRef.current.scrollHeight,
-      windowWidth: exportBannerRef.current.scrollWidth,
-      windowHeight: exportBannerRef.current.scrollHeight,
     });
 
     return new Promise((resolve) => {
@@ -413,25 +462,10 @@ export default function MerchantPromoBanner() {
           </p>
         </div>
 
-        <div className="fixed -left-[10000px] top-0 z-[-1] pointer-events-none opacity-0">
-          <div ref={exportBannerRef}>
-            <PromoBannerArtwork
-              exportMode={true}
-              productImages={productImages}
-              shopNameLines={shopNameLines}
-              categoryLines={categoryLines}
-              addressLines={addressLines}
-              cityName={cityName}
-              uniqueId={uniqueId}
-              websiteText={websiteText}
-            />
-          </div>
-        </div>
-
         <div className="w-full rounded-[26px] border border-slate-200 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
           <div className="mx-auto w-full max-w-[800px]" ref={bannerRef}>
               <PromoBannerArtwork
-                productImages={productImages}
+                products={products}
                 shopNameLines={shopNameLines}
                 categoryLines={categoryLines}
                 addressLines={addressLines}

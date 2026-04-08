@@ -199,6 +199,7 @@ function ShopDetail() {
       .eq("shop_id", shopId)
       .eq("is_available", true)
       .order("id", { ascending: true })
+      .limit(100)
       .then((res) => {
         if (!res.error) fetchedProducts = res.data || []
       })
@@ -280,7 +281,7 @@ function ShopDetail() {
   // 3. Smart Caching Hook
   // Key includes user?.id so "hasLiked" state caches correctly per user
   const cacheKey = `shop_detail_${shopId}_${user?.id || 'anon'}`
-  const { data, loading: dataLoading, error, isOffline } = useCachedFetch(
+  const { data, loading: dataLoading, error, isOffline, mutate } = useCachedFetch(
     cacheKey,
     fetchShopData,
     { dependencies: [shopId, user?.id], ttl: 1000 * 60 * 5 }
@@ -460,6 +461,7 @@ function ShopDetail() {
   useEffect(() => {
     if (!shopId) return undefined
 
+    let debounceTimer
     const channel = supabase
       .channel(`public:shop_comments:shop_id=eq.${shopId}`)
       .on(
@@ -471,12 +473,18 @@ function ShopDetail() {
           filter: `shop_id=eq.${shopId}`,
         },
         () => {
-          fetchComments()
+          // Debounce the fetch by 1.5 seconds to prevent network spam
+          // if multiple users comment on the same shop simultaneously.
+          clearTimeout(debounceTimer)
+          debounceTimer = setTimeout(() => {
+            fetchComments()
+          }, 1500)
         }
       )
       .subscribe()
 
     return () => {
+      clearTimeout(debounceTimer)
       supabase.removeChannel(channel)
     }
   }, [shopId, fetchComments])
@@ -980,7 +988,7 @@ function ShopDetail() {
 
   // Show Error only if data fails to fetch and there is no cache
   if (error && !data) {
-    return <RetryingNotice message={getRetryingMessage(error)} />
+    return <RetryingNotice message={getRetryingMessage(error)} onRetry={mutate} />
   }
 
   const shopLogo =

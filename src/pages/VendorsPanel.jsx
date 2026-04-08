@@ -30,6 +30,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { supabase } from "../lib/supabase"
+import { clearCachedFetchStore } from "../hooks/useCachedFetch"
 
 function VendorsPanelShimmer() {
   return (
@@ -170,6 +171,10 @@ function VendorsPanel() {
           filter: `shop_id=eq.${shopId}`,
         },
         () => {
+        // Invalidate global caches so updates reflect instantly in the marketplace
+        clearCachedFetchStore((key) => 
+          key.startsWith("dashboard_cache_") || key.startsWith("shop_detail_") || key.startsWith("dir_city_") || key.startsWith("search_city_")
+        )
           mutate()
         },
       )
@@ -192,7 +197,7 @@ function VendorsPanel() {
   }
 
   if (error && error !== "SHOP_NOT_FOUND" && !data) {
-    return <RetryingNotice message={getRetryingMessage(error)} />
+    return <RetryingNotice message={getRetryingMessage(error)} onRetry={mutate} />
   }
 
   if (!data?.shop) return null

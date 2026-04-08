@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -25,6 +25,13 @@ function ShopIndex() {
   // 1. Unified Auth State
   const { user, profile, loading: authLoading } = useAuthSession()
   const [searchInput, setSearchInput] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+
+  // Debounce the search input by 400ms to avoid DB spam
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchInput), 400)
+    return () => clearTimeout(timer)
+  }, [searchInput])
 
   // 2. Extracted Data Fetching Logic for Hook
   const fetchDirectory = async () => {
@@ -32,11 +39,20 @@ function ShopIndex() {
       throw new Error("City data not found. Please complete your profile.")
     }
 
-    const { data: shops, error: shopsError } = await supabase
+    let query = supabase
       .from("shops")
       .select("*")
       .eq("city_id", profile.city_id)
       .order("name", { ascending: true })
+      .limit(100)
+
+    if (debouncedSearch) {
+      const q = debouncedSearch.trim().replace(/,/g, "")
+      const ilikeQuery = `%${q}%`
+      query = query.or(`name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},address.ilike.${ilikeQuery}`)
+    }
+
+    const { data: shops, error: shopsError } = await query
 
     if (shopsError) throw shopsError
 
@@ -44,36 +60,17 @@ function ShopIndex() {
   }
 
   // 3. Smart Caching Hook
-  const cacheKey = `directory_city_${profile?.city_id || 'none'}`
-  const { data: allShops, loading: dataLoading, error: dataError } = useCachedFetch(
+  const cacheKey = `dir_city_${profile?.city_id || 'none'}_q_${debouncedSearch}`
+  const { data: allShops, loading: dataLoading, error: dataError, mutate } = useCachedFetch(
     cacheKey,
     fetchDirectory,
-    { dependencies: [profile?.city_id], ttl: 1000 * 60 * 30 } // Cache directory for 30 minutes
+    { dependencies: [profile?.city_id, debouncedSearch], ttl: 1000 * 60 * 15 } 
   )
 
   const headerTitle = profile?.cities?.name ? `${profile.cities.name} Directory` : "Shop Directory"
 
-  // 4. Memoized Search Filtering
-  const filteredShops = useMemo(() => {
-    if (!allShops) return []
-    const query = String(searchInput || "").trim().toLowerCase()
-
-    if (!query) return allShops
-
-    return allShops.filter((shop) => {
-      const name = String(shop?.name || "").toLowerCase()
-      const category = String(shop?.category || "").toLowerCase()
-      const uniqueId = String(shop?.unique_id || "").toLowerCase()
-      const address = String(shop?.address || "").toLowerCase()
-
-      return (
-        name.includes(query) ||
-        category.includes(query) ||
-        uniqueId.includes(query) ||
-        address.includes(query)
-      )
-    })
-  }, [allShops, searchInput])
+  // 4. Server-side Search Results
+  const filteredShops = allShops || []
 
   function getDisplayImage(shop) {
     if (shop?.image_url) return shop.image_url
@@ -143,7 +140,7 @@ function ShopIndex() {
             <ShimmerList />
           </div>
         ) : dataError && !allShops ? (
-          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} />
+          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} onRetry={mutate} />
         ) : filteredShops.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center px-5 text-center text-slate-400">
             <FaStoreSlash className="mb-4 text-5xl opacity-30" />

@@ -63,6 +63,7 @@ function Cat() {
       .eq("category", catName)
       .eq("is_verified", true)
       .order("name", { ascending: true })
+      .limit(100)
 
     if (shopsError) throw shopsError
 
@@ -74,6 +75,7 @@ function Cat() {
         .select("*")
         .in("shop_id", shopIds)
         .eq("is_available", true)
+        .limit(300)
 
       if (productsError) throw productsError
       productsData = prods || []
@@ -84,7 +86,7 @@ function Cat() {
 
   // 3. Smart Caching Hook
   const cacheKey = `cat_${catName}_city_${profile?.city_id || 'none'}`
-  const { data, loading: dataLoading, error: dataError } = useCachedFetch(
+  const { data, loading: dataLoading, error: dataError, mutate } = useCachedFetch(
     cacheKey,
     fetchCategoryData,
     { dependencies: [catName, profile?.city_id], ttl: 1000 * 60 * 15 } // Cache for 15 minutes
@@ -190,7 +192,7 @@ function Cat() {
         {authLoading || (dataLoading && !data) ? (
           <CatShimmer catName={catName} />
         ) : dataError && !data ? (
-          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} />
+          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} onRetry={mutate} />
         ) : (
           <>
             <div className="mb-6 flex items-center gap-3">
