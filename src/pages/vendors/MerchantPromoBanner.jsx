@@ -91,46 +91,26 @@ function PromoBannerArtwork({
   uniqueId,
   websiteText,
   shopId,
-  className = "",
 }) {
-  const shellClass = "w-full max-w-[800px]";
-  const tileClass = "aspect-square";
-  const titleClass = "text-[clamp(0.95rem,2.3vw,1.12rem)]";
-  const categoryClass = "text-[clamp(0.78rem,1.7vw,0.92rem)]";
-  const addressClass = "text-[clamp(0.78rem,1.8vw,0.92rem)]";
+  // STRICT DIMENSIONS: This ensures 100% fidelity when exporting via html2canvas
+  // We no longer use responsive "sm:" classes here because the canvas size is fixed!
+  const shellClass = "w-[800px] bg-[#003B95] text-white";
 
   return (
-    <div className={`flex flex-col overflow-hidden rounded-[26px] bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.16)] ${shellClass} ${className}`}>
-      {/* HEADER: Shop Name & QR Code */}
-      <div className="flex items-start justify-between px-5 py-4 sm:px-6">
-        <div className="flex flex-col max-w-[65%] pt-1">
-          <div className={`font-black leading-[1.1] text-white ${titleClass}`}>
-            {shopNameLines.join(" ")}
-          </div>
-          <div className={`mt-2 w-max font-extrabold text-[#FBBF24] underline decoration-2 underline-offset-4 ${categoryClass}`}>
-            {categoryLines.join(" ")}
-          </div>
+    <div className={`flex flex-col overflow-hidden ${shellClass}`}>
+      
+      {/* HEADER: Only Shop Name & Category */}
+      <div className="flex flex-col items-start justify-center px-8 py-6">
+        <div className="text-[2rem] font-black leading-[1.2] text-white">
+          {shopNameLines.join(" ")}
         </div>
-        <div className="flex flex-col items-end gap-1 max-w-[35%]">
-          <div className="flex flex-col items-center justify-center rounded-lg bg-white p-1 shadow-inner">
-            <img
-              crossOrigin="anonymous"
-              src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`}
-              alt="Shop QR Code"
-              className="h-[44px] w-[44px] sm:h-[54px] sm:w-[54px] object-cover opacity-90 mix-blend-multiply"
-            />
-          </div>
-          <div className="text-[0.65rem] sm:text-[0.7rem] font-bold text-white">
-            {websiteText}
-          </div>
-          <div className="text-[0.65rem] sm:text-[0.7rem] font-bold text-[#93C5FD]">
-            ID: {uniqueId}
-          </div>
+        <div className="mt-2 inline-block w-max border-b-4 border-[#FBBF24] pb-1 text-[1.1rem] font-extrabold text-[#FBBF24]">
+          {categoryLines.join(" ")}
         </div>
       </div>
 
-      {/* PRODUCT GRID: Solid Bottom Labels */}
-      <div className="grid grid-cols-3 gap-[6px] bg-white p-[6px]">
+      {/* PRODUCT GRID: 2x2 Grid (4 Products) */}
+      <div className="grid grid-cols-2 gap-3 bg-white p-3">
         {products.map((product, index) => {
           const price = product.price || 0;
           const discount = product.discount_price;
@@ -141,36 +121,40 @@ function PromoBannerArtwork({
           return (
             <div
               key={`${product.id}-${index}`}
-              className={`relative flex flex-col overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-white ${tileClass}`}
+              className="relative flex flex-col overflow-hidden rounded-[16px] border border-[#E2E8F0] bg-white shadow-sm"
             >
-              <div className="relative flex-1 bg-[#F8FAFC] p-1">
+              {/* Top: Protected Image Container (4:3 Aspect Ratio) */}
+              <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-[#F8FAFC] p-4">
                 <img
                   crossOrigin="anonymous"
                   src={product.image_url}
                   alt={product.name || `Product ${index + 1}`}
-                  className="absolute inset-0 h-full w-full object-contain p-1"
+                  className="h-full w-full object-contain mix-blend-multiply"
                 />
+                
                 {hasDiscount && (
-                  <div className="absolute left-1 top-1 rounded bg-[#DC2626] px-1.5 py-0.5 text-[0.55rem] sm:text-[0.6rem] font-extrabold text-white shadow-sm">
+                  <div className="absolute left-2 top-2 rounded bg-[#DC2626] px-2 py-1 text-[0.8rem] font-extrabold text-white">
                     -{percent}%
                   </div>
                 )}
+                
                 {product.condition === "Fairly Used" && (
-                  <div className="absolute right-1 top-1 rounded bg-[#D97706] px-1.5 py-0.5 text-[0.55rem] sm:text-[0.6rem] font-extrabold text-white shadow-sm">
+                  <div className="absolute right-2 top-2 rounded bg-[#D97706] px-2 py-1 text-[0.8rem] font-extrabold text-white">
                     Used
                   </div>
                 )}
               </div>
               
+              {/* Bottom: Fixed Height Text Container */}
               {(product.name || price > 0) && (
-                <div className="flex flex-col justify-center border-t border-[#E2E8F0] bg-white px-1.5 py-1.5 text-center sm:px-2">
+                <div className="flex h-[85px] w-full flex-col justify-center border-t border-slate-100 p-3 text-center">
                   {product.name && (
-                    <div className="truncate text-[0.65rem] sm:text-[0.7rem] font-bold text-[#0F1111]">
+                    <div className="truncate text-[1.1rem] font-bold text-slate-800">
                       {product.name}
                     </div>
                   )}
                   {price > 0 && (
-                    <div className="text-[0.7rem] sm:text-[0.75rem] font-black text-[#EA580C]">
+                    <div className="mt-1 text-[1.3rem] font-black leading-tight text-[#003B95]">
                       ₦{Number(finalPrice).toLocaleString()}
                     </div>
                   )}
@@ -181,18 +165,44 @@ function PromoBannerArtwork({
         })}
       </div>
 
-      {/* FOOTER: Address & Scan Note */}
-      <div className="flex items-center justify-between px-5 py-4 sm:px-6">
-        <div className="flex max-w-[65%] items-start gap-2">
-          <FaLocationDot className="mt-[2px] shrink-0 text-[0.9rem] sm:text-[1rem] text-[#FBBF24]" />
-          <div className={`font-semibold leading-[1.3] text-[#E2E8F0] ${addressClass}`}>
-            {addressLines.join(" ")}
+      {/* FOOTER: Address, Website, ID & QR Code */}
+      <div className="flex items-center justify-between bg-[#1E3A8A] px-8 py-5">
+        <div className="flex flex-col gap-2 max-w-[70%]">
+          {/* Address Line */}
+          <div className="flex items-start gap-2">
+            <FaLocationDot className="mt-1 shrink-0 text-[1.2rem] text-[#FBBF24]" />
+            <div className="text-[1.15rem] font-semibold leading-[1.3] text-white">
+              {addressLines.join(" ")}
+            </div>
+          </div>
+          
+          {/* Website and ID Line */}
+          <div className="ml-[1.7rem] flex items-center gap-6 mt-1">
+            <div className="text-[1.1rem] font-bold text-white">
+              {websiteText}
+            </div>
+            <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-3 py-1 text-[1rem] font-bold text-[#93C5FD]">
+               ID: {uniqueId}
+            </div>
           </div>
         </div>
-        <div className="max-w-[30%] text-right text-[0.65rem] sm:text-[0.7rem] font-bold text-[#93C5FD] italic leading-tight">
-          Scan QR to view<br/>shop in repository
+
+        {/* QR Section */}
+        <div className="flex flex-col items-center justify-center gap-1.5">
+          <div className="flex shrink-0 flex-col items-center justify-center rounded-xl bg-white p-2 shadow-inner">
+            <img
+              crossOrigin="anonymous"
+              src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`}
+              alt="Shop QR Code"
+              className="h-[75px] w-[75px] object-cover mix-blend-multiply"
+            />
+          </div>
+          <div className="text-center text-[0.7rem] font-black uppercase tracking-widest text-[#93C5FD]">
+            Scan to view
+          </div>
         </div>
       </div>
+
     </div>
   );
 }
@@ -286,12 +296,13 @@ export default function MerchantPromoBanner() {
         }
         setShopData(shop);
 
+        // Fetch exactly 4 products for the 2x2 grid
         const { data: prods, error: prodErr } = await supabase
           .from("products")
           .select("id, name, price, discount_price, condition, image_url")
           .eq("shop_id", shop.id)
           .eq("is_approved", true)
-          .limit(6);
+          .limit(4);
 
         if (prodErr) throw prodErr;
 
@@ -303,9 +314,11 @@ export default function MerchantPromoBanner() {
         };
         
         const available = (prods || []).filter((p) => p.image_url);
+        
+        // Fill the 4 slots
         const finalProducts = available.length
-          ? Array.from({ length: 6 }, (_, index) => available[index % available.length])
-          : Array(6).fill(fallbackProduct);
+          ? Array.from({ length: 4 }, (_, index) => available[index % available.length])
+          : Array(4).fill(fallbackProduct);
 
         setProducts(finalProducts);
       } catch (err) {
@@ -323,12 +336,9 @@ export default function MerchantPromoBanner() {
 
     await waitForExportAssets(bannerRef.current);
 
-    // Dynamically scale based on current screen width to ensure high-quality output
-    const currentWidth = bannerRef.current.offsetWidth;
-    const scale = currentWidth < 500 ? 4 : 3;
-
+    // Hardcode scale to 2 because width is strictly 800px (Output will be a crisp 1600px wide image)
     const canvas = await html2canvas(bannerRef.current, {
-      scale,
+      scale: 2,
       useCORS: true,
       backgroundColor: "#003B95",
       logging: false,
@@ -390,10 +400,9 @@ export default function MerchantPromoBanner() {
 
   const displayAddress = shopData?.address || "Registered Business Address";
   const websiteText = "www.ctmerchant.com.ng";
-  const shopNameLines = useMemo(() => wrapTextLines(shopData?.name || "", 24, 2), [shopData?.name]);
-  const categoryLines = useMemo(() => wrapTextLines(shopData?.category || "Shop & Retail", 26, 2), [shopData?.category]);
-  const addressLines = useMemo(() => wrapTextLines(displayAddress, 36, 3), [displayAddress]);
-  const cityName = shopData?.cities?.name || "Local";
+  const shopNameLines = useMemo(() => wrapTextLines(shopData?.name || "", 26, 2), [shopData?.name]);
+  const categoryLines = useMemo(() => wrapTextLines(shopData?.category || "Shop & Retail", 30, 1), [shopData?.category]);
+  const addressLines = useMemo(() => wrapTextLines(displayAddress, 45, 2), [displayAddress]);
   const uniqueId = shopData?.unique_id || "PENDING";
 
   if (authLoading || loading) return <PromoBannerShimmer />;
@@ -451,38 +460,34 @@ export default function MerchantPromoBanner() {
               <FaImage />
             </div>
             <div>
-              <div className="text-[1rem] font-black text-slate-900">Auto-generated from your shop</div>
-              <div className="text-[0.84rem] font-semibold text-slate-500">Native promo layout synced to web</div>
+              <div className="text-[1rem] font-black text-slate-900">Promo Layout Generation</div>
+              <div className="text-[0.84rem] font-semibold text-slate-500">Optimized for high-resolution sharing</div>
             </div>
           </div>
-          <p className="mt-3 text-[0.92rem] leading-6 text-slate-500">
-            The promo engine pulls your verified shop details and latest approved product images into one printable promo layout.
-          </p>
         </div>
 
-        <div className="w-full rounded-[26px] border border-slate-200 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
-          <div className="mx-auto w-full max-w-[800px]" ref={bannerRef}>
-              <PromoBannerArtwork
-                products={products}
-                shopNameLines={shopNameLines}
-                categoryLines={categoryLines}
-                addressLines={addressLines}
-                cityName={cityName}
-                uniqueId={uniqueId}
-                websiteText={websiteText}
-                shopId={shopData?.id}
-              />
+        {/* Scrollable Wrapper Container to protect the 800px fixed layout on Mobile Devices */}
+        <div className="w-full overflow-hidden rounded-[26px] border border-slate-200 bg-slate-50 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+          <div className="w-full overflow-x-auto p-4 custom-scrollbar">
+            {/* The actual Banner Component - Hard locked to 800px width */}
+            <div 
+              className="mx-auto w-[800px] shrink-0 overflow-hidden rounded-[26px] shadow-[0_15px_30px_rgba(0,0,0,0.16)]" 
+              ref={bannerRef}
+            >
+                <PromoBannerArtwork
+                  products={products}
+                  shopNameLines={shopNameLines}
+                  categoryLines={categoryLines}
+                  addressLines={addressLines}
+                  uniqueId={uniqueId}
+                  websiteText={websiteText}
+                  shopId={shopData?.id}
+                />
+            </div>
           </div>
         </div>
 
-        <div className="w-full rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
-          <div className="text-[0.92rem] font-black text-slate-900">Native promo flow status</div>
-          <p className="mt-2 text-[0.86rem] leading-6 text-slate-500">
-            The preview now follows the Expo layout directly: product collage first, then the shop promo card below it.
-          </p>
-        </div>
-
-        <div className="flex w-full flex-col gap-3 sm:flex-row">
+        <div className="flex w-full flex-col gap-3 sm:flex-row mt-2">
           <button
             onClick={handleShare}
             disabled={sharing}
