@@ -92,45 +92,58 @@ function PromoBannerArtwork({
   uniqueId,
   websiteText,
   shopId,
+  exportMode = false,
   className = "",
 }) {
-  const shellClass = "w-[800px] shrink-0";
+  const shellClass = exportMode ? "w-[800px] shrink-0" : "w-full";
   const tileClass = "aspect-square flex flex-col";
-  const titleClass = "text-[1.4rem]";
-  const categoryClass = "text-[1rem]";
-  const addressClass = "text-[1rem]";
+  
+  const titleClass = exportMode ? "text-[24px]" : "text-[1.15rem] sm:text-[24px]";
+  const idClass = exportMode ? "text-[20px]" : "text-[0.95rem] sm:text-[20px]";
+  const categoryClass = exportMode ? "text-[16px]" : "text-[0.75rem] sm:text-[16px]";
+  const websiteClass = exportMode ? "text-[16px]" : "text-[0.8rem] sm:text-[16px]";
+  const logoClass = exportMode ? "h-8 w-8" : "h-6 w-6 sm:h-8 sm:w-8";
+  const qrClass = exportMode ? "h-[64px] w-[64px]" : "h-[45px] w-[45px] sm:h-[64px] sm:w-[64px]";
+  
+  const prodNameClass = exportMode ? "text-[14px]" : "text-[0.75rem] sm:text-[14px]";
+  const prodPriceClass = exportMode ? "text-[18px]" : "text-[0.9rem] sm:text-[18px]";
+  const badgeClass = exportMode ? "px-2 py-1 text-[12px]" : "px-1.5 py-0.5 text-[9px] sm:px-2 sm:py-1 sm:text-[12px]";
+  
+  const addressClass = exportMode ? "text-[16px]" : "text-[0.8rem] sm:text-[16px]";
+  const footerNoteClass = exportMode ? "text-[13px]" : "text-[0.65rem] sm:text-[13px]";
+  const locationIconClass = exportMode ? "text-[18px]" : "text-[14px] sm:text-[18px]";
 
   return (
     <div className={`flex flex-col overflow-hidden rounded-[26px] bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.16)] ${shellClass} ${className}`}>
       
       {/* HEADER: Shop Name, Category, Website & QR */}
-      <div className="flex items-start justify-between px-6 py-5">
-        <div className="flex flex-1 flex-col pr-4">
-          <div className="mb-2.5 flex items-center gap-2.5">
+      <div className="flex items-start justify-between px-4 py-4 sm:px-6 sm:py-5">
+        <div className="flex flex-1 flex-col pr-3 sm:pr-4">
+          <div className="mb-2 flex items-center gap-2 sm:mb-2.5 sm:gap-2.5">
             <img
               crossOrigin="anonymous"
               src={logoImage}
               alt="CTMerchant"
-              className="h-8 w-8 rounded border border-white/20 object-cover shadow-sm"
+              className={`rounded border border-white/20 object-cover shadow-sm ${logoClass}`}
             />
-            <span className="text-[0.95rem] font-bold text-white/90">{websiteText}</span>
-            <span className="text-[0.95rem] font-black text-[#93C5FD]">| ID: {uniqueId}</span>
+            <span className={`font-bold text-white/90 ${websiteClass}`}>{websiteText}</span>
           </div>
-          <div className={`font-black leading-[1.15] text-white ${titleClass}`}>
-            {shopNameLines.join(" ")}
+          <div className={`flex flex-wrap items-center gap-1.5 sm:gap-2 font-black leading-[1.15] text-white ${titleClass}`}>
+            <span>{shopNameLines.join(" ")}</span>
+            <span className={`font-black tracking-wide text-[#93C5FD] ${idClass}`}>| ID: {uniqueId}</span>
           </div>
-          <div className={`mt-2 w-max font-extrabold text-[#FBBF24] underline decoration-2 underline-offset-4 ${categoryClass}`}>
+          <div className={`mt-1.5 w-max font-extrabold text-[#FBBF24] underline decoration-2 underline-offset-4 sm:mt-2 ${categoryClass}`}>
             {categoryLines.join(" ")}
           </div>
         </div>
         
         <div className="flex shrink-0 flex-col items-end justify-start">
-          <div className="flex shrink-0 flex-col items-center justify-center rounded-lg bg-white p-1.5 shadow-inner">
+          <div className="flex shrink-0 flex-col items-center justify-center rounded-lg bg-white p-1 sm:p-1.5 shadow-inner">
             <img
               crossOrigin="anonymous"
               src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`}
               alt="Shop QR Code"
-              className="h-[60px] w-[60px] object-cover opacity-90 mix-blend-multiply"
+              className={`object-cover opacity-90 mix-blend-multiply ${qrClass}`}
             />
           </div>
         </div>
@@ -160,13 +173,13 @@ function PromoBannerArtwork({
                 />
                 
                 {hasDiscount && (
-                  <div className="absolute left-1.5 top-1.5 rounded bg-[#DC2626] px-2 py-1 text-[0.75rem] font-extrabold text-white shadow-sm">
+                  <div className={`absolute left-1.5 top-1.5 rounded bg-[#DC2626] font-extrabold text-white shadow-sm ${badgeClass}`}>
                     -{percent}%
                   </div>
                 )}
                 
                 {product.condition === "Fairly Used" && (
-                  <div className="absolute right-1.5 top-1.5 rounded bg-[#D97706] px-2 py-1 text-[0.75rem] font-extrabold text-white shadow-sm">
+                  <div className={`absolute right-1.5 top-1.5 rounded bg-[#D97706] font-extrabold text-white shadow-sm ${badgeClass}`}>
                     Used
                   </div>
                 )}
@@ -174,14 +187,14 @@ function PromoBannerArtwork({
               
               {/* Bottom: Clear Text Container */}
               {(product.name || price > 0) && (
-                <div className="flex flex-col justify-center w-full border-t border-[#E2E8F0] bg-white p-2.5 text-center">
+                <div className="flex flex-col justify-center w-full border-t border-[#E2E8F0] bg-white p-2 sm:p-2.5 text-center">
                   {product.name && (
-                    <div className="truncate text-[0.85rem] font-bold text-[#0F1111]">
+                    <div className={`truncate font-bold text-[#0F1111] ${prodNameClass}`}>
                       {product.name}
                     </div>
                   )}
                   {price > 0 && (
-                    <div className="mt-1 text-[1.05rem] font-black leading-tight text-[#EA580C]">
+                    <div className={`mt-0.5 sm:mt-1 font-black leading-tight text-[#EA580C] ${prodPriceClass}`}>
                       ₦{Number(finalPrice).toLocaleString()}
                     </div>
                   )}
@@ -193,14 +206,14 @@ function PromoBannerArtwork({
       </div>
 
       {/* FOOTER: Address & Scan Note */}
-      <div className="flex flex-col items-center justify-center bg-[#1E3A8A] px-6 py-4">
-        <div className="mb-2 flex w-full items-center justify-center gap-2 text-center">
-          <FaLocationDot className="shrink-0 text-[1.1rem] text-[#FBBF24]" />
+      <div className="flex flex-col items-center justify-center bg-[#1E3A8A] px-4 py-3 sm:px-6 sm:py-4">
+        <div className="mb-1.5 flex w-full items-center justify-center gap-1.5 sm:mb-2 sm:gap-2 text-center">
+          <FaLocationDot className={`shrink-0 text-[#FBBF24] ${locationIconClass}`} />
           <div className={`font-semibold leading-[1.3] text-white ${addressClass}`}>
             {addressLines.join(" ")}
           </div>
         </div>
-        <div className="text-[0.8rem] font-black uppercase tracking-widest text-[#93C5FD]">
+        <div className={`font-black uppercase tracking-widest text-[#93C5FD] ${footerNoteClass}`}>
           Enter ID in repo or scan to view shop
         </div>
       </div>
@@ -468,8 +481,8 @@ export default function MerchantPromoBanner() {
           </p>
         </div>
 
-        <div className="w-full overflow-x-auto rounded-[26px] border border-slate-200 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)] custom-scrollbar">
-          <div className="w-[800px] mx-auto" ref={bannerRef}>
+        <div className="w-full rounded-[26px] border border-slate-200 bg-white p-3 sm:p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+          <div className="w-full mx-auto" ref={bannerRef}>
               <PromoBannerArtwork
                 products={products}
                 shopNameLines={shopNameLines}
@@ -478,6 +491,7 @@ export default function MerchantPromoBanner() {
                 uniqueId={uniqueId}
                 websiteText={websiteText}
                 shopId={shopData?.id}
+                exportMode={false}
               />
           </div>
         </div>
@@ -493,6 +507,7 @@ export default function MerchantPromoBanner() {
               uniqueId={uniqueId}
               websiteText={websiteText}
               shopId={shopData?.id}
+              exportMode={true}
             />
           </div>
         </div>
