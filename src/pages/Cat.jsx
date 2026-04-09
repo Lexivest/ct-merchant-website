@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -15,7 +16,7 @@ import PageSeo from "../components/common/PageSeo"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
-function CatShimmer({ catName }) {
+function CatShimmer() {
   return (
     <div className="flex flex-col items-center justify-center pt-6 w-full">
       <div className="w-full mb-6 flex items-center gap-3">
@@ -46,15 +47,17 @@ function Cat() {
   // 1. Unified Auth State (isOffline removed to rely on global wrapper)
   const { user, profile, loading: authLoading } = useAuthSession()
 
-  // Gatekeeper Redirect
-  if (!authLoading && (!user || !catName)) {
-    navigate(-1)
-    return null
-  }
+  useEffect(() => {
+    if (!authLoading && (!user || !catName)) {
+      navigate(-1)
+    }
+  }, [authLoading, catName, navigate, user])
 
   // 2. Extracted Data Fetching Logic for Hook
   const fetchCategoryData = async () => {
-    if (!profile?.city_id) throw new Error("City not found")
+    if (!user || !catName || !profile?.city_id) {
+      return { shops: [], products: [] }
+    }
 
     const { data: shopsData, error: shopsError } = await supabase
       .from("shops")
@@ -89,7 +92,7 @@ function Cat() {
   const { data, loading: dataLoading, error: dataError, mutate } = useCachedFetch(
     cacheKey,
     fetchCategoryData,
-    { dependencies: [catName, profile?.city_id], ttl: 1000 * 60 * 15 } // Cache for 15 minutes
+    { dependencies: [catName, profile?.city_id, user?.id], ttl: 1000 * 60 * 15 } // Cache for 15 minutes
   )
 
   const shops = data?.shops || []
@@ -189,8 +192,8 @@ function Cat() {
       </header>
 
       <main className="mx-auto w-full max-w-[1200px] flex-1 px-5 py-6">
-        {authLoading || (dataLoading && !data) ? (
-          <CatShimmer catName={catName} />
+        {authLoading || ((!user || !catName) && !authLoading) || (dataLoading && !data) ? (
+          <CatShimmer />
         ) : dataError && !data ? (
           <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} onRetry={mutate} />
         ) : (

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { FaArrowLeft } from "react-icons/fa6"
 
 const jobs = [
@@ -88,15 +88,24 @@ function CareersDashboardView({ onBack }) {
   const [selectedJob, setSelectedJob] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  useEffect(() => {
+    if (!isModalOpen) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isModalOpen])
+
   const openClosedNotice = (jobTitle) => {
     setSelectedJob(jobTitle)
     setIsModalOpen(true)
-    document.body.style.overflow = "hidden"
   }
 
   const closeModal = () => {
     setIsModalOpen(false)
-    document.body.style.overflow = ""
   }
 
   return (

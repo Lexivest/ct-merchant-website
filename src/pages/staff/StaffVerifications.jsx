@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaCircleCheck, FaCircleNotch, FaEye, FaIdBadge, FaVideo } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
@@ -20,7 +20,7 @@ export default function StaffVerifications() {
   const [togglingId, setTogglingId] = useState(null)
   const [selectedKycShop, setSelectedKycShop] = useState(null)
 
-  async function fetchShops() {
+  const fetchShops = useCallback(async () => {
     setLoadingShops(true)
     try {
       const { data, error } = await supabase
@@ -55,11 +55,11 @@ export default function StaffVerifications() {
     } finally {
       setLoadingShops(false)
     }
-  }
+  }, [notify])
 
   useEffect(() => {
     fetchShops()
-  }, [])
+  }, [fetchShops])
 
   const toggleIdIssued = async (shopId, currentStatus) => {
     setTogglingId(shopId)
@@ -262,4 +262,3 @@ export default function StaffVerifications() {
     </StaffPortalShell>
   )
 }
-

@@ -113,11 +113,13 @@ export default function MerchantVideoKYC() {
   const locationRef = useRef(null);
   const dateRef = useRef("");
   const cityRef = useRef("");
+  const recordingStateRef = useRef(recordingState);
 
   // Sync state to refs for the animation loop
   useEffect(() => { locationRef.current = location; }, [location]);
   useEffect(() => { dateRef.current = currentDateTime; }, [currentDateTime]);
   useEffect(() => { cityRef.current = cityName; }, [cityName]);
+  useEffect(() => { recordingStateRef.current = recordingState; }, [recordingState]);
 
   const stopActiveMedia = useCallback(() => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
@@ -283,6 +285,60 @@ export default function MerchantVideoKYC() {
   }, [user?.id, shopData?.id, isOffline, navigate, notify]);
 
 
+  const startCanvasLoop = useCallback(() => {
+    const drawFrame = () => {
+      const video = rawVideoRef.current;
+      const canvas = canvasRef.current;
+
+      if (video && canvas && video.readyState >= 2 && recordingStateRef.current !== "recorded") {
+        const ctx = canvas.getContext('2d');
+        
+        // Sync canvas resolution to the camera's actual output resolution
+        if (canvas.width !== video.videoWidth) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+        }
+
+        // 1. Draw the raw video frame
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // 2. Draw the Watermark Background Box
+        ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+        ctx.fillRect(10, canvas.height - 98, 300, 88);
+
+        // 3. Draw the Date/Time
+        ctx.fillStyle = "#38BDF8"; // Light blue
+        ctx.font = "bold 15px monospace";
+        ctx.fillText(dateRef.current, 20, canvas.height - 68);
+
+        // 4. Draw the City
+        if (cityRef.current) {
+          ctx.fillStyle = "#FBBF24";
+          ctx.font = "bold 14px monospace";
+          ctx.fillText(`CITY: ${cityRef.current}`, 20, canvas.height - 46);
+        }
+
+        // 5. Draw the Coordinates
+        if (locationRef.current) {
+          ctx.fillStyle = "#A3E635"; // Green
+          ctx.font = "bold 13px monospace";
+          ctx.fillText(`LAT: ${locationRef.current.lat}`, 20, canvas.height - 24);
+          ctx.fillText(`LNG: ${locationRef.current.lng}`, 160, canvas.height - 24);
+        } else {
+          ctx.fillStyle = "#FBBF24"; // Yellow
+          ctx.font = "bold 14px monospace";
+          ctx.fillText("Acquiring GPS...", 20, canvas.height - 24);
+        }
+      }
+      
+      // Loop
+      animationFrameId.current = requestAnimationFrame(drawFrame);
+    };
+    
+    // Kick off the loop
+    drawFrame();
+  }, []);
+
   // 2. Permissions, Camera, and CANVAS BURNING Logic
   const requestPermissionsAndStart = useCallback(async () => {
     try {
@@ -340,68 +396,13 @@ export default function MerchantVideoKYC() {
         setSetupError("Please allow camera and microphone access and retry.");
       }
     }
-  }, [cityName, shopData?.cities?.name, stopActiveMedia]);
+  }, [cityName, shopData?.cities?.name, startCanvasLoop, stopActiveMedia]);
 
   useEffect(() => {
     if (loading || pageError || !shopData || isOffline || hasAutoStartedSetup) return;
     setHasAutoStartedSetup(true);
     requestPermissionsAndStart();
   }, [loading, pageError, shopData, isOffline, hasAutoStartedSetup, requestPermissionsAndStart]);
-
-  // The engine that "burns" the text into the video frames
-  const startCanvasLoop = () => {
-    const drawFrame = () => {
-      const video = rawVideoRef.current;
-      const canvas = canvasRef.current;
-
-      if (video && canvas && video.readyState >= 2 && recordingState !== 'recorded') {
-        const ctx = canvas.getContext('2d');
-        
-        // Sync canvas resolution to the camera's actual output resolution
-        if (canvas.width !== video.videoWidth) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-        }
-
-        // 1. Draw the raw video frame
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        // 2. Draw the Watermark Background Box
-        ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-        ctx.fillRect(10, canvas.height - 98, 300, 88);
-
-        // 3. Draw the Date/Time
-        ctx.fillStyle = "#38BDF8"; // Light blue
-        ctx.font = "bold 15px monospace";
-        ctx.fillText(dateRef.current, 20, canvas.height - 68);
-
-        // 4. Draw the City
-        if (cityRef.current) {
-          ctx.fillStyle = "#FBBF24";
-          ctx.font = "bold 14px monospace";
-          ctx.fillText(`CITY: ${cityRef.current}`, 20, canvas.height - 46);
-        }
-
-        // 5. Draw the Coordinates
-        if (locationRef.current) {
-          ctx.fillStyle = "#A3E635"; // Green
-          ctx.font = "bold 13px monospace";
-          ctx.fillText(`LAT: ${locationRef.current.lat}`, 20, canvas.height - 24);
-          ctx.fillText(`LNG: ${locationRef.current.lng}`, 160, canvas.height - 24);
-        } else {
-          ctx.fillStyle = "#FBBF24"; // Yellow
-          ctx.font = "bold 14px monospace";
-          ctx.fillText("Acquiring GPS...", 20, canvas.height - 24);
-        }
-      }
-      
-      // Loop
-      animationFrameId.current = requestAnimationFrame(drawFrame);
-    };
-    
-    // Kick off the loop
-    drawFrame();
-  };
 
   const handleRecordToggle = () => {
     if (recordingState === "recording") stopRecording();
@@ -425,7 +426,7 @@ export default function MerchantVideoKYC() {
 
     try {
       mediaRecorderRef.current = new MediaRecorder(combinedStream, options);
-    } catch (e) {
+    } catch {
       mediaRecorderRef.current = new MediaRecorder(combinedStream);
     }
 

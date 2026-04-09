@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   FaCircleCheck,
   FaCircleNotch,
@@ -47,7 +47,7 @@ export default function StaffCommunity() {
   const [deletingCommentId, setDeletingCommentId] = useState(null)
   const [moderationDrafts, setModerationDrafts] = useState({})
 
-  async function fetchCommentQueue() {
+  const fetchCommentQueue = useCallback(async () => {
     setLoadingComments(true)
     try {
       const { data: commentRows, error: commentError } = await supabase
@@ -130,11 +130,11 @@ export default function StaffCommunity() {
     } finally {
       setLoadingComments(false)
     }
-  }
+  }, [notify])
 
   useEffect(() => {
     fetchCommentQueue()
-  }, [])
+  }, [fetchCommentQueue])
 
   useEffect(() => {
     const channel = supabase
@@ -147,7 +147,7 @@ export default function StaffCommunity() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [fetchCommentQueue])
 
   const updateModerationDraft = (commentId, value) => {
     setModerationDrafts((prev) => ({ ...prev, [commentId]: value }))

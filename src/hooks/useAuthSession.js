@@ -225,19 +225,6 @@ function useAuthSession() {
         if (!mounted) return
 
         if (!user) {
-          if (snapshot?.user) {
-            syncState({
-              loading: false,
-              session: snapshot.session || null,
-              user: snapshot.user,
-              profile: snapshot.profile || null,
-              suspended: isProfileSuspended(snapshot.profile) || Boolean(snapshot.suspended),
-              profileLoaded: Boolean(snapshot.profile),
-              error: "",
-            })
-            return
-          }
-
           clearCachedProfile()
           clearCachedFetchStore()
           clearAuthSnapshot()

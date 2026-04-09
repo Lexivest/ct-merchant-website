@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react"
-import { supabase } from "../../lib/supabase";
-import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
+import { useEffect, useRef, useState } from "react"
+import { supabase } from "../../lib/supabase"
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 
 const DAILY_LIMIT = 15
 
@@ -19,7 +19,7 @@ function AiAssistantWidget() {
   const messagesEndRef = useRef(null)
   const scrollContainerRef = useRef(null)
 
-  const usage = useMemo(() => {
+  const usage = (() => {
     const today = new Date().toISOString().split("T")[0]
     const raw = localStorage.getItem("ctm_ai_anon_usage")
     let parsed = raw ? JSON.parse(raw) : { date: today, count: 0 }
@@ -30,7 +30,7 @@ function AiAssistantWidget() {
     }
 
     return parsed
-  }, [isOpen, messages.length])
+  })()
 
   useEffect(() => {
     if (!isOpen) return

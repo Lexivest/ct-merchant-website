@@ -62,26 +62,51 @@ function Search() {
 
     const q = initialQuery.trim().replace(/,/g, "") // Sanitize for PostgREST
     if (!q) {
-      const { data: defaultShops } = await supabase.from("shops").select("*").eq("city_id", profile.city_id).order("name", { ascending: true }).limit(30)
+      const { data: defaultShops, error: defaultShopsError } = await supabase
+        .from("shops")
+        .select("*")
+        .eq("city_id", profile.city_id)
+        .order("name", { ascending: true })
+        .limit(30)
+
+      if (defaultShopsError) throw defaultShopsError
       return { shops: defaultShops || [], allProducts: [], matchedProducts: [] }
     }
 
     const ilikeQuery = `%${q}%`
 
     // 1. Fast fetch of all shop IDs in the user's city
-    const { data: cityShops } = await supabase.from("shops").select("id").eq("city_id", profile.city_id)
+    const { data: cityShops, error: cityShopsError } = await supabase
+      .from("shops")
+      .select("id")
+      .eq("city_id", profile.city_id)
+
+    if (cityShopsError) throw cityShopsError
     const cityShopIds = (cityShops || []).map((s) => s.id)
 
     // 2. Backend Search for Shops
-    const { data: shops, error: shopsErr } = await supabase.from("shops").select("*").eq("city_id", profile.city_id).or(`name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},description.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},address.ilike.${ilikeQuery}`).limit(50)
-    if (shopsErr) console.error("Shop search error:", shopsErr)
+    const { data: shops, error: shopsErr } = await supabase
+      .from("shops")
+      .select("*")
+      .eq("city_id", profile.city_id)
+      .or(`name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},description.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},address.ilike.${ilikeQuery}`)
+      .limit(50)
+
+    if (shopsErr) throw shopsErr
 
     // 3. Backend Search for Products
     let cleanedProducts = []
     if (cityShopIds.length > 0) {
       // Safely search using confirmed columns to prevent schema mismatch errors
-      const { data: products, error: prodErr } = await supabase.from("products").select("*").in("shop_id", cityShopIds).eq("is_available", true).or(`name.ilike.${ilikeQuery},description.ilike.${ilikeQuery},category.ilike.${ilikeQuery}`).limit(50)
-      if (prodErr) console.error("Product search error:", prodErr)
+      const { data: products, error: prodErr } = await supabase
+        .from("products")
+        .select("*")
+        .in("shop_id", cityShopIds)
+        .eq("is_available", true)
+        .or(`name.ilike.${ilikeQuery},description.ilike.${ilikeQuery},category.ilike.${ilikeQuery}`)
+        .limit(50)
+
+      if (prodErr) throw prodErr
       cleanedProducts = products || []
     }
 
@@ -89,7 +114,14 @@ function Search() {
     const shopIds = (shops || []).map(s => s.id)
     let additionalProducts = []
     if (shopIds.length > 0) {
-      const { data: shopProds } = await supabase.from("products").select("*").in("shop_id", shopIds).eq("is_available", true).limit(100)
+      const { data: shopProds, error: shopProductsError } = await supabase
+        .from("products")
+        .select("*")
+        .in("shop_id", shopIds)
+        .eq("is_available", true)
+        .limit(100)
+
+      if (shopProductsError) throw shopProductsError
       additionalProducts = shopProds || []
     }
 

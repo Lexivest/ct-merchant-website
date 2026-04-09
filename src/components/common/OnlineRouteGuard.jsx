@@ -32,7 +32,9 @@ function OnlineRouteGuard({
 
   if (!isOffline) return children
 
-  return <RetryingNotice message={`${title}, retrying...`.replace("..", ".")} />
+  const retryMessage = message || `${title}, retrying...`
+
+  return <RetryingNotice message={retryMessage.replace("..", ".")} />
 }
 
 export default OnlineRouteGuard

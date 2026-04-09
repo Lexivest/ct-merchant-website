@@ -6,6 +6,7 @@ const globalCache = new Map()
 const activeFetchers = new Map()
 const MAX_CACHE_SIZE = 150 // Prevent memory leaks for heavy browsing sessions
 let globalListenersAttached = false
+let globalRefreshTimerId = null
 
 function refreshAllActiveFetches() {
   for (const fetcher of activeFetchers.values()) {
@@ -17,9 +18,20 @@ function ensureGlobalFetchListeners() {
   if (typeof window === "undefined" || globalListenersAttached) return
   globalListenersAttached = true
 
+  const scheduleRefresh = () => {
+    if (globalRefreshTimerId) {
+      window.clearTimeout(globalRefreshTimerId)
+    }
+
+    globalRefreshTimerId = window.setTimeout(() => {
+      globalRefreshTimerId = null
+      refreshAllActiveFetches()
+    }, 150)
+  }
+
   const handleResume = () => {
     if (typeof navigator !== "undefined" && navigator.onLine) {
-      refreshAllActiveFetches()
+      scheduleRefresh()
     }
   }
 
@@ -30,7 +42,7 @@ function ensureGlobalFetchListeners() {
       typeof navigator !== "undefined" &&
       navigator.onLine
     ) {
-      refreshAllActiveFetches()
+      scheduleRefresh()
     }
   }
 
@@ -58,8 +70,8 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
     dependencies = [] 
   } = options
 
-  const [tick, setTick] = useState(0) // Used purely to force a re-render
-  const isOfflineRef = useRef(!navigator.onLine)
+  const [, setTick] = useState(0) // Used purely to force a re-render
+  const isOfflineRef = useRef(typeof navigator !== "undefined" ? !navigator.onLine : false)
   const errorRef = useRef(null)
 
   useEffect(() => {
@@ -80,7 +92,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
 
     const fetchData = async ({ force = false } = {}) => {
       // Offline Check
-      if (!navigator.onLine) {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
         isOfflineRef.current = true
         if (globalCache.has(queryKey)) {
           errorRef.current = null
@@ -143,18 +155,11 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       if (isMounted) setTick(t => t + 1)
     }
     
-    const handleOnline = () => {
-      isOfflineRef.current = false
-      fetchData({ force: true })
-    }
-
     window.addEventListener("offline", handleOffline)
-    window.addEventListener("online", handleOnline)
 
     return () => {
       isMounted = false
       window.removeEventListener("offline", handleOffline)
-      window.removeEventListener("online", handleOnline)
       activeFetchers.delete(queryKey)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

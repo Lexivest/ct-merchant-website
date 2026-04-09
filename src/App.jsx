@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from "react"
+import { Suspense, lazy, useCallback, useEffect, useState } from "react"
 import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom"
 import Home from "./pages/Home"
 import About from "./pages/About"
@@ -44,7 +44,7 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
       ? ""
       : `ctm_chunk_retry_${window.location.pathname}_${pageLabel.replace(/\s+/g, "_")}`
 
-  function retryPage(forceManual = false) {
+  const retryPage = useCallback((forceManual = false) => {
     if (typeof window === "undefined") return
     if (forceManual && retryKey) {
       try {
@@ -55,7 +55,7 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
     }
     setIsRetrying(true)
     window.location.reload()
-  }
+  }, [retryKey])
 
   useEffect(() => {
     function handleOnline() {
@@ -96,7 +96,7 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
     }, 700)
 
     return () => window.clearTimeout(timer)
-  }, [isOffline, retryKey])
+  }, [isOffline, retryKey, retryPage])
 
   return (
     <RetryingNotice
@@ -344,7 +344,7 @@ function ProtectedDashboardRoute({ children }) {
       cancelled = true
       window.clearTimeout(timerId)
     }
-  }, [user?.id, isOffline])
+  }, [user, isOffline])
 
   if (!loading && !user) {
     return <Navigate to="/" replace />

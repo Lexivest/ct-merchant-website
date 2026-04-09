@@ -9,7 +9,6 @@ import {
   FaCircleInfo,
   FaComments,
   FaFlag,
-  FaGlobe,
   FaHouse,
   FaLocationDot,
   FaMapLocationDot,
@@ -17,13 +16,8 @@ import {
   FaShield,
   FaStore,
   FaTriangleExclamation,
-  FaXTwitter,
-  FaTiktok,
 } from "react-icons/fa6"
 import {
-  FaFacebookF,
-  FaInstagram,
-  FaPhone,
   FaWhatsapp,
 } from "react-icons/fa"
 import L from "leaflet"
@@ -40,6 +34,9 @@ import RetryingNotice, { getRetryingMessage } from "../components/common/Retryin
 import ScrollingTicker from "../components/common/ScrollingTicker"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+
+const EMPTY_PRODUCTS = []
+const EMPTY_NEWS = []
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function ShopDetailShimmer() {
@@ -278,7 +275,7 @@ function ShopDetail() {
   // 3. Smart Caching Hook
   // Key includes user?.id so "hasLiked" state caches correctly per user
   const cacheKey = `shop_detail_${shopId}_${user?.id || 'anon'}`
-  const { data, loading: dataLoading, error, isOffline, mutate } = useCachedFetch(
+  const { data, loading: dataLoading, error, mutate } = useCachedFetch(
     cacheKey,
     fetchShopData,
     { dependencies: [shopId, user?.id], ttl: 1000 * 60 * 5 }
@@ -317,8 +314,8 @@ function ShopDetail() {
 
   // Computed Values
   const currentShop = data?.shop
-  const products = data?.products || []
-  const approvedNews = data?.approvedNews || []
+  const products = data?.products ?? EMPTY_PRODUCTS
+  const approvedNews = data?.approvedNews ?? EMPTY_NEWS
   const shopBanner = data?.shopBanner || ""
   const approvedCommentCount = useMemo(
     () => comments.filter((comment) => comment.status === "approved").length,
@@ -623,23 +620,6 @@ function ShopDetail() {
     }
   }
 
-  async function shareShop() {
-    if (!currentShop) return
-    const shareData = {
-      title: currentShop.name,
-      text: `Check out ${currentShop.name} on CTMerchant!`,
-      url: window.location.href,
-    }
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData)
-        return
-      }
-      await navigator.clipboard.writeText(window.location.href)
-      notify({ type: "success", title: "Link copied", message: "The shop link was copied to your clipboard." })
-    } catch { /* ignore */ }
-  }
-
   function formatPrice(value) {
     if (value === null || value === undefined || value === "") return ""
     return `₦${Number(value).toLocaleString()}`
@@ -698,91 +678,6 @@ function ShopDetail() {
     )
   }
 
-  function renderSocialButtons() {
-    if (!currentShop) return null
-    if (!isLoggedIn) {
-      return null
-    }
-    const links = []
-
-    if (currentShop.whatsapp) {
-      links.push(
-        <button
-          key="whatsapp"
-          type="button"
-          onClick={() => setSecurityModalOpen(true)}
-          title="Chat on WhatsApp"
-          className="social-btn animate-[pulse-whatsapp_2s_infinite] rounded-lg border-2 border-[#25D366] bg-[#25D366] text-white shadow-[0_0_0_0_rgba(37,211,102,0.7)] transition hover:-translate-y-0.5 hover:text-white"
-        >
-          <FaWhatsapp />
-        </button>
-      )
-    }
-
-    if (currentShop.phone) {
-      links.push(
-        <a
-          key="phone"
-          href={`tel:${currentShop.phone}`}
-          title="Call Business"
-          className="social-btn rounded-lg bg-blue-500 text-white transition hover:-translate-y-0.5 hover:text-white"
-        >
-          <FaPhone />
-        </a>
-      )
-    }
-
-    if (currentShop.website_url) {
-      const url = currentShop.website_url.startsWith("http") ? currentShop.website_url : `https://${currentShop.website_url}`
-      links.push(
-        <a key="website" href={url} target="_blank" rel="noreferrer" title="Visit Website" className="social-btn rounded-lg bg-indigo-600 text-white transition hover:-translate-y-0.5 hover:text-white">
-          <FaGlobe />
-        </a>
-      )
-    }
-
-    if (currentShop.facebook_url) {
-      const url = currentShop.facebook_url.startsWith("http") ? currentShop.facebook_url : `https://${currentShop.facebook_url}`
-      links.push(
-        <a key="facebook" href={url} target="_blank" rel="noreferrer" title="Facebook" className="social-btn rounded-lg bg-[#1877F2] text-white transition hover:-translate-y-0.5 hover:text-white">
-          <FaFacebookF />
-        </a>
-      )
-    }
-
-    if (currentShop.instagram_url) {
-      const url = currentShop.instagram_url.startsWith("http") ? currentShop.instagram_url : `https://${currentShop.instagram_url}`
-      links.push(
-        <a key="instagram" href={url} target="_blank" rel="noreferrer" title="Instagram" className="social-btn rounded-lg bg-[linear-gradient(45deg,#f09433_0%,#e6683c_25%,#dc2743_50%,#cc2366_75%,#bc1888_100%)] text-white transition hover:-translate-y-0.5 hover:text-white">
-          <FaInstagram />
-        </a>
-      )
-    }
-
-    if (currentShop.twitter_url) {
-      const url = currentShop.twitter_url.startsWith("http") ? currentShop.twitter_url : `https://${currentShop.twitter_url}`
-      links.push(
-        <a key="twitter" href={url} target="_blank" rel="noreferrer" title="X (Twitter)" className="social-btn rounded-lg bg-black text-white transition hover:-translate-y-0.5 hover:text-white">
-          <FaXTwitter />
-        </a>
-      )
-    }
-
-    if (currentShop.tiktok_url) {
-      const url = currentShop.tiktok_url.startsWith("http") ? currentShop.tiktok_url : `https://${currentShop.tiktok_url}`
-      links.push(
-        <a key="tiktok" href={url} target="_blank" rel="noreferrer" title="TikTok" className="social-btn rounded-lg bg-black text-white transition hover:-translate-y-0.5 hover:text-white">
-          <FaTiktok />
-        </a>
-      )
-    }
-
-    if (links.length === 0) {
-      return <span className="text-[0.85rem] text-slate-400">No contact information provided.</span>
-    }
-    return links
-  }
-
   function getCommentAuthor(comment) {
     const profile = authorProfiles[comment.user_id]
     const displayName =
@@ -838,7 +733,7 @@ function ShopDetail() {
       }
 
       navigate(`/product-detail?id=${productRow.id}`)
-    } catch (_error) {
+    } catch {
       notify({
         type: "info",
         title: "Product no longer exists",
@@ -863,18 +758,6 @@ function ShopDetail() {
         shopId
       )}&comment_id=${encodeURIComponent(comment.id)}&context=shop_comment&excerpt=${excerpt}`
     )
-  }
-
-  function beginReply(comment) {
-    const threadParentId = comment.parent_id || comment.id
-    setExpandedThreadId(threadParentId)
-    setReplyTarget({
-      id: threadParentId,
-      authorName: getCommentAuthor(comment).displayName,
-      body: comment.body,
-      productId: comment.product_id ? String(comment.product_id) : "",
-    })
-    setReplyBody("")
   }
 
   function clearReplyComposer() {
@@ -1157,6 +1040,7 @@ function ShopDetail() {
   )
   const isVerified = Boolean(currentShop?.is_verified)
   const isLoggedIn = Boolean(user?.id)
+  const showLegacyInfoLayout = false
 
   return (
     <div className="min-h-screen bg-[#E3E6E6] pb-10">
@@ -1325,7 +1209,7 @@ function ShopDetail() {
           </section>
         ) : null}
 
-        {false ? (
+        {showLegacyInfoLayout ? (
         <section className="mb-2 border-y border-slate-300 bg-white px-4 py-6">
           <div className="mb-5 flex flex-wrap items-center gap-3 overflow-x-auto border-b border-slate-200 pb-3">
             {[

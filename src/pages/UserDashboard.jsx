@@ -50,6 +50,22 @@ const ALLOWED_SERVICE_VIEWS = new Set([
   "wishlist",
 ])
 
+function unwrapSupabaseResult(result) {
+  if (result?.error) {
+    throw result.error
+  }
+
+  return result?.data ?? null
+}
+
+function unwrapSupabaseCount(result) {
+  if (result?.error) {
+    throw result.error
+  }
+
+  return result?.count ?? 0
+}
+
 function DashboardShimmer({ label = "Loading dashboard..." }) {
   return (
     <section className="min-h-screen bg-[#E3E6E6] px-4 py-4">
@@ -145,8 +161,37 @@ function UserDashboard() {
       supabase.from("wishlist").select("*", { count: "exact", head: true }).eq("user_id", user.id),
     ])
 
+    const promos = unwrapSupabaseResult(
+      promosRes,
+      "Promotions could not be loaded right now."
+    ) || []
+    const announcements = unwrapSupabaseResult(
+      announcementsRes,
+      "Announcements could not be loaded right now."
+    ) || []
+    const categories = unwrapSupabaseResult(
+      categoriesRes,
+      "Categories could not be loaded right now."
+    ) || []
+    const areas = unwrapSupabaseResult(
+      areasRes,
+      "Areas could not be loaded right now."
+    ) || []
+    const shops = unwrapSupabaseResult(
+      shopsRes,
+      "Marketplace shops could not be loaded right now."
+    ) || []
+    const notifications = unwrapSupabaseResult(
+      notificationsRes,
+      "Notifications could not be loaded right now."
+    ) || []
+    const wishlistCount = unwrapSupabaseCount(
+      wishlistRes,
+      "Wishlist status could not be loaded right now."
+    )
+
     let products = []
-    const shopIds = (shopsRes.data || []).map((shop) => shop.id)
+    const shopIds = shops.map((shop) => shop.id)
 
     if (shopIds.length > 0) {
       const productsRes = await supabase
@@ -157,20 +202,23 @@ function UserDashboard() {
         .limit(400)
         .order("id", { ascending: true })
 
-      if (!productsRes.error) products = productsRes.data || []
+      products = unwrapSupabaseResult(
+        productsRes,
+        "Products could not be loaded right now."
+      ) || []
     }
 
     return {
       profile: currentProfile,
-      promos: promosRes.data || [],
-      announcements: announcementsRes.data || [],
-      categories: categoriesRes.data || [],
-      areas: areasRes.data || [],
-      shops: shopsRes.data || [],
+      promos,
+      announcements,
+      categories,
+      areas,
+      shops,
       products,
-      notifications: notificationsRes.data || [],
-      wishlistCount: wishlistRes.count || 0,
-      unread: (notificationsRes.data || []).filter((item) => !item.is_read).length,
+      notifications,
+      wishlistCount,
+      unread: notifications.filter((item) => !item.is_read).length,
     }
   }
 

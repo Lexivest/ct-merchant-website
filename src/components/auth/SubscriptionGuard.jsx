@@ -1,49 +1,106 @@
-import { Navigate } from "react-router-dom";
-import useAuthSession from "../../hooks/useAuthSession";
-import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { useEffect, useState } from "react"
+import { Navigate } from "react-router-dom"
+import useAuthSession from "../../hooks/useAuthSession"
+import { supabase } from "../../lib/supabase"
+
+const SUBSCRIPTION_CACHE_KEY = "ctmerchant_subscription_guard_v1"
+
+function readCachedSubscription(userId) {
+  if (typeof localStorage === "undefined" || !userId) return null
+
+  try {
+    const raw = localStorage.getItem(SUBSCRIPTION_CACHE_KEY)
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw)
+    if (parsed?.userId !== userId) return null
+
+    return typeof parsed.isActive === "boolean" ? parsed.isActive : null
+  } catch {
+    return null
+  }
+}
+
+function writeCachedSubscription(userId, isActive) {
+  if (typeof localStorage === "undefined" || !userId) return
+
+  try {
+    localStorage.setItem(
+      SUBSCRIPTION_CACHE_KEY,
+      JSON.stringify({
+        userId,
+        isActive: Boolean(isActive),
+        updatedAt: Date.now(),
+      })
+    )
+  } catch {
+    // ignore
+  }
+}
+
+function clearCachedSubscription() {
+  if (typeof localStorage === "undefined") return
+
+  try {
+    localStorage.removeItem(SUBSCRIPTION_CACHE_KEY)
+  } catch {
+    // ignore
+  }
+}
 
 export default function SubscriptionGuard({ children }) {
-  const { user, loading, isOffline } = useAuthSession();
-  const [isActive, setIsActive] = useState(true);
-  const [checking, setChecking] = useState(true);
+  const { user, loading, isOffline } = useAuthSession()
+  const [isActive, setIsActive] = useState(() =>
+    user?.id ? readCachedSubscription(user.id) : null
+  )
+  const [checking, setChecking] = useState(true)
 
   useEffect(() => {
     async function checkSubscription() {
-      if (!user) return;
-      if (isOffline) {
-        // If offline, let them see cached data rather than locking them out unnecessarily
-        setChecking(false);
-        return;
+      if (!user) {
+        clearCachedSubscription()
+        setIsActive(false)
+        setChecking(false)
+        return
       }
-      
+
+      const cachedStatus = readCachedSubscription(user.id)
+
+      if (isOffline) {
+        setIsActive(cachedStatus)
+        setChecking(false)
+        return
+      }
+
       try {
-        // --- THE FIX: Fetch the secure server-side boolean ---
         const { data, error } = await supabase
           .from("shops")
           .select("is_subscription_active")
           .eq("owner_id", user.id)
-          .maybeSingle();
+          .maybeSingle()
 
-        if (error) throw error;
+        if (error) throw error
 
-        // --- THE FIX: Unconditionally trust the backend ---
+        let nextIsActive = false
         if (data && data.is_subscription_active !== null) {
-          setIsActive(data.is_subscription_active === true);
-        } else {
-          // If no data exists for some reason, lock them out to be safe
-          setIsActive(false);
+          nextIsActive = data.is_subscription_active === true
         }
-      } catch (err) {
-        console.error("Failed to verify subscription status:", err);
-        setIsActive(false);
+
+        writeCachedSubscription(user.id, nextIsActive)
+        setIsActive(nextIsActive)
+      } catch (error) {
+        console.error("Failed to verify subscription status:", error)
+        setIsActive(cachedStatus)
       } finally {
-        setChecking(false);
+        setChecking(false)
       }
     }
 
-    if (!loading) checkSubscription();
-  }, [user, loading, isOffline]);
+    if (!loading) {
+      setChecking(true)
+      void checkSubscription()
+    }
+  }, [user, loading, isOffline])
 
   if (loading || checking) {
     return (
@@ -51,13 +108,12 @@ export default function SubscriptionGuard({ children }) {
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-pink-600/20 border-t-pink-600"></div>
         <p className="mt-4 font-semibold text-slate-500">Verifying access...</p>
       </div>
-    );
+    )
   }
 
-  // THE KICK: If expired, bounce them directly to the billing page!
   if (!isActive) {
-    return <Navigate to="/service-fee" replace />;
+    return <Navigate to="/service-fee" replace />
   }
 
-  return children;
+  return children
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaArrowLeft,
@@ -72,7 +72,7 @@ export default function MerchantAnalytics() {
   const [shopId, setShopId] = useState(urlShopId);
   const [stats, setStats] = useState({ views: 0, clicks: 0, likes: 0, conversion: "0.0%" });
 
-  const fetchStats = async (isRefresh = false) => {
+  const fetchStats = useCallback(async (isRefresh = false) => {
     if (isOffline) {
       if (!isRefresh) setError("Network offline. Please connect to the internet to view analytics.");
       else notify({ type: "error", title: "Network unavailable", message: "You must be online to refresh statistics." });
@@ -135,13 +135,13 @@ export default function MerchantAnalytics() {
       if (isRefresh) setRefreshing(false);
       else setLoading(false);
     }
-  };
+  }, [isOffline, notify, shopId, user]);
 
   useEffect(() => {
     if (!authLoading && user) {
       fetchStats(false);
     }
-  }, [user, authLoading]); // Intentionally not including shopId so it only runs once on mount
+  }, [authLoading, fetchStats, user]);
 
 
   if (authLoading || loading) return <AnalyticsShimmer />;

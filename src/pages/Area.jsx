@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -27,16 +27,23 @@ function Area() {
   // 1. Unified Auth State (isOffline removed to rely on global wrapper)
   const { user, loading: authLoading } = useAuthSession()
 
-  // Gatekeeper Redirect
-  if (!authLoading && !user) {
-    navigate("/", { replace: true })
-    return null
-  }
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/", { replace: true })
+    }
+  }, [authLoading, navigate, user])
 
   // 2. Extracted Data Fetching Logic for Hook
   const fetchAreaShops = async () => {
     if (!areaId) {
       throw new Error("Area ID missing.")
+    }
+
+    if (!user) {
+      return {
+        areaName: "Area",
+        shops: [],
+      }
     }
 
     const [
@@ -66,7 +73,7 @@ function Area() {
   const { data, loading: dataLoading, error: dataError, mutate } = useCachedFetch(
     cacheKey,
     fetchAreaShops,
-    { dependencies: [areaId], ttl: 1000 * 60 * 15 } // Cache area data for 15 minutes
+    { dependencies: [areaId, user?.id], ttl: 1000 * 60 * 15 } // Cache area data for 15 minutes
   )
 
   const areaName = data?.areaName || ""
@@ -103,7 +110,7 @@ function Area() {
       </header>
 
       <main className="mx-auto w-full max-w-[800px] flex-1 px-4 py-5">
-        {authLoading || (dataLoading && !data) ? (
+        {authLoading || (!user && !authLoading) || (dataLoading && !data) ? (
           <div className="pt-2">
             <ShimmerList />
           </div>

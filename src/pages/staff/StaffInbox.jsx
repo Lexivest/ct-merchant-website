@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import {
@@ -23,11 +23,7 @@ export default function StaffInbox() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [updating, setUpdating] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, [activeTab]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setSelectedItem(null);
     setItems([]); 
@@ -81,7 +77,11 @@ export default function StaffInbox() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const updateStatus = async (id, newStatus, type) => {
     setUpdating(true);

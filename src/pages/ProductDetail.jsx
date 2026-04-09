@@ -138,7 +138,7 @@ function ProductDetail() {
 
   // 3. Smart Caching Hook
   const cacheKey = `prod_detail_${productId}_${user?.id || 'anon'}`
-  const { data, loading: dataLoading, error, isOffline } = useCachedFetch(
+  const { data, loading: dataLoading, error } = useCachedFetch(
     cacheKey,
     fetchProductData,
     { dependencies: [productId, user?.id], ttl: 1000 * 60 * 5 }
@@ -172,7 +172,6 @@ function ProductDetail() {
     if (data) {
       setIsInWishlist(data.initialWishlist)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data])
 
   useEffect(() => {
@@ -185,7 +184,7 @@ function ProductDetail() {
       ""
 
     setSelectedImage(nextImage)
-  }, [currentProduct?.id])
+  }, [currentProduct])
 
   const galleryImages = useMemo(() => {
     const images = [

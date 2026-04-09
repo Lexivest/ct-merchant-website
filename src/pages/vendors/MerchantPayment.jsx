@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaCircleNotch,
@@ -28,12 +28,16 @@ async function extractFunctionErrorMessage(error, fallback = "Verification faile
       if (asJson && typeof asJson.error === "string" && asJson.error.trim()) {
         return asJson.error;
       }
-    } catch (_) {}
+    } catch {
+      // Ignore non-JSON edge function error bodies.
+    }
 
     try {
       const asText = await context.clone().text();
       if (asText && asText.trim()) return asText.trim();
-    } catch (_) {}
+    } catch {
+      // Ignore non-text edge function error bodies.
+    }
   }
 
   if (rawMessage.trim()) return rawMessage;
@@ -155,7 +159,7 @@ export default function MerchantPayment() {
     if (!authLoading) init();
   }, [user, authLoading, isOffline, urlShopId, callbackReference, navigate, notify]);
 
-  const verifyPaymentOnBackend = async (txId, gateway, { auto = false } = {}) => {
+  const verifyPaymentOnBackend = useCallback(async (txId, gateway, { auto = false } = {}) => {
     if (!txId || processing) return;
 
     try {
@@ -192,7 +196,7 @@ export default function MerchantPayment() {
       setStatusMsg(getFriendlyErrorMessage(error, "Verification failed."));
       setProcessing(false);
     }
-  };
+  }, [navigate, processing, urlShopId, user]);
 
   useEffect(() => {
     if (!user || !urlShopId || callbackPayment !== "physical" || !callbackReference) return;
@@ -200,7 +204,7 @@ export default function MerchantPayment() {
 
     setHandledReturnRef(callbackReference);
     verifyPaymentOnBackend(callbackReference, "paystack", { auto: true });
-  }, [user, urlShopId, callbackPayment, callbackReference, handledReturnRef]);
+  }, [callbackPayment, callbackReference, handledReturnRef, urlShopId, user, verifyPaymentOnBackend]);
 
   const handleApplyPromo = () => {
     if (processing || startingCheckout) return;

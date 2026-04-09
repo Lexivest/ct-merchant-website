@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaArrowLeft,
@@ -32,12 +32,16 @@ async function extractFunctionErrorMessage(error, fallback = "Verification faile
       if (asJson && typeof asJson.error === "string" && asJson.error.trim()) {
         return asJson.error;
       }
-    } catch (_) {}
+    } catch {
+      // Ignore non-JSON edge function error bodies.
+    }
 
     try {
       const asText = await context.clone().text();
       if (asText && asText.trim()) return asText.trim();
-    } catch (_) {}
+    } catch {
+      // Ignore non-text edge function error bodies.
+    }
   }
 
   if (rawMessage.trim()) return rawMessage;
@@ -69,10 +73,9 @@ export default function MerchantServiceFee() {
   const [startingCheckout, setStartingCheckout] = useState(false);
   const [processingNote, setProcessingNote] = useState("Please do not close this window.");
   const [shopData, setShopData] = useState(null);
-  const [firstName, setFirstName] = useState("Merchant");
   const [handledReturnRef, setHandledReturnRef] = useState("");
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     if (!user) return;
     if (isOffline) {
       setError("Network unavailable. Retry.");
@@ -82,9 +85,6 @@ export default function MerchantServiceFee() {
 
     try {
       setLoading(true);
-
-      const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
-      if (profile?.full_name) setFirstName(profile.full_name.split(" ")[0]);
 
       let currentShopId = urlShopId;
       if (!currentShopId) {
@@ -108,11 +108,11 @@ export default function MerchantServiceFee() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isOffline, urlShopId, user]);
 
   useEffect(() => {
     if (!authLoading) fetchSubscription();
-  }, [user, authLoading, urlShopId, isOffline]);
+  }, [authLoading, fetchSubscription]);
 
   useEffect(() => {
     if (!user?.id || !shopData?.id || isOffline) return undefined;
@@ -145,7 +145,7 @@ export default function MerchantServiceFee() {
     };
   }, [user?.id, shopData?.id, isOffline]);
 
-  const verifySubscriptionOnBackend = async (txId, planKey, gateway = "paystack", { auto = false } = {}) => {
+  const verifySubscriptionOnBackend = useCallback(async (txId, planKey, gateway = "paystack", { auto = false } = {}) => {
     if (!txId || !shopData?.id || processing) return;
 
     try {
@@ -180,7 +180,7 @@ export default function MerchantServiceFee() {
       setProcessing(false);
       setProcessingNote("Please do not close this window.");
     }
-  };
+  }, [fetchSubscription, navigate, notify, processing, shopData?.id]);
 
   useEffect(() => {
     if (!shopData?.id || callbackPayment !== "service_fee" || !callbackReference || !callbackPlan) return;
@@ -189,7 +189,7 @@ export default function MerchantServiceFee() {
 
     setHandledReturnRef(callbackReference);
     verifySubscriptionOnBackend(callbackReference, callbackPlan, "paystack", { auto: true });
-  }, [shopData?.id, callbackPayment, callbackReference, callbackPlan, handledReturnRef]);
+  }, [callbackPayment, callbackPlan, callbackReference, handledReturnRef, shopData?.id, verifySubscriptionOnBackend]);
 
   const startPaystackCheckout = async (planKey) => {
     if (processing || startingCheckout || !shopData?.id) return;

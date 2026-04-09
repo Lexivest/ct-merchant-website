@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
@@ -321,7 +322,6 @@ export function StaffPortalShell({
   children,
   headerActions = null,
 }) {
-  const navigate = useNavigate()
   const { authUser, staffData, fetchingStaff, isLoggingOut, handleLogout } = useStaffPortalSession()
 
   if (fetchingStaff) {
@@ -418,4 +418,3 @@ export function StaffPortalShell({
     </div>
   )
 }
-

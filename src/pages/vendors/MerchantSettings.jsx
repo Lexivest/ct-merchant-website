@@ -23,7 +23,6 @@ import {
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
-import useCachedFetch from "../../hooks/useCachedFetch";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
@@ -182,7 +181,9 @@ export default function MerchantSettings() {
       if (updateError) throw updateError;
 
       // Invalidate cache
-      try { localStorage.removeItem(`ctm_dashboard_cache`); } catch(e){}
+      try { localStorage.removeItem(`ctm_dashboard_cache`); } catch {
+        // Ignore cache cleanup failures after a successful update.
+      }
 
       navigate("/vendor-panel");
 

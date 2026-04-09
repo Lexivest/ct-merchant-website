@@ -75,7 +75,6 @@ function VendorsPanel() {
 
   const { user, loading: authLoading, isOffline } = useAuthSession()
   const [realtimeShop, setRealtimeShop] = useState(null)
-  const [realtimeRejectedCount, setRealtimeRejectedCount] = useState(null)
 
   const fetchMerchantData = async () => {
     if (!user) throw new Error("Authentication required")
@@ -203,10 +202,7 @@ function VendorsPanel() {
   if (!data?.shop) return null
 
   const activeShop = realtimeShop || data.shop
-  const activeRejectedCount =
-    realtimeRejectedCount !== null
-      ? realtimeRejectedCount
-      : data.rejectedProductCount
+  const activeRejectedCount = data.rejectedProductCount
 
   const hasPaidFee = data.hasPaidFee
   const isVerified =

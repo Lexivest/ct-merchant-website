@@ -766,7 +766,9 @@ function ShopRegistration() {
       setReviewOpen(false)
       window.scrollTo({ top: 0, behavior: "smooth" })
 
-      try { localStorage.removeItem("ctm_dashboard_cache") } catch (e) {}
+      try { localStorage.removeItem("ctm_dashboard_cache") } catch {
+        // Ignore cache cleanup failures after a successful submission.
+      }
 
       setTimeout(() => navigate("/user-dashboard"), 1200)
     } catch (error) {

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { isNetworkError } from "../../lib/friendlyErrors"
 import { FaRotateRight } from "react-icons/fa6"
 

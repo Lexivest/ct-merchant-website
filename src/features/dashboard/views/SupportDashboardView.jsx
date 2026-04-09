@@ -2,6 +2,7 @@
 import { createPortal } from "react-dom"
 import { FaArrowLeft, FaCircleCheck } from "react-icons/fa6"
 import { supabase } from "../../../lib/supabase"
+import { getFriendlyErrorMessage } from "../../../lib/friendlyErrors"
 
 function SupportDashboardView({ onBack, onOpenServices, mode = "support" }) {
   const [formData, setFormData] = useState({

@@ -514,7 +514,9 @@ export default function EditProduct() {
           try {
             const fileName = decodeURIComponent(new URL(existingUrls[i]).pathname.split('/').pop());
             if (fileName) pathsToDelete.push(fileName);
-          } catch(e) {}
+          } catch {
+            // Ignore malformed legacy URLs during cleanup.
+          }
         }
       });
       if (pathsToDelete.length > 0) {
@@ -555,7 +557,9 @@ export default function EditProduct() {
           try {
             const fileName = decodeURIComponent(new URL(url).pathname.split('/').pop());
             if(fileName) pathsToDelete.push(fileName);
-          } catch(e) {}
+          } catch {
+            // Ignore malformed legacy URLs during cleanup.
+          }
         }
       });
       

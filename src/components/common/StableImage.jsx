@@ -44,19 +44,24 @@ function StableImage({
   fetchPriority,
 }) {
   const rootRef = useRef(null)
-  const [isNearViewport, setIsNearViewport] = useState(false)
-  const [displaySrc, setDisplaySrc] = useState(null)
-  const [ready, setReady] = useState(false)
+  const [isNearViewport, setIsNearViewport] = useState(() => {
+    if (typeof window === "undefined") return false
+    return !("IntersectionObserver" in window)
+  })
+  const [failedSrc, setFailedSrc] = useState(null)
+  const [loadedSrc, setLoadedSrc] = useState(null)
+  const primarySrc = src || fallbackSrc
+  const displaySrc = isNearViewport ? (failedSrc === primarySrc ? fallbackSrc : primarySrc) : null
+  const ready = Boolean(
+    displaySrc && (loadedImageCache.has(displaySrc) || loadedSrc === displaySrc)
+  )
 
   useEffect(() => {
     const node = rootRef.current
     if (!node) return undefined
 
     const observer = getSharedObserver()
-    if (!observer) {
-      setIsNearViewport(true)
-      return undefined
-    }
+    if (!observer) return undefined
 
     observerListeners.set(node, () => setIsNearViewport(true))
     observer.observe(node)
@@ -66,14 +71,6 @@ function StableImage({
       observer.unobserve(node)
     }
   }, [])
-
-  useEffect(() => {
-    if (!isNearViewport) return
-
-    const nextSrc = src || fallbackSrc
-    setDisplaySrc(nextSrc)
-    setReady(loadedImageCache.has(nextSrc))
-  }, [isNearViewport, src, fallbackSrc])
 
   function handleLoad() {
     if (!displaySrc) return
@@ -85,16 +82,17 @@ function StableImage({
     }
     
     loadedImageCache.add(displaySrc)
-    setReady(true)
+    setLoadedSrc(displaySrc)
   }
 
   function handleError() {
     if (displaySrc && displaySrc !== fallbackSrc) {
-      setReady(false)
-      setDisplaySrc(fallbackSrc)
+      setFailedSrc(primarySrc)
       return
     }
-    setReady(true)
+    if (displaySrc) {
+      setLoadedSrc(displaySrc)
+    }
   }
 
   return (

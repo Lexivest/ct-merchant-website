@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   FaChartLine,
@@ -70,7 +70,7 @@ export default function StaffDashboard() {
     visitsToday: 0,
   })
 
-  async function fetchSummary() {
+  const fetchSummary = useCallback(async () => {
     setLoading(true)
     try {
       const [shopsResult, commentsResult, usersResult, visitsResult] = await Promise.all([
@@ -113,12 +113,12 @@ export default function StaffDashboard() {
     } finally {
       if (isMounted.current) setLoading(false)
     }
-  }
+  }, [notify])
 
   useEffect(() => {
     fetchSummary()
     return () => { isMounted.current = false }
-  }, [])
+  }, [fetchSummary])
 
   const headerActions = useMemo(
     () => [
@@ -143,7 +143,7 @@ export default function StaffDashboard() {
         onClick={() => navigate("/staff-studio")}
       />,
     ],
-    [loading, navigate]
+    [fetchSummary, loading, navigate]
   )
 
   return (

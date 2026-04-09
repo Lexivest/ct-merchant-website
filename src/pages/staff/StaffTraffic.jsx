@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { FaChartLine, FaCircleNotch } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
-import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import {
   SectionHeading,
@@ -12,7 +11,6 @@ import {
 } from "./StaffPortalShared"
 
 export default function StaffTraffic() {
-  const { notify } = useGlobalFeedback()
   const [visitWindow, setVisitWindow] = useState(30)
   const [visitStats, setVisitStats] = useState([])
   const [topPages, setTopPages] = useState([])
@@ -166,4 +164,3 @@ export default function StaffTraffic() {
     </StaffPortalShell>
   )
 }
-
