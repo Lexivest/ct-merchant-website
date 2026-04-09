@@ -121,6 +121,8 @@ function PromoBannerArtwork({
   const addressClass = exportMode ? "text-[16px]" : "text-[0.8rem] sm:text-[16px]";
   const footerNoteClass = exportMode ? "text-[13px]" : "text-[0.65rem] sm:text-[13px]";
   const locationIconClass = exportMode ? "text-[18px]" : "text-[14px] sm:text-[18px]";
+  const qrBlendClass = exportMode ? "" : "mix-blend-multiply";
+  const productBlendClass = exportMode ? "" : "mix-blend-multiply";
 
   return (
     <div className={`flex flex-col overflow-hidden rounded-[26px] bg-[#003B95] text-white shadow-[0_15px_30px_rgba(0,0,0,0.16)] ${shellClass} ${className}`}>
@@ -152,7 +154,7 @@ function PromoBannerArtwork({
               crossOrigin="anonymous"
               src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`}
               alt="Shop QR Code"
-              className={`object-cover opacity-90 mix-blend-multiply ${qrClass}`}
+              className={`object-cover opacity-90 ${qrBlendClass} ${qrClass}`}
             />
           </div>
         </div>
@@ -178,7 +180,7 @@ function PromoBannerArtwork({
                   crossOrigin="anonymous"
                   src={product.image_url}
                   alt={product.name || `Product ${index + 1}`}
-                  className="absolute inset-0 h-full w-full object-contain mix-blend-multiply p-1"
+                  className={`absolute inset-0 h-full w-full object-contain p-1 ${productBlendClass}`}
                 />
                 
                 {hasDiscount && (
@@ -354,20 +356,43 @@ export default function MerchantPromoBanner() {
   }, [user, authLoading, urlShopId, isOffline]);
 
   const generateBannerBlob = async () => {
-    if (!exportBannerRef.current) throw new Error("Banner element not found.");
+    const exportNode = exportBannerRef.current;
+    if (!exportNode) throw new Error("Banner element not found.");
 
-    await waitForExportAssets(exportBannerRef.current);
+    await waitForExportAssets(exportNode);
     const html2canvas = await loadHtml2canvas();
+    const width = exportNode.scrollWidth;
+    const height = exportNode.scrollHeight;
+    const deviceScale = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    const preferredScale = Math.min(2.5, Math.max(2, deviceScale));
+    const maxPixels = 9_000_000;
+    const maxSafeScale = Math.sqrt(maxPixels / Math.max(1, width * height));
+    const scale = Math.max(1.5, Math.min(preferredScale, maxSafeScale || preferredScale));
 
-    const canvas = await html2canvas(exportBannerRef.current, {
-      scale: 3, // Ensures a highly crisp 2400px wide export
+    const canvas = await html2canvas(exportNode, {
+      scale,
       useCORS: true,
+      allowTaint: false,
       backgroundColor: "#003B95",
+      width,
+      height,
+      windowWidth: width,
+      windowHeight: height,
+      scrollX: 0,
+      scrollY: 0,
+      imageTimeout: 15000,
+      removeContainer: true,
       logging: false,
     });
 
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => resolve(blob), "image/png");
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error("Could not generate banner image."));
+          return;
+        }
+        resolve(blob);
+      }, "image/png", 1);
     });
   };
 
@@ -507,7 +532,7 @@ export default function MerchantPromoBanner() {
         </div>
 
         {/* Hidden Export Node - Prevents mobile distortion */}
-        <div className="fixed -left-[10000px] top-0 z-[-1] pointer-events-none opacity-0">
+        <div className="fixed -left-[10000px] top-0 z-[-1] pointer-events-none" aria-hidden="true">
           <div className="w-[800px]" ref={exportBannerRef}>
             <PromoBannerArtwork
               products={products}
