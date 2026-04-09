@@ -57,7 +57,10 @@
   position: relative;
   width: 100%;
   overflow: hidden;
-  contain: layout paint;
+  isolation: isolate;
+  contain: layout paint style;
+  transform: translateZ(0);
+  backface-visibility: hidden;
   --ctm-ticker-speed-factor: 1;
 }
 
@@ -81,6 +84,13 @@
   align-items: center;
   white-space: nowrap;
   padding-right: 2.5rem;
+  transform: translateZ(0);
+}
+
+.ticker-wrapper {
+  min-width: 0;
+  isolation: isolate;
+  contain: layout paint style;
   transform: translateZ(0);
 }
 
@@ -153,6 +163,12 @@ img {
   overflow-x: auto;
   gap: 16px;
   padding: 4px 16px 20px;
+  isolation: isolate;
+  contain: layout paint style;
+  transform: translateZ(0);
+  will-change: scroll-position;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -201,6 +217,8 @@ img {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .premium-shop-card {
@@ -213,6 +231,9 @@ img {
   border-radius: 8px;
   border: 1px solid #d5d9d9;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
   transition:
     background 0.2s,
     box-shadow 0.2s,
@@ -246,6 +267,7 @@ img {
   margin-bottom: 16px;
   flex: 1;
   width: 100%;
+  transform: translateZ(0);
 }
 
 .shop-grid-item-wrap {
