@@ -266,23 +266,6 @@ function RouteLoadingScreen({
   )
 }
 
-function AccountCheckShell() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
-      <div className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-xl">
-        <div className="mx-auto h-2 w-28 animate-pulse rounded-full bg-pink-100" />
-        <h1 className="mt-5 text-3xl font-black text-slate-900">Checking your account</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          Please wait while we confirm your account status and load your profile securely.
-        </p>
-        <p className="mt-3 text-sm leading-6 text-slate-500">
-          If your account is restricted, we will show a support message instead of the dashboard.
-        </p>
-      </div>
-    </div>
-  )
-}
-
 function NotFoundPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6 text-center">
@@ -377,8 +360,13 @@ function ProtectedDashboardRoute({ children }) {
     )
   }
 
-  if (user && !profileLoaded) {
-    return <AccountCheckShell />
+  if (loading || (user && !profileLoaded)) {
+    return (
+      <RouteLoadingScreen
+        title="Loading dashboard"
+        message="Please wait while we prepare your dashboard."
+      />
+    )
   }
 
   const needsProfileSetup =

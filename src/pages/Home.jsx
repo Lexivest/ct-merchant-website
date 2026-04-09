@@ -90,11 +90,40 @@ const testimonials = [
   },
 ]
 
+function DashboardRedirectShimmer() {
+  return (
+    <div className="min-h-screen bg-[#E3E6E6] px-4 py-6">
+      <div className="mx-auto max-w-[1200px]">
+        <div className="mb-4 flex items-center justify-between rounded-xl bg-[#131921] px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="h-6 w-6 animate-pulse rounded bg-white/20" />
+            <div className="h-5 w-36 animate-pulse rounded bg-white/20" />
+          </div>
+          <div className="h-6 w-6 animate-pulse rounded bg-white/20" />
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <div className="aspect-video w-full animate-pulse rounded-xl bg-slate-200" />
+          <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="space-y-2">
+                <div className="aspect-square animate-pulse rounded-lg bg-slate-100" />
+                <div className="h-4 w-3/4 animate-pulse rounded bg-slate-100" />
+                <div className="h-4 w-1/2 animate-pulse rounded bg-slate-100" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Home() {
   const navigate = useNavigate()
 
   // 1. Hook into global auth state
-  const { user, suspended, profileLoaded, isOffline, loading: authLoading } = useAuthSession()
+  const { user, suspended, isOffline, loading: authLoading } = useAuthSession()
   const { notify } = useGlobalFeedback()
   const shouldRedirectToDashboard = Boolean(user) && !suspended && !isOffline
 
@@ -224,13 +253,6 @@ function Home() {
 
       await updateLastActiveIp(signedInUser.id, result.ipData.ip)
 
-      notify({
-        type: "success",
-        title: "Google sign-in successful",
-        message: "Opening your dashboard...",
-        autoCloseMs: 1400,
-      })
-
     } catch (error) {
       const message = getFriendlyErrorMessage(error, "Please try again.")
       const isSuspendedMessage = /suspended|restricted/i.test(message)
@@ -355,13 +377,6 @@ function Home() {
 
       await updateLastActiveIp(signedInUser.id, result.ipData.ip)
 
-      notify({
-        type: "success",
-        title: "Login successful",
-        message: "Opening your dashboard...",
-        autoCloseMs: 1400,
-      })
-      
     } catch (error) {
       const message = getFriendlyErrorMessage(error, "We could not sign you in. Check your connection and try again.")
       const isSuspendedMessage = /suspended|restricted/i.test(message)
@@ -518,31 +533,7 @@ function Home() {
   }
 
   if (shouldRedirectToDashboard) {
-    return (
-      <MainLayout>
-        <PageSeo
-          title="Opening Dashboard | CTMerchant"
-          description="Opening your CTMerchant dashboard."
-          canonicalPath="/"
-        />
-        <div className="min-h-screen bg-pink-50 px-4 py-10">
-          <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center">
-            <div className="w-full max-w-xl rounded-[28px] border border-pink-100 bg-white p-8 text-center shadow-sm">
-              <div className="mx-auto h-2 w-24 rounded-full bg-pink-200" />
-              <h1 className="mt-5 text-3xl font-black text-slate-900">Opening your dashboard</h1>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                We found your active session and are taking you straight to your workspace.
-              </p>
-              {authLoading || !profileLoaded ? (
-                <p className="mt-3 text-sm leading-6 text-slate-500">
-                  Confirming your account details securely...
-                </p>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      </MainLayout>
-    )
+    return <DashboardRedirectShimmer />
   }
 
   return (
