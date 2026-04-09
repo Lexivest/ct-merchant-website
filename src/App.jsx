@@ -8,6 +8,7 @@ import SiteVisitTracker from "./components/common/SiteVisitTracker"
 import RetryingNotice from "./components/common/RetryingNotice"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
+import Home from "./pages/Home"
 
 function isChunkLoadFailure(error) {
   const message = String(error?.message || error || "").toLowerCase()
@@ -117,9 +118,6 @@ function resilientLazy(importer, options = {}) {
 }
 
 // --- IMPORTS ---
-const Home = resilientLazy(() => import("./pages/Home"), {
-  pageLabel: "home",
-})
 const About = resilientLazy(() => import("./pages/About"), {
   pageLabel: "about",
 })

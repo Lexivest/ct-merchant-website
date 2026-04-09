@@ -94,19 +94,17 @@ function Home() {
   const navigate = useNavigate()
 
   // 1. Hook into global auth state
-  const { user, profile, suspended, profileLoaded, isOffline } = useAuthSession()
+  const { user, suspended, profileLoaded, isOffline, loading: authLoading } = useAuthSession()
   const { notify } = useGlobalFeedback()
+  const shouldRedirectToDashboard = Boolean(user) && !suspended && !isOffline
 
   // 2. Smooth Auto-Redirect
   useEffect(() => {
-    if (user && profileLoaded && profile && !suspended && !isOffline) {
+    if (!authLoading && shouldRedirectToDashboard) {
       void import("./UserDashboard")
-      const timer = setTimeout(() => {
-        navigate("/user-dashboard", { replace: true })
-      }, 150)
-      return () => clearTimeout(timer)
+      navigate("/user-dashboard", { replace: true })
     }
-  }, [user, profile, profileLoaded, suspended, isOffline, navigate])
+  }, [authLoading, navigate, shouldRedirectToDashboard])
 
   // --- BANNER CAROUSEL STATE & TIMER ---
   const [currentBanner, setCurrentBanner] = useState(0)
@@ -517,6 +515,34 @@ function Home() {
     } finally {
       setRepoSearchLoading(false)
     }
+  }
+
+  if (shouldRedirectToDashboard) {
+    return (
+      <MainLayout>
+        <PageSeo
+          title="Opening Dashboard | CTMerchant"
+          description="Opening your CTMerchant dashboard."
+          canonicalPath="/"
+        />
+        <div className="min-h-screen bg-pink-50 px-4 py-10">
+          <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center">
+            <div className="w-full max-w-xl rounded-[28px] border border-pink-100 bg-white p-8 text-center shadow-sm">
+              <div className="mx-auto h-2 w-24 rounded-full bg-pink-200" />
+              <h1 className="mt-5 text-3xl font-black text-slate-900">Opening your dashboard</h1>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                We found your active session and are taking you straight to your workspace.
+              </p>
+              {authLoading || !profileLoaded ? (
+                <p className="mt-3 text-sm leading-6 text-slate-500">
+                  Confirming your account details securely...
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </MainLayout>
+    )
   }
 
   return (
