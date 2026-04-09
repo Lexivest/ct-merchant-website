@@ -181,12 +181,9 @@ function ShopDetail() {
     if (shopData.owner_id) {
       tasks.push(
         supabase
-          .from("profiles")
-          .select("id, full_name, avatar_url")
-          .eq("id", shopData.owner_id)
-          .maybeSingle()
+          .rpc("get_public_profiles", { profile_ids: [shopData.owner_id] })
           .then((res) => {
-            if (!res.error) fetchedOwnerProfile = res.data || null
+            if (!res.error) fetchedOwnerProfile = Array.isArray(res.data) ? res.data[0] || null : null
           })
           .catch(() => {})
       )
@@ -825,9 +822,34 @@ function ShopDetail() {
     )
   }
 
-  function openProductDetail(productId) {
+  async function openProductDetail(productId) {
     if (!productId) return
-    navigate(`/product-detail?id=${productId}`)
+
+    try {
+      const { data: productRow, error: productError } = await supabase
+        .from("products")
+        .select("id")
+        .eq("id", Number(productId))
+        .maybeSingle()
+
+      if (productError) throw productError
+      if (!productRow?.id) {
+        notify({
+          type: "info",
+          title: "Product no longer exists",
+          message: "This tagged product is no longer available.",
+        })
+        return
+      }
+
+      navigate(`/product-detail?id=${productRow.id}`)
+    } catch (_error) {
+      notify({
+        type: "info",
+        title: "Product no longer exists",
+        message: "This tagged product is no longer available.",
+      })
+    }
   }
 
   function openAbuseReport(comment) {
