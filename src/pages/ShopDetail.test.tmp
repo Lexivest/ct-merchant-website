@@ -16,8 +16,6 @@ import {
 import {
   FaWhatsapp,
 } from "react-icons/fa"
-import L from "leaflet"
-import "leaflet/dist/leaflet.css"
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
@@ -31,6 +29,7 @@ import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 
 const EMPTY_PRODUCTS = []
 const EMPTY_NEWS = []
+const ShopLocationMap = lazy(() => import("../components/shop/ShopLocationMap"))
 const ShopCommunitySection = lazy(() => import("../components/shop/ShopCommunitySection"))
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
@@ -92,6 +91,10 @@ function ShopSectionFallback({ title, body }) {
       {body ? <div className="sr-only">{body}</div> : null}
     </div>
   )
+}
+
+function MapPanelFallback() {
+  return <div className="h-[260px] w-full rounded-[18px] border border-slate-200 bg-slate-100" />
 }
 
 function ShopDetail() {
@@ -266,8 +269,6 @@ function ShopDetail() {
     }
   }, [data])
 
-  const mapRef = useRef(null)
-  const mapInstanceRef = useRef(null)
   const communityLoaderRef = useRef(null)
 
   // Computed Values
@@ -1111,28 +1112,8 @@ function ShopDetail() {
 
         ) : null}
 
-        <div ref={communityLoaderRef} className="h-px" aria-hidden="true" />
-
-        {shouldLoadCommunity ? (
-          <Suspense
-            fallback={<ShopSectionFallback title="Shop Community" body="Loading community discussion." />}
-          >
-            <ShopCommunitySection
-              shopId={shopId}
-              ownerId={currentShop?.owner_id}
-              shopName={currentShop?.name}
-              products={products}
-              user={user}
-              preselectedProductId={preselectedProductId}
-            />
-          </Suspense>
-        ) : (
-          <ShopSectionFallback
-            title="Shop Community"
-            body="Preparing community discussion."
-          />
-        )}
-      </div>
+TESTLINE1
+TESTLINE2
       {securityModalOpen ? (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[rgba(19,25,33,0.8)] px-4 backdrop-blur-[2px]">
           <div className="w-full max-w-[360px] rounded-lg bg-white px-6 py-7 text-center shadow-[0_10px_25px_rgba(0,0,0,0.2)]">
