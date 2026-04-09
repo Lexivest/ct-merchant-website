@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import html2canvas from "html2canvas";
 import {
   FaArrowLeft,
   FaCircleCheck,
@@ -19,6 +18,16 @@ import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { ShimmerBlock } from "../../components/common/Shimmers";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import logoImage from "../../assets/images/logo.jpg";
+
+let html2canvasPromise = null;
+
+function loadHtml2canvas() {
+  if (!html2canvasPromise) {
+    html2canvasPromise = import("html2canvas").then((module) => module.default);
+  }
+
+  return html2canvasPromise;
+}
 
 function wrapTextLines(input, maxCharsPerLine, maxLines) {
   const text = String(input || "").trim().replace(/\s+/g, " ");
@@ -348,6 +357,7 @@ export default function MerchantPromoBanner() {
     if (!exportBannerRef.current) throw new Error("Banner element not found.");
 
     await waitForExportAssets(exportBannerRef.current);
+    const html2canvas = await loadHtml2canvas();
 
     const canvas = await html2canvas(exportBannerRef.current, {
       scale: 3, // Ensures a highly crisp 2400px wide export

@@ -1,10 +1,21 @@
-import { useEffect, useState } from "react"
+import { memo, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaChevronRight, FaImage } from "react-icons/fa6"
 // IMPORT OUR NEW SHIMMERS
 import { ShimmerBlock, ShimmerCard } from "../../common/Shimmers"
 import StableImage from "../../common/StableImage"
 import RetryingNotice, { getRetryingMessage } from "../../common/RetryingNotice"
+
+const EMPTY_PRODUCTS = []
+let shopDetailPrefetchPromise = null
+
+function prefetchShopDetailPage() {
+  if (!shopDetailPrefetchPromise) {
+    shopDetailPrefetchPromise = import("../../../pages/ShopDetail")
+  }
+
+  return shopDetailPrefetchPromise
+}
 
 function PromoSlider({ promos }) {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -42,15 +53,8 @@ function PromoSlider({ promos }) {
   )
 }
 
-function ShopCard({ shop, products, onOpenShop }) {
-  const shopProducts = (products || [])
-    .filter(
-      (item) =>
-        item.shop_id === shop.id &&
-        item.image_url &&
-        item.condition !== "Fairly Used"
-    )
-    .slice(0, 4)
+const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
+  const shopProducts = products || EMPTY_PRODUCTS
 
   const cells = Array.from({ length: 4 }).map((_, index) => {
     const item = shopProducts[index]
@@ -116,7 +120,13 @@ function ShopCard({ shop, products, onOpenShop }) {
 
   return (
     <div className="premium-shop-card-wrap min-w-[280px] w-[85vw] max-w-[340px] shrink-0">
-      <div className="premium-shop-card" onClick={() => onOpenShop(shop.id)}>
+      <div
+        className="premium-shop-card"
+        onClick={() => onOpenShop(shop.id)}
+        onMouseEnter={prefetchShopDetailPage}
+        onFocus={prefetchShopDetailPage}
+        onPointerDown={prefetchShopDetailPage}
+      >
         <div className="shop-card-title">{shop.name}</div>
         <div className="shop-image-grid">{cells}</div>
         <div className="shop-cta">
@@ -125,7 +135,7 @@ function ShopCard({ shop, products, onOpenShop }) {
       </div>
     </div>
   )
-}
+})
 
 function MarketSection({
   dashboardData,
@@ -149,6 +159,42 @@ function MarketSection({
   function openShop(shopId) {
     navigate(`/shop-detail?id=${shopId}`)
   }
+
+  const productsByShopId = useMemo(() => {
+    const grouped = new Map()
+
+    ;(dashboardData?.products || []).forEach((product) => {
+      if (!product?.shop_id || !product.image_url || product.condition === "Fairly Used") {
+        return
+      }
+
+      const existing = grouped.get(product.shop_id)
+      if (existing && existing.length >= 4) return
+
+      if (existing) {
+        existing.push(product)
+      } else {
+        grouped.set(product.shop_id, [product])
+      }
+    })
+
+    return grouped
+  }, [dashboardData?.products])
+
+  const categoryPreviewImageByName = useMemo(() => {
+    const shopCategoryById = new Map(
+      (dashboardData?.shops || []).map((shop) => [shop.id, shop.category])
+    )
+    const previews = new Map()
+
+    ;(dashboardData?.products || []).forEach((product) => {
+      const categoryName = shopCategoryById.get(product.shop_id)
+      if (!categoryName || !product?.image_url || previews.has(categoryName)) return
+      previews.set(categoryName, product.image_url)
+    })
+
+    return previews
+  }, [dashboardData?.products, dashboardData?.shops])
 
   // 1. PROFESSIONAL ERROR STATE (Only shows if no cache is available)
   if (error && dashboardShellEmpty) {
@@ -201,7 +247,7 @@ function MarketSection({
               <ShopCard
                 key={shop.id}
                 shop={shop}
-                products={dashboardData.products}
+                products={productsByShopId.get(shop.id)}
                 onOpenShop={openShop}
               />
             ))}
@@ -229,7 +275,7 @@ function MarketSection({
               <ShopCard
                 key={shop.id}
                 shop={shop}
-                products={dashboardData.products}
+                products={productsByShopId.get(shop.id)}
                 onOpenShop={openShop}
               />
             ))}
@@ -245,18 +291,8 @@ function MarketSection({
 
           <div className="cat-grid flex flex-wrap gap-3 px-4 pb-6">
             {(dashboardData.categories || []).map((category) => {
-              const matchingShopIds = (dashboardData.shops || [])
-                .filter((shop) => shop.category === category.name)
-                .map((shop) => shop.id)
-
-              const previewProduct = (dashboardData.products || []).find(
-                (product) =>
-                  matchingShopIds.includes(product.shop_id) &&
-                  product.image_url
-              )
-
               const imageUrl =
-                previewProduct?.image_url ||
+                categoryPreviewImageByName.get(category.name) ||
                 `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
                   category.name
                 )}`

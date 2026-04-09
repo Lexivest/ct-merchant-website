@@ -1,17 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react"
 import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom"
-import Home from "./pages/Home"
-import About from "./pages/About"
-import Services from "./pages/Services"
-import Affiliate from "./pages/Affiliate"
-import Careers from "./pages/Careers"
-import Contact from "./pages/Contact"
-
-import StaffPortal from "./pages/StaffPortal"
-
-import Privacy from "./pages/Privacy"
-import Terms from "./pages/Terms"
-import CreateAccount from "./pages/CreateAccount"
 
 import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
@@ -129,6 +117,36 @@ function resilientLazy(importer, options = {}) {
 }
 
 // --- IMPORTS ---
+const Home = resilientLazy(() => import("./pages/Home"), {
+  pageLabel: "home",
+})
+const About = resilientLazy(() => import("./pages/About"), {
+  pageLabel: "about",
+})
+const Services = resilientLazy(() => import("./pages/Services"), {
+  pageLabel: "services",
+})
+const Affiliate = resilientLazy(() => import("./pages/Affiliate"), {
+  pageLabel: "affiliate",
+})
+const Careers = resilientLazy(() => import("./pages/Careers"), {
+  pageLabel: "careers",
+})
+const Contact = resilientLazy(() => import("./pages/Contact"), {
+  pageLabel: "contact",
+})
+const StaffPortal = resilientLazy(() => import("./pages/StaffPortal"), {
+  pageLabel: "staff portal",
+})
+const Privacy = resilientLazy(() => import("./pages/Privacy"), {
+  pageLabel: "privacy",
+})
+const Terms = resilientLazy(() => import("./pages/Terms"), {
+  pageLabel: "terms",
+})
+const CreateAccount = resilientLazy(() => import("./pages/CreateAccount"), {
+  pageLabel: "create account",
+})
 const StaffDashboard = resilientLazy(() => import("./pages/StaffDashboard"), {
   pageLabel: "staff dashboard",
 })

@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { Suspense, lazy, startTransition, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import Cropper from "cropperjs"
-import "cropperjs/dist/cropper.css"
 
 import AuthNotification from "../components/auth/AuthNotification"
 import useAuthSession from "../hooks/useAuthSession"
@@ -14,8 +12,25 @@ import { UPLOAD_RULES, formatBytes } from "../lib/uploadRules"
 
 import DashboardHeader from "../components/dashboard/layout/DashboardHeader"
 import MarketSection from "../components/dashboard/sections/MarketSection"
-import ServicesProfileSection from "../components/dashboard/sections/ServicesProfileSection"
 import NotificationsSection from "../components/dashboard/sections/NotificationsSection"
+
+const loadServicesProfileSection = () =>
+  import("../components/dashboard/sections/ServicesProfileSection")
+
+const ServicesProfileSection = lazy(loadServicesProfileSection)
+
+let cropperAssetsPromise = null
+
+function loadCropperAssets() {
+  if (!cropperAssetsPromise) {
+    cropperAssetsPromise = Promise.all([
+      import("cropperjs"),
+      import("cropperjs/dist/cropper.css"),
+    ]).then(([module]) => module.default)
+  }
+
+  return cropperAssetsPromise
+}
 
 const AVATAR_RULE = UPLOAD_RULES.avatars
 const MAX_FILE_SIZE = AVATAR_RULE.maxBytes
@@ -112,6 +127,28 @@ function DashboardShimmer({ label = "Loading dashboard..." }) {
         </p>
       </div>
     </section>
+  )
+}
+
+function DashboardSectionFallback({ label = "Loading section..." }) {
+  return (
+    <div className="screen active">
+      <div className="tool-block-wrap bg-white px-4 py-6">
+        <div className="mx-auto max-w-[900px] animate-pulse">
+          <div className="mb-5 h-8 w-56 rounded bg-slate-200" />
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-slate-100" />
+                <div className="mx-auto h-4 w-24 rounded bg-slate-200" />
+                <div className="mx-auto mt-2 h-3 w-20 rounded bg-slate-100" />
+              </div>
+            ))}
+          </div>
+          <p className="mt-5 text-center text-sm font-semibold text-slate-500">{label}</p>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -327,44 +364,74 @@ function UserDashboard() {
   }, [])
 
   useEffect(() => {
-    if (!cropModalOpen || !cropImageRef.current) return
+    if (!cropModalOpen || !cropImageRef.current) return undefined
 
-    if (cropperRef.current) {
-      cropperRef.current.destroy()
+    let cancelled = false
+
+    async function initCropper() {
+      const Cropper = await loadCropperAssets()
+      if (cancelled || !cropImageRef.current) return
+
+      if (cropperRef.current) {
+        cropperRef.current.destroy()
+      }
+
+      cropperRef.current = new Cropper(cropImageRef.current, {
+        aspectRatio: 1,
+        viewMode: 2,
+        background: false,
+        autoCropArea: 0.9,
+        responsive: true,
+        dragMode: "move",
+        guides: true,
+        highlight: true,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        movable: true,
+        zoomOnTouch: true,
+        zoomOnWheel: true,
+        minCropBoxWidth: 120,
+        minCropBoxHeight: 120,
+        toggleDragModeOnDblclick: false,
+      })
     }
 
-    cropperRef.current = new Cropper(cropImageRef.current, {
-      aspectRatio: 1,
-      viewMode: 2,
-      background: false,
-      autoCropArea: 0.9,
-      responsive: true,
-      dragMode: "move",
-      guides: true,
-      highlight: true,
-      cropBoxMovable: true,
-      cropBoxResizable: true,
-      movable: true,
-      zoomOnTouch: true,
-      zoomOnWheel: true,
-      minCropBoxWidth: 120,
-      minCropBoxHeight: 120,
-      toggleDragModeOnDblclick: false,
-    })
+    void initCropper()
 
     return () => {
+      cancelled = true
       if (cropperRef.current) {
         cropperRef.current.destroy()
         cropperRef.current = null
       }
     }
-  }, [cropModalOpen])
+  }, [avatarPreview, cropModalOpen])
 
   useEffect(() => {
     return () => {
       clearGeneratedAvatarPreview()
     }
   }, [])
+
+  useEffect(() => {
+    if (!user?.id) return undefined
+
+    const preloadServicesSection = () => {
+      void loadServicesProfileSection()
+    }
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(preloadServicesSection, { timeout: 1500 })
+      return () => {
+        if ("cancelIdleCallback" in window) {
+          window.cancelIdleCallback(idleId)
+        }
+      }
+    }
+
+    const timerId = window.setTimeout(preloadServicesSection, 900)
+    return () => window.clearTimeout(timerId)
+  }, [user?.id])
 
   async function handleLogout() {
     Object.keys(localStorage).forEach((key) => {
@@ -410,18 +477,26 @@ function UserDashboard() {
   }
 
   function handleServiceViewChange(nextView) {
-    updateDashboardLocation({
-      tab: "services",
-      view: nextView === "menu" ? null : nextView,
+    startTransition(() => {
+      updateDashboardLocation({
+        tab: "services",
+        view: nextView === "menu" ? null : nextView,
+      })
     })
   }
 
   function switchScreen(tab) {
-    if (tab === "services") {
-      updateDashboardLocation({ tab: "services", view: null })
-    } else {
-      updateDashboardLocation({ tab, view: null })
+    if (tab === "services" || tab === "profile") {
+      void loadServicesProfileSection()
     }
+
+    startTransition(() => {
+      if (tab === "services") {
+        updateDashboardLocation({ tab: "services", view: null })
+      } else {
+        updateDashboardLocation({ tab, view: null })
+      }
+    })
 
     if (tab === "notifications") {
       markNotificationsRead()
@@ -508,10 +583,20 @@ function UserDashboard() {
   )
 
   const groupedShopsByArea = useMemo(() => {
+    const shopsByArea = new Map()
+
+    ;(localData.shops || []).forEach((shop) => {
+      const areaId = shop.area_id
+      if (!shopsByArea.has(areaId)) {
+        shopsByArea.set(areaId, [])
+      }
+      shopsByArea.get(areaId).push(shop)
+    })
+
     return sortedAreas
       .map((area) => ({
         area,
-        shops: (localData.shops || []).filter((shop) => shop.area_id === area.id),
+        shops: shopsByArea.get(area.id) || [],
       }))
       .filter((group) => group.shops.length > 0)
   }, [sortedAreas, localData.shops])
@@ -1190,69 +1275,73 @@ function UserDashboard() {
         )}
 
         {activeTab === "services" && (
-          <ServicesProfileSection
-            mode="services"
-            serviceView={serviceView}
-            setServiceView={handleServiceViewChange}
-            user={user}
-            currentProfile={currentProfile}
-            profileEditOpen={profileEditOpen}
-            openProfileEdit={openProfileEdit}
-            cancelProfileEdit={cancelProfileEdit}
-            handleLogout={handleLogout}
-            handleShopClick={handleShopClick}
-            shopCardMeta={shopMeta} /* PASSED THE ISOLATED META HERE */
-            wishlistCount={localData.wishlistCount}
-            onNavigate={navigate}
-            profileEditForm={profileEditForm}
-            setProfileEditForm={setProfileEditForm}
-            profileEditCities={profileEditCities}
-            profileEditAreas={profileEditAreas}
-            profileEditError={profileEditError}
-            profileSaving={profileSaving}
-            handleProfileCityChange={handleProfileCityChange}
-            saveProfile={saveProfile}
-            fileInputRef={fileInputRef}
-            avatarPreview={avatarPreview}
-            onAvatarSelect={onAvatarSelect}
-            cropModalOpen={cropModalOpen}
-            cropImageRef={cropImageRef}
-            closeAvatarCropModal={closeAvatarCropModal}
-            applyAvatarCrop={applyAvatarCrop}
-          />
+          <Suspense fallback={<DashboardSectionFallback label="Loading dashboard tools..." />}>
+            <ServicesProfileSection
+              mode="services"
+              serviceView={serviceView}
+              setServiceView={handleServiceViewChange}
+              user={user}
+              currentProfile={currentProfile}
+              profileEditOpen={profileEditOpen}
+              openProfileEdit={openProfileEdit}
+              cancelProfileEdit={cancelProfileEdit}
+              handleLogout={handleLogout}
+              handleShopClick={handleShopClick}
+              shopCardMeta={shopMeta} /* PASSED THE ISOLATED META HERE */
+              wishlistCount={localData.wishlistCount}
+              onNavigate={navigate}
+              profileEditForm={profileEditForm}
+              setProfileEditForm={setProfileEditForm}
+              profileEditCities={profileEditCities}
+              profileEditAreas={profileEditAreas}
+              profileEditError={profileEditError}
+              profileSaving={profileSaving}
+              handleProfileCityChange={handleProfileCityChange}
+              saveProfile={saveProfile}
+              fileInputRef={fileInputRef}
+              avatarPreview={avatarPreview}
+              onAvatarSelect={onAvatarSelect}
+              cropModalOpen={cropModalOpen}
+              cropImageRef={cropImageRef}
+              closeAvatarCropModal={closeAvatarCropModal}
+              applyAvatarCrop={applyAvatarCrop}
+            />
+          </Suspense>
         )}
 
         {activeTab === "profile" && (
-          <ServicesProfileSection
-            mode="profile"
-            serviceView={serviceView}
-            setServiceView={handleServiceViewChange}
-            user={user}
-            currentProfile={currentProfile}
-            profileEditOpen={profileEditOpen}
-            openProfileEdit={openProfileEdit}
-            cancelProfileEdit={cancelProfileEdit}
-            handleLogout={handleLogout}
-            handleShopClick={handleShopClick}
-            shopCardMeta={shopMeta} /* PASSED THE ISOLATED META HERE */
-            wishlistCount={localData.wishlistCount}
-            onNavigate={navigate}
-            profileEditForm={profileEditForm}
-            setProfileEditForm={setProfileEditForm}
-            profileEditCities={profileEditCities}
-            profileEditAreas={profileEditAreas}
-            profileEditError={profileEditError}
-            profileSaving={profileSaving}
-            handleProfileCityChange={handleProfileCityChange}
-            saveProfile={saveProfile}
-            fileInputRef={fileInputRef}
-            avatarPreview={avatarPreview}
-            onAvatarSelect={onAvatarSelect}
-            cropModalOpen={cropModalOpen}
-            cropImageRef={cropImageRef}
-            closeAvatarCropModal={closeAvatarCropModal}
-            applyAvatarCrop={applyAvatarCrop}
-          />
+          <Suspense fallback={<DashboardSectionFallback label="Loading your profile..." />}>
+            <ServicesProfileSection
+              mode="profile"
+              serviceView={serviceView}
+              setServiceView={handleServiceViewChange}
+              user={user}
+              currentProfile={currentProfile}
+              profileEditOpen={profileEditOpen}
+              openProfileEdit={openProfileEdit}
+              cancelProfileEdit={cancelProfileEdit}
+              handleLogout={handleLogout}
+              handleShopClick={handleShopClick}
+              shopCardMeta={shopMeta} /* PASSED THE ISOLATED META HERE */
+              wishlistCount={localData.wishlistCount}
+              onNavigate={navigate}
+              profileEditForm={profileEditForm}
+              setProfileEditForm={setProfileEditForm}
+              profileEditCities={profileEditCities}
+              profileEditAreas={profileEditAreas}
+              profileEditError={profileEditError}
+              profileSaving={profileSaving}
+              handleProfileCityChange={handleProfileCityChange}
+              saveProfile={saveProfile}
+              fileInputRef={fileInputRef}
+              avatarPreview={avatarPreview}
+              onAvatarSelect={onAvatarSelect}
+              cropModalOpen={cropModalOpen}
+              cropImageRef={cropImageRef}
+              closeAvatarCropModal={closeAvatarCropModal}
+              applyAvatarCrop={applyAvatarCrop}
+            />
+          </Suspense>
         )}
 
         {activeTab === "notifications" && (

@@ -100,6 +100,7 @@ function Home() {
   // 2. Smooth Auto-Redirect
   useEffect(() => {
     if (user && profileLoaded && profile && !suspended && !isOffline) {
+      void import("./UserDashboard")
       const timer = setTimeout(() => {
         navigate("/user-dashboard", { replace: true })
       }, 150)

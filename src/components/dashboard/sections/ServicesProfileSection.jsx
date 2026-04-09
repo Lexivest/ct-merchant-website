@@ -14,14 +14,16 @@ import {
   FaStore,
   FaTriangleExclamation,
 } from "react-icons/fa6"
-import AboutDashboardView from "../../../features/dashboard/views/AboutDashboardView";
-import ServicesDashboardView from "../../../features/dashboard/views/ServicesDashboardView";
-import CareersDashboardView from "../../../features/dashboard/views/CareersDashboardView";
-import SupportDashboardView from "../../../features/dashboard/views/SupportDashboardView";
-import AbuseReportDashboardView from "../../../features/dashboard/views/AbuseReportDashboardView";
-import FaqDashboardView from "../../../features/dashboard/views/FaqDashboardView";
-import WishlistDashboardView from "../../../features/dashboard/views/WishlistDashboardView";
+import { Suspense, lazy } from "react"
 import { UPLOAD_RULES, getAcceptValue, getRuleLabel } from "../../../lib/uploadRules";
+
+const AboutDashboardView = lazy(() => import("../../../features/dashboard/views/AboutDashboardView"))
+const ServicesDashboardView = lazy(() => import("../../../features/dashboard/views/ServicesDashboardView"))
+const CareersDashboardView = lazy(() => import("../../../features/dashboard/views/CareersDashboardView"))
+const SupportDashboardView = lazy(() => import("../../../features/dashboard/views/SupportDashboardView"))
+const AbuseReportDashboardView = lazy(() => import("../../../features/dashboard/views/AbuseReportDashboardView"))
+const FaqDashboardView = lazy(() => import("../../../features/dashboard/views/FaqDashboardView"))
+const WishlistDashboardView = lazy(() => import("../../../features/dashboard/views/WishlistDashboardView"))
 
 const AVATAR_RULE = UPLOAD_RULES.avatars
 const AVATAR_ACCEPT = getAcceptValue(AVATAR_RULE, "image/jpeg,image/png")
@@ -45,6 +47,25 @@ function ServiceCard({ icon, title, subtitle, onClick }) {
       </button>
     </div>
   )
+}
+
+function ServiceViewFallback({ label = "Loading..." }) {
+  return (
+    <div className="screen active">
+      <div className="tool-block-wrap bg-white px-4 py-6">
+        <div className="mx-auto max-w-[900px] animate-pulse">
+          <div className="mb-2 h-4 w-28 rounded bg-slate-100" />
+          <div className="mb-4 h-8 w-56 rounded bg-slate-200" />
+          <div className="h-40 rounded-[24px] border border-slate-200 bg-slate-50" />
+          <p className="mt-4 text-sm font-semibold text-slate-500">{label}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LazyServiceView({ children, label }) {
+  return <Suspense fallback={<ServiceViewFallback label={label} />}>{children}</Suspense>
 }
 
 function renderShopMetaIcon(status) {
@@ -98,59 +119,77 @@ function ServicesProfileSection({
 
   if (mode === "services") {
     if (serviceView === "about") {
-      return <AboutDashboardView onBack={() => setServiceView("menu")} />
+      return (
+        <LazyServiceView label="Loading About CTMerchant...">
+          <AboutDashboardView onBack={() => setServiceView("menu")} />
+        </LazyServiceView>
+      )
     }
 
     if (serviceView === "services-info") {
       return (
-        <ServicesDashboardView
-          onBack={() => setServiceView("menu")}
-          onOpenSupport={() => setServiceView("support")}
-        />
+        <LazyServiceView label="Loading service details...">
+          <ServicesDashboardView
+            onBack={() => setServiceView("menu")}
+            onOpenSupport={() => setServiceView("support")}
+          />
+        </LazyServiceView>
       )
     }
 
     if (serviceView === "careers") {
-      return <CareersDashboardView onBack={() => setServiceView("menu")} />
+      return (
+        <LazyServiceView label="Loading career opportunities...">
+          <CareersDashboardView onBack={() => setServiceView("menu")} />
+        </LazyServiceView>
+      )
     }
 
     if (serviceView === "support") {
       return (
-        <SupportDashboardView
-          mode="support"
-          onBack={() => setServiceView("menu")}
-          onOpenServices={() => setServiceView("services-info")}
-        />
+        <LazyServiceView label="Loading support tools...">
+          <SupportDashboardView
+            mode="support"
+            onBack={() => setServiceView("menu")}
+            onOpenServices={() => setServiceView("services-info")}
+          />
+        </LazyServiceView>
       )
     }
 
     if (serviceView === "faq") {
       return (
-        <FaqDashboardView
-          onBack={() => setServiceView("menu")}
-          onOpenSupport={() => setServiceView("support")}
-        />
+        <LazyServiceView label="Loading FAQ...">
+          <FaqDashboardView
+            onBack={() => setServiceView("menu")}
+            onOpenSupport={() => setServiceView("support")}
+          />
+        </LazyServiceView>
       )
     }
 
     if (serviceView === "report-abuse") {
       return (
-        <AbuseReportDashboardView
-          onBack={() => setServiceView("menu")}
-          user={user}
-        />
+        <LazyServiceView label="Loading report tools...">
+          <AbuseReportDashboardView
+            onBack={() => setServiceView("menu")}
+            user={user}
+          />
+        </LazyServiceView>
       )
     }
 
     if (serviceView === "wishlist") {
       return (
-        <WishlistDashboardView
-          onBack={() => setServiceView("menu")}
-          user={user}
-          onOpenProduct={(productId) =>
-            onNavigate(`/product-detail?id=${productId}`)
-          }
-        />
+        <LazyServiceView label="Loading wishlist...">
+          <WishlistDashboardView
+            onBack={() => setServiceView("menu")}
+            user={user}
+            onOpenProduct={(productId) =>
+              onNavigate(`/product-detail?id=${productId}`)
+            }
+          />
+        </LazyServiceView>
       )
     }
 
