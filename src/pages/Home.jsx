@@ -247,7 +247,7 @@ function Home() {
   // Initialize and render Google Sign-in button
   useEffect(() => {
     const clientId =
-      "237791711830-h0kb3jmuq122l276e64dc6jbl5tluesu.apps.googleusercontent.com"
+      "504776303212-4s0mgf9qd3hlpfhld5fdgpore65m6tfl.apps.googleusercontent.com"
 
       function mountGoogleButton() {
         if (!window.google?.accounts?.id || !googleButtonRef.current) return false

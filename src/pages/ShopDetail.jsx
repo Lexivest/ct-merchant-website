@@ -299,7 +299,7 @@ function ShopDetail() {
   const [submittingComment, setSubmittingComment] = useState(false)
   const [commentProductPickerOpen, setCommentProductPickerOpen] = useState(false)
   const [replyBody, setReplyBody] = useState("")
-  const [activeInfoSection, setActiveInfoSection] = useState("business")
+  const [activeInfoSection, setActiveInfoSection] = useState(null)
   const [expandedThreadId, setExpandedThreadId] = useState(null)
 
   // Sync optimistic state when cached data resolves
@@ -339,20 +339,6 @@ function ShopDetail() {
     if (!products.some((product) => String(product.id) === String(preselectedProductId))) return
     setSelectedProductId(String(preselectedProductId))
   }, [preselectedProductId, products])
-
-  useEffect(() => {
-    if (currentShop?.storefront_url) return
-    if (activeInfoSection === "storefront") {
-      setActiveInfoSection(currentShop?.latitude && currentShop?.longitude ? "map" : "business")
-    }
-  }, [activeInfoSection, currentShop?.latitude, currentShop?.longitude, currentShop?.storefront_url])
-
-  useEffect(() => {
-    if (currentShop?.latitude && currentShop?.longitude) return
-    if (activeInfoSection === "map") {
-      setActiveInfoSection(currentShop?.storefront_url ? "storefront" : "business")
-    }
-  }, [activeInfoSection, currentShop?.latitude, currentShop?.longitude, currentShop?.storefront_url])
 
   useEffect(() => {
     function handleOutsideClick(event) {
@@ -601,9 +587,18 @@ function ShopDetail() {
   }
 
   function openGoogleMaps() {
-    if (!currentShop?.latitude || !currentShop?.longitude) return
+    if (currentShop?.latitude && currentShop?.longitude) {
+      window.open(
+        `https://www.google.com/maps/search/?api=1&query=${currentShop.latitude},${currentShop.longitude}`,
+        "_blank",
+        "noopener,noreferrer"
+      )
+      return
+    }
+
+    if (!currentShop?.address) return
     window.open(
-      `https://www.google.com/maps/search/?api=1&query=$${currentShop.latitude},${currentShop.longitude}`,
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentShop.address)}`,
       "_blank",
       "noopener,noreferrer"
     )
@@ -997,6 +992,144 @@ function ShopDetail() {
     }
   }
 
+  function renderInfoSection() {
+    if (!activeInfoSection) return null
+
+    if (activeInfoSection === "storefront") {
+      return (
+        <div className="mb-4 rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
+          {currentShop?.storefront_url ? (
+            <StableImage
+              src={currentShop.storefront_url}
+              alt="Store Front"
+              containerClassName="flex min-h-[240px] w-full items-center justify-center overflow-hidden rounded-[18px] border border-slate-200 bg-slate-50 p-2"
+              className="max-h-[560px] w-full object-contain"
+            />
+          ) : (
+            <div className="rounded-[18px] border border-dashed border-orange-200 bg-orange-50 px-5 py-10 text-center">
+              <div className="text-[1rem] font-extrabold text-[#0F1111]">No storefront photo yet</div>
+              <div className="mt-2 text-[0.9rem] text-slate-600">
+                The merchant has not uploaded a storefront image for this shop.
+              </div>
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    if (activeInfoSection === "map") {
+      const hasCoordinates = Boolean(currentShop?.latitude && currentShop?.longitude)
+      const hasAddress = Boolean(currentShop?.address)
+
+      return (
+        <div className="mb-4 rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
+          {hasCoordinates ? (
+            <div
+              ref={mapRef}
+              className="h-[260px] w-full rounded-[18px] border border-slate-200 bg-slate-50"
+            />
+          ) : (
+            <div className="rounded-[18px] border border-dashed border-sky-200 bg-sky-50 px-5 py-10">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 text-sky-600">
+                  <FaLocationDot />
+                </span>
+                <div>
+                  <div className="text-[0.98rem] font-extrabold text-[#0F1111]">Address reference</div>
+                  <div className="mt-2 text-[0.92rem] leading-6 text-slate-600">
+                    {hasAddress
+                      ? currentShop.address
+                      : "This merchant did not provide GPS coordinates or an address during registration."}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {hasCoordinates || hasAddress ? (
+            <button
+              type="button"
+              onClick={openGoogleMaps}
+              className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-[0.82rem] font-bold text-[#0F1111] transition hover:bg-[#F7FAFA]"
+            >
+              {hasCoordinates ? "Open in Google Maps" : "Open address in Maps"}
+              <span>↗</span>
+            </button>
+          ) : null}
+        </div>
+      )
+    }
+
+    return (
+      <div className="mb-4 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
+          <div className="mb-3 flex items-start gap-4">
+            <StableImage
+              src={shopLogo}
+              alt="Shop Logo"
+              containerClassName="h-[72px] w-[72px] shrink-0 rounded-xl border border-slate-300 bg-white"
+              className="h-full w-full object-cover"
+            />
+
+            <div className="min-w-0 flex-1">
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-[1.2rem] font-extrabold leading-[1.2] text-[#0F1111]">
+                <span>{currentShop?.name}</span>
+                {isVerified ? (
+                  <FaCircleCheck className="text-[1rem] text-[#007185]" title="Approved Shop" />
+                ) : null}
+              </div>
+
+              <div className="inline-block rounded-full bg-pink-100 px-3 py-1 text-[0.74rem] font-bold text-pink-600">
+                {currentShop?.category}
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-5 mt-4 flex items-start gap-2 text-[0.92rem] font-medium leading-6 text-slate-600">
+            <FaLocationDot className="mt-1 shrink-0 text-pink-600" />
+            <span>{currentShop?.address || "Address not provided."}</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[0.8rem] font-bold ${
+                isVerified
+                  ? "border-[#BFE8F0] bg-[#EFF6FF] text-[#007185]"
+                  : "border-red-100 bg-red-50 text-red-700"
+              }`}
+            >
+              {isVerified ? <FaShield /> : <FaTriangleExclamation />}
+              {isVerified ? `ID: ${currentShop?.unique_id || "Verified"}` : "Pending Verification"}
+            </div>
+
+            <button
+              type="button"
+              onClick={toggleLike}
+              className={`inline-flex items-center gap-2 rounded-full border px-5 py-2 text-[0.85rem] font-bold transition ${
+                hasLiked
+                  ? "border-pink-300 bg-white text-pink-600"
+                  : "border-slate-300 bg-white text-[#0F1111]"
+              }`}
+            >
+              <span>{hasLiked ? "👍" : "👍"}</span>
+              <span>{likeCount}</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
+          <div className="mb-3 text-[0.82rem] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+            About Business
+          </div>
+
+          <p className="text-[0.95rem] leading-7 text-[#0F1111]">
+            {currentShop?.description || "No description provided by the merchant."}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   // RETURN STATES
   if (!shopId) {
     goBackSafe()
@@ -1115,6 +1248,33 @@ function ShopDetail() {
           </div>
         ) : null}
 
+        <section className="mb-2 border-y border-slate-300 bg-white px-4 py-6">
+          <div className="mb-5 flex flex-wrap items-center gap-3 overflow-x-auto border-b border-slate-200 pb-3">
+            {[
+              { key: "storefront", label: "Storefront", icon: <FaStore />, active: "border-orange-200 bg-orange-50 text-orange-700", idle: "border-orange-100 bg-white text-orange-700 hover:border-orange-200 hover:bg-orange-50" },
+              { key: "map", label: "Location", icon: <FaMapLocationDot />, active: "border-sky-200 bg-sky-50 text-sky-700", idle: "border-sky-100 bg-white text-sky-700 hover:border-sky-200 hover:bg-sky-50" },
+              { key: "business", label: "About", icon: <FaCircleInfo />, active: "border-emerald-200 bg-emerald-50 text-emerald-700", idle: "border-emerald-100 bg-white text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50" },
+            ].map((section) => (
+              <button
+                key={section.key}
+                type="button"
+                onClick={() =>
+                  setActiveInfoSection((current) => (current === section.key ? null : section.key))
+                }
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[0.8rem] font-extrabold transition ${
+                  activeInfoSection === section.key ? section.active : section.idle
+                }`}
+              >
+                {section.icon}
+                {section.label}
+                <FaChevronRight className={`text-[0.7rem] transition ${activeInfoSection === section.key ? "rotate-90" : ""}`} />
+              </button>
+            ))}
+          </div>
+
+          {renderInfoSection()}
+        </section>
+
         {specialProducts.length > 0 ? (
           <section className="mb-2 border-y border-slate-300 bg-white px-4 py-6">
             <h2 className="mb-4 flex items-center gap-3 text-[1.35rem] font-extrabold text-[#0F1111]">
@@ -1165,6 +1325,7 @@ function ShopDetail() {
           </section>
         ) : null}
 
+        {false ? (
         <section className="mb-2 border-y border-slate-300 bg-white px-4 py-6">
           <div className="mb-5 flex flex-wrap items-center gap-3 overflow-x-auto border-b border-slate-200 pb-3">
             {[
@@ -1415,6 +1576,8 @@ function ShopDetail() {
             </div>
           </div>
         </section>
+
+        ) : null}
 
         <section
           ref={communityRef}
