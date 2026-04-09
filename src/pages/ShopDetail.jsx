@@ -759,6 +759,8 @@ function ShopDetail() {
               alt="Shop Banner"
               containerClassName="aspect-video max-h-[400px] w-full rounded-xl border border-slate-300 bg-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
               className="block h-full w-full object-cover"
+              loading="eager"
+              fetchPriority="high"
             />
           </div>
         ) : null}

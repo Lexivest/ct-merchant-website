@@ -43,10 +43,11 @@ function StableImage({
   loading = "lazy",
   fetchPriority,
 }) {
+  const shouldEagerLoad = loading === "eager" || fetchPriority === "high"
   const rootRef = useRef(null)
   const [isNearViewport, setIsNearViewport] = useState(() => {
     if (typeof window === "undefined") return false
-    return !("IntersectionObserver" in window)
+    return shouldEagerLoad || !("IntersectionObserver" in window)
   })
   const [failedSrc, setFailedSrc] = useState(null)
   const [loadedSrc, setLoadedSrc] = useState(null)
@@ -57,6 +58,8 @@ function StableImage({
   )
 
   useEffect(() => {
+    if (shouldEagerLoad) return undefined
+
     const node = rootRef.current
     if (!node) return undefined
 
@@ -70,7 +73,7 @@ function StableImage({
       observerListeners.delete(node)
       observer.unobserve(node)
     }
-  }, [])
+  }, [shouldEagerLoad])
 
   function handleLoad() {
     if (!displaySrc) return

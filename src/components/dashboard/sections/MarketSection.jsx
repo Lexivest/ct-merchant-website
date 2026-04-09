@@ -46,6 +46,8 @@ function PromoSlider({ promos }) {
             alt="Promo Banner"
             containerClassName="h-full w-full bg-white"
             className="block h-full w-full object-cover object-center bg-white"
+            loading={idx === currentSlide ? "eager" : "lazy"}
+            fetchPriority={idx === currentSlide ? "high" : "auto"}
           />
         </div>
       ))}
