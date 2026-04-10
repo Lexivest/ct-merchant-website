@@ -487,7 +487,7 @@ function ShopDetail() {
     )
   }
 
-  async function launchWhatsApp() {
+  function launchWhatsApp() {
     if (!currentShop?.whatsapp) return
 
     let phone = currentShop.whatsapp.replace(/\D/g, "")

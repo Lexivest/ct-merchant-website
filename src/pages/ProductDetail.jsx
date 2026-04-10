@@ -361,7 +361,7 @@ function ProductDetail() {
     }
   }
 
-  async function callMerchant() {
+  function callMerchant() {
     if (!currentShop?.phone) {
       notify({ type: "error", title: "Phone unavailable", message: "This merchant has not provided a phone number." })
       return
@@ -394,7 +394,7 @@ function ProductDetail() {
     setSecurityModalOpen(false)
   }
 
-  async function launchWhatsApp() {
+  function launchWhatsApp() {
     if (!currentShop?.whatsapp || !currentProduct) return
 
     let phone = currentShop.whatsapp.replace(/\D/g, "")
