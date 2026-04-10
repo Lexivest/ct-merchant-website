@@ -12,6 +12,12 @@ import {
   FaShield,
   FaStore,
   FaTriangleExclamation,
+  FaPhone,
+  FaGlobe,
+  FaFacebook,
+  FaInstagram,
+  FaXTwitter,
+  FaTiktok,
 } from "react-icons/fa6"
 import {
   FaWhatsapp,
@@ -87,7 +93,7 @@ function ShopDetail() {
   // 1. Unified Auth State
   const { user, loading: authLoading } = useAuthSession()
 
-  // 2. Data Fetching Logic (Extracted for useCachedFetch)
+  // 2. Data Fetching Logic
   const fetchShopData = async () =>
     fetchShopDetailData({
       shopId,
@@ -95,7 +101,6 @@ function ShopDetail() {
     })
 
   // 3. Smart Caching Hook
-  // Key includes user?.id so "hasLiked" state caches correctly per user
   const cacheKey = buildShopDetailCacheKey(shopId, user?.id || null)
   const { data, loading: dataLoading, error, mutate } = useCachedFetch(
     cacheKey,
@@ -103,7 +108,7 @@ function ShopDetail() {
     { dependencies: [shopId, user?.id], ttl: 1000 * 60 * 5 }
   )
 
-  // 4. Local Optimistic State for Interactions
+  // 4. Local Optimistic State
   const [hasLiked, setHasLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(0)
   const [securityModalOpen, setSecurityModalOpen] = useState(false)
@@ -116,7 +121,6 @@ function ShopDetail() {
     error: "",
   })
 
-  // Sync optimistic state when cached data resolves
   useEffect(() => {
     if (data) {
       setHasLiked(data.hasLiked)
@@ -130,7 +134,6 @@ function ShopDetail() {
   const communityLoaderRef = useRef(null)
   const viewTrackedRef = useRef(false)
 
-  // Computed Values
   const currentShop = data?.shop
   const products = data?.products ?? EMPTY_PRODUCTS
   const approvedNews = data?.approvedNews ?? EMPTY_NEWS
@@ -237,7 +240,6 @@ function ShopDetail() {
     return `${cityName} Repository of shops, products and services`
   }, [approvedNews, currentShop])
 
-  // Map Initialization
   useEffect(() => {
     if (activeInfoSection !== "map") return undefined
     if (!currentShop?.latitude || !currentShop?.longitude || !mapRef.current) return undefined
@@ -272,7 +274,7 @@ function ShopDetail() {
         const map = L.map(mapRef.current).setView([lat, lng], 15)
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap",
+          attribution: "© OpenStreetMap",
         }).addTo(map)
 
         L.circleMarker([lat, lng], {
@@ -328,7 +330,6 @@ function ShopDetail() {
     const nextLiked = !hasLiked
     const nextCount = nextLiked ? likeCount + 1 : Math.max(0, likeCount - 1)
 
-    // Optimistic Update
     setHasLiked(nextLiked)
     setLikeCount(nextCount)
 
@@ -345,10 +346,9 @@ function ShopDetail() {
           .delete()
           .eq("shop_id", shopId)
           .eq("user_id", user.id)
-      if (error) throw error
+        if (error) throw error
       }
     } catch {
-      // Rollback on fail
       setHasLiked(!nextLiked)
       setLikeCount(likeCount)
       notify({ type: "error", title: "Action failed", message: "We could not update your shop like. Please try again." })
@@ -358,7 +358,7 @@ function ShopDetail() {
   function openGoogleMaps() {
     if (currentShop?.latitude && currentShop?.longitude) {
       window.open(
-        `https://www.google.com/maps/search/?api=1&query=${currentShop.latitude},${currentShop.longitude}`,
+        `https://www.google.com/maps/search/?api=1&query=$${currentShop.latitude},${currentShop.longitude}`,
         "_blank",
         "noopener,noreferrer"
       )
@@ -367,10 +367,16 @@ function ShopDetail() {
 
     if (!currentShop?.address) return
     window.open(
-      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentShop.address)}`,
+      `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(currentShop.address)}`,
       "_blank",
       "noopener,noreferrer"
     )
+  }
+
+  function openExternalUrl(url) {
+    if (!url) return
+    const formattedUrl = url.startsWith("http") ? url : `https://${url}`
+    window.open(formattedUrl, "_blank", "noopener,noreferrer")
   }
 
   function launchWhatsApp() {
@@ -491,7 +497,7 @@ function ShopDetail() {
       <div
         key={product.id}
         className="product-card relative flex cursor-pointer flex-col transition hover:-translate-y-1 hover:opacity-90"
-          onClick={() => openProductWithTransition(product.id)}
+        onClick={() => openProductWithTransition(product.id)}
       >
         <div className="prod-img-wrap relative aspect-square w-full overflow-hidden bg-white">
           <StableImage
@@ -538,16 +544,16 @@ function ShopDetail() {
 
     if (activeInfoSection === "storefront") {
       return (
-        <div className="mb-4 rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
+        <div className="mb-4 rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
           {currentShop?.storefront_url ? (
             <StableImage
               src={currentShop.storefront_url}
               alt="Store Front"
-              containerClassName="flex min-h-[240px] w-full items-center justify-center overflow-hidden rounded-[18px] border border-slate-200 bg-slate-50 p-2"
+              containerClassName="flex min-h-[240px] w-full items-center justify-center overflow-hidden rounded-[16px] border border-slate-200 bg-slate-50"
               className="max-h-[560px] w-full object-contain"
             />
           ) : (
-            <div className="rounded-[18px] border border-dashed border-orange-200 bg-orange-50 px-5 py-10 text-center">
+            <div className="rounded-[16px] border border-dashed border-orange-200 bg-orange-50 px-5 py-10 text-center">
               <div className="text-[1rem] font-extrabold text-[#0F1111]">No storefront photo yet</div>
               <div className="mt-2 text-[0.9rem] text-slate-600">
                 The merchant has not uploaded a storefront image for this shop.
@@ -563,26 +569,22 @@ function ShopDetail() {
       const hasAddress = Boolean(currentShop?.address)
 
       return (
-        <div className="mb-4 rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
+        <div className="mb-4 rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
           {hasCoordinates ? (
             <div
               ref={mapRef}
-              className="h-[260px] w-full rounded-[18px] border border-slate-200 bg-slate-50"
+              className="h-[220px] w-full rounded-[16px] border border-slate-200 bg-slate-50"
             />
           ) : (
-            <div className="rounded-[18px] border border-dashed border-sky-200 bg-sky-50 px-5 py-10">
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 text-sky-600">
-                  <FaLocationDot />
-                </span>
-                <div>
-                  <div className="text-[0.98rem] font-extrabold text-[#0F1111]">Address reference</div>
-                  <div className="mt-2 text-[0.92rem] leading-6 text-slate-600">
-                    {hasAddress
-                      ? currentShop.address
-                      : "This merchant did not provide GPS coordinates or an address during registration."}
-                  </div>
-                </div>
+            <div className="flex items-start gap-3 rounded-[16px] border border-blue-200 bg-blue-50 p-4">
+              <FaLocationDot className="mt-0.5 text-blue-600" />
+              <div className="flex flex-col gap-1">
+                <span className="text-[0.7rem] font-black uppercase tracking-wider text-blue-700">Address reference</span>
+                <p className="text-[0.85rem] leading-snug text-slate-700">
+                  {hasAddress
+                    ? currentShop.address
+                    : "This merchant did not provide GPS coordinates or an address."}
+                </p>
               </div>
             </div>
           )}
@@ -591,7 +593,7 @@ function ShopDetail() {
             <button
               type="button"
               onClick={openGoogleMaps}
-              className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-[0.82rem] font-bold text-[#0F1111] transition hover:bg-[#F7FAFA]"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-[0.85rem] font-bold text-[#0F1111] transition hover:bg-[#F7FAFA] sm:w-auto"
             >
               {hasCoordinates ? "Open in Google Maps" : "Open address in Maps"}
               <span>↗</span>
@@ -601,83 +603,99 @@ function ShopDetail() {
       )
     }
 
-    return (
-      <div className="mb-4 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
-          <div className="mb-3 flex items-start gap-4">
-            <StableImage
-              src={shopLogo}
-              alt="Shop Logo"
-              containerClassName="h-[72px] w-[72px] shrink-0 rounded-xl border border-slate-300 bg-white"
-              className="h-full w-full object-cover"
-            />
-
-            <div className="min-w-0 flex-1">
-              <div className="mb-2 flex flex-wrap items-center gap-2 text-[1.2rem] font-extrabold leading-[1.2] text-[#0F1111]">
-                <span>{currentShop?.name}</span>
-                {isVerified ? (
-                  <FaCircleCheck className="text-[1rem] text-[#007185]" title="Approved Shop" />
-                ) : null}
+    if (activeInfoSection === "about") {
+      return (
+        <div className="flex flex-col gap-3">
+          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
+            {/* Shop Identity Row */}
+            <div className="flex items-start gap-3">
+              <StableImage
+                src={shopLogo}
+                alt="Shop Logo"
+                containerClassName="h-[64px] w-[64px] shrink-0 rounded-xl border border-slate-300 bg-white"
+                className="h-full w-full object-cover"
+              />
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <h2 className="truncate text-[1.25rem] font-black leading-tight text-[#0F1111]">
+                  {currentShop?.name}
+                </h2>
+                {currentShop?.category && (
+                  <div className="inline-flex self-start rounded-full bg-pink-100 px-3 py-1 text-[0.65rem] font-black text-pink-600">
+                    {currentShop.category}
+                  </div>
+                )}
               </div>
+            </div>
 
-              <div className="inline-block rounded-full bg-pink-100 px-3 py-1 text-[0.74rem] font-bold text-pink-600">
-                {currentShop?.category}
-              </div>
+            {/* Social Row */}
+            <div className="mt-4 flex flex-wrap gap-2.5">
+              {currentShop?.phone && (
+                <a href={`tel:${currentShop.phone}`} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#3B82F6] text-white transition hover:opacity-90">
+                  <FaPhone className="text-lg" />
+                </a>
+              )}
+              {currentShop?.whatsapp && (
+                <button type="button" onClick={() => setSecurityModalOpen(true)} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#22C55E] text-white transition hover:opacity-90">
+                  <FaWhatsapp className="text-xl" />
+                </button>
+              )}
+              {currentShop?.website_url && (
+                <button type="button" onClick={() => openExternalUrl(currentShop.website_url)} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#4F46E5] text-white transition hover:opacity-90">
+                  <FaGlobe className="text-lg" />
+                </button>
+              )}
+              {currentShop?.facebook_url && (
+                <button type="button" onClick={() => openExternalUrl(currentShop.facebook_url)} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#1877F2] text-white transition hover:opacity-90">
+                  <FaFacebook className="text-xl" />
+                </button>
+              )}
+              {currentShop?.instagram_url && (
+                <button type="button" onClick={() => openExternalUrl(currentShop.instagram_url)} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#C13584] text-white transition hover:opacity-90">
+                  <FaInstagram className="text-xl" />
+                </button>
+              )}
+              {currentShop?.twitter_url && (
+                <button type="button" onClick={() => openExternalUrl(currentShop.twitter_url)} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#111111] text-white transition hover:opacity-90">
+                  <FaXTwitter className="text-lg" />
+                </button>
+              )}
+              {currentShop?.tiktok_url && (
+                <button type="button" onClick={() => openExternalUrl(currentShop.tiktok_url)} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#111111] text-white transition hover:opacity-90">
+                  <FaTiktok className="text-lg" />
+                </button>
+              )}
             </div>
           </div>
 
-          <div className="mb-5 mt-4 flex items-start gap-2 text-[0.92rem] font-medium leading-6 text-slate-600">
-            <FaLocationDot className="mt-1 shrink-0 text-pink-600" />
-            <span>{currentShop?.address || "Address not provided."}</span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <div
-              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[0.8rem] font-bold ${
-                isVerified
-                  ? "border-[#BFE8F0] bg-[#EFF6FF] text-[#007185]"
-                  : "border-red-100 bg-red-50 text-red-700"
-              }`}
-            >
-              {isVerified ? <FaShield /> : <FaTriangleExclamation />}
-              {isVerified ? `ID: ${currentShop?.unique_id || "Verified"}` : "Pending Verification"}
+          {(currentShop?.address || currentShop?.description) && (
+            <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+              {currentShop?.address && (
+                <div className="mb-4 flex flex-col gap-1">
+                  <span className="text-[0.7rem] font-black uppercase tracking-wider text-slate-500">Business Address</span>
+                  <p className="text-[0.9rem] font-semibold text-slate-800">{currentShop.address}</p>
+                </div>
+              )}
+              <div className="flex flex-col gap-1">
+                <span className="text-[0.7rem] font-black uppercase tracking-wider text-slate-500">About Business</span>
+                <p className="whitespace-pre-wrap text-[0.9rem] leading-relaxed text-slate-600">
+                  {currentShop?.description || "No description provided by the merchant."}
+                </p>
+              </div>
             </div>
-
-            <button
-              type="button"
-              onClick={toggleLike}
-              className={`inline-flex items-center gap-2 rounded-full border px-5 py-2 text-[0.85rem] font-bold transition ${
-                hasLiked
-                  ? "border-pink-300 bg-white text-pink-600"
-                  : "border-slate-300 bg-white text-[#0F1111]"
-              }`}
-            >
-              <span>{hasLiked ? "👍" : "👍"}</span>
-              <span>{likeCount}</span>
-            </button>
-          </div>
+          )}
         </div>
+      )
+    }
 
-        <div className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
-          <div className="mb-3 text-[0.82rem] font-extrabold uppercase tracking-[0.12em] text-slate-400">
-            About Business
-          </div>
-
-          <p className="text-[0.95rem] leading-7 text-[#0F1111]">
-            {currentShop?.description || "No description provided by the merchant."}
-          </p>
-        </div>
-      </div>
-    )
+    return null
   }
 
-  // RETURN STATES
+  // EARLY EXITS
   if (!shopId) {
     goBackSafe()
     return null
   }
 
-  // Show Shimmer while Auth or Data is strictly loading without cache fallback
   if (authLoading || (dataLoading && !data)) {
     return (
       <PageLoadingScreen
@@ -687,7 +705,6 @@ function ShopDetail() {
     )
   }
 
-  // Show Error only if data fails to fetch and there is no cache
   if (error && !data) {
     return <RetryingNotice message={getRetryingMessage(error)} onRetry={mutate} />
   }
@@ -703,7 +720,6 @@ function ShopDetail() {
   )
   const isVerified = Boolean(currentShop?.is_verified)
   const isLoggedIn = Boolean(user?.id)
-  const showLegacyInfoLayout = false
 
   return (
     <>
@@ -817,25 +833,23 @@ function ShopDetail() {
         ) : null}
 
         <section className="mb-2 border-y border-slate-300 bg-white px-4 py-6">
-          <div className="mb-5 flex flex-wrap items-center gap-3 overflow-x-auto border-b border-slate-200 pb-3">
+          {/* Aligned Tabs for Single Row */}
+          <div className="mb-5 flex w-full flex-row flex-nowrap items-center justify-between gap-2 overflow-x-auto border-b border-slate-200 pb-3 sm:justify-start">
             {[
-              { key: "storefront", label: "Storefront", icon: <FaStore />, active: "border-orange-200 bg-orange-50 text-orange-700", idle: "border-orange-100 bg-white text-orange-700 hover:border-orange-200 hover:bg-orange-50" },
-              { key: "map", label: "Location", icon: <FaMapLocationDot />, active: "border-sky-200 bg-sky-50 text-sky-700", idle: "border-sky-100 bg-white text-sky-700 hover:border-sky-200 hover:bg-sky-50" },
-              { key: "business", label: "About", icon: <FaCircleInfo />, active: "border-emerald-200 bg-emerald-50 text-emerald-700", idle: "border-emerald-100 bg-white text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50" },
+              { key: "storefront", label: "Storefront", icon: <FaStore />, active: "border-orange-300 bg-orange-50 text-orange-700", idle: "border-orange-200 bg-white text-orange-700 hover:bg-orange-50" },
+              { key: "map", label: "Location", icon: <FaMapLocationDot />, active: "border-blue-300 bg-blue-50 text-blue-700", idle: "border-blue-200 bg-white text-blue-700 hover:bg-blue-50" },
+              { key: "about", label: "About", icon: <FaCircleInfo />, active: "border-emerald-300 bg-emerald-50 text-emerald-700", idle: "border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50" },
             ].map((section) => (
               <button
                 key={section.key}
                 type="button"
-                onClick={() =>
-                  setActiveInfoSection((current) => (current === section.key ? null : section.key))
-                }
-                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[0.8rem] font-extrabold transition ${
+                onClick={() => setActiveInfoSection((current) => (current === section.key ? null : section.key))}
+                className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-1.5 text-[0.7rem] font-extrabold transition sm:flex-none sm:px-4 sm:text-[0.75rem] ${
                   activeInfoSection === section.key ? section.active : section.idle
                 }`}
               >
-                {section.icon}
-                {section.label}
-                <FaChevronRight className={`text-[0.7rem] transition ${activeInfoSection === section.key ? "rotate-90" : ""}`} />
+                <span className="shrink-0">{section.icon}</span>
+                <span className="truncate">{section.label}</span>
               </button>
             ))}
           </div>
@@ -893,260 +907,6 @@ function ShopDetail() {
           </section>
         ) : null}
 
-        {showLegacyInfoLayout ? (
-        <section className="mb-2 border-y border-slate-300 bg-white px-4 py-6">
-          <div className="mb-5 flex flex-wrap items-center gap-3 overflow-x-auto border-b border-slate-200 pb-3">
-            {[
-              currentShop?.storefront_url ? { key: "storefront", label: "View Storefront", icon: <FaStore /> } : null,
-              currentShop?.latitude && currentShop?.longitude ? { key: "map", label: "View Location Map", icon: <FaMapLocationDot /> } : null,
-              { key: "business", label: "About Business", icon: <FaCircleInfo /> },
-            ]
-              .filter(Boolean)
-              .map((section) => (
-                <button
-                  key={section.key}
-                  type="button"
-                  onClick={() =>
-                    setActiveInfoSection((current) => (current === section.key ? null : section.key))
-                  }
-                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[0.8rem] font-extrabold transition ${
-                    activeInfoSection === section.key
-                      ? "border-pink-200 bg-pink-50 text-pink-600"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-pink-200 hover:text-pink-600"
-                  }`}
-                >
-                  {section.icon}
-                  {section.label}
-                  <FaChevronRight className={`text-[0.7rem] transition ${activeInfoSection === section.key ? "rotate-90" : ""}`} />
-                </button>
-              ))}
-          </div>
-
-          {activeInfoSection === "storefront" && currentShop?.storefront_url ? (
-            <div className="mb-4 rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
-              <StableImage
-                src={currentShop.storefront_url}
-                alt="Store Front"
-                containerClassName="flex min-h-[240px] w-full items-center justify-center overflow-hidden rounded-[18px] border border-slate-200 bg-slate-50 p-2"
-                className="max-h-[560px] w-full object-contain"
-              />
-            </div>
-          ) : null}
-
-          {activeInfoSection === "map" && currentShop?.latitude && currentShop?.longitude ? (
-            <div className="mb-4 rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
-              <div
-                ref={mapRef}
-                className="h-[260px] w-full rounded-[18px] border border-slate-200 bg-slate-50"
-              />
-
-              <button
-                type="button"
-                onClick={openGoogleMaps}
-                className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-[0.82rem] font-bold text-[#0F1111] transition hover:bg-[#F7FAFA]"
-              >
-                Open in Google Maps
-                <span>↗</span>
-              </button>
-            </div>
-          ) : null}
-
-          {activeInfoSection === "business" ? (
-            <div className="mb-4 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-              <div className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
-                <div className="mb-3 flex items-start gap-4">
-                  <StableImage
-                    src={shopLogo}
-                    alt="Shop Logo"
-                    containerClassName="h-[72px] w-[72px] shrink-0 rounded-xl border border-slate-300 bg-white"
-                    className="h-full w-full object-cover"
-                  />
-
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-2 flex flex-wrap items-center gap-2 text-[1.2rem] font-extrabold leading-[1.2] text-[#0F1111]">
-                      <span>{currentShop?.name}</span>
-                      {isVerified ? (
-                        <FaCircleCheck
-                          className="text-[1rem] text-[#007185]"
-                          title="Approved Shop"
-                        />
-                      ) : null}
-                    </div>
-
-                    <div className="inline-block rounded-full bg-pink-100 px-3 py-1 text-[0.74rem] font-bold text-pink-600">
-                      {currentShop?.category}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mb-5 mt-4 flex items-start gap-2 text-[0.92rem] font-medium leading-6 text-slate-600">
-                  <FaLocationDot className="mt-1 shrink-0 text-pink-600" />
-                  <span>{currentShop?.address}</span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <div
-                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[0.8rem] font-bold ${
-                      isVerified
-                        ? "border-[#BFE8F0] bg-[#EFF6FF] text-[#007185]"
-                        : "border-red-100 bg-red-50 text-red-700"
-                    }`}
-                  >
-                    {isVerified ? <FaShield /> : <FaTriangleExclamation />}
-                    {isVerified
-                      ? `ID: ${currentShop?.unique_id || "Verified"}`
-                      : "Pending Verification"}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={toggleLike}
-                    className={`inline-flex items-center gap-2 rounded-full border px-5 py-2 text-[0.85rem] font-bold transition ${
-                      hasLiked
-                        ? "border-pink-300 bg-white text-pink-600"
-                        : "border-slate-300 bg-white text-[#0F1111]"
-                    }`}
-                  >
-                    <span>{hasLiked ? "👍" : "👍"}</span>
-                    <span>{likeCount}</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
-                <div className="mb-3 text-[0.82rem] font-extrabold uppercase tracking-[0.12em] text-slate-400">
-                  About Business
-                </div>
-
-                <p className="text-[0.95rem] leading-7 text-[#0F1111]">
-                  {currentShop?.description ||
-                    "No description provided by the merchant."}
-                </p>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="hidden grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-            <div>
-              {currentShop?.storefront_url ? (
-                <div className="mb-6 rounded-lg border border-slate-300 bg-white p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-                  <div className="mb-3 flex items-center gap-2 border-b border-slate-200 pb-2 text-base font-extrabold text-[#0F1111]">
-                    <FaStore className="text-pink-600" />
-                    Store Front
-                  </div>
-
-                  <div className="flex justify-center">
-                    <StableImage
-                      src={currentShop.storefront_url}
-                      alt="Store Front"
-                      containerClassName="aspect-[3/4] w-full max-w-[360px] rounded-lg border border-slate-300 bg-slate-50"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                </div>
-              ) : null}
-
-              {currentShop?.latitude && currentShop?.longitude ? (
-                <div className="rounded-lg border border-slate-300 bg-white p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-                  <div className="mb-3 flex items-center gap-2 border-b border-slate-200 pb-2 text-base font-extrabold text-[#0F1111]">
-                    <FaMapLocationDot className="text-pink-600" />
-                    Location Map
-                  </div>
-
-                  <div
-                    className="h-[220px] w-full rounded-lg border border-slate-300 bg-slate-50"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={openGoogleMaps}
-                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-[0.85rem] font-bold text-[#0F1111] shadow-[0_2px_5px_0_rgba(213,217,217,0.5)] transition hover:bg-[#F7FAFA]"
-                  >
-                    Open in Google Maps
-                    <span>↗</span>
-                  </button>
-                </div>
-              ) : null}
-            </div>
-
-            <div>
-              <div className="mb-6 rounded-lg border border-slate-300 bg-white p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-                <div className="mb-3 flex items-start gap-4">
-                  <StableImage
-                    src={shopLogo}
-                    alt="Shop Logo"
-                    containerClassName="h-[72px] w-[72px] shrink-0 rounded-lg border border-slate-300 bg-white"
-                    className="h-full w-full object-cover"
-                  />
-
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-2 flex flex-wrap items-center gap-2 text-[1.4rem] font-extrabold leading-[1.2] text-[#0F1111]">
-                      <span>{currentShop?.name}</span>
-                      {isVerified ? (
-                        <FaCircleCheck
-                          className="text-[1.1rem] text-[#007185]"
-                          title="Approved Shop"
-                        />
-                      ) : null}
-                    </div>
-
-                    <div className="inline-block rounded bg-pink-100 px-3 py-1 text-[0.75rem] font-bold text-pink-600">
-                      {currentShop?.category}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mb-5 mt-4 flex items-start gap-2 text-[0.95rem] font-medium leading-6 text-slate-600">
-                  <FaLocationDot className="mt-1 shrink-0 text-pink-600" />
-                  <span>{currentShop?.address}</span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <div
-                    className={`inline-flex items-center gap-2 rounded-md border px-4 py-2 text-[0.85rem] font-bold ${
-                      isVerified
-                        ? "border-[#BFE8F0] bg-[#EFF6FF] text-[#007185]"
-                        : "border-red-100 bg-red-50 text-red-700"
-                    }`}
-                  >
-                    {isVerified ? <FaShield /> : <FaTriangleExclamation />}
-                    {isVerified
-                      ? `ID: ${currentShop?.unique_id || "Verified"}`
-                      : "Pending Verification"}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={toggleLike}
-                    className={`inline-flex items-center gap-2 rounded-md border px-5 py-2 text-[0.9rem] font-bold shadow-[0_2px_5px_0_rgba(213,217,217,0.5)] transition ${
-                      hasLiked
-                        ? "border-pink-300 bg-white text-pink-600"
-                        : "border-slate-300 bg-white text-[#0F1111]"
-                    }`}
-                  >
-                    <span>{hasLiked ? "👍" : "👍"}</span>
-                    <span>{likeCount}</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="mb-6 rounded-lg border border-slate-300 bg-white p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-                <div className="mb-3 flex items-center gap-2 border-b border-slate-200 pb-2 text-base font-extrabold text-[#0F1111]">
-                  <FaCircleInfo className="text-[#007185]" />
-                  About Business
-                </div>
-
-                <p className="text-[0.95rem] leading-7 text-[#0F1111]">
-                  {currentShop?.description ||
-                    "No description provided by the merchant."}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        ) : null}
-
         <div ref={communityLoaderRef} className="h-px" aria-hidden="true" />
 
         {shouldLoadCommunity ? (
@@ -1172,7 +932,7 @@ function ShopDetail() {
       </div>
       {securityModalOpen ? (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[rgba(19,25,33,0.8)] px-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-[360px] rounded-lg bg-white px-6 py-7 text-center shadow-[0_10px_25px_rgba(0,0,0,0.2)]">
+          <div className="w-full max-w-[360px] rounded-[18px] bg-white px-6 py-7 text-center shadow-[0_10px_25px_rgba(0,0,0,0.2)]">
             <FaWhatsapp className="mx-auto mb-4 text-5xl text-[#25D366]" />
             <h3 className="mb-2 text-xl font-extrabold text-[#0F1111]">
               Contact Merchant
@@ -1189,7 +949,7 @@ function ShopDetail() {
                   setSecurityModalOpen(false)
                   setOpeningWhatsApp(false)
                 }}
-                className="flex-1 rounded-md border border-slate-300 bg-white px-4 py-3 font-bold text-[#0F1111] transition hover:bg-[#F7FAFA]"
+                className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-bold text-[#0F1111] transition hover:bg-[#F7FAFA]"
               >
                 Cancel
               </button>
@@ -1197,7 +957,7 @@ function ShopDetail() {
                 type="button"
                 onClick={launchWhatsApp}
                 disabled={openingWhatsApp}
-                className="flex-1 rounded-md bg-[#25D366] px-4 py-3 font-bold text-white transition hover:bg-green-600 disabled:cursor-wait disabled:opacity-70"
+                className="flex-1 rounded-xl bg-[#25D366] px-4 py-3 font-bold text-white transition hover:bg-green-600 disabled:cursor-wait disabled:opacity-70"
               >
                 {openingWhatsApp ? "Opening WhatsApp..." : "Continue to Chat"}
               </button>
