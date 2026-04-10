@@ -382,44 +382,87 @@ export default function ShopCommunitySection({
           </div>
         ) : (
           <>
-            <label className="mb-3 block">
+            <div className="mb-3 block">
               <span className="mb-1.5 block text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-slate-500">
                 Product Reference
               </span>
-              <select
-                value={selectedProductId}
-                onChange={(event) => setSelectedProductId(event.target.value)}
-                className="w-full rounded-[16px] border border-slate-200 bg-white px-3 py-3 text-[0.88rem] font-semibold text-[#0F1111] outline-none transition focus:border-pink-300 focus:ring-4 focus:ring-pink-100"
-              >
-                <option value="">General shop service</option>
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+              
+              <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {/* General Shop Topic Card */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedProductId("")}
+                  className={`flex w-[132px] shrink-0 flex-col gap-2 rounded-[16px] border p-2.5 text-left transition ${
+                    !selectedProductId
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-slate-300 bg-white hover:border-slate-400 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className={`flex h-[84px] w-full items-center justify-center rounded-xl ${!selectedProductId ? "bg-blue-500 text-white" : "bg-slate-200 text-slate-400"}`}>
+                    <FaBoxOpen className="text-[1.2rem]" />
+                  </div>
+                  <div className={`line-clamp-2 text-[0.75rem] font-extrabold leading-[1.2] ${!selectedProductId ? "text-blue-700" : "text-[#0F1111]"}`}>
+                    General shop topic
+                  </div>
+                </button>
+
+                {/* Product Cards */}
+                {products.map((product) => {
+                  const isActive = String(product.id) === String(selectedProductId)
+                  return (
+                    <button
+                      key={product.id}
+                      type="button"
+                      onClick={() => setSelectedProductId(String(product.id))}
+                      className={`flex w-[132px] shrink-0 flex-col gap-2 rounded-[16px] border p-2.5 text-left transition ${
+                        isActive
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-slate-300 bg-white hover:border-slate-400 hover:bg-slate-50"
+                      }`}
+                    >
+                      {product.image_url ? (
+                        <div className="h-[84px] w-full overflow-hidden rounded-xl bg-white">
+                          <StableImage
+                            src={product.image_url}
+                            alt={product.name}
+                            containerClassName="h-full w-full bg-white"
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className={`flex h-[84px] w-full items-center justify-center rounded-xl ${isActive ? "bg-blue-200 text-blue-600" : "bg-slate-200 text-slate-400"}`}>
+                          <FaBoxOpen className="text-[1.2rem]" />
+                        </div>
+                      )}
+                      <div className={`line-clamp-2 text-[0.75rem] font-extrabold leading-[1.2] ${isActive ? "text-blue-700" : "text-[#0F1111]"}`}>
+                        {product.name}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
             {selectedProduct ? (
               <button
                 type="button"
                 onClick={() => openProductDetail(selectedProductId)}
-                className="mb-3 flex items-center gap-3 rounded-2xl border border-pink-100 bg-white px-3 py-3 text-left shadow-[0_8px_24px_rgba(15,23,42,0.04)]"
+                className="mb-3 flex items-center gap-3 rounded-[18px] border border-blue-200 bg-blue-50 px-3 py-3 text-left"
               >
                 {selectedProduct.image_url ? (
                   <StableImage
                     src={selectedProduct.image_url}
                     alt={selectedProduct.name || "Selected product"}
-                    containerClassName="h-[64px] w-[64px] overflow-hidden rounded-xl bg-white"
+                    containerClassName="h-[68px] w-[68px] shrink-0 overflow-hidden rounded-xl bg-white"
                     className="h-full w-full object-contain"
                   />
                 ) : (
-                  <div className="flex h-[64px] w-[64px] items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-400">
-                    <FaBoxOpen />
+                  <div className="flex h-[68px] w-[68px] shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-100 text-blue-400">
+                    <FaBoxOpen className="text-[1.5rem]" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="text-[0.72rem] font-extrabold uppercase tracking-[0.12em] text-pink-600">
+                  <div className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-blue-600">
                     Attached Product
                   </div>
                   <div className="truncate text-[0.88rem] font-bold text-[#0F1111]">
