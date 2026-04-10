@@ -10,7 +10,7 @@ export const REMITA_SCRIPT_URL =
 
 export const CTM_BANK_ACCOUNT = Object.freeze({
   bankName: "United Bank For Africa (UBA)",
-  accountName: "CT Merchant LTD",
+  accountName: "CT MERCHANT LTD",
   accountNumber: "1029794680",
 })
 
