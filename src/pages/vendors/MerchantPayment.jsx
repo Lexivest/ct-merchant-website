@@ -367,15 +367,15 @@ export default function MerchantPayment() {
 
   return (
     <div
-      className={`flex min-h-screen items-center justify-center bg-[#F8FAFC] p-5 ${
+      className={`flex min-h-screen w-full items-start justify-center overflow-x-hidden bg-[#F8FAFC] px-3 py-4 sm:items-center sm:p-5 ${
         location.state?.fromVendorTransition ? "ctm-page-enter" : ""
       }`}
     >
-      <div className="relative w-full max-w-[760px] overflow-hidden rounded-[28px] border border-[#E2E8F0] bg-white p-6 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-8">
+      <div className="relative w-full max-w-[760px] min-w-0 overflow-hidden rounded-[24px] border border-[#E2E8F0] bg-white p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:rounded-[28px] sm:p-8">
         <div className="absolute left-0 right-0 top-0 h-1.5 bg-[#D97706]"></div>
 
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <div>
+          <div className="min-w-0">
             <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#FEF3C7] text-3xl text-[#D97706]">
               <FaIdCardClip />
             </div>
@@ -386,7 +386,7 @@ export default function MerchantPayment() {
 
             <div className="mb-5 rounded-2xl bg-[#F1F5F9] p-5">
               <div className="mb-1 text-[0.78rem] font-bold uppercase tracking-widest text-[#64748B]">Amount to Pay</div>
-              <div className="text-4xl font-extrabold text-[#0F172A]">{formatNaira(PHYSICAL_VERIFICATION_FEE)}</div>
+              <div className="text-3xl font-extrabold text-[#0F172A] sm:text-4xl">{formatNaira(PHYSICAL_VERIFICATION_FEE)}</div>
             </div>
 
             <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-4 text-left text-[0.85rem] leading-relaxed text-[#991B1B]">
@@ -395,13 +395,13 @@ export default function MerchantPayment() {
               After staff confirms payment, you will record a short 60-second video inside your physical shop at:
               <div className="my-3 flex items-start gap-2 rounded-lg border border-dashed border-[#FCA5A5] bg-white p-3 font-semibold text-[#7F1D1D]">
                 <FaLocationDot className="mt-[3px] shrink-0" />
-                <span>{shopDetails.shopAddress}</span>
+                <span className="min-w-0 break-words">{shopDetails.shopAddress}</span>
               </div>
               This fee is strictly non-refundable. If you do not have a physical shop, please contact support before paying.
             </div>
           </div>
 
-          <div>
+          <div className="min-w-0">
             <StatusCard proof={paymentProof} />
 
             <div className="mb-5 rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] p-5 text-left">
@@ -411,15 +411,15 @@ export default function MerchantPayment() {
               <div className="grid gap-3 text-sm">
                 <div className="rounded-xl bg-white p-3">
                   <div className="text-xs font-bold uppercase text-[#64748B]">Bank Name</div>
-                  <div className="mt-1 font-black text-[#0F172A]">{CTM_BANK_ACCOUNT.bankName}</div>
+                  <div className="mt-1 break-words font-black text-[#0F172A]">{CTM_BANK_ACCOUNT.bankName}</div>
                 </div>
                 <div className="rounded-xl bg-white p-3">
                   <div className="text-xs font-bold uppercase text-[#64748B]">Account Name</div>
-                  <div className="mt-1 font-black text-[#0F172A]">{CTM_BANK_ACCOUNT.accountName}</div>
+                  <div className="mt-1 break-words font-black text-[#0F172A]">{CTM_BANK_ACCOUNT.accountName}</div>
                 </div>
                 <div className="rounded-xl bg-white p-3">
                   <div className="text-xs font-bold uppercase text-[#64748B]">Account Number</div>
-                  <div className="mt-1 font-mono text-2xl font-black tracking-wide text-[#0F172A]">{CTM_BANK_ACCOUNT.accountNumber}</div>
+                  <div className="mt-1 break-all font-mono text-xl font-black tracking-wide text-[#0F172A] sm:text-2xl">{CTM_BANK_ACCOUNT.accountNumber}</div>
                 </div>
               </div>
             </div>
@@ -452,7 +452,7 @@ export default function MerchantPayment() {
                   accept="image/jpeg,image/png,image/webp,application/pdf"
                   onChange={(event) => setReceiptFile(event.target.files?.[0] || null)}
                   disabled={submittingProof || processingPromo}
-                  className="mb-2 w-full rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-4 text-sm font-semibold text-[#475569]"
+                  className="mb-2 block w-full min-w-0 max-w-full rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-3 py-4 text-sm font-semibold text-[#475569] sm:px-4"
                 />
                 <div className="mb-4 text-xs font-semibold text-[#64748B]">{getPaymentReceiptRuleLabel()}</div>
 
@@ -473,7 +473,7 @@ export default function MerchantPayment() {
                   <label className="mb-2 flex items-center gap-2 text-[0.85rem] font-bold text-[#64748B]">
                     <FaTicket className="text-[#D97706]" /> Have a Promo Code?
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex min-w-0 gap-2">
                     <input
                       type="text"
                       maxLength={6}
@@ -491,7 +491,7 @@ export default function MerchantPayment() {
                     <button
                       onClick={handleApplyPromo}
                       disabled={!canApplyPromo}
-                      className="rounded-lg bg-[#0F172A] px-4 py-2 font-bold text-white transition hover:bg-[#1E293B] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="shrink-0 rounded-lg bg-[#0F172A] px-3 py-2 font-bold text-white transition hover:bg-[#1E293B] disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
                     >
                       Activate
                     </button>
