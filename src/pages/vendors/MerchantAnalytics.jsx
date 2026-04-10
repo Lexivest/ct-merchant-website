@@ -12,7 +12,7 @@ import {
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
-import { ShimmerBlock } from "../../components/common/Shimmers";
+import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 
@@ -26,33 +26,10 @@ const formatNumber = (num) => {
 // --- SHIMMER COMPONENT ---
 function AnalyticsShimmer() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
-      <header className="sticky top-0 z-40 flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="text-xl opacity-50"><FaArrowLeft /></div>
-          <div className="text-[1.15rem] font-bold opacity-50">Shop Analytics</div>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-[800px] flex-1 p-5 pb-12">
-        <div className="mb-6 flex items-end justify-between">
-          <div>
-            <ShimmerBlock className="mb-2 h-6 w-48 rounded" />
-            <ShimmerBlock className="h-4 w-64 rounded" />
-          </div>
-          <ShimmerBlock className="h-6 w-16 rounded" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex flex-col items-start rounded-lg border border-[#D5D9D9] bg-white p-6 shadow-sm">
-              <ShimmerBlock className="mb-5 h-[52px] w-[52px] rounded-lg" />
-              <ShimmerBlock className="mb-2 h-8 w-24 rounded" />
-              <ShimmerBlock className="mb-1 h-5 w-32 rounded" />
-              <ShimmerBlock className="h-3 w-40 rounded" />
-            </div>
-          ))}
-        </div>
-      </main>
-    </div>
+    <PageLoadingScreen
+      title="Opening analytics"
+      message="Please wait while we prepare your shop analytics."
+    />
   );
 }
 

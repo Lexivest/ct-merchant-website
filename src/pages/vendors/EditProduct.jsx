@@ -23,8 +23,8 @@ import {
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
-import { ShimmerBlock } from "../../components/common/Shimmers";
 import CameraCaptureModal from "../../components/common/CameraCaptureModal";
+import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
@@ -52,33 +52,10 @@ const MAX_SPECIAL_OFFERS = 2;
 // --- SHIMMER COMPONENT ---
 function EditProductShimmer() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] pb-12">
-      <header className="sticky top-0 z-40 flex items-center gap-4 bg-[#131921] px-4 py-3 text-white shadow-sm">
-        <div className="text-xl opacity-50"><FaArrowLeft /></div>
-        <div className="text-[1.15rem] font-bold opacity-50">Edit Product</div>
-      </header>
-      <main className="mx-auto w-full max-w-[680px] p-5">
-        <div className="mb-6 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-          <ShimmerBlock className="mb-2 h-5 w-48 rounded" />
-          <ShimmerBlock className="h-4 w-full rounded" />
-        </div>
-        <div className="rounded-xl border border-[#D5D9D9] bg-white p-6 shadow-sm">
-          <div className="mb-6 grid grid-cols-3 gap-3">
-            {[1, 2, 3].map((i) => <ShimmerBlock key={i} className="aspect-square w-full rounded-lg" />)}
-          </div>
-          <div className="mb-6 flex flex-col items-center rounded-lg border border-[#D5D9D9] bg-[#F3F4F6] p-5">
-            <ShimmerBlock className="mb-3 h-5 w-40 rounded" />
-            <div className="w-[140px] rounded-md border border-[#E5E7EB] bg-white p-2">
-              <ShimmerBlock className="mb-2 aspect-square w-full rounded" />
-              <ShimmerBlock className="h-4 w-3/4 rounded" />
-            </div>
-          </div>
-          <ShimmerBlock className="mb-5 h-12 w-full rounded" />
-          <ShimmerBlock className="mb-5 h-12 w-full rounded" />
-          <ShimmerBlock className="mt-8 h-14 w-full rounded-lg" />
-        </div>
-      </main>
-    </div>
+    <PageLoadingScreen
+      title="Opening edit product"
+      message="Please wait while we prepare the product editor."
+    />
   );
 }
 

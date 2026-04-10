@@ -10,11 +10,11 @@ import {
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
-import { ShimmerList } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
+import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
@@ -169,9 +169,11 @@ function Area() {
 
       <main className="mx-auto w-full max-w-[800px] flex-1 px-4 py-5">
         {authLoading || (!user && !authLoading) || (dataLoading && !data) ? (
-          <div className="pt-2">
-            <ShimmerList />
-          </div>
+          <PageLoadingScreen
+            fullScreen={false}
+            title="Loading area"
+            message="Please wait while we prepare shops in this area."
+          />
         ) : dataError && !data ? (
           <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} onRetry={mutate} />
         ) : (

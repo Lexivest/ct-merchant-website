@@ -20,7 +20,7 @@ import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import CameraCaptureModal from "../../components/common/CameraCaptureModal";
-import { ShimmerBlock } from "../../components/common/Shimmers";
+import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
@@ -45,22 +45,10 @@ const TARGET_H = BANNER_PROFILE.targetHeight;
 // --- SHIMMER COMPONENT ---
 function BannerShimmer() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
-      <header className="sticky top-0 z-40 flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="text-xl opacity-50"><FaArrowLeft /></div>
-          <div className="text-[1.15rem] font-bold opacity-50">Shop Banner</div>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-[600px] p-5">
-        <div className="mb-6 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-          <ShimmerBlock className="mb-2 h-5 w-48 rounded" />
-          <ShimmerBlock className="h-4 w-full rounded" />
-          <ShimmerBlock className="mt-1 h-4 w-3/4 rounded" />
-        </div>
-        <ShimmerBlock className="aspect-video w-full rounded-xl" />
-      </main>
-    </div>
+    <PageLoadingScreen
+      title="Opening banner"
+      message="Please wait while we prepare your shop banner tools."
+    />
   );
 }
 

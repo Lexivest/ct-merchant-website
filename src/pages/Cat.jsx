@@ -9,35 +9,14 @@ import {
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
-import { ShimmerBlock, ShimmerCard } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
+import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
-
-// --- PROFESSIONAL SHIMMER COMPONENT ---
-function CatShimmer() {
-  return (
-    <div className="flex flex-col items-center justify-center pt-6 w-full">
-      <div className="w-full mb-6 flex items-center gap-3">
-        <ShimmerBlock className="h-12 w-12 rounded-lg" />
-        <div>
-          <ShimmerBlock className="mb-2 h-8 w-48 rounded" />
-          <ShimmerBlock className="h-4 w-32 rounded" />
-        </div>
-      </div>
-      <div className="w-full grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
-        <ShimmerCard />
-        <ShimmerCard />
-        <ShimmerCard />
-        <ShimmerCard />
-      </div>
-    </div>
-  )
-}
 
 function Cat() {
   const navigate = useNavigate()
@@ -251,7 +230,11 @@ function Cat() {
 
       <main className="mx-auto w-full max-w-[1200px] flex-1 px-5 py-6">
         {authLoading || ((!user || !catName) && !authLoading) || (dataLoading && !data) ? (
-          <CatShimmer />
+          <PageLoadingScreen
+            fullScreen={false}
+            title="Loading category"
+            message="Please wait while we prepare shops in this category."
+          />
         ) : dataError && !data ? (
           <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} onRetry={mutate} />
         ) : (

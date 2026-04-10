@@ -10,45 +10,17 @@ import {
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
-import { ShimmerBlock, ShimmerCard } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
+import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import {
   prepareProductDetailTransition,
   prepareShopDetailTransition,
 } from "../lib/detailPageTransitions"
-
-// --- PROFESSIONAL SHIMMER COMPONENT ---
-function SearchShimmer() {
-  return (
-    <div className="flex flex-col items-center justify-center py-10 w-full max-w-[1600px] mx-auto px-5">
-      <div className="w-full mb-8">
-        <ShimmerBlock className="mb-4 h-8 w-64 rounded bg-slate-200" />
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
-          <ShimmerCard />
-          <ShimmerCard />
-          <ShimmerCard />
-        </div>
-      </div>
-      <div className="w-full">
-        <ShimmerBlock className="mb-4 h-8 w-64 rounded bg-slate-200" />
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-white p-2">
-              <ShimmerBlock className="aspect-square w-full rounded-md" />
-              <ShimmerBlock className="h-4 w-3/4 rounded" />
-              <ShimmerBlock className="h-4 w-1/2 rounded" />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function Search() {
   const navigate = useNavigate()
@@ -481,7 +453,11 @@ function Search() {
 
       <main className="mx-auto w-full max-w-[1600px] px-5 py-6">
         {authLoading || (dataLoading && !data) ? (
-          <SearchShimmer />
+          <PageLoadingScreen
+            fullScreen={false}
+            title="Loading search"
+            message="Please wait while we prepare your search results."
+          />
         ) : dataError && !data ? (
           <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} onRetry={mutate} />
         ) : (

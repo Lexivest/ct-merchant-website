@@ -11,10 +11,10 @@ import {
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
-import { ShimmerList } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 
 function ShopIndex() {
@@ -136,9 +136,11 @@ function ShopIndex() {
 
       <div className="mx-auto w-full max-w-[800px] flex-1 overflow-y-auto px-4 py-5">
         {authLoading || (dataLoading && !allShops) ? (
-          <div className="pt-2">
-            <ShimmerList />
-          </div>
+          <PageLoadingScreen
+            fullScreen={false}
+            title="Loading shops"
+            message="Please wait while we prepare the shop directory."
+          />
         ) : dataError && !allShops ? (
           <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} onRetry={mutate} />
         ) : filteredShops.length === 0 ? (

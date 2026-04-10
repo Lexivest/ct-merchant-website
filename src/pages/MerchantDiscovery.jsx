@@ -4,19 +4,8 @@ import { FaArrowLeft } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
 import useCachedFetch from "../hooks/useCachedFetch"
 import PageSeo from "../components/common/PageSeo"
+import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
-import { ShimmerList } from "../components/common/Shimmers"
-
-function RepoSearchShimmer() {
-  return (
-    <div className="w-full max-w-[720px] pt-2">
-      <ShimmerList />
-      <div className="pt-5 text-center">
-        <p className="text-sm font-semibold text-slate-500">Loading shop...</p>
-      </div>
-    </div>
-  )
-}
 
 function MerchantDiscovery() {
   const navigate = useNavigate()
@@ -92,11 +81,19 @@ function MerchantDiscovery() {
 
       <main className="flex justify-center px-5 py-10">
         {loading && !data ? (
-          <RepoSearchShimmer />
+          <PageLoadingScreen
+            fullScreen={false}
+            title="Loading shop"
+            message="Please wait while we prepare this merchant profile."
+          />
         ) : dataError && !data ? (
           <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} className="w-full max-w-[420px]" />
         ) : shop ? (
-          <RepoSearchShimmer />
+          <PageLoadingScreen
+            fullScreen={false}
+            title="Opening shop"
+            message="Please wait while we finish preparing this merchant profile."
+          />
         ) : null}
       </main>
     </div>

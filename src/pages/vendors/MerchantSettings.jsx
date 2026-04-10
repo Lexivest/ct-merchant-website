@@ -24,35 +24,17 @@ import {
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
-import { ShimmerBlock } from "../../components/common/Shimmers";
+import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 
 // --- SHIMMER COMPONENT ---
 function SettingsShimmer() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
-      <header className="sticky top-0 z-40 flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="text-xl opacity-50"><FaArrowLeft /></div>
-          <div className="text-[1.15rem] font-bold opacity-50">Shop Settings</div>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-[600px] p-5">
-        <div className="rounded-xl border border-[#D5D9D9] bg-white p-6 shadow-sm">
-          <ShimmerBlock className="mb-6 h-8 w-48 rounded" />
-          <ShimmerBlock className="mb-2 h-4 w-32 rounded" />
-          <ShimmerBlock className="mb-5 h-12 w-full rounded" />
-          <ShimmerBlock className="mb-2 h-4 w-24 rounded" />
-          <ShimmerBlock className="mb-5 h-24 w-full rounded" />
-          <ShimmerBlock className="mb-2 h-4 w-36 rounded" />
-          <ShimmerBlock className="mb-8 h-12 w-full rounded" />
-          <ShimmerBlock className="mb-6 h-8 w-40 rounded" />
-          <ShimmerBlock className="mb-2 h-4 w-28 rounded" />
-          <ShimmerBlock className="h-12 w-full rounded" />
-        </div>
-      </main>
-    </div>
+    <PageLoadingScreen
+      title="Opening settings"
+      message="Please wait while we prepare your shop settings."
+    />
   );
 }
 

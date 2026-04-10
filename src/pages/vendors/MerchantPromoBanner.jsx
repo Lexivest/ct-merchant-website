@@ -15,7 +15,7 @@ import {
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
-import { ShimmerBlock } from "../../components/common/Shimmers";
+import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import logoImage from "../../assets/images/logo.jpg";
 
@@ -68,28 +68,10 @@ function wrapTextLines(input, maxCharsPerLine, maxLines) {
 
 function PromoBannerShimmer() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#F4F7FB] text-[#0F1111]">
-      <header className="px-4 py-4">
-        <div className="mx-auto flex w-full max-w-[860px] items-center gap-4 rounded-[24px] bg-[#111827] px-4 py-4 text-white shadow-[0_14px_30px_rgba(15,23,42,0.18)]">
-          <div className="flex h-[42px] w-[42px] items-center justify-center rounded-[16px] bg-white/10 text-[1rem] opacity-60">
-            <FaArrowLeft />
-          </div>
-          <div className="min-w-0">
-            <div className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#f472b6]">Merchant</div>
-            <div className="text-[1.2rem] font-black opacity-60">Shop Promo Banner</div>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto flex w-full max-w-[860px] flex-1 flex-col items-center p-5 pb-12">
-        <div className="w-full rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
-          <ShimmerBlock className="mb-2 h-4 w-28 rounded-full" />
-          <ShimmerBlock className="mb-3 h-6 w-64 rounded" />
-          <ShimmerBlock className="h-4 w-full rounded" />
-          <ShimmerBlock className="mt-2 h-4 w-4/5 rounded" />
-          <ShimmerBlock className="mt-6 h-[520px] w-full rounded-[26px]" />
-        </div>
-      </main>
-    </div>
+    <PageLoadingScreen
+      title="Opening promo banner"
+      message="Please wait while we prepare your promo banner tools."
+    />
   );
 }
 
