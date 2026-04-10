@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import {
   FaArrowLeft,
@@ -14,16 +14,30 @@ import {
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 
 export default function StaffInbox() {
+  const location = useLocation();
   const navigate = useNavigate();
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "staff-inbox"
+      ? location.state.prefetchedData
+      : null
   usePreventPullToRefresh();
 
-  const [activeTab, setActiveTab] = useState("contact"); 
-  const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState([]);
+  const [activeTab, setActiveTab] = useState(() => prefetchedData?.activeTab || "contact"); 
+  const [loading, setLoading] = useState(() => !prefetchedData);
+  const [items, setItems] = useState(() => prefetchedData?.items || []);
   const [selectedItem, setSelectedItem] = useState(null);
   const [updating, setUpdating] = useState(false);
+  const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData));
 
   const fetchData = useCallback(async () => {
+    if (prefetchedReady && prefetchedData && activeTab === prefetchedData.activeTab) {
+      setItems(prefetchedData.items || [])
+      setSelectedItem(null)
+      setLoading(false)
+      setPrefetchedReady(false)
+      return
+    }
+
     setLoading(true);
     setSelectedItem(null);
     setItems([]); 
@@ -77,7 +91,7 @@ export default function StaffInbox() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, [activeTab, prefetchedData, prefetchedReady]);
 
   useEffect(() => {
     fetchData();

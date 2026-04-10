@@ -13,6 +13,8 @@ import {
 import { supabase } from "../lib/supabase"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
+import { prepareStaffRouteTransition } from "../lib/staffRouteTransitions"
 import {
   QuickActionButton,
   SectionHeading,
@@ -61,8 +63,13 @@ export default function StaffDashboard() {
   const navigate = useNavigate()
   const { notify } = useGlobalFeedback()
   const isMounted = useRef(true)
+  const retryRouteTransitionRef = useRef(null)
 
   const [loading, setLoading] = useState(true)
+  const [routeTransition, setRouteTransition] = useState({
+    pending: false,
+    error: "",
+  })
   const [summary, setSummary] = useState({
     shopCount: 0,
     pendingComments: 0,
@@ -120,6 +127,47 @@ export default function StaffDashboard() {
     return () => { isMounted.current = false }
   }, [fetchSummary])
 
+  function beginRouteTransition(retryAction = null) {
+    retryRouteTransitionRef.current = retryAction
+    setRouteTransition({
+      pending: true,
+      error: "",
+    })
+  }
+
+  function failRouteTransition(message, retryAction = null) {
+    retryRouteTransitionRef.current = retryAction
+    setRouteTransition({
+      pending: false,
+      error: message,
+    })
+  }
+
+  const openStaffRouteWithTransition = useCallback(async (path) => {
+    if (!path) return
+
+    const retryAction = () => openStaffRouteWithTransition(path)
+    beginRouteTransition(retryAction)
+
+    try {
+      const prefetchedData = await prepareStaffRouteTransition({ path })
+      navigate(path, {
+        state: {
+          fromStaffTransition: true,
+          prefetchedData,
+        },
+      })
+    } catch (error) {
+      failRouteTransition(
+        getFriendlyErrorMessage(
+          error,
+          "We could not open that staff page right now. Please try again."
+        ),
+        retryAction
+      )
+    }
+  }, [navigate])
+
   const headerActions = useMemo(
     () => [
       <QuickActionButton
@@ -133,119 +181,134 @@ export default function StaffDashboard() {
         key="inbox"
         icon={<FaEnvelope />}
         label="Open Support Inbox"
-        onClick={() => navigate("/staff-inbox")}
+        onClick={() => void openStaffRouteWithTransition("/staff-inbox")}
       />,
       <QuickActionButton
         key="studio"
         icon={<FaWandMagicSparkles />}
         label="Launch CT Studio"
         tone="pink"
-        onClick={() => navigate("/staff-studio")}
+        onClick={() => void openStaffRouteWithTransition("/staff-studio")}
       />,
     ],
-    [fetchSummary, loading, navigate]
+    [fetchSummary, loading, openStaffRouteWithTransition]
   )
 
   return (
-    <StaffPortalShell
-      activeKey="home"
-      title="Staff Portal Home"
-      description="Move through moderation, analytics, user operations, and merchant controls from one clean command center."
-      headerActions={headerActions}
-    >
-      <SectionHeading
-        eyebrow="Home"
-        title="Operations Areas"
-        description="Each card opens a dedicated working page so the staff portal behaves like a proper internal product, not one long stacked screen."
+    <>
+      <PageTransitionOverlay
+        visible={routeTransition.pending}
+        error={routeTransition.error}
+        onRetry={() => retryRouteTransitionRef.current?.()}
+        onDismiss={() =>
+          setRouteTransition({
+            pending: false,
+            error: "",
+          })
+        }
       />
+      <div className={routeTransition.pending ? "pointer-events-none select-none" : ""}>
+        <StaffPortalShell
+          activeKey="home"
+          title="Staff Portal Home"
+          description="Move through moderation, analytics, user operations, and merchant controls from one clean command center."
+          headerActions={headerActions}
+        >
+          <SectionHeading
+            eyebrow="Home"
+            title="Operations Areas"
+            description="Each card opens a dedicated working page so the staff portal behaves like a proper internal product, not one long stacked screen."
+          />
 
-      <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <HomeCard
-          icon={<FaChartLine />}
-          title="Traffic Intelligence"
-          subtitle="Review page visits, route performance, and daily traffic movement in a dedicated analytics workspace."
-          metric={summary.visitsToday}
-          tone="blue"
-          onClick={() => navigate("/staff-traffic")}
-        />
-        <HomeCard
-          icon={<FaUsers />}
-          title="User Activity"
-          subtitle="Inspect city-level user activity, inactivity risk, and shop ownership patterns without crowding the main dashboard."
-          metric={summary.inactiveUsers}
-          tone="amber"
-          onClick={() => navigate("/staff-users")}
-        />
-        <HomeCard
-          icon={<FaComments />}
-          title="Community Moderation"
-          subtitle="Approve, hide, or reject shop discussion threads and keep public conversations professional."
-          metric={summary.pendingComments}
-          tone="pink"
-          onClick={() => navigate("/staff-community")}
-        />
-        <HomeCard
-          icon={<FaStore />}
-          title="Merchant Verifications"
-          subtitle="Review KYC videos, issue merchant IDs, and supervise approval workflows from a focused verification page."
-          metric={summary.shopCount}
-          tone="purple"
-          onClick={() => navigate("/staff-verifications")}
-        />
+          <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <HomeCard
+              icon={<FaChartLine />}
+              title="Traffic Intelligence"
+              subtitle="Review page visits, route performance, and daily traffic movement in a dedicated analytics workspace."
+              metric={summary.visitsToday}
+              tone="blue"
+              onClick={() => void openStaffRouteWithTransition("/staff-traffic")}
+            />
+            <HomeCard
+              icon={<FaUsers />}
+              title="User Activity"
+              subtitle="Inspect city-level user activity, inactivity risk, and shop ownership patterns without crowding the main dashboard."
+              metric={summary.inactiveUsers}
+              tone="amber"
+              onClick={() => void openStaffRouteWithTransition("/staff-users")}
+            />
+            <HomeCard
+              icon={<FaComments />}
+              title="Community Moderation"
+              subtitle="Approve, hide, or reject shop discussion threads and keep public conversations professional."
+              metric={summary.pendingComments}
+              tone="pink"
+              onClick={() => void openStaffRouteWithTransition("/staff-community")}
+            />
+            <HomeCard
+              icon={<FaStore />}
+              title="Merchant Verifications"
+              subtitle="Review KYC videos, issue merchant IDs, and supervise approval workflows from a focused verification page."
+              metric={summary.shopCount}
+              tone="purple"
+              onClick={() => void openStaffRouteWithTransition("/staff-verifications")}
+            />
+          </div>
+
+          <SectionHeading
+            eyebrow="Quick Status"
+            title="Today At A Glance"
+            description="A compact briefing for what needs attention before you drill into the detailed operational pages."
+          />
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">Community Queue</div>
+              <div className="mt-3 text-4xl font-black text-slate-900">{summary.pendingComments}</div>
+              <p className="mt-3 text-sm leading-6 text-slate-500">
+                Pending shop comments awaiting approval or moderation action.
+              </p>
+              <button
+                type="button"
+                onClick={() => void openStaffRouteWithTransition("/staff-community")}
+                className="mt-5 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+              >
+                Open Community Page
+              </button>
+            </div>
+
+            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">Merchant Load</div>
+              <div className="mt-3 text-4xl font-black text-slate-900">{summary.shopCount}</div>
+              <p className="mt-3 text-sm leading-6 text-slate-500">
+                Latest merchant records available for verification and operational supervision.
+              </p>
+              <button
+                type="button"
+                onClick={() => void openStaffRouteWithTransition("/staff-verifications")}
+                className="mt-5 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+              >
+                Open Verification Page
+              </button>
+            </div>
+
+            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">User Health</div>
+              <div className="mt-3 text-4xl font-black text-slate-900">{summary.inactiveUsers}</div>
+              <p className="mt-3 text-sm leading-6 text-slate-500">
+                Inactive accounts flagged at the 180-day threshold for follow-up and analysis.
+              </p>
+              <button
+                type="button"
+                onClick={() => void openStaffRouteWithTransition("/staff-users")}
+                className="mt-5 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+              >
+                Open User Activity Page
+              </button>
+            </div>
+          </div>
+        </StaffPortalShell>
       </div>
-
-      <SectionHeading
-        eyebrow="Quick Status"
-        title="Today At A Glance"
-        description="A compact briefing for what needs attention before you drill into the detailed operational pages."
-      />
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">Community Queue</div>
-          <div className="mt-3 text-4xl font-black text-slate-900">{summary.pendingComments}</div>
-          <p className="mt-3 text-sm leading-6 text-slate-500">
-            Pending shop comments awaiting approval or moderation action.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate("/staff-community")}
-            className="mt-5 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
-          >
-            Open Community Page
-          </button>
-        </div>
-
-        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">Merchant Load</div>
-          <div className="mt-3 text-4xl font-black text-slate-900">{summary.shopCount}</div>
-          <p className="mt-3 text-sm leading-6 text-slate-500">
-            Latest merchant records available for verification and operational supervision.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate("/staff-verifications")}
-            className="mt-5 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
-          >
-            Open Verification Page
-          </button>
-        </div>
-
-        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">User Health</div>
-          <div className="mt-3 text-4xl font-black text-slate-900">{summary.inactiveUsers}</div>
-          <p className="mt-3 text-sm leading-6 text-slate-500">
-            Inactive accounts flagged at the 180-day threshold for follow-up and analysis.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate("/staff-users")}
-            className="mt-5 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
-          >
-            Open User Activity Page
-          </button>
-        </div>
-      </div>
-    </StaffPortalShell>
+    </>
   )
 }

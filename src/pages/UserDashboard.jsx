@@ -15,6 +15,7 @@ import { buildShopDetailCacheKey, fetchShopDetailData } from "../lib/shopDetailD
 import { supabase } from "../lib/supabase"
 import { UPLOAD_RULES, formatBytes } from "../lib/uploadRules"
 import { prepareVendorDashboardEntryTransition } from "../lib/vendorRouteTransitions"
+import { buildWishlistCacheKey, fetchWishlistData } from "../lib/wishlistData"
 
 import DashboardHeader from "../components/dashboard/layout/DashboardHeader"
 import MarketSection from "../components/dashboard/sections/MarketSection"
@@ -27,6 +28,8 @@ const loadSearchPage = () => import("./Search")
 const loadAreaPage = () => import("./Area")
 const loadCatPage = () => import("./Cat")
 const loadShopIndexPage = () => import("./ShopIndex")
+const loadWishlistDashboardView = () =>
+  import("../features/dashboard/views/WishlistDashboardView")
 
 const ServicesProfileSection = lazy(loadServicesProfileSection)
 
@@ -283,6 +286,7 @@ function UserDashboard() {
     pending: false,
     error: "",
   })
+  const [prefetchedWishlistItems, setPrefetchedWishlistItems] = useState(null)
 
   useEffect(() => {
     if (fetchedData) {
@@ -501,6 +505,57 @@ function UserDashboard() {
     })
   }
 
+  async function openWishlistWithTransition() {
+    if (!user?.id) return
+
+    const retryAction = () => openWishlistWithTransition()
+    beginRouteTransition(retryAction)
+
+    try {
+      const cacheKey = buildWishlistCacheKey(user.id)
+      const cachedWishlist = readCachedFetchStore(cacheKey)
+      const prefetchedItems = await Promise.race([
+        Promise.all([
+          loadWishlistDashboardView(),
+          cachedWishlist?.data
+            ? Promise.resolve(cachedWishlist.data)
+            : fetchWishlistData({ userId: user.id }),
+        ]).then(([, items]) => items),
+        new Promise((_, reject) =>
+          window.setTimeout(
+            () => reject(new Error("Timed out while opening your wishlist.")),
+            10000
+          )
+        ),
+      ])
+
+      primeCachedFetchStore(cacheKey, prefetchedItems)
+      setPrefetchedWishlistItems(prefetchedItems)
+
+      startTransition(() => {
+        updateDashboardLocation({
+          tab: "services",
+          view: "wishlist",
+        })
+      })
+
+      window.requestAnimationFrame(() => {
+        setRouteTransition({
+          pending: false,
+          error: "",
+        })
+      })
+    } catch (error) {
+      failRouteTransition(
+        getFriendlyErrorMessage(
+          error,
+          "We could not open your wishlist right now. Please try again."
+        ),
+        retryAction
+      )
+    }
+  }
+
   function switchScreen(tab) {
     if (tab === "services" || tab === "profile") {
       void loadServicesProfileSection()
@@ -522,6 +577,9 @@ function UserDashboard() {
   useEffect(() => {
     setNotice((prev) => (prev.visible ? { ...prev, visible: false } : prev))
     setProfileEditError("")
+    if (serviceView !== "wishlist") {
+      setPrefetchedWishlistItems(null)
+    }
   }, [activeTab, serviceView, user?.id])
 
   // Updated purely to rely on our new isolated shopData hook
@@ -1592,6 +1650,8 @@ function UserDashboard() {
               handleShopClick={handleShopClick}
               shopCardMeta={shopMeta} /* PASSED THE ISOLATED META HERE */
               wishlistCount={localData.wishlistCount}
+              prefetchedWishlistItems={prefetchedWishlistItems}
+              onOpenWishlist={openWishlistWithTransition}
               onNavigate={navigate}
               profileEditForm={profileEditForm}
               setProfileEditForm={setProfileEditForm}
@@ -1627,6 +1687,8 @@ function UserDashboard() {
               handleShopClick={handleShopClick}
               shopCardMeta={shopMeta} /* PASSED THE ISOLATED META HERE */
               wishlistCount={localData.wishlistCount}
+              prefetchedWishlistItems={prefetchedWishlistItems}
+              onOpenWishlist={openWishlistWithTransition}
               onNavigate={navigate}
               profileEditForm={profileEditForm}
               setProfileEditForm={setProfileEditForm}

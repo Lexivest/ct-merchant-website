@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import { FaCircleCheck, FaCircleNotch, FaEye, FaIdBadge, FaVideo } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
@@ -13,14 +13,27 @@ import {
 } from "./StaffPortalShared"
 
 export default function StaffVerifications() {
+  const location = useLocation()
   const navigate = useNavigate()
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "staff-verifications"
+      ? location.state.prefetchedData
+      : null
   const { notify } = useGlobalFeedback()
-  const [shops, setShops] = useState([])
-  const [loadingShops, setLoadingShops] = useState(true)
+  const [shops, setShops] = useState(() => prefetchedData?.shops || [])
+  const [loadingShops, setLoadingShops] = useState(() => !prefetchedData)
   const [togglingId, setTogglingId] = useState(null)
   const [selectedKycShop, setSelectedKycShop] = useState(null)
+  const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
   const fetchShops = useCallback(async () => {
+    if (prefetchedReady && prefetchedData) {
+      setShops(prefetchedData.shops || [])
+      setLoadingShops(false)
+      setPrefetchedReady(false)
+      return
+    }
+
     setLoadingShops(true)
     try {
       const { data, error } = await supabase
@@ -55,7 +68,7 @@ export default function StaffVerifications() {
     } finally {
       setLoadingShops(false)
     }
-  }, [notify])
+  }, [notify, prefetchedData, prefetchedReady])
 
   useEffect(() => {
     fetchShops()

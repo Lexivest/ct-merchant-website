@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { useLocation } from "react-router-dom"
 import {
   FaCircleCheck,
   FaCircleNotch,
@@ -37,17 +38,31 @@ function getThreadAgeInDays(value) {
 }
 
 export default function StaffCommunity() {
+  const location = useLocation()
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "staff-community"
+      ? location.state.prefetchedData
+      : null
   const { notify } = useGlobalFeedback()
-  const [commentThreads, setCommentThreads] = useState([])
-  const [loadingComments, setLoadingComments] = useState(true)
+  const [commentThreads, setCommentThreads] = useState(() => prefetchedData?.commentThreads || [])
+  const [loadingComments, setLoadingComments] = useState(() => !prefetchedData)
   const [selectedCommentThread, setSelectedCommentThread] = useState(null)
   const [commentFilter, setCommentFilter] = useState("pending")
   const [ageFilter, setAgeFilter] = useState("all")
   const [moderatingCommentId, setModeratingCommentId] = useState(null)
   const [deletingCommentId, setDeletingCommentId] = useState(null)
-  const [moderationDrafts, setModerationDrafts] = useState({})
+  const [moderationDrafts, setModerationDrafts] = useState(() => prefetchedData?.moderationDrafts || {})
+  const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
   const fetchCommentQueue = useCallback(async () => {
+    if (prefetchedReady && prefetchedData) {
+      setCommentThreads(prefetchedData.commentThreads || [])
+      setModerationDrafts(prefetchedData.moderationDrafts || {})
+      setLoadingComments(false)
+      setPrefetchedReady(false)
+      return
+    }
+
     setLoadingComments(true)
     try {
       const { data: commentRows, error: commentError } = await supabase
@@ -130,7 +145,7 @@ export default function StaffCommunity() {
     } finally {
       setLoadingComments(false)
     }
-  }, [notify])
+  }, [notify, prefetchedData, prefetchedReady])
 
   useEffect(() => {
     fetchCommentQueue()

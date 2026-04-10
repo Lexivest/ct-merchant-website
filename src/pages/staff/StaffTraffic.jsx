@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { useLocation } from "react-router-dom"
 import { FaChartLine, FaCircleNotch } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
@@ -11,13 +12,28 @@ import {
 } from "./StaffPortalShared"
 
 export default function StaffTraffic() {
-  const [visitWindow, setVisitWindow] = useState(30)
-  const [visitStats, setVisitStats] = useState([])
-  const [topPages, setTopPages] = useState([])
-  const [loadingVisitStats, setLoadingVisitStats] = useState(true)
+  const location = useLocation()
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "staff-traffic"
+      ? location.state.prefetchedData
+      : null
+  const [visitWindow, setVisitWindow] = useState(() => prefetchedData?.visitWindow || 30)
+  const [visitStats, setVisitStats] = useState(() => prefetchedData?.visitStats || [])
+  const [topPages, setTopPages] = useState(() => prefetchedData?.topPages || [])
+  const [loadingVisitStats, setLoadingVisitStats] = useState(() => !prefetchedData)
   const [visitStatsError, setVisitStatsError] = useState("")
+  const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
-  async function fetchVisitStats(windowDays) {
+  const fetchVisitStats = useCallback(async (windowDays) => {
+    if (prefetchedReady && prefetchedData && windowDays === prefetchedData.visitWindow) {
+      setVisitStats(prefetchedData.visitStats || [])
+      setTopPages(prefetchedData.topPages || [])
+      setVisitStatsError("")
+      setLoadingVisitStats(false)
+      setPrefetchedReady(false)
+      return
+    }
+
     setLoadingVisitStats(true)
     setVisitStatsError("")
     try {
@@ -42,11 +58,11 @@ export default function StaffTraffic() {
     } finally {
       setLoadingVisitStats(false)
     }
-  }
+  }, [prefetchedData, prefetchedReady])
 
   useEffect(() => {
     fetchVisitStats(visitWindow)
-  }, [visitWindow])
+  }, [fetchVisitStats, visitWindow])
 
   const visitTimeline = useMemo(() => buildVisitTimeline(visitStats, visitWindow), [visitStats, visitWindow])
   const totalVisitsInWindow = visitTimeline.reduce((sum, item) => sum + (Number(item.total_visits) || 0), 0)

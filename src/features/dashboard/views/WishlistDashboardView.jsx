@@ -2,13 +2,25 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaHeart } from "react-icons/fa6"
 import { supabase } from "../../../lib/supabase"
+import StableImage from "../../../components/common/StableImage"
 
-function WishlistDashboardView({ onBack, user, onOpenProduct }) {
+function WishlistDashboardView({
+  onBack,
+  user,
+  onOpenProduct,
+  prefetchedItems = null,
+}) {
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
-  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(() => !prefetchedItems)
+  const [items, setItems] = useState(() => prefetchedItems || [])
 
   useEffect(() => {
+    if (prefetchedItems) {
+      setItems(prefetchedItems)
+      setLoading(false)
+      return
+    }
+
     async function fetchWishlist() {
       if (!user?.id) {
         setItems([])
@@ -37,7 +49,7 @@ function WishlistDashboardView({ onBack, user, onOpenProduct }) {
     }
 
     fetchWishlist()
-  }, [user?.id])
+  }, [prefetchedItems, user?.id])
 
   function renderPrice(product) {
     const hasDiscount =
@@ -104,22 +116,25 @@ function WishlistDashboardView({ onBack, user, onOpenProduct }) {
                     )
                   : 0
 
-                return (
-                  <button
-                    key={item.product_id}
+              return (
+                <button
+                  key={item.product_id}
                     type="button"
                     onClick={() =>
                       onOpenProduct
                         ? onOpenProduct(product.id)
                         : navigate(`/product-detail?id=${product.id}`)
                     }
-                    className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-1 hover:border-[#2E1065] hover:shadow-md"
-                  >
-                    <img
-                      src={product.image_url || "https://via.placeholder.com/150"}
-                      alt={product.name || "Product"}
-                      className="h-40 w-full object-cover"
-                    />
+                  className="relative overflow-hidden rounded-[22px] border border-slate-200 bg-white text-left shadow-[0_2px_6px_rgba(15,23,42,0.04)] transition hover:-translate-y-1 hover:border-pink-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.08)]"
+                >
+                    <div className="relative aspect-square border-b border-slate-200 bg-slate-50 p-2">
+                      <StableImage
+                        src={product.image_url || "https://via.placeholder.com/150"}
+                        alt={product.name || "Product"}
+                        containerClassName="flex h-full w-full items-center justify-center overflow-hidden rounded-[18px] bg-white"
+                        className="h-full w-full object-contain p-2"
+                      />
+                    </div>
 
                     {hasDiscount ? (
                       <span className="absolute left-2 top-2 rounded bg-red-600 px-2 py-1 text-[11px] font-bold text-white">
@@ -134,7 +149,10 @@ function WishlistDashboardView({ onBack, user, onOpenProduct }) {
                     ) : null}
 
                     <div className="p-3">
-                      <div className="mb-1 truncate text-sm font-bold text-slate-700">
+                      <div
+                        className="mb-1 line-clamp-2 min-h-[2.5rem] text-[0.9rem] font-bold leading-[1.35] text-[#0F1111]"
+                        title={product.name}
+                      >
                         {product.name}
                       </div>
                       {renderPrice(product)}

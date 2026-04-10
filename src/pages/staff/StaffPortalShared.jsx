@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useEffect, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   FaArrowRightFromBracket,
   FaChartLine,
@@ -14,6 +14,12 @@ import {
   FaWandMagicSparkles,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
+
+let staffPortalMemory = {
+  isResolved: false,
+  authUser: null,
+  staffData: null,
+}
 
 export function formatDateTime(value) {
   if (!value) return "Never"
@@ -258,12 +264,14 @@ export function QuickActionButton({ icon, label, tone = "dark", onClick }) {
 
 export function useStaffPortalSession() {
   const navigate = useNavigate()
-  const [authUser, setAuthUser] = useState(null)
-  const [staffData, setStaffData] = useState(null)
-  const [fetchingStaff, setFetchingStaff] = useState(true)
+  const [authUser, setAuthUser] = useState(() => staffPortalMemory.authUser)
+  const [staffData, setStaffData] = useState(() => staffPortalMemory.staffData)
+  const [fetchingStaff, setFetchingStaff] = useState(() => !staffPortalMemory.isResolved)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   useEffect(() => {
+    if (staffPortalMemory.isResolved) return undefined
+
     async function initDashboard() {
       try {
         const {
@@ -287,9 +295,19 @@ export function useStaffPortalSession() {
           throw new Error("Access denied. Staff account required.")
         }
 
+        staffPortalMemory = {
+          isResolved: true,
+          authUser: session.user,
+          staffData: staffProfile,
+        }
         setStaffData(staffProfile)
       } catch (err) {
         console.error(err)
+        staffPortalMemory = {
+          isResolved: false,
+          authUser: null,
+          staffData: null,
+        }
         await supabase.auth.signOut()
         navigate("/staff-portal", { replace: true })
       } finally {
@@ -302,6 +320,11 @@ export function useStaffPortalSession() {
 
   const handleLogout = async () => {
     setIsLoggingOut(true)
+    staffPortalMemory = {
+      isResolved: false,
+      authUser: null,
+      staffData: null,
+    }
     await supabase.auth.signOut()
     navigate("/staff-portal", { replace: true })
   }
@@ -322,6 +345,7 @@ export function StaffPortalShell({
   children,
   headerActions = null,
 }) {
+  const routeLocation = useLocation()
   const { authUser, staffData, fetchingStaff, isLoggingOut, handleLogout } = useStaffPortalSession()
 
   if (fetchingStaff) {
@@ -350,7 +374,11 @@ export function StaffPortalShell({
   ]
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fdf2f8_0,#f8fafc_26%,#f8fafc_100%)] font-sans pb-12">
+    <div
+      className={`min-h-screen bg-[radial-gradient(circle_at_top,#fdf2f8_0,#f8fafc_26%,#f8fafc_100%)] pb-12 font-sans ${
+        routeLocation.state?.fromStaffTransition ? "ctm-page-enter" : ""
+      }`}
+    >
       <nav className="flex items-center justify-between bg-[#2E1065] px-6 py-4 text-white shadow-md">
         <div className="flex items-center gap-3">
           <FaShieldHalved className="text-2xl text-[#DB2777]" />

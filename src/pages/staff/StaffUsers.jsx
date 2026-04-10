@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { useLocation } from "react-router-dom"
 import { FaCircleCheck, FaCircleNotch, FaFilter, FaLocationDot, FaTriangleExclamation } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
@@ -11,24 +12,48 @@ import {
 } from "./StaffPortalShared"
 
 export default function StaffUsers() {
-  const [cityOptions, setCityOptions] = useState([])
-  const [selectedCityId, setSelectedCityId] = useState("all")
-  const [inactiveDays, setInactiveDays] = useState(180)
+  const location = useLocation()
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "staff-users"
+      ? location.state.prefetchedData
+      : null
+  const [cityOptions, setCityOptions] = useState(() => prefetchedData?.cityOptions || [])
+  const [selectedCityId, setSelectedCityId] = useState(() => prefetchedData?.selectedCityId || "all")
+  const [inactiveDays, setInactiveDays] = useState(() => prefetchedData?.inactiveDays || 180)
   const [inactiveOnly, setInactiveOnly] = useState(false)
-  const [userActivity, setUserActivity] = useState([])
-  const [loadingUserActivity, setLoadingUserActivity] = useState(true)
+  const [userActivity, setUserActivity] = useState(() => prefetchedData?.userActivity || [])
+  const [loadingUserActivity, setLoadingUserActivity] = useState(() => !prefetchedData)
   const [userActivityError, setUserActivityError] = useState("")
+  const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
-  async function fetchCities() {
+  const fetchCities = useCallback(async () => {
+    if (prefetchedData?.cityOptions?.length) {
+      setCityOptions(prefetchedData.cityOptions)
+      return
+    }
+
     const { data } = await supabase
       .from("cities")
       .select("id, name, state")
       .order("state", { ascending: true })
       .order("name", { ascending: true })
     setCityOptions(data || [])
-  }
+  }, [prefetchedData?.cityOptions])
 
-  async function fetchUserActivity({ cityId, threshold }) {
+  const fetchUserActivity = useCallback(async ({ cityId, threshold }) => {
+    if (
+      prefetchedReady &&
+      prefetchedData &&
+      cityId === prefetchedData.selectedCityId &&
+      threshold === prefetchedData.inactiveDays
+    ) {
+      setUserActivity(prefetchedData.userActivity || [])
+      setUserActivityError("")
+      setLoadingUserActivity(false)
+      setPrefetchedReady(false)
+      return
+    }
+
     setLoadingUserActivity(true)
     setUserActivityError("")
     try {
@@ -50,15 +75,15 @@ export default function StaffUsers() {
     } finally {
       setLoadingUserActivity(false)
     }
-  }
+  }, [prefetchedData, prefetchedReady])
 
   useEffect(() => {
     fetchCities()
-  }, [])
+  }, [fetchCities])
 
   useEffect(() => {
     fetchUserActivity({ cityId: selectedCityId, threshold: inactiveDays })
-  }, [selectedCityId, inactiveDays])
+  }, [fetchUserActivity, inactiveDays, selectedCityId])
 
   const visibleUsers = inactiveOnly ? userActivity.filter((item) => item.is_inactive) : userActivity
   const totalInactiveUsers = userActivity.filter((item) => item.is_inactive).length
@@ -228,4 +253,3 @@ export default function StaffUsers() {
     </StaffPortalShell>
   )
 }
-

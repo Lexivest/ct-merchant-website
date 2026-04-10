@@ -88,6 +88,8 @@ function ServicesProfileSection({
   handleShopClick,
   shopCardMeta,
   wishlistCount,
+  prefetchedWishlistItems,
+  onOpenWishlist,
   onNavigate,
   profileEditForm,
   setProfileEditForm,
@@ -185,6 +187,7 @@ function ServicesProfileSection({
           <WishlistDashboardView
             onBack={() => setServiceView("menu")}
             user={user}
+            prefetchedItems={prefetchedWishlistItems}
             onOpenProduct={(productId) =>
               onNavigate(`/product-detail?id=${productId}`)
             }
@@ -210,7 +213,7 @@ function ServicesProfileSection({
               icon={<FaHeart style={{ color: "#db2777" }} />}
               title="Wishlist"
               subtitle={`${wishlistCount || 0} items`}
-              onClick={() => setServiceView("wishlist")}
+              onClick={onOpenWishlist || (() => setServiceView("wishlist"))}
             />
             <ServiceCard
               icon={<FaHeadset style={{ color: "#007185" }} />}
