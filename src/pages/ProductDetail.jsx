@@ -71,6 +71,33 @@ function shouldUseDirectAppHandoff() {
   return Boolean(window.matchMedia?.("(pointer: coarse)").matches)
 }
 
+function openWhatsAppConversation(phone, text) {
+  if (typeof window === "undefined") return
+
+  const encodedText = encodeURIComponent(text)
+  const webUrl = `https://wa.me/${phone}?text=${encodedText}`
+
+  if (!shouldUseDirectAppHandoff()) {
+    window.open(webUrl, "_blank", "noopener,noreferrer")
+    return
+  }
+
+  const appUrl = `whatsapp://send?phone=${phone}&text=${encodedText}`
+  const fallbackTimer = window.setTimeout(() => {
+    if (typeof document === "undefined" || document.visibilityState === "visible") {
+      window.location.assign(webUrl)
+    }
+  }, 900)
+
+  const clearFallback = () => {
+    window.clearTimeout(fallbackTimer)
+  }
+
+  document.addEventListener("visibilitychange", clearFallback, { once: true })
+  window.addEventListener("pagehide", clearFallback, { once: true })
+  window.location.href = appUrl
+}
+
 function ProductDetail() {
   const navigate = useNavigate()
   const { notify } = useGlobalFeedback()
@@ -378,8 +405,6 @@ function ProductDetail() {
       price || 0
     ).toLocaleString()})`
 
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
-
     if (currentShop?.id) {
       void supabase
         .from("whatsapp_clicks")
@@ -393,13 +418,8 @@ function ProductDetail() {
         })
     }
 
-    if (shouldUseDirectAppHandoff()) {
-      window.location.assign(whatsappUrl)
-      return
-    }
-
     hideSecurityModal()
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer")
+    openWhatsAppConversation(phone, message)
   }
 
   async function shareProductWithImage() {
