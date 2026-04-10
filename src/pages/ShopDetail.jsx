@@ -19,24 +19,34 @@ import {
 import "leaflet/dist/leaflet.css"
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
-import useCachedFetch from "../hooks/useCachedFetch"
+import useCachedFetch, {
+  primeCachedFetchStore,
+  readCachedFetchStore,
+} from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 import ScrollingTicker from "../components/common/ScrollingTicker"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
+import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import {
   normalizeWhatsAppPhone,
   openWhatsAppConversation,
   shouldUseDirectWhatsAppHandoff,
 } from "../lib/whatsapp"
 import { buildShopDetailCacheKey, fetchShopDetailData } from "../lib/shopDetailData"
+import {
+  buildProductDetailCacheKey,
+  fetchProductDetailData,
+} from "../lib/productDetailData"
 
 const EMPTY_PRODUCTS = []
 const EMPTY_NEWS = []
 const ShopCommunitySection = lazy(() => import("../components/shop/ShopCommunitySection"))
+const loadProductDetailPage = () => import("./ProductDetail")
 
 function getNameInitials(value) {
   const parts = String(value || "")
@@ -100,6 +110,11 @@ function ShopDetail() {
   const [openingWhatsApp, setOpeningWhatsApp] = useState(false)
   const [activeInfoSection, setActiveInfoSection] = useState(null)
   const [shouldLoadCommunity, setShouldLoadCommunity] = useState(false)
+  const [productTransition, setProductTransition] = useState({
+    pending: false,
+    productId: "",
+    error: "",
+  })
 
   // Sync optimistic state when cached data resolves
   useEffect(() => {
@@ -401,6 +416,70 @@ function ShopDetail() {
     return `₦${Number(value).toLocaleString()}`
   }
 
+  async function openProductWithTransition(productId) {
+    if (!productId) return
+
+    const cacheKey = buildProductDetailCacheKey(productId, user?.id || null)
+    const cachedEntry = readCachedFetchStore(cacheKey)
+    const hasFreshCache =
+      cachedEntry && Date.now() - cachedEntry.timestamp <= 1000 * 60 * 5
+
+    setProductTransition({
+      pending: true,
+      productId,
+      error: "",
+    })
+
+    try {
+      if (hasFreshCache) {
+        await loadProductDetailPage()
+        navigate(`/product-detail?id=${productId}${shopId ? `&shop_src=${shopId}` : ""}`, {
+          state: { fromProductTransition: true },
+        })
+        return
+      }
+
+      const transitionResult = await new Promise((resolve, reject) => {
+        const timeoutId = window.setTimeout(() => {
+          reject(new Error("Timed out while opening the product."))
+        }, 10000)
+
+        Promise.all([
+          fetchProductDetailData({ productId, userId: user?.id || null }),
+          loadProductDetailPage(),
+        ])
+          .then(([prefetchedData]) => {
+            window.clearTimeout(timeoutId)
+            resolve(prefetchedData)
+          })
+          .catch((error) => {
+            window.clearTimeout(timeoutId)
+            reject(error)
+          })
+      })
+
+      primeCachedFetchStore(cacheKey, transitionResult)
+
+      navigate(`/product-detail?id=${productId}${shopId ? `&shop_src=${shopId}` : ""}`, {
+        state: { fromProductTransition: true },
+      })
+    } catch (error) {
+      console.error("Failed to open product detail", error)
+      const safeMessage = isNetworkError(error)
+        ? "We could not open this product right now. Please try again."
+        : getFriendlyErrorMessage(
+            error,
+            "We could not open this product right now. Please try again."
+          )
+
+      setProductTransition({
+        pending: false,
+        productId,
+        error: safeMessage,
+      })
+    }
+  }
+
   function renderProductCard(product) {
     const hasDiscount = product.discount_price && Number(product.discount_price) < Number(product.price)
     const percent = hasDiscount
@@ -412,7 +491,7 @@ function ShopDetail() {
       <div
         key={product.id}
         className="product-card relative flex cursor-pointer flex-col transition hover:-translate-y-1 hover:opacity-90"
-        onClick={() => navigate(`/product-detail?id=${product.id}`)}
+          onClick={() => openProductWithTransition(product.id)}
       >
         <div className="prod-img-wrap relative aspect-square w-full overflow-hidden bg-white">
           <StableImage
@@ -627,11 +706,24 @@ function ShopDetail() {
   const showLegacyInfoLayout = false
 
   return (
-    <div
-      className={`min-h-screen bg-[#E3E6E6] pb-10 ${
-        location.state?.fromMarketTransition ? "ctm-page-enter" : ""
-      }`}
-    >
+    <>
+      <PageTransitionOverlay
+        visible={productTransition.pending}
+        error={productTransition.error}
+        onRetry={() => openProductWithTransition(productTransition.productId)}
+        onDismiss={() =>
+          setProductTransition((prev) => ({
+            ...prev,
+            pending: false,
+            error: "",
+          }))
+        }
+      />
+      <div
+        className={`min-h-screen bg-[#E3E6E6] pb-10 ${
+          location.state?.fromMarketTransition ? "ctm-page-enter" : ""
+        } ${productTransition.pending ? "pointer-events-none select-none" : ""}`}
+      >
       <PageSeo
         title={currentShop?.name ? `${currentShop.name} | CTMerchant Shop` : "Shop Details | CTMerchant"}
         description={
@@ -1059,14 +1151,15 @@ function ShopDetail() {
           <Suspense
             fallback={<ShopSectionFallback title="Shop Community" body="Loading community discussion." />}
           >
-            <ShopCommunitySection
-              shopId={shopId}
-              ownerId={currentShop?.owner_id}
-              shopName={currentShop?.name}
-              products={products}
-              user={user}
-              preselectedProductId={preselectedProductId}
-            />
+              <ShopCommunitySection
+                shopId={shopId}
+                ownerId={currentShop?.owner_id}
+                shopName={currentShop?.name}
+                products={products}
+                user={user}
+                preselectedProductId={preselectedProductId}
+                onOpenProduct={openProductWithTransition}
+              />
           </Suspense>
         ) : (
           <ShopSectionFallback
@@ -1111,6 +1204,7 @@ function ShopDetail() {
         </div>
       ) : null}
     </div>
+    </>
   )
 }
 

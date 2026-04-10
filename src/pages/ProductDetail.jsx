@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
   FaBoxOpen,
@@ -17,22 +17,31 @@ import {
 import { FaWhatsapp } from "react-icons/fa"
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
-import useCachedFetch from "../hooks/useCachedFetch"
+import useCachedFetch, {
+  primeCachedFetchStore,
+  readCachedFetchStore,
+} from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
-import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import {
   normalizeWhatsAppPhone,
   openWhatsAppConversation,
   shouldUseDirectWhatsAppHandoff,
 } from "../lib/whatsapp"
+import {
+  buildProductDetailCacheKey,
+  fetchProductDetailData,
+} from "../lib/productDetailData"
 
 function ProductDetail() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { notify } = useGlobalFeedback()
   const [searchParams] = useSearchParams()
   const chatBodyRef = useRef(null)
@@ -46,72 +55,14 @@ function ProductDetail() {
   const { user, loading: authLoading } = useAuthSession()
 
   // 2. Extracted Data Fetching Logic for Hook
-  const fetchProductData = async () => {
-    const { data: product, error: productError } = await supabase
-      .from("products")
-      .select("*")
-      .eq("id", productId)
-      .single()
-
-    if (productError || !product) {
-      throw new Error("Product fetch failed.")
-    }
-
-    let shop = null
-    let recs = []
-    let initialWishlist = false
-
-    const tasks = []
-
-    if (product.shop_id) {
-      tasks.push(
-        supabase
-          .from("shops")
-          .select("id, name, whatsapp, phone, address, city_id, areas(name), cities(name)")
-          .eq("id", product.shop_id)
-          .maybeSingle()
-          .then((res) => {
-            if (res.data) shop = res.data
-          })
-      )
-    }
-
-    if (product.category) {
-      tasks.push(
-        supabase
-          .from("products")
-          .select("id, name, price, discount_price, image_url")
-          .eq("category", product.category)
-          .neq("id", product.id)
-          .eq("is_available", true)
-          .limit(10)
-          .then((res) => {
-            if (res.data) recs = res.data
-          })
-      )
-    }
-
-    if (user?.id) {
-      tasks.push(
-        supabase
-          .from("wishlist")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("product_id", productId)
-          .maybeSingle()
-          .then((res) => {
-            initialWishlist = Boolean(res.data)
-          })
-      )
-    }
-
-    await Promise.all(tasks)
-
-    return { product, shop, recommendations: recs, initialWishlist }
-  }
+  const fetchProductData = async () =>
+    fetchProductDetailData({
+      productId,
+      userId: user?.id || null,
+    })
 
   // 3. Smart Caching Hook
-  const cacheKey = `prod_detail_${productId}_${user?.id || 'anon'}`
+  const cacheKey = buildProductDetailCacheKey(productId, user?.id || null)
   const { data, loading: dataLoading, error } = useCachedFetch(
     cacheKey,
     fetchProductData,
@@ -123,6 +74,11 @@ function ProductDetail() {
   const [isInWishlist, setIsInWishlist] = useState(false)
   const [securityModalOpen, setSecurityModalOpen] = useState(false)
   const [openingWhatsApp, setOpeningWhatsApp] = useState(false)
+  const [productTransition, setProductTransition] = useState({
+    pending: false,
+    productId: "",
+    error: "",
+  })
 
   // Chat States
   const [chatOpen, setChatOpen] = useState(false)
@@ -504,6 +460,64 @@ function ProductDetail() {
     return `₦${Number(value || 0).toLocaleString()}`
   }
 
+  async function openProductWithTransition(nextProductId) {
+    if (!nextProductId) return
+
+    const nextCacheKey = buildProductDetailCacheKey(nextProductId, user?.id || null)
+    const cachedEntry = readCachedFetchStore(nextCacheKey)
+    const hasFreshCache =
+      cachedEntry && Date.now() - cachedEntry.timestamp <= 1000 * 60 * 5
+
+    setProductTransition({
+      pending: true,
+      productId: nextProductId,
+      error: "",
+    })
+
+    try {
+      if (!hasFreshCache) {
+        const transitionResult = await new Promise((resolve, reject) => {
+          const timeoutId = window.setTimeout(() => {
+            reject(new Error("Timed out while opening the product."))
+          }, 10000)
+
+          fetchProductDetailData({
+            productId: nextProductId,
+            userId: user?.id || null,
+          })
+            .then((prefetchedData) => {
+              window.clearTimeout(timeoutId)
+              resolve(prefetchedData)
+            })
+            .catch((transitionError) => {
+              window.clearTimeout(timeoutId)
+              reject(transitionError)
+            })
+        })
+
+        primeCachedFetchStore(nextCacheKey, transitionResult)
+      }
+
+      navigate(
+        `/product-detail?id=${nextProductId}${currentShop?.id ? `&shop_src=${currentShop.id}` : ""}`,
+        { state: { fromProductTransition: true } }
+      )
+    } catch (transitionError) {
+      const safeMessage = isNetworkError(transitionError)
+        ? "We could not open this product right now. Please try again."
+        : getFriendlyErrorMessage(
+            transitionError,
+            "We could not open this product right now. Please try again."
+          )
+
+      setProductTransition({
+        pending: false,
+        productId: nextProductId,
+        error: safeMessage,
+      })
+    }
+  }
+
   function renderMiniRecommendation(product) {
     const itemHasDiscount = product.discount_price && Number(product.discount_price) < Number(product.price)
     const itemDiscountPercent = itemHasDiscount
@@ -514,7 +528,7 @@ function ProductDetail() {
       <div
         key={product.id}
         className="mini-card flex w-[150px] shrink-0 cursor-pointer flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition hover:border-pink-600 hover:shadow-[0_4px_8px_rgba(0,0,0,0.05)]"
-        onClick={() => navigate(`/product-detail?id=${product.id}${currentShop?.id ? `&shop_src=${currentShop.id}` : ""}`)}
+        onClick={() => openProductWithTransition(product.id)}
       >
         <div className="mini-img-wrap relative aspect-square w-full bg-white">
           {itemHasDiscount ? (
@@ -573,6 +587,18 @@ function ProductDetail() {
 
   return (
     <>
+      <PageTransitionOverlay
+        visible={productTransition.pending}
+        error={productTransition.error}
+        onRetry={() => openProductWithTransition(productTransition.productId)}
+        onDismiss={() =>
+          setProductTransition((prev) => ({
+            ...prev,
+            pending: false,
+            error: "",
+          }))
+        }
+      />
       <PageSeo
         title={
           currentProduct?.name
@@ -586,7 +612,11 @@ function ProductDetail() {
         canonicalPath={`/product-detail${productId ? `?id=${encodeURIComponent(productId)}` : ""}`}
         image={selectedImage || currentProduct?.image_url || "/ctm-logo.jpg"}
       />
-      <div className="mx-auto flex min-h-screen max-w-[1200px] flex-col bg-[#E3E6E6] pb-[90px]">
+      <div
+        className={`mx-auto flex min-h-screen max-w-[1200px] flex-col bg-[#E3E6E6] pb-[90px] ${
+          location.state?.fromProductTransition ? "ctm-page-enter" : ""
+        } ${productTransition.pending ? "pointer-events-none select-none" : ""}`}
+      >
         <header className="sticky top-0 z-[100] flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <button type="button" onClick={goBack} className="shrink-0 text-[1.2rem] transition hover:text-pink-500">

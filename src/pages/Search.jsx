@@ -14,7 +14,13 @@ import { ShimmerBlock, ShimmerCard } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
+import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
+import {
+  prepareProductDetailTransition,
+  prepareShopDetailTransition,
+} from "../lib/detailPageTransitions"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function SearchShimmer() {
@@ -50,6 +56,12 @@ function Search() {
 
   const initialQuery = searchParams.get("q") || ""
   const [query, setQuery] = useState(initialQuery)
+  const [transitionState, setTransitionState] = useState({
+    pending: false,
+    kind: "",
+    id: "",
+    error: "",
+  })
 
   usePreventPullToRefresh()
 
@@ -145,6 +157,77 @@ function Search() {
   const allProducts = data?.allProducts || []
   const matchedProducts = data?.matchedProducts || []
 
+  async function openShopWithTransition(shopId) {
+    if (!shopId) return
+
+    setTransitionState({
+      pending: true,
+      kind: "shop",
+      id: shopId,
+      error: "",
+    })
+
+    try {
+      await prepareShopDetailTransition({
+        shopId,
+        userId: user?.id || null,
+      })
+      navigate(`/shop-detail?id=${shopId}`, {
+        state: { fromDiscoveryTransition: true },
+      })
+    } catch (error) {
+      const safeMessage = isNetworkError(error)
+        ? "We could not open this shop right now. Please try again."
+        : getFriendlyErrorMessage(
+            error,
+            "We could not open this shop right now. Please try again."
+          )
+
+      setTransitionState({
+        pending: false,
+        kind: "shop",
+        id: shopId,
+        error: safeMessage,
+      })
+    }
+  }
+
+  async function openProductWithTransition(productId, shopId = "") {
+    if (!productId) return
+
+    setTransitionState({
+      pending: true,
+      kind: "product",
+      id: productId,
+      error: "",
+    })
+
+    try {
+      await prepareProductDetailTransition({
+        productId,
+        userId: user?.id || null,
+      })
+      navigate(
+        `/product-detail?id=${productId}${shopId ? `&shop_src=${shopId}` : ""}`,
+        { state: { fromDiscoveryTransition: true } }
+      )
+    } catch (error) {
+      const safeMessage = isNetworkError(error)
+        ? "We could not open this product right now. Please try again."
+        : getFriendlyErrorMessage(
+            error,
+            "We could not open this product right now. Please try again."
+          )
+
+      setTransitionState({
+        pending: false,
+        kind: "product",
+        id: productId,
+        error: safeMessage,
+      })
+    }
+  }
+
   function runSearch() {
     const trimmed = query.trim()
     if (!trimmed) return
@@ -228,7 +311,7 @@ function Search() {
       <div
         key={shop.id}
         className="premium-shop-card cursor-pointer rounded-lg border border-[#D5D9D9] bg-white p-6 transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-[0_8px_16px_rgba(0,0,0,0.08)]"
-        onClick={() => navigate(`/shop-detail?id=${shop.id}`)}
+        onClick={() => openShopWithTransition(shop.id)}
       >
         <div className="shop-card-title">
           {shop.name}
@@ -263,13 +346,7 @@ function Search() {
       <div
         key={product.id}
         className="product-card cursor-pointer rounded-lg border border-[#D5D9D9] bg-white transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-[0_8px_16px_rgba(0,0,0,0.08)]"
-        onClick={() =>
-          navigate(
-            `/product-detail?id=${product.id}${
-              product.shop_id ? `&shop_src=${product.shop_id}` : ""
-            }`
-          )
-        }
+        onClick={() => openProductWithTransition(product.id, product.shop_id)}
       >
         <div className="prod-img-wrap relative aspect-square w-full overflow-hidden bg-[#F7F7F7]">
           <StableImage
@@ -328,7 +405,38 @@ function Search() {
   const hasResults = matchedShops.length > 0 || matchedProducts.length > 0
 
   return (
-    <div className="min-h-screen bg-[#E3E6E6]">
+    <>
+      <PageTransitionOverlay
+        visible={transitionState.pending}
+        error={transitionState.error}
+        onRetry={() => {
+          if (transitionState.kind === "shop") {
+            return openShopWithTransition(transitionState.id)
+          }
+          if (transitionState.kind === "product") {
+            const retryProduct = matchedProducts.find(
+              (product) => String(product.id) === String(transitionState.id)
+            )
+            return openProductWithTransition(
+              transitionState.id,
+              retryProduct?.shop_id || ""
+            )
+          }
+          return null
+        }}
+        onDismiss={() =>
+          setTransitionState((prev) => ({
+            ...prev,
+            pending: false,
+            error: "",
+          }))
+        }
+      />
+      <div
+        className={`min-h-screen bg-[#E3E6E6] ${
+          transitionState.pending ? "pointer-events-none select-none" : ""
+        }`}
+      >
       <PageSeo
         title={
           query.trim()
@@ -425,7 +533,8 @@ function Search() {
           </>
         )}
       </main>
-    </div>
+      </div>
+    </>
   )
 }
 

@@ -84,6 +84,7 @@ export default function ShopCommunitySection({
   products,
   user,
   preselectedProductId,
+  onOpenProduct,
 }) {
   const navigate = useNavigate()
   const { notify } = useGlobalFeedback()
@@ -232,6 +233,11 @@ export default function ShopCommunitySection({
     async (productId) => {
       if (!productId) return
 
+      if (typeof onOpenProduct === "function") {
+        onOpenProduct(productId)
+        return
+      }
+
       try {
         const { data: productRow, error: productError } = await supabase
           .from("products")
@@ -251,7 +257,7 @@ export default function ShopCommunitySection({
         })
       }
     },
-    [navigate, notify]
+    [navigate, notify, onOpenProduct]
   )
 
   const openAbuseReport = useCallback(
