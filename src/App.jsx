@@ -1,11 +1,12 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react"
-import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom"
+import { Routes, Route, Link, Navigate, useLocation, useNavigate } from "react-router-dom"
 
 import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import OnlineRouteGuard from "./components/common/OnlineRouteGuard"
 import SiteVisitTracker from "./components/common/SiteVisitTracker"
 import RetryingNotice from "./components/common/RetryingNotice"
+import AppErrorBoundary from "./components/common/AppErrorBoundary"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
 import Home from "./pages/Home"
@@ -360,7 +361,7 @@ function ProtectedDashboardRoute({ children }) {
     )
   }
 
-  if (loading || (user && !profileLoaded)) {
+  if (loading || (user && !profileLoaded && !isOffline)) {
     return (
       <RouteLoadingScreen
         title="Loading dashboard"
@@ -401,7 +402,7 @@ function ProtectedDashboardRoute({ children }) {
   )
 }
 
-function App() {
+function AppShell() {
   const withOnlineGuard = (element, options = {}) => (
     <OnlineRouteGuard {...options}>{element}</OnlineRouteGuard>
   )
@@ -592,6 +593,16 @@ function App() {
         />
       </Routes>
     </Suspense>
+  )
+}
+
+function App() {
+  const location = useLocation()
+
+  return (
+    <AppErrorBoundary resetKey={`${location.pathname}${location.search}`}>
+      <AppShell />
+    </AppErrorBoundary>
   )
 }
 
