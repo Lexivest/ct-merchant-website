@@ -65,13 +65,13 @@ function CommentAvatar({ author }) {
       <img
         src={author.avatarUrl}
         alt={author.displayName}
-        className="h-10 w-10 rounded-full border border-slate-200 object-cover"
+        className="h-10 w-10 shrink-0 rounded-full border border-slate-200 object-cover"
       />
     )
   }
 
   return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-pink-50 text-[0.78rem] font-black text-pink-600">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-pink-50 text-[0.78rem] font-black text-pink-600">
       {author.initials}
     </div>
   )
@@ -388,7 +388,6 @@ export default function ShopCommunitySection({
               </span>
               
               <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {/* General Shop Topic Card */}
                 <button
                   type="button"
                   onClick={() => setSelectedProductId("")}
@@ -406,7 +405,6 @@ export default function ShopCommunitySection({
                   </div>
                 </button>
 
-                {/* Product Cards */}
                 {products.map((product) => {
                   const isActive = String(product.id) === String(selectedProductId)
                   return (
@@ -563,10 +561,30 @@ export default function ShopCommunitySection({
                       <button
                         type="button"
                         onClick={() => openProductDetail(comment.product_id)}
-                        className="mt-2 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[0.74rem] font-bold text-slate-600 transition hover:border-pink-200 hover:text-pink-600"
+                        className="mt-3 flex w-full max-w-[400px] items-center gap-3 rounded-[16px] bg-[#F8FAFC] p-2.5 text-left transition hover:bg-slate-100"
                       >
-                        <FaBoxOpen className="text-[0.7rem]" />
-                        {product.name}
+                        {product.image_url ? (
+                          <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-[14px] bg-white">
+                            <StableImage
+                              src={product.image_url}
+                              alt={product.name}
+                              containerClassName="h-full w-full bg-white"
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-[14px] bg-slate-200 text-slate-400">
+                            <FaBoxOpen className="text-2xl" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[0.68rem] font-extrabold uppercase tracking-widest text-slate-500">
+                            Ref Product
+                          </div>
+                          <div className="mt-0.5 line-clamp-2 text-[0.88rem] font-bold leading-snug text-[#0F1111]">
+                            {product.name}
+                          </div>
+                        </div>
                       </button>
                     ) : null}
 
