@@ -473,7 +473,7 @@ export default function ShopCommunitySection({
             <textarea
               value={commentBody}
               onChange={(event) => setCommentBody(event.target.value)}
-              placeholder="Share a shop experience, ask a question, or start a product discussion..."
+              placeholder="Select a product and start a thread..."
               className="min-h-[112px] w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-[0.92rem] leading-6 text-[#0F1111] outline-none transition focus:border-pink-300 focus:ring-4 focus:ring-pink-100"
               maxLength={500}
             />
