@@ -16,7 +16,6 @@ import {
 import {
   FaWhatsapp,
 } from "react-icons/fa"
-import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
@@ -274,6 +273,7 @@ function ShopDetail() {
 
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
+  const leafletModuleRef = useRef(null)
   const communityLoaderRef = useRef(null)
 
   // Computed Values
@@ -364,43 +364,71 @@ function ShopDetail() {
 
   // Map Initialization
   useEffect(() => {
-    if (activeInfoSection !== "map") return
-    if (!currentShop?.latitude || !currentShop?.longitude || !mapRef.current) return
+    if (activeInfoSection !== "map") return undefined
+    if (!currentShop?.latitude || !currentShop?.longitude || !mapRef.current) return undefined
 
     if (mapInstanceRef.current) {
-      setTimeout(() => {
+      const resizeTimer = window.setTimeout(() => {
         mapInstanceRef.current?.invalidateSize()
       }, 150)
-      return
+      return () => {
+        window.clearTimeout(resizeTimer)
+      }
     }
 
     const lat = Number(currentShop.latitude)
     const lng = Number(currentShop.longitude)
 
-    if (Number.isNaN(lat) || Number.isNaN(lng)) return
+    if (Number.isNaN(lat) || Number.isNaN(lng)) return undefined
 
-    const map = L.map(mapRef.current).setView([lat, lng], 15)
+    let cancelled = false
+    let resizeTimer = null
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    const initialiseMap = async () => {
+      try {
+        if (!leafletModuleRef.current) {
+          const leafletModule = await import("leaflet")
+          leafletModuleRef.current = leafletModule.default || leafletModule
+        }
+
+        if (cancelled || mapInstanceRef.current || !mapRef.current) return
+
+        const L = leafletModuleRef.current
+        const map = L.map(mapRef.current).setView([lat, lng], 15)
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap",
-    }).addTo(map)
+        }).addTo(map)
 
-    L.circleMarker([lat, lng], {
-      radius: 8,
-      weight: 2,
-      color: "#db2777",
-      fillColor: "#db2777",
-      fillOpacity: 0.9,
-    })
-      .addTo(map)
-      .bindPopup("Shop Location")
-      .openPopup()
+        L.circleMarker([lat, lng], {
+          radius: 8,
+          weight: 2,
+          color: "#db2777",
+          fillColor: "#db2777",
+          fillOpacity: 0.9,
+        })
+          .addTo(map)
+          .bindPopup("Shop Location")
+          .openPopup()
 
-    mapInstanceRef.current = map
+        mapInstanceRef.current = map
 
-    setTimeout(() => { map.invalidateSize() }, 250)
+        resizeTimer = window.setTimeout(() => {
+          map.invalidateSize()
+        }, 250)
+
+      } catch (mapError) {
+        console.error("Failed to initialize shop map", mapError)
+      }
+    }
+
+    void initialiseMap()
 
     return () => {
+      cancelled = true
+      if (resizeTimer) {
+        window.clearTimeout(resizeTimer)
+      }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove()
         mapInstanceRef.current = null

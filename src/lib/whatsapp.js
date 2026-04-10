@@ -84,7 +84,7 @@ export function openWhatsAppConversation(phone, text) {
       window.location.assign(nativeUrl)
     } else {
       const newWindow = window.open(waUrl, "_blank", "noopener,noreferrer")
-      if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
+      if (newWindow === null) {
         window.location.assign(waUrl)
       }
     }
