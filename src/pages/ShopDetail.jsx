@@ -271,10 +271,15 @@ function ShopDetail() {
 
     viewTrackedRef.current = true
 
-    void supabase
-      .from("shop_views")
-      .insert({ shop_id: currentShop.id, viewer_id: user.id })
-      .catch(() => {})
+    void (async () => {
+      const { error } = await supabase
+        .from("shop_views")
+        .insert({ shop_id: currentShop.id, viewer_id: user.id })
+
+      if (error) {
+        console.error("Failed to record shop view", error)
+      }
+    })()
   }, [currentShop?.id, currentShop?.owner_id, user?.id])
 
   useEffect(() => {

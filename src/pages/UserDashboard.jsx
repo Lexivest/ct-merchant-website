@@ -1300,8 +1300,6 @@ function UserDashboard() {
     <div className="bg-[#E3E6E6] text-[#0F1111]">
       <PageTransitionOverlay
         visible={shopTransition.pending}
-        title={`Opening ${shopTransition.shopName || "shop"}`}
-        message="Please wait while we get the shop ready."
         error={shopTransition.error}
         onRetry={() => openShopWithTransition(shopTransition.shopId)}
         onDismiss={() =>
@@ -1312,6 +1310,7 @@ function UserDashboard() {
           }))
         }
       />
+      <div className={shopTransition.pending ? "pointer-events-none select-none" : ""}>
       <DashboardHeader
         activeTab={activeTab}
         currentProfile={currentProfile}
@@ -1431,6 +1430,7 @@ function UserDashboard() {
           <NotificationsSection notifications={localData.notifications} />
         )}
       </main>
+      </div>
     </div>
   )
 }
