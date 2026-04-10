@@ -371,7 +371,7 @@ export default function ShopCommunitySection({
           </p>
         </div>
         <div className="text-[0.82rem] font-semibold text-slate-500">
-          <span className="font-extrabold text-[#2E1065]">{approvedCommentCount}</span> approved threads
+          <span className="font-extrabold text-[#2E1065]">{approvedCommentCount}</span> thread{approvedCommentCount === 1 ? "" : "s"}
         </div>
       </div>
 
