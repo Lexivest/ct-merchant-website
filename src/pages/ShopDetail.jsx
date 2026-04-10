@@ -480,21 +480,26 @@ function ShopDetail() {
     }
 
     const text = `Hello ${currentShop.name}, I found your shop on CTMerchant.`
-    setOpeningWhatsApp(true)
-
-    if (user?.id) {
-      void supabase
-        .from("whatsapp_clicks")
-        .insert({ clicker_id: user.id, shop_id: shopId })
-        .catch(() => {})
-    }
-
     const isDirectHandoff = shouldUseDirectWhatsAppHandoff()
+    setOpeningWhatsApp(true)
     const didLaunch = openWhatsAppConversation(phone, text)
     if (!didLaunch) {
       setOpeningWhatsApp(false)
       notify({ type: "error", title: "WhatsApp did not open", message: "Please try again in a moment." })
       return
+    }
+
+    if (user?.id) {
+      void (async () => {
+        const { error } = await supabase.from("whatsapp_clicks").insert({
+          clicker_id: user.id,
+          shop_id: shopId,
+        })
+
+        if (error) {
+          console.error("Failed to record WhatsApp click", error)
+        }
+      })()
     }
 
     if (!isDirectHandoff) {

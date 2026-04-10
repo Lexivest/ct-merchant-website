@@ -375,27 +375,27 @@ function ProductDetail() {
       price || 0
     ).toLocaleString()})`
 
-    setOpeningWhatsApp(true)
-
-    if (currentShop?.id) {
-      void supabase
-        .from("whatsapp_clicks")
-        .insert({
-          shop_id: currentShop.id,
-          clicker_id: user ? user.id : null,
-          product_id: parseInt(productId, 10),
-        })
-        .catch((error) => {
-          console.error("Failed to record WhatsApp click", error)
-        })
-    }
-
     const isDirectHandoff = shouldUseDirectWhatsAppHandoff()
+    setOpeningWhatsApp(true)
     const didLaunch = openWhatsAppConversation(phone, message)
     if (!didLaunch) {
       setOpeningWhatsApp(false)
       notify({ type: "error", title: "WhatsApp did not open", message: "Please try again in a moment." })
       return
+    }
+
+    if (currentShop?.id) {
+      void (async () => {
+        const { error } = await supabase.from("whatsapp_clicks").insert({
+          shop_id: currentShop.id,
+          clicker_id: user ? user.id : null,
+          product_id: parseInt(productId, 10),
+        })
+
+        if (error) {
+          console.error("Failed to record WhatsApp click", error)
+        }
+      })()
     }
 
     if (!isDirectHandoff) {

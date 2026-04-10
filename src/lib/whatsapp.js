@@ -31,34 +31,66 @@ export function normalizeWhatsAppPhone(rawPhone, countryCode = "234") {
 }
 
 export function openWhatsAppConversation(phone, text) {
-  if (typeof window === "undefined") return false
+  if (typeof window === "undefined" || typeof document === "undefined") return false
 
   const normalizedPhone = normalizeWhatsAppPhone(phone)
   if (!normalizedPhone) return false
 
   const encodedText = encodeURIComponent(text || "")
-  
-  // Universal Link - works flawlessly on both Mobile and Desktop
+  const nativeUrl = `whatsapp://send?phone=${normalizedPhone}&text=${encodedText}`
+  const apiUrl = `https://api.whatsapp.com/send?phone=${normalizedPhone}&text=${encodedText}`
   const waUrl = `https://wa.me/${normalizedPhone}?text=${encodedText}`
-
   const isMobile = shouldUseDirectWhatsAppHandoff()
+
+  const cleanupHandlers = []
+  const cleanup = () => {
+    cleanupHandlers.splice(0).forEach((fn) => fn())
+  }
+
+  const addCleanup = (fn) => {
+    cleanupHandlers.push(fn)
+  }
 
   try {
     if (isMobile) {
-      // On mobile, direct window location change is the most reliable 
-      // way to trigger OS-level App Links without hitting popup blockers.
-      window.location.href = waUrl
+      const clearNativeFallback = window.setTimeout(() => {
+        if (document.visibilityState === "visible") {
+          window.location.replace(apiUrl)
+        }
+      }, 700)
+      const clearWebFallback = window.setTimeout(() => {
+        if (document.visibilityState === "visible") {
+          window.location.replace(waUrl)
+        }
+      }, 1500)
+
+      addCleanup(() => window.clearTimeout(clearNativeFallback))
+      addCleanup(() => window.clearTimeout(clearWebFallback))
+
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === "hidden") {
+          cleanup()
+        }
+      }
+
+      document.addEventListener("visibilitychange", handleVisibilityChange)
+      window.addEventListener("pagehide", cleanup, { once: true })
+      window.addEventListener("blur", cleanup, { once: true })
+
+      addCleanup(() => document.removeEventListener("visibilitychange", handleVisibilityChange))
+      addCleanup(() => window.removeEventListener("pagehide", cleanup))
+      addCleanup(() => window.removeEventListener("blur", cleanup))
+
+      window.location.assign(nativeUrl)
     } else {
-      // On desktop, pop a new tab. 
       const newWindow = window.open(waUrl, "_blank", "noopener,noreferrer")
-      
-      // If a strict ad-blocker blocks the new tab, gracefully fallback to same-tab navigation
       if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
-        window.location.href = waUrl
+        window.location.assign(waUrl)
       }
     }
     return true
   } catch (error) {
+    cleanup()
     console.error("Failed to open WhatsApp:", error)
     return false
   }
