@@ -1,5 +1,5 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Routes, Route, Link, Navigate, matchPath, useLocation, useNavigate } from "react-router-dom"
+import { Suspense, lazy, useCallback, useEffect, useState } from "react"
+import { Routes, Route, Link, Navigate, useLocation, useNavigate } from "react-router-dom"
 
 import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
@@ -7,8 +7,6 @@ import OnlineRouteGuard from "./components/common/OnlineRouteGuard"
 import SiteVisitTracker from "./components/common/SiteVisitTracker"
 import RetryingNotice from "./components/common/RetryingNotice"
 import AppErrorBoundary from "./components/common/AppErrorBoundary"
-import PageTransitionOverlay from "./components/common/PageTransitionOverlay"
-import { PageLoadingScreen } from "./components/common/PageStatusScreen"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
 import Home from "./pages/Home"
@@ -199,64 +197,6 @@ const MerchantPayment = resilientLazy(loadMerchantPayment, { pageLabel: "payment
 const MerchantServiceFee = resilientLazy(loadMerchantServiceFee, { pageLabel: "service fee page" })
 const MerchantVideoKYC = resilientLazy(loadMerchantVideoKYC, { pageLabel: "video verification" })
 
-const ROUTE_PRELOADERS = [
-  { path: "/", label: "Home", load: () => Promise.resolve() },
-  { path: "/about", label: "About", load: loadAbout },
-  { path: "/services", label: "Services", load: loadServices },
-  { path: "/affiliate", label: "Affiliate", load: loadAffiliate },
-  { path: "/careers", label: "Careers", load: loadCareers },
-  { path: "/contact", label: "Contact", load: loadContact },
-  { path: "/staff-portal", label: "Staff portal", load: loadStaffPortal },
-  { path: "/staff-dashboard", label: "Staff dashboard", load: loadStaffDashboard },
-  { path: "/staff-traffic", label: "Staff traffic", load: loadStaffTraffic },
-  { path: "/staff-users", label: "Staff users", load: loadStaffUsers },
-  { path: "/staff-community", label: "Staff community", load: loadStaffCommunity },
-  { path: "/staff-verifications", label: "Staff verifications", load: loadStaffVerifications },
-  { path: "/staff-issue-id", label: "Staff ID generator", load: loadStaffIDGenerator },
-  { path: "/staff-inbox", label: "Staff inbox", load: loadStaffInbox },
-  { path: "/privacy", label: "Privacy", load: loadPrivacy },
-  { path: "/terms", label: "Terms", load: loadTerms },
-  { path: "/create-account", label: "Create account", load: loadCreateAccount },
-  { path: "/reposearch", label: "Merchant profile", load: loadMerchantDiscovery },
-  { path: "/shop-detail", label: "Shop details", load: loadShopDetail },
-  { path: "/product-detail", label: "Product details", load: loadProductDetail },
-  { path: "/user-dashboard", label: "Dashboard", load: loadUserDashboard },
-  { path: "/remita", label: "Payment", load: loadMerchantPayment },
-  { path: "/merchant-video-kyc", label: "Video verification", load: loadMerchantVideoKYC },
-  { path: "/merchant-promo-banner", label: "Promo banner", load: loadMerchantPromoBanner },
-  { path: "/merchant-settings", label: "Merchant settings", load: loadMerchantSettings },
-  { path: "/merchant-banner", label: "Merchant banner", load: loadMerchantBanner },
-  { path: "/merchant-products", label: "Merchant products", load: loadMerchantProducts },
-  { path: "/merchant-edit-product", label: "Edit product", load: loadEditProduct },
-  { path: "/merchant-add-product", label: "Add product", load: loadAddProduct },
-  { path: "/service-fee", label: "Service fee", load: loadMerchantServiceFee },
-  { path: "/merchant-analytics", label: "Merchant analytics", load: loadMerchantAnalytics },
-  { path: "/merchant-news", label: "Merchant news", load: loadMerchantNews },
-  { path: "/shop-registration", label: "Shop registration", load: loadShopRegistration },
-  { path: "/vendor-panel", label: "Vendor panel", load: loadVendorsPanel },
-  { path: "/area", label: "Area", load: loadArea },
-  { path: "/cat", label: "Category", load: loadCat },
-  { path: "/search", label: "Search", load: loadSearch },
-  { path: "/shop-index", label: "Market", load: loadShopIndex },
-]
-
-const DEFAULT_ROUTE_PRELOADER = {
-  label: "Page",
-  load: () => Promise.resolve(),
-}
-
-function getLocationKey(location) {
-  return `${location.pathname}${location.search}${location.hash || ""}`
-}
-
-function findRoutePreloader(pathname) {
-  return (
-    ROUTE_PRELOADERS.find((entry) =>
-      matchPath({ path: entry.path, end: true }, pathname)
-    ) || DEFAULT_ROUTE_PRELOADER
-  )
-}
-
 function RouteLoadingScreen({
   title = "Loading your page",
   message = "Please wait while we prepare the next screen.",
@@ -432,18 +372,6 @@ function ProtectedDashboardRoute({ children }) {
 }
 
 function AppShell() {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const [renderedLocation, setRenderedLocation] = useState(location)
-  const [isPageEntering, setIsPageEntering] = useState(false)
-  const [transitionState, setTransitionState] = useState({
-    pending: false,
-    title: "Opening page",
-    error: "",
-  })
-  const activeTransitionRef = useRef(0)
-  const attemptedLocationRef = useRef(null)
-
   const withOnlineGuard = (element, options = {}) => (
     <OnlineRouteGuard {...options}>{element}</OnlineRouteGuard>
   )
@@ -458,275 +386,182 @@ function AppShell() {
     <ProtectedDashboardRoute>{element}</ProtectedDashboardRoute>
   )
 
-  const renderedLocationKey = useMemo(
-    () => getLocationKey(renderedLocation),
-    [renderedLocation]
-  )
-  const currentLocationKey = useMemo(() => getLocationKey(location), [location])
-
-  useEffect(() => {
-    if (currentLocationKey === renderedLocationKey) {
-      return
-    }
-
-    const targetRoute = findRoutePreloader(location.pathname)
-
-    const transitionId = activeTransitionRef.current + 1
-    activeTransitionRef.current = transitionId
-    attemptedLocationRef.current = location
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTransitionState({
-      pending: true,
-      title: `Opening ${targetRoute.label}`,
-      error: "",
-    })
-
-    const timeoutId = window.setTimeout(() => {
-      if (activeTransitionRef.current !== transitionId) return
-      setTransitionState({
-        pending: false,
-        title: `Opening ${targetRoute.label}`,
-        error: "We could not load that page right now. Please check your connection and try again.",
-      })
-      navigate(renderedLocationKey || "/", { replace: true })
-    }, 10000)
-
-    Promise.resolve(targetRoute.load())
-      .then(() => {
-        if (activeTransitionRef.current !== transitionId) return
-        window.clearTimeout(timeoutId)
-        setRenderedLocation(location)
-        setTransitionState({
-          pending: false,
-          title: `Opening ${targetRoute.label}`,
-          error: "",
-        })
-        setIsPageEntering(true)
-      })
-      .catch(() => {
-        if (activeTransitionRef.current !== transitionId) return
-        window.clearTimeout(timeoutId)
-        setTransitionState({
-          pending: false,
-          title: `Opening ${targetRoute.label}`,
-          error: "That page failed to load. Please try again.",
-        })
-        navigate(renderedLocationKey || "/", { replace: true })
-      })
-
-    return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [currentLocationKey, location, navigate, renderedLocationKey])
-
-  useEffect(() => {
-    if (!isPageEntering) return undefined
-
-    const timerId = window.setTimeout(() => {
-      setIsPageEntering(false)
-    }, 260)
-
-    return () => {
-      window.clearTimeout(timerId)
-    }
-  }, [isPageEntering])
-
-  const retryPendingPage = useCallback(() => {
-    const attemptedLocation = attemptedLocationRef.current
-    if (!attemptedLocation) return
-    setTransitionState((prev) => ({ ...prev, error: "" }))
-    navigate(getLocationKey(attemptedLocation), { replace: true })
-  }, [navigate])
-
   return (
-    <>
+    <Suspense
+      fallback={
+        <RouteLoadingScreen
+          title="Loading page"
+          message="Please wait while we prepare this screen."
+        />
+      }
+    >
       <SiteVisitTracker />
-      <PageTransitionOverlay
-        visible={transitionState.pending}
-        title={transitionState.title}
-        message="Please wait while we get the next screen ready."
-        error={transitionState.error}
-        onRetry={retryPendingPage}
-        onDismiss={() => setTransitionState((prev) => ({ ...prev, error: "" }))}
-      />
-      <div className={isPageEntering ? "ctm-page-enter" : ""}>
-        <Suspense
-          fallback={
-            <PageLoadingScreen
-              title="Loading page"
-              message="Please wait while we prepare this screen."
-            />
+      <Routes>
+        {/* PUBLIC ROUTES */}
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/affiliate" element={<Affiliate />} />
+        <Route path="/careers" element={<Careers />} />
+        <Route path="/contact" element={<Contact />} />
+        
+        {/* --- STAFF ROUTES --- */}
+        <Route path="/staff-portal" element={<StaffPortal />} />
+        <Route path="/staff-dashboard" element={<StaffDashboard />} />
+        <Route path="/staff-traffic" element={<StaffTraffic />} />
+        <Route path="/staff-users" element={<StaffUsers />} />
+        <Route path="/staff-community" element={<StaffCommunity />} />
+        <Route path="/staff-verifications" element={<StaffVerifications />} />
+        <Route path="/staff-issue-id" element={<StaffIDGenerator />} />
+        <Route path="/staff-studio" element={<ImageOptimizer />} />
+        <Route path="/staff-inbox" element={<StaffInbox />} />
+
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/create-account" element={<CreateAccount />} />
+
+        <Route
+          path="/reposearch"
+          element={<MerchantDiscovery />}
+        />
+        <Route
+          path="/shop-detail"
+          element={<ShopDetail />}
+        />
+        <Route
+          path="/product-detail"
+          element={<ProductDetail />}
+        />
+
+        {/* PROTECTED DASHBOARD ROUTES */}
+        <Route
+          path="/user-dashboard"
+          element={
+            <ProtectedDashboardRoute>
+              <UserDashboard />
+            </ProtectedDashboardRoute>
           }
-        >
-          <Routes location={renderedLocation}>
-            {/* PUBLIC ROUTES */}
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/affiliate" element={<Affiliate />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/contact" element={<Contact />} />
-            
-            {/* --- STAFF ROUTES --- */}
-            <Route path="/staff-portal" element={<StaffPortal />} />
-            <Route path="/staff-dashboard" element={<StaffDashboard />} />
-            <Route path="/staff-traffic" element={<StaffTraffic />} />
-            <Route path="/staff-users" element={<StaffUsers />} />
-            <Route path="/staff-community" element={<StaffCommunity />} />
-            <Route path="/staff-verifications" element={<StaffVerifications />} />
-            <Route path="/staff-issue-id" element={<StaffIDGenerator />} />
-            <Route path="/staff-studio" element={<ImageOptimizer />} />
-            <Route path="/staff-inbox" element={<StaffInbox />} />
+        />
 
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/create-account" element={<CreateAccount />} />
+        <Route
+          path="/remita"
+          element={withProtectedOnlineGuard(<MerchantPayment />)}
+        />
 
-            <Route
-              path="/reposearch"
-              element={<MerchantDiscovery />}
-            />
-            <Route
-              path="/shop-detail"
-              element={<ShopDetail />}
-            />
-            <Route
-              path="/product-detail"
-              element={<ProductDetail />}
-            />
+        <Route
+          path="/merchant-video-kyc"
+          element={withProtectedOnlineGuard(<MerchantVideoKYC />)}
+        />
 
-            {/* PROTECTED DASHBOARD ROUTES */}
-            <Route
-              path="/user-dashboard"
-              element={
-                <ProtectedDashboardRoute>
-                  <UserDashboard />
-                </ProtectedDashboardRoute>
-              }
-            />
+        {/* --- LOCKED PREMIUM ROUTES START HERE --- */}
+        <Route
+          path="/merchant-promo-banner"
+          element={withProtectedOnlineGuard(
+            <SubscriptionGuard>
+              <MerchantPromoBanner />
+            </SubscriptionGuard>
+          )}
+        />
 
-            <Route
-              path="/remita"
-              element={withProtectedOnlineGuard(<MerchantPayment />)}
-            />
+        <Route
+          path="/merchant-settings"
+          element={withProtectedOnlineGuard(
+            <SubscriptionGuard>
+              <MerchantSettings />
+            </SubscriptionGuard>
+          )}
+        />
 
-            <Route
-              path="/merchant-video-kyc"
-              element={withProtectedOnlineGuard(<MerchantVideoKYC />)}
-            />
+        <Route
+          path="/merchant-banner"
+          element={withProtectedOnlineGuard(
+            <SubscriptionGuard>
+              <MerchantBanner />
+            </SubscriptionGuard>
+          )}
+        />
 
-            {/* --- LOCKED PREMIUM ROUTES START HERE --- */}
-            <Route
-              path="/merchant-promo-banner"
-              element={withProtectedOnlineGuard(
-                <SubscriptionGuard>
-                  <MerchantPromoBanner />
-                </SubscriptionGuard>
-              )}
-            />
+        <Route
+          path="/merchant-products"
+          element={withProtectedOnlineGuard(
+            <SubscriptionGuard>
+              <MerchantProducts />
+            </SubscriptionGuard>
+          )}
+        />
 
-            <Route
-              path="/merchant-settings"
-              element={withProtectedOnlineGuard(
-                <SubscriptionGuard>
-                  <MerchantSettings />
-                </SubscriptionGuard>
-              )}
-            />
+        <Route
+          path="/merchant-edit-product"
+          element={withProtectedOnlineGuard(
+            <SubscriptionGuard>
+              <EditProduct />
+            </SubscriptionGuard>
+          )}
+        />
 
-            <Route
-              path="/merchant-banner"
-              element={withProtectedOnlineGuard(
-                <SubscriptionGuard>
-                  <MerchantBanner />
-                </SubscriptionGuard>
-              )}
-            />
+        <Route
+          path="/merchant-add-product"
+          element={withProtectedOnlineGuard(
+            <SubscriptionGuard>
+              <AddProduct />
+            </SubscriptionGuard>
+          )}
+        />
+        {/* --- LOCKED PREMIUM ROUTES END HERE --- */}
 
-            <Route
-              path="/merchant-products"
-              element={withProtectedOnlineGuard(
-                <SubscriptionGuard>
-                  <MerchantProducts />
-                </SubscriptionGuard>
-              )}
-            />
+        {/* --- UNLOCKED / FREE ROUTES --- */}
+        <Route
+          path="/service-fee"
+          element={withProtectedOnlineGuard(<MerchantServiceFee />)}
+        />
 
-            <Route
-              path="/merchant-edit-product"
-              element={withProtectedOnlineGuard(
-                <SubscriptionGuard>
-                  <EditProduct />
-                </SubscriptionGuard>
-              )}
-            />
+        <Route
+          path="/merchant-analytics"
+          element={withProtectedOnlineGuard(<MerchantAnalytics />)}
+        />
 
-            <Route
-              path="/merchant-add-product"
-              element={withProtectedOnlineGuard(
-                <SubscriptionGuard>
-                  <AddProduct />
-                </SubscriptionGuard>
-              )}
-            />
-            {/* --- LOCKED PREMIUM ROUTES END HERE --- */}
+        <Route
+          path="/merchant-news"
+          element={withProtectedOnlineGuard(<MerchantNews />)}
+        />
 
-            {/* --- UNLOCKED / FREE ROUTES --- */}
-            <Route
-              path="/service-fee"
-              element={withProtectedOnlineGuard(<MerchantServiceFee />)}
-            />
+        <Route
+          path="/shop-registration"
+          element={withProtectedOnlineGuard(<ShopRegistration />)}
+        />
 
-            <Route
-              path="/merchant-analytics"
-              element={withProtectedOnlineGuard(<MerchantAnalytics />)}
-            />
+        <Route
+          path="/vendor-panel"
+          element={withProtectedRoute(<VendorsPanel />)}
+        />
 
-            <Route
-              path="/merchant-news"
-              element={withProtectedOnlineGuard(<MerchantNews />)}
-            />
+        <Route
+          path="/area"
+          element={withProtectedRoute(<Area />)}
+        />
 
-            <Route
-              path="/shop-registration"
-              element={withProtectedOnlineGuard(<ShopRegistration />)}
-            />
+        <Route
+          path="/cat"
+          element={withProtectedRoute(<Cat />)}
+        />
 
-            <Route
-              path="/vendor-panel"
-              element={withProtectedRoute(<VendorsPanel />)}
-            />
+        <Route
+          path="/search"
+          element={withProtectedRoute(<Search />)}
+        />
 
-            <Route
-              path="/area"
-              element={withProtectedRoute(<Area />)}
-            />
+        <Route
+          path="/shop-index"
+          element={withProtectedRoute(<ShopIndex />)}
+        />
 
-            <Route
-              path="/cat"
-              element={withProtectedRoute(<Cat />)}
-            />
-
-            <Route
-              path="/search"
-              element={withProtectedRoute(<Search />)}
-            />
-
-            <Route
-              path="/shop-index"
-              element={withProtectedRoute(<ShopIndex />)}
-            />
-
-            {/* --- CATCH-ALL 404 ROUTE --- */}
-            <Route
-              path="*"
-              element={<NotFoundPage />}
-            />
-          </Routes>
-        </Suspense>
-      </div>
-    </>
+        {/* --- CATCH-ALL 404 ROUTE --- */}
+        <Route
+          path="*"
+          element={<NotFoundPage />}
+        />
+      </Routes>
+    </Suspense>
   )
 }
 

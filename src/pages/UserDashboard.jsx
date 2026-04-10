@@ -2,11 +2,13 @@ import { Suspense, lazy, startTransition, useEffect, useMemo, useRef, useState }
 import { useNavigate, useSearchParams } from "react-router-dom"
 
 import AuthNotification from "../components/auth/AuthNotification"
+import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import useAuthSession from "../hooks/useAuthSession"
-import useCachedFetch from "../hooks/useCachedFetch"
+import useCachedFetch, { primeCachedFetchStore } from "../hooks/useCachedFetch"
 import useMyShop from "../hooks/useMyShop" // <-- Import our new logic file
 import { signOutUser } from "../lib/auth"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import { buildShopDetailCacheKey, fetchShopDetailData } from "../lib/shopDetailData"
 import { supabase } from "../lib/supabase"
 import { UPLOAD_RULES, formatBytes } from "../lib/uploadRules"
 
@@ -16,6 +18,7 @@ import NotificationsSection from "../components/dashboard/sections/Notifications
 
 const loadServicesProfileSection = () =>
   import("../components/dashboard/sections/ServicesProfileSection")
+const loadShopDetailPage = () => import("./ShopDetail")
 
 const ServicesProfileSection = lazy(loadServicesProfileSection)
 
@@ -267,6 +270,12 @@ function UserDashboard() {
   )
 
   const [localData, setLocalData] = useState(EMPTY_DASHBOARD_DATA)
+  const [shopTransition, setShopTransition] = useState({
+    pending: false,
+    shopId: "",
+    shopName: "",
+    error: "",
+  })
 
   useEffect(() => {
     if (fetchedData) {
@@ -672,6 +681,65 @@ function UserDashboard() {
   function navigateCategory(name) {
     if (name === "all") return
     navigate(`/cat?name=${encodeURIComponent(name)}`)
+  }
+
+  async function openShopWithTransition(shopId) {
+    if (!shopId) return
+
+    const shopName =
+      localData.shops?.find((shop) => String(shop.id) === String(shopId))?.name || "shop"
+
+    setShopTransition({
+      pending: true,
+      shopId,
+      shopName,
+      error: "",
+    })
+
+    try {
+      const transitionResult = await new Promise((resolve, reject) => {
+        const timeoutId = window.setTimeout(() => {
+          reject(new Error("Timed out while opening the shop."))
+        }, 10000)
+
+        Promise.all([
+          fetchShopDetailData({
+            shopId,
+            userId: user?.id || null,
+            recordView: false,
+          }),
+          loadShopDetailPage(),
+        ])
+          .then(([shopDetailData]) => {
+            window.clearTimeout(timeoutId)
+            resolve(shopDetailData)
+          })
+          .catch((error) => {
+            window.clearTimeout(timeoutId)
+            reject(error)
+          })
+      })
+
+      primeCachedFetchStore(
+        buildShopDetailCacheKey(shopId, user?.id || null),
+        transitionResult
+      )
+
+      navigate(`/shop-detail?id=${shopId}`, {
+        state: { fromMarketTransition: true },
+      })
+    } catch (error) {
+      console.error("Failed to open shop detail", error)
+      setShopTransition({
+        pending: false,
+        shopId,
+        shopName,
+        error: getFriendlyErrorMessage(
+          error,
+          "We could not open this shop right now. Please try again."
+        ),
+      })
+    }
   }
 
   async function openProfileEdit() {
@@ -1230,6 +1298,20 @@ function UserDashboard() {
 
   return (
     <div className="bg-[#E3E6E6] text-[#0F1111]">
+      <PageTransitionOverlay
+        visible={shopTransition.pending}
+        title={`Opening ${shopTransition.shopName || "shop"}`}
+        message="Please wait while we get the shop ready."
+        error={shopTransition.error}
+        onRetry={() => openShopWithTransition(shopTransition.shopId)}
+        onDismiss={() =>
+          setShopTransition((prev) => ({
+            ...prev,
+            pending: false,
+            error: "",
+          }))
+        }
+      />
       <DashboardHeader
         activeTab={activeTab}
         currentProfile={currentProfile}
@@ -1269,6 +1351,7 @@ function UserDashboard() {
             featuredShops={featuredShops}
             groupedShopsByArea={groupedShopsByArea}
             navigateCategory={navigateCategory}
+            onOpenShop={openShopWithTransition}
             loading={dataLoading} 
             error={dataError} 
           />

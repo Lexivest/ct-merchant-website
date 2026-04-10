@@ -64,6 +64,17 @@ export function clearCachedFetchStore(predicate) {
   }
 }
 
+export function primeCachedFetchStore(queryKey, data, timestamp = Date.now()) {
+  if (!queryKey) return
+
+  if (globalCache.size >= MAX_CACHE_SIZE && !globalCache.has(queryKey)) {
+    const firstKey = globalCache.keys().next().value
+    globalCache.delete(firstKey)
+  }
+
+  globalCache.set(queryKey, { data, timestamp })
+}
+
 export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   const { 
     ttl = 1000 * 60 * 5, // 5-minute default cache lifespan

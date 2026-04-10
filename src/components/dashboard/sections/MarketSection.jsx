@@ -1,5 +1,4 @@
 import { memo, useEffect, useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
 import { FaChevronRight, FaImage } from "react-icons/fa6"
 // IMPORT OUR NEW SHIMMERS
 import { ShimmerBlock, ShimmerCard } from "../../common/Shimmers"
@@ -144,11 +143,10 @@ function MarketSection({
   featuredShops = [],
   groupedShopsByArea = [],
   navigateCategory,
+  onOpenShop,
   loading, // NEW PROP
   error    // NEW PROP
 }) {
-  const navigate = useNavigate()
-
   const dashboardShellEmpty =
     !dashboardData ||
     (!dashboardData.profile &&
@@ -159,7 +157,9 @@ function MarketSection({
       (dashboardData.products || []).length === 0)
 
   function openShop(shopId) {
-    navigate(`/shop-detail?id=${shopId}`)
+    if (typeof onOpenShop === "function") {
+      onOpenShop(shopId)
+    }
   }
 
   const productsByShopId = useMemo(() => {

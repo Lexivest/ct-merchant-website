@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaBoxOpen,
   FaBullhorn,
@@ -65,6 +65,7 @@ function ShopSectionFallback({ title, body }) {
 
 function ShopDetail() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { notify } = useGlobalFeedback()
   const [searchParams] = useSearchParams()
   const shopId = searchParams.get("id")
@@ -186,16 +187,6 @@ function ShopDetail() {
         })
         .catch(() => {})
       )
-
-      if (user.id !== shopData.owner_id) {
-        tasks.push(
-          supabase
-          .from("shop_views")
-          .insert({ shop_id: shopId, viewer_id: user.id })
-          .then(() => {})
-          .catch(() => {})
-        )
-      }
     }
 
     await Promise.allSettled(tasks)
@@ -240,6 +231,7 @@ function ShopDetail() {
   const mapInstanceRef = useRef(null)
   const leafletModuleRef = useRef(null)
   const communityLoaderRef = useRef(null)
+  const viewTrackedRef = useRef(false)
 
   // Computed Values
   const currentShop = data?.shop
@@ -268,6 +260,22 @@ function ShopDetail() {
   useEffect(() => {
     setShouldLoadCommunity(false)
   }, [shopId])
+
+  useEffect(() => {
+    viewTrackedRef.current = false
+  }, [shopId])
+
+  useEffect(() => {
+    if (!user?.id || !currentShop?.id || viewTrackedRef.current) return
+    if (user.id === currentShop.owner_id) return
+
+    viewTrackedRef.current = true
+
+    void supabase
+      .from("shop_views")
+      .insert({ shop_id: currentShop.id, viewer_id: user.id })
+      .catch(() => {})
+  }, [currentShop?.id, currentShop?.owner_id, user?.id])
 
   useEffect(() => {
     if (shouldLoadCommunity) return undefined
@@ -732,7 +740,11 @@ function ShopDetail() {
   const showLegacyInfoLayout = false
 
   return (
-    <div className="min-h-screen bg-[#E3E6E6] pb-10">
+    <div
+      className={`min-h-screen bg-[#E3E6E6] pb-10 ${
+        location.state?.fromMarketTransition ? "ctm-page-enter" : ""
+      }`}
+    >
       <PageSeo
         title={currentShop?.name ? `${currentShop.name} | CTMerchant Shop` : "Shop Details | CTMerchant"}
         description={
