@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -17,6 +17,7 @@ import AuthInput from "../components/auth/AuthInput"
 import AuthNotification from "../components/auth/AuthNotification"
 import MainLayout from "../layouts/MainLayout"
 import PageSeo from "../components/common/PageSeo"
+import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import {
   fetchAreasByCity,
   fetchOpenCities,
@@ -24,51 +25,72 @@ import {
   signUpWithEmail,
   updateLastActiveIp,
 } from "../lib/auth"
+import { supabase } from "../lib/supabase"
 import { validateSignupForm } from "../lib/validators"
 import useCachedFetch from "../hooks/useCachedFetch"
 import useAuthSession from "../hooks/useAuthSession"
-import { ShimmerBlock } from "../components/common/Shimmers"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
-
-// --- PROFESSIONAL SHIMMER COMPONENT ---
-function CreateAccountShimmer() {
-  return (
-    <MainLayout>
-      <section className="min-h-screen bg-pink-50 px-4 py-0">
-        <div className="mx-auto max-w-md">
-          <ShimmerBlock className="mb-6 h-10 w-24 rounded-xl" />
-          <div className="rounded-[28px] border border-pink-100 bg-white p-6 shadow-xl md:p-8">
-            <ShimmerBlock className="mb-2 h-8 w-48 rounded" />
-            <ShimmerBlock className="mb-6 h-4 w-64 rounded" />
-            <ShimmerBlock className="mb-8 h-[44px] w-full rounded" />
-            <ShimmerBlock className="mb-6 h-4 w-full rounded" />
-            
-            <div className="space-y-4">
-              <ShimmerBlock className="h-14 w-full rounded-2xl" />
-              <ShimmerBlock className="h-14 w-full rounded-2xl" />
-              <ShimmerBlock className="h-14 w-full rounded-2xl" />
-              <ShimmerBlock className="h-14 w-full rounded-2xl" />
-            </div>
-            <ShimmerBlock className="mt-8 h-12 w-full rounded-xl" />
-          </div>
-        </div>
-      </section>
-    </MainLayout>
-  )
-}
+import {
+  getAuthScreenTransitionMessage,
+  preloadDashboardScreen,
+} from "../lib/authScreenTransitions"
 
 function CreateAccount() {
   const navigate = useNavigate()
 
   // 1. Unified Auth & Network State
-  const { user, loading: authLoading, isOffline } = useAuthSession()
+  const {
+    session,
+    user,
+    profile,
+    suspended,
+    loading: authLoading,
+    isOffline,
+  } = useAuthSession()
+  const shouldRedirectToDashboard = Boolean(user) && !suspended && !isOffline
+  const holdForExistingSession = shouldRedirectToDashboard && authLoading
+  const transitionRetryRef = useRef(null)
+  const [transitionState, setTransitionState] = useState({
+    pending: false,
+    error: "",
+  })
 
-  // Redirect authenticated users away from signup
-  useEffect(() => {
-    if (user) {
-      navigate("/user-dashboard", { replace: true })
-    }
-  }, [user, navigate])
+  function dismissTransitionError() {
+    transitionRetryRef.current = null
+    setTransitionState({
+      pending: false,
+      error: "",
+    })
+  }
+
+  const openDashboardWithTransition = useCallback(
+    async function openDashboard(authState, options = {}) {
+      const { replace = false } = options
+      const retryAction = () => openDashboard(authState, options)
+      transitionRetryRef.current = retryAction
+      setTransitionState({
+        pending: true,
+        error: "",
+      })
+
+      try {
+        await preloadDashboardScreen(authState)
+        navigate("/user-dashboard", { replace })
+        return true
+      } catch (error) {
+        transitionRetryRef.current = retryAction
+        setTransitionState({
+          pending: false,
+          error: getAuthScreenTransitionMessage(
+            error,
+            "We could not open your dashboard right now. Please try again."
+          ),
+        })
+        return false
+      }
+    },
+    [navigate]
+  )
 
   const [form, setForm] = useState({
     surname: "",
@@ -120,6 +142,40 @@ function CreateAccount() {
 
   const [showSuccess, setShowSuccess] = useState(false)
 
+  useEffect(() => {
+    if (
+      !authLoading &&
+      shouldRedirectToDashboard &&
+      !submitting &&
+      !googleLoading &&
+      !transitionState.pending &&
+      !transitionState.error
+    ) {
+      void openDashboardWithTransition(
+        {
+          session,
+          user,
+          profile,
+          suspended,
+          profileLoaded: true,
+        },
+        { replace: true }
+      )
+    }
+  }, [
+    authLoading,
+    googleLoading,
+    profile,
+    session,
+    shouldRedirectToDashboard,
+    submitting,
+    suspended,
+    transitionState.error,
+    transitionState.pending,
+    user,
+    openDashboardWithTransition,
+  ])
+
   // --- GOOGLE CALLBACK ---
   const googleCallbackRef = useRef()
   googleCallbackRef.current = async (response) => {
@@ -134,6 +190,7 @@ function CreateAccount() {
     }
 
     try {
+      let didOpenDashboard = false
       setGoogleLoading(true)
       setNotice({ visible: false, type: "info", title: "", message: "" })
 
@@ -142,11 +199,29 @@ function CreateAccount() {
 
       if (!signedInUser) throw new Error("Google sign-up did not return a valid user.")
 
-      await updateLastActiveIp(signedInUser.id, result.ipData.ip)
-      
-      setNotice({ visible: true, type: "success", title: "Google sign-up successful", message: "Opening your dashboard..." })
+      const currentProfile = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", signedInUser.id)
+        .maybeSingle()
 
-      setTimeout(() => navigate("/user-dashboard"), 900)
+      if (currentProfile.error) {
+        throw new Error("Could not verify your profile. Please try again.")
+      }
+
+      await updateLastActiveIp(signedInUser.id, result.ipData.ip)
+
+      didOpenDashboard = await openDashboardWithTransition({
+        session: result.auth?.session || null,
+        user: signedInUser,
+        profile: currentProfile.data || null,
+        suspended: false,
+        profileLoaded: true,
+      })
+
+      if (!didOpenDashboard) {
+        setGoogleLoading(false)
+      }
       
     } catch (error) {
       setNotice({
@@ -155,16 +230,13 @@ function CreateAccount() {
         title: "Google sign-up failed",
         message: getFriendlyErrorMessage(error, "Please try again."),
       })
-    } finally {
       setGoogleLoading(false)
     }
   }
 
-  const showLoadingScreen = authLoading || (loadingCities && cities.length === 0)
-
   // --- Initialize Standard Google Sign-in ---
   useEffect(() => {
-    if (showLoadingScreen) return
+    if (authLoading) return
 
     const clientId = "504776303212-4s0mgf9qd3hlpfhld5fdgpore65m6tfl.apps.googleusercontent.com"
 
@@ -205,7 +277,7 @@ function CreateAccount() {
     return () => {
       if (timer) clearInterval(timer)
     }
-  }, [showLoadingScreen])
+  }, [authLoading])
 
   const currentErrorsCount = useMemo(() => Object.keys(errors).length, [errors])
   
@@ -279,20 +351,33 @@ function CreateAccount() {
     navigate("/", { state: { prefillEmail: form.email } })
   }
 
-  if (showLoadingScreen) {
-    return <CreateAccountShimmer />
-  }
-
   return (
     <>
-      <MainLayout>
-        <PageSeo
-          title="Create Account | CTMerchant"
-          description="Create a CTMerchant account to discover verified shops, manage your profile, and access merchant tools."
-          canonicalPath="/create-account"
-          noindex
-        />
-        <section className="min-h-screen bg-pink-50 px-4 py-0">
+      <PageTransitionOverlay
+        visible={transitionState.pending || holdForExistingSession}
+        error={transitionState.error}
+        onRetry={
+          typeof transitionRetryRef.current === "function"
+            ? () => transitionRetryRef.current?.()
+            : null
+        }
+        onDismiss={dismissTransitionError}
+      />
+      <div
+        className={
+          transitionState.pending || holdForExistingSession
+            ? "pointer-events-none select-none"
+            : ""
+        }
+      >
+        <MainLayout>
+          <PageSeo
+            title="Create Account | CTMerchant"
+            description="Create a CTMerchant account to discover verified shops, manage your profile, and access merchant tools."
+            canonicalPath="/create-account"
+            noindex
+          />
+          <section className="min-h-screen bg-pink-50 px-4 py-0">
           <div className="mx-auto max-w-md">
             
             {isOffline && (
@@ -372,7 +457,13 @@ function CreateAccount() {
                 <AuthInput id="signup-confirm-password" label="Confirm Password" type={showConfirmPassword ? "text" : "password"} value={form.confirmPassword} onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))} placeholder="Re-enter password" error={errors.confirmPassword} required icon={<FaLock />} autoComplete="new-password" minLength={6} rightElement={<button type="button" onClick={() => setShowConfirmPassword((prev) => !prev)} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600">{showConfirmPassword ? <FaEyeSlash /> : <FaEye />}</button>} />
 
                 <div className="pt-2">
-                  <AuthButton type="submit" loading={submitting} disabled={isOffline}>Create Account</AuthButton>
+                  <AuthButton
+                    type="submit"
+                    loading={submitting}
+                    disabled={isOffline || transitionState.pending}
+                  >
+                    Create Account
+                  </AuthButton>
                   <p className="mt-3 text-center text-[0.75rem] leading-relaxed text-slate-500">
                     By clicking Create Account, you agree to our <br className="hidden sm:block"/>
                     <a href="/terms" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Terms of Use</a> and <a href="/privacy" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Privacy Policy</a>.
@@ -395,8 +486,9 @@ function CreateAccount() {
               </div>
             </div>
           </div>
-        </section>
-      </MainLayout>
+          </section>
+        </MainLayout>
+      </div>
 
       {showSuccess && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 px-4">

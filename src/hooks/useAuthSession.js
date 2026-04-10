@@ -129,6 +129,37 @@ function getSnapshotWithCachedProfile() {
   }
 }
 
+export function primeAuthSessionState({
+  session = null,
+  user = null,
+  profile = null,
+  suspended = false,
+  profileLoaded = true,
+}) {
+  if (!user?.id) return
+
+  if (profile) {
+    writeCachedProfile(user.id, profile)
+  }
+
+  writeAuthSnapshot({
+    session,
+    user,
+    profile,
+    suspended: suspended || isProfileSuspended(profile),
+    profileLoaded,
+  })
+
+  globalAuthMemory = {
+    isResolved: true,
+    session,
+    user,
+    profile,
+    suspended: suspended || isProfileSuspended(profile),
+    profileLoaded,
+  }
+}
+
 function useAuthSession() {
   const [state, setState] = useState(() => {
     // 2. SYNCHRONOUS MEMORY READ

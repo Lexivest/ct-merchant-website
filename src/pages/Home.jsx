@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 import {
   FaArrowRight,
   FaInfoCircle,
@@ -15,6 +15,7 @@ import MainLayout from "../layouts/MainLayout"
 import AuthInput from "../components/auth/AuthInput"
 import AuthButton from "../components/auth/AuthButton"
 import PageSeo from "../components/common/PageSeo"
+import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import {
   sendPasswordResetCode,
@@ -32,6 +33,11 @@ import {
 } from "../lib/validators"
 import useAuthSession from "../hooks/useAuthSession"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import {
+  getAuthScreenTransitionMessage,
+  preloadCreateAccountScreen,
+  preloadDashboardScreen,
+} from "../lib/authScreenTransitions"
 
 // --- LOCAL ASSET IMPORTS FOR CAROUSEL ---
 import banner2 from "../assets/images/banner2.jpg"
@@ -90,50 +96,92 @@ const testimonials = [
   },
 ]
 
-function DashboardRedirectShimmer() {
-  return (
-    <div className="min-h-screen bg-[#E3E6E6] px-4 py-6">
-      <div className="mx-auto max-w-[1200px]">
-        <div className="mb-4 flex items-center justify-between rounded-xl bg-[#131921] px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="h-6 w-6 animate-pulse rounded bg-white/20" />
-            <div className="h-5 w-36 animate-pulse rounded bg-white/20" />
-          </div>
-          <div className="h-6 w-6 animate-pulse rounded bg-white/20" />
-        </div>
-
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <div className="aspect-video w-full animate-pulse rounded-xl bg-slate-200" />
-          <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="space-y-2">
-                <div className="aspect-square animate-pulse rounded-lg bg-slate-100" />
-                <div className="h-4 w-3/4 animate-pulse rounded bg-slate-100" />
-                <div className="h-4 w-1/2 animate-pulse rounded bg-slate-100" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function Home() {
+  const location = useLocation()
   const navigate = useNavigate()
 
   // 1. Hook into global auth state
-  const { user, suspended, isOffline, loading: authLoading } = useAuthSession()
+  const { session, user, profile, suspended, isOffline, loading: authLoading } = useAuthSession()
   const { notify } = useGlobalFeedback()
   const shouldRedirectToDashboard = Boolean(user) && !suspended && !isOffline
+  const holdForExistingSession = shouldRedirectToDashboard && authLoading
+  const transitionRetryRef = useRef(null)
+  const [transitionState, setTransitionState] = useState({
+    pending: false,
+    error: "",
+  })
 
-  // 2. Smooth Auto-Redirect
-  useEffect(() => {
-    if (!authLoading && shouldRedirectToDashboard) {
-      void import("./UserDashboard")
-      navigate("/user-dashboard", { replace: true })
+  function beginTransition(retryAction = null) {
+    transitionRetryRef.current = retryAction
+    setTransitionState({
+      pending: true,
+      error: "",
+    })
+  }
+
+  function failTransition(message, retryAction = null) {
+    transitionRetryRef.current = retryAction
+    setTransitionState({
+      pending: false,
+      error: message,
+    })
+  }
+
+  function dismissTransitionError() {
+    transitionRetryRef.current = null
+    setTransitionState({
+      pending: false,
+      error: "",
+    })
+  }
+
+  async function openCreateAccountWithTransition() {
+    beginTransition(openCreateAccountWithTransition)
+
+    try {
+      await preloadCreateAccountScreen()
+      navigate("/create-account")
+      return true
+    } catch (error) {
+      failTransition(
+        getAuthScreenTransitionMessage(
+          error,
+          "We could not open create account right now. Please try again."
+        ),
+        openCreateAccountWithTransition
+      )
+      return false
     }
-  }, [authLoading, navigate, shouldRedirectToDashboard])
+  }
+
+  const openDashboardWithTransition = useCallback(
+    async function openDashboard(authState, options = {}) {
+      const { replace = false } = options
+      const retryAction = () => openDashboard(authState, options)
+      transitionRetryRef.current = retryAction
+      setTransitionState({
+        pending: true,
+        error: "",
+      })
+
+      try {
+        await preloadDashboardScreen(authState)
+        navigate("/user-dashboard", { replace })
+        return true
+      } catch (error) {
+        transitionRetryRef.current = retryAction
+        setTransitionState({
+          pending: false,
+          error: getAuthScreenTransitionMessage(
+            error,
+            "We could not open your dashboard right now. Please try again."
+          ),
+        })
+        return false
+      }
+    },
+    [navigate]
+  )
 
   // --- BANNER CAROUSEL STATE & TIMER ---
   const [currentBanner, setCurrentBanner] = useState(0)
@@ -180,6 +228,51 @@ function Home() {
 
   const [repoSearchValue, setRepoSearchValue] = useState("")
   const [repoSearchLoading, setRepoSearchLoading] = useState(false)
+
+  // 2. Smooth Auto-Redirect
+  useEffect(() => {
+    if (
+      !authLoading &&
+      shouldRedirectToDashboard &&
+      !loginLoading &&
+      !googleLoading &&
+      !transitionState.pending &&
+      !transitionState.error
+    ) {
+      void openDashboardWithTransition(
+        {
+          session,
+          user,
+          profile,
+          suspended,
+          profileLoaded: true,
+        },
+        { replace: true }
+      )
+    }
+  }, [
+    authLoading,
+    googleLoading,
+    loginLoading,
+    profile,
+    session,
+    shouldRedirectToDashboard,
+    suspended,
+    transitionState.error,
+    transitionState.pending,
+    user,
+    openDashboardWithTransition,
+  ])
+
+  useEffect(() => {
+    const prefillEmail = location.state?.prefillEmail
+    if (!prefillEmail || typeof prefillEmail !== "string") return
+
+    setLoginForm((prev) => ({
+      ...prev,
+      email: prev.email || prefillEmail,
+    }))
+  }, [location.state])
 
   useEffect(() => {
     const currentPhrase = phrases[phraseIndex]
@@ -252,6 +345,17 @@ function Home() {
       }
 
       await updateLastActiveIp(signedInUser.id, result.ipData.ip)
+      const didOpenDashboard = await openDashboardWithTransition({
+        session: result.auth?.session || null,
+        user: signedInUser,
+        profile: currentProfile.data || null,
+        suspended: false,
+        profileLoaded: true,
+      })
+
+      if (!didOpenDashboard) {
+        setGoogleLoading(false)
+      }
 
     } catch (error) {
       const message = getFriendlyErrorMessage(error, "Please try again.")
@@ -376,6 +480,17 @@ function Home() {
       }
 
       await updateLastActiveIp(signedInUser.id, result.ipData.ip)
+      const didOpenDashboard = await openDashboardWithTransition({
+        session: result.auth?.session || null,
+        user: signedInUser,
+        profile: currentProfile.data || null,
+        suspended: false,
+        profileLoaded: true,
+      })
+
+      if (!didOpenDashboard) {
+        setLoginLoading(false)
+      }
 
     } catch (error) {
       const message = getFriendlyErrorMessage(error, "We could not sign you in. Check your connection and try again.")
@@ -532,18 +647,32 @@ function Home() {
     }
   }
 
-  if (shouldRedirectToDashboard) {
-    return <DashboardRedirectShimmer />
-  }
-
   return (
-    <MainLayout>
-      <PageSeo
-        title="CTMerchant | Repository of Shops, Products and Services"
-        description="Discover verified physical shops, browse local products, and connect with real merchants across your city."
-        canonicalPath="/"
+    <>
+      <PageTransitionOverlay
+        visible={transitionState.pending || holdForExistingSession}
+        error={transitionState.error}
+        onRetry={
+          typeof transitionRetryRef.current === "function"
+            ? () => transitionRetryRef.current?.()
+            : null
+        }
+        onDismiss={dismissTransitionError}
       />
-      <section className="overflow-x-hidden bg-pink-50 px-4 py-4 md:py-5">
+      <div
+        className={
+          transitionState.pending || holdForExistingSession
+            ? "pointer-events-none select-none"
+            : ""
+        }
+      >
+        <MainLayout>
+          <PageSeo
+            title="CTMerchant | Repository of Shops, Products and Services"
+            description="Discover verified physical shops, browse local products, and connect with real merchants across your city."
+            canonicalPath="/"
+          />
+          <section className="overflow-x-hidden bg-pink-50 px-4 py-4 md:py-5">
         <div className="mx-auto mb-4 w-full max-w-7xl lg:hidden">
           <div className="overflow-hidden rounded-[22px] border border-pink-100 bg-white p-2 shadow-sm">
             <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-transparent bg-pink-50 transition focus-within:border-pink-600">
@@ -716,7 +845,7 @@ function Home() {
 
                   <button
                     type="button"
-                    onClick={() => navigate("/create-account")}
+                    onClick={openCreateAccountWithTransition}
                     className="w-full rounded-xl border-2 border-pink-200 bg-white px-4 py-3 text-base font-bold text-slate-900 transition hover:bg-pink-100"
                   >
                     Create Account
@@ -953,7 +1082,9 @@ function Home() {
         </SimpleModal>
       ) : null}
 
-    </MainLayout>
+        </MainLayout>
+      </div>
+    </>
   )
 }
 
