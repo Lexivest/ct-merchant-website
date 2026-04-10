@@ -1,4 +1,5 @@
 import { supabase } from "./supabase"
+import { isNetworkError } from "./friendlyErrors"
 
 export function buildShopDetailCacheKey(shopId, userId) {
   return `shop_detail_${shopId}_${userId || "anon"}`
@@ -19,12 +20,15 @@ export async function fetchShopDetailData({
     .eq("id", shopId)
     .maybeSingle()
 
-  if (shopError || !shopData) {
-    throw new Error(
-      !userId
-        ? "This shop may be restricted. Try signing in to view it."
-        : "This shop could not be found or has been removed from the platform."
-    )
+  if (shopError) {
+    if (isNetworkError(shopError)) {
+      throw new Error("We could not open this shop right now. Please try again.")
+    }
+    throw shopError
+  }
+
+  if (!shopData) {
+    throw new Error("This shop is unavailable right now. Please try again later.")
   }
 
   let cityName = "Local"

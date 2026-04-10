@@ -75,6 +75,11 @@ export function primeCachedFetchStore(queryKey, data, timestamp = Date.now()) {
   globalCache.set(queryKey, { data, timestamp })
 }
 
+export function readCachedFetchStore(queryKey) {
+  if (!queryKey) return null
+  return globalCache.get(queryKey) || null
+}
+
 export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   const { 
     ttl = 1000 * 60 * 5, // 5-minute default cache lifespan

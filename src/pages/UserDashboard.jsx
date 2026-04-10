@@ -4,10 +4,13 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import AuthNotification from "../components/auth/AuthNotification"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import useAuthSession from "../hooks/useAuthSession"
-import useCachedFetch, { primeCachedFetchStore } from "../hooks/useCachedFetch"
+import useCachedFetch, {
+  primeCachedFetchStore,
+  readCachedFetchStore,
+} from "../hooks/useCachedFetch"
 import useMyShop from "../hooks/useMyShop" // <-- Import our new logic file
 import { signOutUser } from "../lib/auth"
-import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import { buildShopDetailCacheKey, fetchShopDetailData } from "../lib/shopDetailData"
 import { supabase } from "../lib/supabase"
 import { UPLOAD_RULES, formatBytes } from "../lib/uploadRules"
@@ -688,6 +691,10 @@ function UserDashboard() {
 
     const shopName =
       localData.shops?.find((shop) => String(shop.id) === String(shopId))?.name || "shop"
+    const cacheKey = buildShopDetailCacheKey(shopId, user?.id || null)
+    const cachedEntry = readCachedFetchStore(cacheKey)
+    const hasFreshCache =
+      cachedEntry && Date.now() - cachedEntry.timestamp <= 1000 * 60 * 5
 
     setShopTransition({
       pending: true,
@@ -697,6 +704,14 @@ function UserDashboard() {
     })
 
     try {
+      if (hasFreshCache) {
+        await loadShopDetailPage()
+        navigate(`/shop-detail?id=${shopId}`, {
+          state: { fromMarketTransition: true },
+        })
+        return
+      }
+
       const transitionResult = await new Promise((resolve, reject) => {
         const timeoutId = window.setTimeout(() => {
           reject(new Error("Timed out while opening the shop."))
@@ -730,14 +745,18 @@ function UserDashboard() {
       })
     } catch (error) {
       console.error("Failed to open shop detail", error)
+      const safeMessage = isNetworkError(error)
+        ? "We could not open this shop right now. Please try again."
+        : getFriendlyErrorMessage(
+            error,
+            "We could not open this shop right now. Please try again."
+          )
+
       setShopTransition({
         pending: false,
         shopId,
         shopName,
-        error: getFriendlyErrorMessage(
-          error,
-          "We could not open this shop right now. Please try again."
-        ),
+        error: safeMessage,
       })
     }
   }
