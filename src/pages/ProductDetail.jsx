@@ -57,6 +57,20 @@ function ProductDetailShimmer() {
   )
 }
 
+function shouldUseDirectAppHandoff() {
+  if (typeof window === "undefined") return false
+
+  if (typeof navigator !== "undefined") {
+    const isTouchDevice =
+      navigator.maxTouchPoints > 0 ||
+      /android|iphone|ipad|ipod/i.test(navigator.userAgent || "")
+
+    if (isTouchDevice) return true
+  }
+
+  return Boolean(window.matchMedia?.("(pointer: coarse)").matches)
+}
+
 function ProductDetail() {
   const navigate = useNavigate()
   const { notify } = useGlobalFeedback()
@@ -354,8 +368,6 @@ function ProductDetail() {
   }
 
   async function launchWhatsApp() {
-    hideSecurityModal()
-
     if (!currentShop?.whatsapp || !currentProduct) return
 
     let phone = currentShop.whatsapp.replace(/\D/g, "")
@@ -366,19 +378,28 @@ function ProductDetail() {
       price || 0
     ).toLocaleString()})`
 
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer")
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
 
     if (currentShop?.id) {
-      try {
-        await supabase.from("whatsapp_clicks").insert({
+      void supabase
+        .from("whatsapp_clicks")
+        .insert({
           shop_id: currentShop.id,
           clicker_id: user ? user.id : null,
           product_id: parseInt(productId, 10),
         })
-      } catch (error) {
-        console.error("Failed to record WhatsApp click", error)
-      }
+        .catch((error) => {
+          console.error("Failed to record WhatsApp click", error)
+        })
     }
+
+    if (shouldUseDirectAppHandoff()) {
+      window.location.assign(whatsappUrl)
+      return
+    }
+
+    hideSecurityModal()
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer")
   }
 
   async function shareProductWithImage() {

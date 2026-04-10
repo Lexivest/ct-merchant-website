@@ -94,6 +94,20 @@ function ShopSectionFallback({ title, body }) {
   )
 }
 
+function shouldUseDirectAppHandoff() {
+  if (typeof window === "undefined") return false
+
+  if (typeof navigator !== "undefined") {
+    const isTouchDevice =
+      navigator.maxTouchPoints > 0 ||
+      /android|iphone|ipad|ipod/i.test(navigator.userAgent || "")
+
+    if (isTouchDevice) return true
+  }
+
+  return Boolean(window.matchMedia?.("(pointer: coarse)").matches)
+}
+
 function ShopDetail() {
   const navigate = useNavigate()
   const { notify } = useGlobalFeedback()
@@ -447,22 +461,28 @@ function ShopDetail() {
   }
 
   async function launchWhatsApp() {
-    setSecurityModalOpen(false)
     if (!currentShop?.whatsapp) return
 
     let phone = currentShop.whatsapp.replace(/\D/g, "")
     if (phone.startsWith("0")) phone = `234${phone.slice(1)}`
 
     const text = `Hello ${currentShop.name}, I found your shop on CTMerchant.`
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer")
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
 
     if (user?.id) {
-      await supabase
+      void supabase
         .from("whatsapp_clicks")
         .insert({ clicker_id: user.id, shop_id: shopId })
-        .then(() => {})
         .catch(() => {})
     }
+
+    if (shouldUseDirectAppHandoff()) {
+      window.location.assign(whatsappUrl)
+      return
+    }
+
+    setSecurityModalOpen(false)
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer")
   }
 
   function formatPrice(value) {
