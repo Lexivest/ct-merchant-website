@@ -19,9 +19,6 @@ import {
   FaXTwitter,
   FaTiktok,
 } from "react-icons/fa6"
-import {
-  FaWhatsapp,
-} from "react-icons/fa"
 import "leaflet/dist/leaflet.css"
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
@@ -39,11 +36,6 @@ import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import { prepareDashboardTransition } from "../lib/dashboardData"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
-import {
-  normalizeWhatsAppPhone,
-  openWhatsAppConversation,
-  shouldUseDirectWhatsAppHandoff,
-} from "../lib/whatsapp"
 import { buildShopDetailCacheKey, fetchShopDetailData } from "../lib/shopDetailData"
 import {
   buildProductDetailCacheKey,
@@ -112,8 +104,6 @@ function ShopDetail() {
   // 4. Local Optimistic State
   const [hasLiked, setHasLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(0)
-  const [securityModalOpen, setSecurityModalOpen] = useState(false)
-  const [openingWhatsApp, setOpeningWhatsApp] = useState(false)
   const [activeInfoSection, setActiveInfoSection] = useState(null)
   const [shouldLoadCommunity, setShouldLoadCommunity] = useState(false)
   const [productTransition, setProductTransition] = useState({
@@ -143,24 +133,6 @@ function ShopDetail() {
   const products = data?.products ?? EMPTY_PRODUCTS
   const approvedNews = data?.approvedNews ?? EMPTY_NEWS
   const shopBanner = data?.shopBanner || ""
-
-  useEffect(() => {
-    if (!securityModalOpen || typeof document === "undefined") return undefined
-
-    const resetLaunchState = () => {
-      if (document.visibilityState === "visible") {
-        setOpeningWhatsApp(false)
-      }
-    }
-
-    document.addEventListener("visibilitychange", resetLaunchState)
-    window.addEventListener("pageshow", resetLaunchState)
-
-    return () => {
-      document.removeEventListener("visibilitychange", resetLaunchState)
-      window.removeEventListener("pageshow", resetLaunchState)
-    }
-  }, [securityModalOpen])
 
   useEffect(() => {
     setShouldLoadCommunity(false)
@@ -418,44 +390,6 @@ function ShopDetail() {
     window.open(formattedUrl, "_blank", "noopener,noreferrer")
   }
 
-  function launchWhatsApp() {
-    if (!currentShop?.whatsapp) return
-
-    const phone = normalizeWhatsAppPhone(currentShop.whatsapp)
-    if (!phone) {
-      notify({ type: "error", title: "Invalid WhatsApp number", message: "This merchant's WhatsApp number is not valid yet." })
-      return
-    }
-
-    const text = `Hello ${currentShop.name}, I found your shop on CTMerchant.`
-    const isDirectHandoff = shouldUseDirectWhatsAppHandoff()
-    setOpeningWhatsApp(true)
-    const didLaunch = openWhatsAppConversation(phone, text)
-    if (!didLaunch) {
-      setOpeningWhatsApp(false)
-      notify({ type: "error", title: "WhatsApp did not open", message: "Please try again in a moment." })
-      return
-    }
-
-    if (user?.id) {
-      void (async () => {
-        const { error } = await supabase.from("whatsapp_clicks").insert({
-          clicker_id: user.id,
-          shop_id: shopId,
-        })
-
-        if (error) {
-          console.error("Failed to record WhatsApp click", error)
-        }
-      })()
-    }
-
-    if (!isDirectHandoff) {
-      setSecurityModalOpen(false)
-      setOpeningWhatsApp(false)
-    }
-  }
-
   function formatPrice(value) {
     if (value === null || value === undefined || value === "") return ""
     return `₦${Number(value).toLocaleString()}`
@@ -672,11 +606,6 @@ function ShopDetail() {
                 <a href={`tel:${currentShop.phone}`} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#3B82F6] text-white transition hover:opacity-90">
                   <FaPhone className="text-lg" />
                 </a>
-              )}
-              {currentShop?.whatsapp && (
-                <button type="button" onClick={() => setSecurityModalOpen(true)} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#22C55E] text-white transition hover:opacity-90">
-                  <FaWhatsapp className="text-xl" />
-                </button>
               )}
               {currentShop?.website_url && (
                 <button type="button" onClick={() => openExternalUrl(currentShop.website_url)} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#4F46E5] text-white transition hover:opacity-90">
@@ -983,41 +912,6 @@ function ShopDetail() {
           />
         )}
       </div>
-      {securityModalOpen ? (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[rgba(19,25,33,0.8)] px-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-[360px] rounded-[18px] bg-white px-6 py-7 text-center shadow-[0_10px_25px_rgba(0,0,0,0.2)]">
-            <FaWhatsapp className="mx-auto mb-4 text-5xl text-[#25D366]" />
-            <h3 className="mb-2 text-xl font-extrabold text-[#0F1111]">
-              Contact Merchant
-            </h3>
-            <p className="text-[0.85rem] leading-6 text-slate-600">
-              To protect merchants from spam, your User ID will be recorded.
-              Please ensure this inquiry is business-related.
-            </p>
-
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setSecurityModalOpen(false)
-                  setOpeningWhatsApp(false)
-                }}
-                className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-bold text-[#0F1111] transition hover:bg-[#F7FAFA]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={launchWhatsApp}
-                disabled={openingWhatsApp}
-                className="flex-1 rounded-xl bg-[#25D366] px-4 py-3 font-bold text-white transition hover:bg-green-600 disabled:cursor-wait disabled:opacity-70"
-              >
-                {openingWhatsApp ? "Opening WhatsApp..." : "Continue to Chat"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
     </>
   )

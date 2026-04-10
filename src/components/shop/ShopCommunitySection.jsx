@@ -8,6 +8,60 @@ import { ShimmerBlock } from "../common/Shimmers"
 import { useGlobalFeedback } from "../common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 
+const COMMUNITY_CACHE_PREFIX = "ctm_shop_community:"
+const COMMUNITY_CACHE_TTL = 1000 * 60 * 10
+
+function getCommunityCacheKey(shopId) {
+  return `${COMMUNITY_CACHE_PREFIX}${shopId}`
+}
+
+function readCommunityCache(shopId, options = {}) {
+  const { includeExpired = false } = options
+
+  if (
+    !shopId ||
+    typeof window === "undefined" ||
+    typeof window.sessionStorage === "undefined"
+  ) {
+    return null
+  }
+
+  try {
+    const rawValue = window.sessionStorage.getItem(getCommunityCacheKey(shopId))
+    if (!rawValue) return null
+
+    const parsed = JSON.parse(rawValue)
+    if (!parsed || typeof parsed.timestamp !== "number") return null
+    if (!includeExpired && Date.now() - parsed.timestamp > COMMUNITY_CACHE_TTL) return null
+
+    return parsed.data || null
+  } catch {
+    return null
+  }
+}
+
+function writeCommunityCache(shopId, data) {
+  if (
+    !shopId ||
+    typeof window === "undefined" ||
+    typeof window.sessionStorage === "undefined"
+  ) {
+    return
+  }
+
+  try {
+    window.sessionStorage.setItem(
+      getCommunityCacheKey(shopId),
+      JSON.stringify({
+        data,
+        timestamp: Date.now(),
+      })
+    )
+  } catch {
+    // Cache is only a UX enhancement, so quota/privacy failures are safe to ignore.
+  }
+}
+
 function formatCommentTimestamp(value) {
   if (!value) return "Just now"
   const date = new Date(value)
@@ -100,6 +154,7 @@ export default function ShopCommunitySection({
   const [submittingComment, setSubmittingComment] = useState(false)
   const [replyBody, setReplyBody] = useState("")
   const [expandedThreadId, setExpandedThreadId] = useState(null)
+  const hasComments = comments.length > 0
 
   const commentThreads = useMemo(() => buildCommentThreads(comments), [comments])
   const approvedCommentCount = useMemo(
@@ -121,15 +176,52 @@ export default function ShopCommunitySection({
     setSelectedProductId(String(preselectedProductId))
   }, [preselectedProductId, products])
 
-  const fetchComments = useCallback(async () => {
+  const applyCommunityPayload = useCallback((payload) => {
+    setComments(Array.isArray(payload?.comments) ? payload.comments : [])
+    setAuthorProfiles(payload?.authorProfiles || {})
+    setCommentProducts(payload?.commentProducts || {})
+  }, [])
+
+  useEffect(() => {
+    if (!shopId) return
+
+    const cachedPayload = readCommunityCache(shopId, {
+      includeExpired: typeof navigator !== "undefined" && !navigator.onLine,
+    })
+    if (!cachedPayload) return
+
+    applyCommunityPayload(cachedPayload)
+    setCommentsError("")
+    setCommentsLoading(false)
+  }, [applyCommunityPayload, shopId])
+
+  const fetchComments = useCallback(async ({ showLoader = false } = {}) => {
     if (!shopId) {
       setComments([])
       setCommentsLoading(false)
       return
     }
 
+    const isOffline = typeof navigator !== "undefined" && !navigator.onLine
+    const cachedPayload = readCommunityCache(shopId, {
+      includeExpired: isOffline,
+    })
+
+    if (isOffline) {
+      if (cachedPayload) {
+        applyCommunityPayload(cachedPayload)
+        setCommentsError("")
+      } else {
+        setCommentsError("Community discussion is unavailable while offline. It will retry when your connection returns.")
+      }
+      setCommentsLoading(false)
+      return
+    }
+
     try {
-      setCommentsLoading(true)
+      if (showLoader || !cachedPayload) {
+        setCommentsLoading(true)
+      }
       setCommentsError("")
 
       const { data: commentRows, error: commentError } = await supabase
@@ -143,7 +235,6 @@ export default function ShopCommunitySection({
       if (commentError) throw commentError
 
       const safeComments = commentRows || []
-      setComments(safeComments)
 
       const userIds = [...new Set(safeComments.map((comment) => comment.user_id).filter(Boolean))]
       const productIds = [
@@ -152,41 +243,60 @@ export default function ShopCommunitySection({
 
       const [profileResult, productResult] = await Promise.allSettled([
         userIds.length > 0
-          ? supabase.from("profiles").select("id, full_name, avatar_url").in("id", userIds)
+          ? supabase.rpc("get_public_profiles", { profile_ids: userIds })
           : Promise.resolve({ data: [] }),
         productIds.length > 0
           ? supabase.from("products").select("id, name, image_url").in("id", productIds)
           : Promise.resolve({ data: [] }),
       ])
 
-      if (profileResult.status === "fulfilled" && !profileResult.value.error) {
-        setAuthorProfiles(
-          Object.fromEntries((profileResult.value.data || []).map((profile) => [profile.id, profile]))
-        )
-      } else {
-        setAuthorProfiles({})
+      const nextAuthorProfiles =
+        profileResult.status === "fulfilled" && !profileResult.value.error
+          ? Object.fromEntries((profileResult.value.data || []).map((profile) => [profile.id, profile]))
+          : cachedPayload?.authorProfiles || {}
+
+      const nextCommentProducts =
+        productResult.status === "fulfilled" && !productResult.value.error
+          ? Object.fromEntries(
+              (productResult.value.data || []).map((product) => [String(product.id), product])
+            )
+          : cachedPayload?.commentProducts || {}
+
+      const nextPayload = {
+        comments: safeComments,
+        authorProfiles: nextAuthorProfiles,
+        commentProducts: nextCommentProducts,
       }
 
-      if (productResult.status === "fulfilled" && !productResult.value.error) {
-        setCommentProducts(
-          Object.fromEntries(
-            (productResult.value.data || []).map((product) => [String(product.id), product])
-          )
-        )
-      } else {
-        setCommentProducts({})
-      }
+      applyCommunityPayload(nextPayload)
+      writeCommunityCache(shopId, nextPayload)
     } catch (err) {
       console.error("Error fetching community comments:", err)
-      setCommentsError("Could not load the community discussion right now.")
+      if (cachedPayload) {
+        applyCommunityPayload(cachedPayload)
+        setCommentsError("")
+      } else {
+        setCommentsError("Community discussion could not be loaded right now. It will retry automatically when your connection returns.")
+      }
     } finally {
       setCommentsLoading(false)
     }
-  }, [shopId])
+  }, [applyCommunityPayload, shopId])
 
   useEffect(() => {
-    fetchComments()
+    fetchComments({ showLoader: true })
   }, [fetchComments])
+
+  useEffect(() => {
+    function handleOnline() {
+      void fetchComments({ showLoader: !hasComments })
+    }
+
+    window.addEventListener("online", handleOnline)
+    return () => {
+      window.removeEventListener("online", handleOnline)
+    }
+  }, [fetchComments, hasComments])
 
   useEffect(() => {
     if (!shopId) return undefined
