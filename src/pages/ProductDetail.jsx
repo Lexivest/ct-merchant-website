@@ -66,7 +66,7 @@ function ProductDetail() {
   const { data, loading: dataLoading, error } = useCachedFetch(
     cacheKey,
     fetchProductData,
-    { dependencies: [productId, user?.id], ttl: 1000 * 60 * 5 }
+    { dependencies: [productId, user?.id], ttl: 1000 * 60 * 5, persist: "session" }
   )
 
   // 4. Local Optimistic States

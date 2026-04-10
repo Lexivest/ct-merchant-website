@@ -1,5 +1,5 @@
 import { Suspense, lazy, startTransition, useEffect, useMemo, useRef, useState } from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 
 import AuthNotification from "../components/auth/AuthNotification"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
@@ -10,6 +10,7 @@ import useCachedFetch, {
 } from "../hooks/useCachedFetch"
 import useMyShop from "../hooks/useMyShop" // <-- Import our new logic file
 import { signOutUser } from "../lib/auth"
+import { buildDashboardCacheKey, fetchDashboardData } from "../lib/dashboardData"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import { buildShopDetailCacheKey, fetchShopDetailData } from "../lib/shopDetailData"
 import { supabase } from "../lib/supabase"
@@ -78,22 +79,6 @@ const ALLOWED_SERVICE_VIEWS = new Set([
   "report-abuse",
   "wishlist",
 ])
-
-function unwrapSupabaseResult(result) {
-  if (result?.error) {
-    throw result.error
-  }
-
-  return result?.data ?? null
-}
-
-function unwrapSupabaseCount(result) {
-  if (result?.error) {
-    throw result.error
-  }
-
-  return result?.count ?? 0
-}
 
 function DashboardShimmer({ label = "Loading dashboard..." }) {
   return (
@@ -168,119 +153,31 @@ function DashboardSectionFallback({ label = "Loading section..." }) {
 
 function UserDashboard() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
+  const prefetchedDashboardData = location.state?.prefetchedDashboardData || null
 
   const { loading: authLoading, user, profile, suspended } = useAuthSession()
   
   // Use our new isolated tracking logic for the shop card
   const { shopData, shopMeta, canRegisterShop, loading: shopLoading } = useMyShop()
 
-  const fetchDashboardData = async () => {
-    if (!user?.id) throw new Error("Authentication required")
-
-    let currentProfile = profile
-    if (!currentProfile?.city_id) {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*, cities(name)")
-        .eq("id", user.id)
-        .single()
-      if (error) throw error
-      currentProfile = data
-    }
-
-    if (!currentProfile?.city_id) throw new Error("Profile not completed")
-    if (currentProfile.is_suspended) throw new Error("Account restricted")
-
-    const cityId = currentProfile.city_id
-
-    const [
-      promosRes,
-      announcementsRes,
-      categoriesRes,
-      areasRes,
-      shopsRes,
-      notificationsRes,
-      wishlistRes,
-    ] = await Promise.all([
-      supabase.from("promo_banners").select("*").order("created_at", { ascending: false }),
-      supabase.from("announcements").select("*").order("created_at", { ascending: false }),
-      supabase.from("categories").select("*").order("name"),
-      supabase.from("areas").select("*").eq("city_id", cityId).order("name"),
-      supabase.from("shops").select("*").eq("city_id", cityId).order("is_featured", { ascending: false }).order("is_verified", { ascending: false }).limit(200),
-      supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
-      supabase.from("wishlist").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-    ])
-
-    const promos = unwrapSupabaseResult(
-      promosRes,
-      "Promotions could not be loaded right now."
-    ) || []
-    const announcements = unwrapSupabaseResult(
-      announcementsRes,
-      "Announcements could not be loaded right now."
-    ) || []
-    const categories = unwrapSupabaseResult(
-      categoriesRes,
-      "Categories could not be loaded right now."
-    ) || []
-    const areas = unwrapSupabaseResult(
-      areasRes,
-      "Areas could not be loaded right now."
-    ) || []
-    const shops = unwrapSupabaseResult(
-      shopsRes,
-      "Marketplace shops could not be loaded right now."
-    ) || []
-    const notifications = unwrapSupabaseResult(
-      notificationsRes,
-      "Notifications could not be loaded right now."
-    ) || []
-    const wishlistCount = unwrapSupabaseCount(
-      wishlistRes,
-      "Wishlist status could not be loaded right now."
-    )
-
-    let products = []
-    const shopIds = shops.map((shop) => shop.id)
-
-    if (shopIds.length > 0) {
-      const productsRes = await supabase
-        .from("products")
-        .select("*")
-        .in("shop_id", shopIds)
-        .eq("is_available", true)
-        .limit(400)
-        .order("id", { ascending: true })
-
-      products = unwrapSupabaseResult(
-        productsRes,
-        "Products could not be loaded right now."
-      ) || []
-    }
-
-    return {
-      profile: currentProfile,
-      promos,
-      announcements,
-      categories,
-      areas,
-      shops,
-      products,
-      notifications,
-      wishlistCount,
-      unread: notifications.filter((item) => !item.is_read).length,
-    }
-  }
-
-  const dashboardCacheKey = `dashboard_cache_${user?.id || "guest"}_${profile?.city_id || "none"}`
+  const dashboardCacheKey = buildDashboardCacheKey(user?.id || "guest", profile?.city_id || "none")
   const { data: fetchedData, loading: dataLoading, error: dataError } = useCachedFetch(
     dashboardCacheKey,
-    fetchDashboardData,
-    { dependencies: [user?.id, profile?.city_id], ttl: 1000 * 60 * 15 }
+    () =>
+      fetchDashboardData({
+        userId: user?.id || null,
+        profile,
+      }),
+    {
+      dependencies: [user?.id, profile?.city_id],
+      ttl: 1000 * 60 * 15,
+      persist: "session",
+    }
   )
 
-  const [localData, setLocalData] = useState(EMPTY_DASHBOARD_DATA)
+  const [localData, setLocalData] = useState(prefetchedDashboardData || EMPTY_DASHBOARD_DATA)
   const retryRouteTransitionRef = useRef(null)
   const [routeTransition, setRouteTransition] = useState({
     pending: false,
@@ -293,6 +190,12 @@ function UserDashboard() {
       setLocalData(fetchedData)
     }
   }, [fetchedData])
+
+  useEffect(() => {
+    if (prefetchedDashboardData) {
+      setLocalData(prefetchedDashboardData)
+    }
+  }, [prefetchedDashboardData])
 
   const tabParam = searchParams.get("tab")
   const activeTab = ALLOWED_TABS.has(tabParam) ? tabParam : "market"
@@ -1568,12 +1471,16 @@ function UserDashboard() {
     }
   }
 
-  if (authLoading || (dataLoading && !fetchedData)) {
+  if (authLoading || (dataLoading && !fetchedData && !localData?.profile)) {
     return <DashboardShimmer label="Loading marketplace..." />
   }
 
   return (
-    <div className="bg-[#E3E6E6] text-[#0F1111]">
+    <div
+      className={`bg-[#E3E6E6] text-[#0F1111] ${
+        location.state?.fromDetailTransition ? "ctm-page-enter" : ""
+      }`}
+    >
       <PageTransitionOverlay
         visible={routeTransition.pending}
         error={routeTransition.error}

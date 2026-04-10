@@ -5,8 +5,86 @@ import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 const globalCache = new Map()
 const activeFetchers = new Map()
 const MAX_CACHE_SIZE = 150 // Prevent memory leaks for heavy browsing sessions
+const SESSION_CACHE_PREFIX = "ctm_cached_fetch:"
 let globalListenersAttached = false
 let globalRefreshTimerId = null
+
+function getSessionCacheKey(queryKey) {
+  return `${SESSION_CACHE_PREFIX}${queryKey}`
+}
+
+function readSessionCacheEntry(queryKey) {
+  if (
+    typeof window === "undefined" ||
+    typeof window.sessionStorage === "undefined" ||
+    !queryKey
+  ) {
+    return null
+  }
+
+  try {
+    const rawValue = window.sessionStorage.getItem(getSessionCacheKey(queryKey))
+    if (!rawValue) return null
+
+    const parsed = JSON.parse(rawValue)
+    if (!parsed || typeof parsed.timestamp !== "number") {
+      window.sessionStorage.removeItem(getSessionCacheKey(queryKey))
+      return null
+    }
+
+    return parsed
+  } catch {
+    window.sessionStorage.removeItem(getSessionCacheKey(queryKey))
+    return null
+  }
+}
+
+function writeSessionCacheEntry(queryKey, entry) {
+  if (
+    typeof window === "undefined" ||
+    typeof window.sessionStorage === "undefined" ||
+    !queryKey ||
+    !entry
+  ) {
+    return
+  }
+
+  try {
+    window.sessionStorage.setItem(getSessionCacheKey(queryKey), JSON.stringify(entry))
+  } catch {
+    // Ignore storage quota failures and keep using in-memory cache.
+  }
+}
+
+function removeSessionCacheEntry(queryKey) {
+  if (
+    typeof window === "undefined" ||
+    typeof window.sessionStorage === "undefined" ||
+    !queryKey
+  ) {
+    return
+  }
+
+  window.sessionStorage.removeItem(getSessionCacheKey(queryKey))
+}
+
+function getCacheEntry(queryKey) {
+  if (!queryKey) return null
+
+  const inMemoryEntry = globalCache.get(queryKey)
+  if (inMemoryEntry) return inMemoryEntry
+
+  const persistedEntry = readSessionCacheEntry(queryKey)
+  if (!persistedEntry) return null
+
+  if (globalCache.size >= MAX_CACHE_SIZE && !globalCache.has(queryKey)) {
+    const firstKey = globalCache.keys().next().value
+    globalCache.delete(firstKey)
+  }
+
+  globalCache.set(queryKey, persistedEntry)
+  return persistedEntry
+}
 
 function refreshAllActiveFetches() {
   for (const fetcher of activeFetchers.values()) {
@@ -54,6 +132,15 @@ function ensureGlobalFetchListeners() {
 export function clearCachedFetchStore(predicate) {
   if (typeof predicate !== "function") {
     globalCache.clear()
+
+    if (typeof window !== "undefined" && typeof window.sessionStorage !== "undefined") {
+      Object.keys(window.sessionStorage).forEach((key) => {
+        if (key.startsWith(SESSION_CACHE_PREFIX)) {
+          window.sessionStorage.removeItem(key)
+        }
+      })
+    }
+
     return
   }
 
@@ -62,33 +149,53 @@ export function clearCachedFetchStore(predicate) {
       globalCache.delete(key)
     }
   }
+
+  if (typeof window !== "undefined" && typeof window.sessionStorage !== "undefined") {
+    Object.keys(window.sessionStorage).forEach((storageKey) => {
+      if (!storageKey.startsWith(SESSION_CACHE_PREFIX)) return
+
+      const cacheKey = storageKey.slice(SESSION_CACHE_PREFIX.length)
+      if (predicate(cacheKey)) {
+        window.sessionStorage.removeItem(storageKey)
+      }
+    })
+  }
 }
 
-export function primeCachedFetchStore(queryKey, data, timestamp = Date.now()) {
+export function primeCachedFetchStore(queryKey, data, timestamp = Date.now(), options = {}) {
   if (!queryKey) return
+
+  const persistMode =
+    options === true ? "session" : options?.persist || null
 
   if (globalCache.size >= MAX_CACHE_SIZE && !globalCache.has(queryKey)) {
     const firstKey = globalCache.keys().next().value
     globalCache.delete(firstKey)
   }
 
-  globalCache.set(queryKey, { data, timestamp })
+  const entry = { data, timestamp }
+  globalCache.set(queryKey, entry)
+
+  if (persistMode === "session") {
+    writeSessionCacheEntry(queryKey, entry)
+  }
 }
 
 export function readCachedFetchStore(queryKey) {
-  if (!queryKey) return null
-  return globalCache.get(queryKey) || null
+  return getCacheEntry(queryKey)
 }
 
 export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   const { 
     ttl = 1000 * 60 * 5, // 5-minute default cache lifespan
-    dependencies = [] 
+    dependencies = [],
+    persist = null,
   } = options
 
   const [, setTick] = useState(0) // Used purely to force a re-render
   const isOfflineRef = useRef(typeof navigator !== "undefined" ? !navigator.onLine : false)
   const errorRef = useRef(null)
+  const persistMode = persist === true ? "session" : persist
 
   useEffect(() => {
     ensureGlobalFetchListeners()
@@ -97,7 +204,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   // 1. SYNCHRONOUS CACHE READ
   // By reading the map directly during render, we never suffer from stale useState data
   // when the queryKey changes (like when user.id resolves).
-  const cachedEntry = globalCache.get(queryKey)
+  const cachedEntry = getCacheEntry(queryKey)
   const data = cachedEntry ? cachedEntry.data : null
   
   // We are loading if we have no data and no hard error yet
@@ -106,11 +213,13 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   useEffect(() => {
     let isMounted = true
 
-    const fetchData = async ({ force = false } = {}) => {
+    const fetchData = async () => {
+      const currentCachedEntry = getCacheEntry(queryKey)
+
       // Offline Check
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         isOfflineRef.current = true
-        if (globalCache.has(queryKey)) {
+        if (currentCachedEntry) {
           errorRef.current = null
           if (isMounted) setTick(t => t + 1)
           return
@@ -123,37 +232,34 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       isOfflineRef.current = false
       errorRef.current = null
       
-      if (force || !globalCache.has(queryKey)) {
-         if (isMounted) setTick(t => t + 1) // Force render to show loading shimmer
+      if (!currentCachedEntry) {
+         if (isMounted) setTick(t => t + 1)
       }
 
       try {
         const result = await fetchPromise()
         if (isMounted) {
-          if (globalCache.size >= MAX_CACHE_SIZE) {
-            // LRU cleanup: Delete the oldest cache entry (first item in the Map)
-            const firstKey = globalCache.keys().next().value
-            globalCache.delete(firstKey)
-          }
-
-          globalCache.set(queryKey, { data: result, timestamp: Date.now() })
+          primeCachedFetchStore(queryKey, result, Date.now(), { persist: persistMode })
           errorRef.current = null
           setTick(t => t + 1) // Force render to show new data
         }
       } catch (err) {
         if (isMounted) {
-          if (globalCache.has(queryKey)) {
+          if (getCacheEntry(queryKey)) {
             console.warn(`Background fetch failed for ${queryKey}, falling back to cache.`)
             errorRef.current = null
           } else {
             errorRef.current = getFriendlyErrorMessage(err, "Something went wrong. Please try again.")
+            if (persistMode === "session") {
+              removeSessionCacheEntry(queryKey)
+            }
           }
           setTick(t => t + 1)
         }
       }
     }
 
-    const cached = globalCache.get(queryKey)
+    const cached = getCacheEntry(queryKey)
     const isExpired = cached && (Date.now() - cached.timestamp > ttl)
 
     if (!cached || isExpired) {

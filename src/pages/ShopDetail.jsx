@@ -37,6 +37,7 @@ import RetryingNotice, { getRetryingMessage } from "../components/common/Retryin
 import ScrollingTicker from "../components/common/ScrollingTicker"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
+import { prepareDashboardTransition } from "../lib/dashboardData"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import {
   normalizeWhatsAppPhone,
@@ -91,7 +92,7 @@ function ShopDetail() {
   usePreventPullToRefresh()
 
   // 1. Unified Auth State
-  const { user, loading: authLoading } = useAuthSession()
+  const { user, profile, loading: authLoading } = useAuthSession()
 
   // 2. Data Fetching Logic
   const fetchShopData = async () =>
@@ -105,7 +106,7 @@ function ShopDetail() {
   const { data, loading: dataLoading, error, mutate } = useCachedFetch(
     cacheKey,
     fetchShopData,
-    { dependencies: [shopId, user?.id], ttl: 1000 * 60 * 5 }
+    { dependencies: [shopId, user?.id], ttl: 1000 * 60 * 5, persist: "session" }
   )
 
   // 4. Local Optimistic State
@@ -118,6 +119,10 @@ function ShopDetail() {
   const [productTransition, setProductTransition] = useState({
     pending: false,
     productId: "",
+    error: "",
+  })
+  const [dashboardTransition, setDashboardTransition] = useState({
+    pending: false,
     error: "",
   })
 
@@ -321,7 +326,41 @@ function ShopDetail() {
     navigate("/user-dashboard")
   }
 
-  async function toggleLike() {
+  async function openDashboardWithTransition() {
+    if (!user?.id) {
+      navigate("/user-dashboard")
+      return
+    }
+
+    setDashboardTransition({
+      pending: true,
+      error: "",
+    })
+
+    try {
+      const prefetchedDashboardData = await prepareDashboardTransition({
+        userId: user.id,
+        profile,
+      })
+
+      navigate("/user-dashboard", {
+        state: {
+          fromDetailTransition: true,
+          prefetchedDashboardData,
+        },
+      })
+    } catch (transitionError) {
+      setDashboardTransition({
+        pending: false,
+        error: getFriendlyErrorMessage(
+          transitionError,
+          "The dashboard could not be opened right now."
+        ),
+      })
+    }
+  }
+
+  async function _toggleLike() {
     if (!user?.id) {
       notify({ type: "info", title: "Login required", message: "Please sign in to like shops." })
       return
@@ -718,7 +757,6 @@ function ShopDetail() {
   const ownerAvatarInitials = getNameInitials(
     data?.ownerProfile?.full_name || currentShop?.name || "CT Merchant"
   )
-  const isVerified = Boolean(currentShop?.is_verified)
   const isLoggedIn = Boolean(user?.id)
 
   return (
@@ -735,12 +773,27 @@ function ShopDetail() {
           }))
         }
       />
+      <PageTransitionOverlay
+        visible={dashboardTransition.pending}
+        error={dashboardTransition.error}
+        onRetry={openDashboardWithTransition}
+        onDismiss={() =>
+          setDashboardTransition({
+            pending: false,
+            error: "",
+          })
+        }
+      />
       <div
         className={`min-h-screen bg-[#E3E6E6] pb-10 ${
           location.state?.fromMarketTransition || location.state?.fromDiscoveryTransition
             ? "ctm-page-enter"
             : ""
-        } ${productTransition.pending ? "pointer-events-none select-none" : ""}`}
+        } ${
+          productTransition.pending || dashboardTransition.pending
+            ? "pointer-events-none select-none"
+            : ""
+        }`}
       >
       <PageSeo
         title={currentShop?.name ? `${currentShop.name} | CTMerchant Shop` : "Shop Details | CTMerchant"}
@@ -757,7 +810,7 @@ function ShopDetail() {
             <div className="flex items-center justify-start">
               <button
                 type="button"
-                onClick={goBackSafe}
+                onClick={openDashboardWithTransition}
                 className="shrink-0 text-[1.2rem] transition hover:text-pink-500"
                 aria-label="Go home"
               >
