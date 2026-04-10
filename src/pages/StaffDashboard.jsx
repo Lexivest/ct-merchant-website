@@ -5,6 +5,7 @@ import {
   FaCircleNotch,
   FaComments,
   FaEnvelope,
+  FaReceipt,
   FaStore,
   FaTriangleExclamation,
   FaUsers,
@@ -75,12 +76,13 @@ export default function StaffDashboard() {
     pendingComments: 0,
     inactiveUsers: 0,
     visitsToday: 0,
+    pendingPayments: 0,
   })
 
   const fetchSummary = useCallback(async () => {
     setLoading(true)
     try {
-      const [shopsResult, commentsResult, usersResult, visitsResult] = await Promise.all([
+      const [shopsResult, commentsResult, usersResult, visitsResult, paymentsResult] = await Promise.all([
         supabase.from("shops").select("id", { count: "exact", head: true }),
         supabase.from("shop_comments").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.rpc("staff_user_activity_summary", {
@@ -88,12 +90,14 @@ export default function StaffDashboard() {
           p_city_id: null,
         }),
         supabase.rpc("staff_site_visit_daily", { p_days: 7 }),
+        supabase.from("offline_payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pending"),
       ])
 
       if (shopsResult.error) throw shopsResult.error
       if (commentsResult.error) throw commentsResult.error
       if (usersResult.error) throw usersResult.error
       if (visitsResult.error) throw visitsResult.error
+      if (paymentsResult.error) throw paymentsResult.error
 
       const userRows = usersResult.data || []
       const visitTimeline = buildVisitTimeline(visitsResult.data || [], 7)
@@ -106,6 +110,7 @@ export default function StaffDashboard() {
           pendingComments: commentsResult.count || 0,
           inactiveUsers: userRows.filter((item) => item.is_inactive).length,
           visitsToday: Number(visitsToday) || 0,
+          pendingPayments: paymentsResult.count || 0,
         })
       }
     } catch (err) {
@@ -220,7 +225,7 @@ export default function StaffDashboard() {
             description="Each card opens a dedicated working page so the staff portal behaves like a proper internal product, not one long stacked screen."
           />
 
-          <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
             <HomeCard
               icon={<FaChartLine />}
               title="Traffic Intelligence"
@@ -252,6 +257,14 @@ export default function StaffDashboard() {
               metric={summary.shopCount}
               tone="purple"
               onClick={() => void openStaffRouteWithTransition("/staff-verifications")}
+            />
+            <HomeCard
+              icon={<FaReceipt />}
+              title="Offline Payments"
+              subtitle="Approve bank transfer receipts, activate subscriptions, and reject unclear proof with notes."
+              metric={summary.pendingPayments}
+              tone="blue"
+              onClick={() => void openStaffRouteWithTransition("/staff-payments")}
             />
           </div>
 

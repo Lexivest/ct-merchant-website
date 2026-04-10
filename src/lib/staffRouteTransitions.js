@@ -8,6 +8,7 @@ const staffRouteLoaders = {
   "/staff-users": () => import("../pages/staff/StaffUsers"),
   "/staff-community": () => import("../pages/staff/StaffCommunity"),
   "/staff-verifications": () => import("../pages/staff/StaffVerifications"),
+  "/staff-payments": () => import("../pages/staff/StaffPayments"),
   "/staff-inbox": () => import("../pages/staff/StaffInbox"),
   "/staff-studio": () => import("../pages/vendors/ImageOptimizer"),
 }
@@ -172,6 +173,21 @@ async function prepareStaffVerificationsData() {
   }
 }
 
+async function prepareStaffPaymentsData() {
+  const { data, error } = await supabase
+    .from("offline_payment_proofs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(100)
+
+  if (error) throw error
+
+  return {
+    kind: "staff-payments",
+    proofs: data || [],
+  }
+}
+
 async function prepareStaffInboxData() {
   const { data, error } = await supabase
     .from("contact_messages")
@@ -192,6 +208,7 @@ const staffPreparers = {
   "/staff-users": prepareStaffUsersData,
   "/staff-community": prepareStaffCommunityData,
   "/staff-verifications": prepareStaffVerificationsData,
+  "/staff-payments": prepareStaffPaymentsData,
   "/staff-inbox": prepareStaffInboxData,
 }
 

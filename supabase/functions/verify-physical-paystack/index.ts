@@ -8,7 +8,6 @@ const corsHeaders = {
 }
 
 const EXPECTED_FEE_NAIRA = 5000
-const PAYSTACK_VERIFY_BASE_URL = "https://api.paystack.co/transaction/verify"
 const ALLOWED_GATEWAYS = new Set(["promo", "paystack"])
 
 class HttpError extends Error {
@@ -79,15 +78,6 @@ function normalizeGateway(input: unknown) {
 
 function normalizePromoCode(input: string) {
   return input.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6)
-}
-
-function parseAmountToKobo(value: unknown) {
-  const asNumber = Number(value)
-  if (!Number.isFinite(asNumber)) return null
-  if (asNumber <= 0) return null
-
-  // Most providers return amount in kobo for NGN.
-  return Math.round(asNumber)
 }
 
 function safeErrorMessage(error: unknown) {
@@ -234,59 +224,10 @@ serve(async (req) => {
       verified = true
       finalAmount = 0
     } else if (gateway === "paystack") {
-      const devBypassEnabled =
-        Deno.env.get("ALLOW_DEV_TEST_BYPASS") === "true" && !isLikelyProduction()
-
-      if (devBypassEnabled && transactionId.startsWith("DEV-TEST")) {
-        verified = true
-      } else {
-        const paystackSecret = getEnvStrict("PAYSTACK_SECRET_KEY", "sk_test_dummy")
-        const paystackRes = await fetch(`${PAYSTACK_VERIFY_BASE_URL}/${encodeURIComponent(transactionId)}`, {
-          method: "GET",
-          headers: { Authorization: `Bearer ${paystackSecret}` },
-        })
-        console.log("[verify-payment] paystack response", {
-          transactionId,
-          status: paystackRes.status,
-          ok: paystackRes.ok,
-        })
-
-        if (!paystackRes.ok) {
-          throw new HttpError(502, `Paystack verify request failed (${paystackRes.status}).`)
-        }
-
-        const paystackData = await paystackRes.json()
-        const statusOk = paystackData?.status === true && paystackData?.data?.status === "success"
-        const amountKobo = parseAmountToKobo(paystackData?.data?.amount)
-        const currency = String(paystackData?.data?.currency || "").toUpperCase()
-        const customerEmail = String(paystackData?.data?.customer?.email || "").toLowerCase()
-        const reference = String(paystackData?.data?.reference || "")
-
-        const expectedKobo = EXPECTED_FEE_NAIRA * 100
-        const amountMatches = amountKobo === expectedKobo
-        const currencyMatches = currency === "NGN"
-        const emailMatches = !!user.email && customerEmail === user.email.toLowerCase()
-        const referenceMatches = reference === transactionId
-        console.log("[verify-payment] paystack checks", {
-          statusOk,
-          amountKobo,
-          expectedKobo,
-          amountMatches,
-          currency,
-          currencyMatches,
-          customerEmail,
-          expectedEmail: user.email?.toLowerCase?.() || null,
-          emailMatches,
-          reference,
-          transactionId,
-          referenceMatches,
-        })
-
-        if (!statusOk || !amountMatches || !currencyMatches || !emailMatches || !referenceMatches) {
-          throw new HttpError(400, "Paystack verification failed strict checks.")
-        }
-        verified = true
-      }
+      throw new HttpError(
+        410,
+        "Automated Paystack verification has been disabled. Please upload an offline payment receipt."
+      )
     }
 
     if (!verified) throw new HttpError(400, "Payment could not be verified.")

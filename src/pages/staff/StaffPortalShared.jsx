@@ -8,6 +8,7 @@ import {
   FaComments,
   FaEnvelope,
   FaGlobe,
+  FaReceipt,
   FaShieldHalved,
   FaStore,
   FaUsers,
@@ -369,6 +370,7 @@ export function StaffPortalShell({
     { key: "users", label: "Users", to: "/staff-users", icon: <FaUsers /> },
     { key: "community", label: "Community", to: "/staff-community", icon: <FaComments /> },
     { key: "verifications", label: "Verifications", to: "/staff-verifications", icon: <FaStore /> },
+    { key: "payments", label: "Payments", to: "/staff-payments", icon: <FaReceipt /> },
     { key: "inbox", label: "Inbox", to: "/staff-inbox", icon: <FaEnvelope /> },
     { key: "studio", label: "CT Studio", to: "/staff-studio", icon: <FaWandMagicSparkles /> },
   ]

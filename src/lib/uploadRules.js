@@ -47,6 +47,11 @@ export const UPLOAD_RULES = Object.freeze({
     maxBytes: 100 * KB,
     allowedMime: [],
   }),
+  paymentReceipts: Object.freeze({
+    bucket: "payment-receipts",
+    maxBytes: 5 * MB,
+    allowedMime: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+  }),
 })
 
 const MIME_LABELS = Object.freeze({
