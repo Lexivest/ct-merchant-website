@@ -39,7 +39,7 @@ import {
   getAcceptValue,
   getRuleLabel,
 } from "../lib/uploadRules"
-import { ShimmerBlock } from "../components/common/Shimmers"
+import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 
 const STOREFRONT_RULE = UPLOAD_RULES.storefronts
 const LOGO_RULE = UPLOAD_RULES.brandAssets
@@ -155,28 +155,10 @@ function buildCameraProfile(ratioInput) {
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function ShopRegistrationShimmer() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-pink-100 to-purple-100 px-4 py-6">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-6 flex items-center gap-4">
-          <ShimmerBlock className="h-12 w-12 rounded-2xl" />
-          <div>
-            <ShimmerBlock className="mb-2 h-8 w-48 rounded" />
-            <ShimmerBlock className="h-4 w-64 rounded" />
-          </div>
-        </div>
-        <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-2xl md:p-8">
-          <ShimmerBlock className="mb-6 h-6 w-48 rounded" />
-          <ShimmerBlock className="mb-8 h-[140px] w-full rounded-2xl" />
-          <ShimmerBlock className="mb-6 h-6 w-48 rounded" />
-          <ShimmerBlock className="mb-5 h-14 w-full rounded-2xl" />
-          <div className="mb-5 grid grid-cols-2 gap-5">
-            <ShimmerBlock className="h-14 w-full rounded-2xl" />
-            <ShimmerBlock className="h-14 w-full rounded-2xl" />
-          </div>
-          <ShimmerBlock className="mb-8 h-[150px] w-full rounded-2xl" />
-        </div>
-      </div>
-    </div>
+    <PageLoadingScreen
+      title="Opening shop registration"
+      message="Please wait while we prepare your registration form."
+    />
   )
 }
 

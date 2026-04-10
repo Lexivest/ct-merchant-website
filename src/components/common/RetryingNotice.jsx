@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { isNetworkError } from "../../lib/friendlyErrors"
 import { FaRotateRight } from "react-icons/fa6"
+import CTMLoader from "./CTMLoader"
 
 export function getRetryingMessage(error) {
   if ((typeof navigator !== "undefined" && !navigator.onLine) || isNetworkError(error)) {
@@ -22,9 +23,9 @@ function RetryingNotice({
 
   return (
     <div className={`${wrapperClass} ${className}`.trim()}>
-      <div className="flex w-full max-w-sm flex-col items-center justify-center text-center">
-        <div className="mx-auto h-2 w-24 animate-pulse rounded-full bg-pink-100" />
-        <p className="mt-4 text-sm font-semibold text-slate-500">{message}</p>
+      <div className="flex w-full max-w-sm flex-col items-center justify-center rounded-[28px] border border-white/70 bg-white/92 px-6 py-8 text-center shadow-[0_24px_60px_rgba(15,23,42,0.14)]">
+        <CTMLoader />
+        <p className="mt-5 text-sm font-semibold leading-6 text-slate-600">{message}</p>
         
         {typeof onRetry === "function" ? (
           <button

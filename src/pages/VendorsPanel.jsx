@@ -25,7 +25,7 @@ import RetryingNotice, {
   getRetryingMessage,
 } from "../components/common/RetryingNotice"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
-import { ShimmerBlock } from "../components/common/Shimmers"
+import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
@@ -34,36 +34,10 @@ import { clearCachedFetchStore } from "../hooks/useCachedFetch"
 
 function VendorsPanelShimmer() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
-      <header className="sticky top-0 z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
-        <div className="mx-auto flex w-full max-w-[1000px] items-center gap-4 px-4 py-3 text-white">
-          <div className="p-1 text-[1.2rem] opacity-50">
-            <FaArrowLeft />
-          </div>
-          <div className="text-[1.15rem] font-bold tracking-[0.5px] opacity-50">
-            Merchant Dashboard
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-[1000px] flex-1 px-5 py-8">
-        <div className="mb-8">
-          <ShimmerBlock className="mb-3 h-8 w-64 rounded-md" />
-          <ShimmerBlock className="h-5 w-48 rounded-md" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-5">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="rounded-[22px] bg-pink-100 p-1">
-              <div className="flex h-full min-h-[125px] flex-col items-center justify-center rounded-[18px] border border-pink-50 bg-white p-4 sm:min-h-[140px]">
-                <ShimmerBlock className="mb-3 h-10 w-10 rounded-full sm:h-12 sm:w-12" />
-                <ShimmerBlock className="h-4 w-24 rounded-md" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </main>
-    </div>
+    <PageLoadingScreen
+      title="Opening vendor tools"
+      message="Please wait while we prepare your merchant workspace."
+    />
   )
 }
 

@@ -18,49 +18,18 @@ import { FaWhatsapp } from "react-icons/fa"
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
-import { ShimmerBlock } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
+import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import {
   normalizeWhatsAppPhone,
   openWhatsAppConversation,
   shouldUseDirectWhatsAppHandoff,
 } from "../lib/whatsapp"
-
-// --- PROFESSIONAL SHIMMER COMPONENT ---
-function ProductDetailShimmer() {
-  return (
-    <div className="min-h-screen bg-[#E3E6E6] pb-[90px]">
-      <header className="sticky top-0 z-[100] flex items-center justify-between bg-[#131921] px-4 py-3 shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <ShimmerBlock className="h-6 w-6 rounded bg-white/20" />
-          <div className="flex flex-col gap-1">
-            <ShimmerBlock className="h-5 w-32 rounded bg-white/20" />
-            <ShimmerBlock className="h-3 w-20 rounded bg-white/10" />
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-4">
-          <ShimmerBlock className="h-6 w-6 rounded bg-white/20" />
-          <ShimmerBlock className="h-6 w-6 rounded bg-white/20" />
-        </div>
-      </header>
-
-      <div className="mx-auto flex w-full max-w-[1200px] flex-col lg:flex-row lg:gap-6 lg:p-10">
-        <div className="lg:flex-1">
-          <ShimmerBlock className="aspect-square w-full rounded-none bg-white lg:rounded-lg" />
-        </div>
-        <div className="mt-2 flex flex-col gap-4 px-4 lg:mt-0 lg:flex-[1.2] lg:px-0">
-          <ShimmerBlock className="h-12 w-full max-w-[400px] rounded-lg bg-white p-6" />
-          <ShimmerBlock className="h-[250px] w-full rounded-lg bg-white p-6" />
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function ProductDetail() {
   const navigate = useNavigate()
@@ -590,7 +559,12 @@ function ProductDetail() {
   }
 
   if (authLoading || (dataLoading && !data)) {
-    return <ProductDetailShimmer />
+    return (
+      <PageLoadingScreen
+        title="Opening product"
+        message="Please wait while we prepare the product details."
+      />
+    )
   }
 
   if (error && !data) {

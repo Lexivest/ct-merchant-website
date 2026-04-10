@@ -396,3 +396,27 @@ img {
 .route-progress-active {
   animation: route-progress-slide 320ms ease-out forwards;
 }
+@keyframes ctmSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ctmSpinReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes ctmPageEnter {
+  from {
+    opacity: 0.92;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.ctm-page-enter {
+  animation: ctmPageEnter 220ms ease-out both;
+}

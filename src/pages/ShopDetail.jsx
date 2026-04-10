@@ -20,13 +20,13 @@ import "leaflet/dist/leaflet.css"
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
-import { ShimmerBlock } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 import ScrollingTicker from "../components/common/ScrollingTicker"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
+import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import {
   normalizeWhatsAppPhone,
   openWhatsAppConversation,
@@ -36,41 +36,6 @@ import {
 const EMPTY_PRODUCTS = []
 const EMPTY_NEWS = []
 const ShopCommunitySection = lazy(() => import("../components/shop/ShopCommunitySection"))
-
-// --- PROFESSIONAL SHIMMER COMPONENT ---
-function ShopDetailShimmer() {
-  return (
-    <div className="min-h-screen bg-[#E3E6E6] pb-10">
-      <header className="sticky top-0 z-[100] flex flex-col bg-[#131921] px-4 py-3 shadow">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <ShimmerBlock className="h-6 w-6 rounded bg-white/20" />
-            <ShimmerBlock className="h-6 w-40 rounded bg-white/20" />
-          </div>
-          <ShimmerBlock className="h-6 w-6 rounded bg-white/20" />
-        </div>
-      </header>
-      <div className="mx-auto max-w-[1600px] px-4 pt-6">
-        {/* Banner Skeleton */}
-        <ShimmerBlock className="mx-auto mb-6 aspect-video max-h-[400px] w-full max-w-[1000px] rounded-xl" />
-        
-        {/* Section Skeleton */}
-        <div className="mb-2 rounded-lg bg-white p-6 shadow-sm">
-          <ShimmerBlock className="mb-6 h-8 w-48 rounded" />
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-5">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="flex flex-col gap-2">
-                <ShimmerBlock className="aspect-square w-full rounded-md" />
-                <ShimmerBlock className="h-4 w-3/4 rounded" />
-                <ShimmerBlock className="h-4 w-1/2 rounded" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function getNameInitials(value) {
   const parts = String(value || "")
@@ -740,7 +705,12 @@ function ShopDetail() {
 
   // Show Shimmer while Auth or Data is strictly loading without cache fallback
   if (authLoading || (dataLoading && !data)) {
-    return <ShopDetailShimmer />
+    return (
+      <PageLoadingScreen
+        title="Opening shop"
+        message="Please wait while we prepare the shop details."
+      />
+    )
   }
 
   // Show Error only if data fails to fetch and there is no cache
