@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   FaAddressCard,
@@ -24,6 +24,7 @@ import { FaRegSquarePlus } from "react-icons/fa6"
 import RetryingNotice, {
   getRetryingMessage,
 } from "../components/common/RetryingNotice"
+import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import useAuthSession from "../hooks/useAuthSession"
@@ -31,6 +32,23 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { supabase } from "../lib/supabase"
 import { clearCachedFetchStore } from "../hooks/useCachedFetch"
+import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
+import { prepareVendorRouteTransition } from "../lib/vendorRouteTransitions"
+
+const loadVendorRoutes = {
+  "/merchant-add-product": () => import("./vendors/AddProduct"),
+  "/merchant-products": () => import("./vendors/MerchantProducts"),
+  "/merchant-banner": () => import("./vendors/MerchantBanner"),
+  "/merchant-settings": () => import("./vendors/MerchantSettings"),
+  "/merchant-news": () => import("./vendors/MerchantNews"),
+  "/merchant-promo-banner": () => import("./vendors/MerchantPromoBanner"),
+  "/merchant-analytics": () => import("./vendors/MerchantAnalytics"),
+  "/merchant-video-kyc": () => import("./vendors/MerchantVideoKYC"),
+  "/remita": () => import("./vendors/MerchantPayment"),
+  "/service-fee": () => import("./vendors/MerchantServiceFee"),
+  "/shop-registration": () => import("./ShopRegistration"),
+}
 
 function VendorsPanelShimmer() {
   return (
@@ -49,6 +67,11 @@ function VendorsPanel() {
 
   const { user, loading: authLoading, isOffline } = useAuthSession()
   const [realtimeShop, setRealtimeShop] = useState(null)
+  const retryRouteTransitionRef = useRef(null)
+  const [routeTransition, setRouteTransition] = useState({
+    pending: false,
+    error: "",
+  })
 
   const fetchMerchantData = async () => {
     if (!user) throw new Error("Authentication required")
@@ -184,6 +207,70 @@ function VendorsPanel() {
   const isSuspended = activeShop.is_open === false
   const isSubscriptionActive = activeShop.is_subscription_active === true
 
+  function beginRouteTransition(retryAction = null) {
+    retryRouteTransitionRef.current = retryAction
+    setRouteTransition({
+      pending: true,
+      error: "",
+    })
+  }
+
+  function failRouteTransition(message, retryAction = null) {
+    retryRouteTransitionRef.current = retryAction
+    setRouteTransition({
+      pending: false,
+      error: message,
+    })
+  }
+
+  async function openVendorRouteWithTransition(path) {
+    if (!path) return
+
+    const retryAction = () => openVendorRouteWithTransition(path)
+    beginRouteTransition(retryAction)
+
+    try {
+      if (path.startsWith("/shop-detail")) {
+        await prepareShopDetailTransition({
+          shopId: activeShop.id,
+          userId: user?.id || null,
+        })
+      } else {
+        const [pathname] = path.split("?")
+        const prefetchedData = await prepareVendorRouteTransition({
+          path,
+          userId: user?.id || null,
+          shopId: activeShop.id,
+        })
+
+        if (!prefetchedData) {
+          const loader = loadVendorRoutes[pathname]
+          if (loader) {
+            await loader()
+          }
+        }
+
+        navigate(path, {
+          state: {
+            fromVendorTransition: true,
+            prefetchedData,
+          },
+        })
+        return
+      }
+
+      navigate(path, { state: { fromVendorTransition: true } })
+    } catch (error) {
+      failRouteTransition(
+        getFriendlyErrorMessage(
+          error,
+          "We could not open that merchant tool right now. Please try again."
+        ),
+        retryAction
+      )
+    }
+  }
+
   const handleCardClick = (path, action) => {
     if (isOffline) {
       notify({
@@ -197,13 +284,28 @@ function VendorsPanel() {
 
     if (action) {
       action()
-    } else {
-      navigate(path)
+    } else if (path) {
+      void openVendorRouteWithTransition(path)
     }
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
+    <div
+      className={`flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
+        routeTransition.pending ? "pointer-events-none select-none" : ""
+      }`}
+    >
+      <PageTransitionOverlay
+        visible={routeTransition.pending}
+        error={routeTransition.error}
+        onRetry={() => retryRouteTransitionRef.current?.()}
+        onDismiss={() =>
+          setRouteTransition({
+            pending: false,
+            error: "",
+          })
+        }
+      />
       <header className="sticky top-0 z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <div className="mx-auto flex w-full max-w-[1000px] items-center gap-4 px-4 py-3 text-white">
           <button

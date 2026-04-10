@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaArrowLeft,
   FaCheck,
@@ -57,6 +57,7 @@ function isFutureDate(value) {
 
 export default function MerchantServiceFee() {
   const navigate = useNavigate();
+  const location = useLocation();
   usePreventPullToRefresh();
   const { notify } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
@@ -64,18 +65,31 @@ export default function MerchantServiceFee() {
   const callbackReference = searchParams.get("reference") || searchParams.get("trxref") || "";
   const callbackPayment = searchParams.get("payment") || "";
   const callbackPlan = searchParams.get("plan") || "";
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "merchant-service-fee" &&
+    callbackPayment !== "service_fee" &&
+    !callbackReference
+      ? location.state.prefetchedData
+      : null
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !prefetchedData);
   const [error, setError] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [startingCheckout, setStartingCheckout] = useState(false);
   const [processingNote, setProcessingNote] = useState("Please do not close this window.");
-  const [shopData, setShopData] = useState(null);
+  const [shopData, setShopData] = useState(() => prefetchedData?.shopData || null);
   const [handledReturnRef, setHandledReturnRef] = useState("");
 
   const fetchSubscription = useCallback(async () => {
+    if (prefetchedData) {
+      setShopData(prefetchedData.shopData || null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     if (!user) return;
     if (isOffline) {
       setError("Network unavailable. Retry.");
@@ -108,7 +122,7 @@ export default function MerchantServiceFee() {
     } finally {
       setLoading(false);
     }
-  }, [isOffline, urlShopId, user]);
+  }, [isOffline, prefetchedData, urlShopId, user]);
 
   useEffect(() => {
     if (!authLoading) fetchSubscription();
@@ -264,7 +278,11 @@ export default function MerchantServiceFee() {
     : "Unknown";
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-5 text-[#1E293B]">
+    <div
+      className={`min-h-screen bg-[#F8FAFC] p-5 text-[#1E293B] ${
+        location.state?.fromVendorTransition ? "ctm-page-enter" : ""
+      }`}
+    >
       <div className="mx-auto w-full max-w-[800px]">
         <div className="mb-6 flex items-center gap-4 rounded-2xl bg-[#2E1065] p-4 text-white shadow-sm">
           <button onClick={() => navigate("/vendor-panel")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-[1.1rem] transition hover:bg-white/30">

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaArrowLeft,
   FaChartPie,
@@ -58,21 +58,37 @@ function AnalyticsShimmer() {
 
 export default function MerchantAnalytics() {
   const navigate = useNavigate();
+  const location = useLocation();
   usePreventPullToRefresh();
   const { notify } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "merchant-analytics" &&
+    (!urlShopId || String(location.state.prefetchedData.shopId) === String(urlShopId))
+      ? location.state.prefetchedData
+      : null
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !prefetchedData);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   
-  const [shopId, setShopId] = useState(urlShopId);
-  const [stats, setStats] = useState({ views: 0, clicks: 0, likes: 0, conversion: "0.0%" });
+  const [shopId, setShopId] = useState(() => prefetchedData?.shopId || urlShopId);
+  const [stats, setStats] = useState(
+    () => prefetchedData?.stats || { views: 0, clicks: 0, likes: 0, conversion: "0.0%" }
+  );
 
   const fetchStats = useCallback(async (isRefresh = false) => {
+    if (prefetchedData && !isRefresh) {
+      setShopId(prefetchedData.shopId || urlShopId);
+      setStats(prefetchedData.stats || { views: 0, clicks: 0, likes: 0, conversion: "0.0%" });
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     if (isOffline) {
       if (!isRefresh) setError("Network offline. Please connect to the internet to view analytics.");
       else notify({ type: "error", title: "Network unavailable", message: "You must be online to refresh statistics." });
@@ -135,7 +151,7 @@ export default function MerchantAnalytics() {
       if (isRefresh) setRefreshing(false);
       else setLoading(false);
     }
-  }, [isOffline, notify, shopId, user]);
+  }, [isOffline, notify, prefetchedData, shopId, urlShopId, user]);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -163,7 +179,11 @@ export default function MerchantAnalytics() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
+    <div
+      className={`flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
+        location.state?.fromVendorTransition ? "ctm-page-enter" : ""
+      }`}
+    >
       <header className="sticky top-0 z-40 flex w-full items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-sm">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]"><FaArrowLeft /></button>

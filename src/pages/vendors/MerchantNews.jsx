@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaArrowLeft,
   FaBullhorn,
@@ -42,23 +42,38 @@ function NewsShimmer() {
 
 export default function MerchantNews() {
   const navigate = useNavigate();
+  const location = useLocation();
   usePreventPullToRefresh();
   const { notify } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "merchant-news" &&
+    (!urlShopId || String(location.state.prefetchedData.shopId) === String(urlShopId))
+      ? location.state.prefetchedData
+      : null
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !prefetchedData);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   
-  const [shopId, setShopId] = useState(urlShopId);
-  const [newsText, setNewsText] = useState("");
-  const [status, setStatus] = useState(""); // 'pending' | 'approved' | 'rejected' | ''
+  const [shopId, setShopId] = useState(() => prefetchedData?.shopId || urlShopId);
+  const [newsText, setNewsText] = useState(() => prefetchedData?.newsText || "");
+  const [status, setStatus] = useState(() => prefetchedData?.status || ""); // 'pending' | 'approved' | 'rejected' | ''
 
   // Initialization & Fetch
   useEffect(() => {
+    if (prefetchedData) {
+      setShopId(prefetchedData.shopId || urlShopId);
+      setNewsText(prefetchedData.newsText || "");
+      setStatus(prefetchedData.status || "");
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     async function init() {
       if (!user) return;
       if (isOffline) {
@@ -116,7 +131,7 @@ export default function MerchantNews() {
       }
     }
     if (!authLoading) init();
-  }, [user, authLoading, shopId, isOffline]);
+  }, [user, authLoading, shopId, isOffline, prefetchedData, urlShopId]);
 
   const handleTextChange = (e) => {
     // Enforce 150 char limit strictly in React state
@@ -191,7 +206,11 @@ export default function MerchantNews() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
+    <div
+      className={`flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
+        location.state?.fromVendorTransition ? "ctm-page-enter" : ""
+      }`}
+    >
       <header className="sticky top-0 z-40 flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-sm">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]">

@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -14,12 +14,20 @@ import { ShimmerList } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
+import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
+import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 
 function Area() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const areaId = searchParams.get("id")
+  const [transitionState, setTransitionState] = useState({
+    pending: false,
+    shopId: "",
+    error: "",
+  })
 
   // Apply pull-to-refresh prevention
   usePreventPullToRefresh()
@@ -86,8 +94,58 @@ function Area() {
     return ""
   }
 
+  async function openShopWithTransition(shopId) {
+    if (!shopId) return
+
+    setTransitionState({
+      pending: true,
+      shopId,
+      error: "",
+    })
+
+    try {
+      await prepareShopDetailTransition({
+        shopId,
+        userId: user?.id || null,
+      })
+      navigate(`/shop-detail?id=${shopId}`, {
+        state: { fromDiscoveryTransition: true },
+      })
+    } catch (error) {
+      const safeMessage = isNetworkError(error)
+        ? "We could not open this shop right now. Please try again."
+        : getFriendlyErrorMessage(
+            error,
+            "We could not open this shop right now. Please try again."
+          )
+
+      setTransitionState({
+        pending: false,
+        shopId,
+        error: safeMessage,
+      })
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-[#F3F4F6] text-[#0F1111]">
+    <>
+      <PageTransitionOverlay
+        visible={transitionState.pending}
+        error={transitionState.error}
+        onRetry={() => openShopWithTransition(transitionState.shopId)}
+        onDismiss={() =>
+          setTransitionState((prev) => ({
+            ...prev,
+            pending: false,
+            error: "",
+          }))
+        }
+      />
+      <div
+        className={`min-h-screen bg-[#F3F4F6] text-[#0F1111] ${
+          transitionState.pending ? "pointer-events-none select-none" : ""
+        }`}
+      >
       <PageSeo
         title={`${areaName || "Area"} Shops | CTMerchant`}
         description={`Browse verified shops and local merchants in ${areaName || "this area"} on CTMerchant.`}
@@ -154,7 +212,7 @@ function Area() {
                 return (
                   <div
                     key={shop.id}
-                    onClick={() => navigate(`/shop-detail?id=${shop.id}`)}
+                    onClick={() => openShopWithTransition(shop.id)}
                     className="mb-3 flex cursor-pointer items-center gap-4 rounded-lg border border-[#D5D9D9] bg-white p-4 shadow-[0_2px_4px_rgba(0,0,0,0.02)] transition hover:translate-y-[-2px] hover:border-[#B0B5B5] hover:shadow-[0_4px_10px_rgba(0,0,0,0.08)] active:scale-[0.98]"
                   >
                     {displayImg ? (
@@ -203,7 +261,8 @@ function Area() {
           </>
         )}
       </main>
-    </div>
+      </div>
+    </>
   )
 }
 

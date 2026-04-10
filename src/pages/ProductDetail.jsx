@@ -614,7 +614,9 @@ function ProductDetail() {
       />
       <div
         className={`mx-auto flex min-h-screen max-w-[1200px] flex-col bg-[#E3E6E6] pb-[90px] ${
-          location.state?.fromProductTransition ? "ctm-page-enter" : ""
+          location.state?.fromProductTransition || location.state?.fromDiscoveryTransition
+            ? "ctm-page-enter"
+            : ""
         } ${productTransition.pending ? "pointer-events-none select-none" : ""}`}
       >
         <header className="sticky top-0 z-[100] flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">

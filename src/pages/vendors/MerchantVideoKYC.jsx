@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   FaArrowLeft,
   FaCamera,
@@ -71,17 +71,22 @@ async function resolveBrowserLocationLabel(lat, lng, fallback = "") {
 
 export default function MerchantVideoKYC() {
   const navigate = useNavigate();
+  const routeLocation = useLocation();
   usePreventPullToRefresh();
   const { notify } = useGlobalFeedback();
   const { user, loading: authLoading, isOffline } = useAuthSession();
+  const prefetchedData =
+    routeLocation.state?.prefetchedData?.kind === "merchant-video-kyc"
+      ? routeLocation.state.prefetchedData
+      : null
 
   // Data State
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !prefetchedData);
   const [pageError, setPageError] = useState(null);
-  const [shopData, setShopData] = useState(null);
-  const [profileName, setProfileName] = useState("Merchant");
-  const [profileAvatar, setProfileAvatar] = useState("");
-  const [cityName, setCityName] = useState("");
+  const [shopData, setShopData] = useState(() => prefetchedData?.shopData || null);
+  const [profileName, setProfileName] = useState(() => prefetchedData?.profileName || "Merchant");
+  const [profileAvatar, setProfileAvatar] = useState(() => prefetchedData?.profileAvatar || "");
+  const [cityName, setCityName] = useState(() => prefetchedData?.cityName || "");
   const [location, setLocation] = useState(null); // { lat, lng }
   const [setupState, setSetupState] = useState("idle"); // 'idle' | 'requesting' | 'ready' | 'failed'
   const [setupError, setSetupError] = useState("");
@@ -169,6 +174,17 @@ export default function MerchantVideoKYC() {
 
   // 1. Initial Data Fetch & Validation
   useEffect(() => {
+    const shouldUsePrefetchedData = Boolean(prefetchedData)
+
+    if (shouldUsePrefetchedData) {
+      setShopData(prefetchedData.shopData || null)
+      setProfileName(prefetchedData.profileName || "Merchant")
+      setProfileAvatar(prefetchedData.profileAvatar || "")
+      setCityName(prefetchedData.cityName || "")
+      setPageError(null)
+      setLoading(false)
+    }
+
     async function init() {
       if (!user) return;
       if (isOffline) {
@@ -223,7 +239,7 @@ export default function MerchantVideoKYC() {
       }
     }
 
-    if (!authLoading) init();
+    if (!shouldUsePrefetchedData && !authLoading) init();
 
     // Start Live Clock
     const updateClock = () => {
@@ -241,7 +257,7 @@ export default function MerchantVideoKYC() {
       clearPlaybackUrl();
       if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);
     };
-  }, [user, authLoading, isOffline, navigate, notify, stopActiveMedia, clearPlaybackUrl]);
+  }, [user, authLoading, isOffline, navigate, notify, stopActiveMedia, clearPlaybackUrl, prefetchedData]);
 
   useEffect(() => {
     if (!user?.id || !shopData?.id || isOffline) return undefined;
@@ -633,7 +649,11 @@ export default function MerchantVideoKYC() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050816] text-white">
+      <div
+        className={`min-h-screen bg-[#050816] text-white ${
+          routeLocation.state?.fromVendorTransition ? "ctm-page-enter" : ""
+        }`}
+      >
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0B1020]/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-[700px] items-center gap-3 px-4 py-4">
           <button

@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -13,7 +13,10 @@ import { ShimmerBlock, ShimmerCard } from "../components/common/Shimmers"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
+import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
+import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function CatShimmer() {
@@ -40,6 +43,11 @@ function Cat() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const catName = searchParams.get("name")
+  const [transitionState, setTransitionState] = useState({
+    pending: false,
+    shopId: "",
+    error: "",
+  })
 
   // Apply pull-to-refresh prevention
   usePreventPullToRefresh()
@@ -168,8 +176,58 @@ function Cat() {
     return items
   }
 
+  async function openShopWithTransition(shopId) {
+    if (!shopId) return
+
+    setTransitionState({
+      pending: true,
+      shopId,
+      error: "",
+    })
+
+    try {
+      await prepareShopDetailTransition({
+        shopId,
+        userId: user?.id || null,
+      })
+      navigate(`/shop-detail?id=${shopId}`, {
+        state: { fromDiscoveryTransition: true },
+      })
+    } catch (error) {
+      const safeMessage = isNetworkError(error)
+        ? "We could not open this shop right now. Please try again."
+        : getFriendlyErrorMessage(
+            error,
+            "We could not open this shop right now. Please try again."
+          )
+
+      setTransitionState({
+        pending: false,
+        shopId,
+        error: safeMessage,
+      })
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-[#F3F4F6] text-[#0F1111]">
+    <>
+      <PageTransitionOverlay
+        visible={transitionState.pending}
+        error={transitionState.error}
+        onRetry={() => openShopWithTransition(transitionState.shopId)}
+        onDismiss={() =>
+          setTransitionState((prev) => ({
+            ...prev,
+            pending: false,
+            error: "",
+          }))
+        }
+      />
+      <div
+        className={`min-h-screen bg-[#F3F4F6] text-[#0F1111] ${
+          transitionState.pending ? "pointer-events-none select-none" : ""
+        }`}
+      >
       <PageSeo
         title={`${catName || "Category"} Shops | CTMerchant`}
         description={`Discover verified shops and products in the ${catName || "selected"} category on CTMerchant.`}
@@ -230,7 +288,7 @@ function Cat() {
                 {shops.map((shop) => (
                   <div key={shop.id} className="flex flex-col">
                     <div
-                      onClick={() => navigate(`/shop-detail?id=${shop.id}`)}
+                      onClick={() => openShopWithTransition(shop.id)}
                       className="flex h-full cursor-pointer flex-col rounded-lg border border-[#D5D9D9] bg-white px-5 py-6 transition hover:translate-y-[-2px] hover:border-[#B0B5B5] hover:bg-[#Fcfcfc] hover:shadow-[0_8px_16px_rgba(0,0,0,0.08)]"
                     >
                       <div className="mb-4 line-clamp-2 text-[1.15rem] font-extrabold leading-[1.2] text-[#0F1111]">
@@ -255,7 +313,8 @@ function Cat() {
           </>
         )}
       </main>
-    </div>
+      </div>
+    </>
   )
 }
 

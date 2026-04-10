@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaArrowLeft,
   FaBoxOpen,
@@ -51,6 +51,7 @@ function MerchantProductsShimmer() {
 
 export default function MerchantProducts() {
   const navigate = useNavigate();
+  const location = useLocation();
   usePreventPullToRefresh();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
@@ -145,7 +146,11 @@ export default function MerchantProducts() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
+    <div
+      className={`flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
+        location.state?.fromVendorTransition ? "ctm-page-enter" : ""
+      }`}
+    >
       
       {/* OFFLINE BANNER */}
       {isOffline && (

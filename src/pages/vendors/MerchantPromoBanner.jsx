@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaArrowLeft,
   FaCircleCheck,
@@ -235,18 +235,24 @@ function PromoBannerArtwork({
 
 export default function MerchantPromoBanner() {
   const navigate = useNavigate();
+  const location = useLocation();
   usePreventPullToRefresh();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "merchant-promo-banner" &&
+    (!urlShopId || String(location.state.prefetchedData.shopData?.id) === String(urlShopId))
+      ? location.state.prefetchedData
+      : null
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !prefetchedData);
   const [error, setError] = useState(null);
   const [sharing, setSharing] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [shopData, setShopData] = useState(null);
-  const [products, setProducts] = useState([]);
+  const [shopData, setShopData] = useState(() => prefetchedData?.shopData || null);
+  const [products, setProducts] = useState(() => prefetchedData?.products || []);
 
   const bannerRef = useRef(null);
   const exportBannerRef = useRef(null);
@@ -289,6 +295,14 @@ export default function MerchantPromoBanner() {
   };
 
   useEffect(() => {
+    if (prefetchedData) {
+      setShopData(prefetchedData.shopData || null);
+      setProducts(prefetchedData.products || []);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     async function fetchBannerData() {
       if (!user) return;
       if (isOffline) {
@@ -353,7 +367,7 @@ export default function MerchantPromoBanner() {
     }
 
     if (!authLoading) fetchBannerData();
-  }, [user, authLoading, urlShopId, isOffline]);
+  }, [user, authLoading, urlShopId, isOffline, prefetchedData]);
 
   const generateBannerBlob = async () => {
     const exportNode = exportBannerRef.current;
@@ -484,7 +498,11 @@ export default function MerchantPromoBanner() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-[#F4F7FB] text-[#0F1111]">
+    <div
+      className={`flex min-h-screen flex-col items-center bg-[#F4F7FB] text-[#0F1111] ${
+        location.state?.fromVendorTransition ? "ctm-page-enter" : ""
+      }`}
+    >
       <header className="sticky top-0 z-40 w-full px-4 py-4 backdrop-blur">
         <div className="mx-auto flex w-full max-w-[860px] items-center gap-4 rounded-[24px] bg-[#111827] px-4 py-4 text-white shadow-[0_14px_30px_rgba(15,23,42,0.18)]">
           <button

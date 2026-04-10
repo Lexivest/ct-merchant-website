@@ -22,6 +22,12 @@ import NotificationsSection from "../components/dashboard/sections/Notifications
 const loadServicesProfileSection = () =>
   import("../components/dashboard/sections/ServicesProfileSection")
 const loadShopDetailPage = () => import("./ShopDetail")
+const loadSearchPage = () => import("./Search")
+const loadAreaPage = () => import("./Area")
+const loadCatPage = () => import("./Cat")
+const loadShopIndexPage = () => import("./ShopIndex")
+const loadVendorsPanelPage = () => import("./VendorsPanel")
+const loadShopRegistrationPage = () => import("./ShopRegistration")
 
 const ServicesProfileSection = lazy(loadServicesProfileSection)
 
@@ -273,10 +279,9 @@ function UserDashboard() {
   )
 
   const [localData, setLocalData] = useState(EMPTY_DASHBOARD_DATA)
-  const [shopTransition, setShopTransition] = useState({
+  const retryRouteTransitionRef = useRef(null)
+  const [routeTransition, setRouteTransition] = useState({
     pending: false,
-    shopId: "",
-    shopName: "",
     error: "",
   })
 
@@ -532,7 +537,7 @@ function UserDashboard() {
         })
         return
       }
-      navigate("/shop-registration")
+      void openDashboardRouteWithTransition("/shop-registration", loadShopRegistrationPage)
       return
     }
 
@@ -563,16 +568,19 @@ function UserDashboard() {
         title: "Correction required",
         message: shopData.rejection_reason || "Please update your details and resubmit.",
       })
-      navigate(`/shop-registration?id=${shopData.id}`)
+      void openDashboardRouteWithTransition(
+        `/shop-registration?id=${shopData.id}`,
+        loadShopRegistrationPage
+      )
       return
     }
 
     if (shopData.status === "approved") {
-      navigate("/vendor-panel")
+      void openDashboardRouteWithTransition("/vendor-panel", loadVendorsPanelPage)
       return
     }
 
-    navigate("/shop-registration")
+    void openDashboardRouteWithTransition("/shop-registration", loadShopRegistrationPage)
   }
 
   const currentProfile = localData.profile || profile
@@ -656,12 +664,213 @@ function UserDashboard() {
     else setSearchSuggestionsMobile(next)
   }
 
+  function beginRouteTransition(retryAction = null) {
+    retryRouteTransitionRef.current = retryAction
+    setRouteTransition({
+      pending: true,
+      error: "",
+    })
+  }
+
+  function failRouteTransition(message, retryAction = null) {
+    retryRouteTransitionRef.current = retryAction
+    setRouteTransition({
+      pending: false,
+      error: message,
+    })
+  }
+
+  function buildSearchTransitionData(value) {
+    const trimmed = String(value || "").trim()
+    if (!trimmed) {
+      return {
+        shops: (localData.shops || []).slice(0, 30),
+        allProducts: [],
+        matchedProducts: [],
+      }
+    }
+
+    const q = trimmed.toLowerCase()
+    const matchedShops = (localData.shops || [])
+      .filter((shop) =>
+        [
+          shop.name,
+          shop.category,
+          shop.description,
+          shop.unique_id,
+          shop.address,
+        ]
+          .filter(Boolean)
+          .some((field) => String(field).toLowerCase().includes(q))
+      )
+      .slice(0, 50)
+
+    const matchedProducts = (localData.products || [])
+      .filter((product) =>
+        [product.name, product.description, product.category]
+          .filter(Boolean)
+          .some((field) => String(field).toLowerCase().includes(q))
+      )
+      .slice(0, 50)
+
+    const matchedShopIds = new Set(matchedShops.map((shop) => shop.id))
+    const relatedProducts = (localData.products || []).filter((product) =>
+      matchedShopIds.has(product.shop_id)
+    )
+
+    const allProductsMap = new Map()
+    matchedProducts.forEach((product) => {
+      allProductsMap.set(product.id, product)
+    })
+    relatedProducts.forEach((product) => {
+      allProductsMap.set(product.id, product)
+    })
+
+    return {
+      shops: matchedShops,
+      allProducts: Array.from(allProductsMap.values()),
+      matchedProducts,
+    }
+  }
+
+  async function openSearchWithTransition(value) {
+    const trimmed = String(value || "").trim()
+    if (!trimmed) return
+
+    const retryAction = () => openSearchWithTransition(trimmed)
+    beginRouteTransition(retryAction)
+
+    try {
+      primeCachedFetchStore(
+        `search_city_${profile?.city_id || "none"}_q_${trimmed}`,
+        buildSearchTransitionData(trimmed)
+      )
+      await loadSearchPage()
+      navigate(`/search?q=${encodeURIComponent(trimmed)}`)
+    } catch (error) {
+      failRouteTransition(
+        getFriendlyErrorMessage(
+          error,
+          "We could not open search right now. Please try again."
+        ),
+        retryAction
+      )
+    }
+  }
+
+  async function openAreaWithTransition(id) {
+    if (!id || id === "all") return
+
+    const retryAction = () => openAreaWithTransition(id)
+    beginRouteTransition(retryAction)
+
+    try {
+      const areaName =
+        localData.areas?.find((area) => String(area.id) === String(id))?.name || "Area"
+      const areaShops = (localData.shops || [])
+        .filter((shop) => String(shop.area_id) === String(id))
+        .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+
+      primeCachedFetchStore(`area_data_${id}`, {
+        areaName,
+        shops: areaShops,
+      })
+      await loadAreaPage()
+      navigate(`/area?id=${encodeURIComponent(id)}`)
+    } catch (error) {
+      failRouteTransition(
+        getFriendlyErrorMessage(
+          error,
+          "We could not open this area right now. Please try again."
+        ),
+        retryAction
+      )
+    }
+  }
+
+  async function openCategoryWithTransition(name) {
+    if (!name || name === "all") return
+
+    const retryAction = () => openCategoryWithTransition(name)
+    beginRouteTransition(retryAction)
+
+    try {
+      const categoryShops = (localData.shops || [])
+        .filter(
+          (shop) =>
+            shop.category === name &&
+            shop.is_verified &&
+            String(shop.city_id) === String(profile?.city_id)
+        )
+        .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+
+      const categoryShopIds = new Set(categoryShops.map((shop) => shop.id))
+      const categoryProducts = (localData.products || [])
+        .filter((product) => categoryShopIds.has(product.shop_id) && product.is_available === true)
+        .slice(0, 300)
+
+      primeCachedFetchStore(`cat_${name}_city_${profile?.city_id || "none"}`, {
+        shops: categoryShops,
+        products: categoryProducts,
+      })
+      await loadCatPage()
+      navigate(`/cat?name=${encodeURIComponent(name)}`)
+    } catch (error) {
+      failRouteTransition(
+        getFriendlyErrorMessage(
+          error,
+          "We could not open this category right now. Please try again."
+        ),
+        retryAction
+      )
+    }
+  }
+
+  async function openShopIndexWithTransition() {
+    const retryAction = () => openShopIndexWithTransition()
+    beginRouteTransition(retryAction)
+
+    try {
+      primeCachedFetchStore(`dir_city_${profile?.city_id || "none"}_q_`, localData.shops || [])
+      await loadShopIndexPage()
+      navigate("/shop-index")
+    } catch (error) {
+      failRouteTransition(
+        getFriendlyErrorMessage(
+          error,
+          "We could not open the shop directory right now. Please try again."
+        ),
+        retryAction
+      )
+    }
+  }
+
+  async function openDashboardRouteWithTransition(path, loader) {
+    if (!path || typeof loader !== "function") return
+
+    const retryAction = () => openDashboardRouteWithTransition(path, loader)
+    beginRouteTransition(retryAction)
+
+    try {
+      await loader()
+      navigate(path, { state: { fromVendorTransition: true } })
+    } catch (error) {
+      failRouteTransition(
+        getFriendlyErrorMessage(
+          error,
+          "We could not open that page right now. Please try again."
+        ),
+        retryAction
+      )
+    }
+  }
+
   function executeSearch(mode) {
     const value =
       mode === "desktop" ? searchInputDesktop.trim() : searchInputMobile.trim()
 
     if (!value) return
-    navigate(`/search?q=${encodeURIComponent(value)}`)
+    void openSearchWithTransition(value)
   }
 
   function applySuggestion(text, mode) {
@@ -673,35 +882,27 @@ function UserDashboard() {
       setSearchSuggestionsMobile([])
     }
 
-    navigate(`/search?q=${encodeURIComponent(text)}`)
+    void openSearchWithTransition(text)
   }
 
   function navigateArea(id) {
-    if (id === "all") return
-    navigate(`/area?id=${encodeURIComponent(id)}`)
+    void openAreaWithTransition(id)
   }
 
   function navigateCategory(name) {
-    if (name === "all") return
-    navigate(`/cat?name=${encodeURIComponent(name)}`)
+    void openCategoryWithTransition(name)
   }
 
   async function openShopWithTransition(shopId) {
     if (!shopId) return
 
-    const shopName =
-      localData.shops?.find((shop) => String(shop.id) === String(shopId))?.name || "shop"
+    const retryAction = () => openShopWithTransition(shopId)
     const cacheKey = buildShopDetailCacheKey(shopId, user?.id || null)
     const cachedEntry = readCachedFetchStore(cacheKey)
     const hasFreshCache =
       cachedEntry && Date.now() - cachedEntry.timestamp <= 1000 * 60 * 5
 
-    setShopTransition({
-      pending: true,
-      shopId,
-      shopName,
-      error: "",
-    })
+    beginRouteTransition(retryAction)
 
     try {
       if (hasFreshCache) {
@@ -752,12 +953,7 @@ function UserDashboard() {
             "We could not open this shop right now. Please try again."
           )
 
-      setShopTransition({
-        pending: false,
-        shopId,
-        shopName,
-        error: safeMessage,
-      })
+      failRouteTransition(safeMessage, retryAction)
     }
   }
 
@@ -1318,18 +1514,21 @@ function UserDashboard() {
   return (
     <div className="bg-[#E3E6E6] text-[#0F1111]">
       <PageTransitionOverlay
-        visible={shopTransition.pending}
-        error={shopTransition.error}
-        onRetry={() => openShopWithTransition(shopTransition.shopId)}
+        visible={routeTransition.pending}
+        error={routeTransition.error}
+        onRetry={
+          typeof retryRouteTransitionRef.current === "function"
+            ? () => retryRouteTransitionRef.current?.()
+            : null
+        }
         onDismiss={() =>
-          setShopTransition((prev) => ({
-            ...prev,
+          setRouteTransition({
             pending: false,
             error: "",
-          }))
+          })
         }
       />
-      <div className={shopTransition.pending ? "pointer-events-none select-none" : ""}>
+      <div className={routeTransition.pending ? "pointer-events-none select-none" : ""}>
       <DashboardHeader
         activeTab={activeTab}
         currentProfile={currentProfile}
@@ -1352,7 +1551,7 @@ function UserDashboard() {
         applySuggestion={applySuggestion}
         switchScreen={switchScreen}
         unread={localData.unread}
-        onShopIndex={() => navigate("/shop-index")}
+        onShopIndex={openShopIndexWithTransition}
         onLogoClick={() => switchScreen("market")}
       />
 

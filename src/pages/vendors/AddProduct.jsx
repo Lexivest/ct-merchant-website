@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
 import {
@@ -169,20 +169,26 @@ function CustomSelect({ value, onChange, options, placeholder, className }) {
 
 export default function AddProduct() {
   const navigate = useNavigate();
+  const location = useLocation();
   usePreventPullToRefresh();
   const { notify } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const shopId = searchParams.get("shop_id");
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "merchant-add-product" &&
+    (!shopId || String(location.state.prefetchedData.shopId) === String(shopId))
+      ? location.state.prefetchedData
+      : null
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !prefetchedData);
   const [error, setError] = useState(null);
-  const [limitReached, setLimitReached] = useState(false);
-  const [activeOffersCount, setActiveOffersCount] = useState(0);
+  const [limitReached, setLimitReached] = useState(() => prefetchedData?.limitReached || false);
+  const [activeOffersCount, setActiveOffersCount] = useState(() => prefetchedData?.activeOffersCount || 0);
   const [submitting, setSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [categoryRows, setCategoryRows] = useState([]);
+  const [categoryRows, setCategoryRows] = useState(() => prefetchedData?.categoryRows || []);
 
   // Form State
   const [form, setForm] = useState({
@@ -224,6 +230,15 @@ export default function AddProduct() {
 
   // Initialization & Security Checks
   useEffect(() => {
+    if (prefetchedData) {
+      setLimitReached(prefetchedData.limitReached || false);
+      setActiveOffersCount(prefetchedData.activeOffersCount || 0);
+      setCategoryRows(prefetchedData.categoryRows || []);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     async function init() {
       if (!user) return;
       if (!shopId) {
@@ -264,7 +279,7 @@ export default function AddProduct() {
       }
     }
     if (!authLoading) init();
-  }, [user, authLoading, shopId, isOffline, navigate]);
+  }, [user, authLoading, shopId, isOffline, navigate, prefetchedData]);
 
 
   // --- HANDLERS ---
@@ -574,7 +589,11 @@ export default function AddProduct() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] pb-12">
+    <div
+      className={`flex min-h-screen flex-col bg-[#F3F4F6] pb-12 text-[#0F1111] ${
+        location.state?.fromVendorTransition ? "ctm-page-enter" : ""
+      }`}
+    >
       <header className="sticky top-0 z-40 flex items-center gap-4 bg-[#131921] px-4 py-3 text-white shadow-sm">
         <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]"><FaArrowLeft /></button>
         <div className="text-[1.15rem] font-bold">Add Product</div>

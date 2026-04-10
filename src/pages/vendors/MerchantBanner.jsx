@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
 import {
@@ -66,25 +66,31 @@ function BannerShimmer() {
 
 export default function MerchantBanner() {
   const navigate = useNavigate();
+  const location = useLocation();
   usePreventPullToRefresh();
   const { notify } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "merchant-banner" &&
+    (!urlShopId || String(location.state.prefetchedData.shopId) === String(urlShopId))
+      ? location.state.prefetchedData
+      : null
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !prefetchedData);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMode, setSuccessMode] = useState("upload"); // 'upload' | 'delete'
 
-  const [shopId, setShopId] = useState(urlShopId);
-  const [existingBanners, setExistingBanners] = useState([]);
+  const [shopId, setShopId] = useState(() => prefetchedData?.shopId || urlShopId);
+  const [existingBanners, setExistingBanners] = useState(() => prefetchedData?.existingBanners || []);
   
   // Display State
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [status, setStatus] = useState(""); // 'pending' | 'approved' | 'rejected' | 'new' | ''
+  const [previewUrl, setPreviewUrl] = useState(() => prefetchedData?.previewUrl || "");
+  const [status, setStatus] = useState(() => prefetchedData?.status || ""); // 'pending' | 'approved' | 'rejected' | 'new' | ''
   
   // Data State
   const [activeBlob, setActiveBlob] = useState(null);
@@ -113,6 +119,16 @@ export default function MerchantBanner() {
   };
 
   useEffect(() => {
+    if (prefetchedData) {
+      setShopId(prefetchedData.shopId || urlShopId);
+      setExistingBanners(prefetchedData.existingBanners || []);
+      setPreviewUrl(prefetchedData.previewUrl || "");
+      setStatus(prefetchedData.status || "");
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     async function init() {
       if (!user) return;
       if (isOffline) {
@@ -169,7 +185,7 @@ export default function MerchantBanner() {
       }
     }
     if (!authLoading) init();
-  }, [user, authLoading, shopId, isOffline]);
+  }, [user, authLoading, shopId, isOffline, prefetchedData, urlShopId]);
 
   // --- STUDIO LOGIC ---
   const openStudioForFile = async (file) => {
@@ -388,7 +404,11 @@ export default function MerchantBanner() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
+    <div
+      className={`flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
+        location.state?.fromVendorTransition ? "ctm-page-enter" : ""
+      }`}
+    >
       <header className="sticky top-0 z-40 flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-sm">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]">

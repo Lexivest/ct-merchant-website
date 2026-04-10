@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaCircleNotch,
   FaCreditCard,
@@ -46,25 +46,40 @@ async function extractFunctionErrorMessage(error, fallback = "Verification faile
 
 export default function MerchantPayment() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
   const callbackReference = searchParams.get("reference") || searchParams.get("trxref") || "";
   const callbackPayment = searchParams.get("payment") || "";
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "merchant-payment" &&
+    callbackPayment !== "physical" &&
+    !callbackReference
+      ? location.state.prefetchedData
+      : null
   const { notify } = useGlobalFeedback();
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !prefetchedData);
   const [processing, setProcessing] = useState(false);
   const [startingCheckout, setStartingCheckout] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
   const [statusError, setStatusError] = useState(false);
   const [promoCode, setPromoCode] = useState("");
-  const [shopDetails, setShopDetails] = useState(null);
+  const [shopDetails, setShopDetails] = useState(() => prefetchedData?.shopDetails || null);
   const [handledReturnRef, setHandledReturnRef] = useState("");
 
   const canApplyPromo = normalizePromoCode(promoCode).length === 6 && !processing && !startingCheckout;
 
   useEffect(() => {
+    if (prefetchedData) {
+      setShopDetails(prefetchedData.shopDetails || null);
+      setStatusError(false);
+      setStatusMsg("");
+      setLoading(false);
+      return;
+    }
+
     async function init() {
       if (!user) return;
 
@@ -157,7 +172,7 @@ export default function MerchantPayment() {
     }
 
     if (!authLoading) init();
-  }, [user, authLoading, isOffline, urlShopId, callbackReference, navigate, notify]);
+  }, [user, authLoading, isOffline, urlShopId, callbackReference, navigate, notify, prefetchedData]);
 
   const verifyPaymentOnBackend = useCallback(async (txId, gateway, { auto = false } = {}) => {
     if (!txId || processing) return;
@@ -258,7 +273,11 @@ export default function MerchantPayment() {
   if (!shopDetails) return null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-5">
+    <div
+      className={`flex min-h-screen items-center justify-center bg-[#F8FAFC] p-5 ${
+        location.state?.fromVendorTransition ? "ctm-page-enter" : ""
+      }`}
+    >
       <div className="relative w-full max-w-[420px] overflow-hidden rounded-[24px] border border-[#E2E8F0] bg-white p-8 text-center shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
         <div className="absolute left-0 right-0 top-0 h-1.5 bg-[#D97706]"></div>
 

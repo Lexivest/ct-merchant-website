@@ -721,7 +721,9 @@ function ShopDetail() {
       />
       <div
         className={`min-h-screen bg-[#E3E6E6] pb-10 ${
-          location.state?.fromMarketTransition ? "ctm-page-enter" : ""
+          location.state?.fromMarketTransition || location.state?.fromDiscoveryTransition
+            ? "ctm-page-enter"
+            : ""
         } ${productTransition.pending ? "pointer-events-none select-none" : ""}`}
       >
       <PageSeo
