@@ -28,6 +28,11 @@ import PageSeo from "../components/common/PageSeo"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 import ScrollingTicker from "../components/common/ScrollingTicker"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
+import {
+  normalizeWhatsAppPhone,
+  openWhatsAppConversation,
+  shouldUseDirectWhatsAppHandoff,
+} from "../lib/whatsapp"
 
 const EMPTY_PRODUCTS = []
 const EMPTY_NEWS = []
@@ -92,47 +97,6 @@ function ShopSectionFallback({ title, body }) {
       {body ? <div className="sr-only">{body}</div> : null}
     </div>
   )
-}
-
-function shouldUseDirectAppHandoff() {
-  if (typeof window === "undefined") return false
-
-  if (typeof navigator !== "undefined") {
-    const isTouchDevice =
-      navigator.maxTouchPoints > 0 ||
-      /android|iphone|ipad|ipod/i.test(navigator.userAgent || "")
-
-    if (isTouchDevice) return true
-  }
-
-  return Boolean(window.matchMedia?.("(pointer: coarse)").matches)
-}
-
-function openWhatsAppConversation(phone, text) {
-  if (typeof window === "undefined") return
-
-  const encodedText = encodeURIComponent(text)
-  const webUrl = `https://wa.me/${phone}?text=${encodedText}`
-
-  if (!shouldUseDirectAppHandoff()) {
-    window.open(webUrl, "_blank", "noopener,noreferrer")
-    return
-  }
-
-  const appUrl = `whatsapp://send?phone=${phone}&text=${encodedText}`
-  const fallbackTimer = window.setTimeout(() => {
-    if (typeof document === "undefined" || document.visibilityState === "visible") {
-      window.location.assign(webUrl)
-    }
-  }, 900)
-
-  const clearFallback = () => {
-    window.clearTimeout(fallbackTimer)
-  }
-
-  document.addEventListener("visibilitychange", clearFallback, { once: true })
-  window.addEventListener("pagehide", clearFallback, { once: true })
-  window.location.href = appUrl
 }
 
 function ShopDetail() {
@@ -296,6 +260,7 @@ function ShopDetail() {
   const [hasLiked, setHasLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(0)
   const [securityModalOpen, setSecurityModalOpen] = useState(false)
+  const [openingWhatsApp, setOpeningWhatsApp] = useState(false)
   const [activeInfoSection, setActiveInfoSection] = useState(null)
   const [shouldLoadCommunity, setShouldLoadCommunity] = useState(false)
 
@@ -316,6 +281,24 @@ function ShopDetail() {
   const products = data?.products ?? EMPTY_PRODUCTS
   const approvedNews = data?.approvedNews ?? EMPTY_NEWS
   const shopBanner = data?.shopBanner || ""
+
+  useEffect(() => {
+    if (!securityModalOpen || typeof document === "undefined") return undefined
+
+    const resetLaunchState = () => {
+      if (document.visibilityState === "visible") {
+        setOpeningWhatsApp(false)
+      }
+    }
+
+    document.addEventListener("visibilitychange", resetLaunchState)
+    window.addEventListener("pageshow", resetLaunchState)
+
+    return () => {
+      document.removeEventListener("visibilitychange", resetLaunchState)
+      window.removeEventListener("pageshow", resetLaunchState)
+    }
+  }, [securityModalOpen])
 
   useEffect(() => {
     setShouldLoadCommunity(false)
@@ -490,10 +473,15 @@ function ShopDetail() {
   function launchWhatsApp() {
     if (!currentShop?.whatsapp) return
 
-    let phone = currentShop.whatsapp.replace(/\D/g, "")
-    if (phone.startsWith("0")) phone = `234${phone.slice(1)}`
+    const phone = normalizeWhatsAppPhone(currentShop.whatsapp)
+    if (!phone) {
+      notify({ type: "error", title: "Invalid WhatsApp number", message: "This merchant's WhatsApp number is not valid yet." })
+      return
+    }
 
     const text = `Hello ${currentShop.name}, I found your shop on CTMerchant.`
+    setOpeningWhatsApp(true)
+
     if (user?.id) {
       void supabase
         .from("whatsapp_clicks")
@@ -501,8 +489,18 @@ function ShopDetail() {
         .catch(() => {})
     }
 
-    setSecurityModalOpen(false)
-    openWhatsAppConversation(phone, text)
+    const isDirectHandoff = shouldUseDirectWhatsAppHandoff()
+    const didLaunch = openWhatsAppConversation(phone, text)
+    if (!didLaunch) {
+      setOpeningWhatsApp(false)
+      notify({ type: "error", title: "WhatsApp did not open", message: "Please try again in a moment." })
+      return
+    }
+
+    if (!isDirectHandoff) {
+      setSecurityModalOpen(false)
+      setOpeningWhatsApp(false)
+    }
   }
 
   function formatPrice(value) {
@@ -1190,7 +1188,10 @@ function ShopDetail() {
             <div className="mt-6 flex gap-3">
               <button
                 type="button"
-                onClick={() => setSecurityModalOpen(false)}
+                onClick={() => {
+                  setSecurityModalOpen(false)
+                  setOpeningWhatsApp(false)
+                }}
                 className="flex-1 rounded-md border border-slate-300 bg-white px-4 py-3 font-bold text-[#0F1111] transition hover:bg-[#F7FAFA]"
               >
                 Cancel
@@ -1198,9 +1199,10 @@ function ShopDetail() {
               <button
                 type="button"
                 onClick={launchWhatsApp}
-                className="flex-1 rounded-md bg-[#25D366] px-4 py-3 font-bold text-white transition hover:bg-green-600"
+                disabled={openingWhatsApp}
+                className="flex-1 rounded-md bg-[#25D366] px-4 py-3 font-bold text-white transition hover:bg-green-600 disabled:cursor-wait disabled:opacity-70"
               >
-                Continue to Chat
+                {openingWhatsApp ? "Opening WhatsApp..." : "Continue to Chat"}
               </button>
             </div>
           </div>
