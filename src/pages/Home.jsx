@@ -38,6 +38,7 @@ import {
   preloadCreateAccountScreen,
   preloadDashboardScreen,
 } from "../lib/authScreenTransitions"
+import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 
 // --- LOCAL ASSET IMPORTS FOR CAROUSEL ---
 import banner2 from "../assets/images/banner2.jpg"
@@ -606,6 +607,7 @@ function Home() {
   async function handleRepoSearch() {
     const value = repoSearchValue.trim()
     if (!value || repoSearchLoading) return
+    const retryAction = () => handleRepoSearch()
 
     if (isOffline) {
       notify({
@@ -618,6 +620,7 @@ function Home() {
 
     try {
       setRepoSearchLoading(true)
+      beginTransition(retryAction)
 
       const { data, error } = await supabase.functions.invoke("repo-search", {
         body: { merchantId: value },
@@ -628,7 +631,18 @@ function Home() {
       }
 
       if (data?.shop?.id) {
-        navigate(`/shop-detail?id=${data.shop.id}`)
+        const shopId = data.shop.id
+        const prefetchedShopData = await prepareShopDetailTransition({
+          shopId,
+          userId: user?.id || null,
+        })
+
+        navigate(`/shop-detail?id=${shopId}`, {
+          state: {
+            fromDiscoveryTransition: true,
+            prefetchedShopData,
+          },
+        })
         return
       }
 
@@ -638,6 +652,7 @@ function Home() {
           title: "Shop not found",
           message: "We could not find any shop with that repository ID.",
         })
+        dismissTransitionError()
         return
       }
 
@@ -648,6 +663,10 @@ function Home() {
         title: "Repository search failed",
         message: getFriendlyErrorMessage(error, "Please try again."),
       })
+      failTransition(
+        getFriendlyErrorMessage(error, "Repository search failed. Please try again."),
+        retryAction
+      )
     } finally {
       setRepoSearchLoading(false)
     }

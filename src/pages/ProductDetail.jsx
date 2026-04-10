@@ -48,6 +48,11 @@ function ProductDetail() {
 
   const productId = searchParams.get("id")
   const shopSrc = searchParams.get("shop_src")
+  const routePrefetchedProductData =
+    location.state?.prefetchedProductData?.product &&
+    String(location.state.prefetchedProductData.product.id) === String(productId)
+      ? location.state.prefetchedProductData
+      : null
 
   usePreventPullToRefresh()
 
@@ -63,6 +68,12 @@ function ProductDetail() {
 
   // 3. Smart Caching Hook
   const cacheKey = buildProductDetailCacheKey(productId, user?.id || null)
+  if (routePrefetchedProductData && !readCachedFetchStore(cacheKey)) {
+    primeCachedFetchStore(cacheKey, routePrefetchedProductData, Date.now(), {
+      persist: "session",
+    })
+  }
+
   const { data, loading: dataLoading, error } = useCachedFetch(
     cacheKey,
     fetchProductData,
@@ -475,6 +486,8 @@ function ProductDetail() {
     })
 
     try {
+      let prefetchedProductData = cachedEntry?.data || null
+
       if (!hasFreshCache) {
         const transitionResult = await new Promise((resolve, reject) => {
           const timeoutId = window.setTimeout(() => {
@@ -495,12 +508,20 @@ function ProductDetail() {
             })
         })
 
-        primeCachedFetchStore(nextCacheKey, transitionResult)
+        prefetchedProductData = transitionResult
+        primeCachedFetchStore(nextCacheKey, transitionResult, Date.now(), {
+          persist: "session",
+        })
       }
 
       navigate(
         `/product-detail?id=${nextProductId}${currentShop?.id ? `&shop_src=${currentShop.id}` : ""}`,
-        { state: { fromProductTransition: true } }
+        {
+          state: {
+            fromProductTransition: true,
+            prefetchedProductData,
+          },
+        }
       )
     } catch (transitionError) {
       const safeMessage = isNetworkError(transitionError)

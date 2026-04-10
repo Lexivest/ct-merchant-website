@@ -410,10 +410,15 @@ function ShopDetail() {
     })
 
     try {
+      let prefetchedProductData = cachedEntry?.data || null
+
       if (hasFreshCache) {
         await loadProductDetailPage()
         navigate(`/product-detail?id=${productId}${shopId ? `&shop_src=${shopId}` : ""}`, {
-          state: { fromProductTransition: true },
+          state: {
+            fromProductTransition: true,
+            prefetchedProductData,
+          },
         })
         return
       }
@@ -437,10 +442,14 @@ function ShopDetail() {
           })
       })
 
-      primeCachedFetchStore(cacheKey, transitionResult)
+      prefetchedProductData = transitionResult
+      primeCachedFetchStore(cacheKey, transitionResult, Date.now(), { persist: "session" })
 
       navigate(`/product-detail?id=${productId}${shopId ? `&shop_src=${shopId}` : ""}`, {
-        state: { fromProductTransition: true },
+        state: {
+          fromProductTransition: true,
+          prefetchedProductData,
+        },
       })
     } catch (error) {
       console.error("Failed to open product detail", error)

@@ -295,6 +295,14 @@ function VendorsPanel() {
     }
   }
 
+  const showSubscriptionRequired = (message) => {
+    notify({
+      type: "error",
+      title: "Subscription required",
+      message,
+    })
+  }
+
   return (
     <div
       className={`flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
@@ -411,8 +419,14 @@ function VendorsPanel() {
             title="Shop Banner"
             icon={<FaCamera />}
             colorClass="bg-[#F3E8FF] text-[#9333EA]"
-            onClick={() =>
-              handleCardClick(`/merchant-banner?shop_id=${activeShop.id}`)
+            isLocked={!isSubscriptionActive}
+            onClick={
+              isSubscriptionActive
+                ? () => handleCardClick(`/merchant-banner?shop_id=${activeShop.id}`)
+                : () =>
+                    showSubscriptionRequired(
+                      "Please activate your service fee subscription to update your shop banner."
+                    )
             }
           />
 
@@ -420,8 +434,14 @@ function VendorsPanel() {
             title="Shop Settings"
             icon={<FaGear />}
             colorClass="bg-[#FFEDD5] text-[#EA580C]"
-            onClick={() =>
-              handleCardClick(`/merchant-settings?shop_id=${activeShop.id}`)
+            isLocked={!isSubscriptionActive}
+            onClick={
+              isSubscriptionActive
+                ? () => handleCardClick(`/merchant-settings?shop_id=${activeShop.id}`)
+                : () =>
+                    showSubscriptionRequired(
+                      "Please activate your service fee subscription to update shop settings."
+                    )
             }
           />
 
