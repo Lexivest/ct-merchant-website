@@ -102,6 +102,25 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
   )
 }
 
+function isHardReloadNavigation() {
+  if (typeof window === "undefined" || typeof performance === "undefined") {
+    return false
+  }
+
+  try {
+    const navigationEntries = performance.getEntriesByType("navigation")
+    const entry = Array.isArray(navigationEntries) ? navigationEntries[0] : null
+    if (entry?.type) {
+      return entry.type === "reload"
+    }
+  } catch {
+    // Fall back below.
+  }
+
+  const legacyNavigation = performance.navigation
+  return legacyNavigation?.type === 1
+}
+
 function resilientLazy(importer, options = {}) {
   return lazy(async () => {
     try {
@@ -202,6 +221,10 @@ function RouteLoadingScreen({
   title = "Loading your page",
   message = "Please wait while we prepare the next screen.",
 }) {
+  if (isHardReloadNavigation()) {
+    return null
+  }
+
   return <PageLoadingScreen title={title} message={message} />
 }
 

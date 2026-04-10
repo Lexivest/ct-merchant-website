@@ -735,7 +735,7 @@ function ShopDetail() {
     return null
   }
 
-  if (authLoading || (dataLoading && !data)) {
+  if (!data && (authLoading || dataLoading)) {
     return (
       <PageLoadingScreen
         title="Opening shop"

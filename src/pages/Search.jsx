@@ -452,7 +452,7 @@ function Search() {
       </header>
 
       <main className="mx-auto w-full max-w-[1600px] px-5 py-6">
-        {authLoading || (dataLoading && !data) ? (
+        {!data && (authLoading || dataLoading) ? (
           <PageLoadingScreen
             fullScreen={false}
             title="Loading search"

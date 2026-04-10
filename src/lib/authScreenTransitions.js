@@ -1,5 +1,6 @@
 import { fetchOpenCities } from "./auth"
 import { getFriendlyErrorMessage } from "./friendlyErrors"
+import { prepareDashboardTransition } from "./dashboardData"
 import { primeCachedFetchStore, readCachedFetchStore } from "../hooks/useCachedFetch"
 import { primeAuthSessionState } from "../hooks/useAuthSession"
 
@@ -40,7 +41,10 @@ export async function preloadDashboardScreen({
     profileLoaded,
   })
 
-  await import("../pages/UserDashboard")
+  return prepareDashboardTransition({
+    userId: user?.id || null,
+    profile,
+  })
 }
 
 export function getAuthScreenTransitionMessage(

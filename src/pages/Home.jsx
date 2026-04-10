@@ -165,8 +165,14 @@ function Home() {
       })
 
       try {
-        await preloadDashboardScreen(authState)
-        navigate("/user-dashboard", { replace })
+        const prefetchedDashboardData = await preloadDashboardScreen(authState)
+        navigate("/user-dashboard", {
+          replace,
+          state: {
+            fromAuthTransition: true,
+            prefetchedDashboardData,
+          },
+        })
         return true
       } catch (error) {
         transitionRetryRef.current = retryAction
