@@ -30,83 +30,36 @@ export function normalizeWhatsAppPhone(rawPhone, countryCode = "234") {
   return digits
 }
 
-function buildWhatsAppUrls(phone, text) {
-  const encodedText = encodeURIComponent(text || "")
-
-  return {
-    nativeUrl: `whatsapp://send?phone=${phone}&text=${encodedText}`,
-    apiUrl: `https://api.whatsapp.com/send?phone=${phone}&text=${encodedText}`,
-    waUrl: `https://wa.me/${phone}?text=${encodedText}`,
-    webUrl: `https://web.whatsapp.com/send?phone=${phone}&text=${encodedText}`,
-  }
-}
-
-function triggerDirectNavigation(url) {
-  const link = document.createElement("a")
-  link.href = url
-  link.rel = "noopener noreferrer"
-  link.style.display = "none"
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-}
-
 export function openWhatsAppConversation(phone, text) {
-  if (typeof window === "undefined" || typeof document === "undefined") return false
+  if (typeof window === "undefined") return false
 
   const normalizedPhone = normalizeWhatsAppPhone(phone)
   if (!normalizedPhone) return false
 
-  const urls = buildWhatsAppUrls(normalizedPhone, text)
+  const encodedText = encodeURIComponent(text || "")
+  
+  // Universal Link - works flawlessly on both Mobile and Desktop
+  const waUrl = `https://wa.me/${normalizedPhone}?text=${encodedText}`
 
-  if (!shouldUseDirectWhatsAppHandoff()) {
-    window.open(urls.webUrl, "_blank", "noopener,noreferrer")
-    return true
-  }
-
-  let cleanedUp = false
-  const timers = []
-
-  const cleanup = () => {
-    if (cleanedUp) return
-    cleanedUp = true
-    timers.forEach((timerId) => window.clearTimeout(timerId))
-    document.removeEventListener("visibilitychange", handleVisibilityChange)
-    window.removeEventListener("pagehide", cleanup)
-    window.removeEventListener("blur", cleanup)
-  }
-
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === "hidden") {
-      cleanup()
-    }
-  }
-
-  document.addEventListener("visibilitychange", handleVisibilityChange)
-  window.addEventListener("pagehide", cleanup, { once: true })
-  window.addEventListener("blur", cleanup, { once: true })
-
-  timers.push(
-    window.setTimeout(() => {
-      if (!cleanedUp && document.visibilityState === "visible") {
-        window.location.replace(urls.apiUrl)
-      }
-    }, 900)
-  )
-
-  timers.push(
-    window.setTimeout(() => {
-      if (!cleanedUp && document.visibilityState === "visible") {
-        window.location.replace(urls.waUrl)
-      }
-    }, 1800)
-  )
+  const isMobile = shouldUseDirectWhatsAppHandoff()
 
   try {
-    triggerDirectNavigation(urls.nativeUrl)
-  } catch {
-    window.location.assign(urls.apiUrl)
+    if (isMobile) {
+      // On mobile, direct window location change is the most reliable 
+      // way to trigger OS-level App Links without hitting popup blockers.
+      window.location.href = waUrl
+    } else {
+      // On desktop, pop a new tab. 
+      const newWindow = window.open(waUrl, "_blank", "noopener,noreferrer")
+      
+      // If a strict ad-blocker blocks the new tab, gracefully fallback to same-tab navigation
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
+        window.location.href = waUrl
+      }
+    }
+    return true
+  } catch (error) {
+    console.error("Failed to open WhatsApp:", error)
+    return false
   }
-
-  return true
 }
