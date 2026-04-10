@@ -80,6 +80,11 @@ function ShopDetail() {
   const [searchParams] = useSearchParams()
   const shopId = searchParams.get("id")
   const preselectedProductId = searchParams.get("comment_product")
+  const routePrefetchedShopData =
+    location.state?.prefetchedShopData?.shop &&
+    String(location.state.prefetchedShopData.shop.id) === String(shopId)
+      ? location.state.prefetchedShopData
+      : null
 
   usePreventPullToRefresh()
 
@@ -95,6 +100,12 @@ function ShopDetail() {
 
   // 3. Smart Caching Hook
   const cacheKey = buildShopDetailCacheKey(shopId, user?.id || null)
+  if (routePrefetchedShopData && !readCachedFetchStore(cacheKey)) {
+    primeCachedFetchStore(cacheKey, routePrefetchedShopData, Date.now(), {
+      persist: "session",
+    })
+  }
+
   const { data, loading: dataLoading, error, mutate } = useCachedFetch(
     cacheKey,
     fetchShopData,

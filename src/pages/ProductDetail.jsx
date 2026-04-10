@@ -91,6 +91,14 @@ function ProductDetail() {
     error: "",
   })
 
+  useEffect(() => {
+    setProductTransition({
+      pending: false,
+      productId: "",
+      error: "",
+    })
+  }, [productId])
+
   // Chat States
   const [chatOpen, setChatOpen] = useState(false)
   const [chatInput, setChatInput] = useState("")
