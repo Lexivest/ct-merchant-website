@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Navigate } from "react-router-dom"
+import { Navigate, useLocation } from "react-router-dom"
 import useAuthSession from "../../hooks/useAuthSession"
 import { supabase } from "../../lib/supabase"
 
@@ -49,11 +49,13 @@ function clearCachedSubscription() {
 }
 
 export default function SubscriptionGuard({ children }) {
+  const location = useLocation()
   const { user, loading, isOffline } = useAuthSession()
+  const routeVerifiedActive = location.state?.verifiedSubscriptionActive === true
   const [isActive, setIsActive] = useState(() =>
-    user?.id ? readCachedSubscription(user.id) : null
+    routeVerifiedActive ? true : user?.id ? readCachedSubscription(user.id) : null
   )
-  const [checking, setChecking] = useState(true)
+  const [checking, setChecking] = useState(() => !routeVerifiedActive)
 
   useEffect(() => {
     async function checkSubscription() {
@@ -97,10 +99,17 @@ export default function SubscriptionGuard({ children }) {
     }
 
     if (!loading) {
+      if (routeVerifiedActive && user?.id) {
+        writeCachedSubscription(user.id, true)
+        setIsActive(true)
+        setChecking(false)
+        return
+      }
+
       setChecking(true)
       void checkSubscription()
     }
-  }, [user, loading, isOffline])
+  }, [user, loading, isOffline, routeVerifiedActive])
 
   if (loading || checking) {
     return (

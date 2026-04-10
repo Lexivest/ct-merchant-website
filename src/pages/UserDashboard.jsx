@@ -14,6 +14,7 @@ import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import { buildShopDetailCacheKey, fetchShopDetailData } from "../lib/shopDetailData"
 import { supabase } from "../lib/supabase"
 import { UPLOAD_RULES, formatBytes } from "../lib/uploadRules"
+import { prepareVendorDashboardEntryTransition } from "../lib/vendorRouteTransitions"
 
 import DashboardHeader from "../components/dashboard/layout/DashboardHeader"
 import MarketSection from "../components/dashboard/sections/MarketSection"
@@ -26,8 +27,6 @@ const loadSearchPage = () => import("./Search")
 const loadAreaPage = () => import("./Area")
 const loadCatPage = () => import("./Cat")
 const loadShopIndexPage = () => import("./ShopIndex")
-const loadVendorsPanelPage = () => import("./VendorsPanel")
-const loadShopRegistrationPage = () => import("./ShopRegistration")
 
 const ServicesProfileSection = lazy(loadServicesProfileSection)
 
@@ -537,7 +536,7 @@ function UserDashboard() {
         })
         return
       }
-      void openDashboardRouteWithTransition("/shop-registration", loadShopRegistrationPage)
+      void openDashboardRouteWithTransition("/shop-registration")
       return
     }
 
@@ -569,18 +568,17 @@ function UserDashboard() {
         message: shopData.rejection_reason || "Please update your details and resubmit.",
       })
       void openDashboardRouteWithTransition(
-        `/shop-registration?id=${shopData.id}`,
-        loadShopRegistrationPage
+        `/shop-registration?id=${shopData.id}`
       )
       return
     }
 
     if (shopData.status === "approved") {
-      void openDashboardRouteWithTransition("/vendor-panel", loadVendorsPanelPage)
+      void openDashboardRouteWithTransition("/vendor-panel")
       return
     }
 
-    void openDashboardRouteWithTransition("/shop-registration", loadShopRegistrationPage)
+    void openDashboardRouteWithTransition("/shop-registration")
   }
 
   const currentProfile = localData.profile || profile
@@ -845,14 +843,19 @@ function UserDashboard() {
     }
   }
 
-  async function openDashboardRouteWithTransition(path, loader) {
-    if (!path || typeof loader !== "function") return
+  async function openDashboardRouteWithTransition(path) {
+    if (!path) return
 
-    const retryAction = () => openDashboardRouteWithTransition(path, loader)
+    const retryAction = () => openDashboardRouteWithTransition(path)
     beginRouteTransition(retryAction)
 
     try {
-      await loader()
+      await prepareVendorDashboardEntryTransition({
+        path,
+        userId: user?.id || null,
+        cityId: profile?.city_id || null,
+        shopId: shopData?.id || null,
+      })
       navigate(path, { state: { fromVendorTransition: true } })
     } catch (error) {
       failRouteTransition(

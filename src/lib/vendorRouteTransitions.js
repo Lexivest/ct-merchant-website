@@ -6,6 +6,8 @@ const VENDOR_TRANSITION_TIMEOUT = 12000
 const MAX_PRODUCTS_LIMIT = 30
 
 const vendorRouteLoaders = {
+  "/shop-registration": () => import("../pages/ShopRegistration"),
+  "/vendor-panel": () => import("../pages/VendorsPanel"),
   "/merchant-add-product": () => import("../pages/vendors/AddProduct"),
   "/merchant-products": () => import("../pages/vendors/MerchantProducts"),
   "/merchant-banner": () => import("../pages/vendors/MerchantBanner"),
@@ -105,6 +107,107 @@ async function prepareMerchantProductsData({ userId, shopId }) {
     kind: "merchant-products",
     shopId: String(shop.id),
   }
+}
+
+async function prepareVendorPanelData({ userId }) {
+  await fetchProfileSuspension(userId)
+
+  const { data: shopData, error: shopError } = await supabase
+    .from("shops")
+    .select("*, is_subscription_active")
+    .eq("owner_id", userId)
+    .maybeSingle()
+
+  if (shopError) throw shopError
+  if (!shopData) {
+    throw new Error("SHOP_NOT_FOUND")
+  }
+
+  if (shopData.status === "rejected" && shopData.kyc_status !== "rejected") {
+    throw new Error(
+      "Your shop application was rejected. Please contact support."
+    )
+  }
+
+  const { count, error: rejectedCountError } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("shop_id", shopData.id)
+    .eq("is_approved", false)
+    .not("rejection_reason", "is", null)
+
+  if (rejectedCountError) throw rejectedCountError
+
+  const { data: paymentRecord, error: paymentError } = await supabase
+    .from("physical_verification_payments")
+    .select("id")
+    .eq("merchant_id", userId)
+    .eq("status", "success")
+    .maybeSingle()
+
+  if (paymentError) throw paymentError
+
+  const payload = {
+    shop: shopData,
+    rejectedProductCount: count || 0,
+    hasPaidFee: Boolean(paymentRecord),
+  }
+
+  primeCachedFetchStore(`vendor_panel_${userId}`, payload)
+  return payload
+}
+
+async function prepareShopRegistrationData({ userId, cityId, shopId = null }) {
+  if (!cityId) {
+    throw new Error("Profile not fully configured.")
+  }
+
+  const tasks = [
+    supabase.from("categories").select("name").order("name"),
+    supabase.from("areas").select("id, name").eq("city_id", cityId).order("name"),
+    supabase.from("cities").select("id, name, is_open").eq("id", cityId).maybeSingle(),
+  ]
+
+  const isEdit = Boolean(shopId)
+  if (isEdit) {
+    tasks.push(
+      supabase
+        .from("shops")
+        .select("*")
+        .eq("id", shopId)
+        .eq("owner_id", userId)
+        .maybeSingle()
+    )
+  }
+
+  const results = await Promise.all(tasks)
+
+  if (results[0].error) throw results[0].error
+  if (results[1].error) throw results[1].error
+  if (results[2].error) throw results[2].error
+
+  let existingShop = null
+  if (isEdit) {
+    if (results[3].error) throw results[3].error
+    existingShop = results[3].data
+    if (!existingShop) {
+      throw new Error("Shop not found or access denied.")
+    }
+  }
+
+  const payload = {
+    categories: results[0].data || [],
+    areas: results[1].data || [],
+    cityData: results[2].data || null,
+    shop: existingShop,
+  }
+
+  const cacheKey = isEdit
+    ? `shop_reg_edit_${userId}_${shopId}`
+    : `shop_reg_new_${userId}_${cityId}`
+
+  primeCachedFetchStore(cacheKey, payload)
+  return payload
 }
 
 async function prepareAddProductData({ userId, shopId }) {
@@ -407,6 +510,53 @@ export async function prepareVendorRouteTransition({
       return prefetchedData
     },
     "Timed out while opening that merchant page.",
+    timeoutMs
+  )
+}
+
+export async function prepareVendorDashboardEntryTransition({
+  path,
+  userId,
+  cityId = null,
+  shopId = null,
+  timeoutMs = VENDOR_TRANSITION_TIMEOUT,
+}) {
+  const [pathname, search = ""] = String(path || "").split("?")
+  const routeLoader = vendorRouteLoaders[pathname]
+
+  if (!routeLoader) {
+    return null
+  }
+
+  return runTimedPreload(
+    async () => {
+      if (pathname === "/vendor-panel") {
+        await Promise.all([
+          prepareVendorPanelData({ userId }),
+          routeLoader(),
+        ])
+        return null
+      }
+
+      if (pathname === "/shop-registration") {
+        const searchParams = new URLSearchParams(search)
+        const editShopId = shopId || searchParams.get("id")
+
+        await Promise.all([
+          prepareShopRegistrationData({
+            userId,
+            cityId,
+            shopId: editShopId,
+          }),
+          routeLoader(),
+        ])
+        return null
+      }
+
+      await routeLoader()
+      return null
+    },
+    "Timed out while opening that page.",
     timeoutMs
   )
 }

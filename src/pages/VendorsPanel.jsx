@@ -254,12 +254,18 @@ function VendorsPanel() {
           state: {
             fromVendorTransition: true,
             prefetchedData,
+            verifiedSubscriptionActive: isSubscriptionActive,
           },
         })
         return
       }
 
-      navigate(path, { state: { fromVendorTransition: true } })
+      navigate(path, {
+        state: {
+          fromVendorTransition: true,
+          verifiedSubscriptionActive: isSubscriptionActive,
+        },
+      })
     } catch (error) {
       failRouteTransition(
         getFriendlyErrorMessage(
