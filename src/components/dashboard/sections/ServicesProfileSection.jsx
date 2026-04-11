@@ -90,7 +90,7 @@ function ServicesProfileSection({
   wishlistCount,
   prefetchedWishlistItems,
   onOpenWishlist,
-  onNavigate,
+  onOpenProduct,
   profileEditForm,
   setProfileEditForm,
   profileEditCities,
@@ -188,9 +188,7 @@ function ServicesProfileSection({
             onBack={() => setServiceView("menu")}
             user={user}
             prefetchedItems={prefetchedWishlistItems}
-            onOpenProduct={(productId) =>
-              onNavigate(`/product-detail?id=${productId}`)
-            }
+            onOpenProduct={onOpenProduct}
           />
         </LazyServiceView>
       )

@@ -122,7 +122,7 @@ function WishlistDashboardView({
                     type="button"
                     onClick={() =>
                       onOpenProduct
-                        ? onOpenProduct(product.id)
+                        ? onOpenProduct(product.id, product.shop_id)
                         : navigate(`/product-detail?id=${product.id}`)
                     }
                   className="relative overflow-hidden rounded-[22px] border border-slate-200 bg-white text-left shadow-[0_2px_6px_rgba(15,23,42,0.04)] transition hover:-translate-y-1 hover:border-pink-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.08)]"

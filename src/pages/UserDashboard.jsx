@@ -12,6 +12,7 @@ import useCachedFetch, {
 import useMyShop from "../hooks/useMyShop" // <-- Import our new logic file
 import { signOutUser } from "../lib/auth"
 import { buildDashboardCacheKey, fetchDashboardData } from "../lib/dashboardData"
+import { prepareProductDetailTransition } from "../lib/detailPageTransitions"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import { buildShopDetailCacheKey, fetchShopDetailData } from "../lib/shopDetailData"
 import { supabase } from "../lib/supabase"
@@ -873,6 +874,40 @@ function UserDashboard() {
     }
   }
 
+  async function openProductWithTransition(productId, shopId = "") {
+    if (!productId) return
+
+    const retryAction = () => openProductWithTransition(productId, shopId)
+    beginRouteTransition(retryAction)
+
+    try {
+      const prefetchedProductData = await prepareProductDetailTransition({
+        productId,
+        userId: user?.id || null,
+      })
+
+      navigate(
+        `/product-detail?id=${productId}${shopId ? `&shop_src=${shopId}` : ""}`,
+        {
+          state: {
+            fromProductTransition: true,
+            prefetchedProductData,
+          },
+        }
+      )
+    } catch (error) {
+      console.error("Failed to open product detail", error)
+      const safeMessage = isNetworkError(error)
+        ? "We could not open this product right now. Please try again."
+        : getFriendlyErrorMessage(
+            error,
+            "We could not open this product right now. Please try again."
+          )
+
+      failRouteTransition(safeMessage, retryAction)
+    }
+  }
+
   async function openProfileEdit() {
     const p = localData.profile
     if (!p) return
@@ -1516,7 +1551,7 @@ function UserDashboard() {
               wishlistCount={localData.wishlistCount}
               prefetchedWishlistItems={prefetchedWishlistItems}
               onOpenWishlist={openWishlistWithTransition}
-              onNavigate={navigate}
+              onOpenProduct={openProductWithTransition}
               profileEditForm={profileEditForm}
               setProfileEditForm={setProfileEditForm}
               profileEditCities={profileEditCities}
@@ -1553,7 +1588,7 @@ function UserDashboard() {
               wishlistCount={localData.wishlistCount}
               prefetchedWishlistItems={prefetchedWishlistItems}
               onOpenWishlist={openWishlistWithTransition}
-              onNavigate={navigate}
+              onOpenProduct={openProductWithTransition}
               profileEditForm={profileEditForm}
               setProfileEditForm={setProfileEditForm}
               profileEditCities={profileEditCities}
