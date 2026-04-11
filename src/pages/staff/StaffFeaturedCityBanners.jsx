@@ -1,23 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
-  FaCircleCheck,
   FaCircleNotch,
   FaCloudArrowUp,
   FaImage,
-  FaLocationDot,
   FaPause,
   FaPlay,
   FaTrashCan,
   FaWandMagicSparkles,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
-import { canvasToBlobWithMaxBytes, fileToDataUrl } from "../../lib/imagePipeline"
+import { canvasToBlobWithMaxBytes } from "../../lib/imagePipeline"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { UPLOAD_RULES } from "../../lib/uploadRules"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import StableImage from "../../components/common/StableImage"
 import { SectionHeading, StaffPortalShell, formatDateTime } from "./StaffPortalShared"
-import logoImage from "../../assets/images/logo.jpg"
 
 let html2canvasPromise = null
 
@@ -29,122 +26,124 @@ function loadHtml2canvas() {
 }
 
 const BANNER_RULE = UPLOAD_RULES.featuredCityBanners
-const TEMPLATE_OPTIONS = [
-  { key: "lifestyle", label: "Lifestyle Spotlight", bg: "from-[#003B95] via-[#1E40AF] to-[#2563EB]", accent: "#FBBF24" },
-  { key: "products", label: "Product Rack", bg: "from-[#003B95] via-[#075985] to-[#0EA5E9]", accent: "#F97316" },
-  { key: "local", label: "Local Trust", bg: "from-[#003B95] via-[#1D4ED8] to-[#38BDF8]", accent: "#10B981" },
+const BACKGROUND_OPTIONS = [
+  {
+    key: "lagoon-blue",
+    label: "Lagoon Blue",
+    bg: "from-[#043C83] via-[#0969B9] to-[#20B7E8]",
+    texture: "radial-gradient(circle_at_15%_20%,rgba(255,255,255,0.38),transparent_22%),radial-gradient(circle_at_82%_12%,rgba(236,72,153,0.3),transparent_20%),linear-gradient(135deg,rgba(255,255,255,0.14)_0_1px,transparent_1px_18px)",
+  },
+  {
+    key: "sunset-coral",
+    label: "Sunset Coral",
+    bg: "from-[#7C2D12] via-[#EA580C] to-[#F9A8D4]",
+    texture: "radial-gradient(circle_at_20%_18%,rgba(255,255,255,0.42),transparent_20%),radial-gradient(circle_at_78%_28%,rgba(254,240,138,0.34),transparent_24%),linear-gradient(45deg,rgba(255,255,255,0.12)_0_2px,transparent_2px_20px)",
+  },
+  {
+    key: "emerald-market",
+    label: "Emerald Market",
+    bg: "from-[#064E3B] via-[#059669] to-[#A7F3D0]",
+    texture: "radial-gradient(circle_at_12%_74%,rgba(255,255,255,0.34),transparent_22%),radial-gradient(circle_at_86%_18%,rgba(190,242,100,0.38),transparent_18%),linear-gradient(120deg,rgba(255,255,255,0.14)_0_1px,transparent_1px_16px)",
+  },
+  {
+    key: "royal-night",
+    label: "Royal Night",
+    bg: "from-[#111827] via-[#312E81] to-[#DB2777]",
+    texture: "radial-gradient(circle_at_18%_16%,rgba(255,255,255,0.22),transparent_18%),radial-gradient(circle_at_78%_70%,rgba(244,114,182,0.42),transparent_24%),linear-gradient(150deg,rgba(255,255,255,0.1)_0_1px,transparent_1px_22px)",
+  },
+  {
+    key: "golden-commerce",
+    label: "Golden Commerce",
+    bg: "from-[#78350F] via-[#D97706] to-[#FDE68A]",
+    texture: "radial-gradient(circle_at_20%_24%,rgba(255,255,255,0.45),transparent_18%),radial-gradient(circle_at_88%_16%,rgba(251,113,133,0.3),transparent_22%),linear-gradient(135deg,rgba(255,255,255,0.16)_0_1px,transparent_1px_14px)",
+  },
+  {
+    key: "berry-silk",
+    label: "Berry Silk",
+    bg: "from-[#831843] via-[#DB2777] to-[#FBCFE8]",
+    texture: "radial-gradient(circle_at_18%_20%,rgba(255,255,255,0.34),transparent_22%),radial-gradient(circle_at_80%_75%,rgba(147,197,253,0.3),transparent_24%),linear-gradient(60deg,rgba(255,255,255,0.16)_0_1px,transparent_1px_18px)",
+  },
+  {
+    key: "indigo-grid",
+    label: "Indigo Grid",
+    bg: "from-[#1E1B4B] via-[#3730A3] to-[#60A5FA]",
+    texture: "linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.12)_1px,transparent_1px),radial-gradient(circle_at_80%_20%,rgba(236,72,153,0.3),transparent_20%)",
+  },
+  {
+    key: "clean-sky",
+    label: "Clean Sky",
+    bg: "from-[#0F766E] via-[#22D3EE] to-[#EFF6FF]",
+    texture: "radial-gradient(circle_at_22%_22%,rgba(255,255,255,0.48),transparent_20%),radial-gradient(circle_at_78%_68%,rgba(14,165,233,0.28),transparent_26%),linear-gradient(140deg,rgba(255,255,255,0.18)_0_1px,transparent_1px_20px)",
+  },
 ]
 
-function getTemplate(key) {
-  return TEMPLATE_OPTIONS.find((item) => item.key === key) || TEMPLATE_OPTIONS[0]
-}
-
-function formatPrice(value) {
-  const amount = Number(value || 0)
-  return amount ? `NGN ${amount.toLocaleString()}` : ""
-}
-
-function initials(name) {
-  return String(name || "CT")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() || "")
-    .join("") || "CT"
+function getBackground(key) {
+  return BACKGROUND_OPTIONS.find((item) => item.key === key) || BACKGROUND_OPTIONS[0]
 }
 
 function FeaturedBannerArtwork({
   shop,
-  profile,
   products,
-  title,
-  subtitle,
-  templateKey,
-  lifestyleImage,
+  backgroundKey,
   exportMode = false,
   variant = "desktop",
 }) {
-  const template = getTemplate(templateKey)
+  const background = getBackground(backgroundKey)
   const isMobile = variant === "mobile"
   const shellClass = exportMode
     ? isMobile ? "h-[700px] w-[1200px]" : "h-[600px] w-[1600px]"
     : "aspect-[16/9] w-full sm:aspect-[8/3]"
-  const titleClass = exportMode ? "text-[72px]" : "text-3xl sm:text-5xl"
-  const copyClass = exportMode ? "text-[32px]" : "text-sm sm:text-xl"
-  const avatarClass = exportMode ? "h-28 w-28" : "h-16 w-16 sm:h-20 sm:w-20"
-  const tileClass = exportMode ? "h-[180px] w-[180px]" : "h-20 w-20 sm:h-32 sm:w-32"
-  const productList = (products || []).slice(0, isMobile ? 3 : 4)
+  const titleClass = exportMode ? (isMobile ? "text-[62px]" : "text-[66px]") : "text-xl sm:text-4xl"
+  const addressClass = exportMode ? "text-[28px]" : "text-[11px] sm:text-lg"
+  const tileClass = exportMode ? (isMobile ? "h-[220px] w-[180px]" : "h-[210px] w-[220px]") : "h-16 w-14 sm:h-28 sm:w-28"
+  const ctaClass = exportMode ? "px-12 py-5 text-[28px]" : "px-4 py-2 text-xs sm:px-7 sm:py-3 sm:text-sm"
+  const productList = (products || []).filter((product) => product?.image_url).slice(0, 5)
+  const productTiles = Array.from({ length: 5 }, (_, index) => productList[index] || null)
+  const displayAddress = shop?.address || shop?.category || "Visit this shop for available products and services."
 
   return (
-    <div className={`relative overflow-hidden rounded-[30px] bg-gradient-to-br ${template.bg} text-white shadow-2xl ${shellClass}`}>
-      <div className="absolute inset-0 opacity-25 [background-image:radial-gradient(circle_at_18%_22%,white_0,transparent_24%),radial-gradient(circle_at_80%_10%,white_0,transparent_18%)]" />
-      {lifestyleImage ? (
-        <img crossOrigin="anonymous" src={lifestyleImage} alt="" className="absolute inset-y-0 right-0 h-full w-[48%] object-cover opacity-80" />
-      ) : (
-        <div className="absolute inset-y-0 right-0 w-[50%] overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_34%_30%,rgba(255,255,255,0.5),transparent_25%),radial-gradient(circle_at_70%_62%,rgba(244,114,182,0.55),transparent_28%)]" />
-          <div className="absolute bottom-[12%] right-[18%] h-[48%] w-[28%] rotate-6 rounded-[32px] border-[10px] border-slate-950 bg-white shadow-2xl">
-            <div className="h-full rounded-[20px] bg-gradient-to-br from-pink-100 via-white to-blue-100 p-4" />
+    <div className={`relative overflow-hidden rounded-[30px] bg-gradient-to-br ${background.bg} text-white shadow-2xl ${shellClass}`}>
+      <div className="absolute inset-0 opacity-70" style={{ backgroundImage: background.texture, backgroundSize: "auto, auto, 28px 28px" }} />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/18 via-black/4 to-black/24" />
+      <div className="absolute -left-[7%] -top-[28%] h-[52%] w-[34%] rounded-full bg-white/22 blur-2xl" />
+      <div className="absolute -bottom-[24%] right-[4%] h-[46%] w-[32%] rounded-full bg-pink-300/30 blur-2xl" />
+
+      <div className={`relative z-[2] flex h-full flex-col items-center ${exportMode ? "px-16 py-12" : "px-4 py-4 sm:px-8 sm:py-7"}`}>
+        <div className="w-full text-center">
+          <div className={`mx-auto max-w-[92%] truncate font-black leading-[0.95] tracking-tight drop-shadow-lg ${titleClass}`}>
+            {shop?.name || "Featured Shop"}
           </div>
-          <div className="absolute bottom-[10%] left-[14%] flex h-[34%] w-[34%] items-center justify-center rounded-full bg-gradient-to-br from-pink-200 to-emerald-400 text-xl font-black text-white shadow-2xl">
-            CTM
+          <div className={`mx-auto mt-2 max-w-[88%] truncate font-bold leading-tight text-white/88 drop-shadow ${addressClass}`}>
+            {displayAddress}
           </div>
         </div>
-      )}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#003B95]/92 via-[#003B95]/55 to-[#003B95]/12" />
 
-      <div className={`relative z-[2] flex h-full flex-col justify-between ${exportMode ? "p-16" : "p-5 sm:p-9"}`}>
-        <div>
-          <div className="mb-5 flex items-center gap-4">
-            {profile?.avatar_url || shop?.image_url ? (
-              <img crossOrigin="anonymous" src={profile?.avatar_url || shop?.image_url} alt={shop?.name || "Shop"} className={`${avatarClass} rounded-3xl border-4 border-white/20 bg-white object-cover shadow-xl`} />
-            ) : (
-              <div className={`${avatarClass} flex items-center justify-center rounded-3xl border-4 border-white/20 bg-white/15 text-3xl font-black shadow-xl`}>
-                {initials(shop?.name)}
-              </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-pink-100 sm:text-sm">
-                <img src={logoImage} alt="" className="h-5 w-5 rounded bg-white object-cover" />
-                CTMerchant Featured
-              </div>
-              {shop?.is_verified ? (
-                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1 text-xs font-black uppercase tracking-wide text-white">
-                  <FaCircleCheck /> Verified Shop
+        <div className={`flex flex-1 items-center justify-center gap-2 sm:gap-4 ${exportMode ? "mt-10" : "mt-3 sm:mt-5"}`}>
+          {productTiles.map((product, index) => (
+            <div
+              key={product?.id || `placeholder-${index}`}
+              className={`overflow-hidden border border-white/35 bg-white/96 shadow-2xl ring-1 ring-black/5 ${tileClass} ${
+                index === 0 || index === 4 ? "rotate-[-3deg] rounded-[26px]" : index === 2 ? "scale-110 rounded-[30px]" : "rotate-[3deg] rounded-[26px]"
+              }`}
+            >
+              {product?.image_url ? (
+                <img
+                  crossOrigin="anonymous"
+                  src={product.image_url}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-slate-100 text-slate-300">
+                  <FaImage />
                 </div>
-              ) : null}
+              )}
             </div>
-          </div>
-
-          <div className={`max-w-[58%] font-black leading-[0.98] tracking-tight ${titleClass}`}>
-            {title || shop?.name || "Featured Shop"}
-          </div>
-          <div className={`mt-4 max-w-[56%] font-bold leading-snug text-white/86 ${copyClass}`}>
-            {subtitle || shop?.address || "Discover selected products and trusted service near you."}
-          </div>
-          {shop?.address ? (
-            <div className="mt-5 flex max-w-[54%] items-center gap-2 text-xs font-black uppercase tracking-wide text-pink-100 sm:text-sm">
-              <FaLocationDot className="shrink-0" />
-              <span className="line-clamp-1">{shop.address}</span>
-            </div>
-          ) : null}
+          ))}
         </div>
 
-        <div className="flex items-end justify-between gap-6">
-          <div className="flex gap-3">
-            {productList.map((product, index) => (
-              <div key={product.id || index} className={`overflow-hidden rounded-3xl border border-white/15 bg-white p-2 text-slate-950 shadow-xl ${tileClass}`}>
-                {product.image_url ? (
-                  <img crossOrigin="anonymous" src={product.image_url} alt={product.name || "Product"} className="h-[72%] w-full object-contain" />
-                ) : (
-                  <div className="flex h-[72%] items-center justify-center rounded-2xl bg-slate-100 text-slate-300"><FaImage /></div>
-                )}
-                <div className="mt-1 truncate text-center text-[10px] font-black sm:text-xs">{product.name || "Product"}</div>
-                <div className="truncate text-center text-[10px] font-black text-pink-600 sm:text-xs">{formatPrice(product.discount_price || product.price)}</div>
-              </div>
-            ))}
-          </div>
-          <div className="rounded-full px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-xl" style={{ backgroundColor: template.accent }}>
+        <div className="flex w-full justify-center">
+          <div className={`rounded-full bg-pink-600 font-black uppercase tracking-[0.18em] text-white shadow-[0_18px_45px_rgba(219,39,119,0.4)] ring-4 ring-white/28 ${ctaClass}`}>
             Visit Shop
           </div>
         </div>
@@ -162,18 +161,13 @@ export default function StaffFeaturedCityBanners() {
   const [cities, setCities] = useState([])
   const [shops, setShops] = useState([])
   const [productsByShopId, setProductsByShopId] = useState({})
-  const [profilesById, setProfilesById] = useState({})
   const [banners, setBanners] = useState([])
   const [selectedCityId, setSelectedCityId] = useState("")
   const [selectedShopId, setSelectedShopId] = useState("")
-  const [templateKey, setTemplateKey] = useState("lifestyle")
-  const [lifestyleImage, setLifestyleImage] = useState("")
-  const [title, setTitle] = useState("")
-  const [subtitle, setSubtitle] = useState("")
+  const [backgroundKey, setBackgroundKey] = useState(BACKGROUND_OPTIONS[0].key)
   const [sortOrder, setSortOrder] = useState(0)
 
   const selectedShop = useMemo(() => shops.find((shop) => String(shop.id) === String(selectedShopId)) || null, [shops, selectedShopId])
-  const selectedProfile = selectedShop?.owner_id ? profilesById[selectedShop.owner_id] || null : null
   const selectedProducts = selectedShop ? productsByShopId[String(selectedShop.id)] || [] : []
 
   const loadInitialData = useCallback(async () => {
@@ -183,7 +177,7 @@ export default function StaffFeaturedCityBanners() {
         supabase.from("cities").select("id, name, state").order("state").order("name"),
         supabase
           .from("featured_city_banners")
-          .select("*, cities(name, state), shops(name, category, address, image_url, is_verified)")
+          .select("*, cities(name, state), shops(name, category, address, image_url)")
           .order("created_at", { ascending: false })
           .limit(100),
       ])
@@ -212,9 +206,8 @@ export default function StaffFeaturedCityBanners() {
     try {
       const { data: shopRows, error: shopsError } = await supabase
         .from("shops")
-        .select("id, owner_id, name, category, address, image_url, is_verified, is_open, status, subscription_end_date")
+        .select("id, name, category, address, image_url, is_open, status, subscription_end_date")
         .eq("city_id", cityId)
-        .order("is_verified", { ascending: false })
         .order("name", { ascending: true })
         .limit(120)
 
@@ -231,21 +224,16 @@ export default function StaffFeaturedCityBanners() {
       )
 
       const shopIds = safeShops.map((shop) => shop.id)
-      const ownerIds = Array.from(new Set(safeShops.map((shop) => shop.owner_id).filter(Boolean)))
-      const [productsResult, profilesResult] = await Promise.all([
-        shopIds.length
-          ? supabase
-              .from("products")
-              .select("id, shop_id, name, price, discount_price, image_url, condition, is_available")
-              .in("shop_id", shopIds)
-              .eq("is_available", true)
-              .order("id", { ascending: true })
-              .limit(360)
-          : Promise.resolve({ data: [], error: null }),
-        ownerIds.length
-          ? supabase.rpc("get_public_profiles", { profile_ids: ownerIds })
-          : Promise.resolve({ data: [], error: null }),
-      ])
+      const productsResult = shopIds.length
+        ? await supabase
+            .from("products")
+            .select("id, shop_id, image_url, is_available")
+            .in("shop_id", shopIds)
+            .eq("is_available", true)
+            .not("image_url", "is", null)
+            .order("id", { ascending: true })
+            .limit(600)
+        : { data: [], error: null }
 
       if (productsResult.error) throw productsResult.error
 
@@ -254,15 +242,9 @@ export default function StaffFeaturedCityBanners() {
         if (!product.shop_id || !product.image_url) return
         const key = String(product.shop_id)
         if (!nextProducts[key]) nextProducts[key] = []
-        if (nextProducts[key].length < 4) nextProducts[key].push(product)
+        if (nextProducts[key].length < 5) nextProducts[key].push(product)
       })
       setProductsByShopId(nextProducts)
-
-      const nextProfiles = {}
-      ;(profilesResult.data || []).forEach((profile) => {
-        nextProfiles[profile.id] = profile
-      })
-      setProfilesById(nextProfiles)
     } catch (error) {
       notify({
         type: "error",
@@ -279,26 +261,6 @@ export default function StaffFeaturedCityBanners() {
   useEffect(() => {
     void loadCityShops(selectedCityId)
   }, [loadCityShops, selectedCityId])
-
-  useEffect(() => {
-    if (!selectedShop) return
-    setTitle(selectedShop.name || "")
-    setSubtitle(selectedShop.address || "")
-  }, [selectedShop])
-
-  async function handleLifestyleFile(file) {
-    if (!file) return
-    try {
-      if (!file.type.startsWith("image/")) throw new Error("Please select an image file.")
-      setLifestyleImage(await fileToDataUrl(file))
-    } catch (error) {
-      notify({
-        type: "error",
-        title: "Photo unavailable",
-        message: getFriendlyErrorMessage(error, "Could not open the selected lifestyle photo."),
-      })
-    }
-  }
 
   async function waitForAssets(node) {
     if (!node) return
@@ -383,10 +345,9 @@ export default function StaffFeaturedCityBanners() {
       const { error } = await supabase.from("featured_city_banners").insert({
         city_id: Number(selectedCityId),
         shop_id: Number(selectedShop.id),
-        title: title.trim() || selectedShop.name,
-        subtitle: subtitle.trim() || selectedShop.address || selectedShop.category || "",
-        template_key: templateKey,
-        lifestyle_asset_key: lifestyleImage ? "custom-upload" : "built-in-graphic",
+        title: selectedShop.name,
+        subtitle: selectedShop.address || selectedShop.category || "",
+        template_key: backgroundKey,
         desktop_image_path: desktopPath,
         desktop_image_url: desktopUrl,
         mobile_image_path: mobilePath,
@@ -462,7 +423,7 @@ export default function StaffFeaturedCityBanners() {
       <SectionHeading
         eyebrow="Marketplace Feature"
         title="City Featured Shop Carousel"
-        description="Choose a city and shop, compose a CTM-branded banner, then publish it to the market screen."
+        description="Choose a city and shop, pick a textured background, then publish a shop-first banner to the market screen."
       />
 
       {loading ? (
@@ -481,26 +442,27 @@ export default function StaffFeaturedCityBanners() {
 
             <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">Shop</label>
             <select value={selectedShopId} onChange={(event) => setSelectedShopId(event.target.value)} className="mb-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-pink-400">
-              {shops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name} {shop.is_verified ? "(verified)" : ""}</option>)}
+              {shops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}
             </select>
 
-            <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">Template</label>
-            <div className="mb-4 grid grid-cols-1 gap-2">
-              {TEMPLATE_OPTIONS.map((template) => (
-                <button key={template.key} type="button" onClick={() => setTemplateKey(template.key)} className={`rounded-2xl border px-4 py-3 text-left text-sm font-black transition ${templateKey === template.key ? "border-pink-500 bg-pink-50 text-pink-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
-                  {template.label}
+            <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">Background</label>
+            <div className="mb-4 grid grid-cols-2 gap-2">
+              {BACKGROUND_OPTIONS.map((background) => (
+                <button
+                  key={background.key}
+                  type="button"
+                  onClick={() => setBackgroundKey(background.key)}
+                  className={`overflow-hidden rounded-2xl border p-2 text-left text-xs font-black transition ${
+                    backgroundKey === background.key ? "border-pink-500 bg-pink-50 text-pink-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <span className={`relative mb-2 block h-10 overflow-hidden rounded-xl bg-gradient-to-br ${background.bg}`}>
+                    <span className="absolute inset-0 opacity-70" style={{ backgroundImage: background.texture }} />
+                  </span>
+                  {background.label}
                 </button>
               ))}
             </div>
-
-            <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">Custom Lifestyle Photo</label>
-            <input type="file" accept="image/*" onChange={(event) => void handleLifestyleFile(event.target.files?.[0])} className="mb-4 block w-full rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600" />
-
-            <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">Title</label>
-            <input value={title} onChange={(event) => setTitle(event.target.value)} className="mb-4 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold outline-none focus:border-pink-400" />
-
-            <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">Subtitle</label>
-            <textarea value={subtitle} onChange={(event) => setSubtitle(event.target.value)} rows={3} className="mb-4 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold outline-none focus:border-pink-400" />
 
             <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">Sort Order</label>
             <input type="number" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} className="mb-5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold outline-none focus:border-pink-400" />
@@ -520,7 +482,7 @@ export default function StaffFeaturedCityBanners() {
                 </div>
                 <FaWandMagicSparkles className="text-2xl text-pink-600" />
               </div>
-              <FeaturedBannerArtwork shop={selectedShop} profile={selectedProfile} products={selectedProducts} title={title} subtitle={subtitle} templateKey={templateKey} lifestyleImage={lifestyleImage} />
+              <FeaturedBannerArtwork shop={selectedShop} products={selectedProducts} backgroundKey={backgroundKey} />
             </div>
 
             <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
@@ -578,10 +540,10 @@ export default function StaffFeaturedCityBanners() {
 
       <div className="pointer-events-none fixed left-[-10000px] top-0 opacity-0">
         <div ref={desktopExportRef}>
-          <FeaturedBannerArtwork shop={selectedShop} profile={selectedProfile} products={selectedProducts} title={title} subtitle={subtitle} templateKey={templateKey} lifestyleImage={lifestyleImage} exportMode variant="desktop" />
+          <FeaturedBannerArtwork shop={selectedShop} products={selectedProducts} backgroundKey={backgroundKey} exportMode variant="desktop" />
         </div>
         <div ref={mobileExportRef}>
-          <FeaturedBannerArtwork shop={selectedShop} profile={selectedProfile} products={selectedProducts} title={title} subtitle={subtitle} templateKey={templateKey} lifestyleImage={lifestyleImage} exportMode variant="mobile" />
+          <FeaturedBannerArtwork shop={selectedShop} products={selectedProducts} backgroundKey={backgroundKey} exportMode variant="mobile" />
         </div>
       </div>
     </StaffPortalShell>
