@@ -55,28 +55,6 @@ function wrapTextLines(input, maxCharsPerLine, maxLines) {
   return lines.slice(0, maxLines);
 }
 
-function escapeXml(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function svgTextLines({ lines, x, y, fontSize, lineHeight, weight = 700, fill = "#FFFFFF", anchor = "start" }) {
-  return (lines || [])
-    .filter(Boolean)
-    .map((line, index) => (
-      `<text x="${x}" y="${y + index * lineHeight}" text-anchor="${anchor}" font-family="Verdana, Arial, sans-serif" font-size="${fontSize}" font-weight="${weight}" fill="${fill}">${escapeXml(line)}</text>`
-    ))
-    .join("");
-}
-
-function svgToDataUrl(svg) {
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-}
-
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -98,6 +76,20 @@ async function imageUrlToDataUrl(url) {
   }
 }
 
+function loadImageElement(src) {
+  return new Promise((resolve, reject) => {
+    if (!src) {
+      resolve(null);
+      return;
+    }
+
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Could not load banner image."));
+    image.src = src;
+  });
+}
+
 function formatPromoPrice(product) {
   const price = Number(product?.price || 0);
   const discount = Number(product?.discount_price || 0);
@@ -105,20 +97,136 @@ function formatPromoPrice(product) {
   return finalPrice > 0 ? `NGN ${finalPrice.toLocaleString()}` : "";
 }
 
-function buildPromoBannerSvg({
+function setCanvasFont(context, weight, size) {
+  context.font = `${weight} ${size}px Verdana, Arial, sans-serif`;
+}
+
+function roundedRectPath(context, x, y, width, height, radius) {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+  context.beginPath();
+  context.moveTo(x + safeRadius, y);
+  context.lineTo(x + width - safeRadius, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  context.lineTo(x + width, y + height - safeRadius);
+  context.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+  context.lineTo(x + safeRadius, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  context.lineTo(x, y + safeRadius);
+  context.quadraticCurveTo(x, y, x + safeRadius, y);
+  context.closePath();
+}
+
+function fillRoundedRect(context, x, y, width, height, radius, fillStyle) {
+  roundedRectPath(context, x, y, width, height, radius);
+  context.fillStyle = fillStyle;
+  context.fill();
+}
+
+function strokeRoundedRect(context, x, y, width, height, radius, strokeStyle, lineWidth = 1) {
+  roundedRectPath(context, x, y, width, height, radius);
+  context.strokeStyle = strokeStyle;
+  context.lineWidth = lineWidth;
+  context.stroke();
+}
+
+function truncateMeasuredText(context, value, maxWidth) {
+  const text = String(value || "").trim();
+  if (!text || context.measureText(text).width <= maxWidth) return text;
+
+  let clipped = text;
+  while (clipped.length > 1 && context.measureText(`${clipped}...`).width > maxWidth) {
+    clipped = clipped.slice(0, -1).trimEnd();
+  }
+  return `${clipped}...`;
+}
+
+function wrapMeasuredText(context, value, maxWidth, maxLines) {
+  const words = String(value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .filter(Boolean);
+
+  if (!words.length) return [];
+
+  const lines = [];
+  let current = "";
+
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (context.measureText(next).width <= maxWidth || !current) {
+      current = next;
+    } else {
+      lines.push(current);
+      current = word;
+    }
+
+    if (lines.length === maxLines) break;
+  }
+
+  if (lines.length < maxLines && current) {
+    lines.push(current);
+  }
+
+  if (lines.length > maxLines) lines.length = maxLines;
+
+  const original = words.join(" ");
+  const drawn = lines.join(" ");
+  if (lines.length && drawn.length < original.length) {
+    lines[lines.length - 1] = truncateMeasuredText(context, lines[lines.length - 1], maxWidth);
+  }
+
+  return lines;
+}
+
+function drawWrappedText(context, value, x, y, maxWidth, lineHeight, maxLines, options = {}) {
+  const {
+    weight = 700,
+    size = 18,
+    fillStyle = "#FFFFFF",
+    align = "left",
+  } = options;
+
+  setCanvasFont(context, weight, size);
+  context.fillStyle = fillStyle;
+  context.textAlign = align;
+  context.textBaseline = "alphabetic";
+
+  const lines = wrapMeasuredText(context, value, maxWidth, maxLines);
+  lines.forEach((line, index) => {
+    context.fillText(line, x, y + index * lineHeight);
+  });
+  return lines;
+}
+
+function drawContainedImage(context, image, x, y, width, height, background = "#F8FAFC") {
+  fillRoundedRect(context, x, y, width, height, 8, background);
+  if (!image) return;
+
+  const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+  const drawWidth = image.naturalWidth * scale;
+  const drawHeight = image.naturalHeight * scale;
+  const drawX = x + (width - drawWidth) / 2;
+  const drawY = y + (height - drawHeight) / 2;
+
+  context.save();
+  roundedRectPath(context, x, y, width, height, 8);
+  context.clip();
+  context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+  context.restore();
+}
+
+async function generatePromoBannerCanvasBlob({
   products,
-  shopNameLines,
-  categoryLines,
-  addressLines,
+  shopName,
+  category,
+  address,
   uniqueId,
   websiteText,
   shopId,
-  logoDataUrl,
-  qrDataUrl,
-  width = 800,
-  height = 1080,
 }) {
-  const safeProducts = Array.from({ length: 4 }, (_, index) => products?.[index] || {});
+  const width = 800;
+  const height = 1080;
   const headerHeight = 190;
   const gridPadding = 8;
   const gridGap = 8;
@@ -128,149 +236,18 @@ function buildPromoBannerSvg({
   const imageHeight = 252;
   const footerY = gridY + gridPadding * 2 + tileHeight * 2 + gridGap;
   const footerHeight = height - footerY;
-  const qrText = `https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`;
-
-  const productMarkup = safeProducts
-    .map((product, index) => {
-      const col = index % 2;
-      const row = Math.floor(index / 2);
-      const x = gridPadding + col * (tileWidth + gridGap);
-      const y = gridY + gridPadding + row * (tileHeight + gridGap);
-      const image = product.svgImageUrl || product.image_url || "";
-      const productName = wrapTextLines(product.name || "Featured Product", 30, 1)[0] || "";
-      const price = formatPromoPrice(product);
-      const hasDiscount = Number(product.discount_price || 0) > 0 && Number(product.discount_price) < Number(product.price || 0);
-      const discountPct = hasDiscount
-        ? Math.round(((Number(product.price) - Number(product.discount_price)) / Number(product.price)) * 100)
-        : 0;
-      const isUsed = product.condition === "Fairly Used";
-
-      return `
-        <g>
-          <rect x="${x}" y="${y}" width="${tileWidth}" height="${tileHeight}" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
-          <clipPath id="promoProductClip${index}">
-            <rect x="${x + 8}" y="${y + 8}" width="${tileWidth - 16}" height="${imageHeight - 16}" rx="8"/>
-          </clipPath>
-          <rect x="${x + 8}" y="${y + 8}" width="${tileWidth - 16}" height="${imageHeight - 16}" rx="8" fill="#F8FAFC"/>
-          ${
-            image
-              ? `<image href="${escapeXml(image)}" x="${x + 8}" y="${y + 8}" width="${tileWidth - 16}" height="${imageHeight - 16}" preserveAspectRatio="xMidYMid meet" clip-path="url(#promoProductClip${index})"/>`
-              : `<text x="${x + tileWidth / 2}" y="${y + 140}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="44" fill="#CBD5E1">+</text>`
-          }
-          ${
-            hasDiscount
-              ? `<rect x="${x + 14}" y="${y + 14}" width="68" height="30" rx="5" fill="#DC2626"/><text x="${x + 48}" y="${y + 35}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="15" font-weight="800" fill="#FFFFFF">-${discountPct}%</text>`
-              : ""
-          }
-          ${
-            isUsed
-              ? `<rect x="${x + tileWidth - 72}" y="${y + 14}" width="58" height="30" rx="5" fill="#D97706"/><text x="${x + tileWidth - 43}" y="${y + 35}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="15" font-weight="800" fill="#FFFFFF">Used</text>`
-              : ""
-          }
-          <line x1="${x}" y1="${y + imageHeight}" x2="${x + tileWidth}" y2="${y + imageHeight}" stroke="#E2E8F0"/>
-          <text x="${x + tileWidth / 2}" y="${y + imageHeight + 42}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="18" font-weight="800" fill="#0F1111">${escapeXml(productName)}</text>
-          <text x="${x + tileWidth / 2}" y="${y + imageHeight + 82}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="26" font-weight="900" fill="#EA580C">${escapeXml(price)}</text>
-        </g>
-      `;
-    })
-    .join("");
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-  <defs>
-    <filter id="promoShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#0F172A" flood-opacity="0.18"/>
-    </filter>
-  </defs>
-  <rect width="${width}" height="${height}" rx="26" fill="#003B95"/>
-  <rect x="0" y="${gridY}" width="${width}" height="${footerY - gridY}" fill="#FFFFFF"/>
-  <rect x="0" y="${footerY}" width="${width}" height="${footerHeight}" fill="#1E3A8A"/>
-
-  <g>
-    ${
-      logoDataUrl
-        ? `<image href="${escapeXml(logoDataUrl)}" x="24" y="24" width="34" height="34" preserveAspectRatio="xMidYMid slice"/>`
-        : `<rect x="24" y="24" width="34" height="34" rx="4" fill="#FFFFFF" opacity="0.9"/>`
-    }
-    <text x="70" y="49" font-family="Verdana, Arial, sans-serif" font-size="17" font-weight="800" fill="#FFFFFF" opacity="0.92">${escapeXml(websiteText)}</text>
-    ${svgTextLines({ lines: shopNameLines, x: 24, y: 94, fontSize: 25, lineHeight: 30, weight: 900 })}
-    <text x="24" y="160" font-family="Verdana, Arial, sans-serif" font-size="20" font-weight="900" fill="#93C5FD">ID: ${escapeXml(uniqueId)}</text>
-    ${svgTextLines({ lines: categoryLines, x: 190, y: 160, fontSize: 17, lineHeight: 22, weight: 900, fill: "#FBBF24" })}
-    <rect x="704" y="24" width="72" height="72" rx="10" fill="#FFFFFF"/>
-    ${
-      qrDataUrl
-        ? `<image href="${escapeXml(qrDataUrl)}" x="710" y="30" width="60" height="60" preserveAspectRatio="xMidYMid meet"/>`
-        : `<text x="740" y="68" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="12" font-weight="900" fill="#003B95">QR</text>`
-    }
-    <text x="704" y="122" font-family="Verdana, Arial, sans-serif" font-size="10" font-weight="800" fill="#BFDBFE">${escapeXml(qrText.slice(0, 25))}</text>
-  </g>
-
-  <g filter="url(#promoShadow)">
-    ${productMarkup}
-  </g>
-
-  <g>
-    <text x="${width / 2}" y="${footerY + 48}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="18" font-weight="800" fill="#FFFFFF">
-      ${escapeXml(addressLines.join(" "))}
-    </text>
-    <text x="${width / 2}" y="${footerY + 92}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="15" font-weight="900" letter-spacing="3" fill="#93C5FD">
-      ENTER ID IN REPO OR SCAN TO VIEW SHOP
-    </text>
-  </g>
-</svg>`;
-}
-
-async function buildStandalonePromoBannerSvg({
-  products,
-  shopNameLines,
-  categoryLines,
-  addressLines,
-  uniqueId,
-  websiteText,
-  shopId,
-}) {
+  const safeProducts = Array.from({ length: 4 }, (_, index) => products?.[index] || {});
   const qrUrl = `https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`;
-  const [logoDataUrl, qrDataUrl, embeddedProducts] = await Promise.all([
+  const [logoDataUrl, qrDataUrl, productDataUrls] = await Promise.all([
     imageUrlToDataUrl(logoImage),
     imageUrlToDataUrl(qrUrl),
-    Promise.all(
-      (products || []).slice(0, 4).map(async (product) => ({
-        ...product,
-        svgImageUrl: await imageUrlToDataUrl(product.image_url),
-      })),
-    ),
+    Promise.all(safeProducts.map((product) => imageUrlToDataUrl(product.image_url))),
   ]);
-
-  return buildPromoBannerSvg({
-    products: embeddedProducts,
-    shopNameLines,
-    categoryLines,
-    addressLines,
-    uniqueId,
-    websiteText,
-    shopId,
-    logoDataUrl,
-    qrDataUrl,
-  });
-}
-
-async function svgToPngBlob(svg, width = 800, height = 1080) {
-  const image = new Image();
-  image.decoding = "async";
-
-  await new Promise((resolve, reject) => {
-    image.onload = resolve;
-    image.onerror = () => reject(new Error("Could not render generated promo banner."));
-    image.src = svgToDataUrl(svg);
-  });
-
-  if (typeof image.decode === "function") {
-    try {
-      await image.decode();
-    } catch {
-      // The load event already confirmed the SVG can render.
-    }
-  }
+  const [logo, qr, productImages] = await Promise.all([
+    loadImageElement(logoDataUrl).catch(() => null),
+    loadImageElement(qrDataUrl).catch(() => null),
+    Promise.all(productDataUrls.map((dataUrl) => loadImageElement(dataUrl).catch(() => null))),
+  ]);
 
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -281,7 +258,98 @@ async function svgToPngBlob(svg, width = 800, height = 1080) {
 
   context.fillStyle = "#003B95";
   context.fillRect(0, 0, width, height);
-  context.drawImage(image, 0, 0, width, height);
+  context.fillStyle = "#FFFFFF";
+  context.fillRect(0, gridY, width, footerY - gridY);
+  context.fillStyle = "#1E3A8A";
+  context.fillRect(0, footerY, width, footerHeight);
+
+  if (logo) {
+    context.drawImage(logo, 24, 24, 34, 34);
+  } else {
+    fillRoundedRect(context, 24, 24, 34, 34, 4, "#FFFFFF");
+  }
+
+  setCanvasFont(context, 800, 17);
+  context.fillStyle = "rgba(255,255,255,0.92)";
+  context.textAlign = "left";
+  context.fillText(websiteText, 70, 49);
+  drawWrappedText(context, shopName, 24, 94, 640, 31, 2, { weight: 900, size: 26, fillStyle: "#FFFFFF" });
+
+  setCanvasFont(context, 900, 20);
+  context.fillStyle = "#93C5FD";
+  context.fillText(`ID: ${uniqueId}`, 24, 160);
+  drawWrappedText(context, category, 190, 160, 470, 22, 1, { weight: 900, size: 17, fillStyle: "#FBBF24" });
+
+  fillRoundedRect(context, 704, 24, 72, 72, 10, "#FFFFFF");
+  if (qr) {
+    drawContainedImage(context, qr, 710, 30, 60, 60, "#FFFFFF");
+  } else {
+    setCanvasFont(context, 900, 12);
+    context.fillStyle = "#003B95";
+    context.textAlign = "center";
+    context.fillText("QR", 740, 68);
+  }
+
+  safeProducts.forEach((product, index) => {
+    const col = index % 2;
+    const row = Math.floor(index / 2);
+    const x = gridPadding + col * (tileWidth + gridGap);
+    const y = gridY + gridPadding + row * (tileHeight + gridGap);
+    const image = productImages[index];
+    const hasDiscount = Number(product.discount_price || 0) > 0 && Number(product.discount_price) < Number(product.price || 0);
+    const discountPct = hasDiscount
+      ? Math.round(((Number(product.price) - Number(product.discount_price)) / Number(product.price)) * 100)
+      : 0;
+
+    fillRoundedRect(context, x, y, tileWidth, tileHeight, 10, "#FFFFFF");
+    strokeRoundedRect(context, x, y, tileWidth, tileHeight, 10, "#E2E8F0");
+    drawContainedImage(context, image, x + 8, y + 8, tileWidth - 16, imageHeight - 16);
+
+    if (hasDiscount) {
+      fillRoundedRect(context, x + 14, y + 14, 68, 30, 5, "#DC2626");
+      setCanvasFont(context, 800, 15);
+      context.fillStyle = "#FFFFFF";
+      context.textAlign = "center";
+      context.fillText(`-${discountPct}%`, x + 48, y + 35);
+    }
+
+    if (product.condition === "Fairly Used") {
+      fillRoundedRect(context, x + tileWidth - 72, y + 14, 58, 30, 5, "#D97706");
+      setCanvasFont(context, 800, 15);
+      context.fillStyle = "#FFFFFF";
+      context.textAlign = "center";
+      context.fillText("Used", x + tileWidth - 43, y + 35);
+    }
+
+    context.strokeStyle = "#E2E8F0";
+    context.beginPath();
+    context.moveTo(x, y + imageHeight);
+    context.lineTo(x + tileWidth, y + imageHeight);
+    context.stroke();
+
+    setCanvasFont(context, 800, 18);
+    context.fillStyle = "#0F1111";
+    context.textAlign = "center";
+    context.fillText(truncateMeasuredText(context, product.name || "Featured Product", tileWidth - 24), x + tileWidth / 2, y + imageHeight + 42);
+
+    const price = formatPromoPrice(product);
+    if (price) {
+      setCanvasFont(context, 900, 26);
+      context.fillStyle = "#EA580C";
+      context.fillText(price, x + tileWidth / 2, y + imageHeight + 82);
+    }
+  });
+
+  drawWrappedText(context, address, width / 2, footerY + 42, 710, 28, 2, {
+    weight: 800,
+    size: 18,
+    fillStyle: "#FFFFFF",
+    align: "center",
+  });
+  setCanvasFont(context, 900, 15);
+  context.fillStyle = "#93C5FD";
+  context.textAlign = "center";
+  context.fillText("ENTER ID IN REPO OR SCAN TO VIEW SHOP", width / 2, footerY + 104);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -540,16 +608,15 @@ export default function MerchantPromoBanner() {
   }, [user, authLoading, urlShopId, isOffline, prefetchedData]);
 
   const generateBannerBlob = async () => {
-    const svg = await buildStandalonePromoBannerSvg({
+    return generatePromoBannerCanvasBlob({
       products,
-      shopNameLines,
-      categoryLines,
-      addressLines,
+      shopName: shopData?.name || "",
+      category: shopData?.category || "Shop & Retail",
+      address: displayAddress,
       uniqueId,
       websiteText,
       shopId: shopData?.id,
     });
-    return svgToPngBlob(svg);
   };
 
   const handleShare = async () => {
