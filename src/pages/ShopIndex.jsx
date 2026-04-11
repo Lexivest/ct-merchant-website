@@ -14,8 +14,11 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
+import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
+import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 
 function ShopIndex() {
   const navigate = useNavigate()
@@ -26,6 +29,11 @@ function ShopIndex() {
   const { user, profile, loading: authLoading } = useAuthSession()
   const [searchInput, setSearchInput] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [transitionState, setTransitionState] = useState({
+    pending: false,
+    shopId: "",
+    error: "",
+  })
 
   // Debounce the search input by 400ms to avoid DB spam
   useEffect(() => {
@@ -86,6 +94,39 @@ function ShopIndex() {
     return rawId.includes("-") ? rawId.split("-").pop() : rawId
   }
 
+  async function openShopWithTransition(shopId) {
+    if (!shopId) return
+
+    setTransitionState({
+      pending: true,
+      shopId,
+      error: "",
+    })
+
+    try {
+      await prepareShopDetailTransition({
+        shopId,
+        userId: user?.id || null,
+      })
+      navigate(`/shop-detail?id=${shopId}`, {
+        state: { fromDiscoveryTransition: true },
+      })
+    } catch (error) {
+      const safeMessage = isNetworkError(error)
+        ? "We could not open this shop right now. Please try again."
+        : getFriendlyErrorMessage(
+            error,
+            "We could not open this shop right now. Please try again."
+          )
+
+      setTransitionState({
+        pending: false,
+        shopId,
+        error: safeMessage,
+      })
+    }
+  }
+
   // Redirect if not authenticated (Gatekeeper backup)
   if (!authLoading && !user) {
     navigate("/", { replace: true })
@@ -93,7 +134,24 @@ function ShopIndex() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-[#F3F4F6] text-[#0F1111]">
+    <>
+      <PageTransitionOverlay
+        visible={transitionState.pending}
+        error={transitionState.error}
+        onRetry={() => openShopWithTransition(transitionState.shopId)}
+        onDismiss={() =>
+          setTransitionState((prev) => ({
+            ...prev,
+            pending: false,
+            error: "",
+          }))
+        }
+      />
+      <div
+        className={`flex h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
+          transitionState.pending ? "pointer-events-none select-none" : ""
+        }`}
+      >
       <PageSeo
         title={`${headerTitle} | CTMerchant`}
         description="Browse verified shops in your city on the CTMerchant directory."
@@ -161,7 +219,7 @@ function ShopIndex() {
             return (
               <div
                 key={shop.id}
-                onClick={() => navigate(`/shop-detail?id=${shop.id}`)}
+                onClick={() => openShopWithTransition(shop.id)}
                 className="mb-3 flex cursor-pointer items-center gap-4 rounded-lg border border-[#D5D9D9] bg-white p-4 shadow-[0_2px_4px_rgba(0,0,0,0.02)] transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-[0_4px_10px_rgba(0,0,0,0.08)] active:scale-[0.98]"
               >
                 {imageUrl ? (
@@ -215,7 +273,8 @@ function ShopIndex() {
           })
         )}
       </div>
-    </div>
+      </div>
+    </>
   )
 }
 

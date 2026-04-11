@@ -129,7 +129,7 @@ function DashboardHeader({
 
   function renderNavControls() {
     return (
-      <nav className="flex shrink-0 items-center gap-0 pr-1 sm:gap-1 sm:pr-2" aria-label="Dashboard navigation">
+      <nav className="flex shrink-0 items-center gap-0 sm:gap-1" aria-label="Dashboard navigation">
         <button
           type="button"
           className={`amz-nav-item ${
@@ -487,8 +487,6 @@ function DashboardHeader({
           </div>
         </div>
 
-        <div className="min-w-0 flex-1" />
-
         {announcementsCount > 0 ? (
           <button
             type="button"
@@ -505,6 +503,7 @@ function DashboardHeader({
         ) : null}
 
         {renderNavControls()}
+        <div className="min-w-0 flex-1" />
       </div>
     </header>
   )
