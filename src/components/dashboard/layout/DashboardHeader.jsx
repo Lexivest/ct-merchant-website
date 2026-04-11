@@ -131,7 +131,7 @@ function DashboardHeader({
           type="button"
           className={`amz-nav-item ${
             activeTab === "market" ? "active" : ""
-          } flex items-center gap-[6px] rounded border border-transparent px-2 py-2 text-[0.9rem] font-bold text-white transition hover:border-white sm:px-3`}
+          } flex h-[32px] items-center gap-[6px] rounded border border-transparent px-2 text-[0.9rem] font-bold text-white transition hover:border-white sm:px-3`}
           onClick={() => switchScreen("market")}
           title="Repository"
         >
@@ -143,7 +143,7 @@ function DashboardHeader({
           type="button"
           className={`amz-nav-item ${
             activeTab === "services" ? "active" : ""
-          } flex items-center gap-[6px] rounded border border-transparent px-2 py-2 text-[0.9rem] font-bold text-white transition hover:border-white sm:px-3`}
+          } flex h-[32px] items-center gap-[6px] rounded border border-transparent px-2 text-[0.9rem] font-bold text-white transition hover:border-white sm:px-3`}
           onClick={() => switchScreen("services")}
           title="Dashboard"
         >
@@ -155,7 +155,7 @@ function DashboardHeader({
           type="button"
           className={`amz-nav-item ${
             activeTab === "notifications" ? "active" : ""
-          } relative flex items-center gap-[6px] rounded border border-transparent px-2 py-2 text-[0.9rem] font-bold text-white transition hover:border-white sm:px-3`}
+          } relative flex h-[32px] items-center gap-[6px] rounded border border-transparent px-2 text-[0.9rem] font-bold text-white transition hover:border-white sm:px-3`}
           onClick={() => switchScreen("notifications")}
           title="Alerts"
         >
@@ -172,13 +172,13 @@ function DashboardHeader({
           type="button"
           className={`amz-nav-item ${
             activeTab === "profile" ? "active" : ""
-          } flex items-center rounded border border-transparent px-1.5 py-1 text-white transition hover:border-white sm:px-2`}
+          } flex h-[32px] items-center rounded border border-transparent px-1.5 text-white transition hover:border-white sm:px-2`}
           onClick={() => switchScreen("profile")}
           title="Profile"
         >
           <img
             src={avatarSrc}
-            className="header-avatar h-[32px] w-[32px] rounded-full bg-white object-cover"
+            className="header-avatar h-[28px] w-[28px] rounded-full bg-white object-cover"
             alt="Avatar"
             onError={(event) => {
               event.currentTarget.onerror = null
@@ -189,7 +189,7 @@ function DashboardHeader({
 
         <button
           type="button"
-          className="amz-nav-item flex items-center rounded border border-transparent px-2 py-2 text-white transition hover:border-white sm:px-2.5"
+          className="amz-nav-item flex h-[32px] items-center rounded border border-transparent px-2 text-white transition hover:border-white sm:px-2.5"
           onClick={onShopIndex}
           title="Shop Index"
         >
@@ -201,14 +201,14 @@ function DashboardHeader({
 
   return (
     <header className="amz-header sticky top-0 z-[1000] flex flex-col bg-[#131921] text-white">
-      <div className="amz-mobile-scroll-row mx-auto hidden w-full max-w-[1600px] items-center gap-4 px-4 py-[10px] min-[1025px]:flex">
+      <div className="amz-mobile-scroll-row hidden w-full items-center gap-0 px-0 py-0 min-[1025px]:flex">
         <div className="amz-location mobile-hide hidden items-center gap-[6px] rounded border border-transparent px-3 py-2 text-[0.95rem] font-bold text-white transition hover:border-white min-[1025px]:flex">
           <FaLocationDot />
           <span>{currentProfile?.cities?.name || "..."}</span>
         </div>
 
-        <div className="desktop-search-wrap mobile-hide relative mx-4 hidden flex-1 min-[1025px]:block">
-          <div className="amz-search-block flex h-[42px] w-full overflow-visible rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
+        <div className="desktop-search-wrap mobile-hide relative mx-0 hidden flex-1 min-[1025px]:block">
+          <div className="amz-search-block flex h-[42px] w-full overflow-visible border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
             <div
               ref={desktopAreaRef}
               className="relative shrink-0 border-r border-r-[#CDD2D3]"
@@ -317,8 +317,8 @@ function DashboardHeader({
 
       </div>
 
-      <div className="mobile-search-wrap relative mx-4 mb-[10px] block w-[calc(100%-32px)] min-[1025px]:hidden">
-        <div className="amz-search-block flex h-[42px] w-full overflow-visible rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
+      <div className="mobile-search-wrap relative mx-0 mb-0 block w-full min-[1025px]:hidden">
+        <div className="amz-search-block flex h-[42px] w-full overflow-visible border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
           <div
             ref={mobileAreaRef}
             className="relative shrink-0 border-r border-r-[#CDD2D3]"
@@ -425,11 +425,11 @@ function DashboardHeader({
         ) : null}
       </div>
 
-      <div className="amz-sub-header flex items-center gap-2 bg-[#232F3E] px-3 py-2 text-[0.9rem] font-semibold text-white sm:px-4">
+      <div className="amz-sub-header flex h-[42px] items-center gap-2 bg-[#232F3E] px-3 py-0 text-[0.9rem] font-semibold text-white sm:px-4">
         <div ref={categoryRef} className="relative shrink-0">
           <button
             type="button"
-            className="flex max-w-[132px] items-center gap-2 rounded border border-white/40 bg-transparent px-2 py-1 text-[0.85rem] font-semibold text-white transition hover:border-white sm:max-w-[180px]"
+            className="flex h-[32px] max-w-[132px] items-center gap-2 rounded border border-white/40 bg-transparent px-2 text-[0.85rem] font-semibold text-white transition hover:border-white sm:max-w-[180px]"
             onClick={() => {
               setCategoryOpen((prev) => !prev)
               setDesktopAreaOpen(false)

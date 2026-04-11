@@ -1737,14 +1737,11 @@ function UserDashboard() {
         <button
           type="button"
           onClick={() => setAnnouncementsOpen(true)}
-          className="fixed bottom-5 left-4 z-[1200] flex min-h-[52px] items-center gap-3 rounded-full border border-white/70 bg-[#2E1065] px-4 py-3 text-sm font-black text-white shadow-[0_18px_40px_rgba(46,16,101,0.35)] transition hover:-translate-y-0.5 hover:bg-[#4C1D95] sm:left-6"
+          className="fixed bottom-3 left-3 z-[1200] flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-[#2E1065] text-sm text-white shadow-[0_10px_24px_rgba(46,16,101,0.28)] transition hover:-translate-y-0.5 hover:bg-[#4C1D95]"
           aria-label="Open announcements"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15">
-            <FaBullhorn />
-          </span>
-          <span className="hidden sm:inline">Announcements</span>
-          <span className="rounded-full bg-pink-600 px-2 py-0.5 text-[0.7rem]">
+          <FaBullhorn />
+          <span className="absolute -right-1 -top-1 rounded-full bg-pink-600 px-1.5 py-0.5 text-[0.62rem] font-black leading-none">
             {(localData.announcements || []).length}
           </span>
         </button>
