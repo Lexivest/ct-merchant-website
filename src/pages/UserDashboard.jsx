@@ -1633,6 +1633,8 @@ function UserDashboard() {
         switchScreen={switchScreen}
         unread={localData.unread}
         onShopIndex={openShopIndexWithTransition}
+        announcementsCount={(localData.announcements || []).length}
+        onOpenAnnouncements={() => setAnnouncementsOpen(true)}
       />
 
       <main className="content-body mx-auto w-full max-w-[1600px] pb-10">
@@ -1733,19 +1735,6 @@ function UserDashboard() {
         )}
       </main>
       </div>
-      {(localData.announcements || []).length > 0 ? (
-        <button
-          type="button"
-          onClick={() => setAnnouncementsOpen(true)}
-          className="fixed bottom-3 left-3 z-[1200] flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-[#2E1065] text-sm text-white shadow-[0_10px_24px_rgba(46,16,101,0.28)] transition hover:-translate-y-0.5 hover:bg-[#4C1D95]"
-          aria-label="Open announcements"
-        >
-          <FaBullhorn />
-          <span className="absolute -right-1 -top-1 rounded-full bg-pink-600 px-1.5 py-0.5 text-[0.62rem] font-black leading-none">
-            {(localData.announcements || []).length}
-          </span>
-        </button>
-      ) : null}
       <DashboardAnnouncementsModal
         announcements={localData.announcements || []}
         open={announcementsOpen}

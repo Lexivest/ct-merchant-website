@@ -3,6 +3,7 @@ import {
   FaArrowDownAZ,
   FaBell,
   FaBox,
+  FaBullhorn,
   FaChevronDown,
   FaHouse,
   FaLocationDot,
@@ -33,6 +34,8 @@ function DashboardHeader({
   switchScreen,
   unread,
   onShopIndex,
+  announcementsCount = 0,
+  onOpenAnnouncements,
 }) {
   const avatarSrc =
     currentProfile?.avatar_url ||
@@ -126,7 +129,7 @@ function DashboardHeader({
 
   function renderNavControls() {
     return (
-      <nav className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-0.5 pr-2 sm:gap-2 sm:pr-4" aria-label="Dashboard navigation">
+      <nav className="flex shrink-0 items-center gap-0.5 pr-2 sm:gap-2 sm:pr-4" aria-label="Dashboard navigation">
         <button
           type="button"
           className={`amz-nav-item ${
@@ -483,6 +486,23 @@ function DashboardHeader({
             </div>
           </div>
         </div>
+
+        <div className="min-w-0 flex-1" />
+
+        {announcementsCount > 0 ? (
+          <button
+            type="button"
+            className="relative flex h-[32px] items-center rounded border border-transparent px-2 text-white transition hover:border-white"
+            onClick={onOpenAnnouncements}
+            title="Announcements"
+            aria-label="Open announcements"
+          >
+            <FaBullhorn className="text-[1.02rem]" />
+            <span className="absolute -right-[5px] -top-[3px] rounded-[10px] border-2 border-[#232F3E] bg-pink-600 px-[5px] py-[1px] text-[0.6rem] font-extrabold leading-none text-white">
+              {announcementsCount > 9 ? "9+" : announcementsCount}
+            </span>
+          </button>
+        ) : null}
 
         {renderNavControls()}
       </div>
