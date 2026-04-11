@@ -49,14 +49,14 @@ function FeaturedCitySlider({ banners, cityName, onOpenShop }) {
                 idx === currentSlide ? "z-[2] opacity-100" : "z-[1] opacity-0"
               }`}
             >
-              <picture>
+              <picture className="absolute inset-0 block h-full w-full">
                 {banner.mobile_image_url ? (
                   <source media="(max-width: 640px)" srcSet={banner.mobile_image_url} />
                 ) : null}
                 <img
                   src={imageUrl}
                   alt={banner.title || banner.shops?.name || "Featured shop"}
-                  className="h-full w-full bg-[#101827] object-cover object-center"
+                  className="block h-full w-full bg-[#101827] object-cover object-center"
                   loading={idx === currentSlide ? "eager" : "lazy"}
                   fetchPriority={idx === currentSlide ? "high" : "auto"}
                 />
