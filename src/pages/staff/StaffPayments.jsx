@@ -276,17 +276,16 @@ function openPrintableReceipt(proof) {
                 </div>
               </div>
             </div>
-            <div class="paid">Payment Confirmed</div>
+            <div class="paid">Payment Receipt</div>
           </section>
           <section class="body">
             <div class="receipt-title">
               <div>
-                <h1>Official Receipt</h1>
-                <div class="meta" style="color:#64748b;">Issued after CTMerchant staff payment confirmation.</div>
-              </div>
-              <div class="receipt-no">
-                Receipt No: ${escapeHtml(receiptNumber)}<br />
-                Date: ${escapeHtml(receiptDate)}
+                <h1>Payment Receipt</h1>
+                <div class="meta" style="color:#64748b;">
+                  Receipt No: ${escapeHtml(receiptNumber)}<br />
+                  Date: ${escapeHtml(receiptDate)}
+                </div>
               </div>
             </div>
             <div class="grid">
@@ -310,7 +309,6 @@ function openPrintableReceipt(proof) {
             <div class="amount">
               <div>
                 <div class="label" style="color:#cbd5e1;">Amount Paid</div>
-                <div style="margin-top:6px;font-weight:800;color:#cbd5e1;">Bank transfer confirmed by CTMerchant Finance</div>
               </div>
               <div class="value">${escapeHtml(formatNaira(proof.amount))}</div>
             </div>
@@ -370,20 +368,19 @@ function ReceiptModal({ proof, onClose, onSendWhatsApp }) {
                 </div>
               </div>
               <div className="self-start rounded-full border border-white/30 bg-white/15 px-4 py-2 text-xs font-black uppercase tracking-widest sm:self-center">
-                Payment Confirmed
+                Payment Receipt
               </div>
             </div>
 
             <div className="p-6">
               <div className="flex flex-col gap-3 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <div className="text-3xl font-black tracking-tight text-slate-950">Official Receipt</div>
-                  <div className="mt-1 text-sm font-semibold text-slate-500">Issued after staff payment confirmation.</div>
-                </div>
-                <div className="text-left text-sm font-bold leading-6 text-slate-500 sm:text-right">
-                  Receipt No: <span className="text-slate-950">{getReceiptNumber(proof)}</span>
-                  <br />
-                  Date: <span className="text-slate-950">{formatDateTime(getReceiptDate(proof))}</span>
+                  <div className="text-3xl font-black tracking-tight text-slate-950">Payment Receipt</div>
+                  <div className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+                    Receipt No: <span className="font-black text-slate-950">{getReceiptNumber(proof)}</span>
+                    <br />
+                    Date: <span className="font-black text-slate-950">{formatDateTime(getReceiptDate(proof))}</span>
+                  </div>
                 </div>
               </div>
 
@@ -411,7 +408,6 @@ function ReceiptModal({ proof, onClose, onSendWhatsApp }) {
               <div className="mt-5 flex flex-col gap-3 rounded-3xl bg-slate-950 p-5 text-white sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="text-xs font-black uppercase tracking-widest text-slate-400">Amount Paid</div>
-                  <div className="mt-1 text-sm font-bold text-slate-300">Bank transfer confirmed by CTMerchant Finance</div>
                 </div>
                 <div className="text-3xl font-black">{formatNaira(proof.amount)}</div>
               </div>
