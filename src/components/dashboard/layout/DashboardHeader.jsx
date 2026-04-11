@@ -10,10 +10,6 @@ import {
   FaStore,
   FaTableCellsLarge,
 } from "react-icons/fa6"
-import ScrollingTicker from "../../common/ScrollingTicker"
-
-// --- LOCAL ASSET IMPORT ---
-import ctmLogo from "../../../assets/images/logo.jpg";
 
 function DashboardHeader({
   activeTab,
@@ -25,7 +21,6 @@ function DashboardHeader({
   setSearchArea,
   categoryFilter,
   setCategoryFilter,
-  tickerText,
   searchInputDesktop,
   setSearchInputDesktop,
   searchInputMobile,
@@ -38,7 +33,6 @@ function DashboardHeader({
   switchScreen,
   unread,
   onShopIndex,
-  onLogoClick,
 }) {
   const avatarSrc =
     currentProfile?.avatar_url ||
@@ -130,18 +124,84 @@ function DashboardHeader({
     setCategoryOpen(false)
   }
 
+  function renderNavControls() {
+    return (
+      <nav className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-0.5 sm:gap-2" aria-label="Dashboard navigation">
+        <button
+          type="button"
+          className={`amz-nav-item ${
+            activeTab === "market" ? "active" : ""
+          } flex items-center gap-[6px] rounded border border-transparent px-2 py-2 text-[0.9rem] font-bold text-white transition hover:border-white sm:px-3`}
+          onClick={() => switchScreen("market")}
+          title="Repository"
+        >
+          <FaHouse className="text-[1.05rem]" />
+          <span className="hidden min-[900px]:inline">Repository</span>
+        </button>
+
+        <button
+          type="button"
+          className={`amz-nav-item ${
+            activeTab === "services" ? "active" : ""
+          } flex items-center gap-[6px] rounded border border-transparent px-2 py-2 text-[0.9rem] font-bold text-white transition hover:border-white sm:px-3`}
+          onClick={() => switchScreen("services")}
+          title="Dashboard"
+        >
+          <FaTableCellsLarge className="text-[1.05rem]" />
+          <span className="hidden min-[900px]:inline">Dashboard</span>
+        </button>
+
+        <button
+          type="button"
+          className={`amz-nav-item ${
+            activeTab === "notifications" ? "active" : ""
+          } relative flex items-center gap-[6px] rounded border border-transparent px-2 py-2 text-[0.9rem] font-bold text-white transition hover:border-white sm:px-3`}
+          onClick={() => switchScreen("notifications")}
+          title="Alerts"
+        >
+          <FaBell className="text-[1.1rem]" />
+          <span className="hidden min-[900px]:inline">Alerts</span>
+          {unread > 0 ? (
+            <span className="notif-badge absolute -right-[5px] -top-[3px] block rounded-[10px] border-2 border-[#232F3E] bg-[#EF4444] px-[6px] py-[2px] text-[0.65rem] font-extrabold text-white">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          ) : null}
+        </button>
+
+        <button
+          type="button"
+          className={`amz-nav-item ${
+            activeTab === "profile" ? "active" : ""
+          } flex items-center rounded border border-transparent px-1.5 py-1 text-white transition hover:border-white sm:px-2`}
+          onClick={() => switchScreen("profile")}
+          title="Profile"
+        >
+          <img
+            src={avatarSrc}
+            className="header-avatar h-[32px] w-[32px] rounded-full bg-white object-cover"
+            alt="Avatar"
+            onError={(event) => {
+              event.currentTarget.onerror = null
+              event.currentTarget.src = fallbackAvatarSrc
+            }}
+          />
+        </button>
+
+        <button
+          type="button"
+          className="amz-nav-item flex items-center rounded border border-transparent px-2 py-2 text-white transition hover:border-white sm:px-2.5"
+          onClick={onShopIndex}
+          title="Shop Index"
+        >
+          <FaArrowDownAZ className="text-[1.05rem]" />
+        </button>
+      </nav>
+    )
+  }
+
   return (
     <header className="amz-header sticky top-0 z-[1000] flex flex-col bg-[#131921] text-white">
-      <div className="amz-mobile-scroll-row mx-auto flex w-full max-w-[1600px] items-center gap-4 px-4 py-[10px] max-[1024px]:justify-between max-[1024px]:gap-2 max-[1024px]:px-3 max-[1024px]:py-2">
-        
-        {/* --- LOCAL ASSET USAGE --- */}
-        <img
-          src={ctmLogo}
-          className="amz-logo h-[38px] cursor-pointer rounded object-contain"
-          alt="Logo"
-          onClick={() => onLogoClick?.()}
-        />
-
+      <div className="amz-mobile-scroll-row mx-auto hidden w-full max-w-[1600px] items-center gap-4 px-4 py-[10px] min-[1025px]:flex">
         <div className="amz-location mobile-hide hidden items-center gap-[6px] rounded border border-transparent px-3 py-2 text-[0.95rem] font-bold text-white transition hover:border-white min-[1025px]:flex">
           <FaLocationDot />
           <span>{currentProfile?.cities?.name || "..."}</span>
@@ -255,75 +315,6 @@ function DashboardHeader({
           ) : null}
         </div>
 
-        <div
-          className={`amz-nav-item ${
-            activeTab === "market" ? "active" : ""
-          } flex cursor-pointer items-center gap-[6px] rounded border border-transparent px-3 py-2 text-[0.95rem] font-bold text-white transition hover:border-white`}
-          onClick={() => switchScreen("market")}
-          title="Repository"
-        >
-          <FaHouse className="text-[1.1rem]" />
-          <span className="mobile-hide hidden min-[1025px]:inline">
-            Repository
-          </span>
-        </div>
-
-        <div
-          className={`amz-nav-item ${
-            activeTab === "services" ? "active" : ""
-          } flex cursor-pointer items-center gap-[6px] rounded border border-transparent px-3 py-2 text-[0.95rem] font-bold text-white transition hover:border-white`}
-          onClick={() => switchScreen("services")}
-          title="Dashboard"
-        >
-          <FaTableCellsLarge className="text-[1.1rem]" />
-          <span className="mobile-hide hidden min-[1025px]:inline">
-            Dashboard
-          </span>
-        </div>
-
-        <div
-          className={`amz-nav-item ${
-            activeTab === "notifications" ? "active" : ""
-          } relative flex cursor-pointer items-center gap-[6px] rounded border border-transparent px-3 py-2 text-[0.95rem] font-bold text-white transition hover:border-white`}
-          onClick={() => switchScreen("notifications")}
-          title="Alerts"
-        >
-          <FaBell className="text-[1.2rem]" />
-          <span className="mobile-hide ml-[6px] hidden min-[1025px]:inline">
-            Alerts
-          </span>
-          {unread > 0 ? (
-            <span className="notif-badge absolute -right-[6px] -top-[2px] block rounded-[10px] border-2 border-[#131921] bg-[#EF4444] px-[6px] py-[2px] text-[0.65rem] font-extrabold text-white">
-              {unread > 9 ? "9+" : unread}
-            </span>
-          ) : null}
-        </div>
-
-        <div
-          className={`amz-nav-item ${
-            activeTab === "profile" ? "active" : ""
-          } flex cursor-pointer items-center rounded border border-transparent px-2 py-1 text-white transition hover:border-white`}
-          onClick={() => switchScreen("profile")}
-          title="Profile"
-        >
-          <img
-            src={avatarSrc}
-            className="header-avatar ml-1 h-[34px] w-[34px] rounded-full bg-white object-cover"
-            alt="Avatar"
-            onError={(event) => {
-              event.currentTarget.onerror = null
-              event.currentTarget.src = fallbackAvatarSrc
-            }}
-          />
-        </div>
-
-        <div
-          className="amz-nav-item flex cursor-pointer items-center rounded border border-transparent px-2 py-1 text-white transition hover:border-white"
-          onClick={onShopIndex}
-          title="Shop Index"
-        >
-          <FaArrowDownAZ className="text-[1.1rem]" />
-        </div>
       </div>
 
       <div className="mobile-search-wrap relative mx-4 mb-[10px] block w-[calc(100%-32px)] min-[1025px]:hidden">
@@ -434,11 +425,11 @@ function DashboardHeader({
         ) : null}
       </div>
 
-      <div className="amz-sub-header flex items-center bg-[#232F3E] px-4 py-2 text-[0.9rem] font-semibold text-white">
-        <div ref={categoryRef} className="relative mr-3">
+      <div className="amz-sub-header flex items-center gap-2 bg-[#232F3E] px-3 py-2 text-[0.9rem] font-semibold text-white sm:px-4">
+        <div ref={categoryRef} className="relative shrink-0">
           <button
             type="button"
-            className="flex max-w-[160px] items-center gap-2 rounded border border-white/40 bg-transparent px-2 py-1 text-[0.85rem] font-semibold text-white transition hover:border-white"
+            className="flex max-w-[132px] items-center gap-2 rounded border border-white/40 bg-transparent px-2 py-1 text-[0.85rem] font-semibold text-white transition hover:border-white sm:max-w-[180px]"
             onClick={() => {
               setCategoryOpen((prev) => !prev)
               setDesktopAreaOpen(false)
@@ -493,15 +484,7 @@ function DashboardHeader({
           </div>
         </div>
 
-        {tickerText ? (
-          <ScrollingTicker
-            text={tickerText}
-            className="ticker-wrapper relative flex-1"
-            textClassName="text-white"
-            minDuration={28}
-            speedFactor={0.22}
-          />
-        ) : null}
+        {renderNavControls()}
       </div>
     </header>
   )

@@ -1,5 +1,6 @@
 import { Suspense, lazy, startTransition, useEffect, useMemo, useRef, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { FaBullhorn, FaXmark } from "react-icons/fa6"
 
 import AuthNotification from "../components/auth/AuthNotification"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
@@ -82,6 +83,8 @@ const ALLOWED_SERVICE_VIEWS = new Set([
   "wishlist",
 ])
 
+const ANNOUNCEMENT_SEEN_KEY_PREFIX = "ctm_dashboard_announcements_seen"
+
 function DashboardSectionFallback({ label = "Loading section..." }) {
   return (
     <div className="screen active">
@@ -98,6 +101,84 @@ function DashboardSectionFallback({ label = "Loading section..." }) {
             ))}
           </div>
           <p className="mt-5 text-center text-sm font-semibold text-slate-500">{label}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function getAnnouncementTitle(item, index) {
+  return item?.title || item?.headline || `Announcement ${index + 1}`
+}
+
+function getAnnouncementBody(item) {
+  return item?.message || item?.body || item?.content || item?.text || ""
+}
+
+function DashboardAnnouncementsModal({ announcements, open, onClose }) {
+  if (!open || !announcements?.length) return null
+
+  return (
+    <div className="fixed inset-0 z-[2500] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-[30px] bg-white shadow-2xl">
+        <div className="flex items-center justify-between gap-4 bg-gradient-to-br from-[#2E1065] to-[#BE185D] px-5 py-5 text-white sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-xl">
+              <FaBullhorn />
+            </div>
+            <div>
+              <div className="text-2xl font-black tracking-tight">Announcements</div>
+              <div className="mt-0.5 text-sm font-semibold text-white/75">
+                Important CTMerchant updates for you.
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25"
+            aria-label="Close announcements"
+          >
+            <FaXmark />
+          </button>
+        </div>
+
+        <div className="max-h-[68vh] overflow-y-auto bg-slate-50 p-4 sm:p-6">
+          <div className="space-y-3">
+            {announcements.map((item, index) => {
+              const body = getAnnouncementBody(item)
+              return (
+                <article
+                  key={item.id || `${body}-${index}`}
+                  className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-pink-50 text-pink-700">
+                      <FaBullhorn />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg font-black leading-tight text-slate-950">
+                        {getAnnouncementTitle(item, index)}
+                      </h3>
+                      {body ? (
+                        <p className="mt-2 whitespace-pre-line text-sm font-semibold leading-6 text-slate-600">
+                          {body}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-5 w-full rounded-2xl bg-[#2E1065] px-5 py-3 font-black text-white transition hover:bg-[#4C1D95]"
+          >
+            Continue to Dashboard
+          </button>
         </div>
       </div>
     </div>
@@ -137,6 +218,7 @@ function UserDashboard() {
     error: "",
   })
   const [prefetchedWishlistItems, setPrefetchedWishlistItems] = useState(null)
+  const [announcementsOpen, setAnnouncementsOpen] = useState(false)
 
   useEffect(() => {
     if (fetchedData) {
@@ -533,10 +615,50 @@ function UserDashboard() {
       .filter((group) => group.shops.length > 0)
   }, [sortedAreas, localData.shops])
 
-  const tickerText = useMemo(() => {
-    if (!localData.announcements?.length) return ""
-    return localData.announcements.map((item) => item.message).join(" • ")
+  const announcementSignature = useMemo(() => {
+    const announcements = localData.announcements || []
+    if (!announcements.length) return ""
+
+    return announcements
+      .slice(0, 8)
+      .map((item, index) =>
+        [
+          item.id || index,
+          item.updated_at || item.created_at || "",
+          getAnnouncementBody(item).slice(0, 80),
+        ].join(":")
+      )
+      .join("|")
   }, [localData.announcements])
+
+  const announcementSeenKey = useMemo(() => {
+    if (!user?.id || !announcementSignature) return ""
+    return `${ANNOUNCEMENT_SEEN_KEY_PREFIX}_${user.id}_${announcementSignature}`
+  }, [announcementSignature, user?.id])
+
+  useEffect(() => {
+    if (!announcementSeenKey || !localData.announcements?.length) return
+
+    try {
+      if (localStorage.getItem(announcementSeenKey) === "1") return
+    } catch {
+      // If storage is blocked, still show the modal once for this dashboard mount.
+    }
+
+    setAnnouncementsOpen(true)
+  }, [announcementSeenKey, localData.announcements?.length])
+
+  function markAnnouncementsSeen() {
+    if (announcementSeenKey) {
+      try {
+        localStorage.setItem(announcementSeenKey, "1")
+      } catch {
+        // Ignore storage failures; the close action should still work.
+      }
+    }
+
+    setAnnouncementsOpen(false)
+  }
 
   function updateSuggestions(value, mode) {
     const q = value.trim().toLowerCase()
@@ -1499,7 +1621,6 @@ function UserDashboard() {
         setSearchArea={navigateArea}
         categoryFilter="all"
         setCategoryFilter={navigateCategory}
-        tickerText={tickerText}
         searchInputDesktop={searchInputDesktop}
         setSearchInputDesktop={setSearchInputDesktop}
         searchInputMobile={searchInputMobile}
@@ -1512,7 +1633,6 @@ function UserDashboard() {
         switchScreen={switchScreen}
         unread={localData.unread}
         onShopIndex={openShopIndexWithTransition}
-        onLogoClick={() => switchScreen("market")}
       />
 
       <main className="content-body mx-auto w-full max-w-[1600px] pb-10">
@@ -1613,6 +1733,27 @@ function UserDashboard() {
         )}
       </main>
       </div>
+      {(localData.announcements || []).length > 0 ? (
+        <button
+          type="button"
+          onClick={() => setAnnouncementsOpen(true)}
+          className="fixed bottom-5 left-4 z-[1200] flex min-h-[52px] items-center gap-3 rounded-full border border-white/70 bg-[#2E1065] px-4 py-3 text-sm font-black text-white shadow-[0_18px_40px_rgba(46,16,101,0.35)] transition hover:-translate-y-0.5 hover:bg-[#4C1D95] sm:left-6"
+          aria-label="Open announcements"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15">
+            <FaBullhorn />
+          </span>
+          <span className="hidden sm:inline">Announcements</span>
+          <span className="rounded-full bg-pink-600 px-2 py-0.5 text-[0.7rem]">
+            {(localData.announcements || []).length}
+          </span>
+        </button>
+      ) : null}
+      <DashboardAnnouncementsModal
+        announcements={localData.announcements || []}
+        open={announcementsOpen}
+        onClose={markAnnouncementsSeen}
+      />
     </div>
   )
 }
