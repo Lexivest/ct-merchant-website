@@ -227,13 +227,13 @@ async function generatePromoBannerCanvasBlob({
 }) {
   const width = 800;
   const height = 1080;
-  const headerHeight = 190;
+  const headerHeight = 240;
   const gridPadding = 8;
   const gridGap = 8;
   const tileWidth = (width - gridPadding * 2 - gridGap) / 2;
-  const tileHeight = 360;
+  const tileHeight = 335;
   const gridY = headerHeight;
-  const imageHeight = 252;
+  const imageHeight = 230;
   const footerY = gridY + gridPadding * 2 + tileHeight * 2 + gridGap;
   const footerHeight = height - footerY;
   const safeProducts = Array.from({ length: 4 }, (_, index) => products?.[index] || {});
@@ -264,30 +264,30 @@ async function generatePromoBannerCanvasBlob({
   context.fillRect(0, footerY, width, footerHeight);
 
   if (logo) {
-    context.drawImage(logo, 24, 24, 34, 34);
+    context.drawImage(logo, 24, 24, 50, 50);
   } else {
-    fillRoundedRect(context, 24, 24, 34, 34, 4, "#FFFFFF");
+    fillRoundedRect(context, 24, 24, 50, 50, 6, "#FFFFFF");
   }
 
-  setCanvasFont(context, 800, 17);
+  setCanvasFont(context, 800, 25);
   context.fillStyle = "rgba(255,255,255,0.92)";
   context.textAlign = "left";
-  context.fillText(websiteText, 70, 49);
-  drawWrappedText(context, shopName, 24, 94, 640, 31, 2, { weight: 900, size: 26, fillStyle: "#FFFFFF" });
+  context.fillText(websiteText, 90, 58);
+  drawWrappedText(context, shopName, 24, 118, 620, 38, 2, { weight: 900, size: 34, fillStyle: "#FFFFFF" });
 
-  setCanvasFont(context, 900, 20);
+  setCanvasFont(context, 900, 25);
   context.fillStyle = "#93C5FD";
-  context.fillText(`ID: ${uniqueId}`, 24, 160);
-  drawWrappedText(context, category, 190, 160, 470, 22, 1, { weight: 900, size: 17, fillStyle: "#FBBF24" });
+  context.fillText(`ID: ${uniqueId}`, 24, 190);
+  drawWrappedText(context, category, 24, 226, 620, 28, 1, { weight: 900, size: 24, fillStyle: "#FBBF24" });
 
-  fillRoundedRect(context, 704, 24, 72, 72, 10, "#FFFFFF");
+  fillRoundedRect(context, 660, 24, 116, 116, 14, "#FFFFFF");
   if (qr) {
-    drawContainedImage(context, qr, 710, 30, 60, 60, "#FFFFFF");
+    drawContainedImage(context, qr, 668, 32, 100, 100, "#FFFFFF");
   } else {
-    setCanvasFont(context, 900, 12);
+    setCanvasFont(context, 900, 18);
     context.fillStyle = "#003B95";
     context.textAlign = "center";
-    context.fillText("QR", 740, 68);
+    context.fillText("QR", 718, 86);
   }
 
   safeProducts.forEach((product, index) => {
@@ -330,13 +330,13 @@ async function generatePromoBannerCanvasBlob({
     setCanvasFont(context, 800, 18);
     context.fillStyle = "#0F1111";
     context.textAlign = "center";
-    context.fillText(truncateMeasuredText(context, product.name || "Featured Product", tileWidth - 24), x + tileWidth / 2, y + imageHeight + 42);
+    context.fillText(truncateMeasuredText(context, product.name || "Featured Product", tileWidth - 24), x + tileWidth / 2, y + imageHeight + 40);
 
     const price = formatPromoPrice(product);
     if (price) {
       setCanvasFont(context, 900, 26);
       context.fillStyle = "#EA580C";
-      context.fillText(price, x + tileWidth / 2, y + imageHeight + 82);
+      context.fillText(price, x + tileWidth / 2, y + imageHeight + 78);
     }
   });
 
