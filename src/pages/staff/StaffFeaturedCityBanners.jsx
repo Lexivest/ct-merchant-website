@@ -170,7 +170,7 @@ function buildFeaturedBannerSvg({ shop, products, backgroundKey, width = 1600, h
     2
   )
   const titleFont = isMobile ? 50 : 58
-  const addressFont = isMobile ? 25 : 28
+  const addressFont = isMobile ? 28 : 32
   const titleStartY = isMobile ? 92 : 82
   const addressStartY = titleStartY + titleLines.length * (isMobile ? 58 : 64) + 12
   const tileY = isMobile ? 315 : 225
