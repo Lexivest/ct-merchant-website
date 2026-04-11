@@ -1,5 +1,6 @@
 import { Suspense, lazy, startTransition, useEffect, useMemo, useRef, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { createPortal } from "react-dom"
 import { FaBullhorn, FaXmark } from "react-icons/fa6"
 
 import AuthNotification from "../components/auth/AuthNotification"
@@ -116,11 +117,24 @@ function getAnnouncementBody(item) {
 }
 
 function DashboardAnnouncementsModal({ announcements, open, onClose }) {
-  if (!open || !announcements?.length) return null
+  const safeAnnouncements = Array.isArray(announcements) ? announcements : []
 
-  return (
-    <div className="fixed inset-0 z-[2500] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-[30px] bg-white shadow-2xl">
+  if (!open || !safeAnnouncements.length || typeof document === "undefined") {
+    return null
+  }
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[5000] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-[30px] bg-white shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Dashboard announcements"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="flex items-center justify-between gap-4 bg-gradient-to-br from-[#2E1065] to-[#BE185D] px-5 py-5 text-white sm:px-6">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-xl">
@@ -145,7 +159,7 @@ function DashboardAnnouncementsModal({ announcements, open, onClose }) {
 
         <div className="max-h-[68vh] overflow-y-auto bg-slate-50 p-4 sm:p-6">
           <div className="space-y-3">
-            {announcements.map((item, index) => {
+            {safeAnnouncements.map((item, index) => {
               const body = getAnnouncementBody(item)
               return (
                 <article
@@ -181,7 +195,8 @@ function DashboardAnnouncementsModal({ announcements, open, onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -658,6 +673,15 @@ function UserDashboard() {
     }
 
     setAnnouncementsOpen(false)
+  }
+
+  function openAnnouncementsModal() {
+    retryRouteTransitionRef.current = null
+    setRouteTransition({
+      pending: false,
+      error: "",
+    })
+    setAnnouncementsOpen(true)
   }
 
   function updateSuggestions(value, mode) {
@@ -1634,7 +1658,7 @@ function UserDashboard() {
         unread={localData.unread}
         onShopIndex={openShopIndexWithTransition}
         announcementsCount={(localData.announcements || []).length}
-        onOpenAnnouncements={() => setAnnouncementsOpen(true)}
+        onOpenAnnouncements={openAnnouncementsModal}
       />
 
       <main className="content-body mx-auto w-full max-w-[1600px] pb-10">

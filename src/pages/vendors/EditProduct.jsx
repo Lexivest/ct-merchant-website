@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
 import {
@@ -48,6 +48,65 @@ const PRODUCT_INPUT_MAX_BYTES = PRODUCT_PROFILE.maxInputBytes;
 const PRODUCT_ACCEPT = getAcceptValue(PRODUCT_RULE, "image/*");
 const PRODUCT_RULE_LABEL = getRuleLabel(PRODUCT_RULE);
 const MAX_SPECIAL_OFFERS = 2;
+
+const DEFAULT_FORM = {
+  name: "",
+  price: "",
+  stock: "1",
+  condition: "New",
+  category: "",
+  desc: "",
+  key_features: "",
+  box_content: "",
+  warranty: "",
+  isDiscount: false,
+  discountPercent: "",
+};
+
+function buildProductEditorState(product) {
+  if (!product) {
+    return {
+      form: { ...DEFAULT_FORM },
+      dynamicAttrs: {},
+      existingUrls: { 1: null, 2: null, 3: null },
+      previews: { 1: "", 2: "", 3: "" },
+    };
+  }
+
+  const attrs = { ...(product.attributes || {}) };
+  delete attrs["Key Features"];
+  delete attrs["What's in the Box"];
+  delete attrs["Warranty"];
+
+  const isSpecial = product.discount_price && product.discount_price < product.price;
+  const discountPerc = isSpecial
+    ? Math.round(((product.price - product.discount_price) / product.price) * 100)
+    : "";
+  const urls = {
+    1: product.image_url || null,
+    2: product.image_url_2 || null,
+    3: product.image_url_3 || null,
+  };
+
+  return {
+    form: {
+      name: product.name || "",
+      price: product.price || "",
+      stock: product.stock_count || 0,
+      condition: product.condition || "New",
+      category: product.category || "",
+      desc: product.description || "",
+      key_features: product.attributes?.["Key Features"] || "",
+      box_content: product.attributes?.["What's in the Box"] || "",
+      warranty: product.attributes?.["Warranty"] || "",
+      isDiscount: isSpecial,
+      discountPercent: discountPerc,
+    },
+    dynamicAttrs: attrs,
+    existingUrls: urls,
+    previews: { 1: urls[1] || "", 2: urls[2] || "", 3: urls[3] || "" },
+  };
+}
 
 // --- SHIMMER COMPONENT ---
 function EditProductShimmer() {
@@ -100,14 +159,24 @@ function CustomSelect({ value, onChange, options, placeholder, className, disabl
 
 export default function EditProduct() {
   const navigate = useNavigate();
+  const location = useLocation();
   usePreventPullToRefresh();
   const { notify, confirm } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const productId = searchParams.get("id");
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "merchant-edit-product" &&
+    (!productId || String(location.state.prefetchedData.productId) === String(productId))
+      ? location.state.prefetchedData
+      : null;
+  const initialEditorState = useMemo(
+    () => buildProductEditorState(prefetchedData?.productData),
+    [prefetchedData]
+  );
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !prefetchedData);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -115,31 +184,19 @@ export default function EditProduct() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMode, setSuccessMode] = useState("update"); // 'update' | 'delete'
 
-  const [productData, setProductData] = useState(null);
-  const [activeOffersCount, setActiveOffersCount] = useState(0);
-  const [categoryRows, setCategoryRows] = useState([]);
+  const [productData, setProductData] = useState(() => prefetchedData?.productData || null);
+  const [activeOffersCount, setActiveOffersCount] = useState(() => prefetchedData?.activeOffersCount || 0);
+  const [categoryRows, setCategoryRows] = useState(() => prefetchedData?.categoryRows || []);
 
   // Form State
-  const [form, setForm] = useState({
-    name: "",
-    price: "",
-    stock: "1",
-    condition: "New",
-    category: "",
-    desc: "",
-    key_features: "",
-    box_content: "",
-    warranty: "",
-    isDiscount: false,
-    discountPercent: "",
-  });
+  const [form, setForm] = useState(() => initialEditorState.form);
 
-  const [dynamicAttrs, setDynamicAttrs] = useState({});
+  const [dynamicAttrs, setDynamicAttrs] = useState(() => initialEditorState.dynamicAttrs);
 
   // Image State (Mixed existing URLs and new Blobs)
-  const [existingUrls, setExistingUrls] = useState({ 1: null, 2: null, 3: null });
+  const [existingUrls, setExistingUrls] = useState(() => initialEditorState.existingUrls);
   const [blobs, setBlobs] = useState({ 1: null, 2: null, 3: null });
-  const [previews, setPreviews] = useState({ 1: "", 2: "", 3: "" });
+  const [previews, setPreviews] = useState(() => initialEditorState.previews);
   const [deletedSlots, setDeletedSlots] = useState({ 1: false, 2: false, 3: false });
   const [savings, setSavings] = useState({ 1: "", 2: "", 3: "" });
 
@@ -157,6 +214,32 @@ export default function EditProduct() {
 
   // --- INITIALIZATION ---
   useEffect(() => {
+    function applyProductState(product, loadedCategoryRows, offerCount) {
+      const nextEditorState = buildProductEditorState(product);
+
+      setProductData(product || null);
+      setCategoryRows(loadedCategoryRows || []);
+      setActiveOffersCount(offerCount || 0);
+      setForm(nextEditorState.form);
+      setDynamicAttrs(nextEditorState.dynamicAttrs);
+      setExistingUrls(nextEditorState.existingUrls);
+      setPreviews(nextEditorState.previews);
+      setDeletedSlots({ 1: false, 2: false, 3: false });
+      setBlobs({ 1: null, 2: null, 3: null });
+      setSavings({ 1: "", 2: "", 3: "" });
+    }
+
+    if (prefetchedData) {
+      applyProductState(
+        prefetchedData.productData,
+        prefetchedData.categoryRows,
+        prefetchedData.activeOffersCount
+      );
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     async function fetchProduct() {
       if (!user) return;
       if (!productId) {
@@ -181,13 +264,10 @@ export default function EditProduct() {
         ]);
 
         if (prodErr || !prod) throw new Error("Product not found.");
-        setCategoryRows(loadedCategoryRows);
 
         const { data: shop } = await supabase.from("shops").select("id, is_open").eq("id", prod.shop_id).eq("owner_id", user.id).maybeSingle();
         if (!shop) throw new Error("Access denied to this product's shop.");
         if (shop.is_open === false) throw new Error("Shop is suspended.");
-
-        setProductData(prod);
 
         // Check Special Offer Limits for this Shop (Excluding THIS product)
         const { count } = await supabase
@@ -196,37 +276,8 @@ export default function EditProduct() {
           .eq('shop_id', prod.shop_id)
           .not('discount_price', 'is', null)
           .neq('id', productId);
-        setActiveOffersCount(count || 0);
 
-        // Hydrate Form
-        const isSpecial = prod.discount_price && prod.discount_price < prod.price;
-        const discountPerc = isSpecial ? Math.round(((prod.price - prod.discount_price) / prod.price) * 100) : "";
-
-        setForm({
-          name: prod.name || "",
-          price: prod.price || "",
-          stock: prod.stock_count || 0,
-          condition: prod.condition || "New",
-          category: prod.category || "",
-          desc: prod.description || "",
-          key_features: prod.attributes?.["Key Features"] || "",
-          box_content: prod.attributes?.["What's in the Box"] || "",
-          warranty: prod.attributes?.["Warranty"] || "",
-          isDiscount: isSpecial,
-          discountPercent: discountPerc,
-        });
-
-        // Hydrate Dynamic Attrs (excluding our standard descriptions)
-        const attrs = { ...prod.attributes };
-        delete attrs["Key Features"];
-        delete attrs["What's in the Box"];
-        delete attrs["Warranty"];
-        setDynamicAttrs(attrs);
-
-        // Hydrate Images
-        const urls = { 1: prod.image_url, 2: prod.image_url_2, 3: prod.image_url_3 };
-        setExistingUrls(urls);
-        setPreviews({ 1: urls[1] || "", 2: urls[2] || "", 3: urls[3] || "" });
+        applyProductState(prod, loadedCategoryRows, count || 0);
 
       } catch (err) {
         setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
@@ -235,7 +286,7 @@ export default function EditProduct() {
       }
     }
     if (!authLoading) fetchProduct();
-  }, [user, authLoading, productId, isOffline, navigate]);
+  }, [user, authLoading, productId, isOffline, navigate, prefetchedData]);
 
 
   // --- HANDLERS ---
@@ -590,7 +641,11 @@ export default function EditProduct() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] pb-12">
+    <div
+      className={`flex min-h-screen flex-col bg-[#F3F4F6] pb-12 text-[#0F1111] ${
+        location.state?.fromVendorTransition ? "ctm-page-enter" : ""
+      }`}
+    >
       <header className="sticky top-0 z-40 flex items-center gap-4 bg-[#131921] px-4 py-3 text-white shadow-sm">
         <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]"><FaArrowLeft /></button>
         <div className="text-[1.15rem] font-bold">Edit Product</div>

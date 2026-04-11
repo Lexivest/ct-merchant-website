@@ -5,6 +5,7 @@ import {
   FaBoxOpen,
   FaCircleCheck,
   FaClock,
+  FaImage,
   FaPen,
   FaPlus,
   FaTriangleExclamation,
@@ -13,8 +14,10 @@ import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import useCachedFetch from "../../hooks/useCachedFetch";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
+import PageTransitionOverlay from "../../components/common/PageTransitionOverlay";
 import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
-import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
+import { getFriendlyErrorMessage, isNetworkError } from "../../lib/friendlyErrors";
+import { prepareVendorRouteTransition } from "../../lib/vendorRouteTransitions";
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function MerchantProductsShimmer() {
@@ -35,6 +38,11 @@ export default function MerchantProducts() {
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
   const [activeShopId, setActiveShopId] = useState(urlShopId);
+  const [transitionState, setTransitionState] = useState({
+    pending: false,
+    productId: "",
+    error: "",
+  });
 
   // 1. Fetch Logic
   const fetchProductsList = async () => {
@@ -97,8 +105,49 @@ export default function MerchantProducts() {
     navigate(`/merchant-add-product?shop_id=${activeShopId}`);
   };
 
-  const editProduct = (id) => {
-    navigate(`/merchant-edit-product?id=${id}`);
+  const editProduct = async (id) => {
+    if (!id) return;
+    if (isOffline) {
+      alert("You must be online to edit a product.");
+      return;
+    }
+
+    const path = `/merchant-edit-product?id=${id}`;
+
+    setTransitionState({
+      pending: true,
+      productId: id,
+      error: "",
+    });
+
+    try {
+      const prefetchedData = await prepareVendorRouteTransition({
+        path,
+        userId: user?.id || null,
+        shopId: activeShopId,
+      });
+
+      navigate(path, {
+        state: {
+          fromVendorTransition: true,
+          prefetchedData,
+          verifiedSubscriptionActive: true,
+        },
+      });
+    } catch (error) {
+      const safeMessage = isNetworkError(error)
+        ? "We could not open this product editor right now. Please try again."
+        : getFriendlyErrorMessage(
+            error,
+            "We could not open this product editor right now. Please try again."
+          );
+
+      setTransitionState({
+        pending: false,
+        productId: id,
+        error: safeMessage,
+      });
+    }
   };
 
 
@@ -123,11 +172,24 @@ export default function MerchantProducts() {
   }
 
   return (
-    <div
-      className={`flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
-        location.state?.fromVendorTransition ? "ctm-page-enter" : ""
-      }`}
-    >
+    <>
+      <PageTransitionOverlay
+        visible={transitionState.pending}
+        error={transitionState.error}
+        onRetry={() => editProduct(transitionState.productId)}
+        onDismiss={() =>
+          setTransitionState((prev) => ({
+            ...prev,
+            pending: false,
+            error: "",
+          }))
+        }
+      />
+      <div
+        className={`flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
+          location.state?.fromVendorTransition ? "ctm-page-enter" : ""
+        } ${transitionState.pending ? "pointer-events-none select-none" : ""}`}
+      >
       
       {/* OFFLINE BANNER */}
       {isOffline && (
@@ -220,6 +282,7 @@ export default function MerchantProducts() {
                   
                   <div className="flex flex-col gap-2">
                     <button 
+                      type="button"
                       className="flex h-9 w-9 items-center justify-center rounded-md border border-[#D5D9D9] bg-white text-[1rem] text-[#0F1111] shadow-[0_2px_4px_rgba(0,0,0,0.02)] transition-colors hover:border-[#B0B5B5] hover:bg-[#F7FAFA]"
                       title="Edit Product"
                     >
@@ -232,6 +295,7 @@ export default function MerchantProducts() {
           </div>
         )}
       </main>
-    </div>
+      </div>
+    </>
   );
 }

@@ -9,6 +9,7 @@ const vendorRouteLoaders = {
   "/shop-registration": () => import("../pages/ShopRegistration"),
   "/vendor-panel": () => import("../pages/VendorsPanel"),
   "/merchant-add-product": () => import("../pages/vendors/AddProduct"),
+  "/merchant-edit-product": () => import("../pages/vendors/EditProduct"),
   "/merchant-products": () => import("../pages/vendors/MerchantProducts"),
   "/merchant-banner": () => import("../pages/vendors/MerchantBanner"),
   "/merchant-settings": () => import("../pages/vendors/MerchantSettings"),
@@ -243,6 +244,56 @@ async function prepareAddProductData({ userId, shopId }) {
   }
 }
 
+async function prepareEditProductData({ userId, shopId, search = "" }) {
+  const productId = new URLSearchParams(search).get("id")
+
+  if (!productId) {
+    throw new Error("Product ID missing.")
+  }
+
+  await fetchProfileSuspension(userId)
+
+  const [{ data: product, error: productError }, categoryRows] = await Promise.all([
+    supabase
+      .from("products")
+      .select("*")
+      .eq("id", productId)
+      .maybeSingle(),
+    loadProductCategoryRows(supabase),
+  ])
+
+  if (productError) throw productError
+  if (!product) {
+    throw new Error("Product not found.")
+  }
+
+  const shop = await fetchOwnedShop(userId, product.shop_id, "id, is_open")
+  if (shopId && String(shop.id) !== String(shopId)) {
+    throw new Error("Access denied to this product's shop.")
+  }
+  if (shop.is_open === false) {
+    throw new Error("Shop is suspended.")
+  }
+
+  const { count, error: offerCountError } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("shop_id", shop.id)
+    .not("discount_price", "is", null)
+    .neq("id", productId)
+
+  if (offerCountError) throw offerCountError
+
+  return {
+    kind: "merchant-edit-product",
+    productId: String(product.id),
+    shopId: String(shop.id),
+    productData: product,
+    activeOffersCount: count || 0,
+    categoryRows,
+  }
+}
+
 async function prepareMerchantBannerData({ userId, shopId }) {
   await fetchProfileSuspension(userId)
   const shop = await fetchOwnedShop(userId, shopId, "id")
@@ -470,6 +521,7 @@ async function prepareMerchantServiceFeeData({ userId, shopId }) {
 
 const vendorRoutePreparers = {
   "/merchant-add-product": prepareAddProductData,
+  "/merchant-edit-product": prepareEditProductData,
   "/merchant-products": prepareMerchantProductsData,
   "/merchant-banner": prepareMerchantBannerData,
   "/merchant-settings": prepareMerchantSettingsData,
@@ -487,7 +539,7 @@ export async function prepareVendorRouteTransition({
   shopId = null,
   timeoutMs = VENDOR_TRANSITION_TIMEOUT,
 }) {
-  const [pathname] = String(path || "").split("?")
+  const [pathname, search = ""] = String(path || "").split("?")
   const routeLoader = vendorRouteLoaders[pathname]
   const routePreparer = vendorRoutePreparers[pathname]
 
@@ -503,7 +555,7 @@ export async function prepareVendorRouteTransition({
       }
 
       const [prefetchedData] = await Promise.all([
-        routePreparer({ userId, shopId }),
+        routePreparer({ userId, shopId, path, search }),
         routeLoader(),
       ])
 
