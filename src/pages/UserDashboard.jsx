@@ -13,7 +13,11 @@ import useCachedFetch, {
 } from "../hooks/useCachedFetch"
 import useMyShop from "../hooks/useMyShop" // <-- Import our new logic file
 import { signOutUser } from "../lib/auth"
-import { buildDashboardCacheKey, fetchDashboardData } from "../lib/dashboardData"
+import {
+  buildDashboardCacheKey,
+  fetchDashboardData,
+  fetchFeaturedCityBanners,
+} from "../lib/dashboardData"
 import { prepareProductDetailTransition } from "../lib/detailPageTransitions"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import { buildShopDetailCacheKey, fetchShopDetailData } from "../lib/shopDetailData"
