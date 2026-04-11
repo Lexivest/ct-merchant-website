@@ -52,7 +52,7 @@ function FeaturedCitySlider({ banners, onOpenShop }) {
               <img
                 src={imageUrl}
                 alt={banner.title || banner.shops?.name || "Featured shop"}
-                className="absolute inset-0 block h-full w-full bg-white object-cover object-center"
+                className="absolute inset-0 block h-full w-full bg-white object-contain object-center"
                 loading={idx === currentSlide ? "eager" : "lazy"}
                 fetchPriority={idx === currentSlide ? "high" : "auto"}
               />

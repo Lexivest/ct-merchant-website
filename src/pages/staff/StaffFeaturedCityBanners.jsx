@@ -93,10 +93,10 @@ function FeaturedBannerArtwork({
   const shellClass = exportMode
     ? isMobile ? "h-[700px] w-[1200px]" : "h-[600px] w-[1600px]"
     : "aspect-[16/9] w-full sm:aspect-[8/3]"
-  const titleClass = exportMode ? (isMobile ? "text-[62px]" : "text-[66px]") : "text-xl sm:text-4xl"
-  const addressClass = exportMode ? "text-[28px]" : "text-[11px] sm:text-lg"
-  const tileClass = exportMode ? (isMobile ? "h-[220px] w-[180px]" : "h-[210px] w-[220px]") : "h-16 w-14 sm:h-28 sm:w-28"
-  const ctaClass = exportMode ? "px-12 py-5 text-[28px]" : "px-4 py-2 text-xs sm:px-7 sm:py-3 sm:text-sm"
+  const titleClass = exportMode ? (isMobile ? "text-[50px]" : "text-[54px]") : "text-lg sm:text-3xl"
+  const addressClass = exportMode ? "text-[24px]" : "text-[10px] sm:text-base"
+  const tileClass = exportMode ? (isMobile ? "h-[210px] w-[170px]" : "h-[190px] w-[205px]") : "h-14 w-12 sm:h-24 sm:w-24"
+  const ctaClass = exportMode ? "px-12 py-4 text-[24px]" : "px-4 py-1.5 text-[10px] sm:px-6 sm:py-2.5 sm:text-xs"
   const productList = (products || []).filter((product) => product?.image_url).slice(0, 5)
   const productTiles = Array.from({ length: 5 }, (_, index) => productList[index] || null)
   const displayAddress = shop?.address || shop?.category || "Visit this shop for available products and services."
@@ -108,17 +108,17 @@ function FeaturedBannerArtwork({
       <div className="absolute -left-[7%] -top-[28%] h-[52%] w-[34%] rounded-full bg-white/22 blur-2xl" />
       <div className="absolute -bottom-[24%] right-[4%] h-[46%] w-[32%] rounded-full bg-pink-300/30 blur-2xl" />
 
-      <div className={`relative z-[2] flex h-full flex-col items-center ${exportMode ? "px-16 py-12" : "px-4 py-4 sm:px-8 sm:py-7"}`}>
+      <div className={`relative z-[2] flex h-full flex-col items-center ${exportMode ? "px-20 py-10" : "px-4 py-3 sm:px-8 sm:py-6"}`}>
         <div className="w-full text-center">
-          <div className={`mx-auto max-w-[92%] truncate font-black leading-[0.95] tracking-tight drop-shadow-lg ${titleClass}`}>
+          <div className={`mx-auto flex max-w-[92%] items-end justify-center text-balance font-black leading-[1.02] tracking-tight drop-shadow-lg ${exportMode ? "min-h-[112px]" : "min-h-[42px] sm:min-h-[68px]"} ${titleClass}`}>
             {shop?.name || "Featured Shop"}
           </div>
-          <div className={`mx-auto mt-2 max-w-[88%] truncate font-bold leading-tight text-white/88 drop-shadow ${addressClass}`}>
+          <div className={`mx-auto mt-1 line-clamp-2 max-w-[84%] font-bold leading-tight text-white/88 drop-shadow ${addressClass}`}>
             {displayAddress}
           </div>
         </div>
 
-        <div className={`flex flex-1 items-center justify-center gap-2 sm:gap-4 ${exportMode ? "mt-10" : "mt-3 sm:mt-5"}`}>
+        <div className={`flex flex-1 items-center justify-center gap-2 sm:gap-4 ${exportMode ? "mt-8" : "mt-2 sm:mt-3"}`}>
           {productTiles.map((product, index) => (
             <div
               key={product?.id || `placeholder-${index}`}
