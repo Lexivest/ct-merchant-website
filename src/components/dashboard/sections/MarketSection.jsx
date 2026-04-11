@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useState } from "react"
-import { FaChevronRight, FaCircleCheck, FaImage, FaLocationDot, FaStore } from "react-icons/fa6"
+import { FaChevronRight, FaImage } from "react-icons/fa6"
 // IMPORT OUR NEW SHIMMERS
 import { ShimmerBlock } from "../../common/Shimmers"
 import StableImage from "../../common/StableImage"
@@ -16,7 +16,7 @@ function prefetchShopDetailPage() {
   return shopDetailPrefetchPromise
 }
 
-function FeaturedCitySlider({ banners, onOpenShop }) {
+function FeaturedCitySlider({ banners, cityName, onOpenShop }) {
   const [currentSlide, setCurrentSlide] = useState(0)
 
   useEffect(() => {
@@ -33,21 +33,8 @@ function FeaturedCitySlider({ banners, onOpenShop }) {
 
   return (
     <section className="relative mb-2 overflow-hidden bg-[#101827]">
-      <div className="px-4 pb-2 pt-4 text-white">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-pink-500/20 text-pink-200">
-            <FaStore />
-          </div>
-          <div>
-            <h2 className="text-[1.15rem] font-black leading-tight">Featured Shops Near You</h2>
-            <p className="text-xs font-semibold text-white/60">Selected marketplace highlights in your city</p>
-          </div>
-        </div>
-      </div>
-
       <div className="promo-banner-slider relative aspect-[16/9] w-full max-h-[420px] overflow-hidden bg-[#101827] sm:aspect-[8/3]">
         {banners.map((banner, idx) => {
-          const shop = banner.shops || {}
           const imageUrl = banner.desktop_image_url || banner.mobile_image_url
 
           return (
@@ -68,41 +55,15 @@ function FeaturedCitySlider({ banners, onOpenShop }) {
                 ) : null}
                 <img
                   src={imageUrl}
-                  alt={banner.title || shop.name || "Featured shop"}
+                  alt={banner.title || banner.shops?.name || "Featured shop"}
                   className="h-full w-full bg-[#101827] object-cover object-center"
                   loading={idx === currentSlide ? "eager" : "lazy"}
                   fetchPriority={idx === currentSlide ? "high" : "auto"}
                 />
               </picture>
 
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent px-4 pb-4 pt-16 text-white">
-                <div className="max-w-[680px]">
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    {shop.is_verified ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/95 px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-wide">
-                        <FaCircleCheck /> Verified
-                      </span>
-                    ) : null}
-                    {shop.category ? (
-                      <span className="rounded-full bg-white/90 px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-wide text-[#101827]">
-                        {shop.category}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div className="text-xl font-black leading-tight sm:text-3xl">
-                    {banner.title || shop.name}
-                  </div>
-                  {banner.subtitle || shop.address ? (
-                    <div className="mt-1 flex items-center gap-1.5 text-xs font-bold text-white/80 sm:text-sm">
-                      <FaLocationDot className="shrink-0 text-pink-200" />
-                      <span className="line-clamp-1">{banner.subtitle || shop.address}</span>
-                    </div>
-                  ) : null}
-                  <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-pink-600 px-4 py-2 text-xs font-black text-white shadow-[0_10px_24px_rgba(219,39,119,0.3)]">
-                    Visit Shop <FaChevronRight className="text-[0.72rem]" />
-                  </div>
-                </div>
+              <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/35 px-3 py-1.5 text-[0.68rem] font-black uppercase tracking-[0.14em] text-white shadow-sm backdrop-blur-sm sm:left-5 sm:top-5 sm:text-xs">
+                Welcome to {cityName || "your city"} commerce
               </div>
             </button>
           )
@@ -292,6 +253,7 @@ function MarketSection({
       {dashboardData.featuredCityBanners?.length > 0 ? (
         <FeaturedCitySlider
           banners={dashboardData.featuredCityBanners}
+          cityName={dashboardData.profile?.cities?.name}
           onOpenShop={openShop}
         />
       ) : null}
