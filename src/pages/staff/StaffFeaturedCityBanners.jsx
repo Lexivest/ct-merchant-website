@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   FaCircleNotch,
   FaCloudArrowUp,
@@ -9,21 +9,11 @@ import {
   FaWandMagicSparkles,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
-import { canvasToBlobWithMaxBytes } from "../../lib/imagePipeline"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { UPLOAD_RULES } from "../../lib/uploadRules"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import StableImage from "../../components/common/StableImage"
 import { SectionHeading, StaffPortalShell, formatDateTime } from "./StaffPortalShared"
-
-let html2canvasPromise = null
-
-function loadHtml2canvas() {
-  if (!html2canvasPromise) {
-    html2canvasPromise = import("html2canvas").then((module) => module.default)
-  }
-  return html2canvasPromise
-}
 
 const BANNER_RULE = UPLOAD_RULES.featuredCityBanners
 const BACKGROUND_OPTIONS = [
@@ -31,54 +21,240 @@ const BACKGROUND_OPTIONS = [
     key: "lagoon-blue",
     label: "Lagoon Blue",
     bg: "from-[#043C83] via-[#0969B9] to-[#20B7E8]",
+    stops: ["#043C83", "#0969B9", "#20B7E8"],
     texture: "radial-gradient(circle_at_15%_20%,rgba(255,255,255,0.38),transparent_22%),radial-gradient(circle_at_82%_12%,rgba(236,72,153,0.3),transparent_20%),linear-gradient(135deg,rgba(255,255,255,0.14)_0_1px,transparent_1px_18px)",
   },
   {
     key: "sunset-coral",
     label: "Sunset Coral",
     bg: "from-[#7C2D12] via-[#EA580C] to-[#F9A8D4]",
+    stops: ["#7C2D12", "#EA580C", "#F9A8D4"],
     texture: "radial-gradient(circle_at_20%_18%,rgba(255,255,255,0.42),transparent_20%),radial-gradient(circle_at_78%_28%,rgba(254,240,138,0.34),transparent_24%),linear-gradient(45deg,rgba(255,255,255,0.12)_0_2px,transparent_2px_20px)",
   },
   {
     key: "emerald-market",
     label: "Emerald Market",
     bg: "from-[#064E3B] via-[#059669] to-[#A7F3D0]",
+    stops: ["#064E3B", "#059669", "#A7F3D0"],
     texture: "radial-gradient(circle_at_12%_74%,rgba(255,255,255,0.34),transparent_22%),radial-gradient(circle_at_86%_18%,rgba(190,242,100,0.38),transparent_18%),linear-gradient(120deg,rgba(255,255,255,0.14)_0_1px,transparent_1px_16px)",
   },
   {
     key: "royal-night",
     label: "Royal Night",
     bg: "from-[#111827] via-[#312E81] to-[#DB2777]",
+    stops: ["#111827", "#312E81", "#DB2777"],
     texture: "radial-gradient(circle_at_18%_16%,rgba(255,255,255,0.22),transparent_18%),radial-gradient(circle_at_78%_70%,rgba(244,114,182,0.42),transparent_24%),linear-gradient(150deg,rgba(255,255,255,0.1)_0_1px,transparent_1px_22px)",
   },
   {
     key: "golden-commerce",
     label: "Golden Commerce",
     bg: "from-[#78350F] via-[#D97706] to-[#FDE68A]",
+    stops: ["#78350F", "#D97706", "#FDE68A"],
     texture: "radial-gradient(circle_at_20%_24%,rgba(255,255,255,0.45),transparent_18%),radial-gradient(circle_at_88%_16%,rgba(251,113,133,0.3),transparent_22%),linear-gradient(135deg,rgba(255,255,255,0.16)_0_1px,transparent_1px_14px)",
   },
   {
     key: "berry-silk",
     label: "Berry Silk",
     bg: "from-[#831843] via-[#DB2777] to-[#FBCFE8]",
+    stops: ["#831843", "#DB2777", "#FBCFE8"],
     texture: "radial-gradient(circle_at_18%_20%,rgba(255,255,255,0.34),transparent_22%),radial-gradient(circle_at_80%_75%,rgba(147,197,253,0.3),transparent_24%),linear-gradient(60deg,rgba(255,255,255,0.16)_0_1px,transparent_1px_18px)",
   },
   {
     key: "indigo-grid",
     label: "Indigo Grid",
     bg: "from-[#1E1B4B] via-[#3730A3] to-[#60A5FA]",
+    stops: ["#1E1B4B", "#3730A3", "#60A5FA"],
     texture: "linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.12)_1px,transparent_1px),radial-gradient(circle_at_80%_20%,rgba(236,72,153,0.3),transparent_20%)",
   },
   {
     key: "clean-sky",
     label: "Clean Sky",
     bg: "from-[#0F766E] via-[#22D3EE] to-[#EFF6FF]",
+    stops: ["#0F766E", "#22D3EE", "#EFF6FF"],
     texture: "radial-gradient(circle_at_22%_22%,rgba(255,255,255,0.48),transparent_20%),radial-gradient(circle_at_78%_68%,rgba(14,165,233,0.28),transparent_26%),linear-gradient(140deg,rgba(255,255,255,0.18)_0_1px,transparent_1px_20px)",
   },
 ]
 
 function getBackground(key) {
   return BACKGROUND_OPTIONS.find((item) => item.key === key) || BACKGROUND_OPTIONS[0]
+}
+
+function escapeXml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;")
+}
+
+function wrapText(value, maxChars, maxLines) {
+  const words = String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+
+  if (!words.length) return []
+
+  const lines = []
+  let current = ""
+
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word
+    if (next.length <= maxChars || !current) {
+      current = next
+    } else {
+      lines.push(current)
+      current = word
+    }
+
+    if (lines.length === maxLines) break
+  }
+
+  if (lines.length < maxLines && current) lines.push(current)
+
+  if (lines.length > maxLines) {
+    lines.length = maxLines
+  }
+
+  const lastIndex = lines.length - 1
+  if (lastIndex >= 0 && words.join(" ").length > lines.join(" ").length) {
+    lines[lastIndex] = `${lines[lastIndex].replace(/[.\s]+$/, "")}...`
+  }
+
+  return lines
+}
+
+function svgTextLines({ lines, x, y, fontSize, lineHeight, weight = 800, fill = "#FFFFFF", opacity = 1, anchor = "middle" }) {
+  return lines
+    .map((line, index) => (
+      `<text x="${x}" y="${y + index * lineHeight}" text-anchor="${anchor}" font-family="Verdana, Arial, sans-serif" font-size="${fontSize}" font-weight="${weight}" fill="${fill}" opacity="${opacity}">${escapeXml(line)}</text>`
+    ))
+    .join("")
+}
+
+function svgToDataUrl(svg) {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error("Could not read image data."))
+    reader.onload = () => resolve(String(reader.result || ""))
+    reader.readAsDataURL(blob)
+  })
+}
+
+async function imageUrlToDataUrl(url) {
+  if (!url) return ""
+  try {
+    const response = await fetch(url, { cache: "force-cache", mode: "cors" })
+    if (!response.ok) throw new Error("Image fetch failed.")
+    return await blobToDataUrl(await response.blob())
+  } catch {
+    return ""
+  }
+}
+
+function buildFeaturedBannerSvg({ shop, products, backgroundKey, width = 1600, height = 600 }) {
+  const background = getBackground(backgroundKey)
+  const [start, middle, end] = background.stops || BACKGROUND_OPTIONS[0].stops
+  const isMobile = height > width * 0.45
+  const titleLines = wrapText(shop?.name || "Featured Shop", isMobile ? 24 : 34, 2)
+  const addressLines = wrapText(
+    shop?.address || shop?.category || "Visit this shop for available products and services.",
+    isMobile ? 48 : 80,
+    2
+  )
+  const titleFont = isMobile ? 50 : 58
+  const addressFont = isMobile ? 25 : 28
+  const titleStartY = isMobile ? 92 : 82
+  const addressStartY = titleStartY + titleLines.length * (isMobile ? 58 : 64) + 12
+  const tileY = isMobile ? 280 : 255
+  const tileWidth = isMobile ? 172 : 214
+  const tileHeight = isMobile ? 218 : 198
+  const gap = isMobile ? 26 : 34
+  const totalTileWidth = tileWidth * 5 + gap * 4
+  const tileStartX = (width - totalTileWidth) / 2
+  const ctaWidth = isMobile ? 310 : 330
+  const ctaHeight = isMobile ? 78 : 72
+  const ctaX = (width - ctaWidth) / 2
+  const ctaY = height - (isMobile ? 112 : 96)
+  const safeProducts = Array.from({ length: 5 }, (_, index) => products?.[index] || null)
+
+  const productMarkup = safeProducts
+    .map((product, index) => {
+      const x = tileStartX + index * (tileWidth + gap)
+      const y = tileY + (index === 2 ? -18 : index % 2 ? 10 : 0)
+      const rotation = index === 0 || index === 4 ? -3 : index === 2 ? 0 : 3
+      const image = product?.svgImageUrl || product?.image_url || ""
+      const centerX = x + tileWidth / 2
+      const centerY = y + tileHeight / 2
+
+      return `
+        <g transform="rotate(${rotation} ${centerX} ${centerY})">
+          <rect x="${x}" y="${y}" width="${tileWidth}" height="${tileHeight}" rx="34" fill="#FFFFFF" opacity="0.97"/>
+          <rect x="${x}" y="${y}" width="${tileWidth}" height="${tileHeight}" rx="34" fill="none" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="4"/>
+          <clipPath id="productClip${index}">
+            <rect x="${x + 10}" y="${y + 10}" width="${tileWidth - 20}" height="${tileHeight - 20}" rx="26"/>
+          </clipPath>
+          ${
+            image
+              ? `<image href="${escapeXml(image)}" x="${x + 10}" y="${y + 10}" width="${tileWidth - 20}" height="${tileHeight - 20}" preserveAspectRatio="xMidYMid slice" clip-path="url(#productClip${index})"/>`
+              : `<rect x="${x + 10}" y="${y + 10}" width="${tileWidth - 20}" height="${tileHeight - 20}" rx="26" fill="#E2E8F0"/><text x="${centerX}" y="${centerY + 12}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="54" fill="#94A3B8">+</text>`
+          }
+        </g>
+      `
+    })
+    .join("")
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${start}"/>
+      <stop offset="54%" stop-color="${middle}"/>
+      <stop offset="100%" stop-color="${end}"/>
+    </linearGradient>
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse">
+      <path d="M 42 0 L 0 0 0 42" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="2"/>
+    </pattern>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#0F172A" flood-opacity="0.24"/>
+    </filter>
+  </defs>
+  <rect width="${width}" height="${height}" fill="url(#bg)"/>
+  <rect width="${width}" height="${height}" fill="url(#grid)" opacity="0.55"/>
+  <circle cx="${width * 0.14}" cy="${height * 0.1}" r="${width * 0.14}" fill="#FFFFFF" opacity="0.18"/>
+  <circle cx="${width * 0.83}" cy="${height * 0.12}" r="${width * 0.11}" fill="#F472B6" opacity="0.26"/>
+  <circle cx="${width * 0.88}" cy="${height * 0.9}" r="${width * 0.15}" fill="#FFFFFF" opacity="0.14"/>
+  <rect width="${width}" height="${height}" fill="#000000" opacity="0.08"/>
+  <g filter="url(#softShadow)">
+    ${svgTextLines({ lines: titleLines, x: width / 2, y: titleStartY, fontSize: titleFont, lineHeight: isMobile ? 58 : 64, weight: 900 })}
+    ${svgTextLines({ lines: addressLines, x: width / 2, y: addressStartY, fontSize: addressFont, lineHeight: isMobile ? 34 : 38, weight: 700, fill: "#FFFFFF", opacity: 0.88 })}
+  </g>
+  <g filter="url(#softShadow)">
+    ${productMarkup}
+  </g>
+  <g filter="url(#softShadow)">
+    <rect x="${ctaX}" y="${ctaY}" width="${ctaWidth}" height="${ctaHeight}" rx="${ctaHeight / 2}" fill="#DB2777"/>
+    <rect x="${ctaX + 7}" y="${ctaY + 7}" width="${ctaWidth - 14}" height="${ctaHeight - 14}" rx="${(ctaHeight - 14) / 2}" fill="none" stroke="#FFFFFF" stroke-opacity="0.34" stroke-width="4"/>
+    <text x="${width / 2}" y="${ctaY + ctaHeight / 2 + (isMobile ? 11 : 10)}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="${isMobile ? 30 : 28}" font-weight="900" letter-spacing="3" fill="#FFFFFF">VISIT SHOP</text>
+  </g>
+</svg>`
+}
+
+async function buildStandaloneFeaturedBannerSvg({ shop, products, backgroundKey, width, height }) {
+  const embeddedProducts = await Promise.all(
+    (products || []).slice(0, 5).map(async (product) => ({
+      ...product,
+      svgImageUrl: await imageUrlToDataUrl(product.image_url),
+    }))
+  )
+
+  return buildFeaturedBannerSvg({ shop, products: embeddedProducts, backgroundKey, width, height })
 }
 
 function FeaturedBannerArtwork({
@@ -88,74 +264,27 @@ function FeaturedBannerArtwork({
   exportMode = false,
   variant = "desktop",
 }) {
-  const background = getBackground(backgroundKey)
   const isMobile = variant === "mobile"
-  const shellClass = exportMode
-    ? isMobile ? "h-[700px] w-[1200px]" : "h-[600px] w-[1600px]"
-    : "aspect-[16/9] w-full sm:aspect-[8/3]"
-  const titleClass = exportMode ? (isMobile ? "text-[50px]" : "text-[54px]") : "text-lg sm:text-3xl"
-  const addressClass = exportMode ? "text-[24px]" : "text-[10px] sm:text-base"
-  const tileClass = exportMode ? (isMobile ? "h-[210px] w-[170px]" : "h-[190px] w-[205px]") : "h-14 w-12 sm:h-24 sm:w-24"
-  const ctaClass = exportMode ? "px-12 py-4 text-[24px]" : "px-4 py-1.5 text-[10px] sm:px-6 sm:py-2.5 sm:text-xs"
   const productList = (products || []).filter((product) => product?.image_url).slice(0, 5)
-  const productTiles = Array.from({ length: 5 }, (_, index) => productList[index] || null)
-  const displayAddress = shop?.address || shop?.category || "Visit this shop for available products and services."
+  const svg = buildFeaturedBannerSvg({
+    shop,
+    products: productList,
+    backgroundKey,
+    width: isMobile ? 1200 : 1600,
+    height: isMobile ? 700 : 600,
+  })
 
   return (
-    <div className={`relative overflow-hidden rounded-[30px] bg-gradient-to-br ${background.bg} text-white shadow-2xl ${shellClass}`}>
-      <div className="absolute inset-0 opacity-70" style={{ backgroundImage: background.texture, backgroundSize: "auto, auto, 28px 28px" }} />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/18 via-black/4 to-black/24" />
-      <div className="absolute -left-[7%] -top-[28%] h-[52%] w-[34%] rounded-full bg-white/22 blur-2xl" />
-      <div className="absolute -bottom-[24%] right-[4%] h-[46%] w-[32%] rounded-full bg-pink-300/30 blur-2xl" />
-
-      <div className={`relative z-[2] flex h-full flex-col items-center ${exportMode ? "px-20 py-10" : "px-4 py-3 sm:px-8 sm:py-6"}`}>
-        <div className="w-full text-center">
-          <div className={`mx-auto flex max-w-[92%] items-end justify-center text-balance font-black leading-[1.02] tracking-tight drop-shadow-lg ${exportMode ? "min-h-[112px]" : "min-h-[42px] sm:min-h-[68px]"} ${titleClass}`}>
-            {shop?.name || "Featured Shop"}
-          </div>
-          <div className={`mx-auto mt-1 line-clamp-2 max-w-[84%] font-bold leading-tight text-white/88 drop-shadow ${addressClass}`}>
-            {displayAddress}
-          </div>
-        </div>
-
-        <div className={`flex flex-1 items-center justify-center gap-2 sm:gap-4 ${exportMode ? "mt-8" : "mt-2 sm:mt-3"}`}>
-          {productTiles.map((product, index) => (
-            <div
-              key={product?.id || `placeholder-${index}`}
-              className={`overflow-hidden border border-white/35 bg-white/96 shadow-2xl ring-1 ring-black/5 ${tileClass} ${
-                index === 0 || index === 4 ? "rotate-[-3deg] rounded-[26px]" : index === 2 ? "scale-110 rounded-[30px]" : "rotate-[3deg] rounded-[26px]"
-              }`}
-            >
-              {product?.image_url ? (
-                <img
-                  crossOrigin="anonymous"
-                  src={product.image_url}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-slate-100 text-slate-300">
-                  <FaImage />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="flex w-full justify-center">
-          <div className={`rounded-full bg-pink-600 font-black uppercase tracking-[0.18em] text-white shadow-[0_18px_45px_rgba(219,39,119,0.4)] ring-4 ring-white/28 ${ctaClass}`}>
-            Visit Shop
-          </div>
-        </div>
-      </div>
-    </div>
+    <img
+      src={svgToDataUrl(svg)}
+      alt={shop?.name || "Featured shop banner preview"}
+      className={`block w-full rounded-[30px] bg-white shadow-2xl ${exportMode ? "" : "aspect-[16/9] sm:aspect-[8/3]"}`}
+    />
   )
 }
 
 export default function StaffFeaturedCityBanners() {
   const { notify, confirm } = useGlobalFeedback()
-  const desktopExportRef = useRef(null)
-  const mobileExportRef = useRef(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [cities, setCities] = useState([])
@@ -262,50 +391,6 @@ export default function StaffFeaturedCityBanners() {
     void loadCityShops(selectedCityId)
   }, [loadCityShops, selectedCityId])
 
-  async function waitForAssets(node) {
-    if (!node) return
-    if (document.fonts?.ready) {
-      try {
-        await document.fonts.ready
-      } catch {
-        // continue
-      }
-    }
-
-    const images = Array.from(node.querySelectorAll("img"))
-    await Promise.all(images.map((img) => new Promise((resolve) => {
-      if (img.complete && img.naturalWidth > 0) {
-        if (typeof img.decode === "function") img.decode().then(resolve).catch(resolve)
-        else resolve()
-        return
-      }
-      img.addEventListener("load", resolve, { once: true })
-      img.addEventListener("error", resolve, { once: true })
-    })))
-    await new Promise((resolve) => requestAnimationFrame(() => resolve()))
-  }
-
-  async function captureBanner(node) {
-    const html2canvas = await loadHtml2canvas()
-    await waitForAssets(node)
-    const canvas = await html2canvas(node, {
-      useCORS: true,
-      allowTaint: false,
-      backgroundColor: null,
-      scale: 1,
-      logging: false,
-    })
-    const blob = await canvasToBlobWithMaxBytes(canvas, {
-      maxBytes: BANNER_RULE.maxBytes,
-      mimeType: "image/jpeg",
-      qualityStart: 0.9,
-      qualityFloor: 0.55,
-      qualityStep: 0.06,
-    })
-    if (!blob) throw new Error("Generated banner is too large. Try fewer images or a simpler photo.")
-    return blob
-  }
-
   async function publishBanner() {
     if (!selectedCityId || !selectedShop) {
       notify({ type: "error", title: "Select a shop", message: "Choose a city and shop before publishing." })
@@ -316,21 +401,40 @@ export default function StaffFeaturedCityBanners() {
       setSaving(true)
       const timestamp = Date.now()
       const basePath = `city-${selectedCityId}/shop-${selectedShop.id}/${timestamp}`
-      const [desktopBlob, mobileBlob] = await Promise.all([
-        captureBanner(desktopExportRef.current),
-        captureBanner(mobileExportRef.current),
+      const [desktopSvg, mobileSvg] = await Promise.all([
+        buildStandaloneFeaturedBannerSvg({
+          shop: selectedShop,
+          products: selectedProducts,
+          backgroundKey,
+          width: 1600,
+          height: 600,
+        }),
+        buildStandaloneFeaturedBannerSvg({
+          shop: selectedShop,
+          products: selectedProducts,
+          backgroundKey,
+          width: 1200,
+          height: 700,
+        }),
       ])
-      const desktopPath = `${basePath}-desktop.jpg`
-      const mobilePath = `${basePath}-mobile.jpg`
+      const desktopBlob = new Blob([desktopSvg], { type: "image/svg+xml;charset=utf-8" })
+      const mobileBlob = new Blob([mobileSvg], { type: "image/svg+xml;charset=utf-8" })
+
+      if (desktopBlob.size > BANNER_RULE.maxBytes || mobileBlob.size > BANNER_RULE.maxBytes) {
+        throw new Error("Generated SVG banner is too large. Use fewer or smaller product images.")
+      }
+
+      const desktopPath = `${basePath}-desktop.svg`
+      const mobilePath = `${basePath}-mobile.svg`
 
       const [desktopUpload, mobileUpload] = await Promise.all([
         supabase.storage.from(BANNER_RULE.bucket).upload(desktopPath, desktopBlob, {
-          contentType: "image/jpeg",
+          contentType: "image/svg+xml",
           cacheControl: "31536000",
           upsert: false,
         }),
         supabase.storage.from(BANNER_RULE.bucket).upload(mobilePath, mobileBlob, {
-          contentType: "image/jpeg",
+          contentType: "image/svg+xml",
           cacheControl: "31536000",
           upsert: false,
         }),
@@ -538,14 +642,6 @@ export default function StaffFeaturedCityBanners() {
         </div>
       )}
 
-      <div className="pointer-events-none fixed left-[-10000px] top-0 opacity-0">
-        <div ref={desktopExportRef}>
-          <FeaturedBannerArtwork shop={selectedShop} products={selectedProducts} backgroundKey={backgroundKey} exportMode variant="desktop" />
-        </div>
-        <div ref={mobileExportRef}>
-          <FeaturedBannerArtwork shop={selectedShop} products={selectedProducts} backgroundKey={backgroundKey} exportMode variant="mobile" />
-        </div>
-      </div>
     </StaffPortalShell>
   )
 }
