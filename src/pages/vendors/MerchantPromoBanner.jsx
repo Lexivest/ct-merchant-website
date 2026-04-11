@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaArrowLeft,
-  FaCircleCheck,
   FaCircleNotch,
   FaDownload,
   FaFacebookF,
@@ -18,16 +17,6 @@ import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import logoImage from "../../assets/images/logo.jpg";
-
-let html2canvasPromise = null;
-
-function loadHtml2canvas() {
-  if (!html2canvasPromise) {
-    html2canvasPromise = import("html2canvas").then((module) => module.default);
-  }
-
-  return html2canvasPromise;
-}
 
 function wrapTextLines(input, maxCharsPerLine, maxLines) {
   const text = String(input || "").trim().replace(/\s+/g, " ");
@@ -64,6 +53,245 @@ function wrapTextLines(input, maxCharsPerLine, maxLines) {
   }
 
   return lines.slice(0, maxLines);
+}
+
+function escapeXml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function svgTextLines({ lines, x, y, fontSize, lineHeight, weight = 700, fill = "#FFFFFF", anchor = "start" }) {
+  return (lines || [])
+    .filter(Boolean)
+    .map((line, index) => (
+      `<text x="${x}" y="${y + index * lineHeight}" text-anchor="${anchor}" font-family="Verdana, Arial, sans-serif" font-size="${fontSize}" font-weight="${weight}" fill="${fill}">${escapeXml(line)}</text>`
+    ))
+    .join("");
+}
+
+function svgToDataUrl(svg) {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read image data."));
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function imageUrlToDataUrl(url) {
+  if (!url) return "";
+
+  try {
+    const response = await fetch(url, { cache: "force-cache", mode: "cors" });
+    if (!response.ok) throw new Error("Image fetch failed.");
+    return await blobToDataUrl(await response.blob());
+  } catch {
+    return "";
+  }
+}
+
+function formatPromoPrice(product) {
+  const price = Number(product?.price || 0);
+  const discount = Number(product?.discount_price || 0);
+  const finalPrice = discount && discount < price ? discount : price;
+  return finalPrice > 0 ? `NGN ${finalPrice.toLocaleString()}` : "";
+}
+
+function buildPromoBannerSvg({
+  products,
+  shopNameLines,
+  categoryLines,
+  addressLines,
+  uniqueId,
+  websiteText,
+  shopId,
+  logoDataUrl,
+  qrDataUrl,
+  width = 800,
+  height = 1080,
+}) {
+  const safeProducts = Array.from({ length: 4 }, (_, index) => products?.[index] || {});
+  const headerHeight = 190;
+  const gridPadding = 8;
+  const gridGap = 8;
+  const tileWidth = (width - gridPadding * 2 - gridGap) / 2;
+  const tileHeight = 360;
+  const gridY = headerHeight;
+  const imageHeight = 252;
+  const footerY = gridY + gridPadding * 2 + tileHeight * 2 + gridGap;
+  const footerHeight = height - footerY;
+  const qrText = `https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`;
+
+  const productMarkup = safeProducts
+    .map((product, index) => {
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+      const x = gridPadding + col * (tileWidth + gridGap);
+      const y = gridY + gridPadding + row * (tileHeight + gridGap);
+      const image = product.svgImageUrl || product.image_url || "";
+      const productName = wrapTextLines(product.name || "Featured Product", 30, 1)[0] || "";
+      const price = formatPromoPrice(product);
+      const hasDiscount = Number(product.discount_price || 0) > 0 && Number(product.discount_price) < Number(product.price || 0);
+      const discountPct = hasDiscount
+        ? Math.round(((Number(product.price) - Number(product.discount_price)) / Number(product.price)) * 100)
+        : 0;
+      const isUsed = product.condition === "Fairly Used";
+
+      return `
+        <g>
+          <rect x="${x}" y="${y}" width="${tileWidth}" height="${tileHeight}" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+          <clipPath id="promoProductClip${index}">
+            <rect x="${x + 8}" y="${y + 8}" width="${tileWidth - 16}" height="${imageHeight - 16}" rx="8"/>
+          </clipPath>
+          <rect x="${x + 8}" y="${y + 8}" width="${tileWidth - 16}" height="${imageHeight - 16}" rx="8" fill="#F8FAFC"/>
+          ${
+            image
+              ? `<image href="${escapeXml(image)}" x="${x + 8}" y="${y + 8}" width="${tileWidth - 16}" height="${imageHeight - 16}" preserveAspectRatio="xMidYMid meet" clip-path="url(#promoProductClip${index})"/>`
+              : `<text x="${x + tileWidth / 2}" y="${y + 140}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="44" fill="#CBD5E1">+</text>`
+          }
+          ${
+            hasDiscount
+              ? `<rect x="${x + 14}" y="${y + 14}" width="68" height="30" rx="5" fill="#DC2626"/><text x="${x + 48}" y="${y + 35}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="15" font-weight="800" fill="#FFFFFF">-${discountPct}%</text>`
+              : ""
+          }
+          ${
+            isUsed
+              ? `<rect x="${x + tileWidth - 72}" y="${y + 14}" width="58" height="30" rx="5" fill="#D97706"/><text x="${x + tileWidth - 43}" y="${y + 35}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="15" font-weight="800" fill="#FFFFFF">Used</text>`
+              : ""
+          }
+          <line x1="${x}" y1="${y + imageHeight}" x2="${x + tileWidth}" y2="${y + imageHeight}" stroke="#E2E8F0"/>
+          <text x="${x + tileWidth / 2}" y="${y + imageHeight + 42}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="18" font-weight="800" fill="#0F1111">${escapeXml(productName)}</text>
+          <text x="${x + tileWidth / 2}" y="${y + imageHeight + 82}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="26" font-weight="900" fill="#EA580C">${escapeXml(price)}</text>
+        </g>
+      `;
+    })
+    .join("");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <defs>
+    <filter id="promoShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#0F172A" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <rect width="${width}" height="${height}" rx="26" fill="#003B95"/>
+  <rect x="0" y="${gridY}" width="${width}" height="${footerY - gridY}" fill="#FFFFFF"/>
+  <rect x="0" y="${footerY}" width="${width}" height="${footerHeight}" fill="#1E3A8A"/>
+
+  <g>
+    ${
+      logoDataUrl
+        ? `<image href="${escapeXml(logoDataUrl)}" x="24" y="24" width="34" height="34" preserveAspectRatio="xMidYMid slice"/>`
+        : `<rect x="24" y="24" width="34" height="34" rx="4" fill="#FFFFFF" opacity="0.9"/>`
+    }
+    <text x="70" y="49" font-family="Verdana, Arial, sans-serif" font-size="17" font-weight="800" fill="#FFFFFF" opacity="0.92">${escapeXml(websiteText)}</text>
+    ${svgTextLines({ lines: shopNameLines, x: 24, y: 94, fontSize: 25, lineHeight: 30, weight: 900 })}
+    <text x="24" y="160" font-family="Verdana, Arial, sans-serif" font-size="20" font-weight="900" fill="#93C5FD">ID: ${escapeXml(uniqueId)}</text>
+    ${svgTextLines({ lines: categoryLines, x: 190, y: 160, fontSize: 17, lineHeight: 22, weight: 900, fill: "#FBBF24" })}
+    <rect x="704" y="24" width="72" height="72" rx="10" fill="#FFFFFF"/>
+    ${
+      qrDataUrl
+        ? `<image href="${escapeXml(qrDataUrl)}" x="710" y="30" width="60" height="60" preserveAspectRatio="xMidYMid meet"/>`
+        : `<text x="740" y="68" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="12" font-weight="900" fill="#003B95">QR</text>`
+    }
+    <text x="704" y="122" font-family="Verdana, Arial, sans-serif" font-size="10" font-weight="800" fill="#BFDBFE">${escapeXml(qrText.slice(0, 25))}</text>
+  </g>
+
+  <g filter="url(#promoShadow)">
+    ${productMarkup}
+  </g>
+
+  <g>
+    <text x="${width / 2}" y="${footerY + 48}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="18" font-weight="800" fill="#FFFFFF">
+      ${escapeXml(addressLines.join(" "))}
+    </text>
+    <text x="${width / 2}" y="${footerY + 92}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="15" font-weight="900" letter-spacing="3" fill="#93C5FD">
+      ENTER ID IN REPO OR SCAN TO VIEW SHOP
+    </text>
+  </g>
+</svg>`;
+}
+
+async function buildStandalonePromoBannerSvg({
+  products,
+  shopNameLines,
+  categoryLines,
+  addressLines,
+  uniqueId,
+  websiteText,
+  shopId,
+}) {
+  const qrUrl = `https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`;
+  const [logoDataUrl, qrDataUrl, embeddedProducts] = await Promise.all([
+    imageUrlToDataUrl(logoImage),
+    imageUrlToDataUrl(qrUrl),
+    Promise.all(
+      (products || []).slice(0, 4).map(async (product) => ({
+        ...product,
+        svgImageUrl: await imageUrlToDataUrl(product.image_url),
+      })),
+    ),
+  ]);
+
+  return buildPromoBannerSvg({
+    products: embeddedProducts,
+    shopNameLines,
+    categoryLines,
+    addressLines,
+    uniqueId,
+    websiteText,
+    shopId,
+    logoDataUrl,
+    qrDataUrl,
+  });
+}
+
+async function svgToPngBlob(svg, width = 800, height = 1080) {
+  const image = new Image();
+  image.decoding = "async";
+
+  await new Promise((resolve, reject) => {
+    image.onload = resolve;
+    image.onerror = () => reject(new Error("Could not render generated promo banner."));
+    image.src = svgToDataUrl(svg);
+  });
+
+  if (typeof image.decode === "function") {
+    try {
+      await image.decode();
+    } catch {
+      // The load event already confirmed the SVG can render.
+    }
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Could not prepare promo banner image.");
+
+  context.fillStyle = "#003B95";
+  context.fillRect(0, 0, width, height);
+  context.drawImage(image, 0, 0, width, height);
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Could not generate banner image."));
+        return;
+      }
+      resolve(blob);
+    }, "image/png", 1);
+  });
 }
 
 function PromoBannerShimmer() {
@@ -236,46 +464,6 @@ export default function MerchantPromoBanner() {
   const [shopData, setShopData] = useState(() => prefetchedData?.shopData || null);
   const [products, setProducts] = useState(() => prefetchedData?.products || []);
 
-  const bannerRef = useRef(null);
-  const exportBannerRef = useRef(null);
-
-  const waitForExportAssets = async (node) => {
-    if (!node) return;
-
-    if (typeof document !== "undefined" && document.fonts?.ready) {
-      try {
-        await document.fonts.ready;
-      } catch {
-        // Ignore font readiness errors and continue with capture.
-      }
-    }
-
-    const images = Array.from(node.querySelectorAll("img"));
-    await Promise.all(
-      images.map(
-        (img) =>
-          new Promise((resolve) => {
-            const finish = () => resolve();
-
-            if (img.complete && img.naturalWidth > 0) {
-              if (typeof img.decode === "function") {
-                img.decode().then(finish).catch(finish);
-              } else {
-                finish();
-              }
-              return;
-            }
-
-            img.addEventListener("load", finish, { once: true });
-            img.addEventListener("error", finish, { once: true });
-          }),
-      ),
-    );
-
-    await new Promise((resolve) => requestAnimationFrame(() => resolve()));
-    await new Promise((resolve) => requestAnimationFrame(() => resolve()));
-  };
-
   useEffect(() => {
     if (prefetchedData) {
       setShopData(prefetchedData.shopData || null);
@@ -352,44 +540,16 @@ export default function MerchantPromoBanner() {
   }, [user, authLoading, urlShopId, isOffline, prefetchedData]);
 
   const generateBannerBlob = async () => {
-    const exportNode = exportBannerRef.current;
-    if (!exportNode) throw new Error("Banner element not found.");
-
-    await waitForExportAssets(exportNode);
-    const html2canvas = await loadHtml2canvas();
-    const width = exportNode.scrollWidth;
-    const height = exportNode.scrollHeight;
-    const deviceScale = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-    const preferredScale = Math.min(2.5, Math.max(2, deviceScale));
-    const maxPixels = 9_000_000;
-    const maxSafeScale = Math.sqrt(maxPixels / Math.max(1, width * height));
-    const scale = Math.max(1.5, Math.min(preferredScale, maxSafeScale || preferredScale));
-
-    const canvas = await html2canvas(exportNode, {
-      scale,
-      useCORS: true,
-      allowTaint: false,
-      backgroundColor: "#003B95",
-      width,
-      height,
-      windowWidth: width,
-      windowHeight: height,
-      scrollX: 0,
-      scrollY: 0,
-      imageTimeout: 15000,
-      removeContainer: true,
-      logging: false,
+    const svg = await buildStandalonePromoBannerSvg({
+      products,
+      shopNameLines,
+      categoryLines,
+      addressLines,
+      uniqueId,
+      websiteText,
+      shopId: shopData?.id,
     });
-
-    return new Promise((resolve, reject) => {
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          reject(new Error("Could not generate banner image."));
-          return;
-        }
-        resolve(blob);
-      }, "image/png", 1);
-    });
+    return svgToPngBlob(svg);
   };
 
   const handleShare = async () => {
@@ -517,7 +677,7 @@ export default function MerchantPromoBanner() {
         </div>
 
         <div className="w-full rounded-[26px] border border-slate-200 bg-white p-3 sm:p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
-          <div className="w-full mx-auto" ref={bannerRef}>
+          <div className="w-full mx-auto">
               <PromoBannerArtwork
                 products={products}
                 shopNameLines={shopNameLines}
@@ -528,22 +688,6 @@ export default function MerchantPromoBanner() {
                 shopId={shopData?.id}
                 exportMode={false}
               />
-          </div>
-        </div>
-
-        {/* Hidden Export Node - Prevents mobile distortion */}
-        <div className="fixed -left-[10000px] top-0 z-[-1] pointer-events-none" aria-hidden="true">
-          <div className="w-[800px]" ref={exportBannerRef}>
-            <PromoBannerArtwork
-              products={products}
-              shopNameLines={shopNameLines}
-              categoryLines={categoryLines}
-              addressLines={addressLines}
-              uniqueId={uniqueId}
-              websiteText={websiteText}
-              shopId={shopData?.id}
-              exportMode={true}
-            />
           </div>
         </div>
 
