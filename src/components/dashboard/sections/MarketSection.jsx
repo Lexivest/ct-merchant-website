@@ -33,7 +33,7 @@ function FeaturedCitySlider({ banners, cityName, onOpenShop }) {
 
   return (
     <section className="relative mb-2 overflow-hidden bg-[#101827]">
-      <div className="promo-banner-slider relative aspect-[16/9] w-full max-h-[420px] overflow-hidden bg-[#101827] sm:aspect-[8/3]">
+      <div className="promo-banner-slider relative aspect-[8/3] w-full max-h-[420px] overflow-hidden bg-[#101827]">
         {banners.map((banner, idx) => {
           const imageUrl = banner.desktop_image_url || banner.mobile_image_url
 
