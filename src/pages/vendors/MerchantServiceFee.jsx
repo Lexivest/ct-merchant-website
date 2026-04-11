@@ -34,6 +34,13 @@ function isFutureDate(value) {
   return parsed.getTime() > Date.now()
 }
 
+function formatFileSize(bytes) {
+  const size = Number(bytes || 0)
+  if (!Number.isFinite(size) || size <= 0) return "Unknown size"
+  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`
+}
+
 function StatusCard({ proof }) {
   if (!proof) return null
 
@@ -71,16 +78,19 @@ export default function MerchantServiceFee() {
     location.state?.prefetchedData?.kind === "merchant-service-fee"
       ? location.state.prefetchedData
       : null
+  const cameFromVendorTransition = location.state?.fromVendorTransition === true
 
   const { user, loading: authLoading, isOffline } = useAuthSession()
 
-  const [loading, setLoading] = useState(() => !prefetchedData)
+  const [loading, setLoading] = useState(() => !prefetchedData && !cameFromVendorTransition)
   const [error, setError] = useState(null)
   const [submittingProof, setSubmittingProof] = useState(false)
   const [shopData, setShopData] = useState(() => prefetchedData?.shopData || null)
-  const [selectedPlan, setSelectedPlan] = useState("6_Months")
+  const [selectedPlan, setSelectedPlan] = useState("")
   const [paymentProof, setPaymentProof] = useState(null)
   const [receiptFile, setReceiptFile] = useState(null)
+  const [receiptPreviewUrl, setReceiptPreviewUrl] = useState("")
+  const [receiptInputKey, setReceiptInputKey] = useState(0)
   const [depositorName, setDepositorName] = useState("")
   const [transferReference, setTransferReference] = useState("")
   const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
@@ -99,7 +109,21 @@ export default function MerchantServiceFee() {
       paymentProof?.status !== "pending"
   )
 
-  const fetchSubscription = useCallback(async () => {
+  useEffect(() => {
+    if (!receiptFile || !receiptFile.type?.startsWith("image/")) {
+      setReceiptPreviewUrl("")
+      return undefined
+    }
+
+    const objectUrl = URL.createObjectURL(receiptFile)
+    setReceiptPreviewUrl(objectUrl)
+
+    return () => {
+      URL.revokeObjectURL(objectUrl)
+    }
+  }, [receiptFile])
+
+  const fetchSubscription = useCallback(async ({ showLoader = true } = {}) => {
     if (prefetchedReady && prefetchedData) {
       setShopData(prefetchedData.shopData || null)
       setError(null)
@@ -111,12 +135,12 @@ export default function MerchantServiceFee() {
     if (!user) return
     if (isOffline) {
       setError("Network unavailable. Retry.")
-      setLoading(false)
+      if (showLoader) setLoading(false)
       return
     }
 
     try {
-      setLoading(true)
+      if (showLoader) setLoading(true)
 
       let currentShopId = urlShopId
       if (!currentShopId) {
@@ -138,13 +162,15 @@ export default function MerchantServiceFee() {
     } catch (err) {
       setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."))
     } finally {
-      setLoading(false)
+      if (showLoader) setLoading(false)
     }
   }, [isOffline, prefetchedData, prefetchedReady, urlShopId, user])
 
   useEffect(() => {
-    if (!authLoading) fetchSubscription()
-  }, [authLoading, fetchSubscription])
+    if (!authLoading) {
+      void fetchSubscription({ showLoader: !cameFromVendorTransition })
+    }
+  }, [authLoading, cameFromVendorTransition, fetchSubscription])
 
   useEffect(() => {
     if (!user?.id || !shopData?.id || isOffline) return undefined
@@ -178,7 +204,14 @@ export default function MerchantServiceFee() {
   }, [user?.id, shopData?.id, isOffline])
 
   useEffect(() => {
-    if (!user?.id || !shopData?.id || !selectedPlan) return
+    if (!selectedPlan) {
+      setPaymentProof(null)
+      return
+    }
+
+    if (!user?.id || !shopData?.id) return
+
+    setPaymentProof(null)
 
     fetchLatestPaymentProof({
       userId: user.id,
@@ -217,7 +250,7 @@ export default function MerchantServiceFee() {
                 title: "Subscription payment approved",
                 message: "Your subscription has been activated.",
               })
-              void fetchSubscription()
+              void fetchSubscription({ showLoader: false })
             }
           }
         }
@@ -258,6 +291,7 @@ export default function MerchantServiceFee() {
 
       setPaymentProof(proof)
       setReceiptFile(null)
+      setReceiptInputKey((key) => key + 1)
       setDepositorName("")
       setTransferReference("")
       notify({
@@ -282,6 +316,10 @@ export default function MerchantServiceFee() {
   const formattedExpiry = hasValidEndDate
     ? endDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })
     : "Unknown"
+
+  const handleReceiptFileChange = (event) => {
+    setReceiptFile(event.target.files?.[0] || null)
+  }
 
   if ((authLoading && !shopData) || loading) {
     return (
@@ -421,16 +459,28 @@ export default function MerchantServiceFee() {
               <div className="mb-4">
                 <div className="text-xs font-black uppercase tracking-widest text-[#DB2777]">Selected Plan</div>
                 <div className="mt-1 text-2xl font-black text-[#0F172A]">
-                  {selectedPlanData?.label} · {formatNaira(selectedPlanData?.amount)}
+                  {selectedPlanData ? `${selectedPlanData.label} - ${formatNaira(selectedPlanData.amount)}` : "Choose a payment type"}
                 </div>
                 <p className="mt-2 text-sm font-semibold leading-6 text-[#64748B]">
-                  Transfer the exact amount, then upload your receipt. Confirmation can take up to 48 hours.
+                  {selectedPlanData
+                    ? "Transfer the exact amount, then upload your receipt. Confirmation can take up to 48 hours."
+                    : "Select either 6 months or 1 year before uploading a payment receipt."}
                 </p>
               </div>
 
               <StatusCard proof={paymentProof} />
 
-              {!isActive && isVerified && paymentProof?.status !== "pending" ? (
+              {!selectedPlanData && !isActive && isVerified ? (
+                <div className="mt-5 rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-5 text-center">
+                  <FaReceipt className="mx-auto mb-3 text-2xl text-[#94A3B8]" />
+                  <div className="font-black text-[#0F172A]">No payment type selected</div>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-[#64748B]">
+                    Choose a subscription plan first, then the receipt upload window will open here.
+                  </p>
+                </div>
+              ) : null}
+
+              {selectedPlanData && !isActive && isVerified && paymentProof?.status !== "pending" ? (
                 <div className="mt-5">
                   <label className="mb-2 block text-[0.85rem] font-bold text-[#64748B]">Depositor name, optional</label>
                   <input
@@ -454,13 +504,48 @@ export default function MerchantServiceFee() {
                     <FaReceipt className="text-[#D97706]" /> Upload payment receipt
                   </label>
                   <input
+                    key={receiptInputKey}
                     type="file"
                     accept="image/jpeg,image/png,image/webp,application/pdf"
-                    onChange={(event) => setReceiptFile(event.target.files?.[0] || null)}
+                    onChange={handleReceiptFileChange}
                     disabled={submittingProof}
                     className="mb-2 w-full rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-4 text-sm font-semibold text-[#475569]"
                   />
                   <div className="mb-4 text-xs font-semibold text-[#64748B]">{getPaymentReceiptRuleLabel()}</div>
+
+                  {receiptFile ? (
+                    <div className="mb-4 overflow-hidden rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF]">
+                      {receiptPreviewUrl ? (
+                        <img
+                          src={receiptPreviewUrl}
+                          alt="Selected payment receipt preview"
+                          className="max-h-[320px] w-full bg-white object-contain"
+                        />
+                      ) : null}
+                      <div className="flex items-center gap-3 p-4">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#1D4ED8]">
+                          <FaReceipt />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-black text-[#0F172A]">{receiptFile.name}</div>
+                          <div className="text-xs font-bold text-[#64748B]">
+                            {receiptFile.type || "Receipt file"} - {formatFileSize(receiptFile.size)}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReceiptFile(null)
+                            setReceiptInputKey((key) => key + 1)
+                          }}
+                          disabled={submittingProof}
+                          className="rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-xs font-black text-[#475569] transition hover:bg-[#F8FAFC] disabled:opacity-60"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
 
                   <button
                     onClick={handleSubmitProof}
