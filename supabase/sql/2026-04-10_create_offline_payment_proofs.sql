@@ -60,7 +60,7 @@ on public.offline_payment_proofs
 for insert
 to authenticated
 with check (
-  auth.uid() = merchant_id
+  (select auth.uid()) = merchant_id
   and status = 'pending'
   and reviewed_by is null
   and reviewed_at is null
@@ -68,27 +68,24 @@ with check (
     select 1
     from public.shops
     where shops.id = offline_payment_proofs.shop_id
-      and shops.owner_id = auth.uid()
+      and shops.owner_id = (select auth.uid())
   )
 );
 
 drop policy if exists "Merchants can read their own payment proofs" on public.offline_payment_proofs;
-create policy "Merchants can read their own payment proofs"
-on public.offline_payment_proofs
-for select
-to authenticated
-using (auth.uid() = merchant_id);
-
 drop policy if exists "Staff can read payment proofs" on public.offline_payment_proofs;
-create policy "Staff can read payment proofs"
+drop policy if exists "Authenticated can read relevant payment proofs" on public.offline_payment_proofs;
+create policy "Authenticated can read relevant payment proofs"
 on public.offline_payment_proofs
 for select
 to authenticated
 using (
+  (select auth.uid()) = merchant_id
+  or
   exists (
     select 1
     from public.staff_profiles
-    where staff_profiles.id = auth.uid()
+    where staff_profiles.id = (select auth.uid())
   )
 );
 
@@ -113,7 +110,7 @@ for insert
 to authenticated
 with check (
   bucket_id = 'payment-receipts'
-  and (storage.foldername(name))[1] = auth.uid()::text
+  and (storage.foldername(name))[1] = (select auth.uid())::text
 );
 
 drop policy if exists "Merchants can read their payment receipts" on storage.objects;
@@ -123,7 +120,7 @@ for select
 to authenticated
 using (
   bucket_id = 'payment-receipts'
-  and (storage.foldername(name))[1] = auth.uid()::text
+  and (storage.foldername(name))[1] = (select auth.uid())::text
 );
 
 drop policy if exists "Staff can read payment receipts" on storage.objects;
@@ -136,6 +133,6 @@ using (
   and exists (
     select 1
     from public.staff_profiles
-    where staff_profiles.id = auth.uid()
+    where staff_profiles.id = (select auth.uid())
   )
 );

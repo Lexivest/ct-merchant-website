@@ -283,7 +283,7 @@ export default function MerchantServiceFee() {
     ? endDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })
     : "Unknown"
 
-  if (authLoading || loading) {
+  if ((authLoading && !shopData) || loading) {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-[#F8FAFC]">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#2E1065]/20 border-t-[#2E1065]"></div>

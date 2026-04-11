@@ -70,6 +70,24 @@ function getEnvStrict(name: string, fallback?: string) {
 
 function safeErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message
+  if (error && typeof error === "object") {
+    const errorLike = error as {
+      message?: unknown
+      details?: unknown
+      hint?: unknown
+      code?: unknown
+    }
+    const parts = [
+      errorLike.message,
+      errorLike.details,
+      errorLike.hint,
+      errorLike.code,
+    ]
+      .map((part) => String(part || "").trim())
+      .filter(Boolean)
+
+    if (parts.length) return parts.join(" ")
+  }
   return String(error || "")
 }
 
@@ -97,19 +115,62 @@ function addMonths(baseDate: Date, months: number) {
   return next
 }
 
-function chooseSubscriptionBaseDate(currentEndDate: string | null | undefined) {
-  if (!currentEndDate) return new Date()
-  const parsed = new Date(currentEndDate)
-  if (Number.isNaN(parsed.getTime())) return new Date()
-  return parsed.getTime() > Date.now() ? parsed : new Date()
-}
-
 function getExpectedAmount(proof: OfflinePaymentProof) {
   if (proof.payment_kind === "physical_verification") return PHYSICAL_VERIFICATION_FEE
 
   const plan = proof.plan ? PLAN_OPTIONS[proof.plan] : null
   if (!plan) throw new HttpError(400, "Invalid subscription plan on payment proof.")
   return plan.amount
+}
+
+function isMissingColumnError(error: unknown, columnName: string) {
+  let serialized = ""
+  try {
+    serialized = JSON.stringify(error)
+  } catch {
+    serialized = ""
+  }
+
+  const message = `${safeErrorMessage(error)} ${serialized}`.toLowerCase()
+  return message.includes("column") && message.includes(columnName.toLowerCase())
+}
+
+function getMissingColumnName(error: unknown) {
+  const message = safeErrorMessage(error)
+  const quotedMatch = message.match(/'([^']+)' column/i)
+  if (quotedMatch?.[1]) return quotedMatch[1]
+
+  const columnMatch = message.match(/column\s+["']?([a-zA-Z0-9_]+)["']?/i)
+  if (columnMatch?.[1]) return columnMatch[1]
+
+  return ""
+}
+
+async function insertWithMissingColumnRetries(
+  adminClient: ReturnType<typeof createClient>,
+  tableName: string,
+  payload: Record<string, unknown>,
+  optionalColumns: string[],
+) {
+  let nextPayload = { ...payload }
+  let lastError: unknown = null
+
+  for (let attempt = 0; attempt <= optionalColumns.length; attempt += 1) {
+    const { error } = await adminClient.from(tableName).insert(nextPayload)
+    if (!error) return null
+    if (String(error.code) === "23505") return error
+
+    lastError = error
+    const missingColumn = getMissingColumnName(error)
+    if (!missingColumn || !optionalColumns.includes(missingColumn)) {
+      return error
+    }
+
+    const { [missingColumn]: _removed, ...rest } = nextPayload
+    nextPayload = rest
+  }
+
+  return lastError
 }
 
 serve(async (req) => {
@@ -281,10 +342,11 @@ serve(async (req) => {
 
     const planKey = proof.plan as keyof typeof PLAN_OPTIONS
     const planOption = PLAN_OPTIONS[planKey]
-    const baseDate = chooseSubscriptionBaseDate(shop.subscription_end_date)
-    const subscriptionEndDate = addMonths(baseDate, planOption.monthsToAdd).toISOString()
+    if (!planOption) throw new HttpError(400, "Invalid subscription plan on payment proof.")
 
-    const { error: updateShopError } = await adminClient
+    const subscriptionEndDate = addMonths(new Date(), planOption.monthsToAdd).toISOString()
+
+    let { error: updateShopError } = await adminClient
       .from("shops")
       .update({
         subscription_plan: planKey,
@@ -294,20 +356,36 @@ serve(async (req) => {
       .eq("id", shop.id)
       .eq("owner_id", proof.merchant_id)
 
+    if (updateShopError && isMissingColumnError(updateShopError, "is_subscription_active")) {
+      const fallbackUpdate = await adminClient
+        .from("shops")
+        .update({
+          subscription_plan: planKey,
+          subscription_end_date: subscriptionEndDate,
+        })
+        .eq("id", shop.id)
+        .eq("owner_id", proof.merchant_id)
+
+      updateShopError = fallbackUpdate.error
+    }
+
     if (updateShopError) throw new HttpError(500, `Failed to activate subscription: ${updateShopError.message}`)
 
-    const { error: serviceInsertError } = await adminClient
-      .from("service_fee_payments")
-      .insert({
-        merchant_id: proof.merchant_id,
-        shop_id: shop.id,
-        shop_name: shop.name || "Unknown Shop",
-        amount: expectedAmount,
-        plan: planKey,
-        payment_ref: paymentRef,
-        status: "success",
-        subscription_end_date: subscriptionEndDate,
-      })
+    const serviceReceiptPayload = {
+      merchant_id: proof.merchant_id,
+      shop_id: shop.id,
+      amount: expectedAmount,
+      plan: planKey,
+      payment_ref: paymentRef,
+      status: "success",
+    }
+
+    const serviceInsertError = await insertWithMissingColumnRetries(
+      adminClient,
+      "service_fee_payments",
+      serviceReceiptPayload,
+      ["status"],
+    )
 
     if (serviceInsertError && String(serviceInsertError.code) !== "23505") {
       throw new HttpError(500, `Failed to record subscription payment: ${serviceInsertError.message}`)

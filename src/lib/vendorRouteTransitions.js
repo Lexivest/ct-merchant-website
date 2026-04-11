@@ -459,7 +459,7 @@ async function prepareMerchantServiceFeeData({ userId, shopId }) {
   const shop = await fetchOwnedShop(
     userId,
     shopId,
-    "id, subscription_end_date, subscription_plan, is_verified, kyc_status"
+    "id, name, subscription_end_date, subscription_plan, is_verified, kyc_status"
   )
 
   return {

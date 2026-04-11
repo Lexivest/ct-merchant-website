@@ -28,6 +28,33 @@ const STATUS_FILTERS = [
   { key: "all", label: "All" },
 ]
 
+async function extractFunctionErrorMessage(error, fallback = "Review failed") {
+  if (!error) return fallback
+  const rawMessage = typeof error.message === "string" ? error.message : ""
+
+  const context = error.context
+  if (context && typeof context.clone === "function") {
+    try {
+      const asJson = await context.clone().json()
+      if (asJson && typeof asJson.error === "string" && asJson.error.trim()) {
+        return asJson.error
+      }
+    } catch {
+      // Ignore non-JSON edge function error bodies.
+    }
+
+    try {
+      const asText = await context.clone().text()
+      if (asText && asText.trim()) return asText.trim()
+    } catch {
+      // Ignore non-text edge function error bodies.
+    }
+  }
+
+  if (rawMessage && !rawMessage.includes("non-2xx")) return rawMessage
+  return fallback
+}
+
 function getPaymentKindLabel(proof) {
   if (proof.payment_kind === "physical_verification") return "Physical Verification"
   if (proof.plan === "1_Year") return "Service Fee · 1 Year"
@@ -194,7 +221,10 @@ export default function StaffPayments() {
         note,
       })
 
-      if (error) throw error
+      if (error) {
+        const detailedMessage = await extractFunctionErrorMessage(error, "Could not update this payment proof.")
+        throw new Error(detailedMessage)
+      }
       if (data?.error) throw new Error(data.error)
 
       notify({
