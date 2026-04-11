@@ -9,6 +9,7 @@ import {
   FaWandMagicSparkles,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
+import { canvasToBlobWithMaxBytes } from "../../lib/imagePipeline"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { UPLOAD_RULES } from "../../lib/uploadRules"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
@@ -257,6 +258,51 @@ async function buildStandaloneFeaturedBannerSvg({ shop, products, backgroundKey,
   return buildFeaturedBannerSvg({ shop, products: embeddedProducts, backgroundKey, width, height })
 }
 
+async function svgToJpegBlob(svg, width, height) {
+  const image = new Image()
+  image.decoding = "async"
+  const dataUrl = svgToDataUrl(svg)
+
+  await new Promise((resolve, reject) => {
+    image.onload = resolve
+    image.onerror = () => reject(new Error("Could not render generated banner."))
+    image.src = dataUrl
+  })
+
+  if (typeof image.decode === "function") {
+    try {
+      await image.decode()
+    } catch {
+      // The load event already confirmed the SVG is renderable.
+    }
+  }
+
+  const canvas = document.createElement("canvas")
+  canvas.width = width
+  canvas.height = height
+
+  const context = canvas.getContext("2d")
+  if (!context) throw new Error("Could not prepare generated banner.")
+
+  context.fillStyle = "#FFFFFF"
+  context.fillRect(0, 0, width, height)
+  context.drawImage(image, 0, 0, width, height)
+
+  const blob = await canvasToBlobWithMaxBytes(canvas, {
+    maxBytes: BANNER_RULE.maxBytes,
+    mimeType: "image/jpeg",
+    qualityStart: 0.92,
+    qualityFloor: 0.55,
+    qualityStep: 0.06,
+  })
+
+  if (!blob) {
+    throw new Error("Generated banner is too large. Use fewer or smaller product images.")
+  }
+
+  return blob
+}
+
 function FeaturedBannerArtwork({
   shop,
   products,
@@ -417,24 +463,22 @@ export default function StaffFeaturedCityBanners() {
           height: 700,
         }),
       ])
-      const desktopBlob = new Blob([desktopSvg], { type: "image/svg+xml;charset=utf-8" })
-      const mobileBlob = new Blob([mobileSvg], { type: "image/svg+xml;charset=utf-8" })
+      const [desktopBlob, mobileBlob] = await Promise.all([
+        svgToJpegBlob(desktopSvg, 1600, 600),
+        svgToJpegBlob(mobileSvg, 1200, 700),
+      ])
 
-      if (desktopBlob.size > BANNER_RULE.maxBytes || mobileBlob.size > BANNER_RULE.maxBytes) {
-        throw new Error("Generated SVG banner is too large. Use fewer or smaller product images.")
-      }
-
-      const desktopPath = `${basePath}-desktop.svg`
-      const mobilePath = `${basePath}-mobile.svg`
+      const desktopPath = `${basePath}-desktop.jpg`
+      const mobilePath = `${basePath}-mobile.jpg`
 
       const [desktopUpload, mobileUpload] = await Promise.all([
         supabase.storage.from(BANNER_RULE.bucket).upload(desktopPath, desktopBlob, {
-          contentType: "image/svg+xml",
+          contentType: "image/jpeg",
           cacheControl: "31536000",
           upsert: false,
         }),
         supabase.storage.from(BANNER_RULE.bucket).upload(mobilePath, mobileBlob, {
-          contentType: "image/svg+xml",
+          contentType: "image/jpeg",
           cacheControl: "31536000",
           upsert: false,
         }),

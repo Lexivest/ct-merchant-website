@@ -25,7 +25,7 @@ export const UPLOAD_RULES = Object.freeze({
   featuredCityBanners: Object.freeze({
     bucket: "featured-city-banners",
     maxBytes: 2 * MB,
-    allowedMime: ["image/svg+xml", "image/jpeg", "image/png", "image/webp"],
+    allowedMime: ["image/jpeg", "image/png", "image/webp"],
   }),
   storefronts: Object.freeze({
     bucket: "storefronts",
@@ -60,7 +60,6 @@ export const UPLOAD_RULES = Object.freeze({
 })
 
 const MIME_LABELS = Object.freeze({
-  "image/svg+xml": "SVG",
   "image/jpeg": "JPG",
   "image/png": "PNG",
   "image/webp": "WEBP",
