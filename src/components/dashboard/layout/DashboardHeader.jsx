@@ -209,6 +209,25 @@ function DashboardHeader({
 
   return (
     <header className="amz-header sticky top-0 z-[1000] flex flex-col bg-[#131921] text-white">
+      <style>
+        {`
+          @keyframes ctm-search-placeholder-scroll {
+            0%, 16% { transform: translateX(0); }
+            82%, 100% { transform: translateX(calc(-100% + var(--ctm-search-placeholder-width, 100%))); }
+          }
+
+          .ctm-search-placeholder-track {
+            animation: ctm-search-placeholder-scroll 9s ease-in-out infinite;
+            will-change: transform;
+          }
+
+          @media (min-width: 1025px) {
+            .ctm-search-placeholder-track {
+              animation-duration: 12s;
+            }
+          }
+        `}
+      </style>
       <div className="amz-mobile-scroll-row hidden w-full items-center gap-0 px-0 py-0 min-[1025px]:flex">
         <div className="amz-location mobile-hide hidden items-center gap-[6px] rounded border border-transparent px-3 py-2 text-[0.95rem] font-bold text-white transition hover:border-white min-[1025px]:flex">
           <FaLocationDot />
@@ -278,18 +297,30 @@ function DashboardHeader({
               </div>
             </div>
 
-            <input
-              className="amz-search-input min-w-0 flex-1 border-none px-4 text-[0.95rem] text-[#0F1111] outline-none placeholder:text-[0.82rem] placeholder:font-semibold min-[1180px]:placeholder:text-[0.9rem]"
-              placeholder={searchPlaceholder}
-              value={searchInputDesktop}
-              onChange={(e) => {
-                setSearchInputDesktop(e.target.value)
-                updateSuggestions(e.target.value, "desktop")
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") executeSearch("desktop")
-              }}
-            />
+            <div
+              className="relative min-w-0 flex-1 overflow-hidden"
+              style={{ "--ctm-search-placeholder-width": "calc(100vw - 280px)" }}
+            >
+              {!searchInputDesktop ? (
+                <div className="pointer-events-none absolute inset-y-0 left-4 right-4 flex items-center overflow-hidden">
+                  <span className="ctm-search-placeholder-track whitespace-nowrap text-[1rem] font-bold text-slate-500">
+                    {searchPlaceholder}
+                  </span>
+                </div>
+              ) : null}
+              <input
+                className="amz-search-input relative z-[1] min-w-0 w-full border-none bg-transparent px-4 text-base font-semibold text-[#0F1111] outline-none"
+                placeholder=""
+                value={searchInputDesktop}
+                onChange={(e) => {
+                  setSearchInputDesktop(e.target.value)
+                  updateSuggestions(e.target.value, "desktop")
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") executeSearch("desktop")
+                }}
+              />
+            </div>
 
             <button
               type="button"
@@ -388,18 +419,30 @@ function DashboardHeader({
             </div>
           </div>
 
-          <input
-            className="amz-search-input min-w-0 flex-1 border-none px-2.5 text-[0.86rem] text-[#0F1111] outline-none placeholder:text-[0.68rem] placeholder:font-semibold min-[390px]:placeholder:text-[0.74rem]"
-            placeholder={searchPlaceholder}
-            value={searchInputMobile}
-            onChange={(e) => {
-              setSearchInputMobile(e.target.value)
-              updateSuggestions(e.target.value, "mobile")
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") executeSearch("mobile")
-            }}
-          />
+          <div
+            className="relative min-w-0 flex-1 overflow-hidden"
+            style={{ "--ctm-search-placeholder-width": "calc(100vw - 176px)" }}
+          >
+            {!searchInputMobile ? (
+              <div className="pointer-events-none absolute inset-y-0 left-3 right-3 flex items-center overflow-hidden">
+                <span className="ctm-search-placeholder-track whitespace-nowrap text-[0.86rem] font-bold text-slate-500 min-[390px]:text-[0.92rem]">
+                  {searchPlaceholder}
+                </span>
+              </div>
+            ) : null}
+            <input
+              className="amz-search-input relative z-[1] min-w-0 w-full border-none bg-transparent px-3 text-[0.95rem] font-semibold text-[#0F1111] outline-none"
+              placeholder=""
+              value={searchInputMobile}
+              onChange={(e) => {
+                setSearchInputMobile(e.target.value)
+                updateSuggestions(e.target.value, "mobile")
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") executeSearch("mobile")
+              }}
+            />
+          </div>
 
           <button
             type="button"

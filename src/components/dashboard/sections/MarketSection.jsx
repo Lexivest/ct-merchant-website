@@ -32,8 +32,8 @@ function FeaturedCitySlider({ banners, onOpenShop }) {
   if (!banners?.length) return null
 
   return (
-    <section className="relative mb-2 overflow-hidden bg-[#101827]">
-      <div className="promo-banner-slider relative aspect-[8/3] w-full max-h-[420px] overflow-hidden bg-[#101827]">
+    <section className="relative mb-2 overflow-hidden bg-white">
+      <div className="promo-banner-slider relative aspect-[8/3] w-full max-h-[420px] overflow-hidden bg-white">
         {banners.map((banner, idx) => {
           const imageUrl = banner.desktop_image_url || banner.mobile_image_url
 
@@ -52,7 +52,7 @@ function FeaturedCitySlider({ banners, onOpenShop }) {
               <img
                 src={imageUrl}
                 alt={banner.title || banner.shops?.name || "Featured shop"}
-                className="absolute inset-0 block h-full w-full bg-[#101827] object-cover object-center"
+                className="absolute inset-0 block h-full w-full bg-white object-cover object-center"
                 loading={idx === currentSlide ? "eager" : "lazy"}
                 fetchPriority={idx === currentSlide ? "high" : "auto"}
               />
