@@ -49,18 +49,13 @@ function FeaturedCitySlider({ banners, cityName, onOpenShop }) {
                 idx === currentSlide ? "z-[2] opacity-100" : "z-[1] opacity-0"
               }`}
             >
-              <picture className="absolute inset-0 block h-full w-full">
-                {banner.mobile_image_url ? (
-                  <source media="(max-width: 640px)" srcSet={banner.mobile_image_url} />
-                ) : null}
-                <img
-                  src={imageUrl}
-                  alt={banner.title || banner.shops?.name || "Featured shop"}
-                  className="block h-full w-full bg-[#101827] object-cover object-center"
-                  loading={idx === currentSlide ? "eager" : "lazy"}
-                  fetchPriority={idx === currentSlide ? "high" : "auto"}
-                />
-              </picture>
+              <img
+                src={imageUrl}
+                alt={banner.title || banner.shops?.name || "Featured shop"}
+                className="absolute inset-0 block h-full w-full bg-[#101827] object-cover object-center"
+                loading={idx === currentSlide ? "eager" : "lazy"}
+                fetchPriority={idx === currentSlide ? "high" : "auto"}
+              />
 
               <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/35 px-3 py-1.5 text-[0.68rem] font-black uppercase tracking-[0.14em] text-white shadow-sm backdrop-blur-sm sm:left-5 sm:top-5 sm:text-xs">
                 Welcome to {cityName || "your city"} commerce
