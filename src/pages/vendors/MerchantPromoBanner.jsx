@@ -587,25 +587,16 @@ export default function MerchantPromoBanner() {
     if (isOffline) return alert("You must be online to share.");
     try {
       setSharing(true);
-      const textContent = `Visit my shop "${shopData.name}" on www.ctmerchant.com.ng\n\nSearch my ID: ${shopData.unique_id}.\n\n[Type your top products here...]`;
 
       const blob = await generateBannerBlob();
       const file = new File([blob], `CTMerchant_Banner_${shopData.unique_id}.png`, { type: "image/png" });
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: shopData.name,
-          text: textContent,
           files: [file],
         });
-      } else if (navigator.share) {
-        await navigator.share({
-          title: shopData.name,
-          text: textContent,
-        });
       } else {
-        navigator.clipboard.writeText(textContent);
-        alert("Shop details copied to clipboard! (Your device does not support native image sharing).");
+        alert("This browser cannot share image files directly. Please save the banner, then share it manually.");
       }
     } catch (err) {
       console.warn("Share action cancelled or failed:", err);
