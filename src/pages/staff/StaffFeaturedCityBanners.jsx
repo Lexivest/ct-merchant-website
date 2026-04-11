@@ -173,39 +173,33 @@ function buildFeaturedBannerSvg({ shop, products, backgroundKey, width = 1600, h
   const addressFont = isMobile ? 25 : 28
   const titleStartY = isMobile ? 92 : 82
   const addressStartY = titleStartY + titleLines.length * (isMobile ? 58 : 64) + 12
-  const tileY = isMobile ? 280 : 255
-  const tileWidth = isMobile ? 172 : 214
-  const tileHeight = isMobile ? 218 : 198
-  const gap = isMobile ? 26 : 34
+  const tileY = isMobile ? 315 : 225
+  const tileWidth = isMobile ? 190 : 258
+  const tileHeight = isMobile ? 260 : 285
+  const gap = isMobile ? 22 : 28
   const totalTileWidth = tileWidth * 5 + gap * 4
   const tileStartX = (width - totalTileWidth) / 2
-  const ctaWidth = isMobile ? 310 : 330
-  const ctaHeight = isMobile ? 78 : 72
-  const ctaX = (width - ctaWidth) / 2
-  const ctaY = height - (isMobile ? 112 : 96)
   const safeProducts = Array.from({ length: 5 }, (_, index) => products?.[index] || null)
 
   const productMarkup = safeProducts
     .map((product, index) => {
       const x = tileStartX + index * (tileWidth + gap)
-      const y = tileY + (index === 2 ? -18 : index % 2 ? 10 : 0)
-      const rotation = index === 0 || index === 4 ? -3 : index === 2 ? 0 : 3
+      const y = tileY
       const image = product?.svgImageUrl || product?.image_url || ""
       const centerX = x + tileWidth / 2
       const centerY = y + tileHeight / 2
 
       return `
-        <g transform="rotate(${rotation} ${centerX} ${centerY})">
-          <rect x="${x}" y="${y}" width="${tileWidth}" height="${tileHeight}" rx="34" fill="#FFFFFF" opacity="0.97"/>
-          <rect x="${x}" y="${y}" width="${tileWidth}" height="${tileHeight}" rx="34" fill="none" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="4"/>
+        <g>
           <clipPath id="productClip${index}">
-            <rect x="${x + 10}" y="${y + 10}" width="${tileWidth - 20}" height="${tileHeight - 20}" rx="26"/>
+            <rect x="${x}" y="${y}" width="${tileWidth}" height="${tileHeight}" rx="30"/>
           </clipPath>
           ${
             image
-              ? `<image href="${escapeXml(image)}" x="${x + 10}" y="${y + 10}" width="${tileWidth - 20}" height="${tileHeight - 20}" preserveAspectRatio="xMidYMid slice" clip-path="url(#productClip${index})"/>`
-              : `<rect x="${x + 10}" y="${y + 10}" width="${tileWidth - 20}" height="${tileHeight - 20}" rx="26" fill="#E2E8F0"/><text x="${centerX}" y="${centerY + 12}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="54" fill="#94A3B8">+</text>`
+              ? `<image href="${escapeXml(image)}" x="${x}" y="${y}" width="${tileWidth}" height="${tileHeight}" preserveAspectRatio="xMidYMid slice" clip-path="url(#productClip${index})"/>`
+              : `<rect x="${x}" y="${y}" width="${tileWidth}" height="${tileHeight}" rx="30" fill="#FFFFFF" opacity="0.14"/><text x="${centerX}" y="${centerY + 12}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="54" fill="#FFFFFF" opacity="0.7">+</text>`
           }
+          <rect x="${x}" y="${y}" width="${tileWidth}" height="${tileHeight}" rx="30" fill="none" stroke="#FFFFFF" stroke-opacity="0.42" stroke-width="3"/>
         </g>
       `
     })
@@ -238,11 +232,6 @@ function buildFeaturedBannerSvg({ shop, products, backgroundKey, width = 1600, h
   </g>
   <g filter="url(#softShadow)">
     ${productMarkup}
-  </g>
-  <g filter="url(#softShadow)">
-    <rect x="${ctaX}" y="${ctaY}" width="${ctaWidth}" height="${ctaHeight}" rx="${ctaHeight / 2}" fill="#DB2777"/>
-    <rect x="${ctaX + 7}" y="${ctaY + 7}" width="${ctaWidth - 14}" height="${ctaHeight - 14}" rx="${(ctaHeight - 14) / 2}" fill="none" stroke="#FFFFFF" stroke-opacity="0.34" stroke-width="4"/>
-    <text x="${width / 2}" y="${ctaY + ctaHeight / 2 + (isMobile ? 11 : 10)}" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="${isMobile ? 30 : 28}" font-weight="900" letter-spacing="3" fill="#FFFFFF">VISIT SHOP</text>
   </g>
 </svg>`
 }
