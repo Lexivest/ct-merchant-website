@@ -126,7 +126,7 @@ function DashboardHeader({
 
   function renderNavControls() {
     return (
-      <nav className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-0.5 sm:gap-2" aria-label="Dashboard navigation">
+      <nav className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-0.5 pr-2 sm:gap-2 sm:pr-4" aria-label="Dashboard navigation">
         <button
           type="button"
           className={`amz-nav-item ${
@@ -425,11 +425,11 @@ function DashboardHeader({
         ) : null}
       </div>
 
-      <div className="amz-sub-header flex h-[42px] items-center gap-2 bg-[#232F3E] px-3 py-0 text-[0.9rem] font-semibold text-white sm:px-4">
-        <div ref={categoryRef} className="relative shrink-0">
+      <div className="amz-sub-header flex h-[42px] items-center gap-2 bg-[#232F3E] px-0 py-0 text-[0.9rem] font-semibold text-white">
+        <div ref={categoryRef} className="relative shrink-0 self-stretch">
           <button
             type="button"
-            className="flex h-[32px] max-w-[132px] items-center gap-2 rounded border border-white/40 bg-transparent px-2 text-[0.85rem] font-semibold text-white transition hover:border-white sm:max-w-[180px]"
+            className="flex h-full max-w-[142px] items-center gap-2 border-r border-r-[#CDD2D3] bg-[#F3F4F6] px-2 text-[0.85rem] font-semibold text-[#555] transition hover:bg-[#DADADA] hover:text-[#0F1111] sm:max-w-[190px] sm:px-3"
             onClick={() => {
               setCategoryOpen((prev) => !prev)
               setDesktopAreaOpen(false)
@@ -445,7 +445,7 @@ function DashboardHeader({
           </button>
 
           <div
-            className={`absolute left-0 top-[calc(100%+8px)] z-[3000] w-[260px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-all duration-200 ${
+            className={`absolute left-0 top-[calc(100%+8px)] z-[3000] w-[260px] overflow-hidden rounded-r-xl border border-l-0 border-slate-200 bg-white shadow-2xl transition-all duration-200 ${
               categoryOpen
                 ? "pointer-events-auto translate-y-0 opacity-100"
                 : "pointer-events-none -translate-y-2 opacity-0"
