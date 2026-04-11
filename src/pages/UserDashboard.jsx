@@ -606,11 +606,6 @@ function UserDashboard() {
     })
   }, [localData.areas, currentProfile?.area_id])
 
-  const featuredShops = useMemo(
-    () => (localData.shops || []).filter((shop) => shop.is_featured),
-    [localData.shops]
-  )
-
   const groupedShopsByArea = useMemo(() => {
     const shopsByArea = new Map()
 
@@ -1671,7 +1666,6 @@ function UserDashboard() {
         {activeTab === "market" && (
           <MarketSection
             dashboardData={localData}
-            featuredShops={featuredShops}
             groupedShopsByArea={groupedShopsByArea}
             navigateCategory={navigateCategory}
             onOpenShop={openShopWithTransition}

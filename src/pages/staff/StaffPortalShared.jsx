@@ -7,7 +7,7 @@ import {
   FaCircleNotch,
   FaComments,
   FaEnvelope,
-  FaGlobe,
+  FaImages,
   FaReceipt,
   FaShieldHalved,
   FaStore,
@@ -371,6 +371,7 @@ export function StaffPortalShell({
     { key: "community", label: "Community", to: "/staff-community", icon: <FaComments /> },
     { key: "verifications", label: "Verifications", to: "/staff-verifications", icon: <FaStore /> },
     { key: "payments", label: "Payments", to: "/staff-payments", icon: <FaReceipt /> },
+    { key: "city-banners", label: "City Banners", to: "/staff-city-banners", icon: <FaImages /> },
     { key: "inbox", label: "Inbox", to: "/staff-inbox", icon: <FaEnvelope /> },
     { key: "studio", label: "CT Studio", to: "/staff-studio", icon: <FaWandMagicSparkles /> },
   ]

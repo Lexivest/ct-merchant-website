@@ -5,11 +5,11 @@ import {
   FaCircleNotch,
   FaComments,
   FaEnvelope,
+  FaImages,
   FaReceipt,
   FaStore,
   FaTriangleExclamation,
   FaUsers,
-  FaWandMagicSparkles,
 } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
@@ -189,11 +189,11 @@ export default function StaffDashboard() {
         onClick={() => void openStaffRouteWithTransition("/staff-inbox")}
       />,
       <QuickActionButton
-        key="studio"
-        icon={<FaWandMagicSparkles />}
-        label="Launch CT Studio"
+        key="city-banners"
+        icon={<FaImages />}
+        label="City Banners"
         tone="pink"
-        onClick={() => void openStaffRouteWithTransition("/staff-studio")}
+        onClick={() => void openStaffRouteWithTransition("/staff-city-banners")}
       />,
     ],
     [fetchSummary, loading, openStaffRouteWithTransition]
@@ -225,7 +225,7 @@ export default function StaffDashboard() {
             description="Each card opens a dedicated working page so the staff portal behaves like a proper internal product, not one long stacked screen."
           />
 
-          <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
+          <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-6">
             <HomeCard
               icon={<FaChartLine />}
               title="Traffic Intelligence"
@@ -265,6 +265,13 @@ export default function StaffDashboard() {
               metric={summary.pendingPayments}
               tone="blue"
               onClick={() => void openStaffRouteWithTransition("/staff-payments")}
+            />
+            <HomeCard
+              icon={<FaImages />}
+              title="City Banners"
+              subtitle="Generate and publish featured shop banners for the marketplace carousel."
+              tone="pink"
+              onClick={() => void openStaffRouteWithTransition("/staff-city-banners")}
             />
           </div>
 

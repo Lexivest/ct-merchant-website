@@ -22,6 +22,11 @@ export const UPLOAD_RULES = Object.freeze({
     maxBytes: 250 * KB,
     allowedMime: [],
   }),
+  featuredCityBanners: Object.freeze({
+    bucket: "featured-city-banners",
+    maxBytes: 2 * MB,
+    allowedMime: ["image/jpeg", "image/png", "image/webp"],
+  }),
   storefronts: Object.freeze({
     bucket: "storefronts",
     maxBytes: 500 * KB,

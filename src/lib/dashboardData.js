@@ -75,7 +75,7 @@ export async function fetchDashboardData({ userId, profile = null }) {
   const cityId = currentProfile.city_id
 
   const [
-    promosRes,
+    featuredBannersRes,
     announcementsRes,
     categoriesRes,
     areasRes,
@@ -83,7 +83,39 @@ export async function fetchDashboardData({ userId, profile = null }) {
     notificationsRes,
     wishlistRes,
   ] = await Promise.all([
-    supabase.from("promo_banners").select("*").order("created_at", { ascending: false }),
+    supabase
+      .from("featured_city_banners")
+      .select(`
+        id,
+        city_id,
+        shop_id,
+        title,
+        subtitle,
+        desktop_image_url,
+        mobile_image_url,
+        sort_order,
+        status,
+        starts_at,
+        ends_at,
+        shops (
+          id,
+          name,
+          category,
+          address,
+          image_url,
+          is_verified,
+          is_open,
+          status,
+          subscription_end_date
+        )
+      `)
+      .eq("city_id", cityId)
+      .eq("status", "published")
+      .or(`starts_at.is.null,starts_at.lte.${new Date().toISOString()}`)
+      .or(`ends_at.is.null,ends_at.gte.${new Date().toISOString()}`)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(10),
     supabase.from("announcements").select("*").order("created_at", { ascending: false }),
     supabase.from("categories").select("*").order("name"),
     supabase.from("areas").select("*").eq("city_id", cityId).order("name"),
@@ -103,9 +135,9 @@ export async function fetchDashboardData({ userId, profile = null }) {
     supabase.from("wishlist").select("*", { count: "exact", head: true }).eq("user_id", userId),
   ])
 
-  const promos = unwrapSupabaseResult(
-    promosRes,
-    "Promotions could not be loaded right now."
+  const featuredCityBanners = unwrapSupabaseResult(
+    featuredBannersRes,
+    "Featured shops could not be loaded right now."
   ) || []
   const announcements = unwrapSupabaseResult(
     announcementsRes,
@@ -152,7 +184,8 @@ export async function fetchDashboardData({ userId, profile = null }) {
 
   return {
     profile: currentProfile,
-    promos,
+    promos: [],
+    featuredCityBanners,
     announcements,
     categories,
     areas,
