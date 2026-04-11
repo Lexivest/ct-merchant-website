@@ -6,14 +6,19 @@ import {
   FaCircleCheck,
   FaCircleNotch,
   FaClock,
+  FaPrint,
   FaReceipt,
   FaTriangleExclamation,
+  FaWhatsapp,
+  FaXmark,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { PAYMENT_RECEIPT_RULE, formatNaira } from "../../lib/offlinePayments"
+import { normalizeWhatsAppPhone, openWhatsAppConversation } from "../../lib/whatsapp"
+import ctmLogo from "../../assets/images/logo.jpg"
 import {
   QuickActionButton,
   SectionHeading,
@@ -27,6 +32,13 @@ const STATUS_FILTERS = [
   { key: "rejected", label: "Rejected" },
   { key: "all", label: "All" },
 ]
+
+const COMPANY_DETAILS = {
+  name: "CT Merchant LTD",
+  website: "www.ctmerchant.com.ng",
+  rcNumber: "RC: 8879163",
+  email: "finance@ctmerchant.com.ng",
+}
 
 async function extractFunctionErrorMessage(error, fallback = "Review failed") {
   if (!error) return fallback
@@ -57,8 +69,376 @@ async function extractFunctionErrorMessage(error, fallback = "Review failed") {
 
 function getPaymentKindLabel(proof) {
   if (proof.payment_kind === "physical_verification") return "Physical Verification"
-  if (proof.plan === "1_Year") return "Service Fee · 1 Year"
-  return "Service Fee · 6 Months"
+  if (proof.plan === "1_Year") return "Service Fee - 1 Year"
+  return "Service Fee - 6 Months"
+}
+
+function getReceiptNumber(proof) {
+  return proof?.approval_payment_ref || `OFFLINE_${proof?.id || "PENDING"}`
+}
+
+function getReceiptDate(proof) {
+  return proof?.reviewed_at || proof?.updated_at || proof?.created_at || new Date().toISOString()
+}
+
+function getReceiptRecipientPhone(proof) {
+  return proof?.shop_whatsapp || proof?.shop_phone || proof?.merchant_phone || ""
+}
+
+function buildReceiptMessage(proof) {
+  const lines = [
+    `Hello ${proof.merchant_name || "Merchant"},`,
+    "",
+    "Your CTMerchant payment has been confirmed.",
+    "",
+    `Receipt No: ${getReceiptNumber(proof)}`,
+    `Payment: ${getPaymentKindLabel(proof)}`,
+    `Shop: ${proof.shop_name || `Shop #${proof.shop_id}`}`,
+    `Amount: ${formatNaira(proof.amount)}`,
+    `Date: ${formatDateTime(getReceiptDate(proof))}`,
+    "",
+    COMPANY_DETAILS.name,
+    COMPANY_DETAILS.website,
+    COMPANY_DETAILS.rcNumber,
+    COMPANY_DETAILS.email,
+  ]
+
+  return lines.join("\n")
+}
+
+async function enrichPaymentProofs(rows) {
+  const safeRows = Array.isArray(rows) ? rows : []
+  if (!safeRows.length) return []
+
+  const merchantIds = [...new Set(safeRows.map((proof) => proof.merchant_id).filter(Boolean))]
+  const shopIds = [...new Set(safeRows.map((proof) => proof.shop_id).filter(Boolean))]
+
+  const [profilesResult, shopsResult] = await Promise.all([
+    merchantIds.length
+      ? supabase.from("profiles").select("id, full_name, phone").in("id", merchantIds)
+      : Promise.resolve({ data: [], error: null }),
+    shopIds.length
+      ? supabase
+          .from("shops")
+          .select("id, name, phone, whatsapp, owner_id, subscription_end_date, subscription_plan")
+          .in("id", shopIds)
+      : Promise.resolve({ data: [], error: null }),
+  ])
+
+  if (profilesResult.error) {
+    console.warn("Could not load payment merchant profiles:", profilesResult.error)
+  }
+  if (shopsResult.error) {
+    console.warn("Could not load payment shop contacts:", shopsResult.error)
+  }
+
+  const profilesById = new Map((profilesResult.data || []).map((profile) => [profile.id, profile]))
+  const shopsById = new Map((shopsResult.data || []).map((shop) => [shop.id, shop]))
+
+  return safeRows.map((proof) => {
+    const profile = profilesById.get(proof.merchant_id) || null
+    const shop = shopsById.get(proof.shop_id) || null
+
+    return {
+      ...proof,
+      merchant_name: proof.merchant_name || profile?.full_name || "Merchant",
+      merchant_phone: profile?.phone || "",
+      shop_name: proof.shop_name || shop?.name || "",
+      shop_phone: shop?.phone || "",
+      shop_whatsapp: shop?.whatsapp || "",
+      subscription_end_date: shop?.subscription_end_date || proof.subscription_end_date || null,
+      subscription_plan_current: shop?.subscription_plan || "",
+    }
+  })
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+}
+
+function openPrintableReceipt(proof) {
+  if (typeof window === "undefined") return false
+
+  const printWindow = window.open("", "_blank")
+  if (!printWindow) return false
+
+  const receiptNumber = getReceiptNumber(proof)
+  const receiptDate = formatDateTime(getReceiptDate(proof))
+  const paymentLabel = getPaymentKindLabel(proof)
+  const shopName = proof.shop_name || `Shop #${proof.shop_id}`
+  const merchantName = proof.merchant_name || "Merchant"
+
+  printWindow.document.write(`
+    <!doctype html>
+    <html>
+      <head>
+        <title>${escapeHtml(receiptNumber)} - CTMerchant Receipt</title>
+        <style>
+          * { box-sizing: border-box; }
+          body {
+            margin: 0;
+            background: #eef2f7;
+            color: #0f172a;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          }
+          .sheet {
+            width: min(860px, calc(100% - 32px));
+            margin: 28px auto;
+            background: #ffffff;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 24px 80px rgba(15, 23, 42, 0.18);
+          }
+          .top {
+            background: linear-gradient(135deg, #2e1065, #be185d);
+            color: white;
+            padding: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+          }
+          .brand { display: flex; align-items: center; gap: 16px; }
+          .brand img {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.35);
+            object-fit: cover;
+            background: white;
+          }
+          .company { font-size: 30px; font-weight: 950; letter-spacing: -0.04em; }
+          .meta { margin-top: 6px; font-size: 13px; font-weight: 750; opacity: 0.86; line-height: 1.55; }
+          .paid {
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 950;
+            text-transform: uppercase;
+            background: rgba(255,255,255,0.14);
+          }
+          .body { padding: 34px; }
+          .receipt-title {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 22px;
+          }
+          h1 { margin: 0; font-size: 34px; letter-spacing: -0.04em; }
+          .receipt-no { text-align: right; color: #475569; font-size: 13px; font-weight: 850; line-height: 1.7; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 24px; }
+          .box { border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 20px; padding: 18px; }
+          .label { color: #64748b; font-size: 11px; font-weight: 950; text-transform: uppercase; letter-spacing: 0.08em; }
+          .value { margin-top: 8px; font-size: 17px; font-weight: 900; color: #0f172a; line-height: 1.45; }
+          .amount {
+            margin-top: 24px;
+            border-radius: 24px;
+            background: #0f172a;
+            color: white;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+          }
+          .amount .value { color: white; font-size: 36px; margin: 0; }
+          .foot {
+            padding: 22px 34px 32px;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.7;
+          }
+          @media print {
+            body { background: white; }
+            .sheet { width: 100%; margin: 0; box-shadow: none; border-radius: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <main class="sheet">
+          <section class="top">
+            <div class="brand">
+              <img src="${ctmLogo}" alt="CTMerchant logo" />
+              <div>
+                <div class="company">${escapeHtml(COMPANY_DETAILS.name)}</div>
+                <div class="meta">
+                  ${escapeHtml(COMPANY_DETAILS.website)}<br />
+                  ${escapeHtml(COMPANY_DETAILS.rcNumber)}<br />
+                  ${escapeHtml(COMPANY_DETAILS.email)}
+                </div>
+              </div>
+            </div>
+            <div class="paid">Payment Confirmed</div>
+          </section>
+          <section class="body">
+            <div class="receipt-title">
+              <div>
+                <h1>Official Receipt</h1>
+                <div class="meta" style="color:#64748b;">Issued after CTMerchant staff payment confirmation.</div>
+              </div>
+              <div class="receipt-no">
+                Receipt No: ${escapeHtml(receiptNumber)}<br />
+                Date: ${escapeHtml(receiptDate)}
+              </div>
+            </div>
+            <div class="grid">
+              <div class="box">
+                <div class="label">Received From</div>
+                <div class="value">${escapeHtml(merchantName)}</div>
+              </div>
+              <div class="box">
+                <div class="label">Shop</div>
+                <div class="value">${escapeHtml(shopName)}</div>
+              </div>
+              <div class="box">
+                <div class="label">Payment Type</div>
+                <div class="value">${escapeHtml(paymentLabel)}</div>
+              </div>
+              <div class="box">
+                <div class="label">Reference</div>
+                <div class="value">${escapeHtml(proof.transfer_reference || receiptNumber)}</div>
+              </div>
+            </div>
+            <div class="amount">
+              <div>
+                <div class="label" style="color:#cbd5e1;">Amount Paid</div>
+                <div style="margin-top:6px;font-weight:800;color:#cbd5e1;">Bank transfer confirmed by CTMerchant Finance</div>
+              </div>
+              <div class="value">${escapeHtml(formatNaira(proof.amount))}</div>
+            </div>
+          </section>
+          <section class="foot">
+            This receipt confirms payment recorded by CTMerchant staff. For finance support, contact ${escapeHtml(COMPANY_DETAILS.email)}.
+          </section>
+        </main>
+        <script>
+          window.addEventListener("load", () => {
+            window.focus();
+            window.print();
+          });
+        </script>
+      </body>
+    </html>
+  `)
+  printWindow.document.close()
+  return true
+}
+
+function ReceiptModal({ proof, onClose, onSendWhatsApp }) {
+  if (!proof) return null
+
+  const recipientPhone = getReceiptRecipientPhone(proof)
+  const normalizedPhone = normalizeWhatsAppPhone(recipientPhone)
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
+      <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[28px] bg-white shadow-2xl">
+        <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
+          <div>
+            <div className="text-lg font-black text-slate-950">CTMerchant Receipt</div>
+            <div className="text-xs font-bold text-slate-500">{getReceiptNumber(proof)}</div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+          >
+            <FaXmark />
+          </button>
+        </div>
+
+        <div className="p-5">
+          <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-col gap-4 bg-gradient-to-br from-[#2E1065] to-[#BE185D] p-6 text-white sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <img src={ctmLogo} alt="CTMerchant logo" className="h-16 w-16 rounded-2xl border border-white/30 bg-white object-cover" />
+                <div>
+                  <div className="text-2xl font-black tracking-tight">{COMPANY_DETAILS.name}</div>
+                  <div className="mt-1 text-xs font-bold leading-5 text-white/80">
+                    {COMPANY_DETAILS.website} - {COMPANY_DETAILS.rcNumber}
+                    <br />
+                    {COMPANY_DETAILS.email}
+                  </div>
+                </div>
+              </div>
+              <div className="self-start rounded-full border border-white/30 bg-white/15 px-4 py-2 text-xs font-black uppercase tracking-widest sm:self-center">
+                Payment Confirmed
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="flex flex-col gap-3 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <div className="text-3xl font-black tracking-tight text-slate-950">Official Receipt</div>
+                  <div className="mt-1 text-sm font-semibold text-slate-500">Issued after staff payment confirmation.</div>
+                </div>
+                <div className="text-left text-sm font-bold leading-6 text-slate-500 sm:text-right">
+                  Receipt No: <span className="text-slate-950">{getReceiptNumber(proof)}</span>
+                  <br />
+                  Date: <span className="text-slate-950">{formatDateTime(getReceiptDate(proof))}</span>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <div className="text-xs font-black uppercase tracking-widest text-slate-400">Received From</div>
+                  <div className="mt-2 font-black text-slate-950">{proof.merchant_name || "Merchant"}</div>
+                  <div className="mt-1 text-xs font-semibold text-slate-500">{proof.merchant_email || proof.merchant_id}</div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <div className="text-xs font-black uppercase tracking-widest text-slate-400">Shop</div>
+                  <div className="mt-2 font-black text-slate-950">{proof.shop_name || `Shop #${proof.shop_id}`}</div>
+                  <div className="mt-1 text-xs font-semibold text-slate-500">WhatsApp: {normalizedPhone || "Not provided"}</div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <div className="text-xs font-black uppercase tracking-widest text-slate-400">Payment Type</div>
+                  <div className="mt-2 font-black text-slate-950">{getPaymentKindLabel(proof)}</div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <div className="text-xs font-black uppercase tracking-widest text-slate-400">Reference</div>
+                  <div className="mt-2 font-black text-slate-950">{proof.transfer_reference || getReceiptNumber(proof)}</div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col gap-3 rounded-3xl bg-slate-950 p-5 text-white sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="text-xs font-black uppercase tracking-widest text-slate-400">Amount Paid</div>
+                  <div className="mt-1 text-sm font-bold text-slate-300">Bank transfer confirmed by CTMerchant Finance</div>
+                </div>
+                <div className="text-3xl font-black">{formatNaira(proof.amount)}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => onSendWhatsApp(proof)}
+              disabled={!normalizedPhone}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 font-black text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+              <FaWhatsapp /> Send Receipt on WhatsApp
+            </button>
+            <button
+              type="button"
+              onClick={() => openPrintableReceipt(proof)}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 font-black text-white transition hover:bg-slate-800"
+            >
+              <FaPrint /> Print / Save PDF
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function getStatusBadge(status) {
@@ -86,11 +466,12 @@ export default function StaffPayments() {
   const [signedUrls, setSignedUrls] = useState({})
   const [reviewDrafts, setReviewDrafts] = useState({})
   const [reviewingId, setReviewingId] = useState(null)
+  const [selectedReceiptProof, setSelectedReceiptProof] = useState(null)
   const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
   const fetchProofs = useCallback(async () => {
     if (prefetchedReady && prefetchedData) {
-      const rows = prefetchedData.proofs || []
+      const rows = await enrichPaymentProofs(prefetchedData.proofs || [])
       setProofs(rows)
       setReviewDrafts((current) => {
         const next = { ...current }
@@ -114,7 +495,7 @@ export default function StaffPayments() {
       setSignedUrls(Object.fromEntries(signedEntries))
       setLoading(false)
       setPrefetchedReady(false)
-      return
+      return rows
     }
 
     setLoading(true)
@@ -127,7 +508,7 @@ export default function StaffPayments() {
 
       if (error) throw error
 
-      const rows = data || []
+      const rows = await enrichPaymentProofs(data || [])
       setProofs(rows)
       setReviewDrafts((current) => {
         const next = { ...current }
@@ -151,6 +532,7 @@ export default function StaffPayments() {
       )
 
       setSignedUrls(Object.fromEntries(signedEntries))
+      return rows
     } catch (error) {
       console.error("Could not load offline payment proofs:", error)
       notify({
@@ -158,6 +540,7 @@ export default function StaffPayments() {
         title: "Could not load payments",
         message: getFriendlyErrorMessage(error, "Could not load payment proofs. Retry."),
       })
+      return []
     } finally {
       setLoading(false)
     }
@@ -232,7 +615,17 @@ export default function StaffPayments() {
         title: action === "approve" ? "Payment approved" : "Payment rejected",
         message: data?.message || "Payment proof updated.",
       })
-      await fetchProofs()
+      const refreshedProofs = await fetchProofs()
+      if (action === "approve") {
+        const approvedProof =
+          refreshedProofs.find((item) => item.id === proof.id) || {
+            ...proof,
+            status: "approved",
+            reviewed_at: new Date().toISOString(),
+            approval_payment_ref: data?.paymentRef || proof.approval_payment_ref,
+          }
+        setSelectedReceiptProof(approvedProof)
+      }
     } catch (error) {
       console.error(error)
       notify({
@@ -245,15 +638,39 @@ export default function StaffPayments() {
     }
   }
 
+  const sendReceiptToWhatsApp = (proof) => {
+    const phone = getReceiptRecipientPhone(proof)
+    const normalizedPhone = normalizeWhatsAppPhone(phone)
+
+    if (!normalizedPhone) {
+      notify({
+        type: "error",
+        title: "WhatsApp unavailable",
+        message: "No merchant WhatsApp or phone number is available for this receipt.",
+      })
+      return
+    }
+
+    const opened = openWhatsAppConversation(normalizedPhone, buildReceiptMessage(proof))
+    if (!opened) {
+      notify({
+        type: "error",
+        title: "Could not open WhatsApp",
+        message: "Please check this device browser settings and try again.",
+      })
+    }
+  }
+
   return (
-    <StaffPortalShell
+    <>
+      <StaffPortalShell
       activeKey="payments"
       title="Offline Payments"
       description="Review bank-transfer receipts, approve subscription activations, and reject unclear proofs with a staff note."
       headerActions={[
         <QuickActionButton key="refresh" icon={<FaCircleNotch className={loading ? "animate-spin" : ""} />} label="Refresh Payments" tone="white" onClick={fetchProofs} />,
       ]}
-    >
+      >
       <SectionHeading
         eyebrow="Payments"
         title="Receipt Review Queue"
@@ -319,7 +736,7 @@ export default function StaffPayments() {
                     </span>
                   </div>
 
-                  <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                     <div>
                       <div className="text-xs font-bold uppercase text-slate-400">Merchant</div>
                       <div className="mt-1 font-black text-slate-900">{proof.merchant_name || "Merchant"}</div>
@@ -340,6 +757,13 @@ export default function StaffPayments() {
                       <div className="mt-1 font-black text-slate-900">{formatDateTime(proof.created_at)}</div>
                       <div className="text-xs font-semibold text-slate-500">Reviewed: {formatDateTime(proof.reviewed_at)}</div>
                     </div>
+                    <div>
+                      <div className="text-xs font-bold uppercase text-slate-400">WhatsApp</div>
+                      <div className="mt-1 font-black text-slate-900">
+                        {normalizeWhatsAppPhone(getReceiptRecipientPhone(proof)) || "Not provided"}
+                      </div>
+                      <div className="text-xs font-semibold text-slate-500">Shop WhatsApp, shop phone, then profile phone</div>
+                    </div>
                   </div>
 
                   {proof.review_note ? (
@@ -357,11 +781,11 @@ export default function StaffPayments() {
                       rel="noreferrer"
                       className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-100"
                     >
-                      <FaReceipt /> View Receipt <FaArrowUpRightFromSquare />
+                      <FaReceipt /> View Uploaded Proof <FaArrowUpRightFromSquare />
                     </a>
                   ) : (
                     <div className="mb-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-400">
-                      Receipt preview unavailable
+                      Uploaded proof unavailable
                     </div>
                   )}
 
@@ -397,6 +821,24 @@ export default function StaffPayments() {
                         </button>
                       </div>
                     </div>
+                  ) : proof.status === "approved" ? (
+                    <div className="grid gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedReceiptProof(proof)}
+                        className="flex items-center justify-center gap-2 rounded-xl bg-[#2E1065] px-4 py-3 text-sm font-black text-white transition hover:bg-[#4C1D95]"
+                      >
+                        <FaReceipt /> View CTM Receipt
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => sendReceiptToWhatsApp(proof)}
+                        disabled={!normalizeWhatsAppPhone(getReceiptRecipientPhone(proof))}
+                        className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                      >
+                        <FaWhatsapp /> Send to WhatsApp
+                      </button>
+                    </div>
                   ) : null}
                 </div>
               </div>
@@ -404,6 +846,12 @@ export default function StaffPayments() {
           ))
         )}
       </div>
-    </StaffPortalShell>
+      </StaffPortalShell>
+      <ReceiptModal
+        proof={selectedReceiptProof}
+        onClose={() => setSelectedReceiptProof(null)}
+        onSendWhatsApp={sendReceiptToWhatsApp}
+      />
+    </>
   )
 }
