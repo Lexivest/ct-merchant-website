@@ -599,6 +599,73 @@ function UserDashboard() {
   const currentProfile = localData.profile || profile
   const dashboardDataError = activeTab === "market" && !fetchedData ? dataError : ""
 
+  useEffect(() => {
+    const cityId = currentProfile?.city_id
+    if (!user?.id || !cityId) return undefined
+
+    let cancelled = false
+    let refreshTimerId = null
+
+    async function refreshFeaturedBanners() {
+      try {
+        const featuredCityBanners = await fetchFeaturedCityBanners(cityId)
+        if (cancelled) return
+
+        setLocalData((prev) => {
+          const next = {
+            ...prev,
+            featuredCityBanners,
+          }
+          primeCachedFetchStore(dashboardCacheKey, next, Date.now(), {
+            persist: "session",
+          })
+          return next
+        })
+      } catch (error) {
+        console.warn("Failed to refresh featured city banners:", error)
+      }
+    }
+
+    function scheduleRefresh(payload) {
+      const changedCityId = payload?.new?.city_id || payload?.old?.city_id
+      const shouldRefresh =
+        !changedCityId ||
+        String(changedCityId) === String(cityId) ||
+        payload?.eventType === "DELETE"
+
+      if (!shouldRefresh) return
+
+      if (refreshTimerId) {
+        window.clearTimeout(refreshTimerId)
+      }
+
+      refreshTimerId = window.setTimeout(() => {
+        void refreshFeaturedBanners()
+      }, 350)
+    }
+
+    const channel = supabase
+      .channel(`public:featured_city_banners:dashboard:${cityId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "featured_city_banners",
+        },
+        scheduleRefresh
+      )
+      .subscribe()
+
+    return () => {
+      cancelled = true
+      if (refreshTimerId) {
+        window.clearTimeout(refreshTimerId)
+      }
+      supabase.removeChannel(channel)
+    }
+  }, [currentProfile?.city_id, dashboardCacheKey, user?.id])
+
   const sortedAreas = useMemo(() => {
     const areas = [...(localData.areas || [])]
     const userAreaId = currentProfile?.area_id

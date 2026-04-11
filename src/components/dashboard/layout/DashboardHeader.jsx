@@ -298,18 +298,18 @@ function DashboardHeader({
             </div>
 
             <div
-              className="relative min-w-0 flex-1 overflow-hidden"
+              className="relative flex h-full min-w-0 flex-1 items-center overflow-hidden"
               style={{ "--ctm-search-placeholder-width": "calc(100vw - 280px)" }}
             >
               {!searchInputDesktop ? (
-                <div className="pointer-events-none absolute inset-y-0 left-4 right-4 flex items-center overflow-hidden">
+                <div className="pointer-events-none absolute inset-y-0 left-4 right-4 z-0 flex items-center overflow-hidden">
                   <span className="ctm-search-placeholder-track whitespace-nowrap text-[1rem] font-bold text-slate-500">
                     {searchPlaceholder}
                   </span>
                 </div>
               ) : null}
               <input
-                className="amz-search-input relative z-[1] min-w-0 w-full border-none bg-transparent px-4 text-base font-semibold text-[#0F1111] outline-none"
+                className="amz-search-input relative z-[1] h-full min-w-0 w-full border-none bg-transparent px-4 text-base font-semibold text-[#0F1111] outline-none"
                 placeholder=""
                 value={searchInputDesktop}
                 onChange={(e) => {
@@ -420,18 +420,18 @@ function DashboardHeader({
           </div>
 
           <div
-            className="relative min-w-0 flex-1 overflow-hidden"
+            className="relative flex h-full min-w-0 flex-1 items-center overflow-hidden"
             style={{ "--ctm-search-placeholder-width": "calc(100vw - 176px)" }}
           >
             {!searchInputMobile ? (
-              <div className="pointer-events-none absolute inset-y-0 left-3 right-3 flex items-center overflow-hidden">
+              <div className="pointer-events-none absolute inset-y-0 left-3 right-3 z-0 flex items-center overflow-hidden">
                 <span className="ctm-search-placeholder-track whitespace-nowrap text-[0.86rem] font-bold text-slate-500 min-[390px]:text-[0.92rem]">
                   {searchPlaceholder}
                 </span>
               </div>
             ) : null}
             <input
-              className="amz-search-input relative z-[1] min-w-0 w-full border-none bg-transparent px-3 text-[0.95rem] font-semibold text-[#0F1111] outline-none"
+              className="amz-search-input relative z-[1] h-full min-w-0 w-full border-none bg-transparent px-3 text-[0.95rem] font-semibold text-[#0F1111] outline-none"
               placeholder=""
               value={searchInputMobile}
               onChange={(e) => {
