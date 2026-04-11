@@ -30,9 +30,9 @@ function loadHtml2canvas() {
 
 const BANNER_RULE = UPLOAD_RULES.featuredCityBanners
 const TEMPLATE_OPTIONS = [
-  { key: "lifestyle", label: "Lifestyle Spotlight", bg: "from-[#101827] via-[#2E1065] to-[#BE185D]", accent: "#DB2777" },
-  { key: "products", label: "Product Rack", bg: "from-[#0F172A] via-[#1D4ED8] to-[#F97316]", accent: "#F97316" },
-  { key: "local", label: "Local Trust", bg: "from-[#052E2B] via-[#065F46] to-[#0EA5E9]", accent: "#10B981" },
+  { key: "lifestyle", label: "Lifestyle Spotlight", bg: "from-[#003B95] via-[#1E40AF] to-[#2563EB]", accent: "#FBBF24" },
+  { key: "products", label: "Product Rack", bg: "from-[#003B95] via-[#075985] to-[#0EA5E9]", accent: "#F97316" },
+  { key: "local", label: "Local Trust", bg: "from-[#003B95] via-[#1D4ED8] to-[#38BDF8]", accent: "#10B981" },
 ]
 
 function getTemplate(key) {
@@ -91,7 +91,7 @@ function FeaturedBannerArtwork({
           </div>
         </div>
       )}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/82 via-black/40 to-black/8" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#003B95]/92 via-[#003B95]/55 to-[#003B95]/12" />
 
       <div className={`relative z-[2] flex h-full flex-col justify-between ${exportMode ? "p-16" : "p-5 sm:p-9"}`}>
         <div>
