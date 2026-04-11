@@ -159,7 +159,11 @@ async function imageUrlToDataUrl(url) {
   }
 }
 
-function buildFeaturedBannerSvg({ shop, products, backgroundKey, width = 1600, height = 600 }) {
+function getProfileDisplayName(profile) {
+  return profile?.full_name || profile?.name || profile?.username || ""
+}
+
+function buildFeaturedBannerSvg({ shop, products, backgroundKey, proprietorName, width = 1600, height = 600 }) {
   const background = getBackground(backgroundKey)
   const [start, middle, end] = background.stops || BACKGROUND_OPTIONS[0].stops
   const isMobile = height > width * 0.45
@@ -180,6 +184,13 @@ function buildFeaturedBannerSvg({ shop, products, backgroundKey, width = 1600, h
   const totalTileWidth = tileWidth * 5 + gap * 4
   const tileStartX = (width - totalTileWidth) / 2
   const safeProducts = Array.from({ length: 5 }, (_, index) => products?.[index] || null)
+  const shopLogo = shop?.svgLogoUrl || shop?.image_url || ""
+  const logoSize = isMobile ? 88 : 92
+  const logoX = isMobile ? 42 : 48
+  const logoY = isMobile ? 36 : 34
+  const proprietorText = proprietorName ? `Proprietor: ${proprietorName}` : ""
+  const proprietorLines = wrapText(proprietorText, isMobile ? 42 : 74, 1)
+  const proprietorY = isMobile ? 650 : 560
 
   const productMarkup = safeProducts
     .map((product, index) => {
@@ -227,24 +238,50 @@ function buildFeaturedBannerSvg({ shop, products, backgroundKey, width = 1600, h
   <circle cx="${width * 0.88}" cy="${height * 0.9}" r="${width * 0.15}" fill="#FFFFFF" opacity="0.14"/>
   <rect width="${width}" height="${height}" fill="#000000" opacity="0.08"/>
   <g filter="url(#softShadow)">
+    <clipPath id="shopLogoClip">
+      <rect x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" rx="24"/>
+    </clipPath>
+    ${
+      shopLogo
+        ? `<image href="${escapeXml(shopLogo)}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid slice" clip-path="url(#shopLogoClip)"/>`
+        : `<rect x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" rx="24" fill="#FFFFFF" opacity="0.16"/>`
+    }
+    <rect x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" rx="24" fill="none" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="3"/>
+  </g>
+  <g filter="url(#softShadow)">
     ${svgTextLines({ lines: titleLines, x: width / 2, y: titleStartY, fontSize: titleFont, lineHeight: isMobile ? 58 : 64, weight: 900 })}
     ${svgTextLines({ lines: addressLines, x: width / 2, y: addressStartY, fontSize: addressFont, lineHeight: isMobile ? 34 : 38, weight: 700, fill: "#FFFFFF", opacity: 0.88 })}
   </g>
   <g filter="url(#softShadow)">
     ${productMarkup}
   </g>
+  ${
+    proprietorLines.length
+      ? `<g filter="url(#softShadow)">${svgTextLines({ lines: proprietorLines, x: width / 2, y: proprietorY, fontSize: isMobile ? 28 : 30, lineHeight: 34, weight: 800, fill: "#FFFFFF", opacity: 0.9 })}</g>`
+      : ""
+  }
 </svg>`
 }
 
-async function buildStandaloneFeaturedBannerSvg({ shop, products, backgroundKey, width, height }) {
-  const embeddedProducts = await Promise.all(
-    (products || []).slice(0, 5).map(async (product) => ({
-      ...product,
-      svgImageUrl: await imageUrlToDataUrl(product.image_url),
-    }))
-  )
+async function buildStandaloneFeaturedBannerSvg({ shop, products, backgroundKey, proprietorName, width, height }) {
+  const [logoDataUrl, embeddedProducts] = await Promise.all([
+    imageUrlToDataUrl(shop?.image_url),
+    Promise.all(
+      (products || []).slice(0, 5).map(async (product) => ({
+        ...product,
+        svgImageUrl: await imageUrlToDataUrl(product.image_url),
+      }))
+    ),
+  ])
 
-  return buildFeaturedBannerSvg({ shop, products: embeddedProducts, backgroundKey, width, height })
+  return buildFeaturedBannerSvg({
+    shop: { ...shop, svgLogoUrl: logoDataUrl },
+    products: embeddedProducts,
+    backgroundKey,
+    proprietorName,
+    width,
+    height,
+  })
 }
 
 async function svgToJpegBlob(svg, width, height) {
@@ -296,6 +333,7 @@ function FeaturedBannerArtwork({
   shop,
   products,
   backgroundKey,
+  proprietorName,
   exportMode = false,
   variant = "desktop",
 }) {
@@ -305,6 +343,7 @@ function FeaturedBannerArtwork({
     shop,
     products: productList,
     backgroundKey,
+    proprietorName,
     width: isMobile ? 1200 : 1600,
     height: isMobile ? 700 : 600,
   })
@@ -325,6 +364,7 @@ export default function StaffFeaturedCityBanners() {
   const [cities, setCities] = useState([])
   const [shops, setShops] = useState([])
   const [productsByShopId, setProductsByShopId] = useState({})
+  const [profilesById, setProfilesById] = useState({})
   const [banners, setBanners] = useState([])
   const [selectedCityId, setSelectedCityId] = useState("")
   const [selectedShopId, setSelectedShopId] = useState("")
@@ -333,6 +373,8 @@ export default function StaffFeaturedCityBanners() {
 
   const selectedShop = useMemo(() => shops.find((shop) => String(shop.id) === String(selectedShopId)) || null, [shops, selectedShopId])
   const selectedProducts = selectedShop ? productsByShopId[String(selectedShop.id)] || [] : []
+  const selectedProfile = selectedShop?.owner_id ? profilesById[selectedShop.owner_id] || null : null
+  const proprietorName = getProfileDisplayName(selectedProfile)
 
   const loadInitialData = useCallback(async () => {
     setLoading(true)
@@ -370,7 +412,7 @@ export default function StaffFeaturedCityBanners() {
     try {
       const { data: shopRows, error: shopsError } = await supabase
         .from("shops")
-        .select("id, name, category, address, image_url, is_open, status, subscription_end_date")
+        .select("id, owner_id, name, category, address, image_url, is_open, status, subscription_end_date")
         .eq("city_id", cityId)
         .order("name", { ascending: true })
         .limit(120)
@@ -388,18 +430,25 @@ export default function StaffFeaturedCityBanners() {
       )
 
       const shopIds = safeShops.map((shop) => shop.id)
-      const productsResult = shopIds.length
-        ? await supabase
-            .from("products")
-            .select("id, shop_id, image_url, is_available")
-            .in("shop_id", shopIds)
-            .eq("is_available", true)
-            .not("image_url", "is", null)
-            .order("id", { ascending: true })
-            .limit(600)
-        : { data: [], error: null }
+      const ownerIds = Array.from(new Set(safeShops.map((shop) => shop.owner_id).filter(Boolean)))
+      const [productsResult, profilesResult] = await Promise.all([
+        shopIds.length
+          ? supabase
+              .from("products")
+              .select("id, shop_id, image_url, is_available")
+              .in("shop_id", shopIds)
+              .eq("is_available", true)
+              .not("image_url", "is", null)
+              .order("id", { ascending: true })
+              .limit(600)
+          : Promise.resolve({ data: [], error: null }),
+        ownerIds.length
+          ? supabase.rpc("get_public_profiles", { profile_ids: ownerIds })
+          : Promise.resolve({ data: [], error: null }),
+      ])
 
       if (productsResult.error) throw productsResult.error
+      if (profilesResult.error) throw profilesResult.error
 
       const nextProducts = {}
       ;(productsResult.data || []).forEach((product) => {
@@ -409,6 +458,12 @@ export default function StaffFeaturedCityBanners() {
         if (nextProducts[key].length < 5) nextProducts[key].push(product)
       })
       setProductsByShopId(nextProducts)
+
+      const nextProfiles = {}
+      ;(profilesResult.data || []).forEach((profile) => {
+        nextProfiles[profile.id] = profile
+      })
+      setProfilesById(nextProfiles)
     } catch (error) {
       notify({
         type: "error",
@@ -441,6 +496,7 @@ export default function StaffFeaturedCityBanners() {
           shop: selectedShop,
           products: selectedProducts,
           backgroundKey,
+          proprietorName,
           width: 1600,
           height: 600,
         }),
@@ -448,6 +504,7 @@ export default function StaffFeaturedCityBanners() {
           shop: selectedShop,
           products: selectedProducts,
           backgroundKey,
+          proprietorName,
           width: 1200,
           height: 700,
         }),
@@ -619,7 +676,7 @@ export default function StaffFeaturedCityBanners() {
                 </div>
                 <FaWandMagicSparkles className="text-2xl text-pink-600" />
               </div>
-              <FeaturedBannerArtwork shop={selectedShop} products={selectedProducts} backgroundKey={backgroundKey} />
+              <FeaturedBannerArtwork shop={selectedShop} products={selectedProducts} backgroundKey={backgroundKey} proprietorName={proprietorName} />
             </div>
 
             <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
