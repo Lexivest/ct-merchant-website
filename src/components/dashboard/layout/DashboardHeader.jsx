@@ -70,6 +70,11 @@ function DashboardHeader({
     return found?.name || "All Categories"
   }, [categoryFilter, categories])
 
+  const searchPlaceholder = useMemo(() => {
+    const cityName = currentProfile?.cities?.name || currentProfile?.city_name
+    return `Search ${cityName || "your city"} directory of business and services`
+  }, [currentProfile?.cities?.name, currentProfile?.city_name])
+
   useEffect(() => {
     function handleClickOutside(event) {
       const target = event.target
@@ -274,8 +279,8 @@ function DashboardHeader({
             </div>
 
             <input
-              className="amz-search-input min-w-0 flex-1 border-none px-4 text-base text-[#0F1111] outline-none"
-              placeholder="Search shops and products..."
+              className="amz-search-input min-w-0 flex-1 border-none px-4 text-[0.95rem] text-[#0F1111] outline-none placeholder:text-[0.82rem] placeholder:font-semibold min-[1180px]:placeholder:text-[0.9rem]"
+              placeholder={searchPlaceholder}
               value={searchInputDesktop}
               onChange={(e) => {
                 setSearchInputDesktop(e.target.value)
@@ -384,8 +389,8 @@ function DashboardHeader({
           </div>
 
           <input
-            className="amz-search-input min-w-0 flex-1 border-none px-4 text-base text-[#0F1111] outline-none"
-            placeholder="Search CTMerchant..."
+            className="amz-search-input min-w-0 flex-1 border-none px-2.5 text-[0.86rem] text-[#0F1111] outline-none placeholder:text-[0.68rem] placeholder:font-semibold min-[390px]:placeholder:text-[0.74rem]"
+            placeholder={searchPlaceholder}
             value={searchInputMobile}
             onChange={(e) => {
               setSearchInputMobile(e.target.value)

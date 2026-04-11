@@ -16,7 +16,7 @@ function prefetchShopDetailPage() {
   return shopDetailPrefetchPromise
 }
 
-function FeaturedCitySlider({ banners, cityName, onOpenShop }) {
+function FeaturedCitySlider({ banners, onOpenShop }) {
   const [currentSlide, setCurrentSlide] = useState(0)
 
   useEffect(() => {
@@ -57,9 +57,6 @@ function FeaturedCitySlider({ banners, cityName, onOpenShop }) {
                 fetchPriority={idx === currentSlide ? "high" : "auto"}
               />
 
-              <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/35 px-3 py-1.5 text-[0.68rem] font-black uppercase tracking-[0.14em] text-white shadow-sm backdrop-blur-sm sm:left-5 sm:top-5 sm:text-xs">
-                Welcome to {cityName || "your city"} commerce
-              </div>
             </button>
           )
         })}
@@ -248,7 +245,6 @@ function MarketSection({
       {dashboardData.featuredCityBanners?.length > 0 ? (
         <FeaturedCitySlider
           banners={dashboardData.featuredCityBanners}
-          cityName={dashboardData.profile?.cities?.name}
           onOpenShop={openShop}
         />
       ) : null}
