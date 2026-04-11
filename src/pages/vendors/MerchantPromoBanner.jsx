@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaArrowLeft,
@@ -6,7 +6,6 @@ import {
   FaDownload,
   FaFacebookF,
   FaImage,
-  FaLocationDot,
   FaShareNodes,
   FaTriangleExclamation,
   FaWhatsapp,
@@ -17,43 +16,6 @@ import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import logoImage from "../../assets/images/logo.jpg";
-
-function wrapTextLines(input, maxCharsPerLine, maxLines) {
-  const text = String(input || "").trim().replace(/\s+/g, " ");
-  if (!text) return [""];
-
-  const words = text.split(" ");
-  const lines = [];
-  let current = "";
-  let index = 0;
-
-  for (; index < words.length; index += 1) {
-    const word = words[index];
-    const next = current ? `${current} ${word}` : word;
-    if (next.length <= maxCharsPerLine || !current) {
-      current = next;
-      continue;
-    }
-
-    lines.push(current);
-    current = word;
-
-    if (lines.length === maxLines - 1) break;
-  }
-
-  const remainingWords = lines.length === maxLines - 1
-    ? [current, ...words.slice(index + 1)].filter(Boolean).join(" ")
-    : current;
-
-  if (remainingWords) {
-    const clipped = remainingWords.length > maxCharsPerLine
-      ? `${remainingWords.slice(0, Math.max(0, maxCharsPerLine - 1)).trimEnd()}...`
-      : remainingWords;
-    lines.push(clipped);
-  }
-
-  return lines.slice(0, maxLines);
-}
 
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
@@ -531,6 +493,8 @@ export default function MerchantPromoBanner() {
   const [downloading, setDownloading] = useState(false);
   const [shopData, setShopData] = useState(() => prefetchedData?.shopData || null);
   const [products, setProducts] = useState(() => prefetchedData?.products || []);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   useEffect(() => {
     if (prefetchedData) {
@@ -670,10 +634,50 @@ export default function MerchantPromoBanner() {
 
   const displayAddress = shopData?.address || "Registered Business Address";
   const websiteText = "www.ctmerchant.com.ng";
-  const shopNameLines = useMemo(() => wrapTextLines(shopData?.name || "", 24, 2), [shopData?.name]);
-  const categoryLines = useMemo(() => wrapTextLines(shopData?.category || "Shop & Retail", 26, 2), [shopData?.category]);
-  const addressLines = useMemo(() => wrapTextLines(displayAddress, 36, 3), [displayAddress]);
   const uniqueId = shopData?.unique_id || "PENDING";
+
+  useEffect(() => {
+    if (!shopData || !products.length) {
+      setPreviewUrl("");
+      return undefined;
+    }
+
+    let cancelled = false;
+    let objectUrl = "";
+
+    async function renderPreview() {
+      try {
+        setPreviewLoading(true);
+        const blob = await generatePromoBannerCanvasBlob({
+          products,
+          shopName: shopData?.name || "",
+          category: shopData?.category || "Shop & Retail",
+          address: displayAddress,
+          uniqueId,
+          websiteText,
+          shopId: shopData?.id,
+        });
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setPreviewUrl((current) => {
+          if (current) URL.revokeObjectURL(current);
+          return objectUrl;
+        });
+      } catch (previewError) {
+        console.warn("Could not render promo banner preview:", previewError);
+        if (!cancelled) setPreviewUrl("");
+      } finally {
+        if (!cancelled) setPreviewLoading(false);
+      }
+    }
+
+    void renderPreview();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [shopData, products, displayAddress, uniqueId, websiteText]);
 
   if (authLoading || loading) return <PromoBannerShimmer />;
 
@@ -745,23 +749,27 @@ export default function MerchantPromoBanner() {
 
         <div className="w-full rounded-[26px] border border-slate-200 bg-white p-3 sm:p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
           <div className="w-full mx-auto">
-              <PromoBannerArtwork
-                products={products}
-                shopNameLines={shopNameLines}
-                categoryLines={categoryLines}
-                addressLines={addressLines}
-                uniqueId={uniqueId}
-                websiteText={websiteText}
-                shopId={shopData?.id}
-                exportMode={false}
+            {previewUrl ? (
+              <img
+                src={previewUrl}
+                alt={`${shopData?.name || "Shop"} promo banner preview`}
+                className="block w-full rounded-[26px] bg-[#003B95]"
               />
+            ) : (
+              <div className="flex aspect-[20/27] w-full flex-col items-center justify-center rounded-[26px] bg-[#003B95] text-center text-white">
+                <FaCircleNotch className={`mb-3 text-3xl ${previewLoading ? "animate-spin" : ""}`} />
+                <p className="px-6 text-sm font-black">
+                  {previewLoading ? "Rendering exact promo image..." : "Promo preview will appear here."}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="w-full rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
           <div className="text-[0.92rem] font-black text-slate-900">Native promo flow status</div>
           <p className="mt-2 text-[0.86rem] leading-6 text-slate-500">
-            The preview now follows the Expo layout directly: product collage first, then the shop promo card below it.
+            The preview now uses the same generated PNG that will be saved or shared, so the output matches what you see here.
           </p>
         </div>
 
