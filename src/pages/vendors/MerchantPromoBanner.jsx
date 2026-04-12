@@ -194,6 +194,7 @@ async function generatePromoBannerCanvasBlob({
   websiteText,
   shopId,
   shopLogoUrl,
+  cityName,
 }) {
   const width = 800;
   const height = 1080;
@@ -201,11 +202,11 @@ async function generatePromoBannerCanvasBlob({
   const gridPadding = 8;
   const gridGap = 8;
   const tileWidth = (width - gridPadding * 2 - gridGap) / 2;
-  const tileHeight = 335;
   const gridY = headerHeight;
-  const imageHeight = 230;
-  const footerY = gridY + gridPadding * 2 + tileHeight * 2 + gridGap;
-  const footerHeight = height - footerY;
+  const footerHeight = 88;
+  const footerY = height - footerHeight;
+  const tileHeight = (footerY - gridY - gridPadding * 2 - gridGap) / 2;
+  const imageHeight = 252;
   const safeProducts = Array.from({ length: 4 }, (_, index) => products?.[index] || {});
   const qrUrl = `https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`;
   const [shopLogoDataUrl, qrDataUrl, productDataUrls] = await Promise.all([
@@ -276,11 +277,35 @@ async function generatePromoBannerCanvasBlob({
 
   setCanvasFont(context, 800, 21);
   context.fillStyle = "rgba(255,255,255,0.92)";
-  context.fillText(websiteText, centerX, categoryY + 38);
+  context.fillText(websiteText, centerX, categoryY + 34);
 
   setCanvasFont(context, 900, 23);
   context.fillStyle = "#93C5FD";
-  context.fillText(uniqueId, centerX, categoryY + 70);
+  context.fillText(uniqueId, centerX, categoryY + 62);
+
+  setCanvasFont(context, 800, 18);
+  const addressLines = wrapMeasuredText(context, address, headerTextMaxWidth - 28, 2);
+  const addressStartY = categoryY + 91;
+  const addressLineHeight = 23;
+  if (addressLines.length) {
+    context.fillStyle = "#FBBF24";
+    context.beginPath();
+    context.arc(centerX - headerTextMaxWidth / 2 + 8, addressStartY - 9, 7, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.moveTo(centerX - headerTextMaxWidth / 2 + 8, addressStartY + 7);
+    context.lineTo(centerX - headerTextMaxWidth / 2 + 1, addressStartY - 2);
+    context.lineTo(centerX - headerTextMaxWidth / 2 + 15, addressStartY - 2);
+    context.closePath();
+    context.fill();
+
+    context.textAlign = "left";
+    context.textBaseline = "alphabetic";
+    context.fillStyle = "#FBBF24";
+    addressLines.forEach((line, index) => {
+      context.fillText(line, centerX - headerTextMaxWidth / 2 + 28, addressStartY + index * addressLineHeight);
+    });
+  }
 
   fillRoundedRect(context, qrX, headerMediaY, logoSize, logoSize, 16, "#FFFFFF");
   if (qr) {
@@ -342,16 +367,14 @@ async function generatePromoBannerCanvasBlob({
     }
   });
 
-  drawWrappedText(context, address, width / 2, footerY + 42, 710, 28, 2, {
-    weight: 800,
-    size: 18,
-    fillStyle: "#FFFFFF",
-    align: "center",
-  });
-  setCanvasFont(context, 900, 15);
+  setCanvasFont(context, 900, 22);
+  context.fillStyle = "#FFFFFF";
+  context.textAlign = "center";
+  context.fillText(`${cityName || "Local"} City Commerce`, width / 2, footerY + 34);
+  setCanvasFont(context, 800, 14);
   context.fillStyle = "#93C5FD";
   context.textAlign = "center";
-  context.fillText("ENTER ID IN REPO OR SCAN TO VIEW SHOP", width / 2, footerY + 104);
+  context.fillText("CTMerchant is not liable for transactions or disputes with this shop.", width / 2, footerY + 62);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -621,6 +644,7 @@ export default function MerchantPromoBanner() {
       websiteText,
       shopId: shopData?.id,
       shopLogoUrl: shopData?.image_url,
+      cityName: displayCityName,
     });
   };
 
@@ -665,6 +689,7 @@ export default function MerchantPromoBanner() {
   };
 
   const displayAddress = shopData?.address || "Registered Business Address";
+  const displayCityName = shopData?.cities?.name || "Local";
   const websiteText = "www.ctmerchant.com.ng";
   const uniqueId = shopData?.unique_id || "PENDING";
 
@@ -689,6 +714,7 @@ export default function MerchantPromoBanner() {
           websiteText,
           shopId: shopData?.id,
           shopLogoUrl: shopData?.image_url,
+          cityName: displayCityName,
         });
         if (cancelled) return;
         objectUrl = URL.createObjectURL(blob);
@@ -710,7 +736,7 @@ export default function MerchantPromoBanner() {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [shopData, products, displayAddress, uniqueId, websiteText]);
+  }, [shopData, products, displayAddress, displayCityName, uniqueId, websiteText]);
 
   if (authLoading || loading) return <PromoBannerShimmer />;
 
