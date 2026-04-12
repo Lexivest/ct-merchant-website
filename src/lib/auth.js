@@ -119,8 +119,16 @@ export async function signInWithPassword({ email, password }) {
     // If login fails with invalid credentials, record the failed attempt
     const msg = error.message.toLowerCase()
     if (msg.includes("invalid") || msg.includes("credential")) {
-      const { error: rpcError } = await supabase.rpc('record_failed_login', { p_email: normalizedEmail })
-      if (rpcError) {
+      const { data: attempts, error: rpcError } = await supabase.rpc('record_failed_login', { p_email: normalizedEmail })
+      
+      if (!rpcError && typeof attempts === 'number') {
+        if (attempts >= 4) {
+          throw new Error("Your account is suspended due to multiple failed login attempts. Please contact support.")
+        } else if (attempts > 0) {
+          const remaining = 4 - attempts
+          throw new Error(`Invalid credentials. You have ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before your account is suspended.`)
+        }
+      } else if (rpcError) {
         console.error("Failed to record login attempt:", rpcError)
       }
     }
