@@ -404,7 +404,7 @@ async function prepareMerchantPromoBannerData({ userId, shopId }) {
   const shop = await fetchOwnedShop(
     userId,
     shopId,
-    "id, name, unique_id, category, is_verified, address, cities(name)"
+    "id, name, unique_id, category, is_verified, address, image_url, cities(name)"
   )
 
   if (!shop.is_verified) {

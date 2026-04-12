@@ -4,18 +4,14 @@ import {
   FaArrowLeft,
   FaCircleNotch,
   FaDownload,
-  FaFacebookF,
-  FaImage,
   FaShareNodes,
   FaTriangleExclamation,
-  FaWhatsapp,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
-import logoImage from "../../assets/images/logo.jpg";
 
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
@@ -57,6 +53,17 @@ function formatPromoPrice(product) {
   const discount = Number(product?.discount_price || 0);
   const finalPrice = discount && discount < price ? discount : price;
   return finalPrice > 0 ? `NGN ${finalPrice.toLocaleString()}` : "";
+}
+
+function getNameInitials(value) {
+  const parts = String(value || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (!parts.length) return "CT";
+  return parts.map((part) => part[0]?.toUpperCase() || "").join("");
 }
 
 function setCanvasFont(context, weight, size) {
@@ -186,6 +193,7 @@ async function generatePromoBannerCanvasBlob({
   uniqueId,
   websiteText,
   shopId,
+  shopLogoUrl,
 }) {
   const width = 800;
   const height = 1080;
@@ -200,13 +208,13 @@ async function generatePromoBannerCanvasBlob({
   const footerHeight = height - footerY;
   const safeProducts = Array.from({ length: 4 }, (_, index) => products?.[index] || {});
   const qrUrl = `https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`;
-  const [logoDataUrl, qrDataUrl, productDataUrls] = await Promise.all([
-    imageUrlToDataUrl(logoImage),
+  const [shopLogoDataUrl, qrDataUrl, productDataUrls] = await Promise.all([
+    imageUrlToDataUrl(shopLogoUrl),
     imageUrlToDataUrl(qrUrl),
     Promise.all(safeProducts.map((product) => imageUrlToDataUrl(product.image_url))),
   ]);
-  const [logo, qr, productImages] = await Promise.all([
-    loadImageElement(logoDataUrl).catch(() => null),
+  const [shopLogo, qr, productImages] = await Promise.all([
+    loadImageElement(shopLogoDataUrl).catch(() => null),
     loadImageElement(qrDataUrl).catch(() => null),
     Promise.all(productDataUrls.map((dataUrl) => loadImageElement(dataUrl).catch(() => null))),
   ]);
@@ -225,45 +233,63 @@ async function generatePromoBannerCanvasBlob({
   context.fillStyle = "#1E3A8A";
   context.fillRect(0, footerY, width, footerHeight);
 
-  if (logo) {
-    context.drawImage(logo, 16, 18, 48, 48);
+  const logoSize = 152;
+  const logoX = 24;
+  const headerMediaY = 20;
+  const qrX = width - logoX - logoSize;
+
+  if (shopLogo) {
+    drawContainedImage(context, shopLogo, logoX, headerMediaY, logoSize, logoSize, "#FFFFFF");
   } else {
-    fillRoundedRect(context, 16, 18, 48, 48, 6, "#FFFFFF");
+    fillRoundedRect(context, logoX, headerMediaY, logoSize, logoSize, 16, "#FFFFFF");
+    setCanvasFont(context, 900, 42);
+    context.fillStyle = "#003B95";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(getNameInitials(shopName), logoX + logoSize / 2, headerMediaY + logoSize / 2);
   }
 
-  setCanvasFont(context, 800, 24);
-  context.fillStyle = "rgba(255,255,255,0.92)";
-  context.textAlign = "left";
-  context.fillText(websiteText, 72, 50);
-
-  const headerTextMaxWidth = 460;
-  const shopNameLines = drawWrappedText(context, shopName, width / 2, 108, headerTextMaxWidth, 34, 2, {
+  const headerTextMaxWidth = width - logoSize * 2 - logoX * 4;
+  const centerX = width / 2;
+  const shopNameLines = drawWrappedText(context, shopName, centerX, 54, headerTextMaxWidth, 32, 2, {
     weight: 900,
-    size: 34,
+    size: 32,
     fillStyle: "#FFFFFF",
     align: "center",
   });
-  const metaY = 108 + shopNameLines.length * 34 + 8;
+  const categoryY = 54 + shopNameLines.length * 32 + 10;
+  const categoryText = truncateMeasuredText(context, category, headerTextMaxWidth);
 
-  setCanvasFont(context, 900, 25);
-  context.fillStyle = "#93C5FD";
+  setCanvasFont(context, 900, 23);
+  context.fillStyle = "#FBBF24";
   context.textAlign = "center";
-  context.fillText(uniqueId, width / 2, metaY);
-  drawWrappedText(context, category, width / 2, metaY + 34, headerTextMaxWidth, 26, 1, {
-    weight: 900,
-    size: 24,
-    fillStyle: "#FBBF24",
-    align: "center",
-  });
+  context.textBaseline = "alphabetic";
+  context.fillText(categoryText, centerX, categoryY);
+  const categoryMetrics = context.measureText(categoryText);
+  const categoryUnderlineWidth = Math.min(categoryMetrics.width, headerTextMaxWidth);
+  context.strokeStyle = "#FBBF24";
+  context.lineWidth = 3;
+  context.beginPath();
+  context.moveTo(centerX - categoryUnderlineWidth / 2, categoryY + 8);
+  context.lineTo(centerX + categoryUnderlineWidth / 2, categoryY + 8);
+  context.stroke();
 
-  fillRoundedRect(context, 624, 20, 152, 152, 16, "#FFFFFF");
+  setCanvasFont(context, 800, 21);
+  context.fillStyle = "rgba(255,255,255,0.92)";
+  context.fillText(websiteText, centerX, categoryY + 38);
+
+  setCanvasFont(context, 900, 23);
+  context.fillStyle = "#93C5FD";
+  context.fillText(uniqueId, centerX, categoryY + 70);
+
+  fillRoundedRect(context, qrX, headerMediaY, logoSize, logoSize, 16, "#FFFFFF");
   if (qr) {
-    drawContainedImage(context, qr, 634, 30, 132, 132, "#FFFFFF");
+    drawContainedImage(context, qr, qrX + 10, headerMediaY + 10, logoSize - 20, logoSize - 20, "#FFFFFF");
   } else {
     setCanvasFont(context, 900, 18);
     context.fillStyle = "#003B95";
     context.textAlign = "center";
-    context.fillText("QR", 700, 102);
+    context.fillText("QR", qrX + logoSize / 2, headerMediaY + logoSize / 2);
   }
 
   safeProducts.forEach((product, index) => {
@@ -387,7 +413,7 @@ function PromoBannerArtwork({
           <div className="mb-2 flex items-center gap-2 sm:mb-2.5 sm:gap-2.5">
             <img
               crossOrigin="anonymous"
-              src={logoImage}
+              src=""
               alt="CTMerchant"
               className={`rounded border border-white/20 object-cover shadow-sm ${logoClass}`}
             />
@@ -542,7 +568,7 @@ export default function MerchantPromoBanner() {
 
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
-          .select("id, name, unique_id, category, is_verified, address, cities(name)")
+          .select("id, name, unique_id, category, is_verified, address, image_url, cities(name)")
           .eq("id", currentShopId)
           .eq("owner_id", user.id)
           .maybeSingle();
@@ -594,6 +620,7 @@ export default function MerchantPromoBanner() {
       uniqueId,
       websiteText,
       shopId: shopData?.id,
+      shopLogoUrl: shopData?.image_url,
     });
   };
 
@@ -661,6 +688,7 @@ export default function MerchantPromoBanner() {
           uniqueId,
           websiteText,
           shopId: shopData?.id,
+          shopLogoUrl: shopData?.image_url,
         });
         if (cancelled) return;
         objectUrl = URL.createObjectURL(blob);
@@ -722,36 +750,17 @@ export default function MerchantPromoBanner() {
       }`}
     >
       <header className="sticky top-0 z-40 w-full px-4 py-4 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[860px] items-center gap-4 rounded-[24px] bg-[#111827] px-4 py-4 text-white shadow-[0_14px_30px_rgba(15,23,42,0.18)]">
+        <div className="mx-auto flex w-full max-w-[860px] items-center rounded-[24px] bg-[#111827] px-4 py-4 text-white shadow-[0_14px_30px_rgba(15,23,42,0.18)]">
           <button
             onClick={() => navigate("/vendor-panel")}
             className="flex h-[42px] w-[42px] items-center justify-center rounded-[16px] bg-white/10 text-[1rem] transition hover:bg-white/15"
           >
             <FaArrowLeft />
           </button>
-          <div className="min-w-0">
-            <div className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#f472b6]">Merchant</div>
-            <div className="text-[1.35rem] font-black">Shop Promo Banner</div>
-          </div>
         </div>
       </header>
 
       <main className="flex w-full max-w-[860px] flex-1 flex-col items-center gap-4 px-4 pb-12">
-        <div className="w-full rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-pink-50 text-[1.2rem] text-[#db2777]">
-              <FaImage />
-            </div>
-            <div>
-              <div className="text-[1rem] font-black text-slate-900">Auto-generated from your shop</div>
-              <div className="text-[0.84rem] font-semibold text-slate-500">Native promo layout synced to web</div>
-            </div>
-          </div>
-          <p className="mt-3 text-[0.92rem] leading-6 text-slate-500">
-            The promo engine pulls your verified shop details and latest approved product images into one printable promo layout.
-          </p>
-        </div>
-
         <div className="w-full rounded-[26px] border border-slate-200 bg-white p-3 sm:p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
           <div className="w-full mx-auto">
             {previewUrl ? (
@@ -763,19 +772,9 @@ export default function MerchantPromoBanner() {
             ) : (
               <div className="flex aspect-[20/27] w-full flex-col items-center justify-center rounded-[26px] bg-[#003B95] text-center text-white">
                 <FaCircleNotch className={`mb-3 text-3xl ${previewLoading ? "animate-spin" : ""}`} />
-                <p className="px-6 text-sm font-black">
-                  {previewLoading ? "Rendering exact promo image..." : "Promo preview will appear here."}
-                </p>
               </div>
             )}
           </div>
-        </div>
-
-        <div className="w-full rounded-[18px] border border-slate-200 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
-          <div className="text-[0.92rem] font-black text-slate-900">Native promo flow status</div>
-          <p className="mt-2 text-[0.86rem] leading-6 text-slate-500">
-            The preview now uses the same generated PNG that will be saved or shared, so the output matches what you see here.
-          </p>
         </div>
 
         <div className="flex w-full flex-col gap-3 sm:flex-row">
@@ -786,7 +785,7 @@ export default function MerchantPromoBanner() {
           >
             {sharing ? <FaCircleNotch className="animate-spin text-xl" /> : (
               <>
-                <FaShareNodes /> Broadcast Banner <FaWhatsapp className="ml-1 text-xl" /> <FaFacebookF className="text-xl" />
+                <FaShareNodes /> Share Banner
               </>
             )}
           </button>
@@ -795,7 +794,7 @@ export default function MerchantPromoBanner() {
             disabled={downloading}
             className="flex w-full items-center justify-center gap-2 rounded-[18px] border border-slate-300 bg-white p-3.5 font-bold text-[#0F1111] shadow-[0_10px_24px_rgba(15,23,42,0.06)] transition hover:border-slate-400 hover:bg-[#F7FAFA] disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {downloading ? <><FaCircleNotch className="animate-spin" /> Saving...</> : <><FaDownload /> Save Image in High Quality</>}
+            {downloading ? <><FaCircleNotch className="animate-spin" /> Saving...</> : <><FaDownload /> Save Image</>}
           </button>
         </div>
       </main>
