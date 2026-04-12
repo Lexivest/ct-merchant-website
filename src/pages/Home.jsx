@@ -371,10 +371,17 @@ function Home() {
 
     } catch (error) {
       const message = getFriendlyErrorMessage(error, "Please try again.")
-      const isSuspendedMessage = /suspended|restricted/i.test(message)
+      
+      let title = "Google sign-in failed"
+      if (message.toLowerCase().includes("remaining before")) {
+        title = "Warning"
+      } else if (/suspended|restricted/i.test(message)) {
+        title = "Account suspended"
+      }
+
       notify({
         type: "error",
-        title: isSuspendedMessage ? "Account suspended" : "Google sign-in failed",
+        title,
         message,
       })
       setGoogleLoading(false)
@@ -506,10 +513,17 @@ function Home() {
 
     } catch (error) {
       const message = getFriendlyErrorMessage(error, "We could not sign you in. Check your connection and try again.")
-      const isSuspendedMessage = /suspended|restricted/i.test(message)
+      
+      let title = "Login failed"
+      if (message.toLowerCase().includes("remaining before")) {
+        title = "Warning"
+      } else if (/suspended|restricted/i.test(message)) {
+        title = "Account suspended"
+      }
+
       notify({
         type: "error",
-        title: isSuspendedMessage ? "Account suspended" : "Login failed",
+        title,
         message,
       })
       setLoginLoading(false)

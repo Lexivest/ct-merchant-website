@@ -123,7 +123,7 @@ export async function signInWithPassword({ email, password }) {
       
       if (!rpcError && typeof attempts === 'number') {
         if (attempts >= 4) {
-          throw new Error("Your account is suspended due to multiple failed login attempts. Please contact support.")
+          throw new Error("Your account is suspended. Please contact support.")
         } else if (attempts > 0) {
           const remaining = 4 - attempts
           throw new Error(`Invalid credentials. You have ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before your account is suspended.`)
@@ -149,7 +149,8 @@ export async function signInWithPassword({ email, password }) {
 
     if (profile?.is_suspended) {
       await supabase.auth.signOut()
-      throw new Error("Your account is suspended due to multiple failed login attempts. Please contact support.")
+      clearCachedFetchStore()
+      throw new Error("Your account is suspended. Please contact support.")
     }
 
     // Success! Reset the failed login counter
