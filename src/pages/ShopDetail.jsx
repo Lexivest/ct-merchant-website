@@ -834,9 +834,9 @@ function ShopDetail() {
           </div>
         ) : null}
 
-        <section className="mb-2 border-y border-slate-300 bg-white px-4 py-6">
+        <section className={`border-y border-slate-300 bg-white px-4 pt-6 ${activeInfoSection ? "mb-2 pb-6" : "mb-0 pb-3"}`}>
           {/* Aligned Tabs for Single Row */}
-          <div className="mb-5 flex w-full flex-row flex-nowrap items-center justify-between gap-2 overflow-x-auto border-b border-slate-200 pb-3 sm:justify-start">
+          <div className={`flex w-full flex-row flex-nowrap items-center justify-between gap-2 overflow-x-auto border-b border-slate-200 pb-3 sm:justify-start ${activeInfoSection ? "mb-5" : "mb-0"}`}>
             {[
               { key: "storefront", label: "Storefront", icon: <FaStore />, active: "border-orange-300 bg-orange-50 text-orange-700", idle: "border-orange-200 bg-white text-orange-700 hover:bg-orange-50" },
               { key: "map", label: "Location", icon: <FaMapLocationDot />, active: "border-blue-300 bg-blue-50 text-blue-700", idle: "border-blue-200 bg-white text-blue-700 hover:bg-blue-50" },

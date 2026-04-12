@@ -477,7 +477,7 @@ export default function ShopCommunitySection({
             Shop Community
           </h2>
           <p className="mt-1 text-[0.84rem] text-slate-500">
-            Feedback, product questions, and owner replies live here.
+            Feedback, product questions, and owner replies.
           </p>
         </div>
         <div className="text-[0.82rem] font-semibold text-slate-500">
