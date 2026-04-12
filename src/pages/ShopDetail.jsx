@@ -805,16 +805,16 @@ function ShopDetail() {
         </header>
 
         {shopBanner ? (
-          <div className="mx-auto max-w-[1000px] px-4 pb-0 pt-6">
+          <section className="relative mb-2 overflow-hidden bg-white p-[6px]">
             <StableImage
               src={shopBanner}
               alt="Shop Banner"
-              containerClassName="promo-banner-slider aspect-[8/3] max-h-[420px] w-full rounded-xl border border-slate-300 bg-white p-[6px] shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
-              className="absolute inset-[6px] block h-[calc(100%-12px)] w-[calc(100%-12px)] bg-white object-contain object-center"
+              containerClassName="promo-banner-slider relative aspect-[8/3] w-full max-h-[420px] overflow-hidden bg-white"
+              className="absolute inset-0 block h-full w-full bg-white object-contain object-center"
               loading="eager"
               fetchPriority="high"
             />
-          </div>
+          </section>
         ) : null}
 
         {!isLoggedIn ? (
