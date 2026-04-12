@@ -281,7 +281,7 @@ function MarketSection({
                 </span>
               </>
             ) : (
-              <>Explore stores in {area.name}</>
+              <>{area.name}</>
             )}
           </h2>
 
