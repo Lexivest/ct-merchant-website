@@ -346,15 +346,20 @@ function useAuthSession() {
       } catch {
         if (!mounted) return
         const offlineSnapshot = getSnapshotWithCachedProfile()
-        if (offlineSnapshot?.user) {
+        const memUser = globalAuthMemory.user
+
+        if (offlineSnapshot?.user || memUser) {
+          const fallbackSession = offlineSnapshot?.session || globalAuthMemory.session || null
+          const fallbackProfile = offlineSnapshot?.profile || globalAuthMemory.profile || null
+
           syncState({
             loading: false,
-            session: offlineSnapshot.session || null,
-            user: offlineSnapshot.user,
-            profile: offlineSnapshot.profile || null,
+            session: fallbackSession,
+            user: offlineSnapshot?.user || memUser,
+            profile: fallbackProfile,
             suspended:
-              isProfileSuspended(offlineSnapshot.profile) || Boolean(offlineSnapshot.suspended),
-            profileLoaded: Boolean(offlineSnapshot.profile),
+              isProfileSuspended(fallbackProfile) || Boolean(offlineSnapshot?.suspended || globalAuthMemory.suspended),
+            profileLoaded: Boolean(fallbackProfile),
             error: "",
           })
           return
