@@ -1,5 +1,5 @@
 const NETWORK_ERROR_PATTERN =
-  /(failed to fetch|networkerror|network error|load failed|fetch resource|internet connection|offline|timeout|timed out|aborterror)/i
+  /(failed to fetch|networkerror|network error|load failed|fetch resource|internet connection|offline|timeout|timed out|aborterror|operation was aborted)/i
 
 export function isNetworkError(error) {
   const rawMessage = String(error?.message || error || "").toLowerCase()

@@ -14,58 +14,46 @@ function getSessionCacheKey(queryKey) {
 }
 
 function readSessionCacheEntry(queryKey) {
-  if (
-    typeof window === "undefined" ||
-    typeof window.sessionStorage === "undefined" ||
-    !queryKey
-  ) {
-    return null
-  }
+  if (!queryKey) return null
 
   try {
+    if (typeof window === "undefined" || !window.sessionStorage) return null
+
     const rawValue = window.sessionStorage.getItem(getSessionCacheKey(queryKey))
     if (!rawValue) return null
 
     const parsed = JSON.parse(rawValue)
     if (!parsed || typeof parsed.timestamp !== "number") {
-      window.sessionStorage.removeItem(getSessionCacheKey(queryKey))
+      try { window.sessionStorage.removeItem(getSessionCacheKey(queryKey)) } catch {}
       return null
     }
 
     return parsed
   } catch {
-    window.sessionStorage.removeItem(getSessionCacheKey(queryKey))
     return null
   }
 }
 
 function writeSessionCacheEntry(queryKey, entry) {
-  if (
-    typeof window === "undefined" ||
-    typeof window.sessionStorage === "undefined" ||
-    !queryKey ||
-    !entry
-  ) {
-    return
-  }
+  if (!queryKey || !entry) return
 
   try {
-    window.sessionStorage.setItem(getSessionCacheKey(queryKey), JSON.stringify(entry))
+    if (typeof window !== "undefined" && window.sessionStorage) {
+      window.sessionStorage.setItem(getSessionCacheKey(queryKey), JSON.stringify(entry))
+    }
   } catch {
     // Ignore storage quota failures and keep using in-memory cache.
   }
 }
 
 function removeSessionCacheEntry(queryKey) {
-  if (
-    typeof window === "undefined" ||
-    typeof window.sessionStorage === "undefined" ||
-    !queryKey
-  ) {
-    return
-  }
+  if (!queryKey) return
 
-  window.sessionStorage.removeItem(getSessionCacheKey(queryKey))
+  try {
+    if (typeof window !== "undefined" && window.sessionStorage) {
+      window.sessionStorage.removeItem(getSessionCacheKey(queryKey))
+    }
+  } catch {}
 }
 
 function getCacheEntry(queryKey) {
@@ -133,13 +121,15 @@ export function clearCachedFetchStore(predicate) {
   if (typeof predicate !== "function") {
     globalCache.clear()
 
-    if (typeof window !== "undefined" && typeof window.sessionStorage !== "undefined") {
-      Object.keys(window.sessionStorage).forEach((key) => {
-        if (key.startsWith(SESSION_CACHE_PREFIX)) {
-          window.sessionStorage.removeItem(key)
-        }
-      })
-    }
+    try {
+      if (typeof window !== "undefined" && window.sessionStorage) {
+        Object.keys(window.sessionStorage).forEach((key) => {
+          if (key.startsWith(SESSION_CACHE_PREFIX)) {
+            window.sessionStorage.removeItem(key)
+          }
+        })
+      }
+    } catch {}
 
     return
   }
@@ -150,16 +140,18 @@ export function clearCachedFetchStore(predicate) {
     }
   }
 
-  if (typeof window !== "undefined" && typeof window.sessionStorage !== "undefined") {
-    Object.keys(window.sessionStorage).forEach((storageKey) => {
-      if (!storageKey.startsWith(SESSION_CACHE_PREFIX)) return
+  try {
+    if (typeof window !== "undefined" && window.sessionStorage) {
+      Object.keys(window.sessionStorage).forEach((storageKey) => {
+        if (!storageKey.startsWith(SESSION_CACHE_PREFIX)) return
 
-      const cacheKey = storageKey.slice(SESSION_CACHE_PREFIX.length)
-      if (predicate(cacheKey)) {
-        window.sessionStorage.removeItem(storageKey)
-      }
-    })
-  }
+        const cacheKey = storageKey.slice(SESSION_CACHE_PREFIX.length)
+        if (predicate(cacheKey)) {
+          window.sessionStorage.removeItem(storageKey)
+        }
+      })
+    }
+  } catch {}
 }
 
 export function primeCachedFetchStore(queryKey, data, timestamp = Date.now(), options = {}) {
