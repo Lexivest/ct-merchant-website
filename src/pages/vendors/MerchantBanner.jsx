@@ -26,8 +26,8 @@ import {
 
 const BANNER_RULE = UPLOAD_RULES.shopBanners;
 const BANNER_BUCKET = BANNER_RULE.bucket;
-const BANNER_WIDTH = 1280;
-const BANNER_HEIGHT = 720;
+const BANNER_WIDTH = 1600;
+const BANNER_HEIGHT = 600;
 
 function BannerShimmer() {
   return (
@@ -56,7 +56,7 @@ export default function MerchantBanner() {
   const navigate = useNavigate();
   const location = useLocation();
   usePreventPullToRefresh();
-  const { notify } = useGlobalFeedback();
+  const { notify, confirm } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
   const prefetchedData =
@@ -71,7 +71,6 @@ export default function MerchantBanner() {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [rendering, setRendering] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [shopData, setShopData] = useState(() => prefetchedData?.shopData || null);
   const [products, setProducts] = useState(() => prefetchedData?.products || []);
   const [proprietorName, setProprietorName] = useState(() => prefetchedData?.proprietorName || "");
@@ -298,8 +297,14 @@ export default function MerchantBanner() {
       }
 
       setStatus("pending");
-      setShowSuccess(true);
-      setTimeout(() => navigate("/vendor-panel"), 2200);
+      const goBack = await confirm({
+        type: "success",
+        title: "Banner submitted",
+        message: "Your generated shop banner has been sent for staff approval.",
+        confirmText: "Back to dashboard",
+        cancelText: "Stay here",
+      });
+      if (goBack) navigate("/vendor-panel");
     } catch (err) {
       notify({ type: "error", title: "Submission failed", message: getFriendlyErrorMessage(err, "Could not submit this banner.") });
     } finally {
@@ -410,9 +415,9 @@ export default function MerchantBanner() {
               {statusLabel(status)}
             </span>
           </div>
-          <div className="relative aspect-video overflow-hidden rounded-[22px] bg-slate-100">
+          <div className="relative aspect-[8/3] overflow-hidden rounded-[22px] bg-white">
             {generatedPreviewUrl ? (
-              <img src={generatedPreviewUrl} alt={`${shopData?.name || "Shop"} generated banner`} className="h-full w-full object-cover" />
+              <img src={generatedPreviewUrl} alt={`${shopData?.name || "Shop"} generated banner`} className="h-full w-full object-contain" />
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
                 {rendering ? <FaCircleNotch className="mb-3 animate-spin text-3xl text-pink-600" /> : <FaImage className="mb-3 text-4xl" />}
@@ -436,20 +441,6 @@ export default function MerchantBanner() {
         </div>
       </main>
 
-      {showSuccess && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-[rgba(15,23,42,0.95)] backdrop-blur-sm">
-          <div className="w-[90%] max-w-[420px] animate-[scaleUp_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] rounded-[28px] bg-white p-10 text-center shadow-2xl">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#D1FAE5]">
-              <FaCheck className="text-4xl text-[#10B981]" />
-            </div>
-            <h2 className="mb-2 text-[1.6rem] font-extrabold text-[#1F2937]">Submitted!</h2>
-            <p className="mb-6 font-medium text-[#6B7280]">Your generated banner has been sent for staff approval.</p>
-            <div className="mx-auto h-7 w-7 animate-spin rounded-full border-4 border-[#db2777]/30 border-t-[#db2777]"></div>
-            <p className="mt-4 text-[0.8rem] font-bold text-[#db2777]">Redirecting to dashboard...</p>
-          </div>
-          <style dangerouslySetInnerHTML={{ __html: "@keyframes scaleUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }" }} />
-        </div>
-      )}
     </div>
   );
 }

@@ -809,8 +809,8 @@ function ShopDetail() {
             <StableImage
               src={shopBanner}
               alt="Shop Banner"
-              containerClassName="aspect-video max-h-[400px] w-full rounded-xl border border-slate-300 bg-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
-              className="block h-full w-full object-cover"
+              containerClassName="aspect-[8/3] max-h-[420px] w-full overflow-hidden rounded-xl border border-slate-300 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+              className="block h-full w-full object-contain"
               loading="eager"
               fetchPriority="high"
             />
