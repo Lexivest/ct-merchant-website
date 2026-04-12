@@ -43,6 +43,7 @@ import {
   preloadCreateAccountScreen,
   preloadDashboardScreen,
 } from "../lib/authScreenTransitions"
+import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 
 // --- LOCAL ASSET IMPORTS FOR CAROUSEL ---
 import banner2 from "../assets/images/banner2.jpg"
@@ -644,7 +645,12 @@ function Home() {
 
       if (data?.shop?.id) {
         const shopId = data.shop.id
-        const prefetchedShopData = buildShopDetailPrefetchFromRepoSearch(data)
+        const prefetchedShopData =
+          buildShopDetailPrefetchFromRepoSearch(data) ||
+          (await prepareShopDetailTransition({
+            shopId,
+            userId: user?.id || null,
+          }))
 
         navigate(`/shop-detail?id=${shopId}`, {
           state: {

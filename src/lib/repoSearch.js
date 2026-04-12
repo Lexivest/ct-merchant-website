@@ -58,6 +58,7 @@ export function buildShopDetailPrefetchFromRepoSearch(result) {
   const shop = result?.shop
   if (!shop?.id) return null
   const detailReady = result?.detail_ready === true
+  if (!detailReady) return null
 
   const cityName =
     shop?.cities?.name ||

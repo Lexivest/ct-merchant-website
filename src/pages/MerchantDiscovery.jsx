@@ -10,6 +10,7 @@ import {
   getRepoSearchCooldownMessage,
   invokeRepoSearch,
 } from "../lib/repoSearch"
+import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 
 function MerchantDiscovery() {
   const navigate = useNavigate()
@@ -50,14 +51,45 @@ function MerchantDiscovery() {
   const shop = data?.shop || null
 
   useEffect(() => {
+    let cancelled = false
+
+    async function openShopWhenReady() {
+      if (!shop?.id) return
+
+      try {
+        const prefetchedShopData =
+          buildShopDetailPrefetchFromRepoSearch(data) ||
+          (await prepareShopDetailTransition({
+            shopId: shop.id,
+            userId: null,
+          }))
+
+        if (cancelled) return
+
+        navigate(`/shop-detail?id=${shop.id}`, {
+          replace: true,
+          state: {
+            fromDiscoveryTransition: true,
+            prefetchedShopData,
+          },
+        })
+      } catch {
+        if (cancelled) return
+        navigate(`/shop-detail?id=${shop.id}`, {
+          replace: true,
+          state: {
+            fromDiscoveryTransition: true,
+          },
+        })
+      }
+    }
+
     if (shop?.id) {
-      navigate(`/shop-detail?id=${shop.id}`, {
-        replace: true,
-        state: {
-          fromDiscoveryTransition: true,
-          prefetchedShopData: buildShopDetailPrefetchFromRepoSearch(data),
-        },
-      })
+      void openShopWhenReady()
+    }
+
+    return () => {
+      cancelled = true
     }
   }, [data, navigate, shop?.id])
 
