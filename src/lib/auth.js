@@ -117,19 +117,27 @@ export async function signInWithPassword({ email, password }) {
 
   if (error) {
     // If login fails with invalid credentials, record the failed attempt
-    if (error.message.toLowerCase().includes("invalid login credentials")) {
-      await supabase.rpc('record_failed_login', { p_email: normalizedEmail })
+    const msg = error.message.toLowerCase()
+    if (msg.includes("invalid") || msg.includes("credential")) {
+      const { error: rpcError } = await supabase.rpc('record_failed_login', { p_email: normalizedEmail })
+      if (rpcError) {
+        console.error("Failed to record login attempt:", rpcError)
+      }
     }
     throw error
   }
 
   const user = data.user || data.session?.user
   if (user) {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("is_suspended")
+      .select("is_suspended, failed_login_attempts")
       .eq("id", user.id)
       .maybeSingle()
+
+    if (profileError) {
+      console.error("Profile fetch error during login:", profileError)
+    }
 
     if (profile?.is_suspended) {
       await supabase.auth.signOut()
@@ -137,7 +145,9 @@ export async function signInWithPassword({ email, password }) {
     }
 
     // Success! Reset the failed login counter
-    await supabase.rpc('reset_failed_login')
+    if (profile?.failed_login_attempts > 0) {
+      await supabase.rpc('reset_failed_login')
+    }
   }
 
   return {
