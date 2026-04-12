@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useState } from "react"
-import { FaChevronRight, FaImage } from "react-icons/fa6"
+import { FaImage } from "react-icons/fa6"
 // IMPORT OUR NEW SHIMMERS
 import { ShimmerBlock } from "../../common/Shimmers"
 import StableImage from "../../common/StableImage"
@@ -7,6 +7,17 @@ import RetryingNotice, { getRetryingMessage } from "../../common/RetryingNotice"
 
 const EMPTY_PRODUCTS = []
 let shopDetailPrefetchPromise = null
+
+function getCategoryImageUrl(category) {
+  return (
+    category?.image_url ||
+    category?.icon_url ||
+    category?.photo_url ||
+    category?.thumbnail_url ||
+    category?.cover_image_url ||
+    ""
+  )
+}
 
 function prefetchShopDetailPage() {
   if (!shopDetailPrefetchPromise) {
@@ -157,9 +168,6 @@ const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
       >
         <div className="shop-card-title">{shop.name}</div>
         <div className="shop-image-grid">{cells}</div>
-        <div className="shop-cta">
-          Visit shop <FaChevronRight className="ml-1 text-[0.75rem]" />
-        </div>
       </div>
     </div>
   )
@@ -224,6 +232,19 @@ function MarketSection({
     return previews
   }, [dashboardData?.products, dashboardData?.shops])
 
+  const sortedCategories = useMemo(() => {
+    return [...(dashboardData?.categories || [])].sort((a, b) => {
+      const aHasCategoryImage = Boolean(getCategoryImageUrl(a))
+      const bHasCategoryImage = Boolean(getCategoryImageUrl(b))
+
+      if (aHasCategoryImage !== bHasCategoryImage) {
+        return aHasCategoryImage ? -1 : 1
+      }
+
+      return String(a?.name || "").localeCompare(String(b?.name || ""))
+    })
+  }, [dashboardData?.categories])
+
   // 1. PROFESSIONAL ERROR STATE (Only shows if no cache is available)
   if (error && dashboardShellEmpty) {
     return <RetryingNotice fullScreen={false} message={getRetryingMessage(error)} />
@@ -277,15 +298,17 @@ function MarketSection({
         </div>
       ))}
 
-      {(dashboardData.categories || []).length > 0 ? (
+      {sortedCategories.length > 0 ? (
         <div className="cat-section-wrap mb-2 bg-white pt-4">
           <h2 className="sec-title mb-3 flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 text-[1.35rem] font-extrabold text-[#0F1111]">
             Browse Categories
           </h2>
 
-          <div className="cat-grid flex flex-wrap gap-3 px-4 pb-6">
-            {(dashboardData.categories || []).map((category) => {
+          <div className="cat-grid px-4 pb-6">
+            {sortedCategories.map((category) => {
+              const categoryImageUrl = getCategoryImageUrl(category)
               const imageUrl =
+                categoryImageUrl ||
                 categoryPreviewImageByName.get(category.name) ||
                 `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
                   category.name
@@ -294,16 +317,16 @@ function MarketSection({
               return (
                 <div
                   key={category.id || category.name}
-                  className="cat-chip flex cursor-pointer items-center gap-[10px] rounded-[50px] border border-[#D5D9D9] bg-white px-4 py-[6px] pl-[6px] transition hover:-translate-y-[2px] hover:border-pink-600 hover:bg-[#F7F7F7]"
+                  className="cat-card"
                   onClick={() => navigateCategory(category.name)}
                 >
                   <StableImage
                     src={imageUrl}
                     alt={category.name}
-                    containerClassName="h-8 w-8 rounded-full border border-[#E5E7EB] bg-white"
-                    className="h-8 w-8 rounded-full object-contain bg-white"
+                    containerClassName="cat-card-image"
+                    className="h-full w-full object-contain bg-white"
                   />
-                  <span className="text-[0.85rem] font-bold text-[#0F1111]">
+                  <span className="cat-card-title">
                     {category.name}
                   </span>
                 </div>
