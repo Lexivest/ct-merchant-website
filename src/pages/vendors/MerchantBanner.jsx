@@ -405,7 +405,7 @@ export default function MerchantBanner() {
           </button>
         </div>
 
-        <div className="rounded-[24px] border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="rounded-[24px] border border-slate-200 bg-white p-[6px] shadow-sm">
           <div className="mb-3 flex items-center justify-between gap-3 px-1">
             <div className="flex items-center gap-2 text-sm font-black text-slate-900">
               <FaPanorama className="text-[#007185]" />
@@ -415,9 +415,9 @@ export default function MerchantBanner() {
               {statusLabel(status)}
             </span>
           </div>
-          <div className="relative aspect-[8/3] overflow-hidden rounded-[22px] bg-white">
+          <div className="promo-banner-slider relative aspect-[8/3] w-full overflow-hidden rounded-[18px] bg-white">
             {generatedPreviewUrl ? (
-              <img src={generatedPreviewUrl} alt={`${shopData?.name || "Shop"} generated banner`} className="h-full w-full object-contain" />
+              <img src={generatedPreviewUrl} alt={`${shopData?.name || "Shop"} generated banner`} className="absolute inset-0 block h-full w-full bg-white object-contain object-center" />
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
                 {rendering ? <FaCircleNotch className="mb-3 animate-spin text-3xl text-pink-600" /> : <FaImage className="mb-3 text-4xl" />}

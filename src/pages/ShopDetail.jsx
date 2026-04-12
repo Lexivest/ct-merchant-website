@@ -809,8 +809,8 @@ function ShopDetail() {
             <StableImage
               src={shopBanner}
               alt="Shop Banner"
-              containerClassName="aspect-[8/3] max-h-[420px] w-full overflow-hidden rounded-xl border border-slate-300 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
-              className="block h-full w-full object-contain"
+              containerClassName="promo-banner-slider aspect-[8/3] max-h-[420px] w-full rounded-xl border border-slate-300 bg-white p-[6px] shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+              className="absolute inset-[6px] block h-[calc(100%-12px)] w-[calc(100%-12px)] bg-white object-contain object-center"
               loading="eager"
               fetchPriority="high"
             />
