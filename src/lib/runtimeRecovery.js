@@ -17,24 +17,19 @@ export function isCriticalAssetLoadFailure(event) {
   // Get the URL of the failing script or stylesheet
   const assetUrl = String(target?.src || target?.href || "").toLowerCase()
 
-  // Verify the asset is internal. 
-  // It should match your origin, be a relative path, or specifically contain your Vite /assets/ directory.
-  const isInternalAsset = assetUrl && (
-    assetUrl.startsWith(window.location.origin.toLowerCase()) ||
-    assetUrl.startsWith("/") ||
-    assetUrl.includes("/assets/")
-  )
+  // Only trigger a hard reload if an actual Vite-bundled chunk fails to load.
+  // Third-party scripts (Cloudflare) often get blocked by Firefox ETP,
+  // and must be silently ignored rather than crashing the application.
+  const isViteAsset = assetUrl.includes("/assets/")
 
   if (tagName === "script") {
-    // Only trigger boundary if it's an internal script that failed
-    return isInternalAsset
+    return isViteAsset
   }
   
   if (tagName === "link") {
     const rel = String(target?.rel || "").toLowerCase()
     const isCriticalLink = rel.includes("stylesheet") || rel.includes("modulepreload")
-    // Only trigger boundary if it's an internal stylesheet/preload that failed
-    return isCriticalLink && isInternalAsset
+    return isCriticalLink && isViteAsset
   }
 
   return false

@@ -61,8 +61,6 @@ function GlobalErrorScreen({
   const wrapperClass = fullScreen ? "min-h-screen" : "min-h-[280px]"
   const Icon = copy.network ? FaWifi : FaTriangleExclamation
 
-  console.error("[FATAL CRASH TRACE]:", error)
-
   return (
     <div className={`${wrapperClass} flex items-center justify-center bg-[#E3E6E6] px-5 py-10`}>
       <div className="relative w-full max-w-md overflow-hidden rounded-[30px] border border-white/80 bg-white p-7 text-center shadow-[0_28px_70px_rgba(15,23,42,0.18)]">
@@ -84,12 +82,6 @@ function GlobalErrorScreen({
           <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
             {busy ? "Preparing a clean reload..." : copy.message}
           </p>
-
-          <div className="mt-4 text-left p-3 bg-red-50 text-red-900 text-xs font-mono overflow-auto rounded-xl max-h-32 border border-red-200">
-            <strong>[Raw Error Debug]:</strong><br/>
-            {String(error?.message || error || "Unknown Error")}<br/>
-            <span className="text-[10px] opacity-70">{error?.stack || ""}</span>
-          </div>
 
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
             {typeof onRetry === "function" ? (
