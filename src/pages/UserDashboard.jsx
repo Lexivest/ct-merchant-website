@@ -1707,6 +1707,8 @@ function UserDashboard() {
         user={user}
         sortedAreas={sortedAreas}
         categories={localData.categories}
+        shops={localData.shops}
+        products={localData.products}
         searchArea="all"
         setSearchArea={navigateArea}
         categoryFilter="all"

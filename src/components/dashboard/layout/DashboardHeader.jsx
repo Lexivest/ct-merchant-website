@@ -18,6 +18,8 @@ function DashboardHeader({
   user,
   sortedAreas,
   categories,
+  shops = [],
+  products = [],
   searchArea,
   setSearchArea,
   categoryFilter,
@@ -69,6 +71,37 @@ function DashboardHeader({
     )
     return found?.name || "All Categories"
   }, [categoryFilter, categories])
+
+  const dropdownImages = useMemo(() => {
+    const shopMetaById = new Map(
+      (shops || []).map((shop) => [
+        shop.id,
+        {
+          areaId: shop.area_id,
+          category: shop.category,
+        },
+      ])
+    )
+    const areaImageById = new Map()
+    const categoryImageByName = new Map()
+
+    ;(products || []).forEach((product) => {
+      if (!product?.shop_id || !product?.image_url) return
+
+      const shopMeta = shopMetaById.get(product.shop_id)
+      if (!shopMeta) return
+
+      if (shopMeta.areaId && !areaImageById.has(String(shopMeta.areaId))) {
+        areaImageById.set(String(shopMeta.areaId), product.image_url)
+      }
+
+      if (shopMeta.category && !categoryImageByName.has(shopMeta.category)) {
+        categoryImageByName.set(shopMeta.category, product.image_url)
+      }
+    })
+
+    return { areaImageById, categoryImageByName }
+  }, [products, shops])
 
   const searchPlaceholder = useMemo(() => {
     const cityName = currentProfile?.cities?.name || currentProfile?.city_name
@@ -130,6 +163,29 @@ function DashboardHeader({
   function selectCategory(value) {
     setCategoryFilter(value)
     setCategoryOpen(false)
+  }
+
+  function renderDropdownMarker({ imageUrl, active }) {
+    if (imageUrl) {
+      return (
+        <span className="h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+          <img
+            src={imageUrl}
+            alt=""
+            className="h-full w-full object-contain"
+            loading="lazy"
+          />
+        </span>
+      )
+    }
+
+    return (
+      <span
+        className={`h-[6px] w-[6px] shrink-0 rounded-full ${
+          active ? "bg-pink-600" : "bg-slate-300"
+        }`}
+      />
+    )
   }
 
   function renderNavControls() {
@@ -274,25 +330,31 @@ function DashboardHeader({
                     }`}
                     onClick={() => selectArea("all")}
                   >
-                    <span className={`h-[6px] w-[6px] rounded-full ${searchArea === "all" ? "bg-pink-600" : "bg-slate-300"}`}></span>
+                    {renderDropdownMarker({ active: searchArea === "all" })}
                     All Areas
                   </button>
 
-                  {sortedAreas.map((area) => (
-                    <button
-                      key={area.id}
-                      type="button"
-                      className={`flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
-                        String(searchArea) === String(area.id)
-                          ? "bg-pink-50 text-pink-700"
-                          : "text-slate-700"
-                      }`}
-                      onClick={() => selectArea(String(area.id))}
-                    >
-                      <span className={`h-[6px] w-[6px] rounded-full shrink-0 ${String(searchArea) === String(area.id) ? "bg-pink-600" : "bg-slate-300"}`}></span>
-                      <span className="truncate">{area.name}</span>
-                    </button>
-                  ))}
+                  {sortedAreas.map((area) => {
+                    const isActive = String(searchArea) === String(area.id)
+                    return (
+                      <button
+                        key={area.id}
+                        type="button"
+                        className={`flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                          isActive
+                            ? "bg-pink-50 text-pink-700"
+                            : "text-slate-700"
+                        }`}
+                        onClick={() => selectArea(String(area.id))}
+                      >
+                        {renderDropdownMarker({
+                          imageUrl: dropdownImages.areaImageById.get(String(area.id)),
+                          active: isActive,
+                        })}
+                        <span className="truncate">{area.name}</span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             </div>
@@ -396,25 +458,31 @@ function DashboardHeader({
                   }`}
                   onClick={() => selectArea("all")}
                 >
-                  <span className={`h-[6px] w-[6px] rounded-full ${searchArea === "all" ? "bg-pink-600" : "bg-slate-300"}`}></span>
+                  {renderDropdownMarker({ active: searchArea === "all" })}
                   All Areas
                 </button>
 
-                {sortedAreas.map((area) => (
-                  <button
-                    key={area.id}
-                    type="button"
-                    className={`flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
-                      String(searchArea) === String(area.id)
-                        ? "bg-pink-50 text-pink-700"
-                        : "text-slate-700"
-                    }`}
-                    onClick={() => selectArea(String(area.id))}
-                  >
-                    <span className={`h-[6px] w-[6px] rounded-full shrink-0 ${String(searchArea) === String(area.id) ? "bg-pink-600" : "bg-slate-300"}`}></span>
-                    <span className="truncate">{area.name}</span>
-                  </button>
-                ))}
+                {sortedAreas.map((area) => {
+                  const isActive = String(searchArea) === String(area.id)
+                  return (
+                    <button
+                      key={area.id}
+                      type="button"
+                      className={`flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                        isActive
+                          ? "bg-pink-50 text-pink-700"
+                          : "text-slate-700"
+                      }`}
+                      onClick={() => selectArea(String(area.id))}
+                    >
+                      {renderDropdownMarker({
+                        imageUrl: dropdownImages.areaImageById.get(String(area.id)),
+                        active: isActive,
+                      })}
+                      <span className="truncate">{area.name}</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -512,25 +580,31 @@ function DashboardHeader({
                 }`}
                 onClick={() => selectCategory("all")}
               >
-                <span className={`h-[6px] w-[6px] rounded-full ${categoryFilter === "all" ? "bg-pink-600" : "bg-slate-300"}`}></span>
+                {renderDropdownMarker({ active: categoryFilter === "all" })}
                 All Categories
               </button>
 
-              {(categories || []).map((category) => (
-                <button
-                  key={category.id || category.name}
-                  type="button"
-                  className={`flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
-                    categoryFilter === category.name
-                      ? "bg-pink-50 text-pink-700"
-                      : "text-slate-700"
-                  }`}
-                  onClick={() => selectCategory(category.name)}
-                >
-                  <span className={`h-[6px] w-[6px] rounded-full shrink-0 ${categoryFilter === category.name ? "bg-pink-600" : "bg-slate-300"}`}></span>
-                  <span className="truncate">{category.name}</span>
-                </button>
-              ))}
+              {(categories || []).map((category) => {
+                const isActive = categoryFilter === category.name
+                return (
+                  <button
+                    key={category.id || category.name}
+                    type="button"
+                    className={`flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50 ${
+                      isActive
+                        ? "bg-pink-50 text-pink-700"
+                        : "text-slate-700"
+                    }`}
+                    onClick={() => selectCategory(category.name)}
+                  >
+                    {renderDropdownMarker({
+                      imageUrl: dropdownImages.categoryImageByName.get(category.name),
+                      active: isActive,
+                    })}
+                    <span className="truncate">{category.name}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>
