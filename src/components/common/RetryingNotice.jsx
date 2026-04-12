@@ -11,6 +11,7 @@ export function getRetryingMessage(error) {
 }
 
 function RetryingNotice({
+  title = "",
   message = "Please check your connection, then retry or go back.",
   fullScreen = true,
   className = "",
@@ -26,6 +27,7 @@ function RetryingNotice({
   return (
     <div className={className}>
       <GlobalErrorScreen
+        title={title}
         error={message}
         message={message}
         fullScreen={fullScreen}

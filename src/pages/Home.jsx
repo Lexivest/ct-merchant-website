@@ -33,6 +33,7 @@ import {
 } from "../lib/validators"
 import useAuthSession from "../hooks/useAuthSession"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import { getRepoSearchCooldownMessage, invokeRepoSearch } from "../lib/repoSearch"
 import {
   getAuthScreenTransitionMessage,
   preloadCreateAccountScreen,
@@ -622,9 +623,17 @@ function Home() {
       setRepoSearchLoading(true)
       beginTransition(retryAction)
 
-      const { data, error } = await supabase.functions.invoke("repo-search", {
-        body: { merchantId: value },
-      })
+      const { data, error } = await invokeRepoSearch(value)
+
+      if (data?.rate_limited) {
+        notify({
+          type: "info",
+          title: "Search cooling down",
+          message: getRepoSearchCooldownMessage(data),
+        })
+        dismissTransitionError()
+        return
+      }
 
       if (error) {
         throw new Error("Service unavailable. Please try again.")

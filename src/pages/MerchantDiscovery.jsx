@@ -1,11 +1,11 @@
 import { useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { FaArrowLeft } from "react-icons/fa6"
-import { supabase } from "../lib/supabase"
 import useCachedFetch from "../hooks/useCachedFetch"
 import PageSeo from "../components/common/PageSeo"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
+import { getRepoSearchCooldownMessage, invokeRepoSearch } from "../lib/repoSearch"
 
 function MerchantDiscovery() {
   const navigate = useNavigate()
@@ -18,12 +18,14 @@ function MerchantDiscovery() {
       throw new Error("No Merchant ID provided.")
     }
 
-    const { data, error } = await supabase.functions.invoke("repo-search", {
-      body: { merchantId },
-    })
+    const { data, error } = await invokeRepoSearch(merchantId)
 
     if (error) {
       throw new Error("Service unavailable. Please try again.")
+    }
+
+    if (data?.rate_limited) {
+      throw new Error(getRepoSearchCooldownMessage(data))
     }
 
     if (data?.error || data?.not_found || !data?.shop) {
@@ -87,7 +89,20 @@ function MerchantDiscovery() {
             message="Please wait while we prepare this merchant profile."
           />
         ) : dataError && !data ? (
-          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} className="w-full max-w-[420px]" />
+          <RetryingNotice
+            fullScreen={false}
+            title={
+              String(dataError).toLowerCase().includes("too many searches")
+                ? "Search cooling down"
+                : ""
+            }
+            message={
+              String(dataError).toLowerCase().includes("too many searches")
+                ? dataError
+                : getRetryingMessage(dataError)
+            }
+            className="w-full max-w-[420px]"
+          />
         ) : shop ? (
           <PageLoadingScreen
             fullScreen={false}
