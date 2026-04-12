@@ -108,13 +108,37 @@ export async function signOutUser() {
 
 export async function signInWithPassword({ email, password }) {
   const ipData = await getClientIpData()
+  const normalizedEmail = normalizeEmail(email)
 
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: normalizeEmail(email),
+    email: normalizedEmail,
     password,
   })
 
-  if (error) throw error
+  if (error) {
+    // If login fails with invalid credentials, record the failed attempt
+    if (error.message.toLowerCase().includes("invalid login credentials")) {
+      await supabase.rpc('record_failed_login', { p_email: normalizedEmail })
+    }
+    throw error
+  }
+
+  const user = data.user || data.session?.user
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_suspended")
+      .eq("id", user.id)
+      .maybeSingle()
+
+    if (profile?.is_suspended) {
+      await supabase.auth.signOut()
+      throw new Error("Your account is suspended due to multiple failed login attempts. Please contact support.")
+    }
+
+    // Success! Reset the failed login counter
+    await supabase.rpc('reset_failed_login')
+  }
 
   return {
     auth: data,
