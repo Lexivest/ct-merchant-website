@@ -16,7 +16,7 @@ import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
-import { UPLOAD_RULES, getRuleLabel } from "../../lib/uploadRules";
+import { UPLOAD_RULES } from "../../lib/uploadRules";
 import {
   FEATURED_BANNER_BACKGROUNDS,
   buildStandaloneFeaturedBannerSvg,
@@ -26,7 +26,6 @@ import {
 
 const BANNER_RULE = UPLOAD_RULES.shopBanners;
 const BANNER_BUCKET = BANNER_RULE.bucket;
-const BANNER_RULE_LABEL = getRuleLabel(BANNER_RULE);
 const BANNER_WIDTH = 1280;
 const BANNER_HEIGHT = 720;
 
@@ -79,6 +78,7 @@ export default function MerchantBanner() {
   const [existingBanners, setExistingBanners] = useState(() => prefetchedData?.existingBanners || []);
   const [status, setStatus] = useState(() => prefetchedData?.status || "");
   const [backgroundKey, setBackgroundKey] = useState(FEATURED_BANNER_BACKGROUNDS[0].key);
+  const [renderRequest, setRenderRequest] = useState(0);
   const [generatedBlob, setGeneratedBlob] = useState(null);
   const [generatedPreviewUrl, setGeneratedPreviewUrl] = useState("");
 
@@ -238,7 +238,7 @@ export default function MerchantBanner() {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [shopData, products, backgroundKey, proprietorName, notify]);
+  }, [shopData, products, backgroundKey, proprietorName, renderRequest, notify]);
 
   const handleSubmit = async () => {
     if (saving) return;
@@ -307,6 +307,10 @@ export default function MerchantBanner() {
     }
   };
 
+  const handleGenerate = () => {
+    setRenderRequest((current) => current + 1);
+  };
+
   if (authLoading || loading) return <BannerShimmer />;
 
   if (error) {
@@ -356,11 +360,11 @@ export default function MerchantBanner() {
             </div>
             <div>
               <h3 className="text-base font-black text-slate-950">Generated shop banner</h3>
-              <p className="text-sm font-semibold text-slate-500">Choose a background. CTMerchant generates the banner from your shop profile and products.</p>
+              <p className="text-sm font-semibold text-slate-500">Choose a background. CT Studio generates the banner from your shop profile and products.</p>
             </div>
           </div>
           <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs font-bold text-slate-500">
-            Final image: {BANNER_RULE_LABEL}. Submitted banners remain pending until staff approval.
+            Submitted banners remain pending until staff approval.
           </div>
         </div>
 
@@ -385,6 +389,15 @@ export default function MerchantBanner() {
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={rendering || !shopData}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            {rendering ? <FaCircleNotch className="animate-spin" /> : <FaWandMagicSparkles />}
+            {rendering ? "Generating Banner..." : "Generate Banner"}
+          </button>
         </div>
 
         <div className="rounded-[24px] border border-slate-200 bg-white p-3 shadow-sm">
