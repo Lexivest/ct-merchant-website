@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
-  FaAddressCard,
   FaArrowLeft,
   FaBuildingCircleCheck,
   FaBullhorn,
@@ -479,21 +478,6 @@ function VendorsPanel() {
           )}
 
           <DashCard
-            title="Official ID Card"
-            subtitle="Issued by Staff"
-            icon={<FaAddressCard />}
-            colorClass="bg-[#FAE8FF] text-[#C026D3]"
-            onClick={() =>
-              notify({
-                type: "info",
-                title: "Official ID card",
-                message:
-                  "Your official CTMerchant ID card is issued by the approval team directly to your registered WhatsApp or email after physical approval. Please check your inbox or contact support if you have not received it.",
-              })
-            }
-          />
-
-          <DashCard
             title="Promo Banner"
             subtitle="Print & Broadcast"
             icon={<FaImage />}
@@ -589,7 +573,8 @@ function VendorsPanel() {
             )
           ) : (
             <DashCard
-              title="Digital ID & KYC"
+              title="Verification Fee"
+              subtitle="Physical Check"
               icon={<FaBuildingCircleCheck />}
               colorClass="bg-[#FEF3C7] text-[#D97706]"
               onClick={() => handleCardClick(`/remita?shop_id=${activeShop.id}`)}

@@ -6,12 +6,12 @@ import {
   FaCircleCheck,
   FaCircleNotch,
   FaClock,
-  FaIdCardClip,
   FaLocationDot,
   FaReceipt,
   FaTicket,
   FaTriangleExclamation,
   FaVideo,
+  FaBuildingCircleCheck,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions"
@@ -377,9 +377,9 @@ export default function MerchantPayment() {
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="min-w-0">
             <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#FEF3C7] text-3xl text-[#D97706]">
-              <FaIdCardClip />
+              <FaBuildingCircleCheck />
             </div>
-            <h2 className="mb-2 text-[1.45rem] font-extrabold text-[#2E1065]">Digital ID & Promo Banner Fee</h2>
+            <h2 className="mb-2 text-[1.45rem] font-extrabold text-[#2E1065]">Verification Fee</h2>
             <p className="mb-5 text-[0.95rem] leading-relaxed text-[#64748B]">
               Pay the one-time verification fee into CTMerchant account, upload your receipt, then our staff confirms it within 48 hours.
             </p>

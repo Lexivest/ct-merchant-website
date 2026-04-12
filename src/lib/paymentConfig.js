@@ -26,8 +26,9 @@ export const SERVICE_FEE_PLANS = Object.freeze({
   "1_Year": Object.freeze({
     label: "1 Year",
     amount: 10000,
+    originalAmount: 15000,
     tier: "Professional Tier",
-    hint: "Works out to N833 / month",
+    hint: "Promo: save N5,000 on the annual plan",
   }),
 })
 

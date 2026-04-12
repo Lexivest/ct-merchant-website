@@ -414,7 +414,17 @@ export default function MerchantServiceFee() {
                       <div className="absolute right-[-30px] top-[12px] rotate-45 bg-[#E11D48] px-8 py-1 text-[0.75rem] font-black tracking-widest text-white">BEST VALUE</div>
                     ) : null}
                     <div className={`mb-3 text-[1.2rem] font-bold ${planKey === "1_Year" ? "text-[#2E1065]" : "text-[#64748B]"}`}>{plan.tier}</div>
-                    <div className="mb-2 text-[2.5rem] font-black leading-none text-[#0F172A]">{formatNaira(plan.amount)}</div>
+                    {plan.originalAmount ? (
+                      <div className="mb-2 flex flex-col items-center gap-1">
+                        <div className="text-[1rem] font-black text-slate-400 line-through decoration-2">{formatNaira(plan.originalAmount)}</div>
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="rounded-full bg-[#DCFCE7] px-3 py-1 text-[0.68rem] font-black uppercase tracking-wide text-[#15803D]">Promo Price</span>
+                          <span className="text-[2.5rem] font-black leading-none text-[#0F172A]">{formatNaira(plan.amount)}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mb-2 text-[2.5rem] font-black leading-none text-[#0F172A]">{formatNaira(plan.amount)}</div>
+                    )}
                     <div className="mb-6 text-[0.9rem] font-bold text-[#16A34A]">{plan.hint}</div>
 
                     <ul className="mb-6 flex flex-col gap-3 text-left text-[0.95rem] text-[#64748B]">
@@ -458,9 +468,22 @@ export default function MerchantServiceFee() {
             <div className="rounded-[22px] border border-[#E2E8F0] bg-white p-5 shadow-sm">
               <div className="mb-4">
                 <div className="text-xs font-black uppercase tracking-widest text-[#DB2777]">Selected Plan</div>
-                <div className="mt-1 text-2xl font-black text-[#0F172A]">
-                  {selectedPlanData ? `${selectedPlanData.label} - ${formatNaira(selectedPlanData.amount)}` : "Choose a payment type"}
-                </div>
+                {selectedPlanData ? (
+                  <div className="mt-1">
+                    <div className="text-2xl font-black text-[#0F172A]">{selectedPlanData.label}</div>
+                    {selectedPlanData.originalAmount ? (
+                      <div className="mt-2 flex flex-wrap items-end gap-2">
+                        <span className="text-sm font-black text-slate-400 line-through decoration-2">{formatNaira(selectedPlanData.originalAmount)}</span>
+                        <span className="rounded-full bg-[#DCFCE7] px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-wide text-[#15803D]">Promo</span>
+                        <span className="text-2xl font-black text-[#DB2777]">{formatNaira(selectedPlanData.amount)}</span>
+                      </div>
+                    ) : (
+                      <div className="mt-1 text-2xl font-black text-[#0F172A]">{formatNaira(selectedPlanData.amount)}</div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-1 text-2xl font-black text-[#0F172A]">Choose a payment type</div>
+                )}
                 <p className="mt-2 text-sm font-semibold leading-6 text-[#64748B]">
                   {selectedPlanData
                     ? "Transfer the exact amount, then upload your receipt. Confirmation can take up to 48 hours."
