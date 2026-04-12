@@ -283,10 +283,10 @@ async function generatePromoBannerCanvasBlob({
   context.fillStyle = "#93C5FD";
   context.fillText(uniqueId, centerX, categoryY + 62);
 
-  setCanvasFont(context, 800, 18);
+  setCanvasFont(context, 800, 20);
   const addressLines = wrapMeasuredText(context, address, headerTextMaxWidth - 28, 2);
   const addressStartY = categoryY + 91;
-  const addressLineHeight = 23;
+  const addressLineHeight = 25;
   if (addressLines.length) {
     context.fillStyle = "#FBBF24";
     context.beginPath();
@@ -354,7 +354,7 @@ async function generatePromoBannerCanvasBlob({
     context.lineTo(x + tileWidth, y + imageHeight);
     context.stroke();
 
-    setCanvasFont(context, 800, 18);
+    setCanvasFont(context, 800, 20);
     context.fillStyle = "#0F1111";
     context.textAlign = "center";
     context.fillText(truncateMeasuredText(context, product.name || "Featured Product", tileWidth - 24), x + tileWidth / 2, y + imageHeight + 40);

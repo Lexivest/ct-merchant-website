@@ -1,55 +1,56 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import Cropper from "react-cropper";
-import "cropperjs/dist/cropper.css";
 import {
   FaArrowLeft,
-  FaCamera,
   FaCheck,
   FaCircleNotch,
-  FaCropSimple,
-  FaHandPointer,
+  FaCloudArrowUp,
   FaImage,
   FaPanorama,
-  FaTrashCan,
   FaTriangleExclamation,
   FaWandMagicSparkles,
-  FaXmark,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
-import CameraCaptureModal from "../../components/common/CameraCaptureModal";
 import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
-import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
-import { IMAGE_PROFILES } from "../../lib/imageProfiles";
+import { UPLOAD_RULES, getRuleLabel } from "../../lib/uploadRules";
 import {
-  canvasToBlobWithMaxBytes,
-  fileToDataUrl,
-  padImageToAspectDataUrl,
-  renderCanvasToTarget,
-} from "../../lib/imagePipeline";
+  FEATURED_BANNER_BACKGROUNDS,
+  buildStandaloneFeaturedBannerSvg,
+  getProfileDisplayName,
+  svgToJpegBlob,
+} from "../../lib/featuredBannerEngine";
 
 const BANNER_RULE = UPLOAD_RULES.shopBanners;
-const BANNER_PROFILE = IMAGE_PROFILES.shopBanner;
 const BANNER_BUCKET = BANNER_RULE.bucket;
-const BANNER_MAX_BYTES = BANNER_RULE.maxBytes;
-const BANNER_INPUT_MAX_BYTES = BANNER_PROFILE.maxInputBytes;
-const BANNER_ACCEPT = getAcceptValue(BANNER_RULE, "image/*");
 const BANNER_RULE_LABEL = getRuleLabel(BANNER_RULE);
-const TARGET_W = BANNER_PROFILE.targetWidth;
-const TARGET_H = BANNER_PROFILE.targetHeight;
+const BANNER_WIDTH = 1280;
+const BANNER_HEIGHT = 720;
 
-// --- SHIMMER COMPONENT ---
 function BannerShimmer() {
   return (
     <PageLoadingScreen
       title="Opening banner"
-      message="Please wait while we prepare your shop banner tools."
+      message="Please wait while we prepare your generated shop banner."
     />
   );
+}
+
+function statusLabel(status) {
+  if (status === "pending") return "Pending Approval";
+  if (status === "approved") return "Approved";
+  if (status === "rejected") return "Rejected";
+  return "New Generated Banner";
+}
+
+function statusClass(status) {
+  if (status === "pending") return "border-amber-200 bg-amber-100 text-amber-800";
+  if (status === "approved") return "border-emerald-200 bg-emerald-100 text-emerald-800";
+  if (status === "rejected") return "border-rose-200 bg-rose-100 text-rose-800";
+  return "border-slate-200 bg-slate-100 text-slate-700";
 }
 
 export default function MerchantBanner() {
@@ -63,35 +64,29 @@ export default function MerchantBanner() {
     location.state?.prefetchedData?.kind === "merchant-banner" &&
     (!urlShopId || String(location.state.prefetchedData.shopId) === String(urlShopId))
       ? location.state.prefetchedData
-      : null
+      : null;
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
   const [loading, setLoading] = useState(() => !prefetchedData);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [rendering, setRendering] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [successMode, setSuccessMode] = useState("upload"); // 'upload' | 'delete'
-
-  const [shopId, setShopId] = useState(() => prefetchedData?.shopId || urlShopId);
+  const [shopData, setShopData] = useState(() => prefetchedData?.shopData || null);
+  const [products, setProducts] = useState(() => prefetchedData?.products || []);
+  const [proprietorName, setProprietorName] = useState(() => prefetchedData?.proprietorName || "");
   const [existingBanners, setExistingBanners] = useState(() => prefetchedData?.existingBanners || []);
-  
-  // Display State
-  const [previewUrl, setPreviewUrl] = useState(() => prefetchedData?.previewUrl || "");
-  const [status, setStatus] = useState(() => prefetchedData?.status || ""); // 'pending' | 'approved' | 'rejected' | 'new' | ''
-  
-  // Data State
-  const [activeBlob, setActiveBlob] = useState(null);
-  const [shouldDeleteOld, setShouldDeleteOld] = useState(false);
+  const [status, setStatus] = useState(() => prefetchedData?.status || "");
+  const [backgroundKey, setBackgroundKey] = useState(FEATURED_BANNER_BACKGROUNDS[0].key);
+  const [generatedBlob, setGeneratedBlob] = useState(null);
+  const [generatedPreviewUrl, setGeneratedPreviewUrl] = useState("");
 
-  // Studio State
-  const [studioOpen, setStudioOpen] = useState(false);
-  const [cameraOpen, setCameraOpen] = useState(false);
-  const [tempImage, setTempImage] = useState("");
-  const [fitMode, setFitMode] = useState("contain");
-  const [isFitting, setIsFitting] = useState(false);
-  const cropperRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const shopId = shopData?.id || prefetchedData?.shopId || urlShopId;
+  const selectedBackground = useMemo(
+    () => FEATURED_BANNER_BACKGROUNDS.find((background) => background.key === backgroundKey) || FEATURED_BANNER_BACKGROUNDS[0],
+    [backgroundKey]
+  );
 
   const getBannerPathFromUrl = (url) => {
     if (!url) return null;
@@ -108,9 +103,10 @@ export default function MerchantBanner() {
 
   useEffect(() => {
     if (prefetchedData) {
-      setShopId(prefetchedData.shopId || urlShopId);
+      setShopData(prefetchedData.shopData || null);
+      setProducts(prefetchedData.products || []);
+      setProprietorName(prefetchedData.proprietorName || "");
       setExistingBanners(prefetchedData.existingBanners || []);
-      setPreviewUrl(prefetchedData.previewUrl || "");
       setStatus(prefetchedData.status || "");
       setError(null);
       setLoading(false);
@@ -131,169 +127,127 @@ export default function MerchantBanner() {
         const { data: profile } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).maybeSingle();
         if (profile?.is_suspended) throw new Error("Account restricted.");
 
-        let currentShopId = shopId;
+        let currentShopId = urlShopId;
         if (!currentShopId) {
-          const { data: shop } = await supabase.from("shops").select("id").eq("owner_id", user.id).maybeSingle();
-          if (!shop) throw new Error("Shop not found.");
-          currentShopId = shop.id;
-          setShopId(shop.id);
+          const { data: shopLookup } = await supabase.from("shops").select("id").eq("owner_id", user.id).maybeSingle();
+          if (!shopLookup) throw new Error("Shop not found.");
+          currentShopId = shopLookup.id;
         }
 
-        const { data: shopAccess, error: shopAccessErr } = await supabase
+        const { data: shop, error: shopErr } = await supabase
           .from("shops")
-          .select("id")
+          .select("id, owner_id, name, category, address, image_url, cities(name)")
           .eq("id", currentShopId)
           .eq("owner_id", user.id)
           .maybeSingle();
 
-        if (shopAccessErr || !shopAccess) throw new Error("Shop not found or access denied.");
-        if (String(shopId) !== String(shopAccess.id || currentShopId)) {
-          setShopId(String(shopAccess.id));
-        }
+        if (shopErr || !shop) throw new Error("Shop not found or access denied.");
 
-        const { data: banners, error: bannerErr } = await supabase
-          .from("shop_banners_news")
-          .select("*")
-          .eq("shop_id", currentShopId)
-          .eq("content_type", "banner")
-          .order("created_at", { ascending: false });
+        const [bannerResult, productResult, profileResult] = await Promise.all([
+          supabase
+            .from("shop_banners_news")
+            .select("*")
+            .eq("shop_id", shop.id)
+            .eq("content_type", "banner")
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("products")
+            .select("id, shop_id, image_url, is_available")
+            .eq("shop_id", shop.id)
+            .eq("is_available", true)
+            .not("image_url", "is", null)
+            .order("id", { ascending: true })
+            .limit(5),
+          shop.owner_id
+            ? supabase.rpc("get_public_profiles", { profile_ids: [shop.owner_id] })
+            : Promise.resolve({ data: [], error: null }),
+        ]);
 
-        if (bannerErr) throw bannerErr;
+        if (bannerResult.error) throw bannerResult.error;
+        if (productResult.error) throw productResult.error;
+        if (profileResult.error) throw profileResult.error;
 
-        if (banners && banners.length > 0) {
-          setExistingBanners(banners);
-          setPreviewUrl(banners[0].content_data);
-          setStatus(banners[0].status);
-        }
-
+        setShopData(shop);
+        setProducts(productResult.data || []);
+        setProprietorName(getProfileDisplayName(profileResult.data?.[0]));
+        setExistingBanners(bannerResult.data || []);
+        setStatus(bannerResult.data?.[0]?.status || "");
       } catch (err) {
         setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
       } finally {
         setLoading(false);
       }
     }
+
     if (!authLoading) init();
-  }, [user, authLoading, shopId, isOffline, prefetchedData, urlShopId]);
+  }, [user, authLoading, isOffline, prefetchedData, urlShopId]);
 
-  // --- STUDIO LOGIC ---
-  const openStudioForFile = async (file) => {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      throw new Error("Please upload a valid image file.");
-    }
-    if (file.size > BANNER_INPUT_MAX_BYTES) {
-      throw new Error(`File is too large. Max input size is ${formatBytes(BANNER_INPUT_MAX_BYTES)}.`);
+  useEffect(() => {
+    if (!shopData) {
+      setGeneratedBlob(null);
+      setGeneratedPreviewUrl("");
+      return undefined;
     }
 
-    const src = await fileToDataUrl(file);
-    setTempImage(src);
-    setFitMode("contain");
-    setStudioOpen(true);
-  };
+    let cancelled = false;
+    let objectUrl = "";
 
-  const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    try {
-      await openStudioForFile(file);
-    } catch (error) {
-      notify({ type: "error", title: "Image unavailable", message: getFriendlyErrorMessage(error, "Could not open the selected image.") });
-    }
-  };
-
-  const handleCameraCapture = async ({ blob }) => {
-    if (!blob) return;
-    try {
-      const file = new File([blob], `banner_camera_${Date.now()}.jpg`, { type: "image/jpeg" });
-      await openStudioForFile(file);
-      setCameraOpen(false);
-    } catch (error) {
-      notify({ type: "error", title: "Capture failed", message: getFriendlyErrorMessage(error, "Could not process the captured image.") });
-    }
-  };
-
-  const closeStudio = () => {
-    setStudioOpen(false);
-    setTempImage("");
-  };
-
-  const applyAutoFit = async () => {
-    if (!tempImage) return;
-    setIsFitting(true);
-    try {
-      const fitted = await padImageToAspectDataUrl(tempImage, BANNER_PROFILE.aspectRatio);
-      setTempImage(fitted);
-      if (cropperRef.current?.cropper) {
-        cropperRef.current.cropper.replace(fitted);
+    async function renderGeneratedBanner() {
+      try {
+        setRendering(true);
+        const svg = await buildStandaloneFeaturedBannerSvg({
+          shop: shopData,
+          products,
+          backgroundKey,
+          proprietorName,
+          width: BANNER_WIDTH,
+          height: BANNER_HEIGHT,
+        });
+        const blob = await svgToJpegBlob(svg, BANNER_WIDTH, BANNER_HEIGHT, {
+          maxBytes: BANNER_RULE.maxBytes,
+          qualityStart: 0.86,
+          qualityFloor: 0.2,
+          qualityStep: 0.08,
+        });
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setGeneratedBlob(blob);
+        setGeneratedPreviewUrl((current) => {
+          if (current) URL.revokeObjectURL(current);
+          return objectUrl;
+        });
+      } catch (renderError) {
+        console.warn("Could not render generated shop banner:", renderError);
+        if (!cancelled) {
+          setGeneratedBlob(null);
+          setGeneratedPreviewUrl("");
+          notify({
+            type: "error",
+            title: "Banner preview failed",
+            message: getFriendlyErrorMessage(renderError, "Could not generate this banner preview."),
+          });
+        }
+      } finally {
+        if (!cancelled) setRendering(false);
       }
-      setFitMode("contain");
-    } catch (error) {
-      notify({ type: "error", title: "Auto-fit failed", message: getFriendlyErrorMessage(error, "Could not auto-fit the banner.") });
-    } finally {
-      setIsFitting(false);
-    }
-  };
-
-  const applyCrop = async () => {
-    if (!cropperRef.current?.cropper) return;
-    const cropper = cropperRef.current.cropper;
-
-    const sourceCanvas = cropper.getCroppedCanvas({
-      fillColor: "#FFFFFF",
-      imageSmoothingEnabled: true,
-      imageSmoothingQuality: "high",
-    });
-    if (!sourceCanvas) return;
-
-    const finalCanvas = renderCanvasToTarget(sourceCanvas, {
-      targetWidth: TARGET_W,
-      targetHeight: TARGET_H,
-      fitMode,
-      background: "#FFFFFF",
-    });
-
-    const blob = await canvasToBlobWithMaxBytes(finalCanvas, {
-      maxBytes: BANNER_MAX_BYTES,
-      mimeType: BANNER_PROFILE.outputMimeType,
-      qualityStart: BANNER_PROFILE.qualityStart,
-      qualityFloor: BANNER_PROFILE.qualityFloor,
-      qualityStep: BANNER_PROFILE.qualityStep,
-    });
-
-    if (!blob) {
-      notify({
-        type: "error",
-        title: "Compression failed",
-        message: `We could not compress this banner under ${formatBytes(BANNER_MAX_BYTES)}. Please try a simpler image.`,
-      });
-      return;
     }
 
-    setActiveBlob(blob);
-    setShouldDeleteOld(true);
-    setPreviewUrl(URL.createObjectURL(blob));
-    setStatus("new");
-    closeStudio();
-  };
+    void renderGeneratedBanner();
 
-  const removeImage = (e) => {
-    e.stopPropagation();
-    setShouldDeleteOld(true);
-    setActiveBlob(null);
-    setPreviewUrl("");
-    setStatus("");
-  };
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [shopData, products, backgroundKey, proprietorName, notify]);
 
-  // --- SUBMIT ---
-  const handleSave = async () => {
+  const handleSubmit = async () => {
     if (saving) return;
     if (isOffline) {
-      notify({ type: "error", title: "Network unavailable", message: "You must be online to save changes." });
+      notify({ type: "error", title: "Network unavailable", message: "You must be online to submit your banner." });
       return;
     }
-    if (!shouldDeleteOld && !activeBlob) {
-      navigate("/vendor-panel");
+    if (!generatedBlob || !shopId) {
+      notify({ type: "error", title: "Banner not ready", message: "Please wait for the generated preview before submitting." });
       return;
     }
 
@@ -308,78 +262,59 @@ export default function MerchantBanner() {
         if (oldPath) pathsToDelete.push(oldPath);
       });
 
-      // 1. Upload & insert new banner first (prevents blank state if upload fails)
-      if (activeBlob) {
-        const fName = `${shopId}/${Date.now()}_banner.jpg`;
-        const { error: uploadError } = await supabase.storage
-          .from(BANNER_BUCKET)
-          .upload(fName, activeBlob, {
-            contentType: "image/jpeg",
-            upsert: false,
-            cacheControl: "31536000",
-          });
-
-        if (uploadError) throw uploadError;
-
-        const { data } = supabase.storage.from(BANNER_BUCKET).getPublicUrl(fName);
-
-        // 3. Insert Record
-        const { error: dbError } = await supabase.from("shop_banners_news").insert({
-          shop_id: parseInt(shopId),
-          merchant_id: user.id,
-          content_type: "banner",
-          content_data: data.publicUrl,
-          status: "pending",
+      const path = `${shopId}/${Date.now()}_generated_banner.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from(BANNER_BUCKET)
+        .upload(path, generatedBlob, {
+          contentType: "image/jpeg",
+          upsert: false,
+          cacheControl: "31536000",
         });
 
-        if (dbError) {
-          await supabase.storage.from(BANNER_BUCKET).remove([fName]);
-          throw dbError;
-        }
-        setSuccessMode("upload");
-      } else {
-        setSuccessMode("delete");
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from(BANNER_BUCKET).getPublicUrl(path);
+      const { error: insertError } = await supabase.from("shop_banners_news").insert({
+        shop_id: Number(shopId),
+        merchant_id: user.id,
+        content_type: "banner",
+        content_data: data.publicUrl,
+        status: "pending",
+      });
+
+      if (insertError) {
+        await supabase.storage.from(BANNER_BUCKET).remove([path]);
+        throw insertError;
       }
 
-      // 2. Cleanup old records/files after successful insert or delete action
-      if (shouldDeleteOld && idsToDelete.length > 0) {
-        const { error: deleteRowsError } = await supabase
-          .from("shop_banners_news")
-          .delete()
-          .in("id", idsToDelete);
-
+      if (idsToDelete.length > 0) {
+        const { error: deleteRowsError } = await supabase.from("shop_banners_news").delete().in("id", idsToDelete);
         if (deleteRowsError) throw deleteRowsError;
       }
 
-      if (shouldDeleteOld && pathsToDelete.length > 0) {
-        const uniquePaths = [...new Set(pathsToDelete)];
-        const { error: cleanupError } = await supabase.storage
-          .from(BANNER_BUCKET)
-          .remove(uniquePaths);
-        if (cleanupError) {
-          console.warn("Old banner storage cleanup failed:", cleanupError);
-        }
+      if (pathsToDelete.length > 0) {
+        const { error: cleanupError } = await supabase.storage.from(BANNER_BUCKET).remove([...new Set(pathsToDelete)]);
+        if (cleanupError) console.warn("Old banner storage cleanup failed:", cleanupError);
       }
 
+      setStatus("pending");
       setShowSuccess(true);
-      setTimeout(() => {
-        navigate("/vendor-panel");
-      }, 2500);
-
+      setTimeout(() => navigate("/vendor-panel"), 2200);
     } catch (err) {
-      notify({ type: "error", title: "Save failed", message: getFriendlyErrorMessage(err, "Could not save the banner.") });
+      notify({ type: "error", title: "Submission failed", message: getFriendlyErrorMessage(err, "Could not submit this banner.") });
     } finally {
       setSaving(false);
     }
   };
-
 
   if (authLoading || loading) return <BannerShimmer />;
 
   if (error) {
     return (
       <div className="flex h-screen flex-col bg-[#F3F4F6]">
-        <header className="bg-[#131921] px-4 py-3 text-white"><button onClick={() => navigate("/vendor-panel")}><FaArrowLeft /></button></header>
+        <header className="bg-[#131921] px-4 py-3 text-white">
+          <button onClick={() => navigate("/vendor-panel")}><FaArrowLeft /></button>
+        </header>
         <div className="flex flex-1 items-center justify-center p-5 text-center">
           <div className="rounded-xl border border-red-200 bg-white p-8 shadow-sm">
             <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-600" />
@@ -404,173 +339,100 @@ export default function MerchantBanner() {
           </button>
           <div className="text-[1.15rem] font-bold">Shop Banner</div>
         </div>
-        <button 
-          onClick={handleSave} 
-          disabled={saving}
+        <button
+          onClick={handleSubmit}
+          disabled={saving || rendering || !generatedBlob}
           className="flex items-center gap-2 rounded-md border border-[#be185d] bg-[#db2777] px-4 py-1.5 text-[0.95rem] font-bold text-white shadow-[0_2px_5px_rgba(219,39,119,0.3)] transition hover:bg-[#be185d] disabled:cursor-not-allowed disabled:border-[#D5D9D9] disabled:bg-[#E3E6E6] disabled:text-[#888C8C] disabled:shadow-none"
         >
-          {saving ? <><FaCircleNotch className="animate-spin" /> Saving</> : <><FaCheck /> Save</>}
+          {saving ? <><FaCircleNotch className="animate-spin" /> Submitting</> : <><FaCheck /> Submit</>}
         </button>
       </header>
 
-      <main className="mx-auto w-full max-w-[600px] flex-1 p-5">
-        
-        <div className="mb-6 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-          <h4 className="mb-2 flex items-center gap-2 text-[0.95rem] font-extrabold text-[#0F1111]">
-            <FaPanorama className="text-[#007185]" /> Landscape Shop Banner
-          </h4>
-          <p className="text-[0.85rem] text-[#475569] leading-relaxed">
-            {`Upload from Gallery or Camera. Camera includes zoom support where available. Max input ${formatBytes(BANNER_INPUT_MAX_BYTES)}; final upload ${BANNER_RULE_LABEL}. All banners are reviewed by an admin.`}
-          </p>
+      <main className="mx-auto w-full max-w-[760px] flex-1 p-5">
+        <div className="mb-5 rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-pink-50 text-pink-600">
+              <FaWandMagicSparkles />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-slate-950">Generated shop banner</h3>
+              <p className="text-sm font-semibold text-slate-500">Choose a background. CTMerchant generates the banner from your shop profile and products.</p>
+            </div>
+          </div>
+          <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs font-bold text-slate-500">
+            Final image: {BANNER_RULE_LABEL}. Submitted banners remain pending until staff approval.
+          </div>
         </div>
 
-        <div className="relative w-full">
-          <div
-            className={`relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden rounded-xl border-2 transition-colors ${previewUrl ? "border-[#D5D9D9] bg-white shadow-sm" : "border-dashed border-[#888C8C] bg-[#F7F7F7]"}`}
-          >
-            <input type="file" ref={fileInputRef} hidden accept={BANNER_ACCEPT} onChange={handleFileSelect} />
-            
-            {previewUrl ? (
-              <>
-                <img src={previewUrl} className="absolute inset-0 h-full w-full bg-white object-contain z-0" alt="Banner Preview" />
-                <button 
-                  type="button" 
-                  onClick={removeImage} 
-                  className="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white shadow-md transition hover:scale-110 hover:bg-red-700"
-                >
-                  <FaTrashCan />
-                </button>
-                
-                {status && (
-                  <div className={`absolute left-3 top-3 z-10 rounded-md border px-3 py-1.5 text-[0.75rem] font-extrabold shadow-sm backdrop-blur-sm ${
-                    status === "pending" ? "border-[#FDE68A] bg-[#FEF3C7]/95 text-[#D97706]" :
-                    status === "approved" ? "border-[#A7F3D0] bg-[#D1FAE5]/95 text-[#059669]" :
-                    status === "rejected" ? "border-[#FECACA] bg-[#FEE2E2]/95 text-[#DC2626]" :
-                    "border-[#D5D9D9] bg-[#F3F4F6]/95 text-[#0F1111]"
-                  }`}>
-                    {status === "pending" ? "PENDING APPROVAL" : status === "approved" ? "APPROVED" : status === "rejected" ? "REJECTED" : "UNSAVED CHANGES"}
-                  </div>
-                )}
-              </>
+        <div className="mb-5 rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+          <label className="mb-3 block text-xs font-black uppercase tracking-wide text-slate-500">Background Design</label>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {FEATURED_BANNER_BACKGROUNDS.map((background) => (
+              <button
+                key={background.key}
+                type="button"
+                onClick={() => setBackgroundKey(background.key)}
+                className={`overflow-hidden rounded-2xl border p-2 text-left text-xs font-black transition ${
+                  backgroundKey === background.key
+                    ? "border-pink-500 bg-pink-50 text-pink-700"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <span className={`relative mb-2 block h-10 overflow-hidden rounded-xl bg-gradient-to-br ${background.bg}`}>
+                  <span className="absolute inset-0 opacity-70" style={{ backgroundImage: background.texture }} />
+                </span>
+                {background.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-[24px] border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="mb-3 flex items-center justify-between gap-3 px-1">
+            <div className="flex items-center gap-2 text-sm font-black text-slate-900">
+              <FaPanorama className="text-[#007185]" />
+              Preview
+            </div>
+            <span className={`rounded-full border px-3 py-1 text-[0.7rem] font-black uppercase ${statusClass(status)}`}>
+              {statusLabel(status)}
+            </span>
+          </div>
+          <div className="relative aspect-video overflow-hidden rounded-[22px] bg-slate-100">
+            {generatedPreviewUrl ? (
+              <img src={generatedPreviewUrl} alt={`${shopData?.name || "Shop"} generated banner`} className="h-full w-full object-cover" />
             ) : (
-              <div className="text-center p-5">
-                <FaImage className="mx-auto mb-3 text-5xl text-[#888C8C]" />
-                <span className="text-[0.9rem] font-bold leading-relaxed text-[#565959]">{`Use File or Camera below (Landscape, ${BANNER_RULE_LABEL})`}</span>
+              <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
+                {rendering ? <FaCircleNotch className="mb-3 animate-spin text-3xl text-pink-600" /> : <FaImage className="mb-3 text-4xl" />}
               </div>
             )}
+            {rendering ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/55 backdrop-blur-[1px]">
+                <FaCircleNotch className="animate-spin text-3xl text-pink-600" />
+              </div>
+            ) : null}
           </div>
-
-          <div className="mt-3 flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="rounded-md border border-[#334155] bg-white px-3 py-2 text-[0.75rem] font-extrabold uppercase tracking-wide text-[#0F172A] transition hover:bg-slate-50"
-            >
-              Upload File
-            </button>
-            <button
-              type="button"
-              onClick={() => setCameraOpen(true)}
-              className="flex items-center gap-2 rounded-md border border-[#1E293B] bg-[#0F172A] px-3 py-2 text-[0.75rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1E293B]"
-            >
-              <FaCamera />
-              Use Camera
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={saving || rendering || !generatedBlob}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-pink-600 px-5 py-3.5 text-sm font-black text-white shadow-[0_10px_25px_rgba(219,39,119,0.25)] transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            {saving ? <FaCircleNotch className="animate-spin" /> : <FaCloudArrowUp />}
+            {saving ? "Submitting for approval..." : `Submit ${selectedBackground.label} Banner for Approval`}
+          </button>
         </div>
-
       </main>
 
-      {/* STUDIO OVERLAY (16:9 STRICT) */}
-      {studioOpen && (
-        <div className="fixed inset-0 z-[2000] flex flex-col bg-[rgba(15,23,42,0.95)] backdrop-blur-sm">
-          <div className="flex items-center justify-between bg-black/50 px-5 py-4 text-white">
-            <div className="flex items-center gap-2 font-extrabold text-[1.2rem]"><FaCropSimple className="text-[#db2777]" /> Frame Banner</div>
-            <button onClick={closeStudio} className="text-2xl text-white hover:text-[#db2777]"><FaXmark /></button>
-          </div>
-          
-          <div className="flex flex-1 items-center justify-center overflow-hidden p-5">
-            <Cropper
-              ref={cropperRef}
-              src={tempImage}
-              style={{ height: "100%", width: "100%" }}
-              aspectRatio={16 / 9}
-              viewMode={1}
-              dragMode="move"
-              background={true}
-              autoCropArea={1}
-              responsive={true}
-              checkOrientation={false}
-            />
-          </div>
-          
-          <div className="flex flex-col items-center justify-center gap-4 bg-black/50 p-5">
-            <div className="text-center text-[0.85rem] font-medium text-white">
-              <FaHandPointer className="inline mr-1" /> Drag to move. Pinch to zoom in/out.
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setFitMode("contain")}
-                className={`rounded-lg border px-3 py-2 text-[0.75rem] font-extrabold uppercase tracking-wide transition ${
-                  fitMode === "contain"
-                    ? "border-[#10B981] bg-[#10B981] text-white"
-                    : "border-[#94A3B8] bg-transparent text-[#E2E8F0] hover:bg-white/10"
-                }`}
-              >
-                Fit (No Cut)
-              </button>
-              <button
-                type="button"
-                onClick={() => setFitMode("cover")}
-                className={`rounded-lg border px-3 py-2 text-[0.75rem] font-extrabold uppercase tracking-wide transition ${
-                  fitMode === "cover"
-                    ? "border-[#DB2777] bg-[#DB2777] text-white"
-                    : "border-[#94A3B8] bg-transparent text-[#E2E8F0] hover:bg-white/10"
-                }`}
-              >
-                Fill (Crop)
-              </button>
-              <button
-                type="button"
-                onClick={applyAutoFit}
-                disabled={isFitting}
-                className="rounded-lg border border-[#334155] bg-[#111827] px-3 py-2 text-[0.75rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1F2937] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isFitting ? "Fitting..." : "Auto Fit Source"}
-              </button>
-            </div>
-            <div className="flex items-center justify-center gap-4">
-              <button onClick={closeStudio} className="rounded-lg bg-[#374151] px-6 py-3 font-semibold text-white transition hover:bg-[#4B5563]">Cancel</button>
-              <button onClick={applyCrop} className="flex items-center gap-2 rounded-lg bg-[#db2777] px-8 py-3 font-extrabold text-white shadow-md transition hover:bg-[#be185d]">Apply Crop</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <CameraCaptureModal
-        open={cameraOpen}
-        title="Capture Shop Banner"
-        profile={BANNER_PROFILE}
-        onClose={() => setCameraOpen(false)}
-        onCapture={handleCameraCapture}
-      />
-
-      {/* SUCCESS MODAL */}
       {showSuccess && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-[rgba(15,23,42,0.95)] backdrop-blur-sm">
           <div className="w-[90%] max-w-[420px] animate-[scaleUp_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] rounded-[28px] bg-white p-10 text-center shadow-2xl">
-            <div className={`mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full ${successMode === 'delete' ? 'bg-[#FEE2E2]' : 'bg-[#D1FAE5]'}`}>
-              {successMode === 'delete' ? <FaTrashCan className="text-4xl text-[#DC2626]" /> : <FaCheck className="text-4xl text-[#10B981]" />}
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#D1FAE5]">
+              <FaCheck className="text-4xl text-[#10B981]" />
             </div>
-            <h2 className={`mb-2 text-[1.6rem] font-extrabold ${successMode === 'delete' ? 'text-[#991B1B]' : 'text-[#1F2937]'}`}>
-              {successMode === 'delete' ? 'Banner Deleted' : 'Upload Successful!'}
-            </h2>
-            <p className="mb-6 font-medium text-[#6B7280]">
-              {successMode === 'delete' ? 'Banner successfully removed from your shop.' : 'New Banner uploaded! It will be reviewed shortly.'}
-            </p>
-            <div className={`mx-auto h-7 w-7 animate-spin rounded-full border-4 ${successMode === 'delete' ? 'border-[#DC2626]/30 border-t-[#DC2626]' : 'border-[#db2777]/30 border-t-[#db2777]'}`}></div>
-            <p className={`mt-4 text-[0.8rem] font-bold ${successMode === 'delete' ? 'text-[#565959]' : 'text-[#db2777]'}`}>Redirecting to dashboard...</p>
+            <h2 className="mb-2 text-[1.6rem] font-extrabold text-[#1F2937]">Submitted!</h2>
+            <p className="mb-6 font-medium text-[#6B7280]">Your generated banner has been sent for staff approval.</p>
+            <div className="mx-auto h-7 w-7 animate-spin rounded-full border-4 border-[#db2777]/30 border-t-[#db2777]"></div>
+            <p className="mt-4 text-[0.8rem] font-bold text-[#db2777]">Redirecting to dashboard...</p>
           </div>
           <style dangerouslySetInnerHTML={{ __html: "@keyframes scaleUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }" }} />
         </div>

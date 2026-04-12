@@ -1,4 +1,5 @@
 import { primeCachedFetchStore } from "../hooks/useCachedFetch"
+import { getProfileDisplayName } from "./featuredBannerEngine"
 import { loadProductCategoryRows } from "./productCategories"
 import { supabase } from "./supabase"
 
@@ -296,23 +297,45 @@ async function prepareEditProductData({ userId, shopId, search = "" }) {
 
 async function prepareMerchantBannerData({ userId, shopId }) {
   await fetchProfileSuspension(userId)
-  const shop = await fetchOwnedShop(userId, shopId, "id")
+  const shop = await fetchOwnedShop(
+    userId,
+    shopId,
+    "id, owner_id, name, category, address, image_url, cities(name)"
+  )
 
-  const { data: banners, error } = await supabase
-    .from("shop_banners_news")
-    .select("*")
-    .eq("shop_id", shop.id)
-    .eq("content_type", "banner")
-    .order("created_at", { ascending: false })
+  const [bannerResult, productResult, profileResult] = await Promise.all([
+    supabase
+      .from("shop_banners_news")
+      .select("*")
+      .eq("shop_id", shop.id)
+      .eq("content_type", "banner")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("products")
+      .select("id, shop_id, image_url, is_available")
+      .eq("shop_id", shop.id)
+      .eq("is_available", true)
+      .not("image_url", "is", null)
+      .order("id", { ascending: true })
+      .limit(5),
+    shop.owner_id
+      ? supabase.rpc("get_public_profiles", { profile_ids: [shop.owner_id] })
+      : Promise.resolve({ data: [], error: null }),
+  ])
 
-  if (error) throw error
+  if (bannerResult.error) throw bannerResult.error
+  if (productResult.error) throw productResult.error
+  if (profileResult.error) throw profileResult.error
 
   return {
     kind: "merchant-banner",
     shopId: String(shop.id),
-    existingBanners: banners || [],
-    previewUrl: banners?.[0]?.content_data || "",
-    status: banners?.[0]?.status || "",
+    shopData: shop,
+    products: productResult.data || [],
+    proprietorName: getProfileDisplayName(profileResult.data?.[0]),
+    existingBanners: bannerResult.data || [],
+    previewUrl: bannerResult.data?.[0]?.content_data || "",
+    status: bannerResult.data?.[0]?.status || "",
   }
 }
 
