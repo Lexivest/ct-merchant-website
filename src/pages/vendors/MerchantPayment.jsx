@@ -288,8 +288,10 @@ export default function MerchantPayment() {
 
       setStatusMsg("Promo code accepted. Redirecting to video KYC...")
       window.setTimeout(() => {
-        localStorage.removeItem(`vendor_panel_${user.id}`)
-        sessionStorage.removeItem(`vendor_panel_${user.id}`)
+        try {
+          localStorage.removeItem(`vendor_panel_${user.id}`)
+          sessionStorage.removeItem(`vendor_panel_${user.id}`)
+        } catch {}
         navigate(`/merchant-video-kyc?shop_id=${parsedShopId}`)
       }, 900)
     } catch (error) {

@@ -411,9 +411,11 @@ function UserDashboard() {
   }, [user?.id])
 
   async function handleLogout() {
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith("ctm_")) localStorage.removeItem(key)
-    })
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith("ctm_")) localStorage.removeItem(key)
+      })
+    } catch {}
     await signOutUser()
     navigate("/", { replace: true })
   }
@@ -1621,7 +1623,9 @@ function UserDashboard() {
         }
       }
 
+    try {
       localStorage.removeItem("ctm_dashboard_cache")
+    } catch {}
 
       const refreshedProfileRes = await supabase
         .from("profiles")

@@ -178,11 +178,16 @@ function useAuthSession() {
     }
 
     const authSnapshot = getSnapshotWithCachedProfile()
-    const activeCachedUserId =
-      authSnapshot?.user?.id ||
-      (typeof localStorage !== "undefined"
-        ? localStorage.getItem(PROFILE_CACHE_ACTIVE_USER_KEY)
-        : null)
+    
+    let activeCachedUserId = authSnapshot?.user?.id || null
+    if (!activeCachedUserId) {
+      try {
+        if (typeof localStorage !== "undefined") {
+          activeCachedUserId = localStorage.getItem(PROFILE_CACHE_ACTIVE_USER_KEY)
+        }
+      } catch {}
+    }
+
     const cachedProfile =
       authSnapshot?.profile || readCachedProfile(activeCachedUserId)
     return {
