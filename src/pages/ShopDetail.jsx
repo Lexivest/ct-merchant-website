@@ -101,7 +101,10 @@ function ShopDetail() {
   // 3. Smart Caching Hook
   const cacheKey = buildShopDetailCacheKey(shopId, user?.id || null)
   if (routePrefetchedShopData && !readCachedFetchStore(cacheKey)) {
-    primeCachedFetchStore(cacheKey, routePrefetchedShopData, Date.now(), {
+    const prefetchTimestamp = routePrefetchedShopData.__repoSearchDetailReady
+      ? Date.now()
+      : 0
+    primeCachedFetchStore(cacheKey, routePrefetchedShopData, prefetchTimestamp, {
       persist: "session",
     })
   }

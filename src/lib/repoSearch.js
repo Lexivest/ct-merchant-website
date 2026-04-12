@@ -57,6 +57,7 @@ export async function invokeRepoSearch(merchantId) {
 export function buildShopDetailPrefetchFromRepoSearch(result) {
   const shop = result?.shop
   if (!shop?.id) return null
+  const detailReady = result?.detail_ready === true
 
   const cityName =
     shop?.cities?.name ||
@@ -81,5 +82,6 @@ export function buildShopDetailPrefetchFromRepoSearch(result) {
     shopBanner: result?.shopBanner || result?.shop_banner || "",
     hasLiked: false,
     ownerProfile: result?.ownerProfile || result?.profile || null,
+    __repoSearchDetailReady: detailReady,
   }
 }

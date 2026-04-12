@@ -2,7 +2,7 @@ import { supabase } from "./supabase"
 import { isNetworkError } from "./friendlyErrors"
 
 export function buildShopDetailCacheKey(shopId, userId) {
-  return `shop_detail_${shopId}_${userId || "anon"}`
+  return `shop_detail_v2_${shopId}_${userId || "anon"}`
 }
 
 export async function fetchShopDetailData({
