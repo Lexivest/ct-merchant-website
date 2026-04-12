@@ -726,7 +726,9 @@ function UserDashboard() {
     if (!announcementSeenKey || !localData.announcements?.length) return
 
     try {
-      if (localStorage.getItem(announcementSeenKey) === "1") return
+      if (typeof window !== "undefined" && window.localStorage) {
+        if (window.localStorage.getItem(announcementSeenKey) === "1") return
+      }
     } catch {
       // If storage is blocked, still show the modal once for this dashboard mount.
     }
@@ -737,7 +739,9 @@ function UserDashboard() {
   function markAnnouncementsSeen() {
     if (announcementSeenKey) {
       try {
-        localStorage.setItem(announcementSeenKey, "1")
+        if (typeof window !== "undefined" && window.localStorage) {
+          window.localStorage.setItem(announcementSeenKey, "1")
+        }
       } catch {
         // Ignore storage failures; the close action should still work.
       }

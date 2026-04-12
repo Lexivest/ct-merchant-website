@@ -34,86 +34,94 @@ function getProfileCacheKey(userId) {
 
 function readCachedProfile(userId) {
   if (!userId) return null
-  if (typeof localStorage === "undefined") return null
   try {
-    const raw = localStorage.getItem(getProfileCacheKey(userId))
-    return raw ? JSON.parse(raw) : null
+    if (typeof window !== "undefined" && window.localStorage) {
+      const raw = window.localStorage.getItem(getProfileCacheKey(userId))
+      return raw ? JSON.parse(raw) : null
+    }
   } catch {
-    return null
+    // ignore
   }
+  return null
 }
 
 function writeCachedProfile(userId, profile) {
   if (!userId || !profile) return
-  if (typeof localStorage === "undefined") return
   try {
-    localStorage.setItem(getProfileCacheKey(userId), JSON.stringify(profile))
-    localStorage.setItem(PROFILE_CACHE_ACTIVE_USER_KEY, userId)
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.setItem(getProfileCacheKey(userId), JSON.stringify(profile))
+      window.localStorage.setItem(PROFILE_CACHE_ACTIVE_USER_KEY, userId)
+    }
   } catch {
     // ignore
   }
 }
 
 function clearCachedProfile(userId) {
-  if (typeof localStorage === "undefined") return
   try {
-    if (userId) {
-      localStorage.removeItem(getProfileCacheKey(userId))
-      const activeUserId = localStorage.getItem(PROFILE_CACHE_ACTIVE_USER_KEY)
-      if (activeUserId === userId) {
-        localStorage.removeItem(PROFILE_CACHE_ACTIVE_USER_KEY)
+    if (typeof window !== "undefined" && window.localStorage) {
+      if (userId) {
+        window.localStorage.removeItem(getProfileCacheKey(userId))
+        const activeUserId = window.localStorage.getItem(PROFILE_CACHE_ACTIVE_USER_KEY)
+        if (activeUserId === userId) {
+          window.localStorage.removeItem(PROFILE_CACHE_ACTIVE_USER_KEY)
+        }
+        return
       }
-      return
-    }
 
-    const keysToRemove = []
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (key && key.startsWith(PROFILE_CACHE_KEY_PREFIX)) {
-        keysToRemove.push(key)
+      const keysToRemove = []
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const key = window.localStorage.key(i)
+        if (key && key.startsWith(PROFILE_CACHE_KEY_PREFIX)) {
+          keysToRemove.push(key)
+        }
       }
+      keysToRemove.forEach((key) => window.localStorage.removeItem(key))
+      window.localStorage.removeItem(PROFILE_CACHE_ACTIVE_USER_KEY)
     }
-    keysToRemove.forEach((key) => localStorage.removeItem(key))
-    localStorage.removeItem(PROFILE_CACHE_ACTIVE_USER_KEY)
   } catch {
     // ignore
   }
 }
 
 function readAuthSnapshot() {
-  if (typeof localStorage === "undefined") return null
   try {
-    const raw = localStorage.getItem(AUTH_SNAPSHOT_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    if (!parsed || !parsed.user?.id) return null
-    return parsed
+    if (typeof window !== "undefined" && window.localStorage) {
+      const raw = window.localStorage.getItem(AUTH_SNAPSHOT_KEY)
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      if (!parsed || !parsed.user?.id) return null
+      return parsed
+    }
   } catch {
-    return null
+    // ignore
   }
+  return null
 }
 
 function writeAuthSnapshot(snapshot) {
-  if (typeof localStorage === "undefined") return
   if (!snapshot?.user?.id) return
   try {
-    const payload = {
-      session: snapshot.session || null,
-      user: snapshot.user,
-      profile: snapshot.profile || null,
-      suspended: Boolean(snapshot.suspended),
-      updatedAt: Date.now(),
+    if (typeof window !== "undefined" && window.localStorage) {
+      const payload = {
+        session: snapshot.session || null,
+        user: snapshot.user,
+        profile: snapshot.profile || null,
+        suspended: Boolean(snapshot.suspended),
+        updatedAt: Date.now(),
+      }
+      window.localStorage.setItem(AUTH_SNAPSHOT_KEY, JSON.stringify(payload))
     }
-    localStorage.setItem(AUTH_SNAPSHOT_KEY, JSON.stringify(payload))
   } catch {
     // ignore
   }
 }
 
 function clearAuthSnapshot() {
-  if (typeof localStorage === "undefined") return
   try {
-    localStorage.removeItem(AUTH_SNAPSHOT_KEY)
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.removeItem(AUTH_SNAPSHOT_KEY)
+    }
   } catch {
     // ignore
   }

@@ -21,12 +21,21 @@ function AiAssistantWidget() {
 
   const usage = (() => {
     const today = new Date().toISOString().split("T")[0]
-    const raw = localStorage.getItem("ctm_ai_anon_usage")
-    let parsed = raw ? JSON.parse(raw) : { date: today, count: 0 }
+    let parsed = { date: today, count: 0 }
 
-    if (parsed.date !== today) {
-      parsed = { date: today, count: 0 }
-      localStorage.setItem("ctm_ai_anon_usage", JSON.stringify(parsed))
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const raw = window.localStorage.getItem("ctm_ai_anon_usage")
+        if (raw) {
+          const stored = JSON.parse(raw)
+          if (stored.date === today) parsed = stored
+        }
+        if (parsed.count === 0) {
+          window.localStorage.setItem("ctm_ai_anon_usage", JSON.stringify(parsed))
+        }
+      }
+    } catch {
+      // Ignore storage errors in strict privacy modes
     }
 
     return parsed
@@ -51,13 +60,19 @@ function AiAssistantWidget() {
 
   const saveUsage = (nextCount) => {
     const today = new Date().toISOString().split("T")[0]
-    localStorage.setItem(
-      "ctm_ai_anon_usage",
-      JSON.stringify({
-        date: today,
-        count: nextCount,
-      })
-    )
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem(
+          "ctm_ai_anon_usage",
+          JSON.stringify({
+            date: today,
+            count: nextCount,
+          })
+        )
+      }
+    } catch {
+      // Ignore storage errors
+    }
   }
 
   const handleSend = async () => {

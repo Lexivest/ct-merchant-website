@@ -11,17 +11,22 @@ function getShopCacheKey(userId) {
 function readCachedShop(userId) {
   if (!userId) return null
   try {
-    const raw = localStorage.getItem(getShopCacheKey(userId))
-    return raw ? JSON.parse(raw) : null
+    if (typeof window !== "undefined" && window.localStorage) {
+      const raw = window.localStorage.getItem(getShopCacheKey(userId))
+      return raw ? JSON.parse(raw) : null
+    }
   } catch {
-    return null
+    // ignore
   }
+  return null
 }
 
 function writeCachedShop(userId, value) {
   if (!userId || !value) return
   try {
-    localStorage.setItem(getShopCacheKey(userId), JSON.stringify(value))
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.setItem(getShopCacheKey(userId), JSON.stringify(value))
+    }
   } catch {
     // ignore cache write failures
   }
@@ -30,7 +35,9 @@ function writeCachedShop(userId, value) {
 function clearCachedShop(userId) {
   if (!userId) return
   try {
-    localStorage.removeItem(getShopCacheKey(userId))
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.removeItem(getShopCacheKey(userId))
+    }
   } catch {
     // ignore cache cleanup failures
   }
