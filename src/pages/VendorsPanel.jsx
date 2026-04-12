@@ -333,8 +333,8 @@ function VendorsPanel() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[1000px] flex-1 px-5 py-8">
-        <div className="mb-8">
+      <main className="mx-auto w-full max-w-[1000px] flex-1 px-5 pb-8 pt-3">
+        <div className="mb-4">
           <div className="inline-flex max-w-full rounded-full bg-pink-100 px-3 py-1.5 text-[0.9rem] font-extrabold leading-snug text-pink-700 ring-1 ring-pink-200">
             <span className="min-w-0 whitespace-normal break-words">
               Manage {activeShop.name}
