@@ -33,13 +33,16 @@ import {
 } from "../lib/validators"
 import useAuthSession from "../hooks/useAuthSession"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
-import { getRepoSearchCooldownMessage, invokeRepoSearch } from "../lib/repoSearch"
+import {
+  buildShopDetailPrefetchFromRepoSearch,
+  getRepoSearchCooldownMessage,
+  invokeRepoSearch,
+} from "../lib/repoSearch"
 import {
   getAuthScreenTransitionMessage,
   preloadCreateAccountScreen,
   preloadDashboardScreen,
 } from "../lib/authScreenTransitions"
-import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 
 // --- LOCAL ASSET IMPORTS FOR CAROUSEL ---
 import banner2 from "../assets/images/banner2.jpg"
@@ -641,10 +644,7 @@ function Home() {
 
       if (data?.shop?.id) {
         const shopId = data.shop.id
-        const prefetchedShopData = await prepareShopDetailTransition({
-          shopId,
-          userId: user?.id || null,
-        })
+        const prefetchedShopData = buildShopDetailPrefetchFromRepoSearch(data)
 
         navigate(`/shop-detail?id=${shopId}`, {
           state: {

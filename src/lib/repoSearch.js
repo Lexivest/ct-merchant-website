@@ -53,3 +53,33 @@ export async function invokeRepoSearch(merchantId) {
 
   return result
 }
+
+export function buildShopDetailPrefetchFromRepoSearch(result) {
+  const shop = result?.shop
+  if (!shop?.id) return null
+
+  const cityName =
+    shop?.cities?.name ||
+    shop?.city_name ||
+    "Local"
+
+  return {
+    shop: {
+      ...shop,
+      cities: {
+        ...(typeof shop.cities === "object" && shop.cities ? shop.cities : {}),
+        name: cityName,
+      },
+    },
+    products: Array.isArray(result?.products) ? result.products : [],
+    likeCount: Number(result?.likeCount || result?.like_count || 0),
+    approvedNews: Array.isArray(result?.approvedNews)
+      ? result.approvedNews
+      : Array.isArray(result?.approved_news)
+        ? result.approved_news
+        : [],
+    shopBanner: result?.shopBanner || result?.shop_banner || "",
+    hasLiked: false,
+    ownerProfile: result?.ownerProfile || result?.profile || null,
+  }
+}

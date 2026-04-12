@@ -5,7 +5,11 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import PageSeo from "../components/common/PageSeo"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
-import { getRepoSearchCooldownMessage, invokeRepoSearch } from "../lib/repoSearch"
+import {
+  buildShopDetailPrefetchFromRepoSearch,
+  getRepoSearchCooldownMessage,
+  invokeRepoSearch,
+} from "../lib/repoSearch"
 
 function MerchantDiscovery() {
   const navigate = useNavigate()
@@ -36,7 +40,7 @@ function MerchantDiscovery() {
   }
 
   // 2. Smart Caching Hook
-  const cacheKey = `merchant_discovery_${merchantId || 'empty'}`
+  const cacheKey = `merchant_discovery_v2_${merchantId || 'empty'}`
   const { data, loading, error: dataError } = useCachedFetch(
     cacheKey,
     fetchMerchant,
@@ -47,9 +51,15 @@ function MerchantDiscovery() {
 
   useEffect(() => {
     if (shop?.id) {
-      navigate(`/shop-detail?id=${shop.id}`, { replace: true })
+      navigate(`/shop-detail?id=${shop.id}`, {
+        replace: true,
+        state: {
+          fromDiscoveryTransition: true,
+          prefetchedShopData: buildShopDetailPrefetchFromRepoSearch(data),
+        },
+      })
     }
-  }, [navigate, shop?.id])
+  }, [data, navigate, shop?.id])
 
   function handleBack() {
     navigate("/")
