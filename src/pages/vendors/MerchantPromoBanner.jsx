@@ -226,30 +226,44 @@ async function generatePromoBannerCanvasBlob({
   context.fillRect(0, footerY, width, footerHeight);
 
   if (logo) {
-    context.drawImage(logo, 24, 24, 50, 50);
+    context.drawImage(logo, 16, 18, 48, 48);
   } else {
-    fillRoundedRect(context, 24, 24, 50, 50, 6, "#FFFFFF");
+    fillRoundedRect(context, 16, 18, 48, 48, 6, "#FFFFFF");
   }
 
-  setCanvasFont(context, 800, 25);
+  setCanvasFont(context, 800, 24);
   context.fillStyle = "rgba(255,255,255,0.92)";
   context.textAlign = "left";
-  context.fillText(websiteText, 90, 58);
-  drawWrappedText(context, shopName, 24, 118, 620, 38, 2, { weight: 900, size: 34, fillStyle: "#FFFFFF" });
+  context.fillText(websiteText, 72, 50);
+
+  const headerTextMaxWidth = 460;
+  const shopNameLines = drawWrappedText(context, shopName, width / 2, 108, headerTextMaxWidth, 34, 2, {
+    weight: 900,
+    size: 34,
+    fillStyle: "#FFFFFF",
+    align: "center",
+  });
+  const metaY = 108 + shopNameLines.length * 34 + 8;
 
   setCanvasFont(context, 900, 25);
   context.fillStyle = "#93C5FD";
-  context.fillText(`ID: ${uniqueId}`, 24, 190);
-  drawWrappedText(context, category, 24, 226, 620, 28, 1, { weight: 900, size: 24, fillStyle: "#FBBF24" });
+  context.textAlign = "center";
+  context.fillText(uniqueId, width / 2, metaY);
+  drawWrappedText(context, category, width / 2, metaY + 34, headerTextMaxWidth, 26, 1, {
+    weight: 900,
+    size: 24,
+    fillStyle: "#FBBF24",
+    align: "center",
+  });
 
-  fillRoundedRect(context, 660, 24, 116, 116, 14, "#FFFFFF");
+  fillRoundedRect(context, 624, 20, 152, 152, 16, "#FFFFFF");
   if (qr) {
-    drawContainedImage(context, qr, 668, 32, 100, 100, "#FFFFFF");
+    drawContainedImage(context, qr, 634, 30, 132, 132, "#FFFFFF");
   } else {
     setCanvasFont(context, 900, 18);
     context.fillStyle = "#003B95";
     context.textAlign = "center";
-    context.fillText("QR", 718, 86);
+    context.fillText("QR", 700, 102);
   }
 
   safeProducts.forEach((product, index) => {
