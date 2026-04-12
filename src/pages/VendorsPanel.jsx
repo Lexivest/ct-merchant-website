@@ -335,12 +335,11 @@ function VendorsPanel() {
 
       <main className="mx-auto w-full max-w-[1000px] flex-1 px-5 py-8">
         <div className="mb-8">
-          <h1 className="mb-1 text-[1.8rem] font-extrabold leading-[1.2] text-[#0F1111]">
-            Manage {activeShop.name}
-          </h1>
-          <p className="text-[0.95rem] font-medium text-[#565959]">
-            Control your inventory and shop presence.
-          </p>
+          <div className="inline-flex max-w-full rounded-full bg-pink-100 px-3 py-1.5 text-[0.9rem] font-extrabold leading-snug text-pink-700 ring-1 ring-pink-200">
+            <span className="min-w-0 whitespace-normal break-words">
+              Manage {activeShop.name}
+            </span>
+          </div>
 
           {activeShop.status === "pending" && (
             <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-[#FDE68A] border-l-4 border-l-[#D97706] bg-[#FEF3C7] px-4 py-3 text-[0.9rem] font-semibold leading-[1.4] text-[#92400E]">
