@@ -8,7 +8,6 @@ import {
   FaImage,
   FaPen,
   FaPlus,
-  FaTriangleExclamation,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
@@ -16,6 +15,8 @@ import useCachedFetch from "../../hooks/useCachedFetch";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import PageTransitionOverlay from "../../components/common/PageTransitionOverlay";
 import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
+import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage, isNetworkError } from "../../lib/friendlyErrors";
 import { prepareVendorRouteTransition } from "../../lib/vendorRouteTransitions";
 
@@ -32,6 +33,7 @@ function MerchantProductsShimmer() {
 export default function MerchantProducts() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { notify } = useGlobalFeedback();
   usePreventPullToRefresh();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
@@ -100,15 +102,33 @@ export default function MerchantProducts() {
 
   // 3. Handlers
   const goToAdd = () => {
-    if (isOffline) return alert("You must be online to add a new product.");
-    if (!activeShopId) return alert("Shop ID is missing.");
+    if (isOffline) {
+      notify({
+        type: "error",
+        title: "No internet connection",
+        message: "Please reconnect before adding a product.",
+      });
+      return;
+    }
+    if (!activeShopId) {
+      notify({
+        type: "error",
+        title: "Shop unavailable",
+        message: "Shop details are not ready yet. Please retry.",
+      });
+      return;
+    }
     navigate(`/merchant-add-product?shop_id=${activeShopId}`);
   };
 
   const editProduct = async (id) => {
     if (!id) return;
     if (isOffline) {
-      alert("You must be online to edit a product.");
+      notify({
+        type: "error",
+        title: "No internet connection",
+        message: "Please reconnect before editing a product.",
+      });
       return;
     }
 
@@ -158,16 +178,12 @@ export default function MerchantProducts() {
 
   if (error && error !== "SHOP_NOT_FOUND" && !products) {
     return (
-      <div className="flex h-screen flex-col bg-[#F3F4F6]">
-        <header className="bg-[#131921] px-4 py-3 text-white"><button onClick={() => navigate("/vendor-panel")}><FaArrowLeft /></button></header>
-        <div className="flex flex-1 items-center justify-center p-5 text-center">
-          <div className="rounded-xl border border-red-200 bg-white p-8 shadow-sm">
-            <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-600" />
-            <h3 className="font-bold text-slate-900">{getFriendlyErrorMessage(error, "Network unavailable. Retry.")}</h3>
-            <button onClick={() => navigate("/vendor-panel")} className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold transition hover:bg-slate-50">Retry</button>
-          </div>
-        </div>
-      </div>
+      <GlobalErrorScreen
+        error={error}
+        message={getFriendlyErrorMessage(error, "Please retry or go back.")}
+        onRetry={() => window.location.reload()}
+        onBack={() => navigate("/vendor-panel")}
+      />
     );
   }
 
@@ -191,14 +207,6 @@ export default function MerchantProducts() {
         } ${transitionState.pending ? "pointer-events-none select-none" : ""}`}
       >
       
-      {/* OFFLINE BANNER */}
-      {isOffline && (
-        <div className="z-[101] bg-amber-100 px-4 py-2 text-center text-sm font-bold text-amber-800 shadow-sm border-b border-amber-200">
-          <i className="fa-solid fa-wifi-slash mr-2"></i>
-          Network unavailable. Retry.
-        </div>
-      )}
-
       {/* HEADER */}
       <header className="sticky top-0 z-40 flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-sm">
         <div className="flex items-center gap-4">

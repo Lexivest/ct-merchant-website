@@ -19,7 +19,6 @@ import {
   FaShieldHalved,
   FaShop,
   FaStore,
-  FaTriangleExclamation,
   FaXmark,
 } from "react-icons/fa6"
 import Cropper from "react-cropper"
@@ -28,6 +27,7 @@ import "cropperjs/dist/cropper.css"
 import AuthButton from "../components/auth/AuthButton"
 import AuthNotification from "../components/auth/AuthNotification"
 import CameraCaptureModal from "../components/common/CameraCaptureModal"
+import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
@@ -788,14 +788,12 @@ function ShopRegistration() {
 
   if (dataError && !data) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-100 via-pink-100 to-purple-100 px-4">
-        <div className="w-full max-w-md rounded-[28px] border border-pink-100 bg-white px-8 py-10 text-center shadow-xl">
-          <FaTriangleExclamation className="mx-auto mb-4 text-5xl text-red-600" />
-          <h3 className="mb-2 text-xl font-extrabold text-slate-800">Connection Error</h3>
-          <p className="mb-6 text-sm font-semibold text-slate-600">{getFriendlyErrorMessage(dataError, "Retry to load this page.")}</p>
-          <button onClick={() => window.location.reload()} className="rounded-xl border border-slate-200 bg-white px-8 py-3 font-bold text-slate-700 transition hover:bg-slate-50">Retry</button>
-        </div>
-      </div>
+      <GlobalErrorScreen
+        error={dataError}
+        message={getFriendlyErrorMessage(dataError, "Please retry or go back.")}
+        onRetry={() => window.location.reload()}
+        onBack={() => navigate("/vendor-panel")}
+      />
     )
   }
 

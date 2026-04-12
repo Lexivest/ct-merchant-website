@@ -16,6 +16,7 @@ import { supabase } from "../../lib/supabase"
 import useAuthSession from "../../hooks/useAuthSession"
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
+import GlobalErrorScreen from "../../components/common/GlobalErrorScreen"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { CTM_BANK_ACCOUNT, SERVICE_FEE_PLANS } from "../../lib/paymentConfig"
 import {
@@ -332,20 +333,12 @@ export default function MerchantServiceFee() {
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col bg-[#F8FAFC]">
-        <div className="flex w-full items-center gap-4 bg-[#2E1065] px-4 py-4 text-white shadow-sm">
-          <button onClick={() => navigate("/vendor-panel")} className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 transition hover:bg-white/30"><FaArrowLeft /></button>
-          <div className="text-[1.25rem] font-bold">Service Fee Portal</div>
-        </div>
-        <div className="flex flex-1 items-center justify-center p-5 text-center">
-          <div className="w-full max-w-sm rounded-xl border border-red-200 bg-white p-8 shadow-sm">
-            <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-600" />
-            <h3 className="mb-2 font-bold text-slate-900">Failed to load</h3>
-            <p className="text-sm text-slate-600">{error}</p>
-            <button onClick={() => navigate("/vendor-panel")} className="mt-5 w-full rounded-md border border-[#E2E8F0] bg-[#F1F5F9] px-6 py-3 font-bold text-[#1E293B] transition hover:bg-[#E2E8F0]">Back</button>
-          </div>
-        </div>
-      </div>
+      <GlobalErrorScreen
+        error={error}
+        message={error}
+        onRetry={() => window.location.reload()}
+        onBack={() => navigate("/vendor-panel")}
+      />
     )
   }
 

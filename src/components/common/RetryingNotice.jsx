@@ -1,43 +1,37 @@
 /* eslint-disable react-refresh/only-export-components */
 import { isNetworkError } from "../../lib/friendlyErrors"
-import { FaRotateRight } from "react-icons/fa6"
-import CTMLoader from "./CTMLoader"
+import GlobalErrorScreen from "./GlobalErrorScreen"
 
 export function getRetryingMessage(error) {
   if ((typeof navigator !== "undefined" && !navigator.onLine) || isNetworkError(error)) {
-    return "Network unavailable, retrying..."
+    return "Please check your connection, then retry or go back."
   }
 
-  return "Something happened, retrying..."
+  return "Something went wrong. Please retry or go back."
 }
 
 function RetryingNotice({
-  message = "Network unavailable, retrying...",
+  message = "Please check your connection, then retry or go back.",
   fullScreen = true,
   className = "",
   onRetry = null,
+  onBack = null,
 }) {
-  const wrapperClass = fullScreen
-    ? "flex min-h-screen items-center justify-center bg-[#E3E6E6] px-5 py-10"
-    : "flex min-h-[240px] items-center justify-center px-5 py-10"
+  const handleBack =
+    onBack ||
+    (() => {
+      if (typeof window !== "undefined") window.history.back()
+    })
 
   return (
-    <div className={`${wrapperClass} ${className}`.trim()}>
-      <div className="flex w-full max-w-sm flex-col items-center justify-center rounded-[28px] border border-white/70 bg-white/92 px-6 py-8 text-center shadow-[0_24px_60px_rgba(15,23,42,0.14)]">
-        <CTMLoader />
-        <p className="mt-5 text-sm font-semibold leading-6 text-slate-600">{message}</p>
-        
-        {typeof onRetry === "function" ? (
-          <button
-            type="button"
-            onClick={onRetry}
-            className="mt-5 flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-bold text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-pink-600 active:scale-95"
-          >
-            <FaRotateRight className="text-[0.8rem]" />
-            Try Again
-          </button>
-        ) : null}
-      </div>
+    <div className={className}>
+      <GlobalErrorScreen
+        error={message}
+        message={message}
+        fullScreen={fullScreen}
+        onRetry={onRetry}
+        onBack={handleBack}
+      />
     </div>
   )
 }

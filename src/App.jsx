@@ -5,24 +5,13 @@ import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import OnlineRouteGuard from "./components/common/OnlineRouteGuard"
 import SiteVisitTracker from "./components/common/SiteVisitTracker"
-import RetryingNotice from "./components/common/RetryingNotice"
 import AppErrorBoundary from "./components/common/AppErrorBoundary"
+import GlobalErrorScreen from "./components/common/GlobalErrorScreen"
 import { PageLoadingScreen } from "./components/common/PageStatusScreen"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
 import Home from "./pages/Home"
-
-function isChunkLoadFailure(error) {
-  const message = String(error?.message || error || "").toLowerCase()
-  return (
-    message.includes("error loading dynamically imported module") ||
-    message.includes("failed to fetch dynamically imported module") ||
-    message.includes("importing a module script failed") ||
-    message.includes("failed to load module script") ||
-    message.includes("chunkloaderror") ||
-    message.includes("loading chunk")
-  )
-}
+import { forceFreshAppReload, isChunkLoadFailure } from "./lib/runtimeRecovery"
 
 function ChunkRouteFallback({ pageLabel = "this page" }) {
   const [isOffline, setIsOffline] = useState(() => {
@@ -45,7 +34,7 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
       }
     }
     setIsRetrying(true)
-    window.location.reload()
+    forceFreshAppReload({ reason: "chunk", manual: forceManual })
   }, [retryKey])
 
   useEffect(() => {
@@ -83,21 +72,28 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
     }
 
     const timer = window.setTimeout(() => {
-      retryPage(false)
+      const started = forceFreshAppReload({ reason: "chunk", manual: false })
+      if (!started) setIsRetrying(false)
     }, 700)
 
     return () => window.clearTimeout(timer)
   }, [isOffline, retryKey, retryPage])
 
   return (
-    <RetryingNotice
+    <GlobalErrorScreen
+      title={isOffline ? "No internet connection" : "Website update in progress"}
       message={
         isRetrying
-          ? "Network unavailable, retrying..."
+          ? "Preparing a clean reload..."
           : isOffline
-            ? "Network unavailable, retrying..."
-            : "Something happened, retrying..."
+            ? "Please reconnect, then retry or go back."
+            : `We could not load ${pageLabel}. Retry will safely load the latest CTMerchant files.`
       }
+      onRetry={() => retryPage(true)}
+      onBack={() => {
+        if (typeof window !== "undefined") window.history.back()
+      }}
+      busy={isRetrying}
     />
   )
 }

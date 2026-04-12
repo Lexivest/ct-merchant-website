@@ -12,10 +12,12 @@ import {
   FaCheckDouble,
 } from "react-icons/fa6";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 
 export default function StaffInbox() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { notify } = useGlobalFeedback();
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-inbox"
       ? location.state.prefetchedData
@@ -87,11 +89,15 @@ export default function StaffInbox() {
       }
     } catch (err) {
       console.error("Error fetching inbox:", err);
-      alert("Failed to load messages. Check console for details.");
+      notify({
+        type: "error",
+        title: "Something went wrong",
+        message: "We could not load staff messages. Please retry.",
+      });
     } finally {
       setLoading(false);
     }
-  }, [activeTab, prefetchedData, prefetchedReady]);
+  }, [activeTab, notify, prefetchedData, prefetchedReady]);
 
   useEffect(() => {
     fetchData();
@@ -114,7 +120,11 @@ export default function StaffInbox() {
       }
     } catch (err) {
       console.error("Error updating status:", err);
-      alert("Failed to update status.");
+      notify({
+        type: "error",
+        title: "Update failed",
+        message: "We could not update this message status. Please retry.",
+      });
     } finally {
       setUpdating(false);
     }
@@ -122,7 +132,11 @@ export default function StaffInbox() {
 
   const handleReply = (email, subject) => {
     if (!email) {
-      alert("User email is private or not provided for this specific report.");
+      notify({
+        type: "info",
+        title: "Email unavailable",
+        message: "This user email is private or not provided for this report.",
+      });
       return;
     }
     const replySubject = encodeURIComponent(`Re: ${subject || "Your Inquiry to CTMerchant"}`);

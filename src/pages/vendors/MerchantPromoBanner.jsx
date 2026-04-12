@@ -5,12 +5,13 @@ import {
   FaCircleNotch,
   FaDownload,
   FaShareNodes,
-  FaTriangleExclamation,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
+import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 
 function blobToDataUrl(blob) {
@@ -549,6 +550,7 @@ export default function MerchantPromoBanner() {
       : null
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
+  const { notify } = useGlobalFeedback();
 
   const [loading, setLoading] = useState(() => !prefetchedData);
   const [error, setError] = useState(null);
@@ -649,7 +651,14 @@ export default function MerchantPromoBanner() {
   };
 
   const handleShare = async () => {
-    if (isOffline) return alert("You must be online to share.");
+    if (isOffline) {
+      notify({
+        type: "error",
+        title: "No internet connection",
+        message: "Please reconnect before sharing your banner.",
+      });
+      return;
+    }
     try {
       setSharing(true);
 
@@ -661,7 +670,11 @@ export default function MerchantPromoBanner() {
           files: [file],
         });
       } else {
-        alert("This browser cannot share image files directly. Please save the banner, then share it manually.");
+        notify({
+          type: "info",
+          title: "Sharing not supported",
+          message: "Please save the banner, then share it manually.",
+        });
       }
     } catch (err) {
       console.warn("Share action cancelled or failed:", err);
@@ -682,7 +695,11 @@ export default function MerchantPromoBanner() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
-      alert("Failed to save image. Please try again.");
+      notify({
+        type: "error",
+        title: "Save failed",
+        message: "We could not save the banner. Please try again.",
+      });
     } finally {
       setDownloading(false);
     }
@@ -742,30 +759,12 @@ export default function MerchantPromoBanner() {
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col bg-[#F4F7FB]">
-        <header className="px-4 py-4">
-          <div className="mx-auto flex w-full max-w-[860px] items-center gap-4 rounded-[24px] bg-[#111827] px-4 py-4 text-white shadow-[0_14px_30px_rgba(15,23,42,0.18)]">
-            <button
-              onClick={() => navigate("/vendor-panel")}
-              className="flex h-[42px] w-[42px] items-center justify-center rounded-[16px] bg-white/10 transition hover:bg-white/15"
-            >
-              <FaArrowLeft />
-            </button>
-            <div className="min-w-0">
-              <div className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#f472b6]">Merchant</div>
-              <div className="text-[1.2rem] font-black">Shop Promo Banner</div>
-            </div>
-          </div>
-        </header>
-        <div className="flex flex-1 items-center justify-center p-5 text-center">
-          <div className="rounded-xl border border-red-200 bg-white p-8 shadow-sm">
-            <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-600" />
-            <h3 className="mb-2 font-bold text-slate-900">Cannot Generate Banner</h3>
-            <p className="mx-auto max-w-sm text-sm text-slate-600">{error}</p>
-            <button onClick={() => window.location.reload()} className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold transition hover:bg-slate-50">Retry</button>
-          </div>
-        </div>
-      </div>
+      <GlobalErrorScreen
+        error={error}
+        message={error}
+        onRetry={() => window.location.reload()}
+        onBack={() => navigate("/vendor-panel")}
+      />
     );
   }
 

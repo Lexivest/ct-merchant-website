@@ -1,0 +1,108 @@
+const CHUNK_LOAD_PATTERN =
+  /(error loading dynamically imported module|failed to fetch dynamically imported module|importing a module script failed|failed to load module script|chunkloaderror|loading chunk|unable to preload css|vite:preloaderror)/i
+
+const RECOVERY_PARAM = "ctm_reload"
+
+export function isChunkLoadFailure(error) {
+  const message = String(error?.message || error?.reason || error || "").toLowerCase()
+  return CHUNK_LOAD_PATTERN.test(message)
+}
+
+export function isCriticalAssetLoadFailure(event) {
+  const target = event?.target
+  const tagName = String(target?.tagName || "").toLowerCase()
+
+  if (!tagName) return false
+  if (tagName === "script") return true
+  if (tagName === "link") {
+    const rel = String(target?.rel || "").toLowerCase()
+    return rel.includes("stylesheet") || rel.includes("modulepreload")
+  }
+
+  return false
+}
+
+export function removeRecoverySearchParam() {
+  if (typeof window === "undefined") return
+
+  try {
+    const url = new URL(window.location.href)
+    if (!url.searchParams.has(RECOVERY_PARAM)) return
+    url.searchParams.delete(RECOVERY_PARAM)
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`)
+  } catch {
+    // The recovery param is only cosmetic. Ignore cleanup failures.
+  }
+}
+
+export function hasAttemptedFreshReload(reason = "app") {
+  if (typeof window === "undefined") return true
+
+  try {
+    const key = `ctm_fresh_reload_${reason}_${window.location.pathname}`
+    return window.sessionStorage.getItem(key) === "1"
+  } catch {
+    return false
+  }
+}
+
+function markFreshReloadAttempt(reason = "app") {
+  if (typeof window === "undefined") return
+
+  try {
+    const key = `ctm_fresh_reload_${reason}_${window.location.pathname}`
+    window.sessionStorage.setItem(key, "1")
+  } catch {
+    // Best effort only.
+  }
+}
+
+async function clearBrowserManagedCaches() {
+  if (typeof window === "undefined") return
+
+  try {
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(registrations.map((registration) => registration.unregister()))
+    }
+  } catch {
+    // Some browsers block this API. Continue with URL cache busting.
+  }
+
+  try {
+    if ("caches" in window) {
+      const cacheNames = await window.caches.keys()
+      await Promise.all(cacheNames.map((cacheName) => window.caches.delete(cacheName)))
+    }
+  } catch {
+    // Cache API is optional and may be unavailable in private mode.
+  }
+}
+
+export function buildFreshReloadUrl() {
+  if (typeof window === "undefined") return ""
+
+  const url = new URL(window.location.href)
+  url.searchParams.set(RECOVERY_PARAM, Date.now().toString(36))
+  return url.toString()
+}
+
+export function forceFreshAppReload({ reason = "app", manual = false } = {}) {
+  if (typeof window === "undefined") return false
+
+  if (!manual && hasAttemptedFreshReload(reason)) {
+    return false
+  }
+
+  if (!manual) {
+    markFreshReloadAttempt(reason)
+  }
+
+  const nextUrl = buildFreshReloadUrl()
+
+  clearBrowserManagedCaches().finally(() => {
+    window.location.replace(nextUrl)
+  })
+
+  return true
+}

@@ -18,13 +18,13 @@ import {
   FaShieldHalved,
   FaStore,
   FaTiktok,
-  FaTriangleExclamation,
   FaXTwitter,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
+import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 
@@ -195,16 +195,12 @@ export default function MerchantSettings() {
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col bg-[#F3F4F6]">
-        <header className="bg-[#131921] px-4 py-3 text-white"><button onClick={() => navigate("/vendor-panel")}><FaArrowLeft /></button></header>
-        <div className="flex flex-1 items-center justify-center p-5 text-center">
-          <div className="rounded-xl border border-red-200 bg-white p-8 shadow-sm">
-            <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-600" />
-            <h3 className="font-bold text-slate-900">{error}</h3>
-            <button onClick={() => window.location.reload()} className="mt-5 rounded-md border border-[#D5D9D9] bg-white px-6 py-2.5 font-semibold transition hover:bg-slate-50">Retry</button>
-          </div>
-        </div>
-      </div>
+      <GlobalErrorScreen
+        error={error}
+        message={error}
+        onRetry={() => window.location.reload()}
+        onBack={() => navigate("/vendor-panel")}
+      />
     );
   }
 

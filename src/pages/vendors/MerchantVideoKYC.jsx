@@ -8,12 +8,12 @@ import {
   FaMicrophone,
   FaRotateRight,
   FaShieldHalved,
-  FaTriangleExclamation,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
+import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getRuleLabel } from "../../lib/uploadRules";
 import logoImage from "../../assets/images/logo.jpg";
@@ -631,20 +631,12 @@ export default function MerchantVideoKYC() {
 
   if (pageError) {
     return (
-      <div className="flex h-screen flex-col bg-[#131921] text-white">
-        <header className="flex w-full items-center gap-4 bg-[#131921] p-4 shadow-md">
-          <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]"><FaArrowLeft /></button>
-          <div className="text-[1.15rem] font-bold">Verification Error</div>
-        </header>
-        <div className="flex flex-1 items-center justify-center p-5 text-center">
-          <div className="rounded-xl border border-red-800 bg-[#1E293B] p-8 shadow-sm">
-            <FaTriangleExclamation className="mx-auto mb-4 text-4xl text-red-500" />
-            <h3 className="mb-2 font-bold text-white">Setup Failed</h3>
-            <p className="text-sm text-[#CBD5E1] max-w-sm mx-auto">{pageError}</p>
-            <button onClick={() => navigate("/vendor-panel")} className="mt-5 rounded-md border border-[#334155] bg-[#0F172A] px-6 py-2.5 font-semibold transition hover:bg-[#1E293B]">Back</button>
-          </div>
-        </div>
-      </div>
+      <GlobalErrorScreen
+        error={pageError}
+        message={pageError}
+        onRetry={() => window.location.reload()}
+        onBack={() => navigate("/vendor-panel")}
+      />
     );
   }
 
