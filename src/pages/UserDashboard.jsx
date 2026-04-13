@@ -1692,6 +1692,8 @@ function UserDashboard() {
 
   // Protect against rendering the dashboard if the profile failed to load (e.g., due to CORS or Network errors)
   if (!currentProfile) {
+    console.error("Dashboard rendering blocked because currentProfile is null. Error:", dataError)
+    /* TEMPORARILY DISABLED CUSTOM ERROR SCREEN
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#F8FAFC] px-5">
         <div className="w-full max-w-md rounded-[24px] border border-[#FECACA] bg-[#FEF2F2] p-6 text-center shadow-sm">
@@ -1701,6 +1703,7 @@ function UserDashboard() {
         </div>
       </div>
     )
+    */
   }
 
   return (
