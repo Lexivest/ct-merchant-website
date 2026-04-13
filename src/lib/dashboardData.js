@@ -8,6 +8,11 @@ const loadUserDashboardPage = () => import("../pages/UserDashboard")
 
 function unwrapSupabaseResult(result) {
   if (result?.error) {
+    const msg = String(result.error.message || "").toLowerCase()
+    if (msg.includes("fetch") || msg.includes("network")) {
+      console.warn("Non-critical dashboard fetch blocked. Defaulting to empty.")
+      return null
+    }
     throw result.error
   }
 
@@ -16,6 +21,10 @@ function unwrapSupabaseResult(result) {
 
 function unwrapSupabaseCount(result) {
   if (result?.error) {
+    const msg = String(result.error.message || "").toLowerCase()
+    if (msg.includes("fetch") || msg.includes("network")) {
+      return 0
+    }
     throw result.error
   }
 

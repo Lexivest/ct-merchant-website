@@ -256,10 +256,14 @@ export function isProfileSuspended(profile) {
 export async function updateLastActiveIp(userId, ip) {
   if (!userId || !ip || ip === "unknown") return
 
-  await supabase
-    .from("profiles")
-    .update({ last_active_ip: ip })
-    .eq("id", userId)
+  try {
+    await supabase
+      .from("profiles")
+      .update({ last_active_ip: ip })
+      .eq("id", userId)
+  } catch (error) {
+    // Silently ignore background tracking updates blocked by browser privacy settings
+  }
 }
 
 export async function completeProfileSetup({
