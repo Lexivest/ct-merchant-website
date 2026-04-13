@@ -110,7 +110,12 @@ function DashboardHeader({
         ? currentProfile.cities[0]?.name
         : currentProfile.cities.name
     }
-    return `Search ${cityName || "your city"} directory of business and services`
+    
+    if (cityName) {
+      return `Search ${cityName} directory of business and services`
+    }
+    
+    return `Search your city directory of business and services`
   }, [currentProfile])
 
   useEffect(() => {
