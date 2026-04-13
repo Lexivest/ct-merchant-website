@@ -625,7 +625,7 @@ function Home() {
 
   async function handleRepoSearch() {
     const value = repoSearchValue.trim()
-    if (!value || repoSearchLoading) return
+    if (!value || value.length < 2 || repoSearchLoading) return
     const retryAction = () => handleRepoSearch()
 
     if (isOffline) {

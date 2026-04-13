@@ -1,8 +1,7 @@
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 import { useLocation } from "react-router-dom"
 import { supabase } from "../../lib/supabase"
 
-const VISITOR_STORAGE_KEY = "ctm_visitor_key_v1"
 const SESSION_STORAGE_KEY = "ctm_visit_session_key_v1"
 
 function createKey() {
@@ -11,21 +10,6 @@ function createKey() {
   }
 
   return `ctm_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
-}
-
-function getOrCreateVisitorKey() {
-  if (typeof window === "undefined") return null
-
-  try {
-    let visitorKey = window.localStorage.getItem(VISITOR_STORAGE_KEY)
-    if (!visitorKey) {
-      visitorKey = createKey()
-      window.localStorage.setItem(VISITOR_STORAGE_KEY, visitorKey)
-    }
-    return visitorKey
-  } catch {
-    return createKey()
-  }
 }
 
 function getOrCreateSessionKey() {
@@ -42,7 +26,6 @@ function getOrCreateSessionKey() {
     return createKey()
   }
 }
-
 function shouldSkipTracking(pathname) {
   if (!pathname) return true
   return pathname.startsWith("/staff")
@@ -50,36 +33,27 @@ function shouldSkipTracking(pathname) {
 
 export default function SiteVisitTracker() {
   const location = useLocation()
-  const previousPathRef = useRef("")
 
   useEffect(() => {
     const currentPath = location.pathname || "/"
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
-      previousPathRef.current = currentPath
       return
     }
 
     if (shouldSkipTracking(currentPath)) {
-      previousPathRef.current = currentPath
       return
     }
 
     const sessionKey = getOrCreateSessionKey()
-    const visitorKey = getOrCreateVisitorKey()
-    const referrerPath = previousPathRef.current || null
-    previousPathRef.current = currentPath
-
-    if (!sessionKey || !visitorKey) return
+    if (!sessionKey) return
 
     let cancelled = false
 
     async function recordVisit() {
+      // Send only session_key for simple daily aggregation/deduplication
       const { error } = await supabase.rpc("record_site_visit", {
-        p_session_key: sessionKey,
-        p_visitor_key: visitorKey,
-        p_page_path: currentPath,
-        p_referrer_path: referrerPath,
+        p_session_key: sessionKey
       })
 
       if (cancelled || !error) return
@@ -92,8 +66,6 @@ export default function SiteVisitTracker() {
       ) {
         return
       }
-
-      console.warn("Site visit tracking skipped:", message)
     }
 
     recordVisit()
@@ -105,3 +77,4 @@ export default function SiteVisitTracker() {
 
   return null
 }
+
