@@ -125,7 +125,8 @@ export async function signInWithPassword({ email, password }) {
   })
 
   if (error) {
-    // If login fails with invalid credentials, record the failed attempt
+    // TEMPORARILY DISABLED: Failed login tracking
+    /*
     const msg = error.message.toLowerCase()
     if (msg.includes("invalid") || msg.includes("credential")) {
       const { data: attempts, error: rpcError } = await supabase.rpc('record_failed_login', { p_email: normalizedEmail })
@@ -141,6 +142,7 @@ export async function signInWithPassword({ email, password }) {
         console.error("Failed to record login attempt:", rpcError)
       }
     }
+    */
     throw error
   }
 
@@ -162,10 +164,12 @@ export async function signInWithPassword({ email, password }) {
       throw new Error("Your account is suspended. Please contact support.")
     }
 
-    // Success! Reset the failed login counter
+    // TEMPORARILY DISABLED: Reset the failed login counter
+    /*
     if (profile?.failed_login_attempts > 0) {
       await supabase.rpc('reset_failed_login')
     }
+    */
   }
 
   return {
