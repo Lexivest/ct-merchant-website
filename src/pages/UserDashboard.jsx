@@ -211,11 +211,9 @@ function UserDashboard() {
   const prefetchedDashboardData = location.state?.prefetchedDashboardData || null
 
   const { loading: authLoading, user, profile, suspended } = useAuthSession()
-  console.log("[DEBUG] Auth Session:", { authLoading, userId: user?.id, suspended, hasProfile: !!profile })
   
   // Use our new isolated tracking logic for the shop card
   const { shopData, shopMeta, canRegisterShop, loading: shopLoading } = useMyShop()
-  console.log("[DEBUG] Shop State:", { shopLoading, hasShop: !!shopData, shopStatus: shopMeta?.status })
 
   const dashboardCacheKey = buildDashboardCacheKey(user?.id || "guest", profile?.city_id || "none")
   const { data: fetchedData, loading: dataLoading, error: dataError } = useCachedFetch(
@@ -231,7 +229,6 @@ function UserDashboard() {
       persist: "session",
     }
   )
-  console.log("[DEBUG] Dashboard Data:", { dataLoading, dataError, hasData: !!fetchedData })
 
   const [localData, setLocalData] = useState(prefetchedDashboardData || EMPTY_DASHBOARD_DATA)
   const retryRouteTransitionRef = useRef(null)

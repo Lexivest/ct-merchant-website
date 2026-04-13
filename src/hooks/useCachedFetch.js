@@ -258,7 +258,6 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
               removeSessionCacheEntry(queryKey)
             }
           }
-        console.error(`[DEBUG] useCachedFetch Caught Error on ${queryKey}:`, err)
           setTick(t => t + 1)
         }
       }

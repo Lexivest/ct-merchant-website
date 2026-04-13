@@ -138,24 +138,19 @@ export async function signInWithPassword({ email, password }) {
   })
 
   if (error) {
-    // TEMPORARILY DISABLED: Failed login tracking
-    /*
     const msg = error.message.toLowerCase()
     if (msg.includes("invalid") || msg.includes("credential")) {
       const { data: attempts, error: rpcError } = await supabase.rpc('record_failed_login', { p_email: normalizedEmail })
       
       if (!rpcError && typeof attempts === 'number') {
         if (attempts >= 4) {
-          throw new Error("Your account is suspended. Please contact support.")
+          throw new Error("Your account is suspended due to too many failed login attempts. Please contact support.")
         } else if (attempts > 0) {
           const remaining = 4 - attempts
           throw new Error(`Invalid credentials. You have ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before your account is suspended.`)
         }
-      } else if (rpcError) {
-        console.error("Failed to record login attempt:", rpcError)
       }
     }
-    */
     throw error
   }
 
@@ -177,13 +172,11 @@ export async function signInWithPassword({ email, password }) {
       throw new Error("Your account is suspended. Please contact support.")
     }
 
-    // TEMPORARILY DISABLED: Reset the failed login counter
-    /*
     if (profile?.failed_login_attempts > 0) {
       await supabase.rpc('reset_failed_login')
     }
-    */
   }
+
 
   return {
     auth: data,

@@ -3,21 +3,8 @@ import { FaArrowLeft, FaRotateRight, FaTriangleExclamation, FaWifi, FaBug } from
 import { isNetworkError } from "../../lib/friendlyErrors"
 import { isChunkLoadFailure } from "../../lib/runtimeRecovery"
 
-// Global debug log to capture errors outside of React
-if (typeof window !== "undefined") {
-  window.__CTM_LOGS__ = window.__CTM_LOGS__ || []
-  const originalError = console.error
-  console.error = (...args) => {
-    window.__CTM_LOGS__.push({
-      t: Date.now(),
-      m: args.map(a => String(a?.message || a)).join(" "),
-      stack: args.find(a => a?.stack)?.stack
-    })
-    originalError.apply(console, args)
-  }
-}
-
 function resolveErrorCopy(error, explicitTitle, explicitMessage) {
+
   const offline = typeof navigator !== "undefined" ? !navigator.onLine : false
   const network = offline || isNetworkError(error)
   const chunk = isChunkLoadFailure(error)
@@ -73,9 +60,9 @@ function GlobalErrorScreen({
   busy = false,
 }) {
   const [showDetails, setShowDetails] = useState(false)
-  const [showLogs, setShowLogs] = useState(false)
   const [cloudStatus, setCloudStatus] = useState("Checking...")
   const copy = resolveErrorCopy(error, title, message)
+
   const wrapperClass = fullScreen ? "min-h-screen" : "min-h-[280px]"
   const Icon = copy.network ? FaWifi : FaTriangleExclamation
 
@@ -108,7 +95,6 @@ function GlobalErrorScreen({
       return {
         name: error.name || "Error",
         message: error.message || String(error),
-        stack: error.stack || "No stack trace available",
         url: typeof window !== "undefined" ? window.location.href : "unknown",
         storage: (() => {
           try {
@@ -166,32 +152,11 @@ function GlobalErrorScreen({
                   <p><strong>Cloudflare Status:</strong> {cloudStatus}</p>
                   <p><strong>Browser Storage:</strong> {diagnosticInfo?.storage || "Unknown"}</p>
                   <p><strong>Agent:</strong> {diagnosticInfo?.agent || "Unknown"}</p>
-                  <div className="mt-3 border-t border-rose-100 pt-3">
-                    <button 
-                      onClick={() => setShowLogs(!showLogs)}
-                      className="text-pink-600 underline font-bold"
-                    >
-                      {showLogs ? "Hide Console Logs" : `View ${window.__CTM_LOGS__?.length || 0} Console Logs`}
-                    </button>
-                    {showLogs && (
-                      <div className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap break-all opacity-70">
-                        {window.__CTM_LOGS__?.map((l, i) => (
-                          <div key={i} className="mb-2 border-b border-rose-100 pb-1">
-                            [{new Date(l.t).toLocaleTimeString()}] {l.m}
-                            {l.stack && <div className="mt-1 text-[8px] opacity-50">{l.stack}</div>}
-                          </div>
-                        )) || "No logs captured."}
-                      </div>
-                    )}
-                  </div>
-                  <p className="mt-3 border-t border-rose-100 pt-2 opacity-60 break-all leading-relaxed">
-                    <strong>Stack Trace:</strong><br/>
-                    {diagnosticInfo?.stack || "No stack trace available."}
-                  </p>
                 </div>
               </div>
             )}
           </div>
+
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
             {typeof onRetry === "function" ? (
