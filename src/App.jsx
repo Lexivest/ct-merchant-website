@@ -101,11 +101,29 @@ function isHardReloadNavigation() {
   return legacyNavigation?.type === 1
 }
 
+// --- NEW HELPER: Transparently retries the import ---
+const retryImport = async (importer, retries = 3, interval = 1000) => {
+  try {
+    return await importer()
+  } catch (error) {
+    // If we are out of retries, or it's not a chunk error, throw it up the chain
+    if (retries === 0 || !isChunkLoadFailure(error)) {
+      throw error
+    }
+    // Wait for the interval (1 second), then recursively try again
+    await new Promise((res) => setTimeout(res, interval))
+    return retryImport(importer, retries - 1, interval)
+  }
+}
+
+// --- UPDATED: Uses the retry helper before falling back ---
 function resilientLazy(importer, options = {}) {
   return lazy(async () => {
     try {
-      return await importer()
+      // Attempt to load the chunk with 3 invisible retries
+      return await retryImport(importer, 3, 1000)
     } catch (error) {
+      // If it STILL fails after 3 retries, catch it and use your existing fallback
       if (!isChunkLoadFailure(error)) throw error
 
       const pageLabel = options.pageLabel || "this page"
