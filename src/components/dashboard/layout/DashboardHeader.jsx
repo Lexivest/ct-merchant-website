@@ -104,9 +104,14 @@ function DashboardHeader({
   }, [products, shops])
 
   const searchPlaceholder = useMemo(() => {
-    const cityName = currentProfile?.cities?.name || currentProfile?.city_name
+    let cityName = currentProfile?.city_name
+    if (currentProfile?.cities) {
+      cityName = Array.isArray(currentProfile.cities)
+        ? currentProfile.cities[0]?.name
+        : currentProfile.cities.name
+    }
     return `Search ${cityName || "your city"} directory of business and services`
-  }, [currentProfile?.cities?.name, currentProfile?.city_name])
+  }, [currentProfile])
 
   useEffect(() => {
     function handleClickOutside(event) {
