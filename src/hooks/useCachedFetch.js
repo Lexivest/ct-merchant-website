@@ -17,32 +17,39 @@ function readSessionCacheEntry(queryKey) {
   if (!queryKey) return null
 
   try {
-    if (typeof window === "undefined" || !window.sessionStorage) return null
+    if (typeof window !== "undefined") {
+      const storage = window.sessionStorage
+      if (storage) {
+        const rawValue = storage.getItem(getSessionCacheKey(queryKey))
+        if (!rawValue) return null
 
-    const rawValue = window.sessionStorage.getItem(getSessionCacheKey(queryKey))
-    if (!rawValue) return null
+        const parsed = JSON.parse(rawValue)
+        if (!parsed || typeof parsed.timestamp !== "number") {
+          try { storage.removeItem(getSessionCacheKey(queryKey)) } catch {}
+          return null
+        }
 
-    const parsed = JSON.parse(rawValue)
-    if (!parsed || typeof parsed.timestamp !== "number") {
-      try { window.sessionStorage.removeItem(getSessionCacheKey(queryKey)) } catch {}
-      return null
+        return parsed
+      }
     }
-
-    return parsed
-  } catch {
-    return null
+  } catch (error) {
+    console.warn("Session storage read blocked:", error.message)
   }
+  return null
 }
 
 function writeSessionCacheEntry(queryKey, entry) {
   if (!queryKey || !entry) return
 
   try {
-    if (typeof window !== "undefined" && window.sessionStorage) {
-      window.sessionStorage.setItem(getSessionCacheKey(queryKey), JSON.stringify(entry))
+    if (typeof window !== "undefined") {
+      const storage = window.sessionStorage
+      if (storage) {
+        storage.setItem(getSessionCacheKey(queryKey), JSON.stringify(entry))
+      }
     }
-  } catch {
-    // Ignore storage quota failures and keep using in-memory cache.
+  } catch (error) {
+    console.warn("Session storage write blocked:", error.message)
   }
 }
 
@@ -50,10 +57,15 @@ function removeSessionCacheEntry(queryKey) {
   if (!queryKey) return
 
   try {
-    if (typeof window !== "undefined" && window.sessionStorage) {
-      window.sessionStorage.removeItem(getSessionCacheKey(queryKey))
+    if (typeof window !== "undefined") {
+      const storage = window.sessionStorage
+      if (storage) {
+        storage.removeItem(getSessionCacheKey(queryKey))
+      }
     }
-  } catch {}
+  } catch (error) {
+    console.warn("Session storage remove blocked:", error.message)
+  }
 }
 
 function getCacheEntry(queryKey) {

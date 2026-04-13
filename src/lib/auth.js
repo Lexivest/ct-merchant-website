@@ -84,30 +84,38 @@ export async function signOutUser() {
 
   try {
     // 2. Wipe Local Storage safely (only our app's keys)
-    if (typeof window !== "undefined" && window.localStorage) {
-      const keysToRemove = []
-      for (let i = 0; i < window.localStorage.length; i++) {
-        const key = window.localStorage.key(i)
-        if (
-          key &&
-          (
-            key.startsWith("sb-") ||
-            key.startsWith("vendor_panel_") ||
-            key.startsWith("shop_detail_") ||
-            key.startsWith("open_cities") ||
-            key.startsWith("areas_") ||
-            key.startsWith("ctmerchant_") ||
-            key.includes("ctm_")
-          )
-        ) {
-          keysToRemove.push(key)
+    if (typeof window !== "undefined") {
+      const storage = window.localStorage
+      if (storage) {
+        const keysToRemove = []
+        for (let i = 0; i < storage.length; i++) {
+          const key = storage.key(i)
+          if (
+            key &&
+            (
+              key.startsWith("sb-") ||
+              key.startsWith("vendor_panel_") ||
+              key.startsWith("shop_detail_") ||
+              key.startsWith("open_cities") ||
+              key.startsWith("areas_") ||
+              key.startsWith("ctmerchant_") ||
+              key.includes("ctm_")
+            )
+          ) {
+            keysToRemove.push(key)
+          }
         }
+        keysToRemove.forEach((key) => storage.removeItem(key))
       }
-      keysToRemove.forEach((key) => window.localStorage.removeItem(key))
     }
 
-    // 3. Clear session storage
-    sessionStorage.clear()
+    // 3. Clear session storage safely
+    if (typeof window !== "undefined") {
+      const sess = window.sessionStorage
+      if (sess) {
+        sess.clear()
+      }
+    }
 
     // 4. Clear in-memory query cache used by useCachedFetch
     clearCachedFetchStore()

@@ -35,12 +35,15 @@ function getProfileCacheKey(userId) {
 function readCachedProfile(userId) {
   if (!userId) return null
   try {
-    if (typeof window !== "undefined" && window.localStorage) {
-      const raw = window.localStorage.getItem(getProfileCacheKey(userId))
-      return raw ? JSON.parse(raw) : null
+    if (typeof window !== "undefined") {
+      const storage = window.localStorage
+      if (storage) {
+        const raw = storage.getItem(getProfileCacheKey(userId))
+        return raw ? JSON.parse(raw) : null
+      }
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    console.warn("Storage read blocked:", error.message)
   }
   return null
 }
@@ -48,53 +51,62 @@ function readCachedProfile(userId) {
 function writeCachedProfile(userId, profile) {
   if (!userId || !profile) return
   try {
-    if (typeof window !== "undefined" && window.localStorage) {
-      window.localStorage.setItem(getProfileCacheKey(userId), JSON.stringify(profile))
-      window.localStorage.setItem(PROFILE_CACHE_ACTIVE_USER_KEY, userId)
+    if (typeof window !== "undefined") {
+      const storage = window.localStorage
+      if (storage) {
+        storage.setItem(getProfileCacheKey(userId), JSON.stringify(profile))
+        storage.setItem(PROFILE_CACHE_ACTIVE_USER_KEY, userId)
+      }
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    console.warn("Storage write blocked:", error.message)
   }
 }
 
 function clearCachedProfile(userId) {
   try {
-    if (typeof window !== "undefined" && window.localStorage) {
-      if (userId) {
-        window.localStorage.removeItem(getProfileCacheKey(userId))
-        const activeUserId = window.localStorage.getItem(PROFILE_CACHE_ACTIVE_USER_KEY)
-        if (activeUserId === userId) {
-          window.localStorage.removeItem(PROFILE_CACHE_ACTIVE_USER_KEY)
+    if (typeof window !== "undefined") {
+      const storage = window.localStorage
+      if (storage) {
+        if (userId) {
+          storage.removeItem(getProfileCacheKey(userId))
+          const activeUserId = storage.getItem(PROFILE_CACHE_ACTIVE_USER_KEY)
+          if (activeUserId === userId) {
+            storage.removeItem(PROFILE_CACHE_ACTIVE_USER_KEY)
+          }
+          return
         }
-        return
-      }
 
-      const keysToRemove = []
-      for (let i = 0; i < window.localStorage.length; i++) {
-        const key = window.localStorage.key(i)
-        if (key && key.startsWith(PROFILE_CACHE_KEY_PREFIX)) {
-          keysToRemove.push(key)
+        const keysToRemove = []
+        for (let i = 0; i < storage.length; i++) {
+          const key = storage.key(i)
+          if (key && key.startsWith(PROFILE_CACHE_KEY_PREFIX)) {
+            keysToRemove.push(key)
+          }
         }
+        keysToRemove.forEach((key) => storage.removeItem(key))
+        storage.removeItem(PROFILE_CACHE_ACTIVE_USER_KEY)
       }
-      keysToRemove.forEach((key) => window.localStorage.removeItem(key))
-      window.localStorage.removeItem(PROFILE_CACHE_ACTIVE_USER_KEY)
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    console.warn("Storage clear blocked:", error.message)
   }
 }
 
 function readAuthSnapshot() {
   try {
-    if (typeof window !== "undefined" && window.localStorage) {
-      const raw = window.localStorage.getItem(AUTH_SNAPSHOT_KEY)
-      if (!raw) return null
-      const parsed = JSON.parse(raw)
-      if (!parsed || !parsed.user?.id) return null
-      return parsed
+    if (typeof window !== "undefined") {
+      const storage = window.localStorage
+      if (storage) {
+        const raw = storage.getItem(AUTH_SNAPSHOT_KEY)
+        if (!raw) return null
+        const parsed = JSON.parse(raw)
+        if (!parsed || !parsed.user?.id) return null
+        return parsed
+      }
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    console.warn("Auth snapshot read blocked:", error.message)
   }
   return null
 }
@@ -102,28 +114,34 @@ function readAuthSnapshot() {
 function writeAuthSnapshot(snapshot) {
   if (!snapshot?.user?.id) return
   try {
-    if (typeof window !== "undefined" && window.localStorage) {
-      const payload = {
-        session: snapshot.session || null,
-        user: snapshot.user,
-        profile: snapshot.profile || null,
-        suspended: Boolean(snapshot.suspended),
-        updatedAt: Date.now(),
+    if (typeof window !== "undefined") {
+      const storage = window.localStorage
+      if (storage) {
+        const payload = {
+          session: snapshot.session || null,
+          user: snapshot.user,
+          profile: snapshot.profile || null,
+          suspended: Boolean(snapshot.suspended),
+          updatedAt: Date.now(),
+        }
+        storage.setItem(AUTH_SNAPSHOT_KEY, JSON.stringify(payload))
       }
-      window.localStorage.setItem(AUTH_SNAPSHOT_KEY, JSON.stringify(payload))
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    console.warn("Auth snapshot write blocked:", error.message)
   }
 }
 
 function clearAuthSnapshot() {
   try {
-    if (typeof window !== "undefined" && window.localStorage) {
-      window.localStorage.removeItem(AUTH_SNAPSHOT_KEY)
+    if (typeof window !== "undefined") {
+      const storage = window.localStorage
+      if (storage) {
+        storage.removeItem(AUTH_SNAPSHOT_KEY)
+      }
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    console.warn("Auth snapshot clear blocked:", error.message)
   }
 }
 

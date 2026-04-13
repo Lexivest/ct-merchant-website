@@ -701,8 +701,39 @@ function Home() {
     }
   }
 
+  // --- RENDER ERROR STATE ---
   if (transitionState.error) {
-    throw new Error("RAW HOME ERROR: " + transitionState.error)
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-pink-50 p-6 text-center">
+        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-pink-100 text-4xl text-pink-600">
+          !
+        </div>
+        <h1 className="mb-2 text-2xl font-black text-slate-900">Something went wrong</h1>
+        <p className="mb-8 max-w-md text-slate-600">
+          {transitionState.error}
+        </p>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button
+            onClick={() => {
+              if (transitionRetryRef.current) {
+                transitionRetryRef.current()
+              } else {
+                window.location.reload()
+              }
+            }}
+            className="rounded-2xl bg-pink-600 px-8 py-3 font-bold text-white transition hover:bg-pink-700"
+          >
+            Try again
+          </button>
+          <button
+            onClick={dismissTransitionError}
+            className="rounded-2xl border border-pink-200 bg-white px-8 py-3 font-bold text-slate-900 transition hover:bg-pink-50"
+          >
+            Back to home
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
