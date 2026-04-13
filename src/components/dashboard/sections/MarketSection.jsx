@@ -182,8 +182,9 @@ function MarketSection({
   groupedShopsByArea = [],
   navigateCategory,
   onOpenShop,
-  loading, // NEW PROP
-  error    // NEW PROP
+  loading, 
+  error,
+  promoBanner = null
 }) {
   const dashboardShellEmpty =
     !dashboardData ||
@@ -273,6 +274,8 @@ function MarketSection({
           onOpenShop={openShop}
         />
       ) : null}
+
+      {promoBanner}
 
       {groupedShopsByArea.map(({ area, shops }) => (
         <div key={area.id} className="area-block-wrap mb-2 bg-white pt-4">

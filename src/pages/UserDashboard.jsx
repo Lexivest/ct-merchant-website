@@ -1813,8 +1813,6 @@ function UserDashboard() {
         onOpenAnnouncements={openAnnouncementsModal}
       />
 
-      <PromoAlertBanner />
-
       <main className="content-body mx-auto w-full max-w-[1600px] pb-10">
         {activeTab === "market" && (
           <MarketSection
@@ -1822,11 +1820,11 @@ function UserDashboard() {
             groupedShopsByArea={groupedShopsByArea}
             navigateCategory={navigateCategory}
             onOpenShop={openShopWithTransition}
-            loading={dataLoading} 
-            error={dataError} 
+            loading={dataLoading}
+            error={dataError}
+            promoBanner={<PromoAlertBanner />}
           />
         )}
-
         {activeTab === "services" && (
           <Suspense fallback={<DashboardSectionFallback label="Loading dashboard tools..." />}>
             <ServicesProfileSection
