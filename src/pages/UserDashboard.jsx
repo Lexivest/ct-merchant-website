@@ -206,40 +206,56 @@ function DashboardAnnouncementsModal({ announcements, open, onClose }) {
 
 function PromoAlertBanner() {
   const [visible, setVisible] = useState(true)
+  const [msgIndex, setMsgIndex] = useState(0)
+  
+  const messages = [
+    "UP TO 50 PROMO CODES REMAINING!",
+    "CLAIM YOUR DISCOUNT VOUCHER NOW!",
+    "LIMITED TIME PLATFORM OFFER!"
+  ]
+
+  useEffect(() => {
+    if (!visible) return
+    const timer = setInterval(() => {
+      setMsgIndex((prev) => (prev + 1) % messages.length)
+    }, 4000)
+    return () => clearInterval(timer)
+  }, [visible, messages.length])
+
   if (!visible) return null
 
   return (
     <div className="mx-auto w-full max-w-[1600px] px-4 pt-4">
-      <div className="animate-alert-flash relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-[24px] bg-[#BE185D] px-6 py-4 text-white shadow-xl shadow-pink-200">
-        <div className="pointer-events-none absolute left-0 top-0 h-full w-full bg-[radial-gradient(circle_at_30%_-20%,rgba(255,255,255,0.2),transparent)]" />
+      <div className="animate-alert-flash relative flex items-center justify-between gap-3 overflow-hidden rounded-2xl bg-[#BE185D] px-4 py-2.5 text-white shadow-lg shadow-pink-100/50 sm:py-3 sm:px-6">
+        <div className="pointer-events-none absolute left-0 top-0 h-full w-full bg-[radial-gradient(circle_at_30%_-20%,rgba(255,255,255,0.15),transparent)]" />
         
-        <div className="relative flex items-center gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-2xl backdrop-blur-sm">
+        <div className="relative flex min-w-0 flex-1 items-center gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/20 text-sm backdrop-blur-sm sm:h-10 sm:w-10 sm:text-lg">
             <FaTicket className="animate-bounce" />
           </div>
-          <div>
-            <div className="animate-market-glow text-lg font-black tracking-tight sm:text-xl">
-              UP TO 50 PROMO CODES REMAINING!
-            </div>
-            <div className="text-[11px] font-bold uppercase tracking-widest text-white/80 sm:text-xs">
-              Exclusive platform offering — Claim your discount now
+          <div className="relative h-5 flex-1 overflow-hidden sm:h-6">
+            <div 
+              key={msgIndex}
+              className="animate-slide-promo absolute inset-0 truncate text-[10px] font-black uppercase tracking-wider sm:text-xs"
+            >
+              {messages[msgIndex]}
             </div>
           </div>
         </div>
 
-        <div className="relative flex items-center gap-3">
+        <div className="relative flex items-center gap-2 sm:gap-3">
           <button 
             type="button"
-            className="rounded-full bg-white px-6 py-2.5 text-xs font-black uppercase tracking-tighter text-[#BE185D] transition hover:scale-105 hover:bg-slate-50 active:scale-95"
+            className="whitespace-nowrap rounded-full bg-white px-4 py-1.5 text-[9px] font-black uppercase tracking-tighter text-[#BE185D] transition hover:bg-slate-50 active:scale-95 sm:px-6 sm:py-2 sm:text-[10px]"
           >
-            Claim Now
+            Claim
           </button>
           <button 
             onClick={() => setVisible(false)}
-            className="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-black/10"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition hover:bg-black/10 sm:h-9 sm:w-9"
             aria-label="Dismiss alert"
           >
-            <FaXmark />
+            <FaXmark className="text-xs sm:text-base" />
           </button>
         </div>
       </div>
