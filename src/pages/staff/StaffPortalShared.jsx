@@ -147,9 +147,7 @@ export function buildVisitTimeline(data, windowDays) {
       {
         ...item,
         total_visits: Number(item.total_visits) || 0,
-        unique_visitors: Number(item.unique_visitors) || 0,
         authenticated_visits: Number(item.authenticated_visits) || 0,
-        total_sessions: Number(item.total_sessions) || 0,
       },
     ])
   )
@@ -168,9 +166,7 @@ export function buildVisitTimeline(data, windowDays) {
       existing || {
         visit_date: key,
         total_visits: 0,
-        unique_visitors: 0,
         authenticated_visits: 0,
-        total_sessions: 0,
       }
     )
   }
