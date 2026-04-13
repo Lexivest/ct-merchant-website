@@ -1696,27 +1696,19 @@ function UserDashboard() {
     return <PageLoadingScreen title="Syncing Profile" message="Please wait while we establish a secure connection..." />
   }
 
+  if (dataError) {
+    throw new Error("RAW DASHBOARD DATA ERROR: " + dataError)
+  }
+  if (routeTransition.error) {
+    throw new Error("RAW DASHBOARD TRANSITION ERROR: " + routeTransition.error)
+  }
+
   return (
     <div
       className={`bg-[#E3E6E6] text-[#0F1111] ${
         location.state?.fromDetailTransition ? "ctm-page-enter" : ""
       }`}
     >
-      <PageTransitionOverlay
-        visible={routeTransition.pending}
-        error={routeTransition.error}
-        onRetry={
-          typeof retryRouteTransitionRef.current === "function"
-            ? () => retryRouteTransitionRef.current?.()
-            : null
-        }
-        onDismiss={() =>
-          setRouteTransition({
-            pending: false,
-            error: "",
-          })
-        }
-      />
       <div className={routeTransition.pending ? "pointer-events-none select-none" : ""}>
       <DashboardHeader
         activeTab={activeTab}
@@ -1747,12 +1739,6 @@ function UserDashboard() {
       />
 
       <main className="content-body mx-auto w-full max-w-[1600px] pb-10">
-        <AuthNotification
-          visible={Boolean(dashboardDataError || notice.visible)}
-          type={dashboardDataError ? "error" : notice.type}
-          title={dashboardDataError ? "Session Issue" : notice.title}
-          message={dashboardDataError || notice.message}
-        />
         {activeTab === "market" && (
           <MarketSection
             dashboardData={localData}
