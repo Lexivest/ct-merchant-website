@@ -700,6 +700,13 @@ function ShopDetail() {
     return <RetryingNotice message={getRetryingMessage(error)} onRetry={mutate} />
   }
 
+  if (productTransition.error) {
+    throw new Error("RAW SHOP DETAIL PRODUCT ERROR: " + productTransition.error)
+  }
+  if (dashboardTransition.error) {
+    throw new Error("RAW SHOP DETAIL DASHBOARD ERROR: " + dashboardTransition.error)
+  }
+
   const shopLogo =
     currentShop?.image_url ||
     `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
@@ -713,29 +720,6 @@ function ShopDetail() {
 
   return (
     <>
-      <PageTransitionOverlay
-        visible={productTransition.pending}
-        error={productTransition.error}
-        onRetry={() => openProductWithTransition(productTransition.productId)}
-        onDismiss={() =>
-          setProductTransition((prev) => ({
-            ...prev,
-            pending: false,
-            error: "",
-          }))
-        }
-      />
-      <PageTransitionOverlay
-        visible={dashboardTransition.pending}
-        error={dashboardTransition.error}
-        onRetry={openDashboardWithTransition}
-        onDismiss={() =>
-          setDashboardTransition({
-            pending: false,
-            error: "",
-          })
-        }
-      />
       <div
         className={`min-h-screen bg-[#E3E6E6] pb-10 ${
           location.state?.fromMarketTransition || location.state?.fromDiscoveryTransition

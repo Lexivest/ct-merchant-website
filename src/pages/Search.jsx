@@ -376,34 +376,12 @@ function Search() {
 
   const hasResults = matchedShops.length > 0 || matchedProducts.length > 0
 
+  if (transitionState.error) {
+    throw new Error("RAW SEARCH ERROR: " + transitionState.error)
+  }
+
   return (
     <>
-      <PageTransitionOverlay
-        visible={transitionState.pending}
-        error={transitionState.error}
-        onRetry={() => {
-          if (transitionState.kind === "shop") {
-            return openShopWithTransition(transitionState.id)
-          }
-          if (transitionState.kind === "product") {
-            const retryProduct = matchedProducts.find(
-              (product) => String(product.id) === String(transitionState.id)
-            )
-            return openProductWithTransition(
-              transitionState.id,
-              retryProduct?.shop_id || ""
-            )
-          }
-          return null
-        }}
-        onDismiss={() =>
-          setTransitionState((prev) => ({
-            ...prev,
-            pending: false,
-            error: "",
-          }))
-        }
-      />
       <div
         className={`min-h-screen bg-[#E3E6E6] ${
           transitionState.pending ? "pointer-events-none select-none" : ""

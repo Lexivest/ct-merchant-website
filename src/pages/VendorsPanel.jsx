@@ -302,23 +302,16 @@ function VendorsPanel() {
     })
   }
 
+  if (routeTransition.error) {
+    throw new Error("RAW VENDORS PANEL ERROR: " + routeTransition.error)
+  }
+
   return (
     <div
       className={`flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
         routeTransition.pending ? "pointer-events-none select-none" : ""
       }`}
     >
-      <PageTransitionOverlay
-        visible={routeTransition.pending}
-        error={routeTransition.error}
-        onRetry={() => retryRouteTransitionRef.current?.()}
-        onDismiss={() =>
-          setRouteTransition({
-            pending: false,
-            error: "",
-          })
-        }
-      />
       <header className="sticky top-0 z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <div className="mx-auto flex w-full max-w-[1000px] items-center gap-4 px-4 py-3 text-white">
           <button

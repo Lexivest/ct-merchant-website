@@ -133,20 +133,12 @@ function ShopIndex() {
     return null
   }
 
+  if (transitionState.error) {
+    throw new Error("RAW SHOP INDEX ERROR: " + transitionState.error)
+  }
+
   return (
     <>
-      <PageTransitionOverlay
-        visible={transitionState.pending}
-        error={transitionState.error}
-        onRetry={() => openShopWithTransition(transitionState.shopId)}
-        onDismiss={() =>
-          setTransitionState((prev) => ({
-            ...prev,
-            pending: false,
-            error: "",
-          }))
-        }
-      />
       <div
         className={`flex h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
           transitionState.pending ? "pointer-events-none select-none" : ""

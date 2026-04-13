@@ -614,20 +614,12 @@ function ProductDetail() {
     return <RetryingNotice message={getRetryingMessage(error)} />
   }
 
+  if (productTransition.error) {
+    throw new Error("RAW PRODUCT DETAIL ERROR: " + productTransition.error)
+  }
+
   return (
     <>
-      <PageTransitionOverlay
-        visible={productTransition.pending}
-        error={productTransition.error}
-        onRetry={() => openProductWithTransition(productTransition.productId)}
-        onDismiss={() =>
-          setProductTransition((prev) => ({
-            ...prev,
-            pending: false,
-            error: "",
-          }))
-        }
-      />
       <PageSeo
         title={
           currentProduct?.name

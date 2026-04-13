@@ -199,19 +199,12 @@ export default function StaffDashboard() {
     [fetchSummary, loading, openStaffRouteWithTransition]
   )
 
+  if (routeTransition.error) {
+    throw new Error("RAW STAFF DASHBOARD ERROR: " + routeTransition.error)
+  }
+
   return (
     <>
-      <PageTransitionOverlay
-        visible={routeTransition.pending}
-        error={routeTransition.error}
-        onRetry={() => retryRouteTransitionRef.current?.()}
-        onDismiss={() =>
-          setRouteTransition({
-            pending: false,
-            error: "",
-          })
-        }
-      />
       <div className={routeTransition.pending ? "pointer-events-none select-none" : ""}>
         <StaffPortalShell
           activeKey="home"

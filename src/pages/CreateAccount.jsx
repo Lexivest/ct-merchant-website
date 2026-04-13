@@ -357,18 +357,12 @@ function CreateAccount() {
     navigate("/", { state: { prefillEmail: form.email } })
   }
 
+  if (transitionState.error) {
+    throw new Error("RAW CREATE ACCOUNT ERROR: " + transitionState.error)
+  }
+
   return (
     <>
-      <PageTransitionOverlay
-        visible={transitionState.pending || holdForExistingSession}
-        error={transitionState.error}
-        onRetry={
-          typeof transitionRetryRef.current === "function"
-            ? () => transitionRetryRef.current?.()
-            : null
-        }
-        onDismiss={dismissTransitionError}
-      />
       <div
         className={
           transitionState.pending || holdForExistingSession

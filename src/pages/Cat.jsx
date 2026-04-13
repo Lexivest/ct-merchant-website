@@ -188,20 +188,12 @@ function Cat() {
     }
   }
 
+  if (transitionState.error) {
+    throw new Error("RAW CAT ERROR: " + transitionState.error)
+  }
+
   return (
     <>
-      <PageTransitionOverlay
-        visible={transitionState.pending}
-        error={transitionState.error}
-        onRetry={() => openShopWithTransition(transitionState.shopId)}
-        onDismiss={() =>
-          setTransitionState((prev) => ({
-            ...prev,
-            pending: false,
-            error: "",
-          }))
-        }
-      />
       <div
         className={`min-h-screen bg-[#F3F4F6] text-[#0F1111] ${
           transitionState.pending ? "pointer-events-none select-none" : ""
