@@ -48,13 +48,21 @@ export async function fetchAreasByCity(cityId) {
 }
 
 export async function getSession() {
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession()
+  try {
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession()
 
-  if (error) throw error
-  return session
+    if (error) {
+      console.warn("Session fetch blocked by browser privacy settings:", error.message)
+      return null
+    }
+    return session
+  } catch (e) {
+    console.warn("Session read exception:", e.message)
+    return null
+  }
 }
 
 // Upgraded to act as the Global Logout & Cache Cleaner

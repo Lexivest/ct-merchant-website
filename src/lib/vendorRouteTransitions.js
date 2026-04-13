@@ -47,7 +47,11 @@ async function fetchProfileSuspension(userId) {
     .eq("id", userId)
     .maybeSingle()
 
-  if (error) throw error
+  if (error) {
+    const msg = String(error.message || "").toLowerCase()
+    if (msg.includes("fetch") || msg.includes("network")) return
+    throw error
+  }
   if (profile?.is_suspended) {
     throw new Error("Account restricted.")
   }
