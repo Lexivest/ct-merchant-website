@@ -46,13 +46,17 @@ function FeaturedCitySlider({ banners, onOpenShop }) {
     <section className="relative mb-2 overflow-hidden bg-white p-[6px]">
       <div className="promo-banner-slider relative aspect-[8/3] w-full max-h-[420px] overflow-hidden bg-white">
         {banners.map((banner, idx) => {
-          const imageUrl = banner.desktop_image_url || banner.mobile_image_url
+          const imageUrl = banner.desktop_image_url || banner.mobile_image_url || ""
 
           return (
             <button
               type="button"
               key={banner.id || idx}
-              onClick={() => onOpenShop?.(banner.shop_id)}
+              onClick={() => {
+                if (banner.shop_id) {
+                  onOpenShop?.(banner.shop_id)
+                }
+              }}
               onMouseEnter={prefetchShopDetailPage}
               onFocus={prefetchShopDetailPage}
               onPointerDown={prefetchShopDetailPage}
@@ -60,14 +64,14 @@ function FeaturedCitySlider({ banners, onOpenShop }) {
                 idx === currentSlide ? "z-[2] opacity-100" : "z-[1] opacity-0"
               }`}
             >
-              <img
+              <StableImage
                 src={imageUrl}
-                alt={banner.title || banner.shops?.name || "Featured shop"}
-                className="absolute inset-0 block h-full w-full bg-white object-contain object-center"
+                alt={banner.title || (banner.shops && banner.shops.name) || "Featured shop"}
+                containerClassName="absolute inset-0 h-full w-full bg-white"
+                className="h-full w-full object-contain object-center"
                 loading={idx === currentSlide ? "eager" : "lazy"}
                 fetchPriority={idx === currentSlide ? "high" : "auto"}
               />
-
             </button>
           )
         })}
