@@ -805,11 +805,11 @@ function UserDashboard() {
     })
   }
 
-  function failRouteTransition(message, retryAction = null) {
+  function failRouteTransition(message, retryAction = null, originalError = null) {
     retryRouteTransitionRef.current = retryAction
     setRouteTransition({
       pending: false,
-      error: message,
+      error: originalError || message,
     })
   }
 
@@ -1125,7 +1125,7 @@ function UserDashboard() {
             "We could not open this product right now. Please try again."
           )
 
-      failRouteTransition(safeMessage, retryAction)
+      failRouteTransition(safeMessage, retryAction, error)
     }
   }
 
@@ -1698,40 +1698,27 @@ function UserDashboard() {
 
   // --- RENDER ERROR STATE ---
   if (dataError || routeTransition.error) {
-    const errorMessage = dataError || routeTransition.error
+    const errorSource = dataError || routeTransition.error
+    const errorObj = errorSource instanceof Error 
+      ? errorSource 
+      : new Error(String(errorSource))
+
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6 text-center">
-        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-pink-100 text-4xl text-pink-600">
-          !
-        </div>
-        <h1 className="mb-2 text-2xl font-black text-slate-900">Something went wrong</h1>
-        <p className="mb-8 max-w-md text-slate-600">
-          {errorMessage}
-        </p>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <button
-            onClick={() => {
-              if (retryRouteTransitionRef.current) {
-                retryRouteTransitionRef.current()
-              } else {
-                window.location.reload()
-              }
-            }}
-            className="rounded-2xl bg-pink-600 px-8 py-3 font-bold text-white transition hover:bg-pink-700"
-          >
-            Try again
-          </button>
-          <button
-            onClick={() => {
-              setRouteTransition({ pending: false, error: "" })
-              if (dataError) window.location.reload()
-            }}
-            className="rounded-2xl border border-pink-200 bg-white px-8 py-3 font-bold text-slate-900 transition hover:bg-pink-50"
-          >
-            Back to dashboard
-          </button>
-        </div>
-      </div>
+      <GlobalErrorScreen
+        error={errorObj}
+        onRetry={() => {
+          if (retryRouteTransitionRef.current) {
+            retryRouteTransitionRef.current()
+          } else {
+            window.location.reload()
+          }
+        }}
+        onBack={() => {
+          setRouteTransition({ pending: false, error: "" })
+          if (dataError) window.location.reload()
+        }}
+        backLabel="Back to dashboard"
+      />
     )
   }
 
@@ -1871,3 +1858,4 @@ function UserDashboard() {
 }
 
 export default UserDashboard
+shboard

@@ -14,3 +14,12 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     detectSessionInUrl: true,
   },
 })
+
+// --- DEBUG LOGGING FOR FIREFOX/CLOUDFLARE ---
+if (typeof window !== "undefined") {
+  window.addEventListener("unhandledrejection", (event) => {
+    if (event.reason?.message?.includes("supabase") || event.reason?.name === "AuthApiError") {
+      console.error("[SUPABASE DEBUG] Unhandled Rejection:", event.reason)
+    }
+  })
+}

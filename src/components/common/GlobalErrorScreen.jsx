@@ -1,3 +1,4 @@
+import React, { useState, useMemo } from "react"
 import { FaArrowLeft, FaRotateRight, FaTriangleExclamation, FaWifi } from "react-icons/fa6"
 import { isNetworkError } from "../../lib/friendlyErrors"
 import { isChunkLoadFailure } from "../../lib/runtimeRecovery"
@@ -57,9 +58,33 @@ function GlobalErrorScreen({
   backLabel = "Go back",
   busy = false,
 }) {
+  const [showDetails, setShowDetails] = useState(false)
   const copy = resolveErrorCopy(error, title, message)
   const wrapperClass = fullScreen ? "min-h-screen" : "min-h-[280px]"
   const Icon = copy.network ? FaWifi : FaTriangleExclamation
+
+  const diagnosticInfo = useMemo(() => {
+    if (!error) return null
+    try {
+      return {
+        name: error.name || "Error",
+        message: error.message || String(error),
+        stack: error.stack || "No stack trace available",
+        url: typeof window !== "undefined" ? window.location.href : "unknown",
+        storage: (() => {
+          try {
+            return !!window.localStorage && !!window.sessionStorage ? "Available" : "Blocked"
+          } catch {
+            return "Blocked/SecurityError"
+          }
+        })(),
+        online: typeof navigator !== "undefined" ? navigator.onLine : "unknown",
+        agent: typeof navigator !== "undefined" ? navigator.userAgent : "unknown"
+      }
+    } catch {
+      return null
+    }
+  }, [error])
 
   return (
     <div className={`${wrapperClass} flex items-center justify-center bg-[#E3E6E6] px-5 py-10`}>
@@ -82,6 +107,30 @@ function GlobalErrorScreen({
           <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
             {busy ? "Preparing a clean reload..." : copy.message}
           </p>
+
+          {diagnosticInfo && (
+            <div className="mt-6 text-left">
+              <button
+                type="button"
+                onClick={() => setShowDetails(!showDetails)}
+                className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-pink-600 transition-colors"
+              >
+                {showDetails ? "Hide Diagnostic Info" : "Show Diagnostic Info"}
+              </button>
+              
+              {showDetails && (
+                <div className="mt-3 overflow-hidden rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-[10px] shadow-inner">
+                  <div className="mb-2 font-black text-rose-700 uppercase tracking-tighter">Firefox Diagnostic Report</div>
+                  <div className="space-y-1 font-mono text-slate-700">
+                    <p><strong>Error:</strong> {diagnosticInfo.name}: {diagnosticInfo.message}</p>
+                    <p><strong>Storage:</strong> {diagnosticInfo.storage}</p>
+                    <p><strong>URL:</strong> {diagnosticInfo.url}</p>
+                    <p className="mt-2 whitespace-pre-wrap opacity-60 break-all border-t border-rose-100 pt-2">{diagnosticInfo.stack}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
             {typeof onRetry === "function" ? (
