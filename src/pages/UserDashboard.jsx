@@ -1,7 +1,7 @@
 import { Suspense, lazy, startTransition, useEffect, useMemo, useRef, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { createPortal } from "react-dom"
-import { FaBullhorn, FaXmark } from "react-icons/fa6"
+import { FaBullhorn, FaGift, FaTicket, FaXmark } from "react-icons/fa6"
 
 import AuthNotification from "../components/auth/AuthNotification"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
@@ -201,6 +201,49 @@ function DashboardAnnouncementsModal({ announcements, open, onClose }) {
       </div>
     </div>,
     document.body
+  )
+}
+
+function PromoAlertBanner() {
+  const [visible, setVisible] = useState(true)
+  if (!visible) return null
+
+  return (
+    <div className="mx-auto w-full max-w-[1600px] px-4 pt-4">
+      <div className="animate-alert-flash relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-[24px] bg-[#BE185D] px-6 py-4 text-white shadow-xl shadow-pink-200">
+        <div className="pointer-events-none absolute left-0 top-0 h-full w-full bg-[radial-gradient(circle_at_30%_-20%,rgba(255,255,255,0.2),transparent)]" />
+        
+        <div className="relative flex items-center gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-2xl backdrop-blur-sm">
+            <FaTicket className="animate-bounce" />
+          </div>
+          <div>
+            <div className="animate-market-glow text-lg font-black tracking-tight sm:text-xl">
+              UP TO 50 PROMO CODES REMAINING!
+            </div>
+            <div className="text-[11px] font-bold uppercase tracking-widest text-white/80 sm:text-xs">
+              Exclusive platform offering — Claim your discount now
+            </div>
+          </div>
+        </div>
+
+        <div className="relative flex items-center gap-3">
+          <button 
+            type="button"
+            className="rounded-full bg-white px-6 py-2.5 text-xs font-black uppercase tracking-tighter text-[#BE185D] transition hover:scale-105 hover:bg-slate-50 active:scale-95"
+          >
+            Claim Now
+          </button>
+          <button 
+            onClick={() => setVisible(false)}
+            className="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-black/10"
+            aria-label="Dismiss alert"
+          >
+            <FaXmark />
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -1753,6 +1796,8 @@ function UserDashboard() {
         announcementsCount={(localData.announcements || []).length}
         onOpenAnnouncements={openAnnouncementsModal}
       />
+
+      <PromoAlertBanner />
 
       <main className="content-body mx-auto w-full max-w-[1600px] pb-10">
         {activeTab === "market" && (

@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import {
   FaArrowRight,
+  FaArrowUp,
   FaCalendarDays,
+  FaChartLine,
   FaCircleInfo,
   FaClock,
   FaEnvelope,
@@ -18,6 +20,7 @@ import {
   FaYoutube,
 } from "react-icons/fa6"
 import MainLayout from "../layouts/MainLayout"
+import ScrollingTicker from "../components/common/ScrollingTicker"
 import AuthInput from "../components/auth/AuthInput"
 import AuthButton from "../components/auth/AuthButton"
 import PageSeo from "../components/common/PageSeo"
@@ -111,6 +114,43 @@ const testimonials = [
     detail: "Home Essentials Store, Plateau",
   },
 ]
+
+function MarketPulseTicker() {
+  const stats = [
+    { label: "Active Shops", value: "1,240+", trend: "+12%" },
+    { label: "Verified Products", value: "8,500+", trend: "+5%" },
+    { label: "Market Activity", value: "High", trend: "Steady" },
+    { label: "City: Jos", value: "Active", trend: "+8%" },
+    { label: "City: Kaduna", value: "Growing", trend: "+15%" },
+    { label: "City: Abuja", value: "Hub", trend: "+20%" },
+  ]
+
+  const tickerText = stats
+    .map((s) => `${s.label.toUpperCase()}: ${s.value} (${s.trend})`)
+    .join("  |  ")
+
+  return (
+    <div className="bg-slate-950 py-3 text-white">
+      <div className="mx-auto flex max-w-7xl items-center px-4">
+        <div className="mr-4 flex shrink-0 items-center gap-2 border-r border-white/20 pr-4 text-[10px] font-black uppercase tracking-tighter text-emerald-400">
+          <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+          Live Market Pulse
+        </div>
+        <div className="min-w-0 flex-1">
+          <ScrollingTicker
+            text={tickerText}
+            textClassName="text-xs font-mono font-bold tracking-wider text-slate-300"
+            speedFactor={0.15}
+          />
+        </div>
+        <div className="ml-4 hidden shrink-0 items-center gap-2 text-[10px] font-black uppercase text-pink-500 md:flex">
+          <FaChartLine />
+          Index: CT-240
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function HighlightsSection({ announcements = [] }) {
   const calendarEvents = [
@@ -1170,6 +1210,7 @@ function Home() {
           </section>
 
           <HighlightsSection announcements={highlights?.announcements || []} />
+      <MarketPulseTicker />
           {resetEmailOpen ? (
             <SimpleModal
               title="Reset Password"
