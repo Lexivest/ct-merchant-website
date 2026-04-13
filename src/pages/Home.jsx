@@ -3,17 +3,17 @@ import { useLocation, useNavigate } from "react-router-dom"
 import {
   FaArrowRight,
   FaCalendarDays,
+  FaCircleInfo,
   FaClock,
   FaEnvelope,
   FaEye,
   FaEyeSlash,
   FaFacebookF,
   FaHashtag,
-  FaInfoCircle,
   FaLock,
+  FaMagnifyingGlass,
   FaNewspaper,
   FaPhone,
-  FaSearch,
   FaXTwitter,
   FaYoutube,
 } from "react-icons/fa6"
@@ -887,7 +887,7 @@ function Home() {
                 className="flex w-[56px] items-center justify-center bg-pink-600 text-white transition hover:bg-pink-700"
                 aria-label="Search repository"
               >
-                {repoSearchLoading ? "..." : <FaSearch />}
+                {repoSearchLoading ? "..." : <FaMagnifyingGlass />}
               </button>
             </div>
           </div>
@@ -946,8 +946,9 @@ function Home() {
                       className="flex w-[52px] items-center justify-center bg-pink-600 text-white transition hover:bg-pink-700"
                       aria-label="Search repository"
                     >
-                      {repoSearchLoading ? "..." : <FaSearch />}
+                      {repoSearchLoading ? "..." : <FaMagnifyingGlass />}
                     </button>
+
                   </div>
                 </div>
               </div>
@@ -1107,7 +1108,7 @@ function Home() {
                       <span className="inline-flex rounded-full bg-white px-3 py-1 text-[0.7rem] font-extrabold uppercase tracking-[0.18em] text-pink-600">
                         {item.type}
                       </span>
-                      <FaInfoCircle className="shrink-0 text-pink-400" />
+                      <FaCircleInfo className="shrink-0 text-pink-400" />
                     </div>
                     <p className="mt-4 text-base font-medium leading-8 text-slate-700">
                       "{item.quote}"
