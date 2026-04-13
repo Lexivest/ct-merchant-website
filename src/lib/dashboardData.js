@@ -116,6 +116,26 @@ export async function fetchFeaturedCityBanners(cityId) {
   ) || []
 }
 
+export async function fetchHomeHighlights() {
+  const [announcementsRes, bannersRes] = await Promise.all([
+    supabase
+      .from("announcements")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("featured_city_banners")
+      .select("id, title, subtitle, mobile_image_url")
+      .eq("status", "published")
+      .limit(3)
+  ])
+
+  return {
+    announcements: announcementsRes.data || [],
+    banners: bannersRes.data || []
+  }
+}
+
 export async function fetchDashboardData({ userId, profile = null }) {
   if (!userId) throw new Error("Authentication required")
 

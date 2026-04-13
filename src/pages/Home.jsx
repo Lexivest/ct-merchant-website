@@ -2,15 +2,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import {
   FaArrowRight,
-  FaInfoCircle,
+  FaCalendarDays,
+  FaClock,
   FaEnvelope,
   FaEye,
   FaEyeSlash,
+  FaFacebookF,
   FaHashtag,
+  FaInfoCircle,
   FaLock,
+  FaNewspaper,
+  FaPhone,
   FaSearch,
-} from "react-icons/fa"
-import { FaFacebookF, FaXTwitter, FaYoutube } from "react-icons/fa6"
+  FaXTwitter,
+  FaYoutube,
+} from "react-icons/fa6"
 import MainLayout from "../layouts/MainLayout"
 import AuthInput from "../components/auth/AuthInput"
 import AuthButton from "../components/auth/AuthButton"
@@ -38,6 +44,9 @@ import {
   getRepoSearchCooldownMessage,
   invokeRepoSearch,
 } from "../lib/repoSearch"
+import {
+  fetchHomeHighlights,
+} from "../lib/dashboardData"
 import {
   getAuthScreenTransitionMessage,
   preloadCreateAccountScreen,
@@ -101,6 +110,119 @@ const testimonials = [
     detail: "Home Essentials Store, Plateau",
   },
 ]
+
+function HighlightsSection({ announcements = [] }) {
+  const calendarEvents = [
+    { date: "APR 20", title: "Merchant Training Webinar", type: "Virtual" },
+    { date: "APR 25", title: "Kaduna Business Meetup", type: "Offline" },
+    { date: "MAY 05", title: "New Feature Launch", type: "System" },
+  ]
+
+  return (
+    <section className="mx-auto w-full max-w-7xl px-4 py-12 md:py-20">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
+        {/* Newsfeed Section */}
+        <div className="flex flex-col">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pink-600 text-white shadow-lg shadow-pink-200">
+              <FaNewspaper className="text-xl" />
+            </div>
+            <h3 className="text-xl font-black tracking-tight text-slate-900">Platform News</h3>
+          </div>
+
+          <div className="space-y-6">
+            {announcements.length > 0 ? (
+              announcements.map((news) => (
+                <div key={news.id} className="group cursor-pointer">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-pink-600">
+                    {new Date(news.created_at).toLocaleDateString("en-NG", { month: "short", day: "numeric" })}
+                  </div>
+                  <h4 className="mt-1 text-base font-bold text-slate-900 transition group-hover:text-pink-600">
+                    {news.title}
+                  </h4>
+                  <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-500">
+                    {news.content}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm font-medium text-slate-400 italic">No new announcements at this time.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Calendar Section */}
+        <div className="flex flex-col">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg shadow-slate-200">
+              <FaCalendarDays className="text-xl" />
+            </div>
+            <h3 className="text-xl font-black tracking-tight text-slate-900">Community Calendar</h3>
+          </div>
+
+          <div className="divide-y divide-slate-100 rounded-3xl border border-slate-100 bg-white p-2 shadow-sm">
+            {calendarEvents.map((ev, idx) => (
+              <div key={idx} className="flex items-center gap-4 p-4 transition hover:bg-slate-50">
+                <div className="flex h-14 w-14 flex-col items-center justify-center rounded-2xl bg-pink-50 text-center">
+                  <span className="text-[10px] font-black text-pink-600">{ev.date.split(" ")[0]}</span>
+                  <span className="text-lg font-black text-slate-900">{ev.date.split(" ")[1]}</span>
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-slate-900">{ev.title}</div>
+                  <div className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    {ev.type}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Office Hours Section */}
+        <div className="flex flex-col">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-lg shadow-amber-200">
+              <FaClock className="text-xl" />
+            </div>
+            <h3 className="text-xl font-black tracking-tight text-slate-900">Office & Support</h3>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="mt-1 text-amber-500"><FaClock /></div>
+                <div>
+                  <div className="text-sm font-bold text-slate-900">Opening Hours</div>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Mon - Fri: 8:00 AM - 6:00 PM<br/>
+                    Sat: 9:00 AM - 4:00 PM<br/>
+                    Sun: Closed
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 pt-4 border-t border-slate-50">
+                <div className="mt-1 text-pink-600"><FaPhone /></div>
+                <div>
+                  <div className="text-sm font-bold text-slate-900">Phone Support</div>
+                  <p className="mt-1 text-sm text-slate-500">+234 812 345 6789</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 pt-4 border-t border-slate-50">
+                <div className="mt-1 text-blue-500"><FaEnvelope /></div>
+                <div>
+                  <div className="text-sm font-bold text-slate-900">Email Inquiry</div>
+                  <p className="mt-1 text-sm text-slate-500 underline">support@ctmerchant.ng</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 function Home() {
   const location = useLocation()
@@ -240,6 +362,11 @@ function Home() {
 
   const [repoSearchValue, setRepoSearchValue] = useState("")
   const [repoSearchLoading, setRepoSearchLoading] = useState(false)
+
+  // 1.5. Fetch Highlights (News/Announcements)
+  const { data: highlights } = useCachedFetch("home_highlights_v1", fetchHomeHighlights, {
+    ttl: 1000 * 60 * 30, // 30 minutes
+  })
 
   // 2. Smooth Auto-Redirect
   useEffect(() => {
@@ -739,6 +866,7 @@ function Home() {
             canonicalPath="/"
           />
           <section className="overflow-x-hidden bg-pink-50 px-4 py-4 md:py-5">
+            {/* ... Existing Hero and Search Logic ... */}
         <div className="mx-auto mb-4 w-full max-w-7xl lg:hidden">
           <div className="overflow-hidden rounded-[22px] border border-pink-100 bg-white p-2 shadow-sm">
             <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-transparent bg-pink-50 transition focus-within:border-pink-600">
@@ -1041,6 +1169,7 @@ function Home() {
         </div>
       </section>
 
+      <HighlightsSection announcements={highlights?.announcements || []} />
       {resetEmailOpen ? (
         <SimpleModal
           title="Reset Password"
