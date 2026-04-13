@@ -7,14 +7,19 @@ import { clearCachedFetchStore } from "../hooks/useCachedFetch"
 
 export async function getClientIpData() {
   try {
-    // Calling the secure Server-Side RPC instead of the Cloudflare trace
+    // TEMPORARILY DISABLED: Firefox Enhanced Tracking Protection (ETP) strictly flags endpoints 
+    // that fetch IP addresses as "Trackers" and instantly blocks the entire database domain.
+    /*
     const { data, error } = await supabase.rpc('get_network_info')
-    
     if (error) throw error
-
     return {
       ip: data?.ip || "unknown",
       country: data?.country || "unknown",
+    }
+    */
+    return {
+      ip: "unknown",
+      country: "unknown",
     }
   } catch (error) {
     console.error("Failed to fetch secure network info:", error.message)

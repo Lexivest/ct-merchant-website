@@ -563,11 +563,9 @@ function App() {
   const location = useLocation()
 
   return (
-    <>
-      {/* <AppErrorBoundary resetKey={`${location.pathname}${location.search}`}> */}
-        <AppShell />
-      {/* </AppErrorBoundary> */}
-    </>
+    <AppErrorBoundary resetKey={`${location.pathname}${location.search}`}>
+      <AppShell />
+    </AppErrorBoundary>
   )
 }
 

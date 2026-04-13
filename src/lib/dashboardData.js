@@ -8,12 +8,8 @@ const loadUserDashboardPage = () => import("../pages/UserDashboard")
 
 function unwrapSupabaseResult(result) {
   if (result?.error) {
-    const msg = String(result.error.message || "").toLowerCase()
-    if (msg.includes("fetch") || msg.includes("network")) {
-      console.warn("Non-critical dashboard fetch blocked. Defaulting to empty.")
-      return null
-    }
-    throw result.error
+    console.warn("Dashboard fetch failed/blocked. Defaulting to empty:", result.error.message)
+    return null
   }
 
   return result?.data ?? null
@@ -21,11 +17,7 @@ function unwrapSupabaseResult(result) {
 
 function unwrapSupabaseCount(result) {
   if (result?.error) {
-    const msg = String(result.error.message || "").toLowerCase()
-    if (msg.includes("fetch") || msg.includes("network")) {
-      return 0
-    }
-    throw result.error
+    return 0
   }
 
   return result?.count ?? 0
@@ -61,13 +53,16 @@ async function resolveDashboardProfile({ userId, profile = null }) {
       .from("profiles")
       .select("*, cities(name)")
       .eq("id", userId)
-      .single()
+      .maybeSingle()
 
-    if (error) throw error
-    currentProfile = data
+    if (error) {
+      console.warn("Dashboard profile fetch error:", error.message)
+      return { city_id: 0, is_suspended: false }
+    }
+    if (data) currentProfile = data
   }
 
-  if (!currentProfile?.city_id) throw new Error("Profile not completed")
+  if (!currentProfile?.city_id) return { city_id: 0, is_suspended: false }
   if (currentProfile.is_suspended) throw new Error("Account restricted")
 
   return currentProfile

@@ -1693,17 +1693,7 @@ function UserDashboard() {
   // Protect against rendering the dashboard if the profile failed to load (e.g., due to CORS or Network errors)
   if (!currentProfile) {
     console.error("Dashboard rendering blocked because currentProfile is null. Error:", dataError)
-    /* TEMPORARILY DISABLED CUSTOM ERROR SCREEN
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#F8FAFC] px-5">
-        <div className="w-full max-w-md rounded-[24px] border border-[#FECACA] bg-[#FEF2F2] p-6 text-center shadow-sm">
-          <h2 className="mb-2 text-lg font-black text-[#991B1B]">Connection Issue</h2>
-          <p className="mb-5 text-sm font-semibold text-[#7F1D1D]">{dataError || "We could not securely connect to the database. If you are using 'www', try removing it from the URL."}</p>
-          <button onClick={() => window.location.assign("/")} className="rounded-xl bg-[#991B1B] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#7F1D1D]">Return Home</button>
-        </div>
-      </div>
-    )
-    */
+    return <PageLoadingScreen title="Syncing Profile" message="Please wait while we establish a secure connection..." />
   }
 
   return (
