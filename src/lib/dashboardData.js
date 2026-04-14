@@ -139,7 +139,7 @@ export async function fetchHomeHighlights() {
 export async function fetchPromoBanners(cityId) {
   let query = supabase
     .from("promo_banners")
-    .select("*, shops(id, name, products(id, image_url))")
+    .select("*, shops(id, name, products(*))")
     .eq("status", "published")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false })
@@ -161,7 +161,7 @@ export async function fetchPromoBanners(cityId) {
   // Enforce product limit for nested products
   const enriched = (data || []).map(banner => {
     if (banner.shops?.products) {
-      banner.shop_products = banner.shops.products.slice(0, 3)
+      banner.shop_products = banner.shops.products.slice(0, 4)
     }
     return banner
   })

@@ -15,7 +15,7 @@ function PromoBanner({ banner }) {
 
   const products = banner.shop_products || []
   const layout = banner.layout || "split"
-  const isHotDeal = Boolean(banner.shop_id)
+  const shopName = banner.shops?.name || "Premium Store"
 
   const handleClick = () => {
     if (banner.shop_id) {
@@ -42,26 +42,19 @@ function PromoBanner({ banner }) {
         {layout === "split" && (
           <>
             <div className="flex-1 text-white space-y-0.5 min-w-0">
-              {isHotDeal && (
-                <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[7px] font-black uppercase tracking-tighter">
-                  <FaBolt className="text-amber-400" /> Hot Deal
-                </div>
-              )}
+              <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[7px] font-black uppercase tracking-tighter">
+                {shopName}
+              </div>
               <h2 className="text-sm md:text-lg font-black leading-tight truncate">
                 {banner.title}
               </h2>
               <p className="text-[9px] md:text-[11px] font-bold opacity-80 line-clamp-1">
                 {banner.subtitle}
               </p>
-              <div className="pt-1.5">
-                <span className="px-3 py-1 rounded-lg bg-white text-slate-900 font-black text-[8px] md:text-[10px] shadow-md">
-                  {banner.call_to_action || 'Claim'}
-                </span>
-              </div>
             </div>
             
             <div className="flex gap-1.5 shrink-0">
-              {products.map((p, i) => (
+              {products.slice(0, 3).map((p, i) => (
                 <div 
                   key={p.id || i} 
                   className="relative w-10 h-14 md:w-14 md:h-20 rounded-lg overflow-hidden border border-white/20 shadow-lg"
@@ -75,6 +68,9 @@ function PromoBanner({ banner }) {
 
         {layout === "grid" && (
           <div className="w-full text-center text-white space-y-2">
+            <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[7px] font-black uppercase tracking-tighter mb-1">
+              {shopName}
+            </div>
             <h2 className="text-sm md:text-xl font-black leading-none truncate px-2">{banner.title}</h2>
             <div className="flex justify-center gap-2">
               {products.map((p, i) => (
@@ -94,6 +90,9 @@ function PromoBanner({ banner }) {
                ))}
              </div>
              <div className="relative z-10 bg-black/40 backdrop-blur-lg p-3 rounded-[18px] border border-white/10 text-center text-white w-full max-w-[80%]">
+                <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md text-[7px] font-black uppercase tracking-tighter mb-1">
+                 {shopName}
+                </div>
                <h2 className="text-xs md:text-sm font-black truncate">{banner.title}</h2>
                <p className="text-[8px] md:text-[10px] opacity-70 font-bold truncate">{banner.subtitle}</p>
              </div>
@@ -230,7 +229,7 @@ const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
             src={item.image_url}
             alt={name}
             containerClassName="h-full w-full bg-[#F8FAFC]"
-            className="h-full w-full object-contain p-2"
+            className="h-full w-full object-cover"
           />
           {discounted ? (
             <div className="grid-badge flash-offer">-{discountPct}%</div>
@@ -377,25 +376,26 @@ function MarketSection({
       ) : null}
 
       {promoBanners.length > 0 && (
-        <div className="sponsored-wrap mb-2 bg-white pt-4 pb-2">
-           <div className="px-4 mb-4 flex items-center gap-3">
+        <div className="sponsored-wrap bg-white">
+           <div className="px-4 py-4 flex items-center gap-3">
              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-[11px] font-black uppercase tracking-widest shadow-sm">
                <FaBolt className="text-[10px]" /> Sponsored
              </span>
              <div className="h-[1px] flex-1 bg-slate-100"></div>
            </div>
            
-           <div className="flex gap-4 overflow-x-auto px-4 pb-4 no-scrollbar">
+           <div className="flex gap-4 overflow-x-auto pl-4 pb-4 no-scrollbar">
              {promoBanners.map((banner) => (
                <PromoBanner key={banner.id} banner={banner} />
              ))}
+             <div className="w-4 shrink-0" aria-hidden="true" />
            </div>
         </div>
       )}
 
       {groupedShopsByArea.map(({ area, shops }) => (
-        <div key={area.id} className="area-block-wrap mb-2 bg-white pt-4">
-          <h2 className="sec-title mb-3 flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 text-[1.35rem] font-extrabold text-[#0F1111]">
+        <div key={area.id} className="area-block-wrap bg-white">
+          <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 py-4 text-[1.35rem] font-extrabold text-[#0F1111]">
             {area.id === dashboardData.profile?.area_id ? (
               <>
                 Top stores in {area.name}{" "}
@@ -408,7 +408,7 @@ function MarketSection({
             )}
           </h2>
 
-          <div className="h-scroll flex gap-4 overflow-x-auto px-4 pb-5 pt-1">
+          <div className="h-scroll flex gap-4 overflow-x-auto pl-4 pb-5 pt-1">
             {shops.map((shop) => (
               <ShopCard
                 key={shop.id}
@@ -417,13 +417,14 @@ function MarketSection({
                 onOpenShop={openShop}
               />
             ))}
+            <div className="w-4 shrink-0" aria-hidden="true" />
           </div>
         </div>
       ))}
 
       {sortedCategories.length > 0 ? (
-        <div className="cat-section-wrap mb-2 bg-white pt-4">
-          <h2 className="sec-title mb-3 flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 text-[1.35rem] font-extrabold text-[#0F1111]">
+        <div className="cat-section-wrap bg-white">
+          <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 py-4 text-[1.35rem] font-extrabold text-[#0F1111]">
             Browse Categories
           </h2>
 

@@ -180,16 +180,16 @@ img {
 .area-block-wrap,
 .cat-section-wrap {
   background-color: #fff;
-  padding-top: 16px;
-  margin-bottom: 8px;
+  padding-top: 0;
+  margin-bottom: 0;
 }
 
 .sec-title {
   font-size: 1.35rem;
   font-weight: 800;
   color: #0f1111;
-  margin: 0 0 12px;
-  padding: 0 16px;
+  margin: 0;
+  padding: 16px 16px 12px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -294,7 +294,7 @@ img {
 .shop-grid-item img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   background: #f8fafc;
   display: block;
