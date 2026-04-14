@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react"
-import { Routes, Route, Link, Navigate, useLocation, useNavigate } from "react-router-dom"
+import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom"
 
 import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
@@ -18,7 +18,6 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
     if (typeof navigator === "undefined") return false
     return !navigator.onLine
   })
-  const [isRetrying, setIsRetrying] = useState(false)
   const retryKey =
     typeof window === "undefined"
       ? ""
@@ -33,7 +32,6 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
         console.warn("Could not clear chunk retry key", error)
       }
     }
-    setIsRetrying(true)
     forceFreshAppReload({ reason: "chunk", manual: forceManual })
   }, [retryKey])
 
@@ -72,8 +70,7 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
     }
 
     const timer = window.setTimeout(() => {
-      const started = forceFreshAppReload({ reason: "chunk", manual: false })
-      if (!started) setIsRetrying(false)
+      forceFreshAppReload({ reason: "chunk", manual: false })
     }, 700)
 
     return () => window.clearTimeout(timer)
@@ -565,8 +562,6 @@ function AppShell() {
 }
 
 function App() {
-  const location = useLocation()
-
   return (
     <>
       <AppShell />

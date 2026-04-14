@@ -75,13 +75,13 @@ function GlobalErrorScreen({
         const id = setTimeout(() => controller.abort(), 4000)
         
         // Check Cloudflare Trace - If this fails, Cloudflare is likely blocking Firefox
-        const res = await fetch("https://www.cloudflare.com/cdn-cgi/trace", { 
+        await fetch("https://www.cloudflare.com/cdn-cgi/trace", { 
           signal: controller.signal,
           mode: 'no-cors' 
         })
         clearTimeout(id)
         setCloudStatus("Cloudflare Reachable")
-      } catch (e) {
+      } catch {
         setCloudStatus("Connection Blocked (Cloudflare/ETP)")
       }
     }

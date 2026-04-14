@@ -6,27 +6,19 @@ import {
 import { clearCachedFetchStore } from "../hooks/useCachedFetch"
 
 export async function getClientIpData() {
-  try {
-    // TEMPORARILY DISABLED: Firefox Enhanced Tracking Protection (ETP) strictly flags endpoints 
-    // that fetch IP addresses as "Trackers" and instantly blocks the entire database domain.
-    /*
-    const { data, error } = await supabase.rpc('get_network_info')
-    if (error) throw error
-    return {
-      ip: data?.ip || "unknown",
-      country: data?.country || "unknown",
-    }
-    */
-    return {
-      ip: "unknown",
-      country: "unknown",
-    }
-  } catch (error) {
-    console.error("Failed to fetch secure network info:", error.message)
-    return {
-      ip: "unknown",
-      country: "unknown",
-    }
+  // TEMPORARILY DISABLED: Firefox Enhanced Tracking Protection (ETP) strictly flags endpoints 
+  // that fetch IP addresses as "Trackers" and instantly blocks the entire database domain.
+  /*
+  const { data, error } = await supabase.rpc('get_network_info')
+  if (error) throw error
+  return {
+    ip: data?.ip || "unknown",
+    country: data?.country || "unknown",
+  }
+  */
+  return {
+    ip: "unknown",
+    country: "unknown",
   }
 }
 
@@ -271,7 +263,7 @@ export async function updateLastActiveIp(userId, ip) {
       .from("profiles")
       .update({ last_active_ip: ip })
       .eq("id", userId)
-  } catch (error) {
+  } catch {
     // Silently ignore background tracking updates blocked by browser privacy settings
   }
 }

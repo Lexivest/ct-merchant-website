@@ -9,7 +9,7 @@ export function useVersionCheck() {
   const { confirm } = useGlobalFeedback()
   const [currentVersion, setCurrentVersion] = useState(null)
   const isUpdateDetected = useRef(false)
-  const lastCheckTime = useRef(Date.now())
+  const lastCheckTime = useRef(0)
 
   const fetchVersion = useCallback(async () => {
     try {
@@ -67,7 +67,9 @@ export function useVersionCheck() {
 
   useEffect(() => {
     // Initial fetch to establish baseline
-    checkUpdates(true)
+    const initialTimer = setTimeout(() => {
+      checkUpdates(true)
+    }, 0)
 
     // Periodic check
     const interval = setInterval(() => {
@@ -91,6 +93,7 @@ export function useVersionCheck() {
     window.addEventListener("online", handleFocus) // Also check when network is back
     
     return () => {
+      clearTimeout(initialTimer)
       clearInterval(interval)
       window.removeEventListener("focus", handleFocus)
       window.removeEventListener("online", handleFocus)

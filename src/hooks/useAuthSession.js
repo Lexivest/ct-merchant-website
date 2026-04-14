@@ -211,7 +211,9 @@ function useAuthSession() {
         if (typeof localStorage !== "undefined") {
           activeCachedUserId = localStorage.getItem(PROFILE_CACHE_ACTIVE_USER_KEY)
         }
-      } catch {}
+      } catch {
+        // ignore
+      }
     }
 
     const cachedProfile =

@@ -25,7 +25,7 @@ function readSessionCacheEntry(queryKey) {
 
         const parsed = JSON.parse(rawValue)
         if (!parsed || typeof parsed.timestamp !== "number") {
-          try { storage.removeItem(getSessionCacheKey(queryKey)) } catch {}
+          try { storage.removeItem(getSessionCacheKey(queryKey)) } catch { /* ignore */ }
           return null
         }
 
@@ -141,7 +141,7 @@ export function clearCachedFetchStore(predicate) {
           }
         })
       }
-    } catch {}
+    } catch { /* ignore */ }
 
     return
   }
@@ -163,7 +163,9 @@ export function clearCachedFetchStore(predicate) {
         }
       })
     }
-  } catch {}
+  } catch {
+    // ignore
+  }
 }
 
 export function primeCachedFetchStore(queryKey, data, timestamp = Date.now(), options = {}) {

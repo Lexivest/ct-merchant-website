@@ -55,14 +55,6 @@ function CreateAccount() {
     error: "",
   })
 
-  function dismissTransitionError() {
-    transitionRetryRef.current = null
-    setTransitionState({
-      pending: false,
-      error: "",
-    })
-  }
-
   const openDashboardWithTransition = useCallback(
     async function openDashboard(authState, options = {}) {
       const { replace = false } = options

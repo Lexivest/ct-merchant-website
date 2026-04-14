@@ -226,9 +226,8 @@ async function prepareStaffInboxData() {
 }
 
 async function prepareStaffPromoBannersData() {
-  const [citiesResult, bannersResult] = await Promise.all([
+  const [citiesResult] = await Promise.all([
     supabase.from("cities").select("id, name, state").order("name"),
-    supabase.from("promo_banners").select("id").limit(1),
   ])
 
   if (citiesResult.error) throw citiesResult.error

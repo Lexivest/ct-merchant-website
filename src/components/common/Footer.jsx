@@ -13,7 +13,7 @@ function Footer() {
           const data = await res.json()
           setAppVersion(data.version)
         }
-      } catch (err) {
+      } catch {
         // Silently fail if version cannot be fetched
       }
     }
