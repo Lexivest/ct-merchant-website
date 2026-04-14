@@ -7,58 +7,41 @@ import StableImage from "../../common/StableImage"
 import RetryingNotice, { getRetryingMessage } from "../../common/RetryingNotice"
 import { PROMO_EXTENDED_COLORS } from "../../../lib/promoBannerEngine"
 
-function PromoBanner({ banner }) {
+function SponsoredProductCard({ sponsored }) {
   const navigate = useNavigate()
-  const background = useMemo(() => 
-    PROMO_EXTENDED_COLORS.find(c => c.key === banner.template_key) || PROMO_EXTENDED_COLORS[0]
-  , [banner.template_key])
-
-  const products = banner.shop_products || []
-  const shopName = banner.shops?.name || "Premium Store"
+  const product = sponsored.product
+  if (!product) return null
 
   const handleClick = () => {
-    if (banner.shop_id) {
-      navigate(`/shop-detail?id=${banner.shop_id}`)
-    } else if (banner.external_link) {
-      window.open(banner.external_link, "_blank", "noopener,noreferrer")
-    }
+    navigate(`/product-detail?id=${product.id}`)
   }
 
   return (
     <div 
       onClick={handleClick}
-      className={`group relative overflow-hidden rounded-[24px] cursor-pointer transition-all duration-500 hover:shadow-xl active:scale-[0.98] h-[160px] md:h-[180px] w-[130px] md:w-[150px] shrink-0 bg-gradient-to-br ${background.bg} flex flex-col p-3 shadow-sm border border-white/10`}
+      className="group relative overflow-hidden rounded-[24px] cursor-pointer transition-all duration-500 hover:shadow-xl active:scale-[0.98] bg-white border border-slate-100 flex flex-col p-3 w-[140px] md:w-[160px] shrink-0 shadow-sm"
     >
-      {/* Animated Background Texture */}
-      <div 
-        className="absolute inset-0 opacity-15 transition-transform duration-1000 group-hover:scale-110" 
-        style={{ backgroundImage: background.texture }}
-      />
-      
-      {/* 1. Shop Name at the top */}
-      <div className="relative z-10 w-full text-center">
-        <span className="inline-flex px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[7px] md:text-[8px] font-black uppercase tracking-tight text-white border border-white/10">
-          {shopName}
+      <div className="absolute top-2 left-2 z-10">
+        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-600 text-white text-[8px] font-black uppercase tracking-tighter shadow-lg">
+          <FaBolt className="text-[7px]" /> Sponsored
         </span>
       </div>
-
-      {/* 2. Images in the middle (Row) */}
-      <div className="relative z-10 flex-1 flex items-center justify-center gap-1.5 overflow-hidden my-2">
-        {products.slice(0, 2).map((p, i) => (
-          <div key={i} className="w-10 h-14 md:w-12 md:h-18 rounded-lg overflow-hidden border border-white/20 shadow-lg transform rotate-[-2deg] first:rotate-[2deg] transition-transform group-hover:rotate-0">
-            <StableImage src={p.image_url} alt="Product" className="h-full w-full object-cover" />
-          </div>
-        ))}
+      
+      <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-50 mb-3">
+        <StableImage 
+          src={product.image_url} 
+          alt={product.name} 
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
+        />
       </div>
 
-      {/* 3. Subtitle / Title below */}
-      <div className="relative z-10 w-full text-center space-y-0.5">
-        <h2 className="text-[9px] md:text-[11px] font-black leading-tight text-white truncate px-1">
-          {banner.title}
-        </h2>
-        <p className="text-[7px] md:text-[8px] font-bold text-white/70 truncate px-1">
-          {banner.subtitle}
-        </p>
+      <div className="space-y-1">
+        <div className="text-[10px] font-black text-slate-900 truncate">{product.name}</div>
+        <div className="text-[9px] font-bold text-pink-600">₦{Number(product.price).toLocaleString()}</div>
+        <div className="pt-1 border-t border-slate-50 flex items-center justify-between">
+           <span className="text-[7px] font-bold text-slate-400 truncate max-w-[70%]">{product.shops?.name}</span>
+           <FaArrowRight className="text-[7px] text-slate-300" />
+        </div>
       </div>
     </div>
   )
@@ -346,8 +329,8 @@ function MarketSection({
            </div>
            
            <div className="flex gap-4 overflow-x-auto pl-4 pb-4 no-scrollbar">
-             {promoBanners.map((banner) => (
-               <PromoBanner key={banner.id} banner={banner} />
+             {promoBanners.map((sponsored) => (
+               <SponsoredProductCard key={sponsored.id} sponsored={sponsored} />
              ))}
              <div className="w-4 shrink-0" aria-hidden="true" />
            </div>

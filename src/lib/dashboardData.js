@@ -139,11 +139,19 @@ export async function fetchHomeHighlights() {
 export async function fetchPromoBanners(cityId) {
   let query = supabase
     .from("promo_banners")
-    .select("*, shops(id, name, products(*))")
+    .select(`
+      id,
+      template_key,
+      sort_order,
+      status,
+      city_id,
+      shops(id, name)
+    `)
     .eq("status", "published")
+    .eq("layout", "product") // Filter for the new product layout
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false })
-    .limit(10)
+    .limit(15)
 
   if (cityId) {
     query = query.or(`city_id.is.null,city_id.eq.${cityId}`)
@@ -158,15 +166,35 @@ export async function fetchPromoBanners(cityId) {
     return []
   }
 
-  // Enforce product limit for nested products
-  const enriched = (data || []).map(banner => {
-    if (banner.shops?.products) {
-      banner.shop_products = banner.shops.products.slice(0, 4)
-    }
-    return banner
-  })
+  // Fetch individual product details for each sponsored banner
+  const productIds = (data || []).map(b => b.template_key).filter(Boolean)
+  
+  if (productIds.length === 0) return []
 
-  return enriched
+  const { data: products, error: pError } = await supabase
+    .from("products")
+    .select("*, shops(id, name)")
+    .in("id", productIds)
+    .eq("is_available", true)
+
+  if (pError) {
+    console.warn("Sponsored products fetch failed:", pError.message)
+    return []
+  }
+
+  // Map products back to banner order
+  const sponsored = (data || [])
+    .map(banner => {
+      const product = (products || []).find(p => String(p.id) === String(banner.template_key))
+      if (!product) return null
+      return {
+        ...banner,
+        product
+      }
+    })
+    .filter(Boolean)
+
+  return sponsored
 }
 
 export async function fetchDashboardData({ userId, profile = null }) {
