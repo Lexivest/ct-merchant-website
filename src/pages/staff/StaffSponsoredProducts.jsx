@@ -16,6 +16,7 @@ import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import { SectionHeading, StaffPortalShell, formatDateTime } from "./StaffPortalShared"
 import StableImage from "../../components/common/StableImage"
+import { clearCachedFetchStore } from "../../hooks/useCachedFetch"
 
 function SponsoredProductPreview({ product }) {
   const [imgIndex, setImgIndex] = useState(0)
@@ -206,6 +207,10 @@ export default function StaffSponsoredProducts() {
       })
       
       if (error) throw error
+
+      // Invalidate dashboard caches so changes reflect immediately for all users
+      clearCachedFetchStore((key) => key.startsWith("dashboard_cache_"))
+
       notify({ type: "success", title: "Product Sponsored", message: "The product is now featured in the marketplace." })
       setSelectedProduct(null)
       await loadInitialData()
@@ -220,6 +225,8 @@ export default function StaffSponsoredProducts() {
     try {
       const { error } = await supabase.from("sponsored_products").update({ status }).eq("id", banner.id)
       if (error) throw error
+      
+      clearCachedFetchStore((key) => key.startsWith("dashboard_cache_"))
       await loadInitialData()
     } catch (error) {
       notify({ type: "error", title: "Update failed", message: getFriendlyErrorMessage(error) })
@@ -232,6 +239,8 @@ export default function StaffSponsoredProducts() {
     try {
       const { error } = await supabase.from("sponsored_products").delete().eq("id", banner.id)
       if (error) throw error
+
+      clearCachedFetchStore((key) => key.startsWith("dashboard_cache_"))
       await loadInitialData()
     } catch (error) {
       notify({ type: "error", title: "Delete failed", message: getFriendlyErrorMessage(error) })
