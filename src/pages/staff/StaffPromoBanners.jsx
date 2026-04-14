@@ -18,6 +18,20 @@ import { SectionHeading, StaffPortalShell, formatDateTime } from "./StaffPortalS
 import StableImage from "../../components/common/StableImage"
 
 function SponsoredProductPreview({ product }) {
+  const [imgIndex, setImgIndex] = useState(0)
+  const images = useMemo(() => {
+    if (!product) return []
+    return [product.image_url, product.side_image_url, product.back_image_url].filter(Boolean)
+  }, [product])
+
+  useEffect(() => {
+    if (images.length <= 1) return
+    const interval = setInterval(() => {
+      setImgIndex((prev) => (prev + 1) % images.length)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [images])
+
   if (!product) {
     return (
       <div className="flex h-40 flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-400">
@@ -28,27 +42,42 @@ function SponsoredProductPreview({ product }) {
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-[24px] bg-white shadow-xl border border-slate-100 flex flex-col p-3 w-[160px] mx-auto">
-      <div className="absolute top-2 left-2 z-10">
-        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-600 text-white text-[8px] font-black uppercase tracking-tighter shadow-lg">
-          <FaBolt className="text-[7px]" /> Sponsored
+    <div className="group relative overflow-hidden rounded-[28px] bg-white shadow-xl border border-slate-100 flex flex-col p-4 w-[180px] md:w-[210px] mx-auto shadow-md">
+      <div className="absolute top-3 left-3 z-10">
+        <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-pink-600 text-white text-[9px] font-black uppercase tracking-tighter shadow-lg">
+          <FaBolt className="text-[8px] animate-pulse" /> Sponsored
         </span>
       </div>
       
-      <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-50 mb-3">
-        <StableImage 
-          src={product.image_url} 
-          alt={product.name} 
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
-        />
+      <div className="relative aspect-square w-full rounded-[20px] overflow-hidden bg-slate-50 mb-4">
+        {images.map((img, idx) => (
+          <div 
+            key={idx}
+            className={`absolute inset-0 transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1) ${idx === imgIndex ? 'translate-x-0 opacity-100' : idx < imgIndex ? '-translate-x-full opacity-0' : 'translate-x-full opacity-0'}`}
+          >
+            <StableImage 
+              src={img} 
+              alt={product.name} 
+              className="h-full w-full object-cover" 
+            />
+          </div>
+        ))}
+        
+        {images.length > 1 && (
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-10">
+            {images.map((_, idx) => (
+              <div key={idx} className={`h-1 rounded-full transition-all duration-500 ${idx === imgIndex ? 'w-4 bg-white shadow-sm' : 'w-1 bg-white/40'}`} />
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="space-y-1">
-        <div className="text-[10px] font-black text-slate-900 truncate">{product.name}</div>
-        <div className="text-[9px] font-bold text-pink-600">₦{Number(product.price).toLocaleString()}</div>
-        <div className="pt-1 border-t border-slate-50 flex items-center justify-between">
-           <span className="text-[7px] font-bold text-slate-400 truncate max-w-[70%]">{product.shops?.name}</span>
-           <FaArrowRight className="text-[7px] text-slate-300" />
+      <div className="space-y-1.5">
+        <div className="text-xs md:text-sm font-black text-slate-900 truncate leading-tight">{product.name}</div>
+        <div className="text-xs font-black text-pink-600">₦{Number(product.price).toLocaleString()}</div>
+        <div className="pt-2 border-t border-slate-50 flex items-center justify-between mt-1">
+           <span className="text-[9px] md:text-[10px] font-black text-yellow-400 uppercase tracking-tight truncate max-w-[70%]">{product.shops?.name}</span>
+           <FaArrowRight className="text-[9px] text-slate-300" />
         </div>
       </div>
     </div>

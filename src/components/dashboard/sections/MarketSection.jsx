@@ -45,7 +45,7 @@ function SponsoredProductCard({ sponsored }) {
         {images.map((img, idx) => (
           <div 
             key={idx}
-            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === imgIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110 pointer-events-none'}`}
+            className={`absolute inset-0 transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1) ${idx === imgIndex ? 'translate-x-0 opacity-100' : idx < imgIndex ? '-translate-x-full opacity-0' : 'translate-x-full opacity-0'}`}
           >
             <StableImage 
               src={img} 
@@ -69,7 +69,7 @@ function SponsoredProductCard({ sponsored }) {
         <div className="text-xs md:text-sm font-black text-slate-900 truncate leading-tight">{product.name}</div>
         <div className="text-xs font-black text-pink-600">₦{Number(product.price).toLocaleString()}</div>
         <div className="pt-2 border-t border-slate-50 flex items-center justify-between mt-1">
-           <span className="text-[9px] md:text-[10px] font-black text-amber-500 uppercase tracking-tight truncate max-w-[70%]">{product.shops?.name}</span>
+           <span className="text-[9px] md:text-[10px] font-black text-yellow-400 uppercase tracking-tight truncate max-w-[70%]">{product.shops?.name}</span>
            <FaArrowRight className="text-[9px] text-slate-300 group-hover:text-pink-500 transition-colors" />
         </div>
       </div>
