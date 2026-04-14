@@ -26,94 +26,84 @@ function PromoBanner({ banner }) {
   }
 
   return (
-    <div className="px-4 mb-6">
+    <div 
+      onClick={handleClick}
+      className={`group relative overflow-hidden rounded-[20px] cursor-pointer transition-all duration-500 hover:shadow-lg active:scale-[0.98] h-[110px] md:h-[130px] w-[260px] md:w-[300px] shrink-0 bg-gradient-to-br ${background.bg}`}
+    >
+      {/* Animated Background Texture */}
       <div 
-        onClick={handleClick}
-        className={`group relative overflow-hidden rounded-[24px] cursor-pointer transition-all duration-500 hover:shadow-xl active:scale-[0.98] min-h-[140px] md:min-h-[160px] bg-gradient-to-br ${background.bg}`}
-      >
-        {/* Animated Background Texture */}
-        <div 
-          className="absolute inset-0 opacity-20 transition-transform duration-1000 group-hover:scale-110" 
-          style={{ backgroundImage: background.texture }}
-        />
+        className="absolute inset-0 opacity-15 transition-transform duration-1000 group-hover:scale-110" 
+        style={{ backgroundImage: background.texture }}
+      />
+      
+      {/* Content Layouts */}
+      <div className="relative h-full flex items-center p-4 md:p-5 gap-4">
         
-        {/* Content Layouts */}
-        <div className="relative h-full flex items-center p-6 md:p-8 gap-6">
-          
-          {layout === "split" && (
-            <>
-              <div className="flex-1 text-white space-y-1 animate-in fade-in slide-in-from-left duration-700">
-                {isHotDeal && (
-                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[8px] font-black uppercase tracking-widest">
-                    <FaBolt className="text-amber-400" /> Hot Deal
-                  </div>
-                )}
-                <h2 className="text-xl md:text-3xl font-black leading-tight drop-shadow-md">
-                  {banner.title}
-                </h2>
-                <p className="text-[10px] md:text-sm font-bold opacity-90 max-w-md line-clamp-1">
-                  {banner.subtitle}
-                </p>
-                <div className="pt-2">
-                  <span className="px-4 py-1.5 rounded-xl bg-white text-slate-900 font-black text-[10px] md:text-xs shadow-lg transition-transform group-hover:scale-105 inline-block">
-                    {banner.call_to_action || 'Claim Now'}
-                  </span>
+        {layout === "split" && (
+          <>
+            <div className="flex-1 text-white space-y-0.5 min-w-0">
+              {isHotDeal && (
+                <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[7px] font-black uppercase tracking-tighter">
+                  <FaBolt className="text-amber-400" /> Hot Deal
                 </div>
-              </div>
-              
-              <div className="flex gap-3 animate-in fade-in zoom-in duration-1000 delay-200">
-                {products.map((p, i) => (
-                  <div 
-                    key={p.id || i} 
-                    className={`relative w-16 h-20 md:w-20 md:h-28 rounded-xl overflow-hidden border-2 border-white/20 shadow-xl transition-transform duration-500 group-hover:translate-y-[-5px]`}
-                    style={{ transitionDelay: `${i * 100}ms` }}
-                  >
-                    <StableImage src={p.image_url} alt="Product" className="h-full w-full object-cover" />
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {layout === "grid" && (
-            <div className="w-full text-center text-white space-y-3">
-              <div className="space-y-0.5">
-                <h2 className="text-2xl md:text-4xl font-black drop-shadow-md leading-none">{banner.title}</h2>
-                <p className="text-[10px] md:text-sm font-bold opacity-80">{banner.subtitle}</p>
-              </div>
-              <div className="flex justify-center gap-3">
-                {products.map((p, i) => (
-                  <div key={p.id || i} className="w-10 h-10 md:w-16 md:h-16 rounded-xl overflow-hidden border-2 border-white/10 shadow-lg">
-                    <StableImage src={p.image_url} alt="Product" className="h-full w-full object-cover" />
-                  </div>
-                ))}
+              )}
+              <h2 className="text-sm md:text-lg font-black leading-tight truncate">
+                {banner.title}
+              </h2>
+              <p className="text-[9px] md:text-[11px] font-bold opacity-80 line-clamp-1">
+                {banner.subtitle}
+              </p>
+              <div className="pt-1.5">
+                <span className="px-3 py-1 rounded-lg bg-white text-slate-900 font-black text-[8px] md:text-[10px] shadow-md">
+                  {banner.call_to_action || 'Claim'}
+                </span>
               </div>
             </div>
-          )}
-
-          {layout === "focus" && (
-            <div className="w-full h-full flex items-center justify-center">
-               <div className="absolute inset-0 flex gap-1 opacity-20 grayscale blur-[2px]">
-                 {products.map((p, i) => (
-                   <div key={i} className="flex-1 h-full"><StableImage src={p.image_url} className="w-full h-full object-cover" /></div>
-                 ))}
-               </div>
-               <div className="relative z-10 bg-black/40 backdrop-blur-xl p-4 md:p-6 rounded-[24px] border border-white/10 text-center text-white w-full max-w-sm transform transition-transform group-hover:scale-105 duration-700">
-                 <h2 className="text-xl md:text-2xl font-black mb-1">{banner.title}</h2>
-                 <p className="text-[10px] md:text-xs opacity-80 font-bold">{banner.subtitle}</p>
-               </div>
+            
+            <div className="flex gap-1.5 shrink-0">
+              {products.map((p, i) => (
+                <div 
+                  key={p.id || i} 
+                  className="relative w-10 h-14 md:w-14 md:h-20 rounded-lg overflow-hidden border border-white/20 shadow-lg"
+                >
+                  <StableImage src={p.image_url} alt="Product" className="h-full w-full object-cover" />
+                </div>
+              ))}
             </div>
-          )}
+          </>
+        )}
 
-          {/* Icon Arrow Overlay */}
-          <div className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white backdrop-blur-lg border border-white/20 transition-all duration-500 group-hover:bg-white/30 group-hover:scale-110">
-            <FaArrowRight className="text-lg" />
+        {layout === "grid" && (
+          <div className="w-full text-center text-white space-y-2">
+            <h2 className="text-sm md:text-xl font-black leading-none truncate px-2">{banner.title}</h2>
+            <div className="flex justify-center gap-2">
+              {products.map((p, i) => (
+                <div key={p.id || i} className="w-8 h-8 md:w-12 md:h-12 rounded-lg overflow-hidden border border-white/10">
+                  <StableImage src={p.image_url} alt="Product" className="h-full w-full object-cover" />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {layout === "focus" && (
+          <div className="w-full h-full flex items-center justify-center">
+             <div className="absolute inset-0 flex gap-0.5 opacity-20 grayscale blur-[1px]">
+               {products.map((p, i) => (
+                 <div key={i} className="flex-1 h-full"><StableImage src={p.image_url} className="w-full h-full object-cover" /></div>
+               ))}
+             </div>
+             <div className="relative z-10 bg-black/40 backdrop-blur-lg p-3 rounded-[18px] border border-white/10 text-center text-white w-full max-w-[80%]">
+               <h2 className="text-xs md:text-sm font-black truncate">{banner.title}</h2>
+               <p className="text-[8px] md:text-[10px] opacity-70 font-bold truncate">{banner.subtitle}</p>
+             </div>
+          </div>
+        )}
       </div>
     </div>
   )
 }
+
 
 const EMPTY_PRODUCTS = []
 let shopDetailPrefetchPromise = null
@@ -378,7 +368,7 @@ function MarketSection({
 
   // 3. ACTUAL RENDER
   return (
-    <div className="screen active">
+    <div className="screen active bg-slate-50">
       {dashboardData.featuredCityBanners?.length > 0 ? (
         <FeaturedCitySlider
           banners={dashboardData.featuredCityBanners}
@@ -386,9 +376,22 @@ function MarketSection({
         />
       ) : null}
 
-      {promoBanners.map((banner) => (
-        <PromoBanner key={banner.id} banner={banner} />
-      ))}
+      {promoBanners.length > 0 && (
+        <div className="sponsored-wrap mb-2 bg-white pt-4 pb-2">
+           <div className="px-4 mb-4 flex items-center gap-3">
+             <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-[11px] font-black uppercase tracking-widest shadow-sm">
+               <FaBolt className="text-[10px]" /> Sponsored
+             </span>
+             <div className="h-[1px] flex-1 bg-slate-100"></div>
+           </div>
+           
+           <div className="flex gap-4 overflow-x-auto px-4 pb-4 no-scrollbar">
+             {promoBanners.map((banner) => (
+               <PromoBanner key={banner.id} banner={banner} />
+             ))}
+           </div>
+        </div>
+      )}
 
       {groupedShopsByArea.map(({ area, shops }) => (
         <div key={area.id} className="area-block-wrap mb-2 bg-white pt-4">
