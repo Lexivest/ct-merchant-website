@@ -136,6 +136,25 @@ export async function fetchHomeHighlights() {
   }
 }
 
+export async function fetchPromoBanners(cityId) {
+  let query = supabase
+    .from("promo_banners")
+    .select("*")
+    .eq("status", "published")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(10)
+
+  if (cityId) {
+    query = query.or(`city_id.is.null,city_id.eq.${cityId}`)
+  } else {
+    query = query.is("city_id", null)
+  }
+
+  const res = await query
+  return unwrapSupabaseResult(res) || []
+}
+
 export async function fetchDashboardData({ userId, profile = null }) {
   if (!userId) throw new Error("Authentication required")
 
@@ -144,6 +163,7 @@ export async function fetchDashboardData({ userId, profile = null }) {
 
   const [
     featuredCityBanners,
+    promoBanners,
     announcementsRes,
     categoriesRes,
     areasRes,
@@ -152,6 +172,7 @@ export async function fetchDashboardData({ userId, profile = null }) {
     wishlistRes,
   ] = await Promise.all([
     fetchFeaturedCityBanners(cityId),
+    fetchPromoBanners(cityId),
     supabase.from("announcements").select("*").order("created_at", { ascending: false }),
     supabase.from("categories").select("*").order("name"),
     supabase.from("areas").select("*").eq("city_id", cityId).order("name"),
@@ -216,7 +237,7 @@ export async function fetchDashboardData({ userId, profile = null }) {
 
   return {
     profile: currentProfile,
-    promos: [],
+    promos: promoBanners,
     featuredCityBanners,
     announcements,
     categories,

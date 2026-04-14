@@ -153,6 +153,7 @@ const loadStaffCommunity = () => import("./pages/staff/StaffCommunity")
 const loadStaffVerifications = () => import("./pages/staff/StaffVerifications")
 const loadStaffPayments = () => import("./pages/staff/StaffPayments")
 const loadStaffFeaturedCityBanners = () => import("./pages/staff/StaffFeaturedCityBanners")
+const loadStaffPromoBanners = () => import("./pages/staff/StaffPromoBanners")
 const loadStaffIDGenerator = () => import("./pages/staff/StaffIDGenerator")
 const loadStaffInbox = () => import("./pages/staff/StaffInbox")
 const loadUserDashboard = () => import("./pages/UserDashboard")
@@ -194,6 +195,7 @@ const StaffCommunity = resilientLazy(loadStaffCommunity, { pageLabel: "staff com
 const StaffVerifications = resilientLazy(loadStaffVerifications, { pageLabel: "staff verifications" })
 const StaffPayments = resilientLazy(loadStaffPayments, { pageLabel: "staff payments" })
 const StaffFeaturedCityBanners = resilientLazy(loadStaffFeaturedCityBanners, { pageLabel: "featured city banners" })
+const StaffPromoBanners = resilientLazy(loadStaffPromoBanners, { pageLabel: "promo banner studio" })
 const StaffIDGenerator = resilientLazy(loadStaffIDGenerator, { pageLabel: "staff ID generator" })
 const StaffInbox = resilientLazy(loadStaffInbox, { pageLabel: "staff inbox" })
 const UserDashboard = resilientLazy(loadUserDashboard, { pageLabel: "user dashboard" })
@@ -408,6 +410,7 @@ function AppShell() {
         <Route path="/staff-verifications" element={<StaffVerifications />} />
         <Route path="/staff-payments" element={<StaffPayments />} />
         <Route path="/staff-city-banners" element={<StaffFeaturedCityBanners />} />
+        <Route path="/staff-promo-banners" element={<StaffPromoBanners />} />
         <Route path="/staff-issue-id" element={<StaffIDGenerator />} />
         <Route path="/staff-studio" element={<ImageOptimizer />} />
         <Route path="/staff-inbox" element={<StaffInbox />} />

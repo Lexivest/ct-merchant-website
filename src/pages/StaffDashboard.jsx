@@ -189,6 +189,13 @@ export default function StaffDashboard() {
         onClick={() => void openStaffRouteWithTransition("/staff-inbox")}
       />,
       <QuickActionButton
+        key="promo-banners"
+        icon={<FaImages />}
+        label="Promo Studio"
+        tone="pink"
+        onClick={() => void openStaffRouteWithTransition("/staff-promo-banners")}
+      />,
+      <QuickActionButton
         key="city-banners"
         icon={<FaImages />}
         label="City Banners"
@@ -258,6 +265,13 @@ export default function StaffDashboard() {
               metric={summary.pendingPayments}
               tone="blue"
               onClick={() => void openStaffRouteWithTransition("/staff-payments")}
+            />
+            <HomeCard
+              icon={<FaImages />}
+              title="Promo Studio"
+              subtitle="Design and publish text-based colorful promo widgets with city targeting."
+              tone="pink"
+              onClick={() => void openStaffRouteWithTransition("/staff-promo-banners")}
             />
             <HomeCard
               icon={<FaImages />}

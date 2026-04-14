@@ -10,6 +10,7 @@ const staffRouteLoaders = {
   "/staff-verifications": () => import("../pages/staff/StaffVerifications"),
   "/staff-payments": () => import("../pages/staff/StaffPayments"),
   "/staff-city-banners": () => import("../pages/staff/StaffFeaturedCityBanners"),
+  "/staff-promo-banners": () => import("../pages/staff/StaffPromoBanners"),
   "/staff-inbox": () => import("../pages/staff/StaffInbox"),
   "/staff-studio": () => import("../pages/vendors/ImageOptimizer"),
 }
@@ -224,6 +225,20 @@ async function prepareStaffInboxData() {
   }
 }
 
+async function prepareStaffPromoBannersData() {
+  const [citiesResult, bannersResult] = await Promise.all([
+    supabase.from("cities").select("id, name, state").order("name"),
+    supabase.from("promo_banners").select("id").limit(1),
+  ])
+
+  if (citiesResult.error) throw citiesResult.error
+
+  return {
+    kind: "staff-promo-banners",
+    cityOptions: citiesResult.data || [],
+  }
+}
+
 const staffPreparers = {
   "/staff-traffic": prepareStaffTrafficData,
   "/staff-users": prepareStaffUsersData,
@@ -231,6 +246,7 @@ const staffPreparers = {
   "/staff-verifications": prepareStaffVerificationsData,
   "/staff-payments": prepareStaffPaymentsData,
   "/staff-city-banners": prepareStaffFeaturedCityBannersData,
+  "/staff-promo-banners": prepareStaffPromoBannersData,
   "/staff-inbox": prepareStaffInboxData,
 }
 

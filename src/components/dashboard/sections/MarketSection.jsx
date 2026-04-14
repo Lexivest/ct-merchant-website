@@ -1,9 +1,50 @@
 import { memo, useEffect, useMemo, useState } from "react"
-import { FaImage } from "react-icons/fa6"
+import { useNavigate } from "react-router-dom"
+import { FaImage, FaArrowRight } from "react-icons/fa6"
 // IMPORT OUR NEW SHIMMERS
 import { ShimmerBlock } from "../../common/Shimmers"
 import StableImage from "../../common/StableImage"
 import RetryingNotice, { getRetryingMessage } from "../../common/RetryingNotice"
+import { buildPromoBannerSvg, promoSvgToDataUrl } from "../../../lib/promoBannerEngine"
+
+function PromoBanner({ banner }) {
+  const navigate = useNavigate()
+
+  const svg = useMemo(
+    () =>
+      buildPromoBannerSvg({
+        title: banner.title,
+        subtitle: banner.subtitle,
+        backgroundKey: banner.template_key,
+        isHotDeal: Boolean(banner.shop_id),
+      }),
+    [banner]
+  )
+
+  const handleClick = () => {
+    if (banner.shop_id) {
+      navigate(`/shop-detail?id=${banner.shop_id}`)
+    } else if (banner.external_link) {
+      window.open(banner.external_link, "_blank", "noopener,noreferrer")
+    }
+  }
+
+  return (
+    <div
+      onClick={handleClick}
+      className="group relative mb-5 cursor-pointer overflow-hidden rounded-[24px] transition active:scale-[0.98] px-4"
+    >
+      <img
+        src={promoSvgToDataUrl(svg)}
+        alt={banner.title}
+        className="block w-full"
+      />
+      <div className="absolute right-10 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white backdrop-blur-md transition group-hover:bg-white/40">
+        <FaArrowRight />
+      </div>
+    </div>
+  )
+}
 
 const EMPTY_PRODUCTS = []
 let shopDetailPrefetchPromise = null
@@ -182,9 +223,8 @@ function MarketSection({
   groupedShopsByArea = [],
   navigateCategory,
   onOpenShop,
-  loading, 
+  loading,
   error,
-  promoBanner = null
 }) {
   const dashboardShellEmpty =
     !dashboardData ||
@@ -194,6 +234,8 @@ function MarketSection({
       (dashboardData.areas || []).length === 0 &&
       (dashboardData.shops || []).length === 0 &&
       (dashboardData.products || []).length === 0)
+
+  const promoBanners = dashboardData?.promos || []
 
   function openShop(shopId) {
     if (typeof onOpenShop === "function") {
@@ -275,7 +317,9 @@ function MarketSection({
         />
       ) : null}
 
-      {promoBanner}
+      {promoBanners.map((banner) => (
+        <PromoBanner key={banner.id} banner={banner} />
+      ))}
 
       {groupedShopsByArea.map(({ area, shops }) => (
         <div key={area.id} className="area-block-wrap mb-2 bg-white pt-4">
