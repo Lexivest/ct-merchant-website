@@ -25,7 +25,7 @@ function MarketPulseTicker() {
       <div className="mx-auto flex max-w-7xl items-center px-4">
         <div className="mr-4 flex shrink-0 items-center gap-2 border-r border-white/20 pr-4 text-[10px] font-black uppercase tracking-tighter text-emerald-400">
           <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-          Live Market Pulse
+          Live
         </div>
         <div className="min-w-0 flex-1">
           <ScrollingTicker

@@ -124,7 +124,7 @@ function ActivityCalendar() {
   ]
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col items-center">
       <div className="mb-4 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-md shadow-slate-200">
           <FaCalendarDays className="text-base" />
@@ -132,14 +132,14 @@ function ActivityCalendar() {
         <h3 className="text-base font-black tracking-tight text-slate-900 uppercase">Activity Calendar</h3>
       </div>
 
-      <div className="divide-y divide-slate-100 rounded-3xl border border-slate-100 bg-white p-1 shadow-sm">
+      <div className="w-full divide-y divide-slate-100 rounded-3xl border border-slate-100 bg-white p-1 shadow-sm">
         {calendarEvents.map((ev, idx) => (
           <div key={idx} className="flex items-center gap-3 p-3 transition hover:bg-slate-50">
-            <div className="flex h-12 w-12 flex-col items-center justify-center rounded-xl bg-pink-50 text-center">
+            <div className="flex h-12 w-12 flex-col items-center justify-center rounded-xl bg-pink-50 text-center shrink-0">
               <span className="text-[9px] font-black text-pink-600 uppercase tracking-tighter">{ev.date.split(" ")[0]}</span>
               <span className="text-base font-black text-slate-900">{ev.date.split(" ")[1]}</span>
             </div>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 text-left">
               <div className="text-xs font-bold text-slate-900 truncate">{ev.title}</div>
               <div className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-slate-500">
                 {ev.type}
@@ -154,7 +154,7 @@ function ActivityCalendar() {
 
 function OfficeSupportCard() {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col items-center">
       <div className="mb-4 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md shadow-amber-200">
           <FaClock className="text-base" />
@@ -162,10 +162,10 @@ function OfficeSupportCard() {
         <h3 className="text-base font-black tracking-tight text-slate-900 uppercase">Office & Support</h3>
       </div>
 
-      <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+      <div className="w-full rounded-3xl border border-slate-100 bg-white p-5 shadow-sm text-center">
         <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 text-amber-500 text-sm"><FaClock /></div>
+          <div className="flex flex-col items-center gap-1">
+            <div className="text-amber-500 text-sm"><FaClock /></div>
             <div>
               <div className="text-xs font-bold text-slate-900">Opening Hours</div>
               <p className="mt-1 text-xs leading-relaxed text-slate-500">
@@ -175,19 +175,19 @@ function OfficeSupportCard() {
             </div>
           </div>
 
-          <div className="flex items-start gap-3 pt-3 border-t border-slate-50">
-            <div className="mt-0.5 text-pink-600 text-sm"><FaPhone /></div>
+          <div className="flex flex-col items-center gap-1 pt-3 border-t border-slate-50">
+            <div className="text-pink-600 text-sm"><FaPhone /></div>
             <div>
               <div className="text-xs font-bold text-slate-900">Phone Support</div>
               <p className="mt-1 text-xs text-slate-500 font-mono font-bold">+234 812 345 6789</p>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 pt-3 border-t border-slate-50">
-            <div className="mt-0.5 text-blue-500 text-sm"><FaEnvelope /></div>
+          <div className="flex flex-col items-center gap-1 pt-3 border-t border-slate-50">
+            <div className="text-blue-500 text-sm"><FaEnvelope /></div>
             <div>
               <div className="text-xs font-bold text-slate-900">Email Inquiry</div>
-              <p className="mt-1 text-xs text-slate-500 underline truncate">support@ctmerchant.ng</p>
+              <p className="mt-1 text-xs text-slate-500 underline truncate max-w-full">support@ctmerchant.ng</p>
             </div>
           </div>
         </div>
@@ -1279,7 +1279,7 @@ function Home() {
 
                       <div className="space-y-3">
                         <div className="relative flex min-h-[44px] w-full items-center justify-center">
-                          <div ref={googleButtonRef} className="w-full" />
+                          <div ref={googleButtonRef} className="flex justify-center w-full" />
                           {!googleReady ? (
                             <div className="absolute inset-0 flex items-center justify-center rounded-lg border border-[#DADCE0] bg-white text-xs font-semibold text-[#5F6368]">
                               Preparing Google sign-in...
@@ -1320,12 +1320,13 @@ function Home() {
             </div>
           </section>
 
-          <NewsletterSection />
-          <div className="bg-slate-900 py-3 text-white">
+          <div className="bg-white py-3 text-slate-900 border-y border-slate-100">
             <div className="mx-auto max-w-7xl px-4">
               <HeaderMarquee />
             </div>
           </div>
+
+          <NewsletterSection />
           {resetEmailOpen ? (
             <SimpleModal
               title="Reset Password"
