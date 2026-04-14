@@ -1,6 +1,5 @@
 import Navbar from "../components/common/Navbar"
 import Footer from "../components/common/Footer"
-import FloatingContact from "../components/common/FloatingContact"
 import AiAssistantWidget from "../components/common/AiAssistantWidget"
 
 function MainLayout({ children }) {
@@ -9,7 +8,6 @@ function MainLayout({ children }) {
       <Navbar />
       <main className="w-full overflow-x-hidden">{children}</main>
       <Footer />
-      <FloatingContact />
       <AiAssistantWidget />
     </div>
   )

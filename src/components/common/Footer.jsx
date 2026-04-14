@@ -24,7 +24,7 @@ function Footer() {
     <footer className="border-t-4 border-pink-600 bg-slate-950 py-8 text-slate-400">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 text-xs md:flex-row">
         <div className="flex flex-col gap-1 md:flex-row md:items-center md:gap-4">
-          <p className="font-bold text-white">© 2026 CT-MERCHANT LTD.</p>
+          <p className="font-bold text-white">© 2025 CT-MERCHANT LTD.</p>
           {appVersion && (
             <span className="font-mono text-[10px] uppercase tracking-widest text-slate-600">
               Build v{appVersion}

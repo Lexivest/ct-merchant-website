@@ -265,6 +265,261 @@ function HighlightsSection({ announcements = [] }) {
   )
 }
 
+function HomeFeedbackSection() {
+  const { notify } = useGlobalFeedback()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    subject: "General Inquiry",
+    message: "",
+  })
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!formData.fullName.trim() || !formData.email.trim() || !formData.message.trim()) {
+      notify({ type: "error", title: "Missing Fields", message: "Please fill in all required details." })
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      const { error } = await supabase.from("contact_messages").insert([{
+        full_name: formData.fullName.trim(),
+        email: formData.email.trim(),
+        subject: formData.subject,
+        message: formData.message.trim(),
+      }])
+      if (error) throw error
+      setFormData({ fullName: "", email: "", subject: "General Inquiry", message: "" })
+      notify({ type: "success", title: "Feedback Received", message: "Thank you! Your message has been sent to our team." })
+    } catch (err) {
+      notify({ type: "error", title: "Submission Failed", message: getFriendlyErrorMessage(err) })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="h-full rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
+      <div className="mb-6">
+        <span className="inline-block rounded-full border border-pink-200 bg-pink-50 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-pink-700">
+          Share Your Feedback
+        </span>
+        <h2 className="mt-4 text-2xl font-extrabold text-slate-900 md:text-3xl">
+          Help Us Improve Your Experience
+        </h2>
+        <p className="mt-2 text-sm font-medium text-slate-500">
+          Have a suggestion or encountered an issue? We'd love to hear from you.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500">Full Name</label>
+            <input
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              placeholder="e.g. John Doe"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-pink-500 focus:bg-white"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500">Email Address</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="name@example.com"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-pink-500 focus:bg-white"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500">Subject</label>
+          <select
+            name="subject"
+            value={formData.subject}
+            onChange={handleChange}
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-pink-500 focus:bg-white"
+          >
+            <option>General Inquiry</option>
+            <option>Merchant Feedback</option>
+            <option>Feature Request</option>
+            <option>Technical Issue</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500">Message</label>
+          <textarea
+            name="message"
+            rows="4"
+            value={formData.message}
+            onChange={handleChange}
+            placeholder="Tell us what's on your mind..."
+            className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-pink-500 focus:bg-white"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[#0F1111] px-6 py-4 text-sm font-black text-white transition hover:bg-slate-800 disabled:opacity-70"
+        >
+          {isSubmitting ? "Sending Message..." : "Submit Feedback"}
+          {!isSubmitting && <FaArrowRight />}
+        </button>
+      </form>
+
+      <div className="mt-8 rounded-[22px] border border-pink-100 bg-pink-50 p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-extrabold uppercase tracking-[0.2em] text-pink-600">
+              Follow CTMerchant
+            </p>
+            <h3 className="mt-1 text-lg font-extrabold text-slate-900">
+              Stay connected
+            </h3>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          {socialLinks.map((item) => {
+            const Icon = item.icon
+            return (
+              <a
+                key={item.label}
+                href={item.href}
+                target="_blank"
+                rel="noreferrer"
+                className="group flex items-center gap-3 rounded-2xl border border-pink-100 bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-200 hover:shadow-md"
+              >
+                <span
+                  className={`flex h-11 w-11 items-center justify-center rounded-2xl text-lg text-white ${item.accent}`}
+                >
+                  <Icon />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-extrabold text-slate-900">
+                    {item.label}
+                  </span>
+                </span>
+              </a>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function NewsletterSection() {
+  const { notify } = useGlobalFeedback()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formData, setFormData] = useState({ fullName: "", email: "" })
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!formData.fullName.trim() || !formData.email.trim()) {
+      notify({ type: "error", title: "Required", message: "Please provide your name and email." })
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      const { error } = await supabase.from("newsletter_subscriptions").insert([{
+        full_name: formData.fullName.trim(),
+        email: formData.email.trim(),
+      }])
+
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error("You are already subscribed to our newsletter.")
+        }
+        throw error
+      }
+
+      setFormData({ fullName: "", email: "" })
+      notify({ type: "success", title: "Subscribed!", message: "Welcome to the CTMerchant newsletter." })
+    } catch (err) {
+      notify({ type: "error", title: "Subscription Failed", message: getFriendlyErrorMessage(err) })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <section className="bg-slate-900 py-16 text-white">
+      <div className="mx-auto max-w-7xl px-4">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div>
+            <div className="inline-flex rounded-full bg-pink-600/20 px-4 py-2 text-xs font-black uppercase tracking-widest text-pink-400 ring-1 ring-pink-500/30">
+              CTMerchant Insider
+            </div>
+            <h2 className="mt-6 text-4xl font-black tracking-tight md:text-5xl">
+              Stay Ahead of the <br />
+              <span className="text-pink-500">Market Pulse</span>
+            </h2>
+            <p className="mt-6 max-w-md text-lg font-medium leading-relaxed text-slate-400">
+              Join our newsletter to receive weekly insights, new merchant alerts, and exclusive community updates directly in your inbox.
+            </p>
+          </div>
+
+          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Full Name</label>
+                  <input
+                    type="text"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                    placeholder="John Doe"
+                    className="w-full rounded-2xl border border-white/10 bg-white/10 px-6 py-4 text-base font-bold text-white outline-none transition focus:bg-white/20 focus:ring-2 focus:ring-pink-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Email Address</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="john@example.com"
+                    className="w-full rounded-2xl border border-white/10 bg-white/10 px-6 py-4 text-base font-bold text-white outline-none transition focus:bg-white/20 focus:ring-2 focus:ring-pink-500"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex w-full items-center justify-center gap-3 rounded-2xl bg-pink-600 px-8 py-4 text-base font-black text-white transition hover:bg-pink-700 disabled:opacity-70"
+              >
+                {isSubmitting ? "Joining..." : "Join Newsletter"}
+                {!isSubmitting && <FaArrowRight />}
+              </button>
+              
+              <p className="text-center text-[10px] font-medium text-slate-500">
+                We respect your privacy. Unsubscribe at any time.
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function Home() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -1124,93 +1379,14 @@ function Home() {
               </div>
 
               <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-1 lg:row-start-2">
-                <div className="h-full rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
-                  <span className="inline-block rounded-full border border-pink-200 bg-pink-50 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-pink-700">
-                    Testimonials
-                  </span>
-
-                  <h2 className="mt-4 text-2xl font-extrabold text-slate-900 md:text-3xl">
-                    What Merchants And Users Are Saying
-                  </h2>
-
-                  <p className="mt-4 text-base leading-8 text-slate-600">
-                    Placeholder feedback from real merchants and customers will appear here as the platform continues to grow.
-                  </p>
-
-                  <div className="mt-6 space-y-4">
-                    {testimonials.map((item) => (
-                      <div
-                        key={`${item.type}-${item.author}`}
-                        className="rounded-[22px] border border-pink-100 bg-pink-50 p-5"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="inline-flex rounded-full bg-white px-3 py-1 text-[0.7rem] font-extrabold uppercase tracking-[0.18em] text-pink-600">
-                            {item.type}
-                          </span>
-                          <FaCircleInfo className="shrink-0 text-pink-400" />
-                        </div>
-                        <p className="mt-4 text-base font-medium leading-8 text-slate-700">
-                          "{item.quote}"
-                        </p>
-                        <div className="mt-4">
-                          <div className="text-sm font-extrabold text-slate-900">{item.author}</div>
-                          <div className="text-sm text-slate-500">{item.detail}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-8 rounded-[22px] border border-pink-100 bg-pink-50 p-5">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                      <div>
-                        <p className="text-sm font-extrabold uppercase tracking-[0.2em] text-pink-600">
-                          Follow CTMerchant
-                        </p>
-                        <h3 className="mt-1 text-lg font-extrabold text-slate-900">
-                          Stay connected across our official channels
-                        </h3>
-                      </div>
-                      <p className="text-sm text-slate-500">
-                        News, updates, highlights, and marketplace stories.
-                      </p>
-                    </div>
-
-                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                      {socialLinks.map((item) => {
-                        const Icon = item.icon
-                        return (
-                          <a
-                            key={item.label}
-                            href={item.href}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="group flex items-center gap-3 rounded-2xl border border-pink-100 bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-200 hover:shadow-md"
-                          >
-                            <span
-                              className={`flex h-11 w-11 items-center justify-center rounded-2xl text-lg text-white ${item.accent}`}
-                            >
-                              <Icon />
-                            </span>
-                            <span className="min-w-0">
-                              <span className="block text-sm font-extrabold text-slate-900">
-                                {item.label}
-                              </span>
-                              <span className="block truncate text-xs font-medium text-slate-500 group-hover:text-pink-600">
-                                Open channel
-                              </span>
-                            </span>
-                          </a>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
+                <HomeFeedbackSection />
               </div>
             </div>
           </section>
 
           <HighlightsSection announcements={highlights?.announcements || []} />
-      <MarketPulseTicker />
+          <NewsletterSection />
+          <MarketPulseTicker />
           {resetEmailOpen ? (
             <SimpleModal
               title="Reset Password"

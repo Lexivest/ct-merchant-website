@@ -10,6 +10,7 @@ import {
   FaShieldHalved,
   FaTriangleExclamation,
   FaCheckDouble,
+  FaUsersViewfinder,
 } from "react-icons/fa6";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
@@ -53,6 +54,16 @@ export default function StaffInbox() {
         
         if (error) throw error;
         setItems((data || []).map(item => ({ ...item, _type: "contact" })));
+      }
+
+      if (activeTab === "newsletter") {
+        const { data, error } = await supabase
+          .from("newsletter_subscriptions")
+          .select("*")
+          .order("created_at", { ascending: false });
+        
+        if (error) throw error;
+        setItems((data || []).map(item => ({ ...item, _type: "newsletter" })));
       }
 
       if (activeTab === "abuse") {
@@ -105,7 +116,11 @@ export default function StaffInbox() {
 
   const updateStatus = async (id, newStatus, type) => {
     setUpdating(true);
-    const table = type === "contact" ? "contact_messages" : "abuse_reports";
+    const table = 
+      type === "contact" ? "contact_messages" : 
+      type === "newsletter" ? "newsletter_subscriptions" :
+      "abuse_reports";
+
     try {
       const { error } = await supabase
         .from(table)
@@ -123,7 +138,7 @@ export default function StaffInbox() {
       notify({
         type: "error",
         title: "Update failed",
-        message: "We could not update this message status. Please retry.",
+        message: "We could not update this record status. Please retry.",
       });
     } finally {
       setUpdating(false);
@@ -145,6 +160,10 @@ export default function StaffInbox() {
 
   const renderStatusBadge = (status) => {
     switch (status?.toLowerCase()) {
+      case "active":
+        return <span className="bg-emerald-100 text-emerald-800 text-[0.65rem] px-2 py-0.5 rounded-md font-black uppercase tracking-widest border border-emerald-200">Subscribed</span>;
+      case "unsubscribed":
+        return <span className="bg-rose-100 text-rose-800 text-[0.65rem] px-2 py-0.5 rounded-md font-black uppercase tracking-widest border border-rose-200">Unsubscribed</span>;
       case "unread":
       case "pending":
         return <span className="bg-amber-100 text-amber-800 text-[0.65rem] px-2 py-0.5 rounded-md font-black uppercase tracking-widest border border-amber-200">Needs Action</span>;
@@ -185,6 +204,14 @@ export default function StaffInbox() {
           <FaEnvelope /> Public Inquiries
         </button>
         <button
+          onClick={() => setActiveTab("newsletter")}
+          className={`flex items-center gap-2 px-4 py-4 text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+            activeTab === "newsletter" ? "border-b-2 border-emerald-600 text-emerald-700" : "text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <FaUsersViewfinder /> Newsletter
+        </button>
+        <button
           onClick={() => setActiveTab("abuse")}
           className={`flex items-center gap-2 px-4 py-4 text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
             activeTab === "abuse" ? "border-b-2 border-rose-600 text-rose-700" : "text-slate-500 hover:text-slate-800"
@@ -220,25 +247,25 @@ export default function StaffInbox() {
                     onClick={() => setSelectedItem(item)}
                     className={`cursor-pointer p-4 transition-all border-l-4 ${
                       isSelected 
-                        ? (isContact ? "bg-blue-50 border-blue-600 hidden lg:block" : "bg-rose-50 border-rose-600 hidden lg:block") 
-                        : (isContact ? "hover:bg-blue-50/50 border-transparent" : "hover:bg-rose-50/50 border-transparent")
+                        ? (activeTab === "contact" ? "bg-blue-50 border-blue-600 hidden lg:block" : activeTab === "newsletter" ? "bg-emerald-50 border-emerald-600 hidden lg:block" : "bg-rose-50 border-rose-600 hidden lg:block") 
+                        : (activeTab === "contact" ? "hover:bg-blue-50/50 border-transparent" : activeTab === "newsletter" ? "hover:bg-emerald-50/50 border-transparent" : "hover:bg-rose-50/50 border-transparent")
                     }`}
                   >
                     {/* EXPLICIT TYPE BADGE */}
                     <div className="flex justify-between items-start mb-2">
-                      <span className={`flex items-center gap-1.5 text-[0.6rem] font-black uppercase tracking-widest ${isContact ? 'text-blue-600' : 'text-rose-600'}`}>
-                        {isContact ? <FaEnvelope /> : <FaShieldHalved />}
-                        {isContact ? 'Public Inquiry' : 'Abuse Report'}
+                      <span className={`flex items-center gap-1.5 text-[0.6rem] font-black uppercase tracking-widest ${activeTab === "contact" ? 'text-blue-600' : activeTab === "newsletter" ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        {activeTab === "contact" ? <FaEnvelope /> : activeTab === "newsletter" ? <FaUsersViewfinder /> : <FaShieldHalved />}
+                        {activeTab === "contact" ? 'Public Inquiry' : activeTab === "newsletter" ? 'Newsletter Subscriber' : 'Abuse Report'}
                       </span>
                       {renderStatusBadge(item.status)}
                     </div>
 
                     <h4 className="font-bold text-slate-900 line-clamp-1 pr-2 text-sm mb-1">
-                      {isContact ? item.full_name : item.profiles?.full_name || "Unknown Reporter"}
+                      {item.full_name || item.profiles?.full_name || "Unknown Identity"}
                     </h4>
                     
-                    <p className={`text-xs font-semibold mb-1.5 line-clamp-1 ${isContact ? 'text-slate-700' : 'text-rose-700'}`}>
-                      {isContact ? item.subject : `Category: ${item.category}`}
+                    <p className={`text-xs font-semibold mb-1.5 line-clamp-1 ${activeTab === "contact" ? 'text-slate-700' : activeTab === "newsletter" ? 'text-emerald-700' : 'text-rose-700'}`}>
+                      {activeTab === "contact" ? item.subject : activeTab === "newsletter" ? `Email: ${item.email}` : `Category: ${item.category}`}
                     </p>
                     
                     <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
@@ -272,15 +299,17 @@ export default function StaffInbox() {
               <div className={`rounded-xl p-4 mb-4 sm:mb-6 shadow-sm border flex items-center gap-3 ${
                 activeTab === "contact" 
                   ? "bg-blue-50 border-blue-200 text-blue-800" 
+                  : activeTab === "newsletter"
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-800"
                   : "bg-rose-50 border-rose-200 text-rose-800"
               }`}>
-                {activeTab === "contact" ? <FaEnvelope className="text-xl sm:text-2xl flex-shrink-0" /> : <FaShieldHalved className="text-xl sm:text-2xl flex-shrink-0" />}
+                {activeTab === "contact" ? <FaEnvelope className="text-xl sm:text-2xl flex-shrink-0" /> : activeTab === "newsletter" ? <FaUsersViewfinder className="text-xl sm:text-2xl flex-shrink-0" /> : <FaShieldHalved className="text-xl sm:text-2xl flex-shrink-0" />}
                 <div>
                   <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest">
-                    {activeTab === "contact" ? "Standard Public Inquiry" : "Critical Abuse Report"}
+                    {activeTab === "contact" ? "Standard Public Inquiry" : activeTab === "newsletter" ? "Newsletter Subscriber" : "Critical Abuse Report"}
                   </h3>
                   <p className="text-[0.65rem] sm:text-xs font-medium opacity-80 mt-0.5">
-                    {activeTab === "contact" ? "Respond via email if applicable." : "Review carefully before taking moderation action."}
+                    {activeTab === "contact" ? "Respond via email if applicable." : activeTab === "newsletter" ? "Manage email recipient list." : "Review carefully before taking moderation action."}
                   </p>
                 </div>
               </div>
@@ -291,7 +320,7 @@ export default function StaffInbox() {
                   <div className="w-full">
                     <div className="flex justify-between items-start mb-2">
                       <h2 className="text-lg sm:text-2xl font-black text-slate-900 pr-2">
-                        {activeTab === "contact" ? selectedItem.subject : `Violation: ${selectedItem.category}`}
+                        {activeTab === "contact" ? selectedItem.subject : activeTab === "newsletter" ? "Subscription Details" : `Violation: ${selectedItem.category}`}
                       </h2>
                       <div className="sm:hidden flex-shrink-0">{renderStatusBadge(selectedItem.status)}</div>
                     </div>
@@ -300,21 +329,19 @@ export default function StaffInbox() {
                       <div className="flex items-center gap-2">
                         <span className="font-black text-slate-400 uppercase tracking-wider text-[0.65rem] sm:text-xs w-12 sm:w-16 flex-shrink-0">From:</span>
                         <span className="font-bold text-slate-800 truncate">
-                          {activeTab === "contact" ? selectedItem.full_name : selectedItem.profiles?.full_name || "Unknown Identity"}
+                          {selectedItem.full_name || selectedItem.profiles?.full_name || "Unknown Identity"}
                         </span>
                       </div>
                       
-                      {(activeTab === "contact" || selectedItem.reporter_email) && (
-                        <div className="flex items-center gap-2">
-                          <span className="font-black text-slate-400 uppercase tracking-wider text-[0.65rem] sm:text-xs w-12 sm:w-16 flex-shrink-0">Email:</span>
-                          <a 
-                            href={`mailto:${activeTab === "contact" ? selectedItem.email : selectedItem.reporter_email}`} 
-                            className="font-bold text-blue-600 hover:underline truncate"
-                          >
-                            {activeTab === "contact" ? selectedItem.email : selectedItem.reporter_email}
-                          </a>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-slate-400 uppercase tracking-wider text-[0.65rem] sm:text-xs w-12 sm:w-16 flex-shrink-0">Email:</span>
+                        <a 
+                          href={`mailto:${activeTab === "contact" ? selectedItem.email : activeTab === "newsletter" ? selectedItem.email : selectedItem.reporter_email}`} 
+                          className="font-bold text-blue-600 hover:underline truncate"
+                        >
+                          {activeTab === "contact" ? selectedItem.email : activeTab === "newsletter" ? selectedItem.email : selectedItem.reporter_email}
+                        </a>
+                      </div>
                     </div>
                   </div>
                   <div className="hidden sm:block flex-shrink-0">{renderStatusBadge(selectedItem.status)}</div>
@@ -333,10 +360,10 @@ export default function StaffInbox() {
                 {/* The Message Body */}
                 <div className="relative mt-2">
                   <span className="absolute -top-2.5 left-4 bg-white px-2 text-[0.6rem] sm:text-[0.65rem] font-black uppercase tracking-widest text-slate-400">
-                    Message Payload
+                    {activeTab === "newsletter" ? "Subscription Info" : "Message Payload"}
                   </span>
                   <div className="text-sm sm:text-base text-slate-700 whitespace-pre-wrap bg-slate-50/50 p-4 sm:p-6 pt-5 rounded-xl border border-slate-200 leading-relaxed font-medium">
-                    {activeTab === "contact" ? selectedItem.message : selectedItem.details}
+                    {activeTab === "contact" ? selectedItem.message : activeTab === "newsletter" ? `Subscriber since ${new Date(selectedItem.created_at).toLocaleString()}` : selectedItem.details}
                   </div>
                 </div>
               </div>
@@ -344,30 +371,44 @@ export default function StaffInbox() {
               {/* Action Bar - Sticks to bottom on mobile */}
               <div className="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:left-auto lg:right-auto bg-white lg:rounded-2xl p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] lg:shadow-sm border-t lg:border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0 z-30">
                 <div className="flex gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={() => updateStatus(selectedItem.id, activeTab === "contact" ? "read" : "in_progress", activeTab)}
-                    disabled={updating}
-                    className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-[0.65rem] sm:text-xs font-black uppercase tracking-widest transition disabled:opacity-50 text-center"
-                  >
-                    Review
-                  </button>
-                  <button
-                    onClick={() => updateStatus(selectedItem.id, "resolved", activeTab)}
-                    disabled={updating}
-                    className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-[0.65rem] sm:text-xs font-black uppercase tracking-widest transition disabled:opacity-50 text-center"
-                  >
-                    Resolve
-                  </button>
+                  {activeTab === "newsletter" ? (
+                    <button
+                      onClick={() => updateStatus(selectedItem.id, selectedItem.status === "active" ? "unsubscribed" : "active", activeTab)}
+                      disabled={updating}
+                      className={`flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-[0.65rem] sm:text-xs font-black uppercase tracking-widest transition disabled:opacity-50 text-center ${
+                        selectedItem.status === "active" ? "bg-rose-50 text-rose-700 border border-rose-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      }`}
+                    >
+                      {selectedItem.status === "active" ? "Unsubscribe User" : "Re-activate Subscription"}
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => updateStatus(selectedItem.id, activeTab === "contact" ? "read" : "in_progress", activeTab)}
+                        disabled={updating}
+                        className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-[0.65rem] sm:text-xs font-black uppercase tracking-widest transition disabled:opacity-50 text-center"
+                      >
+                        Review
+                      </button>
+                      <button
+                        onClick={() => updateStatus(selectedItem.id, "resolved", activeTab)}
+                        disabled={updating}
+                        className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-[0.65rem] sm:text-xs font-black uppercase tracking-widest transition disabled:opacity-50 text-center"
+                      >
+                        Resolve
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 <button
                   onClick={() => handleReply(
-                    activeTab === "contact" ? selectedItem.email : selectedItem.reporter_email,
-                    activeTab === "contact" ? selectedItem.subject : `Regarding your Abuse Report`
+                    activeTab === "contact" ? selectedItem.email : activeTab === "newsletter" ? selectedItem.email : selectedItem.reporter_email,
+                    activeTab === "contact" ? selectedItem.subject : activeTab === "newsletter" ? "About your CTMerchant Subscription" : `Regarding your Abuse Report`
                   )}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-[#0f172a] text-white hover:bg-[#1e293b] rounded-lg text-[0.7rem] sm:text-xs font-black uppercase tracking-widest shadow-md transition"
                 >
-                  <FaReply /> Reply directly
+                  <FaReply /> {activeTab === "newsletter" ? "Contact Subscriber" : "Reply directly"}
                 </button>
               </div>
 
