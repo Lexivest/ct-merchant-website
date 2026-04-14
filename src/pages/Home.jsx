@@ -124,24 +124,24 @@ function ActivityCalendar() {
   ]
 
   return (
-    <div className="flex flex-col items-center w-full max-w-sm mx-auto">
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-md shadow-slate-200">
-          <FaCalendarDays className="text-base" />
+    <div className="flex flex-col items-center w-full max-w-[280px] mx-auto">
+      <div className="mb-4 flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white shadow-sm">
+          <FaCalendarDays className="text-xs" />
         </div>
-        <h3 className="text-base font-black tracking-tight text-slate-900 uppercase">Activity Calendar</h3>
+        <h3 className="text-xs font-black tracking-tight text-slate-900 uppercase">Activity Calendar</h3>
       </div>
 
-      <div className="w-full divide-y divide-slate-100 rounded-3xl border border-slate-100 bg-white p-1 shadow-sm overflow-hidden">
+      <div className="w-full divide-y divide-slate-100 rounded-2xl border border-slate-100 bg-white p-1 shadow-sm overflow-hidden">
         {calendarEvents.map((ev, idx) => (
-          <div key={idx} className="flex items-center gap-3 p-3 transition hover:bg-slate-50">
-            <div className="flex h-12 w-12 flex-col items-center justify-center rounded-xl bg-pink-50 text-center shrink-0">
-              <span className="text-[9px] font-black text-pink-600 uppercase tracking-tighter">{ev.date.split(" ")[0]}</span>
-              <span className="text-base font-black text-slate-900">{ev.date.split(" ")[1]}</span>
+          <div key={idx} className="flex items-center gap-2.5 p-2.5 transition hover:bg-slate-50">
+            <div className="flex h-10 w-10 flex-col items-center justify-center rounded-lg bg-pink-50 text-center shrink-0">
+              <span className="text-[8px] font-black text-pink-600 uppercase tracking-tighter">{ev.date.split(" ")[0]}</span>
+              <span className="text-sm font-black text-slate-900">{ev.date.split(" ")[1]}</span>
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <div className="text-xs font-bold text-slate-900 truncate">{ev.title}</div>
-              <div className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-slate-500">
+              <div className="text-[11px] font-bold text-slate-900 truncate leading-tight">{ev.title}</div>
+              <div className="mt-0.5 inline-flex rounded-full bg-slate-100 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-slate-500">
                 {ev.type}
               </div>
             </div>
@@ -154,40 +154,40 @@ function ActivityCalendar() {
 
 function OfficeSupportCard() {
   return (
-    <div className="flex flex-col items-center w-full max-w-sm mx-auto">
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md shadow-amber-200">
-          <FaClock className="text-base" />
+    <div className="flex flex-col items-center w-full max-w-[280px] mx-auto">
+      <div className="mb-4 flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 text-white shadow-sm">
+          <FaClock className="text-xs" />
         </div>
-        <h3 className="text-base font-black tracking-tight text-slate-900 uppercase">Office & Support</h3>
+        <h3 className="text-xs font-black tracking-tight text-slate-900 uppercase">Office & Support</h3>
       </div>
 
-      <div className="w-full rounded-3xl border border-slate-100 bg-white p-5 shadow-sm text-center">
-        <div className="space-y-4">
+      <div className="w-full rounded-2xl border border-slate-100 bg-white p-4 shadow-sm text-center">
+        <div className="space-y-3">
           <div className="flex flex-col items-center gap-1">
-            <div className="text-amber-500 text-sm"><FaClock /></div>
+            <div className="text-amber-500 text-xs"><FaClock /></div>
             <div>
-              <div className="text-xs font-bold text-slate-900 uppercase tracking-tighter">Opening Hours</div>
-              <p className="mt-1 text-[11px] font-medium leading-relaxed text-slate-500">
+              <div className="text-[10px] font-black text-slate-900 uppercase tracking-tighter">Opening Hours</div>
+              <p className="mt-0.5 text-[10px] font-medium leading-relaxed text-slate-500">
                 Mon - Fri: 8:00 AM - 6:00 PM<br/>
                 Sat: 9:00 AM - 4:00 PM
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-1 pt-3 border-t border-slate-50">
-            <div className="text-pink-600 text-sm"><FaPhone /></div>
+          <div className="flex flex-col items-center gap-1 pt-2.5 border-t border-slate-50">
+            <div className="text-pink-600 text-xs"><FaPhone /></div>
             <div>
-              <div className="text-xs font-bold text-slate-900 uppercase tracking-tighter">Phone Support</div>
-              <p className="mt-1 text-[11px] font-bold text-slate-500 font-mono">+234 812 345 6789</p>
+              <div className="text-[10px] font-black text-slate-900 uppercase tracking-tighter">Phone Support</div>
+              <p className="mt-0.5 text-[10px] font-bold text-slate-500 font-mono">+234 812 345 6789</p>
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-1 pt-3 border-t border-slate-50">
-            <div className="text-blue-500 text-sm"><FaEnvelope /></div>
+          <div className="flex flex-col items-center gap-1 pt-2.5 border-t border-slate-50">
+            <div className="text-blue-500 text-xs"><FaEnvelope /></div>
             <div>
-              <div className="text-xs font-bold text-slate-900 uppercase tracking-tighter">Email Inquiry</div>
-              <p className="mt-1 text-[11px] font-bold text-slate-500 underline truncate max-w-full">support@ctmerchant.ng</p>
+              <div className="text-[10px] font-black text-slate-900 uppercase tracking-tighter">Email Inquiry</div>
+              <p className="mt-0.5 text-[10px] font-bold text-slate-500 underline truncate max-w-full">support@ctmerchant.ng</p>
             </div>
           </div>
         </div>
@@ -1119,7 +1119,7 @@ function Home() {
               </div>
             </div>
 
-            <div className="mx-auto grid w-full max-w-7xl min-w-0 gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
+            <div className="mx-auto grid w-full max-w-7xl min-w-0 gap-6 lg:grid-cols-2">
               <div className="mb-2 min-w-0 bg-pink-200 p-0 shadow-sm md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
                 <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
                   <div className="relative aspect-video w-full h-[220px] sm:h-[300px] md:h-[400px] overflow-hidden bg-slate-100">
@@ -1155,7 +1155,7 @@ function Home() {
               </div>
 
               {/* Mobile Only Ticker - positioned just below the hero image */}
-              <div className="lg:hidden w-full">
+              <div className="lg:hidden w-full px-1">
                 <div className="bg-white py-3 text-slate-900 border border-pink-100 rounded-[22px] shadow-sm px-2 overflow-hidden">
                   <HeaderMarquee />
                 </div>
