@@ -1,27 +1,21 @@
 import { memo, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { FaImage, FaArrowRight } from "react-icons/fa6"
+import { FaImage, FaArrowRight, FaBolt } from "react-icons/fa6"
 // IMPORT OUR NEW SHIMMERS
 import { ShimmerBlock } from "../../common/Shimmers"
 import StableImage from "../../common/StableImage"
 import RetryingNotice, { getRetryingMessage } from "../../common/RetryingNotice"
-import { buildPromoBannerSvg, promoSvgToDataUrl } from "../../../lib/promoBannerEngine"
+import { PROMO_EXTENDED_COLORS } from "../../../lib/promoBannerEngine"
 
 function PromoBanner({ banner }) {
   const navigate = useNavigate()
+  const background = useMemo(() => 
+    PROMO_EXTENDED_COLORS.find(c => c.key === banner.template_key) || PROMO_EXTENDED_COLORS[0]
+  , [banner.template_key])
 
-  const svg = useMemo(
-    () =>
-      buildPromoBannerSvg({
-        title: banner.title,
-        subtitle: banner.subtitle,
-        backgroundKey: banner.template_key,
-        layout: banner.layout || "split",
-        products: banner.shop_products || [],
-        isHotDeal: Boolean(banner.shop_id),
-      }),
-    [banner]
-  )
+  const products = banner.shop_products || []
+  const layout = banner.layout || "split"
+  const isHotDeal = Boolean(banner.shop_id)
 
   const handleClick = () => {
     if (banner.shop_id) {
@@ -32,17 +26,96 @@ function PromoBanner({ banner }) {
   }
 
   return (
-    <div
-      onClick={handleClick}
-      className="group relative mb-8 cursor-pointer overflow-hidden rounded-[32px] transition active:scale-[0.98] px-4"
-    >
-      <img
-        src={promoSvgToDataUrl(svg)}
-        alt={banner.title}
-        className="block w-full shadow-xl"
-      />
-      <div className="absolute right-12 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-4 text-white backdrop-blur-md transition group-hover:bg-white/40 group-hover:scale-110">
-        <FaArrowRight className="text-xl" />
+    <div className="px-4 mb-8">
+      <div 
+        onClick={handleClick}
+        className={`group relative overflow-hidden rounded-[32px] cursor-pointer transition-all duration-500 hover:shadow-2xl active:scale-[0.98] min-h-[220px] md:min-h-[280px] bg-gradient-to-br ${background.bg}`}
+      >
+        {/* Animated Background Texture */}
+        <div 
+          className="absolute inset-0 opacity-20 transition-transform duration-1000 group-hover:scale-110" 
+          style={{ backgroundImage: background.texture }}
+        />
+        
+        {/* Content Layouts */}
+        <div className="relative h-full flex flex-col md:flex-row items-center p-8 md:p-12 gap-8">
+          
+          {layout === "split" && (
+            <>
+              <div className="flex-1 text-white space-y-4 animate-in fade-in slide-in-from-left duration-700">
+                {isHotDeal && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-black uppercase tracking-widest">
+                    <FaBolt className="text-amber-400" /> Hot Deal
+                  </div>
+                )}
+                <h2 className="text-3xl md:text-5xl font-black leading-tight drop-shadow-lg">
+                  {banner.title}
+                </h2>
+                <p className="text-sm md:text-lg font-bold opacity-90 max-w-md">
+                  {banner.subtitle}
+                </p>
+                <div className="pt-4">
+                  <span className="px-6 py-3 rounded-2xl bg-white text-slate-900 font-black text-sm shadow-xl transition-transform group-hover:scale-105 inline-block">
+                    {banner.call_to_action || 'Claim Now'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex-1 flex gap-4 animate-in fade-in zoom-in duration-1000 delay-200">
+                {products.map((p, i) => (
+                  <div 
+                    key={p.id || i} 
+                    className={`relative w-24 h-32 md:w-32 md:h-44 rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl transition-transform duration-500 group-hover:translate-y-[-10px]`}
+                    style={{ transitionDelay: `${i * 100}ms` }}
+                  >
+                    <StableImage src={p.image_url} alt="Product" className="h-full w-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {layout === "grid" && (
+            <div className="w-full text-center text-white space-y-8">
+              <div className="space-y-2">
+                <h2 className="text-4xl md:text-6xl font-black drop-shadow-lg">{banner.title}</h2>
+                <p className="text-lg font-bold opacity-80">{banner.subtitle}</p>
+              </div>
+              <div className="flex justify-center gap-6">
+                {products.map((p, i) => (
+                  <div key={p.id || i} className="w-20 h-20 md:w-32 md:h-32 rounded-3xl overflow-hidden border-4 border-white/10 shadow-2xl transition-all duration-500 hover:scale-110">
+                    <StableImage src={p.image_url} alt="Product" className="h-full w-full object-cover" />
+                  </div>
+                ))}
+              </div>
+              <button className="px-8 py-4 rounded-2xl bg-white text-slate-900 font-black text-lg shadow-2xl">
+                {banner.call_to_action || 'Claim Now'}
+              </button>
+            </div>
+          )}
+
+          {layout === "focus" && (
+            <div className="w-full h-full flex items-center justify-center">
+               <div className="absolute inset-0 flex gap-2 opacity-30 grayscale blur-sm">
+                 {products.map((p, i) => (
+                   <div key={i} className="flex-1 h-full"><StableImage src={p.image_url} className="w-full h-full object-cover" /></div>
+                 ))}
+               </div>
+               <div className="relative z-10 bg-black/40 backdrop-blur-xl p-10 rounded-[40px] border border-white/10 text-center text-white max-w-2xl transform transition-transform group-hover:scale-105 duration-700">
+                 <h2 className="text-4xl md:text-5xl font-black mb-4">{banner.title}</h2>
+                 <p className="text-lg opacity-80 mb-8 font-bold">{banner.subtitle}</p>
+                 <button className="px-10 py-4 rounded-2xl bg-white text-slate-900 font-black text-xl">
+                   {banner.call_to_action || 'Claim Now'}
+                 </button>
+               </div>
+            </div>
+          )}
+
+          {/* Icon Arrow Overlay */}
+          <div className="absolute right-8 bottom-8 md:bottom-auto md:top-1/2 md:-translate-y-1/2 rounded-full bg-white/10 p-4 text-white backdrop-blur-lg border border-white/20 transition-all duration-500 group-hover:bg-white/30 group-hover:scale-125">
+            <FaArrowRight className="text-2xl" />
+          </div>
+        </div>
       </div>
     </div>
   )

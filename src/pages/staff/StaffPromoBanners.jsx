@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import {
+  FaArrowRight,
+  FaBolt,
   FaCircleNotch,
   FaImage,
   FaPause,
@@ -12,7 +14,8 @@ import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import { SectionHeading, StaffPortalShell, formatDateTime } from "./StaffPortalShared"
-import { buildPromoBannerSvg, promoSvgToDataUrl, PROMO_EXTENDED_COLORS, PROMO_LAYOUTS } from "../../lib/promoBannerEngine"
+import { PROMO_EXTENDED_COLORS, PROMO_LAYOUTS } from "../../lib/promoBannerEngine"
+import StableImage from "../../components/common/StableImage"
 
 function PromoBannerPreview({
   title,
@@ -21,23 +24,74 @@ function PromoBannerPreview({
   layout,
   products = [],
   isHotDeal = false,
+  cta = "Claim Now"
 }) {
-  const svg = buildPromoBannerSvg({
-    title,
-    subtitle,
-    backgroundKey,
-    layout,
-    products,
-    isHotDeal,
-  })
+  const background = useMemo(() => 
+    PROMO_EXTENDED_COLORS.find(c => c.key === backgroundKey) || PROMO_EXTENDED_COLORS[0]
+  , [backgroundKey])
 
   return (
-    <div className="overflow-hidden rounded-[32px] shadow-2xl">
-      <img
-        src={promoSvgToDataUrl(svg)}
-        alt="Promo Banner Preview"
-        className="block w-full"
-      />
+    <div className={`group relative overflow-hidden rounded-[32px] min-h-[220px] bg-gradient-to-br ${background.bg}`}>
+      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: background.texture }} />
+      <div className="relative h-full flex flex-col md:flex-row items-center p-6 md:p-8 gap-6">
+        {layout === "split" && (
+          <>
+            <div className="flex-1 text-white space-y-3">
+              {isHotDeal && (
+                <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[9px] font-black uppercase tracking-widest">
+                  <FaBolt className="text-amber-400" /> Hot Deal
+                </div>
+              )}
+              <h2 className="text-2xl md:text-3xl font-black leading-tight">{title}</h2>
+              <p className="text-xs md:text-sm font-bold opacity-90">{subtitle}</p>
+              <div className="pt-2">
+                <span className="px-4 py-2 rounded-xl bg-white text-slate-900 font-black text-xs inline-block">
+                  {cta}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {products.map((p, i) => (
+                <div key={i} className="w-16 h-24 md:w-20 md:h-28 rounded-xl overflow-hidden border border-white/20 shadow-xl">
+                  <StableImage src={p.image_url} className="h-full w-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {layout === "grid" && (
+          <div className="w-full text-center text-white space-y-4">
+            <h2 className="text-3xl font-black">{title}</h2>
+            <div className="flex justify-center gap-3">
+              {products.map((p, i) => (
+                <div key={i} className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/10 shadow-lg">
+                  <StableImage src={p.image_url} className="h-full w-full object-cover" />
+                </div>
+              ))}
+            </div>
+            <button className="px-5 py-2 rounded-xl bg-white text-slate-900 font-black text-xs">{cta}</button>
+          </div>
+        )}
+
+        {layout === "focus" && (
+          <div className="w-full h-full flex items-center justify-center">
+             <div className="absolute inset-0 flex gap-1 opacity-20 grayscale">
+               {products.map((p, i) => (
+                 <div key={i} className="flex-1 h-full"><StableImage src={p.image_url} className="w-full h-full object-cover" /></div>
+               ))}
+             </div>
+             <div className="relative z-10 bg-black/40 backdrop-blur-xl p-6 rounded-[30px] border border-white/10 text-center text-white w-full max-w-sm">
+               <h2 className="text-2xl font-black mb-2">{title}</h2>
+               <p className="text-xs opacity-80 mb-4 font-bold">{subtitle}</p>
+               <button className="px-6 py-2 rounded-xl bg-white text-slate-900 font-black text-xs">{cta}</button>
+             </div>
+          </div>
+        )}
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white border border-white/20">
+          <FaArrowRight className="text-sm" />
+        </div>
+      </div>
     </div>
   )
 }
