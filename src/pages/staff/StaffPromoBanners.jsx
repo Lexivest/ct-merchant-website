@@ -9,6 +9,7 @@ import {
   FaPlus,
   FaTrashCan,
   FaMagnifyingGlass,
+  FaXmark,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
@@ -58,11 +59,11 @@ export default function StaffPromoBanners() {
   const { notify, confirm } = useGlobalFeedback()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [searching, setSearching] = useState(false)
+  const [fetchingProducts, setFetchingProducts] = useState(false)
   
   const [cities, setCities] = useState([])
   const [banners, setBanners] = useState([])
-  const [searchResults, setSearchResults] = useState([])
+  const [availableProducts, setAvailableProducts] = useState([])
   
   const [selectedCityId, setSelectedCityId] = useState("")
   const [selectedProduct, setSelectedProduct] = useState(null)
@@ -88,7 +89,7 @@ export default function StaffPromoBanners() {
       if (citiesResult.error) throw citiesResult.error
       if (bannersResult.error) throw bannersResult.error
       
-      // For each banner, we need to fetch the product details because we store product_id in template_key
+      // For each banner, we need to fetch the product details
       const enrichedBanners = await Promise.all((bannersResult.data || []).map(async (b) => {
         if (!b.template_key) return b
         const { data: p } = await supabase
@@ -108,14 +109,10 @@ export default function StaffPromoBanners() {
     }
   }, [notify])
 
-  useEffect(() => { loadInitialData() }, [loadInitialData])
-
-  async function handleSearch() {
-    if (!searchQuery.trim() || searchQuery.length < 2) return
-    
-    setSearching(true)
+  const loadProducts = useCallback(async () => {
+    setFetchingProducts(true)
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("products")
         .select(`
           id, 
@@ -123,21 +120,39 @@ export default function StaffPromoBanners() {
           price, 
           image_url, 
           shop_id,
-          shops!inner(id, name, status)
+          shops!inner(id, name, status, city_id)
         `)
         .eq("shops.status", "approved")
         .eq("is_available", true)
-        .ilike("name", `%${searchQuery}%`)
-        .limit(10)
+        .order("created_at", { ascending: false })
+        .limit(50)
+
+      if (selectedCityId) {
+        query = query.eq("shops.city_id", selectedCityId)
+      }
+
+      if (searchQuery.trim()) {
+        query = query.ilike("name", `%${searchQuery}%`)
+      }
+
+      const { data, error } = await query
 
       if (error) throw error
-      setSearchResults(data || [])
+      setAvailableProducts(data || [])
     } catch (error) {
-      notify({ type: "error", title: "Search failed", message: getFriendlyErrorMessage(error) })
+      console.error("Failed to load products", error)
     } finally {
-      setSearching(false)
+      setFetchingProducts(false)
     }
-  }
+  }, [selectedCityId, searchQuery])
+
+  useEffect(() => { loadInitialData() }, [loadInitialData])
+  useEffect(() => { 
+    const timer = setTimeout(() => {
+      loadProducts()
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [loadProducts])
 
   async function handlePublish() {
     if (!selectedProduct) {
@@ -152,7 +167,7 @@ export default function StaffPromoBanners() {
         shop_id: selectedProduct.shop_id,
         title: selectedProduct.name,
         subtitle: `Sponsored from ${selectedProduct.shops.name}`,
-        template_key: String(selectedProduct.id), // Storing product ID here
+        template_key: String(selectedProduct.id), 
         layout: "product",
         sort_order: Number(sortOrder) || 0,
         status: "published"
@@ -161,8 +176,6 @@ export default function StaffPromoBanners() {
       if (error) throw error
       notify({ type: "success", title: "Product Sponsored", message: "The product is now featured in the marketplace." })
       setSelectedProduct(null)
-      setSearchQuery("")
-      setSearchResults([])
       await loadInitialData()
     } catch (error) {
       notify({ type: "error", title: "Action failed", message: getFriendlyErrorMessage(error) })
@@ -195,7 +208,7 @@ export default function StaffPromoBanners() {
 
   return (
     <StaffPortalShell activeKey="promo-banners" title="Sponsored Products" description="Select products to feature in the marketplace.">
-      <SectionHeading eyebrow="Marketplace Feature" title="Product Sponsorship" description="Search for any product from approved shops and feature them directly to users." />
+      <SectionHeading eyebrow="Marketplace Feature" title="Product Sponsorship" description="Choose available products from approved shops to feature them directly to users." />
       
       {loading ? (
         <div className="flex h-64 items-center justify-center"><FaCircleNotch className="animate-spin text-4xl text-pink-600" /></div>
@@ -206,58 +219,56 @@ export default function StaffPromoBanners() {
             
             <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-500">Target City</label>
+                <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-500">Step 1: Filter by City</label>
                 <select value={selectedCityId} onChange={(e) => setSelectedCityId(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-pink-500">
                   <option value="">Global (All Cities)</option>
                   {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
 
-              <div className="relative">
-                <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-500">Search Product</label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <input 
-                      type="text" 
-                      value={searchQuery} 
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                      placeholder="Type product name..." 
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm font-bold outline-none focus:border-pink-500" 
-                    />
-                    <FaMagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  </div>
-                  <button 
-                    onClick={handleSearch}
-                    disabled={searching || searchQuery.length < 2}
-                    className="rounded-2xl bg-slate-900 px-4 text-white hover:bg-slate-800 disabled:bg-slate-200"
-                  >
-                    {searching ? <FaCircleNotch className="animate-spin" /> : "Search"}
-                  </button>
+              <div>
+                <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-500">Step 2: Browse & Select Product</label>
+                <div className="mb-3 relative">
+                  <input 
+                    type="text" 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search in available list..." 
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-10 pr-10 py-3 text-sm font-bold outline-none focus:border-pink-500" 
+                  />
+                  <FaMagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                      <FaXmark />
+                    </button>
+                  )}
                 </div>
 
-                {searchResults.length > 0 && (
-                  <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-                    {searchResults.map(p => (
-                      <button 
-                        key={p.id} 
-                        onClick={() => {
-                          setSelectedProduct(p)
-                          setSearchResults([])
-                        }}
-                        className="flex w-full items-center gap-3 p-3 text-left transition hover:bg-pink-50"
-                      >
-                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-slate-100">
-                          <img src={p.image_url} alt="" className="h-full w-full object-cover" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-xs font-black text-slate-900">{p.name}</div>
-                          <div className="text-[10px] font-bold text-slate-400">{p.shops.name} • ₦{Number(p.price).toLocaleString()}</div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <div className="max-h-[400px] overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50 p-2 scrollbar-thin">
+                  {fetchingProducts ? (
+                    <div className="flex h-20 items-center justify-center"><FaCircleNotch className="animate-spin text-pink-600" /></div>
+                  ) : availableProducts.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-2">
+                      {availableProducts.map(p => (
+                        <button 
+                          key={p.id} 
+                          onClick={() => setSelectedProduct(p)}
+                          className={`flex items-center gap-3 p-2 rounded-xl transition-all border-2 ${selectedProduct?.id === p.id ? 'border-pink-500 bg-white shadow-sm' : 'border-transparent hover:bg-white'}`}
+                        >
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-slate-200">
+                            <img src={p.image_url} alt="" className="h-full w-full object-cover" />
+                          </div>
+                          <div className="min-w-0 flex-1 text-left">
+                            <div className="truncate text-xs font-black text-slate-900">{p.name}</div>
+                            <div className="text-[10px] font-bold text-slate-400">{p.shops.name} • ₦{Number(p.price).toLocaleString()}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-10 text-center text-xs font-bold text-slate-400">No products found for this city.</div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -283,7 +294,7 @@ export default function StaffPromoBanners() {
 
           <div className="space-y-8">
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="mb-4 text-xl font-black text-slate-900 text-center">Selected Product</h3>
+              <h3 className="mb-4 text-xl font-black text-slate-900 text-center">Preview of Selection</h3>
               <SponsoredProductPreview product={selectedProduct} />
             </div>
 
