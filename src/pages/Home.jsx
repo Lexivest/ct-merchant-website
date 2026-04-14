@@ -152,7 +152,7 @@ function MarketPulseTicker() {
   )
 }
 
-function HighlightsSection({ announcements = [] }) {
+function ActivityCalendar() {
   const calendarEvents = [
     { date: "APR 20", title: "Merchant Training Webinar", type: "Virtual" },
     { date: "APR 25", title: "Kaduna Business Meetup", type: "Offline" },
@@ -160,108 +160,75 @@ function HighlightsSection({ announcements = [] }) {
   ]
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-12 md:py-20">
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
-        {/* Newsfeed Section */}
-        <div className="flex flex-col">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pink-600 text-white shadow-lg shadow-pink-200">
-              <FaNewspaper className="text-xl" />
-            </div>
-            <h3 className="text-xl font-black tracking-tight text-slate-900">Platform News</h3>
-          </div>
-
-          <div className="space-y-6">
-            {announcements.length > 0 ? (
-              announcements.map((news) => (
-                <div key={news.id} className="group cursor-pointer">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-pink-600">
-                    {new Date(news.created_at).toLocaleDateString("en-NG", { month: "short", day: "numeric" })}
-                  </div>
-                  <h4 className="mt-1 text-base font-bold text-slate-900 transition group-hover:text-pink-600">
-                    {news.title}
-                  </h4>
-                  <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-500">
-                    {news.content}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm font-medium text-slate-400 italic">No new announcements at this time.</p>
-            )}
-          </div>
+    <div className="flex flex-col">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-md shadow-slate-200">
+          <FaCalendarDays className="text-base" />
         </div>
+        <h3 className="text-base font-black tracking-tight text-slate-900 uppercase">Activity Calendar</h3>
+      </div>
 
-        {/* Calendar Section */}
-        <div className="flex flex-col">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg shadow-slate-200">
-              <FaCalendarDays className="text-xl" />
+      <div className="divide-y divide-slate-100 rounded-3xl border border-slate-100 bg-white p-1 shadow-sm">
+        {calendarEvents.map((ev, idx) => (
+          <div key={idx} className="flex items-center gap-3 p-3 transition hover:bg-slate-50">
+            <div className="flex h-12 w-12 flex-col items-center justify-center rounded-xl bg-pink-50 text-center">
+              <span className="text-[9px] font-black text-pink-600 uppercase tracking-tighter">{ev.date.split(" ")[0]}</span>
+              <span className="text-base font-black text-slate-900">{ev.date.split(" ")[1]}</span>
             </div>
-            <h3 className="text-xl font-black tracking-tight text-slate-900">Community Calendar</h3>
-          </div>
-
-          <div className="divide-y divide-slate-100 rounded-3xl border border-slate-100 bg-white p-2 shadow-sm">
-            {calendarEvents.map((ev, idx) => (
-              <div key={idx} className="flex items-center gap-4 p-4 transition hover:bg-slate-50">
-                <div className="flex h-14 w-14 flex-col items-center justify-center rounded-2xl bg-pink-50 text-center">
-                  <span className="text-[10px] font-black text-pink-600">{ev.date.split(" ")[0]}</span>
-                  <span className="text-lg font-black text-slate-900">{ev.date.split(" ")[1]}</span>
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-slate-900">{ev.title}</div>
-                  <div className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-500">
-                    {ev.type}
-                  </div>
-                </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-bold text-slate-900 truncate">{ev.title}</div>
+              <div className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-slate-500">
+                {ev.type}
               </div>
-            ))}
+            </div>
           </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function OfficeSupportCard() {
+  return (
+    <div className="flex flex-col">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md shadow-amber-200">
+          <FaClock className="text-base" />
         </div>
+        <h3 className="text-base font-black tracking-tight text-slate-900 uppercase">Office & Support</h3>
+      </div>
 
-        {/* Office Hours Section */}
-        <div className="flex flex-col">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-lg shadow-amber-200">
-              <FaClock className="text-xl" />
+      <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 text-amber-500 text-sm"><FaClock /></div>
+            <div>
+              <div className="text-xs font-bold text-slate-900">Opening Hours</div>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                Mon - Fri: 8:00 AM - 6:00 PM<br/>
+                Sat: 9:00 AM - 4:00 PM
+              </p>
             </div>
-            <h3 className="text-xl font-black tracking-tight text-slate-900">Office & Support</h3>
           </div>
 
-          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-            <div className="space-y-4">
-              <div className="flex items-start gap-4">
-                <div className="mt-1 text-amber-500"><FaClock /></div>
-                <div>
-                  <div className="text-sm font-bold text-slate-900">Opening Hours</div>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Mon - Fri: 8:00 AM - 6:00 PM<br/>
-                    Sat: 9:00 AM - 4:00 PM<br/>
-                    Sun: Closed
-                  </p>
-                </div>
-              </div>
+          <div className="flex items-start gap-3 pt-3 border-t border-slate-50">
+            <div className="mt-0.5 text-pink-600 text-sm"><FaPhone /></div>
+            <div>
+              <div className="text-xs font-bold text-slate-900">Phone Support</div>
+              <p className="mt-1 text-xs text-slate-500 font-mono font-bold">+234 812 345 6789</p>
+            </div>
+          </div>
 
-              <div className="flex items-start gap-4 pt-4 border-t border-slate-50">
-                <div className="mt-1 text-pink-600"><FaPhone /></div>
-                <div>
-                  <div className="text-sm font-bold text-slate-900">Phone Support</div>
-                  <p className="mt-1 text-sm text-slate-500">+234 812 345 6789</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4 pt-4 border-t border-slate-50">
-                <div className="mt-1 text-blue-500"><FaEnvelope /></div>
-                <div>
-                  <div className="text-sm font-bold text-slate-900">Email Inquiry</div>
-                  <p className="mt-1 text-sm text-slate-500 underline">support@ctmerchant.ng</p>
-                </div>
-              </div>
+          <div className="flex items-start gap-3 pt-3 border-t border-slate-50">
+            <div className="mt-0.5 text-blue-500 text-sm"><FaEnvelope /></div>
+            <div>
+              <div className="text-xs font-bold text-slate-900">Email Inquiry</div>
+              <p className="mt-1 text-xs text-slate-500 underline truncate">support@ctmerchant.ng</p>
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   )
 }
 
@@ -1373,6 +1340,11 @@ function Home() {
                           .
                         </p>
                       </div>
+
+                      <div className="mt-8 grid gap-6 sm:grid-cols-2">
+                        <ActivityCalendar />
+                        <OfficeSupportCard />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1384,7 +1356,6 @@ function Home() {
             </div>
           </section>
 
-          <HighlightsSection announcements={highlights?.announcements || []} />
           <NewsletterSection />
           <MarketPulseTicker />
           {resetEmailOpen ? (
