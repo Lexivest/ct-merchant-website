@@ -112,10 +112,10 @@ function DashboardHeader({
     }
     
     if (cityName) {
-      return `Search ${cityName} directory of business and services`
+      return `Search ${cityName} business directory`
     }
     
-    return `Search your city directory of business and services`
+    return `Search your city business directory`
   }, [currentProfile])
 
   useEffect(() => {
@@ -375,7 +375,7 @@ function DashboardHeader({
             >
               {!searchInputDesktop ? (
                 <div className="pointer-events-none absolute inset-y-0 left-4 right-4 z-0 flex items-center overflow-hidden">
-                  <span className="ctm-search-placeholder-track whitespace-nowrap text-[1rem] font-bold text-slate-500">
+                  <span className="whitespace-nowrap text-[1rem] font-bold text-slate-400">
                     {searchPlaceholder}
                   </span>
                 </div>
@@ -503,7 +503,7 @@ function DashboardHeader({
           >
             {!searchInputMobile ? (
               <div className="pointer-events-none absolute inset-y-0 left-3 right-3 z-0 flex items-center overflow-hidden">
-                <span className="ctm-search-placeholder-track whitespace-nowrap text-[0.86rem] font-bold text-slate-500 min-[390px]:text-[0.92rem]">
+                <span className="whitespace-nowrap text-[0.86rem] font-bold text-slate-400 min-[390px]:text-[0.92rem]">
                   {searchPlaceholder}
                 </span>
               </div>
