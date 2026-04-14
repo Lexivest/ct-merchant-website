@@ -1,9 +1,47 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import HeaderMarquee from "./HeaderMarquee"
+import { FaChartLine } from "react-icons/fa6"
+import ScrollingTicker from "./ScrollingTicker"
 
 // --- LOCAL ASSET IMPORT ---
 import ctmLogo from "../../assets/images/logo.jpg"
+
+function MarketPulseTicker() {
+  const stats = [
+    { label: "Active Shops", value: "1,240+", trend: "+12%" },
+    { label: "Verified Products", value: "8,500+", trend: "+5%" },
+    { label: "Market Activity", value: "High", trend: "Steady" },
+    { label: "City: Jos", value: "Active", trend: "+8%" },
+    { label: "City: Kaduna", value: "Growing", trend: "+15%" },
+    { label: "City: Abuja", value: "Hub", trend: "+20%" },
+  ]
+
+  const tickerText = stats
+    .map((s) => `${s.label.toUpperCase()}: ${s.value} (${s.trend})`)
+    .join("  |  ")
+
+  return (
+    <div className="bg-slate-950 py-2.5 text-white">
+      <div className="mx-auto flex max-w-7xl items-center px-4">
+        <div className="mr-4 flex shrink-0 items-center gap-2 border-r border-white/20 pr-4 text-[10px] font-black uppercase tracking-tighter text-emerald-400">
+          <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+          Live Market Pulse
+        </div>
+        <div className="min-w-0 flex-1">
+          <ScrollingTicker
+            text={tickerText}
+            textClassName="text-xs font-mono font-bold tracking-wider text-slate-300"
+            speedFactor={0.15}
+          />
+        </div>
+        <div className="ml-4 hidden shrink-0 items-center gap-2 text-[10px] font-black uppercase text-pink-500 md:flex">
+          <FaChartLine />
+          Index: CT-240
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const navLinks = [
   { label: "Home", to: "/" },
@@ -21,11 +59,7 @@ function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 shadow-md">
-      <div className="bg-black text-white">
-        <div className="mx-auto max-w-7xl px-4 py-1">
-          <HeaderMarquee />
-        </div>
-      </div>
+      <MarketPulseTicker />
 
       <div className="relative border-b-2 border-pink-200 bg-white text-slate-800">
         {/* Adjusted padding: py-2 on mobile, py-3 on desktop */}
