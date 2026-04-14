@@ -1,6 +1,7 @@
 function AuthInput({
   label,
   id,
+  name,
   type = "text",
   value,
   onChange,
@@ -35,6 +36,7 @@ function AuthInput({
 
         <input
           id={id}
+          name={name}
           type={type}
           value={value}
           onChange={onChange}

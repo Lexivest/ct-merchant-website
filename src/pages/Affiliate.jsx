@@ -1,11 +1,12 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 import useAuthSession from "../hooks/useAuthSession"
 import PageSeo from "../components/common/PageSeo"
 import AuthInput from "../components/auth/AuthInput"
 import AuthButton from "../components/auth/AuthButton"
-import { FaEnvelope, FaUser, FaPhone, FaCircleInfo, FaGlobe, FaBullhorn, FaCircleQuestion, FaCheckCircle } from "react-icons/fa6"
+// Fixed the import below from FaCheckCircle to FaCircleCheck
+import { FaEnvelope, FaUser, FaPhone, FaCircleInfo, FaGlobe, FaBullhorn, FaCircleQuestion, FaCircleCheck } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
@@ -33,6 +34,13 @@ function Affiliate() {
   })
 
   const [errors, setErrors] = useState({})
+
+  // Sync email when user session is loaded
+  useEffect(() => {
+    if (user?.email && !formData.email) {
+      setFormData(prev => ({ ...prev, email: user.email }))
+    }
+  }, [user, formData.email])
 
   const handleBack = () => {
     const ref = document.referrer.toLowerCase()
@@ -111,7 +119,8 @@ function Affiliate() {
           <div className="mx-auto max-w-2xl text-center">
             <div className="mb-6 flex justify-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-sm">
-                <FaCheckCircle className="text-4xl" />
+                {/* Updated icon tag here */}
+                <FaCircleCheck className="text-4xl" />
               </div>
             </div>
             <h1 className="text-3xl font-black text-slate-900 md:text-4xl">Submission Successful!</h1>
