@@ -26,10 +26,10 @@ function PromoBanner({ banner }) {
   }
 
   return (
-    <div className="px-4 mb-8">
+    <div className="px-4 mb-6">
       <div 
         onClick={handleClick}
-        className={`group relative overflow-hidden rounded-[32px] cursor-pointer transition-all duration-500 hover:shadow-2xl active:scale-[0.98] min-h-[220px] md:min-h-[280px] bg-gradient-to-br ${background.bg}`}
+        className={`group relative overflow-hidden rounded-[24px] cursor-pointer transition-all duration-500 hover:shadow-xl active:scale-[0.98] min-h-[140px] md:min-h-[160px] bg-gradient-to-br ${background.bg}`}
       >
         {/* Animated Background Texture */}
         <div 
@@ -38,34 +38,34 @@ function PromoBanner({ banner }) {
         />
         
         {/* Content Layouts */}
-        <div className="relative h-full flex flex-col md:flex-row items-center p-8 md:p-12 gap-8">
+        <div className="relative h-full flex items-center p-6 md:p-8 gap-6">
           
           {layout === "split" && (
             <>
-              <div className="flex-1 text-white space-y-4 animate-in fade-in slide-in-from-left duration-700">
+              <div className="flex-1 text-white space-y-1 animate-in fade-in slide-in-from-left duration-700">
                 {isHotDeal && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-black uppercase tracking-widest">
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[8px] font-black uppercase tracking-widest">
                     <FaBolt className="text-amber-400" /> Hot Deal
                   </div>
                 )}
-                <h2 className="text-3xl md:text-5xl font-black leading-tight drop-shadow-lg">
+                <h2 className="text-xl md:text-3xl font-black leading-tight drop-shadow-md">
                   {banner.title}
                 </h2>
-                <p className="text-sm md:text-lg font-bold opacity-90 max-w-md">
+                <p className="text-[10px] md:text-sm font-bold opacity-90 max-w-md line-clamp-1">
                   {banner.subtitle}
                 </p>
-                <div className="pt-4">
-                  <span className="px-6 py-3 rounded-2xl bg-white text-slate-900 font-black text-sm shadow-xl transition-transform group-hover:scale-105 inline-block">
+                <div className="pt-2">
+                  <span className="px-4 py-1.5 rounded-xl bg-white text-slate-900 font-black text-[10px] md:text-xs shadow-lg transition-transform group-hover:scale-105 inline-block">
                     {banner.call_to_action || 'Claim Now'}
                   </span>
                 </div>
               </div>
               
-              <div className="flex-1 flex gap-4 animate-in fade-in zoom-in duration-1000 delay-200">
+              <div className="flex gap-3 animate-in fade-in zoom-in duration-1000 delay-200">
                 {products.map((p, i) => (
                   <div 
                     key={p.id || i} 
-                    className={`relative w-24 h-32 md:w-32 md:h-44 rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl transition-transform duration-500 group-hover:translate-y-[-10px]`}
+                    className={`relative w-16 h-20 md:w-20 md:h-28 rounded-xl overflow-hidden border-2 border-white/20 shadow-xl transition-transform duration-500 group-hover:translate-y-[-5px]`}
                     style={{ transitionDelay: `${i * 100}ms` }}
                   >
                     <StableImage src={p.image_url} alt="Product" className="h-full w-full object-cover" />
@@ -76,44 +76,38 @@ function PromoBanner({ banner }) {
           )}
 
           {layout === "grid" && (
-            <div className="w-full text-center text-white space-y-8">
-              <div className="space-y-2">
-                <h2 className="text-4xl md:text-6xl font-black drop-shadow-lg">{banner.title}</h2>
-                <p className="text-lg font-bold opacity-80">{banner.subtitle}</p>
+            <div className="w-full text-center text-white space-y-3">
+              <div className="space-y-0.5">
+                <h2 className="text-2xl md:text-4xl font-black drop-shadow-md leading-none">{banner.title}</h2>
+                <p className="text-[10px] md:text-sm font-bold opacity-80">{banner.subtitle}</p>
               </div>
-              <div className="flex justify-center gap-6">
+              <div className="flex justify-center gap-3">
                 {products.map((p, i) => (
-                  <div key={p.id || i} className="w-20 h-20 md:w-32 md:h-32 rounded-3xl overflow-hidden border-4 border-white/10 shadow-2xl transition-all duration-500 hover:scale-110">
+                  <div key={p.id || i} className="w-10 h-10 md:w-16 md:h-16 rounded-xl overflow-hidden border-2 border-white/10 shadow-lg">
                     <StableImage src={p.image_url} alt="Product" className="h-full w-full object-cover" />
                   </div>
                 ))}
               </div>
-              <button className="px-8 py-4 rounded-2xl bg-white text-slate-900 font-black text-lg shadow-2xl">
-                {banner.call_to_action || 'Claim Now'}
-              </button>
             </div>
           )}
 
           {layout === "focus" && (
             <div className="w-full h-full flex items-center justify-center">
-               <div className="absolute inset-0 flex gap-2 opacity-30 grayscale blur-sm">
+               <div className="absolute inset-0 flex gap-1 opacity-20 grayscale blur-[2px]">
                  {products.map((p, i) => (
                    <div key={i} className="flex-1 h-full"><StableImage src={p.image_url} className="w-full h-full object-cover" /></div>
                  ))}
                </div>
-               <div className="relative z-10 bg-black/40 backdrop-blur-xl p-10 rounded-[40px] border border-white/10 text-center text-white max-w-2xl transform transition-transform group-hover:scale-105 duration-700">
-                 <h2 className="text-4xl md:text-5xl font-black mb-4">{banner.title}</h2>
-                 <p className="text-lg opacity-80 mb-8 font-bold">{banner.subtitle}</p>
-                 <button className="px-10 py-4 rounded-2xl bg-white text-slate-900 font-black text-xl">
-                   {banner.call_to_action || 'Claim Now'}
-                 </button>
+               <div className="relative z-10 bg-black/40 backdrop-blur-xl p-4 md:p-6 rounded-[24px] border border-white/10 text-center text-white w-full max-w-sm transform transition-transform group-hover:scale-105 duration-700">
+                 <h2 className="text-xl md:text-2xl font-black mb-1">{banner.title}</h2>
+                 <p className="text-[10px] md:text-xs opacity-80 font-bold">{banner.subtitle}</p>
                </div>
             </div>
           )}
 
           {/* Icon Arrow Overlay */}
-          <div className="absolute right-8 bottom-8 md:bottom-auto md:top-1/2 md:-translate-y-1/2 rounded-full bg-white/10 p-4 text-white backdrop-blur-lg border border-white/20 transition-all duration-500 group-hover:bg-white/30 group-hover:scale-125">
-            <FaArrowRight className="text-2xl" />
+          <div className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white backdrop-blur-lg border border-white/20 transition-all duration-500 group-hover:bg-white/30 group-hover:scale-110">
+            <FaArrowRight className="text-lg" />
           </div>
         </div>
       </div>
