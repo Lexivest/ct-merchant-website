@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { useLocation, useNavigationType } from "react-router-dom"
 import AppErrorBoundary from "./AppErrorBoundary"
 import { removeRecoverySearchParam } from "../../lib/runtimeRecovery"
+import { useVersionCheck } from "../../hooks/useVersionCheck"
 
 function RouteFeedback() {
   const location = useLocation()
@@ -33,6 +34,7 @@ function RouteFeedback() {
 
 function AppFrame({ children }) {
   const location = useLocation()
+  useVersionCheck() // Monitor for app updates in the background
 
   useEffect(() => {
     removeRecoverySearchParam()
