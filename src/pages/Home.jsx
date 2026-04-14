@@ -1122,15 +1122,19 @@ function Home() {
             <div className="mx-auto grid w-full max-w-7xl min-w-0 gap-6 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
               <div className="mb-2 min-w-0 bg-pink-200 p-0 shadow-sm md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
                 <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
-                  <div className="relative aspect-video w-full max-h-[400px] overflow-hidden bg-white">
-                    <img
-                      key={currentBanner}
-                      src={bannerImages[currentBanner] || bannerImages[0]}
-                      alt={`Commerce Banner ${currentBanner + 1}`}
-                      fetchPriority={currentBanner === 0 ? "high" : "auto"}
-                      className="absolute inset-0 h-full w-full object-cover object-center"
-                      loading={currentBanner === 0 ? "eager" : "lazy"}
-                    />
+                  <div className="relative aspect-video w-full max-h-[400px] overflow-hidden bg-slate-100">
+                    {/* Professional Smooth Carousel with Cross-fade */}
+                    {bannerImages.map((src, index) => (
+                      <img
+                        key={src}
+                        src={src}
+                        alt={`Commerce Banner ${index + 1}`}
+                        className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 ease-in-out ${
+                          index === currentBanner ? "opacity-100" : "opacity-0"
+                        }`}
+                        loading="eager"
+                      />
+                    ))}
                   </div>
 
                   <div className="flex w-full flex-wrap justify-center gap-4 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-5 md:py-4 md:text-sm">
@@ -1147,6 +1151,13 @@ function Home() {
                       Unique ID
                     </span>
                   </div>
+                </div>
+              </div>
+
+              {/* Mobile Only Ticker - positioned just below the hero image */}
+              <div className="lg:hidden">
+                <div className="bg-white py-2.5 text-slate-900 border-y border-pink-100 rounded-2xl shadow-sm px-4">
+                  <HeaderMarquee />
                 </div>
               </div>
 
@@ -1320,7 +1331,8 @@ function Home() {
             </div>
           </section>
 
-          <div className="bg-white py-3 text-slate-900 border-y border-slate-100">
+          {/* Desktop Only Ticker */}
+          <div className="hidden lg:block bg-white py-3 text-slate-900 border-y border-slate-100">
             <div className="mx-auto max-w-7xl px-4">
               <HeaderMarquee />
             </div>

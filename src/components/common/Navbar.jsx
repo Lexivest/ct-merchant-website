@@ -23,19 +23,19 @@ function MarketPulseTicker() {
   return (
     <div className="bg-slate-950 py-2.5 text-white">
       <div className="mx-auto flex max-w-7xl items-center px-4">
-        <div className="mr-4 flex shrink-0 items-center gap-2 border-r border-white/20 pr-4 text-[10px] font-black uppercase tracking-tighter text-emerald-400">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+        <div className="mr-4 flex shrink-0 items-center gap-1.5 border-r border-white/20 pr-4 text-[9px] font-black uppercase tracking-tighter text-emerald-400">
+          <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
           Live
         </div>
         <div className="min-w-0 flex-1">
           <ScrollingTicker
             text={tickerText}
-            textClassName="text-xs font-mono font-bold tracking-wider text-slate-300"
+            textClassName="text-[10px] font-mono font-bold tracking-wider text-slate-300"
             speedFactor={0.15}
           />
         </div>
-        <div className="ml-4 hidden shrink-0 items-center gap-2 text-[10px] font-black uppercase text-pink-500 md:flex">
-          <FaChartLine />
+        <div className="ml-4 hidden shrink-0 items-center gap-1.5 text-[9px] font-black uppercase text-pink-500 md:flex">
+          <FaChartLine className="text-[10px]" />
           Index: CT-240
         </div>
       </div>
