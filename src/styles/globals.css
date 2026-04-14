@@ -162,7 +162,7 @@ img {
   display: flex;
   overflow-x: auto;
   gap: 16px;
-  padding: 4px 16px 20px;
+  padding: 0px 16px 16px;
   isolation: isolate;
   contain: layout paint style;
   transform: translateZ(0);
@@ -189,7 +189,7 @@ img {
   font-weight: 800;
   color: #0f1111;
   margin: 0;
-  padding: 16px 16px 12px;
+  padding: 8px 16px 4px;
   display: flex;
   align-items: center;
   gap: 10px;

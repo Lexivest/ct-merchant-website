@@ -350,7 +350,7 @@ function MarketSection({
       ) : null}
 
       {promoBanners.length > 0 && (
-        <div className="sponsored-wrap bg-white py-4 border-b border-slate-50">
+        <div className="sponsored-wrap bg-white pt-2 pb-4 border-b border-slate-50">
            <div className="flex gap-4 overflow-x-auto pl-4 pb-2 no-scrollbar">
              {promoBanners.map((sponsored) => (
                <SponsoredProductCard key={sponsored.id} sponsored={sponsored} />
@@ -362,7 +362,7 @@ function MarketSection({
 
       {groupedShopsByArea.map(({ area, shops }) => (
         <div key={area.id} className="area-block-wrap bg-white">
-          <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 py-4 text-[1.35rem] font-extrabold text-[#0F1111]">
+          <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 pb-1 pt-2 text-[1.35rem] font-extrabold text-[#0F1111]">
             {area.id === dashboardData.profile?.area_id ? (
               <>
                 Top stores in {area.name}{" "}
@@ -375,7 +375,7 @@ function MarketSection({
             )}
           </h2>
 
-          <div className="h-scroll flex gap-4 overflow-x-auto pl-4 pb-5 pt-1">
+          <div className="h-scroll flex gap-4 overflow-x-auto pl-4 pb-4 pt-0">
             {shops.map((shop) => (
               <ShopCard
                 key={shop.id}
@@ -391,11 +391,11 @@ function MarketSection({
 
       {sortedCategories.length > 0 ? (
         <div className="cat-section-wrap bg-white">
-          <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 py-4 text-[1.35rem] font-extrabold text-[#0F1111]">
+          <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 pb-1 pt-2 text-[1.35rem] font-extrabold text-[#0F1111]">
             Browse Categories
           </h2>
 
-          <div className="cat-grid px-4 pb-6">
+          <div className="cat-grid px-4 pb-4">
             {sortedCategories.map((category) => {
               const categoryImageUrl = getCategoryImageUrl(category)
               const imageUrl =
