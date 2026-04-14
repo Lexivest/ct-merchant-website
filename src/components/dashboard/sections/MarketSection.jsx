@@ -12,6 +12,20 @@ function SponsoredProductCard({ sponsored }) {
   const product = sponsored.product
   if (!product) return null
 
+  // Image rotation logic
+  const [imgIndex, setImgIndex] = useState(0)
+  const images = useMemo(() => {
+    return [product.image_url, product.side_image_url, product.back_image_url].filter(Boolean)
+  }, [product])
+
+  useEffect(() => {
+    if (images.length <= 1) return
+    const interval = setInterval(() => {
+      setImgIndex((prev) => (prev + 1) % images.length)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [images])
+
   const handleClick = () => {
     navigate(`/product-detail?id=${product.id}`)
   }
@@ -19,28 +33,44 @@ function SponsoredProductCard({ sponsored }) {
   return (
     <div 
       onClick={handleClick}
-      className="group relative overflow-hidden rounded-[24px] cursor-pointer transition-all duration-500 hover:shadow-xl active:scale-[0.98] bg-white border border-slate-100 flex flex-col p-3 w-[140px] md:w-[160px] shrink-0 shadow-sm"
+      className="group relative overflow-hidden rounded-[28px] cursor-pointer transition-all duration-500 hover:shadow-2xl active:scale-[0.98] bg-white border border-slate-100 flex flex-col p-4 w-[180px] md:w-[210px] shrink-0 shadow-md"
     >
-      <div className="absolute top-2 left-2 z-10">
-        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-600 text-white text-[8px] font-black uppercase tracking-tighter shadow-lg">
-          <FaBolt className="text-[7px]" /> Sponsored
+      <div className="absolute top-3 left-3 z-10">
+        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-pink-600 text-white text-[9px] font-black uppercase tracking-tighter shadow-xl">
+          <FaBolt className="text-[8px] animate-pulse" /> Sponsored
         </span>
       </div>
       
-      <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-50 mb-3">
-        <StableImage 
-          src={product.image_url} 
-          alt={product.name} 
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
-        />
+      <div className="relative aspect-square w-full rounded-[20px] overflow-hidden bg-slate-50 mb-4">
+        {images.map((img, idx) => (
+          <div 
+            key={idx}
+            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === imgIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110 pointer-events-none'}`}
+          >
+            <StableImage 
+              src={img} 
+              alt={product.name} 
+              className="h-full w-full object-cover" 
+            />
+          </div>
+        ))}
+        
+        {/* Pagination Dots for images */}
+        {images.length > 1 && (
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-10">
+            {images.map((_, idx) => (
+              <div key={idx} className={`h-1 rounded-full transition-all duration-500 ${idx === imgIndex ? 'w-4 bg-white shadow-sm' : 'w-1 bg-white/40'}`} />
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="space-y-1">
-        <div className="text-[10px] font-black text-slate-900 truncate">{product.name}</div>
-        <div className="text-[9px] font-bold text-pink-600">₦{Number(product.price).toLocaleString()}</div>
-        <div className="pt-1 border-t border-slate-50 flex items-center justify-between">
-           <span className="text-[7px] font-bold text-slate-400 truncate max-w-[70%]">{product.shops?.name}</span>
-           <FaArrowRight className="text-[7px] text-slate-300" />
+      <div className="space-y-1.5">
+        <div className="text-xs md:text-sm font-black text-slate-900 truncate leading-tight">{product.name}</div>
+        <div className="text-xs font-black text-pink-600">₦{Number(product.price).toLocaleString()}</div>
+        <div className="pt-2 border-t border-slate-50 flex items-center justify-between mt-1">
+           <span className="text-[9px] md:text-[10px] font-black text-amber-500 uppercase tracking-tight truncate max-w-[70%]">{product.shops?.name}</span>
+           <FaArrowRight className="text-[9px] text-slate-300 group-hover:text-pink-500 transition-colors" />
         </div>
       </div>
     </div>
@@ -320,15 +350,8 @@ function MarketSection({
       ) : null}
 
       {promoBanners.length > 0 && (
-        <div className="sponsored-wrap bg-white">
-           <div className="px-4 py-4 flex items-center gap-3">
-             <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-[11px] font-black uppercase tracking-widest shadow-sm">
-               <FaBolt className="text-[10px]" /> Sponsored
-             </span>
-             <div className="h-[1px] flex-1 bg-slate-100"></div>
-           </div>
-           
-           <div className="flex gap-4 overflow-x-auto pl-4 pb-4 no-scrollbar">
+        <div className="sponsored-wrap bg-white py-4 border-b border-slate-50">
+           <div className="flex gap-4 overflow-x-auto pl-4 pb-2 no-scrollbar">
              {promoBanners.map((sponsored) => (
                <SponsoredProductCard key={sponsored.id} sponsored={sponsored} />
              ))}
