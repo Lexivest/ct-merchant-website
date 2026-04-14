@@ -117,7 +117,7 @@ function FeaturedCitySlider({ banners, onOpenShop }) {
 
   return (
     <section className="relative overflow-hidden bg-white p-[6px]">
-      <div className="promo-banner-slider relative aspect-[8/3] w-full max-h-[420px] overflow-hidden bg-white">
+      <div className="sponsored-product-slider relative aspect-[8/3] w-full max-h-[420px] overflow-hidden bg-white">
         {banners.map((banner, idx) => {
           const imageUrl = banner.desktop_image_url || banner.mobile_image_url || ""
 
@@ -133,7 +133,7 @@ function FeaturedCitySlider({ banners, onOpenShop }) {
               onMouseEnter={prefetchShopDetailPage}
               onFocus={prefetchShopDetailPage}
               onPointerDown={prefetchShopDetailPage}
-              className={`promo-slide absolute left-0 top-0 h-full w-full text-left transition-opacity duration-1000 ease-in-out ${
+              className={`sponsored-product-slide absolute left-0 top-0 h-full w-full text-left transition-opacity duration-1000 ease-in-out ${
                 idx === currentSlide ? "z-[2] opacity-100" : "z-[1] opacity-0"
               }`}
             >
@@ -267,7 +267,7 @@ function MarketSection({
       (dashboardData.shops || []).length === 0 &&
       (dashboardData.products || []).length === 0)
 
-  const promoBanners = dashboardData?.promos || []
+  const sponsoredProducts = dashboardData?.sponsoredProducts || []
 
   function openShop(shopId) {
     if (typeof onOpenShop === "function") {
@@ -349,16 +349,17 @@ function MarketSection({
         />
       ) : null}
 
-      {promoBanners.length > 0 && (
+      {sponsoredProducts.length > 0 && (
         <div className="sponsored-wrap bg-white pt-2 pb-4 border-b border-slate-50">
            <div className="flex gap-4 overflow-x-auto pl-4 pb-2 no-scrollbar">
-             {promoBanners.map((sponsored) => (
+             {sponsoredProducts.map((sponsored) => (
                <SponsoredProductCard key={sponsored.id} sponsored={sponsored} />
              ))}
              <div className="w-4 shrink-0" aria-hidden="true" />
            </div>
         </div>
       )}
+
 
       {groupedShopsByArea.map(({ area, shops }) => (
         <div key={area.id} className="area-block-wrap bg-white">

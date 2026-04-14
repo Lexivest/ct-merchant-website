@@ -409,7 +409,7 @@ export default function MerchantBanner() {
               {statusLabel(status)}
             </span>
           </div>
-          <div className="promo-banner-slider relative aspect-[8/3] w-full overflow-hidden rounded-[18px] bg-white">
+          <div className="sponsored-product-slider relative aspect-[8/3] w-full overflow-hidden rounded-[18px] bg-white">
             {generatedPreviewUrl ? (
               <img src={generatedPreviewUrl} alt={`${shopData?.name || "Shop"} generated banner`} className="absolute inset-0 block h-full w-full bg-white object-contain object-center" />
             ) : (

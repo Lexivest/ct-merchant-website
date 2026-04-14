@@ -150,7 +150,7 @@ const loadStaffCommunity = () => import("./pages/staff/StaffCommunity")
 const loadStaffVerifications = () => import("./pages/staff/StaffVerifications")
 const loadStaffPayments = () => import("./pages/staff/StaffPayments")
 const loadStaffFeaturedCityBanners = () => import("./pages/staff/StaffFeaturedCityBanners")
-const loadStaffPromoBanners = () => import("./pages/staff/StaffPromoBanners")
+const loadStaffSponsoredProducts = () => import("./pages/staff/StaffSponsoredProducts")
 const loadStaffIDGenerator = () => import("./pages/staff/StaffIDGenerator")
 const loadStaffInbox = () => import("./pages/staff/StaffInbox")
 const loadUserDashboard = () => import("./pages/UserDashboard")
@@ -170,7 +170,7 @@ const loadMerchantProducts = () => import("./pages/vendors/MerchantProducts")
 const loadMerchantBanner = () => import("./pages/vendors/MerchantBanner")
 const loadMerchantSettings = () => import("./pages/vendors/MerchantSettings")
 const loadMerchantNews = () => import("./pages/vendors/MerchantNews")
-const loadMerchantPromoBanner = () => import("./pages/vendors/MerchantPromoBanner")
+const loadMerchantSponsoredProduct = () => import("./pages/vendors/MerchantSponsoredProduct")
 const loadMerchantAnalytics = () => import("./pages/vendors/MerchantAnalytics")
 const loadMerchantPayment = () => import("./pages/vendors/MerchantPayment")
 const loadMerchantServiceFee = () => import("./pages/vendors/MerchantServiceFee")
@@ -192,7 +192,7 @@ const StaffCommunity = resilientLazy(loadStaffCommunity, { pageLabel: "staff com
 const StaffVerifications = resilientLazy(loadStaffVerifications, { pageLabel: "staff verifications" })
 const StaffPayments = resilientLazy(loadStaffPayments, { pageLabel: "staff payments" })
 const StaffFeaturedCityBanners = resilientLazy(loadStaffFeaturedCityBanners, { pageLabel: "featured city banners" })
-const StaffPromoBanners = resilientLazy(loadStaffPromoBanners, { pageLabel: "promo banner studio" })
+const StaffSponsoredProducts = resilientLazy(loadStaffSponsoredProducts, { pageLabel: "sponsored products studio" })
 const StaffIDGenerator = resilientLazy(loadStaffIDGenerator, { pageLabel: "staff ID generator" })
 const StaffInbox = resilientLazy(loadStaffInbox, { pageLabel: "staff inbox" })
 const UserDashboard = resilientLazy(loadUserDashboard, { pageLabel: "user dashboard" })
@@ -212,7 +212,7 @@ const MerchantProducts = resilientLazy(loadMerchantProducts, { pageLabel: "merch
 const MerchantBanner = resilientLazy(loadMerchantBanner, { pageLabel: "shop banner" })
 const MerchantSettings = resilientLazy(loadMerchantSettings, { pageLabel: "merchant settings" })
 const MerchantNews = resilientLazy(loadMerchantNews, { pageLabel: "merchant news" })
-const MerchantPromoBanner = resilientLazy(loadMerchantPromoBanner, { pageLabel: "promo banner" })
+const MerchantSponsoredProduct = resilientLazy(loadMerchantSponsoredProduct, { pageLabel: "sponsored product" })
 const MerchantAnalytics = resilientLazy(loadMerchantAnalytics, { pageLabel: "merchant analytics" })
 const MerchantPayment = resilientLazy(loadMerchantPayment, { pageLabel: "payment page" })
 const MerchantServiceFee = resilientLazy(loadMerchantServiceFee, { pageLabel: "service fee page" })
@@ -407,7 +407,7 @@ function AppShell() {
         <Route path="/staff-verifications" element={<StaffVerifications />} />
         <Route path="/staff-payments" element={<StaffPayments />} />
         <Route path="/staff-city-banners" element={<StaffFeaturedCityBanners />} />
-        <Route path="/staff-promo-banners" element={<StaffPromoBanners />} />
+        <Route path="/staff-sponsored-products" element={<StaffSponsoredProducts />} />
         <Route path="/staff-issue-id" element={<StaffIDGenerator />} />
         <Route path="/staff-studio" element={<ImageOptimizer />} />
         <Route path="/staff-inbox" element={<StaffInbox />} />
@@ -451,10 +451,10 @@ function AppShell() {
 
         {/* --- LOCKED PREMIUM ROUTES START HERE --- */}
         <Route
-          path="/merchant-promo-banner"
+          path="/merchant-sponsored-product"
           element={withProtectedOnlineGuard(
             <SubscriptionGuard>
-              <MerchantPromoBanner />
+              <MerchantSponsoredProduct />
             </SubscriptionGuard>
           )}
         />

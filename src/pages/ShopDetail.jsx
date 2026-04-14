@@ -796,7 +796,7 @@ function ShopDetail() {
             <StableImage
               src={shopBanner}
               alt="Shop Banner"
-              containerClassName="promo-banner-slider relative aspect-[8/3] w-full max-h-[420px] overflow-hidden bg-white"
+              containerClassName="sponsored-product-slider relative aspect-[8/3] w-full max-h-[420px] overflow-hidden bg-white"
               className="absolute inset-0 block h-full w-full bg-white object-contain object-center"
               loading="eager"
               fetchPriority="high"

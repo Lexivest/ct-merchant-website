@@ -186,7 +186,7 @@ function drawContainedImage(context, image, x, y, width, height, background = "#
   context.restore();
 }
 
-async function generatePromoBannerCanvasBlob({
+async function generateSponsoredProductCanvasBlob({
   products,
   shopName,
   category,
@@ -537,14 +537,14 @@ function PromoBannerArtwork({
   );
 }
 
-export default function MerchantPromoBanner() {
+export default function MerchantSponsoredProduct() {
   const navigate = useNavigate();
   const location = useLocation();
   usePreventPullToRefresh();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
   const prefetchedData =
-    location.state?.prefetchedData?.kind === "merchant-promo-banner" &&
+    location.state?.prefetchedData?.kind === "merchant-sponsored-product" &&
     (!urlShopId || String(location.state.prefetchedData.shopData?.id) === String(urlShopId))
       ? location.state.prefetchedData
       : null

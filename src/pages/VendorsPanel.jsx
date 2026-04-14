@@ -38,11 +38,9 @@ import { prepareVendorRouteTransition } from "../lib/vendorRouteTransitions"
 const loadVendorRoutes = {
   "/merchant-add-product": () => import("./vendors/AddProduct"),
   "/merchant-products": () => import("./vendors/MerchantProducts"),
-  "/merchant-banner": () => import("./vendors/MerchantBanner"),
+  "/merchant-sponsored-product": () => import("./vendors/MerchantSponsoredProduct"),
   "/merchant-settings": () => import("./vendors/MerchantSettings"),
   "/merchant-news": () => import("./vendors/MerchantNews"),
-  "/merchant-promo-banner": () => import("./vendors/MerchantPromoBanner"),
-  "/merchant-analytics": () => import("./vendors/MerchantAnalytics"),
   "/merchant-video-kyc": () => import("./vendors/MerchantVideoKYC"),
   "/remita": () => import("./vendors/MerchantPayment"),
   "/service-fee": () => import("./vendors/MerchantServiceFee"),
@@ -470,8 +468,8 @@ function VendorsPanel() {
           )}
 
           <DashCard
-            title="Promo Banner"
-            subtitle="Print & Broadcast"
+            title="Sponsored Product"
+            subtitle="Broadcast & Promote"
             icon={<FaImage />}
             colorClass="bg-[#D1FAE5] text-[#059669]"
             isLocked={!isSubscriptionActive}
@@ -479,14 +477,14 @@ function VendorsPanel() {
               isSubscriptionActive
                 ? () =>
                     handleCardClick(
-                      `/merchant-promo-banner?shop_id=${activeShop.id}`,
+                      `/merchant-sponsored-product?shop_id=${activeShop.id}`,
                     )
                 : () =>
                     notify({
                       type: "error",
                       title: "Subscription required",
                       message:
-                        "Please activate your service fee subscription to access promo banners.",
+                        "Please activate your service fee subscription to access sponsored products.",
                     })
             }
           />

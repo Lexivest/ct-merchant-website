@@ -136,9 +136,9 @@ export async function fetchHomeHighlights() {
   }
 }
 
-export async function fetchPromoBanners(cityId) {
+export async function fetchSponsoredProducts(cityId) {
   let query = supabase
-    .from("promo_banners")
+    .from("sponsored_products")
     .select(`
       id,
       template_key,
@@ -162,7 +162,7 @@ export async function fetchPromoBanners(cityId) {
   const { data, error } = await query
   
   if (error) {
-    console.warn("Promo banners fetch failed:", error.message)
+    console.warn("Sponsored products fetch failed:", error.message)
     return []
   }
 
@@ -205,7 +205,7 @@ export async function fetchDashboardData({ userId, profile = null }) {
 
   const [
     featuredCityBanners,
-    promoBanners,
+    sponsoredProducts,
     announcementsRes,
     categoriesRes,
     areasRes,
@@ -214,7 +214,7 @@ export async function fetchDashboardData({ userId, profile = null }) {
     wishlistRes,
   ] = await Promise.all([
     fetchFeaturedCityBanners(cityId),
-    fetchPromoBanners(cityId),
+    fetchSponsoredProducts(cityId),
     supabase.from("announcements").select("*").order("created_at", { ascending: false }),
     supabase.from("categories").select("*").order("name"),
     supabase.from("areas").select("*").eq("city_id", cityId).order("name"),
@@ -279,7 +279,7 @@ export async function fetchDashboardData({ userId, profile = null }) {
 
   return {
     profile: currentProfile,
-    promos: promoBanners,
+    sponsoredProducts,
     featuredCityBanners,
     announcements,
     categories,

@@ -85,7 +85,7 @@ function SponsoredProductPreview({ product }) {
   )
 }
 
-export default function StaffPromoBanners() {
+export default function StaffSponsoredProducts() {
   const { notify, confirm } = useGlobalFeedback()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -106,7 +106,7 @@ export default function StaffPromoBanners() {
       const [citiesResult, bannersResult] = await Promise.all([
         supabase.from("cities").select("id, name, state").order("name"),
         supabase
-          .from("promo_banners")
+          .from("sponsored_products")
           .select(`
             *,
             cities(name),
@@ -194,7 +194,7 @@ export default function StaffPromoBanners() {
 
     try {
       setSaving(true)
-      const { error } = await supabase.from("promo_banners").insert({
+      const { error } = await supabase.from("sponsored_products").insert({
         city_id: selectedCityId ? Number(selectedCityId) : null,
         shop_id: selectedProduct.shop_id,
         title: selectedProduct.name,
@@ -218,7 +218,7 @@ export default function StaffPromoBanners() {
 
   async function updateStatus(banner, status) {
     try {
-      const { error } = await supabase.from("promo_banners").update({ status }).eq("id", banner.id)
+      const { error } = await supabase.from("sponsored_products").update({ status }).eq("id", banner.id)
       if (error) throw error
       await loadInitialData()
     } catch (error) {
@@ -230,7 +230,7 @@ export default function StaffPromoBanners() {
     const ok = await confirm({ type: "error", title: "Remove sponsorship?", message: "This product will no longer be featured.", confirmText: "Remove" })
     if (!ok) return
     try {
-      const { error } = await supabase.from("promo_banners").delete().eq("id", banner.id)
+      const { error } = await supabase.from("sponsored_products").delete().eq("id", banner.id)
       if (error) throw error
       await loadInitialData()
     } catch (error) {
@@ -239,7 +239,7 @@ export default function StaffPromoBanners() {
   }
 
   return (
-    <StaffPortalShell activeKey="promo-banners" title="Sponsored Products" description="Select products to feature in the marketplace.">
+    <StaffPortalShell activeKey="sponsored-products" title="Sponsored Products" description="Select products to feature in the marketplace.">
       <SectionHeading eyebrow="Marketplace Feature" title="Product Sponsorship" description="Choose available products from approved shops to feature them directly to users." />
       
       {loading ? (

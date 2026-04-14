@@ -189,11 +189,11 @@ export default function StaffDashboard() {
         onClick={() => void openStaffRouteWithTransition("/staff-inbox")}
       />,
       <QuickActionButton
-        key="promo-banners"
+        key="sponsored-products"
         icon={<FaImages />}
-        label="Promo Studio"
+        label="Sponsored Products"
         tone="pink"
-        onClick={() => void openStaffRouteWithTransition("/staff-promo-banners")}
+        onClick={() => void openStaffRouteWithTransition("/staff-sponsored-products")}
       />,
       <QuickActionButton
         key="city-banners"
@@ -268,10 +268,10 @@ export default function StaffDashboard() {
             />
             <HomeCard
               icon={<FaImages />}
-              title="Promo Studio"
-              subtitle="Design and publish text-based colorful promo widgets with city targeting."
+              title="Sponsored Products"
+              subtitle="Select and publish products to feature in the marketplace."
               tone="pink"
-              onClick={() => void openStaffRouteWithTransition("/staff-promo-banners")}
+              onClick={() => void openStaffRouteWithTransition("/staff-sponsored-products")}
             />
             <HomeCard
               icon={<FaImages />}
