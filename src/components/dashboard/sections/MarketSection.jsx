@@ -128,32 +128,10 @@ function FeaturedCitySlider({ banners, onOpenShop }) {
                 src={imageUrl}
                 alt={banner.title || (banner.shops && banner.shops.name) || "Featured shop"}
                 containerClassName="absolute inset-0 h-full w-full bg-white"
-                className="h-full w-full object-cover object-center"
+                className="h-full w-full object-contain object-center"
                 loading={idx === currentSlide ? "eager" : "lazy"}
                 fetchPriority={idx === currentSlide ? "high" : "auto"}
               />
-
-              {/* Text Overlays */}
-              <div className="absolute inset-0 flex flex-col justify-between p-4 md:p-8 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none">
-                <div className="flex justify-start">
-                   <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-xl text-[10px] md:text-xs font-black uppercase tracking-widest text-white border border-white/20 shadow-xl">
-                      {banner.shops?.name || "Featured Store"}
-                   </span>
-                </div>
-                
-                <div className="flex flex-col items-start gap-1">
-                   {banner.title && (
-                     <h3 className="text-white text-xl md:text-3xl font-black drop-shadow-2xl uppercase italic tracking-tighter">
-                       {banner.title}
-                     </h3>
-                   )}
-                   {banner.subtitle && (
-                     <p className="text-white/90 text-[10px] md:text-sm font-bold max-w-[80%] line-clamp-2 drop-shadow-lg">
-                       {banner.subtitle}
-                     </p>
-                   )}
-                </div>
-              </div>
             </button>
           )
         })}
