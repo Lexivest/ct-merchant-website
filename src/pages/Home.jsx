@@ -1092,8 +1092,8 @@ function Home() {
             description="Discover verified physical shops, browse local products, and connect with real merchants across your city."
             canonicalPath="/"
           />
-          <section className="overflow-x-hidden bg-pink-50 px-4 py-4 md:py-5">
-            <div className="mx-auto mb-4 w-full max-w-7xl lg:hidden">
+          <section className="overflow-x-hidden bg-pink-50 px-4 py-4 md:py-10">
+            <div className="mx-auto mb-6 w-full max-w-7xl lg:hidden">
               <div className="overflow-hidden rounded-[22px] border border-pink-100 bg-white p-2 shadow-sm">
                 <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-transparent bg-pink-50 transition focus-within:border-pink-600">
                   <input
@@ -1119,8 +1119,8 @@ function Home() {
               </div>
             </div>
 
-            <div className="mx-auto grid w-full max-w-7xl min-w-0 gap-6 lg:grid-cols-2">
-              <div className="mb-2 min-w-0 bg-pink-200 p-0 shadow-sm md:rounded-[28px] md:p-1 lg:col-start-1 lg:row-start-1">
+            <div className="mx-auto flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:max-w-7xl">
+              <div className="w-full lg:col-start-1 lg:row-start-1">
                 <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
                   <div className="relative aspect-video w-full h-[220px] sm:h-[300px] md:h-[400px] overflow-hidden bg-slate-100">
                     {/* Professional Smooth Carousel with Cross-fade */}
@@ -1161,8 +1161,9 @@ function Home() {
                 </div>
               </div>
 
-              <div className="min-w-0 rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-2 lg:row-span-2 lg:row-start-1">
-                <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
+              <div className="w-full lg:col-start-2 lg:row-span-2">
+                <div className="min-w-0 rounded-[28px] bg-pink-200 p-1 shadow-sm h-full">
+                  <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-5 md:p-8">
                   <div className="hidden rounded-[22px] bg-pink-200 p-1 lg:block">
                     <div className="rounded-[18px] border border-pink-100 bg-slate-50 p-4">
                       <div className="flex h-[42px] overflow-hidden rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
@@ -1328,9 +1329,12 @@ function Home() {
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm lg:col-start-1 lg:row-start-2">
-                <HomeFeedbackSection />
+              <div className="w-full lg:col-start-1 lg:row-start-2">
+                <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm h-full">
+                  <HomeFeedbackSection />
+                </div>
               </div>
             </div>
           </section>
