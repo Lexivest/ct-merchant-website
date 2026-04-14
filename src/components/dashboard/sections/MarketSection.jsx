@@ -15,8 +15,8 @@ function SponsoredProductCard({ sponsored }) {
   // Image rotation logic
   const [imgIndex, setImgIndex] = useState(0)
   const images = useMemo(() => {
-    return [product.image_url, product.side_image_url, product.back_image_url].filter(Boolean)
-  }, [product])
+    return [product.image_url, product.image_url_2, product.image_url_3].filter(Boolean)
+  }, [product.image_url, product.image_url_2, product.image_url_3])
 
   useEffect(() => {
     if (images.length <= 1) return
@@ -24,7 +24,7 @@ function SponsoredProductCard({ sponsored }) {
       setImgIndex((prev) => (prev + 1) % images.length)
     }, 3000)
     return () => clearInterval(interval)
-  }, [images])
+  }, [images.length])
 
   const handleClick = () => {
     navigate(`/product-detail?id=${product.id}`)
@@ -44,8 +44,8 @@ function SponsoredProductCard({ sponsored }) {
       <div className="relative aspect-square w-full rounded-[20px] overflow-hidden bg-slate-50 mb-4">
         {images.map((img, idx) => (
           <div 
-            key={idx}
-            className={`absolute inset-0 transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1) ${idx === imgIndex ? 'translate-x-0 opacity-100' : idx < imgIndex ? '-translate-x-full opacity-0' : 'translate-x-full opacity-0'}`}
+            key={`${img}-${idx}`}
+            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === imgIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110 pointer-events-none'}`}
           >
             <StableImage 
               src={img} 

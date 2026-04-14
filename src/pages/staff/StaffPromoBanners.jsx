@@ -21,16 +21,17 @@ function SponsoredProductPreview({ product }) {
   const [imgIndex, setImgIndex] = useState(0)
   const images = useMemo(() => {
     if (!product) return []
-    return [product.image_url, product.side_image_url, product.back_image_url].filter(Boolean)
-  }, [product])
+    return [product.image_url, product.image_url_2, product.image_url_3].filter(Boolean)
+  }, [product?.id, product?.image_url, product?.image_url_2, product?.image_url_3])
 
   useEffect(() => {
+    setImgIndex(0)
     if (images.length <= 1) return
     const interval = setInterval(() => {
       setImgIndex((prev) => (prev + 1) % images.length)
     }, 3000)
     return () => clearInterval(interval)
-  }, [images])
+  }, [images.length, product?.id])
 
   if (!product) {
     return (
@@ -44,7 +45,7 @@ function SponsoredProductPreview({ product }) {
   return (
     <div className="group relative overflow-hidden rounded-[28px] bg-white shadow-xl border border-slate-100 flex flex-col p-4 w-[180px] md:w-[210px] mx-auto shadow-md">
       <div className="absolute top-3 left-3 z-10">
-        <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-pink-600 text-white text-[9px] font-black uppercase tracking-tighter shadow-lg">
+        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-pink-600 text-white text-[9px] font-black uppercase tracking-tighter shadow-xl">
           <FaBolt className="text-[8px] animate-pulse" /> Sponsored
         </span>
       </div>
@@ -52,8 +53,8 @@ function SponsoredProductPreview({ product }) {
       <div className="relative aspect-square w-full rounded-[20px] overflow-hidden bg-slate-50 mb-4">
         {images.map((img, idx) => (
           <div 
-            key={idx}
-            className={`absolute inset-0 transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1) ${idx === imgIndex ? 'translate-x-0 opacity-100' : idx < imgIndex ? '-translate-x-full opacity-0' : 'translate-x-full opacity-0'}`}
+            key={`${img}-${idx}`}
+            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === imgIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110 pointer-events-none'}`}
           >
             <StableImage 
               src={img} 
@@ -123,7 +124,7 @@ export default function StaffPromoBanners() {
         if (!b.template_key) return b
         const { data: p } = await supabase
           .from("products")
-          .select("id, name, price, image_url, shops(name)")
+          .select("id, name, price, image_url, image_url_2, image_url_3, shops(name)")
           .eq("id", b.template_key)
           .single()
         return { ...b, product: p }
@@ -147,7 +148,9 @@ export default function StaffPromoBanners() {
           id, 
           name, 
           price, 
-          image_url, 
+          image_url,
+          image_url_2,
+          image_url_3, 
           shop_id,
           shops!inner(id, name, status, city_id)
         `)
