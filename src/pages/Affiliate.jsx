@@ -164,7 +164,7 @@ function Affiliate() {
                   </button>
 
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.25em] text-pink-300">Partnerships</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.25em] text-pink-300">Partnerships (v2)</p>
                     <h1 className="text-xl font-extrabold md:text-2xl">Become an Affiliate</h1>
                   </div>
                 </div>
