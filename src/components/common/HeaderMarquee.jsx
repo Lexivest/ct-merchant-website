@@ -15,9 +15,9 @@ function HeaderMarquee() {
         {marqueeItems.map((text, index) => (
           <div
             key={index}
-            className="flex shrink-0 items-center gap-2 pr-12 text-[11px] font-extrabold uppercase tracking-wide text-white"
+            className="flex shrink-0 items-center gap-2 pr-12 text-[11px] font-extrabold uppercase tracking-wide text-amber-600"
           >
-            <span className="normal-case">CTMerchant</span>
+            <span className="normal-case text-slate-900">CTMerchant</span>
 
             <div className="flex h-[9px] w-[13px] flex-col overflow-hidden rounded-[1px]">
               <div className="flex-1 bg-green-600"></div>
