@@ -16,6 +16,8 @@ function PromoBanner({ banner }) {
         title: banner.title,
         subtitle: banner.subtitle,
         backgroundKey: banner.template_key,
+        layout: banner.layout || "split",
+        products: banner.shop_products || [],
         isHotDeal: Boolean(banner.shop_id),
       }),
     [banner]
@@ -32,15 +34,15 @@ function PromoBanner({ banner }) {
   return (
     <div
       onClick={handleClick}
-      className="group relative mb-5 cursor-pointer overflow-hidden rounded-[24px] transition active:scale-[0.98] px-4"
+      className="group relative mb-8 cursor-pointer overflow-hidden rounded-[32px] transition active:scale-[0.98] px-4"
     >
       <img
         src={promoSvgToDataUrl(svg)}
         alt={banner.title}
-        className="block w-full"
+        className="block w-full shadow-xl"
       />
-      <div className="absolute right-10 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white backdrop-blur-md transition group-hover:bg-white/40">
-        <FaArrowRight />
+      <div className="absolute right-12 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-4 text-white backdrop-blur-md transition group-hover:bg-white/40 group-hover:scale-110">
+        <FaArrowRight className="text-xl" />
       </div>
     </div>
   )
