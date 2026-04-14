@@ -14,7 +14,6 @@ function PromoBanner({ banner }) {
   , [banner.template_key])
 
   const products = banner.shop_products || []
-  const layout = banner.layout || "split"
   const shopName = banner.shops?.name || "Premium Store"
 
   const handleClick = () => {
@@ -28,7 +27,7 @@ function PromoBanner({ banner }) {
   return (
     <div 
       onClick={handleClick}
-      className={`group relative overflow-hidden rounded-[20px] cursor-pointer transition-all duration-500 hover:shadow-lg active:scale-[0.98] h-[110px] md:h-[130px] w-[260px] md:w-[300px] shrink-0 bg-gradient-to-br ${background.bg}`}
+      className={`group relative overflow-hidden rounded-[24px] cursor-pointer transition-all duration-500 hover:shadow-xl active:scale-[0.98] h-[160px] md:h-[180px] w-[130px] md:w-[150px] shrink-0 bg-gradient-to-br ${background.bg} flex flex-col p-3 shadow-sm border border-white/10`}
     >
       {/* Animated Background Texture */}
       <div 
@@ -36,68 +35,30 @@ function PromoBanner({ banner }) {
         style={{ backgroundImage: background.texture }}
       />
       
-      {/* Content Layouts */}
-      <div className="relative h-full flex items-center p-4 md:p-5 gap-4">
-        
-        {layout === "split" && (
-          <>
-            <div className="flex-1 text-white space-y-0.5 min-w-0">
-              <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[7px] font-black uppercase tracking-tighter">
-                {shopName}
-              </div>
-              <h2 className="text-sm md:text-lg font-black leading-tight truncate">
-                {banner.title}
-              </h2>
-              <p className="text-[9px] md:text-[11px] font-bold opacity-80 line-clamp-1">
-                {banner.subtitle}
-              </p>
-            </div>
-            
-            <div className="flex gap-1.5 shrink-0">
-              {products.slice(0, 3).map((p, i) => (
-                <div 
-                  key={p.id || i} 
-                  className="relative w-10 h-14 md:w-14 md:h-20 rounded-lg overflow-hidden border border-white/20 shadow-lg"
-                >
-                  <StableImage src={p.image_url} alt="Product" className="h-full w-full object-cover" />
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+      {/* 1. Shop Name at the top */}
+      <div className="relative z-10 w-full text-center">
+        <span className="inline-flex px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[7px] md:text-[8px] font-black uppercase tracking-tight text-white border border-white/10">
+          {shopName}
+        </span>
+      </div>
 
-        {layout === "grid" && (
-          <div className="w-full text-center text-white space-y-2">
-            <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[7px] font-black uppercase tracking-tighter mb-1">
-              {shopName}
-            </div>
-            <h2 className="text-sm md:text-xl font-black leading-none truncate px-2">{banner.title}</h2>
-            <div className="flex justify-center gap-2">
-              {products.map((p, i) => (
-                <div key={p.id || i} className="w-8 h-8 md:w-12 md:h-12 rounded-lg overflow-hidden border border-white/10">
-                  <StableImage src={p.image_url} alt="Product" className="h-full w-full object-cover" />
-                </div>
-              ))}
-            </div>
+      {/* 2. Images in the middle (Row) */}
+      <div className="relative z-10 flex-1 flex items-center justify-center gap-1.5 overflow-hidden my-2">
+        {products.slice(0, 2).map((p, i) => (
+          <div key={i} className="w-10 h-14 md:w-12 md:h-18 rounded-lg overflow-hidden border border-white/20 shadow-lg transform rotate-[-2deg] first:rotate-[2deg] transition-transform group-hover:rotate-0">
+            <StableImage src={p.image_url} alt="Product" className="h-full w-full object-cover" />
           </div>
-        )}
+        ))}
+      </div>
 
-        {layout === "focus" && (
-          <div className="w-full h-full flex items-center justify-center">
-             <div className="absolute inset-0 flex gap-0.5 opacity-20 grayscale blur-[1px]">
-               {products.map((p, i) => (
-                 <div key={i} className="flex-1 h-full"><StableImage src={p.image_url} className="w-full h-full object-cover" /></div>
-               ))}
-             </div>
-             <div className="relative z-10 bg-black/40 backdrop-blur-lg p-3 rounded-[18px] border border-white/10 text-center text-white w-full max-w-[80%]">
-                <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md text-[7px] font-black uppercase tracking-tighter mb-1">
-                 {shopName}
-                </div>
-               <h2 className="text-xs md:text-sm font-black truncate">{banner.title}</h2>
-               <p className="text-[8px] md:text-[10px] opacity-70 font-bold truncate">{banner.subtitle}</p>
-             </div>
-          </div>
-        )}
+      {/* 3. Subtitle / Title below */}
+      <div className="relative z-10 w-full text-center space-y-0.5">
+        <h2 className="text-[9px] md:text-[11px] font-black leading-tight text-white truncate px-1">
+          {banner.title}
+        </h2>
+        <p className="text-[7px] md:text-[8px] font-bold text-white/70 truncate px-1">
+          {banner.subtitle}
+        </p>
       </div>
     </div>
   )
@@ -167,10 +128,32 @@ function FeaturedCitySlider({ banners, onOpenShop }) {
                 src={imageUrl}
                 alt={banner.title || (banner.shops && banner.shops.name) || "Featured shop"}
                 containerClassName="absolute inset-0 h-full w-full bg-white"
-                className="h-full w-full object-contain object-center"
+                className="h-full w-full object-cover object-center"
                 loading={idx === currentSlide ? "eager" : "lazy"}
                 fetchPriority={idx === currentSlide ? "high" : "auto"}
               />
+
+              {/* Text Overlays */}
+              <div className="absolute inset-0 flex flex-col justify-between p-4 md:p-8 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none">
+                <div className="flex justify-start">
+                   <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-xl text-[10px] md:text-xs font-black uppercase tracking-widest text-white border border-white/20 shadow-xl">
+                      {banner.shops?.name || "Featured Store"}
+                   </span>
+                </div>
+                
+                <div className="flex flex-col items-start gap-1">
+                   {banner.title && (
+                     <h3 className="text-white text-xl md:text-3xl font-black drop-shadow-2xl uppercase italic tracking-tighter">
+                       {banner.title}
+                     </h3>
+                   )}
+                   {banner.subtitle && (
+                     <p className="text-white/90 text-[10px] md:text-sm font-bold max-w-[80%] line-clamp-2 drop-shadow-lg">
+                       {banner.subtitle}
+                     </p>
+                   )}
+                </div>
+              </div>
             </button>
           )
         })}
