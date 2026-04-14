@@ -236,21 +236,21 @@ function HomeFeedbackSection() {
   }
 
   return (
-    <div className="h-full rounded-[24px] border border-pink-100 bg-white p-6 md:p-8">
-      <div className="mb-6">
+    <div className="h-full rounded-[24px] border border-pink-100 bg-white p-5 md:p-7">
+      <div className="mb-4">
         <span className="inline-block rounded-full border border-pink-200 bg-pink-50 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-pink-700">
           Share Your Feedback
         </span>
-        <h2 className="mt-4 text-2xl font-extrabold text-slate-900 md:text-3xl">
+        <h2 className="mt-2 text-2xl font-extrabold text-slate-900 md:text-3xl">
           Help Us Improve Your Experience
         </h2>
-        <p className="mt-2 text-sm font-medium text-slate-500">
+        <p className="mt-1 text-sm font-medium text-slate-500">
           Have a suggestion or encountered an issue? We'd love to hear from you.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="grid gap-5 sm:grid-cols-2">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500">Full Name</label>
             <input
@@ -312,7 +312,7 @@ function HomeFeedbackSection() {
         </button>
       </form>
 
-      <div className="mt-8 rounded-[22px] border border-pink-100 bg-pink-50 p-5">
+      <div className="mt-6 rounded-[22px] border border-pink-100 bg-pink-50 p-5">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-extrabold uppercase tracking-[0.2em] text-pink-600">
@@ -324,7 +324,7 @@ function HomeFeedbackSection() {
           </div>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
           {socialLinks.map((item) => {
             const Icon = item.icon
             return (
@@ -390,23 +390,23 @@ function NewsletterSection() {
   }
 
   return (
-    <section className="bg-slate-900 py-16 text-white">
+    <section className="bg-slate-900 py-10 md:py-16 text-white">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
+        <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
           <div>
             <div className="inline-flex rounded-full bg-pink-600/20 px-4 py-2 text-xs font-black uppercase tracking-widest text-pink-400 ring-1 ring-pink-500/30">
               CTMerchant Insider
             </div>
-            <h2 className="mt-6 text-4xl font-black tracking-tight md:text-5xl">
+            <h2 className="mt-4 text-4xl font-black tracking-tight md:text-5xl">
               Stay Ahead of the <br />
               <span className="text-pink-500">Market Pulse</span>
             </h2>
-            <p className="mt-6 max-w-md text-lg font-medium leading-relaxed text-slate-400">
+            <p className="mt-4 max-w-md text-lg font-medium leading-relaxed text-slate-400">
               Join our newsletter to receive weekly insights, new merchant alerts, and exclusive community updates directly in your inbox.
             </p>
           </div>
 
-          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
+          <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 md:p-8 backdrop-blur-sm">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -1092,8 +1092,8 @@ function Home() {
             description="Discover verified physical shops, browse local products, and connect with real merchants across your city."
             canonicalPath="/"
           />
-          <section className="overflow-x-hidden bg-pink-50 px-4 py-4 md:py-10">
-            <div className="mx-auto mb-6 w-full max-w-7xl lg:hidden">
+          <section className="overflow-x-hidden bg-pink-50 px-4 py-3 md:py-6">
+            <div className="mx-auto mb-4 w-full max-w-7xl lg:hidden">
               <div className="overflow-hidden rounded-[22px] border border-pink-100 bg-white p-2 shadow-sm">
                 <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-transparent bg-pink-50 transition focus-within:border-pink-600">
                   <input
@@ -1119,7 +1119,7 @@ function Home() {
               </div>
             </div>
 
-            <div className="mx-auto flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:max-w-7xl">
+            <div className="mx-auto flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:max-w-7xl">
               <div className="w-full lg:col-start-1 lg:row-start-1">
                 <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
                   <div className="relative aspect-video w-full h-[220px] sm:h-[300px] md:h-[400px] overflow-hidden bg-slate-100">
@@ -1190,23 +1190,23 @@ function Home() {
                     </div>
                   </div>
 
-                  <div className="mt-4 min-h-[28px] text-lg font-extrabold leading-tight text-slate-900 md:min-h-[32px] md:text-2xl">
+                  <div className="mt-2 min-h-[28px] text-lg font-extrabold leading-tight text-slate-900 md:min-h-[32px] md:text-2xl">
                     {currentPhraseText}
                     <span className="ml-1 inline-block animate-pulse text-pink-600">|</span>
                   </div>
 
-                  <p className="mt-2 max-w-xl text-base font-medium leading-7 text-slate-600">
+                  <p className="mt-1 max-w-xl text-base font-medium leading-7 text-slate-600">
                     We provide a digital repository of physical shops, their products, and locations within a city.
                   </p>
 
-                  <div className="mt-6 rounded-[22px] bg-pink-200 p-1">
+                  <div className="mt-4 rounded-[22px] bg-pink-200 p-1">
                     <div className="rounded-[18px] border border-pink-200 bg-pink-50 p-6">
                       <h2 className="flex items-center gap-2 text-xl font-extrabold text-slate-900">
                         <FaLock className="text-pink-600" />
                         <span>Users Login</span>
                       </h2>
 
-                      <form className="mt-5 space-y-4" onSubmit={handleEmailLogin}>
+                      <form className="mt-4 space-y-3" onSubmit={handleEmailLogin}>
                         <AuthInput
                           id="hero-email"
                           label="Email address"
@@ -1269,7 +1269,7 @@ function Home() {
                         </AuthButton>
                       </form>
 
-                      <div className="my-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <div className="my-3 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
                         <div className="h-px flex-1 bg-pink-200" />
                         <span>New to CTMerchant?</span>
                         <div className="h-px flex-1 bg-pink-200" />
@@ -1283,13 +1283,13 @@ function Home() {
                         Create Account
                       </button>
 
-                      <div className="my-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <div className="my-3 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
                         <div className="h-px flex-1 bg-pink-200" />
                         <span>Or continue with</span>
                         <div className="h-px flex-1 bg-pink-200" />
                       </div>
 
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div className="relative flex min-h-[44px] w-full items-center justify-center">
                           <div ref={googleButtonRef} className="flex justify-center w-full" />
                           {!googleReady ? (
@@ -1317,11 +1317,11 @@ function Home() {
                         </p>
                       </div>
 
-                      <div className="mt-8 grid gap-6 sm:grid-cols-2">
+                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
                         <div className="flex justify-center w-full">
                           <ActivityCalendar />
                         </div>
-                        <div className="flex justify-center w-full border-t border-slate-50 pt-6 sm:border-t-0 sm:pt-0">
+                        <div className="flex justify-center w-full border-t border-slate-50 pt-4 sm:border-t-0 sm:pt-0">
                           <OfficeSupportCard />
                         </div>
                       </div>
