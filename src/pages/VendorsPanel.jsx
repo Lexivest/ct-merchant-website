@@ -39,7 +39,7 @@ import { prepareVendorRouteTransition } from "../lib/vendorRouteTransitions"
 const loadVendorRoutes = {
   "/merchant-add-product": () => import("./vendors/AddProduct"),
   "/merchant-products": () => import("./vendors/MerchantProducts"),
-  "/merchant-sponsored-product": () => import("./vendors/MerchantSponsoredProduct"),
+  "/merchant-promo-banner": () => import("./vendors/MerchantPromoBanner"),
   "/merchant-settings": () => import("./vendors/MerchantSettings"),
   "/merchant-news": () => import("./vendors/MerchantNews"),
   "/merchant-video-kyc": () => import("./vendors/MerchantVideoKYC"),
@@ -494,7 +494,7 @@ function VendorsPanel() {
                     })
                 : () =>
                     handleCardClick(
-                      `/merchant-sponsored-product?shop_id=${activeShop.id}`,
+                      `/merchant-promo-banner?shop_id=${activeShop.id}`,
                     )
             }
           />

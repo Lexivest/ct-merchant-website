@@ -4,6 +4,7 @@ import {
   FaArrowLeft,
   FaCircleNotch,
   FaDownload,
+  FaLocationDot,
   FaShareNodes,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
@@ -186,7 +187,7 @@ function drawContainedImage(context, image, x, y, width, height, background = "#
   context.restore();
 }
 
-async function generateSponsoredProductCanvasBlob({
+async function generatePromoBannerCanvasBlob({
   products,
   shopName,
   category,
@@ -253,16 +254,16 @@ async function generateSponsoredProductCanvasBlob({
 
   const headerTextMaxWidth = width - logoSize * 2 - logoX * 4;
   const centerX = width / 2;
-  const shopNameLines = drawWrappedText(context, shopName, centerX, 54, headerTextMaxWidth, 32, 2, {
+  const shopNameLines = drawWrappedText(context, shopName, centerX, 42, headerTextMaxWidth, 28, 2, {
     weight: 900,
-    size: 32,
+    size: 28,
     fillStyle: "#FFFFFF",
     align: "center",
   });
-  const categoryY = 54 + shopNameLines.length * 32 + 10;
+  const categoryY = 42 + shopNameLines.length * 28 + 10;
   const categoryText = truncateMeasuredText(context, category, headerTextMaxWidth);
 
-  setCanvasFont(context, 900, 23);
+  setCanvasFont(context, 900, 20);
   context.fillStyle = "#FBBF24";
   context.textAlign = "center";
   context.textBaseline = "alphabetic";
@@ -276,18 +277,18 @@ async function generateSponsoredProductCanvasBlob({
   context.lineTo(centerX + categoryUnderlineWidth / 2, categoryY + 8);
   context.stroke();
 
-  setCanvasFont(context, 800, 21);
+  setCanvasFont(context, 800, 18);
   context.fillStyle = "rgba(255,255,255,0.92)";
   context.fillText(websiteText, centerX, categoryY + 34);
 
-  setCanvasFont(context, 900, 23);
+  setCanvasFont(context, 900, 20);
   context.fillStyle = "#93C5FD";
   context.fillText(uniqueId, centerX, categoryY + 62);
 
-  setCanvasFont(context, 800, 20);
+  setCanvasFont(context, 800, 17);
   const addressLines = wrapMeasuredText(context, address, headerTextMaxWidth - 28, 2);
   const addressStartY = categoryY + 91;
-  const addressLineHeight = 25;
+  const addressLineHeight = 22;
   if (addressLines.length) {
     context.fillStyle = "#FBBF24";
     context.beginPath();
@@ -335,7 +336,7 @@ async function generateSponsoredProductCanvasBlob({
 
     if (hasDiscount) {
       fillRoundedRect(context, x + 14, y + 14, 68, 30, 5, "#DC2626");
-      setCanvasFont(context, 800, 15);
+      setCanvasFont(context, 800, 13);
       context.fillStyle = "#FFFFFF";
       context.textAlign = "center";
       context.fillText(`-${discountPct}%`, x + 48, y + 35);
@@ -343,7 +344,7 @@ async function generateSponsoredProductCanvasBlob({
 
     if (product.condition === "Fairly Used") {
       fillRoundedRect(context, x + tileWidth - 72, y + 14, 58, 30, 5, "#D97706");
-      setCanvasFont(context, 800, 15);
+      setCanvasFont(context, 800, 13);
       context.fillStyle = "#FFFFFF";
       context.textAlign = "center";
       context.fillText("Used", x + tileWidth - 43, y + 35);
@@ -355,24 +356,24 @@ async function generateSponsoredProductCanvasBlob({
     context.lineTo(x + tileWidth, y + imageHeight);
     context.stroke();
 
-    setCanvasFont(context, 800, 20);
+    setCanvasFont(context, 800, 17);
     context.fillStyle = "#0F1111";
     context.textAlign = "center";
     context.fillText(truncateMeasuredText(context, product.name || "Featured Product", tileWidth - 24), x + tileWidth / 2, y + imageHeight + 40);
 
     const price = formatPromoPrice(product);
     if (price) {
-      setCanvasFont(context, 900, 26);
+      setCanvasFont(context, 900, 22);
       context.fillStyle = "#EA580C";
       context.fillText(price, x + tileWidth / 2, y + imageHeight + 78);
     }
   });
 
-  setCanvasFont(context, 900, 22);
+  setCanvasFont(context, 900, 19);
   context.fillStyle = "#FFFFFF";
   context.textAlign = "center";
   context.fillText(`${cityName || "Local"} City Commerce`, width / 2, footerY + 34);
-  setCanvasFont(context, 800, 14);
+  setCanvasFont(context, 800, 12);
   context.fillStyle = "#93C5FD";
   context.textAlign = "center";
   context.fillText("CTMerchant is not liable for transactions or disputes with this shop.", width / 2, footerY + 62);
@@ -537,14 +538,14 @@ function PromoBannerArtwork({
   );
 }
 
-export default function MerchantSponsoredProduct() {
+export default function MerchantPromoBanner() {
   const navigate = useNavigate();
   const location = useLocation();
   usePreventPullToRefresh();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
   const prefetchedData =
-    location.state?.prefetchedData?.kind === "merchant-sponsored-product" &&
+    location.state?.prefetchedData?.kind === "merchant-promo-banner" &&
     (!urlShopId || String(location.state.prefetchedData.shopData?.id) === String(urlShopId))
       ? location.state.prefetchedData
       : null

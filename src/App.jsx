@@ -172,7 +172,7 @@ const loadMerchantProducts = () => import("./pages/vendors/MerchantProducts")
 const loadMerchantBanner = () => import("./pages/vendors/MerchantBanner")
 const loadMerchantSettings = () => import("./pages/vendors/MerchantSettings")
 const loadMerchantNews = () => import("./pages/vendors/MerchantNews")
-const loadMerchantSponsoredProduct = () => import("./pages/vendors/MerchantSponsoredProduct")
+const loadMerchantPromoBanner = () => import("./pages/vendors/MerchantPromoBanner")
 const loadMerchantAnalytics = () => import("./pages/vendors/MerchantAnalytics")
 const loadMerchantPayment = () => import("./pages/vendors/MerchantPayment")
 const loadMerchantServiceFee = () => import("./pages/vendors/MerchantServiceFee")
@@ -217,7 +217,7 @@ const MerchantProducts = resilientLazy(loadMerchantProducts, { pageLabel: "merch
 const MerchantBanner = resilientLazy(loadMerchantBanner, { pageLabel: "shop banner" })
 const MerchantSettings = resilientLazy(loadMerchantSettings, { pageLabel: "merchant settings" })
 const MerchantNews = resilientLazy(loadMerchantNews, { pageLabel: "merchant news" })
-const MerchantSponsoredProduct = resilientLazy(loadMerchantSponsoredProduct, { pageLabel: "sponsored product" })
+const MerchantPromoBanner = resilientLazy(loadMerchantPromoBanner, { pageLabel: "promo banner studio" })
 const MerchantAnalytics = resilientLazy(loadMerchantAnalytics, { pageLabel: "merchant analytics" })
 const MerchantPayment = resilientLazy(loadMerchantPayment, { pageLabel: "payment page" })
 const MerchantServiceFee = resilientLazy(loadMerchantServiceFee, { pageLabel: "service fee page" })
@@ -475,10 +475,10 @@ function AppShell() {
 
         {/* --- LOCKED PREMIUM ROUTES START HERE --- */}
         <Route
-          path="/merchant-sponsored-product"
+          path="/merchant-promo-banner"
           element={withProtectedOnlineGuard(
             <SubscriptionGuard>
-              <MerchantSponsoredProduct />
+              <MerchantPromoBanner />
             </SubscriptionGuard>
           )}
         />

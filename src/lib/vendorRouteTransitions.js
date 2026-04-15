@@ -15,7 +15,7 @@ const vendorRouteLoaders = {
   "/merchant-banner": () => import("../pages/vendors/MerchantBanner"),
   "/merchant-settings": () => import("../pages/vendors/MerchantSettings"),
   "/merchant-news": () => import("../pages/vendors/MerchantNews"),
-  "/merchant-sponsored-product": () => import("../pages/vendors/MerchantSponsoredProduct"),
+  "/merchant-promo-banner": () => import("../pages/vendors/MerchantPromoBanner"),
   "/merchant-analytics": () => import("../pages/vendors/MerchantAnalytics"),
   "/merchant-video-kyc": () => import("../pages/vendors/MerchantVideoKYC"),
   "/remita": () => import("../pages/vendors/MerchantPayment"),
@@ -426,7 +426,7 @@ async function prepareMerchantAnalyticsData({ userId, shopId }) {
   }
 }
 
-async function prepareMerchantSponsoredProductData({ userId, shopId }) {
+async function prepareMerchantPromoBannerData({ userId, shopId }) {
   await fetchProfileSuspension(userId)
   const shop = await fetchOwnedShop(
     userId,
@@ -436,7 +436,7 @@ async function prepareMerchantSponsoredProductData({ userId, shopId }) {
 
   if (!shop.is_verified) {
     throw new Error(
-      "Access denied. Your shop must be physically verified before you can generate a sponsored product."
+      "Access denied. Your shop must be physically verified before you can generate a promo banner."
     )
   }
 
@@ -463,7 +463,7 @@ async function prepareMerchantSponsoredProductData({ userId, shopId }) {
     : Array(4).fill(fallbackProduct)
 
   return {
-    kind: "merchant-sponsored-product",
+    kind: "merchant-promo-banner",
     shopData: shop,
     products: finalProducts,
   }
@@ -553,7 +553,7 @@ const vendorRoutePreparers = {
   "/merchant-banner": prepareMerchantBannerData,
   "/merchant-settings": prepareMerchantSettingsData,
   "/merchant-news": prepareMerchantNewsData,
-  "/merchant-sponsored-product": prepareMerchantSponsoredProductData,
+  "/merchant-promo-banner": prepareMerchantPromoBannerData,
   "/merchant-analytics": prepareMerchantAnalyticsData,
   "/merchant-video-kyc": prepareMerchantVideoKYCData,
   "/remita": prepareMerchantPaymentData,
