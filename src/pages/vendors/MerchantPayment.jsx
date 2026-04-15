@@ -280,7 +280,7 @@ export default function MerchantPayment() {
       setStatusError(false)
       setStatusMsg("")
 
-      const { data, error } = await invokeEdgeFunctionAuthed("verify-physical-paystack", {
+      const { data, error } = await invokeEdgeFunctionAuthed("physical-verification-payment", {
         transactionId: txId,
         shopId: parsedShopId,
         gateway: "promo",
