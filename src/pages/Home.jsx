@@ -27,6 +27,7 @@ import AuthButton from "../components/auth/AuthButton"
 import PageSeo from "../components/common/PageSeo"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import HeaderMarquee from "../components/common/HeaderMarquee"
+import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import {
   sendPasswordResetCode,

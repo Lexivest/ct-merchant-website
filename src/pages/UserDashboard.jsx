@@ -5,6 +5,7 @@ import { FaBullhorn, FaGift, FaTicket, FaXmark } from "react-icons/fa6"
 
 import AuthNotification from "../components/auth/AuthNotification"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
+import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch, {

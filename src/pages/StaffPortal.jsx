@@ -1,13 +1,14 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { supabase } from "../lib/supabase"
 import { signInWithPassword } from "../lib/auth"
+import useAuthSession from "../hooks/useAuthSession"
 
 // --- LOCAL ASSET IMPORT ---
 import ctmLogo from "../assets/images/logo.jpg"
 
 function StaffPortal() {
   const navigate = useNavigate()
+  const { user, profile, profileLoaded } = useAuthSession()
 
   const [formData, setFormData] = useState({
     email: "",
@@ -16,6 +17,13 @@ function StaffPortal() {
 
   const [errorMessage, setErrorMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Auto-redirect if already logged in as staff
+  useEffect(() => {
+    if (user && profileLoaded && profile?.role === "staff") {
+      navigate("/staff-dashboard", { replace: true })
+    }
+  }, [user, profile, profileLoaded, navigate])
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -33,32 +41,17 @@ function StaffPortal() {
 
     try {
       // 1. Authenticate using the shared logic (handles suspension and tracking)
-      const { auth: data } = await signInWithPassword({
+      await signInWithPassword({
         email: formData.email.trim(),
         password: formData.password,
       })
 
-      if (!data.user) {
-        throw new Error("No user returned from system.")
-      }
-
-      // 2. Verify staff status
-      const { data: staff, error: staffError } = await supabase
-        .from("staff_profiles")
-        .select("*")
-        .eq("id", data.user.id)
-        .single()
-
-      if (staffError || !staff) {
-        await supabase.auth.signOut()
-        throw new Error("Access denied: Restricted to staff accounts only.")
-      }
-
-      navigate("/staff-dashboard")
+      // The useAuthSession hook will detect the new session and fetch the profile.
+      // The useEffect above will handle redirection once the staff role is confirmed.
+      
     } catch (error) {
       // Show cleaner messages for common errors
       setErrorMessage(error.message)
-    } finally {
       setIsSubmitting(false)
     }
   }
