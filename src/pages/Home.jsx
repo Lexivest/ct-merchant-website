@@ -16,6 +16,7 @@ import {
   FaMagnifyingGlass,
   FaNewspaper,
   FaPhone,
+  FaTelegram,
   FaXTwitter,
   FaYoutube,
 } from "react-icons/fa6"
@@ -89,6 +90,12 @@ const socialLinks = [
     href: "https://x.com/CTMerchantNG",
     icon: FaXTwitter,
     accent: "bg-slate-900",
+  },
+  {
+    label: "Telegram",
+    href: "https://t.me/CTMerchant",
+    icon: FaTelegram,
+    accent: "bg-[#24A1DE]",
   },
 ]
 
@@ -324,7 +331,7 @@ function HomeFeedbackSection() {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-4 gap-1.5 sm:gap-3">
           {socialLinks.map((item) => {
             const Icon = item.icon
             return (
@@ -333,15 +340,15 @@ function HomeFeedbackSection() {
                 href={item.href}
                 target="_blank"
                 rel="noreferrer"
-                className="group flex items-center gap-3 rounded-2xl border border-pink-100 bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-200 hover:shadow-md"
+                className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-pink-100 bg-white p-2 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-200 hover:shadow-md sm:flex-row sm:gap-3 sm:rounded-2xl sm:p-4"
               >
                 <span
-                  className={`flex h-11 w-11 items-center justify-center rounded-2xl text-lg text-white ${item.accent}`}
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg text-base text-white sm:h-11 sm:w-11 sm:rounded-2xl sm:text-lg ${item.accent}`}
                 >
                   <Icon />
                 </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-extrabold text-slate-900">
+                <span className="min-w-0 text-center sm:text-left">
+                  <span className="block text-[9px] font-extrabold text-slate-900 sm:text-sm">
                     {item.label}
                   </span>
                 </span>
@@ -1134,16 +1141,6 @@ function Home() {
                         }`}
                         loading="eager"
                       />
-                    ))}
-                  </div>
-
-                  <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-4 md:py-4 md:text-sm">
-                    <span className="flex items-center text-pink-400 font-black tracking-wider uppercase mr-1">Active In:</span>
-                    {["Jos", "Kaduna", "Lokoja", "Minna", "Asaba", "Enugu", "Makurdi"].map((city) => (
-                      <span key={city} className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        {city}
-                      </span>
                     ))}
                   </div>
                 </div>
