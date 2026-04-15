@@ -402,44 +402,18 @@ function Contact() {
 
                           <div>
                             <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">
-                              Head Office
+                              Digital Presence
                             </p>
                             <h3 className="mt-2 text-base font-extrabold text-slate-900">
-                              No. 110, Gidan Gomna Tsphon Bagado
+                              Online Marketplace
                             </h3>
                             <p className="mt-2 text-sm leading-7 text-slate-600">
-                              Kamazou, Kaduna State, Nigeria.
-                            </p>
-                            <p className="text-sm font-semibold leading-7 text-slate-700">
-                              Landmark: EES KAMAZOU/BAGADO
+                              CTMerchant is a digital repository of verified physical shops. 
+                              For physical inquiries, please visit the specific shop address 
+                              listed on their profile.
                             </p>
                           </div>
                         </div>
-
-                        <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
-                          <div className="h-[260px] w-full">
-                            <iframe
-                              title="CTMerchant Head Office Map"
-                              width="100%"
-                              height="100%"
-                              frameBorder="0"
-                              style={{ border: 0 }}
-                              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d15707.037841575!2d7.472!3d10.457!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sng!4v1700000000000"
-                              allowFullScreen
-                              loading="lazy"
-                            />
-                          </div>
-                        </div>
-
-                        <a
-                          href="https://www.google.com/maps/search/?api=1&query=10.457,7.472"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-extrabold text-slate-900 transition hover:bg-slate-50 hover:border-slate-400"
-                        >
-                          <span>📍</span>
-                          <span>Navigate to Office</span>
-                        </a>
                       </div>
                     </div>
 

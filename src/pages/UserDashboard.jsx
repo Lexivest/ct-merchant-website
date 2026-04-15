@@ -688,7 +688,7 @@ function UserDashboard() {
   }
 
   const currentProfile = localData.profile || profile
-  const dashboardDataError = activeTab === "market" && !fetchedData ? dataError : ""
+  const dashboardDataError = activeTab === "market" && !localData ? dataError : ""
 
   useEffect(() => {
     const cityId = currentProfile?.city_id
@@ -719,7 +719,19 @@ function UserDashboard() {
         { event: "*", schema: "public", table: "categories" },
         () => scheduleRefresh("base")
       )
-      // 2. Dynamic Data Changes
+      // 2. Dynamic Data Changes (Wishlist/Likes/Profile)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "wishlist", filter: `user_id=eq.${user.id}` },
+        () => scheduleRefresh("dynamic")
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shop_likes", filter: `user_id=eq.${user.id}` },
+        () => scheduleRefresh("dynamic")
+      )
+      // 3. Notifications Changes
+
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "featured_city_banners" },

@@ -445,35 +445,6 @@ function About() {
                       </div>
                     </div>
 
-                    <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            className="h-5 w-5"
-                          >
-                            <circle cx="12" cy="12" r="10" />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 8h.01M11 12h1v4h1"
-                            />
-                          </svg>
-                        </div>
-
-                        <p className="text-sm leading-7 text-amber-900">
-                          Communications with executive staff are prioritized
-                          strictly on institutional relevance and maintained in
-                          line with corporate privacy protocols. For direct
-                          inquiries, please use the official support channels
-                          listed in the Contact page.
-                        </p>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>

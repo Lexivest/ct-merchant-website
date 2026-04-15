@@ -20,6 +20,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch, {
   primeCachedFetchStore,
   readCachedFetchStore,
+  clearCachedFetchStore,
 } from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
@@ -255,6 +256,12 @@ function ProductDetail() {
           product_id: productId,
         })
         if (insertError) throw insertError
+
+        // Invalidate relevant caches so dashboard and wishlist view update
+        clearCachedFetchStore((key) => 
+          key.startsWith("wishlist_items_") || 
+          key.startsWith("dashboard_dynamic_")
+        )
       } else {
         const { error: removeError } = await supabase
           .from("wishlist")
@@ -262,6 +269,12 @@ function ProductDetail() {
           .eq("user_id", user.id)
           .eq("product_id", productId)
         if (removeError) throw removeError
+
+        // Invalidate relevant caches so dashboard and wishlist view update
+        clearCachedFetchStore((key) => 
+          key.startsWith("wishlist_items_") || 
+          key.startsWith("dashboard_dynamic_")
+        )
       }
     } catch (error) {
       console.error("Wishlist error:", error)

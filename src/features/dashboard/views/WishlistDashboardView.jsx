@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { FaArrowLeft, FaHeart } from "react-icons/fa6"
+import { FaArrowLeft, FaHeart, FaTrash } from "react-icons/fa6"
 import { supabase } from "../../../lib/supabase"
 import StableImage from "../../../components/common/StableImage"
+import { clearCachedFetchStore } from "../../../hooks/useCachedFetch"
 
 function WishlistDashboardView({
   onBack,
@@ -50,6 +51,27 @@ function WishlistDashboardView({
 
     fetchWishlist()
   }, [prefetchedItems, user?.id])
+
+  async function removeItem(productId) {
+    if (!user?.id) return
+
+    try {
+      const { error } = await supabase
+        .from("wishlist")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("product_id", productId)
+
+      if (error) throw error
+
+      setItems((prev) => prev.filter((item) => item.product_id !== productId))
+
+      // Invalidate dashboard dynamic cache so count updates
+      clearCachedFetchStore((key) => key.startsWith("dashboard_dynamic_"))
+    } catch (err) {
+      console.error("Failed to remove item:", err)
+    }
+  }
 
   function renderPrice(product) {
     const hasDiscount =
@@ -147,6 +169,18 @@ function WishlistDashboardView({
                         Used
                       </span>
                     ) : null}
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        removeItem(item.product_id)
+                      }}
+                      className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                      aria-label="Remove from wishlist"
+                    >
+                      <FaTrash className="text-sm" />
+                    </button>
 
                     <div className="p-3">
                       <div

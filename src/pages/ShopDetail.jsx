@@ -25,6 +25,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch, {
   primeCachedFetchStore,
   readCachedFetchStore,
+  clearCachedFetchStore,
 } from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
@@ -365,6 +366,9 @@ function ShopDetail() {
           user_id: user.id,
         })
         if (error) throw error
+
+        // Invalidate dashboard dynamic cache so liked count updates
+        clearCachedFetchStore((key) => key.startsWith("dashboard_dynamic_"))
       } else {
         const { error } = await supabase
           .from("shop_likes")
@@ -372,6 +376,9 @@ function ShopDetail() {
           .eq("shop_id", shopId)
           .eq("user_id", user.id)
         if (error) throw error
+
+        // Invalidate dashboard dynamic cache so liked count updates
+        clearCachedFetchStore((key) => key.startsWith("dashboard_dynamic_"))
       }
     } catch {
       setHasLiked(!nextLiked)
@@ -561,7 +568,12 @@ function ShopDetail() {
     }
 
     if (activeInfoSection === "map") {
-      const hasCoordinates = Boolean(currentShop?.latitude && currentShop?.longitude)
+      const hasCoordinates = Boolean(
+        currentShop?.latitude && 
+        currentShop?.longitude && 
+        !Number.isNaN(Number(currentShop.latitude)) && 
+        !Number.isNaN(Number(currentShop.longitude))
+      )
       const hasAddress = Boolean(currentShop?.address)
 
       return (
@@ -575,11 +587,14 @@ function ShopDetail() {
             <div className="flex items-start gap-3 rounded-[16px] border border-blue-200 bg-blue-50 p-4">
               <FaLocationDot className="mt-0.5 text-blue-600" />
               <div className="flex flex-col gap-1">
-                <span className="text-[0.7rem] font-black uppercase tracking-wider text-blue-700">Address reference</span>
-                <p className="text-[0.85rem] leading-snug text-slate-700">
+                <span className="text-[0.7rem] font-black uppercase tracking-wider text-blue-700">Shop Address</span>
+                <p className="text-[0.85rem] font-bold leading-snug text-slate-900">
                   {hasAddress
                     ? currentShop.address
-                    : "This merchant did not provide GPS coordinates or an address."}
+                    : "The merchant has not provided an address or GPS location."}
+                </p>
+                <p className="mt-1 text-[0.75rem] leading-normal text-slate-600">
+                  GPS coordinates were not provided for this shop. Please use the address listed above to find this merchant.
                 </p>
               </div>
             </div>
