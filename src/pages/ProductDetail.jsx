@@ -436,7 +436,7 @@ function ProductDetail() {
 
       const headers = {
         "Content-Type": "application/json",
-        apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkY2hhY2RqY2dhenlja2FjYnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDA2MzMsImV4cCI6MjA4NTExNjYzM30.41V3RaUX-ii-EHysbcVpUCgm0-RsNmuOb8FmYsz72Ow",
+        apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
       }
 
       if (session?.access_token) {
@@ -450,7 +450,7 @@ function ProductDetail() {
       }
 
       const response = await fetch(
-        "https://xdchacdjcgazyckacbpc.supabase.co/functions/v1/ai-assistant",
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`,
         {
           method: "POST",
           headers,

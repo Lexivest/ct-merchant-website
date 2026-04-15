@@ -35,5 +35,4 @@ ctm_mobile_react/
 mobile_app/
 
 # Supabase server artifacts are applied manually, not deployed with Cloudflare
-supabase/sql/
-supabase/functions/
+supabase/
