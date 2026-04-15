@@ -103,20 +103,22 @@ function DashboardHeader({
     return { areaImageById, categoryImageByName }
   }, [products, shops])
 
-  const searchPlaceholder = useMemo(() => {
-    let cityName = currentProfile?.city_name
+  const cityName = useMemo(() => {
+    let name = currentProfile?.city_name
     if (currentProfile?.cities) {
-      cityName = Array.isArray(currentProfile.cities)
+      name = Array.isArray(currentProfile.cities)
         ? currentProfile.cities[0]?.name
         : currentProfile.cities.name
     }
-    
-    if (cityName) {
-      return `Search ${cityName} business directory`
-    }
-    
-    return `Search your city business directory`
+    return name || ""
   }, [currentProfile])
+
+  const searchPlaceholder = useMemo(() => {
+    if (cityName) {
+      return `Search ${cityName} biz hub`
+    }
+    return `Search your city biz hub`
+  }, [cityName])
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -297,7 +299,7 @@ function DashboardHeader({
       <div className="amz-mobile-scroll-row hidden w-full items-center gap-0 px-0 py-0 min-[1025px]:flex">
         <div className="amz-location mobile-hide hidden items-center gap-[6px] rounded border border-transparent px-3 py-2 text-[0.95rem] font-bold text-white transition hover:border-white min-[1025px]:flex">
           <FaLocationDot />
-          <span>{currentProfile?.cities?.name || "..."}</span>
+          <span>{cityName || "..."}</span>
         </div>
 
         <div className="desktop-search-wrap mobile-hide relative mx-0 hidden flex-1 min-[1025px]:block">
