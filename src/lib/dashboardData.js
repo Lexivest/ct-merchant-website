@@ -197,6 +197,22 @@ export async function fetchSponsoredProducts(cityId) {
   return sponsored
 }
 
+export async function fetchStaffDiscoveries() {
+  const { data, error } = await supabase
+    .from("staff_discoveries")
+    .select("*")
+    .eq("status", "published")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(12)
+
+  if (error) {
+    console.warn("Staff discoveries fetch failed:", error.message)
+    return []
+  }
+  return data || []
+}
+
 export async function fetchDashboardData({ userId, profile = null }) {
   if (!userId) throw new Error("Authentication required")
 
@@ -206,6 +222,7 @@ export async function fetchDashboardData({ userId, profile = null }) {
   const [
     featuredCityBanners,
     sponsoredProducts,
+    staffDiscoveries,
     announcementsRes,
     categoriesRes,
     areasRes,
@@ -215,6 +232,7 @@ export async function fetchDashboardData({ userId, profile = null }) {
   ] = await Promise.all([
     fetchFeaturedCityBanners(cityId),
     fetchSponsoredProducts(cityId),
+    fetchStaffDiscoveries(),
     supabase.from("announcements").select("*").order("created_at", { ascending: false }),
     supabase.from("categories").select("*").order("name"),
     supabase.from("areas").select("*").eq("city_id", cityId).order("name"),
@@ -280,6 +298,7 @@ export async function fetchDashboardData({ userId, profile = null }) {
   return {
     profile: currentProfile,
     sponsoredProducts,
+    staffDiscoveries,
     featuredCityBanners,
     announcements,
     categories,

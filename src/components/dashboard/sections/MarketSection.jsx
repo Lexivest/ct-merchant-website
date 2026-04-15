@@ -250,6 +250,31 @@ const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
   )
 })
 
+function DiscoveryCard({ item }) {
+  const navigate = useNavigate()
+  return (
+    <div 
+      onClick={() => navigate(`/discovery?id=${item.id}`)}
+      className="group relative flex w-[160px] md:w-[190px] shrink-0 cursor-pointer flex-col overflow-hidden rounded-[24px] bg-white border border-slate-100 shadow-sm transition-all hover:shadow-xl active:scale-[0.98]"
+    >
+      <div className="relative aspect-[2/3] w-full overflow-hidden">
+        <StableImage 
+          src={item.image_url} 
+          alt={item.title} 
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      </div>
+      <div className="p-3">
+        <div className="truncate text-[0.85rem] font-black text-slate-900 leading-tight">{item.title}</div>
+        {item.price && (
+          <div className="mt-1 text-[0.85rem] font-bold text-pink-600">₦{Number(item.price).toLocaleString()}</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function MarketSection({
   dashboardData,
   groupedShopsByArea = [],
@@ -398,6 +423,20 @@ function MarketSection({
           </div>
         </div>
       ))}
+
+      {dashboardData.staffDiscoveries?.length > 0 && (
+        <div className="discoveries-section-wrap bg-white py-4 mb-2">
+          <h2 className="sec-title px-4 pb-3 text-[1.35rem] font-extrabold text-[#0F1111]">
+            Direct Discoveries
+          </h2>
+          <div className="flex gap-4 overflow-x-auto pl-4 pb-2 no-scrollbar">
+            {dashboardData.staffDiscoveries.map((item) => (
+              <DiscoveryCard key={item.id} item={item} />
+            ))}
+            <div className="w-4 shrink-0" aria-hidden="true" />
+          </div>
+        </div>
+      )}
 
       {sortedCategories.length > 0 ? (
         <div className="cat-section-wrap bg-white">

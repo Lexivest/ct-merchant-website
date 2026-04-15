@@ -151,6 +151,7 @@ const loadStaffVerifications = () => import("./pages/staff/StaffVerifications")
 const loadStaffPayments = () => import("./pages/staff/StaffPayments")
 const loadStaffFeaturedCityBanners = () => import("./pages/staff/StaffFeaturedCityBanners")
 const loadStaffSponsoredProducts = () => import("./pages/staff/StaffSponsoredProducts")
+const loadStaffDiscoveries = () => import("./pages/staff/StaffDiscoveries")
 const loadStaffIDGenerator = () => import("./pages/staff/StaffIDGenerator")
 const loadStaffInbox = () => import("./pages/staff/StaffInbox")
 const loadUserDashboard = () => import("./pages/UserDashboard")
@@ -158,6 +159,7 @@ const loadShopRegistration = () => import("./pages/ShopRegistration")
 const loadArea = () => import("./pages/Area")
 const loadCat = () => import("./pages/Cat")
 const loadSearch = () => import("./pages/Search")
+const loadDiscoveryDetail = () => import("./pages/DiscoveryDetail")
 const loadShopDetail = () => import("./pages/ShopDetail")
 const loadProductDetail = () => import("./pages/ProductDetail")
 const loadShopIndex = () => import("./pages/ShopIndex")
@@ -193,6 +195,7 @@ const StaffVerifications = resilientLazy(loadStaffVerifications, { pageLabel: "s
 const StaffPayments = resilientLazy(loadStaffPayments, { pageLabel: "staff payments" })
 const StaffFeaturedCityBanners = resilientLazy(loadStaffFeaturedCityBanners, { pageLabel: "featured city banners" })
 const StaffSponsoredProducts = resilientLazy(loadStaffSponsoredProducts, { pageLabel: "sponsored products studio" })
+const StaffDiscoveries = resilientLazy(loadStaffDiscoveries, { pageLabel: "market discoveries" })
 const StaffIDGenerator = resilientLazy(loadStaffIDGenerator, { pageLabel: "staff ID generator" })
 const StaffInbox = resilientLazy(loadStaffInbox, { pageLabel: "staff inbox" })
 const UserDashboard = resilientLazy(loadUserDashboard, { pageLabel: "user dashboard" })
@@ -200,7 +203,9 @@ const ShopRegistration = resilientLazy(loadShopRegistration, { pageLabel: "shop 
 const Area = resilientLazy(loadArea, { pageLabel: "area view" })
 const Cat = resilientLazy(loadCat, { pageLabel: "category view" })
 const Search = resilientLazy(loadSearch, { pageLabel: "search" })
-const ShopDetail = resilientLazy(loadShopDetail, { pageLabel: "shop details" })
+const DiscoveryDetail = resilientLazy(loadDiscoveryDetail, { pageLabel: "discovery detail" })
+const ShopDetail = resilientLazy(loadShopDetail, { pageLabel: "shop view" })
+
 const ProductDetail = resilientLazy(loadProductDetail, { pageLabel: "product details" })
 const ShopIndex = resilientLazy(loadShopIndex, { pageLabel: "market index" })
 const MerchantDiscovery = resilientLazy(loadMerchantDiscovery, { pageLabel: "merchant profile" })
@@ -408,6 +413,7 @@ function AppShell() {
         <Route path="/staff-payments" element={<StaffPayments />} />
         <Route path="/staff-city-banners" element={<StaffFeaturedCityBanners />} />
         <Route path="/staff-sponsored-products" element={<StaffSponsoredProducts />} />
+        <Route path="/staff-discoveries" element={<StaffDiscoveries />} />
         <Route path="/staff-issue-id" element={<StaffIDGenerator />} />
         <Route path="/staff-studio" element={<ImageOptimizer />} />
         <Route path="/staff-inbox" element={<StaffInbox />} />
@@ -419,6 +425,10 @@ function AppShell() {
         <Route
           path="/reposearch"
           element={<MerchantDiscovery />}
+        />
+        <Route
+          path="/discovery"
+          element={<DiscoveryDetail />}
         />
         <Route
           path="/shop-detail"

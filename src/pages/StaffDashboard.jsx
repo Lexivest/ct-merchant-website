@@ -10,6 +10,7 @@ import {
   FaStore,
   FaTriangleExclamation,
   FaUsers,
+  FaPanorama,
 } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
@@ -272,6 +273,13 @@ export default function StaffDashboard() {
               subtitle="Select and publish products to feature in the marketplace."
               tone="pink"
               onClick={() => void openStaffRouteWithTransition("/staff-sponsored-products")}
+            />
+            <HomeCard
+              icon={<FaPanorama />}
+              title="Market Discoveries"
+              subtitle="Post portrait-style direct fashion and lifestyle shots."
+              tone="blue"
+              onClick={() => void openStaffRouteWithTransition("/staff-discoveries")}
             />
             <HomeCard
               icon={<FaImages />}
