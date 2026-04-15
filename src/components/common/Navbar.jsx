@@ -1,24 +1,15 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { FaChartLine } from "react-icons/fa6"
 import ScrollingTicker from "./ScrollingTicker"
 
 // --- LOCAL ASSET IMPORT ---
 import ctmLogo from "../../assets/images/logo.jpg"
 
 function MarketPulseTicker() {
-  const stats = [
-    { label: "Active Shops", value: "1,240+", trend: "+12%" },
-    { label: "Verified Products", value: "8,500+", trend: "+5%" },
-    { label: "Market Activity", value: "High", trend: "Steady" },
-    { label: "City: Jos", value: "Active", trend: "+8%" },
-    { label: "City: Kaduna", value: "Growing", trend: "+15%" },
-    { label: "City: Abuja", value: "Hub", trend: "+20%" },
-  ]
-
-  const tickerText = stats
-    .map((s) => `${s.label.toUpperCase()}: ${s.value} (${s.trend})`)
-    .join("  |  ")
+  const cities = ["Jos", "Kaduna", "Lokoja", "Minna", "Asaba", "Enugu", "Makurdi"]
+  const message = "city commerce- discover business and offerings in your neighbourhood before you step out- bridging the gap between digital convenience and physical reality"
+  
+  const tickerText = `${cities.join("  |  ").toUpperCase()}  |  ${message.toUpperCase()}`
 
   return (
     <div className="bg-slate-950 py-2.5 text-white">
@@ -33,10 +24,6 @@ function MarketPulseTicker() {
             textClassName="text-[10px] font-mono font-bold tracking-wider text-slate-300"
             speedFactor={0.15}
           />
-        </div>
-        <div className="ml-4 hidden shrink-0 items-center gap-1.5 text-[9px] font-black uppercase text-pink-500 md:flex">
-          <FaChartLine className="text-[10px]" />
-          Index: CT-240
         </div>
       </div>
     </div>
