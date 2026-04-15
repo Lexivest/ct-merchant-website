@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabase"
+import { signInWithPassword } from "../lib/auth"
 
 // --- LOCAL ASSET IMPORT ---
 import ctmLogo from "../assets/images/logo.jpg"
@@ -31,19 +32,17 @@ function StaffPortal() {
     setIsSubmitting(true)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // 1. Authenticate using the shared logic (handles suspension and tracking)
+      const { auth: data } = await signInWithPassword({
         email: formData.email.trim(),
         password: formData.password,
       })
-
-      if (error) {
-        throw new Error(error.message)
-      }
 
       if (!data.user) {
         throw new Error("No user returned from system.")
       }
 
+      // 2. Verify staff status
       const { data: staff, error: staffError } = await supabase
         .from("staff_profiles")
         .select("*")
@@ -57,7 +56,8 @@ function StaffPortal() {
 
       navigate("/staff-dashboard")
     } catch (error) {
-      setErrorMessage(`Login failed: ${error.message}`)
+      // Show cleaner messages for common errors
+      setErrorMessage(error.message)
     } finally {
       setIsSubmitting(false)
     }

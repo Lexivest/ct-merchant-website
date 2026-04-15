@@ -210,6 +210,26 @@ export async function fetchStaffDiscoveries() {
     console.warn("Staff discoveries fetch failed:", error.message)
     return []
   }
+
+  // FALLBACK: If no staff discoveries exist, pick some available products to show as "Staff Picks"
+  if (!data || data.length === 0) {
+    const { data: fallbackProducts } = await supabase
+      .from("products")
+      .select("id, name, price, image_url")
+      .eq("is_available", true)
+      .limit(6)
+    
+    if (fallbackProducts) {
+      return fallbackProducts.map(p => ({
+        id: `fallback-${p.id}`,
+        title: p.name,
+        price: p.price,
+        image_url: p.image_url,
+        status: "published"
+      }))
+    }
+  }
+
   return data || []
 }
 
