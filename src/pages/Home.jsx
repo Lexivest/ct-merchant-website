@@ -465,7 +465,7 @@ function Home() {
   // 1. Hook into global auth state
   const { session, user, profile, suspended, isOffline, loading: authLoading } = useAuthSession()
   const { notify } = useGlobalFeedback()
-  const shouldRedirectToDashboard = Boolean(user) && !suspended && !isOffline
+  const shouldRedirectToDashboard = Boolean(user) && !suspended && !isOffline && profile?.role === "user"
   const holdForExistingSession = shouldRedirectToDashboard && authLoading
   const transitionRetryRef = useRef(null)
   const [transitionState, setTransitionState] = useState({
@@ -607,6 +607,7 @@ function Home() {
     if (
       !authLoading &&
       shouldRedirectToDashboard &&
+      profile?.role === "user" &&
       !loginLoading &&
       !googleLoading &&
       !transitionState.pending &&

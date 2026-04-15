@@ -253,14 +253,42 @@ export async function signUpWithEmail({
 }
 
 export async function fetchProfileByUserId(userId) {
-  const { data, error } = await supabase
+  // 1. Try to fetch regular profile
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*, cities(name)")
     .eq("id", userId)
     .maybeSingle()
 
-  if (error) throw error
-  return data
+  if (profileError) throw profileError
+
+  // 2. Check if this user is staff
+  const { data: staff, error: staffError } = await supabase
+    .from("staff_profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle()
+
+  if (staffError) {
+    console.warn("Staff check failed:", staffError.message)
+  }
+
+  // 3. Return combined profile with role
+  if (profile) {
+    return {
+      ...profile,
+      role: staff ? "staff" : "user"
+    }
+  }
+
+  if (staff) {
+    return {
+      ...staff,
+      role: "staff"
+    }
+  }
+
+  return null
 }
 
 export function isProfileComplete(profile) {
