@@ -66,9 +66,9 @@ import banner3 from "../assets/images/banner3.jpg"
 const bannerImages = [banner2, banner3]
 
 const phrases = [
-  "Verified Merchants",
-  "Safe and Secure",
-  "Boost Your Business",
+  "City Commerce",
+  "Digital Convenience",
+  "Physical Reality",
 ]
 
 const socialLinks = [
@@ -1137,19 +1137,14 @@ function Home() {
                     ))}
                   </div>
 
-                  <div className="flex w-full flex-wrap justify-center gap-4 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-5 md:py-4 md:text-sm">
-                    <span className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                      Commerce
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-pink-400" />
-                      Discover Locally
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-sky-400" />
-                      Unique ID
-                    </span>
+                  <div className="flex w-full flex-wrap justify-center gap-3 border-t border-white/20 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-md md:gap-4 md:py-4 md:text-sm">
+                    <span className="flex items-center text-pink-400 font-black tracking-wider uppercase mr-1">Active In:</span>
+                    {["Jos", "Kaduna", "Lokoja", "Minna", "Asaba", "Enugu", "Makurdi"].map((city) => (
+                      <span key={city} className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                        {city}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -1196,7 +1191,7 @@ function Home() {
                   </div>
 
                   <p className="mt-1 max-w-xl text-base font-medium leading-7 text-slate-600">
-                    We provide a digital repository of physical shops, their products, and locations within a city.
+                    Discover business and offerings in your neighbourhood before you step out—bridging the gap between digital convenience and physical reality.
                   </p>
 
                   <div className="mt-4 rounded-[22px] bg-pink-200 p-1">
