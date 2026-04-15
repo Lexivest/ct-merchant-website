@@ -18,6 +18,7 @@ import {
   FaTriangleExclamation,
   FaVideo,
   FaVideoSlash,
+  FaWandMagicSparkles,
 } from "react-icons/fa6"
 import { FaRegSquarePlus } from "react-icons/fa6"
 import RetryingNotice, {
@@ -247,6 +248,7 @@ function VendorsPanel() {
           }
         }
 
+        setRouteTransition({ pending: false, error: "" })
         navigate(path, {
           state: {
             fromVendorTransition: true,
@@ -257,6 +259,7 @@ function VendorsPanel() {
         return
       }
 
+      setRouteTransition({ pending: false, error: "" })
       navigate(path, {
         state: {
           fromVendorTransition: true,
@@ -264,13 +267,12 @@ function VendorsPanel() {
         },
       })
     } catch (error) {
-      failRouteTransition(
-        getFriendlyErrorMessage(
-          error,
-          "We could not open that merchant tool right now. Please try again."
-        ),
-        retryAction
-      )
+      setRouteTransition({ pending: false, error: "" })
+      notify({
+        type: "error",
+        title: "Access denied",
+        message: getFriendlyErrorMessage(error, "We could not open that merchant tool right now. Please try again."),
+      })
     }
   }
 
@@ -468,24 +470,32 @@ function VendorsPanel() {
           )}
 
           <DashCard
-            title="Sponsored Product"
-            subtitle="Broadcast & Promote"
-            icon={<FaImage />}
-            colorClass="bg-[#D1FAE5] text-[#059669]"
-            isLocked={!isSubscriptionActive}
+            title="Promo Banner"
+            subtitle="Custom Ad Studio"
+            icon={<FaWandMagicSparkles />}
+            colorClass="bg-[#FDF2F8] text-[#db2777]"
+            isLocked={!isSubscriptionActive || !isVerified}
             onClick={
-              isSubscriptionActive
+              !isSubscriptionActive
                 ? () =>
-                    handleCardClick(
-                      `/merchant-sponsored-product?shop_id=${activeShop.id}`,
-                    )
-                : () =>
                     notify({
                       type: "error",
                       title: "Subscription required",
                       message:
-                        "Please activate your service fee subscription to access sponsored products.",
+                        "Please activate your service fee subscription to access the promo banner studio.",
                     })
+                : !isVerified
+                ? () =>
+                    notify({
+                      type: "error",
+                      title: "Verification required",
+                      message:
+                        "Your shop must be physically verified before you can generate a promo banner.",
+                    })
+                : () =>
+                    handleCardClick(
+                      `/merchant-sponsored-product?shop_id=${activeShop.id}`,
+                    )
             }
           />
 

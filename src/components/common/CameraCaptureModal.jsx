@@ -39,7 +39,7 @@ export default function CameraCaptureModal({
     if (aspectRatio >= 1) {
       return { width: "86%", maxHeight: "72vh", aspectRatio: String(aspectRatio) }
     }
-    return { height: "72vh", maxWidth: "86%", aspectRatio: String(aspectRatio) }
+    return { height: "72vh", maxHeight: "72vh", maxWidth: "86%", aspectRatio: String(aspectRatio) }
   }, [aspectRatio])
 
   useEffect(() => {
@@ -209,7 +209,7 @@ export default function CameraCaptureModal({
       <div className="relative flex flex-1 items-center justify-center overflow-hidden px-4 py-6">
         <video
           ref={videoRef}
-          className="h-full w-full max-w-[900px] rounded-xl border border-slate-700 bg-black object-cover"
+          className="h-full w-full max-w-[900px] rounded-xl border border-slate-700 bg-black object-contain"
           muted
           playsInline
           autoPlay
