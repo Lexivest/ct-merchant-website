@@ -387,7 +387,7 @@ function MarketSection({
       )}
 
 
-      {groupedShopsByArea.map(({ area, shops }) => (
+      {groupedShopsByArea.slice(0, 3).map(({ area, shops }) => (
         <div key={area.id} className="area-block-wrap bg-white">
           <div className="flex items-center justify-between px-4 pb-1 pt-2">
             <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap text-[1.35rem] font-extrabold text-[#0F1111] !p-0">
@@ -427,7 +427,7 @@ function MarketSection({
       {dashboardData.staffDiscoveries?.length > 0 && (
         <div className="discoveries-section-wrap bg-white py-4 mb-2">
           <h2 className="sec-title px-4 pb-3 text-[1.35rem] font-extrabold text-[#0F1111]">
-            Direct Discoveries
+            Recommended for you
           </h2>
           <div className="flex gap-4 overflow-x-auto pl-4 pb-2 no-scrollbar">
             {dashboardData.staffDiscoveries.map((item) => (
@@ -437,6 +437,43 @@ function MarketSection({
           </div>
         </div>
       )}
+
+      {groupedShopsByArea.slice(3).map(({ area, shops }) => (
+        <div key={area.id} className="area-block-wrap bg-white">
+          <div className="flex items-center justify-between px-4 pb-1 pt-2">
+            <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap text-[1.35rem] font-extrabold text-[#0F1111] !p-0">
+              {area.id === dashboardData.profile?.area_id ? (
+                <>
+                  Top stores in {area.name}{" "}
+                  <span className="text-[0.85em] font-bold text-pink-600">
+                    (Near You)
+                  </span>
+                </>
+              ) : (
+                <>{area.name}</>
+              )}
+            </h2>
+            <button
+              onClick={() => navigate(`/area?id=${area.id}`)}
+              className="text-[0.9rem] font-bold text-[#007185] hover:text-pink-600 active:scale-95 transition-all shrink-0"
+            >
+              See All
+            </button>
+          </div>
+
+          <div className="h-scroll flex gap-4 overflow-x-auto pl-4 pb-4 pt-0">
+            {shops.map((shop) => (
+              <ShopCard
+                key={shop.id}
+                shop={shop}
+                products={productsByShopId.get(shop.id)}
+                onOpenShop={openShop}
+              />
+            ))}
+            <div className="w-4 shrink-0" aria-hidden="true" />
+          </div>
+        </div>
+      ))}
 
       {sortedCategories.length > 0 ? (
         <div className="cat-section-wrap bg-white">
