@@ -233,19 +233,36 @@ export async function fetchStaffDiscoveries() {
   return data || []
 }
 
-export async function fetchDashboardData({ userId, profile = null }) {
-  if (!userId) throw new Error("Authentication required")
+const DASHBOARD_BASE_TTL = 1000 * 60 * 60 * 24 // 24 hours for categories, etc.
+const DASHBOARD_DYNAMIC_TTL = 1000 * 60 * 15 // 15 mins for shops/products
 
-  const currentProfile = await resolveDashboardProfile({ userId, profile })
-  const cityId = currentProfile.city_id
+export function buildDashboardBaseCacheKey(cityId) {
+  return `dashboard_base_${cityId || "none"}`
+}
 
+export function buildDashboardDynamicCacheKey(userId, cityId) {
+  return `dashboard_dynamic_${userId || "guest"}_${cityId || "none"}`
+}
+
+export async function fetchDashboardBaseData(cityId) {
+  const [categoriesRes, areasRes, announcementsRes] = await Promise.all([
+    supabase.from("categories").select("*").order("name"),
+    supabase.from("areas").select("*").eq("city_id", cityId).order("name"),
+    supabase.from("announcements").select("*").order("created_at", { ascending: false }),
+  ])
+
+  return {
+    categories: unwrapSupabaseResult(categoriesRes) || [],
+    areas: unwrapSupabaseResult(areasRes) || [],
+    announcements: unwrapSupabaseResult(announcementsRes) || [],
+  }
+}
+
+export async function fetchDashboardDynamicData({ userId, cityId }) {
   const [
     featuredCityBanners,
     sponsoredProducts,
     staffDiscoveries,
-    announcementsRes,
-    categoriesRes,
-    areasRes,
     shopsRes,
     notificationsRes,
     wishlistRes,
@@ -253,81 +270,67 @@ export async function fetchDashboardData({ userId, profile = null }) {
     fetchFeaturedCityBanners(cityId),
     fetchSponsoredProducts(cityId),
     fetchStaffDiscoveries(),
-    supabase.from("announcements").select("*").order("created_at", { ascending: false }),
-    supabase.from("categories").select("*").order("name"),
-    supabase.from("areas").select("*").eq("city_id", cityId).order("name"),
     supabase
       .from("shops")
       .select("*")
       .eq("city_id", cityId)
       .order("is_featured", { ascending: false })
       .order("is_verified", { ascending: false })
-      .limit(200),
+      .limit(100), // Reduced from 200 to save bandwidth
     supabase
       .from("notifications")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
-      .limit(20),
+      .limit(15),
     supabase.from("wishlist").select("*", { count: "exact", head: true }).eq("user_id", userId),
   ])
 
-  const announcements = unwrapSupabaseResult(
-    announcementsRes,
-    "Announcements could not be loaded right now."
-  ) || []
-  const categories = unwrapSupabaseResult(
-    categoriesRes,
-    "Categories could not be loaded right now."
-  ) || []
-  const areas = unwrapSupabaseResult(
-    areasRes,
-    "Areas could not be loaded right now."
-  ) || []
-  const shops = unwrapSupabaseResult(
-    shopsRes,
-    "Marketplace shops could not be loaded right now."
-  ) || []
-  const notifications = unwrapSupabaseResult(
-    notificationsRes,
-    "Notifications could not be loaded right now."
-  ) || []
-  const wishlistCount = unwrapSupabaseCount(
-    wishlistRes,
-    "Wishlist status could not be loaded right now."
-  )
-
+  const shops = unwrapSupabaseResult(shopsRes) || []
   let products = []
-  const shopIds = shops.map((shop) => shop.id)
+  
+  // Only fetch products for the first 50 shops to keep response small
+  const shopIdsForProducts = shops.slice(0, 50).map(s => s.id)
 
-  if (shopIds.length > 0) {
+  if (shopIdsForProducts.length > 0) {
     const productsRes = await supabase
       .from("products")
       .select("*")
-      .in("shop_id", shopIds)
+      .in("shop_id", shopIdsForProducts)
       .eq("is_available", true)
-      .limit(400)
+      .limit(150) // Drastically reduced from 400
       .order("id", { ascending: true })
 
-    products = unwrapSupabaseResult(
-      productsRes,
-      "Products could not be loaded right now."
-    ) || []
+    products = unwrapSupabaseResult(productsRes) || []
   }
 
   return {
-    profile: currentProfile,
+    featuredCityBanners,
     sponsoredProducts,
     staffDiscoveries,
-    featuredCityBanners,
-    announcements,
-    categories,
-    areas,
     shops,
     products,
-    notifications,
-    wishlistCount,
-    unread: notifications.filter((item) => !item.is_read).length,
+    notifications: unwrapSupabaseResult(notificationsRes) || [],
+    wishlistCount: unwrapSupabaseCount(wishlistRes),
+  }
+}
+
+export async function fetchDashboardData({ userId, profile = null }) {
+  if (!userId) throw new Error("Authentication required")
+
+  const currentProfile = await resolveDashboardProfile({ userId, profile })
+  const cityId = currentProfile.city_id
+
+  const [base, dynamic] = await Promise.all([
+    fetchDashboardBaseData(cityId),
+    fetchDashboardDynamicData({ userId, cityId }),
+  ])
+
+  return {
+    profile: currentProfile,
+    ...base,
+    ...dynamic,
+    unread: dynamic.notifications.filter((item) => !item.is_read).length,
   }
 }
 
@@ -339,12 +342,20 @@ export async function prepareDashboardTransition({
   if (!userId) throw new Error("Authentication required")
 
   const resolvedProfile = await resolveDashboardProfile({ userId, profile })
-  const cacheKey = buildDashboardCacheKey(userId, resolvedProfile.city_id)
-  const cachedEntry = readCachedFetchStore(cacheKey)
+  const baseKey = buildDashboardBaseCacheKey(resolvedProfile.city_id)
+  const dynamicKey = buildDashboardDynamicCacheKey(userId, resolvedProfile.city_id)
+  
+  const cachedBase = readCachedFetchStore(baseKey)
+  const cachedDynamic = readCachedFetchStore(dynamicKey)
 
-  if (hasFreshCache(cachedEntry)) {
+  if (hasFreshCache(cachedBase, DASHBOARD_BASE_TTL) && hasFreshCache(cachedDynamic, DASHBOARD_DYNAMIC_TTL)) {
     await loadUserDashboardPage()
-    return cachedEntry.data
+    return {
+      profile: resolvedProfile,
+      ...cachedBase.data,
+      ...cachedDynamic.data,
+      unread: cachedDynamic.data.notifications.filter((item) => !item.is_read).length,
+    }
   }
 
   const data = await runTimedPreload(
@@ -360,6 +371,12 @@ export async function prepareDashboardTransition({
     timeoutMs
   )
 
-  primeCachedFetchStore(cacheKey, data, Date.now(), { persist: "session" })
+  // Split and prime
+  const { profile: p, notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, shops, products, ...basePart } = data
+  const dynamicPart = { notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, shops, products }
+
+  primeCachedFetchStore(baseKey, basePart, Date.now(), { persist: "session" })
+  primeCachedFetchStore(dynamicKey, dynamicPart, Date.now(), { persist: "session" })
+  
   return data
 }

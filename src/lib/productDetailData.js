@@ -12,7 +12,7 @@ export async function fetchProductDetailData({ productId, userId = null }) {
 
   const { data: product, error: productError } = await supabase
     .from("products")
-    .select("*")
+    .select("*, shops(id, name, whatsapp, phone, address, city_id, areas(name), cities(name))")
     .eq("id", productId)
     .single()
 
@@ -27,24 +27,10 @@ export async function fetchProductDetailData({ productId, userId = null }) {
     throw new Error("This product is unavailable right now. Please try again later.")
   }
 
-  let shop = null
+  const shop = product.shops
   let recommendations = []
   let initialWishlist = false
   const tasks = []
-
-  if (product.shop_id) {
-    tasks.push(
-      supabase
-        .from("shops")
-        .select("id, name, whatsapp, phone, address, city_id, areas(name), cities(name)")
-        .eq("id", product.shop_id)
-        .maybeSingle()
-        .then((res) => {
-          if (res.data) shop = res.data
-        })
-        .catch(() => {})
-    )
-  }
 
   if (product.category) {
     tasks.push(

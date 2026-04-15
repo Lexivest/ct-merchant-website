@@ -447,34 +447,49 @@ export default function AddProduct() {
       const uploadPromises = [1, 2, 3].map(async (idx) => {
         if (!blobs[idx]) return null;
         const fName = `${user.id}_${Date.now()}_img${idx}.jpg`;
-        const { error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], {
-          contentType: "image/jpeg",
-          upsert: false,
-          cacheControl: "31536000",
-        });
-        if (upErr) throw upErr;
-        return supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl;
+        try {
+          const { error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], {
+            contentType: "image/jpeg",
+            upsert: false,
+            cacheControl: "31536000",
+          });
+          if (upErr) throw upErr;
+          return supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl;
+        } catch (uploadErr) {
+          console.error(`Image ${idx} upload failed:`, uploadErr);
+          throw new Error(`Failed to upload image ${idx}. Please check your connection.`);
+        }
       });
 
       const [url1, url2, url3] = await Promise.all(uploadPromises);
 
-      const { error: insertError } = await supabase.from("products").insert({
-        shop_id: parseInt(shopId),
-        name: form.name.trim(),
-        description: form.desc.trim(),
-        price: priceVal,
-        discount_price: discountPrice,
-        condition: form.condition,
-        category: form.category,
-        image_url: url1,
-        image_url_2: url2,
-        image_url_3: url3,
-        stock_count: parseInt(form.stock),
-        attributes: finalAttrs,
-        is_available: parseInt(form.stock) > 0,
-      });
+      let lastInsertError = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const { error: insertError } = await supabase.from("products").insert({
+          shop_id: parseInt(shopId),
+          name: form.name.trim(),
+          description: form.desc.trim(),
+          price: priceVal,
+          discount_price: discountPrice,
+          condition: form.condition,
+          category: form.category,
+          image_url: url1,
+          image_url_2: url2,
+          image_url_3: url3,
+          stock_count: parseInt(form.stock),
+          attributes: finalAttrs,
+          is_available: parseInt(form.stock) > 0,
+        });
 
-      if (insertError) throw insertError;
+        if (!insertError) {
+          lastInsertError = null;
+          break;
+        }
+        lastInsertError = insertError;
+        if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt));
+      }
+
+      if (lastInsertError) throw lastInsertError;
 
       setShowSuccess(true);
       setTimeout(() => {

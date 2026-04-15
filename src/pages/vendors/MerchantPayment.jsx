@@ -126,13 +126,26 @@ export default function MerchantPayment() {
     try {
       if (showLoader) setLoading(true)
 
-      const { data: shop, error: shopErr } = await supabase
-        .from("shops")
-        .select("*")
-        .eq("id", parsedShopId)
-        .eq("owner_id", user.id)
-        .maybeSingle()
-      if (shopErr || !shop) throw new Error("Shop not found or access denied")
+      // Fetch shop and verification status in parallel
+      const [shopRes, paymentRes] = await Promise.all([
+        supabase
+          .from("shops")
+          .select("*, cities(name)")
+          .eq("id", parsedShopId)
+          .eq("owner_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("physical_verification_payments")
+          .select("id")
+          .eq("merchant_id", user.id)
+          .eq("status", "success")
+          .order("id", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      ])
+
+      const shop = shopRes.data
+      if (shopRes.error || !shop) throw new Error("Shop not found or access denied")
 
       if (shop.is_verified || shop.kyc_status === "approved") {
         notify({
@@ -144,16 +157,7 @@ export default function MerchantPayment() {
         return
       }
 
-      const { data: paymentRecord } = await supabase
-        .from("physical_verification_payments")
-        .select("id")
-        .eq("merchant_id", user.id)
-        .eq("status", "success")
-        .order("id", { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (paymentRecord) {
+      if (paymentRes.data) {
         if (shop.status === "pending_kyc_review" || shop.kyc_status === "submitted") {
           notify({
             type: "info",
@@ -172,7 +176,8 @@ export default function MerchantPayment() {
         return
       }
 
-      const [{ data: profile, error: profErr }, latestProof] = await Promise.all([
+      // Fetch profile and proof in parallel
+      const [profileRes, latestProof] = await Promise.all([
         supabase
           .from("profiles")
           .select("*, cities(name)")
@@ -184,13 +189,14 @@ export default function MerchantPayment() {
           paymentKind: "physical_verification",
         }),
       ])
-      if (profErr || !profile) throw new Error("Profile not found")
+
+      if (profileRes.error || !profileRes.data) throw new Error("Profile not found")
 
       setPaymentProof(latestProof)
       setShopDetails({
-        merchantName: profile.full_name || "Merchant",
+        merchantName: profileRes.data.full_name || "Merchant",
         shopName: shop.name,
-        cityName: profile.cities?.name || "Unknown City",
+        cityName: profileRes.data.cities?.name || shop.cities?.name || "Unknown City",
         shopAddress: shop.address || "Address not provided",
         email: user.email,
       })

@@ -16,7 +16,7 @@ export async function fetchShopDetailData({
 
   const { data: shopData, error: shopError } = await supabase
     .from("shops")
-    .select("*")
+    .select("*, cities(name)")
     .eq("id", shopId)
     .maybeSingle()
 
@@ -31,7 +31,6 @@ export async function fetchShopDetailData({
     throw new Error("This shop is unavailable right now. Please try again later.")
   }
 
-  let cityName = "Local"
   let fetchedProducts = []
   let fetchedLikeCount = 0
   let fetchedApprovedNews = []
@@ -39,20 +38,6 @@ export async function fetchShopDetailData({
   let fetchedHasLiked = false
   let fetchedOwnerProfile = null
   const tasks = []
-
-  if (shopData.city_id) {
-    tasks.push(
-      supabase
-        .from("cities")
-        .select("name")
-        .eq("id", shopData.city_id)
-        .maybeSingle()
-        .then((res) => {
-          if (res.data?.name) cityName = res.data.name
-        })
-        .catch(() => {})
-    )
-  }
 
   if (shopData.owner_id) {
     tasks.push(
@@ -144,7 +129,7 @@ export async function fetchShopDetailData({
   await Promise.allSettled(tasks)
 
   return {
-    shop: { ...shopData, cities: { name: cityName } },
+    shop: shopData,
     products: fetchedProducts,
     likeCount: fetchedLikeCount,
     approvedNews: fetchedApprovedNews,

@@ -155,7 +155,7 @@ export async function signInWithPassword({ email, password }) {
       .maybeSingle()
 
     if (profileError) {
-      console.error("Profile fetch error during login:", profileError)
+      console.error("Profile check failed during login:", profileError)
     }
 
     if (profile?.is_suspended) {
@@ -165,7 +165,11 @@ export async function signInWithPassword({ email, password }) {
     }
 
     if (profile?.failed_login_attempts > 0) {
-      await supabase.rpc('reset_failed_login')
+      try {
+        await supabase.rpc('reset_failed_login')
+      } catch (e) {
+        console.warn("Failed to reset login attempts:", e.message)
+      }
     }
   }
 
@@ -217,18 +221,30 @@ export async function signUpWithEmail({
     throw new Error("Account could not be created.")
   }
 
-  const { error: profileError } = await supabase.from("profiles").insert({
-    id: authData.user.id,
-    full_name: fullName.trim(),
-    phone: normalizePhone(phone),
-    city_id: Number(cityId),
-    area_id: Number(areaId),
-    registration_ip: ipData.ip,
-    last_active_ip: ipData.ip,
-    ip_country: ipData.country,
-  })
+  let profileError = null
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const { error } = await supabase.from("profiles").upsert({
+      id: authData.user.id,
+      full_name: fullName.trim(),
+      phone: normalizePhone(phone),
+      city_id: Number(cityId),
+      area_id: Number(areaId),
+      registration_ip: ipData.ip,
+      last_active_ip: ipData.ip,
+      ip_country: ipData.country,
+    })
+    
+    if (!error) {
+      profileError = null
+      break
+    }
+    profileError = error
+    if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt))
+  }
 
-  if (profileError) throw profileError
+  if (profileError) {
+    console.error("Profile creation failed after retries:", profileError)
+  }
 
   return {
     user: authData.user,

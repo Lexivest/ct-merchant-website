@@ -53,11 +53,13 @@ export async function uploadPaymentReceipt({ file, userId, shopId, paymentKind }
     throw new Error(`Receipt type is not supported. ${getPaymentReceiptRuleLabel()}.`)
   }
 
+  // Sanitize kind for path safety
+  const safeKind = String(paymentKind || "payment").toLowerCase().replace(/[^a-z0-9_-]/g, "")
   const extension = file.name?.includes(".")
     ? file.name.split(".").pop().toLowerCase().replace(/[^a-z0-9]/g, "")
-    : "upload"
-  const safeKind = String(paymentKind || "payment").replace(/[^a-z0-9_-]/gi, "")
-  const path = `${userId}/${shopId}/${safeKind}_${Date.now()}.${extension || "upload"}`
+    : file.type.split("/")[1]?.replace(/[^a-z0-9]/g, "") || "upload"
+  
+  const path = `${userId}/${shopId}/${safeKind}_${Date.now()}.${extension}`
 
   const { error } = await supabase.storage
     .from(PAYMENT_RECEIPT_RULE.bucket)
@@ -67,7 +69,10 @@ export async function uploadPaymentReceipt({ file, userId, shopId, paymentKind }
       contentType: file.type || "application/octet-stream",
     })
 
-  if (error) throw error
+  if (error) {
+    console.error("Storage upload failed:", error)
+    throw new Error("Could not upload receipt. Please check your network and try again.")
+  }
 
   return {
     path,
@@ -90,7 +95,10 @@ export async function fetchLatestPaymentProof({ userId, shopId, paymentKind, pla
   query = plan ? query.eq("plan", plan) : query.is("plan", null)
 
   const { data, error } = await query.maybeSingle()
-  if (error) throw error
+  if (error) {
+    console.error("Fetch latest proof failed:", error)
+    return null
+  }
   return data || null
 }
 
@@ -109,26 +117,33 @@ export async function createPaymentProof({
 }) {
   if (!user?.id) throw new Error("Session unavailable. Please sign in again.")
 
-  const { data, error } = await supabase
-    .from("offline_payment_proofs")
-    .insert({
-      merchant_id: user.id,
-      merchant_email: user.email || null,
-      merchant_name: merchantName || user.user_metadata?.full_name || "Merchant",
-      shop_id: Number(shopId),
-      shop_name: shopName || null,
-      payment_kind: paymentKind,
-      plan,
-      amount: Number(amount),
-      depositor_name: depositorName.trim() || null,
-      transfer_reference: transferReference.trim() || null,
-      receipt_path: receiptPath,
-      receipt_url: receiptUrl,
-      status: "pending",
-    })
-    .select("*")
-    .single()
+  let insertError = null
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const { data, error } = await supabase
+      .from("offline_payment_proofs")
+      .insert({
+        merchant_id: user.id,
+        merchant_email: user.email || null,
+        merchant_name: merchantName || user.user_metadata?.full_name || "Merchant",
+        shop_id: Number(shopId),
+        shop_name: shopName || null,
+        payment_kind: paymentKind,
+        plan,
+        amount: Number(amount),
+        depositor_name: depositorName.trim() || null,
+        transfer_reference: transferReference.trim() || null,
+        receipt_path: receiptPath,
+        receipt_url: receiptUrl,
+        status: "pending",
+      })
+      .select("*")
+      .single()
 
-  if (error) throw error
-  return data
+    if (!error) return data
+    insertError = error
+    if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt))
+  }
+
+  console.error("Create payment proof failed after retries:", insertError)
+  throw new Error("We could not save your payment proof. Please contact support if the issue persists.")
 }

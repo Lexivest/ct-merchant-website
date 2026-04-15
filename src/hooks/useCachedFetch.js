@@ -196,11 +196,13 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
     ttl = 1000 * 60 * 5, // 5-minute default cache lifespan
     dependencies = [],
     persist = null,
+    skip = false,
   } = options
 
   const [, setTick] = useState(0) // Used purely to force a re-render
   const isOfflineRef = useRef(typeof navigator !== "undefined" ? !navigator.onLine : false)
   const errorRef = useRef(null)
+  const isRevalidatingRef = useRef(false)
   const persistMode = persist === true ? "session" : persist
 
   useEffect(() => {
@@ -208,19 +210,22 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   }, [])
 
   // 1. SYNCHRONOUS CACHE READ
-  // By reading the map directly during render, we never suffer from stale useState data
-  // when the queryKey changes (like when user.id resolves).
   const cachedEntry = getCacheEntry(queryKey)
   const data = cachedEntry ? cachedEntry.data : null
   
-  // We are loading if we have no data and no hard error yet
-  const loading = !data && !errorRef.current
+  // We are loading if we have no data, no hard error, and we are not skipping
+  const loading = !data && !errorRef.current && !skip
 
   useEffect(() => {
+    if (skip) return undefined
+    
     let isMounted = true
 
-    const fetchData = async () => {
+    const fetchData = async ({ force = false } = {}) => {
       const currentCachedEntry = getCacheEntry(queryKey)
+      const isExpired = currentCachedEntry && (Date.now() - currentCachedEntry.timestamp > ttl)
+
+      if (!force && currentCachedEntry && !isExpired) return
 
       // Offline Check
       if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -238,8 +243,10 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       isOfflineRef.current = false
       errorRef.current = null
       
-      if (!currentCachedEntry) {
-         if (isMounted) setTick(t => t + 1)
+      if (currentCachedEntry) {
+        isRevalidatingRef.current = true
+      } else {
+        if (isMounted) setTick(t => t + 1)
       }
 
       try {
@@ -247,10 +254,12 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
         if (isMounted) {
           primeCachedFetchStore(queryKey, result, Date.now(), { persist: persistMode })
           errorRef.current = null
-          setTick(t => t + 1) // Force render to show new data
+          isRevalidatingRef.current = false
+          setTick(t => t + 1)
         }
       } catch (err) {
         if (isMounted) {
+          isRevalidatingRef.current = false
           if (getCacheEntry(queryKey)) {
             console.warn(`Background fetch failed for ${queryKey}, falling back to cache.`)
             errorRef.current = null
@@ -265,16 +274,10 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       }
     }
 
-    const cached = getCacheEntry(queryKey)
-    const isExpired = cached && (Date.now() - cached.timestamp > ttl)
-
-    if (!cached || isExpired) {
-      fetchData()
-    }
+    fetchData()
 
     activeFetchers.set(queryKey, fetchData)
 
-    // Real-time Network Listeners
     const handleOffline = () => {
       isOfflineRef.current = true
       if (globalCache.has(queryKey)) {
@@ -290,8 +293,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       window.removeEventListener("offline", handleOffline)
       activeFetchers.delete(queryKey)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...dependencies, queryKey])
+  }, [...dependencies, queryKey, skip, ttl])
 
   const mutate = useCallback(() => {
     const fetcher = activeFetchers.get(queryKey)
@@ -301,6 +303,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   return { 
     data, 
     loading, 
+    isRevalidating: isRevalidatingRef.current,
     error: errorRef.current, 
     isOffline: isOfflineRef.current,
     mutate

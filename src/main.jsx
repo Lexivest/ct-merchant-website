@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
+import AppErrorBoundary from './components/common/AppErrorBoundary.jsx'
 import AppFrame from './components/common/AppFrame.jsx'
 import GlobalFeedbackProvider from './components/common/GlobalFeedbackProvider.jsx'
 import './styles/globals.css'
@@ -27,11 +28,13 @@ if (typeof window !== "undefined") {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter future={{ v7_startTransition: true }}>
-      <GlobalFeedbackProvider>
-        <AppFrame>
-          <App />
-        </AppFrame>
-      </GlobalFeedbackProvider>
+      <AppErrorBoundary resetKey={window.location.pathname}>
+        <GlobalFeedbackProvider>
+          <AppFrame>
+            <App />
+          </AppFrame>
+        </GlobalFeedbackProvider>
+      </AppErrorBoundary>
     </BrowserRouter>
   </React.StrictMode>,
 )

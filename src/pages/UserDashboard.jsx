@@ -14,8 +14,10 @@ import useCachedFetch, {
 import useMyShop from "../hooks/useMyShop" // <-- Import our new logic file
 import { signOutUser } from "../lib/auth"
 import {
-  buildDashboardCacheKey,
-  fetchDashboardData,
+  buildDashboardBaseCacheKey,
+  buildDashboardDynamicCacheKey,
+  fetchDashboardBaseData,
+  fetchDashboardDynamicData,
   fetchFeaturedCityBanners,
 } from "../lib/dashboardData"
 import { prepareProductDetailTransition } from "../lib/detailPageTransitions"
@@ -269,27 +271,49 @@ function UserDashboard() {
   const [searchParams, setSearchParams] = useSearchParams()
   const prefetchedDashboardData = location.state?.prefetchedDashboardData || null
 
-  const { loading: authLoading, user, profile, suspended } = useAuthSession()
+  const { loading: authLoading, user, profile, suspended, profileLoaded } = useAuthSession()
   
   // Use our new isolated tracking logic for the shop card
   const { shopData, shopMeta, canRegisterShop, loading: shopLoading } = useMyShop()
 
-  const dashboardCacheKey = buildDashboardCacheKey(user?.id || "guest", profile?.city_id || "none")
-  const { data: fetchedData, loading: dataLoading, error: dataError } = useCachedFetch(
-    dashboardCacheKey,
-    () =>
-      fetchDashboardData({
-        userId: user?.id || null,
-        profile,
-      }),
+  const cityId = profile?.city_id || "none"
+  const baseCacheKey = buildDashboardBaseCacheKey(cityId)
+  const dynamicCacheKey = buildDashboardDynamicCacheKey(user?.id, cityId)
+
+  const { data: baseData, loading: baseLoading, mutate: mutateBase } = useCachedFetch(
+    baseCacheKey,
+    () => fetchDashboardBaseData(cityId),
     {
-      dependencies: [user?.id, profile?.city_id],
-      ttl: 1000 * 60 * 15,
+      dependencies: [cityId],
+      ttl: 1000 * 60 * 60 * 24, // 24 hours for stable data
       persist: "session",
+      skip: !profileLoaded
     }
   )
 
-  const [localData, setLocalData] = useState(prefetchedDashboardData || EMPTY_DASHBOARD_DATA)
+  const { data: dynamicData, loading: dynamicLoading, error: dataError, mutate: mutateDynamic } = useCachedFetch(
+    dynamicCacheKey,
+    () => fetchDashboardDynamicData({ userId: user?.id, cityId }),
+    {
+      dependencies: [user?.id, cityId],
+      ttl: 1000 * 60 * 15, // 15 mins for dynamic data
+      persist: "session",
+      skip: !profileLoaded
+    }
+  )
+
+  const [localData, setLocalData] = useState(() => {
+    if (prefetchedDashboardData) return prefetchedDashboardData
+    
+    // Attempt to merge from separate caches if present
+    const b = readCachedFetchStore(baseCacheKey)?.data
+    const d = readCachedFetchStore(dynamicCacheKey)?.data
+    if (b && d) {
+      return { ...EMPTY_DASHBOARD_DATA, ...b, ...d, unread: (d.notifications || []).filter(n => !n.is_read).length }
+    }
+    return EMPTY_DASHBOARD_DATA
+  })
+
   const retryRouteTransitionRef = useRef(null)
   const [routeTransition, setRouteTransition] = useState({
     pending: false,
@@ -299,10 +323,16 @@ function UserDashboard() {
   const [announcementsOpen, setAnnouncementsOpen] = useState(false)
 
   useEffect(() => {
-    if (fetchedData) {
-      setLocalData(fetchedData)
+    if (baseData && dynamicData) {
+      setLocalData((prev) => ({
+        ...prev,
+        profile,
+        ...baseData,
+        ...dynamicData,
+        unread: dynamicData.notifications.filter((item) => !item.is_read).length,
+      }))
     }
-  }, [fetchedData])
+  }, [baseData, dynamicData, profile])
 
   useEffect(() => {
     if (prefetchedDashboardData) {
@@ -667,65 +697,92 @@ function UserDashboard() {
     let cancelled = false
     let refreshTimerId = null
 
-    async function refreshFeaturedBanners() {
-      try {
-        const featuredCityBanners = await fetchFeaturedCityBanners(cityId)
-        if (cancelled) return
-
-        setLocalData((prev) => {
-          const next = {
-            ...prev,
-            featuredCityBanners,
-          }
-          primeCachedFetchStore(dashboardCacheKey, next, Date.now(), {
-            persist: "session",
-          })
-          return next
-        })
-      } catch (error) {
-        console.warn("Failed to refresh featured city banners:", error)
-      }
-    }
-
-    function scheduleRefresh(payload) {
-      const changedCityId = payload?.new?.city_id || payload?.old?.city_id
-      const shouldRefresh =
-        !changedCityId ||
-        String(changedCityId) === String(cityId) ||
-        payload?.eventType === "DELETE"
-
-      if (!shouldRefresh) return
-
-      if (refreshTimerId) {
-        window.clearTimeout(refreshTimerId)
-      }
-
+    // Helper to refresh specific dashboard segments via mutate
+    function scheduleRefresh(segment) {
+      if (refreshTimerId) window.clearTimeout(refreshTimerId)
       refreshTimerId = window.setTimeout(() => {
-        void refreshFeaturedBanners()
-      }, 350)
+        if (segment === "base") mutateBase()
+        else mutateDynamic()
+      }, 400)
     }
 
     const channel = supabase
-      .channel(`public:featured_city_banners:dashboard:${cityId}`)
+      .channel(`dashboard-realtime-${cityId}-${user.id}`)
+      // 1. Base Data Changes (Announcements/Categories)
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "featured_city_banners",
+        { event: "*", schema: "public", table: "announcements" },
+        () => scheduleRefresh("base")
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "categories" },
+        () => scheduleRefresh("base")
+      )
+      // 2. Dynamic Data Changes
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "featured_city_banners" },
+        (payload) => {
+          const changedCityId = payload.new?.city_id || payload.old?.city_id
+          if (!changedCityId || String(changedCityId) === String(cityId)) {
+            scheduleRefresh("dynamic")
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "sponsored_products" },
+        (payload) => {
+          const changedCityId = payload.new?.city_id || payload.old?.city_id
+          if (!changedCityId || String(changedCityId) === String(cityId)) {
+            scheduleRefresh("dynamic")
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
+        () => scheduleRefresh("dynamic")
+      )
+      // 4. Notifications (Direct state update remains for speed, but dynamic mutate ensures sync)
+      .on(
+        "postgres_changes",
+        { 
+          event: "*", 
+          schema: "public", 
+          table: "notifications", 
+          filter: `user_id=eq.${user.id}` 
         },
-        scheduleRefresh
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+             scheduleRefresh("dynamic")
+          } else {
+            setLocalData((prev) => {
+              let nextNotifications = [...prev.notifications]
+              if (payload.eventType === 'UPDATE') {
+                nextNotifications = nextNotifications.map(n => n.id === payload.new.id ? payload.new : n)
+              } else if (payload.eventType === 'DELETE') {
+                nextNotifications = nextNotifications.filter(n => n.id !== payload.old.id)
+              }
+              
+              return {
+                ...prev,
+                notifications: nextNotifications,
+                unread: nextNotifications.filter(n => !n.is_read).length
+              }
+            })
+          }
+        }
       )
       .subscribe()
 
     return () => {
       cancelled = true
-      if (refreshTimerId) {
-        window.clearTimeout(refreshTimerId)
-      }
+      if (refreshTimerId) window.clearTimeout(refreshTimerId)
       supabase.removeChannel(channel)
     }
-  }, [currentProfile?.city_id, dashboardCacheKey, user?.id])
+  }, [currentProfile?.city_id, user?.id, mutateBase, mutateDynamic])
 
   const sortedAreas = useMemo(() => {
     const areas = [...(localData.areas || [])]
@@ -1737,7 +1794,7 @@ function UserDashboard() {
     }
   }
 
-  if (authLoading || (dataLoading && !fetchedData && !localData?.profile)) {
+  if (authLoading || ((baseLoading || dynamicLoading) && !prefetchedDashboardData && !localData?.profile)) {
     return (
       <PageLoadingScreen
         title="Loading dashboard"
@@ -1753,7 +1810,7 @@ function UserDashboard() {
   }
 
   // --- RENDER ERROR STATE ---
-  if (dataError || routeTransition.error) {
+  if ((dataError && !localData?.shops?.length) || routeTransition.error) {
     const errorSource = dataError || routeTransition.error
     const errorObj = errorSource instanceof Error 
       ? errorSource 
@@ -1766,7 +1823,7 @@ function UserDashboard() {
           if (retryRouteTransitionRef.current) {
             retryRouteTransitionRef.current()
           } else {
-            window.location.reload()
+            mutateDynamic()
           }
         }}
         onBack={() => {
@@ -1820,7 +1877,7 @@ function UserDashboard() {
             groupedShopsByArea={groupedShopsByArea}
             navigateCategory={navigateCategory}
             onOpenShop={openShopWithTransition}
-            loading={dataLoading}
+            loading={dynamicLoading && !localData?.shops?.length}
             error={dataError}
             promoBanner={<PromoAlertBanner />}
           />

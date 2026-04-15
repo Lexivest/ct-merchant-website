@@ -369,6 +369,20 @@ function ProtectedDashboardRoute({ children }) {
   )
 }
 
+function ProtectedStaffRoute({ children }) {
+  const { loading, user, profile, profileLoaded } = useAuthSession()
+
+  if (loading || (user && !profileLoaded)) {
+    return <RouteLoadingScreen title="Accessing staff portal" message="Verifying credentials..." />
+  }
+
+  if (!user || profile?.role !== "staff") {
+    return <Navigate to="/staff-portal" replace />
+  }
+
+  return children
+}
+
 function AppShell() {
   const withOnlineGuard = (element, options = {}) => (
     <OnlineRouteGuard {...options}>{element}</OnlineRouteGuard>
@@ -405,18 +419,18 @@ function AppShell() {
         
         {/* --- STAFF ROUTES --- */}
         <Route path="/staff-portal" element={<StaffPortal />} />
-        <Route path="/staff-dashboard" element={<StaffDashboard />} />
-        <Route path="/staff-traffic" element={<StaffTraffic />} />
-        <Route path="/staff-users" element={<StaffUsers />} />
-        <Route path="/staff-community" element={<StaffCommunity />} />
-        <Route path="/staff-verifications" element={<StaffVerifications />} />
-        <Route path="/staff-payments" element={<StaffPayments />} />
-        <Route path="/staff-city-banners" element={<StaffFeaturedCityBanners />} />
-        <Route path="/staff-sponsored-products" element={<StaffSponsoredProducts />} />
-        <Route path="/staff-discoveries" element={<StaffDiscoveries />} />
-        <Route path="/staff-issue-id" element={<StaffIDGenerator />} />
-        <Route path="/staff-studio" element={<ImageOptimizer />} />
-        <Route path="/staff-inbox" element={<StaffInbox />} />
+        <Route path="/staff-dashboard" element={<ProtectedStaffRoute><StaffDashboard /></ProtectedStaffRoute>} />
+        <Route path="/staff-traffic" element={<ProtectedStaffRoute><StaffTraffic /></ProtectedStaffRoute>} />
+        <Route path="/staff-users" element={<ProtectedStaffRoute><StaffUsers /></ProtectedStaffRoute>} />
+        <Route path="/staff-community" element={<ProtectedStaffRoute><StaffCommunity /></ProtectedStaffRoute>} />
+        <Route path="/staff-verifications" element={<ProtectedStaffRoute><StaffVerifications /></ProtectedStaffRoute>} />
+        <Route path="/staff-payments" element={<ProtectedStaffRoute><StaffPayments /></ProtectedStaffRoute>} />
+        <Route path="/staff-city-banners" element={<ProtectedStaffRoute><StaffFeaturedCityBanners /></ProtectedStaffRoute>} />
+        <Route path="/staff-sponsored-products" element={<ProtectedStaffRoute><StaffSponsoredProducts /></ProtectedStaffRoute>} />
+        <Route path="/staff-discoveries" element={<ProtectedStaffRoute><StaffDiscoveries /></ProtectedStaffRoute>} />
+        <Route path="/staff-issue-id" element={<ProtectedStaffRoute><StaffIDGenerator /></ProtectedStaffRoute>} />
+        <Route path="/staff-studio" element={<ProtectedStaffRoute><ImageOptimizer /></ProtectedStaffRoute>} />
+        <Route path="/staff-inbox" element={<ProtectedStaffRoute><StaffInbox /></ProtectedStaffRoute>} />
 
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
