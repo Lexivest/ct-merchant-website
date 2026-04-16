@@ -150,19 +150,48 @@ export async function signInWithPassword({ email, password }) {
   })
 
   if (error) {
-    const msg = error.message.toLowerCase()
-    if (msg.includes("invalid") || msg.includes("credential")) {
-      const { data: attempts, error: rpcError } = await supabase.rpc('record_failed_login', { p_email: normalizedEmail })
-      
-      if (!rpcError && typeof attempts === 'number') {
-        if (attempts >= 4) {
-          throw new Error("Your account is suspended due to too many failed login attempts. Please contact support.")
-        } else if (attempts > 0) {
-          const remaining = 4 - attempts
-          throw new Error(`Invalid credentials. You have ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before your account is suspended.`)
+    const rawMessage = String(error?.message || "")
+    const lowerMessage = rawMessage.toLowerCase()
+    const authStatus = Number(error?.status || 0)
+    const authCode = String(error?.code || "").toLowerCase()
+    const isInvalidCredentialsError =
+      authStatus === 400 ||
+      authCode === "invalid_grant" ||
+      lowerMessage.includes("invalid") ||
+      lowerMessage.includes("credential") ||
+      lowerMessage.includes("password") ||
+      lowerMessage.includes("grant")
+
+    if (isInvalidCredentialsError) {
+      try {
+        const { data: attempts, error: rpcError } = await supabase.rpc("record_failed_login", {
+          p_email: normalizedEmail,
+        })
+
+        if (!rpcError && typeof attempts === "number") {
+          if (attempts >= 4) {
+            throw new Error(
+              "Your account is suspended due to too many failed login attempts. Please contact support."
+            )
+          }
+
+          if (attempts > 0) {
+            const remaining = 4 - attempts
+            throw new Error(
+              `Invalid credentials. You have ${remaining} attempt${remaining === 1 ? "" : "s"} remaining before your account is suspended.`
+            )
+          }
         }
+      } catch (trackingError) {
+        if (trackingError instanceof Error && trackingError.message) {
+          throw trackingError
+        }
+        console.warn("Failed to record login attempt:", trackingError?.message || trackingError)
       }
+
+      throw new Error("Invalid credentials. Please try again.")
     }
+
     throw error
   }
 
@@ -186,7 +215,7 @@ export async function signInWithPassword({ email, password }) {
 
     if (profile?.failed_login_attempts > 0) {
       try {
-        await supabase.rpc('reset_failed_login')
+        await supabase.rpc("reset_failed_login")
       } catch (e) {
         console.warn("Failed to reset login attempts:", e.message)
       }
@@ -267,6 +296,7 @@ export async function signUpWithEmail({
   }
 
   return {
+    auth: authData,
     user: authData.user,
     ipData,
   }

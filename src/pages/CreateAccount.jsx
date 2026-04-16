@@ -11,7 +11,6 @@ import {
   FaPhone,
   FaUser,
 } from "react-icons/fa"
-import { FaCircleCheck } from "react-icons/fa6"
 import AuthButton from "../components/auth/AuthButton"
 import AuthInput from "../components/auth/AuthInput"
 import AuthNotification from "../components/auth/AuthNotification"
@@ -146,8 +145,6 @@ function CreateAccount() {
     title: "",
     message: "",
   })
-
-  const [showSuccess, setShowSuccess] = useState(false)
 
   // Sync network or fetch errors to the notification area
   useEffect(() => {
@@ -336,6 +333,28 @@ function CreateAccount() {
     setErrors((prev) => ({ ...prev, cityId: "", areaId: "" }))
   }
 
+  async function resolveFreshProfile(userId, fallbackProfile) {
+    if (!userId) return fallbackProfile || null
+
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const currentProfile = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle()
+
+      if (currentProfile.data) {
+        return currentProfile.data
+      }
+
+      if (attempt < 3) {
+        await new Promise((resolve) => window.setTimeout(resolve, 350 * (attempt + 1)))
+      }
+    }
+
+    return fallbackProfile || null
+  }
+
   // --- DIRECT EMAIL SIGNUP EXECUTION ---
   async function handleEmailSignup(event) {
     event.preventDefault()
@@ -371,7 +390,7 @@ function CreateAccount() {
       setSubmitting(true)
       setNotice({ visible: false, type: "info", title: "", message: "" })
 
-      await signUpWithEmail({
+      const result = await signUpWithEmail({
         fullName: combinedFullName,
         phone: form.phone,
         email: form.email,
@@ -379,8 +398,31 @@ function CreateAccount() {
         cityId: form.cityId,
         areaId: form.areaId,
       })
+      const signedInUser = result.auth?.user || result.auth?.session?.user || result.user
 
-      setShowSuccess(true)
+      if (!signedInUser) {
+        throw new Error("Account was created, but we could not start your session.")
+      }
+
+      const hydratedProfile = await resolveFreshProfile(signedInUser.id, {
+        id: signedInUser.id,
+        full_name: combinedFullName,
+        phone: form.phone,
+        city_id: Number(form.cityId),
+        area_id: Number(form.areaId),
+      })
+
+      const didOpenDashboard = await openDashboardWithTransition({
+        session: result.auth?.session || null,
+        user: signedInUser,
+        profile: hydratedProfile,
+        suspended: false,
+        profileLoaded: true,
+      })
+
+      if (!didOpenDashboard) {
+        setSubmitting(false)
+      }
     } catch (error) {
       setNotice({
         visible: true,
@@ -388,14 +430,8 @@ function CreateAccount() {
         title: "Registration failed",
         message: getFriendlyErrorMessage(error, "Please try again."),
       })
-    } finally {
       setSubmitting(false)
     }
-  }
-
-  function closeSuccess() {
-    setShowSuccess(false)
-    navigate("/", { state: { prefillEmail: form.email } })
   }
 
   return (
@@ -566,16 +602,6 @@ function CreateAccount() {
         </MainLayout>
       </div>
 
-      {showSuccess && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-[350px] rounded-[20px] bg-white p-8 text-center shadow-2xl">
-            <FaCircleCheck className="mx-auto mb-4 text-5xl text-green-600" />
-            <div className="mb-2 text-xl font-extrabold text-slate-900">Account Created</div>
-            <div className="mb-6 text-sm leading-6 text-slate-500">Your account has been created successfully. Continue to sign in with your email and password.</div>
-            <button type="button" onClick={closeSuccess} className="w-full rounded-xl bg-slate-100 px-4 py-3 font-bold text-slate-900 transition hover:bg-slate-200">Go to Sign In</button>
-          </div>
-        </div>
-      )}
     </>
   )
 }
