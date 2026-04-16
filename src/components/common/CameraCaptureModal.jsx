@@ -175,34 +175,44 @@ export default function CameraCaptureModal({
     const sx = Math.max(0, Math.floor((sourceWidth - cropWidth) / 2))
     const sy = Math.max(0, Math.floor((sourceHeight - cropHeight) / 2))
 
-    const canvas = document.createElement("canvas")
-    canvas.width = targetWidth
-    canvas.height = targetHeight
-    const ctx = canvas.getContext("2d")
-    if (!ctx) {
-      setError("Could not initialize camera capture.")
-      return
+    try {
+      const canvas = document.createElement("canvas")
+      canvas.width = targetWidth
+      canvas.height = targetHeight
+      const ctx = canvas.getContext("2d")
+      if (!ctx) {
+        setError("Could not initialize camera capture.")
+        return
+      }
+
+      ctx.fillStyle = "#FFFFFF"
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(video, sx, sy, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height)
+
+      const blob = await new Promise((resolve) => {
+        canvas.toBlob((output) => resolve(output), "image/jpeg", 0.95)
+      })
+
+      if (!blob) {
+        setError("Could not capture image. Please retry.")
+        return
+      }
+
+      // Close first to release camera resources before processing in parent
+      onClose()
+
+      setTimeout(() => {
+        onCapture({
+          blob,
+          width: canvas.width,
+          height: canvas.height,
+          mimeType: "image/jpeg",
+        })
+      }, 0)
+    } catch (err) {
+      console.error("Camera capture error:", err)
+      setError("An error occurred during capture. Please try again.")
     }
-
-    ctx.fillStyle = "#FFFFFF"
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.drawImage(video, sx, sy, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height)
-
-    const blob = await new Promise((resolve) => {
-      canvas.toBlob((output) => resolve(output), "image/jpeg", 0.95)
-    })
-
-    if (!blob) {
-      setError("Could not capture image. Please retry.")
-      return
-    }
-
-    onCapture({
-      blob,
-      width: canvas.width,
-      height: canvas.height,
-      mimeType: "image/jpeg",
-    })
   }
 
   if (!open) return null
