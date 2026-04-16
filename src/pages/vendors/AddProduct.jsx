@@ -294,13 +294,6 @@ export default function AddProduct() {
 
       setBlobs((prev) => ({ ...prev, [slot]: result.blob }));
       setPreviews((prev) => ({ ...prev, [slot]: result.previewUrl }));
-
-      const diff = result.originalSize - result.processedSize;
-      if (diff > 0) {
-        setSavings((prev) => ({ ...prev, [slot]: `✅ Optimized ${Math.round((diff / result.originalSize) * 100)}%` }));
-      } else {
-        setSavings((prev) => ({ ...prev, [slot]: "✅ Ready" }));
-      }
     } catch (err) {
       notify({
         type: "error",
@@ -436,12 +429,6 @@ export default function AddProduct() {
       setBlobs((prev) => ({ ...prev, [activeSlot]: blob }));
       setPreviews((prev) => ({ ...prev, [activeSlot]: URL.createObjectURL(blob) }));
 
-      const saved = tempSize - blob.size;
-      if (saved > 0) {
-        setSavings((prev) => ({ ...prev, [activeSlot]: `Saved ${Math.round((saved / tempSize) * 100)}%` }));
-      } else {
-        setSavings((prev) => ({ ...prev, [activeSlot]: "Ready" }));
-      }
       closeStudio();
     } catch (err) {
       notify({
@@ -682,11 +669,6 @@ export default function AddProduct() {
                     <button type="button" onClick={(e) => removeImage(e, slot)} className="absolute right-1 top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-md transition hover:scale-110 hover:bg-red-700">
                       <FaTrashCan size={12} />
                     </button>
-                    {savings[slot] && (
-                      <div className="absolute bottom-1 left-1 right-1 z-20 rounded bg-[#10B981]/90 px-1 py-0.5 text-center text-[0.6rem] font-extrabold text-white backdrop-blur-sm">
-                        {savings[slot]}
-                      </div>
-                    )}
                   </>
                 ) : (
                   <>
