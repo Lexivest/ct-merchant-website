@@ -140,6 +140,50 @@ export async function signOutUser() {
   }
 }
 
+const FAILED_LOGIN_TRACK_RPC_NAMES = [
+  "track_failed_login_attempt",
+  "register_failed_login_attempt",
+  "record_failed_login",
+]
+
+const FAILED_LOGIN_RESET_RPC_NAMES = [
+  "reset_failed_login_attempts",
+  "clear_failed_login_attempts",
+  "reset_failed_login",
+]
+
+function isMissingRpcError(error) {
+  const message = String(error?.message || "").toLowerCase()
+  const code = String(error?.code || "").toLowerCase()
+  return (
+    code === "pgrst202" ||
+    code === "42883" ||
+    message.includes("could not find the function") ||
+    message.includes("function") && message.includes("does not exist")
+  )
+}
+
+async function invokeFirstAvailableRpc(rpcNames, args = undefined) {
+  let lastError = null
+
+  for (const rpcName of rpcNames) {
+    const result = args === undefined
+      ? await supabase.rpc(rpcName)
+      : await supabase.rpc(rpcName, args)
+
+    if (!result.error) {
+      return { ...result, rpcName }
+    }
+
+    lastError = result.error
+    if (!isMissingRpcError(result.error)) {
+      return { ...result, rpcName }
+    }
+  }
+
+  return { data: null, error: lastError, rpcName: null }
+}
+
 export async function signInWithPassword({ email, password }) {
   const ipData = await getClientIpData()
   const normalizedEmail = normalizeEmail(email)
@@ -166,19 +210,23 @@ export async function signInWithPassword({ email, password }) {
 
     if (looksLikeAuthFailure) {
       try {
-        // Record the failure in the database to track brute force and handle lockouts.
-        // We call this even if we aren't 100% sure it's a credential error, 
-        // as the DB function handles its own internal validation.
-        const { data: attempts, error: rpcError } = await supabase.rpc("record_failed_login", {
+        const { data: attempts, error: rpcError, rpcName } = await invokeFirstAvailableRpc(
+          FAILED_LOGIN_TRACK_RPC_NAMES,
+          {
           p_email: normalizedEmail,
-        })
+          }
+        )
 
         if (rpcError) {
-          console.error("CRITICAL: record_failed_login RPC failed:", rpcError.message, rpcError.details)
+          console.error(
+            "CRITICAL: failed-login tracking RPC failed:",
+            rpcName || FAILED_LOGIN_TRACK_RPC_NAMES.join(", "),
+            rpcError.message,
+            rpcError.details
+          )
         }
 
         if (!rpcError && typeof attempts === "number") {
-          // The database function returns the current count of failed attempts
           if (attempts >= 4) {
             throw new Error(
               "Your account is suspended due to too many failed login attempts. Please contact support."
@@ -227,7 +275,16 @@ export async function signInWithPassword({ email, password }) {
 
     if (profile?.failed_login_attempts > 0) {
       try {
-        await supabase.rpc("reset_failed_login")
+        const { error: resetError, rpcName } = await invokeFirstAvailableRpc(
+          FAILED_LOGIN_RESET_RPC_NAMES
+        )
+        if (resetError) {
+          console.warn(
+            "Failed to reset login attempts:",
+            rpcName || FAILED_LOGIN_RESET_RPC_NAMES.join(", "),
+            resetError.message
+          )
+        }
       } catch (e) {
         console.warn("Failed to reset login attempts:", e.message)
       }
