@@ -37,10 +37,10 @@ export default function CameraCaptureModal({
 
   const frameStyle = useMemo(() => {
     return {
-      width: aspectRatio >= 1 ? "min(88vw, 520px)" : "min(84vw, 420px)",
-      height: aspectRatio < 1 ? "min(62vh, 640px)" : "auto",
-      maxWidth: "92vw",
-      maxHeight: "62vh",
+      width: aspectRatio >= 1 ? "min(90vw, 500px)" : "auto",
+      height: aspectRatio < 1 ? "min(50vh, 500px)" : "auto",
+      maxWidth: "94vw",
+      maxHeight: "50vh",
       aspectRatio: String(aspectRatio),
     }
   }, [aspectRatio])
@@ -196,59 +196,54 @@ export default function CameraCaptureModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[4000] flex flex-col bg-[rgba(2,6,23,0.98)] backdrop-blur-md">
-      <div className="flex items-center justify-between border-b border-white/10 px-5 py-3 text-white">
-        <div className="text-[0.95rem] font-bold">{title}</div>
+    <div className="fixed inset-0 z-[5000] flex h-[100dvh] flex-col overflow-hidden bg-black font-sans">
+      <div className="flex items-center justify-between bg-[#020617] px-5 py-4 text-white">
+        <div className="text-[0.85rem] font-black uppercase tracking-[0.1em]">{title}</div>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-full p-1 text-2xl text-slate-400 transition hover:bg-white/10 hover:text-white"
+          className="rounded-full p-1.5 text-2xl text-slate-400 transition hover:bg-white/10 hover:text-white"
           aria-label="Close camera"
         >
           <FaXmark />
         </button>
       </div>
 
-      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-4 py-2">
-        <div
-          style={frameStyle}
-          className="relative overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl"
-        >
-          <video
-            ref={videoRef}
-            className="absolute inset-0 h-full w-full object-cover"
-            muted
-            playsInline
-            autoPlay
-          />
-        </div>
+      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden bg-black">
+        <video
+          ref={videoRef}
+          className="h-full w-full object-cover opacity-80"
+          muted
+          playsInline
+          autoPlay
+        />
 
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
           <div
             style={frameStyle}
-            className="relative rounded-2xl border-2 border-dashed border-white/80 shadow-[0_0_0_9999px_rgba(2,6,23,0.5)]"
+            className="relative rounded-2xl border-[3px] border-dashed border-white/90 shadow-[0_0_0_9999px_rgba(2,6,23,0.8)]"
           />
         </div>
 
         {initializing ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 text-white">
             <FaCircleNotch className="animate-spin text-3xl text-pink-500" />
-            <p className="text-sm font-bold tracking-wide">INITIALIZING CAMERA</p>
+            <p className="text-[0.65rem] font-black uppercase tracking-widest">Waking Sensor...</p>
           </div>
         ) : null}
 
         {error ? (
-          <div className="absolute bottom-4 left-1/2 w-[calc(100%-2rem)] max-w-[500px] -translate-x-1/2 rounded-xl border border-red-500/50 bg-red-950/90 px-4 py-3 text-center text-sm font-bold text-red-200 shadow-xl backdrop-blur-sm">
+          <div className="absolute bottom-6 left-1/2 w-[calc(100%-3rem)] max-w-[400px] -translate-x-1/2 rounded-xl border border-red-500/50 bg-red-950/90 px-4 py-3 text-center text-[0.7rem] font-black uppercase tracking-wider text-red-200 shadow-2xl backdrop-blur-md">
             {error}
           </div>
         ) : null}
       </div>
 
-      <div className="border-t border-white/10 bg-slate-900/80 px-4 py-5 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-[600px] flex-col gap-5">
+      <div className="bg-[#0f172a] px-5 py-6">
+        <div className="mx-auto flex w-full max-w-[500px] flex-col gap-6">
           {zoomRange ? (
             <div className="flex items-center gap-4 text-white">
-              <FaMagnifyingGlassMinus className="text-slate-400" />
+              <FaMagnifyingGlassMinus className="text-slate-500" />
               <input
                 type="range"
                 min={zoomRange.min}
@@ -256,9 +251,9 @@ export default function CameraCaptureModal({
                 step={zoomRange.step}
                 value={zoom}
                 onChange={(event) => applyZoom(Number(event.target.value))}
-                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-700 accent-pink-500"
+                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-700 accent-pink-600"
               />
-              <FaMagnifyingGlassPlus className="text-slate-400" />
+              <FaMagnifyingGlassPlus className="text-slate-500" />
             </div>
           ) : null}
 
@@ -266,7 +261,7 @@ export default function CameraCaptureModal({
             <button
               type="button"
               onClick={onClose}
-              className="min-w-[100px] rounded-xl border border-white/20 px-6 py-3 font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
+              className="flex-1 rounded-2xl border border-white/10 bg-white/5 py-4 text-xs font-black uppercase tracking-widest text-slate-300 active:scale-95"
             >
               Cancel
             </button>
@@ -274,9 +269,9 @@ export default function CameraCaptureModal({
               type="button"
               onClick={capture}
               disabled={initializing}
-              className="flex min-w-[140px] items-center justify-center gap-2 rounded-xl bg-pink-600 px-8 py-3 font-black uppercase tracking-wider text-white shadow-lg transition hover:bg-pink-700 hover:shadow-pink-500/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex flex-[1.5] items-center justify-center gap-3 rounded-2xl bg-pink-600 py-4 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-pink-600/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <FaCamera className="text-lg" />
+              <FaCamera className="text-xl" />
               Capture
             </button>
           </div>
