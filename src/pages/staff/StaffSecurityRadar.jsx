@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { useLocation } from "react-router-dom"
-import { FaCircleNotch, FaTriangleExclamation, FaSkullCrossbones, FaBan, FaCheckCircle, FaTowerBroadcast } from "react-icons/fa6"
+import { FaCircleNotch, FaTriangleExclamation, FaSkullCrossbones, FaBan, FaCircleCheck, FaTowerBroadcast } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import {
@@ -77,7 +77,7 @@ export default function StaffSecurityRadar() {
         ) : insights.length === 0 ? (
           <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
-              <FaCheckCircle className="text-3xl" />
+              <FaCircleCheck className="text-3xl" />
             </div>
             <h3 className="text-lg font-black text-slate-900">All Clear</h3>
             <p className="mt-1 max-w-sm text-sm text-slate-500">
@@ -173,3 +173,4 @@ export default function StaffSecurityRadar() {
     </StaffPortalShell>
   )
 }
+

@@ -34,7 +34,6 @@ import {
   signInWithGoogleIdToken,
   signInWithPassword,
   signOutUser,
-  updateLastActiveIp,
   verifyRecoveryCodeAndResetPassword,
 } from "../lib/auth"
 import { supabase } from "../lib/supabase"
@@ -720,7 +719,6 @@ function Home() {
         throw new Error("Your account is suspended. Please contact support.")
       }
 
-      await updateLastActiveIp(signedInUser.id, result.ipData.ip)
       const didOpenDashboard = await openDashboardWithTransition({
         session: result.auth?.session || null,
         user: signedInUser,
@@ -862,7 +860,6 @@ function Home() {
         throw new Error("Your account is suspended. Please contact support.")
       }
 
-      await updateLastActiveIp(signedInUser.id, result.ipData.ip)
       const didOpenDashboard = await openDashboardWithTransition({
         session: result.auth?.session || null,
         user: signedInUser,
