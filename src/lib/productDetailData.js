@@ -10,11 +10,15 @@ export async function fetchProductDetailData({ productId, userId = null }) {
     throw new Error("Product id is required")
   }
 
-  const { data: product, error: productError } = await supabase
+  const { data, error: productError } = await supabase
     .from("products")
     .select("*, shops(id, name, whatsapp, phone, address, city_id, areas(name), cities(name))")
     .eq("id", productId)
-    .single()
+    .maybeSingle()
+
+  // Note: if PostgREST still returns multiple rows despite maybeSingle, 
+  // it might be due to a complex join. We handle the result carefully.
+  const product = Array.isArray(data) ? data[0] : data
 
   if (productError) {
     if (isNetworkError(productError)) {

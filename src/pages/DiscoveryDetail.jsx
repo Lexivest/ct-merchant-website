@@ -31,10 +31,10 @@ export default function DiscoveryDetail() {
           .from("staff_discoveries")
           .select("*")
           .eq("id", id)
-          .single()
+          .maybeSingle()
         
         if (dbError) throw dbError
-        setDiscovery(data)
+        setDiscovery(Array.isArray(data) ? data[0] : data)
       } catch (err) {
         setError(err.message)
       } finally {

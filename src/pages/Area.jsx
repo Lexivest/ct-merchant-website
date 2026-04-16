@@ -56,7 +56,7 @@ function Area() {
     if (!areaId) throw new Error("Area ID missing.")
 
     const [{ data: areaData, error: areaError }] = await Promise.all([
-      supabase.from("areas").select("name").eq("id", areaId).single()
+      supabase.from("areas").select("name").eq("id", areaId).maybeSingle()
     ])
     if (areaError) throw areaError
 

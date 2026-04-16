@@ -14,11 +14,14 @@ export async function fetchShopDetailData({
     throw new Error("Shop id is required")
   }
 
-  const { data: shopData, error: shopError } = await supabase
+  const { data, error: shopError } = await supabase
     .from("shops")
     .select("*, cities(name)")
     .eq("id", shopId)
     .maybeSingle()
+
+  // Handle potential multiple results from PostgREST if join logic is ambiguous
+  const shopData = Array.isArray(data) ? data[0] : data
 
   if (shopError) {
     if (isNetworkError(shopError)) {
