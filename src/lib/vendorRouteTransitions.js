@@ -120,7 +120,7 @@ async function prepareVendorPanelData({ userId }) {
 
   const { data: shopData, error: shopError } = await supabase
     .from("shops")
-    .select("*, is_subscription_active")
+    .select("*, subscription_end_date")
     .eq("owner_id", userId)
     .maybeSingle()
 

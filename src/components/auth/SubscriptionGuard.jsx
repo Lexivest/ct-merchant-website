@@ -77,15 +77,16 @@ export default function SubscriptionGuard({ children }) {
       try {
         const { data, error } = await supabase
           .from("shops")
-          .select("is_subscription_active")
+          .select("subscription_end_date")
           .eq("owner_id", user.id)
           .maybeSingle()
 
         if (error) throw error
 
         let nextIsActive = false
-        if (data && data.is_subscription_active !== null) {
-          nextIsActive = data.is_subscription_active === true
+        if (data?.subscription_end_date) {
+          const endDate = new Date(data.subscription_end_date)
+          nextIsActive = !isNaN(endDate.getTime()) && endDate.getTime() > Date.now()
         }
 
         writeCachedSubscription(user.id, nextIsActive)

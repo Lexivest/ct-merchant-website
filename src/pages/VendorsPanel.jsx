@@ -48,6 +48,13 @@ const loadVendorRoutes = {
   "/shop-registration": () => import("./ShopRegistration"),
 }
 
+function isFutureDate(value) {
+  if (!value) return false
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return false
+  return parsed.getTime() > Date.now()
+}
+
 function VendorsPanelShimmer() {
   return (
     <PageLoadingScreen
@@ -89,7 +96,7 @@ function VendorsPanel() {
 
     const { data: shopData, error: shopErr } = await supabase
       .from("shops")
-      .select("*, is_subscription_active")
+      .select("*, subscription_end_date")
       .eq("owner_id", user.id)
       .maybeSingle()
 
@@ -203,7 +210,7 @@ function VendorsPanel() {
   const isVerified =
     activeShop.is_verified || activeShop.kyc_status === "approved"
   const isSuspended = activeShop.is_open === false
-  const isSubscriptionActive = activeShop.is_subscription_active === true
+  const isSubscriptionActive = isFutureDate(activeShop.subscription_end_date)
 
   function beginRouteTransition(retryAction = null) {
     retryRouteTransitionRef.current = retryAction
