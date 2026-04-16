@@ -7,7 +7,9 @@ import {
   FaEnvelope,
   FaImages,
   FaReceipt,
+  FaShieldHalved,
   FaStore,
+  FaTowerBroadcast,
   FaTriangleExclamation,
   FaUsers,
   FaPanorama,
@@ -80,13 +82,14 @@ export default function StaffDashboard() {
     inactiveUsers: 0,
     visitsToday: 0,
     pendingPayments: 0,
+    securityClusters: 0,
   })
 
   const fetchSummary = useCallback(async () => {
     setLoading(true)
     setSummaryError(null)
     try {
-      const [shopsResult, commentsResult, usersResult, visitsResult, paymentsResult] = await Promise.all([
+      const [shopsResult, commentsResult, usersResult, visitsResult, paymentsResult, radarResult] = await Promise.all([
         supabase.from("shops").select("id", { count: "exact", head: true }),
         supabase.from("shop_comments").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.rpc("staff_user_activity_summary", {
@@ -95,6 +98,7 @@ export default function StaffDashboard() {
         }),
         supabase.rpc("staff_site_visit_daily", { p_days: 7 }),
         supabase.from("offline_payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.rpc("ctm_get_security_radar_insights"),
       ])
 
       if (shopsResult.error) throw shopsResult.error
@@ -102,6 +106,7 @@ export default function StaffDashboard() {
       if (usersResult.error) throw usersResult.error
       if (visitsResult.error) throw visitsResult.error
       if (paymentsResult.error) throw paymentsResult.error
+      if (radarResult.error) throw radarResult.error
 
       const userRows = usersResult.data || []
       const visitTimeline = buildVisitTimeline(visitsResult.data || [], 7)
@@ -115,6 +120,7 @@ export default function StaffDashboard() {
           inactiveUsers: userRows.filter((item) => item.is_inactive).length,
           visitsToday: Number(visitsToday) || 0,
           pendingPayments: paymentsResult.count || 0,
+          securityClusters: (radarResult.data || []).length,
         })
       }
     } catch (err) {
@@ -313,6 +319,14 @@ export default function StaffDashboard() {
               subtitle="Generate and publish featured shop banners for the marketplace carousel."
               tone="pink"
               onClick={() => void openStaffRouteWithTransition("/staff-city-banners")}
+            />
+            <HomeCard
+              icon={<FaTowerBroadcast />}
+              title="Security Intelligence"
+              subtitle="Detect multi-account clusters and suspicious merchant footprints sharing network fingerprints."
+              metric={summary.securityClusters}
+              tone="amber"
+              onClick={() => void openStaffRouteWithTransition("/staff-security-radar")}
             />
           </div>
 

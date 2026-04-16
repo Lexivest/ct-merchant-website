@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
-import { FaCircleNotch, FaTriangleExclamation, FaSkullCrossbones, FaBan, FaCheckCircle } from "react-icons/fa6"
+import { useLocation } from "react-router-dom"
+import { FaCircleNotch, FaTriangleExclamation, FaSkullCrossbones, FaBan, FaCheckCircle, FaTowerBroadcast } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import {
@@ -8,11 +9,25 @@ import {
 } from "./StaffPortalShared"
 
 export default function StaffSecurityRadar() {
-  const [insights, setInsights] = useState([])
-  const [loading, setLoading] = useState(true)
+  const location = useLocation()
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "staff-security-radar"
+      ? location.state.prefetchedData
+      : null
+
+  const [insights, setInsights] = useState(() => prefetchedData?.insights || [])
+  const [loading, setLoading] = useState(() => !prefetchedData)
   const [error, setError] = useState("")
+  const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
   const fetchInsights = useCallback(async () => {
+    if (prefetchedReady && prefetchedData) {
+      setInsights(prefetchedData.insights || [])
+      setLoading(false)
+      setPrefetchedReady(false)
+      return
+    }
+
     setLoading(true)
     setError("")
     try {
@@ -25,7 +40,7 @@ export default function StaffSecurityRadar() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [prefetchedData, prefetchedReady])
 
   useEffect(() => {
     fetchInsights()

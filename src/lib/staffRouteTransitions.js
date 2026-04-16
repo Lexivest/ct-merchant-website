@@ -12,6 +12,7 @@ const staffRouteLoaders = {
   "/staff-city-banners": () => import("../pages/staff/StaffFeaturedCityBanners"),
   "/staff-sponsored-products": () => import("../pages/staff/StaffSponsoredProducts"),
   "/staff-inbox": () => import("../pages/staff/StaffInbox"),
+  "/staff-security-radar": () => import("../pages/staff/StaffSecurityRadar"),
   "/staff-studio": () => import("../pages/vendors/ImageOptimizer"),
 }
 
@@ -238,6 +239,16 @@ async function prepareStaffSponsoredProductsData() {
   }
 }
 
+async function prepareStaffSecurityRadarData() {
+  const { data, error } = await supabase.rpc("ctm_get_security_radar_insights")
+  if (error) throw error
+
+  return {
+    kind: "staff-security-radar",
+    insights: data || [],
+  }
+}
+
 const staffPreparers = {
   "/staff-traffic": prepareStaffTrafficData,
   "/staff-users": prepareStaffUsersData,
@@ -247,6 +258,7 @@ const staffPreparers = {
   "/staff-city-banners": prepareStaffFeaturedCityBannersData,
   "/staff-sponsored-products": prepareStaffSponsoredProductsData,
   "/staff-inbox": prepareStaffInboxData,
+  "/staff-security-radar": prepareStaffSecurityRadarData,
 }
 
 export async function prepareStaffRouteTransition({ path, timeoutMs = STAFF_ROUTE_TIMEOUT }) {
