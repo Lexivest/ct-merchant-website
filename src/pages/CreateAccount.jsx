@@ -103,7 +103,7 @@ function CreateAccount() {
   })
 
   // 2. Reactive Cached Fetching for Locations
-  const { data: citiesData, loading: loadingCities } = useCachedFetch(
+  const { data: citiesData, loading: loadingCities, error: cityError } = useCachedFetch(
     "open_cities",
     fetchOpenCities,
     {
@@ -115,7 +115,7 @@ function CreateAccount() {
 
   // Areas fetch reactively whenever form.cityId changes
   const areaCacheKey = form.cityId ? `areas_city_${form.cityId}` : "areas_none"
-  const { data: areasData, loading: loadingAreas } = useCachedFetch(
+  const { data: areasData, loading: loadingAreas, error: areaError } = useCachedFetch(
     areaCacheKey,
     async () => {
       if (!form.cityId) return []
@@ -125,6 +125,7 @@ function CreateAccount() {
       dependencies: [form.cityId],
       ttl: 1000 * 60 * 60 * 24,
       persist: "session",
+      skip: !form.cityId
     }
   )
   const areas = areasData || []
@@ -146,6 +147,25 @@ function CreateAccount() {
   })
 
   const [showSuccess, setShowSuccess] = useState(false)
+
+  // Sync network or fetch errors to the notification area
+  useEffect(() => {
+    if (cityError) {
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Could not load cities",
+        message: cityError
+      })
+    } else if (areaError) {
+      setNotice({
+        visible: true,
+        type: "error",
+        title: "Could not load areas",
+        message: areaError
+      })
+    }
+  }, [cityError, areaError])
 
   useEffect(() => {
     if (

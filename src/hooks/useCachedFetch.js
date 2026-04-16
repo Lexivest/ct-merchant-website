@@ -211,9 +211,10 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
 
   // 1. SYNCHRONOUS CACHE READ
   const cachedEntry = getCacheEntry(queryKey)
-  const data = cachedEntry ? cachedEntry.data : null
+  const isExpired = cachedEntry && (Date.now() - cachedEntry.timestamp > ttl)
+  const data = (cachedEntry && !isExpired) ? cachedEntry.data : null
   
-  // We are loading if we have no data, no hard error, and we are not skipping
+  // We are loading if we have no valid data, no hard error, and we are not skipping
   const loading = !data && !errorRef.current && !skip
 
   useEffect(() => {
@@ -223,11 +224,12 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
 
     const fetchData = async ({ force = false } = {}) => {
       const currentCachedEntry = getCacheEntry(queryKey)
-      const isExpired = currentCachedEntry && (Date.now() - currentCachedEntry.timestamp > ttl)
+      const currentIsExpired = currentCachedEntry && (Date.now() - currentCachedEntry.timestamp > ttl)
 
-      if (!force && currentCachedEntry && !isExpired) return
-
-      // Offline Check
+      if (!force && currentCachedEntry && !currentIsExpired) {
+        if (isMounted) setTick(t => t + 1) // Ensure component knows we checked
+        return
+      }
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         isOfflineRef.current = true
         if (currentCachedEntry) {
