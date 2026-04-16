@@ -19,23 +19,6 @@ function withTimeout(promise, message, timeoutMs = LOCATION_QUERY_TIMEOUT_MS) {
   ])
 }
 
-export async function getClientIpData() {
-  // TEMPORARILY DISABLED: Firefox Enhanced Tracking Protection (ETP) strictly flags endpoints 
-  // that fetch IP addresses as "Trackers" and instantly blocks the entire database domain.
-  /*
-  const { data, error } = await supabase.rpc('get_network_info')
-  if (error) throw error
-  return {
-    ip: data?.ip || "unknown",
-    country: data?.country || "unknown",
-  }
-  */
-  return {
-    ip: "unknown",
-    country: "unknown",
-  }
-}
-
 export async function fetchOpenCities() {
   const { data, error } = await withTimeout(
     supabase
@@ -246,7 +229,6 @@ async function ensureEmailIsNotLoginSuspended(email, options = {}) {
 }
 
 export async function signInWithPassword({ email, password }) {
-  const ipData = await getClientIpData()
   const normalizedEmail = normalizeEmail(email)
 
   logLoginGuardDebug("signin:start", {
@@ -350,13 +332,11 @@ export async function signInWithPassword({ email, password }) {
 
 
   return {
-    auth: data,
-    ipData,
+    auth: data
   }
 }
 
 export async function signInWithGoogleIdToken(idToken) {
-  const ipData = await getClientIpData()
   logLoginGuardDebug("google-signin:start")
 
   const { data, error } = await supabase.auth.signInWithIdToken({
@@ -390,8 +370,7 @@ export async function signInWithGoogleIdToken(idToken) {
   }
 
   return {
-    auth: data,
-    ipData,
+    auth: data
   }
 }
 
@@ -403,8 +382,6 @@ export async function signUpWithEmail({
   cityId,
   areaId,
 }) {
-  const ipData = await getClientIpData()
-
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: normalizeEmail(email),
     password,
@@ -427,10 +404,7 @@ export async function signUpWithEmail({
       full_name: fullName.trim(),
       phone: normalizePhone(phone),
       city_id: Number(cityId),
-      area_id: Number(areaId),
-      registration_ip: ipData.ip,
-      last_active_ip: ipData.ip,
-      ip_country: ipData.country,
+      area_id: Number(areaId)
     })
     
     if (!error) {
@@ -447,8 +421,7 @@ export async function signUpWithEmail({
 
   return {
     auth: authData,
-    user: authData.user,
-    ipData,
+    user: authData.user
   }
 }
 
@@ -499,19 +472,6 @@ export function isProfileSuspended(profile) {
   return Boolean(profile?.is_suspended === true)
 }
 
-export async function updateLastActiveIp(userId, ip) {
-  if (!userId || !ip || ip === "unknown") return
-
-  try {
-    await supabase
-      .from("profiles")
-      .update({ last_active_ip: ip })
-      .eq("id", userId)
-  } catch {
-    // Silently ignore background tracking updates blocked by browser privacy settings
-  }
-}
-
 export async function completeProfileSetup({
   userId,
   fullName,
@@ -519,22 +479,17 @@ export async function completeProfileSetup({
   cityId,
   areaId,
 }) {
-  const ipData = await getClientIpData()
-
   const { error } = await supabase.from("profiles").upsert({
     id: userId,
     full_name: fullName?.trim() || "",
     phone: normalizePhone(phone),
     city_id: Number(cityId),
-    area_id: Number(areaId),
-    registration_ip: ipData.ip,
-    last_active_ip: ipData.ip,
-    ip_country: ipData.country,
+    area_id: Number(areaId)
   })
 
   if (error) throw error
 
-  return { ipData }
+  return { success: true }
 }
 
 export async function sendPasswordResetCode(email) {

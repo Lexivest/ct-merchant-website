@@ -22,7 +22,6 @@ import {
   fetchOpenCities,
   signInWithGoogleIdToken,
   signUpWithEmail,
-  updateLastActiveIp,
 } from "../lib/auth"
 import { supabase } from "../lib/supabase"
 import { validateSignupForm } from "../lib/validators"
@@ -252,8 +251,6 @@ function CreateAccount() {
       if (currentProfile.error) {
         throw new Error("Could not verify your profile. Please try again.")
       }
-
-      await updateLastActiveIp(signedInUser.id, result.ipData.ip)
 
       didOpenDashboard = await openDashboardWithTransition({
         session: result.auth?.session || null,
