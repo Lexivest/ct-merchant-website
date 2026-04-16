@@ -89,7 +89,7 @@ export default function StaffDashboard() {
     setLoading(true)
     setSummaryError(null)
     try {
-      const [shopsResult, commentsResult, usersResult, visitsResult, paymentsResult, radarResult] = await Promise.all([
+      const results = await Promise.allSettled([
         supabase.from("shops").select("id", { count: "exact", head: true }),
         supabase.from("shop_comments").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.rpc("staff_user_activity_summary", {
@@ -101,12 +101,22 @@ export default function StaffDashboard() {
         supabase.rpc("ctm_get_security_radar_insights"),
       ])
 
-      if (shopsResult.error) throw shopsResult.error
-      if (commentsResult.error) throw commentsResult.error
-      if (usersResult.error) throw usersResult.error
-      if (visitsResult.error) throw visitsResult.error
-      if (paymentsResult.error) throw paymentsResult.error
-      if (radarResult.error) throw radarResult.error
+      const labels = ["shops", "comments", "users", "visits", "payments", "radar"]
+      const errors = []
+      
+      results.forEach((result, idx) => {
+        if (result.status === "rejected") {
+          errors.push(`${labels[idx]}: ${result.reason?.message || "Unknown error"}`)
+        } else if (result.value.error) {
+          errors.push(`${labels[idx]}: ${result.value.error.message}`)
+        }
+      })
+
+      if (errors.length > 0) {
+        throw new Error(`Summary fetch partially failed: ${errors.join(", ")}`)
+      }
+
+      const [shopsResult, commentsResult, usersResult, visitsResult, paymentsResult, radarResult] = results.map(r => r.value)
 
       const userRows = usersResult.data || []
       const visitTimeline = buildVisitTimeline(visitsResult.data || [], 7)

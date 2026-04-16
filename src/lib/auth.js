@@ -388,6 +388,9 @@ export async function signUpWithEmail({
     options: {
       data: {
         full_name: fullName.trim(),
+        phone: normalizePhone(phone),
+        city_id: Number(cityId),
+        area_id: Number(areaId),
       },
     },
   })
@@ -395,28 +398,6 @@ export async function signUpWithEmail({
   if (authError) throw authError
   if (!authData?.user) {
     throw new Error("Account could not be created.")
-  }
-
-  let profileError = null
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    const { error } = await supabase.from("profiles").upsert({
-      id: authData.user.id,
-      full_name: fullName.trim(),
-      phone: normalizePhone(phone),
-      city_id: Number(cityId),
-      area_id: Number(areaId)
-    })
-    
-    if (!error) {
-      profileError = null
-      break
-    }
-    profileError = error
-    if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt))
-  }
-
-  if (profileError) {
-    console.error("Profile creation failed after retries:", profileError)
   }
 
   return {
