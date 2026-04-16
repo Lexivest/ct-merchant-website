@@ -200,7 +200,6 @@ export default function EditProduct() {
   const [blobs, setBlobs] = useState({ 1: null, 2: null, 3: null });
   const [previews, setPreviews] = useState(() => initialEditorState.previews);
   const [deletedSlots, setDeletedSlots] = useState({ 1: false, 2: false, 3: false });
-  const [savings, setSavings] = useState({ 1: "", 2: "", 3: "" });
   const [processingSlots, setProcessingSlots] = useState({ 1: false, 2: false, 3: false });
 
   // Studio State
@@ -235,7 +234,6 @@ export default function EditProduct() {
       setPreviews(nextEditorState.previews);
       setDeletedSlots({ 1: false, 2: false, 3: false });
       setBlobs({ 1: null, 2: null, 3: null });
-      setSavings({ 1: "", 2: "", 3: "" });
     }
 
     if (prefetchedData) {
@@ -362,12 +360,6 @@ export default function EditProduct() {
       setDeletedSlots((prev) => ({ ...prev, [slot]: false }));
       setPreviews((prev) => ({ ...prev, [slot]: result.previewUrl }));
 
-      const diff = result.originalSize - result.processedSize;
-      if (diff > 0) {
-        setSavings((prev) => ({ ...prev, [slot]: `✅ Optimized ${Math.round((diff / result.originalSize) * 100)}%` }));
-      } else {
-        setSavings((prev) => ({ ...prev, [slot]: "✅ Ready" }));
-      }
     } catch (err) {
       notify({
         type: "error",
@@ -510,10 +502,6 @@ export default function EditProduct() {
       setDeletedSlots((prev) => ({ ...prev, [activeSlot]: false }));
       setPreviews((prev) => ({ ...prev, [activeSlot]: URL.createObjectURL(blob) }));
       
-      const saved = tempSize - blob.size;
-      if (saved > 0) setSavings((prev) => ({ ...prev, [activeSlot]: `Saved ${Math.round((saved / tempSize) * 100)}%` }));
-      else setSavings((prev) => ({ ...prev, [activeSlot]: "Ready" }));
-      
       closeStudio();
     } catch (err) {
       notify({
@@ -532,7 +520,6 @@ export default function EditProduct() {
     setDeletedSlots((prev) => ({ ...prev, [slot]: true }));
     setBlobs((prev) => ({ ...prev, [slot]: null }));
     setPreviews((prev) => ({ ...prev, [slot]: "" }));
-    setSavings((prev) => ({ ...prev, [slot]: "" }));
   };
 
   // --- SUBMIT ---
@@ -810,11 +797,6 @@ export default function EditProduct() {
                     <button type="button" onClick={(e) => removeImage(e, slot)} className="absolute right-1 top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-md transition hover:scale-110 hover:bg-red-700">
                       <FaTrashCan size={12} />
                     </button>
-                    {savings[slot] && (
-                      <div className="absolute bottom-1 left-1 right-1 z-20 rounded bg-[#10B981]/90 px-1 py-0.5 text-center text-[0.6rem] font-extrabold text-white backdrop-blur-sm">
-                        {savings[slot]}
-                      </div>
-                    )}
                   </>
                 ) : (
                   <>

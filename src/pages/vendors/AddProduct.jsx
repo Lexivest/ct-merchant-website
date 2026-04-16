@@ -161,7 +161,6 @@ export default function AddProduct() {
   // Image State
   const [blobs, setBlobs] = useState({ 1: null, 2: null, 3: null });
   const [previews, setPreviews] = useState({ 1: "", 2: "", 3: "" });
-  const [savings, setSavings] = useState({ 1: "", 2: "", 3: "" });
   const [processingSlots, setProcessingSlots] = useState({ 1: false, 2: false, 3: false });
 
   // Studio State
