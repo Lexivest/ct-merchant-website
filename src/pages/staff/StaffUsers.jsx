@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { useLocation } from "react-router-dom"
-import { FaCircleCheck, FaCircleNotch, FaFilter, FaLocationDot, FaTriangleExclamation } from "react-icons/fa6"
+import { FaCircleCheck, FaCircleNotch, FaFilter, FaLocationDot, FaTriangleExclamation, FaRotateLeft } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import {
@@ -25,6 +25,7 @@ export default function StaffUsers() {
   const [loadingUserActivity, setLoadingUserActivity] = useState(() => !prefetchedData)
   const [userActivityError, setUserActivityError] = useState("")
   const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
+  const [reinstatingEmail, setReinstatingEmail] = useState(null)
 
   const fetchCities = useCallback(async () => {
     if (prefetchedData?.cityOptions?.length) {
@@ -84,6 +85,33 @@ export default function StaffUsers() {
   useEffect(() => {
     fetchUserActivity({ cityId: selectedCityId, threshold: inactiveDays })
   }, [fetchUserActivity, inactiveDays, selectedCityId])
+
+  const handleReinstate = async (email) => {
+    if (!window.confirm(`Are you sure you want to reinstate ${email}? This will clear their wrong-password attempts and lift the login suspension.`)) {
+      return
+    }
+
+    setReinstatingEmail(email)
+    try {
+      const { data, error } = await supabase.rpc("ctm_reinstate_login_guard", {
+        p_email: email
+      })
+
+      if (error) throw error
+      
+      if (data) {
+        // Refresh the list
+        fetchUserActivity({ cityId: selectedCityId, threshold: inactiveDays })
+      } else {
+        alert("Could not find a login guard record for this email.")
+      }
+    } catch (err) {
+      console.error("Error reinstating user:", err)
+      alert(getFriendlyErrorMessage(err, "Failed to reinstate user."))
+    } finally {
+      setReinstatingEmail(null)
+    }
+  }
 
   const visibleUsers = inactiveOnly ? userActivity.filter((item) => item.is_inactive) : userActivity
   const totalInactiveUsers = userActivity.filter((item) => item.is_inactive).length
@@ -217,9 +245,30 @@ export default function StaffUsers() {
                               </span>
                             )}
                             {item.is_suspended ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-800">
-                                Suspended
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-800" title={item.guard_suspension_reason}>
+                                {item.guard_suspended_at ? "Security Lockout" : "Suspended"}
                               </span>
+                            ) : null}
+
+                            {item.guard_suspended_at ? (
+                              <div className="mt-2 flex flex-col gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-rose-500">
+                                  Login Guard Lock
+                                </span>
+                                <button
+                                  type="button"
+                                  disabled={reinstatingEmail === item.email}
+                                  onClick={() => handleReinstate(item.email)}
+                                  className="flex items-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-rose-700 disabled:opacity-50"
+                                >
+                                  {reinstatingEmail === item.email ? (
+                                    <FaCircleNotch className="animate-spin" />
+                                  ) : (
+                                    <FaRotateLeft />
+                                  )}
+                                  Reinstate User
+                                </button>
+                              </div>
                             ) : null}
                           </div>
                         </td>
