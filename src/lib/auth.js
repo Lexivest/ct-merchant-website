@@ -153,30 +153,38 @@ export async function signInWithPassword({ email, password }) {
     const rawMessage = String(error?.message || "")
     const lowerMessage = rawMessage.toLowerCase()
     
-    // We only track "Invalid credentials" or "Invalid grant" as failed login attempts.
-    // Errors like "Email not confirmed" or server errors should not count toward lockout.
-    const isInvalidCredentials = 
+    // Broaden detection: Any 400 or any message containing common failure keywords
+    // should trigger a failure record. We exclude confirmed network/timeout errors.
+    const looksLikeAuthFailure = 
       error.status === 400 || 
+      error.status === 401 ||
       lowerMessage.includes("invalid") || 
       lowerMessage.includes("credentials") ||
-      lowerMessage.includes("grant")
+      lowerMessage.includes("grant") ||
+      lowerMessage.includes("not found") ||
+      lowerMessage.includes("confirmed")
 
-    if (isInvalidCredentials) {
+    if (looksLikeAuthFailure) {
       try {
-        // Record the failure in the database to track brute force and handle lockouts
+        // Record the failure in the database to track brute force and handle lockouts.
+        // We call this even if we aren't 100% sure it's a credential error, 
+        // as the DB function handles its own internal validation.
         const { data: attempts, error: rpcError } = await supabase.rpc("record_failed_login", {
           p_email: normalizedEmail,
         })
 
+        if (rpcError) {
+          console.error("CRITICAL: record_failed_login RPC failed:", rpcError.message, rpcError.details)
+        }
+
         if (!rpcError && typeof attempts === "number") {
-          // Check if the user is now locked out (4 or more attempts)
+          // The database function returns the current count of failed attempts
           if (attempts >= 4) {
             throw new Error(
               "Your account is suspended due to too many failed login attempts. Please contact support."
             )
           }
 
-          // Inform the user about remaining attempts
           if (attempts > 0) {
             const remaining = 4 - attempts
             throw new Error(
@@ -185,14 +193,12 @@ export async function signInWithPassword({ email, password }) {
           }
         }
       } catch (trackingError) {
-        // If it's our own lockout error, rethrow it
-        if (trackingError instanceof Error && trackingError.message.includes("suspended")) {
+        // If it's a suspension or remaining-attempts error we just threw, rethrow it to the UI
+        if (trackingError instanceof Error && (trackingError.message.includes("suspended") || trackingError.message.includes("remaining"))) {
           throw trackingError
         }
-        if (trackingError instanceof Error && trackingError.message.includes("remaining")) {
-          throw trackingError
-        }
-        console.warn("Failed to record login attempt:", trackingError?.message || trackingError)
+        // Otherwise log the internal tracking error but don't block the user's login error
+        console.warn("Internal login tracking warning:", trackingError?.message || trackingError)
       }
 
       throw new Error("Invalid credentials. Please check your email and password.")
