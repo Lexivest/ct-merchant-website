@@ -70,6 +70,7 @@ function MerchantDiscovery() {
           replace: true,
           state: {
             fromDiscoveryTransition: true,
+            fromRepoSearch: true,
             prefetchedShopData,
           },
         })
@@ -79,6 +80,7 @@ function MerchantDiscovery() {
           replace: true,
           state: {
             fromDiscoveryTransition: true,
+            fromRepoSearch: true,
           },
         })
       }

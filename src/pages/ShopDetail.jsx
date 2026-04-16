@@ -82,6 +82,7 @@ function ShopDetail() {
   const [searchParams] = useSearchParams()
   const shopId = searchParams.get("id")
   const preselectedProductId = searchParams.get("comment_product")
+  const isRepoSearchEntry = location.state?.fromRepoSearch === true
   const routePrefetchedShopData =
     location.state?.prefetchedShopData?.shop &&
     String(location.state.prefetchedShopData.shop.id) === String(shopId)
@@ -419,6 +420,15 @@ function ShopDetail() {
 
   async function openProductWithTransition(productId) {
     if (!productId) return
+
+    if (isRepoSearchEntry && !user?.id) {
+      notify({
+        type: "info",
+        title: "Login required",
+        message: "Login to continue.",
+      })
+      return
+    }
 
     const cacheKey = buildProductDetailCacheKey(productId, user?.id || null)
     const cachedEntry = readCachedFetchStore(cacheKey)

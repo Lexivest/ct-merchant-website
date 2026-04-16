@@ -1032,6 +1032,7 @@ function Home() {
         navigate(`/shop-detail?id=${shopId}`, {
           state: {
             fromDiscoveryTransition: true,
+            fromRepoSearch: true,
             prefetchedShopData,
           },
         })
