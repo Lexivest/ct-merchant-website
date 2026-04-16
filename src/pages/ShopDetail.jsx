@@ -43,6 +43,12 @@ import {
   buildProductDetailCacheKey,
   fetchProductDetailData,
 } from "../lib/productDetailData"
+import {
+  buildProductDetailPrefetchFromRepoPayload,
+  buildRepoSearchQuerySuffix,
+  fetchPublicRepoProductDetail,
+  fetchPublicRepoShopDetail,
+} from "../lib/repoSearch"
 
 const EMPTY_PRODUCTS = []
 const EMPTY_NEWS = []
@@ -82,7 +88,15 @@ function ShopDetail() {
   const [searchParams] = useSearchParams()
   const shopId = searchParams.get("id")
   const preselectedProductId = searchParams.get("comment_product")
-  const isRepoSearchEntry = location.state?.fromRepoSearch === true
+  const repoRefFromUrl = searchParams.get("repo_ref")?.trim() || ""
+  const repoRefFromState =
+    location.state?.prefetchedShopData?.__repoRef ||
+    location.state?.prefetchedShopData?.shop?.unique_id ||
+    ""
+  const repoRef = repoRefFromUrl || repoRefFromState
+  const isRepoSearchEntry =
+    searchParams.get("repo_public") === "1" ||
+    location.state?.fromRepoSearch === true
   const routePrefetchedShopData =
     location.state?.prefetchedShopData?.shop &&
     String(location.state.prefetchedShopData.shop.id) === String(shopId)
@@ -93,16 +107,24 @@ function ShopDetail() {
 
   // 1. Unified Auth State
   const { user, profile, loading: authLoading } = useAuthSession()
+  const usePublicRepoMode = isRepoSearchEntry && !user?.id && Boolean(repoRef)
 
   // 2. Data Fetching Logic
   const fetchShopData = async () =>
-    fetchShopDetailData({
-      shopId,
-      userId: user?.id || null,
-    })
+    usePublicRepoMode
+      ? fetchPublicRepoShopDetail({
+          repoRef,
+          shopId,
+        })
+      : fetchShopDetailData({
+          shopId,
+          userId: user?.id || null,
+        })
 
   // 3. Smart Caching Hook
-  const cacheKey = buildShopDetailCacheKey(shopId, user?.id || null)
+  const cacheKey = usePublicRepoMode
+    ? `repo_public_shop_${repoRef || "unknown"}_${shopId || "unknown"}`
+    : buildShopDetailCacheKey(shopId, user?.id || null)
   if (routePrefetchedShopData && !readCachedFetchStore(cacheKey)) {
     const prefetchTimestamp = routePrefetchedShopData.__repoSearchDetailReady
       ? Date.now()
@@ -420,15 +442,7 @@ function ShopDetail() {
 
   async function openProductWithTransition(productId) {
     if (!productId) return
-
-    if (isRepoSearchEntry && !user?.id) {
-      notify({
-        type: "info",
-        title: "Login required",
-        message: "Login to continue.",
-      })
-      return
-    }
+    const repoSuffix = usePublicRepoMode ? buildRepoSearchQuerySuffix(repoRef) : ""
 
     const cacheKey = buildProductDetailCacheKey(productId, user?.id || null)
     const cachedEntry = readCachedFetchStore(cacheKey)
@@ -442,11 +456,14 @@ function ShopDetail() {
     })
 
     try {
-      let prefetchedProductData = cachedEntry?.data || null
+      let prefetchedProductData =
+        usePublicRepoMode
+          ? buildProductDetailPrefetchFromRepoPayload(data, productId)
+          : cachedEntry?.data || null
 
-      if (hasFreshCache) {
+      if (!usePublicRepoMode && hasFreshCache) {
         await loadProductDetailPage()
-        navigate(`/product-detail?id=${productId}${shopId ? `&shop_src=${shopId}` : ""}`, {
+        navigate(`/product-detail?id=${productId}${shopId ? `&shop_src=${shopId}` : ""}${repoSuffix}`, {
           state: {
             fromProductTransition: true,
             prefetchedProductData,
@@ -460,10 +477,15 @@ function ShopDetail() {
           reject(new Error("Timed out while opening the product."))
         }, 10000)
 
-        Promise.all([
-          fetchProductDetailData({ productId, userId: user?.id || null }),
-          loadProductDetailPage(),
-        ])
+        const fetcher = usePublicRepoMode
+          ? fetchPublicRepoProductDetail({
+              repoRef,
+              productId,
+              shopId,
+            })
+          : fetchProductDetailData({ productId, userId: user?.id || null })
+
+        Promise.all([fetcher, loadProductDetailPage()])
           .then(([prefetchedData]) => {
             window.clearTimeout(timeoutId)
             resolve(prefetchedData)
@@ -477,7 +499,7 @@ function ShopDetail() {
       prefetchedProductData = transitionResult
       primeCachedFetchStore(cacheKey, transitionResult, Date.now(), { persist: "session" })
 
-      navigate(`/product-detail?id=${productId}${shopId ? `&shop_src=${shopId}` : ""}`, {
+      navigate(`/product-detail?id=${productId}${shopId ? `&shop_src=${shopId}` : ""}${repoSuffix}`, {
         state: {
           fromProductTransition: true,
           prefetchedProductData,

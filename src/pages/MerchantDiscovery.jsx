@@ -6,6 +6,7 @@ import PageSeo from "../components/common/PageSeo"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
 import {
+  buildRepoSearchQuerySuffix,
   buildShopDetailPrefetchFromRepoSearch,
   getRepoSearchCooldownMessage,
   invokeRepoSearch,
@@ -55,6 +56,7 @@ function MerchantDiscovery() {
 
     async function openShopWhenReady() {
       if (!shop?.id) return
+      const repoRef = shop?.unique_id || merchantId
 
       try {
         const prefetchedShopData =
@@ -66,7 +68,7 @@ function MerchantDiscovery() {
 
         if (cancelled) return
 
-        navigate(`/shop-detail?id=${shop.id}`, {
+        navigate(`/shop-detail?id=${shop.id}${buildRepoSearchQuerySuffix(repoRef)}`, {
           replace: true,
           state: {
             fromDiscoveryTransition: true,
@@ -76,7 +78,7 @@ function MerchantDiscovery() {
         })
       } catch {
         if (cancelled) return
-        navigate(`/shop-detail?id=${shop.id}`, {
+        navigate(`/shop-detail?id=${shop.id}${buildRepoSearchQuerySuffix(repoRef)}`, {
           replace: true,
           state: {
             fromDiscoveryTransition: true,
@@ -93,7 +95,7 @@ function MerchantDiscovery() {
     return () => {
       cancelled = true
     }
-  }, [data, navigate, shop?.id])
+  }, [data, merchantId, navigate, shop?.id, shop?.unique_id])
 
   function handleBack() {
     navigate("/")

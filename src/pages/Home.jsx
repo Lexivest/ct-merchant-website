@@ -47,6 +47,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import {
+  buildRepoSearchQuerySuffix,
   buildShopDetailPrefetchFromRepoSearch,
   getRepoSearchCooldownMessage,
   invokeRepoSearch,
@@ -1022,6 +1023,7 @@ function Home() {
 
       if (data?.shop?.id) {
         const shopId = data.shop.id
+        const repoRef = data.shop.unique_id || value
         const prefetchedShopData =
           buildShopDetailPrefetchFromRepoSearch(data) ||
           (await prepareShopDetailTransition({
@@ -1029,7 +1031,7 @@ function Home() {
             userId: user?.id || null,
           }))
 
-        navigate(`/shop-detail?id=${shopId}`, {
+        navigate(`/shop-detail?id=${shopId}${buildRepoSearchQuerySuffix(repoRef)}`, {
           state: {
             fromDiscoveryTransition: true,
             fromRepoSearch: true,
