@@ -36,10 +36,13 @@ export default function CameraCaptureModal({
   const targetHeight = profile?.targetHeight || Math.round(targetWidth / aspectRatio)
 
   const frameStyle = useMemo(() => {
-    if (aspectRatio >= 1) {
-      return { width: "86%", maxHeight: "55vh", aspectRatio: String(aspectRatio) }
+    return {
+      width: aspectRatio >= 1 ? "88%" : "auto",
+      height: aspectRatio < 1 ? "45vh" : "auto",
+      maxWidth: "92%",
+      maxHeight: "45vh",
+      aspectRatio: String(aspectRatio),
     }
-    return { height: "55vh", maxHeight: "55vh", maxWidth: "86%", aspectRatio: String(aspectRatio) }
   }, [aspectRatio])
 
   useEffect(() => {
@@ -60,8 +63,8 @@ export default function CameraCaptureModal({
           audio: false,
           video: {
             facingMode: { ideal: "environment" },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
           },
         })
 
@@ -193,23 +196,23 @@ export default function CameraCaptureModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[4000] flex flex-col bg-[rgba(2,6,23,0.96)] backdrop-blur-sm">
-      <div className="flex items-center justify-between border-b border-slate-700 px-5 py-4 text-white">
-        <div className="text-[1rem] font-extrabold">{title}</div>
+    <div className="fixed inset-0 z-[4000] flex flex-col bg-[rgba(2,6,23,0.98)] backdrop-blur-md">
+      <div className="flex items-center justify-between border-b border-white/10 px-5 py-3 text-white">
+        <div className="text-[0.95rem] font-bold">{title}</div>
         <button
           type="button"
           onClick={onClose}
-          className="text-2xl text-slate-300 transition hover:text-white"
+          className="rounded-full p-1 text-2xl text-slate-400 transition hover:bg-white/10 hover:text-white"
           aria-label="Close camera"
         >
           <FaXmark />
         </button>
       </div>
 
-      <div className="relative flex flex-1 items-center justify-center overflow-hidden px-4 py-4">
+      <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden min-h-0 px-4 py-2">
         <video
           ref={videoRef}
-          className="h-full w-full max-h-[60vh] max-w-[900px] rounded-xl border border-slate-700 bg-black object-contain"
+          className="max-h-[50vh] w-full max-w-[800px] rounded-2xl border border-white/10 bg-black object-contain shadow-2xl"
           muted
           playsInline
           autoPlay
@@ -218,29 +221,29 @@ export default function CameraCaptureModal({
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4">
           <div
             style={frameStyle}
-            className="relative rounded-xl border-2 border-dashed border-white/90 shadow-[0_0_0_9999px_rgba(2,6,23,0.45)]"
+            className="relative rounded-2xl border-2 border-dashed border-white/80 shadow-[0_0_0_9999px_rgba(2,6,23,0.5)]"
           />
         </div>
 
         {initializing ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/55 text-white">
-            <FaCircleNotch className="animate-spin text-3xl" />
-            <p className="text-sm font-semibold">Initializing camera...</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 text-white">
+            <FaCircleNotch className="animate-spin text-3xl text-pink-500" />
+            <p className="text-sm font-bold tracking-wide">INITIALIZING CAMERA</p>
           </div>
         ) : null}
 
         {error ? (
-          <div className="absolute bottom-4 left-1/2 w-[calc(100%-2rem)] max-w-[620px] -translate-x-1/2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700">
+          <div className="absolute bottom-4 left-1/2 w-[calc(100%-2rem)] max-w-[500px] -translate-x-1/2 rounded-xl border border-red-500/50 bg-red-950/90 px-4 py-3 text-center text-sm font-bold text-red-200 shadow-xl backdrop-blur-sm">
             {error}
           </div>
         ) : null}
       </div>
 
-      <div className="border-t border-slate-700 bg-[rgba(15,23,42,0.96)] px-4 py-4">
-        <div className="mx-auto flex w-full max-w-[900px] flex-col gap-4">
+      <div className="border-t border-white/10 bg-slate-900/80 px-4 py-5 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-[600px] flex-col gap-5">
           {zoomRange ? (
-            <div className="flex items-center gap-3 text-white">
-              <FaMagnifyingGlassMinus className="text-slate-300" />
+            <div className="flex items-center gap-4 text-white">
+              <FaMagnifyingGlassMinus className="text-slate-400" />
               <input
                 type="range"
                 min={zoomRange.min}
@@ -248,21 +251,17 @@ export default function CameraCaptureModal({
                 step={zoomRange.step}
                 value={zoom}
                 onChange={(event) => applyZoom(Number(event.target.value))}
-                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-600 accent-pink-500"
+                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-700 accent-pink-500"
               />
-              <FaMagnifyingGlassPlus className="text-slate-300" />
+              <FaMagnifyingGlassPlus className="text-slate-400" />
             </div>
-          ) : (
-            <p className="text-center text-[0.8rem] font-semibold text-slate-300">
-              Camera zoom is not available on this device. You can still capture and adjust in studio.
-            </p>
-          )}
+          ) : null}
 
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-4">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-slate-500 px-5 py-2.5 font-semibold text-slate-200 transition hover:bg-slate-700"
+              className="min-w-[100px] rounded-xl border border-white/20 px-6 py-3 font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
             >
               Cancel
             </button>
@@ -270,9 +269,9 @@ export default function CameraCaptureModal({
               type="button"
               onClick={capture}
               disabled={initializing}
-              className="flex items-center gap-2 rounded-lg bg-pink-600 px-6 py-2.5 font-extrabold text-white shadow-md transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex min-w-[140px] items-center justify-center gap-2 rounded-xl bg-pink-600 px-8 py-3 font-black uppercase tracking-wider text-white shadow-lg transition hover:bg-pink-700 hover:shadow-pink-500/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <FaCamera />
+              <FaCamera className="text-lg" />
               Capture
             </button>
           </div>
