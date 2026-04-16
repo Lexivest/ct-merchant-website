@@ -152,29 +152,31 @@ export async function signInWithPassword({ email, password }) {
   if (error) {
     const rawMessage = String(error?.message || "")
     const lowerMessage = rawMessage.toLowerCase()
-    const authStatus = Number(error?.status || 0)
-    const authCode = String(error?.code || "").toLowerCase()
-    const isInvalidCredentialsError =
-      authStatus === 400 ||
-      authCode === "invalid_grant" ||
-      lowerMessage.includes("invalid") ||
-      lowerMessage.includes("credential") ||
-      lowerMessage.includes("password") ||
+    
+    // We only track "Invalid credentials" or "Invalid grant" as failed login attempts.
+    // Errors like "Email not confirmed" or server errors should not count toward lockout.
+    const isInvalidCredentials = 
+      error.status === 400 || 
+      lowerMessage.includes("invalid") || 
+      lowerMessage.includes("credentials") ||
       lowerMessage.includes("grant")
 
-    if (isInvalidCredentialsError) {
+    if (isInvalidCredentials) {
       try {
+        // Record the failure in the database to track brute force and handle lockouts
         const { data: attempts, error: rpcError } = await supabase.rpc("record_failed_login", {
           p_email: normalizedEmail,
         })
 
         if (!rpcError && typeof attempts === "number") {
+          // Check if the user is now locked out (4 or more attempts)
           if (attempts >= 4) {
             throw new Error(
               "Your account is suspended due to too many failed login attempts. Please contact support."
             )
           }
 
+          // Inform the user about remaining attempts
           if (attempts > 0) {
             const remaining = 4 - attempts
             throw new Error(
@@ -183,13 +185,17 @@ export async function signInWithPassword({ email, password }) {
           }
         }
       } catch (trackingError) {
-        if (trackingError instanceof Error && trackingError.message) {
+        // If it's our own lockout error, rethrow it
+        if (trackingError instanceof Error && trackingError.message.includes("suspended")) {
+          throw trackingError
+        }
+        if (trackingError instanceof Error && trackingError.message.includes("remaining")) {
           throw trackingError
         }
         console.warn("Failed to record login attempt:", trackingError?.message || trackingError)
       }
 
-      throw new Error("Invalid credentials. Please try again.")
+      throw new Error("Invalid credentials. Please check your email and password.")
     }
 
     throw error
