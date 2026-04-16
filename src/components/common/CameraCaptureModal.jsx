@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import {
   FaCamera,
   FaCircleNotch,
@@ -122,6 +123,17 @@ export default function CameraCaptureModal({
     }
   }, [open])
 
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [open])
+
   const applyZoom = async (nextZoom) => {
     setZoom(nextZoom)
     const track = trackRef.current
@@ -195,8 +207,8 @@ export default function CameraCaptureModal({
 
   if (!open) return null
 
-  return (
-    <div className="fixed inset-0 z-[5000] flex h-[100dvh] flex-col overflow-hidden bg-black font-sans">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex h-[100dvh] flex-col overflow-hidden bg-black font-sans">
       <div className="flex items-center justify-between bg-[#020617] px-5 py-4 text-white">
         <div className="text-[0.85rem] font-black uppercase tracking-[0.1em]">{title}</div>
         <button
@@ -277,6 +289,9 @@ export default function CameraCaptureModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
+  )
+}
   )
 }
