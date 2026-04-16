@@ -621,20 +621,20 @@ function DashboardHeader({
           </div>
         </div>
 
-        {announcementsCount > 0 ? (
-          <button
-            type="button"
-            className="relative flex h-[32px] items-center rounded border border-transparent px-2 text-white transition hover:border-white"
-            onClick={onOpenAnnouncements}
-            title="Announcements"
-            aria-label="Open announcements"
-          >
-            <FaBullhorn className="text-[1.02rem]" />
+        <button
+          type="button"
+          className="relative flex h-[32px] items-center rounded border border-transparent px-2 text-white transition hover:border-white"
+          onClick={onOpenAnnouncements}
+          title="Announcements"
+          aria-label="Open announcements"
+        >
+          <FaBullhorn className="text-[1.02rem]" />
+          {announcementsCount > 0 ? (
             <span className="absolute -right-[5px] -top-[3px] rounded-[10px] border-2 border-[#232F3E] bg-pink-600 px-[5px] py-[1px] text-[0.6rem] font-extrabold leading-none text-white">
               {announcementsCount > 9 ? "9+" : announcementsCount}
             </span>
-          </button>
-        ) : null}
+          ) : null}
+        </button>
 
         {renderNavControls()}
         <div className="min-w-0 flex-1" />

@@ -38,10 +38,10 @@ export default function CameraCaptureModal({
 
   const frameStyle = useMemo(() => {
     return {
-      width: aspectRatio >= 1 ? "min(90vw, 500px)" : "auto",
-      height: aspectRatio < 1 ? "min(50vh, 500px)" : "auto",
-      maxWidth: "94vw",
-      maxHeight: "50vh",
+      width: aspectRatio >= 1 ? "min(92vw, 520px)" : "min(82vw, 420px)",
+      height: "auto",
+      maxWidth: "92vw",
+      maxHeight: "min(58dvh, 520px)",
       aspectRatio: String(aspectRatio),
     }
   }, [aspectRatio])
@@ -231,20 +231,19 @@ export default function CameraCaptureModal({
         </button>
       </div>
 
-      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden bg-black">
-        <video
-          ref={videoRef}
-          className="h-full w-full object-cover opacity-80"
-          muted
-          playsInline
-          autoPlay
-        />
-
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
-          <div
-            style={frameStyle}
-            className="relative rounded-2xl border-[3px] border-dashed border-white/90 shadow-[0_0_0_9999px_rgba(2,6,23,0.8)]"
+      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden bg-black px-4 py-5">
+        <div
+          style={frameStyle}
+          className="relative w-full overflow-hidden rounded-[28px] border-2 border-white/90 bg-slate-950 shadow-[0_18px_60px_rgba(0,0,0,0.55)]"
+        >
+          <video
+            ref={videoRef}
+            className="absolute inset-0 h-full w-full object-cover"
+            muted
+            playsInline
+            autoPlay
           />
+          <div className="pointer-events-none absolute inset-0 rounded-[26px] ring-1 ring-white/15" />
         </div>
 
         {initializing ? (
