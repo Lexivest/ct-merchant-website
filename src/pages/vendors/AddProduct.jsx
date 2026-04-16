@@ -36,7 +36,6 @@ import {
 } from "../../lib/productCategories";
 import {
   canvasToBlobWithMaxBytes,
-  fileToDataUrl,
   padImageToAspectDataUrl,
 } from "../../lib/imagePipeline";
 
@@ -165,6 +164,7 @@ export default function AddProduct() {
   // Studio State
   const [studioOpen, setStudioOpen] = useState(false);
   const [cameraSlot, setCameraSlot] = useState(null);
+  const cameraSlotRef = useRef(null);
   const [activeSlot, setActiveSlot] = useState(null);
   const [tempImage, setTempImage] = useState("");
   const [tempSize, setTempSize] = useState(0);
@@ -177,6 +177,10 @@ export default function AddProduct() {
     2: useRef(null),
     3: useRef(null),
   };
+
+  useEffect(() => {
+    cameraSlotRef.current = cameraSlot;
+  }, [cameraSlot]);
 
   // Initialization & Security Checks
   useEffect(() => {
@@ -290,11 +294,12 @@ export default function AddProduct() {
   };
 
   const handleCameraCapture = async ({ blob }) => {
-    if (!blob || !cameraSlot) return;
+    const targetSlot = cameraSlotRef.current;
+    if (!blob || !targetSlot) return;
 
     try {
       const file = new File([blob], `camera_${Date.now()}.jpg`, { type: "image/jpeg" });
-      await openStudioForFile(file, cameraSlot);
+      await openStudioForFile(file, targetSlot);
       setCameraSlot(null);
     } catch (error) {
       notify({ type: "error", title: "Capture failed", message: getFriendlyErrorMessage(error, "Could not process the captured image.") });

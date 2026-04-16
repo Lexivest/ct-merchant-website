@@ -37,7 +37,6 @@ import {
 } from "../../lib/productCategories";
 import {
   canvasToBlobWithMaxBytes,
-  fileToDataUrl,
   padImageToAspectDataUrl,
 } from "../../lib/imagePipeline";
 
@@ -204,6 +203,7 @@ export default function EditProduct() {
   // Studio State
   const [studioOpen, setStudioOpen] = useState(false);
   const [cameraSlot, setCameraSlot] = useState(null);
+  const cameraSlotRef = useRef(null);
   const [activeSlot, setActiveSlot] = useState(null);
   const [tempImage, setTempImage] = useState("");
   const [tempSize, setTempSize] = useState(0);
@@ -212,6 +212,10 @@ export default function EditProduct() {
   const [isFitting, setIsFitting] = useState(false);
   const cropperRef = useRef(null);
   const fileInputRefs = { 1: useRef(null), 2: useRef(null), 3: useRef(null) };
+
+  useEffect(() => {
+    cameraSlotRef.current = cameraSlot;
+  }, [cameraSlot]);
 
   // --- INITIALIZATION ---
   useEffect(() => {
@@ -347,10 +351,11 @@ export default function EditProduct() {
   };
 
   const handleCameraCapture = async ({ blob }) => {
-    if (!blob || !cameraSlot) return;
+    const targetSlot = cameraSlotRef.current;
+    if (!blob || !targetSlot) return;
     try {
       const file = new File([blob], `camera_${Date.now()}.jpg`, { type: "image/jpeg" });
-      await openStudioForFile(file, cameraSlot);
+      await openStudioForFile(file, targetSlot);
       setCameraSlot(null);
     } catch (error) {
       notify({ type: "error", title: "Capture failed", message: getFriendlyErrorMessage(error, "Could not process the captured image.") });

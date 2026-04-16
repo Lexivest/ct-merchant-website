@@ -26,8 +26,10 @@ export default function CameraCaptureModal({
   const videoRef = useRef(null)
   const streamRef = useRef(null)
   const trackRef = useRef(null)
+  const mountedRef = useRef(false)
 
   const [initializing, setInitializing] = useState(false)
+  const [capturing, setCapturing] = useState(false)
   const [error, setError] = useState("")
   const [zoomRange, setZoomRange] = useState(null)
   const [zoom, setZoom] = useState(1)
@@ -45,6 +47,13 @@ export default function CameraCaptureModal({
       aspectRatio: String(aspectRatio),
     }
   }, [aspectRatio])
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     if (!open) return undefined
@@ -119,6 +128,7 @@ export default function CameraCaptureModal({
       trackRef.current = null
       setZoomRange(null)
       setZoom(1)
+      setCapturing(false)
       setError("")
     }
   }, [open])
@@ -150,6 +160,7 @@ export default function CameraCaptureModal({
   const capture = async () => {
     if (!videoRef.current) return
     if (typeof onCapture !== "function") return
+    if (initializing || capturing) return
 
     const video = videoRef.current
     const sourceWidth = video.videoWidth
@@ -176,6 +187,7 @@ export default function CameraCaptureModal({
     const sy = Math.max(0, Math.floor((sourceHeight - cropHeight) / 2))
 
     try {
+      setCapturing(true)
       const canvas = document.createElement("canvas")
       canvas.width = targetWidth
       canvas.height = targetHeight
@@ -198,20 +210,23 @@ export default function CameraCaptureModal({
         return
       }
 
-      // Close first to release camera resources before processing in parent
-      onClose()
-
-      setTimeout(() => {
+      await Promise.resolve(
         onCapture({
           blob,
           width: canvas.width,
           height: canvas.height,
           mimeType: "image/jpeg",
         })
-      }, 0)
+      )
+
+      onClose()
     } catch (err) {
       console.error("Camera capture error:", err)
       setError("An error occurred during capture. Please try again.")
+    } finally {
+      if (mountedRef.current) {
+        setCapturing(false)
+      }
     }
   }
 
@@ -221,12 +236,13 @@ export default function CameraCaptureModal({
     <div className="fixed inset-0 z-[99999] flex h-[100dvh] flex-col overflow-hidden bg-black font-sans">
       <div className="flex items-center justify-between bg-[#020617] px-5 py-4 text-white">
         <div className="text-[0.85rem] font-black uppercase tracking-[0.1em]">{title}</div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full p-1.5 text-2xl text-slate-400 transition hover:bg-white/10 hover:text-white"
-          aria-label="Close camera"
-        >
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={capturing}
+            className="rounded-full p-1.5 text-2xl text-slate-400 transition hover:bg-white/10 hover:text-white"
+            aria-label="Close camera"
+          >
           <FaXmark />
         </button>
       </div>
@@ -282,6 +298,7 @@ export default function CameraCaptureModal({
             <button
               type="button"
               onClick={onClose}
+              disabled={capturing}
               className="flex-1 rounded-2xl border border-white/10 bg-white/5 py-4 text-xs font-black uppercase tracking-widest text-slate-300 active:scale-95"
             >
               Cancel
@@ -289,11 +306,11 @@ export default function CameraCaptureModal({
             <button
               type="button"
               onClick={capture}
-              disabled={initializing}
+              disabled={initializing || capturing}
               className="flex flex-[1.5] items-center justify-center gap-3 rounded-2xl bg-pink-600 py-4 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-pink-600/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <FaCamera className="text-xl" />
-              Capture
+              {capturing ? "Processing..." : "Capture"}
             </button>
           </div>
         </div>
