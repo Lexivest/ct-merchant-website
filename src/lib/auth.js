@@ -144,6 +144,7 @@ const LOGIN_SUSPENSION_THRESHOLD = 3
 const LOGIN_GUARD_STATUS_RPC = "ctm_get_login_guard_status"
 const LOGIN_GUARD_REGISTER_RPC = "ctm_register_wrong_password_attempt"
 const LOGIN_GUARD_RESET_RPC = "ctm_reset_login_guard_after_success"
+const LOGIN_GUARD_DEBUG_PREFIX = "[login-guard]"
 
 function isMissingRpcError(error) {
   const message = String(error?.message || "").toLowerCase()
@@ -172,6 +173,10 @@ function getLoginGuardStatusRow(data, fallbackEmail = "") {
   }
 }
 
+function logLoginGuardDebug(stage, payload = {}) {
+  console.info(`${LOGIN_GUARD_DEBUG_PREFIX} ${stage}`, payload)
+}
+
 function isLikelyCredentialFailure(error) {
   const lowerMessage = String(error?.message || "").toLowerCase()
   return (
@@ -186,11 +191,24 @@ function isLikelyCredentialFailure(error) {
 
 async function runLoginGuardRpc(rpcName, email, fallbackMessage) {
   const normalizedEmail = normalizeEmail(email)
+  logLoginGuardDebug("rpc:start", {
+    rpcName,
+    email: normalizedEmail,
+  })
+
   const { data, error } = await supabase.rpc(rpcName, {
     p_email: normalizedEmail,
   })
 
   if (error) {
+    logLoginGuardDebug("rpc:error", {
+      rpcName,
+      email: normalizedEmail,
+      code: error.code || null,
+      message: error.message || fallbackMessage,
+      details: error.details || null,
+      hint: error.hint || null,
+    })
     console.error(`Login guard RPC ${rpcName} failed:`, error)
     if (isMissingRpcError(error)) {
       throw new Error("Login security is updating right now. Please try again shortly.")
@@ -198,7 +216,15 @@ async function runLoginGuardRpc(rpcName, email, fallbackMessage) {
     throw new Error(fallbackMessage)
   }
 
-  return getLoginGuardStatusRow(data, normalizedEmail)
+  const status = getLoginGuardStatusRow(data, normalizedEmail)
+  logLoginGuardDebug("rpc:success", {
+    rpcName,
+    email: normalizedEmail,
+    status,
+    rawData: data,
+  })
+
+  return status
 }
 
 async function ensureEmailIsNotLoginSuspended(email, options = {}) {
@@ -223,6 +249,10 @@ export async function signInWithPassword({ email, password }) {
   const ipData = await getClientIpData()
   const normalizedEmail = normalizeEmail(email)
 
+  logLoginGuardDebug("signin:start", {
+    email: normalizedEmail,
+  })
+
   await ensureEmailIsNotLoginSuspended(normalizedEmail)
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -231,6 +261,13 @@ export async function signInWithPassword({ email, password }) {
   })
 
   if (error) {
+    logLoginGuardDebug("signin:auth-error", {
+      email: normalizedEmail,
+      status: error.status || null,
+      message: error.message || "Unknown login error",
+      code: error.code || null,
+    })
+
     if (isLikelyCredentialFailure(error)) {
       try {
         const status = await runLoginGuardRpc(
@@ -247,6 +284,11 @@ export async function signInWithPassword({ email, password }) {
 
         if (status.failedAttempts > 0) {
           const remaining = status.attemptsRemaining
+          logLoginGuardDebug("signin:remaining-attempts", {
+            email: normalizedEmail,
+            failedAttempts: status.failedAttempts,
+            remaining,
+          })
           throw new Error(
             `Invalid credentials. You have ${remaining} attempt${remaining === 1 ? "" : "s"} remaining before your account is suspended.`
           )
@@ -270,6 +312,11 @@ export async function signInWithPassword({ email, password }) {
 
   const user = data.user || data.session?.user
   if (user) {
+    logLoginGuardDebug("signin:auth-success", {
+      email: user.email || normalizedEmail,
+      userId: user.id,
+    })
+
     await ensureEmailIsNotLoginSuspended(user.email || normalizedEmail, {
       signOutOnSuspended: true,
     })
@@ -310,6 +357,7 @@ export async function signInWithPassword({ email, password }) {
 
 export async function signInWithGoogleIdToken(idToken) {
   const ipData = await getClientIpData()
+  logLoginGuardDebug("google-signin:start")
 
   const { data, error } = await supabase.auth.signInWithIdToken({
     provider: "google",
@@ -322,6 +370,10 @@ export async function signInWithGoogleIdToken(idToken) {
   const userEmail = signedInUser?.email ? normalizeEmail(signedInUser.email) : ""
 
   if (userEmail) {
+    logLoginGuardDebug("google-signin:auth-success", {
+      email: userEmail,
+      userId: signedInUser?.id || null,
+    })
     await ensureEmailIsNotLoginSuspended(userEmail, {
       signOutOnSuspended: true,
     })
