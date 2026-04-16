@@ -14,8 +14,10 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
+import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
-import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
+import { getRetryingMessage } from "../components/common/RetryingNotice"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 
@@ -116,12 +118,24 @@ function Area() {
     }
   }
 
-  if (transitionState.error) {
-    throw new Error("AREA ERROR: " + transitionState.error)
-  }
-
   return (
     <>
+      <PageTransitionOverlay
+        visible={transitionState.pending}
+        error={transitionState.error}
+        onRetry={() => {
+          if (transitionState.shopId) {
+            void openShopWithTransition(transitionState.shopId)
+          }
+        }}
+        onDismiss={() =>
+          setTransitionState((prev) => ({
+            ...prev,
+            pending: false,
+            error: "",
+          }))
+        }
+      />
       <div className={`flex h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${transitionState.pending ? "pointer-events-none select-none" : ""}`}>
         <PageSeo
           title={`${headerTitle} | CTMerchant`}
@@ -171,7 +185,13 @@ function Area() {
               message={`Preparing stores in ${areaName}...`}
             />
           ) : dataError && !data ? (
-            <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} onRetry={mutate} />
+            <GlobalErrorScreen
+              fullScreen={false}
+              error={dataError}
+              message={getRetryingMessage(dataError)}
+              onRetry={mutate}
+              onBack={() => navigate(-1)}
+            />
           ) : shops.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center px-5 text-center text-slate-400">
               <FaStoreSlash className="mb-4 text-5xl opacity-30" />

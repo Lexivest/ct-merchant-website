@@ -106,7 +106,10 @@ function CreateAccount() {
   const { data: citiesData, loading: loadingCities } = useCachedFetch(
     "open_cities",
     fetchOpenCities,
-    { ttl: 1000 * 60 * 60 * 24 }
+    {
+      ttl: 1000 * 60 * 60 * 24,
+      persist: "session",
+    }
   )
   const cities = citiesData || []
 
@@ -118,7 +121,11 @@ function CreateAccount() {
       if (!form.cityId) return []
       return await fetchAreasByCity(form.cityId)
     },
-    { dependencies: [form.cityId], ttl: 1000 * 60 * 60 * 24 }
+    {
+      dependencies: [form.cityId],
+      ttl: 1000 * 60 * 60 * 24,
+      persist: "session",
+    }
   )
   const areas = areasData || []
 
@@ -349,12 +356,23 @@ function CreateAccount() {
     navigate("/", { state: { prefillEmail: form.email } })
   }
 
-  if (transitionState.error) {
-    throw new Error("RAW CREATE ACCOUNT ERROR: " + transitionState.error)
-  }
-
   return (
     <>
+      <PageTransitionOverlay
+        visible={transitionState.pending}
+        error={transitionState.error}
+        onRetry={() => {
+          if (typeof transitionRetryRef.current === "function") {
+            void transitionRetryRef.current()
+          }
+        }}
+        onDismiss={() =>
+          setTransitionState({
+            pending: false,
+            error: "",
+          })
+        }
+      />
       <div
         className={
           transitionState.pending || holdForExistingSession

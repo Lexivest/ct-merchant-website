@@ -13,9 +13,10 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
-import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
+import { getRetryingMessage } from "../components/common/RetryingNotice"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import {
   prepareProductDetailTransition,
@@ -376,12 +377,28 @@ function Search() {
 
   const hasResults = matchedShops.length > 0 || matchedProducts.length > 0
 
-  if (transitionState.error) {
-    throw new Error("RAW SEARCH ERROR: " + transitionState.error)
-  }
-
   return (
     <>
+      <PageTransitionOverlay
+        visible={transitionState.pending}
+        error={transitionState.error}
+        onRetry={() => {
+          if (transitionState.kind === "shop" && transitionState.id) {
+            void openShopWithTransition(transitionState.id)
+            return
+          }
+          if (transitionState.kind === "product" && transitionState.id) {
+            void openProductWithTransition(transitionState.id)
+          }
+        }}
+        onDismiss={() =>
+          setTransitionState((prev) => ({
+            ...prev,
+            pending: false,
+            error: "",
+          }))
+        }
+      />
       <div
         className={`min-h-screen bg-[#E3E6E6] ${
           transitionState.pending ? "pointer-events-none select-none" : ""
@@ -437,7 +454,13 @@ function Search() {
             message="Please wait while we prepare your search results."
           />
         ) : dataError && !data ? (
-          <RetryingNotice fullScreen={false} message={getRetryingMessage(dataError)} onRetry={mutate} />
+          <GlobalErrorScreen
+            fullScreen={false}
+            error={dataError}
+            message={getRetryingMessage(dataError)}
+            onRetry={mutate}
+            onBack={() => navigate(-1)}
+          />
         ) : (
           <>
             <h2 className="mb-6 text-[1.1rem] font-semibold text-slate-600">

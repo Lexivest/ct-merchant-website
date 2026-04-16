@@ -30,8 +30,9 @@ import useCachedFetch, {
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
-import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
+import { getRetryingMessage } from "../components/common/RetryingNotice"
 import ScrollingTicker from "../components/common/ScrollingTicker"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
@@ -712,14 +713,14 @@ function ShopDetail() {
   }
 
   if (error && !data) {
-    return <RetryingNotice message={getRetryingMessage(error)} onRetry={mutate} />
-  }
-
-  if (productTransition.error) {
-    throw new Error("RAW SHOP DETAIL PRODUCT ERROR: " + productTransition.error)
-  }
-  if (dashboardTransition.error) {
-    throw new Error("RAW SHOP DETAIL DASHBOARD ERROR: " + dashboardTransition.error)
+    return (
+      <GlobalErrorScreen
+        error={error}
+        message={getRetryingMessage(error)}
+        onRetry={mutate}
+        onBack={goBackSafe}
+      />
+    )
   }
 
   const shopLogo =
@@ -735,6 +736,30 @@ function ShopDetail() {
 
   return (
     <>
+      <PageTransitionOverlay
+        visible={productTransition.pending || dashboardTransition.pending}
+        error={productTransition.error || dashboardTransition.error}
+        onRetry={() => {
+          if (productTransition.error && productTransition.productId) {
+            void openProductWithTransition(productTransition.productId)
+            return
+          }
+          if (dashboardTransition.error) {
+            void openDashboardWithTransition()
+          }
+        }}
+        onDismiss={() => {
+          setProductTransition({
+            pending: false,
+            productId: "",
+            error: "",
+          })
+          setDashboardTransition({
+            pending: false,
+            error: "",
+          })
+        }}
+      />
       <div
         className={`min-h-screen bg-[#E3E6E6] pb-10 ${
           location.state?.fromMarketTransition || location.state?.fromDiscoveryTransition

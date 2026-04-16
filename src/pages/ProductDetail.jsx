@@ -25,8 +25,9 @@ import useCachedFetch, {
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
+import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
-import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
+import { getRetryingMessage } from "../components/common/RetryingNotice"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
@@ -624,15 +625,34 @@ function ProductDetail() {
   }
 
   if (error && !data) {
-    return <RetryingNotice message={getRetryingMessage(error)} />
-  }
-
-  if (productTransition.error) {
-    throw new Error("RAW PRODUCT DETAIL ERROR: " + productTransition.error)
+    return (
+      <GlobalErrorScreen
+        error={error}
+        message={getRetryingMessage(error)}
+        onRetry={() => window.location.reload()}
+        onBack={goBack}
+      />
+    )
   }
 
   return (
     <>
+      <PageTransitionOverlay
+        visible={productTransition.pending}
+        error={productTransition.error}
+        onRetry={() => {
+          if (productTransition.productId) {
+            void openProductWithTransition(productTransition.productId)
+          }
+        }}
+        onDismiss={() =>
+          setProductTransition({
+            pending: false,
+            productId: "",
+            error: "",
+          })
+        }
+      />
       <PageSeo
         title={
           currentProduct?.name

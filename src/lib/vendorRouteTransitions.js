@@ -6,6 +6,14 @@ import { supabase } from "./supabase"
 const VENDOR_TRANSITION_TIMEOUT = 12000
 const MAX_PRODUCTS_LIMIT = 30
 
+export function buildShopRegistrationCacheKey(userId, cityId, shopId = null) {
+  if (shopId) {
+    return `shop_reg_edit_${userId || "guest"}_${shopId}`
+  }
+
+  return `shop_reg_new_${userId || "guest"}_${cityId || "unknown"}`
+}
+
 const vendorRouteLoaders = {
   "/shop-registration": () => import("../pages/ShopRegistration"),
   "/vendor-panel": () => import("../pages/VendorsPanel"),
@@ -208,11 +216,9 @@ async function prepareShopRegistrationData({ userId, cityId, shopId = null }) {
     shop: existingShop,
   }
 
-  const cacheKey = isEdit
-    ? `shop_reg_edit_${userId}_${shopId}`
-    : `shop_reg_new_${userId}_${cityId}`
+  const cacheKey = buildShopRegistrationCacheKey(userId, cityId, isEdit ? shopId : null)
 
-  primeCachedFetchStore(cacheKey, payload)
+  primeCachedFetchStore(cacheKey, payload, Date.now(), { persist: "session" })
   return payload
 }
 

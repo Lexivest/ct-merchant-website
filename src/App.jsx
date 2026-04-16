@@ -76,7 +76,26 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
     return () => window.clearTimeout(timer)
   }, [isOffline, retryKey, retryPage])
 
-  throw new Error("RAW CHUNK LOAD ERROR: Failed to load " + pageLabel)
+  return (
+    <GlobalErrorScreen
+      error={new Error(`Failed to load ${pageLabel}`)}
+      title={isOffline ? "No internet connection" : "Website update in progress"}
+      message={
+        isOffline
+          ? "Please reconnect and retry. This screen will stay here until you retry or go back."
+          : "A fresh version of CTMerchant is available. Retry will safely reload the latest files."
+      }
+      onRetry={() => retryPage(true)}
+      onBack={() => {
+        if (typeof window === "undefined") return
+        if (window.history.length > 1) {
+          window.history.back()
+          return
+        }
+        window.location.assign("/")
+      }}
+    />
+  )
 }
 
 function isHardReloadNavigation() {

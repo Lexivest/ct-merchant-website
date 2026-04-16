@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { FaArrowLeft, FaRotateRight, FaTriangleExclamation, FaWifi, FaBug } from "react-icons/fa6"
 import { isNetworkError } from "../../lib/friendlyErrors"
 import { isChunkLoadFailure } from "../../lib/runtimeRecovery"
@@ -110,6 +110,7 @@ function GlobalErrorScreen({
       return null
     }
   }, [error])
+  const showDebugTools = Boolean(import.meta.env?.DEV && diagnosticInfo)
 
   return (
     <div className={`${wrapperClass} flex items-center justify-center bg-[#E3E6E6] px-5 py-10`}>
@@ -133,29 +134,31 @@ function GlobalErrorScreen({
             {busy ? "Preparing a clean reload..." : copy.message}
           </p>
 
-          <div className="mt-8 flex flex-col gap-2 text-left">
-            <button
-              type="button"
-              onClick={() => setShowDetails(!showDetails)}
-              className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-pink-600 transition-colors"
-            >
-              <FaBug className="text-xs" />
-              {showDetails ? "Hide Diagnostic Report" : "Show Diagnostic Report"}
-            </button>
-            
-            {showDetails && (
-              <div className="mt-2 overflow-hidden rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-[10px] shadow-inner">
-                <div className="mb-2 font-black text-rose-700 uppercase tracking-tighter">Deep Trace Analysis</div>
-                <div className="space-y-1 font-mono text-slate-700">
-                  <p><strong>Error Type:</strong> {diagnosticInfo?.name || "Unknown"}</p>
-                  <p><strong>Message:</strong> {diagnosticInfo?.message || "No message"}</p>
-                  <p><strong>Cloudflare Status:</strong> {cloudStatus}</p>
-                  <p><strong>Browser Storage:</strong> {diagnosticInfo?.storage || "Unknown"}</p>
-                  <p><strong>Agent:</strong> {diagnosticInfo?.agent || "Unknown"}</p>
+          {showDebugTools ? (
+            <div className="mt-8 flex flex-col gap-2 text-left">
+              <button
+                type="button"
+                onClick={() => setShowDetails(!showDetails)}
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-pink-600"
+              >
+                <FaBug className="text-xs" />
+                {showDetails ? "Hide Diagnostic Report" : "Show Diagnostic Report"}
+              </button>
+
+              {showDetails ? (
+                <div className="mt-2 overflow-hidden rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-[10px] shadow-inner">
+                  <div className="mb-2 font-black uppercase tracking-tighter text-rose-700">Deep Trace Analysis</div>
+                  <div className="space-y-1 font-mono text-slate-700">
+                    <p><strong>Error Type:</strong> {diagnosticInfo?.name || "Unknown"}</p>
+                    <p><strong>Message:</strong> {diagnosticInfo?.message || "No message"}</p>
+                    <p><strong>Cloudflare Status:</strong> {cloudStatus}</p>
+                    <p><strong>Browser Storage:</strong> {diagnosticInfo?.storage || "Unknown"}</p>
+                    <p><strong>Agent:</strong> {diagnosticInfo?.agent || "Unknown"}</p>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              ) : null}
+            </div>
+          ) : null}
 
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2">

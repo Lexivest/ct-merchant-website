@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
+import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import { prepareStaffRouteTransition } from "../lib/staffRouteTransitions"
@@ -72,6 +73,7 @@ export default function StaffDashboard() {
     pending: false,
     error: "",
   })
+  const [summaryError, setSummaryError] = useState(null)
   const [summary, setSummary] = useState({
     shopCount: 0,
     pendingComments: 0,
@@ -82,6 +84,7 @@ export default function StaffDashboard() {
 
   const fetchSummary = useCallback(async () => {
     setLoading(true)
+    setSummaryError(null)
     try {
       const [shopsResult, commentsResult, usersResult, visitsResult, paymentsResult] = await Promise.all([
         supabase.from("shops").select("id", { count: "exact", head: true }),
@@ -117,6 +120,7 @@ export default function StaffDashboard() {
     } catch (err) {
       console.error("Error fetching staff summary:", err)
       if (isMounted.current) {
+        setSummaryError(err)
         notify({
           type: "error",
           title: "Could not load staff overview",
@@ -207,12 +211,34 @@ export default function StaffDashboard() {
     [fetchSummary, loading, openStaffRouteWithTransition]
   )
 
-  if (routeTransition.error) {
-    throw new Error("RAW STAFF DASHBOARD ERROR: " + routeTransition.error)
+  if (summaryError && !loading) {
+    return (
+      <GlobalErrorScreen
+        error={summaryError}
+        message={getFriendlyErrorMessage(summaryError, "Could not load the staff home screen. Retry.")}
+        onRetry={fetchSummary}
+        onBack={() => navigate("/staff-portal")}
+      />
+    )
   }
 
   return (
     <>
+      <PageTransitionOverlay
+        visible={routeTransition.pending}
+        error={routeTransition.error}
+        onRetry={() => {
+          if (typeof retryRouteTransitionRef.current === "function") {
+            retryRouteTransitionRef.current()
+          }
+        }}
+        onDismiss={() =>
+          setRouteTransition({
+            pending: false,
+            error: "",
+          })
+        }
+      />
       <div className={routeTransition.pending ? "pointer-events-none select-none" : ""}>
         <StaffPortalShell
           activeKey="home"

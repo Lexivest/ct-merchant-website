@@ -322,6 +322,7 @@ function UserDashboard() {
   })
   const [prefetchedWishlistItems, setPrefetchedWishlistItems] = useState(null)
   const [announcementsOpen, setAnnouncementsOpen] = useState(false)
+  const [hasUnreadAnnouncements, setHasUnreadAnnouncements] = useState(false)
 
   useEffect(() => {
     if (baseData && dynamicData) {
@@ -849,20 +850,26 @@ function UserDashboard() {
   }, [announcementSignature, user?.id])
 
   useEffect(() => {
-    if (!announcementSeenKey || !localData.announcements?.length) return
+    if (!localData.announcements?.length || !announcementSeenKey) {
+      setHasUnreadAnnouncements(false)
+      return
+    }
 
     try {
       if (typeof window !== "undefined" && window.localStorage) {
-        if (window.localStorage.getItem(announcementSeenKey) === "1") return
+        setHasUnreadAnnouncements(
+          window.localStorage.getItem(announcementSeenKey) !== "1"
+        )
+        return
       }
     } catch {
-      // If storage is blocked, still show the modal once for this dashboard mount.
+      // If storage is blocked, fall back to showing the badge for the current mount.
     }
 
-    setAnnouncementsOpen(true)
+    setHasUnreadAnnouncements(true)
   }, [announcementSeenKey, localData.announcements?.length])
 
-  function markAnnouncementsSeen() {
+  function markAnnouncementsSeen({ close = true } = {}) {
     if (announcementSeenKey) {
       try {
         if (typeof window !== "undefined" && window.localStorage) {
@@ -873,7 +880,10 @@ function UserDashboard() {
       }
     }
 
-    setAnnouncementsOpen(false)
+    setHasUnreadAnnouncements(false)
+    if (close) {
+      setAnnouncementsOpen(false)
+    }
   }
 
   function openAnnouncementsModal() {
@@ -882,6 +892,7 @@ function UserDashboard() {
       pending: false,
       error: "",
     })
+    markAnnouncementsSeen({ close: false })
     setAnnouncementsOpen(true)
   }
 
@@ -1879,7 +1890,9 @@ function UserDashboard() {
         switchScreen={switchScreen}
         unread={localData.unread}
         onShopIndex={openShopIndexWithTransition}
-        announcementsCount={(localData.announcements || []).length}
+        announcementsCount={
+          hasUnreadAnnouncements ? (localData.announcements || []).length : 0
+        }
         onOpenAnnouncements={openAnnouncementsModal}
       />
 
@@ -1977,7 +1990,7 @@ function UserDashboard() {
       <DashboardAnnouncementsModal
         announcements={localData.announcements || []}
         open={announcementsOpen}
-        onClose={markAnnouncementsSeen}
+        onClose={() => markAnnouncementsSeen()}
       />
     </div>
   )

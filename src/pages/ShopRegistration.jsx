@@ -33,6 +33,7 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { supabase } from "../lib/supabase"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import { buildShopRegistrationCacheKey } from "../lib/vendorRouteTransitions"
 import {
   UPLOAD_RULES,
   formatBytes,
@@ -215,13 +216,19 @@ function ShopRegistration() {
     }
   }
 
-  const cacheKey = isEdit
-    ? `shop_reg_edit_${user?.id || "guest"}_${shopId}`
-    : `shop_reg_new_${user?.id || "guest"}_${profile?.city_id}`
+  const cacheKey = buildShopRegistrationCacheKey(
+    user?.id || "guest",
+    profile?.city_id,
+    isEdit ? shopId : null,
+  )
   const { data, loading: dataLoading, error: dataError } = useCachedFetch(
     cacheKey,
     fetchFormData,
-    { dependencies: [user?.id, profile?.city_id, shopId, isEdit], ttl: 1000 * 60 * 60 }
+    {
+      dependencies: [user?.id, profile?.city_id, shopId, isEdit],
+      ttl: 1000 * 60 * 60 * 24,
+      persist: "session",
+    }
   )
 
   const [submitting, setSubmitting] = useState(false)
