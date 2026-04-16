@@ -156,6 +156,78 @@ export function renderCanvasToTarget(sourceCanvas, options) {
   return canvas
 }
 
+export async function autoProcessImage(file, options = {}) {
+  const {
+    aspectRatio = 1,
+    targetWidth = 1200,
+    targetHeight = 1200,
+    watermark = "CTMerchant",
+    fillColor = "#FFFFFF",
+    maxBytes = 800 * 1024,
+    qualityStart = 0.92,
+    qualityFloor = 0.4,
+    qualityStep = 0.05,
+  } = options
+
+  if (!file) throw new Error("File is required for auto-processing.")
+
+  const src = URL.createObjectURL(file)
+  try {
+    const image = await loadImage(src)
+    
+    const canvas = document.createElement("canvas")
+    canvas.width = targetWidth
+    canvas.height = targetHeight
+    const ctx = canvas.getContext("2d")
+    if (!ctx) throw new Error("Could not initialize processing canvas.")
+
+    // 1. Background
+    ctx.fillStyle = fillColor
+    ctx.fillRect(0, 0, targetWidth, targetHeight)
+
+    // 2. Center Contain Logic
+    const sourceWidth = image.width
+    const sourceHeight = image.height
+    const scale = Math.min(targetWidth / sourceWidth, targetHeight / sourceHeight)
+    const drawWidth = Math.round(sourceWidth * scale)
+    const drawHeight = Math.round(sourceHeight * scale)
+    const dx = Math.round((targetWidth - drawWidth) / 2)
+    const dy = Math.round((targetHeight - drawHeight) / 2)
+
+    ctx.drawImage(image, dx, dy, drawWidth, drawHeight)
+
+    // 3. Watermark
+    ctx.fillStyle = "rgba(255, 255, 255, 0.45)"
+    ctx.shadowColor = "rgba(0, 0, 0, 0.6)"
+    ctx.shadowBlur = 4
+    ctx.shadowOffsetX = 1
+    ctx.shadowOffsetY = 1
+    ctx.font = 'bold 20px sans-serif'
+    ctx.textAlign = "right"
+    ctx.textBaseline = "bottom"
+    ctx.fillText(watermark, targetWidth - 20, targetHeight - 20)
+
+    // 4. Compress
+    const blob = await canvasToBlobWithMaxBytes(canvas, {
+      maxBytes,
+      qualityStart,
+      qualityFloor,
+      qualityStep,
+    })
+
+    if (!blob) throw new Error("Compression failed.")
+
+    return {
+      blob,
+      previewUrl: URL.createObjectURL(blob),
+      originalSize: file.size,
+      processedSize: blob.size,
+    }
+  } finally {
+    URL.revokeObjectURL(src)
+  }
+}
+
 export async function canvasToBlobWithMaxBytes(canvas, options) {
   const {
     maxBytes,
