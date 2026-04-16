@@ -37,6 +37,7 @@ import {
 } from "../../lib/productCategories";
 import {
   canvasToBlobWithMaxBytes,
+  optimizeImageForEditor,
   padImageToAspectDataUrl,
 } from "../../lib/imagePipeline";
 
@@ -207,6 +208,7 @@ export default function EditProduct() {
   const [activeSlot, setActiveSlot] = useState(null);
   const [tempImage, setTempImage] = useState("");
   const [tempSize, setTempSize] = useState(0);
+  const [preparingStudio, setPreparingStudio] = useState(false);
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
   const [isFitting, setIsFitting] = useState(false);
@@ -330,13 +332,28 @@ export default function EditProduct() {
       throw new Error(`File is too large. Max input size is ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}.`);
     }
 
-    const src = URL.createObjectURL(file);
-    setActiveSlot(slot);
-    setTempSize(file.size);
-    setTempImage(src);
-    setBrightness(100);
-    setContrast(100);
-    setStudioOpen(true);
+    setPreparingStudio(true);
+
+    try {
+      const preparedImage = await optimizeImageForEditor(file, {
+        maxDimension: 1800,
+        mimeType: "image/jpeg",
+        quality: 0.9,
+      });
+
+      if (tempImage && tempImage.startsWith("blob:")) {
+        URL.revokeObjectURL(tempImage);
+      }
+
+      setActiveSlot(slot);
+      setTempSize(preparedImage.blob.size || file.size);
+      setTempImage(preparedImage.src);
+      setBrightness(100);
+      setContrast(100);
+      setStudioOpen(true);
+    } finally {
+      setPreparingStudio(false);
+    }
   };
 
   const handleFileSelect = async (e, slot) => {
@@ -946,6 +963,16 @@ export default function EditProduct() {
           </div>
         </form>
       </main>
+
+      {preparingStudio && (
+        <div className="fixed inset-0 z-[2100] flex items-center justify-center bg-[rgba(15,23,42,0.82)] backdrop-blur-sm">
+          <div className="rounded-[24px] bg-white px-6 py-5 text-center shadow-2xl">
+            <div className="mx-auto mb-3 h-9 w-9 animate-spin rounded-full border-4 border-pink-200 border-t-[#db2777]" />
+            <div className="text-sm font-extrabold text-slate-900">Preparing image...</div>
+            <div className="mt-1 text-xs font-semibold text-slate-500">Optimizing photo for smooth editing.</div>
+          </div>
+        </div>
+      )}
 
       {/* STUDIO OVERLAY */}
       {studioOpen && (

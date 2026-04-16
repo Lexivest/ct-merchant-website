@@ -21,6 +21,60 @@ function loadImage(src) {
   })
 }
 
+export async function optimizeImageForEditor(
+  file,
+  {
+    maxDimension = 1800,
+    mimeType = "image/jpeg",
+    quality = 0.9,
+  } = {}
+) {
+  if (!file) throw new Error("No file provided.")
+
+  const sourceUrl = URL.createObjectURL(file)
+
+  try {
+    const image = await loadImage(sourceUrl)
+    const longestEdge = Math.max(image.width || 0, image.height || 0)
+
+    if (!longestEdge) {
+      throw new Error("Could not read selected image.")
+    }
+
+    const scale = longestEdge > maxDimension ? maxDimension / longestEdge : 1
+    const targetWidth = Math.max(1, Math.round(image.width * scale))
+    const targetHeight = Math.max(1, Math.round(image.height * scale))
+
+    const canvas = document.createElement("canvas")
+    canvas.width = targetWidth
+    canvas.height = targetHeight
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) throw new Error("Could not initialize image canvas.")
+
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = "high"
+    ctx.drawImage(image, 0, 0, targetWidth, targetHeight)
+
+    const optimizedBlob = await new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), mimeType, quality)
+    })
+
+    if (!optimizedBlob) {
+      throw new Error("Could not prepare selected image.")
+    }
+
+    return {
+      blob: optimizedBlob,
+      src: URL.createObjectURL(optimizedBlob),
+      width: targetWidth,
+      height: targetHeight,
+    }
+  } finally {
+    URL.revokeObjectURL(sourceUrl)
+  }
+}
+
 export async function padImageToAspectDataUrl(sourceDataUrl, aspectRatio, fill = "#FFFFFF") {
   if (!sourceDataUrl) throw new Error("Source image is required.")
   if (!aspectRatio || aspectRatio <= 0) throw new Error("Invalid aspect ratio.")
