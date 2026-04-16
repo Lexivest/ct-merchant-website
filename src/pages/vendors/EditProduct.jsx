@@ -36,6 +36,7 @@ import {
   toProductCategoryOptions,
 } from "../../lib/productCategories";
 import {
+  autoProcessImage,
   canvasToBlobWithMaxBytes,
   optimizeImageForEditor,
   padImageToAspectDataUrl,
@@ -200,6 +201,7 @@ export default function EditProduct() {
   const [previews, setPreviews] = useState(() => initialEditorState.previews);
   const [deletedSlots, setDeletedSlots] = useState({ 1: false, 2: false, 3: false });
   const [savings, setSavings] = useState({ 1: "", 2: "", 3: "" });
+  const [processingSlots, setProcessingSlots] = useState({ 1: false, 2: false, 3: false });
 
   // Studio State
   const [studioOpen, setStudioOpen] = useState(false);
@@ -322,20 +324,94 @@ export default function EditProduct() {
     });
   };
 
-  // --- STUDIO LOGIC ---
-  const openStudioForFile = async (file, slot) => {
-    if (!file) return;
+  // --- BACKGROUND PROCESSING PIPELINE ---
+  const processImageInSlot = async (file, slot) => {
+    if (!file || !slot) return;
+
     if (!file.type.startsWith("image/")) {
-      throw new Error("Please upload a valid image file.");
+      notify({ type: "error", title: "Invalid image", message: "Please upload a valid image file." });
+      return;
     }
+
     if (file.size > PRODUCT_INPUT_MAX_BYTES) {
-      throw new Error(`File is too large. Max input size is ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}.`);
+      notify({
+        type: "error",
+        title: "Image too large",
+        message: `Maximum input size for products is ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}.`,
+      });
+      return;
     }
+
+    setProcessingSlots((prev) => ({ ...prev, [slot]: true }));
+    try {
+      const result = await autoProcessImage(file, {
+        aspectRatio: PRODUCT_PROFILE.aspectRatio,
+        targetWidth: PRODUCT_PROFILE.targetWidth,
+        targetHeight: PRODUCT_PROFILE.targetHeight,
+        maxBytes: PRODUCT_MAX_BYTES,
+        qualityStart: PRODUCT_PROFILE.qualityStart,
+        qualityFloor: PRODUCT_PROFILE.qualityFloor,
+        qualityStep: PRODUCT_PROFILE.qualityStep,
+      });
+
+      if (previews[slot] && previews[slot].startsWith("blob:")) {
+        URL.revokeObjectURL(previews[slot]);
+      }
+
+      setBlobs((prev) => ({ ...prev, [slot]: result.blob }));
+      setDeletedSlots((prev) => ({ ...prev, [slot]: false }));
+      setPreviews((prev) => ({ ...prev, [slot]: result.previewUrl }));
+
+      const diff = result.originalSize - result.processedSize;
+      if (diff > 0) {
+        setSavings((prev) => ({ ...prev, [slot]: `✅ Optimized ${Math.round((diff / result.originalSize) * 100)}%` }));
+      } else {
+        setSavings((prev) => ({ ...prev, [slot]: "✅ Ready" }));
+      }
+    } catch (err) {
+      notify({
+        type: "error",
+        title: "Processing failed",
+        message: getFriendlyErrorMessage(err, "Could not process this image. Please try another one."),
+      });
+    } finally {
+      setProcessingSlots((prev) => ({ ...prev, [slot]: false }));
+    }
+  };
+
+  const handleFileSelect = async (e, slot) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    await processImageInSlot(file, slot);
+  };
+
+  const handleCameraCapture = async ({ blob }) => {
+    const targetSlot = cameraSlotRef.current;
+    if (!blob || !targetSlot) return;
+    const file = new File([blob], `camera_${Date.now()}.jpg`, { type: "image/jpeg" });
+    setCameraSlot(null);
+    await processImageInSlot(file, targetSlot);
+  };
+
+  // --- STUDIO LOGIC (NOW OPTIONAL) ---
+  const openStudioForSlot = async (slot) => {
+    const currentPreview = previews[slot];
+    if (!currentPreview) return;
 
     setPreparingStudio(true);
-
     try {
-      const preparedImage = await optimizeImageForEditor(file, {
+      let sourceBlob = blobs[slot];
+      
+      // If it's an existing URL, we must fetch it first
+      if (!sourceBlob && existingUrls[slot]) {
+        const response = await fetch(existingUrls[slot]);
+        sourceBlob = await response.blob();
+      }
+
+      if (!sourceBlob) throw new Error("Could not find image data.");
+
+      const preparedImage = await optimizeImageForEditor(sourceBlob, {
         maxDimension: 1800,
         mimeType: "image/jpeg",
         quality: 0.9,
@@ -346,36 +422,15 @@ export default function EditProduct() {
       }
 
       setActiveSlot(slot);
-      setTempSize(preparedImage.blob.size || file.size);
+      setTempSize(preparedImage.blob.size || sourceBlob.size);
       setTempImage(preparedImage.src);
       setBrightness(100);
       setContrast(100);
       setStudioOpen(true);
+    } catch (err) {
+      notify({ type: "error", title: "Editor failed", message: "Could not open the image editor." });
     } finally {
       setPreparingStudio(false);
-    }
-  };
-
-  const handleFileSelect = async (e, slot) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    try {
-      await openStudioForFile(file, slot);
-    } catch (error) {
-      notify({ type: "error", title: "Image unavailable", message: getFriendlyErrorMessage(error, "Could not open the selected image.") });
-    }
-  };
-
-  const handleCameraCapture = async ({ blob }) => {
-    const targetSlot = cameraSlotRef.current;
-    if (!blob || !targetSlot) return;
-    try {
-      const file = new File([blob], `camera_${Date.now()}.jpg`, { type: "image/jpeg" });
-      await openStudioForFile(file, targetSlot);
-      setCameraSlot(null);
-    } catch (error) {
-      notify({ type: "error", title: "Capture failed", message: getFriendlyErrorMessage(error, "Could not process the captured image.") });
     }
   };
 
@@ -436,39 +491,44 @@ export default function EditProduct() {
     ctx.textBaseline = "bottom";
     ctx.fillText("CTMerchant", PRODUCT_PROFILE.targetWidth - 20, PRODUCT_PROFILE.targetHeight - 20);
 
-    const blob = await canvasToBlobWithMaxBytes(finalCanvas, {
-      maxBytes: PRODUCT_MAX_BYTES,
-      mimeType: PRODUCT_PROFILE.outputMimeType,
-      qualityStart: PRODUCT_PROFILE.qualityStart,
-      qualityFloor: PRODUCT_PROFILE.qualityFloor,
-      qualityStep: PRODUCT_PROFILE.qualityStep,
-    });
-    if (!blob) {
+    try {
+      const blob = await canvasToBlobWithMaxBytes(finalCanvas, {
+        maxBytes: PRODUCT_MAX_BYTES,
+        mimeType: PRODUCT_PROFILE.outputMimeType,
+        qualityStart: PRODUCT_PROFILE.qualityStart,
+        qualityFloor: PRODUCT_PROFILE.qualityFloor,
+        qualityStep: PRODUCT_PROFILE.qualityStep,
+      });
+
+      if (!blob) throw new Error("Compression failed.");
+
+      if (previews[activeSlot] && previews[activeSlot].startsWith("blob:")) {
+        URL.revokeObjectURL(previews[activeSlot]);
+      }
+
+      setBlobs((prev) => ({ ...prev, [activeSlot]: blob }));
+      setDeletedSlots((prev) => ({ ...prev, [activeSlot]: false }));
+      setPreviews((prev) => ({ ...prev, [activeSlot]: URL.createObjectURL(blob) }));
+      
+      const saved = tempSize - blob.size;
+      if (saved > 0) setSavings((prev) => ({ ...prev, [activeSlot]: `Saved ${Math.round((saved / tempSize) * 100)}%` }));
+      else setSavings((prev) => ({ ...prev, [activeSlot]: "Ready" }));
+      
+      closeStudio();
+    } catch (err) {
       notify({
         type: "error",
-        title: "Compression failed",
-        message: `We could not compress this image under ${formatBytes(PRODUCT_MAX_BYTES)}. Please try a simpler image.`,
+        title: "Crop failed",
+        message: getFriendlyErrorMessage(err, "Could not save cropped image."),
       });
-      return;
     }
-
-    if (previews[activeSlot] && previews[activeSlot].startsWith("blob:")) {
-      URL.revokeObjectURL(previews[activeSlot]);
-    }
-
-    setBlobs((prev) => ({ ...prev, [activeSlot]: blob }));
-    setDeletedSlots((prev) => ({ ...prev, [activeSlot]: false }));
-    setPreviews((prev) => ({ ...prev, [activeSlot]: URL.createObjectURL(blob) }));
-    
-    const saved = tempSize - blob.size;
-    if (saved > 0) setSavings((prev) => ({ ...prev, [activeSlot]: `Saved ${Math.round((saved / tempSize) * 100)}%` }));
-    else setSavings((prev) => ({ ...prev, [activeSlot]: "Ready" }));
-    
-    closeStudio();
   };
 
   const removeImage = (e, slot) => {
     e.stopPropagation();
+    if (previews[slot] && previews[slot].startsWith("blob:")) {
+      URL.revokeObjectURL(previews[slot]);
+    }
     setDeletedSlots((prev) => ({ ...prev, [slot]: true }));
     setBlobs((prev) => ({ ...prev, [slot]: null }));
     setPreviews((prev) => ({ ...prev, [slot]: "" }));
@@ -711,6 +771,13 @@ export default function EditProduct() {
               >
                 <input type="file" ref={fileInputRefs[slot]} hidden accept={PRODUCT_ACCEPT} onChange={(e) => handleFileSelect(e, slot)} />
                 
+                {processingSlots[slot] ? (
+                  <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm">
+                    <FaCircleNotch className="animate-spin text-2xl text-[#db2777]" />
+                    <span className="mt-2 text-[0.6rem] font-black uppercase text-[#db2777]">Processing</span>
+                  </div>
+                ) : null}
+
                 {previews[slot] ? (
                   <>
                     <img src={previews[slot]} className="absolute inset-0 h-full w-full object-contain bg-white z-10" alt={`Slot ${slot}`} />
@@ -730,6 +797,14 @@ export default function EditProduct() {
                         title="Capture from camera"
                       >
                         <FaCamera size={11} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openStudioForSlot(slot)}
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#db2777] text-white shadow-md transition hover:scale-110 hover:bg-[#be185d]"
+                        title="Edit in CT Studio"
+                      >
+                        <FaWandMagicSparkles size={11} />
                       </button>
                     </div>
                     <button type="button" onClick={(e) => removeImage(e, slot)} className="absolute right-1 top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-md transition hover:scale-110 hover:bg-red-700">
@@ -968,7 +1043,7 @@ export default function EditProduct() {
         <div className="fixed inset-0 z-[2100] flex items-center justify-center bg-[rgba(15,23,42,0.82)] backdrop-blur-sm">
           <div className="rounded-[24px] bg-white px-6 py-5 text-center shadow-2xl">
             <div className="mx-auto mb-3 h-9 w-9 animate-spin rounded-full border-4 border-pink-200 border-t-[#db2777]" />
-            <div className="text-sm font-extrabold text-slate-900">Preparing image...</div>
+            <div className="text-sm font-extrabold text-slate-900">Preparing editor...</div>
             <div className="mt-1 text-xs font-semibold text-slate-500">Optimizing photo for smooth editing.</div>
           </div>
         </div>
@@ -1002,7 +1077,7 @@ export default function EditProduct() {
               
               <div>
                 <div className="mb-3 border-b border-[#334155] pb-2 text-[0.8rem] font-extrabold uppercase tracking-wide text-[#94a3b8]">Smart Sizing</div>
-                <button onClick={applyWhiteBorders} disabled={isFitting} className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#db2777] bg-transparent p-3 font-bold text-[#db2777] transition hover:bg-[rgba(219,39,119,0.1)]">
+                <button onClick={applyWhiteBorders} type="button" disabled={isFitting} className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#db2777] bg-transparent p-3 font-bold text-[#db2777] transition hover:bg-[rgba(219,39,119,0.1)]">
                   {isFitting ? <FaCircleNotch className="animate-spin" /> : <FaExpand />} Fit Entire Image (Add Borders)
                 </button>
                 <p className="mt-1.5 text-[0.75rem] leading-relaxed text-[#94a3b8]">Prevents edges of tall/wide photos from being cut off.</p>
@@ -1021,8 +1096,8 @@ export default function EditProduct() {
               </div>
               
               <div className="mt-auto flex justify-end gap-3 border-t border-[#334155] pt-4">
-                <button onClick={closeStudio} className="rounded-lg border border-[#334155] px-5 py-2.5 font-semibold text-[#94a3b8] hover:bg-[#334155] hover:text-white">Cancel</button>
-                <button onClick={applyCrop} className="flex items-center gap-2 rounded-lg bg-[#10b981] px-6 py-2.5 font-extrabold text-white shadow-[0_4px_10px_rgba(16,185,129,0.3)] hover:bg-[#059669]"><FaMicrochip /> Process & Save</button>
+                <button onClick={closeStudio} type="button" className="rounded-lg border border-[#334155] px-5 py-2.5 font-semibold text-[#94a3b8] hover:bg-[#334155] hover:text-white">Cancel</button>
+                <button onClick={applyCrop} type="button" className="flex items-center gap-2 rounded-lg bg-[#10b981] px-6 py-2.5 font-extrabold text-white shadow-[0_4px_10px_rgba(16,185,129,0.3)] hover:bg-[#059669]"><FaMicrochip /> Process & Save</button>
               </div>
             </div>
           </div>
