@@ -173,6 +173,7 @@ const loadStaffSponsoredProducts = () => import("./pages/staff/StaffSponsoredPro
 const loadStaffDiscoveries = () => import("./pages/staff/StaffDiscoveries")
 const loadStaffIDGenerator = () => import("./pages/staff/StaffIDGenerator")
 const loadStaffInbox = () => import("./pages/staff/StaffInbox")
+const loadStaffSecurityRadar = () => import("./pages/staff/StaffSecurityRadar")
 const loadUserDashboard = () => import("./pages/UserDashboard")
 const loadShopRegistration = () => import("./pages/ShopRegistration")
 const loadArea = () => import("./pages/Area")
@@ -217,6 +218,7 @@ const StaffSponsoredProducts = resilientLazy(loadStaffSponsoredProducts, { pageL
 const StaffDiscoveries = resilientLazy(loadStaffDiscoveries, { pageLabel: "market discoveries" })
 const StaffIDGenerator = resilientLazy(loadStaffIDGenerator, { pageLabel: "staff ID generator" })
 const StaffInbox = resilientLazy(loadStaffInbox, { pageLabel: "staff inbox" })
+const StaffSecurityRadar = resilientLazy(loadStaffSecurityRadar, { pageLabel: "security radar" })
 const UserDashboard = resilientLazy(loadUserDashboard, { pageLabel: "user dashboard" })
 const ShopRegistration = resilientLazy(loadShopRegistration, { pageLabel: "shop registration" })
 const Area = resilientLazy(loadArea, { pageLabel: "area view" })
@@ -450,6 +452,7 @@ function AppShell() {
         <Route path="/staff-issue-id" element={<ProtectedStaffRoute><StaffIDGenerator /></ProtectedStaffRoute>} />
         <Route path="/staff-studio" element={<ProtectedStaffRoute><ImageOptimizer /></ProtectedStaffRoute>} />
         <Route path="/staff-inbox" element={<ProtectedStaffRoute><StaffInbox /></ProtectedStaffRoute>} />
+        <Route path="/staff-security-radar" element={<ProtectedStaffRoute><StaffSecurityRadar /></ProtectedStaffRoute>} />
 
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />

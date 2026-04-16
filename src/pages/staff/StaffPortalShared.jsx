@@ -11,6 +11,7 @@ import {
   FaReceipt,
   FaShieldHalved,
   FaStore,
+  FaTowerBroadcast,
   FaUsers,
   FaWandMagicSparkles,
   FaPanorama,
@@ -373,6 +374,7 @@ export function StaffPortalShell({
     { key: "city-banners", label: "City Banners", to: "/staff-city-banners", icon: <FaImages /> },
     { key: "inbox", label: "Inbox", to: "/staff-inbox", icon: <FaEnvelope /> },
     { key: "studio", label: "CT Studio", to: "/staff-studio", icon: <FaWandMagicSparkles /> },
+    { key: "security-radar", label: "Security Radar", to: "/staff-security-radar", icon: <FaTowerBroadcast /> },
   ]
 
   return (
