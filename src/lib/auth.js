@@ -141,12 +141,14 @@ export async function signOutUser() {
 }
 
 const FAILED_LOGIN_TRACK_RPC_NAMES = [
+  "ctm_handle_failed_login_attempt",
   "track_failed_login_attempt",
   "register_failed_login_attempt",
   "record_failed_login",
 ]
 
 const FAILED_LOGIN_RESET_RPC_NAMES = [
+  "ctm_reset_failed_login_attempts",
   "reset_failed_login_attempts",
   "clear_failed_login_attempts",
   "reset_failed_login",
