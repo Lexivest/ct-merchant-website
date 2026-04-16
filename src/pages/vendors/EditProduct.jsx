@@ -326,7 +326,7 @@ export default function EditProduct() {
       throw new Error(`File is too large. Max input size is ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}.`);
     }
 
-    const src = await fileToDataUrl(file);
+    const src = URL.createObjectURL(file);
     setActiveSlot(slot);
     setTempSize(file.size);
     setTempImage(src);
@@ -358,6 +358,9 @@ export default function EditProduct() {
   };
 
   const closeStudio = () => {
+    if (tempImage && tempImage.startsWith("blob:")) {
+      URL.revokeObjectURL(tempImage);
+    }
     setStudioOpen(false);
     setTempImage("");
     setActiveSlot(null);
@@ -368,6 +371,7 @@ export default function EditProduct() {
     setIsFitting(true);
     try {
       const fitted = await padImageToAspectDataUrl(tempImage, PRODUCT_PROFILE.aspectRatio);
+      if (tempImage.startsWith("blob:")) URL.revokeObjectURL(tempImage);
       setTempImage(fitted);
       if (cropperRef.current?.cropper) {
         cropperRef.current.cropper.replace(fitted);
@@ -424,6 +428,10 @@ export default function EditProduct() {
         message: `We could not compress this image under ${formatBytes(PRODUCT_MAX_BYTES)}. Please try a simpler image.`,
       });
       return;
+    }
+
+    if (previews[activeSlot] && previews[activeSlot].startsWith("blob:")) {
+      URL.revokeObjectURL(previews[activeSlot]);
     }
 
     setBlobs((prev) => ({ ...prev, [activeSlot]: blob }));
