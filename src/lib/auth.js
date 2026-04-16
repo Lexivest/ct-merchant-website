@@ -5,6 +5,20 @@ import {
 } from "./validators"
 import { clearCachedFetchStore } from "../hooks/useCachedFetch"
 
+const LOCATION_QUERY_TIMEOUT_MS = 8000
+
+function withTimeout(promise, message, timeoutMs = LOCATION_QUERY_TIMEOUT_MS) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      const timerId = setTimeout(() => {
+        clearTimeout(timerId)
+        reject(new Error(message))
+      }, timeoutMs)
+    }),
+  ])
+}
+
 export async function getClientIpData() {
   // TEMPORARILY DISABLED: Firefox Enhanced Tracking Protection (ETP) strictly flags endpoints 
   // that fetch IP addresses as "Trackers" and instantly blocks the entire database domain.
@@ -23,22 +37,28 @@ export async function getClientIpData() {
 }
 
 export async function fetchOpenCities() {
-  const { data, error } = await supabase
-    .from("cities")
-    .select("id, name")
-    .eq("is_open", true)
-    .order("name")
+  const { data, error } = await withTimeout(
+    supabase
+      .from("cities")
+      .select("id, name")
+      .eq("is_open", true)
+      .order("name"),
+    "City list is taking too long to load. Please retry."
+  )
 
   if (error) throw error
   return data || []
 }
 
 export async function fetchAreasByCity(cityId) {
-  const { data, error } = await supabase
-    .from("areas")
-    .select("id, name")
-    .eq("city_id", cityId)
-    .order("name")
+  const { data, error } = await withTimeout(
+    supabase
+      .from("areas")
+      .select("id, name")
+      .eq("city_id", cityId)
+      .order("name"),
+    "Area list is taking too long to load. Please retry."
+  )
 
   if (error) throw error
   return data || []

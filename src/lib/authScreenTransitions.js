@@ -17,11 +17,15 @@ export async function preloadCreateAccountScreen() {
 
   if (!hasFreshCachedEntry(cachedCities, OPEN_CITIES_TTL)) {
     tasks.push(
-      fetchOpenCities().then((cities) => {
-        primeCachedFetchStore(OPEN_CITIES_CACHE_KEY, cities, Date.now(), {
-          persist: "session",
+      fetchOpenCities()
+        .then((cities) => {
+          primeCachedFetchStore(OPEN_CITIES_CACHE_KEY, cities, Date.now(), {
+            persist: "session",
+          })
         })
-      })
+        .catch((error) => {
+          console.warn("Create-account city preload failed:", error)
+        })
     )
   }
 

@@ -50,6 +50,7 @@ function CreateAccount() {
   const shouldRedirectToDashboard = Boolean(user) && !suspended && !isOffline
   const holdForExistingSession = shouldRedirectToDashboard && authLoading
   const transitionRetryRef = useRef(null)
+  const cityRetryTimerRef = useRef(null)
   const [transitionState, setTransitionState] = useState({
     pending: false,
     error: "",
@@ -103,7 +104,7 @@ function CreateAccount() {
   })
 
   // 2. Reactive Cached Fetching for Locations
-  const { data: citiesData, loading: loadingCities, error: cityError } = useCachedFetch(
+  const { data: citiesData, loading: loadingCities, error: cityError, mutate: mutateCities } = useCachedFetch(
     "open_cities",
     fetchOpenCities,
     {
@@ -115,7 +116,7 @@ function CreateAccount() {
 
   // Areas fetch reactively whenever form.cityId changes
   const areaCacheKey = form.cityId ? `areas_city_${form.cityId}` : "areas_none"
-  const { data: areasData, loading: loadingAreas, error: areaError } = useCachedFetch(
+  const { data: areasData, loading: loadingAreas, error: areaError, mutate: mutateAreas } = useCachedFetch(
     areaCacheKey,
     async () => {
       if (!form.cityId) return []
@@ -166,6 +167,27 @@ function CreateAccount() {
       })
     }
   }, [cityError, areaError])
+
+  useEffect(() => {
+    if (!loadingCities || cities.length > 0 || cityError) {
+      if (cityRetryTimerRef.current) {
+        window.clearTimeout(cityRetryTimerRef.current)
+        cityRetryTimerRef.current = null
+      }
+      return undefined
+    }
+
+    cityRetryTimerRef.current = window.setTimeout(() => {
+      mutateCities()
+    }, 4500)
+
+    return () => {
+      if (cityRetryTimerRef.current) {
+        window.clearTimeout(cityRetryTimerRef.current)
+        cityRetryTimerRef.current = null
+      }
+    }
+  }, [cityError, cities.length, loadingCities, mutateCities])
 
   useEffect(() => {
     if (
@@ -468,6 +490,18 @@ function CreateAccount() {
                       {cities.map((city) => (<option key={city.id} value={city.id}>{city.name}</option>))}
                     </select>
                   </div>
+                  {cityError ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNotice((prev) => ({ ...prev, visible: false }))
+                        mutateCities()
+                      }}
+                      className="self-start text-xs font-bold text-pink-600 transition hover:text-pink-700 hover:underline"
+                    >
+                      Retry loading cities
+                    </button>
+                  ) : null}
                   {errors.cityId && <p className="text-xs font-semibold text-red-600">{errors.cityId}</p>}
                 </div>
 
@@ -480,6 +514,18 @@ function CreateAccount() {
                       {areas.map((area) => (<option key={area.id} value={area.id}>{area.name}</option>))}
                     </select>
                   </div>
+                  {areaError && form.cityId ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNotice((prev) => ({ ...prev, visible: false }))
+                        mutateAreas()
+                      }}
+                      className="self-start text-xs font-bold text-pink-600 transition hover:text-pink-700 hover:underline"
+                    >
+                      Retry loading areas
+                    </button>
+                  ) : null}
                   {errors.areaId && <p className="text-xs font-semibold text-red-600">{errors.areaId}</p>}
                 </div>
 
