@@ -28,10 +28,12 @@ import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import useAuthSession from "../hooks/useAuthSession"
-import useCachedFetch from "../hooks/useCachedFetch"
+import useCachedFetch, {
+  clearCachedFetchStore,
+  primeCachedFetchStore,
+} from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { supabase } from "../lib/supabase"
-import { clearCachedFetchStore } from "../hooks/useCachedFetch"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 import { prepareVendorRouteTransition } from "../lib/vendorRouteTransitions"
@@ -144,6 +146,7 @@ function VendorsPanel() {
     if (!user || !data?.shop?.id || isOffline) return
 
     const shopId = data.shop.id
+    const vendorPanelCacheKey = `vendor_panel_${user.id}`
 
     const shopChannel = supabase
       .channel(`public:shops:id=eq.${shopId}`)
@@ -156,7 +159,17 @@ function VendorsPanel() {
           filter: `id=eq.${shopId}`,
         },
         (payload) => {
-          setRealtimeShop(payload.new)
+          const nextShop = payload.new || null
+          setRealtimeShop(nextShop)
+          if (nextShop) {
+            primeCachedFetchStore(vendorPanelCacheKey, {
+              ...data,
+              shop: {
+                ...(data?.shop || {}),
+                ...nextShop,
+              },
+            })
+          }
         },
       )
       .subscribe()
@@ -172,10 +185,32 @@ function VendorsPanel() {
           filter: `shop_id=eq.${shopId}`,
         },
         () => {
-        // Invalidate global caches so updates reflect instantly in the marketplace
-        clearCachedFetchStore((key) => 
-          key.startsWith("dashboard_cache_") || key.startsWith("shop_detail_") || key.startsWith("dir_city_") || key.startsWith("search_city_")
-        )
+          clearCachedFetchStore(
+            (key) =>
+              key.startsWith("dashboard_cache_") ||
+              key.startsWith("shop_detail_") ||
+              key.startsWith("shop_detail_v2_") ||
+              key.startsWith("dir_city_") ||
+              key.startsWith("search_city_") ||
+              key.startsWith("merchant_products_") ||
+              key.startsWith("vendor_panel_"),
+          )
+          mutate()
+        },
+      )
+      .subscribe()
+
+    const paymentChannel = supabase
+      .channel(`public:physical_verification_payments:merchant_id=eq.${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "physical_verification_payments",
+          filter: `merchant_id=eq.${user.id}`,
+        },
+        () => {
           mutate()
         },
       )
@@ -184,8 +219,9 @@ function VendorsPanel() {
     return () => {
       supabase.removeChannel(shopChannel)
       supabase.removeChannel(productChannel)
+      supabase.removeChannel(paymentChannel)
     }
-  }, [user, data?.shop?.id, isOffline, mutate])
+  }, [user, data, data?.shop?.id, isOffline, mutate])
 
   useEffect(() => {
     if (error === "SHOP_NOT_FOUND") {
@@ -274,17 +310,25 @@ function VendorsPanel() {
         },
       })
     } catch (error) {
-      setRouteTransition({ pending: false, error: "" })
-      notify({
-        type: "error",
-        title: "Access denied",
-        message: getFriendlyErrorMessage(error, "We could not open that merchant tool right now. Please try again."),
-      })
+      failRouteTransition(
+        getFriendlyErrorMessage(
+          error,
+          "We could not open that merchant tool right now. Please try again.",
+        ),
+        retryAction,
+      )
     }
   }
 
   const handleCardClick = (path, action) => {
     if (isOffline) {
+      if (path) {
+        failRouteTransition("Network unavailable. Retry.", () =>
+          openVendorRouteWithTransition(path),
+        )
+        return
+      }
+
       notify({
         type: "error",
         title: "Network unavailable",
@@ -309,16 +353,23 @@ function VendorsPanel() {
     })
   }
 
-  if (routeTransition.error) {
-    throw new Error("RAW VENDORS PANEL ERROR: " + routeTransition.error)
-  }
-
   return (
-    <div
-      className={`flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
-        routeTransition.pending ? "pointer-events-none select-none" : ""
-      }`}
-    >
+    <>
+      <PageTransitionOverlay
+        visible={routeTransition.pending}
+        error={routeTransition.error}
+        onRetry={() => {
+          if (typeof retryRouteTransitionRef.current === "function") {
+            retryRouteTransitionRef.current()
+          }
+        }}
+        onDismiss={() => setRouteTransition({ pending: false, error: "" })}
+      />
+      <div
+        className={`flex min-h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
+          routeTransition.pending ? "pointer-events-none select-none" : ""
+        }`}
+      >
       <header className="sticky top-0 z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <div className="mx-auto flex w-full max-w-[1000px] items-center gap-4 px-4 py-3 text-white">
           <button
@@ -615,7 +666,8 @@ function VendorsPanel() {
           )}
         </div>
       </main>
-    </div>
+      </div>
+    </>
   )
 }
 

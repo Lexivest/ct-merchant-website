@@ -8,6 +8,7 @@ import {
   FaImage,
   FaPen,
   FaPlus,
+  FaTriangleExclamation,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
@@ -42,7 +43,7 @@ export default function MerchantProducts() {
   const [activeShopId, setActiveShopId] = useState(urlShopId);
   const [transitionState, setTransitionState] = useState({
     pending: false,
-    productId: "",
+    path: "",
     error: "",
   });
 
@@ -101,42 +102,20 @@ export default function MerchantProducts() {
 
 
   // 3. Handlers
-  const goToAdd = () => {
+  const openVendorTool = async (path, fallbackMessage) => {
+    if (!path) return;
     if (isOffline) {
-      notify({
-        type: "error",
-        title: "No internet connection",
-        message: "Please reconnect before adding a product.",
+      setTransitionState({
+        pending: false,
+        path,
+        error: "Network unavailable. Retry.",
       });
       return;
     }
-    if (!activeShopId) {
-      notify({
-        type: "error",
-        title: "Shop unavailable",
-        message: "Shop details are not ready yet. Please retry.",
-      });
-      return;
-    }
-    navigate(`/merchant-add-product?shop_id=${activeShopId}`);
-  };
-
-  const editProduct = async (id) => {
-    if (!id) return;
-    if (isOffline) {
-      notify({
-        type: "error",
-        title: "No internet connection",
-        message: "Please reconnect before editing a product.",
-      });
-      return;
-    }
-
-    const path = `/merchant-edit-product?id=${id}`;
 
     setTransitionState({
       pending: true,
-      productId: id,
+      path,
       error: "",
     });
 
@@ -156,18 +135,43 @@ export default function MerchantProducts() {
       });
     } catch (error) {
       const safeMessage = isNetworkError(error)
-        ? "We could not open this product editor right now. Please try again."
+        ? "Network unavailable. Retry."
         : getFriendlyErrorMessage(
             error,
-            "We could not open this product editor right now. Please try again."
+            fallbackMessage
           );
 
       setTransitionState({
         pending: false,
-        productId: id,
+        path,
         error: safeMessage,
       });
     }
+  };
+
+  const goToAdd = () => {
+    if (!activeShopId) {
+      notify({
+        type: "error",
+        title: "Shop unavailable",
+        message: "Shop details are not ready yet. Please retry.",
+      });
+      return;
+    }
+
+    void openVendorTool(
+      `/merchant-add-product?shop_id=${activeShopId}`,
+      "We could not open the add product page right now. Please try again."
+    );
+  };
+
+  const editProduct = (id) => {
+    if (!id) return;
+
+    void openVendorTool(
+      `/merchant-edit-product?id=${id}`,
+      "We could not open this product editor right now. Please try again."
+    );
   };
 
 
@@ -192,7 +196,16 @@ export default function MerchantProducts() {
       <PageTransitionOverlay
         visible={transitionState.pending}
         error={transitionState.error}
-        onRetry={() => editProduct(transitionState.productId)}
+        onRetry={() => {
+          if (transitionState.path) {
+            void openVendorTool(
+              transitionState.path,
+              transitionState.path.startsWith("/merchant-add-product")
+                ? "We could not open the add product page right now. Please try again."
+                : "We could not open this product editor right now. Please try again."
+            );
+          }
+        }}
         onDismiss={() =>
           setTransitionState((prev) => ({
             ...prev,

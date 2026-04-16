@@ -37,10 +37,10 @@ export default function CameraCaptureModal({
 
   const frameStyle = useMemo(() => {
     return {
-      width: aspectRatio >= 1 ? "88%" : "auto",
-      height: aspectRatio < 1 ? "45vh" : "auto",
-      maxWidth: "92%",
-      maxHeight: "45vh",
+      width: aspectRatio >= 1 ? "min(88vw, 520px)" : "min(84vw, 420px)",
+      height: aspectRatio < 1 ? "min(62vh, 640px)" : "auto",
+      maxWidth: "92vw",
+      maxHeight: "62vh",
       aspectRatio: String(aspectRatio),
     }
   }, [aspectRatio])
@@ -209,14 +209,19 @@ export default function CameraCaptureModal({
         </button>
       </div>
 
-      <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden min-h-0 px-4 py-2">
-        <video
-          ref={videoRef}
-          className="max-h-[50vh] w-full max-w-[800px] rounded-2xl border border-white/10 bg-black object-contain shadow-2xl"
-          muted
-          playsInline
-          autoPlay
-        />
+      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-4 py-2">
+        <div
+          style={frameStyle}
+          className="relative overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl"
+        >
+          <video
+            ref={videoRef}
+            className="absolute inset-0 h-full w-full object-cover"
+            muted
+            playsInline
+            autoPlay
+          />
+        </div>
 
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4">
           <div
