@@ -215,6 +215,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   const isOfflineRef = useRef(typeof navigator !== "undefined" ? !navigator.onLine : false)
   const errorRef = useRef(null)
   const isRevalidatingRef = useRef(false)
+  const isBackgroundFetchingRef = useRef(false)
   const persistMode = persist === true ? "session" : persist
 
   useEffect(() => {
@@ -226,8 +227,8 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   const isExpired = cachedEntry && (Date.now() - cachedEntry.timestamp > ttl)
   const data = (cachedEntry && !isExpired) ? cachedEntry.data : null
   
-  // We are loading if we have no valid data, no hard error, and we are not skipping
-  const loading = !data && !errorRef.current && !skip
+  // We are loading if we have NO data at all (not even in background), no hard error, and we are not skipping
+  const loading = !data && !errorRef.current && !skip && !isBackgroundFetchingRef.current
 
   useEffect(() => {
     if (skip) return undefined
@@ -260,6 +261,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       if (currentCachedEntry) {
         isRevalidatingRef.current = true
       } else {
+        isBackgroundFetchingRef.current = true
         if (isMounted) setTick(t => t + 1)
       }
 
@@ -269,11 +271,13 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
           primeCachedFetchStore(queryKey, result, Date.now(), { persist: persistMode })
           errorRef.current = null
           isRevalidatingRef.current = false
+          isBackgroundFetchingRef.current = false
           setTick(t => t + 1)
         }
       } catch (err) {
         if (isMounted) {
           isRevalidatingRef.current = false
+          isBackgroundFetchingRef.current = false
           if (getCacheEntry(queryKey)) {
             console.warn(`Background fetch failed for ${queryKey}, falling back to cache.`)
             errorRef.current = null

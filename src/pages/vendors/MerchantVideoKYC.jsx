@@ -593,12 +593,14 @@ export default function MerchantVideoKYC() {
         title: "Video uploaded",
         message: "Your video was submitted successfully and is under review.",
       });
-      try {
-        localStorage.removeItem(`vendor_panel_${user.id}`);
-        sessionStorage.removeItem(`vendor_panel_${user.id}`);
-      } catch (cacheError) {
-        console.warn("Vendor panel cache clear failed:", cacheError);
-      }
+
+      // Clear relevant caches to reflect updated shop status
+      clearCachedFetchStore((key) => 
+        key.startsWith("vendor_panel_") ||
+        key.startsWith("dashboard_dynamic_") ||
+        key.startsWith("shop_detail_")
+      );
+
       uploadInFlightRef.current = false;
       navigate("/vendor-panel", { replace: true });
 
