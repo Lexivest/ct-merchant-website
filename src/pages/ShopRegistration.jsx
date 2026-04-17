@@ -883,7 +883,10 @@ function ShopRegistration() {
         <div className="mx-auto max-w-3xl px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button onClick={() => navigate("/vendor-panel")} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200">
+              <button 
+                onClick={() => navigate(isEdit ? "/vendor-panel" : "/user-dashboard?tab=services")} 
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+              >
                 <FaArrowLeft />
               </button>
               <div>
@@ -1121,9 +1124,11 @@ function ShopRegistration() {
               {/* Navigation Buttons */}
               <div className="flex items-center justify-between gap-4 pt-4">
                 <button 
-                  onClick={prevStep} 
-                  disabled={currentStep === 0}
-                  className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-8 text-sm font-bold text-slate-600 transition-all hover:bg-slate-50 disabled:opacity-30"
+                  onClick={() => {
+                    if (currentStep > 0) prevStep()
+                    else navigate(isEdit ? "/vendor-panel" : "/user-dashboard?tab=services")
+                  }} 
+                  className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-8 text-sm font-bold text-slate-600 transition-all hover:bg-slate-50"
                 >
                   <FaArrowLeft className="text-xs" />
                   <span>Back</span>
