@@ -1040,7 +1040,7 @@ function ShopRegistration() {
                       title="Upload ID Document"
                       subtitle={`Clear photo or PDF | ${idRuleLabel}`}
                       onFileClick={() => openImagePicker("idCard", null)}
-                      onCameraClick={() => openNativeCameraPicker("idCard", null)}
+                      onCameraClick={() => openCustomCamera("idCard", 3 / 2)}
                       onPdfClick={() => openPdfPicker("idCard")}
                       preview={renderPreview("idCard")}
                     />
@@ -1055,7 +1055,7 @@ function ShopRegistration() {
                       title="CAC Certificate"
                       subtitle={`Required for Ltd | ${cacRuleLabel}`}
                       onFileClick={() => openImagePicker("cac", null)}
-                      onCameraClick={() => openNativeCameraPicker("cac", null)}
+                      onCameraClick={() => openCustomCamera("cac", 3 / 4)}
                       onPdfClick={() => openPdfPicker("cac")}
                       preview={renderPreview("cac")}
                     />
