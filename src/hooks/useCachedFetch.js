@@ -180,6 +180,46 @@ export function clearCachedFetchStore(predicate) {
   }
 }
 
+/**
+ * Marks matching cache entries as expired without deleting them.
+ * This allows hooks to keep showing "stale" data while a re-fetch happens in the background.
+ */
+export function invalidateCachedFetchStore(predicate) {
+  if (typeof predicate !== "function") return
+
+  // 1. Invalidate In-Memory Cache
+  for (const [key, entry] of globalCache.entries()) {
+    if (predicate(key)) {
+      entry.timestamp = 0 // Force immediate expiration
+    }
+  }
+
+  // 2. Invalidate Session Storage
+  try {
+    if (typeof window !== "undefined" && window.sessionStorage) {
+      Object.keys(window.sessionStorage).forEach((storageKey) => {
+        if (!storageKey.startsWith(SESSION_CACHE_PREFIX)) return
+        const cacheKey = storageKey.slice(SESSION_CACHE_PREFIX.length)
+        if (predicate(cacheKey)) {
+          const raw = window.sessionStorage.getItem(storageKey)
+          if (raw) {
+            const entry = JSON.parse(raw)
+            entry.timestamp = 0
+            window.sessionStorage.setItem(storageKey, JSON.stringify(entry))
+          }
+        }
+      })
+    }
+  } catch { /* ignore */ }
+
+  // 3. Notify matching active fetchers to re-sync
+  for (const [key, fetchData] of activeFetchers.entries()) {
+    if (predicate(key)) {
+      fetchData({ force: true })
+    }
+  }
+}
+
 export function primeCachedFetchStore(queryKey, data, timestamp = Date.now(), options = {}) {
   if (!queryKey) return
 
@@ -225,7 +265,9 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   // 1. SYNCHRONOUS CACHE READ
   const cachedEntry = getCacheEntry(queryKey)
   const isExpired = cachedEntry && (Date.now() - cachedEntry.timestamp > ttl)
-  const data = (cachedEntry && !isExpired) ? cachedEntry.data : null
+  
+  // Stale-While-Revalidate: Return data even if expired so UI stays stable
+  const data = cachedEntry?.data || null
   
   // We are loading if we have NO data at all (not even in background), no hard error, and we are not skipping
   const loading = !data && !errorRef.current && !skip && !isBackgroundFetchingRef.current
