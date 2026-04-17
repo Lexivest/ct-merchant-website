@@ -7,6 +7,7 @@ import {
   FaBriefcase,
   FaCamera,
   FaCheck,
+  FaCircleNotch,
   FaCity,
   FaCropSimple,
   FaFileContract,
@@ -42,6 +43,8 @@ import {
 } from "../lib/uploadRules"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 
+import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
+
 const STOREFRONT_RULE = UPLOAD_RULES.storefronts
 const LOGO_RULE = UPLOAD_RULES.brandAssets
 const ID_DOCUMENT_RULE = UPLOAD_RULES.idDocuments
@@ -73,7 +76,9 @@ function formatUrl(value) {
 }
 
 function validPhone(value) {
-  return /^(0\d{10}|\+\d{11,15})$/.test(String(value || "").trim())
+  // Simple check for 10-15 digits after cleaning
+  const digits = String(value || "").replace(/\D/g, "")
+  return digits.length >= 10 && digits.length <= 15
 }
 
 function validUrl(value) {
@@ -85,6 +90,35 @@ function validUrl(value) {
     return false
   }
 }
+
+// --- NIGERIA PHONE INPUT ---
+function NigeriaPhoneInput({ value, onChange, placeholder, disabled = false }) {
+  return (
+    <div className="relative flex items-center">
+      <div className="absolute left-3 flex items-center gap-2 border-r border-slate-200 pr-2.5">
+        <div className="flex h-4 w-6 flex-col overflow-hidden rounded-sm border border-slate-100 shadow-sm">
+          <div className="flex-1 bg-[#008751]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#008751]" />
+        </div>
+        <span className="text-sm font-bold text-slate-500">+234</span>
+      </div>
+      <input
+        type="tel"
+        value={value}
+        onChange={(e) => {
+          const val = e.target.value.replace(/\D/g, "").slice(0, 10)
+          onChange(val)
+        }}
+        placeholder={placeholder}
+        disabled={disabled}
+        className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 py-3.5 pl-[104px] pr-4 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all disabled:opacity-60"
+      />
+    </div>
+  )
+}
+
+// --- WHATSAPP VERIFIER (Removed per user request) ---
 
 // --- CANVAS COMPRESSOR (Legacy Port) ---
 const compressFullImage = (file) => {
@@ -175,6 +209,7 @@ function ShopRegistration() {
   const [searchParams] = useSearchParams()
   const shopId = searchParams.get("id")
   const isEdit = Boolean(shopId)
+  const { notify } = useGlobalFeedback()
 
   usePreventPullToRefresh()
 
@@ -749,7 +784,11 @@ function ShopRegistration() {
           .eq("owner_id", user.id)
         if (error) throw error
 
-        setNotice({ visible: true, type: "success", title: "Correction submitted", message: "Your shop is pending approval again." })
+        notify({
+          type: "success",
+          title: "Application Received",
+          message: "Your correction has been received and is under review.",
+        })
       } else {
         const { error } = await supabase.from("shops").insert({
           ...payload,
@@ -757,7 +796,11 @@ function ShopRegistration() {
         })
         if (error) throw error
 
-        setNotice({ visible: true, type: "success", title: "Application submitted", message: "You will be notified once your shop is approved." })
+        notify({
+          type: "success",
+          title: "Application Received",
+          message: "Your shop registration has been received and is currently under review. You will be notified once approved.",
+        })
       }
 
       const oldFilesByBucket = new Map()
@@ -803,11 +846,10 @@ function ShopRegistration() {
         console.warn("Rollback cleanup failed for new shop files:", cleanupError)
       }
 
-      setNotice({
-        visible: true,
+      notify({
         type: "error",
-        title: "Submission failed",
-        message: getFriendlyErrorMessage(error, "Please retry."),
+        title: "Submission Failed",
+        message: getFriendlyErrorMessage(error, "Please retry or contact support."),
       })
       setReviewOpen(false)
       window.scrollTo({ top: 0, behavior: "smooth" })
@@ -841,7 +883,7 @@ function ShopRegistration() {
         <div className="mx-auto max-w-3xl px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button onClick={() => navigate("/user-dashboard")} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200">
+              <button onClick={() => navigate("/vendor-panel")} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200">
                 <FaArrowLeft />
               </button>
               <div>
@@ -850,13 +892,13 @@ function ShopRegistration() {
               </div>
             </div>
             
-            <div className="hidden items-center gap-1 md:flex">
+            <div className="flex items-center gap-1">
               {STEPS.map((s, idx) => (
                 <div key={s.id} className="flex items-center">
                   <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm transition-all duration-500 ${idx <= currentStep ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-slate-100 text-slate-400'}`}>
                     {idx < currentStep ? <FaCheck className="text-xs" /> : s.icon}
                   </div>
-                  {idx < STEPS.length - 1 && <div className={`h-1 w-6 rounded-full mx-1 transition-colors duration-500 ${idx < currentStep ? 'bg-indigo-600' : 'bg-slate-100'}`} />}
+                  {idx < STEPS.length - 1 && <div className={`h-1 w-2 md:w-6 rounded-full mx-1 transition-colors duration-500 ${idx < currentStep ? 'bg-indigo-600' : 'bg-slate-100'}`} />}
                 </div>
               ))}
             </div>
@@ -1044,10 +1086,10 @@ function ShopRegistration() {
                   <div className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2">
                       <FieldBlock label="Business Phone">
-                        <InputWithIcon icon={<FaPhone />} value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} placeholder="080..." />
+                        <NigeriaPhoneInput value={form.phone} onChange={(val) => setForm((prev) => ({ ...prev, phone: val }))} placeholder="803 000 0000" />
                       </FieldBlock>
                       <FieldBlock label="WhatsApp Presence">
-                        <InputWithIcon icon={<FaPhone />} value={form.whatsapp} onChange={(e) => setForm((prev) => ({ ...prev, whatsapp: e.target.value }))} placeholder="080..." />
+                        <NigeriaPhoneInput value={form.whatsapp} onChange={(val) => setForm((prev) => ({ ...prev, whatsapp: val }))} placeholder="803 000 0000" />
                       </FieldBlock>
                     </div>
 
