@@ -33,6 +33,47 @@ import {
   preloadDashboardScreen,
 } from "../lib/authScreenTransitions"
 
+// --- NIGERIA PHONE INPUT ---
+function NigeriaPhoneInput({ value, onChange, placeholder, disabled = false, error }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-sm font-bold text-slate-800">
+        Phone Number <span className="ml-1 text-pink-600">*</span>
+      </label>
+      <div className="relative flex items-center">
+        <div className="absolute left-3 flex items-center gap-2 border-r border-slate-200 pr-2.5">
+          <div className="flex h-4 w-6 flex-col overflow-hidden rounded-sm border border-slate-100 shadow-sm">
+            <div className="flex-1 bg-[#008751]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#008751]" />
+          </div>
+          <span className="text-sm font-bold text-slate-500">+234</span>
+        </div>
+        <input
+          type="tel"
+          value={value}
+          onChange={(e) => {
+            const val = e.target.value.replace(/\D/g, "").slice(0, 10)
+            onChange(val)
+          }}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={`w-full rounded-2xl border bg-white py-3 pl-[104px] pr-4 text-sm font-medium text-slate-900 outline-none transition ${
+            disabled
+              ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+              : error
+              ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100"
+              : "border-slate-300 focus:border-pink-500 focus:ring-4 focus:ring-pink-100"
+          }`}
+        />
+      </div>
+      {error ? (
+        <p className="text-xs font-semibold text-red-600">{error}</p>
+      ) : null}
+    </div>
+  )
+}
+
 function CreateAccount() {
   const navigate = useNavigate()
 
@@ -320,10 +361,6 @@ function CreateAccount() {
     }
   }, [authLoading])
 
-  const currentErrorsCount = useMemo(() => Object.keys(errors).length, [errors])
-  
-  const isFormEmpty = !form.surname && !form.firstName && !form.phone && !form.email && !form.cityId && !form.areaId && !form.password && !form.confirmPassword;
-
   function handleCityChange(event) {
     const cityId = event.target.value
     setForm((prev) => ({ ...prev, cityId, areaId: "" }))
@@ -511,7 +548,15 @@ function CreateAccount() {
                 </div>
                 
                 <AuthInput id="signup-middlename" label="Middle Name (Optional)" value={form.middleName} onChange={(e) => setForm((prev) => ({ ...prev, middleName: e.target.value }))} placeholder="e.g. Olamide" error={errors.middleName} icon={<FaUser />} />
-                <AuthInput id="signup-phone" label="Phone Number" value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} placeholder="e.g. 08012345678" error={errors.phone} required icon={<FaPhone />} />
+                
+                <NigeriaPhoneInput 
+                  value={form.phone} 
+                  onChange={(val) => setForm((prev) => ({ ...prev, phone: val }))} 
+                  placeholder="801 234 5678" 
+                  error={errors.phone} 
+                  disabled={submitting}
+                />
+
                 <AuthInput id="signup-email" label="Email" type="email" value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} placeholder="example@email.com" error={errors.email} required icon={<FaEnvelope />} autoComplete="email" />
 
                 <div className="flex flex-col gap-2">
@@ -584,14 +629,6 @@ function CreateAccount() {
 
               <div className="mt-6 border-t border-slate-100 pt-5 text-center text-sm text-slate-600">
                 Already have an account? <button type="button" onClick={() => navigate("/")} className="font-extrabold text-pink-600 transition hover:text-pink-700 hover:underline">Sign In</button>
-              </div>
-
-              <div className="mt-3 text-center text-xs font-semibold text-slate-500">
-                {isFormEmpty 
-                  ? "Please fill in your details to continue." 
-                  : currentErrorsCount > 0 
-                  ? `${currentErrorsCount} field${currentErrorsCount > 1 ? "s" : ""} still need attention.` 
-                  : "Your details look good."}
               </div>
             </div>
           </div>
