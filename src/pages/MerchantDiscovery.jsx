@@ -1,10 +1,9 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { FaArrowLeft } from "react-icons/fa6"
 import useCachedFetch from "../hooks/useCachedFetch"
 import PageSeo from "../components/common/PageSeo"
-import { PageLoadingScreen } from "../components/common/PageStatusScreen"
-import RetryingNotice, { getRetryingMessage } from "../components/common/RetryingNotice"
+import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import {
   buildRepoSearchQuerySuffix,
   buildShopDetailPrefetchFromRepoSearch,
@@ -43,7 +42,7 @@ function MerchantDiscovery() {
 
   // 2. Smart Caching Hook
   const cacheKey = `merchant_discovery_v2_${merchantId || 'empty'}`
-  const { data, loading, error: dataError } = useCachedFetch(
+  const { data, loading, error: dataError, mutate } = useCachedFetch(
     cacheKey,
     fetchMerchant,
     { dependencies: [merchantId], ttl: 1000 * 60 * 60 } // Cache results for 1 hour
@@ -111,6 +110,14 @@ function MerchantDiscovery() {
         }
         canonicalPath={`/reposearch${merchantId ? `?merchantId=${encodeURIComponent(merchantId)}` : ""}`}
       />
+      
+      <PageTransitionOverlay
+        visible={loading && !data}
+        error={dataError}
+        onRetry={() => mutate()}
+        onDismiss={handleBack}
+      />
+
       <header className="sticky top-0 z-[100] w-full bg-[#131921] text-white shadow">
         <div className="mx-auto flex w-full max-w-[600px] items-center gap-4 px-4 py-3">
           <button
@@ -128,34 +135,13 @@ function MerchantDiscovery() {
       </header>
 
       <main className="flex justify-center px-5 py-10">
-        {loading && !data ? (
-          <PageLoadingScreen
-            fullScreen={false}
-            title="Loading shop"
-            message="Please wait while we prepare this merchant profile."
-          />
-        ) : dataError && !data ? (
-          <RetryingNotice
-            fullScreen={false}
-            title={
-              String(dataError).toLowerCase().includes("too many searches")
-                ? "Search cooling down"
-                : ""
-            }
-            message={
-              String(dataError).toLowerCase().includes("too many searches")
-                ? dataError
-                : getRetryingMessage(dataError)
-            }
-            className="w-full max-w-[420px]"
-          />
-        ) : shop ? (
-          <PageLoadingScreen
-            fullScreen={false}
-            title="Opening shop"
-            message="Please wait while we finish preparing this merchant profile."
-          />
-        ) : null}
+         {/* Silently preparing... */}
+         {!data && !dataError && (
+           <div className="text-center">
+             <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-pink-600"></div>
+             <p className="mt-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Entering Storefront</p>
+           </div>
+         )}
       </main>
     </div>
   )

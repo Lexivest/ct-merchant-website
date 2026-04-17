@@ -190,10 +190,11 @@ function buildCameraProfile(ratioInput) {
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function ShopRegistrationShimmer() {
   return (
-    <PageLoadingScreen
-      title="Opening shop registration"
-      message="Please wait while we prepare your registration form."
-    />
+    <div className="flex min-h-screen items-center justify-center bg-slate-50">
+      <div className="rounded-2xl bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-slate-100">
+        <CTMLoader size="sm" />
+      </div>
+    </div>
   )
 }
 
