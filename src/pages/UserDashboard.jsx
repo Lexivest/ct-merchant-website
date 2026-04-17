@@ -40,6 +40,7 @@ const loadSearchPage = () => import("./Search")
 const loadAreaPage = () => import("./Area")
 const loadCatPage = () => import("./Cat")
 const loadShopIndexPage = () => import("./ShopIndex")
+const loadDiscoveryDetailPage = () => import("./DiscoveryDetail")
 const loadWishlistDashboardView = () =>
   import("../features/dashboard/views/WishlistDashboardView")
 
@@ -1120,6 +1121,26 @@ function UserDashboard() {
     }
   }
 
+  async function openDiscoveryWithTransition(id) {
+    if (!id) return
+
+    const retryAction = () => openDiscoveryWithTransition(id)
+    beginRouteTransition(retryAction)
+
+    try {
+      await loadDiscoveryDetailPage()
+      navigate(`/discovery?id=${id}`)
+    } catch (error) {
+      failRouteTransition(
+        getFriendlyErrorMessage(
+          error,
+          "We could not open this discovery right now. Please try again."
+        ),
+        retryAction
+      )
+    }
+  }
+
   async function openShopIndexWithTransition() {
     const retryAction = () => openShopIndexWithTransition()
     beginRouteTransition(retryAction)
@@ -1944,6 +1965,9 @@ function UserDashboard() {
             groupedShopsByArea={groupedShopsByArea}
             navigateCategory={navigateCategory}
             onOpenShop={openShopWithTransition}
+            onOpenProduct={openProductWithTransition}
+            onOpenArea={openAreaWithTransition}
+            onOpenDiscovery={openDiscoveryWithTransition}
             loading={dynamicLoading && !localData?.shops?.length}
             error={dataError}
             promoBanner={<PromoAlertBanner />}

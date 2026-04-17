@@ -12,10 +12,8 @@ function PageTransitionOverlay({
   return (
     <>
       {visible && !error ? (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-white/40 backdrop-blur-[2px]">
-          <div className="rounded-2xl bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-slate-100">
-            <CTMLoader size="sm" />
-          </div>
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center pointer-events-none">
+          <CTMLoader size="sm" />
         </div>
       ) : null}
 

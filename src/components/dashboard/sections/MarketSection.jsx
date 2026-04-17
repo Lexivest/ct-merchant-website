@@ -7,8 +7,7 @@ import StableImage from "../../common/StableImage"
 import RetryingNotice, { getRetryingMessage } from "../../common/RetryingNotice"
 import { PROMO_EXTENDED_COLORS } from "../../../lib/promoBannerEngine"
 
-function SponsoredProductCard({ sponsored }) {
-  const navigate = useNavigate()
+function SponsoredProductCard({ sponsored, onOpenProduct }) {
   const product = sponsored.product
   if (!product) return null
 
@@ -27,7 +26,9 @@ function SponsoredProductCard({ sponsored }) {
   }, [images.length])
 
   const handleClick = () => {
-    navigate(`/product-detail?id=${product.id}`)
+    if (typeof onOpenProduct === "function") {
+      onOpenProduct(product.id)
+    }
   }
 
   return (
@@ -250,11 +251,16 @@ const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
   )
 })
 
-function DiscoveryCard({ item }) {
-  const navigate = useNavigate()
+function DiscoveryCard({ item, onOpenDiscovery }) {
+  const handleClick = () => {
+    if (typeof onOpenDiscovery === "function") {
+      onOpenDiscovery(item.id)
+    }
+  }
+
   return (
     <div 
-      onClick={() => navigate(`/discovery?id=${item.id}`)}
+      onClick={handleClick}
       className="group relative flex w-[160px] md:w-[190px] shrink-0 cursor-pointer flex-col overflow-hidden rounded-[24px] bg-white border border-slate-100 shadow-sm transition-all hover:shadow-xl active:scale-[0.98]"
     >
       <div className="relative aspect-[2/3] w-full overflow-hidden">
@@ -280,10 +286,12 @@ function MarketSection({
   groupedShopsByArea = [],
   navigateCategory,
   onOpenShop,
+  onOpenProduct,
+  onOpenArea,
+  onOpenDiscovery,
   loading,
   error,
 }) {
-  const navigate = useNavigate()
   const dashboardShellEmpty =
     !dashboardData ||
     (!dashboardData.profile &&
@@ -379,7 +387,11 @@ function MarketSection({
         <div className="sponsored-wrap bg-white pt-2 pb-4 border-b border-slate-50">
            <div className="flex gap-4 overflow-x-auto pl-4 pb-2 no-scrollbar">
              {sponsoredProducts.map((sponsored) => (
-               <SponsoredProductCard key={sponsored.id} sponsored={sponsored} />
+               <SponsoredProductCard 
+                 key={sponsored.id} 
+                 sponsored={sponsored} 
+                 onOpenProduct={onOpenProduct}
+               />
              ))}
              <div className="w-4 shrink-0" aria-hidden="true" />
            </div>
@@ -404,7 +416,11 @@ function MarketSection({
                 )}
               </h2>
               <button
-                onClick={() => navigate(`/area?id=${area.id}`)}
+                onClick={() => {
+                  if (typeof onOpenArea === "function") {
+                    onOpenArea(area.id)
+                  }
+                }}
                 className="text-[0.85rem] font-bold text-[#007185] hover:text-pink-600 active:scale-95 transition-all shrink-0"
               >
                 See All
@@ -431,7 +447,11 @@ function MarketSection({
               </h2>
               <div className="flex gap-4 overflow-x-auto pl-4 pb-2 no-scrollbar">
                 {dashboardData.staffDiscoveries.map((item) => (
-                  <DiscoveryCard key={item.id} item={item} />
+                  <DiscoveryCard 
+                    key={item.id} 
+                    item={item} 
+                    onOpenDiscovery={onOpenDiscovery}
+                  />
                 ))}
                 <div className="w-4 shrink-0" aria-hidden="true" />
               </div>
@@ -447,7 +467,11 @@ function MarketSection({
           </h2>
           <div className="flex gap-4 overflow-x-auto pl-4 pb-2 no-scrollbar">
             {dashboardData.staffDiscoveries.map((item) => (
-              <DiscoveryCard key={item.id} item={item} />
+              <DiscoveryCard 
+                key={item.id} 
+                item={item} 
+                onOpenDiscovery={onOpenDiscovery}
+              />
             ))}
             <div className="w-4 shrink-0" aria-hidden="true" />
           </div>
