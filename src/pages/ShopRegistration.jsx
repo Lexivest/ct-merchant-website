@@ -163,6 +163,13 @@ function ShopRegistrationShimmer() {
   )
 }
 
+const STEPS = [
+  { id: "basics", label: "Basics", icon: <FaStore /> },
+  { id: "profile", label: "Profile", icon: <FaLocationDot /> },
+  { id: "legal", label: "Verification", icon: <FaShieldHalved /> },
+  { id: "presence", label: "Presence", icon: <FaAddressBook /> },
+]
+
 function ShopRegistration() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -231,6 +238,7 @@ function ShopRegistration() {
     }
   )
 
+  const [currentStep, setCurrentStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
   const [hasHydrated, setHasHydrated] = useState(false)
@@ -378,49 +386,66 @@ function ShopRegistration() {
     }
   }
 
-  function validateForm() {
-    if (!form.name.trim() || form.name.trim().length < 3) return "Business name must be at least 3 characters."
-    if (!form.category) return "Please select a business category."
-    if (descWords < DESC_MIN_WORDS || descWords > DESC_MAX_WORDS) return `Business description must be between ${DESC_MIN_WORDS} and ${DESC_MAX_WORDS} words.`
-    if (!form.areaId) return "Please select an area."
-    if (addressWords < ADDR_MIN_WORDS || addressWords > ADDR_MAX_WORDS) return `Street address must be between ${ADDR_MIN_WORDS} and ${ADDR_MAX_WORDS} words.`
-    
-    if (!validPhone(form.phone)) return "Enter a valid business phone number."
-    if (form.whatsapp && !validPhone(form.whatsapp)) return "Enter a valid WhatsApp number."
-    
-    if (!form.idNumber.trim()) return "ID number is required."
-
-    if (!validUrl(form.website)) return "Enter a valid website URL."
-    if (!validUrl(form.facebook)) return "Enter a valid Facebook URL."
-    if (!validUrl(form.instagram)) return "Enter a valid Instagram URL."
-    if (!validUrl(form.twitter)) return "Enter a valid X or Twitter URL."
-    if (!validUrl(form.tiktok)) return "Enter a valid TikTok URL."
-
-    if (!previews.storefront && !files.storefront) return "Store front image is required."
-    if (!previews.idCard && !files.idCard) return "ID document is required."
-    
-    if (form.businessType === "Limited Liability (Ltd)" && !form.cacNumber.trim()) return "RC Number is required for Limited Liability businesses."
-    if (form.businessType === "Limited Liability (Ltd)" && !previews.cac && !files.cac) return "CAC certificate is required for Limited Liability businesses."
-
-    return ""
+  function validateStep(stepIndex) {
+    switch (stepIndex) {
+      case 0: // Basics
+        if (!form.name.trim() || form.name.trim().length < 3) return "Business name must be at least 3 characters."
+        if (!form.category) return "Please select a business category."
+        if (!previews.storefront && !files.storefront) return "Store front image is required."
+        return ""
+      case 1: // Profile
+        if (descWords < DESC_MIN_WORDS || descWords > DESC_MAX_WORDS) return `Business description must be between ${DESC_MIN_WORDS} and ${DESC_MAX_WORDS} words.`
+        if (!form.areaId) return "Please select an area."
+        if (addressWords < ADDR_MIN_WORDS || addressWords > ADDR_MAX_WORDS) return `Street address must be between ${ADDR_MIN_WORDS} and ${ADDR_MAX_WORDS} words.`
+        return ""
+      case 2: // Legal
+        if (!form.idNumber.trim()) return "ID number is required."
+        if (!previews.idCard && !files.idCard) return "ID document is required."
+        if (form.businessType === "Limited Liability (Ltd)") {
+          if (!form.cacNumber.trim()) return "RC Number is required for Limited Liability businesses."
+          if (!previews.cac && !files.cac) return "CAC certificate is required for Limited Liability businesses."
+        }
+        return ""
+      case 3: // Presence
+        if (!validPhone(form.phone)) return "Enter a valid business phone number."
+        if (form.whatsapp && !validPhone(form.whatsapp)) return "Enter a valid WhatsApp number."
+        if (!validUrl(form.website)) return "Enter a valid website URL."
+        if (!validUrl(form.facebook)) return "Enter a valid Facebook URL."
+        if (!validUrl(form.instagram)) return "Enter a valid Instagram URL."
+        if (!validUrl(form.twitter)) return "Enter a valid X or Twitter URL."
+        if (!validUrl(form.tiktok)) return "Enter a valid TikTok URL."
+        return ""
+      default:
+        return ""
+    }
   }
 
-  function openReview(event) {
-    event.preventDefault()
-    if (submitting) return
-    const error = validateForm()
+  function nextStep() {
+    const error = validateStep(currentStep)
     if (error) {
       setNotice({
         visible: true,
         type: "error",
-        title: "Please check the form",
-        message: getFriendlyErrorMessage(error, "Please fix the highlighted fields and retry."),
+        title: "Check Step Details",
+        message: error,
       })
       window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }
     setNotice({ visible: false, type: "info", title: "", message: "" })
-    setReviewOpen(true)
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep(prev => prev + 1)
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    } else {
+      setReviewOpen(true)
+    }
+  }
+
+  function prevStep() {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1)
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
   }
 
   // --- CT STUDIO FILE PIPELINE ---
@@ -756,7 +781,7 @@ function ShopRegistration() {
       window.scrollTo({ top: 0, behavior: "smooth" })
 
       try { localStorage.removeItem("ctm_dashboard_cache") } catch {
-        // Ignore cache cleanup failures after a successful submission.
+        // Ignore cache cleanup failures
       }
 
       setTimeout(() => navigate("/user-dashboard"), 1200)
@@ -807,223 +832,277 @@ function ShopRegistration() {
   if (!user || !profile) return null
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-indigo-100 via-pink-100 to-purple-100 pb-12">
+    <div className="relative min-h-screen bg-slate-50 pb-20">
       
       <input ref={hiddenInputRef} type="file" className="hidden" onChange={handleHiddenFileChange} />
 
-      <section className="px-4 py-6 md:py-8">
-        <div className="mx-auto max-w-3xl">
-          {isOffline && (
-            <div className="mb-4 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-100 px-4 py-3 text-sm font-bold text-amber-800 shadow-sm">
-              <i className="fa-solid fa-wifi-slash"></i> You are currently offline. You can view the form, but cannot submit until reconnected.
+      {/* Modern Header with Navigation */}
+      <div className="sticky top-0 z-[10] border-b border-slate-200 bg-white/80 backdrop-blur-md">
+        <div className="mx-auto max-w-3xl px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate("/user-dashboard")} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200">
+                <FaArrowLeft />
+              </button>
+              <div>
+                <h1 className="text-lg font-bold text-slate-900">{isEdit ? "Correction" : "New Registration"}</h1>
+                <p className="text-xs font-medium text-slate-500">Step {currentStep + 1} of {STEPS.length}</p>
+              </div>
             </div>
-          )}
-
-          <div className="mb-6 flex items-center gap-4">
-            <button onClick={() => navigate("/user-dashboard")} className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-pink-200 hover:bg-pink-50 hover:text-pink-700">
-              <FaArrowLeft />
-            </button>
-            <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">{isEdit ? "Correct Application" : "Register Shop"}</h1>
-              <p className="text-sm font-medium text-slate-600">Complete your merchant registration details.</p>
+            
+            <div className="hidden items-center gap-1 md:flex">
+              {STEPS.map((s, idx) => (
+                <div key={s.id} className="flex items-center">
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm transition-all duration-500 ${idx <= currentStep ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-slate-100 text-slate-400'}`}>
+                    {idx < currentStep ? <FaCheck className="text-xs" /> : s.icon}
+                  </div>
+                  {idx < STEPS.length - 1 && <div className={`h-1 w-6 rounded-full mx-1 transition-colors duration-500 ${idx < currentStep ? 'bg-indigo-600' : 'bg-slate-100'}`} />}
+                </div>
+              ))}
             </div>
           </div>
+
+          {/* Progress Bar (Mobile Optimized) */}
+          <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+            <div 
+              className="h-full bg-indigo-600 transition-all duration-500 ease-out" 
+              style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <section className="px-4 py-6">
+        <div className="mx-auto max-w-3xl">
+          {isOffline && (
+            <div className="mb-6 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+              <i className="fa-solid fa-wifi-slash"></i> Offline Mode: View only.
+            </div>
+          )}
 
           <AuthNotification visible={notice.visible} type={notice.type} title={notice.title} message={notice.message} />
 
           {cityData && cityData.is_open === false ? (
-            <div className="rounded-[28px] border border-amber-200 bg-amber-50 p-6 shadow-xl md:p-8 text-center">
+            <div className="rounded-3xl border border-amber-200 bg-white p-8 text-center shadow-sm">
               <FaCity className="mx-auto mb-4 text-5xl text-amber-500" />
-              <h2 className="text-xl font-extrabold text-slate-900 mb-2">City Operations Paused</h2>
-              <p className="text-sm font-medium text-slate-700 leading-relaxed">
-                We are not currently accepting or processing merchant registrations in <strong>{cityData.name}</strong>. Please check back later or contact support.
+              <h2 className="text-xl font-bold text-slate-900 mb-2">Operations Paused</h2>
+              <p className="text-sm font-medium text-slate-600">
+                Merchant registrations in <strong>{cityData.name}</strong> are temporarily paused.
               </p>
             </div>
           ) : (
-            <form onSubmit={openReview} className="rounded-[28px] border border-white/70 bg-white p-6 shadow-2xl md:p-8">
+            <div className="animate-fade-in space-y-6">
               
-              <SectionTitle icon={<FaStore />} tone="purple" title="Store Front Image" />
-              <p className="mb-4 text-center text-sm font-medium text-slate-500">
-                {`Upload a clear, portrait-oriented photo of your shop exterior (${storefrontRuleLabel}).`}
-              </p>
+              {/* Step 1: Basics */}
+              {currentStep === 0 && (
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+                  <SectionHeader icon={<FaStore />} title="Business Basics" subtitle="Tell us the core details of your shop." />
+                  
+                  <div className="space-y-6">
+                    <FieldBlock label="What is your business name?">
+                      <InputWithIcon icon={<FaShop />} value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="e.g. Ade & Sons Enterprise" />
+                    </FieldBlock>
 
-              <UploadCard
-                title="Cover Photo"
-                subtitle={`Required | ${storefrontRuleLabel}`}
-                onFileClick={() => openImagePicker("storefront", 3 / 4)}
-                onCameraClick={() => openCustomCamera("storefront", 3 / 4)}
-                preview={renderPreview("storefront")}
-                isPortrait
-              />
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <FieldBlock label="Business Structure">
+                        <select value={form.businessType} onChange={(e) => setForm((prev) => ({ ...prev, businessType: e.target.value }))} className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+                          <option>Individual/Enterprise</option>
+                          <option>Limited Liability (Ltd)</option>
+                        </select>
+                      </FieldBlock>
 
-              <SectionTitle icon={<FaBriefcase />} tone="pink" title="Business Details" />
+                      <FieldBlock label="Primary Category">
+                        <select value={form.category} onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))} className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+                          <option value="">Select...</option>
+                          {categories.map((item) => (<option key={item.name} value={item.name}>{item.name}</option>))}
+                        </select>
+                      </FieldBlock>
+                    </div>
 
-              <div className="grid gap-5">
-                <FieldBlock label="Business Name">
-                  <InputWithIcon icon={<FaShop />} value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="e.g. Ade & Sons Enterprise" />
-                </FieldBlock>
-
-                <div className="grid gap-5 md:grid-cols-2">
-                  <FieldBlock label="Business Type">
-                    <select value={form.businessType} onChange={(e) => setForm((prev) => ({ ...prev, businessType: e.target.value }))} className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100">
-                      <option>Individual/Enterprise</option>
-                      <option>Limited Liability (Ltd)</option>
-                    </select>
-                  </FieldBlock>
-
-                  <FieldBlock label="Category">
-                    <select value={form.category} onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))} className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100">
-                      <option value="">Select Category...</option>
-                      {categories.map((item) => (<option key={item.name} value={item.name}>{item.name}</option>))}
-                    </select>
-                  </FieldBlock>
+                    <div className="pt-4">
+                      <UploadCard
+                        title="Store Front Photo"
+                        subtitle={`Clear photo of shop exterior | ${storefrontRuleLabel}`}
+                        onFileClick={() => openImagePicker("storefront", 3 / 4)}
+                        onCameraClick={() => openCustomCamera("storefront", 3 / 4)}
+                        preview={renderPreview("storefront")}
+                        isPortrait
+                      />
+                    </div>
+                  </div>
                 </div>
+              )}
 
-                <FieldBlock label={<span>Description <span className="ml-1 text-pink-600">*</span></span>}>
-                  <textarea value={form.desc} onChange={(e) => setForm((prev) => ({ ...prev, desc: e.target.value }))} placeholder="Give detailed information about what you sell, the services you provide, and what makes your business unique..." className="min-h-[150px] w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100" />
-                  <WordCounter count={descWords} min={DESC_MIN_WORDS} max={DESC_MAX_WORDS} />
-                </FieldBlock>
+              {/* Step 2: Profile */}
+              {currentStep === 1 && (
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+                  <SectionHeader icon={<FaLocationDot />} title="Location & Description" subtitle="Where are you located and what do you do?" />
+
+                  <div className="space-y-6">
+                    <FieldBlock label="Business Description">
+                      <textarea value={form.desc} onChange={(e) => setForm((prev) => ({ ...prev, desc: e.target.value }))} placeholder="Explain your services and products..." className="min-h-[140px] w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                      <WordCounter count={descWords} min={DESC_MIN_WORDS} max={DESC_MAX_WORDS} />
+                    </FieldBlock>
+
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <FieldBlock label="City (Fixed)">
+                        <InputWithIcon icon={<FaCity />} value={profile?.cities?.name || ""} disabled />
+                      </FieldBlock>
+
+                      <FieldBlock label="Business Area">
+                        <select value={form.areaId} onChange={(e) => setForm((prev) => ({ ...prev, areaId: e.target.value }))} className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+                          <option value="">Select Area...</option>
+                          {areas.map((area) => (<option key={area.id} value={area.id}>{area.name}</option>))}
+                        </select>
+                      </FieldBlock>
+                    </div>
+
+                    <FieldBlock label="Detailed Street Address">
+                      <InputWithIcon icon={<FaMapPin />} value={form.address} onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))} placeholder="e.g. Suite 5, Sky Plaza, Wuse 2" />
+                      <WordCounter count={addressWords} min={ADDR_MIN_WORDS} max={ADDR_MAX_WORDS} />
+                    </FieldBlock>
+
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <FieldBlock label="Latitude (Optional)">
+                        <input type="number" step="any" value={form.lat} onChange={(e) => setForm((prev) => ({ ...prev, lat: e.target.value }))} placeholder="9.08" className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                      </FieldBlock>
+                      <FieldBlock label="Longitude (Optional)">
+                        <input type="number" step="any" value={form.lng} onChange={(e) => setForm((prev) => ({ ...prev, lng: e.target.value }))} placeholder="7.49" className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                      </FieldBlock>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Legal */}
+              {currentStep === 2 && (
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+                  <SectionHeader icon={<FaShieldHalved />} title="Verification" subtitle="Verify your identity and business status." />
+
+                  <div className="space-y-8">
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <FieldBlock label="Identification Type">
+                        <select value={form.idType} onChange={(e) => setForm((prev) => ({ ...prev, idType: e.target.value }))} className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+                          <option>National ID Card</option>
+                          <option>Voters Card</option>
+                          <option>Drivers License</option>
+                          <option>Int. Passport</option>
+                        </select>
+                      </FieldBlock>
+                      <FieldBlock label="ID Document Number">
+                        <input value={form.idNumber} onChange={(e) => setForm((prev) => ({ ...prev, idNumber: e.target.value }))} placeholder="Enter number..." className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                      </FieldBlock>
+                    </div>
+
+                    <UploadCard
+                      title="Upload ID Document"
+                      subtitle={`Clear photo or PDF | ${idRuleLabel}`}
+                      onFileClick={() => openImagePicker("idCard", null)}
+                      onCameraClick={() => openNativeCameraPicker("idCard", null)}
+                      onPdfClick={() => openPdfPicker("idCard")}
+                      preview={renderPreview("idCard")}
+                    />
+
+                    <div className="h-px bg-slate-100" />
+
+                    <FieldBlock label={form.businessType === "Limited Liability (Ltd)" ? "RC Number *" : "Business Registration (Optional)"}>
+                      <InputWithIcon icon={<FaFileContract />} value={form.cacNumber} onChange={(e) => setForm((prev) => ({ ...prev, cacNumber: e.target.value }))} placeholder="BN or RC Number" />
+                    </FieldBlock>
+
+                    <UploadCard
+                      title="CAC Certificate"
+                      subtitle={`Required for Ltd | ${cacRuleLabel}`}
+                      onFileClick={() => openImagePicker("cac", null)}
+                      onCameraClick={() => openNativeCameraPicker("cac", null)}
+                      onPdfClick={() => openPdfPicker("cac")}
+                      preview={renderPreview("cac")}
+                    />
+
+                    <div className="h-px bg-slate-100" />
+
+                    <UploadCard
+                      title="Shop Logo (Optional)"
+                      subtitle={`Square image | ${logoRuleLabel}`}
+                      onFileClick={() => openImagePicker("logo", 1)}
+                      onCameraClick={() => openCustomCamera("logo", 1)}
+                      preview={renderPreview("logo")}
+                      isSquare
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Presence */}
+              {currentStep === 3 && (
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+                  <SectionHeader icon={<FaAddressBook />} title="Digital Presence" subtitle="How can customers find you online?" />
+
+                  <div className="mb-8 rounded-2xl bg-indigo-50 p-4 text-xs font-bold text-indigo-700 leading-relaxed">
+                    IMPORTANT: Link to your PROFESSIONAL business pages. Using personal profiles may delay your approval.
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <FieldBlock label="Business Phone">
+                        <InputWithIcon icon={<FaPhone />} value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} placeholder="080..." />
+                      </FieldBlock>
+                      <FieldBlock label="WhatsApp Presence">
+                        <InputWithIcon icon={<FaPhone />} value={form.whatsapp} onChange={(e) => setForm((prev) => ({ ...prev, whatsapp: e.target.value }))} placeholder="080..." />
+                      </FieldBlock>
+                    </div>
+
+                    <FieldBlock label="Official Website">
+                      <InputWithIcon icon={<FaGlobe />} value={form.website} onChange={(e) => setForm((prev) => ({ ...prev, website: e.target.value }))} onBlur={handleUrlBlur("website")} placeholder="www.example.com" />
+                    </FieldBlock>
+
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <FieldBlock label="Facebook Page">
+                        <input value={form.facebook} onChange={(e) => setForm((prev) => ({ ...prev, facebook: e.target.value }))} onBlur={handleUrlBlur("facebook")} placeholder="facebook.com/..." className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                      </FieldBlock>
+                      <FieldBlock label="Instagram Profile">
+                        <input value={form.instagram} onChange={(e) => setForm((prev) => ({ ...prev, instagram: e.target.value }))} onBlur={handleUrlBlur("instagram")} placeholder="instagram.com/..." className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                      </FieldBlock>
+                    </div>
+
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <FieldBlock label="X (Twitter)">
+                        <input value={form.twitter} onChange={(e) => setForm((prev) => ({ ...prev, twitter: e.target.value }))} onBlur={handleUrlBlur("twitter")} placeholder="x.com/..." className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                      </FieldBlock>
+                      <FieldBlock label="TikTok Channel">
+                        <input value={form.tiktok} onChange={(e) => setForm((prev) => ({ ...prev, tiktok: e.target.value }))} onBlur={handleUrlBlur("tiktok")} placeholder="tiktok.com/@..." className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                      </FieldBlock>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Navigation Buttons */}
+              <div className="flex items-center justify-between gap-4 pt-4">
+                <button 
+                  onClick={prevStep} 
+                  disabled={currentStep === 0}
+                  className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-8 text-sm font-bold text-slate-600 transition-all hover:bg-slate-50 disabled:opacity-30"
+                >
+                  <FaArrowLeft className="text-xs" />
+                  <span>Back</span>
+                </button>
+
+                <button 
+                  onClick={nextStep}
+                  className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-8 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 active:scale-95"
+                >
+                  <span>{currentStep === STEPS.length - 1 ? "Review & Finish" : "Next Step"}</span>
+                  <FaArrowRight className="text-xs" />
+                </button>
               </div>
-
-              <SectionTitle icon={<FaLocationDot />} tone="amber" title="Location" />
-
-              <div className="grid gap-5">
-                <div className="grid gap-5 md:grid-cols-2">
-                  <FieldBlock label="City (Fixed)">
-                    <InputWithIcon icon={<FaCity />} value={profile?.cities?.name || ""} disabled />
-                  </FieldBlock>
-
-                  <FieldBlock label="Area">
-                    <select value={form.areaId} onChange={(e) => setForm((prev) => ({ ...prev, areaId: e.target.value }))} className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100">
-                      <option value="">Select Area...</option>
-                      {areas.map((area) => (<option key={area.id} value={area.id}>{area.name}</option>))}
-                    </select>
-                  </FieldBlock>
-                </div>
-
-                <FieldBlock label={<span>Detailed Street Address <span className="ml-1 text-pink-600">*</span></span>}>
-                  <InputWithIcon icon={<FaMapPin />} value={form.address} onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))} placeholder="e.g. Shop 4, Ground Floor, Main Market Plaza..." />
-                  <WordCounter count={addressWords} min={ADDR_MIN_WORDS} max={ADDR_MAX_WORDS} />
-                </FieldBlock>
-
-                <div className="grid gap-5 md:grid-cols-2">
-                  <FieldBlock label="Latitude (Optional)">
-                    <input type="number" step="any" value={form.lat} onChange={(e) => setForm((prev) => ({ ...prev, lat: e.target.value }))} placeholder="e.g. 9.08" className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100" />
-                  </FieldBlock>
-
-                  <FieldBlock label="Longitude (Optional)">
-                    <input type="number" step="any" value={form.lng} onChange={(e) => setForm((prev) => ({ ...prev, lng: e.target.value }))} placeholder="e.g. 7.49" className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100" />
-                  </FieldBlock>
-                </div>
-              </div>
-
-              <SectionTitle icon={<FaShieldHalved />} tone="blue" title="Identity & Legal" rightText="Private" />
-
-              <div className="grid gap-5">
-                <FieldBlock label={form.businessType === "Limited Liability (Ltd)" ? <span>RC Number <span className="ml-1 text-pink-600">*</span></span> : "BN Number (Optional)"}>
-                  <InputWithIcon icon={<FaFileContract />} value={form.cacNumber} onChange={(e) => setForm((prev) => ({ ...prev, cacNumber: e.target.value }))} placeholder="If applicable" />
-                </FieldBlock>
-
-                <UploadCard
-                  title={form.businessType === "Limited Liability (Ltd)" ? <span>CAC Certificate <span className="ml-1 text-pink-600">*</span></span> : "CAC Certificate"}
-                  subtitle={
-                    form.businessType === "Limited Liability (Ltd)"
-                      ? `Required for Ltd | ${cacRuleLabel}`
-                      : `Optional for enterprise | ${cacRuleLabel}`
-                  }
-                  onFileClick={() => openImagePicker("cac", null)}
-                  onCameraClick={() => openNativeCameraPicker("cac", null)}
-                  onPdfClick={() => openPdfPicker("cac")}
-                  preview={renderPreview("cac")}
-                />
-
-                <div className="grid gap-5 md:grid-cols-2">
-                  <FieldBlock label="ID Type">
-                    <select value={form.idType} onChange={(e) => setForm((prev) => ({ ...prev, idType: e.target.value }))} className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100">
-                      <option>National ID Card</option>
-                      <option>Voters Card</option>
-                      <option>Drivers License</option>
-                      <option>Int. Passport</option>
-                    </select>
-                  </FieldBlock>
-
-                  <FieldBlock label="ID Number">
-                    <input value={form.idNumber} onChange={(e) => setForm((prev) => ({ ...prev, idNumber: e.target.value }))} className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100" />
-                  </FieldBlock>
-                </div>
-
-                <UploadCard
-                  title={<span>Official ID Document <span className="ml-1 text-pink-600">*</span></span>}
-                  subtitle={`Required | ${idRuleLabel}`}
-                  onFileClick={() => openImagePicker("idCard", null)}
-                  onCameraClick={() => openNativeCameraPicker("idCard", null)}
-                  onPdfClick={() => openPdfPicker("idCard")}
-                  preview={renderPreview("idCard")}
-                />
-
-                <UploadCard
-                  title="Brand Logo"
-                  subtitle={`Optional square image | ${logoRuleLabel}`}
-                  onFileClick={() => openImagePicker("logo", 1)}
-                  onCameraClick={() => openCustomCamera("logo", 1)}
-                  preview={renderPreview("logo")}
-                  isSquare
-                />
-              </div>
-
-              <SectionTitle icon={<FaAddressBook />} tone="green" title="Contacts & Socials" />
-
-              <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-                Please provide links to your business profiles and website. Personal links may cause your application to be rejected.
-              </div>
-
-              <div className="grid gap-5">
-                <FieldBlock label="Business Website (Optional)">
-                  <InputWithIcon icon={<FaGlobe />} value={form.website} onChange={(e) => setForm((prev) => ({ ...prev, website: e.target.value }))} onBlur={handleUrlBlur("website")} placeholder="e.g. www.yourshop.com" />
-                </FieldBlock>
-
-                <div className="grid gap-5 md:grid-cols-2">
-                  <FieldBlock label="Business Phone">
-                    <InputWithIcon icon={<FaPhone />} value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} placeholder="e.g. 08012345678" />
-                  </FieldBlock>
-                  <FieldBlock label="WhatsApp Number">
-                    <InputWithIcon icon={<FaPhone />} value={form.whatsapp} onChange={(e) => setForm((prev) => ({ ...prev, whatsapp: e.target.value }))} placeholder="e.g. 08012345678" />
-                  </FieldBlock>
-                </div>
-
-                <div className="grid gap-5 md:grid-cols-2">
-                  <FieldBlock label="Facebook URL">
-                    <input value={form.facebook} onChange={(e) => setForm((prev) => ({ ...prev, facebook: e.target.value }))} onBlur={handleUrlBlur("facebook")} placeholder="e.g. www.facebook.com/yourshop" className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100" />
-                  </FieldBlock>
-                  <FieldBlock label="Instagram URL">
-                    <input value={form.instagram} onChange={(e) => setForm((prev) => ({ ...prev, instagram: e.target.value }))} onBlur={handleUrlBlur("instagram")} placeholder="e.g. www.instagram.com/yourshop" className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100" />
-                  </FieldBlock>
-                </div>
-
-                <div className="grid gap-5 md:grid-cols-2">
-                  <FieldBlock label="X (Twitter) URL">
-                    <input value={form.twitter} onChange={(e) => setForm((prev) => ({ ...prev, twitter: e.target.value }))} onBlur={handleUrlBlur("twitter")} placeholder="e.g. x.com/yourshop" className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100" />
-                  </FieldBlock>
-                  <FieldBlock label="TikTok URL">
-                    <input value={form.tiktok} onChange={(e) => setForm((prev) => ({ ...prev, tiktok: e.target.value }))} onBlur={handleUrlBlur("tiktok")} placeholder="e.g. www.tiktok.com/@yourshop" className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100" />
-                  </FieldBlock>
-                </div>
-              </div>
-
-              <div className="mt-8">
-                <AuthButton type="submit" loading={false}>
-                  <span>Review Application</span>
-                  <FaArrowRight />
-                </AuthButton>
-              </div>
-            </form>
+            </div>
           )}
         </div>
       </section>
 
       <CameraCaptureModal
         open={cameraCapture.open}
-        title="Capture Registration Image"
+        title="Capture Image"
         profile={activeCameraProfile}
         onClose={closeCustomCamera}
         onCapture={handleCameraCapture}
@@ -1049,25 +1128,26 @@ function ShopRegistration() {
   )
 }
 
-// --- SUB COMPONENTS ---
+// --- SUB-COMPONENTS ---
 
-function SectionTitle({ icon, title, tone = "purple", rightText = "" }) {
-  const tones = { purple: "text-violet-600", pink: "text-pink-600", amber: "text-amber-500", blue: "text-sky-600", green: "text-emerald-600" }
+function SectionHeader({ icon, title, subtitle }) {
   return (
-    <div className="mb-5 mt-8 flex items-center justify-between border-b-2 border-slate-100 pb-3">
-      <div className="flex items-center gap-3">
-        <div className={`rounded-xl bg-slate-50 p-2 text-lg ${tones[tone]}`}>{icon}</div>
-        <h2 className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-700">{title}</h2>
+    <div className="mb-8 flex items-start gap-4">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-xl text-indigo-600">
+        {icon}
       </div>
-      {rightText && <span className="text-xs font-bold uppercase tracking-wide text-slate-400">{rightText}</span>}
+      <div>
+        <h2 className="text-lg font-extrabold text-slate-900">{title}</h2>
+        <p className="text-sm font-medium text-slate-500 leading-tight">{subtitle}</p>
+      </div>
     </div>
   )
 }
 
 function FieldBlock({ label, children }) {
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-sm font-bold text-slate-800">{label}</label>
+    <div className="flex flex-col gap-2.5">
+      <label className="text-[13px] font-extrabold uppercase tracking-wider text-slate-500">{label}</label>
       {children}
     </div>
   )
@@ -1077,14 +1157,14 @@ function InputWithIcon({ icon, value, onChange, onBlur, placeholder, disabled = 
   return (
     <div className="relative">
       <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">{icon}</span>
-      <input value={value} onChange={onChange} onBlur={onBlur} placeholder={placeholder} disabled={disabled} className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 py-4 pl-12 pr-4 text-sm font-medium text-slate-800 outline-none transition focus:border-pink-500 focus:bg-white focus:ring-4 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-slate-100" />
+      <input value={value} onChange={onChange} onBlur={onBlur} placeholder={placeholder} disabled={disabled} className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 py-3.5 pl-12 pr-4 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all disabled:opacity-60" />
     </div>
   )
 }
 
 function WordCounter({ count, min, max }) {
   const valid = count >= min && count <= max
-  return <div className={`text-right text-xs font-bold ${valid ? "text-emerald-600" : "text-red-500"}`}>{count} words (Min: {min}, Max: {max})</div>
+  return <div className={`mt-1.5 text-right text-[10px] font-extrabold uppercase tracking-widest ${valid ? "text-emerald-600" : "text-rose-500"}`}>{count} / {max} words</div>
 }
 
 function UploadCard({
@@ -1098,53 +1178,55 @@ function UploadCard({
   isSquare,
 }) {
   return (
-    <div className={`mx-auto ${isPortrait ? 'w-full max-w-[240px]' : isSquare ? 'w-full max-w-[200px]' : 'w-full'}`}>
-      <div className={`rounded-[24px] border-2 border-dashed border-slate-300 bg-slate-50 p-5 ${isPortrait ? 'aspect-[3/4]' : isSquare ? 'aspect-square' : ''}`}>
+    <div className="flex flex-col items-center">
+      <div className={`relative overflow-hidden rounded-[32px] border-4 border-white bg-slate-100 shadow-lg shadow-slate-200 ${isPortrait ? 'aspect-[3/4] w-48' : isSquare ? 'aspect-square w-40' : 'aspect-video w-full'}`}>
         {preview ? (
           <div className="h-full w-full">{preview}</div>
         ) : (
-          <div className="flex h-full min-h-[140px] flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white text-center">
-            <FaCamera className="mb-2 text-3xl text-slate-400" />
+          <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-slate-300">
+              <FaCamera className="text-xl" />
+            </div>
+          </div>
+        )}
+        
+        {preview && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity hover:opacity-100">
+             <p className="text-[10px] font-bold uppercase tracking-widest text-white text-center px-2">Tap below to change</p>
           </div>
         )}
       </div>
-      <div className="mt-3 text-center">
-        <p className="text-sm font-extrabold text-slate-800">{title}</p>
-        <p className="mt-1 text-xs font-semibold text-slate-500">{subtitle}</p>
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={onFileClick}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-[0.7rem] font-extrabold uppercase tracking-wide text-slate-700 transition hover:bg-slate-50"
-          >
-            <FaImage className="text-[0.8rem]" />
-            File
-          </button>
-          <button
-            type="button"
-            onClick={onCameraClick}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-[0.7rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-slate-700"
-          >
-            <FaCamera className="text-[0.8rem]" />
-            Camera
-          </button>
-          {onPdfClick ? (
-            <button
-              type="button"
-              onClick={onPdfClick}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-[0.7rem] font-extrabold uppercase tracking-wide text-red-700 transition hover:bg-red-100"
-            >
-              <FaFilePdf className="text-[0.8rem]" />
-              PDF
-            </button>
-          ) : null}
+
+      <div className="mt-4 text-center">
+        <h4 className="text-sm font-bold text-slate-900">{title}</h4>
+        <p className="text-[11px] font-medium text-slate-500">{subtitle}</p>
+        
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          <UploadAction icon={<FaImage />} label="File" onClick={onFileClick} />
+          <UploadAction icon={<FaCamera />} label="Camera" onClick={onCameraClick} primary />
+          {onPdfClick && <UploadAction icon={<FaFilePdf />} label="PDF" onClick={onPdfClick} tone="red" />}
         </div>
       </div>
     </div>
   )
 }
 
-// --- CROPPER MODAL ---
+function UploadAction({ icon, label, onClick, primary, tone }) {
+  const base = "flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95"
+  const styles = primary 
+    ? "bg-slate-900 text-white hover:bg-slate-800" 
+    : tone === "red" 
+      ? "bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100" 
+      : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+  
+  return (
+    <button type="button" onClick={onClick} className={`${base} ${styles}`}>
+      {icon}
+      <span>{label}</span>
+    </button>
+  )
+}
+
 function CropModal({ config, onClose, onCrop }) {
   const cropperRef = useRef(null)
   

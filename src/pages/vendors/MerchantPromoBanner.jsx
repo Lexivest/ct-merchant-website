@@ -268,7 +268,7 @@ async function generatePromoBannerCanvasBlob({
   context.textAlign = "center";
   context.textBaseline = "alphabetic";
   context.fillText(categoryText, centerX, categoryY);
-  const categoryMetrics = context.measureText(categoryText);
+  const categoryMetrics = context.measureText(categoryText);``
   const categoryUnderlineWidth = Math.min(categoryMetrics.width, headerTextMaxWidth);
   context.strokeStyle = "#FBBF24";
   context.lineWidth = 3;
