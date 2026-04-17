@@ -62,11 +62,8 @@ import {
 } from "../lib/authScreenTransitions"
 import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 
-// --- LOCAL ASSET IMPORTS FOR CAROUSEL ---
-import banner2 from "../assets/images/banner2.jpg"
-import banner3 from "../assets/images/banner3.jpg"
-
-const bannerImages = [banner2, banner3]
+// --- LOCAL ASSET IMPORT ---
+import banner from "../assets/images/banner.jpg"
 
 const phrases = [
   "City Commerce",
@@ -553,22 +550,6 @@ function Home() {
     [navigate]
   )
 
-  // --- BANNER CAROUSEL STATE & TIMER ---
-  const [currentBanner, setCurrentBanner] = useState(0)
-
-  useEffect(() => {
-    const bannerTimer = setInterval(() => {
-      setCurrentBanner((prev) => (prev + 1) % bannerImages.length)
-    }, 7500)
-    return () => clearInterval(bannerTimer)
-  }, [])
-
-  useEffect(() => {
-    bannerImages.forEach((src) => {
-      const preload = new Image()
-      preload.src = src
-    })
-  }, [])
 
   const [phraseIndex, setPhraseIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
@@ -1133,20 +1114,14 @@ function Home() {
               <div className="w-full lg:col-start-1 lg:row-start-1">
                 <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
                   <div className="relative aspect-video w-full h-[220px] sm:h-[300px] md:h-[400px] overflow-hidden bg-slate-100">
-                    {/* Professional Smooth Carousel with Cross-fade */}
-                    {bannerImages.map((src, index) => (
-                      <StableImage
-                        key={src}
-                        src={src}
-                        alt={`Commerce Banner ${index + 1}`}
-                        containerClassName={`absolute inset-0 h-full w-full transition-opacity duration-1000 ease-in-out ${
-                          index === currentBanner ? "opacity-100" : "opacity-0"
-                        }`}
-                        className="h-full w-full object-cover object-center"
-                        loading="eager"
-                        fetchPriority={index === 0 ? "high" : "auto"}
-                      />
-                    ))}
+                    <StableImage
+                      src={banner}
+                      alt="Commerce Banner"
+                      containerClassName="absolute inset-0 h-full w-full"
+                      className="h-full w-full object-cover object-center"
+                      loading="eager"
+                      fetchPriority="high"
+                    />
                   </div>
                 </div>
               </div>
