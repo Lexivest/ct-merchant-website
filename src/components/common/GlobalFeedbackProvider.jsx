@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import ctmLogo from "../../assets/images/logo.jpg"
+import StableImage from "./StableImage"
 
 const GlobalFeedbackContext = createContext(null)
 
@@ -87,9 +88,13 @@ function GlobalFeedbackModal({ item, onClose }) {
     >
       <div className={`w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl ring-2 ${tone.ring}`}>
         <div className="mb-4 flex items-center gap-3">
-          <div className="h-11 w-11 overflow-hidden rounded-xl border border-slate-200 bg-white">
-            <img src={ctmLogo} alt="CTM" className="h-full w-full object-cover" />
-          </div>
+          <StableImage
+            src={ctmLogo}
+            alt="CTM"
+            containerClassName="h-11 w-11 overflow-hidden rounded-xl border border-slate-200"
+            className="h-full w-full object-cover"
+            loading="eager"
+          />
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.13em] text-slate-500">CTMerchant</p>
             <h3 className="text-lg font-black text-slate-900">{item.title}</h3>

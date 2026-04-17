@@ -6,34 +6,34 @@ export function isNetworkError(error) {
   return NETWORK_ERROR_PATTERN.test(rawMessage)
 }
 
-export function getFriendlyErrorMessage(error, fallback = "Something went wrong. Please retry.") {
+export function getFriendlyErrorMessage(error, fallback = "We encountered an issue. Please try again.") {
   const rawMessage = String(error?.message || error || "").trim()
   const lower = rawMessage.toLowerCase()
 
   if (!rawMessage) return fallback
 
   if (NETWORK_ERROR_PATTERN.test(rawMessage)) {
-    return "Network unavailable. Retry."
+    return "Check your internet connection and try again."
   }
 
   if (lower.includes("unauthorized") || lower.includes("session expired")) {
-    return "Session expired. Please sign in again."
+    return "Your session has ended. Please sign in to continue."
   }
 
   if (lower.includes("database error saving new user") || lower.includes("phone number already exists")) {
-    return "This phone number is already registered to another account."
+    return "This phone number is already linked to another account."
   }
 
   if (lower.includes("duplicate key value violates unique constraint \"idx_shops_owner_id_unique\"")) {
-    return "You already have a shop registered. You can only manage one shop per account."
+    return "You already have a shop registered. Each account is limited to one shop."
   }
 
   if (lower.includes("duplicate key value violates unique constraint \"shops_name_key\"") || lower.includes("shop name already exists")) {
-    return "A shop with this name is already registered. Please choose a unique name."
+    return "This shop name is already in use. Please try a different name."
   }
 
   if (lower.includes("duplicate key value violates unique constraint \"shops_cac_number_key\"") || lower.includes("cac number already exists")) {
-    return "This RC / CAC number is already registered to another shop."
+    return "This RC or CAC number is already registered. Please check the details."
   }
 
   if (lower.includes("duplicate key value violates unique constraint \"shops_phone_key\"")) {
@@ -41,11 +41,11 @@ export function getFriendlyErrorMessage(error, fallback = "Something went wrong.
   }
 
   if (lower.includes("user already exists") || lower.includes("email already in use")) {
-    return "An account with this email already exists."
+    return "An account with this email address already exists."
   }
 
   if (lower.includes("permission denied") || lower.includes("row-level security")) {
-    return "You do not have permission to complete this action."
+    return "You don't have the required permissions for this action."
   }
 
   if (rawMessage.includes(" | ") || rawMessage.includes("details:") || rawMessage.includes("hint:")) {

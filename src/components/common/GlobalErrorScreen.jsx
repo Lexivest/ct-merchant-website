@@ -4,7 +4,6 @@ import { isNetworkError } from "../../lib/friendlyErrors"
 import { isChunkLoadFailure } from "../../lib/runtimeRecovery"
 
 function resolveErrorCopy(error, explicitTitle, explicitMessage) {
-
   const offline = typeof navigator !== "undefined" ? !navigator.onLine : false
   const network = offline || isNetworkError(error)
   const chunk = isChunkLoadFailure(error)
@@ -13,12 +12,12 @@ function resolveErrorCopy(error, explicitTitle, explicitMessage) {
     return {
       network,
       chunk,
-      title: explicitTitle || (network ? "No internet connection" : "Something went wrong"),
+      title: explicitTitle || (network ? "Connection Issue" : "An error occurred"),
       message:
         explicitMessage ||
         (network
-          ? "Please check your connection. This screen will stay here until you retry or go back."
-          : "We could not complete that request. Please retry or go back."),
+          ? "We're having trouble reaching our servers. Please check your connection."
+          : "We encountered an unexpected issue while processing your request."),
     }
   }
 
@@ -26,8 +25,8 @@ function resolveErrorCopy(error, explicitTitle, explicitMessage) {
     return {
       network,
       chunk,
-      title: "No internet connection",
-      message: "Please check your connection. This screen will stay here until you retry or go back.",
+      title: "Connection Issue",
+      message: "We're having trouble reaching our servers. Please check your connection and try again.",
     }
   }
 
@@ -35,16 +34,16 @@ function resolveErrorCopy(error, explicitTitle, explicitMessage) {
     return {
       network,
       chunk,
-      title: "Website update in progress",
-      message: "A fresh version of CTMerchant is available. Retry will safely reload the latest files.",
+      title: "App Update Required",
+      message: "A new version of CTMerchant is available. We need to reload to apply the latest improvements.",
     }
   }
 
   return {
     network,
     chunk,
-    title: "Something went wrong",
-    message: "We could not complete that request. Please retry or go back.",
+    title: "An error occurred",
+    message: "We encountered an unexpected issue. Please try again or go back to the previous page.",
   }
 }
 
@@ -55,7 +54,7 @@ function GlobalErrorScreen({
   fullScreen = true,
   onRetry = null,
   onBack = null,
-  retryLabel = "Retry",
+  retryLabel = "Try again",
   backLabel = "Go back",
   busy = false,
 }) {
@@ -63,7 +62,7 @@ function GlobalErrorScreen({
   const [cloudStatus, setCloudStatus] = useState("Checking...")
   const copy = resolveErrorCopy(error, title, message)
 
-  const wrapperClass = fullScreen ? "min-h-screen" : "min-h-[280px]"
+  const wrapperClass = fullScreen ? "min-h-screen" : "min-h-[320px]"
   const Icon = copy.network ? FaWifi : FaTriangleExclamation
 
   useEffect(() => {
@@ -73,8 +72,6 @@ function GlobalErrorScreen({
       try {
         const controller = new AbortController()
         const id = setTimeout(() => controller.abort(), 4000)
-        
-        // Check Cloudflare Trace - If this fails, Cloudflare is likely blocking Firefox
         await fetch("https://www.cloudflare.com/cdn-cgi/trace", { 
           signal: controller.signal,
           mode: 'no-cors' 
@@ -85,7 +82,6 @@ function GlobalErrorScreen({
         setCloudStatus("Connection Blocked (Cloudflare/ETP)")
       }
     }
-
     void checkConnectivity()
   }, [showDetails])
 
@@ -110,45 +106,42 @@ function GlobalErrorScreen({
       return null
     }
   }, [error])
+  
   const showDebugTools = Boolean(import.meta.env?.DEV && diagnosticInfo)
 
   return (
-    <div className={`${wrapperClass} flex items-center justify-center bg-[#E3E6E6] px-5 py-10`}>
-      <div className="relative w-full max-w-lg overflow-hidden rounded-[30px] border border-white/80 bg-white p-7 text-center shadow-[0_28px_70px_rgba(15,23,42,0.18)]">
-        <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-pink-100" />
-        <div className="pointer-events-none absolute -bottom-20 -left-12 h-44 w-44 rounded-full bg-rose-50" />
+    <div className={`${wrapperClass} flex items-center justify-center bg-slate-50 px-5 py-12`}>
+      <div className="relative w-full max-w-lg overflow-hidden rounded-[40px] bg-white p-8 text-center shadow-[0_30px_80px_rgba(15,23,42,0.12)] border border-slate-100">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-slate-50/50" />
+        <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-slate-50/50" />
 
         <div className="relative">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#131921] text-2xl text-pink-300 shadow-[0_14px_30px_rgba(19,25,33,0.22)]">
+          <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-[28px] bg-slate-900 text-3xl text-white shadow-[0_16px_35px_rgba(15,23,42,0.25)]">
             <Icon />
           </div>
 
-          <div className="mx-auto mt-5 inline-flex rounded-full bg-pink-100 px-3 py-1 text-[0.75rem] font-black uppercase tracking-[0.12em] text-pink-700 ring-1 ring-pink-200">
-            CTMerchant Recovery
-          </div>
-
-          <h1 className="mt-4 text-[1.55rem] font-black leading-tight text-slate-950">
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 md:text-3xl">
             {copy.title}
           </h1>
-          <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+          <p className="mt-4 text-[0.95rem] font-medium leading-relaxed text-slate-500">
             {busy ? "Preparing a clean reload..." : copy.message}
           </p>
 
-          {showDebugTools ? (
-            <div className="mt-8 flex flex-col gap-2 text-left">
+          {showDebugTools && (
+            <div className="mt-10 flex flex-col gap-2 text-left">
               <button
                 type="button"
                 onClick={() => setShowDetails(!showDetails)}
-                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-pink-600"
+                className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-slate-600"
               >
                 <FaBug className="text-xs" />
                 {showDetails ? "Hide Diagnostic Report" : "Show Diagnostic Report"}
               </button>
 
-              {showDetails ? (
-                <div className="mt-2 overflow-hidden rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-[10px] shadow-inner">
-                  <div className="mb-2 font-black uppercase tracking-tighter text-rose-700">Deep Trace Analysis</div>
-                  <div className="space-y-1 font-mono text-slate-700">
+              {showDetails && (
+                <div className="mt-2 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/80 p-5 text-[10px] shadow-inner">
+                  <div className="mb-2 font-black uppercase tracking-tighter text-slate-700">Deep Trace Analysis</div>
+                  <div className="space-y-1 font-mono text-slate-600">
                     <p><strong>Error Type:</strong> {diagnosticInfo?.name || "Unknown"}</p>
                     <p><strong>Message:</strong> {diagnosticInfo?.message || "No message"}</p>
                     <p><strong>Cloudflare Status:</strong> {cloudStatus}</p>
@@ -156,35 +149,34 @@ function GlobalErrorScreen({
                     <p><strong>Agent:</strong> {diagnosticInfo?.agent || "Unknown"}</p>
                   </div>
                 </div>
-              ) : null}
+              )}
             </div>
-          ) : null}
+          )}
 
-
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            {typeof onRetry === "function" ? (
+          <div className="mt-10 flex flex-col gap-3">
+            {typeof onRetry === "function" && (
               <button
                 type="button"
                 onClick={onRetry}
                 disabled={busy}
-                className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-[#131921] px-5 py-3 text-sm font-black text-white transition hover:bg-[#232F3E] disabled:cursor-wait disabled:opacity-70"
+                className="flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-slate-900 text-sm font-black text-white transition hover:bg-slate-800 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
               >
                 <FaRotateRight className={busy ? "animate-spin" : ""} />
-                {retryLabel}
+                <span>{retryLabel}</span>
               </button>
-            ) : null}
+            )}
 
-            {typeof onBack === "function" ? (
+            {typeof onBack === "function" && (
               <button
                 type="button"
                 onClick={onBack}
                 disabled={busy}
-                className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-2xl border border-pink-200 bg-pink-50 px-5 py-3 text-sm font-black text-pink-700 transition hover:bg-pink-100 disabled:cursor-wait disabled:opacity-70"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-slate-100 text-sm font-bold text-slate-600 transition hover:bg-slate-200 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
               >
-                <FaArrowLeft />
-                {backLabel}
+                <FaArrowLeft className="text-xs" />
+                <span>{backLabel}</span>
               </button>
-            ) : null}
+            )}
           </div>
         </div>
       </div>

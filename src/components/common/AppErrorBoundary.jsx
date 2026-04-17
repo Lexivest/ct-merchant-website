@@ -129,9 +129,10 @@ class AppErrorBoundary extends Component {
           onRetry={this.handleRetry}
           onBack={this.handleBack}
           busy={this.state.busy}
+          retryLabel="Try again"
           message={
             this.state.retryArmed
-              ? "Connection is still unavailable. Please reconnect, then retry or go back."
+              ? "We still can't reach the server. Please check your connection and try again."
               : ""
           }
         />

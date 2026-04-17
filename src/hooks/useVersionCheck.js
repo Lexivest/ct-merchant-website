@@ -73,30 +73,32 @@ export function useVersionCheck() {
 
     // Periodic check
     const interval = setInterval(() => {
-      // Only check if enough time has passed since last check
-      // to avoid excessive requests if the app is left open
       if (Date.now() - lastCheckTime.current >= VERSION_CHECK_INTERVAL) {
         lastCheckTime.current = Date.now()
         checkUpdates()
       }
-    }, 60000) // Check every minute, but respect the 5-min limit internally
+    }, 60000)
 
-    // Check on window focus
-    const handleFocus = () => {
+    // Check on window focus or visibility change (returning to tab)
+    const handleActivity = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return
+      
       if (Date.now() - lastCheckTime.current >= VERSION_CHECK_INTERVAL) {
         lastCheckTime.current = Date.now()
         checkUpdates()
       }
     }
 
-    window.addEventListener("focus", handleFocus)
-    window.addEventListener("online", handleFocus) // Also check when network is back
+    window.addEventListener("focus", handleActivity)
+    window.addEventListener("visibilitychange", handleActivity)
+    window.addEventListener("online", handleActivity)
     
     return () => {
       clearTimeout(initialTimer)
       clearInterval(interval)
-      window.removeEventListener("focus", handleFocus)
-      window.removeEventListener("online", handleFocus)
+      window.removeEventListener("focus", handleActivity)
+      window.removeEventListener("visibilitychange", handleActivity)
+      window.removeEventListener("online", handleActivity)
     }
   }, [checkUpdates])
 

@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import ScrollingTicker from "./ScrollingTicker"
+import StableImage from "./StableImage"
 
 // --- LOCAL ASSET IMPORT ---
 import ctmLogo from "../../assets/images/logo.jpg"
@@ -59,10 +60,13 @@ function Navbar() {
             onClick={closeMenu}
           >
             {/* Adjusted logo size: 8x8 on mobile, 10x10 on desktop */}
-            <img
+            <StableImage
               src={ctmLogo}
               alt="CTMerchant Logo"
-              className="h-8 w-8 rounded-lg object-cover md:h-10 md:w-10"
+              containerClassName="h-8 w-8 rounded-lg md:h-10 md:w-10"
+              className="h-full w-full object-cover"
+              loading="eager"
+              fetchPriority="high"
             />
             {/* Value Proposition Text */}
             <span className="truncate text-sm font-extrabold tracking-wide text-slate-900 md:text-base">

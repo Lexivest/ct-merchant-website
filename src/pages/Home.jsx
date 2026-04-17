@@ -44,6 +44,7 @@ import {
 } from "../lib/validators"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
+import StableImage from "../components/common/StableImage"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import {
   buildRepoSearchQuerySuffix,
@@ -1134,14 +1135,16 @@ function Home() {
                   <div className="relative aspect-video w-full h-[220px] sm:h-[300px] md:h-[400px] overflow-hidden bg-slate-100">
                     {/* Professional Smooth Carousel with Cross-fade */}
                     {bannerImages.map((src, index) => (
-                      <img
+                      <StableImage
                         key={src}
                         src={src}
                         alt={`Commerce Banner ${index + 1}`}
-                        className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 ease-in-out ${
+                        containerClassName={`absolute inset-0 h-full w-full transition-opacity duration-1000 ease-in-out ${
                           index === currentBanner ? "opacity-100" : "opacity-0"
                         }`}
+                        className="h-full w-full object-cover object-center"
                         loading="eager"
+                        fetchPriority={index === 0 ? "high" : "auto"}
                       />
                     ))}
                   </div>
