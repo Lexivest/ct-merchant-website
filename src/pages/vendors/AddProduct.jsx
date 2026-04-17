@@ -138,7 +138,6 @@ export default function AddProduct() {
   const [limitReached, setLimitReached] = useState(() => prefetchedData?.limitReached || false);
   const [activeOffersCount, setActiveOffersCount] = useState(() => prefetchedData?.activeOffersCount || 0);
   const [submitting, setSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [categoryRows, setCategoryRows] = useState(() => prefetchedData?.categoryRows || []);
 
   // Form State
@@ -546,13 +545,36 @@ export default function AddProduct() {
 
       if (lastInsertError) throw lastInsertError;
 
-      setShowSuccess(true);
-      setTimeout(() => {
-        navigate("/vendor-panel");
-      }, 2500);
+      notify({
+        type: "success",
+        title: "Product Added",
+        message: "Your product has been successfully added to the marketplace. You can now add another item.",
+      });
+
+      // Reset form but keep category for convenience
+      setForm({
+        name: "",
+        price: "",
+        stock: "1",
+        condition: "New",
+        category: form.category,
+        desc: "",
+        key_features: "",
+        box_content: "",
+        warranty: "",
+        isDiscount: false,
+        discountPercent: "",
+      });
+      setDynamicAttrs({});
+      setBlobs({ 1: null, 2: null, 3: null });
+      setPreviews({ 1: "", 2: "", 3: "" });
+      
+      // Reset scroll for next entry
+      window.scrollTo({ top: 0, behavior: "smooth" });
 
     } catch (err) {
       notify({ type: "error", title: "Upload failed", message: getFriendlyErrorMessage(err, "Upload failed.") });
+    } finally {
       setSubmitting(false);
     }
   };
@@ -970,22 +992,6 @@ export default function AddProduct() {
         onClose={() => setCameraSlot(null)}
         onCapture={handleCameraCapture}
       />
-
-      {/* SUCCESS MODAL */}
-      {showSuccess && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-[rgba(15,23,42,0.95)] backdrop-blur-sm">
-          <div className="w-[90%] max-w-[420px] animate-[scaleUp_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] rounded-[28px] bg-white p-10 text-center shadow-2xl">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#D1FAE5]">
-              <FaCheck className="text-4xl text-[#10B981]" />
-            </div>
-            <h2 className="mb-2 text-[1.6rem] font-extrabold text-[#1F2937]">Success!</h2>
-            <p className="mb-6 font-medium text-[#6B7280]">Your product has been added to your shop.</p>
-            <div className="mx-auto h-7 w-7 animate-spin rounded-full border-4 border-[#db2777]/30 border-t-[#db2777]"></div>
-            <p className="mt-4 text-[0.8rem] font-bold text-[#db2777]">Redirecting to dashboard...</p>
-          </div>
-          <style dangerouslySetInnerHTML={{ __html: "@keyframes scaleUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }" }} />
-        </div>
-      )}
     </div>
   );
 }

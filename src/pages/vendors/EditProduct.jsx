@@ -629,12 +629,31 @@ export default function EditProduct() {
         await supabase.storage.from(PRODUCT_BUCKET).remove(pathsToDelete);
       }
 
-      setSuccessMode("update");
-      setShowSuccess(true);
-      setTimeout(() => navigate("/vendor-panel"), 2500);
+      notify({
+        type: "success",
+        title: "Update Successful",
+        message: "Your product has been updated and resubmitted for approval. You can continue editing or go back.",
+      });
+
+      // Update local state to reflect the new saved state
+      setExistingUrls({
+        1: finalUrl1,
+        2: finalUrl2,
+        3: finalUrl3,
+      });
+      setBlobs({ 1: null, 2: null, 3: null });
+      setDeletedSlots({ 1: false, 2: false, 3: false });
+      setProductData(prev => ({
+        ...prev,
+        is_approved: false,
+        rejection_reason: null
+      }));
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
 
     } catch (err) {
       notify({ type: "error", title: "Update failed", message: getFriendlyErrorMessage(err, "Update failed.") });
+    } finally {
       setSubmitting(false);
     }
   };
