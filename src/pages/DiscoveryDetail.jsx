@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { FaArrowLeft, FaWhatsapp, FaPhone } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
+import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
@@ -13,39 +14,28 @@ export default function DiscoveryDetail() {
   const [searchParams] = useSearchParams()
   const id = searchParams.get("id")
   
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [discovery, setDiscovery] = useState(null)
-
   usePreventPullToRefresh()
 
-  useEffect(() => {
-    async function loadDiscovery() {
-      if (!id) {
-        setError("ID missing")
-        setLoading(false)
-        return
-      }
-      try {
-        const { data, error: dbError } = await supabase
-          .from("staff_discoveries")
-          .select("*")
-          .eq("id", id)
-          .maybeSingle()
-        
-        if (dbError) throw dbError
-        setDiscovery(Array.isArray(data) ? data[0] : data)
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadDiscovery()
-  }, [id])
+  const fetchDiscovery = async () => {
+    if (!id) throw new Error("ID missing")
+    const { data, error: dbError } = await supabase
+      .from("staff_discoveries")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle()
+    
+    if (dbError) throw dbError
+    return Array.isArray(data) ? data[0] : data
+  }
 
-  if (loading) return <PageLoadingScreen title="Loading discovery..." />
-  if (error) return <RetryingNotice message={getRetryingMessage(error)} onRetry={() => window.location.reload()} />
+  const { data: discovery, loading, error, mutate } = useCachedFetch(
+    `discovery_${id}`,
+    fetchDiscovery,
+    { dependencies: [id], ttl: 1000 * 60 * 60 } // 1 hour for curated content
+  )
+
+  if (loading && !discovery) return <PageLoadingScreen title="Loading discovery..." />
+  if (error && !discovery) return <RetryingNotice message={getRetryingMessage(error)} onRetry={mutate} />
   if (!discovery) return <RetryingNotice message="Item not found." onRetry={() => navigate(-1)} />
 
   return (

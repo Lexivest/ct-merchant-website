@@ -1066,7 +1066,7 @@ function UserDashboard() {
         .filter((shop) => String(shop.area_id) === String(id))
         .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
 
-      primeCachedFetchStore(`area_data_${id}`, {
+      primeCachedFetchStore(`area_shops_${id}_q_`, {
         areaName,
         shops: areaShops,
       })
@@ -1128,6 +1128,11 @@ function UserDashboard() {
     beginRouteTransition(retryAction)
 
     try {
+      const discoveryData = (localData.staffDiscoveries || []).find(d => String(d.id) === String(id))
+      if (discoveryData) {
+        primeCachedFetchStore(`discovery_${id}`, discoveryData)
+      }
+      
       await loadDiscoveryDetailPage()
       navigate(`/discovery?id=${id}`)
     } catch (error) {
