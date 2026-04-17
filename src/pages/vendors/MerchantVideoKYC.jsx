@@ -591,7 +591,7 @@ export default function MerchantVideoKYC() {
       notify({
         type: "success",
         title: "Video uploaded",
-        message: "Your video was uploaded successfully. Our team will review your shop and issue your digital ID card after approval.",
+        message: "Your video was submitted successfully and is under review.",
       });
       try {
         localStorage.removeItem(`vendor_panel_${user.id}`);

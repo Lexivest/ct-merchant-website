@@ -23,9 +23,9 @@ export function getRepoSearchCooldownMessage(payload) {
   return `Too many searches. Please wait about ${minutes} minute${minutes === 1 ? "" : "s"} and try again.`
 }
 
-export async function invokeRepoSearch(merchantId) {
+export async function invokeRepoSearch(merchantId, skipRateLimit = false) {
   const result = await supabase.functions.invoke("repo-search", {
-    body: { merchantId },
+    body: { merchantId, skipRateLimit },
   })
 
   if (!result.error) return result
@@ -70,12 +70,21 @@ export function buildShopDetailPrefetchFromRepoSearch(result) {
     shop?.city_name ||
     "Local"
 
+  const areaName =
+    shop?.areas?.name ||
+    shop?.area_name ||
+    ""
+
   return {
     shop: {
       ...shop,
       cities: {
         ...(typeof shop.cities === "object" && shop.cities ? shop.cities : {}),
         name: cityName,
+      },
+      areas: {
+        ...(typeof shop.areas === "object" && shop.areas ? shop.areas : {}),
+        name: areaName,
       },
     },
     products: Array.isArray(result?.products) ? result.products : [],
@@ -133,7 +142,9 @@ export async function fetchPublicRepoShopDetail({ repoRef, shopId = null }) {
     throw new Error("Public repository reference is missing.")
   }
 
-  const { data, error } = await invokeRepoSearch(repoRef)
+  // If shopId is present, this is internal navigation (not a fresh search from the gateway)
+  const skipRateLimit = !!shopId;
+  const { data, error } = await invokeRepoSearch(repoRef, skipRateLimit)
 
   if (error) {
     throw new Error("We could not open this shop right now. Please try again.")

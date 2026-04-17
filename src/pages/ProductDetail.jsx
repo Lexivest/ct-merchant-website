@@ -934,7 +934,11 @@ function ProductDetail() {
               </div>
               <button
                 type="button"
-                onClick={() => (currentShop?.id ? navigate(`/shop-detail?id=${currentShop.id}`) : null)}
+                onClick={() => {
+                  if (!currentShop?.id) return
+                  const repoSuffix = isPublicRepoMode ? buildRepoSearchQuerySuffix(repoRef) : ""
+                  navigate(`/shop-detail?id=${currentShop.id}${repoSuffix}`)
+                }}
                 className="mt-3 w-full rounded-lg border border-slate-300 bg-transparent px-4 py-3 font-bold text-[#0F1111] transition hover:border-slate-400 hover:bg-white"
               >
                 View Full Shop Catalog

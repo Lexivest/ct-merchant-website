@@ -372,7 +372,7 @@ async function generatePromoBannerCanvasBlob({
   setCanvasFont(context, 900, 19);
   context.fillStyle = "#FFFFFF";
   context.textAlign = "center";
-  context.fillText(`${cityName || "Local"} City Commerce`, width / 2, footerY + 34);
+  context.fillText(`${cityName || "Local"} biz hub`, width / 2, footerY + 34);
   setCanvasFont(context, 800, 12);
   context.fillStyle = "#93C5FD";
   context.textAlign = "center";

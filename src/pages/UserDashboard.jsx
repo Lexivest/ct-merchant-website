@@ -277,6 +277,14 @@ function UserDashboard() {
   // Use our new isolated tracking logic for the shop card
   const { shopData, shopMeta, canRegisterShop, loading: shopLoading } = useMyShop()
 
+  const tabParam = searchParams.get("tab")
+  const activeTab = ALLOWED_TABS.has(tabParam) ? tabParam : "market"
+  const viewParam = searchParams.get("view")
+  const serviceView =
+    activeTab === "services" && ALLOWED_SERVICE_VIEWS.has(viewParam)
+      ? viewParam
+      : "menu"
+
   const cityId = profile?.city_id || "none"
   const baseCacheKey = buildDashboardBaseCacheKey(cityId)
   const dynamicCacheKey = buildDashboardDynamicCacheKey(user?.id, cityId)
@@ -310,7 +318,12 @@ function UserDashboard() {
     const b = readCachedFetchStore(baseCacheKey)?.data
     const d = readCachedFetchStore(dynamicCacheKey)?.data
     if (b && d) {
-      return { ...EMPTY_DASHBOARD_DATA, ...b, ...d, unread: (d.notifications || []).filter(n => !n.is_read).length }
+      return { 
+        ...EMPTY_DASHBOARD_DATA, 
+        ...b, 
+        ...d, 
+        unread: (d.notifications || []).filter(n => !n.is_read).length 
+      }
     }
     return EMPTY_DASHBOARD_DATA
   })
@@ -326,29 +339,21 @@ function UserDashboard() {
 
   useEffect(() => {
     if (baseData && dynamicData) {
-      setLocalData((prev) => ({
-        ...prev,
-        profile,
-        ...baseData,
-        ...dynamicData,
-        unread: dynamicData.notifications.filter((item) => !item.is_read).length,
-      }))
-    }
-  }, [baseData, dynamicData, profile])
+      setLocalData((prev) => {
+        // If the notifications tab is active, we don't want to reset unread count
+        const isNotificationsTab = activeTab === "notifications"
+        const nextUnread = isNotificationsTab ? 0 : dynamicData.notifications.filter((item) => !item.is_read).length
 
-  useEffect(() => {
-    if (prefetchedDashboardData) {
-      setLocalData(prefetchedDashboardData)
+        return {
+          ...prev,
+          profile,
+          ...baseData,
+          ...dynamicData,
+          unread: nextUnread,
+        }
+      })
     }
-  }, [prefetchedDashboardData])
-
-  const tabParam = searchParams.get("tab")
-  const activeTab = ALLOWED_TABS.has(tabParam) ? tabParam : "market"
-  const viewParam = searchParams.get("view")
-  const serviceView =
-    activeTab === "services" && ALLOWED_SERVICE_VIEWS.has(viewParam)
-      ? viewParam
-      : "menu"
+  }, [baseData, dynamicData, profile, activeTab])
 
   const [notice, setNotice] = useState({
     visible: false,
@@ -511,17 +516,36 @@ function UserDashboard() {
     navigate("/", { replace: true })
   }
 
+  useEffect(() => {
+    if (activeTab === "notifications") {
+      markNotificationsRead()
+    }
+  }, [activeTab])
+
   async function markNotificationsRead() {
     if (!user || localData.unread === 0) return
+
+    const nextNotifications = localData.notifications.map((item) => ({
+      ...item,
+      is_read: true,
+    }))
 
     setLocalData((prev) => ({
       ...prev,
       unread: 0,
-      notifications: prev.notifications.map((item) => ({
-        ...item,
-        is_read: true,
-      })),
+      notifications: nextNotifications,
     }))
+
+    // Sync to cache to prevent stale reload
+    if (dynamicCacheKey) {
+      const currentCache = readCachedFetchStore(dynamicCacheKey)
+      if (currentCache?.data) {
+        primeCachedFetchStore(dynamicCacheKey, {
+          ...currentCache.data,
+          notifications: nextNotifications,
+        })
+      }
+    }
 
     await supabase
       .from("notifications")
