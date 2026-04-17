@@ -143,10 +143,15 @@ export function clearCachedFetchStore(predicate) {
       }
     } catch { /* ignore */ }
 
+    // Notify all active fetchers to re-fetch as their data is gone
+    for (const fetchData of activeFetchers.values()) {
+      fetchData({ force: true })
+    }
+
     return
   }
 
-  for (const key of globalCache.keys()) {
+  for (const key of Array.from(globalCache.keys())) {
     if (predicate(key)) {
       globalCache.delete(key)
     }
@@ -165,6 +170,13 @@ export function clearCachedFetchStore(predicate) {
     }
   } catch {
     // ignore
+  }
+
+  // Notify matching active fetchers to re-sync
+  for (const [key, fetchData] of activeFetchers.entries()) {
+    if (predicate(key)) {
+      fetchData({ force: true })
+    }
   }
 }
 
