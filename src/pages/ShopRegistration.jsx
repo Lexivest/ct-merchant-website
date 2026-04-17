@@ -1044,9 +1044,10 @@ function ShopRegistration() {
                       title="Upload ID Document"
                       subtitle={`Clear photo or PDF | ${idRuleLabel}`}
                       onFileClick={() => openImagePicker("idCard", null)}
-                      onCameraClick={() => openCustomCamera("idCard", 3 / 2)}
+                      onCameraClick={() => openCustomCamera("idCard", 3 / 4)}
                       onPdfClick={() => openPdfPicker("idCard")}
                       preview={renderPreview("idCard")}
+                      isPortrait
                     />
 
                     <div className="h-px bg-slate-100" />
@@ -1062,6 +1063,7 @@ function ShopRegistration() {
                       onCameraClick={() => openCustomCamera("cac", 3 / 4)}
                       onPdfClick={() => openPdfPicker("cac")}
                       preview={renderPreview("cac")}
+                      isPortrait
                     />
 
                     <div className="h-px bg-slate-100" />
@@ -1227,7 +1229,7 @@ function UploadCard({
 }) {
   return (
     <div className="flex flex-col items-center">
-      <div className={`relative overflow-hidden rounded-[32px] border-4 border-white bg-slate-100 shadow-lg shadow-slate-200 ${isPortrait ? 'aspect-[3/4] w-48' : isSquare ? 'aspect-square w-40' : 'aspect-video w-full'}`}>
+      <div className={`relative overflow-hidden rounded-[32px] border-4 border-white bg-slate-100 shadow-lg shadow-slate-200 ${isPortrait ? 'aspect-[3/4] w-full max-w-[340px]' : isSquare ? 'aspect-square w-40' : 'aspect-video w-full'}`}>
         {preview ? (
           <div className="h-full w-full">{preview}</div>
         ) : (
