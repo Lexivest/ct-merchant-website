@@ -299,7 +299,7 @@ function FairlyUsedProductCard({ product, onOpenProduct }) {
           alt={product.name} 
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
         />
-        <div className="absolute left-2 top-2 rounded-lg bg-pink-600/90 px-2 py-1 text-[0.65rem] font-black uppercase tracking-wider text-white backdrop-blur-sm">
+        <div className="absolute left-1.5 top-1.5 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter text-white backdrop-blur-sm">
           Fairly Used
         </div>
       </div>
