@@ -11,6 +11,47 @@ import {
 } from "../../lib/auth"
 import { validateCompleteProfileForm } from "../../lib/validators"
 
+// --- NIGERIA PHONE INPUT ---
+function NigeriaPhoneInput({ value, onChange, placeholder, disabled = false, error }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-sm font-bold text-slate-800">
+        Phone number <span className="ml-1 text-pink-600">*</span>
+      </label>
+      <div className="relative flex items-center">
+        <div className="absolute left-3 flex items-center gap-2 border-r border-slate-200 pr-2.5">
+          <div className="flex h-4 w-6 flex-col overflow-hidden rounded-sm border border-slate-100 shadow-sm">
+            <div className="flex-1 bg-[#008751]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#008751]" />
+          </div>
+          <span className="text-sm font-bold text-slate-500">+234</span>
+        </div>
+        <input
+          type="tel"
+          value={value}
+          onChange={(e) => {
+            const val = e.target.value.replace(/\D/g, "").slice(0, 10)
+            onChange(val)
+          }}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={`w-full rounded-2xl border bg-white py-3 pl-[104px] pr-4 text-sm font-medium text-slate-900 outline-none transition ${
+            disabled
+              ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+              : error
+              ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100"
+              : "border-slate-300 focus:border-pink-500 focus:ring-4 focus:ring-pink-100"
+          }`}
+        />
+      </div>
+      {error ? (
+        <p className="text-xs font-semibold text-red-600">{error}</p>
+      ) : null}
+    </div>
+  )
+}
+
 function CompleteProfileModal({
   open,
   onClose,
@@ -97,10 +138,12 @@ function CompleteProfileModal({
       setSaving(true)
       setNotice({ visible: false, type: "info", title: "", message: "" })
 
+      const finalPhone = form.phone.startsWith("+") ? form.phone : `+234${form.phone}`
+
       await completeProfileSetup({
         userId,
         fullName,
-        phone: form.phone,
+        phone: finalPhone,
         cityId: form.cityId,
         areaId: form.areaId,
       })
@@ -151,17 +194,14 @@ function CompleteProfileModal({
         </div>
 
         <div className="space-y-4">
-          <AuthInput
-            id="complete-phone"
-            label="Phone number"
+          <NigeriaPhoneInput
             value={form.phone}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, phone: e.target.value }))
+            onChange={(val) =>
+              setForm((prev) => ({ ...prev, phone: val }))
             }
-            placeholder="08012345678"
+            placeholder="801 234 5678"
             error={errors.phone}
-            required
-            icon={<FaPhone />}
+            disabled={saving}
           />
 
           <div className="flex flex-col gap-2">

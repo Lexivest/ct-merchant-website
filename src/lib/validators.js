@@ -20,7 +20,11 @@ export function isValidEmail(value) {
 
 export function isValidNigerianPhone(value) {
   const phone = normalizePhone(value)
-  return /^(0\d{10}|\+\d{11,15})$/.test(phone)
+  // Accept: 
+  // 1. 11 digits starting with 0 (e.g. 08012345678)
+  // 2. 10 digits (e.g. 8012345678, usually for +234 prefix)
+  // 3. E.164 format (+ followed by 11-15 digits)
+  return /^(0\d{10}|\d{10}|\+\d{11,15})$/.test(phone)
 }
 
 export function isStrongEnoughPassword(value) {

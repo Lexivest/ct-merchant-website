@@ -424,9 +424,11 @@ function CreateAccount() {
       setSubmitting(true)
       setNotice({ visible: false, type: "info", title: "", message: "" })
 
+      const finalPhone = form.phone.startsWith("+") ? form.phone : `+234${form.phone}`
+
       const result = await signUpWithEmail({
         fullName: combinedFullName,
-        phone: form.phone,
+        phone: finalPhone,
         email: form.email,
         password: form.password,
         cityId: form.cityId,
@@ -441,7 +443,7 @@ function CreateAccount() {
       const hydratedProfile = await resolveFreshProfile(signedInUser.id, {
         id: signedInUser.id,
         full_name: combinedFullName,
-        phone: form.phone,
+        phone: finalPhone,
         city_id: Number(form.cityId),
         area_id: Number(form.areaId),
       })
