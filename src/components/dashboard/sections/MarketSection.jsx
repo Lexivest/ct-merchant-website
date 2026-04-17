@@ -281,6 +281,43 @@ function DiscoveryCard({ item, onOpenDiscovery }) {
   )
 }
 
+function FairlyUsedProductCard({ product, onOpenProduct }) {
+  const handleClick = () => {
+    if (typeof onOpenProduct === "function") {
+      onOpenProduct(product.id)
+    }
+  }
+
+  return (
+    <div 
+      onClick={handleClick}
+      className="group relative flex w-[150px] md:w-[170px] shrink-0 cursor-pointer flex-col overflow-hidden rounded-[24px] bg-white border border-slate-100 shadow-sm transition-all hover:shadow-lg active:scale-[0.98]"
+    >
+      <div className="relative aspect-square w-full overflow-hidden bg-slate-50">
+        <StableImage 
+          src={product.image_url} 
+          alt={product.name} 
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
+        />
+        <div className="absolute left-2 top-2 rounded-lg bg-pink-600/90 px-2 py-1 text-[0.65rem] font-black uppercase tracking-wider text-white backdrop-blur-sm">
+          Fairly Used
+        </div>
+      </div>
+      <div className="p-3">
+        <div className="truncate text-[0.8rem] font-bold text-slate-800 leading-tight">{product.name}</div>
+        <div className="mt-1 flex items-baseline gap-1">
+          <span className="text-[0.9rem] font-black text-slate-900">₦{Number(product.price).toLocaleString()}</span>
+        </div>
+        {product.shops?.name && (
+          <div className="mt-1 truncate text-[0.65rem] font-bold text-slate-400">
+             {product.shops.name}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function MarketSection({
   dashboardData,
   groupedShopsByArea = [],
@@ -302,6 +339,7 @@ function MarketSection({
       (dashboardData.products || []).length === 0)
 
   const sponsoredProducts = dashboardData?.sponsoredProducts || []
+  const fairlyUsedProducts = dashboardData?.fairlyUsedProducts || []
 
   function openShop(shopId) {
     if (typeof onOpenShop === "function") {
@@ -471,6 +509,24 @@ function MarketSection({
                 key={item.id} 
                 item={item} 
                 onOpenDiscovery={onOpenDiscovery}
+              />
+            ))}
+            <div className="w-4 shrink-0" aria-hidden="true" />
+          </div>
+        </div>
+      )}
+
+      {fairlyUsedProducts.length > 0 && (
+        <div className="fairly-used-section-wrap bg-white py-2 mb-1">
+          <h2 className="sec-title px-4 pb-2 text-[1.25rem] font-extrabold text-[#0F1111]">
+            Fairly Used Items
+          </h2>
+          <div className="flex gap-4 overflow-x-auto pl-4 pb-2 no-scrollbar">
+            {fairlyUsedProducts.map((product) => (
+              <FairlyUsedProductCard 
+                key={product.id} 
+                product={product} 
+                onOpenProduct={onOpenProduct}
               />
             ))}
             <div className="w-4 shrink-0" aria-hidden="true" />

@@ -266,6 +266,7 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
     shopsRes,
     notificationsRes,
     wishlistRes,
+    fairlyUsedRes,
   ] = await Promise.all([
     fetchFeaturedCityBanners(cityId),
     fetchSponsoredProducts(cityId),
@@ -284,6 +285,13 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
       .order("created_at", { ascending: false })
       .limit(15),
     supabase.from("wishlist").select("*", { count: "exact", head: true }).eq("user_id", userId),
+    supabase
+      .from("products")
+      .select("*, shops(id, name, unique_id)")
+      .eq("condition", "Fairly Used")
+      .eq("is_available", true)
+      .limit(24)
+      .order("created_at", { ascending: false }),
   ])
 
   const shops = unwrapSupabaseResult(shopsRes) || []
@@ -308,6 +316,7 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
     featuredCityBanners,
     sponsoredProducts,
     staffDiscoveries,
+    fairlyUsedProducts: unwrapSupabaseResult(fairlyUsedRes) || [],
     shops,
     products,
     notifications: unwrapSupabaseResult(notificationsRes) || [],
@@ -372,8 +381,8 @@ export async function prepareDashboardTransition({
   )
 
   // Split and prime
-  const { profile: p, notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, shops, products, ...basePart } = data
-  const dynamicPart = { notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, shops, products }
+  const { profile: p, notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, fairlyUsedProducts, shops, products, ...basePart } = data
+  const dynamicPart = { notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, fairlyUsedProducts, shops, products }
 
   primeCachedFetchStore(baseKey, basePart, Date.now(), { persist: "session" })
   primeCachedFetchStore(dynamicKey, dynamicPart, Date.now(), { persist: "session" })
