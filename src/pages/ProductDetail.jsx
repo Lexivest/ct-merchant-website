@@ -2,7 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
+  FaBolt,
   FaBoxOpen,
+  FaCircleCheck,
+  FaClock,
   FaHeart,
   FaLocationDot,
   FaMapPin,
@@ -12,6 +15,7 @@ import {
   FaShareNodes,
   FaShieldHalved,
   FaStar,
+  FaTriangleExclamation,
   FaXmark,
 } from "react-icons/fa6"
 import { FaWhatsapp } from "react-icons/fa"
@@ -190,23 +194,6 @@ function ProductDetail() {
       ? currentProduct.stock_count
       : 1
   }, [currentProduct])
-
-  const stockMeta = useMemo(() => {
-    if (!currentProduct) return { text: "", className: "text-slate-500" }
-
-    if (stockCount <= 0) {
-      return { text: "Currently unavailable.", className: "text-slate-500" }
-    }
-
-    if (stockCount <= 5 || hasDiscount) {
-      return {
-        text: `${stockCount} in stock${hasDiscount ? " - hurry now promo ends soon" : ""}`,
-        className: "text-[#B12704]",
-      }
-    }
-
-    return { text: `${stockCount} in stock`, className: "text-[#007185]" }
-  }, [currentProduct, stockCount, hasDiscount])
 
   const technicalAttributes = useMemo(() => {
     if (!currentProduct?.attributes) return {}
@@ -853,8 +840,56 @@ function ProductDetail() {
                 ) : null}
               </div>
 
-              <div className={`text-[1rem] font-bold lg:text-[1.05rem] ${stockMeta.className}`}>
-                {stockMeta.text}
+              {/* Promo & Stock Widget */}
+              <div className="mt-4">
+                {stockCount <= 0 ? (
+                  <div className="flex items-center gap-2 text-[0.95rem] font-bold text-slate-500">
+                    <FaTriangleExclamation className="text-slate-400" />
+                    Currently unavailable
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {hasDiscount ? (
+                      <div className="relative flex items-center gap-4 overflow-hidden rounded-[22px] bg-gradient-to-br from-[#BE185D] via-[#9D174D] to-[#831843] px-5 py-4 text-white shadow-lg shadow-pink-100/50">
+                        {/* Decorative Background Icon */}
+                        <FaBolt className="absolute -right-4 -top-4 text-[7rem] opacity-10" />
+                        
+                        <div className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-xl backdrop-blur-md">
+                          <FaBolt className="animate-pulse text-yellow-300" />
+                        </div>
+                        
+                        <div className="relative z-10 flex-1">
+                          <div className="flex items-center gap-2 text-[0.7rem] font-black uppercase tracking-[0.15em] text-pink-100/90">
+                            <FaClock className="text-[0.65rem]" /> Flash Promo Active
+                          </div>
+                          <div className="mt-0.5 text-[1.05rem] font-black leading-tight tracking-tight">
+                            Hurry now, promo ends soon!
+                          </div>
+                        </div>
+
+                        <div className="relative z-10 hidden sm:block">
+                           <div className="rounded-full bg-white/10 px-3 py-1 text-[0.65rem] font-black uppercase tracking-tighter backdrop-blur-sm">
+                             Limited Time
+                           </div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div className="flex items-center gap-3">
+                      <div className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.85rem] font-black ${
+                        stockCount <= 5 ? 'bg-orange-50 text-[#B12704] border border-orange-100' : 'bg-emerald-50 text-[#007185] border border-emerald-100'
+                      }`}>
+                        {stockCount <= 5 ? <FaTriangleExclamation className="text-[0.75rem]" /> : <FaCircleCheck className="text-[0.75rem]" />}
+                        {stockCount} in stock
+                      </div>
+                      {stockCount <= 5 && (
+                        <span className="text-[0.8rem] font-bold text-slate-500 italic">
+                          (Limited availability)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
 
