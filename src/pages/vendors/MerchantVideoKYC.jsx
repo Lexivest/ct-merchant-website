@@ -12,7 +12,7 @@ import {
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
-import { invalidateCachedFetchStore } from "../../hooks/useCachedFetch";
+import { clearCachedFetchStore } from "../../hooks/useCachedFetch";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
