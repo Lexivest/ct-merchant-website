@@ -174,6 +174,10 @@ const loadStaffDiscoveries = () => import("./pages/staff/StaffDiscoveries")
 const loadStaffIDGenerator = () => import("./pages/staff/StaffIDGenerator")
 const loadStaffInbox = () => import("./pages/staff/StaffInbox")
 const loadStaffSecurityRadar = () => import("./pages/staff/StaffSecurityRadar")
+const loadStaffProducts = () => import("./pages/staff/StaffProducts")
+const loadStaffShopContent = () => import("./pages/staff/StaffShopContent")
+const loadStaffAnnouncements = () => import("./pages/staff/StaffAnnouncements")
+const loadStaffNotifications = () => import("./pages/staff/StaffNotifications")
 const loadUserDashboard = () => import("./pages/UserDashboard")
 const loadShopRegistration = () => import("./pages/ShopRegistration")
 const loadArea = () => import("./pages/Area")
@@ -219,6 +223,10 @@ const StaffDiscoveries = resilientLazy(loadStaffDiscoveries, { pageLabel: "marke
 const StaffIDGenerator = resilientLazy(loadStaffIDGenerator, { pageLabel: "staff ID generator" })
 const StaffInbox = resilientLazy(loadStaffInbox, { pageLabel: "staff inbox" })
 const StaffSecurityRadar = resilientLazy(loadStaffSecurityRadar, { pageLabel: "security radar" })
+const StaffProducts = resilientLazy(loadStaffProducts, { pageLabel: "product moderation" })
+const StaffShopContent = resilientLazy(loadStaffShopContent, { pageLabel: "shop content moderation" })
+const StaffAnnouncements = resilientLazy(loadStaffAnnouncements, { pageLabel: "city announcements" })
+const StaffNotifications = resilientLazy(loadStaffNotifications, { pageLabel: "targeted notifications" })
 const UserDashboard = resilientLazy(loadUserDashboard, { pageLabel: "user dashboard" })
 const ShopRegistration = resilientLazy(loadShopRegistration, { pageLabel: "shop registration" })
 const Area = resilientLazy(loadArea, { pageLabel: "area view" })
@@ -453,6 +461,10 @@ function AppShell() {
         <Route path="/staff-studio" element={<ProtectedStaffRoute><ImageOptimizer /></ProtectedStaffRoute>} />
         <Route path="/staff-inbox" element={<ProtectedStaffRoute><StaffInbox /></ProtectedStaffRoute>} />
         <Route path="/staff-security-radar" element={<ProtectedStaffRoute><StaffSecurityRadar /></ProtectedStaffRoute>} />
+        <Route path="/staff-products" element={<ProtectedStaffRoute><StaffProducts /></ProtectedStaffRoute>} />
+        <Route path="/staff-shop-content" element={<ProtectedStaffRoute><StaffShopContent /></ProtectedStaffRoute>} />
+        <Route path="/staff-announcements" element={<ProtectedStaffRoute><StaffAnnouncements /></ProtectedStaffRoute>} />
+        <Route path="/staff-notifications" element={<ProtectedStaffRoute><StaffNotifications /></ProtectedStaffRoute>} />
 
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
