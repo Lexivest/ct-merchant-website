@@ -10,6 +10,7 @@ const staffRouteLoaders = {
   "/staff-verifications": () => import("../pages/staff/StaffVerifications"),
   "/staff-products": () => import("../pages/staff/StaffProducts"),
   "/staff-shop-content": () => import("../pages/staff/StaffShopContent"),
+  "/staff-announcements": () => import("../pages/staff/StaffAnnouncements"),
   "/staff-payments": () => import("../pages/staff/StaffPayments"),
   "/staff-city-banners": () => import("../pages/staff/StaffFeaturedCityBanners"),
   "/staff-sponsored-products": () => import("../pages/staff/StaffSponsoredProducts"),
@@ -327,6 +328,22 @@ async function prepareStaffShopContentData() {
   }
 }
 
+async function prepareStaffAnnouncementsData() {
+  const [citiesRes, announcementsRes] = await Promise.all([
+    supabase.from("cities").select("id, name, state").order("name"),
+    supabase.from("announcements").select("*").order("created_at", { ascending: false })
+  ])
+
+  if (citiesRes.error) throw citiesRes.error
+  if (announcementsRes.error) throw announcementsRes.error
+
+  return {
+    kind: "staff-announcements",
+    cities: citiesRes.data || [],
+    announcements: announcementsRes.data || [],
+  }
+}
+
 const staffPreparers = {
   "/staff-traffic": prepareStaffTrafficData,
   "/staff-users": prepareStaffUsersData,
@@ -334,6 +351,7 @@ const staffPreparers = {
   "/staff-verifications": prepareStaffVerificationsData,
   "/staff-products": prepareStaffProductsData,
   "/staff-shop-content": prepareStaffShopContentData,
+  "/staff-announcements": prepareStaffAnnouncementsData,
   "/staff-payments": prepareStaffPaymentsData,
   "/staff-city-banners": prepareStaffFeaturedCityBannersData,
   "/staff-sponsored-products": prepareStaffSponsoredProductsData,

@@ -368,6 +368,7 @@ export function StaffPortalShell({
     { key: "users", label: "Users", to: "/staff-users", icon: <FaUsers /> },
     { key: "products", label: "Products", to: "/staff-products", icon: <FaWandMagicSparkles /> },
     { key: "shop-content", label: "Shop Content", to: "/staff-shop-content", icon: <FaPanorama /> },
+    { key: "announcements", label: "Announcements", to: "/staff-announcements", icon: <FaBullhorn /> },
     { key: "community", label: "Community", to: "/staff-community", icon: <FaComments /> },
     { key: "verifications", label: "Verifications", to: "/staff-verifications", icon: <FaStore /> },
     { key: "payments", label: "Payments", to: "/staff-payments", icon: <FaReceipt /> },

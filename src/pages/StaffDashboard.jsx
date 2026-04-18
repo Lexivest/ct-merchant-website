@@ -309,6 +309,13 @@ export default function StaffDashboard() {
               onClick={() => void openStaffRouteWithTransition("/staff-shop-content")}
             />
             <HomeCard
+              icon={<FaBullhorn />}
+              title="City Announcements"
+              subtitle="Broadcast important messages and alerts to users in specific cities."
+              tone="amber"
+              onClick={() => void openStaffRouteWithTransition("/staff-announcements")}
+            />
+            <HomeCard
               icon={<FaWandMagicSparkles />}
               title="Product Moderation"
               subtitle="Approve or reject new product listings from merchants to keep the marketplace clean and professional."
