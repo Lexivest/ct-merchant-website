@@ -302,6 +302,13 @@ export default function StaffDashboard() {
               onClick={() => void openStaffRouteWithTransition("/staff-verifications")}
             />
             <HomeCard
+              icon={<FaPanorama />}
+              title="Shop Content"
+              subtitle="Moderate shop display banners and news updates to ensure high-quality marketplace visuals."
+              tone="blue"
+              onClick={() => void openStaffRouteWithTransition("/staff-shop-content")}
+            />
+            <HomeCard
               icon={<FaWandMagicSparkles />}
               title="Product Moderation"
               subtitle="Approve or reject new product listings from merchants to keep the marketplace clean and professional."
