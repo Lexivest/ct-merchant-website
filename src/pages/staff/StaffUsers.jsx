@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useState } from "react"
 import { useLocation } from "react-router-dom"
-import { FaCircleCheck, FaCircleNotch, FaFilter, FaLocationDot, FaTriangleExclamation, FaRotateLeft } from "react-icons/fa6"
+import {
+  FaCircleCheck,
+  FaCircleNotch,
+  FaFilter,
+  FaLocationDot,
+  FaTriangleExclamation,
+  FaRotateLeft,
+  FaMagnifyingGlass,
+  FaUserSlash,
+} from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import {
@@ -21,11 +30,12 @@ export default function StaffUsers() {
   const [selectedCityId, setSelectedCityId] = useState(() => prefetchedData?.selectedCityId || "all")
   const [inactiveDays, setInactiveDays] = useState(() => prefetchedData?.inactiveDays || 180)
   const [inactiveOnly, setInactiveOnly] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
   const [userActivity, setUserActivity] = useState(() => prefetchedData?.userActivity || [])
   const [loadingUserActivity, setLoadingUserActivity] = useState(() => !prefetchedData)
   const [userActivityError, setUserActivityError] = useState("")
   const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
-  const [reinstatingEmail, setReinstatingEmail] = useState(null)
+  const [updatingUserId, setUpdatingUserId] = useState(null)
 
   const fetchCities = useCallback(async () => {
     if (prefetchedData?.cityOptions?.length) {
@@ -86,15 +96,27 @@ export default function StaffUsers() {
     fetchUserActivity({ cityId: selectedCityId, threshold: inactiveDays })
   }, [fetchUserActivity, inactiveDays, selectedCityId])
 
-  const handleReinstate = async (email) => {
-    if (!window.confirm(`Are you sure you want to reinstate ${email}? This will clear their wrong-password attempts and lift the login suspension.`)) {
+  const handleToggleSuspension = async (user) => {
+    const isSuspending = !user.is_suspended
+    const actionLabel = isSuspending ? "suspend" : "reinstate"
+    
+    if (!window.confirm(`Are you sure you want to ${actionLabel} ${user.email || user.full_name}?`)) {
       return
     }
 
-    setReinstatingEmail(email)
+    let reason = null
+    if (isSuspending) {
+      reason = window.prompt("Enter a reason for suspension (optional):")
+      if (reason === null) return // User cancelled prompt
+    }
+
+    setUpdatingUserId(user.user_id)
     try {
-      const { data, error } = await supabase.rpc("ctm_reinstate_login_guard", {
-        p_email: email
+      const { data, error } = await supabase.rpc("ctm_staff_update_user_status", {
+        p_user_id: user.user_id,
+        p_email: user.email,
+        p_suspend: isSuspending,
+        p_reason: reason || (isSuspending ? "Manual staff suspension" : null)
       })
 
       if (error) throw error
@@ -103,17 +125,24 @@ export default function StaffUsers() {
         // Refresh the list
         fetchUserActivity({ cityId: selectedCityId, threshold: inactiveDays })
       } else {
-        alert("Could not find a login guard record for this email.")
+        alert(`Failed to ${actionLabel} user.`)
       }
     } catch (err) {
-      console.error("Error reinstating user:", err)
-      alert(getFriendlyErrorMessage(err, "Failed to reinstate user."))
+      console.error(`Error during user ${actionLabel}:`, err)
+      alert(getFriendlyErrorMessage(err, `Failed to ${actionLabel} user.`))
     } finally {
-      setReinstatingEmail(null)
+      setUpdatingUserId(null)
     }
   }
 
-  const visibleUsers = inactiveOnly ? userActivity.filter((item) => item.is_inactive) : userActivity
+  const filteredUsers = userActivity.filter((item) => {
+    const matchesInactive = !inactiveOnly || item.is_inactive
+    const matchesSearch = !searchQuery.trim() || 
+      String(item.full_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(item.email || "").toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesInactive && matchesSearch
+  })
+
   const totalInactiveUsers = userActivity.filter((item) => item.is_inactive).length
 
   return (
@@ -131,7 +160,7 @@ export default function StaffUsers() {
       <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="text-xs font-black uppercase tracking-wide text-slate-400">Users in Scope</div>
-          <div className="mt-3 text-4xl font-black text-slate-900">{visibleUsers.length}</div>
+          <div className="mt-3 text-4xl font-black text-slate-900">{filteredUsers.length}</div>
         </div>
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="text-xs font-black uppercase tracking-wide text-slate-400">Inactive Accounts</div>
@@ -151,6 +180,17 @@ export default function StaffUsers() {
             <p className="text-sm text-slate-500">Review user status, last login, and associated shop portfolio.</p>
           </div>
           <div className="flex flex-col gap-3 md:flex-row">
+            <div className="relative flex items-center">
+              <FaMagnifyingGlass className="absolute left-4 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search name or email..."
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-semibold text-slate-600 outline-none focus:border-[#DB2777] focus:bg-white"
+              />
+            </div>
+
             <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
               <FaLocationDot className="text-[#DB2777]" />
               <select value={selectedCityId} onChange={(event) => setSelectedCityId(event.target.value)} className="bg-transparent outline-none">
@@ -179,7 +219,7 @@ export default function StaffUsers() {
                 inactiveOnly ? "bg-amber-500 text-white hover:bg-amber-600" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
-              {inactiveOnly ? "Showing inactive only" : "Show inactive only"}
+              {inactiveOnly ? "Showing inactive" : "Filter inactive"}
             </button>
           </div>
         </div>
@@ -194,26 +234,28 @@ export default function StaffUsers() {
           </div>
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-slate-200">
-            <table className="w-full min-w-[980px] text-left text-sm text-slate-600">
+            <table className="w-full min-w-[1000px] text-left text-sm text-slate-600">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-4 font-bold">User</th>
                   <th className="px-5 py-4 font-bold">City</th>
                   <th className="px-5 py-4 font-bold">Last Login</th>
-                  <th className="px-5 py-4 font-bold">Status</th>
+                  <th className="px-5 py-4 font-bold">Status & Actions</th>
                   <th className="px-5 py-4 font-bold">Shops</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {visibleUsers.length === 0 ? (
+                {filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="px-5 py-10 text-center font-medium text-slate-500">
-                      No users found for this filter.
+                      No users found.
                     </td>
                   </tr>
                 ) : (
-                  visibleUsers.map((item) => {
+                  filteredUsers.map((item) => {
                     const shopList = normaliseShopList(item.shops)
+                    const isProcessing = updatingUserId === item.user_id
+
                     return (
                       <tr key={item.user_id} className="align-top transition hover:bg-slate-50">
                         <td className="px-5 py-4">
@@ -234,42 +276,47 @@ export default function StaffUsers() {
                           </div>
                         </td>
                         <td className="px-5 py-4">
-                          <div className="flex flex-col items-start gap-2">
-                            {item.is_inactive ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
-                                <FaTriangleExclamation /> Flag inactive
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800">
-                                <FaCircleCheck /> Active recently
-                              </span>
-                            )}
-                            {item.is_suspended ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-800" title={item.guard_suspension_reason}>
-                                {item.guard_suspended_at ? "Security Lockout" : "Suspended"}
-                              </span>
-                            ) : null}
-
-                            {item.guard_suspended_at ? (
-                              <div className="mt-2 flex flex-col gap-2">
-                                <span className="text-[10px] font-black uppercase tracking-wider text-rose-500">
-                                  Login Guard Lock
+                          <div className="flex flex-col items-start gap-3">
+                            <div className="flex flex-wrap gap-2">
+                              {item.is_inactive ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-[10px] font-black uppercase text-amber-800">
+                                  <FaTriangleExclamation /> Inactive
                                 </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-[10px] font-black uppercase text-green-800">
+                                  <FaCircleCheck /> Active
+                                </span>
+                              )}
+                              {item.is_suspended ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-3 py-1 text-[10px] font-black uppercase text-rose-800" title={item.guard_suspension_reason || "Manual Suspension"}>
+                                  <FaUserSlash /> {item.guard_suspended_at ? "Security Lock" : "Suspended"}
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <div className="flex flex-col gap-2 w-full">
+                              {item.is_suspended ? (
                                 <button
                                   type="button"
-                                  disabled={reinstatingEmail === item.email}
-                                  onClick={() => handleReinstate(item.email)}
-                                  className="flex items-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-rose-700 disabled:opacity-50"
+                                  disabled={isProcessing}
+                                  onClick={() => handleToggleSuspension(item)}
+                                  className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
                                 >
-                                  {reinstatingEmail === item.email ? (
-                                    <FaCircleNotch className="animate-spin" />
-                                  ) : (
-                                    <FaRotateLeft />
-                                  )}
+                                  {isProcessing ? <FaCircleNotch className="animate-spin" /> : <FaRotateLeft />}
                                   Reinstate User
                                 </button>
-                              </div>
-                            ) : null}
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={isProcessing}
+                                  onClick={() => handleToggleSuspension(item)}
+                                  className="flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-rose-700 disabled:opacity-50"
+                                >
+                                  {isProcessing ? <FaCircleNotch className="animate-spin" /> : <FaUserSlash />}
+                                  Suspend User
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="px-5 py-4">
@@ -302,3 +349,4 @@ export default function StaffUsers() {
     </StaffPortalShell>
   )
 }
+
