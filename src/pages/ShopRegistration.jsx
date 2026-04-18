@@ -326,6 +326,48 @@ function ShopRegistration() {
     logo: "",
   })
 
+  // Signed URLs for existing private assets
+  const [signedPreviews, setSignedPreviews] = useState({
+    idCard: "",
+    cac: "",
+  })
+
+  useEffect(() => {
+    async function signExisting() {
+      const promises = []
+      const keys = []
+
+      if (previews.idCard && previews.idCard.startsWith("http")) {
+        const path = getStoragePathFromUrl(previews.idCard, ID_DOCUMENT_BUCKET)
+        if (path) {
+          keys.push("idCard")
+          promises.push(supabase.storage.from(ID_DOCUMENT_BUCKET).createSignedUrl(path, 3600))
+        }
+      }
+
+      if (previews.cac && previews.cac.startsWith("http")) {
+        const path = getStoragePathFromUrl(previews.cac, CAC_DOCUMENT_BUCKET)
+        if (path) {
+          keys.push("cac")
+          promises.push(supabase.storage.from(CAC_DOCUMENT_BUCKET).createSignedUrl(path, 3600))
+        }
+      }
+
+      if (promises.length > 0) {
+        const results = await Promise.all(promises)
+        const nextSigned = { ...signedPreviews }
+        results.forEach((res, idx) => {
+          if (res.data?.signedUrl) {
+            nextSigned[keys[idx]] = res.data.signedUrl
+          }
+        })
+        setSignedPreviews(nextSigned)
+      }
+    }
+
+    signExisting()
+  }, [previews.idCard, previews.cac])
+
   const [fileMeta, setFileMeta] = useState({
     storefront: null,
     idCard: null,
@@ -656,7 +698,10 @@ function ShopRegistration() {
     const value = previews[key]
     if (!value) return null
 
-    const isPdf = meta?.type === "application/pdf" || String(value).toLowerCase().includes(".pdf")
+    // Use signed preview if available for private docs (ID/CAC)
+    const displayValue = (key === "idCard" || key === "cac") ? (signedPreviews[key] || value) : value
+
+    const isPdf = meta?.type === "application/pdf" || String(displayValue).toLowerCase().includes(".pdf")
 
     if (isPdf) {
       return (
@@ -671,7 +716,7 @@ function ShopRegistration() {
       )
     }
 
-    return <img src={value} alt={key} className="h-full min-h-[140px] w-full rounded-2xl object-cover" />
+    return <img src={displayValue} alt={key} className="h-full min-h-[140px] w-full rounded-2xl object-cover" />
   }
 
   function getStoragePathFromUrl(url, bucket) {

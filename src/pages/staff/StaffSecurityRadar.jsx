@@ -107,8 +107,7 @@ export default function StaffSecurityRadar() {
                       <tr>
                         <th className="px-5 py-4 font-bold">IP Address</th>
                         <th className="px-5 py-4 font-bold">Count</th>
-                        <th className="px-5 py-4 font-bold">Accounts</th>
-                        <th className="px-5 py-4 font-bold">Shops</th>
+                        <th className="px-5 py-4 font-bold">Account Mapping (Email + Shops)</th>
                         <th className="px-5 py-4 font-bold">Risk</th>
                       </tr>
                     </thead>
@@ -151,8 +150,7 @@ export default function StaffSecurityRadar() {
                       <tr>
                         <th className="px-5 py-4 font-bold">Signature</th>
                         <th className="px-5 py-4 font-bold">Count</th>
-                        <th className="px-5 py-4 font-bold">Accounts</th>
-                        <th className="px-5 py-4 font-bold">Shops</th>
+                        <th className="px-5 py-4 font-bold">Account Mapping (IP + Email + Shops)</th>
                         <th className="px-5 py-4 font-bold">Risk</th>
                       </tr>
                     </thead>
@@ -173,6 +171,8 @@ export default function StaffSecurityRadar() {
 }
 
 function ClusterRow({ item }) {
+  const accounts = Array.isArray(item.account_data) ? item.account_data : []
+
   return (
     <tr className="align-top transition hover:bg-slate-50">
       <td className="px-5 py-4">
@@ -191,25 +191,30 @@ function ClusterRow({ item }) {
         </div>
       </td>
       <td className="px-5 py-4">
-        <div className="flex flex-col gap-1">
-          {item.associated_emails?.map((email) => (
-            <span key={email} className="text-xs font-semibold text-slate-700">
-              {email}
-            </span>
+        <div className="flex flex-col gap-4">
+          {accounts.map((acc, index) => (
+            <div key={index} className="flex flex-col gap-1 rounded-xl border border-slate-100 bg-slate-50/50 p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-black text-slate-900">{acc.email}</span>
+                {acc.ip && (
+                  <span className="rounded bg-blue-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-blue-700">
+                    IP: {acc.ip}
+                  </span>
+                )}
+              </div>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {Array.isArray(acc.shops) && acc.shops.length > 0 ? (
+                  acc.shops.map((shop, sIdx) => (
+                    <span key={sIdx} className="inline-flex items-center rounded-full bg-pink-100 px-2 py-0.5 text-[10px] font-bold text-[#DB2777]">
+                      {shop}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-[10px] italic text-slate-400">No shops linked</span>
+                )}
+              </div>
+            </div>
           ))}
-        </div>
-      </td>
-      <td className="px-5 py-4">
-        <div className="flex flex-wrap gap-2">
-          {item.associated_shops?.length > 0 ? (
-            item.associated_shops.map((shop) => (
-              <span key={shop} className="inline-flex items-center rounded-full bg-pink-50 px-2.5 py-1 text-[11px] font-bold text-[#DB2777] border border-pink-100">
-                {shop}
-              </span>
-            ))
-          ) : (
-            <span className="text-xs italic text-slate-400">No shops</span>
-          )}
         </div>
       </td>
       <td className="px-5 py-4">

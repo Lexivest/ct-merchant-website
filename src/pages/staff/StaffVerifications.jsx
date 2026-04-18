@@ -27,6 +27,8 @@ import {
   formatCoordinate,
   formatDateTime,
 } from "./StaffPortalShared"
+import { ProtectedImage, ProtectedVideo } from "../../components/common/ProtectedMedia"
+import { UPLOAD_RULES } from "../../lib/uploadRules"
 
 function StatusBadge({ status, type = "shop" }) {
   if (type === "kyc") {
@@ -106,6 +108,63 @@ export default function StaffVerifications() {
   const [rejectionNote, setRejectionReason] = useState("")
   const [showRejectionInput, setShowRejectionInput] = useState(false)
   const [filterStatus, setFilterStatus] = useState("all") // 'all' | 'pending' | 'kyc_submitted'
+
+  // Signed URLs for private assets
+  const [signedUrls, setSignedUrls] = useState({ id: null, cac: null, video: null })
+
+  useEffect(() => {
+    if (!selectedShop) {
+      setSignedUrls({ id: null, cac: null, video: null })
+      return
+    }
+
+    async function signAssets() {
+      const getPath = (url, bucket) => {
+        if (!url) return null
+        if (!url.startsWith("http")) return url
+        try {
+          const u = new URL(url)
+          const parts = u.pathname.split("/")
+          if (parts.length >= 6) return parts.slice(6).join("/")
+        } catch (e) {
+          return url
+        }
+        return url
+      }
+
+      const idPath = getPath(selectedShop.id_card_url)
+      const cacPath = getPath(selectedShop.cac_certificate_url)
+      const videoPath = getPath(selectedShop.kyc_video_url)
+
+      const promises = []
+      if (idPath) {
+        promises.push(supabase.storage.from(UPLOAD_RULES.idDocuments.bucket).createSignedUrl(idPath, 3600))
+      } else {
+        promises.push(Promise.resolve({ data: null }))
+      }
+
+      if (cacPath) {
+        promises.push(supabase.storage.from(UPLOAD_RULES.cacDocuments.bucket).createSignedUrl(cacPath, 3600))
+      } else {
+        promises.push(Promise.resolve({ data: null }))
+      }
+
+      if (videoPath) {
+        promises.push(supabase.storage.from(UPLOAD_RULES.kycVideos.bucket).createSignedUrl(videoPath, 3600))
+      } else {
+        promises.push(Promise.resolve({ data: null }))
+      }
+
+      const results = await Promise.all(promises)
+      setSignedUrls({
+        id: results[0]?.data?.signedUrl || selectedShop.id_card_url,
+        cac: results[1]?.data?.signedUrl || selectedShop.cac_certificate_url,
+        video: results[2]?.data?.signedUrl || selectedShop.kyc_video_url,
+      })
+    }
+
+    signAssets()
+  }, [selectedShop])
 
   const fetchShops = useCallback(async () => {
     setLoadingShops(true)
@@ -499,12 +558,12 @@ export default function StaffVerifications() {
                       <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Legal Documents</h4>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <a 
-                          href={selectedShop.id_card_url} 
+                          href={signedUrls.id} 
                           target="_blank" 
                           rel="noreferrer"
                           className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 transition hover:border-indigo-200"
                         >
-                          <img src={selectedShop.id_card_url} className="h-full w-full object-cover transition group-hover:scale-105" />
+                          <img src={signedUrls.id} className="h-full w-full object-cover transition group-hover:scale-105" />
                           <div className="absolute inset-0 flex items-center justify-center bg-slate-900/0 opacity-0 transition group-hover:bg-slate-900/40 group-hover:opacity-100">
                             <span className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-slate-900">View ID Card</span>
                           </div>
@@ -515,12 +574,12 @@ export default function StaffVerifications() {
                         
                         {selectedShop.cac_certificate_url ? (
                           <a 
-                            href={selectedShop.cac_certificate_url} 
+                            href={signedUrls.cac} 
                             target="_blank" 
                             rel="noreferrer"
                             className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 transition hover:border-indigo-200"
                           >
-                            <img src={selectedShop.cac_certificate_url} className="h-full w-full object-cover transition group-hover:scale-105" />
+                            <img src={signedUrls.cac} className="h-full w-full object-cover transition group-hover:scale-105" />
                             <div className="absolute inset-0 flex items-center justify-center bg-slate-900/0 opacity-0 transition group-hover:bg-slate-900/40 group-hover:opacity-100">
                               <span className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-slate-900">View CAC</span>
                             </div>
@@ -555,7 +614,7 @@ export default function StaffVerifications() {
                   <div className="space-y-6">
                     <div className="overflow-hidden rounded-[32px] border-4 border-white bg-slate-900 shadow-xl">
                       {selectedShop.kyc_video_url ? (
-                        <video src={selectedShop.kyc_video_url} controls preload="metadata" className="aspect-video w-full" />
+                        <video src={signedUrls.video} controls preload="metadata" className="aspect-video w-full" />
                       ) : (
                         <div className="flex aspect-video flex-col items-center justify-center text-slate-400">
                           <FaVideo className="mb-4 text-4xl opacity-20" />

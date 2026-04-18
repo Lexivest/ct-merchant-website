@@ -27,9 +27,10 @@ import {
   SectionHeading,
   StaffPortalShell,
   buildVisitTimeline,
+  useStaffCounts,
 } from "./staff/StaffPortalShared"
 
-function HomeCard({ icon, title, subtitle, metric, onClick, tone = "pink" }) {
+function HomeCard({ icon, title, subtitle, metric, metricLabel = "Live", onClick, tone = "pink" }) {
   const toneClass =
     tone === "purple"
       ? "from-[#ede9fe] to-white text-[#5B21B6]"
@@ -43,7 +44,7 @@ function HomeCard({ icon, title, subtitle, metric, onClick, tone = "pink" }) {
     <button
       type="button"
       onClick={onClick}
-      className={`group rounded-[28px] border border-slate-200 bg-gradient-to-br ${toneClass} p-1 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)]`}
+      className={`group relative rounded-[28px] border border-slate-200 bg-gradient-to-br ${toneClass} p-1 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)]`}
     >
       <div className="rounded-[24px] bg-white p-6">
         <div className="mb-4 flex items-center justify-between gap-4">
@@ -52,8 +53,8 @@ function HomeCard({ icon, title, subtitle, metric, onClick, tone = "pink" }) {
           </div>
           {metric !== undefined ? (
             <div className="text-right">
-              <div className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
-                Live
+              <div className={`text-[11px] font-black uppercase tracking-[0.18em] ${metric > 0 && metricLabel === "Pending" ? "text-pink-600" : "text-slate-400"}`}>
+                {metricLabel}
               </div>
               <div className="mt-1 text-3xl font-black text-slate-900">{metric}</div>
             </div>
@@ -62,6 +63,11 @@ function HomeCard({ icon, title, subtitle, metric, onClick, tone = "pink" }) {
         <div className="text-lg font-black text-slate-900">{title}</div>
         <div className="mt-2 text-sm leading-6 text-slate-500">{subtitle}</div>
       </div>
+      {metric > 0 && metricLabel === "Pending" && (
+        <div className="absolute -right-2 -top-2 flex h-8 min-w-[32px] items-center justify-center rounded-full bg-[#DB2777] px-2 text-xs font-black text-white shadow-lg ring-4 ring-white">
+          {metric > 99 ? "99+" : metric}
+        </div>
+      )}
     </button>
   )
 }
@@ -72,6 +78,8 @@ export default function StaffDashboard() {
   const isMounted = useRef(true)
   const retryRouteTransitionRef = useRef(null)
 
+  const { counts, refresh: refreshCounts } = useStaffCounts()
+
   const [loading, setLoading] = useState(true)
   const [routeTransition, setRouteTransition] = useState({
     pending: false,
@@ -80,11 +88,8 @@ export default function StaffDashboard() {
   const [summaryError, setSummaryError] = useState(null)
   const [summary, setSummary] = useState({
     shopCount: 0,
-    pendingComments: 0,
     inactiveUsers: 0,
     visitsToday: 0,
-    pendingPayments: 0,
-    securityClusters: 0,
   })
 
   const fetchSummary = useCallback(async () => {
@@ -93,17 +98,14 @@ export default function StaffDashboard() {
     try {
       const results = await Promise.allSettled([
         supabase.from("shops").select("id", { count: "exact", head: true }),
-        supabase.from("shop_comments").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.rpc("staff_user_activity_summary", {
           p_inactive_days: 180,
           p_city_id: null,
         }),
         supabase.rpc("staff_site_visit_daily", { p_days: 7 }),
-        supabase.from("offline_payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.rpc("ctm_get_security_radar_insights"),
       ])
 
-      const labels = ["shops", "comments", "users", "visits", "payments", "radar"]
+      const labels = ["shops", "users", "visits"]
       const errors = []
       
       results.forEach((result, idx) => {
@@ -118,7 +120,7 @@ export default function StaffDashboard() {
         throw new Error(`Summary fetch partially failed: ${errors.join(", ")}`)
       }
 
-      const [shopsResult, commentsResult, usersResult, visitsResult, paymentsResult, radarResult] = results.map(r => r.value)
+      const [shopsResult, usersResult, visitsResult] = results.map(r => r.value)
 
       const userRows = usersResult.data || []
       const visitTimeline = buildVisitTimeline(visitsResult.data || [], 7)
@@ -128,11 +130,8 @@ export default function StaffDashboard() {
       if (isMounted.current) {
         setSummary({
           shopCount: shopsResult.count || 0,
-          pendingComments: commentsResult.count || 0,
           inactiveUsers: userRows.filter((item) => item.is_inactive).length,
           visitsToday: Number(visitsToday) || 0,
-          pendingPayments: paymentsResult.count || 0,
-          securityClusters: (radarResult.data || []).length,
         })
       }
     } catch (err) {
@@ -154,6 +153,11 @@ export default function StaffDashboard() {
     fetchSummary()
     return () => { isMounted.current = false }
   }, [fetchSummary])
+
+  const handleRefresh = useCallback(() => {
+    fetchSummary()
+    refreshCounts()
+  }, [fetchSummary, refreshCounts])
 
   function beginRouteTransition(retryAction = null) {
     retryRouteTransitionRef.current = retryAction
@@ -203,7 +207,7 @@ export default function StaffDashboard() {
         icon={<FaCircleNotch className={loading ? "animate-spin" : ""} />}
         label="Refresh Overview"
         tone="white"
-        onClick={fetchSummary}
+        onClick={handleRefresh}
       />,
       <QuickActionButton
         key="inbox"
@@ -226,7 +230,7 @@ export default function StaffDashboard() {
         onClick={() => void openStaffRouteWithTransition("/staff-city-banners")}
       />,
     ],
-    [fetchSummary, loading, openStaffRouteWithTransition]
+    [handleRefresh, loading, openStaffRouteWithTransition]
   )
 
   if (summaryError && !loading) {
@@ -234,7 +238,7 @@ export default function StaffDashboard() {
       <GlobalErrorScreen
         error={summaryError}
         message={getFriendlyErrorMessage(summaryError, "Could not load the staff home screen. Retry.")}
-        onRetry={fetchSummary}
+        onRetry={handleRefresh}
         onBack={() => navigate("/staff-portal")}
       />
     )
@@ -284,6 +288,7 @@ export default function StaffDashboard() {
               title="User Activity"
               subtitle="Inspect city-level user activity, inactivity risk, and shop ownership patterns without crowding the main dashboard."
               metric={summary.inactiveUsers}
+              metricLabel="Inactive"
               tone="amber"
               onClick={() => void openStaffRouteWithTransition("/staff-users")}
             />
@@ -291,7 +296,8 @@ export default function StaffDashboard() {
               icon={<FaComments />}
               title="Community Moderation"
               subtitle="Approve, hide, or reject shop discussion threads and keep public conversations professional."
-              metric={summary.pendingComments}
+              metric={counts.community}
+              metricLabel="Pending"
               tone="pink"
               onClick={() => void openStaffRouteWithTransition("/staff-community")}
             />
@@ -299,7 +305,8 @@ export default function StaffDashboard() {
               icon={<FaStore />}
               title="Merchant Verifications"
               subtitle="Review KYC videos, issue merchant IDs, and supervise approval workflows from a focused verification page."
-              metric={summary.shopCount}
+              metric={counts.verifications}
+              metricLabel="Pending"
               tone="purple"
               onClick={() => void openStaffRouteWithTransition("/staff-verifications")}
             />
@@ -307,6 +314,8 @@ export default function StaffDashboard() {
               icon={<FaPanorama />}
               title="Shop Content"
               subtitle="Moderate shop display banners and news updates to ensure high-quality marketplace visuals."
+              metric={counts.content}
+              metricLabel="Pending"
               tone="blue"
               onClick={() => void openStaffRouteWithTransition("/staff-shop-content")}
             />
@@ -328,7 +337,8 @@ export default function StaffDashboard() {
               icon={<FaWandMagicSparkles />}
               title="Product Moderation"
               subtitle="Approve or reject new product listings from merchants to keep the marketplace clean and professional."
-              metric={summary.shopCount}
+              metric={counts.products}
+              metricLabel="Pending"
               tone="purple"
               onClick={() => void openStaffRouteWithTransition("/staff-products")}
             />
@@ -336,7 +346,8 @@ export default function StaffDashboard() {
               icon={<FaReceipt />}
               title="Offline Payments"
               subtitle="Approve bank transfer receipts, activate subscriptions, and reject unclear proof with notes."
-              metric={summary.pendingPayments}
+              metric={counts.payments}
+              metricLabel="Pending"
               tone="blue"
               onClick={() => void openStaffRouteWithTransition("/staff-payments")}
             />
@@ -365,7 +376,8 @@ export default function StaffDashboard() {
               icon={<FaTowerBroadcast />}
               title="Security Intelligence"
               subtitle="Detect multi-account clusters and suspicious merchant footprints sharing network fingerprints."
-              metric={summary.securityClusters}
+              metric={counts.radar}
+              metricLabel="Clusters"
               tone="amber"
               onClick={() => void openStaffRouteWithTransition("/staff-security-radar")}
             />
@@ -380,7 +392,7 @@ export default function StaffDashboard() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">Community Queue</div>
-              <div className="mt-3 text-4xl font-black text-slate-900">{summary.pendingComments}</div>
+              <div className="mt-3 text-4xl font-black text-slate-900">{counts.community}</div>
               <p className="mt-3 text-sm leading-6 text-slate-500">
                 Pending shop comments awaiting approval or moderation action.
               </p>
@@ -394,10 +406,10 @@ export default function StaffDashboard() {
             </div>
 
             <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">Merchant Load</div>
-              <div className="mt-3 text-4xl font-black text-slate-900">{summary.shopCount}</div>
+              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">Merchant Verifications</div>
+              <div className="mt-3 text-4xl font-black text-slate-900">{counts.verifications}</div>
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Latest merchant records available for verification and operational supervision.
+                Pending shop applications and KYC video submissions awaiting review.
               </p>
               <button
                 type="button"
@@ -409,17 +421,17 @@ export default function StaffDashboard() {
             </div>
 
             <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">User Health</div>
-              <div className="mt-3 text-4xl font-black text-slate-900">{summary.inactiveUsers}</div>
+              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">Product Review</div>
+              <div className="mt-3 text-4xl font-black text-slate-900">{counts.products}</div>
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Inactive accounts flagged at the 180-day threshold for follow-up and analysis.
+                New product listings from merchants that need to be approved for the marketplace.
               </p>
               <button
                 type="button"
-                onClick={() => void openStaffRouteWithTransition("/staff-users")}
+                onClick={() => void openStaffRouteWithTransition("/staff-products")}
                 className="mt-5 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
               >
-                Open User Activity Page
+                Open Products Page
               </button>
             </div>
           </div>

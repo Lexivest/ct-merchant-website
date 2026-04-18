@@ -338,6 +338,73 @@ export function useStaffPortalSession() {
   }
 }
 
+export function useStaffCounts() {
+  const [counts, setCounts] = useState({
+    verifications: 0,
+    products: 0,
+    payments: 0,
+    community: 0,
+    content: 0,
+    inbox: 0,
+    radar: 0,
+  })
+  const [loading, setLoading] = useState(true)
+
+  const fetchCounts = async () => {
+    try {
+      // Use simpler queries for speed where possible
+      const [
+        pendingShops,
+        submittedKyc,
+        pendingProducts,
+        pendingPayments,
+        pendingComments,
+        pendingContent,
+        unreadContact,
+        pendingAbuse,
+        radar
+      ] = await Promise.all([
+        supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("shops").select("id", { count: "exact", head: true }).eq("kyc_status", "submitted"),
+        supabase.from("products").select("id", { count: "exact", head: true }).is("is_approved", false).is("rejection_reason", null),
+        supabase.from("offline_payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("shop_comments").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("shop_banners_news").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("contact_messages").select("id", { count: "exact", head: true }).or("status.eq.unread,status.is.null"),
+        supabase.from("abuse_reports").select("id", { count: "exact", head: true }).or("status.eq.pending,status.is.null"),
+        supabase.rpc("ctm_get_security_radar_insights"),
+      ])
+
+      setCounts({
+        verifications: (pendingShops.count || 0) + (submittedKyc.count || 0),
+        products: pendingProducts.count || 0,
+        payments: pendingPayments.count || 0,
+        community: pendingComments.count || 0,
+        content: pendingContent.count || 0,
+        inbox: (unreadContact.count || 0) + (pendingAbuse.count || 0),
+        radar: (radar.data || []).length,
+      })
+    } catch (err) {
+      console.error("Error fetching staff counts:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCounts()
+    // Refresh counts every 2 minutes while the tab is active
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchCounts()
+      }
+    }, 120000)
+    return () => clearInterval(timer)
+  }, [])
+
+  return { counts, loading, refresh: fetchCounts }
+}
+
 export function StaffPortalShell({
   activeKey = "home",
   title,
@@ -347,6 +414,7 @@ export function StaffPortalShell({
 }) {
   const routeLocation = useLocation()
   const { authUser, staffData, fetchingStaff, isLoggingOut, handleLogout } = useStaffPortalSession()
+  const { counts } = useStaffCounts()
 
   if (fetchingStaff) {
     return (
@@ -367,19 +435,19 @@ export function StaffPortalShell({
     { key: "home", label: "Home", to: "/staff-dashboard", icon: <FaShieldHalved /> },
     { key: "traffic", label: "Traffic", to: "/staff-traffic", icon: <FaChartLine /> },
     { key: "users", label: "Users", to: "/staff-users", icon: <FaUsers /> },
-    { key: "products", label: "Products", to: "/staff-products", icon: <FaWandMagicSparkles /> },
-    { key: "shop-content", label: "Shop Content", to: "/staff-shop-content", icon: <FaPanorama /> },
+    { key: "products", label: "Products", to: "/staff-products", icon: <FaWandMagicSparkles />, count: counts.products },
+    { key: "shop-content", label: "Shop Content", to: "/staff-shop-content", icon: <FaPanorama />, count: counts.content },
     { key: "announcements", label: "Announcements", to: "/staff-announcements", icon: <FaBullhorn /> },
     { key: "notifications", label: "Notifications", to: "/staff-notifications", icon: <FaEnvelope /> },
-    { key: "community", label: "Community", to: "/staff-community", icon: <FaComments /> },
-    { key: "verifications", label: "Verifications", to: "/staff-verifications", icon: <FaStore /> },
-    { key: "payments", label: "Payments", to: "/staff-payments", icon: <FaReceipt /> },
+    { key: "community", label: "Community", to: "/staff-community", icon: <FaComments />, count: counts.community },
+    { key: "verifications", label: "Verifications", to: "/staff-verifications", icon: <FaStore />, count: counts.verifications },
+    { key: "payments", label: "Payments", to: "/staff-payments", icon: <FaReceipt />, count: counts.payments },
     { key: "sponsored-products", label: "Sponsored Products", to: "/staff-sponsored-products", icon: <FaImages /> },
     { key: "discoveries", label: "Discoveries", to: "/staff-discoveries", icon: <FaPanorama /> },
     { key: "city-banners", label: "City Banners", to: "/staff-city-banners", icon: <FaImages /> },
-    { key: "inbox", label: "Inbox", to: "/staff-inbox", icon: <FaEnvelope /> },
+    { key: "inbox", label: "Inbox", to: "/staff-inbox", icon: <FaEnvelope />, count: counts.inbox },
     { key: "studio", label: "CT Studio", to: "/staff-studio", icon: <FaWandMagicSparkles /> },
-    { key: "security-radar", label: "Security Radar", to: "/staff-security-radar", icon: <FaTowerBroadcast /> },
+    { key: "security-radar", label: "Security Radar", to: "/staff-security-radar", icon: <FaTowerBroadcast />, count: counts.radar },
   ]
 
   return (
@@ -436,7 +504,7 @@ export function StaffPortalShell({
                 <Link
                   key={item.key}
                   to={item.to}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${
+                  className={`relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${
                     activeKey === item.key
                       ? "bg-[#2E1065] text-white"
                       : "bg-white text-slate-600 shadow-sm hover:bg-slate-100"
@@ -444,6 +512,11 @@ export function StaffPortalShell({
                 >
                   {item.icon}
                   {item.label}
+                  {item.count > 0 && (
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#DB2777] px-1 text-[10px] font-black text-white shadow-sm ring-2 ring-white">
+                      {item.count > 99 ? "99+" : item.count}
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>
