@@ -283,6 +283,7 @@ export function useStaffPortalSession() {
         } = await supabase.auth.getSession()
 
         if (!session) {
+          // No session at all, definitely need to login
           navigate("/staff-portal", { replace: true })
           return
         }
@@ -292,23 +293,27 @@ export function useStaffPortalSession() {
         // Try to fetch from admins table first (harmonized role source)
         const { data: adminProfile, error: adminErr } = await supabase
           .from("admins")
-          .select("*")
+          .select("role, city_id, full_name")
           .eq("id", session.user.id)
           .maybeSingle()
 
         if (adminErr) throw adminErr
 
         if (!adminProfile) {
-          // Fallback check for legacy staff_profiles if necessary, 
-          // but based on user directive we are moving to admins.
+          // Fallback check for legacy staff_profiles
           const { data: staffProfile, error: legacyErr } = await supabase
             .from("staff_profiles")
-            .select("*")
+            .select("role, city_id, full_name")
             .eq("id", session.user.id)
             .maybeSingle()
           
-          if (legacyErr || !staffProfile) {
-            throw new Error("Access denied. Admin account required.")
+          if (legacyErr) throw legacyErr
+
+          if (!staffProfile) {
+            // Definitely not a staff member
+            await supabase.auth.signOut()
+            navigate("/staff-portal", { replace: true })
+            return
           }
           
           // Map legacy to same structure
@@ -333,13 +338,12 @@ export function useStaffPortalSession() {
         }
       } catch (err) {
         console.error("Staff session error:", err)
+        // Only reset memory on actual error, don't redirect yet to avoid loops
         staffPortalMemory = {
           isResolved: false,
           authUser: null,
           staffData: null,
         }
-        await supabase.auth.signOut()
-        navigate("/staff-portal", { replace: true })
       } finally {
         setFetchingStaff(false)
       }

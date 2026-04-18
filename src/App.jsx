@@ -405,7 +405,8 @@ function ProtectedStaffRoute({ children }) {
     return <RouteLoadingScreen title="Accessing staff portal" message="Verifying credentials..." />
   }
 
-  if (!user || profile?.role !== "staff") {
+  const authorizedRoles = ["super_admin", "city_admin", "staff", "director"];
+  if (!user || !profile?.role || !authorizedRoles.includes(profile.role)) {
     return <Navigate to="/staff-portal" replace />
   }
 

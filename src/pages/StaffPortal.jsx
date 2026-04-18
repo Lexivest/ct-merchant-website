@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { supabase } from "../lib/supabase"
 import { signInWithPassword } from "../lib/auth"
 import useAuthSession from "../hooks/useAuthSession"
 
@@ -18,13 +19,6 @@ function StaffPortal() {
   const [errorMessage, setErrorMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Auto-redirect if already logged in as staff
-  useEffect(() => {
-    if (user && profileLoaded && profile?.role === "staff") {
-      navigate("/staff-dashboard", { replace: true })
-    }
-  }, [user, profile, profileLoaded, navigate])
-
   const handleChange = (event) => {
     const { name, value } = event.target
     setFormData((prev) => ({
@@ -40,37 +34,38 @@ function StaffPortal() {
     setIsSubmitting(true)
 
     try {
-      // 1. Authenticate using the shared logic
-      const { data: { user: authUser }, error: signInError } = await supabase.auth.signInWithPassword({
+      // 1. Authenticate using the shared logic (handles suspension and tracking)
+      const result = await signInWithPassword({
         email: formData.email.trim(),
         password: formData.password,
       })
 
-      if (signInError) throw signInError
+      const authUser = result.auth?.user || result.auth?.session?.user
+
       if (!authUser) throw new Error("Login failed. Please check your credentials.")
 
       // 2. Immediate Role Verification (Backend tables define staff/admin)
       // Check admins table first
       const { data: adminProfile } = await supabase
         .from("admins")
-        .select("role")
+        .select("*")
         .eq("id", authUser.id)
         .maybeSingle()
 
       if (adminProfile) {
-        // Successful staff login, the useEffect will handle navigation
+        navigate("/staff-dashboard", { replace: true })
         return
       }
 
       // Check legacy staff_profiles table
       const { data: staffProfile } = await supabase
         .from("staff_profiles")
-        .select("role")
+        .select("*")
         .eq("id", authUser.id)
         .maybeSingle()
 
       if (staffProfile) {
-        // Successful staff login
+        navigate("/staff-dashboard", { replace: true })
         return
       }
 
