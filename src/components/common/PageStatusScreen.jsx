@@ -28,12 +28,7 @@ export function PageErrorScreen({
       message={message}
       fullScreen={fullScreen}
       onRetry={onRetry}
-      onBack={
-        onBack ||
-        (() => {
-          if (typeof window !== "undefined") window.history.back()
-        })
-      }
+      onBack={onBack}
     />
   )
 }

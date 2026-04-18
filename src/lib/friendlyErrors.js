@@ -20,7 +20,11 @@ export function getFriendlyErrorMessage(error, fallback = "We encountered an iss
     return "Your session has ended. Please sign in to continue."
   }
 
-  if (lower.includes("database error saving new user") || lower.includes("phone number already exists")) {
+  if (lower.includes("database error saving new user")) {
+    return "We encountered a database issue while creating your profile. Please contact support if this persists."
+  }
+
+  if (lower.includes("phone number already exists")) {
     return "This phone number is already linked to another account."
   }
 

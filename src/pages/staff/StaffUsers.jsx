@@ -18,6 +18,7 @@ import {
   formatActivityNote,
   formatDateTime,
   normaliseShopList,
+  useStaffPortalSession,
 } from "./StaffPortalShared"
 
 export default function StaffUsers() {

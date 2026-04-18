@@ -138,14 +138,19 @@ function CompleteProfileModal({
       setSaving(true)
       setNotice({ visible: false, type: "info", title: "", message: "" })
 
-      const finalPhone = form.phone.startsWith("+") ? form.phone : `+234${form.phone}`
+      const rawPhone = form.phone.trim().replace(/\s+/g, "")
+      let finalPhone = rawPhone
+      if (!rawPhone.startsWith("+")) {
+        const stripped = rawPhone.startsWith("0") ? rawPhone.substring(1) : rawPhone
+        finalPhone = `+234${stripped}`
+      }
 
       await completeProfileSetup({
         userId,
         fullName,
         phone: finalPhone,
         cityId: form.cityId,
-        areaId: form.areaId,
+        area_id: Number(form.areaId), // areaId should be passed correctly
       })
 
       setNotice({

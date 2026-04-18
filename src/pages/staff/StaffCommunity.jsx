@@ -18,6 +18,7 @@ import {
   formatDateTime,
   getCommentStatusBadge,
   getStaffCommentThreads,
+  useStaffPortalSession,
 } from "./StaffPortalShared"
 
 function getInitials(value) {

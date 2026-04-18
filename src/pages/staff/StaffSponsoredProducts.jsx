@@ -14,7 +14,7 @@ import {
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
-import { SectionHeading, StaffPortalShell, formatDateTime } from "./StaffPortalShared"
+import { SectionHeading, StaffPortalShell, formatDateTime, useStaffPortalSession } from "./StaffPortalShared"
 import StableImage from "../../components/common/StableImage"
 import { clearCachedFetchStore } from "../../hooks/useCachedFetch"
 

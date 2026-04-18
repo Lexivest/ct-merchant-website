@@ -424,7 +424,12 @@ function CreateAccount() {
       setSubmitting(true)
       setNotice({ visible: false, type: "info", title: "", message: "" })
 
-      const finalPhone = form.phone.startsWith("+") ? form.phone : `+234${form.phone}`
+      const rawPhone = form.phone.trim().replace(/\s+/g, "")
+      let finalPhone = rawPhone
+      if (!rawPhone.startsWith("+")) {
+        const stripped = rawPhone.startsWith("0") ? rawPhone.substring(1) : rawPhone
+        finalPhone = `+234${stripped}`
+      }
 
       const result = await signUpWithEmail({
         fullName: combinedFullName,

@@ -395,29 +395,40 @@ export async function fetchProfileByUserId(userId) {
 
   if (profileError) throw profileError
 
-  // 2. Check if this user is staff
-  const { data: staff, error: staffError } = await supabase
-    .from("staff_profiles")
+  // 2. Check if this user is staff (Try admins table first)
+  const { data: adminProfile } = await supabase
+    .from("admins")
     .select("*")
     .eq("id", userId)
     .maybeSingle()
 
-  if (staffError) {
-    console.warn("Staff check failed:", staffError.message)
-  }
+  const { data: staffProfile } = adminProfile 
+    ? { data: null } 
+    : await supabase
+        .from("staff_profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle()
+
+  const staff = adminProfile || staffProfile
+  const role = adminProfile 
+    ? adminProfile.role 
+    : staffProfile 
+      ? (staffProfile.role === "director" ? "super_admin" : "staff")
+      : "user"
 
   // 3. Return combined profile with role
   if (profile) {
     return {
       ...profile,
-      role: staff ? "staff" : "user"
+      role: (role === "user" && staff) ? "staff" : role
     }
   }
 
   if (staff) {
     return {
       ...staff,
-      role: "staff"
+      role: role === "user" ? "staff" : role
     }
   }
 

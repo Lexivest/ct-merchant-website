@@ -190,7 +190,6 @@ function Area() {
               error={dataError}
               message={getRetryingMessage(dataError)}
               onRetry={mutate}
-              onBack={() => navigate(-1)}
             />
           ) : shops.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center px-5 text-center text-slate-400">

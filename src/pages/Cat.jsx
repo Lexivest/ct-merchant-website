@@ -246,7 +246,6 @@ function Cat() {
             error={dataError}
             message={getRetryingMessage(dataError)}
             onRetry={mutate}
-            onBack={() => navigate(-1)}
           />
         ) : (
           <>

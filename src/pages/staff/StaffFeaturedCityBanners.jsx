@@ -14,7 +14,7 @@ import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { UPLOAD_RULES } from "../../lib/uploadRules"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import StableImage from "../../components/common/StableImage"
-import { SectionHeading, StaffPortalShell, formatDateTime } from "./StaffPortalShared"
+import { SectionHeading, StaffPortalShell, formatDateTime, useStaffPortalSession } from "./StaffPortalShared"
 
 const BANNER_RULE = UPLOAD_RULES.featuredCityBanners
 const BACKGROUND_OPTIONS = [

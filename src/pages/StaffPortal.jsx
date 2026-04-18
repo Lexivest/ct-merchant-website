@@ -40,17 +40,45 @@ function StaffPortal() {
     setIsSubmitting(true)
 
     try {
-      // 1. Authenticate using the shared logic (handles suspension and tracking)
-      await signInWithPassword({
+      // 1. Authenticate using the shared logic
+      const { data: { user: authUser }, error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email.trim(),
         password: formData.password,
       })
 
-      // The useAuthSession hook will detect the new session and fetch the profile.
-      // The useEffect above will handle redirection once the staff role is confirmed.
+      if (signInError) throw signInError
+      if (!authUser) throw new Error("Login failed. Please check your credentials.")
+
+      // 2. Immediate Role Verification (Backend tables define staff/admin)
+      // Check admins table first
+      const { data: adminProfile } = await supabase
+        .from("admins")
+        .select("role")
+        .eq("id", authUser.id)
+        .maybeSingle()
+
+      if (adminProfile) {
+        // Successful staff login, the useEffect will handle navigation
+        return
+      }
+
+      // Check legacy staff_profiles table
+      const { data: staffProfile } = await supabase
+        .from("staff_profiles")
+        .select("role")
+        .eq("id", authUser.id)
+        .maybeSingle()
+
+      if (staffProfile) {
+        // Successful staff login
+        return
+      }
+
+      // 3. Not a staff member - Access Denied
+      await supabase.auth.signOut()
+      throw new Error("Access Denied. This portal is restricted to authorized staff members only.")
       
     } catch (error) {
-      // Show cleaner messages for common errors
       setErrorMessage(error.message)
       setIsSubmitting(false)
     }

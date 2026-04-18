@@ -386,22 +386,42 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
   const fetchCounts = async () => {
     try {
       // Define queries with optional city scoping
-      const shopQuery = supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "pending")
-      const kycQuery = supabase.from("shops").select("id", { count: "exact", head: true }).eq("kyc_status", "submitted")
-      const productQuery = supabase.from("products").select("id", { count: "exact", head: true }).is("is_approved", false).is("rejection_reason", null)
-      const paymentQuery = supabase.from("offline_payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pending")
-      const commentQuery = supabase.from("shop_comments").select("id", { count: "exact", head: true }).eq("status", "pending")
-      const contentQuery = supabase.from("shop_banners_news").select("id", { count: "exact", head: true }).eq("status", "pending")
-      const contactQuery = supabase.from("contact_messages").select("id", { count: "exact", head: true }).or("status.eq.unread,status.is.null")
-      const abuseQuery = supabase.from("abuse_reports").select("id", { count: "exact", head: true }).or("status.eq.pending,status.is.null")
+      let shopQuery = supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "pending")
+      let kycQuery = supabase.from("shops").select("id", { count: "exact", head: true }).eq("kyc_status", "submitted")
+      let productQuery = supabase.from("products").select("id", { count: "exact", head: true }).is("is_approved", false).is("rejection_reason", null)
+      let paymentQuery = supabase.from("offline_payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pending")
+      let commentQuery = supabase.from("shop_comments").select("id", { count: "exact", head: true }).eq("status", "pending")
+      let contentQuery = supabase.from("shop_banners_news").select("id", { count: "exact", head: true }).eq("status", "pending")
+      let contactQuery = supabase.from("contact_messages").select("id", { count: "exact", head: true }).or("status.eq.unread,status.is.null")
+      let abuseQuery = supabase.from("abuse_reports").select("id", { count: "exact", head: true }).or("status.eq.pending,status.is.null")
 
       // Apply city filters for regular admins
       if (!isSuperAdmin && staffCityId) {
-        shopQuery.eq("city_id", staffCityId)
-        kycQuery.eq("city_id", staffCityId)
-        productQuery.eq("city_id", staffCityId) // Note: ensure products table has city_id or join it
-        commentQuery.eq("city_id", staffCityId) // Note: ensure comments table has city_id
-        contentQuery.eq("city_id", staffCityId) // Note: ensure content table has city_id
+        shopQuery = shopQuery.eq("city_id", staffCityId)
+        kycQuery = kycQuery.eq("city_id", staffCityId)
+        
+        // These tables don't have city_id directly, join via shops
+        productQuery = supabase.from("products")
+          .select("id, shops!inner(city_id)", { count: "exact", head: true })
+          .is("is_approved", false)
+          .is("rejection_reason", null)
+          .eq("shops.city_id", staffCityId)
+
+        commentQuery = supabase.from("shop_comments")
+          .select("id, shops!inner(city_id)", { count: "exact", head: true })
+          .eq("status", "pending")
+          .eq("shops.city_id", staffCityId)
+
+        contentQuery = supabase.from("shop_banners_news")
+          .select("id, shops!inner(city_id)", { count: "exact", head: true })
+          .eq("status", "pending")
+          .eq("shops.city_id", staffCityId)
+
+        // Abuse reports filtered by reporter/reported profile city
+        abuseQuery = supabase.from("abuse_reports")
+          .select("id, profiles!inner(city_id)", { count: "exact", head: true })
+          .or("status.eq.pending,status.is.null")
+          .eq("profiles.city_id", staffCityId)
       }
 
       const [
@@ -421,8 +441,8 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
         isSuperAdmin ? paymentQuery : Promise.resolve({ count: 0 }),
         commentQuery,
         contentQuery,
-        contactQuery, // Inbox is platform wide or needs separate routing? Keep wide for now.
-        pendingAbuse,
+        contactQuery, 
+        abuseQuery,
         isSuperAdmin ? supabase.rpc("ctm_get_security_radar_insights") : Promise.resolve({ data: [] }),
       ])
 

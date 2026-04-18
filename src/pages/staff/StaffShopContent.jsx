@@ -20,6 +20,7 @@ import {
   SectionHeading,
   StaffPortalShell,
   formatDateTime,
+  useStaffPortalSession,
 } from "./StaffPortalShared"
 
 export default function StaffShopContent() {

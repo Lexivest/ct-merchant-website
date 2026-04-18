@@ -26,6 +26,7 @@ import {
   StaffPortalShell,
   formatCoordinate,
   formatDateTime,
+  useStaffPortalSession,
 } from "./StaffPortalShared"
 import { ProtectedImage, ProtectedVideo } from "../../components/common/ProtectedMedia"
 import { UPLOAD_RULES } from "../../lib/uploadRules"
@@ -373,8 +374,8 @@ export default function StaffVerifications() {
           {[
             { id: "all", label: "All Records" },
             { id: "pending", label: "Applications" },
-            { id: "kyc_submitted", label: "KYC Videos" },
-          ].map((tab) => (
+            { id: "kyc_submitted", label: "KYC Videos", superOnly: true },
+          ].filter(t => !t.superOnly || isSuperAdmin).map((tab) => (
             <button
               key={tab.id}
               onClick={() => setFilterStatus(tab.id)}
@@ -428,15 +429,19 @@ export default function StaffVerifications() {
                         <button
                           onClick={() => {
                             setSelectedShop(shop)
-                            setReviewTab(shop.status === 'pending' ? 'application' : 'kyc')
+                            // If not super admin, always show application tab.
+                            // Otherwise, default to pending application OR kyc if application is already approved
+                            setReviewTab(
+                              (!isSuperAdmin || shop.status === 'pending') ? 'application' : 'kyc'
+                            )
                           }}
                           className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold text-white transition shadow-sm ${
-                            shop.status === 'pending' || shop.kyc_status === 'submitted'
+                            shop.status === 'pending' || (shop.kyc_status === 'submitted' && isSuperAdmin)
                               ? "bg-indigo-600 hover:bg-indigo-700"
                               : "bg-slate-600 hover:bg-slate-700"
                           }`}
                         >
-                          <FaEye /> {shop.status === 'pending' || shop.kyc_status === 'submitted' ? "Review Now" : "View Details"}
+                          <FaEye /> {shop.status === 'pending' || (shop.kyc_status === 'submitted' && isSuperAdmin) ? "Review Now" : "View Details"}
                         </button>
 
                         {shop.is_verified && (
@@ -620,6 +625,16 @@ export default function StaffVerifications() {
                     </div>
                   </div>
                 </div>
+              ) : !isSuperAdmin ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                    <FaVideo className="text-3xl" />
+                  </div>
+                  <h4 className="text-xl font-black text-slate-900">Super Admin Access Only</h4>
+                  <p className="mt-2 max-w-sm text-sm font-medium text-slate-500">
+                    KYC video review and identity verification are restricted to central management to ensure platform-wide security standards.
+                  </p>
+                </div>
               ) : (
                 <div className="grid gap-8 lg:grid-cols-[1.3fr_0.7fr]">
                   <div className="space-y-6">
@@ -731,20 +746,25 @@ export default function StaffVerifications() {
                   </div>
 
                   <div className="flex gap-3">
-                    <button
-                      onClick={() => setShowRejectionInput(true)}
-                      disabled={processing}
-                      className="flex items-center gap-2 rounded-2xl border-2 border-rose-100 bg-white px-6 py-3 text-sm font-black text-rose-600 transition hover:bg-rose-50"
-                    >
-                      <FaXmark /> Reject {reviewTab === 'kyc' ? 'Video' : 'Application'}
-                    </button>
-                    <button
-                      onClick={() => handleApprove(reviewTab)}
-                      disabled={processing}
-                      className="flex items-center gap-2 rounded-2xl bg-emerald-600 px-8 py-3 text-sm font-black text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700 active:scale-95"
-                    >
-                      {processing ? <FaCircleNotch className="animate-spin" /> : <><FaCheck /> Approve {reviewTab === 'kyc' ? 'Video' : 'Application'}</>}
-                    </button>
+                    {(reviewTab === 'application' || isSuperAdmin) && (
+                      <button
+                        onClick={() => setShowRejectionInput(true)}
+                        disabled={processing || (reviewTab === 'application' && selectedShop.status === 'approved') || (reviewTab === 'kyc' && selectedShop.kyc_status === 'approved')}
+                        className="flex items-center gap-2 rounded-2xl border-2 border-rose-100 bg-white px-6 py-3 text-sm font-black text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
+                      >
+                        <FaXmark /> Reject {reviewTab === 'kyc' ? 'Video' : 'Application'}
+                      </button>
+                    )}
+                    
+                    {(reviewTab === 'application' || isSuperAdmin) && (
+                      <button
+                        onClick={() => handleApprove(reviewTab)}
+                        disabled={processing || (reviewTab === 'application' && selectedShop.status === 'approved') || (reviewTab === 'kyc' && selectedShop.kyc_status === 'approved')}
+                        className="flex items-center gap-2 rounded-2xl bg-emerald-600 px-8 py-3 text-sm font-black text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700 active:scale-95 disabled:opacity-50"
+                      >
+                        {processing ? <FaCircleNotch className="animate-spin" /> : <><FaCheck /> Approve {reviewTab === 'kyc' ? 'Video' : 'Application'}</>}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

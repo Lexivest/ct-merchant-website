@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaRotateRight, FaTriangleExclamation, FaWifi, FaBug } from "react-icons/fa6"
 import { isNetworkError } from "../../lib/friendlyErrors"
 import { isChunkLoadFailure } from "../../lib/runtimeRecovery"
@@ -58,12 +59,28 @@ function GlobalErrorScreen({
   backLabel = "Go back",
   busy = false,
 }) {
+  const navigate = useNavigate()
   const [showDetails, setShowDetails] = useState(false)
   const [cloudStatus, setCloudStatus] = useState("Checking...")
   const copy = resolveErrorCopy(error, title, message)
 
   const wrapperClass = fullScreen ? "min-h-screen" : "min-h-[320px]"
   const Icon = copy.network ? FaWifi : FaTriangleExclamation
+
+  const handleBack = () => {
+    if (typeof onBack === "function") {
+      onBack()
+      return
+    }
+
+    if (typeof window !== "undefined") {
+      if (window.history.length > 1) {
+        navigate(-1)
+      } else {
+        navigate("/", { replace: true })
+      }
+    }
+  }
 
   useEffect(() => {
     if (!showDetails) return
@@ -166,10 +183,10 @@ function GlobalErrorScreen({
               </button>
             )}
 
-            {typeof onBack === "function" && (
+            {(onBack !== false) && (
               <button
                 type="button"
-                onClick={onBack}
+                onClick={handleBack}
                 disabled={busy}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-slate-100 text-sm font-bold text-slate-600 transition hover:bg-slate-200 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
               >

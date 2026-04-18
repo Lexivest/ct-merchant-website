@@ -28,6 +28,7 @@ import {
   StaffPortalShell,
   buildVisitTimeline,
   useStaffCounts,
+  useStaffPortalSession,
 } from "./staff/StaffPortalShared"
 
 function HomeCard({ icon, title, subtitle, metric, metricLabel = "Live", onClick, tone = "pink" }) {
@@ -435,7 +436,7 @@ export default function StaffDashboard() {
               <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">Merchant Verifications</div>
               <div className="mt-3 text-4xl font-black text-slate-900">{counts.verifications}</div>
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Pending shop applications and KYC video submissions awaiting review.
+                Pending shop applications and identity submissions awaiting review.
               </p>
               <button
                 type="button"
@@ -447,17 +448,17 @@ export default function StaffDashboard() {
             </div>
 
             <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">Product Review</div>
-              <div className="mt-3 text-4xl font-black text-slate-900">{counts.products}</div>
+              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">User Activity</div>
+              <div className="mt-3 text-4xl font-black text-slate-900">{summary.inactiveUsers}</div>
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                New product listings from merchants that need to be approved for the marketplace.
+                Inactive accounts flagged for follow-up and city-level analysis.
               </p>
               <button
                 type="button"
-                onClick={() => void openStaffRouteWithTransition("/staff-products")}
+                onClick={() => void openStaffRouteWithTransition("/staff-users")}
                 className="mt-5 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
               >
-                Open Products Page
+                Open User Activity Page
               </button>
             </div>
           </div>

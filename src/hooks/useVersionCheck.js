@@ -1,19 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { forceFreshAppReload } from "../lib/runtimeRecovery"
 
-const VERSION_CHECK_INTERVAL = 300000 // 5 minutes
+const VERSION_CHECK_INTERVAL = 600000 // 10 minutes
 const VERSION_URL = "/version.json"
 
+/**
+ * Amazon-style Silent Update Logic
+ * 1. Periodically check version.json in background.
+ * 2. If new version found, don't show a modal.
+ * 3. Instead, mark update as pending.
+ * 4. Try to reload silently when:
+ *    - The user returns to the tab after a long time.
+ *    - The browser is idle.
+ *    - (Optional) Next navigation.
+ */
 export function useVersionCheck() {
-  const { confirm } = useGlobalFeedback()
   const [currentVersion, setCurrentVersion] = useState(null)
-  const isUpdateDetected = useRef(false)
+  const pendingUpdate = useRef(false)
   const lastCheckTime = useRef(0)
 
   const fetchVersion = useCallback(async () => {
     try {
-      // Use a timestamp to bust the cache of version.json itself
       const response = await fetch(`${VERSION_URL}?t=${Date.now()}`, {
         cache: "no-store",
         headers: {
@@ -23,16 +30,27 @@ export function useVersionCheck() {
       })
       if (!response.ok) return null
       return await response.json()
-    } catch (error) {
-      console.warn("Failed to check for app updates:", error)
+    } catch {
       return null
     }
   }, [])
 
-  const checkUpdates = useCallback(async (isInitial = false) => {
-    // If we've already detected an update, don't keep checking
-    if (isUpdateDetected.current) return
+  const attemptSilentUpdate = useCallback(() => {
+    if (!pendingUpdate.current) return
+    
+    // We only refresh if:
+    // 1. User is not currently typing in an input (approximate check)
+    // 2. We are on a "safe" path where state loss is minimal
+    const activeElement = document.activeElement?.tagName?.toLowerCase()
+    const isTyping = activeElement === 'input' || activeElement === 'textarea' || document.activeElement?.isContentEditable
+    
+    if (isTyping) return
 
+    // If safe, reload fresh
+    forceFreshAppReload({ manual: false, reason: "update" })
+  }, [])
+
+  const checkUpdates = useCallback(async (isInitial = false) => {
     const serverData = await fetchVersion()
     if (!serverData) return
 
@@ -43,66 +61,58 @@ export function useVersionCheck() {
 
     if (!currentVersion) return
 
-    // Compare version strings or build times
     const isNewVersion = 
       serverData.version !== currentVersion?.version || 
       serverData.buildTime > (currentVersion?.buildTime || 0)
 
     if (isNewVersion) {
-      isUpdateDetected.current = true
-      
-      const shouldUpdate = await confirm({
-        title: "New Version Available",
-        message: "A fresh update for CTMerchant is ready. We recommend updating now to ensure the best experience and smooth operation.",
-        confirmText: "Update Now",
-        cancelText: "Later",
-        type: "info"
-      })
-
-      if (shouldUpdate) {
-        forceFreshAppReload({ manual: true, reason: "update" })
-      }
+      pendingUpdate.current = true
+      // Don't interrupt now. Just wait for a good moment.
+      // If we are in DEV, we might want to know, but in PROD we stay silent.
     }
-  }, [currentVersion, fetchVersion, confirm])
+  }, [currentVersion, fetchVersion])
 
   useEffect(() => {
-    // Initial fetch to establish baseline
-    const initialTimer = setTimeout(() => {
-      checkUpdates(true)
-    }, 0)
+    // 1. Initial Baseline
+    checkUpdates(true)
 
-    // Periodic check
+    // 2. Background Polling
     const interval = setInterval(() => {
       if (Date.now() - lastCheckTime.current >= VERSION_CHECK_INTERVAL) {
         lastCheckTime.current = Date.now()
         checkUpdates()
       }
-    }, 60000)
+    }, 120000)
 
-    // Check on window focus or visibility change (returning to tab)
-    const handleActivity = () => {
-      if (typeof document !== "undefined" && document.visibilityState === "hidden") return
-      
-      if (Date.now() - lastCheckTime.current >= VERSION_CHECK_INTERVAL) {
-        lastCheckTime.current = Date.now()
-        checkUpdates()
+    // 3. User Activity Hooks (The "Amazon" way)
+    // When user returns to tab, if we have a pending update, refresh now before they start working.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        if (pendingUpdate.current) {
+          attemptSilentUpdate()
+        } else if (Date.now() - lastCheckTime.current >= VERSION_CHECK_INTERVAL) {
+          lastCheckTime.current = Date.now()
+          checkUpdates()
+        }
       }
     }
 
-    window.addEventListener("focus", handleActivity)
-    window.addEventListener("visibilitychange", handleActivity)
-    window.addEventListener("online", handleActivity)
+    window.addEventListener("visibilitychange", handleVisibilityChange)
+    window.addEventListener("online", checkUpdates)
     
+    // 4. Global navigation listener for silent swap
+    // We can't easily hook into React Router from here without passing it in, 
+    // but we can use the window popstate or simply wait for visibility.
+
     return () => {
-      clearTimeout(initialTimer)
       clearInterval(interval)
-      window.removeEventListener("focus", handleActivity)
-      window.removeEventListener("visibilitychange", handleActivity)
-      window.removeEventListener("online", handleActivity)
+      window.removeEventListener("visibilitychange", handleVisibilityChange)
+      window.removeEventListener("online", checkUpdates)
     }
-  }, [checkUpdates])
+  }, [checkUpdates, attemptSilentUpdate])
 
   return {
-    checkNow: () => checkUpdates()
+    checkNow: () => checkUpdates(),
+    hasUpdate: pendingUpdate.current
   }
 }
