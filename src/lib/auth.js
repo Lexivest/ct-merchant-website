@@ -280,9 +280,9 @@ export async function signInWithPassword({ email, password }) {
       console.warn("Failed to reset login guard:", resetError?.message || resetError)
     }
 
-    // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call
+    // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call with targeted user ID
     try {
-      await supabase.rpc("stamp_profile_footprint")
+      await supabase.rpc("stamp_profile_footprint", { p_target_user_id: user.id })
     } catch (rpcError) {
       console.warn("Footprint RPC failed:", rpcError)
     }
@@ -330,9 +330,9 @@ export async function signInWithGoogleIdToken(idToken) {
         throw new Error("Your account is suspended. Please contact support.")
       }
 
-      // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call
+      // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call with targeted user ID
       try {
-        await supabase.rpc("stamp_profile_footprint")
+        await supabase.rpc("stamp_profile_footprint", { p_target_user_id: signedInUser.id })
       } catch (rpcError) {
         console.warn("Footprint RPC failed:", rpcError)
       }
@@ -372,9 +372,9 @@ export async function signUpWithEmail({
     throw new Error("Account could not be created.")
   }
 
-  // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call
+  // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call with targeted user ID
   try {
-    await supabase.rpc("stamp_profile_footprint")
+    await supabase.rpc("stamp_profile_footprint", { p_target_user_id: authData.user.id })
   } catch (rpcError) {
     console.warn("Footprint RPC failed:", rpcError)
   }
