@@ -8,6 +8,7 @@ const staffRouteLoaders = {
   "/staff-users": () => import("../pages/staff/StaffUsers"),
   "/staff-community": () => import("../pages/staff/StaffCommunity"),
   "/staff-verifications": () => import("../pages/staff/StaffVerifications"),
+  "/staff-products": () => import("../pages/staff/StaffProducts"),
   "/staff-payments": () => import("../pages/staff/StaffPayments"),
   "/staff-city-banners": () => import("../pages/staff/StaffFeaturedCityBanners"),
   "/staff-sponsored-products": () => import("../pages/staff/StaffSponsoredProducts"),
@@ -261,11 +262,47 @@ async function prepareStaffSecurityRadarData() {
   }
 }
 
+async function prepareStaffProductsData() {
+  const { data, error } = await supabase
+    .from("shops")
+    .select(`
+      id,
+      name,
+      unique_id,
+      owner_id,
+      profiles ( full_name ),
+      products (
+        id,
+        name,
+        description,
+        price,
+        discount_price,
+        category,
+        image_url,
+        image_url_2,
+        image_url_3,
+        is_approved,
+        rejection_reason,
+        created_at
+      )
+    `)
+    .order("created_at", { ascending: false })
+    .limit(50)
+
+  if (error) throw error
+
+  return {
+    kind: "staff-products",
+    shops: data || [],
+  }
+}
+
 const staffPreparers = {
   "/staff-traffic": prepareStaffTrafficData,
   "/staff-users": prepareStaffUsersData,
   "/staff-community": prepareStaffCommunityData,
   "/staff-verifications": prepareStaffVerificationsData,
+  "/staff-products": prepareStaffProductsData,
   "/staff-payments": prepareStaffPaymentsData,
   "/staff-city-banners": prepareStaffFeaturedCityBannersData,
   "/staff-sponsored-products": prepareStaffSponsoredProductsData,

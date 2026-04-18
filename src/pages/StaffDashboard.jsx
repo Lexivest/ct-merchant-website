@@ -302,6 +302,14 @@ export default function StaffDashboard() {
               onClick={() => void openStaffRouteWithTransition("/staff-verifications")}
             />
             <HomeCard
+              icon={<FaWandMagicSparkles />}
+              title="Product Moderation"
+              subtitle="Approve or reject new product listings from merchants to keep the marketplace clean and professional."
+              metric={summary.shopCount}
+              tone="purple"
+              onClick={() => void openStaffRouteWithTransition("/staff-products")}
+            />
+            <HomeCard
               icon={<FaReceipt />}
               title="Offline Payments"
               subtitle="Approve bank transfer receipts, activate subscriptions, and reject unclear proof with notes."
