@@ -202,7 +202,7 @@ async function ensureEmailIsNotLoginSuspended(email, options = {}) {
     if (signOutOnSuspended) {
       await signOutUser()
     }
-    throw new Error("Your account is suspended due to too many failed login attempts. Please contact support.")
+    throw new Error("Your account is suspended. Please contact support.")
   }
 
   return status
@@ -229,7 +229,7 @@ export async function signInWithPassword({ email, password }) {
 
         if (status.isSuspended || status.failedAttempts >= LOGIN_SUSPENSION_THRESHOLD) {
           throw new Error(
-            "Your account is suspended due to too many failed login attempts. Please contact support."
+            "Your account is suspended. Please contact support."
           )
         }
 
