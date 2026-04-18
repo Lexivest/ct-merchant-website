@@ -328,8 +328,17 @@ export async function signInWithPassword({ email, password }) {
     } catch (resetError) {
       console.warn("Failed to reset login guard after success:", resetError?.message || resetError)
     }
-  }
 
+    // 🚀 THE DATABASE PING: Catch IPs for users who slipped through previously
+    try {
+      await supabase
+        .from("profiles")
+        .update({ id: user.id }) // Dummy update to trigger Postgres PostgREST hook
+        .eq("id", user.id)
+    } catch (pingError) {
+      console.warn("Silent profile IP ping failed:", pingError)
+    }
+  }
 
   return {
     auth: data
@@ -367,6 +376,18 @@ export async function signInWithGoogleIdToken(idToken) {
     } catch (resetError) {
       console.warn("Failed to reset login guard after Google sign-in:", resetError?.message || resetError)
     }
+
+    // 🚀 THE DATABASE PING: Catch Google Auth IPs
+    if (signedInUser?.id) {
+      try {
+        await supabase
+          .from("profiles")
+          .update({ id: signedInUser.id }) // Dummy update
+          .eq("id", signedInUser.id)
+      } catch (pingError) {
+        console.warn("Silent profile IP ping failed:", pingError)
+      }
+    }
   }
 
   return {
@@ -398,6 +419,16 @@ export async function signUpWithEmail({
   if (authError) throw authError
   if (!authData?.user) {
     throw new Error("Account could not be created.")
+  }
+
+  // 🚀 THE DATABASE PING: The crucial PostgREST bypass fix for new registrations
+  try {
+    await supabase
+      .from("profiles")
+      .update({ id: authData.user.id }) // Dummy update
+      .eq("id", authData.user.id)
+  } catch (pingError) {
+    console.warn("Silent profile IP ping failed:", pingError)
   }
 
   return {
