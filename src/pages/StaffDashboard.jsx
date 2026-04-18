@@ -13,6 +13,8 @@ import {
   FaTriangleExclamation,
   FaUsers,
   FaPanorama,
+  FaBullhorn,
+  FaWandMagicSparkles,
 } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"

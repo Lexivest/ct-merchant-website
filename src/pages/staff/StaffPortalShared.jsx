@@ -15,6 +15,7 @@ import {
   FaUsers,
   FaWandMagicSparkles,
   FaPanorama,
+  FaBullhorn,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 
