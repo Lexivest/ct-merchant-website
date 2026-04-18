@@ -157,7 +157,8 @@ function getLoginGuardStatusRow(data, fallbackEmail = "") {
 }
 
 function logLoginGuardDebug(stage, payload = {}) {
-  console.info(`${LOGIN_GUARD_DEBUG_PREFIX} ${stage}`, payload)
+  // Keeping info logs to a minimum for a clean console
+  // console.info(`${LOGIN_GUARD_DEBUG_PREFIX} ${stage}`, payload)
 }
 
 function isLikelyCredentialFailure(error) {
@@ -174,40 +175,19 @@ function isLikelyCredentialFailure(error) {
 
 async function runLoginGuardRpc(rpcName, email, fallbackMessage) {
   const normalizedEmail = normalizeEmail(email)
-  logLoginGuardDebug("rpc:start", {
-    rpcName,
-    email: normalizedEmail,
-  })
 
   const { data, error } = await supabase.rpc(rpcName, {
     p_email: normalizedEmail,
   })
 
   if (error) {
-    logLoginGuardDebug("rpc:error", {
-      rpcName,
-      email: normalizedEmail,
-      code: error.code || null,
-      message: error.message || fallbackMessage,
-      details: error.details || null,
-      hint: error.hint || null,
-    })
-    console.error(`Login guard RPC ${rpcName} failed:`, error)
     if (isMissingRpcError(error)) {
       throw new Error("Login security is updating right now. Please try again shortly.")
     }
     throw new Error(fallbackMessage)
   }
 
-  const status = getLoginGuardStatusRow(data, normalizedEmail)
-  logLoginGuardDebug("rpc:success", {
-    rpcName,
-    email: normalizedEmail,
-    status,
-    rawData: data,
-  })
-
-  return status
+  return getLoginGuardStatusRow(data, normalizedEmail)
 }
 
 async function ensureEmailIsNotLoginSuspended(email, options = {}) {
@@ -231,10 +211,6 @@ async function ensureEmailIsNotLoginSuspended(email, options = {}) {
 export async function signInWithPassword({ email, password }) {
   const normalizedEmail = normalizeEmail(email)
 
-  logLoginGuardDebug("signin:start", {
-    email: normalizedEmail,
-  })
-
   await ensureEmailIsNotLoginSuspended(normalizedEmail)
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -243,13 +219,6 @@ export async function signInWithPassword({ email, password }) {
   })
 
   if (error) {
-    logLoginGuardDebug("signin:auth-error", {
-      email: normalizedEmail,
-      status: error.status || null,
-      message: error.message || "Unknown login error",
-      code: error.code || null,
-    })
-
     if (isLikelyCredentialFailure(error)) {
       try {
         const status = await runLoginGuardRpc(
@@ -266,11 +235,6 @@ export async function signInWithPassword({ email, password }) {
 
         if (status.failedAttempts > 0) {
           const remaining = status.attemptsRemaining
-          logLoginGuardDebug("signin:remaining-attempts", {
-            email: normalizedEmail,
-            failedAttempts: status.failedAttempts,
-            remaining,
-          })
           throw new Error(
             `Invalid credentials. You have ${remaining} attempt${remaining === 1 ? "" : "s"} remaining before your account is suspended.`
           )
@@ -282,37 +246,23 @@ export async function signInWithPassword({ email, password }) {
         ) {
           throw trackingError
         }
-
-        console.warn("Internal login tracking warning:", trackingError?.message || trackingError)
       }
-
       throw new Error("Invalid credentials. Please check your email and password.")
     }
-
     throw error
   }
 
   const user = data.user || data.session?.user
   if (user) {
-    logLoginGuardDebug("signin:auth-success", {
-      email: user.email || normalizedEmail,
-      userId: user.id,
-    })
-
     await ensureEmailIsNotLoginSuspended(user.email || normalizedEmail, {
       signOutOnSuspended: true,
     })
 
-    // Grab both suspension status AND full_name for the safety ping
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from("profiles")
-      .select("is_suspended, full_name")
+      .select("is_suspended")
       .eq("id", user.id)
       .maybeSingle()
-
-    if (profileError) {
-      console.error("Profile check failed during login:", profileError)
-    }
 
     if (profile?.is_suspended) {
       await supabase.auth.signOut()
@@ -327,28 +277,21 @@ export async function signInWithPassword({ email, password }) {
         "Could not clear previous login attempts right now. Please try again."
       )
     } catch (resetError) {
-      console.warn("Failed to reset login guard after success:", resetError?.message || resetError)
+      console.warn("Failed to reset login guard:", resetError?.message || resetError)
     }
 
-    // 🚀 THE DATABASE PING: Catch IPs for users safely
+    // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call
     try {
-      await supabase
-        .from("profiles")
-        .update({ full_name: profile?.full_name || null }) 
-        .eq("id", user.id)
-    } catch (pingError) {
-      console.warn("Silent profile IP ping failed:", pingError)
+      await supabase.rpc("stamp_profile_footprint")
+    } catch (rpcError) {
+      console.warn("Footprint RPC failed:", rpcError)
     }
   }
 
-  return {
-    auth: data
-  }
+  return { auth: data }
 }
 
 export async function signInWithGoogleIdToken(idToken) {
-  logLoginGuardDebug("google-signin:start")
-
   const { data, error } = await supabase.auth.signInWithIdToken({
     provider: "google",
     token: idToken,
@@ -360,10 +303,6 @@ export async function signInWithGoogleIdToken(idToken) {
   const userEmail = signedInUser?.email ? normalizeEmail(signedInUser.email) : ""
 
   if (userEmail) {
-    logLoginGuardDebug("google-signin:auth-success", {
-      email: userEmail,
-      userId: signedInUser?.id || null,
-    })
     await ensureEmailIsNotLoginSuspended(userEmail, {
       signOutOnSuspended: true,
     })
@@ -375,14 +314,13 @@ export async function signInWithGoogleIdToken(idToken) {
         "Could not clear previous login attempts right now. Please try again."
       )
     } catch (resetError) {
-      console.warn("Failed to reset login guard after Google sign-in:", resetError?.message || resetError)
+      console.warn("Failed to reset login guard:", resetError?.message || resetError)
     }
 
-    // Check suspension and grab full_name for the safety ping
     if (signedInUser?.id) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_suspended, full_name")
+        .select("is_suspended")
         .eq("id", signedInUser.id)
         .maybeSingle()
 
@@ -392,21 +330,16 @@ export async function signInWithGoogleIdToken(idToken) {
         throw new Error("Your account is suspended. Please contact support.")
       }
 
-      // 🚀 THE DATABASE PING: Catch Google Auth IPs safely
+      // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call
       try {
-        await supabase
-          .from("profiles")
-          .update({ full_name: profile?.full_name || null }) 
-          .eq("id", signedInUser.id)
-      } catch (pingError) {
-        console.warn("Silent profile IP ping failed:", pingError)
+        await supabase.rpc("stamp_profile_footprint")
+      } catch (rpcError) {
+        console.warn("Footprint RPC failed:", rpcError)
       }
     }
   }
 
-  return {
-    auth: data
-  }
+  return { auth: data }
 }
 
 export async function signUpWithEmail({
@@ -420,67 +353,35 @@ export async function signUpWithEmail({
   const normalizedEmail = normalizeEmail(email)
   const normalizedPhone = normalizePhone(phone)
 
-  // 🚀 DEBUG STAGE 1: Check exactly what is being sent
-  console.group("🕵️ [DEBUG] signUpWithEmail Execution")
-  console.log("1. Raw Inputs:", { fullName, phone, email, cityId, areaId })
-  console.log("2. Normalized Data:", { normalizedEmail, normalizedPhone })
-
-  try {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: normalizedEmail,
-      password,
-      options: {
-        data: {
-          full_name: fullName.trim(),
-          phone: normalizedPhone,
-          city_id: Number(cityId),
-          area_id: Number(areaId),
-        },
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email: normalizedEmail,
+    password,
+    options: {
+      data: {
+        full_name: fullName.trim(),
+        phone: normalizedPhone,
+        city_id: Number(cityId),
+        area_id: Number(areaId),
       },
-    })
+    },
+  })
 
-    // 🚀 DEBUG STAGE 2: Inspect the raw Supabase response
-    console.log("3. Raw Auth Response:", { authData, authError })
+  if (authError) throw authError
+  
+  if (!authData?.user) {
+    throw new Error("Account could not be created.")
+  }
 
-    if (authError) {
-      console.error("❌ Auth Error Intercepted:", {
-        message: authError.message,
-        status: authError.status,
-        name: authError.name,
-        code: authError.code
-      })
-      throw authError
-    }
-    
-    if (!authData?.user) {
-      console.error("❌ Silent Failure: No user object returned.")
-      throw new Error("Account could not be created.")
-    }
+  // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call
+  try {
+    await supabase.rpc("stamp_profile_footprint")
+  } catch (rpcError) {
+    console.warn("Footprint RPC failed:", rpcError)
+  }
 
-    console.log("4. User Auth Success! ID:", authData.user.id)
-
-    // 🚀 THE DATABASE PING: Safely trigger the backend IP capture
-    try {
-      const pingResult = await supabase
-        .from("profiles")
-        .update({ full_name: fullName.trim() }) // Safer dummy update
-        .eq("id", authData.user.id)
-        
-      console.log("5. Database Ping Result:", pingResult)
-    } catch (pingError) {
-      console.warn("Silent profile IP ping failed:", pingError)
-    }
-
-    console.groupEnd()
-
-    return {
-      auth: authData,
-      user: authData.user
-    }
-  } catch (error) {
-    console.error("🚨 Fatal Error in signUpWithEmail:", error)
-    console.groupEnd()
-    throw error
+  return {
+    auth: authData,
+    user: authData.user
   }
 }
 
