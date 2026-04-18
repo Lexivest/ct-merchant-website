@@ -12,7 +12,7 @@ import {
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
-import { clearCachedFetchStore } from "../../hooks/useCachedFetch";
+import { clearCachedFetchStore, invalidateCachedFetchStore } from "../../hooks/useCachedFetch";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
@@ -595,9 +595,14 @@ export default function MerchantVideoKYC() {
         message: "Your video was submitted successfully and is under review.",
       });
 
-      // Clear relevant caches to reflect updated shop status
+      // Clear specific vendor panel cache to force immediate fresh state there
       clearCachedFetchStore((key) => 
-        key.startsWith("vendor_panel_") ||
+        key.startsWith("vendor_panel_")
+      );
+
+      // Invalidate dashboard and shop details so they re-fetch in background 
+      // but keep showing stale data to avoid a blank screen (Stale-While-Revalidate)
+      invalidateCachedFetchStore((key) => 
         key.startsWith("dashboard_dynamic_") ||
         key.startsWith("shop_detail_")
       );
