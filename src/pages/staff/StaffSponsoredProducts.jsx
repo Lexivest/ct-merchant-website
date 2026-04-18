@@ -87,8 +87,9 @@ function SponsoredProductPreview({ product }) {
 }
 
 export default function StaffSponsoredProducts() {
+  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const { notify, confirm } = useGlobalFeedback()
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => !fetchingStaff)
   const [saving, setSaving] = useState(false)
   const [fetchingProducts, setFetchingProducts] = useState(false)
   
@@ -96,25 +97,25 @@ export default function StaffSponsoredProducts() {
   const [banners, setBanners] = useState([])
   const [availableProducts, setAvailableProducts] = useState([])
   
-  const [selectedCityId, setSelectedCityId] = useState("")
+  const [selectedCityId, setSelectedCityId] = useState(isSuperAdmin ? "" : (staffCityId || ""))
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [sortOrder, setSortOrder] = useState(0)
 
   const loadInitialData = useCallback(async () => {
+    if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
+
     setLoading(true)
     try {
+      let bannersQuery = supabase.from("sponsored_products").select(`*, cities(name), shops(name)`)
+      
+      if (!isSuperAdmin && staffCityId) {
+        bannersQuery = bannersQuery.eq("city_id", staffCityId)
+      }
+
       const [citiesResult, bannersResult] = await Promise.all([
         supabase.from("cities").select("id, name, state").order("name"),
-        supabase
-          .from("sponsored_products")
-          .select(`
-            *,
-            cities(name),
-            shops(name)
-          `)
-          .order("sort_order", { ascending: true })
-          .order("created_at", { ascending: false }),
+        bannersQuery.order("sort_order", { ascending: true }).order("created_at", { ascending: false }),
       ])
       
       if (citiesResult.error) throw citiesResult.error
@@ -138,9 +139,14 @@ export default function StaffSponsoredProducts() {
     } finally {
       setLoading(false)
     }
-  }, [notify])
+  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
 
   const loadProducts = useCallback(async () => {
+    if (fetchingStaff) return
+
+    const cityToUse = isSuperAdmin ? selectedCityId : staffCityId
+    if (!cityToUse && !isSuperAdmin) return
+
     setFetchingProducts(true)
     try {
       let query = supabase
@@ -160,8 +166,8 @@ export default function StaffSponsoredProducts() {
         .order("created_at", { ascending: false })
         .limit(50)
 
-      if (selectedCityId) {
-        query = query.eq("shops.city_id", selectedCityId)
+      if (cityToUse) {
+        query = query.eq("shops.city_id", cityToUse)
       }
 
       if (searchQuery.trim()) {
@@ -177,15 +183,22 @@ export default function StaffSponsoredProducts() {
     } finally {
       setFetchingProducts(false)
     }
-  }, [selectedCityId, searchQuery])
+  }, [selectedCityId, staffCityId, isSuperAdmin, searchQuery, fetchingStaff])
 
-  useEffect(() => { loadInitialData() }, [loadInitialData])
   useEffect(() => { 
-    const timer = setTimeout(() => {
-      loadProducts()
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [loadProducts])
+    if (!fetchingStaff) {
+      loadInitialData() 
+    }
+  }, [loadInitialData, fetchingStaff])
+
+  useEffect(() => { 
+    if (!fetchingStaff) {
+      const timer = setTimeout(() => {
+        loadProducts()
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [loadProducts, fetchingStaff])
 
   async function handlePublish() {
     if (!selectedProduct) {

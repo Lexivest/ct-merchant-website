@@ -20,8 +20,9 @@ import { UPLOAD_RULES, formatBytes } from "../../lib/uploadRules"
 const DISCOVERY_RULE = UPLOAD_RULES.sponsoredProducts;
 
 export default function StaffDiscoveries() {
+  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const { notify, confirm } = useGlobalFeedback()
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => !fetchingStaff)
   const [saving, setSaving] = useState(false)
   const [discoveries, setDiscoveries] = useState([])
   
@@ -31,15 +32,24 @@ export default function StaffDiscoveries() {
     price: "",
     image_url: "",
     contact_phone: "",
-    sort_order: "0"
+    sort_order: "0",
+    city_id: isSuperAdmin ? "" : (staffCityId || "")
   })
 
   const loadDiscoveries = useCallback(async () => {
+    if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
+
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("staff_discoveries")
         .select("*")
+      
+      if (!isSuperAdmin && staffCityId) {
+        query = query.eq("city_id", staffCityId)
+      }
+
+      const { data, error } = await query
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false })
       
@@ -50,9 +60,13 @@ export default function StaffDiscoveries() {
     } finally {
       setLoading(false)
     }
-  }, [notify])
+  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
 
-  useEffect(() => { loadDiscoveries() }, [loadDiscoveries])
+  useEffect(() => { 
+    if (!fetchingStaff) {
+      loadDiscoveries() 
+    }
+  }, [loadDiscoveries, fetchingStaff])
 
   async function handleUpload(e) {
     const file = e.target.files?.[0]

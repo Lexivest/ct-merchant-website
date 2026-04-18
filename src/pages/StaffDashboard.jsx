@@ -78,7 +78,14 @@ export default function StaffDashboard() {
   const isMounted = useRef(true)
   const retryRouteTransitionRef = useRef(null)
 
-  const { counts, refresh: refreshCounts } = useStaffCounts()
+  const { 
+    isSuperAdmin, 
+    staffCityId, 
+    staffData,
+    fetchingStaff
+  } = useStaffPortalSession()
+
+  const { counts, refresh: refreshCounts } = useStaffCounts(isSuperAdmin, staffCityId)
 
   const [loading, setLoading] = useState(true)
   const [routeTransition, setRouteTransition] = useState({
@@ -93,14 +100,24 @@ export default function StaffDashboard() {
   })
 
   const fetchSummary = useCallback(async () => {
+    // Wait for staff session to be ready
+    if (!staffData) return
+
     setLoading(true)
     setSummaryError(null)
     try {
+      const shopQuery = supabase.from("shops").select("id", { count: "exact", head: true })
+      
+      // Filter by city if not super admin
+      if (!isSuperAdmin && staffCityId) {
+        shopQuery.eq("city_id", staffCityId)
+      }
+
       const results = await Promise.allSettled([
-        supabase.from("shops").select("id", { count: "exact", head: true }),
+        shopQuery,
         supabase.rpc("staff_user_activity_summary", {
           p_inactive_days: 180,
-          p_city_id: null,
+          p_city_id: isSuperAdmin ? null : Number(staffCityId),
         }),
         supabase.rpc("staff_site_visit_daily", { p_days: 7 }),
       ])
@@ -147,12 +164,14 @@ export default function StaffDashboard() {
     } finally {
       if (isMounted.current) setLoading(false)
     }
-  }, [notify])
+  }, [notify, isSuperAdmin, staffCityId, staffData])
 
   useEffect(() => {
-    fetchSummary()
+    if (!fetchingStaff) {
+      fetchSummary()
+    }
     return () => { isMounted.current = false }
-  }, [fetchSummary])
+  }, [fetchSummary, fetchingStaff])
 
   const handleRefresh = useCallback(() => {
     fetchSummary()
@@ -278,7 +297,7 @@ export default function StaffDashboard() {
             <HomeCard
               icon={<FaChartLine />}
               title="Traffic Intelligence"
-              subtitle="Review page visits, route performance, and daily traffic movement in a dedicated analytics workspace."
+              subtitle="Review page visits, route performance, and daily traffic movement."
               metric={summary.visitsToday}
               tone="blue"
               onClick={() => void openStaffRouteWithTransition("/staff-traffic")}
@@ -286,7 +305,7 @@ export default function StaffDashboard() {
             <HomeCard
               icon={<FaUsers />}
               title="User Activity"
-              subtitle="Inspect city-level user activity, inactivity risk, and shop ownership patterns without crowding the main dashboard."
+              subtitle="Inspect city-level user activity, inactivity risk, and shop ownership patterns."
               metric={summary.inactiveUsers}
               metricLabel="Inactive"
               tone="amber"
@@ -295,7 +314,7 @@ export default function StaffDashboard() {
             <HomeCard
               icon={<FaComments />}
               title="Community Moderation"
-              subtitle="Approve, hide, or reject shop discussion threads and keep public conversations professional."
+              subtitle="Approve, hide, or reject shop discussion threads and keep conversations professional."
               metric={counts.community}
               metricLabel="Pending"
               tone="pink"
@@ -304,7 +323,7 @@ export default function StaffDashboard() {
             <HomeCard
               icon={<FaStore />}
               title="Merchant Verifications"
-              subtitle="Review KYC videos, issue merchant IDs, and supervise approval workflows from a focused verification page."
+              subtitle="Review applications, KYC videos, and supervise approval workflows."
               metric={counts.verifications}
               metricLabel="Pending"
               tone="purple"
@@ -313,7 +332,7 @@ export default function StaffDashboard() {
             <HomeCard
               icon={<FaPanorama />}
               title="Shop Content"
-              subtitle="Moderate shop display banners and news updates to ensure high-quality marketplace visuals."
+              subtitle="Moderate shop display banners and news updates for high-quality visuals."
               metric={counts.content}
               metricLabel="Pending"
               tone="blue"
@@ -329,28 +348,32 @@ export default function StaffDashboard() {
             <HomeCard
               icon={<FaEnvelope />}
               title="Individual Alerts"
-              subtitle="Send targeted, private notifications directly to specific merchant or customer accounts."
+              subtitle="Send targeted, private notifications directly to specific merchant accounts."
               tone="blue"
               onClick={() => void openStaffRouteWithTransition("/staff-notifications")}
             />
             <HomeCard
               icon={<FaWandMagicSparkles />}
               title="Product Moderation"
-              subtitle="Approve or reject new product listings from merchants to keep the marketplace clean and professional."
+              subtitle="Approve or reject new product listings from merchants to keep marketplace clean."
               metric={counts.products}
               metricLabel="Pending"
               tone="purple"
               onClick={() => void openStaffRouteWithTransition("/staff-products")}
             />
-            <HomeCard
-              icon={<FaReceipt />}
-              title="Offline Payments"
-              subtitle="Approve bank transfer receipts, activate subscriptions, and reject unclear proof with notes."
-              metric={counts.payments}
-              metricLabel="Pending"
-              tone="blue"
-              onClick={() => void openStaffRouteWithTransition("/staff-payments")}
-            />
+
+            {isSuperAdmin && (
+              <HomeCard
+                icon={<FaReceipt />}
+                title="Offline Payments"
+                subtitle="Approve bank transfer receipts and activate shop subscriptions."
+                metric={counts.payments}
+                metricLabel="Pending"
+                tone="blue"
+                onClick={() => void openStaffRouteWithTransition("/staff-payments")}
+              />
+            )}
+
             <HomeCard
               icon={<FaImages />}
               title="Sponsored Products"
@@ -372,15 +395,18 @@ export default function StaffDashboard() {
               tone="pink"
               onClick={() => void openStaffRouteWithTransition("/staff-city-banners")}
             />
-            <HomeCard
-              icon={<FaTowerBroadcast />}
-              title="Security Intelligence"
-              subtitle="Detect multi-account clusters and suspicious merchant footprints sharing network fingerprints."
-              metric={counts.radar}
-              metricLabel="Clusters"
-              tone="amber"
-              onClick={() => void openStaffRouteWithTransition("/staff-security-radar")}
-            />
+
+            {isSuperAdmin && (
+              <HomeCard
+                icon={<FaTowerBroadcast />}
+                title="Security Intelligence"
+                subtitle="Detect multi-account clusters and suspicious merchant footprints."
+                metric={counts.radar}
+                metricLabel="Alerts"
+                tone="amber"
+                onClick={() => void openStaffRouteWithTransition("/staff-security-radar")}
+              />
+            )}
           </div>
 
           <SectionHeading

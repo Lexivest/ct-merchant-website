@@ -22,17 +22,23 @@ import {
 
 export default function StaffUsers() {
   const location = useLocation()
+  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
+
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-users"
       ? location.state.prefetchedData
       : null
+  
+  // If city admin, force city selection
+  const initialCityId = isSuperAdmin ? (prefetchedData?.selectedCityId || "all") : (staffCityId || "all")
+
   const [cityOptions, setCityOptions] = useState(() => prefetchedData?.cityOptions || [])
-  const [selectedCityId, setSelectedCityId] = useState(() => prefetchedData?.selectedCityId || "all")
+  const [selectedCityId, setSelectedCityId] = useState(initialCityId)
   const [inactiveDays, setInactiveDays] = useState(() => prefetchedData?.inactiveDays || 180)
   const [inactiveOnly, setInactiveOnly] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [userActivity, setUserActivity] = useState(() => prefetchedData?.userActivity || [])
-  const [loadingUserActivity, setLoadingUserActivity] = useState(() => !prefetchedData)
+  const [loadingUserActivity, setLoadingUserActivity] = useState(() => !prefetchedData && !fetchingStaff)
   const [userActivityError, setUserActivityError] = useState("")
   const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
   const [updatingUserId, setUpdatingUserId] = useState(null)
@@ -52,10 +58,13 @@ export default function StaffUsers() {
   }, [prefetchedData?.cityOptions])
 
   const fetchUserActivity = useCallback(async ({ cityId, threshold }) => {
+    // Determine effective city ID for filtering
+    const effectiveCityId = isSuperAdmin ? cityId : staffCityId
+
     if (
       prefetchedReady &&
       prefetchedData &&
-      cityId === prefetchedData.selectedCityId &&
+      effectiveCityId === prefetchedData.selectedCityId &&
       threshold === prefetchedData.inactiveDays
     ) {
       setUserActivity(prefetchedData.userActivity || [])
@@ -70,7 +79,7 @@ export default function StaffUsers() {
     try {
       const { data, error } = await supabase.rpc("staff_user_activity_summary", {
         p_inactive_days: threshold,
-        p_city_id: cityId === "all" ? null : Number(cityId),
+        p_city_id: effectiveCityId === "all" ? null : Number(effectiveCityId),
       })
 
       if (error) throw error
@@ -86,15 +95,19 @@ export default function StaffUsers() {
     } finally {
       setLoadingUserActivity(false)
     }
-  }, [prefetchedData, prefetchedReady])
+  }, [prefetchedData, prefetchedReady, isSuperAdmin, staffCityId])
 
   useEffect(() => {
-    fetchCities()
-  }, [fetchCities])
+    if (!fetchingStaff) {
+      fetchCities()
+    }
+  }, [fetchCities, fetchingStaff])
 
   useEffect(() => {
-    fetchUserActivity({ cityId: selectedCityId, threshold: inactiveDays })
-  }, [fetchUserActivity, inactiveDays, selectedCityId])
+    if (!fetchingStaff) {
+      fetchUserActivity({ cityId: selectedCityId, threshold: inactiveDays })
+    }
+  }, [fetchUserActivity, inactiveDays, selectedCityId, fetchingStaff])
 
   const handleToggleSuspension = async (user) => {
     const isSuspending = !user.is_suspended
@@ -191,17 +204,19 @@ export default function StaffUsers() {
               />
             </div>
 
-            <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
-              <FaLocationDot className="text-[#DB2777]" />
-              <select value={selectedCityId} onChange={(event) => setSelectedCityId(event.target.value)} className="bg-transparent outline-none">
-                <option value="all">All cities</option>
-                {cityOptions.map((city) => (
-                  <option key={city.id} value={city.id}>
-                    {city.name} - {city.state}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {isSuperAdmin && (
+              <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
+                <FaLocationDot className="text-[#DB2777]" />
+                <select value={selectedCityId} onChange={(event) => setSelectedCityId(event.target.value)} className="bg-transparent outline-none">
+                  <option value="all">All cities</option>
+                  {cityOptions.map((city) => (
+                    <option key={city.id} value={city.id}>
+                      {city.name} - {city.state}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
               <FaFilter className="text-[#DB2777]" />

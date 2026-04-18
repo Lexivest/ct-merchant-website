@@ -269,6 +269,10 @@ export function useStaffPortalSession() {
   const [fetchingStaff, setFetchingStaff] = useState(() => !staffPortalMemory.isResolved)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
+  const isSuperAdmin = staffData?.role === "super_admin"
+  const isAdmin = !!staffData?.role
+  const staffCityId = staffData?.city_id
+
   useEffect(() => {
     if (staffPortalMemory.isResolved) return undefined
 
@@ -285,24 +289,50 @@ export function useStaffPortalSession() {
 
         setAuthUser(session.user)
 
-        const { data: staffProfile, error: staffErr } = await supabase
-          .from("staff_profiles")
+        // Try to fetch from admins table first (harmonized role source)
+        const { data: adminProfile, error: adminErr } = await supabase
+          .from("admins")
           .select("*")
           .eq("id", session.user.id)
-          .single()
+          .maybeSingle()
 
-        if (staffErr || !staffProfile) {
-          throw new Error("Access denied. Staff account required.")
-        }
+        if (adminErr) throw adminErr
 
-        staffPortalMemory = {
-          isResolved: true,
-          authUser: session.user,
-          staffData: staffProfile,
+        if (!adminProfile) {
+          // Fallback check for legacy staff_profiles if necessary, 
+          // but based on user directive we are moving to admins.
+          const { data: staffProfile, error: legacyErr } = await supabase
+            .from("staff_profiles")
+            .select("*")
+            .eq("id", session.user.id)
+            .maybeSingle()
+          
+          if (legacyErr || !staffProfile) {
+            throw new Error("Access denied. Admin account required.")
+          }
+          
+          // Map legacy to same structure
+          const mappedProfile = {
+            ...staffProfile,
+            role: staffProfile.role === "director" ? "super_admin" : "city_admin"
+          }
+
+          staffPortalMemory = {
+            isResolved: true,
+            authUser: session.user,
+            staffData: mappedProfile,
+          }
+          setStaffData(mappedProfile)
+        } else {
+          staffPortalMemory = {
+            isResolved: true,
+            authUser: session.user,
+            staffData: adminProfile,
+          }
+          setStaffData(adminProfile)
         }
-        setStaffData(staffProfile)
       } catch (err) {
-        console.error(err)
+        console.error("Staff session error:", err)
         staffPortalMemory = {
           isResolved: false,
           authUser: null,
@@ -332,13 +362,16 @@ export function useStaffPortalSession() {
   return {
     authUser,
     staffData,
+    isSuperAdmin,
+    isAdmin,
+    staffCityId,
     fetchingStaff,
     isLoggingOut,
     handleLogout,
   }
 }
 
-export function useStaffCounts() {
+export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
   const [counts, setCounts] = useState({
     verifications: 0,
     products: 0,
@@ -352,7 +385,25 @@ export function useStaffCounts() {
 
   const fetchCounts = async () => {
     try {
-      // Use simpler queries for speed where possible
+      // Define queries with optional city scoping
+      const shopQuery = supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "pending")
+      const kycQuery = supabase.from("shops").select("id", { count: "exact", head: true }).eq("kyc_status", "submitted")
+      const productQuery = supabase.from("products").select("id", { count: "exact", head: true }).is("is_approved", false).is("rejection_reason", null)
+      const paymentQuery = supabase.from("offline_payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pending")
+      const commentQuery = supabase.from("shop_comments").select("id", { count: "exact", head: true }).eq("status", "pending")
+      const contentQuery = supabase.from("shop_banners_news").select("id", { count: "exact", head: true }).eq("status", "pending")
+      const contactQuery = supabase.from("contact_messages").select("id", { count: "exact", head: true }).or("status.eq.unread,status.is.null")
+      const abuseQuery = supabase.from("abuse_reports").select("id", { count: "exact", head: true }).or("status.eq.pending,status.is.null")
+
+      // Apply city filters for regular admins
+      if (!isSuperAdmin && staffCityId) {
+        shopQuery.eq("city_id", staffCityId)
+        kycQuery.eq("city_id", staffCityId)
+        productQuery.eq("city_id", staffCityId) // Note: ensure products table has city_id or join it
+        commentQuery.eq("city_id", staffCityId) // Note: ensure comments table has city_id
+        contentQuery.eq("city_id", staffCityId) // Note: ensure content table has city_id
+      }
+
       const [
         pendingShops,
         submittedKyc,
@@ -364,15 +415,15 @@ export function useStaffCounts() {
         pendingAbuse,
         radar
       ] = await Promise.all([
-        supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("shops").select("id", { count: "exact", head: true }).eq("kyc_status", "submitted"),
-        supabase.from("products").select("id", { count: "exact", head: true }).is("is_approved", false).is("rejection_reason", null),
-        supabase.from("offline_payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("shop_comments").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("shop_banners_news").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("contact_messages").select("id", { count: "exact", head: true }).or("status.eq.unread,status.is.null"),
-        supabase.from("abuse_reports").select("id", { count: "exact", head: true }).or("status.eq.pending,status.is.null"),
-        supabase.rpc("ctm_get_security_radar_insights"),
+        shopQuery,
+        kycQuery,
+        productQuery,
+        isSuperAdmin ? paymentQuery : Promise.resolve({ count: 0 }),
+        commentQuery,
+        contentQuery,
+        contactQuery, // Inbox is platform wide or needs separate routing? Keep wide for now.
+        pendingAbuse,
+        isSuperAdmin ? supabase.rpc("ctm_get_security_radar_insights") : Promise.resolve({ data: [] }),
       ])
 
       setCounts({
@@ -393,14 +444,13 @@ export function useStaffCounts() {
 
   useEffect(() => {
     fetchCounts()
-    // Refresh counts every 2 minutes while the tab is active
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") {
         fetchCounts()
       }
     }, 120000)
     return () => clearInterval(timer)
-  }, [])
+  }, [isSuperAdmin, staffCityId])
 
   return { counts, loading, refresh: fetchCounts }
 }
@@ -413,8 +463,17 @@ export function StaffPortalShell({
   headerActions = null,
 }) {
   const routeLocation = useLocation()
-  const { authUser, staffData, fetchingStaff, isLoggingOut, handleLogout } = useStaffPortalSession()
-  const { counts } = useStaffCounts()
+  const { 
+    authUser, 
+    staffData, 
+    isSuperAdmin, 
+    staffCityId, 
+    fetchingStaff, 
+    isLoggingOut, 
+    handleLogout 
+  } = useStaffPortalSession()
+  
+  const { counts } = useStaffCounts(isSuperAdmin, staffCityId)
 
   if (fetchingStaff) {
     return (
@@ -429,9 +488,9 @@ export function StaffPortalShell({
 
   const avatarUrl =
     authUser.user_metadata?.avatar_url ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(staffData.full_name)}&background=2E1065&color=fff&size=150&font-size=0.4`
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(staffData.full_name || "Admin")}&background=2E1065&color=fff&size=150&font-size=0.4`
 
-  const navItems = [
+  const allNavItems = [
     { key: "home", label: "Home", to: "/staff-dashboard", icon: <FaShieldHalved /> },
     { key: "traffic", label: "Traffic", to: "/staff-traffic", icon: <FaChartLine /> },
     { key: "users", label: "Users", to: "/staff-users", icon: <FaUsers /> },
@@ -441,14 +500,16 @@ export function StaffPortalShell({
     { key: "notifications", label: "Notifications", to: "/staff-notifications", icon: <FaEnvelope /> },
     { key: "community", label: "Community", to: "/staff-community", icon: <FaComments />, count: counts.community },
     { key: "verifications", label: "Verifications", to: "/staff-verifications", icon: <FaStore />, count: counts.verifications },
-    { key: "payments", label: "Payments", to: "/staff-payments", icon: <FaReceipt />, count: counts.payments },
+    { key: "payments", label: "Payments", to: "/staff-payments", icon: <FaReceipt />, count: counts.payments, superOnly: true },
     { key: "sponsored-products", label: "Sponsored Products", to: "/staff-sponsored-products", icon: <FaImages /> },
     { key: "discoveries", label: "Discoveries", to: "/staff-discoveries", icon: <FaPanorama /> },
     { key: "city-banners", label: "City Banners", to: "/staff-city-banners", icon: <FaImages /> },
     { key: "inbox", label: "Inbox", to: "/staff-inbox", icon: <FaEnvelope />, count: counts.inbox },
     { key: "studio", label: "CT Studio", to: "/staff-studio", icon: <FaWandMagicSparkles /> },
-    { key: "security-radar", label: "Security Radar", to: "/staff-security-radar", icon: <FaTowerBroadcast />, count: counts.radar },
+    { key: "security-radar", label: "Security Radar", to: "/staff-security-radar", icon: <FaTowerBroadcast />, count: counts.radar, superOnly: true },
   ]
+
+  const navItems = allNavItems.filter(item => !item.superOnly || isSuperAdmin)
 
   return (
     <div

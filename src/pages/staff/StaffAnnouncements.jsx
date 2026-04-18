@@ -22,6 +22,7 @@ import {
 
 export default function StaffAnnouncements() {
   const location = useLocation()
+  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-announcements"
       ? location.state.prefetchedData
@@ -31,23 +32,31 @@ export default function StaffAnnouncements() {
   // --- STATE ---
   const [announcements, setAnnouncements] = useState(() => prefetchedData?.announcements || [])
   const [cities, setCities] = useState(() => prefetchedData?.cities || [])
-  const [loading, setLoading] = useState(() => !prefetchedData)
+  const [loading, setLoading] = useState(() => !prefetchedData && !fetchingStaff)
   const [saving, setSaving] = useState(false)
   const [processingId, setProcessingId] = useState(null)
 
   // Form State
   const [form, setForm] = useState({
-    city_id: "",
+    city_id: isSuperAdmin ? "" : (staffCityId || ""),
     message: "",
     is_active: true
   })
 
   const fetchData = useCallback(async () => {
+    if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
+
     setLoading(true)
     try {
+      let annQuery = supabase.from("announcements").select("*")
+      
+      if (!isSuperAdmin && staffCityId) {
+        annQuery = annQuery.eq("city_id", staffCityId)
+      }
+
       const [citiesRes, announcementsRes] = await Promise.all([
         supabase.from("cities").select("id, name, state").order("name"),
-        supabase.from("announcements").select("*").order("created_at", { ascending: false })
+        annQuery.order("created_at", { ascending: false })
       ])
 
       if (citiesRes.error) throw citiesRes.error
@@ -65,13 +74,13 @@ export default function StaffAnnouncements() {
     } finally {
       setLoading(false)
     }
-  }, [notify])
+  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
 
   useEffect(() => {
-    if (!prefetchedData) {
+    if (!fetchingStaff) {
       fetchData()
     }
-  }, [fetchData, prefetchedData])
+  }, [fetchData, fetchingStaff])
 
   // --- ACTIONS ---
   const handleCreate = async (e) => {

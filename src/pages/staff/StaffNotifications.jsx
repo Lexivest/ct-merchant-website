@@ -23,6 +23,7 @@ import {
 
 export default function StaffNotifications() {
   const location = useLocation()
+  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-notifications"
       ? location.state.prefetchedData
@@ -32,7 +33,7 @@ export default function StaffNotifications() {
   // --- STATE ---
   const [notifications, setNotifications] = useState(() => prefetchedData?.notifications || [])
   const [profiles, setProfiles] = useState(() => prefetchedData?.profiles || [])
-  const [loading, setLoading] = useState(() => !prefetchedData)
+  const [loading, setLoading] = useState(() => !prefetchedData && !fetchingStaff)
   const [saving, setSaving] = useState(false)
   const [processingId, setProcessingId] = useState(null)
   const [userSearch, setUserSearch] = useState("")
@@ -45,11 +46,21 @@ export default function StaffNotifications() {
   })
 
   const fetchData = useCallback(async () => {
+    if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
+
     setLoading(true)
     try {
+      let profilesQuery = supabase.from("profiles").select("id, full_name, phone, city_id").order("full_name")
+      let notificationsQuery = supabase.from("notifications").select(`*, profiles!inner(full_name, city_id)`).order("created_at", { ascending: false }).limit(100)
+
+      if (!isSuperAdmin && staffCityId) {
+        profilesQuery = profilesQuery.eq("city_id", staffCityId)
+        notificationsQuery = notificationsQuery.eq("profiles.city_id", staffCityId)
+      }
+
       const [profilesRes, notificationsRes] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, phone").order("full_name"),
-        supabase.from("notifications").select(`*, profiles(full_name)`).order("created_at", { ascending: false }).limit(100)
+        profilesQuery,
+        notificationsQuery
       ])
 
       if (profilesRes.error) throw profilesRes.error
@@ -67,13 +78,13 @@ export default function StaffNotifications() {
     } finally {
       setLoading(false)
     }
-  }, [notify])
+  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
 
   useEffect(() => {
-    if (!prefetchedData) {
+    if (!fetchingStaff) {
       fetchData()
     }
-  }, [fetchData, prefetchedData])
+  }, [fetchData, fetchingStaff])
 
   // --- ACTIONS ---
   const handleSend = async (e) => {

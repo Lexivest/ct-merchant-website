@@ -358,15 +358,16 @@ function FeaturedBannerArtwork({
 }
 
 export default function StaffFeaturedCityBanners() {
+  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const { notify, confirm } = useGlobalFeedback()
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => !fetchingStaff)
   const [saving, setSaving] = useState(false)
   const [cities, setCities] = useState([])
   const [shops, setShops] = useState([])
   const [productsByShopId, setProductsByShopId] = useState({})
   const [profilesById, setProfilesById] = useState({})
   const [banners, setBanners] = useState([])
-  const [selectedCityId, setSelectedCityId] = useState("")
+  const [selectedCityId, setSelectedCityId] = useState(isSuperAdmin ? "" : (staffCityId || ""))
   const [selectedShopId, setSelectedShopId] = useState("")
   const [backgroundKey, setBackgroundKey] = useState(BACKGROUND_OPTIONS[0].key)
   const [sortOrder, setSortOrder] = useState(0)
@@ -377,15 +378,21 @@ export default function StaffFeaturedCityBanners() {
   const proprietorName = getProfileDisplayName(selectedProfile)
 
   const loadInitialData = useCallback(async () => {
+    if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
+
     setLoading(true)
     try {
+      let bannersQuery = supabase
+        .from("featured_city_banners")
+        .select("*, cities(name, state), shops(name, category, address, image_url)")
+      
+      if (!isSuperAdmin && staffCityId) {
+        bannersQuery = bannersQuery.eq("city_id", staffCityId)
+      }
+
       const [citiesResult, bannersResult] = await Promise.all([
         supabase.from("cities").select("id, name, state").order("state").order("name"),
-        supabase
-          .from("featured_city_banners")
-          .select("*, cities(name, state), shops(name, category, address, image_url)")
-          .order("created_at", { ascending: false })
-          .limit(100),
+        bannersQuery.order("created_at", { ascending: false }).limit(100),
       ])
 
       if (citiesResult.error) throw citiesResult.error
@@ -394,7 +401,12 @@ export default function StaffFeaturedCityBanners() {
       const cityRows = citiesResult.data || []
       setCities(cityRows)
       setBanners(bannersResult.data || [])
-      setSelectedCityId((current) => current || (cityRows[0]?.id ? String(cityRows[0].id) : ""))
+      
+      if (isSuperAdmin) {
+        setSelectedCityId((current) => current || (cityRows[0]?.id ? String(cityRows[0].id) : ""))
+      } else {
+        setSelectedCityId(String(staffCityId))
+      }
     } catch (error) {
       notify({
         type: "error",
@@ -404,7 +416,7 @@ export default function StaffFeaturedCityBanners() {
     } finally {
       setLoading(false)
     }
-  }, [notify])
+  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
 
   const loadCityShops = useCallback(async (cityId) => {
     if (!cityId) return

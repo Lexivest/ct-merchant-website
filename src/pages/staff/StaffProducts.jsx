@@ -25,6 +25,7 @@ import {
 
 export default function StaffProducts() {
   const location = useLocation()
+  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-products"
       ? location.state.prefetchedData
@@ -33,7 +34,7 @@ export default function StaffProducts() {
 
   // --- STATE ---
   const [shops, setShops] = useState(() => prefetchedData?.shops || [])
-  const [loading, setLoading] = useState(() => !prefetchedData)
+  const [loading, setLoading] = useState(() => !prefetchedData && !fetchingStaff)
   const [selectedShop, setSelectedShop] = useState(null)
   const [processingId, setProcessingId] = useState(null)
   const [rejectionNote, setRejectionReason] = useState("")
@@ -41,15 +42,18 @@ export default function StaffProducts() {
   const [filterStatus, setFilterStatus] = useState("pending") // 'all' | 'pending'
 
   const fetchProducts = useCallback(async () => {
+    if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
+
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("shops")
         .select(`
           id,
           name,
           unique_id,
           owner_id,
+          city_id,
           profiles ( full_name ),
           products (
             id,
@@ -66,6 +70,12 @@ export default function StaffProducts() {
             created_at
           )
         `)
+      
+      if (!isSuperAdmin && staffCityId) {
+        query = query.eq("city_id", staffCityId)
+      }
+
+      const { data, error } = await query
         .order("created_at", { ascending: false })
         .limit(100)
 
@@ -81,13 +91,13 @@ export default function StaffProducts() {
     } finally {
       setLoading(false)
     }
-  }, [notify])
+  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
 
   useEffect(() => {
-    if (!prefetchedData) {
+    if (!fetchingStaff) {
       fetchProducts()
     }
-  }, [fetchProducts, prefetchedData])
+  }, [fetchProducts, fetchingStaff])
 
   // --- ACTIONS ---
   const handleApprove = async (product) => {

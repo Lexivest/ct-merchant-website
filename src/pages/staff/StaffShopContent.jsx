@@ -24,6 +24,7 @@ import {
 
 export default function StaffShopContent() {
   const location = useLocation()
+  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-shop-content"
       ? location.state.prefetchedData
@@ -32,15 +33,17 @@ export default function StaffShopContent() {
 
   // --- STATE ---
   const [items, setItems] = useState(() => prefetchedData?.items || [])
-  const [loading, setLoading] = useState(() => !prefetchedData)
+  const [loading, setLoading] = useState(() => !prefetchedData && !fetchingStaff)
   const [processingId, setProcessingId] = useState(null)
   const [filterStatus, setFilterStatus] = useState("pending") // 'all' | 'pending'
   const [previewItem, setPreviewItem] = useState(null)
 
   const fetchContent = useCallback(async () => {
+    if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
+
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("shop_banners_news")
         .select(`
           id,
@@ -49,14 +52,21 @@ export default function StaffShopContent() {
           content_data,
           status,
           created_at,
-          shops (
+          shops!inner (
             id,
             name,
             unique_id,
             owner_id,
+            city_id,
             profiles ( full_name )
           )
         `)
+      
+      if (!isSuperAdmin && staffCityId) {
+        query = query.eq("shops.city_id", staffCityId)
+      }
+
+      const { data, error } = await query
         .order("created_at", { ascending: false })
         .limit(100)
 
@@ -72,13 +82,13 @@ export default function StaffShopContent() {
     } finally {
       setLoading(false)
     }
-  }, [notify])
+  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
 
   useEffect(() => {
-    if (!prefetchedData) {
+    if (!fetchingStaff) {
       fetchContent()
     }
-  }, [fetchContent, prefetchedData])
+  }, [fetchContent, fetchingStaff])
 
   // --- ACTIONS ---
   const handleUpdateStatus = async (item, nextStatus) => {

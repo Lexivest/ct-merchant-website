@@ -91,6 +91,7 @@ function StatusBadge({ status, type = "shop" }) {
 
 export default function StaffVerifications() {
   const location = useLocation()
+  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const navigate = useNavigate()
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-verifications"
@@ -100,7 +101,7 @@ export default function StaffVerifications() {
 
   // --- STATE ---
   const [shops, setShops] = useState(() => prefetchedData?.shops || [])
-  const [loadingShops, setLoadingShops] = useState(() => !prefetchedData)
+  const [loadingShops, setLoadingShops] = useState(() => !prefetchedData && !fetchingStaff)
   const [togglingId, setTogglingId] = useState(null)
   const [selectedShop, setSelectedShop] = useState(null)
   const [reviewTab, setReviewTab] = useState("application") // 'application' | 'kyc'
@@ -119,7 +120,7 @@ export default function StaffVerifications() {
     }
 
     async function signAssets() {
-      const getPath = (url, bucket) => {
+      const getPath = (url) => {
         if (!url) return null
         if (!url.startsWith("http")) return url
         try {
@@ -134,7 +135,8 @@ export default function StaffVerifications() {
 
       const idPath = getPath(selectedShop.id_card_url)
       const cacPath = getPath(selectedShop.cac_certificate_url)
-      const videoPath = getPath(selectedShop.kyc_video_url)
+      // Only Super Admin can see Video KYC
+      const videoPath = isSuperAdmin ? getPath(selectedShop.kyc_video_url) : null
 
       const promises = []
       if (idPath) {
@@ -164,12 +166,14 @@ export default function StaffVerifications() {
     }
 
     signAssets()
-  }, [selectedShop])
+  }, [selectedShop, isSuperAdmin])
 
   const fetchShops = useCallback(async () => {
+    if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
+
     setLoadingShops(true)
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("shops")
         .select(`
           id,
@@ -178,6 +182,7 @@ export default function StaffVerifications() {
           business_type,
           category,
           address,
+          city_id,
           phone,
           whatsapp,
           status,
@@ -198,6 +203,12 @@ export default function StaffVerifications() {
           profiles ( full_name, avatar_url, phone ),
           cities ( name, state )
         `)
+
+      if (!isSuperAdmin && staffCityId) {
+        query = query.eq("city_id", staffCityId)
+      }
+
+      const { data, error } = await query
         .order("created_at", { ascending: false })
         .limit(100)
 
@@ -213,13 +224,13 @@ export default function StaffVerifications() {
     } finally {
       setLoadingShops(false)
     }
-  }, [notify])
+  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
 
   useEffect(() => {
-    if (!prefetchedData) {
+    if (!fetchingStaff) {
       fetchShops()
     }
-  }, [fetchShops, prefetchedData])
+  }, [fetchShops, fetchingStaff])
 
   // --- ACTIONS ---
   const toggleIdIssued = async (shopId, currentStatus) => {
@@ -485,8 +496,8 @@ export default function StaffVerifications() {
             <div className="flex border-b border-slate-100 px-8">
               {[
                 { id: "application", label: "Shop Application", icon: <FaFileContract /> },
-                { id: "kyc", label: "KYC Verification", icon: <FaVideo /> },
-              ].map((tab) => (
+                { id: "kyc", label: "KYC Verification", icon: <FaVideo />, superOnly: true },
+              ].filter(t => !t.superOnly || isSuperAdmin).map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setReviewTab(tab.id)}

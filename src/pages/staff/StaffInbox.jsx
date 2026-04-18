@@ -17,6 +17,7 @@ import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvide
 
 export default function StaffInbox() {
   const location = useLocation();
+  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const navigate = useNavigate();
   const { notify } = useGlobalFeedback();
   const prefetchedData =
@@ -26,7 +27,7 @@ export default function StaffInbox() {
   usePreventPullToRefresh();
 
   const [activeTab, setActiveTab] = useState(() => prefetchedData?.activeTab || "contact"); 
-  const [loading, setLoading] = useState(() => !prefetchedData);
+  const [loading, setLoading] = useState(() => !prefetchedData && !fetchingStaff);
   const [items, setItems] = useState(() => prefetchedData?.items || []);
   const [selectedItem, setSelectedItem] = useState(null);
   const [updating, setUpdating] = useState(false);
@@ -40,6 +41,8 @@ export default function StaffInbox() {
       setPrefetchedReady(false)
       return
     }
+
+    if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
 
     setLoading(true);
     setSelectedItem(null);
@@ -67,36 +70,25 @@ export default function StaffInbox() {
       }
 
       if (activeTab === "abuse") {
-        const { data: reports, error: reportsErr } = await supabase
+        let reportsQuery = supabase
           .from("abuse_reports")
-          .select("*")
+          .select("*, profiles!inner(id, full_name, city_id)")
           .order("created_at", { ascending: false });
+        
+        if (!isSuperAdmin && staffCityId) {
+          reportsQuery = reportsQuery.eq("profiles.city_id", staffCityId)
+        }
           
+        const { data: reports, error: reportsErr } = await reportsQuery
         if (reportsErr) throw new Error(`Database Error: ${reportsErr.message}`);
 
-        if (reports && reports.length > 0) {
-          const reporterIds = [...new Set(reports.map(r => r.reporter_id).filter(Boolean))];
-          let profilesMap = {};
-          
-          if (reporterIds.length > 0) {
-            const { data: profiles, error: profErr } = await supabase
-              .from("profiles")
-              .select("id, full_name") 
-              .in("id", reporterIds);
-              
-            if (!profErr && profiles) {
-              profiles.forEach(p => { profilesMap[p.id] = p; });
-            }
-          }
-
-          const fetchedAbuses = reports.map(report => ({
-            ...report,
-            _type: "abuse",
-            profiles: profilesMap[report.reporter_id] || null
-          }));
-          
-          setItems(fetchedAbuses);
-        }
+        const fetchedAbuses = (reports || []).map(report => ({
+          ...report,
+          _type: "abuse",
+          profiles: report.profiles || null
+        }));
+        
+        setItems(fetchedAbuses);
       }
     } catch (err) {
       console.error("Error fetching inbox:", err);
@@ -108,11 +100,13 @@ export default function StaffInbox() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, notify, prefetchedData, prefetchedReady]);
+  }, [activeTab, notify, isSuperAdmin, staffCityId, fetchingStaff, prefetchedData, prefetchedReady]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (!fetchingStaff) {
+      fetchData();
+    }
+  }, [activeTab, fetchData, fetchingStaff]);
 
   const updateStatus = async (id, newStatus, type) => {
     setUpdating(true);

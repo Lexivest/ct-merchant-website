@@ -39,13 +39,14 @@ function getThreadAgeInDays(value) {
 
 export default function StaffCommunity() {
   const location = useLocation()
+  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-community"
       ? location.state.prefetchedData
       : null
   const { notify } = useGlobalFeedback()
   const [commentThreads, setCommentThreads] = useState(() => prefetchedData?.commentThreads || [])
-  const [loadingComments, setLoadingComments] = useState(() => !prefetchedData)
+  const [loadingComments, setLoadingComments] = useState(() => !prefetchedData && !fetchingStaff)
   const [selectedCommentThread, setSelectedCommentThread] = useState(null)
   const [commentFilter, setCommentFilter] = useState("pending")
   const [ageFilter, setAgeFilter] = useState("all")
@@ -63,25 +64,39 @@ export default function StaffCommunity() {
       return
     }
 
+    if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
+
     setLoadingComments(true)
     try {
+      // 1. Fetch comments
       const { data: commentRows, error: commentError } = await supabase
         .from("shop_comments")
         .select("id, shop_id, product_id, user_id, parent_id, body, status, moderation_reason, created_at, updated_at")
         .order("created_at", { ascending: false })
-        .limit(200)
+        .limit(400) // Fetch more because we might filter some out
 
       if (commentError) throw commentError
 
       const comments = commentRows || []
       const shopIds = Array.from(new Set(comments.map((item) => item.shop_id).filter(Boolean)))
-      const productIds = Array.from(new Set(comments.map((item) => item.product_id).filter(Boolean)))
-      const userIds = Array.from(new Set(comments.map((item) => item.user_id).filter(Boolean)))
+      
+      // 2. Fetch shops with city scoping
+      let shopsQuery = supabase.from("shops").select("id, name, unique_id, owner_id, city_id").in("id", shopIds)
+      if (!isSuperAdmin && staffCityId) {
+        shopsQuery = shopsQuery.eq("city_id", staffCityId)
+      }
+      
+      const { data: shopRows } = await shopsQuery
+      const validShopIds = new Set((shopRows || []).map(s => s.id))
+      const shopsMap = Object.fromEntries((shopRows || []).map((shop) => [String(shop.id), shop]))
 
-      const [shopsResult, productsResult, profilesResult] = await Promise.allSettled([
-        shopIds.length
-          ? supabase.from("shops").select("id, name, unique_id, owner_id").in("id", shopIds)
-          : Promise.resolve({ data: [] }),
+      // 3. Filter comments to only those belonging to visible shops
+      const visibleComments = comments.filter(c => validShopIds.has(c.shop_id))
+
+      const productIds = Array.from(new Set(visibleComments.map((item) => item.product_id).filter(Boolean)))
+      const userIds = Array.from(new Set(visibleComments.map((item) => item.user_id).filter(Boolean)))
+
+      const [productsResult, profilesResult] = await Promise.allSettled([
         productIds.length
           ? supabase.from("products").select("id, name, image_url").in("id", productIds)
           : Promise.resolve({ data: [] }),
@@ -90,10 +105,6 @@ export default function StaffCommunity() {
           : Promise.resolve({ data: [] }),
       ])
 
-      const shopsMap =
-        shopsResult.status === "fulfilled" && !shopsResult.value.error
-          ? Object.fromEntries((shopsResult.value.data || []).map((shop) => [String(shop.id), shop]))
-          : {}
       const productsMap =
         productsResult.status === "fulfilled" && !productsResult.value.error
           ? Object.fromEntries((productsResult.value.data || []).map((product) => [String(product.id), product]))
@@ -103,7 +114,7 @@ export default function StaffCommunity() {
           ? Object.fromEntries((profilesResult.value.data || []).map((profile) => [profile.id, profile]))
           : {}
 
-      const enriched = comments.map((comment) => {
+      const enriched = visibleComments.map((comment) => {
         const shop = shopsMap[String(comment.shop_id)] || null
         const product = comment.product_id ? productsMap[String(comment.product_id)] || null : null
         const profile = profilesMap[comment.user_id] || null
@@ -122,6 +133,7 @@ export default function StaffCommunity() {
 
       const nextThreads = getStaffCommentThreads(enriched)
       setCommentThreads(nextThreads)
+
       setModerationDrafts((prev) => {
         const next = { ...prev }
         nextThreads.forEach((thread) => {
@@ -131,6 +143,7 @@ export default function StaffCommunity() {
         })
         return next
       })
+
       setSelectedCommentThread((current) => {
         if (!current) return current
         return nextThreads.find((thread) => thread.id === current.id) || null
@@ -139,17 +152,19 @@ export default function StaffCommunity() {
       console.error("Error fetching comment queue:", err)
       notify({
         type: "error",
-        title: "Could not load comments",
-        message: getFriendlyErrorMessage(err, "Could not load shop comments. Retry."),
+        title: "Load Failed",
+        message: getFriendlyErrorMessage(err, "Could not fetch community discussions."),
       })
     } finally {
       setLoadingComments(false)
     }
-  }, [notify, prefetchedData, prefetchedReady])
+  }, [notify, isSuperAdmin, staffCityId, fetchingStaff, prefetchedData, prefetchedReady])
 
   useEffect(() => {
-    fetchCommentQueue()
-  }, [fetchCommentQueue])
+    if (!fetchingStaff) {
+      fetchCommentQueue()
+    }
+  }, [fetchCommentQueue, fetchingStaff])
 
   useEffect(() => {
     const channel = supabase
