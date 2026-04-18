@@ -154,19 +154,31 @@ async function prepareStaffVerificationsData() {
       id,
       name,
       unique_id,
+      business_type,
+      category,
       address,
+      phone,
+      whatsapp,
       status,
+      rejection_reason,
+      image_url,
+      storefront_url,
+      id_type,
+      id_number,
+      id_card_url,
+      cac_number,
+      cac_certificate_url,
       kyc_status,
       kyc_video_url,
       kyc_submission_meta,
-      rejection_reason,
       id_issued,
       created_at,
-      profiles ( full_name ),
+      owner_id,
+      profiles ( full_name, avatar_url, phone ),
       cities ( name, state )
     `)
     .order("created_at", { ascending: false })
-    .limit(50)
+    .limit(100)
 
   if (error) throw error
 
