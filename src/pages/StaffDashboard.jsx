@@ -316,6 +316,13 @@ export default function StaffDashboard() {
               onClick={() => void openStaffRouteWithTransition("/staff-announcements")}
             />
             <HomeCard
+              icon={<FaEnvelope />}
+              title="Individual Alerts"
+              subtitle="Send targeted, private notifications directly to specific merchant or customer accounts."
+              tone="blue"
+              onClick={() => void openStaffRouteWithTransition("/staff-notifications")}
+            />
+            <HomeCard
               icon={<FaWandMagicSparkles />}
               title="Product Moderation"
               subtitle="Approve or reject new product listings from merchants to keep the marketplace clean and professional."

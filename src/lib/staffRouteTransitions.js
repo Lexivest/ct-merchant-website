@@ -11,6 +11,7 @@ const staffRouteLoaders = {
   "/staff-products": () => import("../pages/staff/StaffProducts"),
   "/staff-shop-content": () => import("../pages/staff/StaffShopContent"),
   "/staff-announcements": () => import("../pages/staff/StaffAnnouncements"),
+  "/staff-notifications": () => import("../pages/staff/StaffNotifications"),
   "/staff-payments": () => import("../pages/staff/StaffPayments"),
   "/staff-city-banners": () => import("../pages/staff/StaffFeaturedCityBanners"),
   "/staff-sponsored-products": () => import("../pages/staff/StaffSponsoredProducts"),
@@ -344,6 +345,29 @@ async function prepareStaffAnnouncementsData() {
   }
 }
 
+async function prepareStaffNotificationsData() {
+  const [profilesRes, notificationsRes] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, phone").order("full_name"),
+    supabase
+      .from("notifications")
+      .select(`
+        *,
+        profiles ( full_name )
+      `)
+      .order("created_at", { ascending: false })
+      .limit(100)
+  ])
+
+  if (profilesRes.error) throw profilesRes.error
+  if (notificationsRes.error) throw notificationsRes.error
+
+  return {
+    kind: "staff-notifications",
+    profiles: profilesRes.data || [],
+    notifications: notificationsRes.data || [],
+  }
+}
+
 const staffPreparers = {
   "/staff-traffic": prepareStaffTrafficData,
   "/staff-users": prepareStaffUsersData,
@@ -352,6 +376,7 @@ const staffPreparers = {
   "/staff-products": prepareStaffProductsData,
   "/staff-shop-content": prepareStaffShopContentData,
   "/staff-announcements": prepareStaffAnnouncementsData,
+  "/staff-notifications": prepareStaffNotificationsData,
   "/staff-payments": prepareStaffPaymentsData,
   "/staff-city-banners": prepareStaffFeaturedCityBannersData,
   "/staff-sponsored-products": prepareStaffSponsoredProductsData,
