@@ -303,9 +303,10 @@ export async function signInWithPassword({ email, password }) {
       signOutOnSuspended: true,
     })
 
+    // Grab both suspension status AND full_name for the safety ping
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("is_suspended")
+      .select("is_suspended, full_name")
       .eq("id", user.id)
       .maybeSingle()
 
@@ -329,11 +330,11 @@ export async function signInWithPassword({ email, password }) {
       console.warn("Failed to reset login guard after success:", resetError?.message || resetError)
     }
 
-    // 🚀 THE DATABASE PING: Catch IPs for users who slipped through previously
+    // 🚀 THE DATABASE PING: Catch IPs for users safely
     try {
       await supabase
         .from("profiles")
-        .update({ id: user.id }) // Dummy update to trigger Postgres PostgREST hook
+        .update({ full_name: profile?.full_name || null }) 
         .eq("id", user.id)
     } catch (pingError) {
       console.warn("Silent profile IP ping failed:", pingError)
@@ -377,12 +378,25 @@ export async function signInWithGoogleIdToken(idToken) {
       console.warn("Failed to reset login guard after Google sign-in:", resetError?.message || resetError)
     }
 
-    // 🚀 THE DATABASE PING: Catch Google Auth IPs
+    // Check suspension and grab full_name for the safety ping
     if (signedInUser?.id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_suspended, full_name")
+        .eq("id", signedInUser.id)
+        .maybeSingle()
+
+      if (profile?.is_suspended) {
+        await supabase.auth.signOut()
+        clearCachedFetchStore()
+        throw new Error("Your account is suspended. Please contact support.")
+      }
+
+      // 🚀 THE DATABASE PING: Catch Google Auth IPs safely
       try {
         await supabase
           .from("profiles")
-          .update({ id: signedInUser.id }) // Dummy update
+          .update({ full_name: profile?.full_name || null }) 
           .eq("id", signedInUser.id)
       } catch (pingError) {
         console.warn("Silent profile IP ping failed:", pingError)
@@ -403,37 +417,70 @@ export async function signUpWithEmail({
   cityId,
   areaId,
 }) {
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email: normalizeEmail(email),
-    password,
-    options: {
-      data: {
-        full_name: fullName.trim(),
-        phone: normalizePhone(phone),
-        city_id: Number(cityId),
-        area_id: Number(areaId),
-      },
-    },
-  })
+  const normalizedEmail = normalizeEmail(email)
+  const normalizedPhone = normalizePhone(phone)
 
-  if (authError) throw authError
-  if (!authData?.user) {
-    throw new Error("Account could not be created.")
-  }
+  // 🚀 DEBUG STAGE 1: Check exactly what is being sent
+  console.group("🕵️ [DEBUG] signUpWithEmail Execution")
+  console.log("1. Raw Inputs:", { fullName, phone, email, cityId, areaId })
+  console.log("2. Normalized Data:", { normalizedEmail, normalizedPhone })
 
-  // 🚀 THE DATABASE PING: The crucial PostgREST bypass fix for new registrations
   try {
-    await supabase
-      .from("profiles")
-      .update({ id: authData.user.id }) // Dummy update
-      .eq("id", authData.user.id)
-  } catch (pingError) {
-    console.warn("Silent profile IP ping failed:", pingError)
-  }
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        data: {
+          full_name: fullName.trim(),
+          phone: normalizedPhone,
+          city_id: Number(cityId),
+          area_id: Number(areaId),
+        },
+      },
+    })
 
-  return {
-    auth: authData,
-    user: authData.user
+    // 🚀 DEBUG STAGE 2: Inspect the raw Supabase response
+    console.log("3. Raw Auth Response:", { authData, authError })
+
+    if (authError) {
+      console.error("❌ Auth Error Intercepted:", {
+        message: authError.message,
+        status: authError.status,
+        name: authError.name,
+        code: authError.code
+      })
+      throw authError
+    }
+    
+    if (!authData?.user) {
+      console.error("❌ Silent Failure: No user object returned.")
+      throw new Error("Account could not be created.")
+    }
+
+    console.log("4. User Auth Success! ID:", authData.user.id)
+
+    // 🚀 THE DATABASE PING: Safely trigger the backend IP capture
+    try {
+      const pingResult = await supabase
+        .from("profiles")
+        .update({ full_name: fullName.trim() }) // Safer dummy update
+        .eq("id", authData.user.id)
+        
+      console.log("5. Database Ping Result:", pingResult)
+    } catch (pingError) {
+      console.warn("Silent profile IP ping failed:", pingError)
+    }
+
+    console.groupEnd()
+
+    return {
+      auth: authData,
+      user: authData.user
+    }
+  } catch (error) {
+    console.error("🚨 Fatal Error in signUpWithEmail:", error)
+    console.groupEnd()
+    throw error
   }
 }
 
