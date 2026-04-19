@@ -11,12 +11,12 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
   // Define initial messages based on mode
   const getInitialMessage = () => {
     if (productData) {
-      return `Hello! I'm your Product Concierge for *${productData.name}*. 📦 I can help you with technical details, compare it with other options, or check if it's the best fit for your needs. How can I help?`
+      return `Hello! I'm your Shopping Assistant for *${productData.name}*. 📦 I can help you with technical details, compare it with other options, or check if it's the best fit for your needs. How can I help?`
     }
     if (mode === "shopping" && shopData) {
       return `Hello! I'm your Shopping Assistant for ${shopData.name}. 🛍️ I can help you compare prices of products in this shop with others, or find similar shops in the same category for you. How can I assist you today?`
     }
-    return "Hello! 👋 I am the CTMerchant Welcome Ambassador. Would you like to know more about our services, how to get your shop indexed, or how to use CTMerchant to boost sales in your city?"
+    return "Hello! 👋 I am the CTMerchant System Ambassador. Would you like to know more about our services, how to get your shop indexed, or how to use CTMerchant to boost sales in your city?"
   }
 
   const getSuggestions = () => {
@@ -225,14 +225,14 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
           </button>
 
           {!isOpen && (
-            <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-slate-900 text-[10px] font-black text-white">
+            <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-slate-900 text-[8px] font-black text-white">
               1
             </div>
           )}
         </div>
 
-        <span className="text-[10px] font-black uppercase tracking-widest text-pink-600">
-          ask ai
+        <span className="text-[9px] font-black uppercase tracking-widest text-pink-600">
+          {productData || mode === "shopping" ? "ask shopping" : "ask ambassador"}
         </span>
       </div>
 
@@ -245,8 +245,8 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
       >
         <div className="flex items-center justify-between bg-pink-600 px-4 py-3 text-white">
           <div className="flex flex-col">
-            <span className="text-xs font-black uppercase tracking-tighter">
-              {productData ? "Product Concierge" : mode === "shopping" ? "Shopping Assistant" : "Welcome Ambassador"}
+            <span className="text-[9px] font-black uppercase tracking-tighter">
+              {productData || mode === "shopping" ? "Shopping Assistant" : "System Ambassador"}
             </span>
             {(shopData || productData) && (
               <span className="text-[10px] font-bold opacity-80 line-clamp-1">
