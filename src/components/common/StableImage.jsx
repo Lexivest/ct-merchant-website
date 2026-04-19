@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 
 export const DEFAULT_FALLBACK_IMAGE =
-  "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Crect width='100%25' height='100%25' fill='%23F1F5F9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2364748B' font-family='Arial' font-size='44'%3ECTM%3C/text%3E%3C/svg%3E"
+  "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23db2777'/%3E%3Cstop offset='100%25' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='900' font-size='60' opacity='0.7'%3ECTM%3C/text%3E%3C/svg%3E"
 
 // 1. Prevent memory leaks by capping the loaded image cache
 const MAX_IMAGE_CACHE_SIZE = 500
@@ -101,8 +101,12 @@ function StableImage({
   return (
     <div ref={rootRef} className={`relative overflow-hidden ${containerClassName}`}>
       {!ready ? (
-        <div className={`absolute inset-0 z-[1] flex items-center justify-center bg-slate-100 text-[0.75rem] font-extrabold tracking-wide text-slate-500 ${placeholderClassName}`}>
-          CTM
+        <div className={`absolute inset-0 z-[1] flex items-center justify-center bg-gradient-to-br from-pink-600 via-rose-500 to-violet-600 ${placeholderClassName}`}>
+          <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.12),transparent)] animate-shimmer" />
+          <div className="relative flex flex-col items-center gap-2">
+            <span className="text-xl font-black tracking-[0.25em] text-white drop-shadow-lg">CTM</span>
+            <div className="h-1.5 w-8 rounded-full bg-white/25 animate-pulse" />
+          </div>
         </div>
       ) : null}
       {displaySrc ? (
