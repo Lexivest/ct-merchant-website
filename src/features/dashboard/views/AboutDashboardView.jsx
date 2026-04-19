@@ -193,7 +193,7 @@ function AboutDashboardView({ onBack }) {
                         CT-MERCHANT LTD is a registered company with the Corporate Affairs Commission (CAC) of Nigeria under the Companies and Allied Matters Act 2020 (CAMA) with RC Number 8879163, incorporated <span className="text-white font-black italic">"TO CARRY ON THE BUSINESS OF E- COMMERCE AND ONLINE MARKETPLACE BY PROVIDING A DIGITAL PLATFORM FOR BUYERS AND SELLERS TO CONNECT, TRADE, AND TRANSACT; TO ENGAGE IN THE BUSINESS OF INFORMATION AND COMMUNICATION TECHNOLOGY SERVICES INCLUDING SOFTWARE AND MOBILE APPLICATION DEVELOPMENT, WEBSITE DESIGN AND DIGITAL MARKETING."</span>
                       </p>
                       <p className="mt-4 leading-7 md:text-[15px]">
-                        The company is indexed in the Data Universal Numbering System (DUNS) and Bradstreet (USA).
+                        The company is registered with Dun & Bradstreet (D&B) and assigned a Data Universal Numbering System (DUNS) number.
                       </p>
                     </div>
                   </div>
