@@ -46,7 +46,6 @@ import {
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import StableImage from "../components/common/StableImage"
-import AiAssistantWidget from "../components/common/AiAssistantWidget"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import {
   buildRepoSearchQuerySuffix,
@@ -1311,7 +1310,6 @@ function Home() {
           </div>
 
           <NewsletterSection />
-          <AiAssistantWidget mode="ambassador" />
           {resetEmailOpen ? (
             <SimpleModal
               title="Reset Password"

@@ -992,18 +992,19 @@ function ShopDetail() {
           />
         )}
       </div>
-      <AiAssistantWidget 
-        mode="shopping" 
-        shopData={currentShop ? { 
-          id: currentShop.id, 
-          name: currentShop.name, 
-          category: currentShop.category,
-          city: currentShop.cities?.name 
-        } : null} 
-      />
     </div>
-    </>
-  )
+
+    <AiAssistantWidget 
+      mode="shopping" 
+      shopData={currentShop ? { 
+        id: currentShop.id, 
+        name: currentShop.name, 
+        category: currentShop.category,
+        city: currentShop.cities?.name 
+      } : null} 
+    />
+  </>
+)
 }
 
 export default ShopDetail
