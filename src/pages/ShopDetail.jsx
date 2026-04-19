@@ -32,6 +32,7 @@ import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
+import AiAssistantWidget from "../components/common/AiAssistantWidget"
 import { getRetryingMessage } from "../components/common/RetryingNotice"
 import ScrollingTicker from "../components/common/ScrollingTicker"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
@@ -991,6 +992,15 @@ function ShopDetail() {
           />
         )}
       </div>
+      <AiAssistantWidget 
+        mode="shopping" 
+        shopData={currentShop ? { 
+          id: currentShop.id, 
+          name: currentShop.name, 
+          category: currentShop.category,
+          city: currentShop.cities?.name 
+        } : null} 
+      />
     </div>
     </>
   )

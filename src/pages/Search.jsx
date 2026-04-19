@@ -15,6 +15,7 @@ import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
+import AiAssistantWidget from "../components/common/AiAssistantWidget"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import { getRetryingMessage } from "../components/common/RetryingNotice"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
@@ -509,6 +510,7 @@ function Search() {
           </>
         )}
       </main>
+      <AiAssistantWidget mode="ambassador" />
       </div>
     </>
   )

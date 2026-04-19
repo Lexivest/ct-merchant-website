@@ -5,15 +5,49 @@ import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 
 const DAILY_LIMIT = 15
 
-function AiAssistantWidget() {
+function AiAssistantWidget({ mode = "ambassador", shopData = null, productData = null }) {
   const [isOpen, setIsOpen] = useState(false)
+
+  // Define initial messages based on mode
+  const getInitialMessage = () => {
+    if (productData) {
+      return `Hello! I'm your Product Concierge for *${productData.name}*. 📦 I can help you with technical details, compare it with other options, or check if it's the best fit for your needs. How can I help?`
+    }
+    if (mode === "shopping" && shopData) {
+      return `Hello! I'm your Shopping Assistant for ${shopData.name}. 🛍️ I can help you compare prices of products in this shop with others, or find similar shops in the same category for you. How can I assist you today?`
+    }
+    return "Hello! 👋 I am the CTMerchant Welcome Ambassador. Would you like to know more about our services, how to get your shop indexed, or how to use CTMerchant to boost sales in your city?"
+  }
+
+  const getSuggestions = () => {
+    if (productData) {
+      return [
+        "Technical specs?",
+        "Is this good for me?",
+        "Compare with others?"
+      ]
+    }
+    if (mode === "shopping") {
+      return [
+        "Similar shops in this category?",
+        "Compare prices?",
+        "Tell me about this shop"
+      ]
+    }
+    return [
+      "How to get indexed?",
+      "How to boost sales?",
+      "Our services?"
+    ]
+  }
+
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content:
-        "Hello! 👋 I am the CTMerchant Welcome Ambassador. Would you like to know more about how our platform works, or are you looking to create an account today?",
+      content: getInitialMessage(),
     },
   ])
+
   const [input, setInput] = useState("")
   const [isSending, setIsSending] = useState(false)
 
@@ -36,7 +70,7 @@ function AiAssistantWidget() {
         }
       }
     } catch {
-      // Ignore storage errors in strict privacy modes
+      // Ignore
     }
 
     return parsed
@@ -72,12 +106,12 @@ function AiAssistantWidget() {
         )
       }
     } catch {
-      // Ignore storage errors
+      // Ignore
     }
   }
 
-  const handleSend = async () => {
-    const trimmed = input.trim()
+  const handleSend = async (textOverride = null) => {
+    const trimmed = (textOverride || input).trim()
     if (!trimmed || isSending) return
 
     if (usage.count >= DAILY_LIMIT) {
@@ -85,8 +119,7 @@ function AiAssistantWidget() {
         ...prev,
         {
           role: "error",
-          content:
-            "You have reached the free daily limit of 15 messages. This limit prevents system abuse. Please check back tomorrow.",
+          content: "You have reached the free daily limit. Please check back tomorrow.",
         },
       ])
       setInput("")
@@ -116,6 +149,16 @@ function AiAssistantWidget() {
         body: {
           query: trimmed,
           history,
+          mode,
+          context: (shopData || productData) ? {
+            shopId: shopData?.id,
+            shopName: shopData?.name,
+            shopCategory: shopData?.category,
+            city: shopData?.city,
+            productId: productData?.id,
+            productName: productData?.name,
+            productPrice: productData?.price
+          } : null
         },
       })
 
@@ -123,11 +166,8 @@ function AiAssistantWidget() {
         throw new Error(getFriendlyErrorMessage(error, "Could not reach AI server."))
       }
 
-      const reply =
-        data?.reply?.trim() || "No response received from the assistant."
-
-      const isErrorReply =
-        reply.startsWith("Error:") || reply.startsWith("System")
+      const reply = data?.reply?.trim() || "No response received."
+      const isErrorReply = reply.startsWith("Error:") || reply.startsWith("System")
 
       setMessages((prev) => [
         ...prev,
@@ -145,8 +185,7 @@ function AiAssistantWidget() {
         ...prev,
         {
           role: "error",
-          content:
-            getFriendlyErrorMessage(error, "Could not reach AI server."),
+          content: getFriendlyErrorMessage(error, "Could not reach AI server."),
         },
       ])
     } finally {
@@ -181,19 +220,28 @@ function AiAssistantWidget() {
         </div>
 
         <span className="text-[10px] font-black uppercase tracking-widest text-pink-600">
-          chart
+          ask ai
         </span>
       </div>
 
       <div
-        className={`fixed bottom-36 right-6 z-40 flex h-[360px] w-[calc(100%-3rem)] max-w-[320px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 ${
+        className={`fixed bottom-36 right-6 z-40 flex h-[420px] w-[calc(100%-3rem)] max-w-[340px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 ${
           isOpen
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none translate-y-5 opacity-0"
         }`}
       >
         <div className="flex items-center justify-between bg-pink-600 px-4 py-3 text-white">
-          <span className="text-sm font-bold">Assistant</span>
+          <div className="flex flex-col">
+            <span className="text-xs font-black uppercase tracking-tighter">
+              {productData ? "Product Concierge" : mode === "shopping" ? "Shopping Assistant" : "Welcome Ambassador"}
+            </span>
+            {(shopData || productData) && (
+              <span className="text-[10px] font-bold opacity-80 line-clamp-1">
+                {productData?.name || shopData?.name}
+              </span>
+            )}
+          </div>
 
           <button
             type="button"
@@ -211,12 +259,12 @@ function AiAssistantWidget() {
           {messages.map((message, index) => (
             <div
               key={index}
-              className={`max-w-[85%] rounded-2xl px-3 py-2.5 text-sm leading-5 ${
+              className={`max-w-[90%] rounded-2xl px-3 py-2.5 text-sm leading-5 ${
                 message.role === "assistant"
                   ? "rounded-bl-sm border border-slate-200 bg-white text-slate-800"
                   : message.role === "error"
                   ? "mx-auto border border-red-200 bg-red-50 text-center text-red-700"
-                  : "ml-auto rounded-br-sm bg-pink-600 text-white"
+                  : "ml-auto rounded-br-sm bg-pink-600 text-white shadow-sm"
               }`}
             >
               {message.content}
@@ -224,8 +272,8 @@ function AiAssistantWidget() {
           ))}
 
           {isSending ? (
-            <div className="max-w-[85%] rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-3 py-2.5 text-sm leading-5 text-slate-500">
-              Typing...
+            <div className="max-w-[85%] rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-3 py-2.5 text-sm leading-5 text-slate-500 italic">
+              AI is thinking...
             </div>
           ) : null}
 
@@ -233,9 +281,19 @@ function AiAssistantWidget() {
         </div>
 
         <div className="border-t border-slate-200 bg-white p-3">
-          <div className="mb-2 text-[11px] font-semibold text-slate-400">
-            {Math.max(0, DAILY_LIMIT - usage.count)} free messages left today
-          </div>
+          {messages.length === 1 && (
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              {getSuggestions().map((suggestion) => (
+                <button
+                  key={suggestion}
+                  onClick={() => handleSend(suggestion)}
+                  className="rounded-full border border-pink-100 bg-pink-50 px-2.5 py-1 text-[10px] font-bold text-pink-600 transition hover:bg-pink-100"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="flex items-center gap-2">
             <input
@@ -243,18 +301,21 @@ function AiAssistantWidget() {
               value={input}
               onChange={(event) => setInput(event.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type a message..."
+              placeholder="Ask anything..."
               className="flex-1 rounded-full border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-pink-500 focus:bg-white"
             />
 
             <button
               type="button"
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={isSending}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-600 text-white transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               ➤
             </button>
+          </div>
+          <div className="mt-2 text-center text-[9px] font-bold text-slate-400">
+            {Math.max(0, DAILY_LIMIT - usage.count)} / {DAILY_LIMIT} free queries left today
           </div>
         </div>
       </div>

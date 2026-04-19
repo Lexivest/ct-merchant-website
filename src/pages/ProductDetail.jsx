@@ -31,6 +31,7 @@ import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
+import AiAssistantWidget from "../components/common/AiAssistantWidget"
 import { getRetryingMessage } from "../components/common/RetryingNotice"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
@@ -123,18 +124,6 @@ function ProductDetail() {
       error: "",
     })
   }, [productId])
-
-  // Chat States
-  const [chatOpen, setChatOpen] = useState(false)
-  const [chatInput, setChatInput] = useState("")
-  const [chatHistory, setChatHistory] = useState([])
-  const [chatMessages, setChatMessages] = useState([
-    {
-      role: "assistant",
-      content: "Hi! I'm the CTMerchant Assistant. What would you like to know about this product?",
-    },
-  ])
-  const [sendingChat, setSendingChat] = useState(false)
 
   // Computed Values from Cache
   const currentProduct = data?.product
@@ -992,80 +981,20 @@ function ProductDetail() {
         ) : null}
       </div>
 
-      {/* CHAT AI BUTTON & MODAL */}
-      <div className="fixed bottom-5 right-5 z-[4000] flex flex-col items-center gap-1.5">
-        <button
-          type="button"
-          onClick={toggleChat}
-          className="flex h-14 w-14 items-center justify-center rounded-full border-none bg-pink-600 text-[1.5rem] text-white shadow-[0_4px_12px_rgba(219,39,119,0.4)] transition active:scale-95"
-        >
-          <FaRobot />
-        </button>
-        <span className="pointer-events-none whitespace-nowrap rounded-xl border border-slate-200 bg-white px-2 py-1 text-[0.7rem] font-extrabold text-pink-600 shadow">
-          Ask AI
-        </span>
-      </div>
-
-      <div
-        className={`fixed bottom-[90px] right-5 z-[4000] flex h-[500px] w-[350px] flex-col overflow-hidden rounded-lg border border-slate-300 bg-white shadow-[0_10px_25px_rgba(0,0,0,0.15)] transition-all duration-300 max-[480px]:bottom-0 max-[480px]:left-0 max-[480px]:right-0 max-[480px]:h-[85vh] max-[480px]:w-full max-[480px]:rounded-b-none ${
-          chatOpen ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-5 opacity-0"
-        }`}
-      >
-        <div className="flex items-center justify-between bg-[#131921] px-4 py-3 text-white">
-          <span className="font-bold">
-            <FaRobot className="mr-2 inline" /> Product Concierge
-          </span>
-          <button type="button" onClick={toggleChat} className="border-none bg-transparent text-[1.2rem] text-white">
-            <FaXmark />
-          </button>
-        </div>
-
-        <div ref={chatBodyRef} className="flex flex-1 flex-col gap-3 overflow-y-auto bg-slate-50 p-4">
-          {chatMessages.map((message, index) => (
-            <div
-              key={`${message.role}-${index}`}
-              className={`max-w-[85%] rounded-lg px-3.5 py-2.5 text-[0.9rem] leading-[1.4] ${
-                message.role === "assistant"
-                  ? "self-start border border-slate-300 bg-white text-[#0F1111]"
-                  : message.role === "error"
-                  ? "self-center border border-red-200 bg-red-100 text-[0.8rem] text-red-600"
-                  : "self-end bg-pink-600 text-white"
-              }`}
-            >
-              {message.content}
-            </div>
-          ))}
-
-          {sendingChat ? (
-            <div className="self-start rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-[0.9rem] italic text-slate-500">
-              Thinking...
-            </div>
-          ) : null}
-        </div>
-
-        <div className="flex flex-col gap-2 border-t border-slate-300 bg-white p-3">
-          <div className="flex w-full gap-2">
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") sendMsg() }}
-              placeholder="Type a message..."
-              className="flex-1 rounded border border-slate-400 px-3 py-2.5 text-[0.9rem] outline-none focus:border-pink-600 focus:shadow-[0_0_0_2px_rgba(219,39,119,0.1)]"
-            />
-            <button
-              type="button"
-              onClick={sendMsg}
-              className="flex h-10 w-10 items-center justify-center rounded bg-pink-600 text-white"
-            >
-              <FaPaperPlane />
-            </button>
-          </div>
-          <div className="text-[0.75rem] text-slate-600">
-            AI can make mistakes. Please verify important details directly with the merchant.
-          </div>
-        </div>
-      </div>
+      <AiAssistantWidget 
+        mode="shopping" 
+        shopData={currentShop ? { 
+          id: currentShop.id, 
+          name: currentShop.name, 
+          category: currentShop.category,
+          city: currentShop.cities?.name 
+        } : null}
+        productData={currentProduct ? {
+          id: currentProduct.id,
+          name: currentProduct.name,
+          price: currentProduct.discount_price || currentProduct.price
+        } : null}
+      />
 
       {securityModalOpen ? (
         <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-[rgba(19,25,33,0.8)] px-4 backdrop-blur-[2px]">
