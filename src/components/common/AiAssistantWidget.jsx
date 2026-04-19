@@ -150,15 +150,16 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
           query: trimmed,
           history,
           mode,
-          context: (shopData || productData) ? {
+          context: {
+            page: productData ? "product_detail" : (shopData ? "shop_detail" : "home"),
             shopId: shopData?.id,
             shopName: shopData?.name,
             shopCategory: shopData?.category,
             city: shopData?.city,
             productId: productData?.id,
             productName: productData?.name,
-            productPrice: productData?.price
-          } : null
+            productPrice: productData?.price || 0
+          }
         },
       })
 
