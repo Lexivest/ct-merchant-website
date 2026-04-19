@@ -17,6 +17,7 @@ import {
   FaNewspaper,
   FaPhone,
   FaTelegram,
+  FaWhatsapp,
   FaXTwitter,
   FaYoutube,
 } from "react-icons/fa6"
@@ -181,12 +182,17 @@ function OfficeSupportCard() {
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-1 pt-2.5 border-t border-slate-50">
-            <div className="text-pink-600 text-xs"><FaPhone /></div>
-            <div>
-              <div className="text-[10px] font-black text-slate-900 uppercase tracking-tighter">Phone Support</div>
-              <p className="mt-0.5 text-[10px] font-bold text-slate-500 font-mono">+234 812 345 6789</p>
-            </div>
+          <div className="flex flex-col items-center gap-2 pt-2.5 border-t border-slate-50">
+            <div className="text-[10px] font-black text-slate-900 uppercase tracking-tighter">WhatsApp Support</div>
+            <a 
+              href="https://wa.me/2347042021230" 
+              target="_blank" 
+              rel="noreferrer"
+              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-xs font-black text-white shadow-md transition-all hover:scale-[1.02] hover:bg-emerald-600 animate-pulse"
+            >
+              <FaWhatsapp className="text-base" />
+              <span>07042021230</span>
+            </a>
           </div>
 
           <div className="flex flex-col items-center gap-1 pt-2.5 border-t border-slate-50">
@@ -317,45 +323,6 @@ function HomeFeedbackSection() {
           {!isSubmitting && <FaArrowRight />}
         </button>
       </form>
-
-      <div className="mt-6 rounded-[22px] border border-pink-100 bg-pink-50 p-5">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-extrabold uppercase tracking-[0.2em] text-pink-600">
-              Follow CTMerchant
-            </p>
-            <h3 className="mt-1 text-lg font-extrabold text-slate-900">
-              Stay connected
-            </h3>
-          </div>
-        </div>
-
-        <div className="mt-4 grid grid-cols-4 gap-1.5 sm:gap-3">
-          {socialLinks.map((item) => {
-            const Icon = item.icon
-            return (
-              <a
-                key={item.label}
-                href={item.href}
-                target="_blank"
-                rel="noreferrer"
-                className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-pink-100 bg-white p-2 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-200 hover:shadow-md sm:flex-row sm:gap-3 sm:rounded-2xl sm:p-4"
-              >
-                <span
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg text-base text-white sm:h-11 sm:w-11 sm:rounded-2xl sm:text-lg ${item.accent}`}
-                >
-                  <Icon />
-                </span>
-                <span className="min-w-0 text-center sm:text-left">
-                  <span className="block text-[9px] font-extrabold text-slate-900 sm:text-sm">
-                    {item.label}
-                  </span>
-                </span>
-              </a>
-            )
-          })}
-        </div>
-      </div>
     </div>
   )
 }
@@ -1287,6 +1254,30 @@ function Home() {
                           </a>
                           .
                         </p>
+
+                        <div className="mt-4 grid grid-cols-4 gap-1.5 sm:gap-3">
+                          {socialLinks.map((item) => {
+                            const Icon = item.icon
+                            return (
+                              <a
+                                key={item.label}
+                                href={item.href}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-pink-100 bg-white p-2 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-200 hover:shadow-md"
+                              >
+                                <span
+                                  className={`flex h-8 w-8 items-center justify-center rounded-lg text-base text-white sm:h-10 sm:w-10 sm:rounded-xl ${item.accent}`}
+                                >
+                                  <Icon />
+                                </span>
+                                <span className="block text-[8px] font-extrabold text-slate-900 sm:text-[10px]">
+                                  {item.label}
+                                </span>
+                              </a>
+                            )
+                          })}
+                        </div>
                       </div>
 
                       <div className="mt-4 grid gap-4 sm:grid-cols-2">

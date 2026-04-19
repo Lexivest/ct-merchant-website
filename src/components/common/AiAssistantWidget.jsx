@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { FaMessage } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 
@@ -162,25 +163,25 @@ function AiAssistantWidget() {
 
   return (
     <>
-      <div className="fixed bottom-20 right-6 z-40 flex flex-col items-center gap-2">
+      <div className="fixed bottom-20 right-6 z-40 flex flex-col items-center gap-1.5">
         <div className="relative">
           <button
             type="button"
             onClick={toggleChat}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-2xl text-white shadow-[0_10px_25px_rgba(5,150,105,0.35)] transition hover:scale-105 hover:bg-emerald-700"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-pink-600 text-white shadow-lg transition hover:scale-105 hover:bg-pink-700"
           >
-            💬
+            <FaMessage className="text-lg" />
           </button>
 
           {!isOpen && (
-            <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-red-500 text-xs font-extrabold text-white">
+            <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-slate-900 text-[10px] font-black text-white">
               1
             </div>
           )}
         </div>
 
-        <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-extrabold text-emerald-700 shadow-sm">
-          AI Assistant
+        <span className="text-[10px] font-black uppercase tracking-widest text-pink-600">
+          chart
         </span>
       </div>
 
@@ -191,7 +192,7 @@ function AiAssistantWidget() {
             : "pointer-events-none translate-y-5 opacity-0"
         }`}
       >
-        <div className="flex items-center justify-between bg-emerald-600 px-4 py-3 text-white">
+        <div className="flex items-center justify-between bg-pink-600 px-4 py-3 text-white">
           <span className="text-sm font-bold">Assistant</span>
 
           <button
@@ -215,7 +216,7 @@ function AiAssistantWidget() {
                   ? "rounded-bl-sm border border-slate-200 bg-white text-slate-800"
                   : message.role === "error"
                   ? "mx-auto border border-red-200 bg-red-50 text-center text-red-700"
-                  : "ml-auto rounded-br-sm bg-emerald-600 text-white"
+                  : "ml-auto rounded-br-sm bg-pink-600 text-white"
               }`}
             >
               {message.content}
@@ -243,14 +244,14 @@ function AiAssistantWidget() {
               onChange={(event) => setInput(event.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type a message..."
-              className="flex-1 rounded-full border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white"
+              className="flex-1 rounded-full border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-pink-500 focus:bg-white"
             />
 
             <button
               type="button"
               onClick={handleSend}
               disabled={isSending}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-600 text-white transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               ➤
             </button>
