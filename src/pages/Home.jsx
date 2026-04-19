@@ -191,7 +191,7 @@ function OfficeSupportCard() {
               className="group flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-xs font-black text-white shadow-md transition-all hover:scale-[1.02] hover:bg-emerald-600 animate-pulse"
             >
               <FaWhatsapp className="text-base" />
-              <span>07042021230</span>
+              <span>+234 704 202 1230</span>
             </a>
           </div>
 
@@ -199,7 +199,7 @@ function OfficeSupportCard() {
             <div className="text-blue-500 text-xs"><FaEnvelope /></div>
             <div>
               <div className="text-[10px] font-black text-slate-900 uppercase tracking-tighter">Email Inquiry</div>
-              <p className="mt-0.5 text-[10px] font-bold text-slate-500 underline truncate max-w-full">support@ctmerchant.ng</p>
+              <p className="mt-0.5 text-[10px] font-bold text-slate-500 underline truncate max-w-full">support@ctmerchant.com.ng</p>
             </div>
           </div>
         </div>

@@ -186,30 +186,10 @@ function AboutDashboardView({ onBack }) {
                         settlements and logistics to maintain data integrity and
                         search excellence.
                       </p>
-                    </div>
 
-                    <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <div className="flex flex-col gap-3 text-sm md:text-[15px]">
-                        <div className="flex items-center justify-between gap-4">
-                          <span className="font-semibold text-slate-500">
-                            Jurisdiction
-                          </span>
-                          <span className="font-extrabold text-slate-900">
-                            CAC, Nigeria
-                          </span>
-                        </div>
-
-                        <div className="h-px bg-slate-200" />
-
-                        <div className="flex items-center justify-between gap-4">
-                          <span className="font-semibold text-slate-500">
-                            RC Number
-                          </span>
-                          <span className="font-extrabold text-slate-900">
-                            8879163
-                          </span>
-                        </div>
-                      </div>
+                      <p className="rounded-2xl border border-slate-200 bg-slate-50 p-5 font-medium italic text-slate-700">
+                        CT-MERCHANT LTD is a registered company with the Corporate Affairs Commission (CAC) of Nigeria under the Companies and Allied Matters Act 2020 (CAMA) with RC Number 8879163, incorporated to carry on the business of E-commerce and Online Marketplace by providing a digital platform for buyers and sellers to connect, trade, and transact; to engage in the business of Information and Communication Technology services including software and mobile application development, website design and digital marketing. The company is indexed in the Data Universal Numbering System (DUNS) and Bradstreet (USA).
+                      </p>
                     </div>
                   </div>
                 </div>

@@ -336,10 +336,10 @@ function SupportDashboardView({ onBack, onOpenServices, mode = "support" }) {
                                 Email Support
                               </p>
                               <a
-                                href="mailto:admin@ct-merchant.com.ng"
+                                href="mailto:support@ctmerchant.com.ng"
                                 className="mt-2 block text-base font-extrabold text-slate-900 transition hover:text-pink-600"
                               >
-                                admin@ct-merchant.com.ng
+                                support@ctmerchant.com.ng
                               </a>
                             </div>
                           </div>
@@ -349,32 +349,34 @@ function SupportDashboardView({ onBack, onOpenServices, mode = "support" }) {
                       <div className="rounded-3xl bg-pink-200 p-1 shadow-sm">
                         <div className="rounded-[22px] border border-pink-100 bg-white p-6 md:p-7">
                           <div className="flex items-start gap-3">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-pink-50 text-pink-600">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                                 className="h-5 w-5"
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M22 16.92v3a2 2 0 01-2.18 2 19.86 19.86 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.86 19.86 0 012.08 4.18 2 2 0 014.06 2h3a2 2 0 012 1.72c.12.9.32 1.78.59 2.64a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.44-1.2a2 2 0 012.11-.45c.86.27 1.74.47 2.64.59A2 2 0 0122 16.92z"
-                                />
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-7.6 8.38 8.38 0 0 1 3.8.9L21 4.5l-4.5 4.5" />
                               </svg>
                             </div>
 
                             <div>
                               <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">
-                                Call Us
+                                WhatsApp Support
                               </p>
                               <a
-                                href="tel:+2349040978688"
-                                className="mt-2 block text-base font-extrabold text-slate-900 transition hover:text-pink-600"
+                                href="https://wa.me/2347042021230"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-2 block text-base font-extrabold text-slate-900 transition hover:text-emerald-600"
                               >
-                                +234 904 097 8688
+                                +234 704 202 1230
                               </a>
                             </div>
                           </div>
