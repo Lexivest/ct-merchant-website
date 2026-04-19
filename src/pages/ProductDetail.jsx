@@ -9,9 +9,7 @@ import {
   FaHeart,
   FaLocationDot,
   FaMapPin,
-  FaPaperPlane,
   FaPhone,
-  FaRobot,
   FaShareNodes,
   FaShieldHalved,
   FaStar,
@@ -55,7 +53,6 @@ function ProductDetail() {
   const location = useLocation()
   const { notify } = useGlobalFeedback()
   const [searchParams] = useSearchParams()
-  const chatBodyRef = useRef(null)
 
   const productId = searchParams.get("id")
   const shopSrc = searchParams.get("shop_src")
@@ -192,11 +189,6 @@ function ProductDetail() {
     delete attrs["Warranty"]
     return attrs
   }, [currentProduct])
-
-  useEffect(() => {
-    if (!chatBodyRef.current) return
-    chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight
-  }, [chatMessages, sendingChat, chatOpen])
 
   function goBack() {
     const repoSuffix = isPublicRepoMode ? buildRepoSearchQuerySuffix(repoRef) : ""
@@ -411,77 +403,6 @@ function ProductDetail() {
       }
     } catch (error) {
       console.error("Error sharing:", error)
-    }
-  }
-
-  function toggleChat() {
-    setChatOpen((prev) => !prev)
-  }
-
-  async function sendMsg() {
-    const text = chatInput.trim()
-    if (!text || sendingChat || !currentProduct) return
-
-    const nextUserMessage = { role: "user", content: text }
-    setChatMessages((prev) => [...prev, nextUserMessage])
-    setChatHistory((prev) => [...prev, nextUserMessage])
-    setChatInput("")
-    setSendingChat(true)
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-
-      const headers = {
-        "Content-Type": "application/json",
-        apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-      }
-
-      if (session?.access_token) {
-        headers.Authorization = `Bearer ${session.access_token}`
-      }
-
-      const contextData = {
-        page: "product_detail",
-        product: currentProduct,
-        shop: currentShop,
-      }
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`,
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            query: text,
-            history: [...chatHistory, nextUserMessage],
-            context: contextData,
-          }),
-        }
-      )
-
-      if (!response.ok) throw new Error(`Server returned ${response.status}`)
-
-      const resData = await response.json()
-      const reply = resData.reply || "No response received."
-      const isError = reply.startsWith("Error:") || reply.startsWith("System") || reply.startsWith("Config")
-
-      const assistantMessage = { role: isError ? "error" : "assistant", content: reply }
-      setChatMessages((prev) => [...prev, assistantMessage])
-
-      if (!isError) {
-        setChatHistory((prev) => [
-          ...prev,
-          nextUserMessage,
-          { role: "assistant", content: reply },
-        ])
-      }
-    } catch (error) {
-      setChatMessages((prev) => [
-        ...prev,
-        { role: "error", content: getFriendlyErrorMessage(error, "Connection Error.") },
-      ])
-    } finally {
-      setSendingChat(false)
     }
   }
 
