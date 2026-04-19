@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { FaMessage } from "react-icons/fa6"
+import { FaMessage, FaRotateLeft } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 
@@ -91,6 +91,17 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
 
   const toggleChat = () => {
     setIsOpen((prev) => !prev)
+  }
+
+  const resetChat = () => {
+    setMessages([
+      {
+        role: "assistant",
+        content: getInitialMessage(),
+      },
+    ])
+    setInput("")
+    setIsSending(false)
   }
 
   const saveUsage = (nextCount) => {
@@ -244,13 +255,26 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={toggleChat}
-            className="text-xl text-white/80 transition hover:text-white"
-          >
-            ×
-          </button>
+          <div className="flex items-center gap-2">
+            {messages.length > 1 && (
+              <button
+                type="button"
+                onClick={resetChat}
+                title="Clear Chat"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-xs text-white/90 transition hover:bg-white/30 hover:text-white"
+              >
+                <FaRotateLeft />
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={toggleChat}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-xl text-white/80 transition hover:bg-white/10 hover:text-white"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         <div
@@ -282,7 +306,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
         </div>
 
         <div className="border-t border-slate-200 bg-white p-3">
-          {messages.length === 1 && (
+          {(messages.length <= 3 || input.trim() === "") && (
             <div className="mb-3 flex flex-wrap gap-1.5">
               {getSuggestions().map((suggestion) => (
                 <button
