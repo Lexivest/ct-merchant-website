@@ -189,10 +189,10 @@ function AboutDashboardView({ onBack }) {
                     </div>
 
                     <div className="mt-8 mb-[-1.5rem] mx-[-1.5rem] md:mb-[-1.75rem] md:mx-[-1.75rem] rounded-b-[21px] bg-slate-900 p-6 text-slate-300 shadow-2xl border-t border-white/10 backdrop-blur-xl md:p-8">
-                      <p className="leading-7 text-justify md:text-[15px]">
+                      <p className="leading-7 md:text-[15px]">
                         CT-MERCHANT LTD is a registered company with the Corporate Affairs Commission (CAC) of Nigeria under the Companies and Allied Matters Act 2020 (CAMA) with RC Number 8879163, incorporated <span className="text-white font-black italic">"TO CARRY ON THE BUSINESS OF E- COMMERCE AND ONLINE MARKETPLACE BY PROVIDING A DIGITAL PLATFORM FOR BUYERS AND SELLERS TO CONNECT, TRADE, AND TRANSACT; TO ENGAGE IN THE BUSINESS OF INFORMATION AND COMMUNICATION TECHNOLOGY SERVICES INCLUDING SOFTWARE AND MOBILE APPLICATION DEVELOPMENT, WEBSITE DESIGN AND DIGITAL MARKETING."</span>
                       </p>
-                      <p className="mt-4 leading-7 text-justify md:text-[15px]">
+                      <p className="mt-4 leading-7 md:text-[15px]">
                         The company is indexed in the Data Universal Numbering System (DUNS) and Bradstreet (USA).
                       </p>
                     </div>
