@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { FaMessage, FaRotateLeft } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
+import useAuthSession from "../../hooks/useAuthSession"
 
 const DAILY_LIMIT = 15
 
