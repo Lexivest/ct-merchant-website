@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { FaMessage, FaRotateLeft } from "react-icons/fa6"
+import { FaRobot, FaRotateLeft } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import useAuthSession from "../../hooks/useAuthSession"
@@ -16,16 +16,16 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
     const greeting = firstName ? `Hello ${firstName}! 👋` : "Hello! 👋"
 
     if (isRepoSearch && !profile) {
-      return `${greeting} I'm your Shopping Assistant. 🛍️ Please <a href="/" style="color:#db2777; font-weight:bold; text-decoration:underline;">login to your account</a> to use the AI Shopping Assistant for similar products, price comparison, and more.`
+      return `${greeting} I'm CT-AI. 🛍️ Please <a href="/" style="color:#db2777; font-weight:bold; text-decoration:underline;">login to your account</a> to use the AI Shopping Assistant for similar products, price comparison, and more.`
     }
 
     if (productData) {
-      return `${greeting} I'm your Shopping Assistant for *${productData.name}*. 📦 I can help you find similar products and compare their prices. How can I assist you?`
+      return `${greeting} I'm CT-AI, your Shopping Assistant for *${productData.name}*. 📦 I can help you find similar products and compare their prices. How can I assist you?`
     }
     if (mode === "shopping" && shopData) {
-      return `${greeting} I'm your Shopping Assistant for ${shopData.name}. 🛍️ I can help you find similar shops in this category, locate shops in your area, or tell you more about this shop. How can I help?`
+      return `${greeting} I'm CT-AI, your Shopping Assistant for ${shopData.name}. 🛍️ I can help you find similar shops in this category, locate shops in your area, or tell you more about this shop. How can I help?`
     }
-    return `${greeting} I am the CTMerchant System Ambassador. We are a digital collection of shops and their locations in a city to enhance discovery and mitigate fake online sales claims. How can I assist you today?`
+    return `${greeting} I am CT-AI, the CTMerchant System Ambassador. We are a digital collection of shops and their locations in a city to enhance discovery and mitigate fake online sales claims. How can I assist you today?`
   }
 
   const getSuggestions = () => {
@@ -235,7 +235,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
             onClick={toggleChat}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-pink-600 text-white shadow-lg transition hover:scale-105 hover:bg-pink-700"
           >
-            <FaMessage className="text-lg" />
+            <FaRobot className="text-xl" />
           </button>
 
           {!isOpen && (
@@ -246,7 +246,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
         </div>
 
         <span className="text-[9px] font-black uppercase tracking-widest text-pink-600">
-          {productData || mode === "shopping" ? "ask shopping" : "ask ambassador"}
+          ask CT-AI
         </span>
       </div>
 
@@ -260,7 +260,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
         <div className="flex items-center justify-between bg-pink-600 px-4 py-3 text-white">
           <div className="flex flex-col">
             <span className="text-[9px] font-black uppercase tracking-tighter">
-              {productData || mode === "shopping" ? "Shopping Assistant" : "System Ambassador"}
+              CT-AI Shopping Assistant
             </span>
             {(shopData || productData) && (
               <span className="text-[10px] font-bold opacity-80 line-clamp-1">
