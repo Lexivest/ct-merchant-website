@@ -163,13 +163,8 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
           mode,
           context: {
             page: productData ? "product_detail" : (shopData ? "shop_detail" : "home"),
-            shopId: shopData?.id,
-            shopName: shopData?.name,
-            shopCategory: shopData?.category,
-            city: shopData?.city,
-            productId: productData?.id,
-            productName: productData?.name,
-            productPrice: productData?.price || 0
+            product: productData,
+            shop: shopData
           }
         },
       })
@@ -292,7 +287,11 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
                   : "ml-auto rounded-br-sm bg-pink-600 text-white shadow-sm"
               }`}
             >
-              {message.content}
+              {message.role === "assistant" ? (
+                <div dangerouslySetInnerHTML={{ __html: message.content }} />
+              ) : (
+                message.content
+              )}
             </div>
           ))}
 
