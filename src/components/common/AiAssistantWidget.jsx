@@ -7,16 +7,19 @@ const DAILY_LIMIT = 15
 
 function AiAssistantWidget({ mode = "ambassador", shopData = null, productData = null }) {
   const [isOpen, setIsOpen] = useState(false)
+  const { profile } = useAuthSession()
+  const firstName = profile?.full_name?.split(" ")[0] || ""
 
   // Define initial messages based on mode
   const getInitialMessage = () => {
+    const greeting = firstName ? `Hello ${firstName}! 👋` : "Hello! 👋"
     if (productData) {
-      return `Hello! I'm your Shopping Assistant for *${productData.name}*. 📦 I can help you with technical details, compare it with other options, or check if it's the best fit for your needs. How can I help?`
+      return `${greeting} I'm your Shopping Assistant for *${productData.name}*. 📦 I can help you with technical details, compare it with other options, or check if it's the best fit for your needs. How can I help?`
     }
     if (mode === "shopping" && shopData) {
-      return `Hello! I'm your Shopping Assistant for ${shopData.name}. 🛍️ I can help you compare prices of products in this shop with others, or find similar shops in the same category for you. How can I assist you today?`
+      return `${greeting} I'm your Shopping Assistant for ${shopData.name}. 🛍️ I can help you compare prices of products in this shop with others, or find similar shops in the same category for you. How can I assist you today?`
     }
-    return "Hello! 👋 I am the CTMerchant System Ambassador. Would you like to know more about our services, how to get your shop indexed, or how to use CTMerchant to boost sales in your city?"
+    return `${greeting} I am the CTMerchant System Ambassador. Would you like to know more about our services, how to get your shop indexed, or how to use CTMerchant to boost sales in your city?`
   }
 
   const getSuggestions = () => {
@@ -31,7 +34,8 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
       return [
         "Similar shops in this category?",
         "Compare prices?",
-        "Tell me about this shop"
+        "Tell me about this shop",
+        "Shops in your area?"
       ]
     }
     return [
@@ -164,7 +168,12 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
           context: {
             page: productData ? "product_detail" : (shopData ? "shop_detail" : "home"),
             product: productData,
-            shop: shopData
+            shop: shopData,
+            profile: profile ? {
+              city_id: profile.city_id,
+              area_id: profile.area_id,
+              city_name: profile.cities?.name
+            } : null
           }
         },
       })
