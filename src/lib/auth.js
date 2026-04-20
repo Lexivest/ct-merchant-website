@@ -389,7 +389,7 @@ export async function fetchProfileByUserId(userId) {
   // 1. Try to fetch regular profile
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("*, cities(name)")
+    .select("*, cities(name), areas(name)")
     .eq("id", userId)
     .maybeSingle()
 

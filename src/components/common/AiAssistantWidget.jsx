@@ -26,9 +26,9 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
   const getSuggestions = () => {
     if (productData) {
       return [
-        "Technical specs?",
-        "Is this good for me?",
-        "Compare with others?"
+        "Compare price with others?",
+        "Similar products nearby?",
+        "Find cheaper options?"
       ]
     }
     if (mode === "shopping") {
@@ -173,7 +173,8 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
             profile: profile ? {
               city_id: profile.city_id,
               area_id: profile.area_id,
-              city_name: profile.cities?.name
+              city_name: profile.cities?.name,
+              area_name: profile.areas?.name
             } : null
           }
         },
