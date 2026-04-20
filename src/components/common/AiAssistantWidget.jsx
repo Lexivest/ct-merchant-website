@@ -16,7 +16,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
     const greeting = firstName ? `Hello ${firstName}! 👋` : "Hello! 👋"
 
     if (isRepoSearch && !profile) {
-      return `${greeting} I'm your Shopping Assistant. 🛍️ Please login to your account to use the AI Shopping Assistant for similar products, price comparison, and more.`
+      return `${greeting} I'm your Shopping Assistant. 🛍️ Please <a href="/" style="color:#db2777; font-weight:bold; text-decoration:underline;">login to your account</a> to use the AI Shopping Assistant for similar products, price comparison, and more.`
     }
 
     if (productData) {
