@@ -4,6 +4,7 @@ import {
   FaAddressBook,
   FaArrowLeft,
   FaArrowRight,
+  FaBoxOpen,
   FaBriefcase,
   FaCamera,
   FaCheck,
@@ -28,6 +29,7 @@ import "cropperjs/dist/cropper.css"
 import AuthButton from "../components/auth/AuthButton"
 import AuthNotification from "../components/auth/AuthNotification"
 import CameraCaptureModal from "../components/common/CameraCaptureModal"
+import CTMLoader from "../components/common/CTMLoader"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
@@ -278,6 +280,7 @@ function ShopRegistration() {
   const [submitting, setSubmitting] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
   const [hasHydrated, setHasHydrated] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(!isEdit)
 
   const [categories, setCategories] = useState([])
   const [areas, setAreas] = useState([])
@@ -918,6 +921,93 @@ function ShopRegistration() {
   }
 
   if (!user || !profile) return null
+
+  if (showOnboarding) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="mx-auto max-w-3xl px-4 py-12">
+          <div className="mb-10 text-center">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-indigo-600 text-3xl text-white shadow-xl shadow-indigo-100">
+              <FaBriefcase />
+            </div>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900">Merchant Onboarding</h1>
+            <p className="mt-2 text-lg font-medium text-slate-500">Your journey to a professional digital presence starts here.</p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              { 
+                step: "01", 
+                title: "Upload Profile Picture", 
+                desc: "Provide a clear photo of yourself for your merchant profile.",
+                icon: <FaCamera />
+              },
+              { 
+                step: "02", 
+                title: "Submit Application", 
+                desc: "Fill in your shop details, location, and verification documents.",
+                icon: <FaFileContract />
+              },
+              { 
+                step: "03", 
+                title: "Approval & Product Catalog", 
+                desc: "Once approved, upload at least 5 products to activate your storefront.",
+                icon: <FaBoxOpen />
+              },
+              { 
+                step: "04", 
+                title: "Verification Payment", 
+                desc: "Pay ₦5,000 verification fee or redeem a promo code for your badge.",
+                icon: <FaShieldHalved />
+              },
+              { 
+                step: "05", 
+                title: "Video Verification", 
+                desc: "Submit a 1-minute video showing your shop signboard, interior, and products.",
+                icon: <FaCamera />
+              },
+              { 
+                step: "06", 
+                title: "Final Activation", 
+                desc: "Get verified and start reaching thousands of customers in your city.",
+                icon: <FaCheck />
+              },
+            ].map((item, idx) => (
+              <div key={idx} className="group relative flex items-start gap-5 rounded-[32px] border border-slate-200 bg-white p-6 transition-all hover:border-indigo-200 hover:shadow-md">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-xl text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                  {item.icon}
+                </div>
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 group-hover:text-indigo-700">Step {item.step}</span>
+                    <div className="h-1 w-1 rounded-full bg-slate-300" />
+                    <h3 className="text-lg font-extrabold text-slate-900">{item.title}</h3>
+                  </div>
+                  <p className="mt-1 text-[15px] font-medium leading-relaxed text-slate-500">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-12 space-y-4">
+            <button
+              onClick={() => setShowOnboarding(false)}
+              className="flex h-16 w-full items-center justify-center gap-3 rounded-[24px] bg-slate-900 text-lg font-black text-white shadow-xl shadow-slate-200 transition-all hover:bg-slate-800 active:scale-[0.98]"
+            >
+              Accept & Start Registration
+              <FaArrowRight className="text-sm" />
+            </button>
+            <button
+              onClick={() => navigate("/user-dashboard?tab=services")}
+              className="h-14 w-full text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              Maybe later, go back to dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="relative min-h-screen bg-slate-50 pb-20">
