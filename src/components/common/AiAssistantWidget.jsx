@@ -20,7 +20,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
     if (mode === "shopping" && shopData) {
       return `${greeting} I'm your Shopping Assistant for ${shopData.name}. 🛍️ I can help you find similar shops in this category, locate shops in your area, or tell you more about this shop. How can I help?`
     }
-    return `${greeting} I am the CTMerchant System Ambassador. Would you like to know more about our services, how to get your shop indexed, or how to use CTMerchant to boost sales in your city?`
+    return `${greeting} I am the CTMerchant System Ambassador. We are a digital collection of shops and their locations in a city to enhance discovery and mitigate fake online sales claims. How can I assist you today?`
   }
 
   const getSuggestions = () => {
@@ -37,8 +37,8 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
       ]
     }
     return [
-      "How to get indexed?",
-      "How to boost sales?",
+      "Who we are?",
+      "How to use the platform?",
       "Our services?"
     ]
   }

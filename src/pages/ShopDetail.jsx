@@ -996,6 +996,7 @@ function ShopDetail() {
 
     <AiAssistantWidget 
       mode="shopping" 
+      isRepoSearch={isRepoSearchEntry}
       shopData={currentShop ? { 
         id: currentShop.id, 
         name: currentShop.name, 

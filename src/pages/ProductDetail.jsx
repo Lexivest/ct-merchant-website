@@ -904,6 +904,7 @@ function ProductDetail() {
 
       <AiAssistantWidget 
         mode="shopping" 
+        isRepoSearch={isPublicRepoMode}
         shopData={currentShop ? { 
           id: currentShop.id, 
           name: currentShop.name, 
