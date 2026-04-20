@@ -15,10 +15,10 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
   const getInitialMessage = () => {
     const greeting = firstName ? `Hello ${firstName}! 👋` : "Hello! 👋"
     if (productData) {
-      return `${greeting} I'm your Shopping Assistant for *${productData.name}*. 📦 I can help you with technical details, compare it with other options, or check if it's the best fit for your needs. How can I help?`
+      return `${greeting} I'm your Shopping Assistant for *${productData.name}*. 📦 I can help you find similar products and compare their prices. How can I assist you?`
     }
     if (mode === "shopping" && shopData) {
-      return `${greeting} I'm your Shopping Assistant for ${shopData.name}. 🛍️ I can help you compare prices of products in this shop with others, or find similar shops in the same category for you. How can I assist you today?`
+      return `${greeting} I'm your Shopping Assistant for ${shopData.name}. 🛍️ I can help you find similar shops in this category, locate shops in your area, or tell you more about this shop. How can I help?`
     }
     return `${greeting} I am the CTMerchant System Ambassador. Would you like to know more about our services, how to get your shop indexed, or how to use CTMerchant to boost sales in your city?`
   }
@@ -26,17 +26,14 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
   const getSuggestions = () => {
     if (productData) {
       return [
-        "Compare price with others?",
-        "Similar products nearby?",
-        "Find cheaper options?"
+        "Find similar products and compare prices"
       ]
     }
     if (mode === "shopping") {
       return [
         "Similar shops in this category?",
-        "Compare prices?",
-        "Tell me about this shop",
-        "Shops in your area?"
+        "Shops in your area?",
+        "Tell me about this shop"
       ]
     }
     return [
