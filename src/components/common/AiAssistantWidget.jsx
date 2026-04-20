@@ -6,7 +6,7 @@ import useAuthSession from "../../hooks/useAuthSession"
 
 const DAILY_LIMIT = 15
 
-function AiAssistantWidget({ mode = "ambassador", shopData = null, productData = null }) {
+function AiAssistantWidget({ mode = "ambassador", shopData = null, productData = null, isRepoSearch = false }) {
   const [isOpen, setIsOpen] = useState(false)
   const { profile } = useAuthSession()
   const firstName = profile?.full_name?.split(" ")[0] || ""
@@ -14,6 +14,11 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
   // Define initial messages based on mode
   const getInitialMessage = () => {
     const greeting = firstName ? `Hello ${firstName}! 👋` : "Hello! 👋"
+
+    if (isRepoSearch && !profile) {
+      return `${greeting} I'm your Shopping Assistant. 🛍️ Please login to your account to use the AI Shopping Assistant for similar products, price comparison, and more.`
+    }
+
     if (productData) {
       return `${greeting} I'm your Shopping Assistant for *${productData.name}*. 📦 I can help you find similar products and compare their prices. How can I assist you?`
     }
@@ -24,6 +29,12 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
   }
 
   const getSuggestions = () => {
+    if (isRepoSearch && !profile) {
+      return [
+        "Login to my account"
+      ]
+    }
+
     if (productData) {
       return [
         "Find similar products and compare prices"
