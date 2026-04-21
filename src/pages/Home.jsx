@@ -1167,8 +1167,8 @@ function Home() {
               </div>
             </div>
 
-            <div className="mx-auto flex flex-col gap-4 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:gap-x-6 lg:gap-y-0">
-              <div className="w-full lg:col-start-1 lg:row-start-1">
+            <div className="mx-auto flex flex-col gap-4 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:items-start lg:gap-6">
+              <div className="w-full lg:col-start-1 lg:flex lg:flex-col lg:gap-4">
                 <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
                   <div className="relative aspect-video w-full h-[220px] sm:h-[300px] md:h-[400px] overflow-hidden bg-slate-100">
                     <StableImage
@@ -1181,6 +1181,10 @@ function Home() {
                     />
                   </div>
                 </div>
+
+                <div className="hidden rounded-[28px] bg-pink-200 p-1 shadow-sm lg:block">
+                  <HomeFeedbackSection />
+                </div>
               </div>
 
               {/* Mobile Only Ticker - positioned just below the hero image */}
@@ -1190,7 +1194,7 @@ function Home() {
                 </div>
               </div>
 
-              <div className="w-full lg:col-start-2 lg:row-span-2">
+              <div className="w-full lg:col-start-2">
                 <div className="min-w-0 rounded-[28px] bg-pink-200 p-1 shadow-sm h-full">
                   <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-5 md:p-8">
                   <div className="hidden rounded-[22px] bg-pink-200 p-1 lg:block">
@@ -1427,7 +1431,7 @@ function Home() {
               </div>
             </div>
 
-              <div className="w-full lg:col-start-1 lg:row-start-2">
+              <div className="w-full lg:hidden">
                 <div className="rounded-[28px] bg-pink-200 p-1 shadow-sm h-full">
                   <HomeFeedbackSection />
                 </div>
