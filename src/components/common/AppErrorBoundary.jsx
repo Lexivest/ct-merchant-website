@@ -36,7 +36,23 @@ class AppErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("AppErrorBoundary caught an error:", error, errorInfo)
+    // Amazon-style Telemetry: Capture structured error data
+    const errorData = {
+      name: error?.name || "ReactError",
+      message: error?.message || String(error),
+      stack: error?.stack,
+      componentStack: errorInfo?.componentStack,
+      url: window.location.href,
+      timestamp: new Date().toISOString(),
+    }
+
+    console.error("Critical Application Error Caught:", errorData)
+
+    if (typeof window !== "undefined") {
+      if (!window.__CTM_CRASH_LOG__) window.__CTM_CRASH_LOG__ = []
+      window.__CTM_CRASH_LOG__.push({ type: "react_boundary", ...errorData })
+    }
+
     this.recoverFromChunkFailure(error)
   }
 

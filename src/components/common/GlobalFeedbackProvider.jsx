@@ -31,7 +31,7 @@ function normalizePayload(payload) {
       message,
       confirmText: payload.confirmText || "Continue",
       cancelText: payload.cancelText || "Cancel",
-      autoCloseMs: Number(payload.autoCloseMs) > 0 ? Number(payload.autoCloseMs) : null,
+      autoCloseMs: Number(payload.autoCloseMs) > 0 ? Number(payload.autoCloseMs) : (payload.kind === "toast" ? 4000 : null),
     }
   }
 
@@ -75,6 +75,29 @@ function modalTone(type) {
 
 function GlobalFeedbackModal({ item, onClose }) {
   if (!item) return null
+
+  if (item.kind === "toast") {
+    const tone = item.type === "error" ? "bg-slate-900 text-white shadow-2xl" : "bg-white text-slate-900 shadow-xl border border-slate-100"
+    return (
+      <div 
+        className="fixed bottom-6 left-1/2 z-[13000] -translate-x-1/2 px-4 w-full max-w-sm"
+        role="status"
+        aria-live="polite"
+      >
+        <div className={`flex items-center gap-3 rounded-2xl p-4 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${tone}`}>
+          <div className={`h-2.5 w-2.5 shrink-0 rounded-full animate-pulse ${item.type === "success" ? "bg-emerald-400" : item.type === "error" ? "bg-rose-500" : "bg-sky-400"}`} />
+          <p className="text-[13px] font-black leading-tight flex-1">{item.message}</p>
+          <button 
+            type="button" 
+            onClick={() => onClose(true)}
+            className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-slate-400/10 text-[10px] font-bold transition hover:bg-slate-400/20"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const tone = modalTone(item.type)
   const isConfirm = item.kind === "confirm"

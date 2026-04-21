@@ -1,60 +1,136 @@
 const NETWORK_ERROR_PATTERN =
   /(failed to fetch|networkerror|network error|load failed|fetch resource|internet connection|offline|timeout|timed out|aborterror|operation was aborted)/i
 
+export const ErrorCategory = {
+  NETWORK: "network",
+  AUTH: "auth",
+  PERMISSION: "permission",
+  VALIDATION: "validation",
+  CONFLICT: "conflict",
+  SERVER: "server",
+  UNKNOWN: "unknown",
+}
+
+export const ErrorCode = {
+  OFFLINE: "CTM-001",
+  SESSION_EXPIRED: "CTM-002",
+  PERMISSION_DENIED: "CTM-003",
+  DUPLICATE_SHOP: "CTM-004",
+  DUPLICATE_NAME: "CTM-005",
+  DUPLICATE_CAC: "CTM-006",
+  DUPLICATE_PHONE: "CTM-007",
+  DUPLICATE_EMAIL: "CTM-008",
+  DATABASE_SAVE_FAILED: "CTM-009",
+  INTERNAL_SERVER_ERROR: "CTM-500",
+}
+
 export function isNetworkError(error) {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return true
   const rawMessage = String(error?.message || error || "").toLowerCase()
   return NETWORK_ERROR_PATTERN.test(rawMessage)
 }
 
-export function getFriendlyErrorMessage(error, fallback = "We encountered an issue. Please try again.") {
+/**
+ * Maps technical errors to user-friendly messages and metadata.
+ * Inspired by Amazon's clear, actionable error patterns.
+ */
+export function getFriendlyError(error, fallback = "We encountered an unexpected issue. Please try again.") {
   const rawMessage = String(error?.message || error || "").trim()
   const lower = rawMessage.toLowerCase()
 
-  if (!rawMessage) return fallback
-
-  if (NETWORK_ERROR_PATTERN.test(rawMessage)) {
-    return "Check your internet connection and try again."
+  const result = {
+    message: fallback,
+    category: ErrorCategory.UNKNOWN,
+    code: ErrorCode.INTERNAL_SERVER_ERROR,
+    retryable: true,
+    action: "Please refresh the page or try again in a moment.",
   }
 
-  if (lower.includes("unauthorized") || lower.includes("session expired")) {
-    return "Your session has ended. Please sign in to continue."
+  if (!rawMessage) return result
+
+  // --- NETWORK ERRORS ---
+  if (isNetworkError(error)) {
+    result.message = "Connectivity issue detected. We can't reach our servers right now."
+    result.category = ErrorCategory.NETWORK
+    result.code = ErrorCode.OFFLINE
+    result.action = "Check your internet connection or Wi-Fi settings and try again."
+    return result
   }
 
-  if (lower.includes("database error saving new user")) {
-    return "We encountered a database issue while creating your profile. Please contact support if this persists."
+  // --- AUTH ERRORS ---
+  if (lower.includes("unauthorized") || lower.includes("session expired") || lower.includes("jwt expired")) {
+    result.message = "Your session has ended. To protect your account, please sign in again."
+    result.category = ErrorCategory.AUTH
+    result.code = ErrorCode.SESSION_EXPIRED
+    result.retryable = false
+    result.action = "Sign in to continue accessing your dashboard."
+    return result
   }
 
-  if (lower.includes("phone number already exists")) {
-    return "This phone number is already linked to another account."
+  // --- PERMISSION ERRORS ---
+  if (lower.includes("permission denied") || lower.includes("row-level security") || lower.includes("insufficient_privileges")) {
+    result.message = "Access restricted. You don't have the required permissions for this action."
+    result.category = ErrorCategory.PERMISSION
+    result.code = ErrorCode.PERMISSION_DENIED
+    result.retryable = false
+    result.action = "If you believe this is an error, please contact your administrator."
+    return result
   }
 
-  if (lower.includes("duplicate key value violates unique constraint \"idx_shops_owner_id_unique\"")) {
-    return "You already have a shop registered. Each account is limited to one shop."
+  // --- CONFLICT / DUPLICATE ERRORS ---
+  if (lower.includes("idx_shops_owner_id_unique")) {
+    result.message = "A shop is already registered to this account."
+    result.category = ErrorCategory.CONFLICT
+    result.code = ErrorCode.DUPLICATE_SHOP
+    result.retryable = false
+    result.action = "Each account is limited to one shop listing."
+    return result
   }
 
-  if (lower.includes("duplicate key value violates unique constraint \"shops_name_key\"") || lower.includes("shop name already exists")) {
-    return "This shop name is already in use. Please try a different name."
+  if (lower.includes("shops_name_key") || lower.includes("shop name already exists")) {
+    result.message = "This business name is already in use by another merchant."
+    result.category = ErrorCategory.CONFLICT
+    result.code = ErrorCode.DUPLICATE_NAME
+    result.action = "Please choose a unique name for your shop."
+    return result
   }
 
-  if (lower.includes("duplicate key value violates unique constraint \"shops_cac_number_key\"") || lower.includes("cac number already exists")) {
-    return "This RC or CAC number is already registered. Please check the details."
-  }
-
-  if (lower.includes("duplicate key value violates unique constraint \"shops_phone_key\"")) {
-    return "This business phone number is already registered to another shop."
+  if (lower.includes("shops_cac_number_key") || lower.includes("cac number already exists")) {
+    result.message = "This registration number (RC/CAC) is already in our system."
+    result.category = ErrorCategory.CONFLICT
+    result.code = ErrorCode.DUPLICATE_CAC
+    result.retryable = false
+    result.action = "Verify your CAC number or contact support if you believe this is a mistake."
+    return result
   }
 
   if (lower.includes("user already exists") || lower.includes("email already in use")) {
-    return "An account with this email address already exists."
+    result.message = "An account with this email address already exists."
+    result.category = ErrorCategory.CONFLICT
+    result.code = ErrorCode.DUPLICATE_EMAIL
+    result.retryable = false
+    result.action = "Try signing in or use a different email address to register."
+    return result
   }
 
-  if (lower.includes("permission denied") || lower.includes("row-level security")) {
-    return "You don't have the required permissions for this action."
+  // --- SERVER / DATABASE ERRORS ---
+  if (lower.includes("database error saving new user")) {
+    result.message = "We encountered a technical issue while setting up your profile."
+    result.category = ErrorCategory.SERVER
+    result.code = ErrorCode.DATABASE_SAVE_FAILED
+    result.action = "We have been notified. Please try again in a few minutes."
+    return result
   }
 
-  if (rawMessage.includes(" | ") || rawMessage.includes("details:") || rawMessage.includes("hint:")) {
-    return fallback
+  // Fallback for simple short messages that are likely user-friendly enough
+  if (rawMessage.length < 100 && !rawMessage.includes("|") && !rawMessage.includes("details:") && !rawMessage.includes("hint:")) {
+    result.message = rawMessage
   }
 
-  return rawMessage.length > 160 ? fallback : rawMessage
+  return result
+}
+
+// Keep the old function name for backward compatibility during transition
+export function getFriendlyErrorMessage(error, fallback) {
+  return getFriendlyError(error, fallback).message
 }
