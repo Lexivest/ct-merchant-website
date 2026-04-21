@@ -290,7 +290,12 @@ function UserDashboard() {
   const baseCacheKey = buildDashboardBaseCacheKey(cityId)
   const dynamicCacheKey = buildDashboardDynamicCacheKey(user?.id, cityId)
 
-  const { data: baseData, loading: baseLoading, mutate: mutateBase } = useCachedFetch(
+  const { 
+    data: baseData, 
+    loading: baseLoading, 
+    isOffline: baseOffline,
+    mutate: mutateBase 
+  } = useCachedFetch(
     baseCacheKey,
     () => fetchDashboardBaseData(cityId),
     {
@@ -301,7 +306,14 @@ function UserDashboard() {
     }
   )
 
-  const { data: dynamicData, loading: dynamicLoading, error: dataError, mutate: mutateDynamic } = useCachedFetch(
+  const { 
+    data: dynamicData, 
+    loading: dynamicLoading, 
+    error: dataError, 
+    isOffline: dynamicOffline,
+    isRevalidating: dynamicRevalidating,
+    mutate: mutateDynamic 
+  } = useCachedFetch(
     dynamicCacheKey,
     () => fetchDashboardDynamicData({ userId: user?.id, cityId }),
     {
@@ -339,17 +351,19 @@ function UserDashboard() {
   const [hasUnreadAnnouncements, setHasUnreadAnnouncements] = useState(false)
 
   useEffect(() => {
-    if (baseData && dynamicData) {
+    // Only update localData if we have actual new content
+    // This prevents wiping out the screen when a fetch fails or revalidates
+    if (baseData || dynamicData) {
       setLocalData((prev) => {
-        // If the notifications tab is active, we don't want to reset unread count
         const isNotificationsTab = activeTab === "notifications"
-        const nextUnread = isNotificationsTab ? 0 : dynamicData.notifications.filter((item) => !item.is_read).length
+        const nextNotifications = dynamicData?.notifications || prev.notifications
+        const nextUnread = isNotificationsTab ? 0 : (nextNotifications || []).filter((item) => !item.is_read).length
 
         return {
           ...prev,
-          profile,
-          ...baseData,
-          ...dynamicData,
+          profile: profile || prev.profile,
+          ...(baseData || {}),
+          ...(dynamicData || {}),
           unread: nextUnread,
         }
       })
@@ -715,7 +729,7 @@ function UserDashboard() {
   }
 
   const currentProfile = localData.profile || profile
-  const dashboardDataError = activeTab === "market" && !localData ? dataError : ""
+  const dashboardDataError = activeTab === "market" && !localData?.shops?.length ? dataError : ""
 
   useEffect(() => {
     const cityId = currentProfile?.city_id
@@ -814,7 +828,11 @@ function UserDashboard() {
           }
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'TIMED_OUT' || status === 'CHANNEL_ERROR') {
+          scheduleRefresh("dynamic")
+        }
+      })
 
     return () => {
       cancelled = true
@@ -1931,6 +1949,21 @@ function UserDashboard() {
       }`}
     >
       <PageTransitionOverlay visible={baseLoading || dynamicLoading || routeTransition.pending} />
+
+      {/* Online indicator for background revalidation */}
+      {(dynamicRevalidating || dynamicOffline) && (
+        <div className="fixed top-2 left-1/2 z-[1000] -translate-x-1/2 rounded-full bg-slate-900/80 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-white backdrop-blur-md shadow-lg border border-white/10">
+           {dynamicOffline ? (
+             <span className="flex items-center gap-2 text-rose-400">
+               <div className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" /> Offline: Showing Cached Data
+             </span>
+           ) : (
+             <span className="flex items-center gap-2 text-sky-400">
+               <div className="h-1.5 w-1.5 rounded-full bg-sky-500 animate-pulse" /> Syncing Latest Updates...
+             </span>
+           )}
+        </div>
+      )}
 
       <div className={routeTransition.pending ? "pointer-events-none select-none" : ""}>
       <DashboardHeader

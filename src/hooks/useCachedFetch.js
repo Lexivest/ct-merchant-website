@@ -4,7 +4,7 @@ import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 // Global memory cache to prevent redundant network requests across page navigations
 const globalCache = new Map()
 const activeFetchers = new Map()
-const MAX_CACHE_SIZE = 150 // Prevent memory leaks for heavy browsing sessions
+const MAX_CACHE_SIZE = 150 
 const SESSION_CACHE_PREFIX = "ctm_cached_fetch:"
 let globalListenersAttached = false
 let globalRefreshTimerId = null
@@ -143,7 +143,6 @@ export function clearCachedFetchStore(predicate) {
       }
     } catch { /* ignore */ }
 
-    // Notify all active fetchers to re-fetch as their data is gone
     for (const fetchData of activeFetchers.values()) {
       fetchData({ force: true })
     }
@@ -168,11 +167,8 @@ export function clearCachedFetchStore(predicate) {
         }
       })
     }
-  } catch {
-    // ignore
-  }
+  } catch { /* ignore */ }
 
-  // Notify matching active fetchers to re-sync
   for (const [key, fetchData] of activeFetchers.entries()) {
     if (predicate(key)) {
       fetchData({ force: true })
@@ -180,21 +176,15 @@ export function clearCachedFetchStore(predicate) {
   }
 }
 
-/**
- * Marks matching cache entries as expired without deleting them.
- * This allows hooks to keep showing "stale" data while a re-fetch happens in the background.
- */
 export function invalidateCachedFetchStore(predicate) {
   if (typeof predicate !== "function") return
 
-  // 1. Invalidate In-Memory Cache
   for (const [key, entry] of globalCache.entries()) {
     if (predicate(key)) {
-      entry.timestamp = 0 // Force immediate expiration
+      entry.timestamp = 0 
     }
   }
 
-  // 2. Invalidate Session Storage
   try {
     if (typeof window !== "undefined" && window.sessionStorage) {
       Object.keys(window.sessionStorage).forEach((storageKey) => {
@@ -212,7 +202,6 @@ export function invalidateCachedFetchStore(predicate) {
     }
   } catch { /* ignore */ }
 
-  // 3. Notify matching active fetchers to re-sync
   for (const [key, fetchData] of activeFetchers.entries()) {
     if (predicate(key)) {
       fetchData({ force: true })
@@ -245,112 +234,121 @@ export function readCachedFetchStore(queryKey) {
 
 export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   const { 
-    ttl = 1000 * 60 * 5, // 5-minute default cache lifespan
+    ttl = 1000 * 60 * 5,
     dependencies = [],
     persist = null,
     skip = false,
   } = options
 
-  const [, setTick] = useState(0) // Used purely to force a re-render
-  const isOfflineRef = useRef(typeof navigator !== "undefined" ? !navigator.onLine : false)
-  const errorRef = useRef(null)
-  const isRevalidatingRef = useRef(false)
-  const isBackgroundFetchingRef = useRef(false)
+  // Combined state object for atomic updates and consistent renders
+  const [state, setState] = useState({
+    data: getCacheEntry(queryKey)?.data || null,
+    loading: false,
+    error: null,
+    isOffline: typeof navigator !== "undefined" ? !navigator.onLine : false,
+    isRevalidating: false
+  })
+  
   const persistMode = persist === true ? "session" : persist
 
   useEffect(() => {
     ensureGlobalFetchListeners()
   }, [])
 
-  // 1. SYNCHRONOUS CACHE READ
-  const cachedEntry = getCacheEntry(queryKey)
-  const isExpired = cachedEntry && (Date.now() - cachedEntry.timestamp > ttl)
-  
-  // Stale-While-Revalidate: Return data even if expired so UI stays stable
-  const data = cachedEntry?.data || null
-  
-  // We are loading if we have NO data at all (not even in background), no hard error, and we are not skipping
-  const loading = !data && !errorRef.current && !skip && !isBackgroundFetchingRef.current
-
   useEffect(() => {
-    if (skip) return undefined
+    if (skip) {
+      setState(prev => ({ ...prev, loading: false }))
+      return undefined
+    }
     
     let isMounted = true
 
     const fetchData = async ({ force = false } = {}) => {
-      const currentCachedEntry = getCacheEntry(queryKey)
-      const currentIsExpired = currentCachedEntry && (Date.now() - currentCachedEntry.timestamp > ttl)
+      const cachedEntry = getCacheEntry(queryKey)
+      const isExpired = cachedEntry && (Date.now() - cachedEntry.timestamp > ttl)
+      const offline = typeof navigator !== "undefined" ? !navigator.onLine : false
 
-      if (!force && currentCachedEntry && !currentIsExpired) {
-        if (isMounted) setTick(t => t + 1) // Ensure component knows we checked
-        return
-      }
-      if (typeof navigator !== "undefined" && !navigator.onLine) {
-        isOfflineRef.current = true
-        if (currentCachedEntry) {
-          errorRef.current = null
-          if (isMounted) setTick(t => t + 1)
-          return
+      // 1. Skip if data is fresh and not forced
+      if (!force && cachedEntry && !isExpired) {
+        if (isMounted) {
+          setState(prev => ({ 
+            ...prev, 
+            data: cachedEntry.data, 
+            loading: false, 
+            error: null, 
+            isOffline: offline 
+          }))
         }
-        errorRef.current = "Network unavailable. Retry."
-        if (isMounted) setTick(t => t + 1)
         return
       }
 
-      isOfflineRef.current = false
-      errorRef.current = null
-      
-      if (currentCachedEntry) {
-        isRevalidatingRef.current = true
-      } else {
-        isBackgroundFetchingRef.current = true
-        if (isMounted) setTick(t => t + 1)
+      // 2. Handle Offline
+      if (offline) {
+        if (isMounted) {
+          setState(prev => ({
+            ...prev,
+            data: cachedEntry?.data || prev.data,
+            isOffline: true,
+            loading: false,
+            error: cachedEntry ? null : "Network unavailable. Please reconnect."
+          }))
+        }
+        return
+      }
+
+      // 3. Trigger Fetch
+      if (isMounted) {
+        setState(prev => ({
+          ...prev,
+          loading: !prev.data,
+          isRevalidating: !!prev.data,
+          isOffline: false,
+          error: null
+        }))
       }
 
       try {
         const result = await fetchPromise()
         if (isMounted) {
           primeCachedFetchStore(queryKey, result, Date.now(), { persist: persistMode })
-          errorRef.current = null
-          isRevalidatingRef.current = false
-          isBackgroundFetchingRef.current = false
-          setTick(t => t + 1)
+          setState({
+            data: result,
+            loading: false,
+            isRevalidating: false,
+            isOffline: false,
+            error: null
+          })
         }
       } catch (err) {
         if (isMounted) {
-          isRevalidatingRef.current = false
-          isBackgroundFetchingRef.current = false
-          if (getCacheEntry(queryKey)) {
-            console.warn(`Background fetch failed for ${queryKey}, falling back to cache.`)
-            errorRef.current = null
-          } else {
-            errorRef.current = getFriendlyErrorMessage(err, "Something went wrong. Please try again.")
-            if (persistMode === "session") {
-              removeSessionCacheEntry(queryKey)
-            }
+          const errorMessage = getFriendlyErrorMessage(err, "Could not load data. Please retry.")
+          const currentCached = getCacheEntry(queryKey)
+
+          setState(prev => ({
+            ...prev,
+            data: currentCached?.data || prev.data,
+            loading: false,
+            isRevalidating: false,
+            // Only show hard error UI if we have NO data to show
+            error: currentCached ? null : errorMessage
+          }))
+
+          if (!currentCached && persistMode === "session") {
+            removeSessionCacheEntry(queryKey)
           }
-          setTick(t => t + 1)
         }
       }
     }
 
     fetchData()
-
     activeFetchers.set(queryKey, fetchData)
 
-    const handleOffline = () => {
-      isOfflineRef.current = true
-      if (globalCache.has(queryKey)) {
-        errorRef.current = null
-      }
-      if (isMounted) setTick(t => t + 1)
-    }
-    
-    window.addEventListener("offline", handleOffline)
+    const handleOnline = () => fetchData({ force: true })
+    window.addEventListener("online", handleOnline)
 
     return () => {
       isMounted = false
-      window.removeEventListener("offline", handleOffline)
+      window.removeEventListener("online", handleOnline)
       activeFetchers.delete(queryKey)
     }
   }, [...dependencies, queryKey, skip, ttl])
@@ -360,12 +358,5 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
     if (fetcher) fetcher({ force: true })
   }, [queryKey])
 
-  return { 
-    data, 
-    loading, 
-    isRevalidating: isRevalidatingRef.current,
-    error: errorRef.current, 
-    isOffline: isOfflineRef.current,
-    mutate
-  }
+  return { ...state, mutate }
 }
