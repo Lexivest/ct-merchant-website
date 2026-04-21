@@ -456,10 +456,7 @@ function MarketSection({
               <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap text-[1.25rem] font-extrabold text-[#0F1111] !p-0">
                 {area.id === dashboardData.profile?.area_id ? (
                   <>
-                    Top stores in {area.name}{" "}
-                    <span className="text-[0.8em] font-bold text-pink-600">
-                      (Near You)
-                    </span>
+                    Top stores in {area.name}
                   </>
                 ) : (
                   <>{area.name}</>
