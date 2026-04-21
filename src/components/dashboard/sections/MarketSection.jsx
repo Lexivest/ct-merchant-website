@@ -51,6 +51,9 @@ function SponsoredProductCard({ sponsored, onOpenProduct }) {
             <StableImage 
               src={img} 
               alt={product.name} 
+              width={400}
+              height={400}
+              aspectRatio={1}
               className="h-full w-full object-cover" 
             />
           </div>
@@ -203,6 +206,9 @@ const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
           <StableImage
             src={item.image_url}
             alt={name}
+            width={300}
+            height={300}
+            aspectRatio={1}
             containerClassName="h-full w-full bg-[#F8FAFC]"
             className="h-full w-full object-cover"
           />
@@ -267,6 +273,9 @@ function DiscoveryCard({ item, onOpenDiscovery }) {
         <StableImage 
           src={item.image_url} 
           alt={item.title} 
+          width={380}
+          height={570}
+          aspectRatio={2/3}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -297,6 +306,9 @@ function FairlyUsedProductCard({ product, onOpenProduct }) {
         <StableImage 
           src={product.image_url} 
           alt={product.name} 
+          width={300}
+          height={300}
+          aspectRatio={1}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
         />
         <div className="absolute left-1.5 top-1.5 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter text-white backdrop-blur-sm">
@@ -559,6 +571,9 @@ function MarketSection({
                   <StableImage
                     src={imageUrl}
                     alt={category.name}
+                    width={160}
+                    height={160}
+                    aspectRatio={1}
                     containerClassName="cat-card-image"
                     className="h-full w-full object-contain bg-white"
                   />
