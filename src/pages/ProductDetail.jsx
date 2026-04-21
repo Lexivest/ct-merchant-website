@@ -190,21 +190,52 @@ function ProductDetail() {
     return attrs
   }, [currentProduct])
 
-  function goBack() {
+  async function goBack() {
     const repoSuffix = isPublicRepoMode ? buildRepoSearchQuerySuffix(repoRef) : ""
     if (shopSrc) {
       navigate(`/shop-detail?id=${shopSrc}${repoSuffix}`, { replace: true })
       return
     }
+
     if (document.referrer && document.referrer.includes(window.location.hostname)) {
       navigate(-1)
       return
     }
-    if (currentProduct?.shop_id) {
-      navigate(`/shop-detail?id=${currentProduct.shop_id}${repoSuffix}`, { replace: true })
-      return
+
+    // Amazon-style Instant Back: Resolve cache first
+    const cityId = profile?.city_id || "none"
+    const baseKey = buildDashboardBaseCacheKey(cityId)
+    const dynamicKey = buildDashboardDynamicCacheKey(user?.id, cityId)
+    const hasCache = readCachedFetchStore(baseKey)?.data && readCachedFetchStore(dynamicKey)?.data
+
+    if (!hasCache && user?.id) {
+      setDashboardTransition({
+        pending: true,
+        error: "",
+      })
     }
-    navigate("/user-dashboard", { replace: true })
+
+    try {
+      const prefetchedDashboardData = user?.id 
+        ? await prepareDashboardTransition({ userId: user.id, profile })
+        : null
+
+      navigate("/user-dashboard", {
+        replace: true,
+        state: {
+          fromDetailTransition: true,
+          prefetchedDashboardData,
+        },
+      })
+    } catch (transitionError) {
+      setDashboardTransition({
+        pending: false,
+        error: getFriendlyErrorMessage(
+          transitionError,
+          "The dashboard could not be opened right now."
+        ),
+      })
+    }
   }
 
   ...

@@ -357,16 +357,22 @@ export async function prepareDashboardTransition({
   const cachedBase = readCachedFetchStore(baseKey)
   const cachedDynamic = readCachedFetchStore(dynamicKey)
 
-  if (hasFreshCache(cachedBase, DASHBOARD_BASE_TTL) && hasFreshCache(cachedDynamic, DASHBOARD_DYNAMIC_TTL)) {
-    await loadUserDashboardPage()
+  // Amazon-style "Stale-While-Revalidate" Navigation:
+  // If we have ANY cache (even if stale), return it immediately so the next page 
+  // can render instantly while useCachedFetch handles the background sync.
+  if (cachedBase?.data && cachedDynamic?.data) {
+    // Start preloading the code without blocking
+    void loadUserDashboardPage()
+    
     return {
       profile: resolvedProfile,
       ...cachedBase.data,
       ...cachedDynamic.data,
-      unread: cachedDynamic.data.notifications.filter((item) => !item.is_read).length,
+      unread: (cachedDynamic.data.notifications || []).filter((item) => !item.is_read).length,
     }
   }
 
+  // ONLY block if we have absolutely no cache to show
   const data = await runTimedPreload(
     async () => {
       const prefetchedData = await fetchDashboardData({

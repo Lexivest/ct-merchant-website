@@ -344,10 +344,18 @@ function ShopDetail() {
       return
     }
 
-    setDashboardTransition({
-      pending: true,
-      error: "",
-    })
+    const cityId = profile?.city_id || "none"
+    const baseKey = buildDashboardBaseCacheKey(cityId)
+    const dynamicKey = buildDashboardDynamicCacheKey(user.id, cityId)
+    const hasCache = readCachedFetchStore(baseKey)?.data && readCachedFetchStore(dynamicKey)?.data
+
+    // If we have cache, don't even set the pending loader state, just go
+    if (!hasCache) {
+      setDashboardTransition({
+        pending: true,
+        error: "",
+      })
+    }
 
     try {
       const prefetchedDashboardData = await prepareDashboardTransition({
