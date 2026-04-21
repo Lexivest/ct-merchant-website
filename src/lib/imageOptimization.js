@@ -31,16 +31,19 @@ export function getOptimizedImageUrl(src, options = {}) {
   if (format && format !== 'origin') params.append('format', format)
   params.append('resize', resize)
 
+  const queryString = params.toString()
+  if (!queryString) return src
+
   // Supabase transformation URL structure:
   // [project-url]/storage/v1/render/image/public/[bucket]/[path]?[params]
   
   const parts = src.split('/storage/v1/object/public/')
   if (parts.length !== 2) return src
 
-  const baseUrl = parts[0]
+  const baseUrl = parts[0].replace(/\/$/, '') // remove trailing slash if any
   const bucketAndPath = parts[1]
 
-  return `${baseUrl}/storage/v1/render/image/public/${bucketAndPath}?${params.toString()}`
+  return `${baseUrl}/storage/v1/render/image/public/${bucketAndPath}?${queryString}`
 }
 
 /**
