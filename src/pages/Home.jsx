@@ -757,12 +757,17 @@ function Home() {
     () => phrases[phraseIndex].slice(0, charIndex),
     [phraseIndex, charIndex]
   )
+  const isPhoneDevice = useMemo(() => {
+    if (typeof navigator === "undefined") return false
+    const userAgent = navigator.userAgent || ""
+    return /android.*mobile|iphone|ipod/i.test(userAgent)
+  }, [])
   const isAppleMobile = useMemo(() => {
     if (typeof navigator === "undefined") return false
     const userAgent = navigator.userAgent || ""
     return /iphone|ipad|ipod/i.test(userAgent)
   }, [])
-  const showInstallCard = !appInstalled
+  const showInstallCard = isPhoneDevice && !appInstalled
   const installBrowserSupportText =
     "Supported browsers: Google Chrome, Microsoft Edge, Samsung Internet, Opera, Brave. On iPhone and iPad, use Safari's Add to Home Screen."
   const homeStructuredData = useMemo(() => {
