@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 import { 
   FaCircleCheck, 
   FaCircleNotch, 
+  FaDownload,
   FaEye, 
   FaIdBadge, 
   FaVideo, 
@@ -30,6 +31,21 @@ import {
 } from "./StaffPortalShared"
 import { ProtectedImage, ProtectedVideo } from "../../components/common/ProtectedMedia"
 import { UPLOAD_RULES } from "../../lib/uploadRules"
+
+function getStoragePathFromUrl(url, bucket) {
+  if (!url) return null
+  if (!String(url).startsWith("http")) return String(url).replace(/^\/+/, "")
+
+  try {
+    const cleanUrl = String(url).split("?")[0]
+    const escapedBucket = bucket.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")
+    const regex = new RegExp(`/storage/v1/object/(?:public|authenticated|sign)/${escapedBucket}/(.+)$`, "i")
+    const match = cleanUrl.match(regex)
+    return match?.[1] || null
+  } catch {
+    return null
+  }
+}
 
 function StatusBadge({ status, type = "shop" }) {
   if (type === "kyc") {
@@ -107,6 +123,7 @@ export default function StaffVerifications() {
   const [selectedShop, setSelectedShop] = useState(null)
   const [reviewTab, setReviewTab] = useState("application") // 'application' | 'kyc'
   const [processing, setProcessing] = useState(false)
+  const [downloadingVideo, setDownloadingVideo] = useState(false)
   const [rejectionNote, setRejectionReason] = useState("")
   const [showRejectionInput, setShowRejectionInput] = useState(false)
   const [filterStatus, setFilterStatus] = useState("all") // 'all' | 'pending' | 'kyc_submitted'
@@ -121,23 +138,12 @@ export default function StaffVerifications() {
     }
 
     async function signAssets() {
-      const getPath = (url) => {
-        if (!url) return null
-        if (!url.startsWith("http")) return url
-        try {
-          const u = new URL(url)
-          const parts = u.pathname.split("/")
-          if (parts.length >= 6) return parts.slice(6).join("/")
-        } catch (e) {
-          return url
-        }
-        return url
-      }
-
-      const idPath = getPath(selectedShop.id_card_url)
-      const cacPath = getPath(selectedShop.cac_certificate_url)
+      const idPath = getStoragePathFromUrl(selectedShop.id_card_url, UPLOAD_RULES.idDocuments.bucket)
+      const cacPath = getStoragePathFromUrl(selectedShop.cac_certificate_url, UPLOAD_RULES.cacDocuments.bucket)
       // Only Super Admin can see Video KYC
-      const videoPath = isSuperAdmin ? getPath(selectedShop.kyc_video_url) : null
+      const videoPath = isSuperAdmin
+        ? getStoragePathFromUrl(selectedShop.kyc_video_url, UPLOAD_RULES.kycVideos.bucket)
+        : null
 
       const promises = []
       if (idPath) {
@@ -251,6 +257,52 @@ export default function StaffVerifications() {
     }
   }
 
+  const handleDownloadKycVideo = async () => {
+    if (!selectedShop?.kyc_video_url || downloadingVideo) return
+
+    const videoPath = getStoragePathFromUrl(selectedShop.kyc_video_url, UPLOAD_RULES.kycVideos.bucket)
+    if (!videoPath) {
+      notify({
+        type: "error",
+        title: "Download unavailable",
+        message: "We could not locate the KYC video file in storage.",
+      })
+      return
+    }
+
+    setDownloadingVideo(true)
+    try {
+      const { data, error } = await supabase.storage
+        .from(UPLOAD_RULES.kycVideos.bucket)
+        .download(videoPath)
+
+      if (error) throw error
+
+      const objectUrl = URL.createObjectURL(data)
+      const extension = videoPath.split(".").pop() || "mp4"
+      const safeName = (selectedShop.unique_id || selectedShop.name || "ctmerchant-kyc")
+        .replace(/[^a-z0-9-_]+/gi, "_")
+        .replace(/^_+|_+$/g, "")
+
+      const link = document.createElement("a")
+      link.href = objectUrl
+      link.download = `${safeName || "ctmerchant-kyc"}-video.${extension}`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
+    } catch (err) {
+      notify({
+        type: "error",
+        title: "Download failed",
+        message: getFriendlyErrorMessage(err, "Could not download the KYC video."),
+      })
+    } finally {
+      setDownloadingVideo(false)
+    }
+  }
+
   const handleApprove = async (type) => {
     if (!selectedShop || processing) return
     
@@ -290,8 +342,42 @@ export default function StaffVerifications() {
 
       if (error) throw error
 
-      setShops(prev => prev.map(s => s.id === selectedShop.id ? { ...s, ...updateData } : s))
-      setSelectedShop(prev => ({ ...prev, ...updateData }))
+      let nextShopData = { ...selectedShop, ...updateData }
+
+      if (isKyc && selectedShop.kyc_video_url) {
+        const videoPath = getStoragePathFromUrl(selectedShop.kyc_video_url, UPLOAD_RULES.kycVideos.bucket)
+
+        if (videoPath) {
+          const { error: deleteError } = await supabase.storage
+            .from(UPLOAD_RULES.kycVideos.bucket)
+            .remove([videoPath])
+
+          if (deleteError) {
+            console.warn("Approved KYC video cleanup failed:", deleteError)
+            notify({
+              type: "warning",
+              title: "Approved with cleanup warning",
+              message: "KYC was approved, but the review video could not be deleted from storage automatically.",
+            })
+          } else {
+            const cleanupFields = { kyc_video_url: null }
+            const { error: cleanupUpdateError } = await supabase
+              .from("shops")
+              .update(cleanupFields)
+              .eq("id", selectedShop.id)
+
+            if (cleanupUpdateError) {
+              console.warn("Approved KYC video URL cleanup failed:", cleanupUpdateError)
+            } else {
+              nextShopData = { ...nextShopData, ...cleanupFields }
+              setSignedUrls((prev) => ({ ...prev, video: null }))
+            }
+          }
+        }
+      }
+
+      setShops(prev => prev.map(s => s.id === selectedShop.id ? { ...s, ...nextShopData } : s))
+      setSelectedShop(nextShopData)
       
       notify({
         type: "success",
@@ -648,6 +734,20 @@ export default function StaffVerifications() {
                         </div>
                       )}
                     </div>
+
+                    {selectedShop.kyc_video_url ? (
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleDownloadKycVideo}
+                          disabled={downloadingVideo}
+                          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {downloadingVideo ? <FaCircleNotch className="animate-spin" /> : <FaDownload />}
+                          <span>{downloadingVideo ? "Preparing..." : "Download Video"}</span>
+                        </button>
+                      </div>
+                    ) : null}
                     
                     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                       <div className="mb-4 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-indigo-600">

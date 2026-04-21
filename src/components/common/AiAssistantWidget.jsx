@@ -2,13 +2,18 @@ import { useEffect, useRef, useState } from "react"
 import { FaRobot, FaRotateLeft } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
+import {
+  getDeviceFingerprint,
+  readAnonymousAiUsage,
+  writeAnonymousAiUsage,
+} from "../../lib/deviceFingerprint"
 import useAuthSession from "../../hooks/useAuthSession"
 
 const DAILY_LIMIT = 15
 
 function AiAssistantWidget({ mode = "ambassador", shopData = null, productData = null, isRepoSearch = false }) {
   const [isOpen, setIsOpen] = useState(false)
-  const { profile } = useAuthSession()
+  const { user, profile } = useAuthSession()
   const firstName = profile?.full_name?.split(" ")[0] || ""
 
   // Define initial messages based on mode
@@ -63,31 +68,14 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
 
   const [input, setInput] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [anonymousSignature, setAnonymousSignature] = useState("")
+  const [anonymousUsage, setAnonymousUsage] = useState(() => ({
+    date: new Date().toISOString().split("T")[0],
+    count: 0,
+  }))
 
   const messagesEndRef = useRef(null)
   const scrollContainerRef = useRef(null)
-
-  const usage = (() => {
-    const today = new Date().toISOString().split("T")[0]
-    let parsed = { date: today, count: 0 }
-
-    try {
-      if (typeof window !== "undefined" && window.localStorage) {
-        const raw = window.localStorage.getItem("ctm_ai_anon_usage")
-        if (raw) {
-          const stored = JSON.parse(raw)
-          if (stored.date === today) parsed = stored
-        }
-        if (parsed.count === 0) {
-          window.localStorage.setItem("ctm_ai_anon_usage", JSON.stringify(parsed))
-        }
-      }
-    } catch {
-      // Ignore
-    }
-
-    return parsed
-  })()
 
   useEffect(() => {
     if (!isOpen) return
@@ -101,6 +89,26 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
 
     return () => clearTimeout(timer)
   }, [messages, isSending, isOpen])
+
+  useEffect(() => {
+    if (user) return
+
+    let cancelled = false
+
+    async function hydrateAnonymousQuota() {
+      const signature = await getDeviceFingerprint()
+      if (cancelled) return
+
+      setAnonymousSignature(signature)
+      setAnonymousUsage(readAnonymousAiUsage(signature))
+    }
+
+    hydrateAnonymousQuota()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   const toggleChat = () => {
     setIsOpen((prev) => !prev)
@@ -117,28 +125,12 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
     setIsSending(false)
   }
 
-  const saveUsage = (nextCount) => {
-    const today = new Date().toISOString().split("T")[0]
-    try {
-      if (typeof window !== "undefined" && window.localStorage) {
-        window.localStorage.setItem(
-          "ctm_ai_anon_usage",
-          JSON.stringify({
-            date: today,
-            count: nextCount,
-          })
-        )
-      }
-    } catch {
-      // Ignore
-    }
-  }
-
   const handleSend = async (textOverride = null) => {
     const trimmed = (textOverride || input).trim()
     if (!trimmed || isSending) return
+    const isAnonymous = !user
 
-    if (usage.count >= DAILY_LIMIT) {
+    if (isAnonymous && anonymousUsage.count >= DAILY_LIMIT) {
       setMessages((prev) => [
         ...prev,
         {
@@ -161,6 +153,13 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
     setIsSending(true)
 
     try {
+      let signature = anonymousSignature
+      if (isAnonymous && !signature) {
+        signature = await getDeviceFingerprint()
+        setAnonymousSignature(signature)
+        setAnonymousUsage(readAnonymousAiUsage(signature))
+      }
+
       const history = nextMessages
         .filter((item) => item.role === "user" || item.role === "assistant")
         .slice(-6)
@@ -183,13 +182,31 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
               area_id: profile.area_id,
               city_name: profile.cities?.name,
               area_name: profile.areas?.name
-            } : null
-          }
+            } : null,
+          },
+          anonymousDeviceSignature: isAnonymous ? signature : null,
         },
       })
 
       if (error) {
         throw new Error(getFriendlyErrorMessage(error, "Could not reach AI server."))
+      }
+
+      if (data?.rate_limited) {
+        if (isAnonymous && signature) {
+          const limitedCount = data?.usage?.count ?? DAILY_LIMIT
+          writeAnonymousAiUsage(signature, limitedCount)
+          setAnonymousUsage(readAnonymousAiUsage(signature))
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "error",
+            content: data?.reply?.trim() || "You have reached the free daily limit. Please check back tomorrow.",
+          },
+        ])
+        return
       }
 
       const reply = data?.reply?.trim() || "No response received."
@@ -203,8 +220,10 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
         },
       ])
 
-      if (!isErrorReply) {
-        saveUsage(usage.count + 1)
+      if (!isErrorReply && isAnonymous && signature) {
+        const nextCount = data?.usage?.count ?? (anonymousUsage.count + 1)
+        writeAnonymousAiUsage(signature, nextCount)
+        setAnonymousUsage(readAnonymousAiUsage(signature))
       }
     } catch (error) {
       setMessages((prev) => [
@@ -357,9 +376,11 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
               ➤
             </button>
           </div>
-          <div className="mt-2 text-center text-[9px] font-bold text-slate-400">
-            {Math.max(0, DAILY_LIMIT - usage.count)} / {DAILY_LIMIT} free queries left today
-          </div>
+          {!user ? (
+            <div className="mt-2 text-center text-[9px] font-bold text-slate-400">
+              {Math.max(0, DAILY_LIMIT - anonymousUsage.count)} / {DAILY_LIMIT} free queries left today
+            </div>
+          ) : null}
         </div>
       </div>
     </>

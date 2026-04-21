@@ -366,17 +366,28 @@ export async function signUpWithEmail({
     },
   })
 
-  if (authError) throw authError
+  if (authError) {
+    console.error("[signUpWithEmail] Auth Error:", authError);
+    throw authError;
+  }
   
   if (!authData?.user) {
-    throw new Error("Account could not be created.")
+    console.error("[signUpWithEmail] No user data returned");
+    throw new Error("Account could not be created.");
   }
+
+  console.log("[signUpWithEmail] Success, stamping footprint for user:", authData.user.id);
 
   // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call with targeted user ID
   try {
-    await supabase.rpc("stamp_profile_footprint", { p_target_user_id: authData.user.id })
+    const { data: rpcData, error: rpcError } = await supabase.rpc("stamp_profile_footprint", { p_target_user_id: authData.user.id })
+    if (rpcError) {
+      console.warn("[signUpWithEmail] Footprint RPC Error:", rpcError);
+    } else {
+      console.log("[signUpWithEmail] Footprint RPC Result:", rpcData);
+    }
   } catch (rpcError) {
-    console.warn("Footprint RPC failed:", rpcError)
+    console.warn("[signUpWithEmail] Footprint RPC Exception:", rpcError)
   }
 
   return {
