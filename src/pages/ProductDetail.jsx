@@ -238,8 +238,6 @@ function ProductDetail() {
     }
   }
 
-  ...
-
   const productStructuredData = useMemo(() => {
     if (!currentProduct || !currentShop) return null
     const price = currentProduct.discount_price || currentProduct.price
