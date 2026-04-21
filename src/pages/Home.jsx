@@ -1167,7 +1167,7 @@ function Home() {
               </div>
             </div>
 
-            <div className="mx-auto flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:max-w-7xl">
+            <div className="mx-auto flex flex-col gap-4 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:gap-x-6 lg:gap-y-0">
               <div className="w-full lg:col-start-1 lg:row-start-1">
                 <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
                   <div className="relative aspect-video w-full h-[220px] sm:h-[300px] md:h-[400px] overflow-hidden bg-slate-100">
