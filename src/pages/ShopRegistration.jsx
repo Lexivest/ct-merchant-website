@@ -36,6 +36,11 @@ import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { supabase } from "../lib/supabase"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import {
+  clearPersistentDraft,
+  loadPersistentDraft,
+  savePersistentDraft,
+} from "../lib/persistentDrafts"
 import { buildShopRegistrationCacheKey } from "../lib/vendorRouteTransitions"
 import {
   UPLOAD_RULES,
@@ -62,6 +67,50 @@ const ADDR_MIN_WORDS = 5
 const ADDR_MAX_WORDS = 50
 
 const DEFAULT_CAMERA_RATIO = 3 / 4
+const SHOP_DRAFT_SAVE_DELAY = 700
+const SHOP_FILE_KEYS = ["storefront", "idCard", "cac", "logo"]
+const EMPTY_SHOP_FORM = {
+  name: "",
+  businessType: "Individual/Enterprise",
+  category: "",
+  desc: "",
+  areaId: "",
+  address: "",
+  lat: "",
+  lng: "",
+  cacNumber: "",
+  idType: "National ID Card",
+  idNumber: "",
+  website: "",
+  phone: "",
+  whatsapp: "",
+  facebook: "",
+  instagram: "",
+  twitter: "",
+  tiktok: "",
+}
+const EMPTY_SHOP_FILES = {
+  storefront: null,
+  idCard: null,
+  cac: null,
+  logo: null,
+}
+const EMPTY_SHOP_PREVIEWS = {
+  storefront: "",
+  idCard: "",
+  cac: "",
+  logo: "",
+}
+const EMPTY_SIGNED_PREVIEWS = {
+  idCard: "",
+  cac: "",
+}
+const EMPTY_FILE_META = {
+  storefront: null,
+  idCard: null,
+  cac: null,
+  logo: null,
+}
 
 function countWords(value) {
   return String(value || "")
@@ -294,46 +343,14 @@ function ShopRegistration() {
     message: "",
   })
 
-  const [form, setForm] = useState({
-    name: "",
-    businessType: "Individual/Enterprise",
-    category: "",
-    desc: "",
-    areaId: "",
-    address: "",
-    lat: "",
-    lng: "",
-    cacNumber: "",
-    idType: "National ID Card",
-    idNumber: "",
-    website: "",
-    phone: "",
-    whatsapp: "",
-    facebook: "",
-    instagram: "",
-    twitter: "",
-    tiktok: "",
-  })
+  const [form, setForm] = useState(EMPTY_SHOP_FORM)
 
-  const [files, setFiles] = useState({
-    storefront: null,
-    idCard: null,
-    cac: null,
-    logo: null,
-  })
+  const [files, setFiles] = useState(EMPTY_SHOP_FILES)
 
-  const [previews, setPreviews] = useState({
-    storefront: "",
-    idCard: "",
-    cac: "",
-    logo: "",
-  })
+  const [previews, setPreviews] = useState(EMPTY_SHOP_PREVIEWS)
 
   // Signed URLs for existing private assets
-  const [signedPreviews, setSignedPreviews] = useState({
-    idCard: "",
-    cac: "",
-  })
+  const [signedPreviews, setSignedPreviews] = useState(EMPTY_SIGNED_PREVIEWS)
 
   useEffect(() => {
     async function signExisting() {
@@ -371,12 +388,16 @@ function ShopRegistration() {
     signExisting()
   }, [previews.idCard, previews.cac])
 
-  const [fileMeta, setFileMeta] = useState({
-    storefront: null,
-    idCard: null,
-    cac: null,
-    logo: null,
-  })
+  const [fileMeta, setFileMeta] = useState(EMPTY_FILE_META)
+
+  const shopDraftKey = useMemo(() => {
+    if (!user?.id) return ""
+    return isEdit && shopId
+      ? `shop-registration:${user.id}:edit:${shopId}`
+      : `shop-registration:${user.id}:new`
+  }, [isEdit, shopId, user?.id])
+  const previewsRef = useRef(previews)
+  const skipNextDraftSaveRef = useRef(false)
 
   // --- CT STUDIO UPLOAD & CROP STATE ---
   const hiddenInputRef = useRef(null)
@@ -409,15 +430,27 @@ function ShopRegistration() {
   )
 
   useEffect(() => {
-    if (data && !hasHydrated) {
+    if (!data || hasHydrated || !shopDraftKey) return
+
+    let isCancelled = false
+
+    async function hydrateRegistrationForm() {
       setCategories(data.categories)
       setAreas(data.areas)
       setCityData(data.cityData)
 
+      let nextForm = { ...EMPTY_SHOP_FORM }
+      let nextFiles = { ...EMPTY_SHOP_FILES }
+      let nextPreviews = { ...EMPTY_SHOP_PREVIEWS }
+      let nextFileMeta = { ...EMPTY_FILE_META }
+      let nextCurrentStep = 0
+      let nextShowOnboarding = !isEdit
+      let shouldAnnounceDraftRestore = false
+
       if (isEdit && data.shop) {
         const s = data.shop
         setExistingShop(s)
-        setForm({
+        nextForm = {
           name: s.name || "",
           businessType: s.business_type || "Individual/Enterprise",
           category: s.category || "",
@@ -436,22 +469,133 @@ function ShopRegistration() {
           instagram: s.instagram_url || "",
           twitter: s.twitter_url || "",
           tiktok: s.tiktok_url || "",
-        })
+        }
 
-        setPreviews({
+        nextPreviews = {
           storefront: s.storefront_url || "",
           idCard: s.id_card_url || "",
           cac: s.cac_certificate_url || "",
           logo: s.image_url || "",
-        })
+        }
 
         if (s.status === "rejected" && s.rejection_reason) {
           setNotice({ visible: true, type: "warning", title: "Correction required", message: s.rejection_reason })
         }
+      } else {
+        setExistingShop(null)
       }
+
+      const draft = await loadPersistentDraft(shopDraftKey)
+      if (isCancelled) return
+
+      if (draft?.data?.form) {
+        nextForm = { ...nextForm, ...draft.data.form }
+        shouldAnnounceDraftRestore = true
+      }
+
+      if (draft?.data?.previews) {
+        nextPreviews = {
+          ...nextPreviews,
+          ...draft.data.previews,
+        }
+        shouldAnnounceDraftRestore = true
+      }
+
+      if (Number.isInteger(draft?.data?.currentStep)) {
+        nextCurrentStep = Math.max(0, Math.min(STEPS.length - 1, draft.data.currentStep))
+        shouldAnnounceDraftRestore = true
+      }
+
+      if (typeof draft?.data?.showOnboarding === "boolean") {
+        nextShowOnboarding = draft.data.showOnboarding
+        shouldAnnounceDraftRestore = true
+      }
+
+      SHOP_FILE_KEYS.forEach((key) => {
+        const storedFile = draft?.files?.[key]
+        if (!storedFile) return
+
+        const previewUrl = URL.createObjectURL(storedFile)
+        nextFiles[key] = storedFile
+        nextPreviews[key] = previewUrl
+        nextFileMeta[key] = {
+          name: storedFile.name || `${key}_upload`,
+          type: storedFile.type || "application/octet-stream",
+        }
+        shouldAnnounceDraftRestore = true
+      })
+
+      setForm(nextForm)
+      setFiles(nextFiles)
+      setPreviews(nextPreviews)
+      setSignedPreviews(EMPTY_SIGNED_PREVIEWS)
+      setFileMeta(nextFileMeta)
+      setCurrentStep(nextCurrentStep)
+      setShowOnboarding(nextShowOnboarding)
       setHasHydrated(true)
+
+      if (shouldAnnounceDraftRestore) {
+        notify({
+          type: "info",
+          title: "Draft restored",
+          message: "We restored your saved registration progress on this device.",
+        })
+      }
     }
-  }, [data, hasHydrated, isEdit])
+
+    hydrateRegistrationForm()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [data, hasHydrated, isEdit, notify, shopDraftKey])
+
+  useEffect(() => {
+    previewsRef.current = previews
+  }, [previews])
+
+  useEffect(() => {
+    return () => {
+      Object.values(previewsRef.current).forEach((value) => {
+        if (typeof value === "string" && value.startsWith("blob:")) {
+          URL.revokeObjectURL(value)
+        }
+      })
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!hasHydrated || !shopDraftKey) return
+
+    const timeoutId = window.setTimeout(() => {
+      if (skipNextDraftSaveRef.current) {
+        skipNextDraftSaveRef.current = false
+        return
+      }
+
+      const persistentFiles = Object.fromEntries(
+        SHOP_FILE_KEYS.filter((key) => Boolean(files[key])).map((key) => [key, files[key]])
+      )
+      const persistentPreviews = Object.fromEntries(
+        SHOP_FILE_KEYS.map((key) => [
+          key,
+          files[key] || String(previews[key] || "").startsWith("blob:") ? "" : previews[key],
+        ])
+      )
+
+      savePersistentDraft(shopDraftKey, {
+        data: {
+          form,
+          previews: persistentPreviews,
+          currentStep,
+          showOnboarding,
+        },
+        files: persistentFiles,
+      })
+    }, SHOP_DRAFT_SAVE_DELAY)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [currentStep, files, form, hasHydrated, previews, shopDraftKey, showOnboarding])
 
   useEffect(() => {
     if (dataError) {
@@ -689,7 +833,18 @@ function ShopRegistration() {
 
   const saveFileState = (key, fileOrBlob, previewUrl, type) => {
     setFiles((prev) => ({ ...prev, [key]: fileOrBlob }))
-    setPreviews((prev) => ({ ...prev, [key]: previewUrl }))
+    setPreviews((prev) => {
+      const previousValue = prev[key]
+      if (
+        previousValue &&
+        previousValue !== previewUrl &&
+        String(previousValue).startsWith("blob:")
+      ) {
+        URL.revokeObjectURL(previousValue)
+      }
+
+      return { ...prev, [key]: previewUrl }
+    })
     setFileMeta((prev) => ({
       ...prev,
       [key]: { name: fileOrBlob.name || `${key}_upload.jpg`, type: type }
@@ -867,6 +1022,13 @@ function ShopRegistration() {
         )
       } catch (cleanupError) {
         console.warn("Old shop file cleanup failed:", cleanupError)
+      }
+
+      try {
+        skipNextDraftSaveRef.current = true
+        await clearPersistentDraft(shopDraftKey)
+      } catch (draftError) {
+        console.warn("Could not clear shop registration draft:", draftError)
       }
 
       setReviewOpen(false)

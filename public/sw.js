@@ -1,14 +1,16 @@
-const SHELL_CACHE = "ctm-shell-v2";
-const STATIC_CACHE = "ctm-static-v2";
-const ASSET_CACHE = "ctm-assets-v2";
+const SHELL_CACHE = "ctm-shell-v3";
+const STATIC_CACHE = "ctm-static-v3";
+const ASSET_CACHE = "ctm-assets-v3";
 const PRECACHE_URLS = [
   "/",
   "/index.html",
+  "/offline.html",
   "/manifest.json",
   "/ctm-logo.jpg",
   "/favicon.svg",
   "/icons.svg",
 ];
+const INDEX_ASSET_PATTERN = /(?:src|href)=["'](\/assets\/[^"']+)["']/g;
 
 function isCacheableResponse(response) {
   return Boolean(response && response.ok && response.type !== "error");
@@ -21,7 +23,7 @@ async function putInCache(cacheName, request, response) {
   return response;
 }
 
-async function networkFirst(request, cacheName, fallbackUrl = "") {
+async function networkFirst(request, cacheName, fallbackUrls = []) {
   try {
     const networkResponse = await fetch(request);
     await putInCache(cacheName, request, networkResponse);
@@ -30,7 +32,8 @@ async function networkFirst(request, cacheName, fallbackUrl = "") {
     const cachedResponse = await caches.match(request);
     if (cachedResponse) return cachedResponse;
 
-    if (fallbackUrl) {
+    for (const fallbackUrl of fallbackUrls) {
+      if (!fallbackUrl) continue;
       const fallbackResponse = await caches.match(fallbackUrl);
       if (fallbackResponse) return fallbackResponse;
     }
@@ -55,9 +58,55 @@ async function staleWhileRevalidate(request, cacheName) {
   return fetch(request);
 }
 
+async function precacheShellAssets() {
+  let indexResponse = null;
+
+  try {
+    indexResponse = await fetch("/index.html", { cache: "no-store" });
+  } catch (error) {
+    indexResponse = await caches.match("/index.html");
+  }
+
+  if (!isCacheableResponse(indexResponse)) return;
+
+  const shellCache = await caches.open(SHELL_CACHE);
+  await shellCache.put("/index.html", indexResponse.clone());
+
+  let html = "";
+  try {
+    html = await indexResponse.clone().text();
+  } catch (error) {
+    html = "";
+  }
+
+  const assetUrls = Array.from(html.matchAll(INDEX_ASSET_PATTERN))
+    .map((match) => match[1])
+    .filter(Boolean);
+
+  if (!assetUrls.length) return;
+
+  const assetCache = await caches.open(ASSET_CACHE);
+
+  await Promise.all(
+    assetUrls.map(async (assetUrl) => {
+      try {
+        const response = await fetch(assetUrl, { cache: "no-store" });
+        if (!isCacheableResponse(response)) return;
+        await assetCache.put(assetUrl, response.clone());
+      } catch (error) {
+        // Ignore missing assets during install; the cached shell is still usable.
+      }
+    })
+  );
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(SHELL_CACHE).then((cache) => cache.addAll(PRECACHE_URLS))
+    (async () => {
+      const cache = await caches.open(SHELL_CACHE);
+      await cache.addAll(PRECACHE_URLS);
+      await precacheShellAssets();
+    })()
   );
   self.skipWaiting();
 });
@@ -94,17 +143,22 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (event.request.mode === "navigate") {
-    event.respondWith(networkFirst(event.request, SHELL_CACHE, "/index.html"));
+    event.respondWith(networkFirst(event.request, SHELL_CACHE, ["/index.html", "/offline.html"]));
     return;
   }
 
   if (url.pathname === "/index.html") {
-    event.respondWith(networkFirst(event.request, SHELL_CACHE, "/index.html"));
+    event.respondWith(networkFirst(event.request, SHELL_CACHE, ["/index.html", "/offline.html"]));
+    return;
+  }
+
+  if (url.pathname === "/offline.html") {
+    event.respondWith(networkFirst(event.request, SHELL_CACHE, ["/offline.html"]));
     return;
   }
 
   if (url.pathname === "/version.json") {
-    event.respondWith(networkFirst(event.request, SHELL_CACHE));
+    event.respondWith(networkFirst(event.request, SHELL_CACHE, ["/version.json"]));
     return;
   }
 

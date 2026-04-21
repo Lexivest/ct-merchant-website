@@ -7,6 +7,7 @@ import OnlineRouteGuard from "./components/common/OnlineRouteGuard"
 import SiteVisitTracker from "./components/common/SiteVisitTracker"
 import AppErrorBoundary from "./components/common/AppErrorBoundary"
 import GlobalErrorScreen from "./components/common/GlobalErrorScreen"
+import NetworkStatusScreen from "./components/common/NetworkStatusScreen"
 import { PageLoadingScreen } from "./components/common/PageStatusScreen"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
@@ -77,15 +78,30 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
     return () => window.clearTimeout(timer)
   }, [isOffline, retryKey, retryPage])
 
+  if (isOffline) {
+    return (
+      <NetworkStatusScreen
+        title="No internet connection"
+        message={`CTMerchant could not finish opening ${pageLabel}. Reconnect and we will retry automatically.`}
+        reconnectMessage="Connection restored. Reopening CTMerchant now."
+        onRetry={() => retryPage(true)}
+        onBack={() => {
+          if (typeof window === "undefined") return
+          if (window.history.length > 1) {
+            window.history.back()
+            return
+          }
+          window.location.assign("/")
+        }}
+      />
+    )
+  }
+
   return (
     <GlobalErrorScreen
       error={new Error(`Failed to load ${pageLabel}`)}
-      title={isOffline ? "No internet connection" : "Website update in progress"}
-      message={
-        isOffline
-          ? "Please reconnect and retry. This screen will stay here until you retry or go back."
-          : "A fresh version of CTMerchant is available. Retry will safely reload the latest files."
-      }
+      title="Website update in progress"
+      message="A fresh version of CTMerchant is available. Retry will safely reload the latest files."
       onRetry={() => retryPage(true)}
       onBack={() => {
         if (typeof window === "undefined") return
@@ -257,6 +273,30 @@ function RouteLoadingScreen({
   title = "Loading your page",
   message = "Please wait while we prepare the next screen.",
 }) {
+  const isOffline = typeof navigator !== "undefined" ? !navigator.onLine : false
+
+  if (isHardReloadNavigation() && isOffline) {
+    return (
+      <NetworkStatusScreen
+        title="Waiting for internet"
+        message="CTMerchant is installed on this device, but this screen still needs internet to finish loading."
+        reconnectMessage="Connection restored. Opening CTMerchant again."
+        onRetry={() => {
+          if (typeof window === "undefined") return
+          window.location.reload()
+        }}
+        onBack={() => {
+          if (typeof window === "undefined") return
+          if (window.history.length > 1) {
+            window.history.back()
+            return
+          }
+          window.location.assign("/")
+        }}
+      />
+    )
+  }
+
   if (isHardReloadNavigation()) {
     return null
   }

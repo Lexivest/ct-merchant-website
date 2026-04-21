@@ -27,6 +27,11 @@ import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
+import {
+  clearPersistentDraft,
+  loadPersistentDraft,
+  savePersistentDraft,
+} from "../../lib/persistentDrafts";
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 import { IMAGE_PROFILES } from "../../lib/imageProfiles";
 import {
@@ -50,6 +55,23 @@ const PRODUCT_ACCEPT = getAcceptValue(PRODUCT_RULE, "image/*");
 const PRODUCT_RULE_LABEL = getRuleLabel(PRODUCT_RULE);
 const MAX_PRODUCTS_LIMIT = 30;
 const MAX_SPECIAL_OFFERS = 2;
+const PRODUCT_DRAFT_SAVE_DELAY = 700;
+const PRODUCT_IMAGE_SLOTS = [1, 2, 3];
+const EMPTY_PRODUCT_FORM = {
+  name: "",
+  price: "",
+  stock: "1",
+  condition: "New",
+  category: "",
+  desc: "",
+  key_features: "",
+  box_content: "",
+  warranty: "",
+  isDiscount: false,
+  discountPercent: "",
+};
+const EMPTY_PRODUCT_BLOBS = { 1: null, 2: null, 3: null };
+const EMPTY_PRODUCT_PREVIEWS = { 1: "", 2: "", 3: "" };
 
 // --- PROFESSIONAL SHIMMER COMPONENT ---
 function AddProductShimmer() {
@@ -139,27 +161,20 @@ export default function AddProduct() {
   const [activeOffersCount, setActiveOffersCount] = useState(() => prefetchedData?.activeOffersCount || 0);
   const [submitting, setSubmitting] = useState(false);
   const [categoryRows, setCategoryRows] = useState(() => prefetchedData?.categoryRows || []);
+  const productDraftKey = useMemo(() => {
+    if (!user?.id || !shopId) return "";
+    return `add-product:${user.id}:${shopId}`;
+  }, [shopId, user?.id]);
+  const [draftHydrated, setDraftHydrated] = useState(false);
 
   // Form State
-  const [form, setForm] = useState({
-    name: "",
-    price: "",
-    stock: "1",
-    condition: "New",
-    category: "",
-    desc: "",
-    key_features: "",
-    box_content: "",
-    warranty: "",
-    isDiscount: false,
-    discountPercent: "",
-  });
+  const [form, setForm] = useState(EMPTY_PRODUCT_FORM);
 
   const [dynamicAttrs, setDynamicAttrs] = useState({});
 
   // Image State
-  const [blobs, setBlobs] = useState({ 1: null, 2: null, 3: null });
-  const [previews, setPreviews] = useState({ 1: "", 2: "", 3: "" });
+  const [blobs, setBlobs] = useState(EMPTY_PRODUCT_BLOBS);
+  const [previews, setPreviews] = useState(EMPTY_PRODUCT_PREVIEWS);
   const [processingSlots, setProcessingSlots] = useState({ 1: false, 2: false, 3: false });
 
   // Studio State
@@ -174,6 +189,9 @@ export default function AddProduct() {
   const [contrast, setContrast] = useState(100);
   const [isFitting, setIsFitting] = useState(false);
   const cropperRef = useRef(null);
+  const previewsRef = useRef(previews);
+  const tempImageRef = useRef(tempImage);
+  const skipNextDraftSaveRef = useRef(false);
   const fileInputRefs = {
     1: useRef(null),
     2: useRef(null),
@@ -183,6 +201,29 @@ export default function AddProduct() {
   useEffect(() => {
     cameraSlotRef.current = cameraSlot;
   }, [cameraSlot]);
+
+  useEffect(() => {
+    previewsRef.current = previews;
+  }, [previews]);
+
+  useEffect(() => {
+    tempImageRef.current = tempImage;
+  }, [tempImage]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(previewsRef.current).forEach((value) => {
+        if (typeof value === "string" && value.startsWith("blob:")) {
+          URL.revokeObjectURL(value);
+        }
+      });
+
+      const editorPreview = tempImageRef.current;
+      if (typeof editorPreview === "string" && editorPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(editorPreview);
+      }
+    };
+  }, []);
 
   // Initialization & Security Checks
   useEffect(() => {
@@ -236,6 +277,87 @@ export default function AddProduct() {
     }
     if (!authLoading) init();
   }, [user, authLoading, shopId, isOffline, navigate, prefetchedData]);
+
+  useEffect(() => {
+    if (authLoading || loading || error || !productDraftKey) return;
+
+    let isCancelled = false;
+
+    async function restoreDraft() {
+      const draft = await loadPersistentDraft(productDraftKey);
+      if (isCancelled) return;
+
+      const hasDraftData = Boolean(
+        draft?.data ||
+          Object.values(draft?.files || {}).some(Boolean)
+      );
+
+      if (draft?.data?.form) {
+        setForm((prev) => ({ ...prev, ...draft.data.form }));
+      }
+
+      if (draft?.data?.dynamicAttrs) {
+        setDynamicAttrs(draft.data.dynamicAttrs);
+      }
+
+      if (draft?.files) {
+        const nextBlobs = { ...EMPTY_PRODUCT_BLOBS };
+        const nextPreviews = { ...EMPTY_PRODUCT_PREVIEWS };
+
+        PRODUCT_IMAGE_SLOTS.forEach((slot) => {
+          const savedBlob = draft.files[slot] || draft.files[String(slot)];
+          if (!savedBlob) return;
+          nextBlobs[slot] = savedBlob;
+          nextPreviews[slot] = URL.createObjectURL(savedBlob);
+        });
+
+        setBlobs(nextBlobs);
+        setPreviews(nextPreviews);
+      }
+
+      if (hasDraftData) {
+        notify({
+          type: "info",
+          title: "Draft restored",
+          message: "We restored your saved product draft on this device.",
+        });
+      }
+
+      setDraftHydrated(true);
+    }
+
+    restoreDraft();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [authLoading, error, loading, notify, productDraftKey]);
+
+  useEffect(() => {
+    if ((authLoading || loading || error) && !draftHydrated) return;
+    if (!productDraftKey || !draftHydrated) return;
+
+    const timeoutId = window.setTimeout(() => {
+      if (skipNextDraftSaveRef.current) {
+        skipNextDraftSaveRef.current = false;
+        return;
+      }
+
+      const persistentFiles = Object.fromEntries(
+        PRODUCT_IMAGE_SLOTS.filter((slot) => Boolean(blobs[slot])).map((slot) => [slot, blobs[slot]])
+      );
+
+      savePersistentDraft(productDraftKey, {
+        data: {
+          form,
+          dynamicAttrs,
+        },
+        files: persistentFiles,
+      });
+    }, PRODUCT_DRAFT_SAVE_DELAY);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [authLoading, blobs, draftHydrated, dynamicAttrs, error, form, loading, productDraftKey]);
 
 
   // --- HANDLERS ---
@@ -445,7 +567,6 @@ export default function AddProduct() {
     }
     setBlobs((prev) => ({ ...prev, [slot]: null }));
     setPreviews((prev) => ({ ...prev, [slot]: "" }));
-    setSavings((prev) => ({ ...prev, [slot]: "" }));
   };
 
   // --- SUBMIT ---
@@ -498,7 +619,7 @@ export default function AddProduct() {
       if (form.box_content.trim()) finalAttrs["What's in the Box"] = form.box_content.trim();
       if (form.warranty.trim()) finalAttrs["Warranty"] = form.warranty.trim();
 
-      const uploadPromises = [1, 2, 3].map(async (idx) => {
+      const uploadPromises = PRODUCT_IMAGE_SLOTS.map(async (idx) => {
         if (!blobs[idx]) return null;
         const fName = `${user.id}_${Date.now()}_img${idx}.jpg`;
         try {
@@ -551,6 +672,13 @@ export default function AddProduct() {
         message: "Your product has been successfully added to the marketplace. You can now add another item.",
       });
 
+      try {
+        skipNextDraftSaveRef.current = true;
+        await clearPersistentDraft(productDraftKey);
+      } catch (draftError) {
+        console.warn("Could not clear add product draft:", draftError);
+      }
+
       // Reset form but keep category for convenience
       setForm({
         name: "",
@@ -566,8 +694,8 @@ export default function AddProduct() {
         discountPercent: "",
       });
       setDynamicAttrs({});
-      setBlobs({ 1: null, 2: null, 3: null });
-      setPreviews({ 1: "", 2: "", 3: "" });
+      setBlobs(EMPTY_PRODUCT_BLOBS);
+      setPreviews(EMPTY_PRODUCT_PREVIEWS);
       
       // Reset scroll for next entry
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -772,10 +900,10 @@ export default function AddProduct() {
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Technical Specifications</div>
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Brand</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="Apple" onChange={e => handleAttrChange('Brand', e.target.value)} /></div>
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Model</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="iPhone 14" onChange={e => handleAttrChange('Model', e.target.value)} /></div>
-                <div><label className="mb-1 block text-[0.85rem] font-bold">RAM</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="8GB" onChange={e => handleAttrChange('RAM', e.target.value)} /></div>
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Storage</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="256GB" onChange={e => handleAttrChange('Storage', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Brand</label><input type="text" value={dynamicAttrs["Brand"] || ""} className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="Apple" onChange={e => handleAttrChange('Brand', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Model</label><input type="text" value={dynamicAttrs["Model"] || ""} className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="iPhone 14" onChange={e => handleAttrChange('Model', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">RAM</label><input type="text" value={dynamicAttrs["RAM"] || ""} className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="8GB" onChange={e => handleAttrChange('RAM', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Storage</label><input type="text" value={dynamicAttrs["Storage"] || ""} className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="256GB" onChange={e => handleAttrChange('Storage', e.target.value)} /></div>
               </div>
             </div>
           )}
@@ -783,8 +911,8 @@ export default function AddProduct() {
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Apparel Details</div>
               <div className="grid grid-cols-2 gap-4">
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Brand</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Brand', e.target.value)} /></div>
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Size</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Size', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Brand</label><input type="text" value={dynamicAttrs["Brand"] || ""} className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Brand', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Size</label><input type="text" value={dynamicAttrs["Size"] || ""} className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Size', e.target.value)} /></div>
                 <div className="col-span-2">
                   <label className="mb-1 block text-[0.85rem] font-bold">Target Audience (Gender)</label>
                   <CustomSelect
@@ -807,9 +935,9 @@ export default function AddProduct() {
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Product Details</div>
               <div className="grid grid-cols-2 gap-4">
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Brand/Maker</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Brand', e.target.value)} /></div>
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Weight/Vol</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Weight', e.target.value)} /></div>
-                <div className="col-span-2"><label className="mb-1 block text-[0.85rem] font-bold text-red-600">Expiry Date *</label><input type="date" required className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Expiry Date', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Brand/Maker</label><input type="text" value={dynamicAttrs["Brand"] || ""} className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Brand', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Weight/Vol</label><input type="text" value={dynamicAttrs["Weight"] || ""} className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Weight', e.target.value)} /></div>
+                <div className="col-span-2"><label className="mb-1 block text-[0.85rem] font-bold text-red-600">Expiry Date *</label><input type="date" value={dynamicAttrs["Expiry Date"] || ""} required className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Expiry Date', e.target.value)} /></div>
               </div>
             </div>
           )}
@@ -817,7 +945,7 @@ export default function AddProduct() {
             <div className="mb-6 rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4">
               <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-wide text-[#db2777]">Property Details</div>
               <div className="grid grid-cols-1 gap-4">
-                <div><label className="mb-1 block text-[0.85rem] font-bold">Property Type</label><input type="text" className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="e.g. 2 Bed Flat" onChange={e => handleAttrChange('Property Type', e.target.value)} /></div>
+                <div><label className="mb-1 block text-[0.85rem] font-bold">Property Type</label><input type="text" value={dynamicAttrs["Property Type"] || ""} className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="e.g. 2 Bed Flat" onChange={e => handleAttrChange('Property Type', e.target.value)} /></div>
                 <div>
                   <label className="mb-1 block text-[0.85rem] font-bold">Payment Cycle</label>
                   <CustomSelect
