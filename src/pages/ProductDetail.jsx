@@ -128,6 +128,16 @@ function ProductDetail() {
   const recommendations = data?.recommendations || []
   const isLoggedIn = Boolean(user?.id)
 
+  const productImages = useMemo(() => {
+    return [
+      currentProduct?.image_url,
+      currentProduct?.image_url_2,
+      currentProduct?.image_url_3,
+    ]
+      .map((image) => (typeof image === "string" ? image.trim() : ""))
+      .filter(Boolean)
+  }, [currentProduct])
+
   // Sync optimistic states once data arrives
   useEffect(() => {
     if (data) {
@@ -138,24 +148,14 @@ function ProductDetail() {
   useEffect(() => {
     if (!currentProduct) return
 
-    const nextImage =
-      currentProduct.image_url ||
-      currentProduct.image_url_2 ||
-      currentProduct.image_url_3 ||
-      ""
+    const nextImage = productImages[0] || ""
 
     setSelectedImage(nextImage)
-  }, [currentProduct])
+  }, [currentProduct, productImages])
 
   const galleryImages = useMemo(() => {
-    const images = [
-      currentProduct?.image_url,
-      currentProduct?.image_url_2,
-      currentProduct?.image_url_3,
-    ].filter(Boolean)
-
-    return [...new Set(images)]
-  }, [currentProduct])
+    return [...new Set(productImages)]
+  }, [productImages])
 
   const hasDiscount = useMemo(() => {
     if (!currentProduct) return false
@@ -295,6 +295,20 @@ function ProductDetail() {
       console.error("Wishlist error:", error)
       setIsInWishlist(!next) // Rollback
       notify({ type: "error", title: "Wishlist update failed", message: "We could not update your wishlist. Please try again." })
+    }
+  }
+
+  function handleSelectedImageError() {
+    if (!galleryImages.length) return
+
+    const selectedIndex = galleryImages.indexOf(selectedImage)
+    const fallbackImage =
+      selectedIndex >= 0
+        ? galleryImages.slice(selectedIndex + 1).find(Boolean)
+        : galleryImages[0]
+
+    if (fallbackImage && fallbackImage !== selectedImage) {
+      setSelectedImage(fallbackImage)
     }
   }
 
@@ -698,6 +712,7 @@ function ProductDetail() {
                     alt={currentProduct?.name || "Product"}
                     containerClassName="h-full w-full bg-[#F7F7F7]"
                     className="block h-full w-full object-contain mix-blend-multiply"
+                    onError={handleSelectedImageError}
                   />
                 </div>
 

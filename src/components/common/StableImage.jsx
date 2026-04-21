@@ -44,6 +44,8 @@ function StableImage({
   placeholderClassName = "",
   loading = "lazy",
   fetchPriority,
+  onError,
+  onLoad,
   width,
   height,
   quality,
@@ -101,13 +103,25 @@ function StableImage({
     }
   }, [shouldEagerLoad, isPreviouslyLoaded, finalSrc])
 
-  function handleLoad() {
+  useEffect(() => {
+    setFailed(false)
+    setLoaded(isPreviouslyLoaded)
+
+    if (shouldEagerLoad || isPreviouslyLoaded) {
+      setIsNearViewport(true)
+    }
+  }, [finalSrc, isPreviouslyLoaded, shouldEagerLoad])
+
+  function handleLoad(event) {
     setLoaded(true)
     GLOBAL_IMAGE_REGISTRY.add(finalSrc)
+    onLoad?.(event)
   }
 
-  function handleError() {
+  function handleError(event) {
     setFailed(true)
+    setLoaded(false)
+    onError?.(event)
   }
 
   const containerStyle = aspectRatio ? { aspectRatio: String(aspectRatio) } : {}
