@@ -772,9 +772,9 @@ function Home() {
     ? "Open CTMerchant like an app, keep it one tap away, and get a cleaner full-screen experience."
     : isAppleMobile
       ? "Tap Share in Safari, then choose Add to Home Screen to install CTMerchant for quicker access."
-      : installSupported
-        ? "This browser supports app install. The install action will appear automatically when ready."
-        : "Install is available in supported browsers for a faster, app-like experience."
+      : "Keep CTMerchant close, launch faster, and open it in a cleaner app-style window from your device."
+  const installBrowserSupportText =
+    "Supported browsers: Google Chrome, Microsoft Edge, Samsung Internet, Opera, Brave. On iPhone and iPad, use Safari's Add to Home Screen."
   const homeStructuredData = useMemo(() => {
     return {
       "@context": "https://schema.org",
@@ -1245,14 +1245,17 @@ function Home() {
                             <h2 className="mt-3 text-lg font-extrabold tracking-tight text-slate-900 sm:text-[1.35rem]">
                               {installCardTitle}
                             </h2>
-                            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                              {installCardMessage}
-                            </p>
-                            <div className="mt-3 flex flex-wrap gap-2 text-[0.72rem] font-semibold text-slate-500">
+                            <div className="mt-3 flex gap-2 overflow-x-auto whitespace-nowrap pb-1 text-[0.72rem] font-semibold text-slate-500 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                               <span className="rounded-full bg-white px-3 py-1 shadow-sm">Faster launch</span>
                               <span className="rounded-full bg-white px-3 py-1 shadow-sm">Home screen access</span>
                               <span className="rounded-full bg-white px-3 py-1 shadow-sm">Cleaner full-screen feel</span>
                             </div>
+                            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
+                              {installCardMessage}
+                            </p>
+                            <p className="mt-3 text-[0.78rem] font-semibold leading-6 text-slate-500">
+                              {installBrowserSupportText}
+                            </p>
                           </div>
 
                           <div className="sm:w-auto sm:min-w-[220px]">
@@ -1275,13 +1278,7 @@ function Home() {
                             </button>
                             <div className="mt-2 flex items-start gap-2 rounded-2xl border border-white/70 bg-white/80 px-3 py-2 text-[0.72rem] leading-5 text-slate-500">
                               <FaCircleInfo className="mt-0.5 shrink-0 text-pink-500" />
-                              <span>
-                                {installPromptEvent
-                                  ? "The app will install without interrupting your current browsing session."
-                                  : isAppleMobile
-                                    ? "Best experience on Safari: use Share, then Add to Home Screen."
-                                    : "If install is supported here, the action will become available automatically."}
-                              </span>
+                              <span>{installBrowserSupportText}</span>
                             </div>
                           </div>
                         </div>
