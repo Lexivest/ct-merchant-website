@@ -193,7 +193,7 @@ function ProductDetail() {
   function goBack() {
     const repoSuffix = isPublicRepoMode ? buildRepoSearchQuerySuffix(repoRef) : ""
     if (shopSrc) {
-      navigate(`/shop-detail?id=${shopSrc}${repoSuffix}`)
+      navigate(`/shop-detail?id=${shopSrc}${repoSuffix}`, { replace: true })
       return
     }
     if (document.referrer && document.referrer.includes(window.location.hostname)) {
@@ -201,13 +201,43 @@ function ProductDetail() {
       return
     }
     if (currentProduct?.shop_id) {
-      navigate(`/shop-detail?id=${currentProduct.shop_id}${repoSuffix}`)
+      navigate(`/shop-detail?id=${currentProduct.shop_id}${repoSuffix}`, { replace: true })
       return
     }
-    navigate("/user-dashboard")
+    navigate("/user-dashboard", { replace: true })
   }
 
-  async function toggleWishlist() {
+  ...
+
+  const productStructuredData = useMemo(() => {
+    if (!currentProduct || !currentShop) return null
+    const price = currentProduct.discount_price || currentProduct.price
+    return {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": currentProduct.name,
+      "image": selectedImage || currentProduct.image_url,
+      "description": currentProduct.description,
+      "sku": currentProduct.id.toString(),
+      "brand": {
+        "@type": "Brand",
+        "name": currentShop.name
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": window.location.href,
+        "priceCurrency": "NGN",
+        "price": price,
+        "availability": stockCount > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        "seller": {
+          "@type": "Organization",
+          "name": currentShop.name
+        }
+      }
+    }
+  }, [currentProduct, currentShop, selectedImage, stockCount])
+
+  // --- EARLY RETURNS (Loading, Errors) ---
     if (!user) {
       notify({ type: "info", title: "Login required", message: "Please login to save items to your wishlist." })
       return
@@ -593,6 +623,7 @@ function ProductDetail() {
         }
         canonicalPath={`/product-detail${productId ? `?id=${encodeURIComponent(productId)}` : ""}`}
         image={selectedImage || currentProduct?.image_url || "/ctm-logo.jpg"}
+        structuredData={productStructuredData}
       />
       <div
         className={`mx-auto flex min-h-screen max-w-[1200px] flex-col bg-[#E3E6E6] pb-[90px] ${

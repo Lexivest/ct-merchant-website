@@ -1,0 +1,25 @@
+{
+  "short_name": "CTMerchant",
+  "name": "CTMerchant: Repository of Shops, Products and Services",
+  "icons": [
+    {
+      "src": "ctm-logo.jpg",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "ctm-logo.jpg",
+      "type": "image/jpg",
+      "sizes": "192x192"
+    },
+    {
+      "src": "ctm-logo.jpg",
+      "type": "image/jpg",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#131921",
+  "background_color": "#ffffff"
+}

@@ -41,6 +41,20 @@ if (typeof window !== "undefined") {
   }
   window.addEventListener("error", (e) => capture("window_error", e.error || e.message))
   window.addEventListener("unhandledrejection", (e) => capture("promise_rejection", e.reason))
+
+  // --- SERVICE WORKER REGISTRATION ---
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => {
+          console.log("CTM Service Worker registered with scope:", registration.scope)
+        })
+        .catch((error) => {
+          console.error("CTM Service Worker registration failed:", error)
+        })
+    })
+  }
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(

@@ -27,7 +27,7 @@ function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleBack = () => {
-    navigate("/")
+    navigate("/", { replace: true })
   }
 
   const handleChange = (event) => {

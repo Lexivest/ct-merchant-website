@@ -8,11 +8,11 @@ function Privacy() {
 
   const handleBack = () => {
     if (searchParams.get("src") === "dash") {
-      navigate("/user-dashboard?tab=services")
+      navigate("/user-dashboard?tab=services", { replace: true })
       return
     }
 
-    navigate("/")
+    navigate("/", { replace: true })
   }
 
   return (

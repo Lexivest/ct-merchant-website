@@ -49,6 +49,7 @@ function PageSeo({
   image = "/ctm-logo.jpg",
   noindex = false,
   type = "website",
+  structuredData,
 }) {
   useEffect(() => {
     if (typeof document === "undefined") return undefined
@@ -65,15 +66,40 @@ function PageSeo({
     setMeta('meta[property="og:description"]', { property: "og:description", content: description })
     setMeta('meta[property="og:url"]', { property: "og:url", content: canonicalUrl })
     setMeta('meta[property="og:image"]', { property: "og:image", content: image })
-    setMeta('meta[property="og:image:alt"]', { property: "og:image:alt", content: "CTMerchant" })
+    setMeta('meta[property="og:image:width"]', { property: "og:image:width", content: "1200" })
+    setMeta('meta[property="og:image:height"]', { property: "og:image:height", content: "630" })
+    setMeta('meta[property="og:image:alt"]', { property: "og:image:alt", content: title || "CTMerchant" })
+    setMeta('meta[property="og:locale"]', { property: "og:locale", content: "en_NG" })
+    setMeta('meta[property="og:site_name"]', { property: "og:site_name", content: "CTMerchant" })
+    
     setMeta('meta[name="twitter:card"]', { name: "twitter:card", content: "summary_large_image" })
+    setMeta('meta[name="twitter:site"]', { name: "twitter:site", content: "@ctmerchant_ng" })
+    setMeta('meta[name="twitter:creator"]', { name: "twitter:creator", content: "@ctmerchant_ng" })
     setMeta('meta[name="twitter:title"]', { name: "twitter:title", content: title })
     setMeta('meta[name="twitter:description"]', { name: "twitter:description", content: description })
     setMeta('meta[name="twitter:image"]', { name: "twitter:image", content: image })
+    
     setLink('link[rel="canonical"]', { rel: "canonical", href: canonicalUrl })
 
-    return undefined
-  }, [canonicalPath, description, image, noindex, title, type])
+    // Structured Data (JSON-LD)
+    let scriptTag = document.head.querySelector('script[type="application/ld+json"]#dynamic-seo-data')
+    if (structuredData) {
+      if (!scriptTag) {
+        scriptTag = document.createElement("script")
+        scriptTag.type = "application/ld+json"
+        scriptTag.id = "dynamic-seo-data"
+        document.head.appendChild(scriptTag)
+      }
+      scriptTag.text = JSON.stringify(structuredData)
+    } else if (scriptTag) {
+      scriptTag.remove()
+    }
+
+    return () => {
+      // Cleanup dynamic script on unmount if needed, 
+      // but usually we want it to stay until the next page sets it.
+    }
+  }, [canonicalPath, description, image, noindex, title, type, structuredData])
 
   return null
 }

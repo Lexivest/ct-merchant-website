@@ -340,7 +340,7 @@ function ShopDetail() {
 
   async function openDashboardWithTransition() {
     if (!user?.id) {
-      navigate("/user-dashboard")
+      navigate("/user-dashboard", { replace: true })
       return
     }
 
@@ -356,6 +356,7 @@ function ShopDetail() {
       })
 
       navigate("/user-dashboard", {
+        replace: true,
         state: {
           fromDetailTransition: true,
           prefetchedDashboardData,
@@ -371,6 +372,25 @@ function ShopDetail() {
       })
     }
   }
+
+  const shopStructuredData = useMemo(() => {
+    if (!currentShop) return null
+    return {
+      "@context": "https://schema.org",
+      "@type": "Store",
+      "name": currentShop.name,
+      "description": currentShop.description,
+      "image": shopBanner || shopLogo,
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": currentShop.address,
+        "addressLocality": currentShop.cities?.name,
+        "addressCountry": "NG"
+      },
+      "telephone": currentShop.phone,
+      "url": window.location.href
+    }
+  }, [currentShop, shopBanner, shopLogo])
 
   async function _toggleLike() {
     if (!user?.id) {
@@ -812,6 +832,7 @@ function ShopDetail() {
         }
         canonicalPath={`/shop-detail${shopId ? `?id=${encodeURIComponent(shopId)}` : ""}`}
         image={shopBanner || shopLogo}
+        structuredData={shopStructuredData}
       />
       <div className="mx-auto max-w-[1600px]">
         <header className="sticky top-0 z-[100] flex flex-col bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
