@@ -751,6 +751,19 @@ function Home() {
     () => phrases[phraseIndex].slice(0, charIndex),
     [phraseIndex, charIndex]
   )
+  const homeStructuredData = useMemo(() => {
+    return {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "CTMerchant",
+      "url": "https://ctmerchant.com.ng",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://ctmerchant.com.ng/search?q={search_term_string}",
+        "query-input": "required name=search_term_string",
+      },
+    }
+  }, [])
 
   function validateLogin() {
     const errors = {}
@@ -1041,30 +1054,16 @@ function Home() {
         className={
           transitionState.pending || holdForExistingSession
             ? "pointer-events-none select-none"
-            const homeStructuredData = useMemo(() => {
-              return {
-                "@context": "https://schema.org",
-                "@type": "WebSite",
-                "name": "CTMerchant",
-                "url": "https://ctmerchant.com.ng",
-                "potentialAction": {
-                  "@type": "SearchAction",
-                  "target": "https://ctmerchant.com.ng/search?q={search_term_string}",
-                  "query-input": "required name=search_term_string"
-                }
-              }
-            }, [])
-
-            return (
-              <>
-                <div
-            ...
-                    <PageSeo
-                      title="CTMerchant | Repository of Shops, Products and Services"
-                      description="Discover verified physical shops, browse local products, and connect with real merchants across your city."
-                      canonicalPath="/"
-                      structuredData={homeStructuredData}
-                    />
+            : ""
+        }
+      >
+        <MainLayout>
+          <PageSeo
+            title="CTMerchant | Repository of Shops, Products and Services"
+            description="Discover verified physical shops, browse local products, and connect with real merchants across your city."
+            canonicalPath="/"
+            structuredData={homeStructuredData}
+          />
           <section className="overflow-x-hidden bg-pink-50 px-4 py-3 md:py-6">
             <div className="mx-auto mb-4 w-full max-w-7xl lg:hidden">
               <div className="overflow-hidden rounded-[22px] border border-pink-100 bg-white p-2 shadow-sm">

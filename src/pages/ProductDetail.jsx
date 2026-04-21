@@ -202,40 +202,7 @@ function ProductDetail() {
       return
     }
 
-    // Amazon-style Instant Back: Resolve cache first
-    const cityId = profile?.city_id || "none"
-    const baseKey = buildDashboardBaseCacheKey(cityId)
-    const dynamicKey = buildDashboardDynamicCacheKey(user?.id, cityId)
-    const hasCache = readCachedFetchStore(baseKey)?.data && readCachedFetchStore(dynamicKey)?.data
-
-    if (!hasCache && user?.id) {
-      setDashboardTransition({
-        pending: true,
-        error: "",
-      })
-    }
-
-    try {
-      const prefetchedDashboardData = user?.id 
-        ? await prepareDashboardTransition({ userId: user.id, profile })
-        : null
-
-      navigate("/user-dashboard", {
-        replace: true,
-        state: {
-          fromDetailTransition: true,
-          prefetchedDashboardData,
-        },
-      })
-    } catch (transitionError) {
-      setDashboardTransition({
-        pending: false,
-        error: getFriendlyErrorMessage(
-          transitionError,
-          "The dashboard could not be opened right now."
-        ),
-      })
-    }
+    navigate(user?.id ? "/user-dashboard" : "/", { replace: true })
   }
 
   const productStructuredData = useMemo(() => {
@@ -266,7 +233,7 @@ function ProductDetail() {
     }
   }, [currentProduct, currentShop, selectedImage, stockCount])
 
-  // --- EARLY RETURNS (Loading, Errors) ---
+  async function toggleWishlist() {
     if (!user) {
       notify({ type: "info", title: "Login required", message: "Please login to save items to your wishlist." })
       return
@@ -330,6 +297,8 @@ function ProductDetail() {
       notify({ type: "error", title: "Wishlist update failed", message: "We could not update your wishlist. Please try again." })
     }
   }
+
+  // --- EARLY RETURNS (Loading, Errors) ---
 
   function callMerchant() {
     if (!currentShop?.phone) {
