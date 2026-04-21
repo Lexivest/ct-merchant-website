@@ -37,7 +37,11 @@ import { getRetryingMessage } from "../components/common/RetryingNotice"
 import ScrollingTicker from "../components/common/ScrollingTicker"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
-import { prepareDashboardTransition } from "../lib/dashboardData"
+import {
+  buildDashboardBaseCacheKey,
+  buildDashboardDynamicCacheKey,
+  prepareDashboardTransition,
+} from "../lib/dashboardData"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import { buildShopDetailCacheKey, fetchShopDetailData } from "../lib/shopDetailData"
 import {
@@ -173,6 +177,11 @@ function ShopDetail() {
   const products = data?.products ?? EMPTY_PRODUCTS
   const approvedNews = data?.approvedNews ?? EMPTY_NEWS
   const shopBanner = data?.shopBanner || ""
+  const shopLogo =
+    currentShop?.image_url ||
+    `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+      currentShop?.name || "Shop"
+    )}`
 
   useEffect(() => {
     setShouldLoadCommunity(false)
@@ -784,11 +793,6 @@ function ShopDetail() {
     )
   }
 
-  const shopLogo =
-    currentShop?.image_url ||
-    `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-      currentShop?.name || "Shop"
-    )}`
   const ownerAvatarUrl = data?.ownerProfile?.avatar_url || ""
   const ownerAvatarInitials = getNameInitials(
     data?.ownerProfile?.full_name || currentShop?.name || "CT Merchant"
