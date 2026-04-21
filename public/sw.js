@@ -2,7 +2,6 @@ const CACHE_NAME = 'ctm-cache-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/offline.html',
   '/ctm-logo.jpg',
   '/favicon.svg',
   '/icons.svg'
@@ -60,9 +59,9 @@ self.addEventListener('fetch', (event) => {
 
         return response;
       }).catch(() => {
-        // Offline fallback for navigation requests
+        // Fallback to index.html for navigation requests to let SPA handle routing
         if (event.request.mode === 'navigate') {
-          return caches.match('/offline.html');
+          return caches.match('/index.html');
         }
       });
     })
