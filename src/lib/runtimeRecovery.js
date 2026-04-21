@@ -100,7 +100,11 @@ export function buildFreshReloadUrl() {
   return url.toString()
 }
 
-export function forceFreshAppReload({ reason = "app", manual = false } = {}) {
+export function forceFreshAppReload({
+  reason = "app",
+  manual = false,
+  clearCaches = true,
+} = {}) {
   if (typeof window === "undefined") return false
 
   if (!manual && hasAttemptedFreshReload(reason)) {
@@ -113,7 +117,9 @@ export function forceFreshAppReload({ reason = "app", manual = false } = {}) {
 
   const nextUrl = buildFreshReloadUrl()
 
-  clearBrowserManagedCaches().finally(() => {
+  const reloadTask = clearCaches ? clearBrowserManagedCaches() : Promise.resolve()
+
+  reloadTask.finally(() => {
     window.location.replace(nextUrl)
   })
 

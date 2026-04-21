@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react"
-import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom"
+import { Routes, Route, Link, Navigate, useLocation, useNavigate } from "react-router-dom"
 
 import useAuthSession from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
@@ -12,6 +12,7 @@ import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
 import Home from "./pages/Home"
 import { forceFreshAppReload, isChunkLoadFailure } from "./lib/runtimeRecovery"
+import { useVersionCheck } from "./hooks/useVersionCheck"
 
 function ChunkRouteFallback({ pageLabel = "this page" }) {
   const [isOffline, setIsOffline] = useState(() => {
@@ -414,6 +415,9 @@ function ProtectedStaffRoute({ children }) {
 }
 
 function AppShell() {
+  const location = useLocation()
+  useVersionCheck({ pathname: location.pathname })
+
   const withOnlineGuard = (element, options = {}) => (
     <OnlineRouteGuard {...options}>{element}</OnlineRouteGuard>
   )

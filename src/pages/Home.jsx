@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import {
+  FaArrowDown,
   FaArrowRight,
   FaArrowUp,
   FaCalendarDays,
@@ -14,6 +15,7 @@ import {
   FaHashtag,
   FaLock,
   FaMagnifyingGlass,
+  FaMobileScreenButton,
   FaNewspaper,
   FaPhone,
   FaTelegram,
@@ -543,6 +545,10 @@ function Home() {
   const [googleReady, setGoogleReady] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const googleButtonRef = useRef(null)
+  const [installPromptEvent, setInstallPromptEvent] = useState(null)
+  const [installSupported, setInstallSupported] = useState(false)
+  const [installingApp, setInstallingApp] = useState(false)
+  const [appInstalled, setAppInstalled] = useState(false)
 
   const [repoSearchValue, setRepoSearchValue] = useState("")
   const [repoSearchLoading, setRepoSearchLoading] = useState(false)
@@ -751,6 +757,24 @@ function Home() {
     () => phrases[phraseIndex].slice(0, charIndex),
     [phraseIndex, charIndex]
   )
+  const isAppleMobile = useMemo(() => {
+    if (typeof navigator === "undefined") return false
+    const userAgent = navigator.userAgent || ""
+    return /iphone|ipad|ipod/i.test(userAgent)
+  }, [])
+  const showInstallCard = !appInstalled
+  const installCardTitle = installPromptEvent
+    ? "Install CTMerchant on this device"
+    : isAppleMobile
+      ? "Add CTMerchant to your Home Screen"
+      : "Fast access from your device"
+  const installCardMessage = installPromptEvent
+    ? "Open CTMerchant like an app, keep it one tap away, and get a cleaner full-screen experience."
+    : isAppleMobile
+      ? "Tap Share in Safari, then choose Add to Home Screen to install CTMerchant for quicker access."
+      : installSupported
+        ? "This browser supports app install. The install action will appear automatically when ready."
+        : "Install is available in supported browsers for a faster, app-like experience."
   const homeStructuredData = useMemo(() => {
     return {
       "@context": "https://schema.org",
@@ -764,6 +788,63 @@ function Home() {
       },
     }
   }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined
+
+    const isStandalone =
+      window.matchMedia?.("(display-mode: standalone)")?.matches ||
+      window.navigator?.standalone === true
+
+    if (isStandalone) {
+      setAppInstalled(true)
+    }
+
+    function handleBeforeInstallPrompt(event) {
+      event.preventDefault()
+      setInstallPromptEvent(event)
+      setInstallSupported(true)
+    }
+
+    function handleAppInstalled() {
+      setAppInstalled(true)
+      setInstallPromptEvent(null)
+      setInstallSupported(false)
+      setInstallingApp(false)
+    }
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
+    window.addEventListener("appinstalled", handleAppInstalled)
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
+      window.removeEventListener("appinstalled", handleAppInstalled)
+    }
+  }, [])
+
+  async function handleInstallApp() {
+    if (installPromptEvent) {
+      try {
+        setInstallingApp(true)
+        await installPromptEvent.prompt()
+        await installPromptEvent.userChoice
+      } catch (error) {
+        console.warn("Install prompt failed", error)
+      } finally {
+        setInstallingApp(false)
+        setInstallPromptEvent(null)
+      }
+      return
+    }
+
+    notify({
+      type: "info",
+      title: isAppleMobile ? "Install from Safari menu" : "Install unavailable right now",
+      message: isAppleMobile
+        ? "Open the Share menu in Safari and choose Add to Home Screen."
+        : "This browser has not exposed an install prompt for CTMerchant yet.",
+    })
+  }
 
   function validateLogin() {
     const errors = {}
@@ -1151,6 +1232,62 @@ function Home() {
                   <p className="mt-1 max-w-xl text-base font-medium leading-7 text-slate-600">
                     Discover business and offerings in your neighbourhood before you step out—bridging the gap between digital convenience and physical reality.
                   </p>
+
+                  {showInstallCard ? (
+                    <div className="mt-4 rounded-[22px] bg-pink-200 p-1">
+                      <div className="rounded-[18px] border border-pink-200 bg-[linear-gradient(135deg,#fff7fb_0%,#fff1f2_48%,#fdf2f8_100%)] p-5 shadow-sm">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white/90 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.2em] text-pink-600 shadow-sm">
+                              <FaMobileScreenButton className="text-xs" />
+                              Install Web App
+                            </div>
+                            <h2 className="mt-3 text-lg font-extrabold tracking-tight text-slate-900 sm:text-[1.35rem]">
+                              {installCardTitle}
+                            </h2>
+                            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
+                              {installCardMessage}
+                            </p>
+                            <div className="mt-3 flex flex-wrap gap-2 text-[0.72rem] font-semibold text-slate-500">
+                              <span className="rounded-full bg-white px-3 py-1 shadow-sm">Faster launch</span>
+                              <span className="rounded-full bg-white px-3 py-1 shadow-sm">Home screen access</span>
+                              <span className="rounded-full bg-white px-3 py-1 shadow-sm">Cleaner full-screen feel</span>
+                            </div>
+                          </div>
+
+                          <div className="sm:w-auto sm:min-w-[220px]">
+                            <button
+                              type="button"
+                              onClick={handleInstallApp}
+                              disabled={!installPromptEvent && !isAppleMobile}
+                              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3.5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(15,23,42,0.16)] transition hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                            >
+                              <FaArrowDown />
+                              <span>
+                                {installingApp
+                                  ? "Preparing install..."
+                                  : installPromptEvent
+                                    ? "Install now"
+                                    : isAppleMobile
+                                      ? "How to install"
+                                      : "Install unavailable"}
+                              </span>
+                            </button>
+                            <div className="mt-2 flex items-start gap-2 rounded-2xl border border-white/70 bg-white/80 px-3 py-2 text-[0.72rem] leading-5 text-slate-500">
+                              <FaCircleInfo className="mt-0.5 shrink-0 text-pink-500" />
+                              <span>
+                                {installPromptEvent
+                                  ? "The app will install without interrupting your current browsing session."
+                                  : isAppleMobile
+                                    ? "Best experience on Safari: use Share, then Add to Home Screen."
+                                    : "If install is supported here, the action will become available automatically."}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
 
                   <div className="mt-4 rounded-[22px] bg-pink-200 p-1">
                     <div className="rounded-[18px] border border-pink-200 bg-pink-50 p-6">
