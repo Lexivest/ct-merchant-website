@@ -763,16 +763,6 @@ function Home() {
     return /iphone|ipad|ipod/i.test(userAgent)
   }, [])
   const showInstallCard = !appInstalled
-  const installCardTitle = installPromptEvent
-    ? "Install CTMerchant on this device"
-    : isAppleMobile
-      ? "Add CTMerchant to your Home Screen"
-      : "Fast access from your device"
-  const installCardMessage = installPromptEvent
-    ? "Open CTMerchant like an app, keep it one tap away, and get a cleaner full-screen experience."
-    : isAppleMobile
-      ? "Tap Share in Safari, then choose Add to Home Screen to install CTMerchant for quicker access."
-      : "Keep CTMerchant close, launch faster, and open it in a cleaner app-style window from your device."
   const installBrowserSupportText =
     "Supported browsers: Google Chrome, Microsoft Edge, Samsung Internet, Opera, Brave. On iPhone and iPad, use Safari's Add to Home Screen."
   const homeStructuredData = useMemo(() => {
@@ -1235,30 +1225,20 @@ function Home() {
 
                   {showInstallCard ? (
                     <div className="mt-4 rounded-[22px] bg-pink-200 p-1">
-                      <div className="rounded-[18px] border border-pink-200 bg-[linear-gradient(135deg,#fff7fb_0%,#fff1f2_48%,#fdf2f8_100%)] p-5 shadow-sm">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="rounded-[18px] border border-pink-200 bg-[linear-gradient(135deg,#fff7fb_0%,#fff1f2_48%,#fdf2f8_100%)] p-4 shadow-sm">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                           <div className="min-w-0">
                             <div className="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white/90 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.2em] text-pink-600 shadow-sm">
                               <FaMobileScreenButton className="text-xs" />
                               Install Web App
                             </div>
-                            <h2 className="mt-3 text-lg font-extrabold tracking-tight text-slate-900 sm:text-[1.35rem]">
-                              {installCardTitle}
-                            </h2>
                             <div className="mt-3 flex gap-2 overflow-x-auto whitespace-nowrap pb-1 text-[0.72rem] font-semibold text-slate-500 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                               <span className="rounded-full bg-white px-3 py-1 shadow-sm">Faster launch</span>
                               <span className="rounded-full bg-white px-3 py-1 shadow-sm">Home screen access</span>
-                              <span className="rounded-full bg-white px-3 py-1 shadow-sm">Cleaner full-screen feel</span>
                             </div>
-                            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                              {installCardMessage}
-                            </p>
-                            <p className="mt-3 text-[0.78rem] font-semibold leading-6 text-slate-500">
-                              {installBrowserSupportText}
-                            </p>
                           </div>
 
-                          <div className="sm:w-auto sm:min-w-[220px]">
+                          <div className="lg:w-auto lg:min-w-[280px]">
                             <button
                               type="button"
                               onClick={handleInstallApp}
