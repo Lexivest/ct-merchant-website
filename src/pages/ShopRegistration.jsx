@@ -986,6 +986,8 @@ function ShopRegistration() {
           type: "success",
           title: "Application Received",
           message: "Your correction has been received and is under review.",
+          confirmText: "Back to Dashboard",
+          onClose: () => navigate("/vendor-panel", { replace: true }),
         })
       } else {
         const { error } = await supabase.from("shops").insert({
@@ -998,6 +1000,8 @@ function ShopRegistration() {
           type: "success",
           title: "Application Received",
           message: "Your shop registration has been received and is currently under review. You will be notified once approved.",
+          confirmText: "Back to Dashboard",
+          onClose: () => navigate("/vendor-panel", { replace: true }),
         })
       }
 

@@ -372,12 +372,95 @@ export async function fetchProfileByUserId(userId) {
     .eq("id", userId)
     .maybeSingle()
 
-  if (error) {
+  if (!error) {
+    return profile
+  }
+
+  const isPermissionError =
+    String(error?.code || "") === "42501" ||
+    String(error?.message || "").toLowerCase().includes("permission denied")
+
+  if (!isPermissionError) {
     console.error("Error fetching unified profile:", error)
     throw error
   }
 
-  return profile
+  console.warn("Unified profile view unavailable, falling back to base profile query:", error.message)
+
+  const { data: baseProfile, error: baseProfileError } = await supabase
+    .from("profiles")
+    .select(`
+      id,
+      full_name,
+      phone,
+      avatar_url,
+      is_suspended,
+      city_id,
+      area_id,
+      created_at,
+      cities (
+        name
+      ),
+      areas (
+        name
+      )
+    `)
+    .eq("id", userId)
+    .maybeSingle()
+
+  if (baseProfileError) {
+    console.error("Error fetching base profile fallback:", baseProfileError)
+    throw baseProfileError
+  }
+
+  if (!baseProfile) {
+    return null
+  }
+
+  const [adminResult, staffResult] = await Promise.allSettled([
+    supabase
+      .from("admins")
+      .select("role")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabase
+      .from("staff_profiles")
+      .select("role")
+      .eq("id", userId)
+      .maybeSingle(),
+  ])
+
+  const adminRole =
+    adminResult.status === "fulfilled" && !adminResult.value.error
+      ? adminResult.value.data?.role || null
+      : null
+
+  const staffRole =
+    staffResult.status === "fulfilled" && !staffResult.value.error
+      ? staffResult.value.data?.role || null
+      : null
+
+  const resolvedRole = adminRole
+    ? String(adminRole)
+    : staffRole === "director"
+      ? "super_admin"
+      : staffRole
+        ? "staff"
+        : "user"
+
+  return {
+    id: baseProfile.id,
+    full_name: baseProfile.full_name,
+    phone: baseProfile.phone,
+    avatar_url: baseProfile.avatar_url,
+    is_suspended: Boolean(baseProfile.is_suspended),
+    city_id: baseProfile.city_id,
+    city_name: baseProfile.cities?.name || "",
+    area_id: baseProfile.area_id,
+    area_name: baseProfile.areas?.name || "",
+    role: resolvedRole,
+    created_at: baseProfile.created_at,
+  }
 }
 
 export function isProfileComplete(profile) {

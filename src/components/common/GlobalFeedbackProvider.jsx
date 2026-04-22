@@ -32,6 +32,7 @@ function normalizePayload(payload) {
       confirmText: payload.confirmText || "Continue",
       cancelText: payload.cancelText || "Cancel",
       autoCloseMs: Number(payload.autoCloseMs) > 0 ? Number(payload.autoCloseMs) : (payload.kind === "toast" ? 4000 : null),
+      onClose: typeof payload.onClose === "function" ? payload.onClose : null,
     }
   }
 
@@ -45,6 +46,7 @@ function normalizePayload(payload) {
     confirmText: "Continue",
     cancelText: "Cancel",
     autoCloseMs: null,
+    onClose: null,
   }
 }
 
@@ -231,6 +233,13 @@ function GlobalFeedbackProvider({ children }) {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
       timerRef.current = null
+    }
+    if (typeof activeItem?.onClose === "function") {
+      try {
+        activeItem.onClose(result)
+      } catch (error) {
+        console.error("Global feedback onClose handler failed:", error)
+      }
     }
     if (activeItem?.kind === "confirm" && typeof activeItem.resolve === "function") {
       activeItem.resolve(result)

@@ -593,6 +593,8 @@ export default function MerchantVideoKYC() {
         type: "success",
         title: "Video uploaded",
         message: "Your video was submitted successfully and is under review.",
+        confirmText: "Back to Dashboard",
+        onClose: () => navigate("/vendor-panel", { replace: true }),
       });
 
       // Clear specific vendor panel cache to force immediate fresh state there
@@ -608,12 +610,6 @@ export default function MerchantVideoKYC() {
       );
 
       uploadInFlightRef.current = false;
-      // navigate("/vendor-panel", { replace: true });
-      notify({
-        type: "success",
-        title: "Video Uploaded",
-        message: "Your verification video has been successfully uploaded and is under review.",
-      });
 
     } catch (err) {
       if (uploadedPath) {
