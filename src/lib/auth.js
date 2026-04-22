@@ -397,53 +397,18 @@ export async function signUpWithEmail({
 }
 
 export async function fetchProfileByUserId(userId) {
-  // 1. Try to fetch regular profile
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("*, cities(name), areas(name)")
-    .eq("id", userId)
-    .maybeSingle()
-
-  if (profileError) throw profileError
-
-  // 2. Check if this user is staff (Try admins table first)
-  const { data: adminProfile } = await supabase
-    .from("admins")
+  const { data: profile, error } = await supabase
+    .from("vw_user_profiles")
     .select("*")
     .eq("id", userId)
     .maybeSingle()
 
-  const { data: staffProfile } = adminProfile 
-    ? { data: null } 
-    : await supabase
-        .from("staff_profiles")
-        .select("*")
-        .eq("id", userId)
-        .maybeSingle()
-
-  const staff = adminProfile || staffProfile
-  const role = adminProfile 
-    ? adminProfile.role 
-    : staffProfile 
-      ? (staffProfile.role === "director" ? "super_admin" : "staff")
-      : "user"
-
-  // 3. Return combined profile with role
-  if (profile) {
-    return {
-      ...profile,
-      role: (role === "user" && staff) ? "staff" : role
-    }
+  if (error) {
+    console.error("Error fetching unified profile:", error)
+    throw error
   }
 
-  if (staff) {
-    return {
-      ...staff,
-      role: role === "user" ? "staff" : role
-    }
-  }
-
-  return null
+  return profile
 }
 
 export function isProfileComplete(profile) {
