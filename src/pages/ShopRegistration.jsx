@@ -1636,8 +1636,25 @@ function ReviewModal({ form, cityName, areaName, storefrontPreview, idPreview, c
           <DetailRow label="Business Name" value={form.name} />
           <DetailRow label="Type" value={form.businessType} />
           <DetailRow label="Category" value={form.category} />
+          <DetailRow label="Address" value={form.address} />
           <DetailRow label="Location" value={`${areaName}, ${cityName}`} />
+          <DetailRow label="GPS" value={`${form.lat}, ${form.lng}`} />
+          
+          <div className="my-2 h-px bg-slate-200" />
+          
+          <DetailRow label="Phone" value={form.phone} />
+          <DetailRow label="WhatsApp" value={form.whatsapp} />
           {form.website && <DetailRow label="Website" value={formatUrl(form.website)} />}
+          
+          {form.facebook && <DetailRow label="Facebook" value={form.facebook} />}
+          {form.instagram && <DetailRow label="Instagram" value={form.instagram} />}
+          {form.twitter && <DetailRow label="Twitter/X" value={form.twitter} />}
+          {form.tiktok && <DetailRow label="TikTok" value={form.tiktok} />}
+
+          <div className="my-2 h-px bg-slate-200" />
+          
+          <DetailRow label={form.idType || "ID Document"} value={form.idNumber} />
+          {form.cacNumber && <DetailRow label="CAC Number" value={form.cacNumber} />}
         </div>
 
         <div className="mt-6 space-y-3">

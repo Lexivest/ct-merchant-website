@@ -666,6 +666,62 @@ export default function StaffVerifications() {
                         </div>
                       </div>
                     </div>
+
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                      <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Online Presence</h4>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-black uppercase text-slate-400">Official Website</span>
+                          <span className="truncate text-sm font-bold text-slate-900">
+                            {selectedShop.website_url ? (
+                              <a href={selectedShop.website_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
+                                {selectedShop.website_url.replace(/^https?:\/\//, "")}
+                              </a>
+                            ) : "Not provided"}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-black uppercase text-slate-400">Facebook</span>
+                          <span className="truncate text-sm font-bold text-slate-900">
+                            {selectedShop.facebook_url ? (
+                              <a href={selectedShop.facebook_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
+                                View Profile
+                              </a>
+                            ) : "Not provided"}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-black uppercase text-slate-400">Instagram</span>
+                          <span className="truncate text-sm font-bold text-slate-900">
+                            {selectedShop.instagram_url ? (
+                              <a href={selectedShop.instagram_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
+                                @{selectedShop.instagram_url.split("/").filter(Boolean).pop()}
+                              </a>
+                            ) : "Not provided"}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-black uppercase text-slate-400">X (Twitter)</span>
+                          <span className="truncate text-sm font-bold text-slate-900">
+                            {selectedShop.twitter_url ? (
+                              <a href={selectedShop.twitter_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
+                                View X
+                              </a>
+                            ) : "Not provided"}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-black uppercase text-slate-400">TikTok</span>
+                          <span className="truncate text-sm font-bold text-slate-900">
+                            {selectedShop.tiktok_url ? (
+                              <a href={selectedShop.tiktok_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
+                                View TikTok
+                              </a>
+                            ) : "Not provided"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-6">

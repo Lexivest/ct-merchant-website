@@ -1233,18 +1233,18 @@ function Home() {
                   </p>
 
                   {showInstallCard ? (
-                    <div className="mt-4 rounded-[22px] bg-pink-200 p-1">
-                      <div className="rounded-[18px] border border-pink-200 bg-[linear-gradient(135deg,#fff7fb_0%,#fff1f2_48%,#fdf2f8_100%)] p-6 shadow-sm">
+                    <div className="mt-2 rounded-[22px] bg-pink-200 p-0.5">
+                      <div className="rounded-[20px] border border-pink-200 bg-[linear-gradient(135deg,#fff7fb_0%,#fff1f2_48%,#fdf2f8_100%)] p-3 shadow-sm">
                         <button
                           type="button"
                           onClick={handleInstallApp}
                           disabled={!installPromptEvent && !isAppleMobile}
                           className="group flex w-full flex-col items-center justify-center disabled:cursor-not-allowed"
                         >
-                          <span className={`text-sm font-black uppercase tracking-[0.2em] transition-all ${ (installPromptEvent || isAppleMobile) ? "text-pink-600 underline underline-offset-4 group-hover:text-pink-700" : "text-slate-400" }`}>
+                          <span className={`text-[13px] font-black uppercase tracking-[0.15em] transition-all ${ (installPromptEvent || isAppleMobile) ? "text-pink-600 underline underline-offset-4 group-hover:text-pink-700" : "text-slate-400" }`}>
                             Install Web App
                           </span>
-                          <span className="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                          <span className="mt-1.5 text-[9px] font-bold uppercase tracking-widest text-slate-400">
                             Fast launch • Homescreen access
                           </span>
                         </button>
