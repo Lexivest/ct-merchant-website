@@ -385,82 +385,32 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
     inbox: 0,
     radar: 0,
   })
+  const [summary, setSummary] = useState({
+    shopCount: 0,
+    inactiveUsers: 0,
+    visitsToday: 0,
+  })
   const [loading, setLoading] = useState(true)
 
   const fetchCounts = async () => {
     try {
-      // Define queries with optional city scoping
-      let shopQuery = supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "pending")
-      let kycQuery = supabase.from("shops").select("id", { count: "exact", head: true }).eq("kyc_status", "submitted")
-      let productQuery = supabase.from("products").select("id", { count: "exact", head: true }).is("is_approved", false).is("rejection_reason", null)
-      let paymentQuery = supabase.from("offline_payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pending")
-      let commentQuery = supabase.from("shop_comments").select("id", { count: "exact", head: true }).eq("status", "pending")
-      let contentQuery = supabase.from("shop_banners_news").select("id", { count: "exact", head: true }).eq("status", "pending")
-      let contactQuery = supabase.from("contact_messages").select("id", { count: "exact", head: true }).or("status.eq.unread,status.is.null")
-      let abuseQuery = supabase.from("abuse_reports").select("id", { count: "exact", head: true }).or("status.eq.pending,status.is.null")
-
-      // Apply city filters for regular admins
-      if (!isSuperAdmin && staffCityId) {
-        shopQuery = shopQuery.eq("city_id", staffCityId)
-        kycQuery = kycQuery.eq("city_id", staffCityId)
-        
-        // These tables don't have city_id directly, join via shops
-        productQuery = supabase.from("products")
-          .select("id, shops!inner(city_id)", { count: "exact", head: true })
-          .is("is_approved", false)
-          .is("rejection_reason", null)
-          .eq("shops.city_id", staffCityId)
-
-        commentQuery = supabase.from("shop_comments")
-          .select("id, shops!inner(city_id)", { count: "exact", head: true })
-          .eq("status", "pending")
-          .eq("shops.city_id", staffCityId)
-
-        contentQuery = supabase.from("shop_banners_news")
-          .select("id, shops!inner(city_id)", { count: "exact", head: true })
-          .eq("status", "pending")
-          .eq("shops.city_id", staffCityId)
-
-        // Abuse reports filtered by reporter/reported profile city
-        abuseQuery = supabase.from("abuse_reports")
-          .select("id, profiles!inner(city_id)", { count: "exact", head: true })
-          .or("status.eq.pending,status.is.null")
-          .eq("profiles.city_id", staffCityId)
-      }
-
-      const [
-        pendingShops,
-        submittedKyc,
-        pendingProducts,
-        pendingPayments,
-        pendingComments,
-        pendingContent,
-        unreadContact,
-        pendingAbuse,
-        radar
-      ] = await Promise.all([
-        shopQuery,
-        kycQuery,
-        productQuery,
-        isSuperAdmin ? paymentQuery : Promise.resolve({ count: 0 }),
-        commentQuery,
-        contentQuery,
-        contactQuery, 
-        abuseQuery,
-        isSuperAdmin ? supabase.rpc("ctm_get_security_radar_insights") : Promise.resolve({ data: [] }),
-      ])
-
-      setCounts({
-        verifications: (pendingShops.count || 0) + (submittedKyc.count || 0),
-        products: pendingProducts.count || 0,
-        payments: pendingPayments.count || 0,
-        community: pendingComments.count || 0,
-        content: pendingContent.count || 0,
-        inbox: (unreadContact.count || 0) + (pendingAbuse.count || 0),
-        radar: (radar.data || []).length,
+      const { data, error } = await supabase.rpc("get_staff_dashboard_payload", {
+        p_is_super_admin: isSuperAdmin,
+        p_city_id: staffCityId ? Number(staffCityId) : null,
       })
+
+      if (error) throw error
+
+      if (data) {
+        setCounts(data.counts)
+        setSummary({
+          shopCount: data.summary.shop_count,
+          inactiveUsers: data.summary.inactive_users_count,
+          visitsToday: data.summary.visits_today,
+        })
+      }
     } catch (err) {
-      console.error("Error fetching staff counts:", err)
+      console.error("Error fetching staff dashboard payload:", err)
     } finally {
       setLoading(false)
     }
@@ -476,7 +426,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
     return () => clearInterval(timer)
   }, [isSuperAdmin, staffCityId])
 
-  return { counts, loading, refresh: fetchCounts }
+  return { counts, summary, loading, refresh: fetchCounts }
 }
 
 export function StaffPortalShell({

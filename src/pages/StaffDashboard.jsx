@@ -10,15 +10,11 @@ import {
   FaShieldHalved,
   FaStore,
   FaTowerBroadcast,
-  FaTriangleExclamation,
   FaUsers,
   FaPanorama,
   FaBullhorn,
   FaWandMagicSparkles,
 } from "react-icons/fa6"
-import { supabase } from "../lib/supabase"
-import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
-import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import { prepareStaffRouteTransition } from "../lib/staffRouteTransitions"
@@ -26,7 +22,6 @@ import {
   QuickActionButton,
   SectionHeading,
   StaffPortalShell,
-  buildVisitTimeline,
   useStaffCounts,
   useStaffPortalSession,
 } from "./staff/StaffPortalShared"
@@ -75,109 +70,29 @@ function HomeCard({ icon, title, subtitle, metric, metricLabel = "Live", onClick
 
 export default function StaffDashboard() {
   const navigate = useNavigate()
-  const { notify } = useGlobalFeedback()
   const isMounted = useRef(true)
   const retryRouteTransitionRef = useRef(null)
 
   const { 
     isSuperAdmin, 
     staffCityId, 
-    staffData,
-    fetchingStaff
+    fetchingStaff 
   } = useStaffPortalSession()
 
-  const { counts, refresh: refreshCounts } = useStaffCounts(isSuperAdmin, staffCityId)
+  const { counts, summary, loading, refresh: refreshCounts } = useStaffCounts(isSuperAdmin, staffCityId)
 
-  const [loading, setLoading] = useState(true)
   const [routeTransition, setRouteTransition] = useState({
     pending: false,
     error: "",
   })
-  const [summaryError, setSummaryError] = useState(null)
-  const [summary, setSummary] = useState({
-    shopCount: 0,
-    inactiveUsers: 0,
-    visitsToday: 0,
-  })
-
-  const fetchSummary = useCallback(async () => {
-    // Wait for staff session to be ready
-    if (!staffData) return
-
-    setLoading(true)
-    setSummaryError(null)
-    try {
-      const shopQuery = supabase.from("shops").select("id", { count: "exact", head: true })
-      
-      // Filter by city if not super admin
-      if (!isSuperAdmin && staffCityId) {
-        shopQuery.eq("city_id", staffCityId)
-      }
-
-      const results = await Promise.allSettled([
-        shopQuery,
-        supabase.rpc("staff_user_activity_summary", {
-          p_inactive_days: 180,
-          p_city_id: isSuperAdmin ? null : Number(staffCityId),
-        }),
-        supabase.rpc("staff_site_visit_daily", { p_days: 7 }),
-      ])
-
-      const labels = ["shops", "users", "visits"]
-      const errors = []
-      
-      results.forEach((result, idx) => {
-        if (result.status === "rejected") {
-          errors.push(`${labels[idx]}: ${result.reason?.message || "Unknown error"}`)
-        } else if (result.value.error) {
-          errors.push(`${labels[idx]}: ${result.value.error.message}`)
-        }
-      })
-
-      if (errors.length > 0) {
-        throw new Error(`Summary fetch partially failed: ${errors.join(", ")}`)
-      }
-
-      const [shopsResult, usersResult, visitsResult] = results.map(r => r.value)
-
-      const userRows = usersResult.data || []
-      const visitTimeline = buildVisitTimeline(visitsResult.data || [], 7)
-      const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Lagos" })
-      const visitsToday = visitTimeline.find((item) => item.visit_date === todayKey)?.total_visits || 0
-
-      if (isMounted.current) {
-        setSummary({
-          shopCount: shopsResult.count || 0,
-          inactiveUsers: userRows.filter((item) => item.is_inactive).length,
-          visitsToday: Number(visitsToday) || 0,
-        })
-      }
-    } catch (err) {
-      console.error("Error fetching staff summary:", err)
-      if (isMounted.current) {
-        setSummaryError(err)
-        notify({
-          type: "error",
-          title: "Could not load staff overview",
-          message: getFriendlyErrorMessage(err, "Could not load the staff home screen. Retry."),
-        })
-      }
-    } finally {
-      if (isMounted.current) setLoading(false)
-    }
-  }, [notify, isSuperAdmin, staffCityId, staffData])
 
   useEffect(() => {
-    if (!fetchingStaff) {
-      fetchSummary()
-    }
     return () => { isMounted.current = false }
-  }, [fetchSummary, fetchingStaff])
+  }, [])
 
   const handleRefresh = useCallback(() => {
-    fetchSummary()
     refreshCounts()
-  }, [fetchSummary, refreshCounts])
+  }, [refreshCounts])
 
   function beginRouteTransition(retryAction = null) {
     retryRouteTransitionRef.current = retryAction
@@ -252,17 +167,6 @@ export default function StaffDashboard() {
     ],
     [handleRefresh, loading, openStaffRouteWithTransition]
   )
-
-  if (summaryError && !loading) {
-    return (
-      <GlobalErrorScreen
-        error={summaryError}
-        message={getFriendlyErrorMessage(summaryError, "Could not load the staff home screen. Retry.")}
-        onRetry={handleRefresh}
-        onBack={() => navigate("/staff-portal")}
-      />
-    )
-  }
 
   return (
     <>
