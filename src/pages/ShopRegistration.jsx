@@ -1124,15 +1124,24 @@ function ShopRegistration() {
                 icon: <FaCheck />
               },
             ].map((item, idx) => (
-              <div key={idx} className="group relative flex items-start gap-5 rounded-[32px] border border-slate-200 bg-white p-6 transition-all hover:border-indigo-200 hover:shadow-md">
+              <div
+                key={idx}
+                onClick={() => {
+                  if (idx === 0) navigate("/user-dashboard?tab=profile")
+                }}
+                className={`group relative flex items-start gap-5 rounded-[32px] border border-slate-200 bg-white p-6 transition-all hover:border-indigo-200 hover:shadow-md ${idx === 0 ? "cursor-pointer active:scale-[0.98]" : ""}`}
+              >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-xl text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
                   {item.icon}
                 </div>
-                <div>
+                <div className="flex-1">
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 group-hover:text-indigo-700">Step {item.step}</span>
                     <div className="h-1 w-1 rounded-full bg-slate-300" />
                     <h3 className="text-lg font-extrabold text-slate-900">{item.title}</h3>
+                    {idx === 0 && (
+                      <span className="ml-auto rounded-full bg-indigo-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-tight text-indigo-600">Tap to Update</span>
+                    )}
                   </div>
                   <p className="mt-1 text-[15px] font-medium leading-relaxed text-slate-500">{item.desc}</p>
                 </div>
