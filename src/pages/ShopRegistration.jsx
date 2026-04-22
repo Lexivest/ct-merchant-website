@@ -1391,6 +1391,9 @@ function ShopRegistration() {
                       </FieldBlock>
                       <FieldBlock label="WhatsApp Presence">
                         <NigeriaPhoneInput value={form.whatsapp} onChange={(val) => setForm((prev) => ({ ...prev, whatsapp: val }))} placeholder="803 000 0000" />
+                        <p className="mt-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                          We may check to confirm your WhatsApp is active
+                        </p>
                       </FieldBlock>
                     </div>
 

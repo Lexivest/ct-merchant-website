@@ -1234,43 +1234,20 @@ function Home() {
 
                   {showInstallCard ? (
                     <div className="mt-4 rounded-[22px] bg-pink-200 p-1">
-                      <div className="rounded-[18px] border border-pink-200 bg-[linear-gradient(135deg,#fff7fb_0%,#fff1f2_48%,#fdf2f8_100%)] p-4 shadow-sm">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                          <div className="min-w-0">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white/90 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.2em] text-pink-600 shadow-sm">
-                              <FaMobileScreenButton className="text-xs" />
-                              Install Web App
-                            </div>
-                            <div className="mt-3 flex gap-2 overflow-x-auto whitespace-nowrap pb-1 text-[0.72rem] font-semibold text-slate-500 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                              <span className="rounded-full bg-white px-3 py-1 shadow-sm">Faster launch</span>
-                              <span className="rounded-full bg-white px-3 py-1 shadow-sm">Home screen access</span>
-                            </div>
-                          </div>
-
-                          <div className="lg:w-auto lg:min-w-[280px]">
-                            <button
-                              type="button"
-                              onClick={handleInstallApp}
-                              disabled={!installPromptEvent && !isAppleMobile}
-                              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3.5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(15,23,42,0.16)] transition hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-                            >
-                              <FaArrowDown />
-                              <span>
-                                {installingApp
-                                  ? "Preparing install..."
-                                  : installPromptEvent
-                                    ? "Install now"
-                                    : isAppleMobile
-                                      ? "How to install"
-                                      : "Install unavailable"}
-                              </span>
-                            </button>
-                            <div className="mt-2 flex items-start gap-2 rounded-2xl border border-white/70 bg-white/80 px-3 py-2 text-[0.72rem] leading-5 text-slate-500">
-                              <FaCircleInfo className="mt-0.5 shrink-0 text-pink-500" />
-                              <span>{installBrowserSupportText}</span>
-                            </div>
-                          </div>
-                        </div>
+                      <div className="rounded-[18px] border border-pink-200 bg-[linear-gradient(135deg,#fff7fb_0%,#fff1f2_48%,#fdf2f8_100%)] p-6 shadow-sm">
+                        <button
+                          type="button"
+                          onClick={handleInstallApp}
+                          disabled={!installPromptEvent && !isAppleMobile}
+                          className="group flex w-full flex-col items-center justify-center disabled:cursor-not-allowed"
+                        >
+                          <span className={`text-sm font-black uppercase tracking-[0.2em] transition-all ${ (installPromptEvent || isAppleMobile) ? "text-pink-600 underline underline-offset-4 group-hover:text-pink-700" : "text-slate-400" }`}>
+                            Install Web App
+                          </span>
+                          <span className="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                            Fast launch • Homescreen access
+                          </span>
+                        </button>
                       </div>
                     </div>
                   ) : null}
