@@ -315,14 +315,6 @@ export default function AddProduct() {
         setPreviews(nextPreviews);
       }
 
-      if (hasDraftData) {
-        notify({
-          type: "info",
-          title: "Draft restored",
-          message: "We restored your saved product draft on this device.",
-        });
-      }
-
       setDraftHydrated(true);
     }
 

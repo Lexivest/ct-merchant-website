@@ -566,10 +566,15 @@ function ShopRegistration() {
         SHOP_FILE_KEYS.filter((key) => Boolean(files[key])).map((key) => [key, files[key]])
       )
       const persistentPreviews = Object.fromEntries(
-        SHOP_FILE_KEYS.map((key) => [
-          key,
-          files[key] || String(previews[key] || "").startsWith("blob:") ? "" : previews[key],
-        ])
+        SHOP_FILE_KEYS.map((key) => {
+          const val = previews[key]
+          // If we have a local File object, we don't save a preview URL (the File itself is saved in IndexedDB)
+          // If the preview is a blob URL, we don't save it (it's temporary and revoked on reload)
+          // We ONLY save the preview if it's an existing server URL and there's no new file replacement
+          const isServerUrl = typeof val === "string" && val.length > 0 && !val.startsWith("blob:")
+          const hasNewFile = Boolean(files[key])
+          return [key, (isServerUrl && !hasNewFile) ? val : ""]
+        })
       )
 
       savePersistentDraft(shopDraftKey, {
@@ -1026,8 +1031,6 @@ function ShopRegistration() {
       try { localStorage.removeItem("ctm_dashboard_cache") } catch {
         // Ignore cache cleanup failures
       }
-
-      setTimeout(() => navigate("/user-dashboard"), 1200)
     } catch (error) {
       const uploadedPathsByBucket = new Map()
       uploadedFiles.forEach((item) => {

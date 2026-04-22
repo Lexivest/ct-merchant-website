@@ -608,7 +608,12 @@ export default function MerchantVideoKYC() {
       );
 
       uploadInFlightRef.current = false;
-      navigate("/vendor-panel", { replace: true });
+      // navigate("/vendor-panel", { replace: true });
+      notify({
+        type: "success",
+        title: "Video Uploaded",
+        message: "Your verification video has been successfully uploaded and is under review.",
+      });
 
     } catch (err) {
       if (uploadedPath) {
