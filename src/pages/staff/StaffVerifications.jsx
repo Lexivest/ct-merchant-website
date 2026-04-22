@@ -627,6 +627,18 @@ export default function StaffVerifications() {
                           <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700">{selectedShop.category}</span>
                         </div>
                         <div className="flex justify-between border-b border-slate-50 pb-3">
+                          <span className="text-sm font-semibold text-slate-500">Physical Address</span>
+                          <span className="max-w-[200px] text-right text-sm font-bold text-slate-900">{selectedShop.address}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-50 pb-3">
+                          <span className="text-sm font-semibold text-slate-500">GPS Coordinates</span>
+                          <span className="font-mono text-sm font-bold text-slate-900">
+                            {selectedShop.latitude && selectedShop.longitude 
+                              ? `${selectedShop.latitude.toFixed(6)}, ${selectedShop.longitude.toFixed(6)}`
+                              : "Not provided"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-50 pb-3">
                           <span className="text-sm font-semibold text-slate-500">Phone Number</span>
                           <span className="flex items-center gap-1.5 text-sm font-bold text-slate-900"><FaPhone className="text-xs text-slate-400" /> {selectedShop.phone}</span>
                         </div>
@@ -646,6 +658,13 @@ export default function StaffVerifications() {
                           )}
                         </div>
                       </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                      <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">About Business</h4>
+                      <p className="text-sm font-medium leading-relaxed text-slate-600">
+                        {selectedShop.description || "No description provided."}
+                      </p>
                     </div>
 
                     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
