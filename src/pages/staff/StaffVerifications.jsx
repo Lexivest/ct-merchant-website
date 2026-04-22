@@ -632,7 +632,18 @@ export default function StaffVerifications() {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-sm font-semibold text-slate-500">WhatsApp</span>
-                          <span className="flex items-center gap-1.5 text-sm font-bold text-emerald-600"><FaWhatsapp className="text-xs" /> {selectedShop.whatsapp || "Not linked"}</span>
+                          {selectedShop.whatsapp ? (
+                            <a 
+                              href={`https://wa.me/${selectedShop.whatsapp.replace(/\D/g, "").length === 10 ? "234" + selectedShop.whatsapp.replace(/\D/g, "") : selectedShop.whatsapp.replace(/\D/g, "")}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1.5 text-sm font-bold text-emerald-600 hover:underline"
+                            >
+                              <FaWhatsapp className="text-xs" /> {selectedShop.whatsapp}
+                            </a>
+                          ) : (
+                            <span className="text-sm font-bold text-slate-400">Not linked</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -642,7 +653,9 @@ export default function StaffVerifications() {
                       <div className="flex items-center gap-4">
                         <div className="h-14 w-14 overflow-hidden rounded-2xl bg-slate-100">
                           {selectedShop.profiles?.avatar_url ? (
-                            <img src={selectedShop.profiles.avatar_url} className="h-full w-full object-cover" />
+                            <a href={selectedShop.profiles.avatar_url} target="_blank" rel="noreferrer" className="block h-full w-full transition hover:opacity-80">
+                              <img src={selectedShop.profiles.avatar_url} className="h-full w-full object-cover" />
+                            </a>
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-slate-400"><FaUser /></div>
                           )}
@@ -658,55 +671,54 @@ export default function StaffVerifications() {
                   <div className="space-y-6">
                     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                       <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Legal Documents</h4>
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <a 
-                          href={signedUrls.id} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 transition hover:border-indigo-200"
-                        >
-                          <img src={signedUrls.id} className="h-full w-full object-cover transition group-hover:scale-105" />
-                          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/0 opacity-0 transition group-hover:bg-slate-900/40 group-hover:opacity-100">
-                            <span className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-slate-900">View ID Card</span>
-                          </div>
-                          <div className="absolute bottom-2 left-2 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-black uppercase backdrop-blur-sm">
-                            {selectedShop.id_type || "Govt ID"}
-                          </div>
-                        </a>
-                        
-                        {selectedShop.cac_certificate_url ? (
-                          <a 
-                            href={signedUrls.cac} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 transition hover:border-indigo-200"
-                          >
-                            <img src={signedUrls.cac} className="h-full w-full object-cover transition group-hover:scale-105" />
-                            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/0 opacity-0 transition group-hover:bg-slate-900/40 group-hover:opacity-100">
-                              <span className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-slate-900">View CAC</span>
-                            </div>
-                            <div className="absolute bottom-2 left-2 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-black uppercase backdrop-blur-sm">
-                              CAC Certificate
-                            </div>
-                          </a>
-                        ) : (
-                          <div className="flex aspect-[4/3] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 text-slate-400">
-                            <FaTriangleExclamation className="mb-2 text-xl" />
-                            <span className="text-[10px] font-bold uppercase">No CAC Uploaded</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="mt-4 grid gap-2">
-                        <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-3">
-                          <FaFileLines className="text-slate-400" />
-                          <div className="text-xs font-bold text-slate-600">ID: <span className="text-slate-900">{selectedShop.id_number}</span></div>
-                        </div>
-                        {selectedShop.cac_number && (
+                      
+                      <div className="grid gap-8 sm:grid-cols-2">
+                        {/* Government ID Section */}
+                        <div className="space-y-3">
                           <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-3">
                             <FaFileLines className="text-slate-400" />
-                            <div className="text-xs font-bold text-slate-600">CAC: <span className="text-slate-900">{selectedShop.cac_number}</span></div>
+                            <div className="text-xs font-bold text-slate-600">{selectedShop.id_type || "ID"}: <span className="text-slate-900">{selectedShop.id_number}</span></div>
                           </div>
-                        )}
+                          <a 
+                            href={signedUrls.id} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="group relative block aspect-[4/3] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 transition hover:border-indigo-200"
+                          >
+                            <img src={signedUrls.id} className="h-full w-full object-cover transition group-hover:scale-105" />
+                            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/0 opacity-0 transition group-hover:bg-slate-900/40 group-hover:opacity-100">
+                              <span className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-slate-900">View ID Card</span>
+                            </div>
+                          </a>
+                        </div>
+
+                        {/* CAC Section */}
+                        <div className="space-y-3">
+                          {selectedShop.cac_certificate_url ? (
+                            <>
+                              <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-3">
+                                <FaFileLines className="text-slate-400" />
+                                <div className="text-xs font-bold text-slate-600">CAC: <span className="text-slate-900">{selectedShop.cac_number}</span></div>
+                              </div>
+                              <a 
+                                href={signedUrls.cac} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="group relative block aspect-[4/3] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 transition hover:border-indigo-200"
+                              >
+                                <img src={signedUrls.cac} className="h-full w-full object-cover transition group-hover:scale-105" />
+                                <div className="absolute inset-0 flex items-center justify-center bg-slate-900/0 opacity-0 transition group-hover:bg-slate-900/40 group-hover:opacity-100">
+                                  <span className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-slate-900">View CAC Certificate</span>
+                                </div>
+                              </a>
+                            </>
+                          ) : (
+                            <div className="flex h-full min-h-[160px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 p-6 text-slate-400">
+                              <FaTriangleExclamation className="mb-2 text-xl" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest">No CAC Uploaded</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -836,12 +848,13 @@ export default function StaffVerifications() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-6">
                     <div>
-                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Current App Status</div>
-                      <div className="mt-1"><StatusBadge status={selectedShop.status} /></div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Current KYC Status</div>
-                      <div className="mt-1"><StatusBadge status={selectedShop.kyc_status} type="kyc" /></div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</div>
+                      <div className="mt-1">
+                        <StatusBadge 
+                          status={reviewTab === 'kyc' ? selectedShop.kyc_status : selectedShop.status} 
+                          type={reviewTab === 'kyc' ? 'kyc' : 'shop'} 
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -852,7 +865,7 @@ export default function StaffVerifications() {
                         disabled={processing || (reviewTab === 'application' && selectedShop.status === 'approved') || (reviewTab === 'kyc' && selectedShop.kyc_status === 'approved')}
                         className="flex items-center gap-2 rounded-2xl border-2 border-rose-100 bg-white px-6 py-3 text-sm font-black text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
                       >
-                        <FaXmark /> Reject {reviewTab === 'kyc' ? 'Video' : 'Application'}
+                        <FaXmark /> Reject
                       </button>
                     )}
                     
@@ -862,7 +875,7 @@ export default function StaffVerifications() {
                         disabled={processing || (reviewTab === 'application' && selectedShop.status === 'approved') || (reviewTab === 'kyc' && selectedShop.kyc_status === 'approved')}
                         className="flex items-center gap-2 rounded-2xl bg-emerald-600 px-8 py-3 text-sm font-black text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700 active:scale-95 disabled:opacity-50"
                       >
-                        {processing ? <FaCircleNotch className="animate-spin" /> : <><FaCheck /> Approve {reviewTab === 'kyc' ? 'Video' : 'Application'}</>}
+                        {processing ? <FaCircleNotch className="animate-spin" /> : <><FaCheck /> Approve</>}
                       </button>
                     )}
                   </div>
