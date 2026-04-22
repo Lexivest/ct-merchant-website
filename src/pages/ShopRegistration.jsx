@@ -445,7 +445,6 @@ function ShopRegistration() {
       let nextFileMeta = { ...EMPTY_FILE_META }
       let nextCurrentStep = 0
       let nextShowOnboarding = !isEdit
-      let shouldAnnounceDraftRestore = false
 
       if (isEdit && data.shop) {
         const s = data.shop
@@ -490,25 +489,24 @@ function ShopRegistration() {
 
       if (draft?.data?.form) {
         nextForm = { ...nextForm, ...draft.data.form }
-        shouldAnnounceDraftRestore = true
       }
 
       if (draft?.data?.previews) {
-        nextPreviews = {
-          ...nextPreviews,
-          ...draft.data.previews,
-        }
-        shouldAnnounceDraftRestore = true
+        // Only restore previews that have a value, to avoid overwriting 
+        // existing server URLs with empty strings from a partial draft
+        Object.keys(draft.data.previews).forEach((key) => {
+          if (draft.data.previews[key]) {
+            nextPreviews[key] = draft.data.previews[key]
+          }
+        })
       }
 
       if (Number.isInteger(draft?.data?.currentStep)) {
         nextCurrentStep = Math.max(0, Math.min(STEPS.length - 1, draft.data.currentStep))
-        shouldAnnounceDraftRestore = true
       }
 
       if (typeof draft?.data?.showOnboarding === "boolean") {
         nextShowOnboarding = draft.data.showOnboarding
-        shouldAnnounceDraftRestore = true
       }
 
       SHOP_FILE_KEYS.forEach((key) => {
@@ -522,7 +520,6 @@ function ShopRegistration() {
           name: storedFile.name || `${key}_upload`,
           type: storedFile.type || "application/octet-stream",
         }
-        shouldAnnounceDraftRestore = true
       })
 
       setForm(nextForm)
@@ -533,14 +530,6 @@ function ShopRegistration() {
       setCurrentStep(nextCurrentStep)
       setShowOnboarding(nextShowOnboarding)
       setHasHydrated(true)
-
-      if (shouldAnnounceDraftRestore) {
-        notify({
-          type: "info",
-          title: "Draft restored",
-          message: "We restored your saved registration progress on this device.",
-        })
-      }
     }
 
     hydrateRegistrationForm()
