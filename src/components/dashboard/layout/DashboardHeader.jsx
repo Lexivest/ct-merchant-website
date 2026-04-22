@@ -16,7 +16,7 @@ function DashboardHeader({
   activeTab,
   currentProfile,
   user,
-  sortedAreas,
+  sortedAreas = [],
   categories,
   shops = [],
   products = [],
