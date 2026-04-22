@@ -124,9 +124,7 @@ export async function signOutUser() {
 }
 
 const LOGIN_SUSPENSION_THRESHOLD = 3
-const LOGIN_GUARD_STATUS_RPC = "ctm_get_login_guard_status"
-const LOGIN_GUARD_REGISTER_RPC = "ctm_register_wrong_password_attempt"
-const LOGIN_GUARD_RESET_RPC = "ctm_reset_login_guard_after_success"
+const SECURITY_HEARTBEAT_RPC = "ctm_security_heartbeat"
 const LOGIN_GUARD_DEBUG_PREFIX = "[login-guard]"
 
 function isMissingRpcError(error) {
@@ -140,25 +138,53 @@ function isMissingRpcError(error) {
   )
 }
 
-function getLoginGuardStatusRow(data, fallbackEmail = "") {
-  const row = Array.isArray(data) ? data[0] || null : data || null
-  const failedAttempts = Number(row?.failed_attempts || 0)
-  const providedRemaining = Number(row?.attempts_remaining)
+function getSecurityHeartbeatStatus(data, fallbackEmail = "") {
+  const row = data || {}
+  const failedAttempts = 3 - Number(row?.remaining || 3)
   return {
-    email: row?.email || fallbackEmail || "",
+    email: fallbackEmail || "",
     userId: row?.user_id || null,
-    failedAttempts: Number.isFinite(failedAttempts) ? failedAttempts : 0,
-    attemptsRemaining: Number.isFinite(providedRemaining)
-      ? providedRemaining
-      : Math.max(0, LOGIN_SUSPENSION_THRESHOLD - (Number.isFinite(failedAttempts) ? failedAttempts : 0)),
-    isSuspended: Boolean(row?.is_suspended),
-    suspendedAt: row?.suspended_at || null,
+    failedAttempts: failedAttempts,
+    attemptsRemaining: Number(row?.remaining || 3),
+    isSuspended: Boolean(row?.is_blocked),
+    status: row?.status || "CLEAR",
   }
 }
 
-function logLoginGuardDebug(stage, payload = {}) {
-  // Keeping info logs to a minimum for a clean console
-  // console.info(`${LOGIN_GUARD_DEBUG_PREFIX} ${stage}`, payload)
+async function runSecurityHeartbeat(email, action = "CHECK", fallbackMessage) {
+  const normalizedEmail = normalizeEmail(email)
+
+  const { data, error } = await supabase.rpc(SECURITY_HEARTBEAT_RPC, {
+    p_email: normalizedEmail,
+    p_action: action,
+  })
+
+  if (error) {
+    if (isMissingRpcError(error)) {
+      throw new Error("Security check is updating. Please try again in a few seconds.")
+    }
+    throw new Error(fallbackMessage || "Security check failed.")
+  }
+
+  return getSecurityHeartbeatStatus(data, normalizedEmail)
+}
+
+async function ensureEmailIsNotSuspended(email, options = {}) {
+  const { signOutOnSuspended = false } = options
+  const status = await runSecurityHeartbeat(
+    email,
+    "CHECK",
+    "Could not verify your account access right now. Please try again."
+  )
+
+  if (status.isSuspended) {
+    if (signOutOnSuspended) {
+      await signOutUser()
+    }
+    throw new Error("Your account is suspended. Please contact support.")
+  }
+
+  return status
 }
 
 function isLikelyCredentialFailure(error) {
@@ -173,45 +199,15 @@ function isLikelyCredentialFailure(error) {
   )
 }
 
-async function runLoginGuardRpc(rpcName, email, fallbackMessage) {
-  const normalizedEmail = normalizeEmail(email)
-
-  const { data, error } = await supabase.rpc(rpcName, {
-    p_email: normalizedEmail,
-  })
-
-  if (error) {
-    if (isMissingRpcError(error)) {
-      throw new Error("Login security is updating right now. Please try again shortly.")
-    }
-    throw new Error(fallbackMessage)
-  }
-
-  return getLoginGuardStatusRow(data, normalizedEmail)
-}
-
-async function ensureEmailIsNotLoginSuspended(email, options = {}) {
-  const { signOutOnSuspended = false } = options
-  const status = await runLoginGuardRpc(
-    LOGIN_GUARD_STATUS_RPC,
-    email,
-    "Could not verify your account access right now. Please try again."
-  )
-
-  if (status.isSuspended) {
-    if (signOutOnSuspended) {
-      await signOutUser()
-    }
-    throw new Error("Your account is suspended. Please contact support.")
-  }
-
-  return status
-}
-
 export async function signInWithPassword({ email, password }) {
   const normalizedEmail = normalizeEmail(email)
 
-  await ensureEmailIsNotLoginSuspended(normalizedEmail)
+  try {
+    await ensureEmailIsNotSuspended(normalizedEmail)
+  } catch (suspensionError) {
+    console.warn("[Auth] Pre-login suspension check caught block:", suspensionError.message)
+    throw suspensionError
+  }
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email: normalizedEmail,
@@ -219,32 +215,35 @@ export async function signInWithPassword({ email, password }) {
   })
 
   if (error) {
-    if (isLikelyCredentialFailure(error)) {
+    const isCreds = isLikelyCredentialFailure(error)
+    console.log("[Auth] Login failed. isCredentialFailure:", isCreds, "Error:", error)
+
+    if (isCreds) {
       try {
-        const status = await runLoginGuardRpc(
-          LOGIN_GUARD_REGISTER_RPC,
+        const status = await runSecurityHeartbeat(
           normalizedEmail,
-          "Could not update login security right now. Please try again."
+          "FAILURE",
+          "Could not update login security right now."
         )
 
-        if (status.isSuspended || status.failedAttempts >= LOGIN_SUSPENSION_THRESHOLD) {
-          throw new Error("Your account is suspended. Please contact support.")
+        console.log("[Auth] Security Heartbeat Failure Status:", status)
+
+        if (status.isSuspended) {
+          console.warn("[Auth] User is now suspended")
+          throw new Error("Your account is suspended due to too many failed attempts. Please contact support.")
         }
 
-        if (status.failedAttempts > 0) {
+        if (status.attemptsRemaining < 3) {
           const remaining = status.attemptsRemaining
-          throw new Error(
-            `Invalid credentials. You have ${remaining} attempt${remaining === 1 ? "" : "s"} remaining before your account is suspended.`
-          )
+          const msg = `Invalid credentials. You have ${remaining} attempt${remaining === 1 ? "" : "s"} remaining before your account is suspended.`
+          throw new Error(msg)
         }
       } catch (guardError) {
-        // If it's one of our intentional security messages, rethrow it
         const msg = guardError.message || ""
         if (msg.includes("suspended") || msg.includes("remaining")) {
           throw guardError
         }
-        // Otherwise log the internal error but show the standard credential failure
-        console.error("[LoginGuard] Tracking failed:", guardError)
+        console.error("[Security] Tracking failed:", guardError)
       }
       throw new Error("Invalid credentials. Please check your email and password.")
     }
@@ -253,30 +252,16 @@ export async function signInWithPassword({ email, password }) {
 
   const user = data.user || data.session?.user
   if (user) {
-    await ensureEmailIsNotLoginSuspended(user.email || normalizedEmail, {
-      signOutOnSuspended: true,
-    })
+    // 1. Unified Security Check (Manual + Brute Force)
+    const status = await runSecurityHeartbeat(
+      user.email || normalizedEmail,
+      "SUCCESS",
+      "Could not finalize your login security check."
+    )
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_suspended")
-      .eq("id", user.id)
-      .maybeSingle()
-
-    if (profile?.is_suspended) {
-      await supabase.auth.signOut()
-      clearCachedFetchStore()
+    if (status.isSuspended) {
+      await signOutUser()
       throw new Error("Your account is suspended. Please contact support.")
-    }
-
-    try {
-      await runLoginGuardRpc(
-        LOGIN_GUARD_RESET_RPC,
-        user.email || normalizedEmail,
-        "Could not clear previous login attempts right now. Please try again."
-      )
-    } catch (resetError) {
-      console.warn("Failed to reset login guard:", resetError?.message || resetError)
     }
 
     // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call with targeted user ID
@@ -302,33 +287,18 @@ export async function signInWithGoogleIdToken(idToken) {
   const userEmail = signedInUser?.email ? normalizeEmail(signedInUser.email) : ""
 
   if (userEmail) {
-    await ensureEmailIsNotLoginSuspended(userEmail, {
-      signOutOnSuspended: true,
-    })
+    const status = await runSecurityHeartbeat(
+      userEmail,
+      "SUCCESS",
+      "Could not verify your account access right now."
+    )
 
-    try {
-      await runLoginGuardRpc(
-        LOGIN_GUARD_RESET_RPC,
-        userEmail,
-        "Could not clear previous login attempts right now. Please try again."
-      )
-    } catch (resetError) {
-      console.warn("Failed to reset login guard:", resetError?.message || resetError)
+    if (status.isSuspended) {
+      await signOutUser()
+      throw new Error("Your account is suspended. Please contact support.")
     }
 
     if (signedInUser?.id) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_suspended")
-        .eq("id", signedInUser.id)
-        .maybeSingle()
-
-      if (profile?.is_suspended) {
-        await supabase.auth.signOut()
-        clearCachedFetchStore()
-        throw new Error("Your account is suspended. Please contact support.")
-      }
-
       // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call with targeted user ID
       try {
         await supabase.rpc("stamp_profile_footprint", { p_target_user_id: signedInUser.id })
