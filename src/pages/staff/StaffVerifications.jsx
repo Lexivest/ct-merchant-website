@@ -616,55 +616,34 @@ export default function StaffVerifications() {
                 <div className="grid gap-8 lg:grid-cols-2">
                   <div className="space-y-6">
                     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                      <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Business Profile</h4>
+                      <h4 className="mb-6 text-xs font-black uppercase tracking-widest text-slate-400">Shop Profile & Location</h4>
                       <div className="space-y-4">
-                        <div className="flex justify-between border-b border-slate-50 pb-3">
-                          <span className="text-sm font-semibold text-slate-500">Official Name</span>
-                          <span className="text-sm font-bold text-slate-900">{selectedShop.name}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-slate-50 pb-3">
-                          <span className="text-sm font-semibold text-slate-500">Business Category</span>
-                          <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700">{selectedShop.category}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-slate-50 pb-3">
-                          <span className="text-sm font-semibold text-slate-500">Physical Address</span>
-                          <span className="max-w-[200px] text-right text-sm font-bold text-slate-900">{selectedShop.address}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-slate-50 pb-3">
-                          <span className="text-sm font-semibold text-slate-500">GPS Coordinates</span>
-                          <span className="font-mono text-sm font-bold text-slate-900">
-                            {selectedShop.latitude && selectedShop.longitude 
-                              ? `${selectedShop.latitude.toFixed(6)}, ${selectedShop.longitude.toFixed(6)}`
-                              : "Not provided"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between border-b border-slate-50 pb-3">
-                          <span className="text-sm font-semibold text-slate-500">Phone Number</span>
-                          <span className="flex items-center gap-1.5 text-sm font-bold text-slate-900"><FaPhone className="text-xs text-slate-400" /> {selectedShop.phone}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm font-semibold text-slate-500">WhatsApp</span>
-                          {selectedShop.whatsapp ? (
-                            <a 
-                              href={`https://wa.me/${selectedShop.whatsapp.replace(/\D/g, "").length === 10 ? "234" + selectedShop.whatsapp.replace(/\D/g, "") : selectedShop.whatsapp.replace(/\D/g, "")}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center gap-1.5 text-sm font-bold text-emerald-600 hover:underline"
-                            >
-                              <FaWhatsapp className="text-xs" /> {selectedShop.whatsapp}
-                            </a>
-                          ) : (
-                            <span className="text-sm font-bold text-slate-400">Not linked</span>
-                          )}
+                        <DetailRow label="Official Name" value={selectedShop.name} />
+                        <DetailRow label="Category" value={selectedShop.category} badge />
+                        <DetailRow label="Address" value={selectedShop.address} highlight />
+                        <DetailRow 
+                          label="GPS Coordinates" 
+                          value={
+                            (selectedShop.latitude !== null && selectedShop.latitude !== undefined) 
+                              ? `${Number(selectedShop.latitude).toFixed(6)}, ${Number(selectedShop.longitude).toFixed(6)}` 
+                              : null
+                          } 
+                          mono 
+                        />
+                        <DetailRow label="Phone" value={selectedShop.phone} />
+                        <DetailRow 
+                          label="WhatsApp" 
+                          value={selectedShop.whatsapp} 
+                          link={`https://wa.me/${String(selectedShop.whatsapp || "").replace(/\D/g, "").length === 10 ? "234" + String(selectedShop.whatsapp || "").replace(/\D/g, "") : String(selectedShop.whatsapp || "").replace(/\D/g, "")}`} 
+                        />
+                      </div>
+
+                      <div className="mt-8 border-t border-slate-100 pt-6">
+                        <h5 className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-400">About the Business</h5>
+                        <div className="rounded-2xl bg-slate-50 p-4 text-sm font-medium leading-relaxed text-slate-600">
+                          {selectedShop.description || "No business description provided by the merchant."}
                         </div>
                       </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                      <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">About Business</h4>
-                      <p className="text-sm font-medium leading-relaxed text-slate-600">
-                        {selectedShop.description || "No description provided."}
-                      </p>
                     </div>
 
                     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -961,5 +940,36 @@ export default function StaffVerifications() {
         </div>
       ) : null}
     </StaffPortalShell>
+  )
+}
+
+function DetailRow({ label, value, badge, highlight, mono, link }) {
+  return (
+    <div className="flex justify-between border-b border-slate-50 pb-3 last:border-0 last:pb-0">
+      <span className="text-sm font-semibold text-slate-500">{label}</span>
+      <div className="max-w-[200px] text-right">
+        {!value ? (
+          <span className="text-sm font-bold text-slate-400 italic">Not provided</span>
+        ) : link ? (
+          <a
+            href={link}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-end gap-1.5 text-sm font-bold text-emerald-600 hover:underline"
+          >
+            {label === "WhatsApp" && <FaWhatsapp className="text-xs" />}
+            {value}
+          </a>
+        ) : badge ? (
+          <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-700">
+            {value}
+          </span>
+        ) : (
+          <span className={"text-sm font-bold text-slate-900  }>
+            {value}
+          </span>
+        )}
+      </div>
+    </div>
   )
 }
