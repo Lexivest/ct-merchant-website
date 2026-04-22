@@ -228,9 +228,7 @@ export async function signInWithPassword({ email, password }) {
         )
 
         if (status.isSuspended || status.failedAttempts >= LOGIN_SUSPENSION_THRESHOLD) {
-          throw new Error(
-            "Your account is suspended. Please contact support."
-          )
+          throw new Error("Your account is suspended. Please contact support.")
         }
 
         if (status.failedAttempts > 0) {
@@ -239,13 +237,14 @@ export async function signInWithPassword({ email, password }) {
             `Invalid credentials. You have ${remaining} attempt${remaining === 1 ? "" : "s"} remaining before your account is suspended.`
           )
         }
-      } catch (trackingError) {
-        if (
-          trackingError instanceof Error &&
-          (trackingError.message.includes("suspended") || trackingError.message.includes("remaining"))
-        ) {
-          throw trackingError
+      } catch (guardError) {
+        // If it's one of our intentional security messages, rethrow it
+        const msg = guardError.message || ""
+        if (msg.includes("suspended") || msg.includes("remaining")) {
+          throw guardError
         }
+        // Otherwise log the internal error but show the standard credential failure
+        console.error("[LoginGuard] Tracking failed:", guardError)
       }
       throw new Error("Invalid credentials. Please check your email and password.")
     }
