@@ -201,10 +201,19 @@ export default function StaffVerifications() {
           id_card_url,
           cac_number,
           cac_certificate_url,
+          description,
+          latitude,
+          longitude,
+          website_url,
+          facebook_url,
+          instagram_url,
+          twitter_url,
+          tiktok_url,
           kyc_status,
           kyc_video_url,
           kyc_submission_meta,
           id_issued,
+          is_verified,
           created_at,
           owner_id,
           profiles ( full_name, avatar_url, phone ),
@@ -965,7 +974,7 @@ function DetailRow({ label, value, badge, highlight, mono, link }) {
             {value}
           </span>
         ) : (
-          <span className={"text-sm font-bold text-slate-900  }>
+          <span className={`text-sm font-bold ${highlight ? "text-indigo-600" : "text-slate-900"} ${mono ? "font-mono" : ""}`}>
             {value}
           </span>
         )}
