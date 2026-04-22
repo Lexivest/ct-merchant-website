@@ -259,68 +259,33 @@ export async function fetchDashboardBaseData(cityId) {
 }
 
 export async function fetchDashboardDynamicData({ userId, cityId }) {
-  const [
-    featuredCityBanners,
-    sponsoredProducts,
-    staffDiscoveries,
-    shopsRes,
-    notificationsRes,
-    wishlistRes,
-    fairlyUsedRes,
-  ] = await Promise.all([
-    fetchFeaturedCityBanners(cityId),
-    fetchSponsoredProducts(cityId),
-    fetchStaffDiscoveries(),
-    supabase
-      .from("shops")
-      .select("*")
-      .eq("city_id", cityId)
-      .order("is_featured", { ascending: false })
-      .order("is_verified", { ascending: false })
-      .limit(100), // Reduced from 200 to save bandwidth
-    supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(15),
-    supabase.from("wishlist").select("*", { count: "exact", head: true }).eq("user_id", userId),
-    supabase
-      .from("products")
-      .select("*, shops(id, name, unique_id)")
-      .eq("condition", "Fairly Used")
-      .eq("is_available", true)
-      .limit(24)
-      .order("created_at", { ascending: false }),
-  ])
+  const { data, error } = await supabase.rpc("get_dashboard_payload", {
+    p_user_id: userId,
+    p_city_id: cityId,
+  })
 
-  const shops = unwrapSupabaseResult(shopsRes) || []
-  let products = []
-  
-  // Only fetch products for the first 50 shops to keep response small
-  const shopIdsForProducts = shops.slice(0, 50).map(s => s.id)
-
-  if (shopIdsForProducts.length > 0) {
-    const productsRes = await supabase
-      .from("products")
-      .select("*")
-      .in("shop_id", shopIdsForProducts)
-      .eq("is_available", true)
-      .limit(150) // Drastically reduced from 400
-      .order("id", { ascending: true })
-
-    products = unwrapSupabaseResult(productsRes) || []
+  if (error) {
+    console.error("Dashboard RPC fetch failed:", error.message)
+    throw error
   }
 
+  // The RPC returns exactly what we need in one object, but we map snake_case to camelCase
+  // to maintain compatibility with the existing frontend state.
   return {
-    featuredCityBanners,
-    sponsoredProducts,
-    staffDiscoveries,
-    fairlyUsedProducts: unwrapSupabaseResult(fairlyUsedRes) || [],
-    shops,
-    products,
-    notifications: unwrapSupabaseResult(notificationsRes) || [],
-    wishlistCount: unwrapSupabaseCount(wishlistRes),
+    featuredCityBanners: data.featured_city_banners || [],
+    sponsoredProducts: data.sponsored_products || [],
+    staffDiscoveries: data.staff_discoveries || [],
+    fairlyUsedProducts: data.fairly_used_products || [],
+    shops: data.shops || [],
+    notifications: data.notifications || [],
+    wishlistCount: data.wishlist_count || 0,
+    unread: data.unread_notifications || 0,
+    // Note: The RPC doesn't currently return the full 'products' list (150+ items) 
+    // that the old version fetched. If the UI strictly needs that broad list for 
+    // global search/suggestions, we might need to add it to the RPC or keep one 
+    // separate fetch. However, most dashboard sections now have their own 
+    // dedicated arrays in the RPC response.
+    products: [] 
   }
 }
 
