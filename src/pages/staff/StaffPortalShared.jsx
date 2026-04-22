@@ -392,6 +392,142 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
   })
   const [loading, setLoading] = useState(true)
 
+  const fetchCountsFallback = async () => {
+    const cityId = staffCityId ? Number(staffCityId) : null
+    const shouldFilterByCity = !isSuperAdmin && cityId != null
+    const lagosToday = formatLagosDateKey(new Date())
+
+    const buildScopedShopQuery = (query) =>
+      shouldFilterByCity ? query.eq("city_id", cityId) : query
+
+    const buildScopedProductsQuery = () => {
+      const query = supabase
+        .from("products")
+        .select("id, shops!inner(city_id)", { count: "exact", head: true })
+        .eq("is_approved", false)
+        .is("rejection_reason", null)
+
+      return shouldFilterByCity ? query.eq("shops.city_id", cityId) : query
+    }
+
+    const buildScopedCommentsQuery = () => {
+      const query = supabase
+        .from("shop_comments")
+        .select("id, shops!inner(city_id)", { count: "exact", head: true })
+        .eq("status", "pending")
+
+      return shouldFilterByCity ? query.eq("shops.city_id", cityId) : query
+    }
+
+    const buildScopedContentQuery = () => {
+      const query = supabase
+        .from("shop_banners_news")
+        .select("id, shops!inner(city_id)", { count: "exact", head: true })
+        .eq("status", "pending")
+
+      return shouldFilterByCity ? query.eq("shops.city_id", cityId) : query
+    }
+
+    const [
+      shopCountResult,
+      pendingShopResult,
+      submittedKycResult,
+      pendingProductsResult,
+      pendingCommunityResult,
+      pendingContentResult,
+      unreadContactResult,
+      pendingPaymentsResult,
+      visitsTodayResult,
+      cityReporterIdsResult,
+    ] = await Promise.allSettled([
+      buildScopedShopQuery(
+        supabase.from("shops").select("id", { count: "exact", head: true })
+      ),
+      buildScopedShopQuery(
+        supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "pending")
+      ),
+      buildScopedShopQuery(
+        supabase.from("shops").select("id", { count: "exact", head: true }).eq("kyc_status", "submitted")
+      ),
+      buildScopedProductsQuery(),
+      buildScopedCommentsQuery(),
+      buildScopedContentQuery(),
+      supabase
+        .from("contact_messages")
+        .select("id", { count: "exact", head: true })
+        .or("status.eq.unread,status.is.null"),
+      isSuperAdmin
+        ? supabase
+            .from("offline_payment_proofs")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "pending")
+        : Promise.resolve({ count: 0, error: null }),
+      lagosToday
+        ? supabase
+            .from("daily_site_visits")
+            .select("total_visits")
+            .eq("visit_date", lagosToday)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      shouldFilterByCity
+        ? supabase
+            .from("profiles")
+            .select("id")
+            .eq("city_id", cityId)
+        : Promise.resolve({ data: null, error: null }),
+    ])
+
+    const readCount = (result) =>
+      result.status === "fulfilled" && !result.value.error ? result.value.count || 0 : 0
+
+    const visitsToday =
+      visitsTodayResult.status === "fulfilled" && !visitsTodayResult.value.error
+        ? Number(visitsTodayResult.value.data?.total_visits) || 0
+        : 0
+
+    let pendingAbuseCount = 0
+
+    if (!shouldFilterByCity) {
+      const { count, error } = await supabase
+        .from("abuse_reports")
+        .select("id", { count: "exact", head: true })
+        .or("status.eq.pending,status.is.null")
+
+      pendingAbuseCount = error ? 0 : count || 0
+    } else {
+      const reporterIds =
+        cityReporterIdsResult.status === "fulfilled" && !cityReporterIdsResult.value.error
+          ? (cityReporterIdsResult.value.data || []).map((item) => item.id).filter(Boolean)
+          : []
+
+      if (reporterIds.length > 0) {
+        const { count, error } = await supabase
+          .from("abuse_reports")
+          .select("id", { count: "exact", head: true })
+          .or("status.eq.pending,status.is.null")
+          .in("reporter_id", reporterIds)
+
+        pendingAbuseCount = error ? 0 : count || 0
+      }
+    }
+
+    setCounts({
+      verifications: readCount(pendingShopResult) + readCount(submittedKycResult),
+      products: readCount(pendingProductsResult),
+      payments: readCount(pendingPaymentsResult),
+      community: readCount(pendingCommunityResult),
+      content: readCount(pendingContentResult),
+      inbox: readCount(unreadContactResult) + pendingAbuseCount,
+      radar: 0,
+    })
+
+    setSummary({
+      shopCount: readCount(shopCountResult),
+      inactiveUsers: 0,
+      visitsToday,
+    })
+  }
+
   const fetchCounts = async () => {
     try {
       const { data, error } = await supabase.rpc("get_staff_dashboard_payload", {
@@ -411,6 +547,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
       }
     } catch (err) {
       console.error("Error fetching staff dashboard payload:", err)
+      await fetchCountsFallback()
     } finally {
       setLoading(false)
     }

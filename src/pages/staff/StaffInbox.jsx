@@ -77,24 +77,44 @@ export default function StaffInbox() {
       }
 
       if (activeTab === "abuse") {
-        let reportsQuery = supabase
+        const { data: reports, error: reportsErr } = await supabase
           .from("abuse_reports")
-          .select("*, profiles!inner(id, full_name, city_id)")
-          .order("created_at", { ascending: false });
-        
-        if (!isSuperAdmin && staffCityId) {
-          reportsQuery = reportsQuery.eq("profiles.city_id", staffCityId)
-        }
-          
-        const { data: reports, error: reportsErr } = await reportsQuery
+          .select("*")
+          .order("created_at", { ascending: false })
+
         if (reportsErr) throw new Error(`Database Error: ${reportsErr.message}`);
 
-        const fetchedAbuses = (reports || []).map(report => ({
+        const safeReports = reports || []
+        const reporterIds = [...new Set(safeReports.map((report) => report.reporter_id).filter(Boolean))]
+
+        let profileMap = new Map()
+        if (reporterIds.length > 0) {
+          let profilesQuery = supabase
+            .from("profiles")
+            .select("id, full_name, city_id")
+            .in("id", reporterIds)
+
+          if (!isSuperAdmin && staffCityId) {
+            profilesQuery = profilesQuery.eq("city_id", staffCityId)
+          }
+
+          const { data: profiles, error: profilesErr } = await profilesQuery
+          if (profilesErr) throw new Error(`Database Error: ${profilesErr.message}`);
+
+          profileMap = new Map((profiles || []).map((profile) => [profile.id, profile]))
+        }
+
+        const filteredReports =
+          !isSuperAdmin && staffCityId
+            ? safeReports.filter((report) => profileMap.has(report.reporter_id))
+            : safeReports
+
+        const fetchedAbuses = filteredReports.map(report => ({
           ...report,
           _type: "abuse",
-          profiles: report.profiles || null
+          profiles: profileMap.get(report.reporter_id) || null,
         }));
-        
+
         setItems(fetchedAbuses);
       }
     } catch (err) {
