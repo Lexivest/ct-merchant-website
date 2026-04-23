@@ -35,6 +35,7 @@ import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { supabase } from "../lib/supabase"
+import { invokeEdgeFunctionAuthed } from "../lib/edgeFunctions"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import {
   clearPersistentDraft,
@@ -117,6 +118,33 @@ function countWords(value) {
     .trim()
     .split(/\s+/)
     .filter(Boolean).length
+}
+
+async function extractFunctionErrorMessage(error, fallback = "Cleanup failed") {
+  if (!error) return fallback
+  const rawMessage = typeof error.message === "string" ? error.message : ""
+  const context = error.context
+
+  if (context && typeof context.clone === "function") {
+    try {
+      const asJson = await context.clone().json()
+      if (asJson && typeof asJson.error === "string" && asJson.error.trim()) {
+        return asJson.error
+      }
+    } catch {
+      // Ignore non-JSON edge function error bodies.
+    }
+
+    try {
+      const asText = await context.clone().text()
+      if (asText && asText.trim()) return asText.trim()
+    } catch {
+      // Ignore non-text edge function error bodies.
+    }
+  }
+
+  if (rawMessage && !rawMessage.includes("non-2xx")) return rawMessage
+  return fallback
 }
 
 function formatUrl(value) {
@@ -1061,31 +1089,37 @@ function ShopRegistration() {
         // Dashboard status will still refresh from Supabase when local storage is unavailable.
       }
 
-      const oldFilesByBucket = new Map()
-      uploadedFiles.forEach((item) => {
-        if (!item?.bucket || !item.oldPath || !item.newPath || item.oldPath === item.newPath) return
-        if (!oldFilesByBucket.has(item.bucket)) oldFilesByBucket.set(item.bucket, [])
-        oldFilesByBucket.get(item.bucket).push(item.oldPath)
-      })
+      const cleanupAssets = uploadedFiles
+        .filter((item) => item?.bucket && item?.oldPath && item?.newPath && item.oldPath !== item.newPath)
+        .map((item) => ({
+          bucket: item.bucket,
+          path: item.oldPath,
+        }))
 
-      try {
-        await Promise.all(
-          Array.from(oldFilesByBucket.entries()).map(async ([bucket, paths]) => {
-            const uniquePaths = [...new Set(paths)].filter(Boolean)
-            if (!uniquePaths.length) return
+      if (cleanupAssets.length && existingShop?.id) {
+        try {
+          const { data: cleanupData, error: cleanupError } = await invokeEdgeFunctionAuthed(
+            "cleanup-shop-registration-assets",
+            {
+              shopId: existingShop.id,
+              assets: cleanupAssets,
+            },
+          )
 
-            const { error: removeError } = await supabase.storage.from(bucket).remove(uniquePaths)
-            if (removeError) {
-              throw {
-                ...removeError,
-                bucket,
-                paths: uniquePaths,
-              }
-            }
-          })
-        )
-      } catch (cleanupError) {
-        console.warn("Old shop file cleanup failed:", cleanupError)
+          if (cleanupError) {
+            const detailedMessage = await extractFunctionErrorMessage(
+              cleanupError,
+              "Old asset cleanup failed.",
+            )
+            throw new Error(detailedMessage)
+          }
+
+          if (cleanupData?.error) {
+            throw new Error(cleanupData.error)
+          }
+        } catch (cleanupError) {
+          console.warn("Old shop file cleanup failed:", cleanupError)
+        }
       }
 
       try {
