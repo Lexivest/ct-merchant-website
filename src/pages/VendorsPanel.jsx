@@ -153,7 +153,7 @@ function VendorsPanel() {
       .on(
         "postgres_changes",
         {
-          event: "UPDATE",
+          event: "*",
           schema: "public",
           table: "shops",
           filter: `id=eq.${shopId}`,
@@ -170,6 +170,7 @@ function VendorsPanel() {
               },
             })
           }
+          mutate()
         },
       )
       .subscribe()

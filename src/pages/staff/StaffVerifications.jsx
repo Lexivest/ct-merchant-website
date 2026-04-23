@@ -5,6 +5,7 @@ import {
   FaCircleNotch, 
   FaDownload,
   FaEye, 
+  FaImage,
   FaIdBadge, 
   FaVideo, 
   FaStore, 
@@ -128,21 +129,43 @@ export default function StaffVerifications() {
   const [filterStatus, setFilterStatus] = useState("all") // 'all' | 'pending' | 'kyc_submitted'
 
   // Signed URLs for private assets
-  const [signedUrls, setSignedUrls] = useState({ id: null, cac: null, video: null })
+  const [signedUrls, setSignedUrls] = useState({ id: null, cac: null, video: null, logo: null, storefront: null })
 
   useEffect(() => {
     if (!selectedShop) {
-      setSignedUrls({ id: null, cac: null, video: null })
+      setSignedUrls({ id: null, cac: null, video: null, logo: null, storefront: null })
       return
     }
 
     async function signAssets() {
       const idPath = getStoragePathFromUrl(selectedShop.id_card_url, UPLOAD_RULES.idDocuments.bucket)
       const cacPath = getStoragePathFromUrl(selectedShop.cac_certificate_url, UPLOAD_RULES.cacDocuments.bucket)
+      const logoPath = getStoragePathFromUrl(selectedShop.image_url, UPLOAD_RULES.brandAssets.bucket)
+      const storefrontPath = getStoragePathFromUrl(selectedShop.storefront_url, UPLOAD_RULES.storefronts.bucket)
       // Only Super Admin can see Video KYC
       const videoPath = isSuperAdmin
         ? getStoragePathFromUrl(selectedShop.kyc_video_url, UPLOAD_RULES.kycVideos.bucket)
         : null
+
+      const nextUrls = {
+        id: selectedShop.id_card_url || null,
+        cac: selectedShop.cac_certificate_url || null,
+        video: selectedShop.kyc_video_url || null,
+        logo: selectedShop.image_url || null,
+        storefront: selectedShop.storefront_url || null,
+      }
+
+      if (logoPath) {
+        nextUrls.logo =
+          supabase.storage.from(UPLOAD_RULES.brandAssets.bucket).getPublicUrl(logoPath).data?.publicUrl ||
+          nextUrls.logo
+      }
+
+      if (storefrontPath) {
+        nextUrls.storefront =
+          supabase.storage.from(UPLOAD_RULES.storefronts.bucket).getPublicUrl(storefrontPath).data?.publicUrl ||
+          nextUrls.storefront
+      }
 
       const promises = []
       if (idPath) {
@@ -165,9 +188,10 @@ export default function StaffVerifications() {
 
       const results = await Promise.all(promises)
       setSignedUrls({
-        id: results[0]?.data?.signedUrl || selectedShop.id_card_url,
-        cac: results[1]?.data?.signedUrl || selectedShop.cac_certificate_url,
-        video: results[2]?.data?.signedUrl || selectedShop.kyc_video_url,
+        ...nextUrls,
+        id: results[0]?.data?.signedUrl || nextUrls.id,
+        cac: results[1]?.data?.signedUrl || nextUrls.cac,
+        video: results[2]?.data?.signedUrl || nextUrls.video,
       })
     }
 
@@ -715,6 +739,26 @@ export default function StaffVerifications() {
 
                   <div className="space-y-6">
                     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                      <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Brand Assets</h4>
+                      <div className="grid gap-6 sm:grid-cols-[180px_minmax(0,1fr)]">
+                        <MediaPreviewCard
+                          title="Shop Logo"
+                          imageUrl={signedUrls.logo}
+                          aspectClass="aspect-square"
+                          icon={<FaImage />}
+                          emptyLabel="No logo uploaded"
+                        />
+                        <MediaPreviewCard
+                          title="Storefront Photo"
+                          imageUrl={signedUrls.storefront}
+                          aspectClass="aspect-[4/3]"
+                          icon={<FaStore />}
+                          emptyLabel="No storefront uploaded"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                       <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Legal Documents</h4>
                       
                       <div className="grid gap-8 sm:grid-cols-2">
@@ -931,6 +975,36 @@ export default function StaffVerifications() {
         </div>
       ) : null}
     </StaffPortalShell>
+  )
+}
+
+function MediaPreviewCard({ title, imageUrl, aspectClass, icon, emptyLabel }) {
+  return (
+    <div className="space-y-3">
+      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{title}</div>
+      {imageUrl ? (
+        <a
+          href={imageUrl}
+          target="_blank"
+          rel="noreferrer"
+          className={`group relative block overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 ${aspectClass}`}
+        >
+          <img src={imageUrl} alt={title} className="h-full w-full object-cover transition group-hover:scale-105" />
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/0 opacity-0 transition group-hover:bg-slate-900/35 group-hover:opacity-100">
+            <span className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-slate-900">View Image</span>
+          </div>
+        </a>
+      ) : (
+        <div className={`flex items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-400 ${aspectClass}`}>
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white">
+              {icon}
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-widest">{emptyLabel}</span>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

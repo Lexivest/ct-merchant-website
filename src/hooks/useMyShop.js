@@ -142,6 +142,10 @@ export default function useMyShop() {
             } else {
               clearCachedShop(user.id)
             }
+
+            window.setTimeout(() => {
+              fetchShop()
+            }, 0)
           }
 
           setDataError(false)
@@ -154,7 +158,7 @@ export default function useMyShop() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user?.id, isOffline])
+  }, [user?.id, isOffline, fetchShop])
 
   // ROBUST STATE INTERCEPTION (Handles Offline & Network Errors)
   useEffect(() => {

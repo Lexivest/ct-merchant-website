@@ -403,9 +403,12 @@ function ShopRegistration() {
   const [signedPreviews, setSignedPreviews] = useState(EMPTY_SIGNED_PREVIEWS)
 
   useEffect(() => {
+    let isCancelled = false
+
     async function signExisting() {
       const promises = []
       const keys = []
+      const nextSigned = { ...EMPTY_SIGNED_PREVIEWS }
 
       if (previews.idCard && previews.idCard.startsWith("http")) {
         const path = getStoragePathFromUrl(previews.idCard, ID_DOCUMENT_BUCKET)
@@ -425,19 +428,23 @@ function ShopRegistration() {
 
       if (promises.length > 0) {
         const results = await Promise.all(promises)
-        setSignedPreviews((current) => {
-          const nextSigned = { ...current }
-          results.forEach((res, idx) => {
-            if (res.data?.signedUrl) {
-              nextSigned[keys[idx]] = res.data.signedUrl
-            }
-          })
-          return nextSigned
+        results.forEach((res, idx) => {
+          if (res.data?.signedUrl) {
+            nextSigned[keys[idx]] = res.data.signedUrl
+          }
         })
+      }
+
+      if (!isCancelled) {
+        setSignedPreviews(nextSigned)
       }
     }
 
     signExisting()
+
+    return () => {
+      isCancelled = true
+    }
   }, [previews.idCard, previews.cac])
 
   const [fileMeta, setFileMeta] = useState(EMPTY_FILE_META)
@@ -879,6 +886,9 @@ function ShopRegistration() {
 
       return { ...prev, [key]: previewUrl }
     })
+    if (key === "idCard" || key === "cac") {
+      setSignedPreviews((prev) => ({ ...prev, [key]: "" }))
+    }
     setFileMeta((prev) => ({
       ...prev,
       [key]: { name: fileOrBlob.name || `${key}_upload.jpg`, type: type }
@@ -891,7 +901,11 @@ function ShopRegistration() {
     if (!value) return null
 
     // Use signed preview if available for private docs (ID/CAC)
-    const displayValue = (key === "idCard" || key === "cac") ? (signedPreviews[key] || value) : value
+    const shouldUseSignedPreview =
+      (key === "idCard" || key === "cac") &&
+      typeof value === "string" &&
+      value.startsWith("http")
+    const displayValue = shouldUseSignedPreview ? (signedPreviews[key] || value) : value
 
     const isPdf = meta?.type === "application/pdf" || String(displayValue).toLowerCase().includes(".pdf")
 
@@ -913,10 +927,11 @@ function ShopRegistration() {
 
   function getStoragePathFromUrl(url, bucket) {
     if (!url) return null
+    if (!String(url).startsWith("http")) return String(url).replace(/^\/+/, "")
     try {
       const cleanUrl = String(url).split("?")[0]
       const escapedBucket = bucket.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")
-      const regex = new RegExp(`/storage/v1/object/(?:public|authenticated)/${escapedBucket}/(.+)$`)
+      const regex = new RegExp(`/storage/v1/object/(?:public|authenticated|sign)/${escapedBucket}/(.+)$`, "i")
       const match = cleanUrl.match(regex)
       return match?.[1] || null
     } catch {
@@ -924,7 +939,7 @@ function ShopRegistration() {
     }
   }
 
-  async function uploadFile(fileOrBlob, bucket, folder, oldUrl = "") {
+  async function uploadFile(fileOrBlob, bucket, folder, oldUrl = "", slotKey = folder) {
     if (!fileOrBlob) {
       return {
         url: oldUrl || null,
@@ -934,13 +949,17 @@ function ShopRegistration() {
       }
     }
 
+    const oldPath = getStoragePathFromUrl(oldUrl, bucket)
     const extension = fileOrBlob.name?.split(".").pop() || "jpg"
-    const path = `${folder}/${user.id}_${Date.now()}.${extension}`
+    const shouldUseStableImagePath = bucket === STOREFRONT_BUCKET || bucket === LOGO_BUCKET
+    const path = shouldUseStableImagePath
+      ? `${folder}/${user.id}_${slotKey}.jpg`
+      : `${folder}/${user.id}_${Date.now()}.${extension}`
 
     const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(path, fileOrBlob, {
-        upsert: false,
+        upsert: shouldUseStableImagePath,
         contentType: fileOrBlob.type || "image/jpeg",
         cacheControl: "31536000",
       })
@@ -949,7 +968,6 @@ function ShopRegistration() {
 
     const { data } = supabase.storage.from(bucket).getPublicUrl(path)
     const publicUrl = data?.publicUrl || null
-    const oldPath = getStoragePathFromUrl(oldUrl, bucket)
     const finalUrl =
       bucket === ID_DOCUMENT_BUCKET || bucket === CAC_DOCUMENT_BUCKET
         ? publicUrl?.replace("/public/", "/authenticated/")
@@ -977,13 +995,13 @@ function ShopRegistration() {
     try {
       setSubmitting(true)
 
-      const storefrontUpload = await uploadFile(files.storefront, STOREFRONT_BUCKET, "covers", existingShop?.storefront_url)
+      const storefrontUpload = await uploadFile(files.storefront, STOREFRONT_BUCKET, "covers", existingShop?.storefront_url, "storefront")
       uploadedFiles.push(storefrontUpload)
-      const idCardUpload = await uploadFile(files.idCard, ID_DOCUMENT_BUCKET, "ids", existingShop?.id_card_url)
+      const idCardUpload = await uploadFile(files.idCard, ID_DOCUMENT_BUCKET, "ids", existingShop?.id_card_url, "id-card")
       uploadedFiles.push(idCardUpload)
-      const cacUpload = await uploadFile(files.cac, CAC_DOCUMENT_BUCKET, "cac", existingShop?.cac_certificate_url)
+      const cacUpload = await uploadFile(files.cac, CAC_DOCUMENT_BUCKET, "cac", existingShop?.cac_certificate_url, "cac")
       uploadedFiles.push(cacUpload)
-      const logoUpload = await uploadFile(files.logo, LOGO_BUCKET, "logos", existingShop?.image_url)
+      const logoUpload = await uploadFile(files.logo, LOGO_BUCKET, "logos", existingShop?.image_url, "logo")
       uploadedFiles.push(logoUpload)
 
       const { data: rpcRes, error: rpcErr } = await supabase.rpc("register_or_update_shop", {
