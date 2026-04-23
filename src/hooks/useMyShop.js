@@ -48,9 +48,6 @@ function buildMetaFromShop(shopData) {
   if (shopData.is_open === false) return { title: "Locked", status: "locked" }
   if (shopData.status === "pending") return { title: "Pending", status: "pending" }
   if (shopData.status === "rejected") return { title: "Rejected", status: "rejected" }
-  if (!shopData.is_verified && shopData.kyc_status === "submitted") {
-    return { title: "Video Pending", status: "kyc_pending", subtitle: "Under Review" }
-  }
   return { title: "My Shop", status: "approved" }
 }
 

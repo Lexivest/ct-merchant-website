@@ -135,13 +135,13 @@ export default function MerchantBanner() {
 
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
-          .select("id, owner_id, name, category, address, image_url, is_verified, cities(name)")
+          .select("id, owner_id, name, category, address, image_url, status, cities(name)")
           .eq("id", currentShopId)
           .eq("owner_id", user.id)
           .maybeSingle();
 
         if (shopErr || !shop) throw new Error("Shop not found or access denied.");
-        if (!shop.is_verified) throw new Error("Complete KYC verification before opening your shop banner tools.");
+        if (shop.status !== "approved") throw new Error("Your shop must be digitally approved before you can manage your banner.");
 
         const [bannerResult, productResult, profileResult] = await Promise.all([
           supabase

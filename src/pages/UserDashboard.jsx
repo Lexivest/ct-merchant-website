@@ -720,16 +720,6 @@ function UserDashboard() {
       return
     }
 
-    if (!shopData.is_verified && shopData.kyc_status === "submitted") {
-      setNotice({
-        visible: true,
-        type: "info",
-        title: "Video under review",
-        message: "Your video submission is under review. We will notify you once verification is complete.",
-      })
-      return
-    }
-
     if (shopData.status === "approved") {
       void openDashboardRouteWithTransition("/vendor-panel")
       return

@@ -264,21 +264,14 @@ function VendorsPanel() {
   const isApplicationApproved = activeShop.status === "approved"
   const isVerified = Boolean(activeShop.is_verified)
   const verificationProofStatus = data.verificationProofStatus || null
-  const paymentConfirmed =
-    Boolean(data.paymentConfirmed) ||
+  const isSuspended = activeShop.is_open === false
+  const isSubscriptionActive = isFutureDate(activeShop.subscription_end_date)
+  const verificationPaymentConfirmed = Boolean(data.paymentConfirmed)
+  const canOpenKycVideo =
+    verificationPaymentConfirmed ||
     activeShop.kyc_status === "submitted" ||
     activeShop.kyc_status === "rejected" ||
     isVerified
-  const isSuspended = activeShop.is_open === false
-  const isSubscriptionActive = isFutureDate(activeShop.subscription_end_date)
-
-  const showVerificationRequiredNotice = (toolName) => {
-    notify({
-      type: "error",
-      title: "KYC verification required",
-      message: `Complete the KYC Verification card before you can open ${toolName}.`,
-    })
-  }
 
   function beginRouteTransition(retryAction = null) {
     retryRouteTransitionRef.current = retryAction
@@ -459,9 +452,9 @@ function VendorsPanel() {
             title="Add Product"
             icon={<FaRegSquarePlus />}
             colorClass="bg-[#DCFCE7] text-[#16A34A]"
-            isLocked={!isSubscriptionActive}
+            isLocked={!isApplicationApproved || isSuspended}
             onClick={
-              isSubscriptionActive
+              isApplicationApproved && !isSuspended
                 ? () =>
                     handleCardClick(
                       `/merchant-add-product?shop_id=${activeShop.id}`,
@@ -469,9 +462,11 @@ function VendorsPanel() {
                 : () =>
                     notify({
                       type: "error",
-                      title: "Subscription required",
+                      title: isSuspended ? "Shop restricted" : "Approval required",
                       message:
-                        "Please activate your service fee subscription to add new products.",
+                        isSuspended
+                          ? "Your shop access has been restricted by administration."
+                          : "Your shop must be approved before you can add products.",
                     })
             }
           />
@@ -481,17 +476,19 @@ function VendorsPanel() {
             icon={<FaPenToSquare />}
             colorClass="bg-[#DBEAFE] text-[#2563EB]"
             badge={activeRejectedCount}
-            isLocked={!isSubscriptionActive}
+            isLocked={!isApplicationApproved || isSuspended}
             onClick={
-              isSubscriptionActive
+              isApplicationApproved && !isSuspended
                 ? () =>
                     handleCardClick(`/merchant-products?shop_id=${activeShop.id}`)
                 : () =>
                     notify({
                       type: "error",
-                      title: "Subscription required",
+                      title: isSuspended ? "Shop restricted" : "Approval required",
                       message:
-                        "Please activate your service fee subscription to edit products.",
+                        isSuspended
+                          ? "Your shop access has been restricted by administration."
+                          : "Your shop must be approved before you can edit products.",
                     })
             }
           />
@@ -500,12 +497,19 @@ function VendorsPanel() {
             title="Shop Banner"
             icon={<FaCamera />}
             colorClass="bg-[#F3E8FF] text-[#9333EA]"
-            isLocked={!isVerified}
+            isLocked={!isApplicationApproved || isSuspended}
             onClick={
-              isVerified
+              isApplicationApproved && !isSuspended
                 ? () => handleCardClick(`/merchant-banner?shop_id=${activeShop.id}`)
                 : () =>
-                    showVerificationRequiredNotice("Shop Banner")
+                    notify({
+                      type: "error",
+                      title: isSuspended ? "Shop restricted" : "Approval required",
+                      message:
+                        isSuspended
+                          ? "Your shop access has been restricted by administration."
+                          : "Your shop must be approved before you can manage your banner.",
+                    })
             }
           />
 
@@ -513,14 +517,19 @@ function VendorsPanel() {
             title="Shop Settings"
             icon={<FaGear />}
             colorClass="bg-[#FFEDD5] text-[#EA580C]"
-            isLocked={!isSubscriptionActive}
+            isLocked={!isApplicationApproved || isSuspended}
             onClick={
-              isSubscriptionActive
+              isApplicationApproved && !isSuspended
                 ? () => handleCardClick(`/merchant-settings?shop_id=${activeShop.id}`)
                 : () =>
-                    showSubscriptionRequired(
-                      "Please activate your service fee subscription to update shop settings."
-                    )
+                    notify({
+                      type: "error",
+                      title: isSuspended ? "Shop restricted" : "Approval required",
+                      message:
+                        isSuspended
+                          ? "Your shop access has been restricted by administration."
+                          : "Your shop must be approved before you can update shop settings.",
+                    })
             }
           />
 
@@ -528,11 +537,14 @@ function VendorsPanel() {
             title="Post News"
             icon={<FaBullhorn />}
             colorClass="bg-[#FEE2E2] text-[#DC2626]"
-            isLocked={!isVerified}
+            isLocked={!isSubscriptionActive}
             onClick={
-              isVerified
+              isSubscriptionActive
                 ? () => handleCardClick(`/merchant-news?shop_id=${activeShop.id}`)
-                : () => showVerificationRequiredNotice("Post News")
+                : () =>
+                    showSubscriptionRequired(
+                      "An active service plan is required before you can publish shop news."
+                    )
             }
           />
 
@@ -565,11 +577,13 @@ function VendorsPanel() {
             subtitle="Custom Ad Studio"
             icon={<FaWandMagicSparkles />}
             colorClass="bg-[#FDF2F8] text-[#db2777]"
-            isLocked={!isVerified}
+            isLocked={!isSubscriptionActive}
             onClick={
-              !isVerified
+              !isSubscriptionActive
                 ? () =>
-                    showVerificationRequiredNotice("Promo Banner")
+                    showSubscriptionRequired(
+                      "An active service plan is required before you can open the promo banner studio."
+                    )
                 : () =>
                     handleCardClick(
                       `/merchant-promo-banner?shop_id=${activeShop.id}`,
@@ -581,13 +595,15 @@ function VendorsPanel() {
             title="Analytics"
             icon={<FaChartLine />}
             colorClass="bg-[#CCFBF1] text-[#0D9488]"
-            isLocked={!isVerified}
+            isLocked={!isSubscriptionActive}
             onClick={
-              isVerified
+              isSubscriptionActive
                 ? () =>
                     handleCardClick(`/merchant-analytics?shop_id=${activeShop.id}`)
                 : () =>
-                    showVerificationRequiredNotice("Analytics")
+                    showSubscriptionRequired(
+                      "An active service plan is required before you can access analytics."
+                    )
             }
           />
 
@@ -609,7 +625,7 @@ function VendorsPanel() {
           ) : isVerified ? (
             <DashCard
               title="Verified Shop"
-              subtitle="Physical Approval"
+              subtitle="Verification Complete"
               icon={<FaCheckDouble />}
               colorClass="bg-[#DCFCE7] text-[#16A34A]"
               onClick={() =>
@@ -617,14 +633,14 @@ function VendorsPanel() {
                   notify({
                     type: "success",
                     title: "Shop verified",
-                    message: "Your shop has completed physical verification.",
+                    message: "Your shop has completed physical verification and your free trial is active.",
                   }),
                 )
               }
             />
           ) : activeShop.kyc_status === "submitted" ? (
             <DashCard
-              title="KYC Pending"
+              title="Physical Verification"
               subtitle="Under Review"
               icon={<FaHourglassHalf />}
               isLocked={true}
@@ -637,10 +653,10 @@ function VendorsPanel() {
                 })
               }
             />
-          ) : paymentConfirmed ? (
+          ) : canOpenKycVideo ? (
             activeShop.kyc_status === "rejected" ? (
               <DashCard
-                title="KYC Verification"
+                title="Physical Verification"
                 subtitle="Re-record Video"
                 icon={<FaVideo />}
                 colorClass="bg-[#FEE2E2] text-[#DC2626]"
@@ -650,7 +666,7 @@ function VendorsPanel() {
               />
             ) : (
               <DashCard
-                title="KYC Verification"
+                title="Physical Verification"
                 subtitle="Record Video"
                 icon={<FaVideo />}
                 colorClass="bg-[#FEE2E2] text-[#DC2626]"
@@ -661,7 +677,7 @@ function VendorsPanel() {
             )
           ) : (
             <DashCard
-              title="KYC Verification"
+              title="Physical Verification"
               subtitle={
                 verificationProofStatus === "pending"
                   ? "Payment Pending"
@@ -678,6 +694,7 @@ function VendorsPanel() {
           {isVerified ? (
             <DashCard
               title="Service Fee"
+              subtitle={isSubscriptionActive ? "Free Trial Active" : "Choose Plan"}
               icon={<FaFileInvoiceDollar />}
               colorClass="bg-pink-100 text-pink-600"
               onClick={() =>
@@ -687,7 +704,7 @@ function VendorsPanel() {
           ) : (
             <DashCard
               title="Service Fee"
-              subtitle="Approval Req."
+              subtitle="KYC Required"
               icon={<FaLock />}
               isLocked={true}
               onClick={() =>

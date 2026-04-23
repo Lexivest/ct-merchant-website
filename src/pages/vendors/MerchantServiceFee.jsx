@@ -97,7 +97,7 @@ export default function MerchantServiceFee() {
   const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
   const selectedPlanData = SERVICE_FEE_PLANS[selectedPlan]
-  const currentPlan = shopData?.subscription_plan || "Free Trial"
+  const currentPlan = shopData?.subscription_plan || "No Active Plan"
   const isFreeTrial = currentPlan === "Free Trial"
   const isActive = isFutureDate(shopData?.subscription_end_date)
   const isVerified = Boolean(shopData?.is_verified)

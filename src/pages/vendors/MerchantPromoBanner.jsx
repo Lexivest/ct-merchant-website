@@ -87,6 +87,13 @@ function roundedRectPath(context, x, y, width, height, radius) {
   context.closePath();
 }
 
+function isFutureDate(value) {
+  if (!value) return false;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return false;
+  return parsed.getTime() > Date.now();
+}
+
 function fillRoundedRect(context, x, y, width, height, radius, fillStyle) {
   roundedRectPath(context, x, y, width, height, radius);
   context.fillStyle = fillStyle;
@@ -594,14 +601,14 @@ export default function MerchantPromoBanner() {
 
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
-          .select("id, name, unique_id, category, is_verified, address, image_url, cities(name)")
+          .select("id, name, unique_id, category, address, image_url, subscription_end_date, cities(name)")
           .eq("id", currentShopId)
           .eq("owner_id", user.id)
           .maybeSingle();
 
         if (shopErr || !shop) throw new Error("Could not load shop details.");
-        if (!shop.is_verified) {
-          throw new Error("Access Denied: Your shop must be Physically Verified before you can generate a Promotional Banner.");
+        if (!isFutureDate(shop.subscription_end_date)) {
+          throw new Error("Activate your service plan before you can generate a promotional banner.");
         }
         setShopData(shop);
 

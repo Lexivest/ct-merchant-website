@@ -25,6 +25,13 @@ function NewsShimmer() {
   );
 }
 
+function isFutureDate(value) {
+  if (!value) return false;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return false;
+  return parsed.getTime() > Date.now();
+}
+
 export default function MerchantNews() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -83,13 +90,13 @@ export default function MerchantNews() {
 
         const { data: shopAccess, error: shopAccessErr } = await supabase
           .from("shops")
-          .select("id, is_verified")
+          .select("id, subscription_end_date")
           .eq("id", currentShopId)
           .eq("owner_id", user.id)
           .maybeSingle();
 
         if (shopAccessErr || !shopAccess) throw new Error("Shop not found or access denied.");
-        if (!shopAccess.is_verified) throw new Error("Complete KYC verification before opening your shop news tools.");
+        if (!isFutureDate(shopAccess.subscription_end_date)) throw new Error("Activate your service plan before opening your shop news tools.");
         if (String(shopId) !== String(shopAccess.id || currentShopId)) {
           setShopId(String(shopAccess.id));
         }

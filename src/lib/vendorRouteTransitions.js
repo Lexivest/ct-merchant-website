@@ -7,6 +7,13 @@ import { supabase } from "./supabase"
 const VENDOR_TRANSITION_TIMEOUT = 12000
 const MAX_PRODUCTS_LIMIT = 30
 
+function isFutureDate(value) {
+  if (!value) return false
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return false
+  return parsed.getTime() > Date.now()
+}
+
 export function buildShopRegistrationCacheKey(userId, cityId, shopId = null) {
   if (shopId) {
     return `shop_reg_edit_${userId || "guest"}_${shopId}`
@@ -308,11 +315,11 @@ async function prepareMerchantBannerData({ userId, shopId }) {
   const shop = await fetchOwnedShop(
     userId,
     shopId,
-    "id, owner_id, name, category, address, image_url, is_verified, cities(name)"
+    "id, owner_id, name, category, address, image_url, status, cities(name)"
   )
 
-  if (!shop.is_verified) {
-    throw new Error("Complete KYC verification before opening your shop banner tools.")
+  if (shop.status !== "approved") {
+    throw new Error("Your shop must be digitally approved before you can manage your banner.")
   }
 
   const [bannerResult, productResult, profileResult] = await Promise.all([
@@ -376,10 +383,10 @@ async function prepareMerchantSettingsData({ userId, shopId }) {
 
 async function prepareMerchantNewsData({ userId, shopId }) {
   await fetchProfileSuspension(userId)
-  const shop = await fetchOwnedShop(userId, shopId, "id, is_verified")
+  const shop = await fetchOwnedShop(userId, shopId, "id, subscription_end_date")
 
-  if (!shop.is_verified) {
-    throw new Error("Complete KYC verification before opening your shop news tools.")
+  if (!isFutureDate(shop.subscription_end_date)) {
+    throw new Error("Activate your service plan before opening your shop news tools.")
   }
 
   const { data: newsData, error } = await supabase
@@ -403,10 +410,10 @@ async function prepareMerchantNewsData({ userId, shopId }) {
 
 async function prepareMerchantAnalyticsData({ userId, shopId }) {
   await fetchProfileSuspension(userId)
-  const shop = await fetchOwnedShop(userId, shopId, "id, is_verified")
+  const shop = await fetchOwnedShop(userId, shopId, "id, subscription_end_date")
 
-  if (!shop.is_verified) {
-    throw new Error("Complete KYC verification before opening analytics.")
+  if (!isFutureDate(shop.subscription_end_date)) {
+    throw new Error("Activate your service plan before opening analytics.")
   }
 
   const safeCountFetch = async (table) => {
@@ -447,12 +454,12 @@ async function prepareMerchantPromoBannerData({ userId, shopId }) {
   const shop = await fetchOwnedShop(
     userId,
     shopId,
-    "id, name, unique_id, category, is_verified, address, image_url, cities(name)"
+    "id, name, unique_id, category, address, image_url, subscription_end_date, cities(name)"
   )
 
-  if (!shop.is_verified) {
+  if (!isFutureDate(shop.subscription_end_date)) {
     throw new Error(
-      "Access denied. Your shop must be physically verified before you can generate a promo banner."
+      "Activate your service plan before you can generate a promo banner."
     )
   }
 
