@@ -125,7 +125,6 @@ export async function signOutUser() {
 
 const LOGIN_SUSPENSION_THRESHOLD = 3
 const SECURITY_HEARTBEAT_RPC = "ctm_security_heartbeat"
-const LOGIN_GUARD_DEBUG_PREFIX = "[login-guard]"
 
 function isMissingRpcError(error) {
   const message = String(error?.message || "").toLowerCase()
@@ -140,12 +139,16 @@ function isMissingRpcError(error) {
 
 function getSecurityHeartbeatStatus(data, fallbackEmail = "") {
   const row = data || {}
-  const failedAttempts = 3 - Number(row?.remaining || 3)
+  const parsedRemaining = Number(row?.remaining ?? LOGIN_SUSPENSION_THRESHOLD)
+  const remainingAttempts = Number.isFinite(parsedRemaining)
+    ? parsedRemaining
+    : LOGIN_SUSPENSION_THRESHOLD
+  const failedAttempts = LOGIN_SUSPENSION_THRESHOLD - remainingAttempts
   return {
     email: fallbackEmail || "",
     userId: row?.user_id || null,
     failedAttempts: failedAttempts,
-    attemptsRemaining: Number(row?.remaining || 3),
+    attemptsRemaining: remainingAttempts,
     isSuspended: Boolean(row?.is_blocked),
     status: row?.status || "CLEAR",
   }
@@ -202,12 +205,7 @@ function isLikelyCredentialFailure(error) {
 export async function signInWithPassword({ email, password }) {
   const normalizedEmail = normalizeEmail(email)
 
-  try {
-    await ensureEmailIsNotSuspended(normalizedEmail)
-  } catch (suspensionError) {
-    console.warn("[Auth] Pre-login suspension check caught block:", suspensionError.message)
-    throw suspensionError
-  }
+  await ensureEmailIsNotSuspended(normalizedEmail)
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email: normalizedEmail,
@@ -216,7 +214,6 @@ export async function signInWithPassword({ email, password }) {
 
   if (error) {
     const isCreds = isLikelyCredentialFailure(error)
-    console.log("[Auth] Login failed. isCredentialFailure:", isCreds, "Error:", error)
 
     if (isCreds) {
       try {
@@ -226,10 +223,7 @@ export async function signInWithPassword({ email, password }) {
           "Could not update login security right now."
         )
 
-        console.log("[Auth] Security Heartbeat Failure Status:", status)
-
         if (status.isSuspended) {
-          console.warn("[Auth] User is now suspended")
           throw new Error("Your account is suspended due to too many failed attempts. Please contact support.")
         }
 
@@ -252,7 +246,6 @@ export async function signInWithPassword({ email, password }) {
 
   const user = data.user || data.session?.user
   if (user) {
-    // 1. Unified Security Check (Manual + Brute Force)
     const status = await runSecurityHeartbeat(
       user.email || normalizedEmail,
       "SUCCESS",
@@ -264,7 +257,7 @@ export async function signInWithPassword({ email, password }) {
       throw new Error("Your account is suspended. Please contact support.")
     }
 
-    // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call with targeted user ID
+    // Keep last-seen profile metadata fresh without blocking login.
     try {
       await supabase.rpc("stamp_profile_footprint", { p_target_user_id: user.id })
     } catch (rpcError) {
@@ -299,7 +292,7 @@ export async function signInWithGoogleIdToken(idToken) {
     }
 
     if (signedInUser?.id) {
-      // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call with targeted user ID
+      // Keep last-seen profile metadata fresh without blocking login.
       try {
         await supabase.rpc("stamp_profile_footprint", { p_target_user_id: signedInUser.id })
       } catch (rpcError) {
@@ -336,27 +329,19 @@ export async function signUpWithEmail({
   })
 
   if (authError) {
-    console.error("[signUpWithEmail] Auth Error:", authError);
-    throw authError;
+    throw authError
   }
   
   if (!authData?.user) {
-    console.error("[signUpWithEmail] No user data returned");
-    throw new Error("Account could not be created.");
+    throw new Error("Account could not be created.")
   }
 
-  console.log("[signUpWithEmail] Success, stamping footprint for user:", authData.user.id);
-
-  // 🚀 THE FOOTPRINT STAMP: Explicit RPC Call with targeted user ID
+  // Keep signup profile metadata fresh without blocking account creation.
   try {
-    const { data: rpcData, error: rpcError } = await supabase.rpc("stamp_profile_footprint", { p_target_user_id: authData.user.id })
-    if (rpcError) {
-      console.warn("[signUpWithEmail] Footprint RPC Error:", rpcError);
-    } else {
-      console.log("[signUpWithEmail] Footprint RPC Result:", rpcData);
-    }
+    const { error: rpcError } = await supabase.rpc("stamp_profile_footprint", { p_target_user_id: authData.user.id })
+    if (rpcError) console.warn("Footprint RPC failed:", rpcError)
   } catch (rpcError) {
-    console.warn("[signUpWithEmail] Footprint RPC Exception:", rpcError)
+    console.warn("Footprint RPC failed:", rpcError)
   }
 
   return {
