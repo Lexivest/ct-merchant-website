@@ -1,5 +1,6 @@
 import { primeCachedFetchStore } from "../hooks/useCachedFetch"
 import { getProfileDisplayName } from "./featuredBannerEngine"
+import { fetchVerificationAccessStatus } from "./offlinePayments"
 import { loadProductCategoryRows } from "./productCategories"
 import { supabase } from "./supabase"
 
@@ -152,19 +153,16 @@ async function prepareVendorPanelData({ userId }) {
 
   if (rejectedCountError) throw rejectedCountError
 
-  const { data: paymentRecord, error: paymentError } = await supabase
-    .from("physical_verification_payments")
-    .select("id")
-    .eq("merchant_id", userId)
-    .eq("status", "success")
-    .maybeSingle()
-
-  if (paymentError) throw paymentError
+  const verificationAccess = await fetchVerificationAccessStatus({
+    userId,
+    shopId: shopData.id,
+  })
 
   const payload = {
     shop: shopData,
     rejectedProductCount: count || 0,
-    hasPaidFee: Boolean(paymentRecord),
+    hasVerificationAccess: verificationAccess.hasVerificationAccess,
+    verificationProofStatus: verificationAccess.verificationProofStatus,
   }
 
   primeCachedFetchStore(`vendor_panel_${userId}`, payload)
@@ -490,8 +488,29 @@ async function prepareMerchantVideoKYCData({ userId }) {
   const shop = await fetchOwnedShop(
     userId,
     null,
-    "id, name, unique_id, address, city_id, is_verified, kyc_status, kyc_video_url, rejection_reason, cities(name)"
+    "id, name, unique_id, address, city_id, status, is_verified, kyc_status, kyc_video_url, rejection_reason, cities(name)"
   )
+
+  if (shop.is_verified) {
+    throw new Error("Your shop has already completed this verification step.")
+  }
+
+  if (shop.status !== "approved") {
+    throw new Error("Your shop must be digitally approved before you can submit video KYC.")
+  }
+
+  const verificationAccess = await fetchVerificationAccessStatus({
+    userId,
+    shopId: shop.id,
+  })
+  const hasVerificationAccess =
+    verificationAccess.hasVerificationAccess ||
+    shop.kyc_status === "submitted" ||
+    shop.kyc_status === "rejected"
+
+  if (!hasVerificationAccess) {
+    throw new Error("Complete your physical verification payment step before recording video KYC.")
+  }
 
   let cityName = ""
   const resolvedCityId = shop?.city_id || profile?.city_id

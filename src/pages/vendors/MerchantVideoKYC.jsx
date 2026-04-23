@@ -17,6 +17,7 @@ import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvide
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
 import InlineErrorState from "../../components/common/InlineErrorState";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
+import { fetchVerificationAccessStatus } from "../../lib/offlinePayments";
 import { UPLOAD_RULES, formatBytes, getRuleLabel } from "../../lib/uploadRules";
 import logoImage from "../../assets/images/logo.jpg";
 
@@ -210,15 +211,45 @@ export default function MerchantVideoKYC() {
 
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
-          .select("id, name, unique_id, address, city_id, is_verified, kyc_status, kyc_video_url, rejection_reason, cities(name)")
+          .select("id, name, unique_id, address, city_id, status, is_verified, kyc_status, kyc_video_url, rejection_reason, cities(name)")
           .eq("owner_id", user.id)
           .maybeSingle();
 
         if (shopErr || !shop) throw new Error("Shop not found.");
 
-        if (shop.is_verified || shop.kyc_status === 'approved') {
+        const verificationAccess = await fetchVerificationAccessStatus({
+          userId: user.id,
+          shopId: shop.id,
+        });
+
+        const hasVerificationAccess =
+          verificationAccess.hasVerificationAccess ||
+          shop.kyc_status === "submitted" ||
+          shop.kyc_status === "rejected";
+
+        if (shop.is_verified) {
           notify({ type: "info", title: "Already approved", message: "Your shop has already completed this verification step." });
           navigate("/vendor-panel", { replace: true });
+          return;
+        }
+
+        if (shop.status !== "approved") {
+          notify({
+            type: "info",
+            title: "Application pending",
+            message: "Your shop must be digitally approved before you can submit video KYC.",
+          });
+          navigate("/vendor-panel", { replace: true });
+          return;
+        }
+
+        if (!hasVerificationAccess) {
+          notify({
+            type: "info",
+            title: "Verification fee required",
+            message: "Complete your physical verification payment step before recording video KYC.",
+          });
+          navigate(`/remita?shop_id=${shop.id}`, { replace: true });
           return;
         }
 
@@ -285,7 +316,7 @@ export default function MerchantVideoKYC() {
 
           setShopData((prev) => ({ ...(prev || {}), ...nextShop }));
 
-          if (nextShop.is_verified || nextShop.kyc_status === "approved") {
+          if (nextShop.is_verified) {
             notify({
               type: "success",
               title: "KYC approved",

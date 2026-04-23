@@ -100,7 +100,7 @@ export default function MerchantServiceFee() {
   const currentPlan = shopData?.subscription_plan || "Free Trial"
   const isFreeTrial = currentPlan === "Free Trial"
   const isActive = isFutureDate(shopData?.subscription_end_date)
-  const isVerified = shopData?.is_verified || shopData?.kyc_status === "approved"
+  const isVerified = Boolean(shopData?.is_verified)
   const canUploadProof = Boolean(
     receiptFile &&
       selectedPlanData &&

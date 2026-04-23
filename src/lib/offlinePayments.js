@@ -102,6 +102,61 @@ export async function fetchLatestPaymentProof({ userId, shopId, paymentKind, pla
   return data || null
 }
 
+export async function fetchVerificationAccessStatus({
+  userId,
+  shopId,
+  paymentKind = "physical_verification",
+}) {
+  if (!userId || !shopId) {
+    return {
+      paymentRecord: null,
+      latestProof: null,
+      verificationProofStatus: null,
+      hasVerificationAccess: false,
+      paymentConfirmed: false,
+    }
+  }
+
+  const [{ data: paymentRecord, error: paymentError }, latestProof] =
+    await Promise.all([
+      supabase
+        .from("physical_verification_payments")
+        .select("id")
+        .eq("merchant_id", userId)
+        .eq("status", "success")
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      fetchLatestPaymentProof({
+        userId,
+        shopId,
+        paymentKind,
+      }),
+    ])
+
+  if (paymentError) {
+    console.error("Fetch verification payment status failed:", paymentError)
+    throw new Error("Could not confirm verification payment status.")
+  }
+
+  const verificationProofStatus =
+    latestProof?.status || (paymentRecord ? "approved" : null)
+  const hasVerificationAccess =
+    Boolean(paymentRecord) ||
+    verificationProofStatus === "pending" ||
+    verificationProofStatus === "approved"
+  const paymentConfirmed =
+    Boolean(paymentRecord) || verificationProofStatus === "approved"
+
+  return {
+    paymentRecord: paymentRecord || null,
+    latestProof,
+    verificationProofStatus,
+    hasVerificationAccess,
+    paymentConfirmed,
+  }
+}
+
 export async function createPaymentProof({
   user,
   shopId,

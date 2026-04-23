@@ -337,18 +337,9 @@ export default function StaffVerifications() {
 
     setProcessing(true)
     try {
-      const updateData = isKyc 
-        ? { kyc_status: "approved" }
-        : { status: "approved" }
-
-      // If we approve one, check if the other is already approved to set overall verification
-      const otherApproved = isKyc 
-        ? selectedShop.status === "approved"
-        : selectedShop.kyc_status === "approved"
-
-      if (otherApproved) {
-        updateData.is_verified = true
-      }
+      const updateData = isKyc
+        ? { kyc_status: "approved", is_verified: true, rejection_reason: null }
+        : { status: "approved", is_verified: false, rejection_reason: null }
 
       const { error } = await supabase
         .from("shops")

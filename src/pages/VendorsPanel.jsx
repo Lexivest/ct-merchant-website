@@ -36,6 +36,7 @@ import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { supabase } from "../lib/supabase"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
+import { fetchVerificationAccessStatus } from "../lib/offlinePayments"
 import { prepareVendorRouteTransition } from "../lib/vendorRouteTransitions"
 
 const loadVendorRoutes = {
@@ -122,17 +123,16 @@ function VendorsPanel() {
 
     const rejectedCount = !rejectErr && count ? count : 0
 
-    const { data: paymentRecord } = await supabase
-      .from("physical_verification_payments")
-      .select("id")
-      .eq("merchant_id", user.id)
-      .eq("status", "success")
-      .maybeSingle()
+    const verificationAccess = await fetchVerificationAccessStatus({
+      userId: user.id,
+      shopId: shopData.id,
+    })
 
     return {
       shop: shopData,
       rejectedProductCount: rejectedCount,
-      hasPaidFee: Boolean(paymentRecord),
+      hasVerificationAccess: verificationAccess.hasVerificationAccess,
+      verificationProofStatus: verificationAccess.verificationProofStatus,
     }
   }
 
@@ -217,10 +217,27 @@ function VendorsPanel() {
       )
       .subscribe()
 
+    const verificationProofChannel = supabase
+      .channel(`public:offline_payment_proofs:merchant_id=eq.${user.id}:vendor-panel`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "offline_payment_proofs",
+          filter: `merchant_id=eq.${user.id}`,
+        },
+        () => {
+          mutate()
+        },
+      )
+      .subscribe()
+
     return () => {
       supabase.removeChannel(shopChannel)
       supabase.removeChannel(productChannel)
       supabase.removeChannel(paymentChannel)
+      supabase.removeChannel(verificationProofChannel)
     }
   }, [user, data, data?.shop?.id, isOffline, mutate])
 
@@ -243,9 +260,14 @@ function VendorsPanel() {
   const activeShop = realtimeShop || data.shop
   const activeRejectedCount = data.rejectedProductCount
 
-  const hasPaidFee = data.hasPaidFee
-  const isVerified =
-    activeShop.is_verified || activeShop.kyc_status === "approved"
+  const isApplicationApproved = activeShop.status === "approved"
+  const isVerified = Boolean(activeShop.is_verified)
+  const verificationProofStatus = data.verificationProofStatus || null
+  const hasVerificationAccess =
+    Boolean(data.hasVerificationAccess) ||
+    activeShop.kyc_status === "submitted" ||
+    activeShop.kyc_status === "rejected" ||
+    isVerified
   const isSuspended = activeShop.is_open === false
   const isSubscriptionActive = isFutureDate(activeShop.subscription_end_date)
 
@@ -577,23 +599,38 @@ function VendorsPanel() {
             }
           />
 
-          {isVerified ? (
+          {!isApplicationApproved ? (
             <DashCard
-              title="Approved Shop"
-              subtitle="Active"
+              title="Application Pending"
+              subtitle="Staff Review"
+              icon={<FaHourglassHalf />}
+              isLocked={true}
+              onClick={() =>
+                notify({
+                  type: "info",
+                  title: "Application under review",
+                  message:
+                    "Your shop application is waiting for digital approval from CTMerchant staff.",
+                })
+              }
+            />
+          ) : isVerified ? (
+            <DashCard
+              title="Verified Shop"
+              subtitle="Physical Approval"
               icon={<FaCheckDouble />}
               colorClass="bg-[#DCFCE7] text-[#16A34A]"
               onClick={() =>
                 handleCardClick(null, () =>
                   notify({
                     type: "success",
-                    title: "Shop approved",
-                    message: "Your shop has completed physical approval.",
+                    title: "Shop verified",
+                    message: "Your shop has completed physical verification.",
                   }),
                 )
               }
             />
-          ) : hasPaidFee ? (
+          ) : hasVerificationAccess ? (
             activeShop.kyc_status === "submitted" ? (
               <DashCard
                 title="KYC Pending"
@@ -633,7 +670,11 @@ function VendorsPanel() {
           ) : (
             <DashCard
               title="Verification Fee"
-              subtitle="Physical Check"
+              subtitle={
+                verificationProofStatus === "rejected"
+                  ? "Upload Again"
+                  : "Physical Check"
+              }
               icon={<FaBuildingCircleCheck />}
               colorClass="bg-[#FEF3C7] text-[#D97706]"
               onClick={() => handleCardClick(`/remita?shop_id=${activeShop.id}`)}

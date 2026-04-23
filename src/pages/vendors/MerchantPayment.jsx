@@ -21,7 +21,7 @@ import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { CTM_BANK_ACCOUNT, PHYSICAL_VERIFICATION_FEE, normalizePromoCode } from "../../lib/paymentConfig"
 import {
   createPaymentProof,
-  fetchLatestPaymentProof,
+  fetchVerificationAccessStatus,
   formatNaira,
   getPaymentReceiptRuleLabel,
   getProofStatusCopy,
@@ -126,8 +126,7 @@ export default function MerchantPayment() {
     try {
       if (showLoader) setLoading(true)
 
-      // Fetch shop and verification status in parallel
-      const [shopRes, paymentRes] = await Promise.all([
+      const [shopRes, profileRes, verificationAccess] = await Promise.all([
         supabase
           .from("shops")
           .select("*, cities(name)")
@@ -135,19 +134,21 @@ export default function MerchantPayment() {
           .eq("owner_id", user.id)
           .maybeSingle(),
         supabase
-          .from("physical_verification_payments")
-          .select("id")
-          .eq("merchant_id", user.id)
-          .eq("status", "success")
-          .order("id", { ascending: false })
-          .limit(1)
-          .maybeSingle()
+          .from("profiles")
+          .select("*, cities(name)")
+          .eq("id", user.id)
+          .single(),
+        fetchVerificationAccessStatus({
+          userId: user.id,
+          shopId: parsedShopId,
+        }),
       ])
 
       const shop = shopRes.data
       if (shopRes.error || !shop) throw new Error("Shop not found or access denied")
+      if (profileRes.error || !profileRes.data) throw new Error("Profile not found")
 
-      if (shop.is_verified || shop.kyc_status === "approved") {
+      if (shop.is_verified) {
         notify({
           type: "info",
           title: "Already approved",
@@ -157,7 +158,18 @@ export default function MerchantPayment() {
         return
       }
 
-      if (paymentRes.data) {
+      if (shop.status !== "approved") {
+        notify({
+          type: "info",
+          title: "Application pending",
+          message:
+            "Your shop must be digitally approved before you can continue to physical verification payment.",
+        })
+        navigate("/vendor-panel")
+        return
+      }
+
+      if (verificationAccess.paymentConfirmed) {
         if (shop.status === "pending_kyc_review" || shop.kyc_status === "submitted") {
           notify({
             type: "info",
@@ -176,23 +188,7 @@ export default function MerchantPayment() {
         return
       }
 
-      // Fetch profile and proof in parallel
-      const [profileRes, latestProof] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("*, cities(name)")
-          .eq("id", user.id)
-          .single(),
-        fetchLatestPaymentProof({
-          userId: user.id,
-          shopId: parsedShopId,
-          paymentKind: "physical_verification",
-        }),
-      ])
-
-      if (profileRes.error || !profileRes.data) throw new Error("Profile not found")
-
-      setPaymentProof(latestProof)
+      setPaymentProof(verificationAccess.latestProof)
       setShopDetails({
         merchantName: profileRes.data.full_name || "Merchant",
         shopName: shop.name,
