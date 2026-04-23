@@ -594,22 +594,23 @@ export default function EditProduct() {
       const finalUrl3 = url3 || (deletedSlots[3] ? null : existingUrls[3]);
 
       // Update DB
-      const { error: updateError } = await supabase.from("products").update({
-        name: form.name.trim(),
-        description: form.desc.trim(),
-        price: priceVal,
-        discount_price: discountPrice,
-        condition: form.condition,
-        category: form.category,
-        image_url: finalUrl1,
-        image_url_2: finalUrl2,
-        image_url_3: finalUrl3,
-        stock_count: parseInt(form.stock),
-        attributes: finalAttrs,
-        is_available: parseInt(form.stock) > 0,
-        is_approved: false, // Reset approval
-        rejection_reason: null
-      }).eq("id", productId);
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc("manage_product", {
+        p_product_id: parseInt(productId),
+        p_name: form.name.trim(),
+        p_description: form.desc.trim(),
+        p_price: priceVal,
+        p_discount_price: discountPrice,
+        p_condition: form.condition,
+        p_category: form.category,
+        p_image_url: finalUrl1,
+        p_image_url_2: finalUrl2,
+        p_image_url_3: finalUrl3,
+        p_stock_count: parseInt(form.stock),
+        p_attributes: finalAttrs,
+        p_is_available: parseInt(form.stock) > 0,
+      })
+
+      if (rpcErr) throw rpcErr
 
       if (updateError) throw updateError;
 

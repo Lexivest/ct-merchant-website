@@ -946,64 +946,44 @@ function ShopRegistration() {
       const logoUpload = await uploadFile(files.logo, LOGO_BUCKET, "logos", existingShop?.image_url)
       uploadedFiles.push(logoUpload)
 
-      const payload = {
-        name: form.name.trim(),
-        description: form.desc.trim(),
-        business_type: form.businessType,
-        category: form.category,
-        city_id: profile.city_id,
-        area_id: Number(form.areaId),
-        address: form.address.trim(),
-        phone: form.phone.trim(),
-        whatsapp: form.whatsapp.trim() || null,
-        latitude: form.lat ? Number(form.lat) : null,
-        longitude: form.lng ? Number(form.lng) : null,
-        id_type: form.idType,
-        id_number: form.idNumber.trim(),
-        cac_number: form.cacNumber.trim() || null,
-        image_url: logoUpload.url,
-        storefront_url: storefrontUpload.url,
-        id_card_url: idCardUpload.url,
-        cac_certificate_url: cacUpload.url,
-        facebook_url: form.facebook ? formatUrl(form.facebook) : null,
-        instagram_url: form.instagram ? formatUrl(form.instagram) : null,
-        twitter_url: form.twitter ? formatUrl(form.twitter) : null,
-        tiktok_url: form.tiktok ? formatUrl(form.tiktok) : null,
-        website_url: form.website ? formatUrl(form.website) : null,
-        status: "pending",
-        rejection_reason: null,
-      }
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc("register_or_update_shop", {
+        p_name: form.name.trim(),
+        p_description: form.desc.trim(),
+        p_address: form.address.trim(),
+        p_phone: form.phone.trim(),
+        p_whatsapp: form.whatsapp.trim() || null,
+        p_city_id: profile.city_id,
+        p_area_id: Number(form.areaId),
+        p_category: form.category,
+        p_business_type: form.businessType,
+        p_latitude: form.lat ? Number(form.lat) : null,
+        p_longitude: form.lng ? Number(form.lng) : null,
+        p_id_type: form.idType,
+        p_id_number: form.idNumber.trim(),
+        p_cac_number: form.cacNumber.trim() || null,
+        p_image_url: logoUpload.url,
+        p_storefront_url: storefrontUpload.url,
+        p_id_card_url: idCardUpload.url,
+        p_cac_certificate_url: cacUpload.url,
+        p_video_kyc_url: null, -- Handled separately or in a future step
+        p_facebook_url: form.facebook ? formatUrl(form.facebook) : null,
+        p_instagram_url: form.instagram ? formatUrl(form.instagram) : null,
+        p_twitter_url: form.twitter ? formatUrl(form.twitter) : null,
+        p_tiktok_url: form.tiktok ? formatUrl(form.tiktok) : null,
+        p_website_url: form.website ? formatUrl(form.website) : null,
+      })
 
-      if (isEdit && existingShop?.id) {
-        const { error } = await supabase
-          .from("shops")
-          .update(payload)
-          .eq("id", existingShop.id)
-          .eq("owner_id", user.id)
-        if (error) throw error
+      if (rpcErr) throw rpcErr
 
-        notify({
-          type: "success",
-          title: "Application Received",
-          message: "Your correction has been received and is under review.",
-          confirmText: "Back to Dashboard",
-          onClose: () => navigate("/vendor-panel", { replace: true }),
-        })
-      } else {
-        const { error } = await supabase.from("shops").insert({
-          ...payload,
-          owner_id: user.id,
-        })
-        if (error) throw error
-
-        notify({
-          type: "success",
-          title: "Application Received",
-          message: "Your shop registration has been received and is currently under review. You will be notified once approved.",
-          confirmText: "Back to Dashboard",
-          onClose: () => navigate("/vendor-panel", { replace: true }),
-        })
-      }
+      notify({
+        type: "success",
+        title: "Application Received",
+        message: isEdit 
+          ? "Your correction has been received and is under review."
+          : "Your shop registration has been received and is currently under review. You will be notified once approved.",
+        confirmText: "Back to Dashboard",
+        onClose: () => navigate("/vendor-panel", { replace: true }),
+      })
 
       const oldFilesByBucket = new Map()
       uploadedFiles.forEach((item) => {

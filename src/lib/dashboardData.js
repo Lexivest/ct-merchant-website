@@ -280,15 +280,9 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
     notifications: data.notifications || [],
     wishlistCount: data.wishlist_count || 0,
     unread: data.unread_notifications || 0,
-    // Note: The RPC doesn't currently return the full 'products' list (150+ items) 
-    // that the old version fetched. If the UI strictly needs that broad list for 
-    // global search/suggestions, we might need to add it to the RPC or keep one 
-    // separate fetch. However, most dashboard sections now have their own 
-    // dedicated arrays in the RPC response.
-    products: [] 
+    products: data.products || []
   }
 }
-
 export async function fetchDashboardData({ userId, profile = null }) {
   if (!userId) throw new Error("Authentication required")
 

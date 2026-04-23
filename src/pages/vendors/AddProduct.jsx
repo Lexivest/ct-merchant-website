@@ -630,33 +630,23 @@ export default function AddProduct() {
 
       const [url1, url2, url3] = await Promise.all(uploadPromises);
 
-      let lastInsertError = null;
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        const { error: insertError } = await supabase.from("products").insert({
-          shop_id: parseInt(shopId),
-          name: form.name.trim(),
-          description: form.desc.trim(),
-          price: priceVal,
-          discount_price: discountPrice,
-          condition: form.condition,
-          category: form.category,
-          image_url: url1,
-          image_url_2: url2,
-          image_url_3: url3,
-          stock_count: parseInt(form.stock),
-          attributes: finalAttrs,
-          is_available: parseInt(form.stock) > 0,
-        });
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc("manage_product", {
+        p_shop_id: parseInt(shopId),
+        p_name: form.name.trim(),
+        p_description: form.desc.trim(),
+        p_price: priceVal,
+        p_discount_price: discountPrice,
+        p_condition: form.condition,
+        p_category: form.category,
+        p_image_url: url1,
+        p_image_url_2: url2,
+        p_image_url_3: url3,
+        p_stock_count: parseInt(form.stock),
+        p_attributes: finalAttrs,
+        p_is_available: parseInt(form.stock) > 0,
+      })
 
-        if (!insertError) {
-          lastInsertError = null;
-          break;
-        }
-        lastInsertError = insertError;
-        if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt));
-      }
-
-      if (lastInsertError) throw lastInsertError;
+      if (rpcErr) throw rpcErr
 
       notify({
         type: "success",
