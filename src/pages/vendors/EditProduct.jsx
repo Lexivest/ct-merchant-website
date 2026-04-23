@@ -208,7 +208,6 @@ export default function EditProduct() {
   const cameraSlotRef = useRef(null);
   const [activeSlot, setActiveSlot] = useState(null);
   const [tempImage, setTempImage] = useState("");
-  const [tempSize, setTempSize] = useState(0);
   const [preparingStudio, setPreparingStudio] = useState(false);
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
@@ -414,12 +413,11 @@ export default function EditProduct() {
       }
 
       setActiveSlot(slot);
-      setTempSize(preparedImage.blob.size || sourceBlob.size);
       setTempImage(preparedImage.src);
       setBrightness(100);
       setContrast(100);
       setStudioOpen(true);
-    } catch (err) {
+    } catch {
       notify({ type: "error", title: "Editor failed", message: "Could not open the image editor." });
     } finally {
       setPreparingStudio(false);
@@ -594,7 +592,7 @@ export default function EditProduct() {
       const finalUrl3 = url3 || (deletedSlots[3] ? null : existingUrls[3]);
 
       // Update DB
-      const { data: rpcRes, error: rpcErr } = await supabase.rpc("manage_product", {
+      const { error: rpcErr } = await supabase.rpc("manage_product", {
         p_product_id: parseInt(productId),
         p_name: form.name.trim(),
         p_description: form.desc.trim(),
@@ -611,8 +609,6 @@ export default function EditProduct() {
       })
 
       if (rpcErr) throw rpcErr
-
-      if (updateError) throw updateError;
 
       // Garbage collect deleted original images
       const pathsToDelete = [];

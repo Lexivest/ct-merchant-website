@@ -375,13 +375,15 @@ function ShopRegistration() {
 
       if (promises.length > 0) {
         const results = await Promise.all(promises)
-        const nextSigned = { ...signedPreviews }
-        results.forEach((res, idx) => {
-          if (res.data?.signedUrl) {
-            nextSigned[keys[idx]] = res.data.signedUrl
-          }
+        setSignedPreviews((current) => {
+          const nextSigned = { ...current }
+          results.forEach((res, idx) => {
+            if (res.data?.signedUrl) {
+              nextSigned[keys[idx]] = res.data.signedUrl
+            }
+          })
+          return nextSigned
         })
-        setSignedPreviews(nextSigned)
       }
     }
 
@@ -677,18 +679,6 @@ function ShopRegistration() {
     input.value = ""
     input.setAttribute("accept", getAcceptValue(targetRule, "image/*"))
     input.removeAttribute("capture")
-    input.click()
-  }
-
-  const openNativeCameraPicker = (targetId, ratio = null) => {
-    const input = hiddenInputRef.current
-    if (!input) return
-    const targetRule = getRuleForTargetId(targetId)
-
-    pickerContextRef.current = { targetId, ratio }
-    input.value = ""
-    input.setAttribute("accept", getAcceptValue(targetRule, "image/*"))
-    input.setAttribute("capture", "environment")
     input.click()
   }
 

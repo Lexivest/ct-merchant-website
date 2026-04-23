@@ -54,16 +54,53 @@ function StableImage({
   aspectRatio
 }) {
   const shouldEagerLoad = loading === "eager" || fetchPriority === "high"
-  const rootRef = useRef(null)
 
-  // 1. Determine the final URL immediately
   const finalSrc = useMemo(() => {
     if (!src) return fallbackSrc
     // Ensure we don't have double slashes or trailing questions which break cache keys
     return getOptimizedImageUrl(src, { width, height, quality, format, resize })
   }, [src, width, height, quality, format, resize, fallbackSrc])
 
-  // 2. Check if this specific URL has been successfully loaded in this session
+  return (
+    <StableImageFrame
+      key={finalSrc}
+      src={src}
+      alt={alt}
+      fallbackSrc={fallbackSrc}
+      containerClassName={containerClassName}
+      className={className}
+      placeholderClassName={placeholderClassName}
+      loading={loading}
+      fetchPriority={fetchPriority}
+      onError={onError}
+      onLoad={onLoad}
+      width={width}
+      height={height}
+      aspectRatio={aspectRatio}
+      shouldEagerLoad={shouldEagerLoad}
+      finalSrc={finalSrc}
+    />
+  )
+}
+
+function StableImageFrame({
+  src,
+  alt,
+  fallbackSrc,
+  containerClassName,
+  className,
+  placeholderClassName,
+  loading,
+  fetchPriority,
+  onError,
+  onLoad,
+  width,
+  height,
+  aspectRatio,
+  shouldEagerLoad,
+  finalSrc,
+}) {
+  const rootRef = useRef(null)
   const isPreviouslyLoaded = GLOBAL_IMAGE_REGISTRY.has(finalSrc)
 
   const [isNearViewport, setIsNearViewport] = useState(() => {
@@ -72,8 +109,7 @@ function StableImage({
     return shouldEagerLoad || isPreviouslyLoaded || !("IntersectionObserver" in window)
   })
 
-  // If it's in the registry, we treat it as loaded immediately to avoid state-flicker
-  const [loaded, setLoaded] = useState(isPreviouslyLoaded)
+  const [loaded, setLoaded] = useState(() => isPreviouslyLoaded)
   const [failed, setFailed] = useState(false)
 
   const lowResSrc = useMemo(() => {
@@ -83,10 +119,7 @@ function StableImage({
 
   useEffect(() => {
     if (isPreviouslyLoaded) return undefined
-    if (shouldEagerLoad) {
-      setIsNearViewport(true)
-      return undefined
-    }
+    if (shouldEagerLoad) return undefined
 
     const node = rootRef.current
     if (!node) return undefined
@@ -101,16 +134,7 @@ function StableImage({
       observerListeners.delete(node)
       observer.unobserve(node)
     }
-  }, [shouldEagerLoad, isPreviouslyLoaded, finalSrc])
-
-  useEffect(() => {
-    setFailed(false)
-    setLoaded(isPreviouslyLoaded)
-
-    if (shouldEagerLoad || isPreviouslyLoaded) {
-      setIsNearViewport(true)
-    }
-  }, [finalSrc, isPreviouslyLoaded, shouldEagerLoad])
+  }, [shouldEagerLoad, isPreviouslyLoaded])
 
   function handleLoad(event) {
     setLoaded(true)

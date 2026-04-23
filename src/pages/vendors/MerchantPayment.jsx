@@ -297,7 +297,9 @@ export default function MerchantPayment() {
         try {
           localStorage.removeItem(`vendor_panel_${user.id}`)
           sessionStorage.removeItem(`vendor_panel_${user.id}`)
-        } catch {}
+        } catch {
+          // Local cache cleanup is best effort before redirecting to KYC.
+        }
         navigate(`/merchant-video-kyc?shop_id=${parsedShopId}`)
       }, 900)
     } catch (error) {

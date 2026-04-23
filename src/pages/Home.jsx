@@ -101,30 +101,6 @@ const socialLinks = [
   },
 ]
 
-const testimonials = [
-  {
-    type: "Merchant",
-    quote:
-      "Placeholder testimonial: CTMerchant helped more customers discover my shop and ask for products before visiting.",
-    author: "Merchant Name",
-    detail: "Fashion Retailer, Jos",
-  },
-  {
-    type: "User",
-    quote:
-      "Placeholder testimonial: I was able to compare options quickly and confirm the shop location before stepping out.",
-    author: "Customer Name",
-    detail: "Marketplace User, Kaduna",
-  },
-  {
-    type: "Merchant",
-    quote:
-      "Placeholder testimonial: Sharing my CTMerchant ID and storefront made my business look more organized and trustworthy.",
-    author: "Business Owner",
-    detail: "Home Essentials Store, Plateau",
-  },
-]
-
 function ActivityCalendar() {
   const calendarEvents = [
     { date: "APR 20", title: "Merchant Training Webinar", type: "Virtual" },
@@ -546,15 +522,15 @@ function Home() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const googleButtonRef = useRef(null)
   const [installPromptEvent, setInstallPromptEvent] = useState(null)
-  const [installSupported, setInstallSupported] = useState(false)
-  const [installingApp, setInstallingApp] = useState(false)
+  const [, setInstallSupported] = useState(false)
+  const [, setInstallingApp] = useState(false)
   const [appInstalled, setAppInstalled] = useState(false)
 
   const [repoSearchValue, setRepoSearchValue] = useState("")
   const [repoSearchLoading, setRepoSearchLoading] = useState(false)
 
   // 1.5. Fetch Highlights (News/Announcements)
-  const { data: highlights } = useCachedFetch("home_highlights_v1", fetchHomeHighlights, {
+  useCachedFetch("home_highlights_v1", fetchHomeHighlights, {
     ttl: 1000 * 60 * 30, // 30 minutes
   })
 
@@ -768,8 +744,6 @@ function Home() {
     return /iphone|ipad|ipod/i.test(userAgent)
   }, [])
   const showInstallCard = isPhoneDevice && !appInstalled
-  const installBrowserSupportText =
-    "Supported browsers: Google Chrome, Microsoft Edge, Samsung Internet, Opera, Brave. On iPhone and iPad, use Safari's Add to Home Screen."
   const homeStructuredData = useMemo(() => {
     return {
       "@context": "https://schema.org",

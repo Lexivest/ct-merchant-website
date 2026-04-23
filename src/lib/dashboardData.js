@@ -15,18 +15,6 @@ function unwrapSupabaseResult(result) {
   return result?.data ?? null
 }
 
-function unwrapSupabaseCount(result) {
-  if (result?.error) {
-    return 0
-  }
-
-  return result?.count ?? 0
-}
-
-function hasFreshCache(entry, ttl = DASHBOARD_CACHE_TTL) {
-  return Boolean(entry && Date.now() - entry.timestamp <= ttl)
-}
-
 function runTimedPreload(task, timeoutMessage, timeoutMs = DASHBOARD_TRANSITION_TIMEOUT) {
   return new Promise((resolve, reject) => {
     const timeoutId = window.setTimeout(() => {
@@ -346,7 +334,8 @@ export async function prepareDashboardTransition({
   )
 
   // Split and prime
-  const { profile: p, notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, fairlyUsedProducts, shops, products, ...basePart } = data
+  const { profile: cachedProfile, notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, fairlyUsedProducts, shops, products, ...basePart } = data
+  void cachedProfile
   const dynamicPart = { notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, fairlyUsedProducts, shops, products }
 
   primeCachedFetchStore(baseKey, basePart, Date.now(), { persist: "session" })

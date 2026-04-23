@@ -63,7 +63,7 @@ async function precacheShellAssets() {
 
   try {
     indexResponse = await fetch("/index.html", { cache: "no-store" });
-  } catch (error) {
+  } catch {
     indexResponse = await caches.match("/index.html");
   }
 
@@ -75,7 +75,7 @@ async function precacheShellAssets() {
   let html = "";
   try {
     html = await indexResponse.clone().text();
-  } catch (error) {
+  } catch {
     html = "";
   }
 
@@ -93,7 +93,7 @@ async function precacheShellAssets() {
         const response = await fetch(assetUrl, { cache: "no-store" });
         if (!isCacheableResponse(response)) return;
         await assetCache.put(assetUrl, response.clone());
-      } catch (error) {
+      } catch {
         // Ignore missing assets during install; the cached shell is still usable.
       }
     })

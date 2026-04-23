@@ -250,6 +250,21 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   })
   
   const persistMode = persist === true ? "session" : persist
+  const fetchPromiseRef = useRef(fetchPromise)
+  fetchPromiseRef.current = fetchPromise
+  const dependencySignal = dependencies
+    .map((dependency) => {
+      if (dependency == null) return ""
+      if (typeof dependency === "object") {
+        try {
+          return JSON.stringify(dependency)
+        } catch {
+          return String(dependency)
+        }
+      }
+      return String(dependency)
+    })
+    .join("\u001f")
 
   useEffect(() => {
     ensureGlobalFetchListeners()
@@ -308,7 +323,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       }
 
       try {
-        const result = await fetchPromise()
+        const result = await fetchPromiseRef.current()
         if (isMounted) {
           primeCachedFetchStore(queryKey, result, Date.now(), { persist: persistMode })
           setState({
@@ -351,7 +366,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       window.removeEventListener("online", handleOnline)
       activeFetchers.delete(queryKey)
     }
-  }, [...dependencies, queryKey, skip, ttl])
+  }, [dependencySignal, persistMode, queryKey, skip, ttl])
 
   const mutate = useCallback(() => {
     const fetcher = activeFetchers.get(queryKey)

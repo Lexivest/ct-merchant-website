@@ -119,7 +119,6 @@ export default function StaffVerifications() {
   // --- STATE ---
   const [shops, setShops] = useState(() => prefetchedData?.shops || [])
   const [loadingShops, setLoadingShops] = useState(() => !prefetchedData && !fetchingStaff)
-  const [togglingId, setTogglingId] = useState(null)
   const [selectedShop, setSelectedShop] = useState(null)
   const [reviewTab, setReviewTab] = useState("application") // 'application' | 'kyc'
   const [processing, setProcessing] = useState(false)
@@ -249,23 +248,6 @@ export default function StaffVerifications() {
   }, [fetchShops, fetchingStaff])
 
   // --- ACTIONS ---
-  const toggleIdIssued = async (shopId, currentStatus) => {
-    if (togglingId) return
-    setTogglingId(shopId)
-    try {
-      const newStatus = !currentStatus
-      const { error } = await supabase.from("shops").update({ id_issued: newStatus }).eq("id", shopId)
-      if (error) throw error
-
-      setShops((prev) => prev.map((shop) => (shop.id === shopId ? { ...shop, id_issued: newStatus } : shop)))
-      notify({ type: "success", title: "ID Status Updated", message: `ID marked as ${newStatus ? 'issued' : 'pending'}.` })
-    } catch (err) {
-      notify({ type: "error", title: "Update Failed", message: getFriendlyErrorMessage(err) })
-    } finally {
-      setTogglingId(null)
-    }
-  }
-
   const handleDownloadKycVideo = async () => {
     if (!selectedShop?.kyc_video_url || downloadingVideo) return
 

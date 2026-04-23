@@ -183,7 +183,6 @@ export default function AddProduct() {
   const cameraSlotRef = useRef(null);
   const [activeSlot, setActiveSlot] = useState(null);
   const [tempImage, setTempImage] = useState("");
-  const [tempSize, setTempSize] = useState(0);
   const [preparingStudio, setPreparingStudio] = useState(false);
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
@@ -286,11 +285,6 @@ export default function AddProduct() {
     async function restoreDraft() {
       const draft = await loadPersistentDraft(productDraftKey);
       if (isCancelled) return;
-
-      const hasDraftData = Boolean(
-        draft?.data ||
-          Object.values(draft?.files || {}).some(Boolean)
-      );
 
       if (draft?.data?.form) {
         setForm((prev) => ({ ...prev, ...draft.data.form }));
@@ -451,12 +445,11 @@ export default function AddProduct() {
       }
 
       setActiveSlot(slot);
-      setTempSize(preparedImage.blob.size || existingBlob.size);
       setTempImage(preparedImage.src);
       setBrightness(100);
       setContrast(100);
       setStudioOpen(true);
-    } catch (err) {
+    } catch {
       notify({ type: "error", title: "Editor failed", message: "Could not open the image editor." });
     } finally {
       setPreparingStudio(false);
@@ -630,7 +623,7 @@ export default function AddProduct() {
 
       const [url1, url2, url3] = await Promise.all(uploadPromises);
 
-      const { data: rpcRes, error: rpcErr } = await supabase.rpc("manage_product", {
+      const { error: rpcErr } = await supabase.rpc("manage_product", {
         p_shop_id: parseInt(shopId),
         p_name: form.name.trim(),
         p_description: form.desc.trim(),

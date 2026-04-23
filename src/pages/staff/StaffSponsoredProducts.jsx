@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
   FaArrowRight,
   FaBolt,
@@ -14,25 +14,23 @@ import {
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
-import { SectionHeading, StaffPortalShell, formatDateTime, useStaffPortalSession } from "./StaffPortalShared"
+import { SectionHeading, StaffPortalShell, useStaffPortalSession } from "./StaffPortalShared"
 import StableImage from "../../components/common/StableImage"
 import { clearCachedFetchStore } from "../../hooks/useCachedFetch"
 
 function SponsoredProductPreview({ product }) {
   const [imgIndex, setImgIndex] = useState(0)
-  const images = useMemo(() => {
-    if (!product) return []
-    return [product.image_url, product.image_url_2, product.image_url_3].filter(Boolean)
-  }, [product?.id, product?.image_url, product?.image_url_2, product?.image_url_3])
+  const images = product
+    ? [product.image_url, product.image_url_2, product.image_url_3].filter(Boolean)
+    : []
 
   useEffect(() => {
-    setImgIndex(0)
     if (images.length <= 1) return
     const interval = setInterval(() => {
       setImgIndex((prev) => (prev + 1) % images.length)
     }, 3000)
     return () => clearInterval(interval)
-  }, [images.length, product?.id])
+  }, [images.length])
 
   if (!product) {
     return (
@@ -42,6 +40,8 @@ function SponsoredProductPreview({ product }) {
       </div>
     )
   }
+
+  const activeImageIndex = images.length ? imgIndex % images.length : 0
 
   return (
     <div className="group relative overflow-hidden rounded-[28px] bg-white shadow-xl border border-slate-100 flex flex-col p-4 w-[180px] md:w-[210px] mx-auto shadow-md">
@@ -55,7 +55,7 @@ function SponsoredProductPreview({ product }) {
         {images.map((img, idx) => (
           <div 
             key={`${img}-${idx}`}
-            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === imgIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110 pointer-events-none'}`}
+            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === activeImageIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110 pointer-events-none'}`}
           >
             <StableImage 
               src={img} 
@@ -68,7 +68,7 @@ function SponsoredProductPreview({ product }) {
         {images.length > 1 && (
           <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-10">
             {images.map((_, idx) => (
-              <div key={idx} className={`h-1 rounded-full transition-all duration-500 ${idx === imgIndex ? 'w-4 bg-white shadow-sm' : 'w-1 bg-white/40'}`} />
+              <div key={idx} className={`h-1 rounded-full transition-all duration-500 ${idx === activeImageIndex ? 'w-4 bg-white shadow-sm' : 'w-1 bg-white/40'}`} />
             ))}
           </div>
         )}

@@ -1,5 +1,4 @@
 import { memo, useEffect, useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
 import { FaImage, FaArrowRight, FaBolt } from "react-icons/fa6"
 // IMPORT OUR NEW SHIMMERS
 import { ShimmerBlock } from "../../common/Shimmers"
@@ -8,14 +7,14 @@ import RetryingNotice, { getRetryingMessage } from "../../common/RetryingNotice"
 import { PROMO_EXTENDED_COLORS } from "../../../lib/promoBannerEngine"
 
 function SponsoredProductCard({ sponsored, onOpenProduct }) {
-  const product = sponsored.product
-  if (!product) return null
+  const product = sponsored?.product || null
 
   // Image rotation logic
   const [imgIndex, setImgIndex] = useState(0)
   const images = useMemo(() => {
+    if (!product) return []
     return [product.image_url, product.image_url_2, product.image_url_3].filter(Boolean)
-  }, [product.image_url, product.image_url_2, product.image_url_3])
+  }, [product])
 
   useEffect(() => {
     if (images.length <= 1) return
@@ -30,6 +29,10 @@ function SponsoredProductCard({ sponsored, onOpenProduct }) {
       onOpenProduct(product.id)
     }
   }
+
+  if (!product) return null
+
+  const activeImageIndex = images.length ? imgIndex % images.length : 0
 
   return (
     <div 
@@ -46,7 +49,7 @@ function SponsoredProductCard({ sponsored, onOpenProduct }) {
         {images.map((img, idx) => (
           <div 
             key={`${img}-${idx}`}
-            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === imgIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110 pointer-events-none'}`}
+            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === activeImageIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110 pointer-events-none'}`}
           >
             <StableImage 
               src={img} 
@@ -63,7 +66,7 @@ function SponsoredProductCard({ sponsored, onOpenProduct }) {
         {images.length > 1 && (
           <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-10">
             {images.map((_, idx) => (
-              <div key={idx} className={`h-1 rounded-full transition-all duration-500 ${idx === imgIndex ? 'w-4 bg-white shadow-sm' : 'w-1 bg-white/40'}`} />
+              <div key={idx} className={`h-1 rounded-full transition-all duration-500 ${idx === activeImageIndex ? 'w-4 bg-white shadow-sm' : 'w-1 bg-white/40'}`} />
             ))}
           </div>
         )}

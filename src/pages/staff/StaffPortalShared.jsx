@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   FaArrowRightFromBracket,
@@ -392,7 +392,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
   })
   const [loading, setLoading] = useState(true)
 
-  const fetchCountsFallback = async () => {
+  const fetchCountsFallback = useCallback(async () => {
     const cityId = staffCityId ? Number(staffCityId) : null
     const shouldFilterByCity = !isSuperAdmin && cityId != null
     const lagosToday = formatLagosDateKey(new Date())
@@ -526,9 +526,9 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
       inactiveUsers: 0,
       visitsToday,
     })
-  }
+  }, [isSuperAdmin, staffCityId])
 
-  const fetchCounts = async () => {
+  const fetchCounts = useCallback(async () => {
     try {
       const { data, error } = await supabase.rpc("get_staff_dashboard_payload", {
         p_is_super_admin: isSuperAdmin,
@@ -551,7 +551,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [fetchCountsFallback, isSuperAdmin, staffCityId])
 
   useEffect(() => {
     fetchCounts()
@@ -561,7 +561,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
       }
     }, 120000)
     return () => clearInterval(timer)
-  }, [isSuperAdmin, staffCityId])
+  }, [fetchCounts])
 
   return { counts, summary, loading, refresh: fetchCounts }
 }

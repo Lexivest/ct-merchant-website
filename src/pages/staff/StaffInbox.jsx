@@ -18,7 +18,6 @@ import {
   QuickActionButton,
   SectionHeading,
   StaffPortalShell,
-  formatDateTime,
   useStaffPortalSession
 } from "./StaffPortalShared"
 

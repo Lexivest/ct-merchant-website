@@ -75,8 +75,7 @@ export default function StaffDashboard() {
 
   const { 
     isSuperAdmin, 
-    staffCityId, 
-    fetchingStaff 
+    staffCityId
   } = useStaffPortalSession()
 
   const { counts, summary, loading, refresh: refreshCounts } = useStaffCounts(isSuperAdmin, staffCityId)
@@ -94,26 +93,25 @@ export default function StaffDashboard() {
     refreshCounts()
   }, [refreshCounts])
 
-  function beginRouteTransition(retryAction = null) {
+  const beginRouteTransition = useCallback((retryAction = null) => {
     retryRouteTransitionRef.current = retryAction
     setRouteTransition({
       pending: true,
       error: "",
     })
-  }
+  }, [])
 
-  function failRouteTransition(message, retryAction = null) {
+  const failRouteTransition = useCallback((message, retryAction = null) => {
     retryRouteTransitionRef.current = retryAction
     setRouteTransition({
       pending: false,
       error: message,
     })
-  }
+  }, [])
 
-  const openStaffRouteWithTransition = useCallback(async (path) => {
+  const runStaffRouteTransition = useCallback(async (path, retryAction) => {
     if (!path) return
 
-    const retryAction = () => openStaffRouteWithTransition(path)
     beginRouteTransition(retryAction)
 
     try {
@@ -133,7 +131,18 @@ export default function StaffDashboard() {
         retryAction
       )
     }
-  }, [navigate])
+  }, [beginRouteTransition, failRouteTransition, navigate])
+
+  const openStaffRouteWithTransition = useCallback((path) => {
+    if (!path) return undefined
+
+    let retryAction = null
+    retryAction = () => {
+      void runStaffRouteTransition(path, retryAction)
+    }
+
+    return runStaffRouteTransition(path, retryAction)
+  }, [runStaffRouteTransition])
 
   const headerActions = useMemo(
     () => [

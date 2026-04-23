@@ -158,7 +158,6 @@ export function renderCanvasToTarget(sourceCanvas, options) {
 
 export async function autoProcessImage(file, options = {}) {
   const {
-    aspectRatio = 1,
     targetWidth = 1200,
     targetHeight = 1200,
     watermark = "CTMerchant",

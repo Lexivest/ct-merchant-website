@@ -1,4 +1,4 @@
-import { Suspense, lazy, startTransition, useEffect, useMemo, useRef, useState } from "react"
+import { Suspense, lazy, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { createPortal } from "react-dom"
 import { FaBullhorn, FaGift, FaTicket, FaXmark } from "react-icons/fa6"
@@ -19,7 +19,6 @@ import {
   buildDashboardDynamicCacheKey,
   fetchDashboardBaseData,
   fetchDashboardDynamicData,
-  fetchFeaturedCityBanners,
 } from "../lib/dashboardData"
 import { prepareProductDetailTransition } from "../lib/detailPageTransitions"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
@@ -293,7 +292,6 @@ function UserDashboard() {
   const { 
     data: baseData, 
     loading: baseLoading, 
-    isOffline: baseOffline,
     mutate: mutateBase 
   } = useCachedFetch(
     baseCacheKey,
@@ -526,18 +524,14 @@ function UserDashboard() {
       Object.keys(localStorage).forEach((key) => {
         if (key.startsWith("ctm_")) localStorage.removeItem(key)
       })
-    } catch {}
+    } catch {
+      // Local storage can be blocked by privacy settings; logout should still continue.
+    }
     await signOutUser()
     navigate("/", { replace: true })
   }
 
-  useEffect(() => {
-    if (activeTab === "notifications") {
-      markNotificationsRead()
-    }
-  }, [activeTab])
-
-  async function markNotificationsRead() {
+  const markNotificationsRead = useCallback(async () => {
     if (!user || localData.unread === 0) return
 
     const nextNotifications = localData.notifications.map((item) => ({
@@ -567,7 +561,13 @@ function UserDashboard() {
       .update({ is_read: true })
       .eq("user_id", user.id)
       .eq("is_read", false)
-  }
+  }, [dynamicCacheKey, localData.notifications, localData.unread, user])
+
+  useEffect(() => {
+    if (activeTab === "notifications") {
+      void markNotificationsRead()
+    }
+  }, [activeTab, markNotificationsRead])
 
   function updateDashboardLocation({ tab, view }, { replace = false } = {}) {
     setSearchParams(
@@ -729,13 +729,10 @@ function UserDashboard() {
   }
 
   const currentProfile = localData.profile || profile
-  const dashboardDataError = activeTab === "market" && !localData?.shops?.length ? dataError : ""
-
   useEffect(() => {
     const cityId = currentProfile?.city_id
     if (!user?.id || !cityId) return undefined
 
-    let cancelled = false
     let refreshTimerId = null
 
     // Helper to refresh specific dashboard segments via mutate
@@ -835,7 +832,6 @@ function UserDashboard() {
       })
 
     return () => {
-      cancelled = true
       if (refreshTimerId) window.clearTimeout(refreshTimerId)
       supabase.removeChannel(channel)
     }
@@ -1837,7 +1833,9 @@ function UserDashboard() {
 
     try {
       localStorage.removeItem("ctm_dashboard_cache")
-    } catch {}
+    } catch {
+      // Cache cleanup is best effort; profile refresh should continue.
+    }
 
       const refreshedProfileRes = await supabase
         .from("profiles")

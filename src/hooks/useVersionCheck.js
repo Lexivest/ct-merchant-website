@@ -228,7 +228,9 @@ export function useVersionCheck({ pathname = "" } = {}) {
 
   useEffect(() => {
     // 1. Initial Baseline
-    void checkUpdates(true)
+    const initialCheckTimer = window.setTimeout(() => {
+      void checkUpdates(true)
+    }, 0)
 
     // 2. Background Polling
     const interval = setInterval(() => {
@@ -268,6 +270,7 @@ export function useVersionCheck({ pathname = "" } = {}) {
     // but we can use the window popstate or simply wait for visibility.
 
     return () => {
+      window.clearTimeout(initialCheckTimer)
       clearInterval(interval)
       window.removeEventListener("visibilitychange", handleVisibilityChange)
       window.removeEventListener("online", handleOnline)

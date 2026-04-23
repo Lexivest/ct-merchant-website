@@ -1,15 +1,13 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabase"
 import { signInWithPassword } from "../lib/auth"
-import useAuthSession from "../hooks/useAuthSession"
 
 // --- LOCAL ASSET IMPORT ---
 import ctmLogo from "../assets/images/logo.jpg"
 
 function StaffPortal() {
   const navigate = useNavigate()
-  const { user, profile, profileLoaded } = useAuthSession()
 
   const [formData, setFormData] = useState({
     email: "",
