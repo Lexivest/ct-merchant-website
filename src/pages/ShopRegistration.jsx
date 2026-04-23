@@ -1070,9 +1070,19 @@ function ShopRegistration() {
 
       try {
         await Promise.all(
-          Array.from(oldFilesByBucket.entries()).map(([bucket, paths]) =>
-            supabase.storage.from(bucket).remove([...new Set(paths)])
-          )
+          Array.from(oldFilesByBucket.entries()).map(async ([bucket, paths]) => {
+            const uniquePaths = [...new Set(paths)].filter(Boolean)
+            if (!uniquePaths.length) return
+
+            const { error: removeError } = await supabase.storage.from(bucket).remove(uniquePaths)
+            if (removeError) {
+              throw {
+                ...removeError,
+                bucket,
+                paths: uniquePaths,
+              }
+            }
+          })
         )
       } catch (cleanupError) {
         console.warn("Old shop file cleanup failed:", cleanupError)
@@ -1102,9 +1112,19 @@ function ShopRegistration() {
 
       try {
         await Promise.all(
-          Array.from(uploadedPathsByBucket.entries()).map(([bucket, paths]) =>
-            supabase.storage.from(bucket).remove([...new Set(paths)])
-          )
+          Array.from(uploadedPathsByBucket.entries()).map(async ([bucket, paths]) => {
+            const uniquePaths = [...new Set(paths)].filter(Boolean)
+            if (!uniquePaths.length) return
+
+            const { error: removeError } = await supabase.storage.from(bucket).remove(uniquePaths)
+            if (removeError) {
+              throw {
+                ...removeError,
+                bucket,
+                paths: uniquePaths,
+              }
+            }
+          })
         )
       } catch (cleanupError) {
         console.warn("Rollback cleanup failed for new shop files:", cleanupError)
