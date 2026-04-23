@@ -223,7 +223,7 @@ export default function MerchantVideoKYC() {
         });
 
         const hasVerificationAccess =
-          verificationAccess.hasVerificationAccess ||
+          verificationAccess.paymentConfirmed ||
           shop.kyc_status === "submitted" ||
           shop.kyc_status === "rejected";
 

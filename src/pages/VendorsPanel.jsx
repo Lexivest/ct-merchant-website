@@ -133,6 +133,7 @@ function VendorsPanel() {
       rejectedProductCount: rejectedCount,
       hasVerificationAccess: verificationAccess.hasVerificationAccess,
       verificationProofStatus: verificationAccess.verificationProofStatus,
+      paymentConfirmed: verificationAccess.paymentConfirmed,
     }
   }
 
@@ -263,13 +264,21 @@ function VendorsPanel() {
   const isApplicationApproved = activeShop.status === "approved"
   const isVerified = Boolean(activeShop.is_verified)
   const verificationProofStatus = data.verificationProofStatus || null
-  const hasVerificationAccess =
-    Boolean(data.hasVerificationAccess) ||
+  const paymentConfirmed =
+    Boolean(data.paymentConfirmed) ||
     activeShop.kyc_status === "submitted" ||
     activeShop.kyc_status === "rejected" ||
     isVerified
   const isSuspended = activeShop.is_open === false
   const isSubscriptionActive = isFutureDate(activeShop.subscription_end_date)
+
+  const showVerificationRequiredNotice = (toolName) => {
+    notify({
+      type: "error",
+      title: "KYC verification required",
+      message: `Complete the KYC Verification card before you can open ${toolName}.`,
+    })
+  }
 
   function beginRouteTransition(retryAction = null) {
     retryRouteTransitionRef.current = retryAction
@@ -491,14 +500,12 @@ function VendorsPanel() {
             title="Shop Banner"
             icon={<FaCamera />}
             colorClass="bg-[#F3E8FF] text-[#9333EA]"
-            isLocked={!isSubscriptionActive}
+            isLocked={!isVerified}
             onClick={
-              isSubscriptionActive
+              isVerified
                 ? () => handleCardClick(`/merchant-banner?shop_id=${activeShop.id}`)
                 : () =>
-                    showSubscriptionRequired(
-                      "Please activate your service fee subscription to update your shop banner."
-                    )
+                    showVerificationRequiredNotice("Shop Banner")
             }
           />
 
@@ -521,8 +528,11 @@ function VendorsPanel() {
             title="Post News"
             icon={<FaBullhorn />}
             colorClass="bg-[#FEE2E2] text-[#DC2626]"
-            onClick={() =>
-              handleCardClick(`/merchant-news?shop_id=${activeShop.id}`)
+            isLocked={!isVerified}
+            onClick={
+              isVerified
+                ? () => handleCardClick(`/merchant-news?shop_id=${activeShop.id}`)
+                : () => showVerificationRequiredNotice("Post News")
             }
           />
 
@@ -555,24 +565,11 @@ function VendorsPanel() {
             subtitle="Custom Ad Studio"
             icon={<FaWandMagicSparkles />}
             colorClass="bg-[#FDF2F8] text-[#db2777]"
-            isLocked={!isSubscriptionActive || !isVerified}
+            isLocked={!isVerified}
             onClick={
-              !isSubscriptionActive
+              !isVerified
                 ? () =>
-                    notify({
-                      type: "error",
-                      title: "Subscription required",
-                      message:
-                        "Please activate your service fee subscription to access the promo banner studio.",
-                    })
-                : !isVerified
-                ? () =>
-                    notify({
-                      type: "error",
-                      title: "Verification required",
-                      message:
-                        "Your shop must be physically verified before you can generate a promo banner.",
-                    })
+                    showVerificationRequiredNotice("Promo Banner")
                 : () =>
                     handleCardClick(
                       `/merchant-promo-banner?shop_id=${activeShop.id}`,
@@ -584,18 +581,13 @@ function VendorsPanel() {
             title="Analytics"
             icon={<FaChartLine />}
             colorClass="bg-[#CCFBF1] text-[#0D9488]"
-            isLocked={!isSubscriptionActive}
+            isLocked={!isVerified}
             onClick={
-              isSubscriptionActive
+              isVerified
                 ? () =>
                     handleCardClick(`/merchant-analytics?shop_id=${activeShop.id}`)
                 : () =>
-                    notify({
-                      type: "error",
-                      title: "Subscription required",
-                      message:
-                        "Please activate your service fee subscription to access analytics.",
-                    })
+                    showVerificationRequiredNotice("Analytics")
             }
           />
 
@@ -630,26 +622,26 @@ function VendorsPanel() {
                 )
               }
             />
-          ) : hasVerificationAccess ? (
-            activeShop.kyc_status === "submitted" ? (
+          ) : activeShop.kyc_status === "submitted" ? (
+            <DashCard
+              title="KYC Pending"
+              subtitle="Under Review"
+              icon={<FaHourglassHalf />}
+              isLocked={true}
+              onClick={() =>
+                notify({
+                  type: "info",
+                  title: "KYC in review",
+                  message:
+                    "We are currently reviewing your video KYC. We will notify you once approved.",
+                })
+              }
+            />
+          ) : paymentConfirmed ? (
+            activeShop.kyc_status === "rejected" ? (
               <DashCard
-                title="KYC Pending"
-                subtitle="Under Review"
-                icon={<FaHourglassHalf />}
-                isLocked={true}
-                onClick={() =>
-                  notify({
-                    type: "info",
-                    title: "KYC in review",
-                    message:
-                      "We are currently reviewing your video KYC. We will notify you once approved.",
-                  })
-                }
-              />
-            ) : activeShop.kyc_status === "rejected" ? (
-              <DashCard
-                title="Re-record Video"
-                subtitle="Action Required"
+                title="KYC Verification"
+                subtitle="Re-record Video"
                 icon={<FaVideo />}
                 colorClass="bg-[#FEE2E2] text-[#DC2626]"
                 onClick={() =>
@@ -658,8 +650,8 @@ function VendorsPanel() {
               />
             ) : (
               <DashCard
-                title="Record KYC Video"
-                subtitle="Action Required"
+                title="KYC Verification"
+                subtitle="Record Video"
                 icon={<FaVideo />}
                 colorClass="bg-[#FEE2E2] text-[#DC2626]"
                 onClick={() =>
@@ -669,11 +661,13 @@ function VendorsPanel() {
             )
           ) : (
             <DashCard
-              title="Verification Fee"
+              title="KYC Verification"
               subtitle={
-                verificationProofStatus === "rejected"
-                  ? "Upload Again"
-                  : "Physical Check"
+                verificationProofStatus === "pending"
+                  ? "Payment Pending"
+                  : verificationProofStatus === "rejected"
+                    ? "Upload Receipt Again"
+                    : "Verification Fee"
               }
               icon={<FaBuildingCircleCheck />}
               colorClass="bg-[#FEF3C7] text-[#D97706]"

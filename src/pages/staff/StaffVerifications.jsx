@@ -339,7 +339,7 @@ export default function StaffVerifications() {
     try {
       const updateData = isKyc
         ? { kyc_status: "approved", is_verified: true, rejection_reason: null }
-        : { status: "approved", is_verified: false, rejection_reason: null }
+        : { status: "approved" }
 
       const { error } = await supabase
         .from("shops")
@@ -409,7 +409,7 @@ export default function StaffVerifications() {
       const isKyc = type === "kyc"
       const updateData = isKyc
         ? { kyc_status: "rejected", rejection_reason: rejectionNote.trim(), is_verified: false }
-        : { status: "rejected", rejection_reason: rejectionNote.trim(), is_verified: false }
+        : { status: "rejected", rejection_reason: rejectionNote.trim() }
 
       const { error } = await supabase
         .from("shops")

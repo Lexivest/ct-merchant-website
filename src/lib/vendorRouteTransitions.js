@@ -308,8 +308,12 @@ async function prepareMerchantBannerData({ userId, shopId }) {
   const shop = await fetchOwnedShop(
     userId,
     shopId,
-    "id, owner_id, name, category, address, image_url, cities(name)"
+    "id, owner_id, name, category, address, image_url, is_verified, cities(name)"
   )
+
+  if (!shop.is_verified) {
+    throw new Error("Complete KYC verification before opening your shop banner tools.")
+  }
 
   const [bannerResult, productResult, profileResult] = await Promise.all([
     supabase
@@ -372,7 +376,11 @@ async function prepareMerchantSettingsData({ userId, shopId }) {
 
 async function prepareMerchantNewsData({ userId, shopId }) {
   await fetchProfileSuspension(userId)
-  const shop = await fetchOwnedShop(userId, shopId, "id")
+  const shop = await fetchOwnedShop(userId, shopId, "id, is_verified")
+
+  if (!shop.is_verified) {
+    throw new Error("Complete KYC verification before opening your shop news tools.")
+  }
 
   const { data: newsData, error } = await supabase
     .from("shop_banners_news")
@@ -395,7 +403,11 @@ async function prepareMerchantNewsData({ userId, shopId }) {
 
 async function prepareMerchantAnalyticsData({ userId, shopId }) {
   await fetchProfileSuspension(userId)
-  const shop = await fetchOwnedShop(userId, shopId, "id")
+  const shop = await fetchOwnedShop(userId, shopId, "id, is_verified")
+
+  if (!shop.is_verified) {
+    throw new Error("Complete KYC verification before opening analytics.")
+  }
 
   const safeCountFetch = async (table) => {
     try {
@@ -504,7 +516,7 @@ async function prepareMerchantVideoKYCData({ userId }) {
     shopId: shop.id,
   })
   const hasVerificationAccess =
-    verificationAccess.hasVerificationAccess ||
+    verificationAccess.paymentConfirmed ||
     shop.kyc_status === "submitted" ||
     shop.kyc_status === "rejected"
 

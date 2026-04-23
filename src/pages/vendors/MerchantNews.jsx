@@ -83,12 +83,13 @@ export default function MerchantNews() {
 
         const { data: shopAccess, error: shopAccessErr } = await supabase
           .from("shops")
-          .select("id")
+          .select("id, is_verified")
           .eq("id", currentShopId)
           .eq("owner_id", user.id)
           .maybeSingle();
 
         if (shopAccessErr || !shopAccess) throw new Error("Shop not found or access denied.");
+        if (!shopAccess.is_verified) throw new Error("Complete KYC verification before opening your shop news tools.");
         if (String(shopId) !== String(shopAccess.id || currentShopId)) {
           setShopId(String(shopAccess.id));
         }
