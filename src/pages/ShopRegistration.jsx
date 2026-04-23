@@ -965,7 +965,7 @@ function ShopRegistration() {
         p_storefront_url: storefrontUpload.url,
         p_id_card_url: idCardUpload.url,
         p_cac_certificate_url: cacUpload.url,
-        p_video_kyc_url: null, -- Handled separately or in a future step
+        p_video_kyc_url: null, // Handled separately or in a future step
         p_facebook_url: form.facebook ? formatUrl(form.facebook) : null,
         p_instagram_url: form.instagram ? formatUrl(form.instagram) : null,
         p_twitter_url: form.twitter ? formatUrl(form.twitter) : null,
