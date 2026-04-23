@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -41,6 +41,12 @@ function Search() {
 
   // 1. Unified Auth State (isOffline removed to rely on global wrapper)
   const { user, profile, loading: authLoading } = useAuthSession()
+  const shouldRedirectHome = !authLoading && !user
+
+  useEffect(() => {
+    if (!shouldRedirectHome) return
+    navigate("/", { replace: true })
+  }, [navigate, shouldRedirectHome])
 
   // 2. Extracted Data Fetching Logic for Hook
   const fetchSearchData = async () => {
@@ -121,11 +127,27 @@ function Search() {
 
   // 3. Smart Caching Hook
   const cacheKey = `search_city_${profile?.city_id || 'none'}_q_${initialQuery}`
-  const { data, loading: dataLoading, error: dataError, mutate } = useCachedFetch(
+  const {
+    data,
+    loading: dataLoading,
+    error: dataError,
+    mutate,
+    isRevalidating,
+  } = useCachedFetch(
     cacheKey,
     fetchSearchData,
-    { dependencies: [profile?.city_id, initialQuery], ttl: 1000 * 60 * 5 } 
+    {
+      dependencies: [profile?.city_id, initialQuery],
+      ttl: 1000 * 60 * 5,
+      persist: "session",
+      skip: authLoading || !user || !profile?.city_id,
+      keepPreviousData: true,
+    }
   )
+
+  useEffect(() => {
+    setQuery(initialQuery)
+  }, [initialQuery])
 
   const matchedShops = data?.shops || []
   const allProducts = data?.allProducts || []
@@ -370,10 +392,8 @@ function Search() {
     )
   }
 
-  // Gatekeeper Redirect
-  if (!authLoading && !user) {
-    navigate("/", { replace: true })
-    return null
+  if (shouldRedirectHome) {
+    return <PageLoadingScreen />
   }
 
   const hasResults = matchedShops.length > 0 || matchedProducts.length > 0
@@ -460,6 +480,7 @@ function Search() {
             error={dataError}
             message={getRetryingMessage(dataError)}
             onRetry={mutate}
+            onBack={() => navigate(-1)}
           />
         ) : (
           <>
@@ -469,6 +490,12 @@ function Search() {
                 "{query.trim()}"
               </span>
             </h2>
+
+            {isRevalidating ? (
+              <div className="mb-4 inline-flex rounded-full bg-slate-900 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.16em] text-white">
+                Updating results...
+              </div>
+            ) : null}
 
             {matchedShops.length > 0 ? (
               <section className="mb-10">

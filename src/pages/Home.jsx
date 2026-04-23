@@ -52,6 +52,7 @@ import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import {
   buildRepoSearchQuerySuffix,
   buildShopDetailPrefetchFromRepoSearch,
+  fetchPublicRepoShopDetail,
   getRepoSearchCooldownMessage,
   invokeRepoSearch,
 } from "../lib/repoSearch"
@@ -63,7 +64,6 @@ import {
   preloadCreateAccountScreen,
   preloadDashboardScreen,
 } from "../lib/authScreenTransitions"
-import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 
 // --- LOCAL ASSET IMPORT ---
 import banner from "../assets/images/banner.jpg"
@@ -1033,18 +1033,24 @@ function Home() {
       if (data?.shop?.id) {
         const shopId = data.shop.id
         const repoRef = data.shop.unique_id || value
-        const prefetchedShopData =
-          buildShopDetailPrefetchFromRepoSearch(data) ||
-          (await prepareShopDetailTransition({
-            shopId,
-            userId: user?.id || null,
-          }))
+        let prefetchedShopData = buildShopDetailPrefetchFromRepoSearch(data)
+
+        if (!prefetchedShopData) {
+          try {
+            prefetchedShopData = await fetchPublicRepoShopDetail({
+              repoRef,
+              shopId,
+            })
+          } catch (prefetchError) {
+            console.warn("Public repo shop prefetch failed; continuing with route fetch.", prefetchError)
+          }
+        }
 
         navigate(`/shop-detail?id=${shopId}${buildRepoSearchQuerySuffix(repoRef)}`, {
           state: {
             fromDiscoveryTransition: true,
             fromRepoSearch: true,
-            prefetchedShopData,
+            ...(prefetchedShopData ? { prefetchedShopData } : {}),
           },
         })
         return

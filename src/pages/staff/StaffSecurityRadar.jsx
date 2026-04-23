@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom"
 import { FaCircleNotch, FaTriangleExclamation, FaSkullCrossbones, FaBan, FaCircleCheck, FaTowerBroadcast } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
+import InlineErrorState from "../../components/common/InlineErrorState"
 import {
   SectionHeading,
   StaffPortalShell,
@@ -68,16 +69,11 @@ export default function StaffSecurityRadar() {
           </div>
         ) : error ? (
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-6 py-8 text-center">
-              <FaTriangleExclamation className="mx-auto mb-3 text-3xl text-rose-500" />
-              <p className="text-sm font-bold text-rose-900">{error}</p>
-              <button
-                onClick={fetchInsights}
-                className="mt-4 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-rose-700"
-              >
-                Retry
-              </button>
-            </div>
+            <InlineErrorState
+              title="Security insights unavailable"
+              message={error}
+              onRetry={fetchInsights}
+            />
           </div>
         ) : (
           <>

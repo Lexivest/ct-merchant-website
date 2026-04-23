@@ -7,6 +7,7 @@ import {
   FaMagnifyingGlassPlus,
   FaXmark,
 } from "react-icons/fa6"
+import InlineErrorState from "./InlineErrorState"
 
 function getDefaultZoomRange(currentZoom, capabilities) {
   const min = Number.isFinite(capabilities?.zoom?.min) ? capabilities.zoom.min : 1
@@ -270,8 +271,14 @@ export default function CameraCaptureModal({
         ) : null}
 
         {error ? (
-          <div className="absolute bottom-6 left-1/2 w-[calc(100%-3rem)] max-w-[400px] -translate-x-1/2 rounded-xl border border-red-500/50 bg-red-950/90 px-4 py-3 text-center text-[0.7rem] font-black uppercase tracking-wider text-red-200 shadow-2xl backdrop-blur-md">
-            {error}
+          <div className="absolute bottom-6 left-1/2 w-[calc(100%-3rem)] max-w-[420px] -translate-x-1/2">
+            <InlineErrorState
+              title="Camera unavailable"
+              message={error}
+              surface="dark"
+              compact
+              className="backdrop-blur-md"
+            />
           </div>
         ) : null}
       </div>

@@ -2016,6 +2016,7 @@ function UserDashboard() {
             onOpenDiscovery={openDiscoveryWithTransition}
             loading={dynamicLoading && !localData?.shops?.length}
             error={dataError}
+            onRetry={mutateDynamic}
             promoBanner={<PromoAlertBanner />}
           />
         )}

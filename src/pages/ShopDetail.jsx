@@ -33,10 +33,10 @@ import PageSeo from "../components/common/PageSeo"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import AiAssistantWidget from "../components/common/AiAssistantWidget"
+import { ShopDetailEntrySkeleton } from "../components/common/DetailEntrySkeletons"
 import { getRetryingMessage } from "../components/common/RetryingNotice"
 import ScrollingTicker from "../components/common/ScrollingTicker"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
-import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import {
   buildDashboardBaseCacheKey,
   buildDashboardDynamicCacheKey,
@@ -142,7 +142,12 @@ function ShopDetail() {
   const { data, loading: dataLoading, error, mutate } = useCachedFetch(
     cacheKey,
     fetchShopData,
-    { dependencies: [shopId, user?.id], ttl: 1000 * 60 * 5, persist: "session" }
+    {
+      dependencies: [shopId, user?.id],
+      ttl: 1000 * 60 * 5,
+      persist: "session",
+      skip: !shopId,
+    }
   )
 
   // 4. Local Optimistic State
@@ -769,17 +774,17 @@ function ShopDetail() {
 
   // EARLY EXITS
   if (!shopId) {
-    goBackSafe()
-    return null
+    return (
+      <GlobalErrorScreen
+        title="Shop unavailable"
+        message="This shop link is incomplete or no longer available."
+        onBack={goBackSafe}
+      />
+    )
   }
 
   if (!data && (authLoading || dataLoading)) {
-    return (
-      <PageLoadingScreen
-        title="Opening shop"
-        message="Please wait while we prepare the shop details."
-      />
-    )
+    return <ShopDetailEntrySkeleton />
   }
 
   if (error && !data) {

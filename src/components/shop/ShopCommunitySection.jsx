@@ -6,6 +6,7 @@ import { supabase } from "../../lib/supabase"
 import StableImage from "../common/StableImage"
 import { ShimmerBlock } from "../common/Shimmers"
 import { useGlobalFeedback } from "../common/GlobalFeedbackProvider"
+import InlineErrorState from "../common/InlineErrorState"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { isNetworkOffline } from "../../lib/networkStatus"
 
@@ -623,9 +624,11 @@ export default function ShopCommunitySection({
           ))}
         </div>
       ) : commentsError ? (
-        <div className="rounded-[22px] border border-red-200 bg-red-50 px-5 py-5 text-[0.92rem] font-semibold text-red-700">
-          {commentsError}
-        </div>
+        <InlineErrorState
+          title="Community discussion unavailable"
+          message={commentsError}
+          onRetry={() => fetchComments({ showLoader: !hasComments })}
+        />
       ) : commentThreads.length === 0 ? (
         <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white text-[1.4rem] text-pink-500 shadow-sm">

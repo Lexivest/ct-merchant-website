@@ -343,6 +343,7 @@ function MarketSection({
   onOpenDiscovery,
   loading,
   error,
+  onRetry,
 }) {
   const dashboardShellEmpty =
     !dashboardData ||
@@ -413,7 +414,13 @@ function MarketSection({
 
   // 1. PROFESSIONAL ERROR STATE (Only shows if no cache is available)
   if (error && dashboardShellEmpty) {
-    return <RetryingNotice fullScreen={false} message={getRetryingMessage(error)} />
+    return (
+      <RetryingNotice
+        fullScreen={false}
+        message={getRetryingMessage(error)}
+        onRetry={onRetry}
+      />
+    )
   }
 
   // 2. PROFESSIONAL SHIMMER STATE (Mirrors the actual layout)

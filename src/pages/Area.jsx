@@ -84,10 +84,22 @@ function Area() {
 
   // 3. Smart Caching Hook
   const cacheKey = `area_shops_${areaId || 'none'}_q_${debouncedSearch}`
-  const { data, loading: dataLoading, error: dataError, mutate } = useCachedFetch(
+  const {
+    data,
+    loading: dataLoading,
+    error: dataError,
+    mutate,
+    isRevalidating,
+  } = useCachedFetch(
     cacheKey,
     fetchAreaShops,
-    { dependencies: [areaId, debouncedSearch, user?.id], ttl: 1000 * 60 * 15 }
+    {
+      dependencies: [areaId, debouncedSearch, user?.id],
+      ttl: 1000 * 60 * 15,
+      persist: "session",
+      skip: authLoading || !user || !areaId,
+      keepPreviousData: true,
+    }
   )
 
   const areaName = data?.areaName || "Area"
@@ -137,6 +149,15 @@ function Area() {
         }
       />
       <div className={`flex h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${transitionState.pending ? "pointer-events-none select-none" : ""}`}>
+        {!areaId ? (
+          <GlobalErrorScreen
+            title="Area unavailable"
+            message="This area link is incomplete or no longer available."
+            onBack={() => navigate(-1)}
+          />
+        ) : null}
+        {!areaId ? null : (
+        <>
         <PageSeo
           title={`${headerTitle} | CTMerchant`}
           description={`Browse verified shops and local merchants in ${areaName} on CTMerchant.`}
@@ -178,6 +199,11 @@ function Area() {
         </div>
 
         <div className="mx-auto w-full max-w-[800px] flex-1 overflow-y-auto px-4 py-5">
+          {isRevalidating ? (
+            <div className="mb-3 inline-flex rounded-full bg-slate-900 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.16em] text-white">
+              Updating shops...
+            </div>
+          ) : null}
           {authLoading || (dataLoading && !data) ? (
             <PageLoadingScreen
               fullScreen={false}
@@ -190,6 +216,7 @@ function Area() {
               error={dataError}
               message={getRetryingMessage(dataError)}
               onRetry={mutate}
+              onBack={() => navigate(-1)}
             />
           ) : shops.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center px-5 text-center text-slate-400">
@@ -254,6 +281,8 @@ function Area() {
             })
           )}
         </div>
+        </>
+        )}
       </div>
     </>
   )

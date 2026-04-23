@@ -88,10 +88,11 @@ function getCacheEntry(queryKey) {
   return persistedEntry
 }
 
-function buildIdleState(queryKey) {
+function buildIdleState(queryKey, fallbackData = null) {
+  const cachedEntry = getCacheEntry(queryKey)
   return {
     queryKey,
-    data: getCacheEntry(queryKey)?.data || null,
+    data: cachedEntry?.data ?? fallbackData,
     loading: false,
     error: null,
     isOffline: isNetworkOffline(),
@@ -272,6 +273,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
     dependencies = [],
     persist = null,
     skip = false,
+    keepPreviousData = false,
   } = options
 
   // Combined state object for atomic updates and consistent renders
@@ -300,8 +302,10 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
 
   useEffect(() => {
     if (state.queryKey === queryKey) return
-    setState(buildIdleState(queryKey))
-  }, [queryKey, state.queryKey])
+    setState((prev) =>
+      keepPreviousData ? buildIdleState(queryKey, prev.data) : buildIdleState(queryKey)
+    )
+  }, [keepPreviousData, queryKey, state.queryKey])
 
   useEffect(() => {
     if (skip) {
@@ -318,6 +322,10 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
 
       // 1. Skip if data is fresh and not forced
       if (!force && cachedEntry && !isExpired) {
+        if (persistMode === "session" && !readSessionCacheEntry(queryKey)) {
+          writeSessionCacheEntry(queryKey, cachedEntry)
+        }
+
         if (isMounted) {
           setState(prev => ({ 
             ...prev, 
@@ -406,7 +414,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       window.removeEventListener("online", handleOnline)
       activeFetchers.delete(queryKey)
     }
-  }, [dependencySignal, persistMode, queryKey, skip, ttl])
+  }, [dependencySignal, keepPreviousData, persistMode, queryKey, skip, ttl])
 
   const mutate = useCallback(() => {
     const fetcher = activeFetchers.get(queryKey)

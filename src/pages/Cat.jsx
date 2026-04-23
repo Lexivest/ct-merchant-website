@@ -36,10 +36,10 @@ function Cat() {
   const { user, profile, loading: authLoading } = useAuthSession()
 
   useEffect(() => {
-    if (!authLoading && (!user || !catName)) {
-      navigate(-1)
+    if (!authLoading && !user) {
+      navigate("/", { replace: true })
     }
-  }, [authLoading, catName, navigate, user])
+  }, [authLoading, navigate, user])
 
   // 2. Extracted Data Fetching Logic for Hook
   const fetchCategoryData = async () => {
@@ -77,10 +77,22 @@ function Cat() {
 
   // 3. Smart Caching Hook
   const cacheKey = `cat_${catName}_city_${profile?.city_id || 'none'}`
-  const { data, loading: dataLoading, error: dataError, mutate } = useCachedFetch(
+  const {
+    data,
+    loading: dataLoading,
+    error: dataError,
+    mutate,
+    isRevalidating,
+  } = useCachedFetch(
     cacheKey,
     fetchCategoryData,
-    { dependencies: [catName, profile?.city_id, user?.id], ttl: 1000 * 60 * 15 } // Cache for 15 minutes
+    {
+      dependencies: [catName, profile?.city_id, user?.id],
+      ttl: 1000 * 60 * 15,
+      persist: "session",
+      skip: authLoading || !user || !catName || !profile?.city_id,
+      keepPreviousData: true,
+    }
   )
 
   const shops = data?.shops || []
@@ -212,6 +224,15 @@ function Cat() {
           transitionState.pending ? "pointer-events-none select-none" : ""
         }`}
       >
+      {!catName ? (
+        <GlobalErrorScreen
+          title="Category unavailable"
+          message="This category link is incomplete or no longer available."
+          onBack={() => navigate(-1)}
+        />
+      ) : null}
+      {!catName ? null : (
+      <>
       <PageSeo
         title={`${catName || "Category"} Shops | CTMerchant`}
         description={`Discover verified shops and products in the ${catName || "selected"} category on CTMerchant.`}
@@ -234,6 +255,11 @@ function Cat() {
       </header>
 
       <main className="mx-auto w-full max-w-[1200px] flex-1 px-5 py-6">
+        {isRevalidating ? (
+          <div className="mb-4 inline-flex rounded-full bg-slate-900 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.16em] text-white">
+            Updating category...
+          </div>
+        ) : null}
         {authLoading || ((!user || !catName) && !authLoading) || (dataLoading && !data) ? (
           <PageLoadingScreen
             fullScreen={false}
@@ -246,6 +272,7 @@ function Cat() {
             error={dataError}
             message={getRetryingMessage(dataError)}
             onRetry={mutate}
+            onBack={() => navigate(-1)}
           />
         ) : (
           <>
@@ -306,6 +333,8 @@ function Cat() {
           </>
         )}
       </main>
+      </>
+      )}
       </div>
     </>
   )

@@ -18,6 +18,7 @@ import {
   FaBullhorn,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
+import GlobalErrorScreen from "../../components/common/GlobalErrorScreen"
 import { resolveStaffAccess, withStaffAuthTimeout } from "../../lib/staffAuth"
 
 let staffPortalMemory = {
@@ -575,19 +576,13 @@ export function StaffPortalShell({
 
   if (staffError) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-white">
-        <div className="max-w-md rounded-3xl border border-rose-300/20 bg-white/10 p-6 text-center shadow-2xl">
-          <h1 className="text-xl font-black">Staff access could not be verified</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-300">{staffError}</p>
-          <button
-            type="button"
-            onClick={() => navigate("/staff-portal", { replace: true })}
-            className="mt-5 rounded-2xl bg-pink-600 px-5 py-3 text-sm font-black text-white"
-          >
-            Return to staff login
-          </button>
-        </div>
-      </div>
+      <GlobalErrorScreen
+        title="Staff access could not be verified"
+        message={staffError}
+        onRetry={() => navigate("/staff-portal", { replace: true })}
+        retryLabel="Return to staff login"
+        onBack={false}
+      />
     )
   }
 

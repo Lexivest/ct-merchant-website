@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom"
 import { FaChartLine, FaCircleNotch } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
+import InlineErrorState from "../../components/common/InlineErrorState"
 import {
   SectionHeading,
   StaffPortalShell,
@@ -106,9 +107,11 @@ export default function StaffTraffic() {
             <FaCircleNotch className="animate-spin text-2xl text-slate-400" />
           </div>
         ) : visitStatsError ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-5 text-sm font-medium text-amber-900">
-            {visitStatsError}
-          </div>
+          <InlineErrorState
+            title="Traffic data unavailable"
+            message={visitStatsError}
+            onRetry={() => fetchVisitStats(visitWindow)}
+          />
         ) : (
           <VisitTrendChart data={visitTimeline} />
         )}

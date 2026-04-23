@@ -21,11 +21,12 @@ import {
   useStaffPortalSession,
 } from "./StaffPortalShared"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
+import InlineErrorState from "../../components/common/InlineErrorState"
 
 export default function StaffUsers() {
   const location = useLocation()
   const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
-  const { confirm, prompt } = useGlobalFeedback()
+  const { confirm, prompt, notify } = useGlobalFeedback()
 
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-users"
@@ -112,7 +113,7 @@ export default function StaffUsers() {
     }
   }, [fetchUserActivity, inactiveDays, selectedCityId, fetchingStaff])
 
-  const handleToggleSuspension = async (user) => {
+  const handleToggleSuspension = useCallback(async (user) => {
     const isSuspending = !user.is_suspended
     const actionLabel = isSuspending ? "suspend" : "reinstate"
     
@@ -156,17 +157,30 @@ export default function StaffUsers() {
       
       if (data) {
         // Refresh the list
-        fetchUserActivity({ cityId: selectedCityId, threshold: inactiveDays })
+        void fetchUserActivity({ cityId: selectedCityId, threshold: inactiveDays })
+        notify({
+          kind: "toast",
+          type: "success",
+          message: `Account ${isSuspending ? "suspended" : "reinstated"} successfully.`,
+        })
       } else {
-        alert(`Failed to ${actionLabel} user.`)
+        notify({
+          type: "error",
+          title: "Action failed",
+          message: `Failed to ${actionLabel} user.`,
+        })
       }
     } catch (err) {
       console.error(`Error during user ${actionLabel}:`, err)
-      alert(getFriendlyErrorMessage(err, `Failed to ${actionLabel} user.`))
+      notify({
+        type: "error",
+        title: `Could not ${actionLabel} user`,
+        message: getFriendlyErrorMessage(err, `Failed to ${actionLabel} user.`),
+      })
     } finally {
       setUpdatingUserId(null)
     }
-  }
+  }, [confirm, fetchUserActivity, inactiveDays, notify, prompt, selectedCityId])
 
   const filteredUsers = userActivity.filter((item) => {
     const matchesInactive = !inactiveOnly || item.is_inactive
@@ -264,9 +278,11 @@ export default function StaffUsers() {
             <FaCircleNotch className="animate-spin text-2xl text-slate-400" />
           </div>
         ) : userActivityError ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-5 text-sm font-medium text-amber-900">
-            {userActivityError}
-          </div>
+          <InlineErrorState
+            title="User activity unavailable"
+            message={userActivityError}
+            onRetry={() => fetchUserActivity({ cityId: selectedCityId, threshold: inactiveDays })}
+          />
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-slate-200">
             <table className="w-full min-w-[1000px] text-left text-sm text-slate-600">

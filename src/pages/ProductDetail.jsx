@@ -30,9 +30,9 @@ import PageSeo from "../components/common/PageSeo"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import AiAssistantWidget from "../components/common/AiAssistantWidget"
+import { ProductDetailEntrySkeleton } from "../components/common/DetailEntrySkeletons"
 import { getRetryingMessage } from "../components/common/RetryingNotice"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
-import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import {
   normalizeWhatsAppPhone,
@@ -97,10 +97,15 @@ function ProductDetail() {
     })
   }
 
-  const { data, loading: dataLoading, error } = useCachedFetch(
+  const { data, loading: dataLoading, error, mutate } = useCachedFetch(
     cacheKey,
     fetchProductData,
-    { dependencies: [productId, user?.id], ttl: 1000 * 60 * 5, persist: "session" }
+    {
+      dependencies: [productId, user?.id],
+      ttl: 1000 * 60 * 5,
+      persist: "session",
+      skip: !productId,
+    }
   )
 
   // 4. Local Optimistic States
@@ -581,17 +586,17 @@ function ProductDetail() {
 
   // --- EARLY RETURNS (Loading, Errors) ---
   if (!productId) {
-    navigate("/user-dashboard", { replace: true })
-    return null
+    return (
+      <GlobalErrorScreen
+        title="Product unavailable"
+        message="This product link is incomplete or no longer available."
+        onBack={goBack}
+      />
+    )
   }
 
   if (!data && (authLoading || dataLoading)) {
-    return (
-      <PageLoadingScreen
-        title="Opening product"
-        message="Please wait while we prepare the product details."
-      />
-    )
+    return <ProductDetailEntrySkeleton />
   }
 
   if (error && !data) {
@@ -599,7 +604,7 @@ function ProductDetail() {
       <GlobalErrorScreen
         error={error}
         message={getRetryingMessage(error)}
-        onRetry={() => window.location.reload()}
+        onRetry={mutate}
         onBack={goBack}
       />
     )

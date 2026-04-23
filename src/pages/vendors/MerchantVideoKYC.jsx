@@ -15,6 +15,7 @@ import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import { clearCachedFetchStore, invalidateCachedFetchStore } from "../../hooks/useCachedFetch";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
+import InlineErrorState from "../../components/common/InlineErrorState";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getRuleLabel } from "../../lib/uploadRules";
 import logoImage from "../../assets/images/logo.jpg";
@@ -767,9 +768,12 @@ export default function MerchantVideoKYC() {
                     {setupState === "requesting" ? "Waiting..." : "Enable Camera and Location"}
                   </button>
                   {setupError ? (
-                    <p className="text-center text-[0.8rem] font-medium text-[#FCA5A5]">
-                      {setupError}
-                    </p>
+                    <InlineErrorState
+                      title="Permissions still needed"
+                      message={setupError}
+                      surface="dark"
+                      compact
+                    />
                   ) : null}
                   <div className="flex items-center justify-center gap-4 text-[0.78rem] font-semibold text-[#94A3B8]">
                     <span className="inline-flex items-center gap-1"><FaLocationDot /> GPS</span>
