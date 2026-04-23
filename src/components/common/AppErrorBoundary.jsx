@@ -1,5 +1,6 @@
 import { Component } from "react"
 import { isNetworkError } from "../../lib/friendlyErrors"
+import { isNetworkOffline } from "../../lib/networkStatus"
 import GlobalErrorScreen from "./GlobalErrorScreen"
 import {
   forceFreshAppReload,
@@ -67,7 +68,7 @@ class AppErrorBoundary extends Component {
 
   recoverFromChunkFailure(error) {
     if (!isChunkLoadFailure(error)) return false
-    if (typeof navigator !== "undefined" && !navigator.onLine) return false
+    if (isNetworkOffline()) return false
 
     const started = forceFreshAppReload({ reason: "chunk", manual: false })
     this.setState({ error, retryArmed: false, busy: started })
@@ -117,7 +118,7 @@ class AppErrorBoundary extends Component {
   }
 
   handleRetry = () => {
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
+    if (isNetworkOffline()) {
       this.setState({ retryArmed: true, busy: false })
       return
     }

@@ -1,8 +1,26 @@
-import { useEffect } from "react"
+import { useEffect, useLayoutEffect } from "react"
 import { useLocation, useNavigationType } from "react-router-dom"
 import AppErrorBoundary from "./AppErrorBoundary"
 import { removeRecoverySearchParam } from "../../lib/runtimeRecovery"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
+import useRouteWarmup from "../../hooks/useRouteWarmup"
+
+function forceScrollTop() {
+  if (typeof window === "undefined") return
+
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" })
+
+  const scrollingElement = document.scrollingElement || document.documentElement
+  if (scrollingElement) {
+    scrollingElement.scrollTop = 0
+    scrollingElement.scrollLeft = 0
+  }
+
+  if (document.body) {
+    document.body.scrollTop = 0
+    document.body.scrollLeft = 0
+  }
+}
 
 function RouteFeedback() {
   const location = useLocation()
@@ -10,18 +28,39 @@ function RouteFeedback() {
   const routeKey = `${location.pathname}${location.search}${location.hash}`
 
   useEffect(() => {
-    if (
-      navigationType !== "POP" &&
-      !location.hash &&
-      typeof window !== "undefined"
-    ) {
-      window.scrollTo({ top: 0, behavior: "smooth" })
+    if (typeof window === "undefined" || !("scrollRestoration" in window.history)) {
+      return undefined
     }
 
-    if (typeof document !== "undefined") {
-      document.documentElement.style.scrollBehavior = "smooth"
+    const previousScrollRestoration = window.history.scrollRestoration
+    window.history.scrollRestoration = "manual"
+
+    return () => {
+      window.history.scrollRestoration = previousScrollRestoration
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    if (location.hash || typeof window === "undefined") return undefined
+
+    forceScrollTop()
+
+    let frameId = window.requestAnimationFrame(forceScrollTop)
+    const timers = [60, 180, 420].map((delay) =>
+      window.setTimeout(forceScrollTop, delay)
+    )
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+      timers.forEach((timerId) => window.clearTimeout(timerId))
     }
   }, [location.hash, location.pathname, location.search, navigationType])
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.style.scrollBehavior = "auto"
+    }
+  }, [])
 
   return (
     <div
@@ -34,7 +73,8 @@ function RouteFeedback() {
 
 function AppFrame({ children }) {
   const location = useLocation()
-  useVersionCheck() // Monitor for app updates in the background
+  useVersionCheck({ pathname: location.pathname }) // Monitor for app updates in the background
+  useRouteWarmup({ pathname: location.pathname })
 
   useEffect(() => {
     removeRecoverySearchParam()

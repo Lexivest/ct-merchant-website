@@ -249,6 +249,55 @@ function ShopRegistrationShimmer() {
   )
 }
 
+function ShopSubmissionLockedScreen({ isEdit, onBack }) {
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-4">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+            aria-label="Back to dashboard"
+          >
+            <FaArrowLeft />
+          </button>
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-pink-600">
+              Under Review
+            </p>
+            <h1 className="text-lg font-black text-slate-950">
+              {isEdit ? "Correction Submitted" : "Shop Application Submitted"}
+            </h1>
+          </div>
+        </div>
+      </div>
+
+      <main className="mx-auto flex max-w-3xl px-4 py-12">
+        <div className="w-full rounded-[32px] border border-slate-200 bg-white p-8 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[28px] bg-pink-50 text-3xl text-pink-600">
+            <FaShieldHalved />
+          </div>
+          <h2 className="text-2xl font-black tracking-tight text-slate-950">
+            Your form is locked for review
+          </h2>
+          <p className="mx-auto mt-3 max-w-md text-sm font-semibold leading-6 text-slate-500">
+            We have received your submission. You cannot edit this form while staff review is in progress.
+          </p>
+          <button
+            type="button"
+            onClick={onBack}
+            className="mt-8 inline-flex h-12 items-center justify-center gap-3 rounded-2xl bg-slate-950 px-6 text-sm font-black text-white shadow-xl shadow-slate-200 transition hover:bg-slate-800 active:scale-[0.98]"
+          >
+            <FaArrowLeft className="text-xs" />
+            Back to User Dashboard
+          </button>
+        </div>
+      </main>
+    </div>
+  )
+}
+
 const STEPS = [
   { id: "basics", label: "Basics", icon: <FaStore /> },
   { id: "profile", label: "Profile", icon: <FaLocationDot /> },
@@ -328,6 +377,7 @@ function ShopRegistration() {
   const [currentStep, setCurrentStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
+  const [submissionLocked, setSubmissionLocked] = useState(false)
   const [hasHydrated, setHasHydrated] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(!isEdit)
 
@@ -977,15 +1027,24 @@ function ShopRegistration() {
         return
       }
 
-      notify({
-        type: "success",
-        title: "Application Received",
-        message: isEdit 
-          ? "Your correction has been received and is under review."
-          : "Your shop registration has been received and is currently under review. You will be notified once approved.",
-        confirmText: "Back to Dashboard",
-        onClose: () => navigate("/vendor-panel", { replace: true }),
-      })
+      try {
+        if (user?.id && rpcRes?.shop_id) {
+          localStorage.setItem(
+            `ctm_my_shop_${user.id}`,
+            JSON.stringify({
+              id: rpcRes.shop_id,
+              status: "pending",
+              rejection_reason: null,
+              is_open: true,
+              is_verified: false,
+              kyc_status: "unsubmitted",
+              kyc_video_url: null,
+            })
+          )
+        }
+      } catch {
+        // Dashboard status will still refresh from Supabase when local storage is unavailable.
+      }
 
       const oldFilesByBucket = new Map()
       uploadedFiles.forEach((item) => {
@@ -1012,6 +1071,7 @@ function ShopRegistration() {
       }
 
       setReviewOpen(false)
+      setSubmissionLocked(true)
       window.scrollTo({ top: 0, behavior: "smooth" })
 
       try { localStorage.removeItem("ctm_dashboard_cache") } catch {
@@ -1061,6 +1121,15 @@ function ShopRegistration() {
   }
 
   if (!user || !profile) return null
+
+  if (submissionLocked) {
+    return (
+      <ShopSubmissionLockedScreen
+        isEdit={isEdit}
+        onBack={() => navigate("/user-dashboard?tab=services", { replace: true })}
+      />
+    )
+  }
 
   if (showOnboarding) {
     return (

@@ -18,6 +18,7 @@ import {
   FaBullhorn,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
+import { resolveStaffAccess, withStaffAuthTimeout } from "../../lib/staffAuth"
 
 let staffPortalMemory = {
   isResolved: false,
@@ -267,6 +268,7 @@ export function useStaffPortalSession() {
   const [authUser, setAuthUser] = useState(() => staffPortalMemory.authUser)
   const [staffData, setStaffData] = useState(() => staffPortalMemory.staffData)
   const [fetchingStaff, setFetchingStaff] = useState(() => !staffPortalMemory.isResolved)
+  const [staffError, setStaffError] = useState("")
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const isSuperAdmin = staffData?.role === "super_admin"
@@ -278,9 +280,13 @@ export function useStaffPortalSession() {
 
     async function initDashboard() {
       try {
+        setStaffError("")
         const {
           data: { session },
-        } = await supabase.auth.getSession()
+        } = await withStaffAuthTimeout(
+          supabase.auth.getSession(),
+          "Could not confirm your staff session. Please retry."
+        )
 
         if (!session) {
           // No session at all, definitely need to login
@@ -290,54 +296,23 @@ export function useStaffPortalSession() {
 
         setAuthUser(session.user)
 
-        // Try to fetch from admins table first (harmonized role source)
-        const { data: adminProfile, error: adminErr } = await supabase
-          .from("admins")
-          .select("role, city_id, full_name")
-          .eq("id", session.user.id)
-          .maybeSingle()
+        const staffAccess = await resolveStaffAccess(session.user.id)
 
-        if (adminErr) throw adminErr
-
-        if (!adminProfile) {
-          // Fallback check for legacy staff_profiles
-          const { data: staffProfile, error: legacyErr } = await supabase
-            .from("staff_profiles")
-            .select("role, city_id, full_name")
-            .eq("id", session.user.id)
-            .maybeSingle()
-          
-          if (legacyErr) throw legacyErr
-
-          if (!staffProfile) {
-            // Definitely not a staff member
-            await supabase.auth.signOut()
-            navigate("/staff-portal", { replace: true })
-            return
-          }
-          
-          // Map legacy to same structure
-          const mappedProfile = {
-            ...staffProfile,
-            role: staffProfile.role === "director" ? "super_admin" : "city_admin"
-          }
-
-          staffPortalMemory = {
-            isResolved: true,
-            authUser: session.user,
-            staffData: mappedProfile,
-          }
-          setStaffData(mappedProfile)
-        } else {
-          staffPortalMemory = {
-            isResolved: true,
-            authUser: session.user,
-            staffData: adminProfile,
-          }
-          setStaffData(adminProfile)
+        if (!staffAccess) {
+          await supabase.auth.signOut()
+          navigate("/staff-portal", { replace: true })
+          return
         }
+
+        staffPortalMemory = {
+          isResolved: true,
+          authUser: session.user,
+          staffData: staffAccess,
+        }
+        setStaffData(staffAccess)
       } catch (err) {
         console.error("Staff session error:", err)
+        setStaffError(err.message || "Staff session could not be verified.")
         // Only reset memory on actual error, don't redirect yet to avoid loops
         staffPortalMemory = {
           isResolved: false,
@@ -370,6 +345,7 @@ export function useStaffPortalSession() {
     isAdmin,
     staffCityId,
     fetchingStaff,
+    staffError,
     isLoggingOut,
     handleLogout,
   }
@@ -574,12 +550,14 @@ export function StaffPortalShell({
   headerActions = null,
 }) {
   const routeLocation = useLocation()
+  const navigate = useNavigate()
   const { 
     authUser, 
     staffData, 
     isSuperAdmin, 
     staffCityId, 
     fetchingStaff, 
+    staffError,
     isLoggingOut, 
     handleLogout 
   } = useStaffPortalSession()
@@ -591,6 +569,24 @@ export function StaffPortalShell({
       <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#2E1065] via-[#5B21B6] to-[#DB2777] font-sans">
         <FaCircleNotch className="mb-4 animate-spin text-5xl text-[#DB2777]" />
         <p className="text-lg font-semibold text-white">Verifying secure session...</p>
+      </div>
+    )
+  }
+
+  if (staffError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-white">
+        <div className="max-w-md rounded-3xl border border-rose-300/20 bg-white/10 p-6 text-center shadow-2xl">
+          <h1 className="text-xl font-black">Staff access could not be verified</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-300">{staffError}</p>
+          <button
+            type="button"
+            onClick={() => navigate("/staff-portal", { replace: true })}
+            className="mt-5 rounded-2xl bg-pink-600 px-5 py-3 text-sm font-black text-white"
+          >
+            Return to staff login
+          </button>
+        </div>
       </div>
     )
   }

@@ -20,10 +20,12 @@ import {
   normaliseShopList,
   useStaffPortalSession,
 } from "./StaffPortalShared"
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 
 export default function StaffUsers() {
   const location = useLocation()
   const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
+  const { confirm, prompt } = useGlobalFeedback()
 
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-users"
@@ -114,13 +116,30 @@ export default function StaffUsers() {
     const isSuspending = !user.is_suspended
     const actionLabel = isSuspending ? "suspend" : "reinstate"
     
-    if (!window.confirm(`Are you sure you want to ${actionLabel} ${user.email || user.full_name}?`)) {
+    const confirmed = await confirm({
+      title: isSuspending ? "Suspend account" : "Reinstate account",
+      type: isSuspending ? "error" : "info",
+      message: `Are you sure you want to ${actionLabel} ${user.email || user.full_name}?`,
+      confirmText: isSuspending ? "Suspend" : "Reinstate",
+      cancelText: "Cancel",
+    })
+
+    if (!confirmed) {
       return
     }
 
     let reason = null
     if (isSuspending) {
-      reason = window.prompt("Enter a reason for suspension (optional):")
+      reason = await prompt({
+        title: "Suspension reason",
+        type: "error",
+        message: "Enter a reason for suspension. This helps staff keep an audit trail.",
+        inputLabel: "Reason",
+        placeholder: "Manual staff suspension",
+        multiline: true,
+        confirmText: "Continue",
+        cancelText: "Cancel",
+      })
       if (reason === null) return // User cancelled prompt
     }
 
@@ -365,4 +384,3 @@ export default function StaffUsers() {
     </StaffPortalShell>
   )
 }
-

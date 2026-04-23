@@ -1,5 +1,4 @@
 import CTMLoader from "./CTMLoader"
-import GlobalErrorScreen from "./GlobalErrorScreen"
 
 function PageTransitionOverlay({
   visible,

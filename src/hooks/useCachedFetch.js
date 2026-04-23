@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import { isNetworkOffline } from "../lib/networkStatus"
 
 // Global memory cache to prevent redundant network requests across page navigations
 const globalCache = new Map()
 const activeFetchers = new Map()
+const inflightRequests = new Map()
 const MAX_CACHE_SIZE = 150 
 const SESSION_CACHE_PREFIX = "ctm_cached_fetch:"
 let globalListenersAttached = false
@@ -86,6 +88,39 @@ function getCacheEntry(queryKey) {
   return persistedEntry
 }
 
+function buildIdleState(queryKey) {
+  return {
+    queryKey,
+    data: getCacheEntry(queryKey)?.data || null,
+    loading: false,
+    error: null,
+    isOffline: isNetworkOffline(),
+    isRevalidating: false,
+  }
+}
+
+function runSharedFetch(queryKey, fetcher) {
+  if (!queryKey) {
+    return Promise.resolve().then(fetcher)
+  }
+
+  const existingRequest = inflightRequests.get(queryKey)
+  if (existingRequest) {
+    return existingRequest
+  }
+
+  const nextRequest = Promise.resolve()
+    .then(fetcher)
+    .finally(() => {
+      if (inflightRequests.get(queryKey) === nextRequest) {
+        inflightRequests.delete(queryKey)
+      }
+    })
+
+  inflightRequests.set(queryKey, nextRequest)
+  return nextRequest
+}
+
 function refreshAllActiveFetches() {
   for (const fetcher of activeFetchers.values()) {
     fetcher({ force: true })
@@ -108,7 +143,7 @@ function ensureGlobalFetchListeners() {
   }
 
   const handleResume = () => {
-    if (typeof navigator !== "undefined" && navigator.onLine) {
+    if (!isNetworkOffline()) {
       scheduleRefresh()
     }
   }
@@ -117,8 +152,7 @@ function ensureGlobalFetchListeners() {
     if (
       typeof document !== "undefined" &&
       document.visibilityState === "visible" &&
-      typeof navigator !== "undefined" &&
-      navigator.onLine
+      !isNetworkOffline()
     ) {
       scheduleRefresh()
     }
@@ -241,13 +275,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   } = options
 
   // Combined state object for atomic updates and consistent renders
-  const [state, setState] = useState({
-    data: getCacheEntry(queryKey)?.data || null,
-    loading: false,
-    error: null,
-    isOffline: typeof navigator !== "undefined" ? !navigator.onLine : false,
-    isRevalidating: false
-  })
+  const [state, setState] = useState(() => buildIdleState(queryKey))
   
   const persistMode = persist === true ? "session" : persist
   const fetchPromiseRef = useRef(fetchPromise)
@@ -271,6 +299,11 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
   }, [])
 
   useEffect(() => {
+    if (state.queryKey === queryKey) return
+    setState(buildIdleState(queryKey))
+  }, [queryKey, state.queryKey])
+
+  useEffect(() => {
     if (skip) {
       setState(prev => ({ ...prev, loading: false }))
       return undefined
@@ -281,17 +314,19 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
     const fetchData = async ({ force = false } = {}) => {
       const cachedEntry = getCacheEntry(queryKey)
       const isExpired = cachedEntry && (Date.now() - cachedEntry.timestamp > ttl)
-      const offline = typeof navigator !== "undefined" ? !navigator.onLine : false
+      const offline = isNetworkOffline()
 
       // 1. Skip if data is fresh and not forced
       if (!force && cachedEntry && !isExpired) {
         if (isMounted) {
           setState(prev => ({ 
             ...prev, 
+            queryKey,
             data: cachedEntry.data, 
             loading: false, 
             error: null, 
-            isOffline: offline 
+            isOffline: offline,
+            isRevalidating: false,
           }))
         }
         return
@@ -302,9 +337,11 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
         if (isMounted) {
           setState(prev => ({
             ...prev,
+            queryKey,
             data: cachedEntry?.data || prev.data,
             isOffline: true,
             loading: false,
+            isRevalidating: false,
             error: cachedEntry ? null : "Network unavailable. Please reconnect."
           }))
         }
@@ -315,6 +352,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       if (isMounted) {
         setState(prev => ({
           ...prev,
+          queryKey,
           loading: !prev.data,
           isRevalidating: !!prev.data,
           isOffline: false,
@@ -323,10 +361,11 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       }
 
       try {
-        const result = await fetchPromiseRef.current()
+        const result = await runSharedFetch(queryKey, () => fetchPromiseRef.current())
         if (isMounted) {
           primeCachedFetchStore(queryKey, result, Date.now(), { persist: persistMode })
           setState({
+            queryKey,
             data: result,
             loading: false,
             isRevalidating: false,
@@ -341,6 +380,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
 
           setState(prev => ({
             ...prev,
+            queryKey,
             data: currentCached?.data || prev.data,
             loading: false,
             isRevalidating: false,
@@ -373,5 +413,8 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
     if (fetcher) fetcher({ force: true })
   }, [queryKey])
 
-  return { ...state, mutate }
+  const resolvedState =
+    state.queryKey === queryKey ? state : buildIdleState(queryKey)
+
+  return { ...resolvedState, mutate }
 }

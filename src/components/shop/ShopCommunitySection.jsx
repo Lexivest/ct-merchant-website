@@ -7,6 +7,7 @@ import StableImage from "../common/StableImage"
 import { ShimmerBlock } from "../common/Shimmers"
 import { useGlobalFeedback } from "../common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
+import { isNetworkOffline } from "../../lib/networkStatus"
 
 const COMMUNITY_CACHE_PREFIX = "ctm_shop_community:"
 const COMMUNITY_CACHE_TTL = 1000 * 60 * 10
@@ -186,7 +187,7 @@ export default function ShopCommunitySection({
     if (!shopId) return
 
     const cachedPayload = readCommunityCache(shopId, {
-      includeExpired: typeof navigator !== "undefined" && !navigator.onLine,
+      includeExpired: isNetworkOffline(),
     })
     if (!cachedPayload) return
 
@@ -202,7 +203,7 @@ export default function ShopCommunitySection({
       return
     }
 
-    const isOffline = typeof navigator !== "undefined" && !navigator.onLine
+    const isOffline = isNetworkOffline()
     const cachedPayload = readCommunityCache(shopId, {
       includeExpired: isOffline,
     })

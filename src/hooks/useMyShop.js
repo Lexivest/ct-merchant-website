@@ -48,6 +48,9 @@ function buildMetaFromShop(shopData) {
   if (shopData.is_open === false) return { title: "Locked", status: "locked" }
   if (shopData.status === "pending") return { title: "Pending", status: "pending" }
   if (shopData.status === "rejected") return { title: "Rejected", status: "rejected" }
+  if (!shopData.is_verified && shopData.kyc_status === "submitted") {
+    return { title: "Video Pending", status: "kyc_pending", subtitle: "Under Review" }
+  }
   return { title: "My Shop", status: "approved" }
 }
 
@@ -86,7 +89,7 @@ export default function useMyShop() {
       setDataError(false)
       const { data, error } = await supabase
         .from("shops")
-        .select("id, status, rejection_reason, is_open")
+        .select("id, status, rejection_reason, is_open, is_verified, kyc_status, kyc_video_url")
         .eq("owner_id", user.id)
         .maybeSingle()
 

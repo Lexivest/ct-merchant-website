@@ -701,8 +701,8 @@ function UserDashboard() {
       setNotice({
         visible: true,
         type: "warning",
-        title: "Application pending",
-        message: "Your shop application is currently being reviewed. Please check back later.",
+        title: "Application under review",
+        message: "Your shop application is under review. We will notify you once staff completes the check.",
       })
       return
     }
@@ -717,6 +717,16 @@ function UserDashboard() {
       void openDashboardRouteWithTransition(
         `/shop-registration?id=${shopData.id}`
       )
+      return
+    }
+
+    if (!shopData.is_verified && shopData.kyc_status === "submitted") {
+      setNotice({
+        visible: true,
+        type: "info",
+        title: "Video under review",
+        message: "Your video submission is under review. We will notify you once verification is complete.",
+      })
       return
     }
 

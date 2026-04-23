@@ -1,6 +1,7 @@
 import { useEffect } from "react"
 import { useLocation } from "react-router-dom"
 import { supabase } from "../../lib/supabase"
+import { isNetworkOffline } from "../../lib/networkStatus"
 
 const SESSION_STORAGE_KEY = "ctm_visit_session_key_v1"
 
@@ -37,7 +38,7 @@ export default function SiteVisitTracker() {
   useEffect(() => {
     const currentPath = location.pathname || "/"
 
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
+    if (isNetworkOffline()) {
       return
     }
 
@@ -77,4 +78,3 @@ export default function SiteVisitTracker() {
 
   return null
 }
-

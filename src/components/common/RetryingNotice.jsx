@@ -1,9 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
 import { isNetworkError } from "../../lib/friendlyErrors"
+import { isNetworkOffline } from "../../lib/networkStatus"
 import GlobalErrorScreen from "./GlobalErrorScreen"
 
 export function getRetryingMessage(error) {
-  if ((typeof navigator !== "undefined" && !navigator.onLine) || isNetworkError(error)) {
+  if (isNetworkOffline() || isNetworkError(error)) {
     return "Please check your connection, then retry or go back."
   }
 

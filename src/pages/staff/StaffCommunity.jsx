@@ -45,7 +45,7 @@ export default function StaffCommunity() {
     location.state?.prefetchedData?.kind === "staff-community"
       ? location.state.prefetchedData
       : null
-  const { notify } = useGlobalFeedback()
+  const { confirm, notify } = useGlobalFeedback()
   const [commentThreads, setCommentThreads] = useState(() => prefetchedData?.commentThreads || [])
   const [loadingComments, setLoadingComments] = useState(() => !prefetchedData && !fetchingStaff)
   const [selectedCommentThread, setSelectedCommentThread] = useState(null)
@@ -230,7 +230,15 @@ export default function StaffCommunity() {
       ? "Delete this entire thread and every attached reply?"
       : "Delete this selected comment from the thread?"
 
-    if (!window.confirm(confirmLabel)) return
+    const confirmed = await confirm({
+      title: "Delete discussion",
+      type: "error",
+      message: confirmLabel,
+      confirmText: "Delete",
+      cancelText: "Keep",
+    })
+
+    if (!confirmed) return
 
     setDeletingCommentId(comment.id)
     try {

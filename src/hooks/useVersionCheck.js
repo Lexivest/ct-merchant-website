@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
+import { isNetworkOffline } from "../lib/networkStatus"
 import { forceFreshAppReload } from "../lib/runtimeRecovery"
 
 const VERSION_CHECK_INTERVAL = 300000 // 5 minutes
@@ -135,7 +136,7 @@ export function useVersionCheck({ pathname = "" } = {}) {
   const attemptSilentUpdate = useCallback(() => {
     if (!pendingUpdate.current) return
     if (typeof document === "undefined") return
-    if (typeof navigator !== "undefined" && !navigator.onLine) return
+    if (isNetworkOffline()) return
     if (!canSwapSilently(pathname)) return
     
     // We only refresh if:

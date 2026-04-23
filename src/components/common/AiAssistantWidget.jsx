@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react"
-import { FaRobot, FaRotateLeft } from "react-icons/fa6"
+import { FaPaperPlane, FaRobot, FaRotateLeft, FaXmark } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
+import { isNetworkOffline } from "../../lib/networkStatus"
 import {
   getDeviceFingerprint,
   readAnonymousAiUsage,
@@ -129,6 +130,17 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
     const trimmed = (textOverride || input).trim()
     if (!trimmed || isSending) return
     const isAnonymous = !user
+
+    if (isNetworkOffline()) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "error",
+          content: "You are offline right now. Please reconnect and try again.",
+        },
+      ])
+      return
+    }
 
     if (isAnonymous && anonymousUsage.count >= DAILY_LIMIT) {
       setMessages((prev) => [
@@ -305,7 +317,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
               onClick={toggleChat}
               className="flex h-7 w-7 items-center justify-center rounded-full text-xl text-white/80 transition hover:bg-white/10 hover:text-white"
             >
-              ×
+              <FaXmark />
             </button>
           </div>
         </div>
@@ -373,7 +385,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
               disabled={isSending}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-600 text-white transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              ➤
+              <FaPaperPlane />
             </button>
           </div>
           {!user ? (

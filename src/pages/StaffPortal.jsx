@@ -1,7 +1,9 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabase"
-import { signInWithPassword } from "../lib/auth"
+import { signInWithPassword, signOutUser } from "../lib/auth"
+import { buildStaffAuthProfile, resolveStaffAccess, withStaffAuthTimeout } from "../lib/staffAuth"
+import { primeAuthSessionState } from "../hooks/useAuthSession"
 
 // --- LOCAL ASSET IMPORT ---
 import ctmLogo from "../assets/images/logo.jpg"
@@ -33,43 +35,43 @@ function StaffPortal() {
 
     try {
       // 1. Authenticate using the shared logic (handles suspension and tracking)
-      const result = await signInWithPassword({
-        email: formData.email.trim(),
-        password: formData.password,
-      })
+      const result = await withStaffAuthTimeout(
+        signInWithPassword({
+          email: formData.email.trim(),
+          password: formData.password,
+        }),
+        "Login is taking too long. Please check your connection and try again."
+      )
 
       const authUser = result.auth?.user || result.auth?.session?.user
 
       if (!authUser) throw new Error("Login failed. Please check your credentials.")
 
+      const sessionResult = await withStaffAuthTimeout(
+        supabase.auth.getSession(),
+        "Could not confirm the staff session. Please retry."
+      )
+      const session = result.auth?.session || sessionResult.data?.session || null
+
       // 2. Immediate Role Verification (Backend tables define staff/admin)
-      // Check admins table first
-      const { data: adminProfile } = await supabase
-        .from("admins")
-        .select("*")
-        .eq("id", authUser.id)
-        .maybeSingle()
+      const staffAccess = await resolveStaffAccess(authUser.id)
 
-      if (adminProfile) {
-        navigate("/staff-dashboard", { replace: true })
-        return
+      if (!staffAccess) {
+        await signOutUser()
+        throw new Error("Access Denied. This portal is restricted to authorized staff members only.")
       }
 
-      // Check legacy staff_profiles table
-      const { data: staffProfile } = await supabase
-        .from("staff_profiles")
-        .select("*")
-        .eq("id", authUser.id)
-        .maybeSingle()
+      const staffProfile = buildStaffAuthProfile(authUser, staffAccess)
+      primeAuthSessionState({
+        session,
+        user: authUser,
+        profile: staffProfile,
+        suspended: false,
+        profileLoaded: true,
+      })
 
-      if (staffProfile) {
-        navigate("/staff-dashboard", { replace: true })
-        return
-      }
-
-      // 3. Not a staff member - Access Denied
-      await supabase.auth.signOut()
-      throw new Error("Access Denied. This portal is restricted to authorized staff members only.")
+      void import("./StaffDashboard")
+      navigate("/staff-dashboard", { replace: true })
       
     } catch (error) {
       setErrorMessage(error.message)

@@ -1,11 +1,7 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef } from "react"
 
+import { useNetworkStatus } from "../../lib/networkStatus"
 import GlobalErrorScreen from "./GlobalErrorScreen"
-
-function getOfflineState() {
-  if (typeof navigator === "undefined") return false
-  return !navigator.onLine
-}
 
 function NetworkStatusScreen({
   title = "No internet connection",
@@ -18,39 +14,36 @@ function NetworkStatusScreen({
   autoRetryOnReconnect = true,
   fullScreen = true,
 }) {
-  const [isOffline, setIsOffline] = useState(getOfflineState)
-  const [isRecovering, setIsRecovering] = useState(false)
+  const { isOffline } = useNetworkStatus()
+  const lastRetryRef = useRef(0)
+  const isRecovering =
+    !isOffline && autoRetryOnReconnect && typeof onRetry === "function"
 
   useEffect(() => {
-    function handleOnline() {
-      setIsOffline(false)
-
-      if (autoRetryOnReconnect && typeof onRetry === "function") {
-        setIsRecovering(true)
-        window.setTimeout(() => {
-          onRetry()
-        }, 180)
-      }
+    if (isOffline || !autoRetryOnReconnect || typeof onRetry !== "function") {
+      return undefined
     }
 
-    function handleOffline() {
-      setIsOffline(true)
-      setIsRecovering(false)
+    const now = Date.now()
+    if (now - lastRetryRef.current < 1200) {
+      return undefined
     }
 
-    window.addEventListener("online", handleOnline)
-    window.addEventListener("offline", handleOffline)
+    lastRetryRef.current = now
+
+    const timerId = window.setTimeout(() => {
+      onRetry()
+    }, 180)
 
     return () => {
-      window.removeEventListener("online", handleOnline)
-      window.removeEventListener("offline", handleOffline)
+      window.clearTimeout(timerId)
     }
-  }, [autoRetryOnReconnect, onRetry])
+  }, [autoRetryOnReconnect, isOffline, onRetry])
 
   return (
     <GlobalErrorScreen
       error={isOffline ? new Error("Network offline") : null}
-      title={isOffline ? title : "Back online"}
+      title={isOffline ? title : "Connection restored"}
       message={isRecovering ? reconnectMessage : message}
       fullScreen={fullScreen}
       onRetry={onRetry}

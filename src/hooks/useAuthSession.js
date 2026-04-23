@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { supabase } from "../lib/supabase"
+import { isNetworkOffline } from "../lib/networkStatus"
 import {
   fetchProfileByUserId,
   getSession,
@@ -24,8 +25,7 @@ let globalAuthMemory = {
 }
 
 function getIsOffline() {
-  if (typeof navigator === "undefined") return false
-  return !navigator.onLine
+  return isNetworkOffline()
 }
 
 function getProfileCacheKey(userId) {

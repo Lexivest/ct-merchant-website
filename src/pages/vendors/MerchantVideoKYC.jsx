@@ -594,8 +594,26 @@ export default function MerchantVideoKYC() {
         title: "Video uploaded",
         message: "Your video was submitted successfully and is under review.",
         confirmText: "Back to Dashboard",
-        onClose: () => navigate("/vendor-panel", { replace: true }),
+        onClose: () => navigate("/user-dashboard?tab=services", { replace: true }),
       });
+
+      try {
+        localStorage.setItem(
+          `ctm_my_shop_${user.id}`,
+          JSON.stringify({
+            ...(shopData || {}),
+            id: shopData?.id,
+            status: shopData?.status || "approved",
+            rejection_reason: null,
+            is_open: shopData?.is_open !== false,
+            is_verified: false,
+            kyc_status: "submitted",
+            kyc_video_url: publicUrl,
+          })
+        );
+      } catch {
+        // Dashboard status will re-sync from Supabase when local storage is unavailable.
+      }
 
       // Clear specific vendor panel cache to force immediate fresh state there
       clearCachedFetchStore((key) => 

@@ -4,11 +4,11 @@ import {
   FaBuilding,
   FaCamera,
   FaCircleExclamation,
-  FaCircleNotch,
   FaCircleQuestion,
   FaCropSimple,
   FaHeadset,
   FaHeart,
+  FaHourglassHalf,
   FaLayerGroup,
   FaLock,
   FaStore,
@@ -70,7 +70,9 @@ function LazyServiceView({ children, label }) {
 
 function renderShopMetaIcon(status) {
   if (status === "locked") return <FaLock />
-  if (status === "pending") return <FaCircleNotch className="animate-spin" />
+  if (status === "pending" || status === "kyc_pending") {
+    return <FaHourglassHalf style={{ color: "#d97706" }} />
+  }
   if (status === "rejected") return <FaCircleExclamation />
   return <FaStore />
 }

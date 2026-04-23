@@ -1,7 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react"
-import { Routes, Route, Link, Navigate, useLocation, useNavigate } from "react-router-dom"
+import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom"
 
-import useAuthSession from "./hooks/useAuthSession"
+import useAuthSession, { primeAuthSessionState } from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import OnlineRouteGuard from "./components/common/OnlineRouteGuard"
 import SiteVisitTracker from "./components/common/SiteVisitTracker"
@@ -13,13 +13,11 @@ import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
 import Home from "./pages/Home"
 import { forceFreshAppReload, isChunkLoadFailure } from "./lib/runtimeRecovery"
-import { useVersionCheck } from "./hooks/useVersionCheck"
+import { buildStaffAuthProfile, resolveStaffAccess } from "./lib/staffAuth"
+import { useNetworkStatus } from "./lib/networkStatus"
 
 function ChunkRouteFallback({ pageLabel = "this page" }) {
-  const [isOffline, setIsOffline] = useState(() => {
-    if (typeof navigator === "undefined") return false
-    return !navigator.onLine
-  })
+  const { isOffline } = useNetworkStatus()
   const retryKey =
     typeof window === "undefined"
       ? ""
@@ -36,22 +34,6 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
     }
     forceFreshAppReload({ reason: "chunk", manual: forceManual })
   }, [retryKey])
-
-  useEffect(() => {
-    function handleOnline() {
-      setIsOffline(false)
-    }
-    function handleOffline() {
-      setIsOffline(true)
-    }
-
-    window.addEventListener("online", handleOnline)
-    window.addEventListener("offline", handleOffline)
-    return () => {
-      window.removeEventListener("online", handleOnline)
-      window.removeEventListener("offline", handleOffline)
-    }
-  }, [])
 
   useEffect(() => {
     if (typeof window === "undefined" || isOffline || !retryKey) return
@@ -273,7 +255,7 @@ function RouteLoadingScreen({
   title = "Loading your page",
   message = "Please wait while we prepare the next screen.",
 }) {
-  const isOffline = typeof navigator !== "undefined" ? !navigator.onLine : false
+  const { isOffline } = useNetworkStatus()
 
   if (isHardReloadNavigation() && isOffline) {
     return (
@@ -358,31 +340,6 @@ function ProtectedDashboardRoute({ children }) {
   const [completedProfileUserId, setCompletedProfileUserId] = useState(null)
   const { loading, user, profile, suspended, isOffline, profileLoaded } = useAuthSession()
 
-  useEffect(() => {
-    if (!user || isOffline) return undefined
-
-    let cancelled = false
-    const preload = () => {
-      if (cancelled) return
-      // Vendor routes preload removed to save bandwidth.
-      // 90% of standard users don't need vendor scripts downloaded in the background.
-    }
-
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      const idleId = window.requestIdleCallback(preload, { timeout: 2500 })
-      return () => {
-        cancelled = true
-        if ("cancelIdleCallback" in window) window.cancelIdleCallback(idleId)
-      }
-    }
-
-    const timerId = window.setTimeout(preload, 700)
-    return () => {
-      cancelled = true
-      window.clearTimeout(timerId)
-    }
-  }, [user, isOffline])
-
   if (!loading && !user) {
     return <Navigate to="/" replace />
   }
@@ -440,14 +397,85 @@ function ProtectedDashboardRoute({ children }) {
 }
 
 function ProtectedStaffRoute({ children }) {
-  const { loading, user, profile, profileLoaded } = useAuthSession()
+  const { loading, session, user, profile, profileLoaded } = useAuthSession()
+  const [staffFallback, setStaffFallback] = useState({
+    userId: "",
+    checking: false,
+    authorized: false,
+  })
 
-  if (loading || (user && !profileLoaded)) {
+  const authorizedRoles = ["super_admin", "city_admin", "staff", "director"]
+  const hasAuthorizedProfile = Boolean(profile?.role && authorizedRoles.includes(profile.role))
+
+  useEffect(() => {
+    if (loading || !user?.id || (user && !profileLoaded)) return undefined
+    if (hasAuthorizedProfile) {
+      return undefined
+    }
+
+    let cancelled = false
+    const checkingTimer = window.setTimeout(() => {
+      if (!cancelled) {
+        setStaffFallback({
+          userId: user.id,
+          checking: true,
+          authorized: false,
+        })
+      }
+    }, 0)
+
+    resolveStaffAccess(user.id)
+      .then((staffAccess) => {
+        if (cancelled) return
+        if (!staffAccess) {
+          setStaffFallback({
+            userId: user.id,
+            checking: false,
+            authorized: false,
+          })
+          return
+        }
+
+        const staffProfile = buildStaffAuthProfile(user, staffAccess)
+        primeAuthSessionState({
+          session,
+          user,
+          profile: staffProfile,
+          suspended: false,
+          profileLoaded: true,
+        })
+        setStaffFallback({
+          userId: user.id,
+          checking: false,
+          authorized: true,
+        })
+      })
+      .catch((error) => {
+        console.warn("Protected staff fallback check failed:", error)
+        if (!cancelled) {
+          setStaffFallback({
+            userId: user.id,
+            checking: false,
+            authorized: false,
+          })
+        }
+      })
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(checkingTimer)
+    }
+  }, [hasAuthorizedProfile, loading, profileLoaded, session, user])
+
+  if (
+    loading ||
+    (user && !profileLoaded) ||
+    (staffFallback.checking && staffFallback.userId === user?.id)
+  ) {
     return <RouteLoadingScreen title="Accessing staff portal" message="Verifying credentials..." />
   }
 
-  const authorizedRoles = ["super_admin", "city_admin", "staff", "director"];
-  if (!user || !profile?.role || !authorizedRoles.includes(profile.role)) {
+  if (!user || (!hasAuthorizedProfile && !(staffFallback.authorized && staffFallback.userId === user.id))) {
     return <Navigate to="/staff-portal" replace />
   }
 
@@ -455,9 +483,6 @@ function ProtectedStaffRoute({ children }) {
 }
 
 function AppShell() {
-  const location = useLocation()
-  useVersionCheck({ pathname: location.pathname })
-
   const withOnlineGuard = (element, options = {}) => (
     <OnlineRouteGuard {...options}>{element}</OnlineRouteGuard>
   )

@@ -1,3 +1,5 @@
+import { isNetworkOffline } from "./networkStatus"
+
 const NETWORK_ERROR_PATTERN =
   /(failed to fetch|networkerror|network error|load failed|fetch resource|internet connection|offline|timeout|timed out|aborterror|operation was aborted)/i
 
@@ -21,11 +23,13 @@ export const ErrorCode = {
   DUPLICATE_PHONE: "CTM-007",
   DUPLICATE_EMAIL: "CTM-008",
   DATABASE_SAVE_FAILED: "CTM-009",
+  REQUEST_TIMEOUT: "CTM-010",
+  RATE_LIMITED: "CTM-011",
   INTERNAL_SERVER_ERROR: "CTM-500",
 }
 
 export function isNetworkError(error) {
-  if (typeof navigator !== "undefined" && !navigator.onLine) return true
+  if (isNetworkOffline()) return true
   const rawMessage = String(error?.message || error || "").toLowerCase()
   return NETWORK_ERROR_PATTERN.test(rawMessage)
 }
@@ -50,15 +54,29 @@ export function getFriendlyError(error, fallback = "We encountered an unexpected
 
   // --- NETWORK ERRORS ---
   if (isNetworkError(error)) {
-    result.message = "Connectivity issue detected. We can't reach our servers right now."
+    result.message = lower.includes("timed out") || lower.includes("timeout")
+      ? "This request took too long to complete."
+      : "Connectivity issue detected. We can't reach our servers right now."
     result.category = ErrorCategory.NETWORK
-    result.code = ErrorCode.OFFLINE
-    result.action = "Check your internet connection or Wi-Fi settings and try again."
+    result.code =
+      lower.includes("timed out") || lower.includes("timeout")
+        ? ErrorCode.REQUEST_TIMEOUT
+        : ErrorCode.OFFLINE
+    result.action =
+      result.code === ErrorCode.REQUEST_TIMEOUT
+        ? "Please wait a moment and try again."
+        : "Check your internet connection or Wi-Fi settings and try again."
     return result
   }
 
   // --- AUTH ERRORS ---
-  if (lower.includes("unauthorized") || lower.includes("session expired") || lower.includes("jwt expired")) {
+  if (
+    lower.includes("unauthorized") ||
+    lower.includes("session expired") ||
+    lower.includes("jwt expired") ||
+    lower.includes("invalid refresh token") ||
+    lower.includes("refresh token not found")
+  ) {
     result.message = "Your session has ended. To protect your account, please sign in again."
     result.category = ErrorCategory.AUTH
     result.code = ErrorCode.SESSION_EXPIRED
@@ -68,12 +86,25 @@ export function getFriendlyError(error, fallback = "We encountered an unexpected
   }
 
   // --- PERMISSION ERRORS ---
-  if (lower.includes("permission denied") || lower.includes("row-level security") || lower.includes("insufficient_privileges")) {
+  if (
+    lower.includes("permission denied") ||
+    lower.includes("row-level security") ||
+    lower.includes("insufficient_privileges") ||
+    lower.includes("access denied")
+  ) {
     result.message = "Access restricted. You don't have the required permissions for this action."
     result.category = ErrorCategory.PERMISSION
     result.code = ErrorCode.PERMISSION_DENIED
     result.retryable = false
     result.action = "If you believe this is an error, please contact your administrator."
+    return result
+  }
+
+  if (lower.includes("rate limit") || lower.includes("too many requests")) {
+    result.message = "Too many requests were sent in a short time."
+    result.category = ErrorCategory.SERVER
+    result.code = ErrorCode.RATE_LIMITED
+    result.action = "Please wait a moment before trying again."
     return result
   }
 
