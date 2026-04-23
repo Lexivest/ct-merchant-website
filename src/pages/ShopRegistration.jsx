@@ -951,15 +951,12 @@ function ShopRegistration() {
 
     const oldPath = getStoragePathFromUrl(oldUrl, bucket)
     const extension = fileOrBlob.name?.split(".").pop() || "jpg"
-    const shouldUseStableImagePath = bucket === STOREFRONT_BUCKET || bucket === LOGO_BUCKET
-    const path = shouldUseStableImagePath
-      ? `${folder}/${user.id}_${slotKey}.jpg`
-      : `${folder}/${user.id}_${Date.now()}.${extension}`
+    const path = `${folder}/${user.id}_${Date.now()}_${slotKey}.${extension}`
 
     const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(path, fileOrBlob, {
-        upsert: shouldUseStableImagePath,
+        upsert: false,
         contentType: fileOrBlob.type || "image/jpeg",
         cacheControl: "31536000",
       })
@@ -1538,6 +1535,7 @@ function ShopRegistration() {
           form={form}
           cityName={profile?.cities?.name || ""}
           areaName={areas.find((a) => String(a.id) === form.areaId)?.name || ""}
+          logoPreview={renderPreview("logo")}
           storefrontPreview={renderPreview("storefront")}
           idPreview={renderPreview("idCard")}
           cacPreview={renderPreview("cac")}
@@ -1695,14 +1693,15 @@ function CropModal({ config, onClose, onCrop }) {
   )
 }
 
-function ReviewModal({ form, cityName, areaName, storefrontPreview, idPreview, cacPreview, showCac, onClose, onConfirm, loading, isEdit }) {
+function ReviewModal({ form, cityName, areaName, logoPreview, storefrontPreview, idPreview, cacPreview, showCac, onClose, onConfirm, loading, isEdit }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/60 px-4 backdrop-blur-sm">
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-t-[32px] border border-white/60 bg-white p-6 shadow-2xl animate-slide-up">
         <h2 className="text-2xl font-extrabold text-slate-900">Review Application</h2>
         <p className="mt-1 text-sm font-medium text-slate-500">Please ensure all details are correct before submitting.</p>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <ReviewThumb label="Shop Logo" content={logoPreview} />
           <ReviewThumb label="Store Front" content={storefrontPreview} />
           <ReviewThumb label="ID Document" content={idPreview} />
           {showCac && <ReviewThumb label="CAC Certificate" content={cacPreview} />}
