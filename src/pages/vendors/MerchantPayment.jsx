@@ -16,6 +16,7 @@ import {
 import { supabase } from "../../lib/supabase"
 import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions"
 import useAuthSession from "../../hooks/useAuthSession"
+import { clearCachedFetchStore } from "../../hooks/useCachedFetch"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { CTM_BANK_ACCOUNT, PHYSICAL_VERIFICATION_FEE, normalizePromoCode } from "../../lib/paymentConfig"
@@ -124,6 +125,12 @@ export default function MerchantPayment() {
     })
   }, [navigate])
 
+  const refreshVendorPanelState = useCallback(() => {
+    if (!user?.id) return
+
+    clearCachedFetchStore((key) => key === `vendor_panel_${user.id}`)
+  }, [user?.id])
+
   const loadPaymentDetails = useCallback(async ({ showLoader = true } = {}) => {
     if (!user || !parsedShopId) return
 
@@ -185,6 +192,7 @@ export default function MerchantPayment() {
       }
 
       if (verificationAccess.paymentConfirmed) {
+        refreshVendorPanelState()
         if (shop.status === "pending_kyc_review" || shop.kyc_status === "submitted") {
           notify({
             kind: "toast",
@@ -220,7 +228,7 @@ export default function MerchantPayment() {
     } finally {
       if (showLoader) setLoading(false)
     }
-  }, [isOffline, navigate, notify, openVideoKyc, parsedShopId, user])
+  }, [isOffline, navigate, notify, openVideoKyc, parsedShopId, refreshVendorPanelState, user])
 
   useEffect(() => {
     if (!parsedShopId && !authLoading) {
@@ -262,6 +270,7 @@ export default function MerchantPayment() {
           ) {
             setPaymentProof(nextProof)
             if (nextProof.status === "approved") {
+              refreshVendorPanelState()
               notify({
                 kind: "toast",
                 type: "success",
@@ -278,7 +287,7 @@ export default function MerchantPayment() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [notify, openVideoKyc, parsedShopId, user?.id])
+  }, [notify, openVideoKyc, parsedShopId, refreshVendorPanelState, user?.id])
 
   const verifyPromoOnBackend = useCallback(async (txId) => {
     if (!txId || processingPromo || !parsedShopId) return
@@ -303,8 +312,7 @@ export default function MerchantPayment() {
       setStatusMsg("Promo code accepted. Redirecting to video KYC...")
       window.setTimeout(() => {
         try {
-          localStorage.removeItem(`vendor_panel_${user.id}`)
-          sessionStorage.removeItem(`vendor_panel_${user.id}`)
+          refreshVendorPanelState()
         } catch {
           // Local cache cleanup is best effort before redirecting to KYC.
         }
@@ -316,7 +324,7 @@ export default function MerchantPayment() {
       setStatusMsg(getFriendlyErrorMessage(error, "Promo verification failed."))
       setProcessingPromo(false)
     }
-  }, [openVideoKyc, parsedShopId, processingPromo, user])
+  }, [openVideoKyc, parsedShopId, processingPromo, refreshVendorPanelState])
 
   const handleApplyPromo = () => {
     if (!canApplyPromo) return
@@ -354,6 +362,7 @@ export default function MerchantPayment() {
       })
 
       setPaymentProof(proof)
+      refreshVendorPanelState()
       setReceiptFile(null)
       setDepositorName("")
       setTransferReference("")

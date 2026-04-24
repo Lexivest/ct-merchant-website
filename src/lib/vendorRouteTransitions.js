@@ -171,6 +171,7 @@ async function prepareVendorPanelData({ userId }) {
     rejectedProductCount: count || 0,
     hasVerificationAccess: verificationAccess.hasVerificationAccess,
     verificationProofStatus: verificationAccess.verificationProofStatus,
+    paymentConfirmed: verificationAccess.paymentConfirmed,
   }
 
   primeCachedFetchStore(`vendor_panel_${userId}`, payload)

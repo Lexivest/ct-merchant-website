@@ -75,6 +75,7 @@ function VendorsPanel() {
 
   const { user, loading: authLoading, isOffline } = useAuthSession()
   const [realtimeShop, setRealtimeShop] = useState(null)
+  const [verificationAccessOverride, setVerificationAccessOverride] = useState(null)
   const retryRouteTransitionRef = useRef(null)
   const [routeTransition, setRouteTransition] = useState({
     pending: false,
@@ -143,6 +144,39 @@ function VendorsPanel() {
     fetchMerchantData,
     { dependencies: [user?.id], ttl: 1000 * 60 * 5 },
   )
+
+  useEffect(() => {
+    setVerificationAccessOverride(
+      data
+        ? {
+            hasVerificationAccess: Boolean(data.hasVerificationAccess),
+            verificationProofStatus: data.verificationProofStatus || null,
+            paymentConfirmed: Boolean(data.paymentConfirmed),
+          }
+        : null,
+    )
+  }, [data])
+
+  useEffect(() => {
+    if (!data?.shop?.id) return
+
+    const missingConfirmedFlag =
+      !Object.prototype.hasOwnProperty.call(data, "paymentConfirmed")
+    const needsVerificationRefresh =
+      missingConfirmedFlag &&
+      (data.verificationProofStatus === "approved" ||
+        data.hasVerificationAccess === true)
+
+    if (needsVerificationRefresh) {
+      mutate()
+    }
+  }, [
+    data,
+    data?.hasVerificationAccess,
+    data?.shop?.id,
+    data?.verificationProofStatus,
+    mutate,
+  ])
 
   useEffect(() => {
     if (!user || !data?.shop?.id || isOffline) return
@@ -264,10 +298,15 @@ function VendorsPanel() {
 
   const isApplicationApproved = activeShop.status === "approved"
   const isVerified = Boolean(activeShop.is_verified)
-  const verificationProofStatus = data.verificationProofStatus || null
+  const verificationProofStatus =
+    verificationAccessOverride?.verificationProofStatus ?? data.verificationProofStatus ?? null
   const isSuspended = activeShop.is_open === false
   const isSubscriptionActive = isFutureDate(activeShop.subscription_end_date)
-  const verificationPaymentConfirmed = Boolean(data.paymentConfirmed)
+  const verificationPaymentConfirmed = Boolean(
+    verificationAccessOverride?.paymentConfirmed ??
+      data.paymentConfirmed ??
+      verificationProofStatus === "approved",
+  )
   const canOpenKycVideo =
     verificationPaymentConfirmed ||
     activeShop.kyc_status === "submitted" ||
@@ -288,6 +327,136 @@ function VendorsPanel() {
       pending: false,
       error: message,
     })
+  }
+
+  async function handleVerificationGateway() {
+    if (!user?.id || !activeShop?.id) return
+
+    if (isOffline) {
+      failRouteTransition("Network unavailable. Retry.", () =>
+        handleVerificationGateway(),
+      )
+      return
+    }
+
+    const retryAction = () => handleVerificationGateway()
+    beginRouteTransition(retryAction)
+
+    try {
+      const { data: latestShop, error: latestShopError } = await supabase
+        .from("shops")
+        .select("id, owner_id, created_at, status, is_verified, kyc_status, rejection_reason, subscription_end_date, is_open, name")
+        .eq("id", activeShop.id)
+        .eq("owner_id", user.id)
+        .maybeSingle()
+
+      if (latestShopError || !latestShop) {
+        throw latestShopError || new Error("Shop not found or access denied.")
+      }
+
+      const latestVerificationAccess = await fetchVerificationAccessStatus({
+        userId: user.id,
+        shopId: latestShop.id,
+        shopCreatedAt: latestShop.created_at,
+      })
+
+      setRealtimeShop((current) => ({
+        ...(current || {}),
+        ...latestShop,
+      }))
+      setVerificationAccessOverride({
+        hasVerificationAccess: latestVerificationAccess.hasVerificationAccess,
+        verificationProofStatus: latestVerificationAccess.verificationProofStatus || null,
+        paymentConfirmed: latestVerificationAccess.paymentConfirmed,
+      })
+
+      primeCachedFetchStore(`vendor_panel_${user.id}`, {
+        ...(data || {}),
+        shop: {
+          ...(data?.shop || {}),
+          ...latestShop,
+        },
+        hasVerificationAccess: latestVerificationAccess.hasVerificationAccess,
+        verificationProofStatus:
+          latestVerificationAccess.verificationProofStatus || null,
+        paymentConfirmed: latestVerificationAccess.paymentConfirmed,
+      })
+
+      if (latestShop.status !== "approved") {
+        setRouteTransition({ pending: false, error: "" })
+        notify({
+          kind: "toast",
+          type: "info",
+          title: "Application pending",
+          message:
+            "Your shop must be digitally approved before you can continue to physical verification.",
+        })
+        return
+      }
+
+      if (latestShop.is_verified || latestShop.kyc_status === "submitted") {
+        setRouteTransition({ pending: false, error: "" })
+        notify({
+          kind: "toast",
+          type: "info",
+          title: "KYC in review",
+          message:
+            "Your video KYC is already under review. We will notify you once approved.",
+        })
+        return
+      }
+
+      if (latestVerificationAccess.verificationProofStatus === "pending") {
+        setRouteTransition({ pending: false, error: "" })
+        notify({
+          kind: "toast",
+          type: "info",
+          title: "Receipt under review",
+          message:
+            "Your verification receipt has been submitted and is waiting for staff confirmation.",
+        })
+        return
+      }
+
+      const targetPath =
+        latestVerificationAccess.paymentConfirmed ||
+        latestShop.kyc_status === "rejected"
+          ? `/merchant-video-kyc?shop_id=${latestShop.id}`
+          : `/remita?shop_id=${latestShop.id}`
+
+      const [pathname] = targetPath.split("?")
+      const prefetchedData = await prepareVendorRouteTransition({
+        path: targetPath,
+        userId: user.id,
+        shopId: latestShop.id,
+      })
+
+      if (!prefetchedData) {
+        const loader = loadVendorRoutes[pathname]
+        if (loader) {
+          await loader()
+        }
+      }
+
+      setRouteTransition({ pending: false, error: "" })
+      navigate(targetPath, {
+        state: {
+          fromVendorTransition: true,
+          prefetchedData,
+          verifiedSubscriptionActive: isFutureDate(
+            latestShop.subscription_end_date,
+          ),
+        },
+      })
+    } catch (error) {
+      failRouteTransition(
+        getFriendlyErrorMessage(
+          error,
+          "We could not open that verification step right now. Please try again.",
+        ),
+        retryAction,
+      )
+    }
   }
 
   async function openVendorRouteWithTransition(path) {
@@ -522,9 +691,7 @@ function VendorsPanel() {
                 icon={<FaVideo />}
                 colorClass="bg-[#FEE2E2] text-[#DC2626]"
                 featured
-                onClick={() =>
-                  handleCardClick(`/merchant-video-kyc?shop_id=${activeShop.id}`)
-                }
+                onClick={() => handleCardClick(null, handleVerificationGateway)}
               />
             ) : (
               <DashCard
@@ -533,9 +700,7 @@ function VendorsPanel() {
                 icon={<FaVideo />}
                 colorClass="bg-[#FEE2E2] text-[#DC2626]"
                 featured
-                onClick={() =>
-                  handleCardClick(`/merchant-video-kyc?shop_id=${activeShop.id}`)
-                }
+                onClick={() => handleCardClick(null, handleVerificationGateway)}
               />
             )
           ) : (
@@ -549,7 +714,7 @@ function VendorsPanel() {
               icon={<FaBuildingCircleCheck />}
               colorClass="bg-[#FEF3C7] text-[#D97706]"
               featured
-              onClick={() => handleCardClick(`/remita?shop_id=${activeShop.id}`)}
+              onClick={() => handleCardClick(null, handleVerificationGateway)}
             />
           )}
 
