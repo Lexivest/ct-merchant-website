@@ -103,13 +103,14 @@ function MerchantDiscovery() {
   return (
     <div className="min-h-screen bg-[#F3F4F6]">
       <PageSeo
-        title={shop?.name ? `${shop.name} | CTMerchant Merchant Profile` : "Merchant Profile | CTMerchant"}
-      description={
-          shop?.description ||
-          "Discover verified merchant profiles, contact details, and storefront information on CTMerchant."
-        }
-        canonicalPath={`/reposearch${merchantId ? `?merchantId=${encodeURIComponent(merchantId)}` : ""}`}
-      />
+          title={shop?.name ? `${shop.name} | CTMerchant Merchant Profile` : "Merchant Profile | CTMerchant"}
+        description={
+            shop?.description ||
+            "Discover verified merchant profiles, contact details, and storefront information on CTMerchant."
+          }
+          canonicalPath={`/reposearch${merchantId ? `?merchantId=${encodeURIComponent(merchantId)}` : ""}`}
+          noindex
+        />
       
       <PageTransitionOverlay
         visible={loading && !data}

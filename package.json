@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "version": "node scripts/update-version.js",
-    "build": "npm run version && vite build",
+    "seo": "node scripts/generate-seo-files.js",
+    "build": "npm run version && npm run seo && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

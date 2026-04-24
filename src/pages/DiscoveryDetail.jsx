@@ -42,6 +42,8 @@ export default function DiscoveryDetail() {
       <PageSeo 
         title={`${discovery.title} | Market Discovery`}
         description={discovery.description || "Discover unique fashion and lifestyle picks."}
+        canonicalPath={`/discovery${id ? `?id=${encodeURIComponent(id)}` : ""}`}
+        noindex
       />
       
       {/* Fixed Top Nav */}

@@ -172,6 +172,7 @@ function Area() {
           title={`${headerTitle} | CTMerchant`}
           description={`Browse verified shops and local merchants in ${areaName} on CTMerchant.`}
           canonicalPath={`/area?id=${areaId}`}
+          noindex
         />
         
         <div className="sticky top-0 z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">

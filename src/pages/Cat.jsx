@@ -249,6 +249,7 @@ function Cat() {
         title={`${catName || "Category"} Shops | CTMerchant`}
         description={`Discover verified shops and products in the ${catName || "selected"} category on CTMerchant.`}
         canonicalPath={`/cat${catName ? `?name=${encodeURIComponent(catName)}` : ""}`}
+        noindex
       />
       <header className="sticky top-0 z-50 bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <div className="mx-auto flex w-full max-w-[1200px] items-center gap-4 px-4 py-3">

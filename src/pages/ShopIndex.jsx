@@ -77,6 +77,18 @@ function ShopIndex() {
   )
 
   const headerTitle = profile?.cities?.name ? `${profile.cities.name} Directory` : "Shop Directory"
+  const directoryStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": `${headerTitle} | CTMerchant`,
+    "url": "https://www.ctmerchant.com.ng/shop-index",
+    "description": "Browse verified shops in your city on the CTMerchant directory.",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "CTMerchant",
+      "url": "https://www.ctmerchant.com.ng/",
+    },
+  }
 
   // 4. Server-side Search Results
   const filteredShops = allShops || []
@@ -161,6 +173,8 @@ function ShopIndex() {
         title={`${headerTitle} | CTMerchant`}
         description="Browse verified shops in your city on the CTMerchant directory."
         canonicalPath="/shop-index"
+        noindex
+        structuredData={directoryStructuredData}
       />
       <div className="sticky top-0 z-50 bg-[#131921] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
         <header className="mx-auto flex w-full max-w-[800px] items-center gap-4 px-4 py-3 text-white">
