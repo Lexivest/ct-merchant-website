@@ -175,9 +175,9 @@ export async function fetchVerificationAccessStatus({
     throw new Error("Could not confirm verification payment status.")
   }
 
-  const currentPaymentRecord = belongsToCurrentShopLifecycle(paymentRecord, shopCreatedAt)
-    ? paymentRecord
-    : null
+  // Physical verification is a one-time merchant payment.
+  // A confirmed record stays valid even if the merchant later edits or recreates a shop.
+  const currentPaymentRecord = paymentRecord || null
   const verificationProofStatus =
     latestProof?.status || (currentPaymentRecord ? "approved" : null)
   const hasVerificationAccess =
