@@ -1726,7 +1726,6 @@ function UserDashboard() {
     const timestamp = Date.now()
     const uploadPaths = [
       `${user.id}/avatar_${timestamp}.jpg`,
-      `${user.id}/avatar.jpg`,
       `${user.id}_avatar_${timestamp}.jpg`,
     ]
     const uploadErrors = []
@@ -1738,8 +1737,8 @@ function UserDashboard() {
           .from(AVATAR_BUCKET)
           .upload(filePath, avatarBlob, {
             contentType: "image/jpeg",
-            upsert: true,
-            cacheControl: "3600",
+            upsert: false,
+            cacheControl: "31536000",
           })
       } catch (error) {
         uploadErrors.push({
