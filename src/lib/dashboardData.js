@@ -295,12 +295,48 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
   }
 
   const notifications = dedupeDashboardNotifications(data.notifications || [])
+  const rawFeaturedCityBanners =
+    data.featured_city_banners || data.featured_banners || []
+  const rawSponsoredProducts = data.sponsored_products || []
+
+  const featuredCityBanners = (Array.isArray(rawFeaturedCityBanners)
+    ? rawFeaturedCityBanners
+    : [])
+    .filter(Boolean)
+
+  const sponsoredProducts = (Array.isArray(rawSponsoredProducts)
+    ? rawSponsoredProducts
+    : [])
+    .map((item) => {
+      if (!item) return null
+      if (item.product) return item
+
+      const shopName =
+        item.shop_name ||
+        item.shops?.name ||
+        item.product?.shops?.name ||
+        ""
+
+      return {
+        ...item,
+        product: {
+          id: item.product_id || item.template_key || item.id,
+          name: item.product_name || item.name || "Sponsored Product",
+          price: item.price ?? item.product_price ?? 0,
+          image_url: item.image_url || "",
+          image_url_2: item.image_url_2 || null,
+          image_url_3: item.image_url_3 || null,
+          shops: shopName ? { name: shopName } : item.shops || null,
+        },
+      }
+    })
+    .filter(Boolean)
 
   // The RPC returns exactly what we need in one object, but we map snake_case to camelCase
   // to maintain compatibility with the existing frontend state.
   return {
-    featuredCityBanners: data.featured_city_banners || [],
-    sponsoredProducts: data.sponsored_products || [],
+    featuredCityBanners,
+    sponsoredProducts,
     staffDiscoveries: data.staff_discoveries || [],
     fairlyUsedProducts: data.fairly_used_products || [],
     shops: data.shops || [],

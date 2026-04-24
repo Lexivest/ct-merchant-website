@@ -7,7 +7,22 @@ import RetryingNotice, { getRetryingMessage } from "../../common/RetryingNotice"
 import { PROMO_EXTENDED_COLORS } from "../../../lib/promoBannerEngine"
 
 function SponsoredProductCard({ sponsored, onOpenProduct }) {
-  const product = sponsored?.product || null
+  const product = useMemo(() => {
+    if (sponsored?.product) return sponsored.product
+    if (!sponsored) return null
+
+    return {
+      id: sponsored.product_id || sponsored.template_key || sponsored.id,
+      name: sponsored.product_name || sponsored.name || "Sponsored Product",
+      price: sponsored.price ?? sponsored.product_price ?? 0,
+      image_url: sponsored.image_url || "",
+      image_url_2: sponsored.image_url_2 || null,
+      image_url_3: sponsored.image_url_3 || null,
+      shops: sponsored.shop_name
+        ? { name: sponsored.shop_name }
+        : sponsored.shops || null,
+    }
+  }, [sponsored])
 
   // Image rotation logic
   const [imgIndex, setImgIndex] = useState(0)
