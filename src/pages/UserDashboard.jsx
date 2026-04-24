@@ -94,6 +94,16 @@ const ALLOWED_SERVICE_VIEWS = new Set([
 
 const ANNOUNCEMENT_SEEN_KEY_PREFIX = "ctm_dashboard_announcements_seen"
 
+function normalizePositiveId(value) {
+  const normalized = String(value ?? "").trim()
+  if (!/^\d+$/.test(normalized)) return null
+
+  const parsed = Number(normalized)
+  if (!Number.isFinite(parsed) || parsed <= 0) return null
+
+  return String(parsed)
+}
+
 function DashboardSectionFallback({ label = "Loading section..." }) {
   return (
     <div className="screen active">
@@ -851,7 +861,9 @@ function UserDashboard() {
   }, [currentProfile?.city_id, user?.id, mutateBase, mutateDynamic])
 
   const sortedAreas = useMemo(() => {
-    const areas = [...(localData.areas || [])]
+    const areas = [...(localData.areas || [])].filter(
+      (area) => normalizePositiveId(area?.id) !== null
+    )
     const userAreaId = currentProfile?.area_id
 
     return areas.sort((a, b) => {
@@ -865,7 +877,9 @@ function UserDashboard() {
     const shopsByArea = new Map()
 
     ;(localData.shops || []).forEach((shop) => {
-      const areaId = shop.area_id
+      const areaId = normalizePositiveId(shop?.area_id)
+      if (!areaId) return
+
       if (!shopsByArea.has(areaId)) {
         shopsByArea.set(areaId, [])
       }
@@ -1081,24 +1095,25 @@ function UserDashboard() {
   }
 
   async function openAreaWithTransition(id) {
-    if (!id || id === "all") return
+    const resolvedAreaId = normalizePositiveId(id)
+    if (!resolvedAreaId || resolvedAreaId === "all") return
 
-    const retryAction = () => openAreaWithTransition(id)
+    const retryAction = () => openAreaWithTransition(resolvedAreaId)
     beginRouteTransition(retryAction)
 
     try {
       const areaName =
-        localData.areas?.find((area) => String(area.id) === String(id))?.name || "Area"
+        localData.areas?.find((area) => String(area.id) === String(resolvedAreaId))?.name || "Area"
       const areaShops = (localData.shops || [])
-        .filter((shop) => String(shop.area_id) === String(id))
+        .filter((shop) => String(shop.area_id) === String(resolvedAreaId))
         .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
 
-      primeCachedFetchStore(`area_shops_${id}_q_`, {
+      primeCachedFetchStore(`area_shops_${resolvedAreaId}_q_`, {
         areaName,
         shops: areaShops,
       })
       await loadAreaPage()
-      navigate(`/area?id=${encodeURIComponent(id)}`)
+      navigate(`/area?id=${encodeURIComponent(resolvedAreaId)}`)
     } catch (error) {
       failRouteTransition(
         getFriendlyErrorMessage(

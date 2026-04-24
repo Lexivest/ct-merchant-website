@@ -24,6 +24,16 @@ import {
   prepareShopDetailTransition,
 } from "../lib/detailPageTransitions"
 
+function normalizePositiveId(value) {
+  const normalized = String(value ?? "").trim()
+  if (!/^\d+$/.test(normalized)) return null
+
+  const parsed = Number(normalized)
+  if (!Number.isFinite(parsed) || parsed <= 0) return null
+
+  return parsed
+}
+
 function Search() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -50,14 +60,15 @@ function Search() {
 
   // 2. Extracted Data Fetching Logic for Hook
   const fetchSearchData = async () => {
-    if (!profile?.city_id) return { shops: [], products: [] }
+    const resolvedCityId = normalizePositiveId(profile?.city_id)
+    if (!resolvedCityId) return { shops: [], products: [] }
 
     const q = initialQuery.trim().replace(/,/g, "") // Sanitize for PostgREST
     if (!q) {
       const { data: defaultShops, error: defaultShopsError } = await supabase
         .from("shops")
         .select("*")
-        .eq("city_id", profile.city_id)
+        .eq("city_id", resolvedCityId)
         .order("name", { ascending: true })
         .limit(30)
 
@@ -71,7 +82,7 @@ function Search() {
     const { data: cityShops, error: cityShopsError } = await supabase
       .from("shops")
       .select("id")
-      .eq("city_id", profile.city_id)
+      .eq("city_id", resolvedCityId)
 
     if (cityShopsError) throw cityShopsError
     const cityShopIds = (cityShops || []).map((s) => s.id)
@@ -80,7 +91,7 @@ function Search() {
     const { data: shops, error: shopsErr } = await supabase
       .from("shops")
       .select("*")
-      .eq("city_id", profile.city_id)
+      .eq("city_id", resolvedCityId)
       .or(`name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},description.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},address.ilike.${ilikeQuery}`)
       .limit(50)
 

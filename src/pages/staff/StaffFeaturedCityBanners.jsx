@@ -17,6 +17,17 @@ import StableImage from "../../components/common/StableImage"
 import { SectionHeading, StaffPortalShell, formatDateTime, useStaffPortalSession } from "./StaffPortalShared"
 
 const BANNER_RULE = UPLOAD_RULES.featuredCityBanners
+
+function normalizePositiveId(value) {
+  const normalized = String(value ?? "").trim()
+  if (!/^\d+$/.test(normalized)) return ""
+
+  const parsed = Number(normalized)
+  if (!Number.isFinite(parsed) || parsed <= 0) return ""
+
+  return String(parsed)
+}
+
 const BACKGROUND_OPTIONS = [
   {
     key: "lagoon-blue",
@@ -360,6 +371,7 @@ function FeaturedBannerArtwork({
 export default function StaffFeaturedCityBanners() {
   const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const { notify, confirm } = useGlobalFeedback()
+  const normalizedStaffCityId = normalizePositiveId(staffCityId)
   const [loading, setLoading] = useState(() => !fetchingStaff)
   const [saving, setSaving] = useState(false)
   const [cities, setCities] = useState([])
@@ -367,7 +379,9 @@ export default function StaffFeaturedCityBanners() {
   const [productsByShopId, setProductsByShopId] = useState({})
   const [profilesById, setProfilesById] = useState({})
   const [banners, setBanners] = useState([])
-  const [selectedCityId, setSelectedCityId] = useState(isSuperAdmin ? "" : (staffCityId || ""))
+  const [selectedCityId, setSelectedCityId] = useState(
+    isSuperAdmin ? "" : normalizedStaffCityId
+  )
   const [selectedShopId, setSelectedShopId] = useState("")
   const [backgroundKey, setBackgroundKey] = useState(BACKGROUND_OPTIONS[0].key)
   const [sortOrder, setSortOrder] = useState(0)
@@ -378,7 +392,7 @@ export default function StaffFeaturedCityBanners() {
   const proprietorName = getProfileDisplayName(selectedProfile)
 
   const loadInitialData = useCallback(async () => {
-    if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
+    if (!fetchingStaff && !normalizedStaffCityId && !isSuperAdmin) return
 
     setLoading(true)
     try {
@@ -386,8 +400,8 @@ export default function StaffFeaturedCityBanners() {
         .from("featured_city_banners")
         .select("*, cities(name, state), shops(name, category, address, image_url)")
       
-      if (!isSuperAdmin && staffCityId) {
-        bannersQuery = bannersQuery.eq("city_id", staffCityId)
+      if (!isSuperAdmin && normalizedStaffCityId) {
+        bannersQuery = bannersQuery.eq("city_id", Number(normalizedStaffCityId))
       }
 
       const [citiesResult, bannersResult] = await Promise.all([
@@ -398,14 +412,16 @@ export default function StaffFeaturedCityBanners() {
       if (citiesResult.error) throw citiesResult.error
       if (bannersResult.error) throw bannersResult.error
 
-      const cityRows = citiesResult.data || []
+      const cityRows = (citiesResult.data || []).filter(
+        (city) => normalizePositiveId(city?.id) !== ""
+      )
       setCities(cityRows)
       setBanners(bannersResult.data || [])
       
       if (isSuperAdmin) {
         setSelectedCityId((current) => current || (cityRows[0]?.id ? String(cityRows[0].id) : ""))
       } else {
-        setSelectedCityId(String(staffCityId))
+        setSelectedCityId(normalizedStaffCityId)
       }
     } catch (error) {
       notify({
@@ -416,16 +432,23 @@ export default function StaffFeaturedCityBanners() {
     } finally {
       setLoading(false)
     }
-  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
+  }, [notify, isSuperAdmin, normalizedStaffCityId, fetchingStaff])
 
   const loadCityShops = useCallback(async (cityId) => {
-    if (!cityId) return
+    const normalizedCityId = normalizePositiveId(cityId)
+    if (!normalizedCityId) {
+      setShops([])
+      setSelectedShopId("")
+      setProductsByShopId({})
+      setProfilesById({})
+      return
+    }
 
     try {
       const { data: shopRows, error: shopsError } = await supabase
         .from("shops")
         .select("id, owner_id, name, category, address, image_url, is_open, status, subscription_end_date")
-        .eq("city_id", cityId)
+        .eq("city_id", Number(normalizedCityId))
         .order("name", { ascending: true })
         .limit(120)
 
@@ -494,15 +517,17 @@ export default function StaffFeaturedCityBanners() {
   }, [loadCityShops, selectedCityId])
 
   async function publishBanner() {
-    if (!selectedCityId || !selectedShop) {
-      notify({ type: "error", title: "Select a shop", message: "Choose a city and shop before publishing." })
-      return
-    }
+      const normalizedCityId = normalizePositiveId(selectedCityId)
+
+      if (!normalizedCityId || !selectedShop) {
+        notify({ type: "error", title: "Select a shop", message: "Choose a city and shop before publishing." })
+        return
+      }
 
     try {
       setSaving(true)
       const timestamp = Date.now()
-      const basePath = `city-${selectedCityId}/shop-${selectedShop.id}/${timestamp}`
+      const basePath = `city-${normalizedCityId}/shop-${selectedShop.id}/${timestamp}`
       const [desktopSvg, mobileSvg] = await Promise.all([
         buildStandaloneFeaturedBannerSvg({
           shop: selectedShop,
@@ -549,7 +574,7 @@ export default function StaffFeaturedCityBanners() {
       const mobileUrl = supabase.storage.from(BANNER_RULE.bucket).getPublicUrl(mobilePath).data.publicUrl
 
       const { error } = await supabase.from("featured_city_banners").insert({
-        city_id: Number(selectedCityId),
+        city_id: Number(normalizedCityId),
         shop_id: Number(selectedShop.id),
         title: selectedShop.name,
         subtitle: selectedShop.address || selectedShop.category || "",
@@ -642,8 +667,8 @@ export default function StaffFeaturedCityBanners() {
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="mb-4 text-lg font-black text-slate-950">Banner Controls</h3>
             <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">City</label>
-            <select value={selectedCityId} onChange={(event) => setSelectedCityId(event.target.value)} className="mb-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-pink-400">
-              {cities.map((city) => <option key={city.id} value={city.id}>{city.name}{city.state ? `, ${city.state}` : ""}</option>)}
+            <select value={selectedCityId} onChange={(event) => setSelectedCityId(normalizePositiveId(event.target.value))} className="mb-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-pink-400">
+              {cities.map((city) => <option key={city.id} value={normalizePositiveId(city.id)}>{city.name}{city.state ? `, ${city.state}` : ""}</option>)}
             </select>
 
             <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">Shop</label>

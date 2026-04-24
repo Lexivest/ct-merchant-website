@@ -6,6 +6,16 @@ const DASHBOARD_TRANSITION_TIMEOUT = 12000
 
 const loadUserDashboardPage = () => import("../pages/UserDashboard")
 
+function normalizePositiveId(value) {
+  const normalized = String(value ?? "").trim()
+  if (!/^\d+$/.test(normalized)) return null
+
+  const parsed = Number(normalized)
+  if (!Number.isFinite(parsed) || parsed <= 0) return null
+
+  return parsed
+}
+
 function unwrapSupabaseResult(result) {
   if (result?.error) {
     console.warn("Dashboard fetch failed/blocked. Defaulting to empty:", result.error.message)
@@ -50,10 +60,15 @@ async function resolveDashboardProfile({ userId, profile = null }) {
     if (data) currentProfile = data
   }
 
-  if (!currentProfile?.city_id) return { city_id: 0, is_suspended: false }
+  const resolvedCityId = normalizePositiveId(currentProfile?.city_id)
+
+  if (!resolvedCityId) return { city_id: 0, is_suspended: false }
   if (currentProfile.is_suspended) throw new Error("Account restricted")
 
-  return currentProfile
+  return {
+    ...currentProfile,
+    city_id: resolvedCityId,
+  }
 }
 
 export function buildDashboardCacheKey(userId, cityId) {
@@ -61,7 +76,8 @@ export function buildDashboardCacheKey(userId, cityId) {
 }
 
 export async function fetchFeaturedCityBanners(cityId) {
-  if (!cityId) return []
+  const resolvedCityId = normalizePositiveId(cityId)
+  if (!resolvedCityId) return []
 
   const nowIso = new Date().toISOString()
   const featuredBannersRes = await supabase
@@ -90,7 +106,7 @@ export async function fetchFeaturedCityBanners(cityId) {
         subscription_end_date
       )
     `)
-    .eq("city_id", cityId)
+    .eq("city_id", resolvedCityId)
     .eq("status", "published")
     .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
     .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
@@ -125,6 +141,8 @@ export async function fetchHomeHighlights() {
 }
 
 export async function fetchSponsoredProducts(cityId) {
+  const resolvedCityId = normalizePositiveId(cityId)
+
   let query = supabase
     .from("sponsored_products")
     .select(`
@@ -141,8 +159,8 @@ export async function fetchSponsoredProducts(cityId) {
     .order("created_at", { ascending: false })
     .limit(15)
 
-  if (cityId) {
-    query = query.or(`city_id.is.null,city_id.eq.${cityId}`)
+  if (resolvedCityId) {
+    query = query.or(`city_id.is.null,city_id.eq.${resolvedCityId}`)
   } else {
     query = query.is("city_id", null)
   }
@@ -270,9 +288,18 @@ export function buildDashboardDynamicCacheKey(userId, cityId) {
 }
 
 export async function fetchDashboardBaseData(cityId) {
+  const resolvedCityId = normalizePositiveId(cityId)
+  if (!resolvedCityId) {
+    return {
+      categories: [],
+      areas: [],
+      announcements: [],
+    }
+  }
+
   const [categoriesRes, areasRes, announcementsRes] = await Promise.all([
     supabase.from("categories").select("*").order("name"),
-    supabase.from("areas").select("*").eq("city_id", cityId).order("name"),
+    supabase.from("areas").select("*").eq("city_id", resolvedCityId).order("name"),
     supabase.from("announcements").select("*").order("created_at", { ascending: false }),
   ])
 
@@ -284,9 +311,24 @@ export async function fetchDashboardBaseData(cityId) {
 }
 
 export async function fetchDashboardDynamicData({ userId, cityId }) {
+  const resolvedCityId = normalizePositiveId(cityId)
+  if (!resolvedCityId) {
+    return {
+      featuredCityBanners: [],
+      sponsoredProducts: [],
+      staffDiscoveries: [],
+      fairlyUsedProducts: [],
+      shops: [],
+      notifications: [],
+      wishlistCount: 0,
+      unread: 0,
+      products: [],
+    }
+  }
+
   const { data, error } = await supabase.rpc("get_dashboard_payload", {
     p_user_id: userId,
-    p_city_id: cityId,
+    p_city_id: resolvedCityId,
   })
 
   if (error) {

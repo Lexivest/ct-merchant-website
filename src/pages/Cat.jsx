@@ -19,6 +19,16 @@ import { getRetryingMessage } from "../components/common/RetryingNotice"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 
+function normalizePositiveId(value) {
+  const normalized = String(value ?? "").trim()
+  if (!/^\d+$/.test(normalized)) return null
+
+  const parsed = Number(normalized)
+  if (!Number.isFinite(parsed) || parsed <= 0) return null
+
+  return parsed
+}
+
 function Cat() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -43,14 +53,16 @@ function Cat() {
 
   // 2. Extracted Data Fetching Logic for Hook
   const fetchCategoryData = async () => {
-    if (!user || !catName || !profile?.city_id) {
+    const resolvedCityId = normalizePositiveId(profile?.city_id)
+
+    if (!user || !catName || !resolvedCityId) {
       return { shops: [], products: [] }
     }
 
     const { data: shopsData, error: shopsError } = await supabase
       .from("shops")
       .select("*")
-      .eq("city_id", profile.city_id)
+      .eq("city_id", resolvedCityId)
       .eq("category", catName)
       .eq("is_verified", true)
       .order("name", { ascending: true })

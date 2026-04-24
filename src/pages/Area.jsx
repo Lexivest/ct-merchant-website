@@ -21,10 +21,20 @@ import { getRetryingMessage } from "../components/common/RetryingNotice"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 
+function normalizePositiveId(value) {
+  const normalized = String(value ?? "").trim()
+  if (!/^\d+$/.test(normalized)) return null
+
+  const parsed = Number(normalized)
+  if (!Number.isFinite(parsed) || parsed <= 0) return null
+
+  return String(parsed)
+}
+
 function Area() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const areaId = searchParams.get("id")
+  const areaId = normalizePositiveId(searchParams.get("id"))
   
   usePreventPullToRefresh()
 
