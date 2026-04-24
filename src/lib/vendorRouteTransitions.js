@@ -1,6 +1,6 @@
 import { primeCachedFetchStore } from "../hooks/useCachedFetch"
 import { getProfileDisplayName } from "./featuredBannerEngine"
-import { fetchVerificationAccessStatus } from "./offlinePayments"
+import { fetchLatestPaymentProof, fetchVerificationAccessStatus } from "./offlinePayments"
 import { loadProductCategoryRows } from "./productCategories"
 import { supabase } from "./supabase"
 
@@ -165,6 +165,12 @@ async function prepareVendorPanelData({ userId }) {
     shopId: shopData.id,
     shopCreatedAt: shopData.created_at,
   })
+  const latestServiceFeeProof = await fetchLatestPaymentProof({
+    userId,
+    shopId: shopData.id,
+    paymentKind: "service_fee",
+    shopCreatedAt: shopData.created_at,
+  })
 
   const payload = {
     shop: shopData,
@@ -172,6 +178,8 @@ async function prepareVendorPanelData({ userId }) {
     hasVerificationAccess: verificationAccess.hasVerificationAccess,
     verificationProofStatus: verificationAccess.verificationProofStatus,
     paymentConfirmed: verificationAccess.paymentConfirmed,
+    serviceFeeProofStatus: latestServiceFeeProof?.status || null,
+    serviceFeeProofPlan: latestServiceFeeProof?.plan || null,
   }
 
   primeCachedFetchStore(`vendor_panel_${userId}`, payload)

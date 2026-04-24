@@ -15,6 +15,7 @@ import {
 import { supabase } from "../../lib/supabase"
 import useAuthSession from "../../hooks/useAuthSession"
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh"
+import { clearCachedFetchStore } from "../../hooks/useCachedFetch"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
@@ -110,6 +111,11 @@ export default function MerchantServiceFee() {
       paymentProof?.status !== "pending"
   )
 
+  const refreshVendorPanelState = useCallback(() => {
+    if (!user?.id) return
+    clearCachedFetchStore((key) => key === `vendor_panel_${user.id}`)
+  }, [user?.id])
+
   useEffect(() => {
     if (!receiptFile || !receiptFile.type?.startsWith("image/")) {
       setReceiptPreviewUrl("")
@@ -152,13 +158,28 @@ export default function MerchantServiceFee() {
 
       const { data: shop, error: shopErr } = await supabase
         .from("shops")
-        .select("id, name, subscription_end_date, subscription_plan, is_verified, kyc_status")
+        .select("id, name, created_at, subscription_end_date, subscription_plan, is_verified, kyc_status")
         .eq("id", currentShopId)
         .eq("owner_id", user.id)
         .maybeSingle()
 
       if (shopErr || !shop) throw new Error("Could not load shop details.")
       setShopData(shop)
+      const latestServiceProof = await fetchLatestPaymentProof({
+        userId: user.id,
+        shopId: shop.id,
+        paymentKind: "service_fee",
+        shopCreatedAt: shop.created_at,
+      })
+
+      if (latestServiceProof) {
+        setPaymentProof(latestServiceProof)
+        if (latestServiceProof.plan) {
+          setSelectedPlan((current) => current || latestServiceProof.plan)
+        }
+      } else {
+        setPaymentProof(null)
+      }
       setError(null)
     } catch (err) {
       setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."))
@@ -219,10 +240,11 @@ export default function MerchantServiceFee() {
       shopId: shopData.id,
       paymentKind: "service_fee",
       plan: selectedPlan,
+      shopCreatedAt: shopData.created_at,
     })
       .then(setPaymentProof)
       .catch((proofError) => console.warn("Could not load service payment proof", proofError))
-  }, [selectedPlan, shopData?.id, user?.id])
+  }, [selectedPlan, shopData?.created_at, shopData?.id, user?.id])
 
   useEffect(() => {
     if (!user?.id || !shopData?.id) return undefined
@@ -241,10 +263,13 @@ export default function MerchantServiceFee() {
           const nextProof = payload.new
           if (
             nextProof?.shop_id === shopData.id &&
-            nextProof?.payment_kind === "service_fee" &&
-            nextProof?.plan === selectedPlan
+            nextProof?.payment_kind === "service_fee"
           ) {
             setPaymentProof(nextProof)
+            if (nextProof.plan) {
+              setSelectedPlan((current) => current || nextProof.plan)
+            }
+            refreshVendorPanelState()
             if (nextProof.status === "approved") {
               notify({
                 type: "success",
@@ -261,7 +286,7 @@ export default function MerchantServiceFee() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [fetchSubscription, notify, selectedPlan, shopData?.id, user?.id])
+  }, [fetchSubscription, notify, refreshVendorPanelState, shopData?.id, user?.id])
 
   const handleSubmitProof = async () => {
     if (!canUploadProof || !user?.id || !shopData?.id || !selectedPlanData) return
@@ -291,6 +316,7 @@ export default function MerchantServiceFee() {
       })
 
       setPaymentProof(proof)
+      refreshVendorPanelState()
       setReceiptFile(null)
       setReceiptInputKey((key) => key + 1)
       setDepositorName("")
@@ -344,11 +370,11 @@ export default function MerchantServiceFee() {
 
   return (
     <div
-      className={`min-h-screen bg-[#F8FAFC] p-5 text-[#1E293B] ${
+      className={`min-h-screen overflow-x-hidden bg-[#F8FAFC] p-5 text-[#1E293B] ${
         location.state?.fromVendorTransition ? "ctm-page-enter" : ""
       }`}
     >
-      <div className="mx-auto w-full max-w-[980px]">
+      <div className="mx-auto w-full max-w-[980px] min-w-0">
         <div className="mb-6 flex items-center gap-4 rounded-2xl bg-[#2E1065] p-4 text-white shadow-sm">
           <button onClick={() => navigate("/vendor-panel")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-[1.1rem] transition hover:bg-white/30">
             <FaArrowLeft />
@@ -385,7 +411,7 @@ export default function MerchantServiceFee() {
         ) : null}
 
         <div className="grid gap-6 lg:grid-cols-[1fr_0.95fr]">
-          <div>
+          <div className="min-w-0">
             <h2 className="mb-5 text-center text-[1.5rem] font-black text-[#0F172A]">Subscription Plans</h2>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {Object.entries(SERVICE_FEE_PLANS).map(([planKey, plan]) => {
@@ -437,7 +463,7 @@ export default function MerchantServiceFee() {
             </div>
           </div>
 
-          <div className="space-y-5">
+          <div className="min-w-0 space-y-5">
             <div className="rounded-[22px] border border-[#DBEAFE] bg-[#EFF6FF] p-5">
               <div className="mb-4 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-[#1D4ED8]">
                 <FaBuildingColumns /> Bank Transfer Details
@@ -525,7 +551,7 @@ export default function MerchantServiceFee() {
                     accept="image/jpeg,image/png,image/webp,application/pdf"
                     onChange={handleReceiptFileChange}
                     disabled={submittingProof}
-                    className="mb-2 w-full rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-4 text-sm font-semibold text-[#475569]"
+                    className="mb-2 block w-full max-w-full overflow-hidden rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-4 text-sm font-semibold text-[#475569]"
                   />
                   <div className="mb-4 text-xs font-semibold text-[#64748B]">{getPaymentReceiptRuleLabel()}</div>
 
@@ -538,14 +564,14 @@ export default function MerchantServiceFee() {
                           className="max-h-[320px] w-full bg-white object-contain"
                         />
                       ) : null}
-                      <div className="flex items-center gap-3 p-4">
+                      <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#1D4ED8]">
                           <FaReceipt />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="truncate font-black text-[#0F172A]">{receiptFile.name}</div>
+                          <div className="break-all font-black text-[#0F172A]">{receiptFile.name}</div>
                           <div className="text-xs font-bold text-[#64748B]">
-                            {receiptFile.type || "Receipt file"} - {formatFileSize(receiptFile.size)}
+                            {receiptFile.type || "Receipt file"} · {formatFileSize(receiptFile.size)}
                           </div>
                         </div>
                         <button
@@ -555,7 +581,7 @@ export default function MerchantServiceFee() {
                             setReceiptInputKey((key) => key + 1)
                           }}
                           disabled={submittingProof}
-                          className="rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-xs font-black text-[#475569] transition hover:bg-[#F8FAFC] disabled:opacity-60"
+                          className="self-start rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-xs font-black text-[#475569] transition hover:bg-[#F8FAFC] disabled:opacity-60 sm:self-auto"
                         >
                           Remove
                         </button>

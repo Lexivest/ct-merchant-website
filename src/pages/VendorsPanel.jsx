@@ -36,7 +36,7 @@ import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { supabase } from "../lib/supabase"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
-import { fetchVerificationAccessStatus } from "../lib/offlinePayments"
+import { fetchLatestPaymentProof, fetchVerificationAccessStatus } from "../lib/offlinePayments"
 import { prepareVendorRouteTransition } from "../lib/vendorRouteTransitions"
 
 const loadVendorRoutes = {
@@ -56,6 +56,13 @@ function isFutureDate(value) {
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return false
   return parsed.getTime() > Date.now()
+}
+
+function formatSubscriptionLabel(value) {
+  const rawValue = String(value || "").trim()
+  if (!rawValue) return "Active Plan"
+  if (rawValue === "Free Trial") return "Free Trial"
+  return rawValue.replace(/_/g, " ")
 }
 
 function VendorsPanelShimmer() {
@@ -124,11 +131,19 @@ function VendorsPanel() {
 
     const rejectedCount = !rejectErr && count ? count : 0
 
-    const verificationAccess = await fetchVerificationAccessStatus({
-      userId: user.id,
-      shopId: shopData.id,
-      shopCreatedAt: shopData.created_at,
-    })
+    const [verificationAccess, latestServiceFeeProof] = await Promise.all([
+      fetchVerificationAccessStatus({
+        userId: user.id,
+        shopId: shopData.id,
+        shopCreatedAt: shopData.created_at,
+      }),
+      fetchLatestPaymentProof({
+        userId: user.id,
+        shopId: shopData.id,
+        paymentKind: "service_fee",
+        shopCreatedAt: shopData.created_at,
+      }),
+    ])
 
     return {
       shop: shopData,
@@ -136,6 +151,8 @@ function VendorsPanel() {
       hasVerificationAccess: verificationAccess.hasVerificationAccess,
       verificationProofStatus: verificationAccess.verificationProofStatus,
       paymentConfirmed: verificationAccess.paymentConfirmed,
+      serviceFeeProofStatus: latestServiceFeeProof?.status || null,
+      serviceFeeProofPlan: latestServiceFeeProof?.plan || null,
     }
   }
 
@@ -302,6 +319,8 @@ function VendorsPanel() {
     verificationAccessOverride?.verificationProofStatus ?? data.verificationProofStatus ?? null
   const isSuspended = activeShop.is_open === false
   const isSubscriptionActive = isFutureDate(activeShop.subscription_end_date)
+  const serviceFeeProofStatus = data.serviceFeeProofStatus ?? null
+  const currentSubscriptionLabel = formatSubscriptionLabel(activeShop.subscription_plan)
   const verificationPaymentConfirmed = Boolean(
     verificationAccessOverride?.paymentConfirmed ??
       data.paymentConfirmed ??
@@ -718,17 +737,7 @@ function VendorsPanel() {
             />
           )}
 
-          {isVerified ? (
-            <DashCard
-              title="Service Fee"
-              subtitle={isSubscriptionActive ? "Free Trial Active" : "Choose Plan"}
-              icon={<FaFileInvoiceDollar />}
-              colorClass="bg-pink-100 text-pink-600"
-              onClick={() =>
-                handleCardClick(`/service-fee?shop_id=${activeShop.id}`)
-              }
-            />
-          ) : (
+          {!isVerified ? (
             <DashCard
               title="Service Fee"
               subtitle="KYC Required"
@@ -741,6 +750,37 @@ function VendorsPanel() {
                   message:
                     "You cannot subscribe to a service plan until your shop passes KYC approval.",
                 })
+              }
+            />
+          ) : serviceFeeProofStatus === "pending" ? (
+            <DashCard
+              title="Service Fee"
+              subtitle="Pending Receipt Confirmation"
+              icon={<FaHourglassHalf />}
+              isLocked={true}
+              onClick={() =>
+                notify({
+                  type: "info",
+                  title: "Receipt under review",
+                  message:
+                    "Your subscription receipt has been submitted and is waiting for staff confirmation.",
+                })
+              }
+            />
+          ) : (
+            <DashCard
+              title="Service Fee"
+              subtitle={
+                isSubscriptionActive
+                  ? `${currentSubscriptionLabel} Active`
+                  : serviceFeeProofStatus === "rejected"
+                    ? "Upload Receipt Again"
+                    : "Choose Plan"
+              }
+              icon={<FaFileInvoiceDollar />}
+              colorClass="bg-pink-100 text-pink-600"
+              onClick={() =>
+                handleCardClick(`/service-fee?shop_id=${activeShop.id}`)
               }
             />
           )}

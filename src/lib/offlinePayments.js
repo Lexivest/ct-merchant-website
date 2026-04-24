@@ -102,7 +102,7 @@ export async function fetchLatestPaymentProof({
   userId,
   shopId,
   paymentKind,
-  plan = null,
+  plan,
   shopCreatedAt = null,
 }) {
   if (!userId || !shopId || !paymentKind) return null
@@ -116,7 +116,11 @@ export async function fetchLatestPaymentProof({
     .order("created_at", { ascending: false })
     .limit(1)
 
-  query = plan ? query.eq("plan", plan) : query.is("plan", null)
+  if (typeof plan === "string" && plan.trim()) {
+    query = query.eq("plan", plan)
+  } else if (plan === null) {
+    query = query.is("plan", null)
+  }
 
   const { data, error } = await query.maybeSingle()
   if (error) {
@@ -161,6 +165,7 @@ export async function fetchVerificationAccessStatus({
         userId,
         shopId,
         paymentKind,
+        plan: null,
         shopCreatedAt,
       }),
     ])

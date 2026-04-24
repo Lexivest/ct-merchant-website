@@ -33,6 +33,10 @@ import {
 import { ProtectedImage, ProtectedVideo } from "../../components/common/ProtectedMedia"
 import { UPLOAD_RULES } from "../../lib/uploadRules"
 
+const KYC_VIDEO_BUCKETS = Array.from(
+  new Set([UPLOAD_RULES.kycVideos.bucket, "kyc-videos"])
+)
+
 function getStoragePathFromUrl(url, bucket) {
   if (!url) return null
   if (!String(url).startsWith("http")) return String(url).replace(/^\/+/, "")
@@ -143,8 +147,8 @@ export default function StaffVerifications() {
       const logoPath = getStoragePathFromUrl(selectedShop.image_url, UPLOAD_RULES.brandAssets.bucket)
       const storefrontPath = getStoragePathFromUrl(selectedShop.storefront_url, UPLOAD_RULES.storefronts.bucket)
       // Only Super Admin can see Video KYC
-      const videoPath = isSuperAdmin
-        ? getStoragePathFromUrl(selectedShop.kyc_video_url, UPLOAD_RULES.kycVideos.bucket)
+      const videoTarget = isSuperAdmin
+        ? resolveKycVideoStorageTarget(selectedShop.kyc_video_url)
         : null
 
       const nextUrls = {
@@ -180,8 +184,12 @@ export default function StaffVerifications() {
         promises.push(Promise.resolve({ data: null }))
       }
 
-      if (videoPath) {
-        promises.push(supabase.storage.from(UPLOAD_RULES.kycVideos.bucket).createSignedUrl(videoPath, 3600))
+      if (videoTarget?.path) {
+        promises.push(
+          supabase.storage
+            .from(videoTarget.bucket)
+            .createSignedUrl(videoTarget.path, 3600)
+        )
       } else {
         promises.push(Promise.resolve({ data: null }))
       }
@@ -275,8 +283,8 @@ export default function StaffVerifications() {
   const handleDownloadKycVideo = async () => {
     if (!selectedShop?.kyc_video_url || downloadingVideo) return
 
-    const videoPath = getStoragePathFromUrl(selectedShop.kyc_video_url, UPLOAD_RULES.kycVideos.bucket)
-    if (!videoPath) {
+    const videoTarget = resolveKycVideoStorageTarget(selectedShop.kyc_video_url)
+    if (!videoTarget?.path) {
       notify({
         type: "error",
         title: "Download unavailable",
@@ -288,13 +296,13 @@ export default function StaffVerifications() {
     setDownloadingVideo(true)
     try {
       const { data, error } = await supabase.storage
-        .from(UPLOAD_RULES.kycVideos.bucket)
-        .download(videoPath)
+        .from(videoTarget.bucket)
+        .download(videoTarget.path)
 
       if (error) throw error
 
       const objectUrl = URL.createObjectURL(data)
-      const extension = videoPath.split(".").pop() || "mp4"
+      const extension = videoTarget.path.split(".").pop() || "mp4"
       const safeName = (selectedShop.unique_id || selectedShop.name || "ctmerchant-kyc")
         .replace(/[^a-z0-9-_]+/gi, "_")
         .replace(/^_+|_+$/g, "")
@@ -351,12 +359,12 @@ export default function StaffVerifications() {
       let nextShopData = { ...selectedShop, ...updateData }
 
       if (isKyc && selectedShop.kyc_video_url) {
-        const videoPath = getStoragePathFromUrl(selectedShop.kyc_video_url, UPLOAD_RULES.kycVideos.bucket)
+        const videoTarget = resolveKycVideoStorageTarget(selectedShop.kyc_video_url)
 
-        if (videoPath) {
+        if (videoTarget?.path) {
           const { error: deleteError } = await supabase.storage
-            .from(UPLOAD_RULES.kycVideos.bucket)
-            .remove([videoPath])
+            .from(videoTarget.bucket)
+            .remove([videoTarget.path])
 
           if (deleteError) {
             console.warn("Approved KYC video cleanup failed:", deleteError)
@@ -967,6 +975,24 @@ export default function StaffVerifications() {
       ) : null}
     </StaffPortalShell>
   )
+}
+
+function resolveKycVideoStorageTarget(url) {
+  if (!url) return null
+
+  for (const bucket of KYC_VIDEO_BUCKETS) {
+    const path = getStoragePathFromUrl(url, bucket)
+    if (path) return { bucket, path }
+  }
+
+  if (!String(url).startsWith("http")) {
+    return {
+      bucket: UPLOAD_RULES.kycVideos.bucket,
+      path: String(url).replace(/^\/+/, ""),
+    }
+  }
+
+  return null
 }
 
 function MediaPreviewCard({ title, imageUrl, aspectClass, icon, emptyLabel }) {
