@@ -113,6 +113,17 @@ export default function MerchantPayment() {
   const canApplyPromo = normalizePromoCode(promoCode).length === 6 && !processingPromo && !submittingProof
   const canUploadProof = receiptFile && !submittingProof && !processingPromo && paymentProof?.status !== "pending"
 
+  const openVideoKyc = useCallback((shopId) => {
+    if (!shopId) return
+    navigate(`/merchant-video-kyc?shop_id=${shopId}`, {
+      replace: true,
+      state: {
+        fromVendorTransition: true,
+        skipTransitionNotice: true,
+      },
+    })
+  }, [navigate])
+
   const loadPaymentDetails = useCallback(async ({ showLoader = true } = {}) => {
     if (!user || !parsedShopId) return
 
@@ -152,40 +163,38 @@ export default function MerchantPayment() {
 
       if (shop.is_verified) {
         notify({
+          kind: "toast",
           type: "info",
           title: "Already approved",
           message: "Your shop has already completed this verification step.",
         })
-        navigate("/vendor-panel")
+        navigate("/vendor-panel", { replace: true })
         return
       }
 
       if (shop.status !== "approved") {
         notify({
+          kind: "toast",
           type: "info",
           title: "Application pending",
           message:
             "Your shop must be digitally approved before you can continue to physical verification payment.",
         })
-        navigate("/vendor-panel")
+        navigate("/vendor-panel", { replace: true })
         return
       }
 
       if (verificationAccess.paymentConfirmed) {
         if (shop.status === "pending_kyc_review" || shop.kyc_status === "submitted") {
           notify({
+            kind: "toast",
             type: "info",
             title: "KYC in review",
             message: "We are currently reviewing your video KYC. We will notify you once approved.",
           })
-          navigate("/vendor-panel")
+          navigate("/vendor-panel", { replace: true })
         } else {
-          notify({
-            type: "success",
-            title: "Payment already confirmed",
-            message: "Your payment is confirmed. Let's record your video KYC.",
-          })
-          navigate(`/merchant-video-kyc?shop_id=${shop.id}`)
+          openVideoKyc(shop.id)
         }
         return
       }
@@ -207,11 +216,11 @@ export default function MerchantPayment() {
         title: "Payment page unavailable",
         message: getFriendlyErrorMessage(err, "Could not load payment details. Please try again."),
       })
-      navigate("/vendor-panel")
+      navigate("/vendor-panel", { replace: true })
     } finally {
       if (showLoader) setLoading(false)
     }
-  }, [isOffline, navigate, notify, parsedShopId, user])
+  }, [isOffline, navigate, notify, openVideoKyc, parsedShopId, user])
 
   useEffect(() => {
     if (!parsedShopId && !authLoading) {
@@ -254,11 +263,12 @@ export default function MerchantPayment() {
             setPaymentProof(nextProof)
             if (nextProof.status === "approved") {
               notify({
+                kind: "toast",
                 type: "success",
                 title: "Payment approved",
-                message: "Your payment is confirmed. Continue to video KYC.",
+                message: "Payment approved. Opening video KYC.",
               })
-              navigate(`/merchant-video-kyc?shop_id=${parsedShopId}`)
+              openVideoKyc(parsedShopId)
             }
           }
         }
@@ -268,7 +278,7 @@ export default function MerchantPayment() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [navigate, notify, parsedShopId, user?.id])
+  }, [notify, openVideoKyc, parsedShopId, user?.id])
 
   const verifyPromoOnBackend = useCallback(async (txId) => {
     if (!txId || processingPromo || !parsedShopId) return
@@ -298,7 +308,7 @@ export default function MerchantPayment() {
         } catch {
           // Local cache cleanup is best effort before redirecting to KYC.
         }
-        navigate(`/merchant-video-kyc?shop_id=${parsedShopId}`)
+        openVideoKyc(parsedShopId)
       }, 900)
     } catch (error) {
       console.error(error)
@@ -306,7 +316,7 @@ export default function MerchantPayment() {
       setStatusMsg(getFriendlyErrorMessage(error, "Promo verification failed."))
       setProcessingPromo(false)
     }
-  }, [navigate, parsedShopId, processingPromo, user])
+  }, [openVideoKyc, parsedShopId, processingPromo, user])
 
   const handleApplyPromo = () => {
     if (!canApplyPromo) return

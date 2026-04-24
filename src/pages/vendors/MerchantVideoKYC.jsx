@@ -296,13 +296,14 @@ export default function MerchantVideoKYC() {
           shop.kyc_status === "rejected";
 
         if (shop.is_verified) {
-          notify({ type: "info", title: "Already approved", message: "Your shop has already completed this verification step." });
+          notify({ kind: "toast", type: "info", title: "Already approved", message: "Your shop has already completed this verification step." });
           navigate("/vendor-panel", { replace: true });
           return;
         }
 
         if (shop.status !== "approved") {
           notify({
+            kind: "toast",
             type: "info",
             title: "Application pending",
             message: "Your shop must be digitally approved before you can submit video KYC.",
@@ -313,6 +314,7 @@ export default function MerchantVideoKYC() {
 
         if (!hasVerificationAccess) {
           notify({
+            kind: "toast",
             type: "info",
             title: "Verification fee required",
             message: "Complete your physical verification payment step before recording video KYC.",
@@ -386,6 +388,7 @@ export default function MerchantVideoKYC() {
 
           if (nextShop.is_verified) {
             notify({
+              kind: "toast",
               type: "success",
               title: "KYC approved",
               message: "Your shop verification has been approved.",
