@@ -1,4 +1,5 @@
 import { getStaffCommentThreads } from "../pages/staff/StaffPortalShared"
+import { fetchStaffPaymentsOverview } from "./staffPaymentsData"
 import { supabase } from "./supabase"
 
 const STAFF_ROUTE_TIMEOUT = 12000
@@ -193,17 +194,10 @@ async function prepareStaffVerificationsData() {
 }
 
 async function prepareStaffPaymentsData() {
-  const { data, error } = await supabase
-    .from("offline_payment_proofs")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(100)
-
-  if (error) throw error
-
+  const overview = await fetchStaffPaymentsOverview()
   return {
     kind: "staff-payments",
-    proofs: data || [],
+    ...overview,
   }
 }
 

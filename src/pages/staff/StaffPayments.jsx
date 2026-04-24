@@ -1,24 +1,30 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useLocation } from "react-router-dom"
 import {
   FaArrowUpRightFromSquare,
   FaBuildingColumns,
+  FaCalendarDays,
   FaCircleCheck,
   FaCircleNotch,
   FaClock,
+  FaLocationDot,
+  FaMagnifyingGlass,
   FaPrint,
   FaReceipt,
   FaTriangleExclamation,
+  FaWallet,
   FaWhatsapp,
   FaXmark,
 } from "react-icons/fa6"
-import { supabase } from "../../lib/supabase"
-import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions"
+import InlineErrorState from "../../components/common/InlineErrorState"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
-import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
-import { PAYMENT_RECEIPT_RULE, formatNaira } from "../../lib/offlinePayments"
-import { normalizeWhatsAppPhone, openWhatsAppConversation } from "../../lib/whatsapp"
 import ctmLogo from "../../assets/images/logo.jpg"
+import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions"
+import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
+import { formatNaira, PAYMENT_RECEIPT_RULE } from "../../lib/offlinePayments"
+import { fetchStaffPaymentsOverview } from "../../lib/staffPaymentsData"
+import { supabase } from "../../lib/supabase"
+import { normalizeWhatsAppPhone, openWhatsAppConversation } from "../../lib/whatsapp"
 import {
   QuickActionButton,
   SectionHeading,
@@ -26,11 +32,27 @@ import {
   formatDateTime,
 } from "./StaffPortalShared"
 
-const STATUS_FILTERS = [
+const PROOF_STATUS_FILTERS = [
   { key: "pending", label: "Pending" },
   { key: "approved", label: "Approved" },
   { key: "rejected", label: "Rejected" },
   { key: "all", label: "All" },
+]
+
+const CONTROL_FILTERS = [
+  { key: "attention", label: "Needs Action" },
+  { key: "receipt_pending", label: "Receipt Pending" },
+  { key: "physical_due", label: "Physical Fee Due" },
+  { key: "kyc_ready", label: "Ready For Video KYC" },
+  { key: "video_pending", label: "Video Pending" },
+  { key: "expired", label: "Expired Subscription" },
+  { key: "expiring", label: "Expiring Soon" },
+  { key: "all", label: "All Shops" },
+]
+
+const SERVICE_PLAN_OPTIONS = [
+  { key: "6_Months", label: "6 Months", amount: 6000 },
+  { key: "1_Year", label: "1 Year", amount: 10000 },
 ]
 
 const COMPANY_DETAILS = {
@@ -40,7 +62,7 @@ const COMPANY_DETAILS = {
   email: "finance@ctmerchant.com.ng",
 }
 
-async function extractFunctionErrorMessage(error, fallback = "Review failed") {
+async function extractFunctionErrorMessage(error, fallback = "Action failed") {
   if (!error) return fallback
   const rawMessage = typeof error.message === "string" ? error.message : ""
 
@@ -73,8 +95,13 @@ function getPaymentKindLabel(proof) {
   return "Service Fee - 6 Months"
 }
 
+function getPlanLabel(plan) {
+  if (plan === "1_Year") return "1 Year"
+  return "6 Months"
+}
+
 function getReceiptNumber(proof) {
-  return proof?.approval_payment_ref || `OFFLINE_${proof?.id || "PENDING"}`
+  return proof?.approval_payment_ref || proof?.transfer_reference || `OFFLINE_${proof?.id || "PENDING"}`
 }
 
 function getReceiptDate(proof) {
@@ -104,52 +131,6 @@ function buildReceiptMessage(proof) {
   ]
 
   return lines.join("\n")
-}
-
-async function enrichPaymentProofs(rows) {
-  const safeRows = Array.isArray(rows) ? rows : []
-  if (!safeRows.length) return []
-
-  const merchantIds = [...new Set(safeRows.map((proof) => proof.merchant_id).filter(Boolean))]
-  const shopIds = [...new Set(safeRows.map((proof) => proof.shop_id).filter(Boolean))]
-
-  const [profilesResult, shopsResult] = await Promise.all([
-    merchantIds.length
-      ? supabase.from("profiles").select("id, full_name, phone").in("id", merchantIds)
-      : Promise.resolve({ data: [], error: null }),
-    shopIds.length
-      ? supabase
-          .from("shops")
-          .select("id, name, phone, whatsapp, owner_id, subscription_end_date, subscription_plan")
-          .in("id", shopIds)
-      : Promise.resolve({ data: [], error: null }),
-  ])
-
-  if (profilesResult.error) {
-    console.warn("Could not load payment merchant profiles:", profilesResult.error)
-  }
-  if (shopsResult.error) {
-    console.warn("Could not load payment shop contacts:", shopsResult.error)
-  }
-
-  const profilesById = new Map((profilesResult.data || []).map((profile) => [profile.id, profile]))
-  const shopsById = new Map((shopsResult.data || []).map((shop) => [shop.id, shop]))
-
-  return safeRows.map((proof) => {
-    const profile = profilesById.get(proof.merchant_id) || null
-    const shop = shopsById.get(proof.shop_id) || null
-
-    return {
-      ...proof,
-      merchant_name: proof.merchant_name || profile?.full_name || "Merchant",
-      merchant_phone: profile?.phone || "",
-      shop_name: proof.shop_name || shop?.name || "",
-      shop_phone: shop?.phone || "",
-      shop_whatsapp: shop?.whatsapp || "",
-      subscription_end_date: shop?.subscription_end_date || proof.subscription_end_date || null,
-      subscription_plan_current: shop?.subscription_plan || "",
-    }
-  })
 }
 
 function escapeHtml(value) {
@@ -232,7 +213,6 @@ function openPrintableReceipt(proof) {
             padding-bottom: 22px;
           }
           h1 { margin: 0; font-size: 34px; letter-spacing: -0.04em; }
-          .receipt-no { text-align: right; color: #475569; font-size: 13px; font-weight: 850; line-height: 1.7; }
           .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 24px; }
           .box { border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 20px; padding: 18px; }
           .label { color: #64748b; font-size: 11px; font-weight: 950; text-transform: uppercase; letter-spacing: 0.08em; }
@@ -330,6 +310,100 @@ function openPrintableReceipt(proof) {
   return true
 }
 
+function getStatusBadge(status) {
+  if (status === "approved") return "bg-emerald-100 text-emerald-800"
+  if (status === "rejected") return "bg-rose-100 text-rose-800"
+  return "bg-amber-100 text-amber-800"
+}
+
+function getStatusIcon(status) {
+  if (status === "approved") return <FaCircleCheck />
+  if (status === "rejected") return <FaTriangleExclamation />
+  return <FaClock />
+}
+
+function getToneBadgeClasses(tone) {
+  if (tone === "success") return "bg-emerald-100 text-emerald-800"
+  if (tone === "danger") return "bg-rose-100 text-rose-800"
+  if (tone === "warning") return "bg-amber-100 text-amber-800"
+  return "bg-slate-100 text-slate-700"
+}
+
+function getTonePanelClasses(tone) {
+  if (tone === "success") return "border-emerald-200 bg-emerald-50/70"
+  if (tone === "danger") return "border-rose-200 bg-rose-50/70"
+  if (tone === "warning") return "border-amber-200 bg-amber-50/70"
+  return "border-slate-200 bg-slate-50/70"
+}
+
+function matchShopFilter(row, activeFilter) {
+  if (activeFilter === "all") return true
+  if (activeFilter === "attention") {
+    return (
+      ["receipt_pending", "payment_due", "kyc_ready", "video_pending"].includes(row.physicalState?.key) ||
+      ["receipt_pending", "expired", "expiring"].includes(row.subscriptionState?.key)
+    )
+  }
+  if (activeFilter === "receipt_pending") {
+    return row.physicalState?.key === "receipt_pending" || row.subscriptionState?.key === "receipt_pending"
+  }
+  if (activeFilter === "physical_due") return row.physicalState?.key === "payment_due"
+  if (activeFilter === "kyc_ready") return row.physicalState?.key === "kyc_ready"
+  if (activeFilter === "video_pending") return row.physicalState?.key === "video_pending"
+  if (activeFilter === "expired") return row.subscriptionState?.key === "expired"
+  if (activeFilter === "expiring") return row.subscriptionState?.key === "expiring"
+  return true
+}
+
+function createManualPaymentRef(paymentKind, shopId, planKey = null) {
+  const prefix = paymentKind === "physical_verification" ? "MANUALPHY" : "MANUALSUB"
+  const planSuffix = planKey ? `_${planKey}` : ""
+  return `${prefix}_${shopId}${planSuffix}_${Date.now()}`
+}
+
+function buildManualReceipt(row, result, paymentKind, planKey, paymentRef) {
+  const fallbackAmount =
+    paymentKind === "physical_verification"
+      ? 5000
+      : SERVICE_PLAN_OPTIONS.find((item) => item.key === planKey)?.amount || 6000
+
+  return {
+    id: `manual-${paymentKind}-${row.shop.id}-${Date.now()}`,
+    shop_id: row.shop.id,
+    shop_name: row.shop.name,
+    shop_phone: row.shop.phone || "",
+    shop_whatsapp: row.shop.whatsapp || "",
+    merchant_id: row.shop.owner_id,
+    merchant_name: row.merchantName,
+    merchant_phone: row.merchantPhone,
+    payment_kind: paymentKind,
+    plan: result?.plan || planKey || null,
+    amount: Number(result?.amount || fallbackAmount),
+    transfer_reference: result?.paymentRef || paymentRef,
+    approval_payment_ref: result?.paymentRef || paymentRef,
+    reviewed_at: new Date().toISOString(),
+  }
+}
+
+function SummaryCard({ label, value, tone, detail }) {
+  const toneClasses =
+    tone === "success"
+      ? "border-emerald-200 bg-emerald-50"
+      : tone === "danger"
+        ? "border-rose-200 bg-rose-50"
+        : tone === "warning"
+          ? "border-amber-200 bg-amber-50"
+          : "border-slate-200 bg-white"
+
+  return (
+    <div className={`rounded-3xl border p-5 ${toneClasses}`}>
+      <div className="text-xs font-black uppercase tracking-widest text-slate-500">{label}</div>
+      <div className="mt-2 text-4xl font-black text-slate-900">{value}</div>
+      {detail ? <div className="mt-2 text-xs font-semibold text-slate-500">{detail}</div> : null}
+    </div>
+  )
+}
+
 function ReceiptModal({ proof, onClose, onSendWhatsApp }) {
   if (!proof) return null
 
@@ -388,7 +462,9 @@ function ReceiptModal({ proof, onClose, onSendWhatsApp }) {
                 <div className="rounded-2xl bg-slate-50 p-4">
                   <div className="text-xs font-black uppercase tracking-widest text-slate-400">Received From</div>
                   <div className="mt-2 font-black text-slate-950">{proof.merchant_name || "Merchant"}</div>
-                  <div className="mt-1 text-xs font-semibold text-slate-500">{proof.merchant_email || proof.merchant_id}</div>
+                  <div className="mt-1 text-xs font-semibold text-slate-500">
+                    {proof.merchant_email || proof.merchant_phone || proof.merchant_id || "Staff-confirmed payment"}
+                  </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4">
                   <div className="text-xs font-black uppercase tracking-widest text-slate-400">Shop</div>
@@ -437,142 +513,158 @@ function ReceiptModal({ proof, onClose, onSendWhatsApp }) {
   )
 }
 
-function getStatusBadge(status) {
-  if (status === "approved") return "bg-emerald-100 text-emerald-800"
-  if (status === "rejected") return "bg-rose-100 text-rose-800"
-  return "bg-amber-100 text-amber-800"
-}
-
-function getStatusIcon(status) {
-  if (status === "approved") return <FaCircleCheck />
-  if (status === "rejected") return <FaTriangleExclamation />
-  return <FaClock />
-}
-
 export default function StaffPayments() {
   const location = useLocation()
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-payments"
       ? location.state.prefetchedData
       : null
-  const { notify } = useGlobalFeedback()
+  const { confirm, notify, prompt } = useGlobalFeedback()
   const [proofs, setProofs] = useState(() => prefetchedData?.proofs || [])
+  const [shopRows, setShopRows] = useState(() => prefetchedData?.shopRows || [])
   const [loading, setLoading] = useState(() => !prefetchedData)
+  const [pageError, setPageError] = useState("")
   const [activeStatus, setActiveStatus] = useState("pending")
+  const [activeControlFilter, setActiveControlFilter] = useState("attention")
+  const [searchQuery, setSearchQuery] = useState("")
   const [signedUrls, setSignedUrls] = useState({})
   const [reviewDrafts, setReviewDrafts] = useState({})
   const [reviewingId, setReviewingId] = useState(null)
   const [selectedReceiptProof, setSelectedReceiptProof] = useState(null)
   const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
+  const [recordingManualKey, setRecordingManualKey] = useState(null)
+  const realtimeTimerRef = useRef(null)
 
-  const fetchProofs = useCallback(async () => {
-    if (prefetchedReady && prefetchedData) {
-      const rows = await enrichPaymentProofs(prefetchedData.proofs || [])
-      setProofs(rows)
-      setReviewDrafts((current) => {
-        const next = { ...current }
-        rows.forEach((proof) => {
-          if (!(proof.id in next)) next[proof.id] = proof.review_note || ""
-        })
-        return next
+  const applyOverviewPayload = useCallback(async (payload) => {
+    const nextProofs = Array.isArray(payload?.proofs) ? payload.proofs : []
+    const nextShopRows = Array.isArray(payload?.shopRows) ? payload.shopRows : []
+
+    setProofs(nextProofs)
+    setShopRows(nextShopRows)
+    setReviewDrafts((current) => {
+      const next = { ...current }
+      nextProofs.forEach((proof) => {
+        if (!(proof.id in next)) next[proof.id] = proof.review_note || ""
       })
-      const signedEntries = await Promise.all(
-        rows
-          .filter((proof) => proof.receipt_path)
-          .map(async (proof) => {
-            const { data: signed, error: signedError } = await supabase.storage
-              .from(PAYMENT_RECEIPT_RULE.bucket)
-              .createSignedUrl(proof.receipt_path, 60 * 10)
+      return next
+    })
 
-            if (signedError) return [proof.id, ""]
-            return [proof.id, signed?.signedUrl || ""]
-          })
-      )
-      setSignedUrls(Object.fromEntries(signedEntries))
+    const signedEntries = await Promise.all(
+      nextProofs
+        .filter((proof) => proof.receipt_path)
+        .map(async (proof) => {
+          const { data, error } = await supabase.storage
+            .from(PAYMENT_RECEIPT_RULE.bucket)
+            .createSignedUrl(proof.receipt_path, 60 * 10)
+
+          if (error) return [proof.id, ""]
+          return [proof.id, data?.signedUrl || ""]
+        })
+    )
+
+    setSignedUrls(Object.fromEntries(signedEntries))
+    return { proofs: nextProofs, shopRows: nextShopRows }
+  }, [])
+
+  const fetchOverview = useCallback(async () => {
+    if (prefetchedReady && prefetchedData) {
+      setPageError("")
+      const result = await applyOverviewPayload(prefetchedData)
       setLoading(false)
       setPrefetchedReady(false)
-      return rows
+      return result
     }
 
     setLoading(true)
+    setPageError("")
     try {
-      const { data, error } = await supabase
-        .from("offline_payment_proofs")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100)
-
-      if (error) throw error
-
-      const rows = await enrichPaymentProofs(data || [])
-      setProofs(rows)
-      setReviewDrafts((current) => {
-        const next = { ...current }
-        rows.forEach((proof) => {
-          if (!(proof.id in next)) next[proof.id] = proof.review_note || ""
-        })
-        return next
-      })
-
-      const signedEntries = await Promise.all(
-        rows
-          .filter((proof) => proof.receipt_path)
-          .map(async (proof) => {
-            const { data: signed, error: signedError } = await supabase.storage
-              .from(PAYMENT_RECEIPT_RULE.bucket)
-              .createSignedUrl(proof.receipt_path, 60 * 10)
-
-            if (signedError) return [proof.id, ""]
-            return [proof.id, signed?.signedUrl || ""]
-          })
-      )
-
-      setSignedUrls(Object.fromEntries(signedEntries))
-      return rows
+      const overview = await fetchStaffPaymentsOverview()
+      return await applyOverviewPayload(overview)
     } catch (error) {
-      console.error("Could not load offline payment proofs:", error)
-      notify({
-        type: "error",
-        title: "Could not load payments",
-        message: getFriendlyErrorMessage(error, "Could not load payment proofs. Retry."),
-      })
-      return []
+      console.error("Could not load staff payment overview:", error)
+      setPageError(getFriendlyErrorMessage(error, "Could not load staff payment controls. Retry."))
+      return null
     } finally {
       setLoading(false)
     }
-  }, [notify, prefetchedData, prefetchedReady])
+  }, [applyOverviewPayload, prefetchedData, prefetchedReady])
 
   useEffect(() => {
-    fetchProofs()
-  }, [fetchProofs])
+    void fetchOverview()
+  }, [fetchOverview])
 
   useEffect(() => {
+    const scheduleRefresh = () => {
+      if (realtimeTimerRef.current) {
+        window.clearTimeout(realtimeTimerRef.current)
+      }
+      realtimeTimerRef.current = window.setTimeout(() => {
+        void fetchOverview()
+      }, 180)
+    }
+
     const channel = supabase
-      .channel("public:offline_payment_proofs:staff")
+      .channel("public:staff-payments-control")
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "offline_payment_proofs",
-        },
-        () => {
-          void fetchProofs()
-        }
+        { event: "*", schema: "public", table: "offline_payment_proofs" },
+        scheduleRefresh
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "physical_verification_payments" },
+        scheduleRefresh
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "service_fee_payments" },
+        scheduleRefresh
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shops" },
+        scheduleRefresh
       )
       .subscribe()
 
     return () => {
+      if (realtimeTimerRef.current) {
+        window.clearTimeout(realtimeTimerRef.current)
+      }
       supabase.removeChannel(channel)
     }
-  }, [fetchProofs])
+  }, [fetchOverview])
 
   const filteredProofs = useMemo(() => {
     if (activeStatus === "all") return proofs
     return proofs.filter((proof) => proof.status === activeStatus)
   }, [activeStatus, proofs])
 
-  const summary = useMemo(
+  const filteredShopRows = useMemo(() => {
+    const normalizedSearch = searchQuery.trim().toLowerCase()
+
+    return shopRows.filter((row) => {
+      if (!matchShopFilter(row, activeControlFilter)) return false
+      if (!normalizedSearch) return true
+
+      const haystack = [
+        row.shop?.name,
+        row.shop?.unique_id,
+        row.merchantName,
+        row.merchantPhone,
+        row.cityName,
+        row.shop?.phone,
+        row.shop?.whatsapp,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+
+      return haystack.includes(normalizedSearch)
+    })
+  }, [activeControlFilter, searchQuery, shopRows])
+
+  const proofSummary = useMemo(
     () => ({
       pending: proofs.filter((proof) => proof.status === "pending").length,
       approved: proofs.filter((proof) => proof.status === "approved").length,
@@ -581,7 +673,23 @@ export default function StaffPayments() {
     [proofs]
   )
 
-  const reviewProof = async (proof, action) => {
+  const controlSummary = useMemo(
+    () => ({
+      receiptPending: shopRows.filter(
+        (row) =>
+          row.physicalState?.key === "receipt_pending" ||
+          row.subscriptionState?.key === "receipt_pending"
+      ).length,
+      physicalDue: shopRows.filter((row) => row.physicalState?.key === "payment_due").length,
+      kycReady: shopRows.filter((row) => row.physicalState?.key === "kyc_ready").length,
+      videoPending: shopRows.filter((row) => row.physicalState?.key === "video_pending").length,
+      expired: shopRows.filter((row) => row.subscriptionState?.key === "expired").length,
+      expiring: shopRows.filter((row) => row.subscriptionState?.key === "expiring").length,
+    }),
+    [shopRows]
+  )
+
+  const reviewProof = useCallback(async (proof, action) => {
     const note = reviewDrafts[proof.id] || ""
     if (action === "reject" && !note.trim()) {
       notify({
@@ -611,10 +719,11 @@ export default function StaffPayments() {
         title: action === "approve" ? "Payment approved" : "Payment rejected",
         message: data?.message || "Payment proof updated.",
       })
-      const refreshedProofs = await fetchProofs()
+
+      const refreshed = await fetchOverview()
       if (action === "approve") {
         const approvedProof =
-          refreshedProofs.find((item) => item.id === proof.id) || {
+          refreshed?.proofs?.find((item) => item.id === proof.id) || {
             ...proof,
             status: "approved",
             reviewed_at: new Date().toISOString(),
@@ -632,9 +741,78 @@ export default function StaffPayments() {
     } finally {
       setReviewingId(null)
     }
-  }
+  }, [fetchOverview, notify, reviewDrafts])
 
-  const sendReceiptToWhatsApp = (proof) => {
+  const recordManualPayment = useCallback(
+    async (row, paymentKind, planKey = null) => {
+      const paymentLabel =
+        paymentKind === "physical_verification"
+          ? "physical verification payment"
+          : `${getPlanLabel(planKey)} service fee`
+      const defaultPaymentRef = createManualPaymentRef(paymentKind, row.shop.id, planKey)
+      const paymentRef = await prompt({
+        title: "Bank payment reference",
+        type: "info",
+        message: "Confirm the bank reference for this payment. You can keep the generated reference or replace it with your bank statement reference.",
+        inputLabel: "Payment reference",
+        defaultValue: defaultPaymentRef,
+        placeholder: defaultPaymentRef,
+        confirmText: "Continue",
+        cancelText: "Cancel",
+      })
+
+      if (paymentRef === null) return
+
+      const isConfirmed = await confirm({
+        title: "Record manual bank payment",
+        type: "info",
+        message: `This will record ${paymentLabel} for ${row.shop.name} and update merchant access immediately.`,
+        confirmText: "Record Payment",
+        cancelText: "Cancel",
+      })
+
+      if (!isConfirmed) return
+
+      const manualKey = `${row.shop.id}:${paymentKind}:${planKey || "none"}`
+
+      try {
+        setRecordingManualKey(manualKey)
+        const { data, error } = await invokeEdgeFunctionAuthed("staff-manual-payment-review", {
+          shopId: row.shop.id,
+          paymentKind,
+          planKey,
+          paymentRef,
+        })
+
+        if (error) {
+          const detailedMessage = await extractFunctionErrorMessage(error, "Could not record this bank payment.")
+          throw new Error(detailedMessage)
+        }
+        if (data?.error) throw new Error(data.error)
+
+        notify({
+          kind: "toast",
+          type: "success",
+          message: data?.message || "Bank payment recorded successfully.",
+        })
+
+        setSelectedReceiptProof(buildManualReceipt(row, data, paymentKind, planKey, paymentRef))
+        await fetchOverview()
+      } catch (error) {
+        console.error("Manual staff payment failed:", error)
+        notify({
+          type: "error",
+          title: "Could not record payment",
+          message: getFriendlyErrorMessage(error, "Could not record this bank payment."),
+        })
+      } finally {
+        setRecordingManualKey(null)
+      }
+    },
+    [confirm, fetchOverview, notify, prompt]
+  )
+
+  const sendReceiptToWhatsApp = useCallback((proof) => {
     const phone = getReceiptRecipientPhone(proof)
     const normalizedPhone = normalizeWhatsAppPhone(phone)
 
@@ -655,193 +833,490 @@ export default function StaffPayments() {
         message: "Please check this device browser settings and try again.",
       })
     }
-  }
+  }, [notify])
+
+  const hasAnyData = proofs.length > 0 || shopRows.length > 0
 
   return (
     <>
       <StaffPortalShell
-      activeKey="payments"
-      title="Offline Payments"
-      description="Review bank-transfer receipts, approve subscription activations, and reject unclear proofs with a staff note."
-      headerActions={[
-        <QuickActionButton key="refresh" icon={<FaCircleNotch className={loading ? "animate-spin" : ""} />} label="Refresh Payments" tone="white" onClick={fetchProofs} />,
-      ]}
+        activeKey="payments"
+        title="Payments Control"
+        description="Review uploaded receipts, record manual bank confirmations, and keep a clear watch on verification and subscription timelines across all shops."
+        headerActions={[
+          <QuickActionButton
+            key="refresh"
+            icon={<FaCircleNotch className={loading ? "animate-spin" : ""} />}
+            label="Refresh Payments"
+            tone="white"
+            onClick={fetchOverview}
+          />,
+        ]}
       >
-      <SectionHeading
-        eyebrow="Payments"
-        title="Receipt Review Queue"
-        description="Approvals run through the secure edge function so staff action writes the final receipt and updates shop subscription time in one controlled path."
-      />
-
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
-        <div className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
-          <div className="text-xs font-black uppercase tracking-widest text-amber-700">Pending</div>
-          <div className="mt-2 text-4xl font-black text-slate-900">{summary.pending}</div>
-        </div>
-        <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5">
-          <div className="text-xs font-black uppercase tracking-widest text-emerald-700">Approved</div>
-          <div className="mt-2 text-4xl font-black text-slate-900">{summary.approved}</div>
-        </div>
-        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-5">
-          <div className="text-xs font-black uppercase tracking-widest text-rose-700">Rejected</div>
-          <div className="mt-2 text-4xl font-black text-slate-900">{summary.rejected}</div>
-        </div>
-      </div>
-
-      <div className="mb-5 flex flex-wrap gap-2">
-        {STATUS_FILTERS.map((filter) => (
-          <button
-            key={filter.key}
-            type="button"
-            onClick={() => setActiveStatus(filter.key)}
-            className={`rounded-full px-4 py-2 text-sm font-black transition ${
-              activeStatus === filter.key
-                ? "bg-[#2E1065] text-white"
-                : "bg-white text-slate-600 shadow-sm hover:bg-slate-100"
-            }`}
-          >
-            {filter.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="space-y-4">
-        {loading ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500">
-            <FaCircleNotch className="mx-auto mb-3 animate-spin text-3xl" />
-            Loading payment proofs...
+        {pageError && hasAnyData ? (
+          <div className="mb-6 rounded-3xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-800">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>{pageError}</div>
+              <button
+                type="button"
+                onClick={fetchOverview}
+                className="rounded-full bg-rose-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white transition hover:bg-rose-700"
+              >
+                Retry Refresh
+              </button>
+            </div>
           </div>
-        ) : filteredProofs.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-10 text-center text-slate-500">
-            No payment proofs in this view.
-          </div>
+        ) : null}
+
+        {!loading && pageError && !hasAnyData ? (
+          <InlineErrorState
+            title="Payments control unavailable"
+            message={pageError}
+            onRetry={fetchOverview}
+          />
         ) : (
-          filteredProofs.map((proof) => (
-            <div key={proof.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black ${getStatusBadge(proof.status)}`}>
-                      {getStatusIcon(proof.status)} {proof.status}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
-                      <FaBuildingColumns /> {getPaymentKindLabel(proof)}
-                    </span>
-                    <span className="rounded-full bg-[#FCE7F3] px-3 py-1 text-xs font-black text-[#BE185D]">
-                      {formatNaira(proof.amount)}
-                    </span>
-                  </div>
+          <>
+            <SectionHeading
+              eyebrow="Payments"
+              title="Receipt Review Queue"
+              description="Uploaded receipts still flow through the secure approval queue, while manual bank confirmations can now be handled from the shop control section below."
+            />
 
-                  <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                    <div>
-                      <div className="text-xs font-bold uppercase text-slate-400">Merchant</div>
-                      <div className="mt-1 font-black text-slate-900">{proof.merchant_name || "Merchant"}</div>
-                      <div className="text-xs font-semibold text-slate-500">{proof.merchant_email || proof.merchant_id}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold uppercase text-slate-400">Shop</div>
-                      <div className="mt-1 font-black text-slate-900">{proof.shop_name || `Shop #${proof.shop_id}`}</div>
-                      <div className="text-xs font-semibold text-slate-500">Shop ID: {proof.shop_id}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold uppercase text-slate-400">Transfer Reference</div>
-                      <div className="mt-1 font-black text-slate-900">{proof.transfer_reference || "Not provided"}</div>
-                      <div className="text-xs font-semibold text-slate-500">{proof.depositor_name || "Depositor not provided"}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold uppercase text-slate-400">Submitted</div>
-                      <div className="mt-1 font-black text-slate-900">{formatDateTime(proof.created_at)}</div>
-                      <div className="text-xs font-semibold text-slate-500">Reviewed: {formatDateTime(proof.reviewed_at)}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold uppercase text-slate-400">WhatsApp</div>
-                      <div className="mt-1 font-black text-slate-900">
-                        {normalizeWhatsAppPhone(getReceiptRecipientPhone(proof)) || "Not provided"}
-                      </div>
-                      <div className="text-xs font-semibold text-slate-500">Shop WhatsApp, shop phone, then profile phone</div>
-                    </div>
-                  </div>
+            <div className="mb-6 grid gap-4 md:grid-cols-3">
+              <SummaryCard label="Pending Queue" value={proofSummary.pending} tone="warning" />
+              <SummaryCard label="Approved Queue" value={proofSummary.approved} tone="success" />
+              <SummaryCard label="Rejected Queue" value={proofSummary.rejected} tone="danger" />
+            </div>
 
-                  {proof.review_note ? (
-                    <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-600">
-                      Staff note: {proof.review_note}
-                    </div>
-                  ) : null}
+            <div className="mb-5 flex flex-wrap gap-2">
+              {PROOF_STATUS_FILTERS.map((filter) => (
+                <button
+                  key={filter.key}
+                  type="button"
+                  onClick={() => setActiveStatus(filter.key)}
+                  className={`rounded-full px-4 py-2 text-sm font-black transition ${
+                    activeStatus === filter.key
+                      ? "bg-[#2E1065] text-white"
+                      : "bg-white text-slate-600 shadow-sm hover:bg-slate-100"
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-4">
+              {loading && !proofs.length ? (
+                <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500">
+                  <FaCircleNotch className="mx-auto mb-3 animate-spin text-3xl" />
+                  Loading payment proofs...
                 </div>
+              ) : filteredProofs.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-10 text-center text-slate-500">
+                  No payment proofs in this view.
+                </div>
+              ) : (
+                filteredProofs.map((proof) => (
+                  <div key={proof.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black ${getStatusBadge(proof.status)}`}>
+                            {getStatusIcon(proof.status)} {proof.status}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+                            <FaBuildingColumns /> {getPaymentKindLabel(proof)}
+                          </span>
+                          <span className="rounded-full bg-[#FCE7F3] px-3 py-1 text-xs font-black text-[#BE185D]">
+                            {formatNaira(proof.amount)}
+                          </span>
+                        </div>
 
-                <div className="w-full shrink-0 lg:w-[280px]">
-                  {signedUrls[proof.id] ? (
-                    <a
-                      href={signedUrls[proof.id]}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-100"
+                        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                          <div>
+                            <div className="text-xs font-bold uppercase text-slate-400">Merchant</div>
+                            <div className="mt-1 font-black text-slate-900">{proof.merchant_name || "Merchant"}</div>
+                            <div className="text-xs font-semibold text-slate-500">
+                              {proof.merchant_email || proof.merchant_phone || proof.merchant_id}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold uppercase text-slate-400">Shop</div>
+                            <div className="mt-1 font-black text-slate-900">{proof.shop_name || `Shop #${proof.shop_id}`}</div>
+                            <div className="text-xs font-semibold text-slate-500">Shop ID: {proof.shop_id}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold uppercase text-slate-400">Transfer Reference</div>
+                            <div className="mt-1 font-black text-slate-900">{proof.transfer_reference || "Not provided"}</div>
+                            <div className="text-xs font-semibold text-slate-500">{proof.depositor_name || "Depositor not provided"}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold uppercase text-slate-400">Submitted</div>
+                            <div className="mt-1 font-black text-slate-900">{formatDateTime(proof.created_at)}</div>
+                            <div className="text-xs font-semibold text-slate-500">Reviewed: {formatDateTime(proof.reviewed_at)}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold uppercase text-slate-400">WhatsApp</div>
+                            <div className="mt-1 font-black text-slate-900">
+                              {normalizeWhatsAppPhone(getReceiptRecipientPhone(proof)) || "Not provided"}
+                            </div>
+                            <div className="text-xs font-semibold text-slate-500">Shop WhatsApp, shop phone, then profile phone</div>
+                          </div>
+                        </div>
+
+                        {proof.review_note ? (
+                          <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-600">
+                            Staff note: {proof.review_note}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="w-full shrink-0 lg:w-[280px]">
+                        {signedUrls[proof.id] ? (
+                          <a
+                            href={signedUrls[proof.id]}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-100"
+                          >
+                            <FaReceipt /> View Uploaded Proof <FaArrowUpRightFromSquare />
+                          </a>
+                        ) : (
+                          <div className="mb-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-400">
+                            Uploaded proof unavailable
+                          </div>
+                        )}
+
+                        {proof.status === "pending" ? (
+                          <div className="space-y-3">
+                            <textarea
+                              value={reviewDrafts[proof.id] || ""}
+                              onChange={(event) =>
+                                setReviewDrafts((current) => ({
+                                  ...current,
+                                  [proof.id]: event.target.value,
+                                }))
+                              }
+                              placeholder="Optional approval note. Required for rejection."
+                              className="min-h-[96px] w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#2E1065]"
+                            />
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                disabled={reviewingId === proof.id}
+                                onClick={() => reviewProof(proof, "reject")}
+                                className="rounded-xl bg-rose-600 px-4 py-3 text-sm font-black text-white transition hover:bg-rose-700 disabled:opacity-60"
+                              >
+                                Reject
+                              </button>
+                              <button
+                                type="button"
+                                disabled={reviewingId === proof.id}
+                                onClick={() => reviewProof(proof, "approve")}
+                                className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                              >
+                                {reviewingId === proof.id ? <FaCircleNotch className="mx-auto animate-spin" /> : "Approve"}
+                              </button>
+                            </div>
+                          </div>
+                        ) : proof.status === "approved" ? (
+                          <div className="grid gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedReceiptProof(proof)}
+                              className="flex items-center justify-center gap-2 rounded-xl bg-[#2E1065] px-4 py-3 text-sm font-black text-white transition hover:bg-[#4C1D95]"
+                            >
+                              <FaReceipt /> View CTM Receipt
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => sendReceiptToWhatsApp(proof)}
+                              disabled={!normalizeWhatsAppPhone(getReceiptRecipientPhone(proof))}
+                              className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                            >
+                              <FaWhatsapp /> Send to WhatsApp
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="mt-10">
+              <SectionHeading
+                eyebrow="Shop Control"
+                title="Shop Payment Control Board"
+                description="This board pulls every shop into one payment operations view so staff can spot pending receipts, expected physical verification fees, expired subscriptions, and expiring plans even when no receipt was uploaded."
+              />
+
+              <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <SummaryCard label="Receipt Pending" value={controlSummary.receiptPending} tone="warning" />
+                <SummaryCard label="Physical Fee Due" value={controlSummary.physicalDue} tone="warning" />
+                <SummaryCard label="Ready For KYC" value={controlSummary.kycReady} tone="success" />
+                <SummaryCard label="Expired Plans" value={controlSummary.expired} tone="danger" />
+                <SummaryCard label="Expiring Soon" value={controlSummary.expiring} tone="warning" />
+              </div>
+
+              <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex flex-wrap gap-2">
+                  {CONTROL_FILTERS.map((filter) => (
+                    <button
+                      key={filter.key}
+                      type="button"
+                      onClick={() => setActiveControlFilter(filter.key)}
+                      className={`rounded-full px-4 py-2 text-sm font-black transition ${
+                        activeControlFilter === filter.key
+                          ? "bg-[#BE185D] text-white"
+                          : "bg-white text-slate-600 shadow-sm hover:bg-slate-100"
+                      }`}
                     >
-                      <FaReceipt /> View Uploaded Proof <FaArrowUpRightFromSquare />
-                    </a>
-                  ) : (
-                    <div className="mb-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-400">
-                      Uploaded proof unavailable
-                    </div>
-                  )}
-
-                  {proof.status === "pending" ? (
-                    <div className="space-y-3">
-                      <textarea
-                        value={reviewDrafts[proof.id] || ""}
-                        onChange={(event) =>
-                          setReviewDrafts((current) => ({
-                            ...current,
-                            [proof.id]: event.target.value,
-                          }))
-                        }
-                        placeholder="Optional approval note. Required for rejection."
-                        className="min-h-[96px] w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#2E1065]"
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          disabled={reviewingId === proof.id}
-                          onClick={() => reviewProof(proof, "reject")}
-                          className="rounded-xl bg-rose-600 px-4 py-3 text-sm font-black text-white transition hover:bg-rose-700 disabled:opacity-60"
-                        >
-                          Reject
-                        </button>
-                        <button
-                          type="button"
-                          disabled={reviewingId === proof.id}
-                          onClick={() => reviewProof(proof, "approve")}
-                          className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-700 disabled:opacity-60"
-                        >
-                          {reviewingId === proof.id ? <FaCircleNotch className="mx-auto animate-spin" /> : "Approve"}
-                        </button>
-                      </div>
-                    </div>
-                  ) : proof.status === "approved" ? (
-                    <div className="grid gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedReceiptProof(proof)}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-[#2E1065] px-4 py-3 text-sm font-black text-white transition hover:bg-[#4C1D95]"
-                      >
-                        <FaReceipt /> View CTM Receipt
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => sendReceiptToWhatsApp(proof)}
-                        disabled={!normalizeWhatsAppPhone(getReceiptRecipientPhone(proof))}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                      >
-                        <FaWhatsapp /> Send to WhatsApp
-                      </button>
-                    </div>
-                  ) : null}
+                      {filter.label}
+                    </button>
+                  ))}
                 </div>
+
+                <label className="relative block w-full xl:w-[340px]">
+                  <FaMagnifyingGlass className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search shop, merchant, phone, or CT ID"
+                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#BE185D]"
+                  />
+                </label>
+              </div>
+
+              <div className="space-y-4">
+                {loading && !shopRows.length ? (
+                  <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500">
+                    <FaCircleNotch className="mx-auto mb-3 animate-spin text-3xl" />
+                    Loading shop payment control...
+                  </div>
+                ) : filteredShopRows.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-10 text-center text-slate-500">
+                    No shops match this payment view.
+                  </div>
+                ) : (
+                  filteredShopRows.map((row) => {
+                    const physicalProofUrl = signedUrls[row.latestPhysicalProof?.id] || ""
+                    const serviceProofUrl = signedUrls[row.latestServiceProof?.id] || ""
+                    const subscriptionEndsAt = row.shop?.subscription_end_date
+                      ? formatDateTime(row.shop.subscription_end_date)
+                      : "No active subscription"
+
+                    return (
+                      <div key={row.shop.id} className="rounded-[30px] border border-slate-200 bg-white p-5 shadow-sm">
+                        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-black uppercase tracking-widest text-white">
+                                {row.shop?.unique_id || `SHOP-${row.shop.id}`}
+                              </span>
+                              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black ${getToneBadgeClasses(row.physicalState?.tone)}`}>
+                                <FaReceipt /> {row.physicalState?.label}
+                              </span>
+                              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black ${getToneBadgeClasses(row.subscriptionState?.tone)}`}>
+                                <FaWallet /> {row.subscriptionState?.label}
+                              </span>
+                            </div>
+
+                            <div className="mt-3 text-2xl font-black tracking-tight text-slate-950">{row.shop?.name}</div>
+
+                            <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                              <div>
+                                <div className="text-xs font-bold uppercase text-slate-400">Merchant</div>
+                                <div className="mt-1 font-black text-slate-900">{row.merchantName}</div>
+                                <div className="text-xs font-semibold text-slate-500">
+                                  {normalizeWhatsAppPhone(row.merchantPhone) || "No phone on profile"}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs font-bold uppercase text-slate-400">Location</div>
+                                <div className="mt-1 flex items-center gap-2 font-black text-slate-900">
+                                  <FaLocationDot className="text-[#BE185D]" /> {row.cityName}
+                                </div>
+                                <div className="text-xs font-semibold text-slate-500">Status: {row.shop?.status || "pending"}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs font-bold uppercase text-slate-400">Contact</div>
+                                <div className="mt-1 font-black text-slate-900">
+                                  {normalizeWhatsAppPhone(row.shop?.whatsapp || row.shop?.phone) || "Not provided"}
+                                </div>
+                                <div className="text-xs font-semibold text-slate-500">Shop WhatsApp or phone</div>
+                              </div>
+                              <div>
+                                <div className="text-xs font-bold uppercase text-slate-400">Subscription</div>
+                                <div className="mt-1 font-black text-slate-900">{row.shop?.subscription_plan || "No Active Plan"}</div>
+                                <div className="text-xs font-semibold text-slate-500">{subscriptionEndsAt}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-5 grid gap-4 xl:grid-cols-2">
+                          <div className={`rounded-[26px] border p-5 ${getTonePanelClasses(row.physicalState?.tone)}`}>
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-xs font-black uppercase tracking-widest text-slate-500">Physical Verification</div>
+                                <div className="mt-1 text-lg font-black text-slate-950">{row.physicalState?.label}</div>
+                              </div>
+                              <span className={`rounded-full px-3 py-1 text-xs font-black ${getToneBadgeClasses(row.physicalState?.tone)}`}>
+                                {row.shop?.is_verified ? "Verified" : row.shop?.kyc_status || "Not Verified"}
+                              </span>
+                            </div>
+
+                            <div className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                              {row.physicalState?.detail}
+                            </div>
+
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                              <div className="rounded-2xl bg-white/80 p-4">
+                                <div className="text-xs font-black uppercase tracking-widest text-slate-400">Latest bank record</div>
+                                <div className="mt-2 font-black text-slate-900">
+                                  {row.latestPhysicalPayment?.payment_ref || "No physical payment recorded"}
+                                </div>
+                                <div className="text-xs font-semibold text-slate-500">
+                                  {row.latestPhysicalPayment?.created_at
+                                    ? formatDateTime(row.latestPhysicalPayment.created_at)
+                                    : "Waiting for payment"}
+                                </div>
+                              </div>
+                              <div className="rounded-2xl bg-white/80 p-4">
+                                <div className="text-xs font-black uppercase tracking-widest text-slate-400">Latest receipt proof</div>
+                                <div className="mt-2 font-black text-slate-900">
+                                  {row.latestPhysicalProof?.status || "No receipt uploaded"}
+                                </div>
+                                <div className="text-xs font-semibold text-slate-500">
+                                  {row.latestPhysicalProof?.created_at
+                                    ? formatDateTime(row.latestPhysicalProof.created_at)
+                                    : "Manual confirmation allowed"}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              {physicalProofUrl ? (
+                                <a
+                                  href={physicalProofUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-100"
+                                >
+                                  <FaArrowUpRightFromSquare /> View Physical Receipt
+                                </a>
+                              ) : null}
+
+                              {row.canManuallyConfirmPhysical ? (
+                                <button
+                                  type="button"
+                                  disabled={recordingManualKey === `${row.shop.id}:physical_verification:none`}
+                                  onClick={() => recordManualPayment(row, "physical_verification")}
+                                  className="inline-flex items-center gap-2 rounded-full bg-[#2E1065] px-4 py-2 text-xs font-black text-white transition hover:bg-[#4C1D95] disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {recordingManualKey === `${row.shop.id}:physical_verification:none` ? (
+                                    <FaCircleNotch className="animate-spin" />
+                                  ) : (
+                                    <FaBuildingColumns />
+                                  )}
+                                  Confirm N5,000 Bank Payment
+                                </button>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          <div className={`rounded-[26px] border p-5 ${getTonePanelClasses(row.subscriptionState?.tone)}`}>
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-xs font-black uppercase tracking-widest text-slate-500">Service Subscription</div>
+                                <div className="mt-1 text-lg font-black text-slate-950">{row.subscriptionState?.label}</div>
+                              </div>
+                              <span className={`rounded-full px-3 py-1 text-xs font-black ${getToneBadgeClasses(row.subscriptionState?.tone)}`}>
+                                {row.shop?.subscription_plan || "No Plan"}
+                              </span>
+                            </div>
+
+                            <div className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                              {row.subscriptionState?.detail}
+                            </div>
+
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                              <div className="rounded-2xl bg-white/80 p-4">
+                                <div className="text-xs font-black uppercase tracking-widest text-slate-400">Latest service payment</div>
+                                <div className="mt-2 font-black text-slate-900">
+                                  {row.latestServicePayment?.payment_ref || "No service payment recorded"}
+                                </div>
+                                <div className="text-xs font-semibold text-slate-500">
+                                  {row.latestServicePayment?.created_at
+                                    ? formatDateTime(row.latestServicePayment.created_at)
+                                    : "Waiting for payment"}
+                                </div>
+                              </div>
+                              <div className="rounded-2xl bg-white/80 p-4">
+                                <div className="text-xs font-black uppercase tracking-widest text-slate-400">Plan window</div>
+                                <div className="mt-2 flex items-center gap-2 font-black text-slate-900">
+                                  <FaCalendarDays className="text-[#BE185D]" />
+                                  {row.shop?.subscription_end_date ? formatDateTime(row.shop.subscription_end_date) : "No active end date"}
+                                </div>
+                                <div className="text-xs font-semibold text-slate-500">
+                                  {row.subscriptionState?.daysRemaining === null
+                                    ? "No active subscription window"
+                                    : `${row.subscriptionState.daysRemaining} day(s) remaining`}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              {serviceProofUrl ? (
+                                <a
+                                  href={serviceProofUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-100"
+                                >
+                                  <FaArrowUpRightFromSquare /> View Service Receipt
+                                </a>
+                              ) : null}
+
+                              {row.canManuallyConfirmService ? (
+                                SERVICE_PLAN_OPTIONS.map((plan) => {
+                                  const manualKey = `${row.shop.id}:service_fee:${plan.key}`
+                                  return (
+                                    <button
+                                      key={plan.key}
+                                      type="button"
+                                      disabled={recordingManualKey === manualKey}
+                                      onClick={() => recordManualPayment(row, "service_fee", plan.key)}
+                                      className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      {recordingManualKey === manualKey ? (
+                                        <FaCircleNotch className="animate-spin" />
+                                      ) : (
+                                        <FaWallet />
+                                      )}
+                                      Record {plan.label} - {formatNaira(plan.amount)}
+                                    </button>
+                                  )
+                                })
+                              ) : (
+                                <div className="rounded-full bg-white px-4 py-2 text-xs font-black text-slate-500">
+                                  Unlocks after physical verification is approved.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
               </div>
             </div>
-          ))
+          </>
         )}
-      </div>
       </StaffPortalShell>
       <ReceiptModal
         proof={selectedReceiptProof}
