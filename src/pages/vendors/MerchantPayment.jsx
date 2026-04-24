@@ -14,7 +14,6 @@ import {
   FaBuildingCircleCheck,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
-import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions"
 import useAuthSession from "../../hooks/useAuthSession"
 import { clearCachedFetchStore } from "../../hooks/useCachedFetch"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
@@ -28,33 +27,6 @@ import {
   getProofStatusCopy,
   uploadPaymentReceipt,
 } from "../../lib/offlinePayments"
-
-async function extractFunctionErrorMessage(error, fallback = "Verification failed") {
-  if (!error) return fallback
-  const rawMessage = typeof error.message === "string" ? error.message : ""
-
-  const context = error.context
-  if (context && typeof context.clone === "function") {
-    try {
-      const asJson = await context.clone().json()
-      if (asJson && typeof asJson.error === "string" && asJson.error.trim()) {
-        return asJson.error
-      }
-    } catch {
-      // Ignore non-JSON edge function error bodies.
-    }
-
-    try {
-      const asText = await context.clone().text()
-      if (asText && asText.trim()) return asText.trim()
-    } catch {
-      // Ignore non-text edge function error bodies.
-    }
-  }
-
-  if (rawMessage.trim()) return rawMessage
-  return fallback
-}
 
 function StatusCard({ proof }) {
   if (!proof) return null
@@ -297,19 +269,15 @@ export default function MerchantPayment() {
       setStatusError(false)
       setStatusMsg("")
 
-      const { data, error } = await invokeEdgeFunctionAuthed("physical-verification-payment", {
-        transactionId: txId,
-        shopId: parsedShopId,
-        gateway: "promo",
+      const { data, error } = await supabase.rpc("redeem_verification_promo_code_self", {
+        p_code: txId,
+        p_shop_id: parsedShopId,
       })
 
-      if (error) {
-        const detailedMessage = await extractFunctionErrorMessage(error, "Promo verification failed")
-        throw new Error(detailedMessage)
-      }
+      if (error) throw error
       if (data?.error) throw new Error(data.error)
 
-      setStatusMsg("Promo code accepted. Redirecting to video KYC...")
+      setStatusMsg(data?.message || "Promo code accepted. Redirecting to video KYC...")
       window.setTimeout(() => {
         try {
           refreshVendorPanelState()
