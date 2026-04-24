@@ -1204,6 +1204,25 @@ function UserDashboard() {
     }
   }
 
+  function openNotificationAction(item) {
+    const actionPath = String(item?.action_path || "").trim()
+    if (!actionPath) return
+
+    const isVendorFlow =
+      actionPath === "/vendor-panel" ||
+      actionPath.startsWith("/shop-registration") ||
+      actionPath.startsWith("/merchant-video-kyc") ||
+      actionPath.startsWith("/remita") ||
+      actionPath.startsWith("/service-fee")
+
+    if (isVendorFlow) {
+      void openDashboardRouteWithTransition(actionPath)
+      return
+    }
+
+    navigate(actionPath)
+  }
+
   function executeSearch(mode) {
     const value =
       mode === "desktop" ? searchInputDesktop.trim() : searchInputMobile.trim()
@@ -2085,7 +2104,10 @@ function UserDashboard() {
         )}
 
         {activeTab === "notifications" && (
-          <NotificationsSection notifications={localData.notifications} />
+          <NotificationsSection
+            notifications={localData.notifications}
+            onOpenNotification={openNotificationAction}
+          />
         )}
       </main>
       </div>

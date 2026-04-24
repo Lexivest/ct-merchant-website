@@ -231,14 +231,23 @@ function DashboardHeader({
           type="button"
           className={`amz-nav-item ${
             activeTab === "notifications" ? "active" : ""
-          } relative flex h-[32px] items-center gap-[6px] rounded border border-transparent px-2 text-[0.9rem] font-bold text-white transition hover:border-white sm:px-3`}
+          } relative flex h-[36px] items-center gap-[8px] rounded-[14px] border px-2.5 text-[0.9rem] font-bold text-white transition sm:px-3 ${
+            unread > 0
+              ? "border-white/20 bg-white/10 shadow-[0_8px_20px_rgba(0,0,0,0.18)]"
+              : "border-transparent"
+          } hover:border-white`}
           onClick={() => switchScreen("notifications")}
           title="Alerts"
         >
-          <FaBell className="text-[1.1rem]" />
+          <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-white/12">
+            <FaBell className="text-[1rem]" />
+            {unread > 0 ? (
+              <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-[#F59E0B] ring-2 ring-[#131921]" />
+            ) : null}
+          </span>
           <span className="hidden min-[900px]:inline">Alerts</span>
           {unread > 0 ? (
-            <span className="notif-badge absolute -right-[5px] -top-[3px] block rounded-[10px] border-2 border-[#232F3E] bg-[#EF4444] px-[6px] py-[2px] text-[0.65rem] font-extrabold text-white">
+            <span className="notif-badge absolute -right-[6px] -top-[4px] block rounded-full border-2 border-[#232F3E] bg-[#EF4444] px-[6px] py-[2px] text-[0.65rem] font-extrabold text-white shadow-lg">
               {unread > 9 ? "9+" : unread}
             </span>
           ) : null}
