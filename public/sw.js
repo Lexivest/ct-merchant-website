@@ -1,12 +1,19 @@
-const SHELL_CACHE = "ctm-shell-v3";
-const STATIC_CACHE = "ctm-static-v3";
-const ASSET_CACHE = "ctm-assets-v3";
+const SHELL_CACHE = "ctm-shell-v4";
+const STATIC_CACHE = "ctm-static-v4";
+const ASSET_CACHE = "ctm-assets-v4";
 const PRECACHE_URLS = [
   "/",
   "/index.html",
   "/offline.html",
   "/manifest.json",
+  "/version.json",
+  "/robots.txt",
+  "/sitemap.xml",
   "/ctm-logo.jpg",
+  "/apple-touch-icon.png",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/icon-maskable-512.png",
   "/favicon.svg",
   "/icons.svg",
 ];
@@ -23,8 +30,16 @@ async function putInCache(cacheName, request, response) {
   return response;
 }
 
-async function networkFirst(request, cacheName, fallbackUrls = []) {
+async function networkFirst(request, cacheName, fallbackUrls = [], preloadResponsePromise = null) {
   try {
+    if (preloadResponsePromise) {
+      const preloadResponse = await preloadResponsePromise;
+      if (isCacheableResponse(preloadResponse)) {
+        await putInCache(cacheName, request, preloadResponse);
+        return preloadResponse;
+      }
+    }
+
     const networkResponse = await fetch(request);
     await putInCache(cacheName, request, networkResponse);
     return networkResponse;
@@ -115,16 +130,21 @@ self.addEventListener("activate", (event) => {
   const activeCaches = new Set([SHELL_CACHE, STATIC_CACHE, ASSET_CACHE]);
 
   event.waitUntil(
-    caches.keys().then((cacheNames) =>
-      Promise.all(
+    (async () => {
+      if ("navigationPreload" in self.registration) {
+        await self.registration.navigationPreload.enable();
+      }
+
+      const cacheNames = await caches.keys();
+      await Promise.all(
         cacheNames.map((cacheName) => {
           if (!activeCaches.has(cacheName) && cacheName.startsWith("ctm-")) {
             return caches.delete(cacheName);
           }
           return Promise.resolve();
         })
-      )
-    )
+      );
+    })()
   );
 
   self.clients.claim();
@@ -143,7 +163,9 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (event.request.mode === "navigate") {
-    event.respondWith(networkFirst(event.request, SHELL_CACHE, ["/index.html", "/offline.html"]));
+    event.respondWith(
+      networkFirst(event.request, SHELL_CACHE, ["/index.html", "/offline.html"], event.preloadResponse)
+    );
     return;
   }
 
@@ -169,9 +191,15 @@ self.addEventListener("fetch", (event) => {
 
   if (
     url.pathname === "/manifest.json" ||
+    url.pathname === "/apple-touch-icon.png" ||
+    url.pathname === "/icon-192.png" ||
+    url.pathname === "/icon-512.png" ||
+    url.pathname === "/icon-maskable-512.png" ||
     url.pathname === "/ctm-logo.jpg" ||
     url.pathname === "/favicon.svg" ||
-    url.pathname === "/icons.svg"
+    url.pathname === "/icons.svg" ||
+    url.pathname === "/robots.txt" ||
+    url.pathname === "/sitemap.xml"
   ) {
     event.respondWith(staleWhileRevalidate(event.request, STATIC_CACHE));
   }

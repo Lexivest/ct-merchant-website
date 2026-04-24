@@ -47,6 +47,7 @@ import {
 } from "../lib/validators"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
+import usePwaInstall from "../hooks/usePwaInstall"
 import StableImage from "../components/common/StableImage"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import {
@@ -521,11 +522,6 @@ function Home() {
   const [googleReady, setGoogleReady] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const googleButtonRef = useRef(null)
-  const [installPromptEvent, setInstallPromptEvent] = useState(null)
-  const [, setInstallSupported] = useState(false)
-  const [, setInstallingApp] = useState(false)
-  const [appInstalled, setAppInstalled] = useState(false)
-
   const [repoSearchValue, setRepoSearchValue] = useState("")
   const [repoSearchLoading, setRepoSearchLoading] = useState(false)
 
@@ -733,17 +729,14 @@ function Home() {
     () => phrases[phraseIndex].slice(0, charIndex),
     [phraseIndex, charIndex]
   )
-  const isPhoneDevice = useMemo(() => {
-    if (typeof navigator === "undefined") return false
-    const userAgent = navigator.userAgent || ""
-    return /android.*mobile|iphone|ipod/i.test(userAgent)
-  }, [])
-  const isAppleMobile = useMemo(() => {
-    if (typeof navigator === "undefined") return false
-    const userAgent = navigator.userAgent || ""
-    return /iphone|ipad|ipod/i.test(userAgent)
-  }, [])
-  const showInstallCard = isPhoneDevice && !appInstalled
+  const {
+    canPromptInstall,
+    dismissInstallCard,
+    installingApp,
+    isAppleMobile,
+    promptInstall,
+    showInstallCard,
+  } = usePwaInstall()
   const homeStructuredData = useMemo(() => {
     return {
       "@context": "https://schema.org",
@@ -758,51 +751,19 @@ function Home() {
     }
   }, [])
 
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined
-
-    const isStandalone =
-      window.matchMedia?.("(display-mode: standalone)")?.matches ||
-      window.navigator?.standalone === true
-
-    if (isStandalone) {
-      setAppInstalled(true)
-    }
-
-    function handleBeforeInstallPrompt(event) {
-      event.preventDefault()
-      setInstallPromptEvent(event)
-      setInstallSupported(true)
-    }
-
-    function handleAppInstalled() {
-      setAppInstalled(true)
-      setInstallPromptEvent(null)
-      setInstallSupported(false)
-      setInstallingApp(false)
-    }
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
-    window.addEventListener("appinstalled", handleAppInstalled)
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
-      window.removeEventListener("appinstalled", handleAppInstalled)
-    }
-  }, [])
-
   async function handleInstallApp() {
-    if (installPromptEvent) {
-      try {
-        setInstallingApp(true)
-        await installPromptEvent.prompt()
-        await installPromptEvent.userChoice
-      } catch (error) {
-        console.warn("Install prompt failed", error)
-      } finally {
-        setInstallingApp(false)
-        setInstallPromptEvent(null)
-      }
+    const result = await promptInstall()
+
+    if (result?.status === "accepted" || result?.status === "dismissed") {
+      return
+    }
+
+    if (result?.status === "error") {
+      notify({
+        type: "error",
+        title: "Install prompt failed",
+        message: "CTMerchant could not open the install prompt right now. Please try again.",
+      })
       return
     }
 
@@ -1212,22 +1173,90 @@ function Home() {
                     Discover business and offerings in your neighbourhood before you step out—bridging the gap between digital convenience and physical reality.
                   </p>
 
-                  {showInstallCard ? (
+                  {/* Legacy install card retired for the shared PWA install flow.
                     <div className="mt-2 rounded-[22px] bg-pink-200 p-0.5">
                       <div className="rounded-[20px] border border-pink-200 bg-[linear-gradient(135deg,#fff7fb_0%,#fff1f2_48%,#fdf2f8_100%)] p-3 shadow-sm">
-                        <button
-                          type="button"
-                          onClick={handleInstallApp}
-                          disabled={!installPromptEvent && !isAppleMobile}
-                          className="group flex w-full flex-col items-center justify-center disabled:cursor-not-allowed"
-                        >
-                          <span className={`text-[13px] font-black uppercase tracking-[0.15em] transition-all ${ (installPromptEvent || isAppleMobile) ? "text-pink-600 underline underline-offset-4 group-hover:text-pink-700" : "text-slate-400" }`}>
-                            Install Web App
-                          </span>
-                          <span className="mt-1.5 text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-start gap-3">
+                            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-pink-600 text-white shadow-sm">
+                              <FaMobileScreenButton className="text-lg" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[12px] font-black uppercase tracking-[0.16em] text-pink-700">
+                                Install CTMerchant
+                              </p>
+                              <p className="mt-1 text-sm font-semibold leading-5 text-slate-700">
+                                {canPromptInstall
+                                  ? "Open CTMerchant faster from your home screen with a cleaner full-screen launch."
+                                  : "Save CTMerchant to your iPhone home screen for faster access and a cleaner web app experience."}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => dismissInstallCard()}
+                            className="shrink-0 rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 transition hover:bg-white hover:text-slate-600"
+                          >
+                            Later
+                          </button>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between gap-3">
+                          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                            {canPromptInstall ? "Fast launch • Home screen access" : "Safari share menu • Add to Home Screen"}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleInstallApp}
+                            disabled={installingApp}
+                            className="rounded-2xl bg-pink-600 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:bg-pink-700 disabled:cursor-wait disabled:opacity-70"
+                          >
+                            {installingApp ? "Opening..." : canPromptInstall ? "Install now" : "How to install"}
                             Fast launch • Homescreen access
                           </span>
                         </button>
+                      </div>
+                    </div>
+                  */}
+                  {showInstallCard ? (
+                    <div className="mt-2 rounded-[22px] bg-pink-200 p-0.5">
+                      <div className="rounded-[20px] border border-pink-200 bg-[linear-gradient(135deg,#fff7fb_0%,#fff1f2_48%,#fdf2f8_100%)] p-3 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-start gap-3">
+                            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-pink-600 text-white shadow-sm">
+                              <FaMobileScreenButton className="text-lg" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[12px] font-black uppercase tracking-[0.16em] text-pink-700">
+                                Install CTMerchant
+                              </p>
+                              <p className="mt-1 text-sm font-semibold leading-5 text-slate-700">
+                                {canPromptInstall
+                                  ? "Open CTMerchant faster from your home screen with a cleaner full-screen launch."
+                                  : "Save CTMerchant to your iPhone home screen for faster access and a cleaner web app experience."}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => dismissInstallCard()}
+                            className="shrink-0 rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 transition hover:bg-white hover:text-slate-600"
+                          >
+                            Later
+                          </button>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between gap-3">
+                          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                            {canPromptInstall ? "Fast launch • Home screen access" : "Safari share menu • Add to Home Screen"}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleInstallApp}
+                            disabled={installingApp}
+                            className="rounded-2xl bg-pink-600 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:bg-pink-700 disabled:cursor-wait disabled:opacity-70"
+                          >
+                            {installingApp ? "Opening..." : canPromptInstall ? "Install now" : "How to install"}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ) : null}

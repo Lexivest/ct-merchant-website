@@ -1,25 +1,75 @@
 {
+  "id": "/",
+  "name": "CTMerchant",
   "short_name": "CTMerchant",
-  "name": "CTMerchant: Repository of Shops, Products and Services",
+  "description": "Discover verified physical shops, products, and services across your city with CTMerchant.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "portrait-primary",
+  "lang": "en-NG",
+  "dir": "ltr",
+  "theme_color": "#131921",
+  "background_color": "#f8fafc",
+  "categories": ["shopping", "business", "lifestyle"],
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "ctm-logo.jpg",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "ctm-logo.jpg",
-      "type": "image/jpg",
-      "sizes": "192x192"
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "ctm-logo.jpg",
-      "type": "image/jpg",
-      "sizes": "512x512"
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#131921",
-  "background_color": "#ffffff"
+  "shortcuts": [
+    {
+      "name": "Marketplace Services",
+      "short_name": "Services",
+      "url": "/services",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Create Account",
+      "short_name": "Join",
+      "url": "/create-account",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Contact CTMerchant",
+      "short_name": "Contact",
+      "url": "/contact",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
 }

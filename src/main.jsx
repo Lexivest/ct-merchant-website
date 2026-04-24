@@ -44,16 +44,32 @@ if (typeof window !== "undefined") {
 
   // --- SERVICE WORKER REGISTRATION ---
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
+    if (import.meta.env.PROD) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/sw.js", { scope: "/" })
+          .then(async (registration) => {
+            console.log("CTM Service Worker registered with scope:", registration.scope)
+            try {
+              await registration.update()
+            } catch (error) {
+              console.warn("CTM Service Worker update check failed:", error)
+            }
+          })
+          .catch((error) => {
+            console.error("CTM Service Worker registration failed:", error)
+          })
+      })
+    } else {
       navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) => {
-          console.log("CTM Service Worker registered with scope:", registration.scope)
+        .getRegistrations()
+        .then((registrations) =>
+          Promise.all(registrations.map((registration) => registration.unregister()))
+        )
+        .catch(() => {
+          // Ignore service worker cleanup issues in development.
         })
-        .catch((error) => {
-          console.error("CTM Service Worker registration failed:", error)
-        })
-    })
+    }
   }
 }
 
