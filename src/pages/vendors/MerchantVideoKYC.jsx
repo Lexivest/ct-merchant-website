@@ -211,7 +211,7 @@ export default function MerchantVideoKYC() {
 
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
-          .select("id, name, unique_id, address, city_id, status, is_verified, kyc_status, kyc_video_url, rejection_reason, cities(name)")
+          .select("id, name, unique_id, address, city_id, created_at, status, is_verified, kyc_status, kyc_video_url, rejection_reason, cities(name)")
           .eq("owner_id", user.id)
           .maybeSingle();
 
@@ -220,6 +220,7 @@ export default function MerchantVideoKYC() {
         const verificationAccess = await fetchVerificationAccessStatus({
           userId: user.id,
           shopId: shop.id,
+          shopCreatedAt: shop.created_at,
         });
 
         const hasVerificationAccess =

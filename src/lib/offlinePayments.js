@@ -40,6 +40,24 @@ export function getReceiptPublicUrl(path) {
   return supabase.storage.from(PAYMENT_RECEIPT_RULE.bucket).getPublicUrl(path).data.publicUrl
 }
 
+function parseDateValue(value) {
+  if (!value) return null
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return null
+  return parsed
+}
+
+function belongsToCurrentShopLifecycle(record, shopCreatedAt) {
+  if (!record) return false
+  if (!shopCreatedAt) return true
+
+  const recordDate = parseDateValue(record.created_at)
+  const shopDate = parseDateValue(shopCreatedAt)
+
+  if (!recordDate || !shopDate) return true
+  return recordDate.getTime() >= shopDate.getTime()
+}
+
 export async function uploadPaymentReceipt({ file, userId, shopId, paymentKind }) {
   if (!file) throw new Error("Please select a receipt image or PDF.")
   if (!userId) throw new Error("Session unavailable. Please sign in again.")
@@ -80,7 +98,13 @@ export async function uploadPaymentReceipt({ file, userId, shopId, paymentKind }
   }
 }
 
-export async function fetchLatestPaymentProof({ userId, shopId, paymentKind, plan = null }) {
+export async function fetchLatestPaymentProof({
+  userId,
+  shopId,
+  paymentKind,
+  plan = null,
+  shopCreatedAt = null,
+}) {
   if (!userId || !shopId || !paymentKind) return null
 
   let query = supabase
@@ -99,6 +123,11 @@ export async function fetchLatestPaymentProof({ userId, shopId, paymentKind, pla
     console.error("Fetch latest proof failed:", error)
     return null
   }
+
+  if (!belongsToCurrentShopLifecycle(data, shopCreatedAt)) {
+    return null
+  }
+
   return data || null
 }
 
@@ -106,6 +135,7 @@ export async function fetchVerificationAccessStatus({
   userId,
   shopId,
   paymentKind = "physical_verification",
+  shopCreatedAt = null,
 }) {
   if (!userId || !shopId) {
     return {
@@ -121,16 +151,17 @@ export async function fetchVerificationAccessStatus({
     await Promise.all([
       supabase
         .from("physical_verification_payments")
-        .select("id")
+        .select("id, payment_ref, created_at")
         .eq("merchant_id", userId)
         .eq("status", "success")
-        .order("id", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
       fetchLatestPaymentProof({
         userId,
         shopId,
         paymentKind,
+        shopCreatedAt,
       }),
     ])
 
@@ -139,17 +170,20 @@ export async function fetchVerificationAccessStatus({
     throw new Error("Could not confirm verification payment status.")
   }
 
+  const currentPaymentRecord = belongsToCurrentShopLifecycle(paymentRecord, shopCreatedAt)
+    ? paymentRecord
+    : null
   const verificationProofStatus =
-    latestProof?.status || (paymentRecord ? "approved" : null)
+    latestProof?.status || (currentPaymentRecord ? "approved" : null)
   const hasVerificationAccess =
-    Boolean(paymentRecord) ||
+    Boolean(currentPaymentRecord) ||
     verificationProofStatus === "pending" ||
     verificationProofStatus === "approved"
   const paymentConfirmed =
-    Boolean(paymentRecord) || verificationProofStatus === "approved"
+    Boolean(currentPaymentRecord) || verificationProofStatus === "approved"
 
   return {
-    paymentRecord: paymentRecord || null,
+    paymentRecord: currentPaymentRecord || null,
     latestProof,
     verificationProofStatus,
     hasVerificationAccess,

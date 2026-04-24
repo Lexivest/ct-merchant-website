@@ -126,7 +126,7 @@ export default function MerchantPayment() {
     try {
       if (showLoader) setLoading(true)
 
-      const [shopRes, profileRes, verificationAccess] = await Promise.all([
+      const [shopRes, profileRes] = await Promise.all([
         supabase
           .from("shops")
           .select("*, cities(name)")
@@ -138,15 +138,17 @@ export default function MerchantPayment() {
           .select("*, cities(name)")
           .eq("id", user.id)
           .single(),
-        fetchVerificationAccessStatus({
-          userId: user.id,
-          shopId: parsedShopId,
-        }),
       ])
 
       const shop = shopRes.data
       if (shopRes.error || !shop) throw new Error("Shop not found or access denied")
       if (profileRes.error || !profileRes.data) throw new Error("Profile not found")
+
+      const verificationAccess = await fetchVerificationAccessStatus({
+        userId: user.id,
+        shopId: parsedShopId,
+        shopCreatedAt: shop.created_at,
+      })
 
       if (shop.is_verified) {
         notify({

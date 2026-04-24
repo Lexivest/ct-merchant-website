@@ -163,6 +163,7 @@ async function prepareVendorPanelData({ userId }) {
   const verificationAccess = await fetchVerificationAccessStatus({
     userId,
     shopId: shopData.id,
+    shopCreatedAt: shopData.created_at,
   })
 
   const payload = {
@@ -507,7 +508,7 @@ async function prepareMerchantVideoKYCData({ userId }) {
   const shop = await fetchOwnedShop(
     userId,
     null,
-    "id, name, unique_id, address, city_id, status, is_verified, kyc_status, kyc_video_url, rejection_reason, cities(name)"
+    "id, name, unique_id, address, city_id, created_at, status, is_verified, kyc_status, kyc_video_url, rejection_reason, cities(name)"
   )
 
   if (shop.is_verified) {
@@ -521,6 +522,7 @@ async function prepareMerchantVideoKYCData({ userId }) {
   const verificationAccess = await fetchVerificationAccessStatus({
     userId,
     shopId: shop.id,
+    shopCreatedAt: shop.created_at,
   })
   const hasVerificationAccess =
     verificationAccess.paymentConfirmed ||

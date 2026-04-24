@@ -126,6 +126,7 @@ function VendorsPanel() {
     const verificationAccess = await fetchVerificationAccessStatus({
       userId: user.id,
       shopId: shopData.id,
+      shopCreatedAt: shopData.created_at,
     })
 
     return {
