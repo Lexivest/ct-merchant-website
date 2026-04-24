@@ -589,47 +589,27 @@ function AppShell() {
 
         <Route
           path="/merchant-settings"
-          element={withProtectedOnlineGuard(
-            <SubscriptionGuard>
-              <MerchantSettings />
-            </SubscriptionGuard>
-          )}
+          element={withProtectedOnlineGuard(<MerchantSettings />)}
         />
 
         <Route
           path="/merchant-banner"
-          element={withProtectedOnlineGuard(
-            <SubscriptionGuard>
-              <MerchantBanner />
-            </SubscriptionGuard>
-          )}
+          element={withProtectedOnlineGuard(<MerchantBanner />)}
         />
 
         <Route
           path="/merchant-products"
-          element={withProtectedOnlineGuard(
-            <SubscriptionGuard>
-              <MerchantProducts />
-            </SubscriptionGuard>
-          )}
+          element={withProtectedOnlineGuard(<MerchantProducts />)}
         />
 
         <Route
           path="/merchant-edit-product"
-          element={withProtectedOnlineGuard(
-            <SubscriptionGuard>
-              <EditProduct />
-            </SubscriptionGuard>
-          )}
+          element={withProtectedOnlineGuard(<EditProduct />)}
         />
 
         <Route
           path="/merchant-add-product"
-          element={withProtectedOnlineGuard(
-            <SubscriptionGuard>
-              <AddProduct />
-            </SubscriptionGuard>
-          )}
+          element={withProtectedOnlineGuard(<AddProduct />)}
         />
         {/* --- LOCKED PREMIUM ROUTES END HERE --- */}
 

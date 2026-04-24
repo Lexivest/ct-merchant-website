@@ -448,6 +448,137 @@ function VendorsPanel() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-5">
+          {!isApplicationApproved ? (
+            <DashCard
+              title="Application Pending"
+              subtitle="Staff Review"
+              icon={<FaHourglassHalf />}
+              isLocked={true}
+              featured
+              onClick={() =>
+                notify({
+                  type: "info",
+                  title: "Application under review",
+                  message:
+                    "Your shop application is waiting for digital approval from CTMerchant staff.",
+                })
+              }
+            />
+          ) : isVerified ? (
+            <DashCard
+              title="Verified Shop"
+              subtitle="Verification Complete"
+              icon={<FaCheckDouble />}
+              colorClass="bg-[#DCFCE7] text-[#16A34A]"
+              featured
+              onClick={() =>
+                handleCardClick(null, () =>
+                  notify({
+                    type: "success",
+                    title: "Shop verified",
+                    message: "Your shop has completed physical verification and your free trial is active.",
+                  }),
+                )
+              }
+            />
+          ) : activeShop.kyc_status === "submitted" ? (
+            <DashCard
+              title="Physical Verification"
+              subtitle="Video Pending Approval"
+              icon={<FaHourglassHalf />}
+              isLocked={true}
+              featured
+              onClick={() =>
+                notify({
+                  type: "info",
+                  title: "KYC in review",
+                  message:
+                    "We are currently reviewing your video KYC. We will notify you once approved.",
+                })
+              }
+            />
+          ) : verificationProofStatus === "pending" ? (
+            <DashCard
+              title="Physical Verification"
+              subtitle="Pending Receipt Confirmation"
+              icon={<FaHourglassHalf />}
+              isLocked={true}
+              featured
+              onClick={() =>
+                notify({
+                  type: "info",
+                  title: "Receipt under review",
+                  message:
+                    "Your verification receipt has been submitted and is waiting for staff confirmation.",
+                })
+              }
+            />
+          ) : canOpenKycVideo ? (
+            activeShop.kyc_status === "rejected" ? (
+              <DashCard
+                title="Physical Verification"
+                subtitle="Re-record Video"
+                icon={<FaVideo />}
+                colorClass="bg-[#FEE2E2] text-[#DC2626]"
+                featured
+                onClick={() =>
+                  handleCardClick(`/merchant-video-kyc?shop_id=${activeShop.id}`)
+                }
+              />
+            ) : (
+              <DashCard
+                title="Physical Verification"
+                subtitle="Open Video KYC"
+                icon={<FaVideo />}
+                colorClass="bg-[#FEE2E2] text-[#DC2626]"
+                featured
+                onClick={() =>
+                  handleCardClick(`/merchant-video-kyc?shop_id=${activeShop.id}`)
+                }
+              />
+            )
+          ) : (
+            <DashCard
+              title="Physical Verification"
+              subtitle={
+                verificationProofStatus === "rejected"
+                    ? "Upload Receipt Again"
+                    : "Verification Fee"
+              }
+              icon={<FaBuildingCircleCheck />}
+              colorClass="bg-[#FEF3C7] text-[#D97706]"
+              featured
+              onClick={() => handleCardClick(`/remita?shop_id=${activeShop.id}`)}
+            />
+          )}
+
+          {isVerified ? (
+            <DashCard
+              title="Service Fee"
+              subtitle={isSubscriptionActive ? "Free Trial Active" : "Choose Plan"}
+              icon={<FaFileInvoiceDollar />}
+              colorClass="bg-pink-100 text-pink-600"
+              onClick={() =>
+                handleCardClick(`/service-fee?shop_id=${activeShop.id}`)
+              }
+            />
+          ) : (
+            <DashCard
+              title="Service Fee"
+              subtitle="KYC Required"
+              icon={<FaLock />}
+              isLocked={true}
+              onClick={() =>
+                notify({
+                  type: "error",
+                  title: "Approval required",
+                  message:
+                    "You cannot subscribe to a service plan until your shop passes KYC approval.",
+                })
+              }
+            />
+          )}
+
           <DashCard
             title="Add Product"
             icon={<FaRegSquarePlus />}
@@ -606,117 +737,6 @@ function VendorsPanel() {
                     )
             }
           />
-
-          {!isApplicationApproved ? (
-            <DashCard
-              title="Application Pending"
-              subtitle="Staff Review"
-              icon={<FaHourglassHalf />}
-              isLocked={true}
-              onClick={() =>
-                notify({
-                  type: "info",
-                  title: "Application under review",
-                  message:
-                    "Your shop application is waiting for digital approval from CTMerchant staff.",
-                })
-              }
-            />
-          ) : isVerified ? (
-            <DashCard
-              title="Verified Shop"
-              subtitle="Verification Complete"
-              icon={<FaCheckDouble />}
-              colorClass="bg-[#DCFCE7] text-[#16A34A]"
-              onClick={() =>
-                handleCardClick(null, () =>
-                  notify({
-                    type: "success",
-                    title: "Shop verified",
-                    message: "Your shop has completed physical verification and your free trial is active.",
-                  }),
-                )
-              }
-            />
-          ) : activeShop.kyc_status === "submitted" ? (
-            <DashCard
-              title="Physical Verification"
-              subtitle="Under Review"
-              icon={<FaHourglassHalf />}
-              isLocked={true}
-              onClick={() =>
-                notify({
-                  type: "info",
-                  title: "KYC in review",
-                  message:
-                    "We are currently reviewing your video KYC. We will notify you once approved.",
-                })
-              }
-            />
-          ) : canOpenKycVideo ? (
-            activeShop.kyc_status === "rejected" ? (
-              <DashCard
-                title="Physical Verification"
-                subtitle="Re-record Video"
-                icon={<FaVideo />}
-                colorClass="bg-[#FEE2E2] text-[#DC2626]"
-                onClick={() =>
-                  handleCardClick(`/merchant-video-kyc?shop_id=${activeShop.id}`)
-                }
-              />
-            ) : (
-              <DashCard
-                title="Physical Verification"
-                subtitle="Record Video"
-                icon={<FaVideo />}
-                colorClass="bg-[#FEE2E2] text-[#DC2626]"
-                onClick={() =>
-                  handleCardClick(`/merchant-video-kyc?shop_id=${activeShop.id}`)
-                }
-              />
-            )
-          ) : (
-            <DashCard
-              title="Physical Verification"
-              subtitle={
-                verificationProofStatus === "pending"
-                  ? "Payment Pending"
-                  : verificationProofStatus === "rejected"
-                    ? "Upload Receipt Again"
-                    : "Verification Fee"
-              }
-              icon={<FaBuildingCircleCheck />}
-              colorClass="bg-[#FEF3C7] text-[#D97706]"
-              onClick={() => handleCardClick(`/remita?shop_id=${activeShop.id}`)}
-            />
-          )}
-
-          {isVerified ? (
-            <DashCard
-              title="Service Fee"
-              subtitle={isSubscriptionActive ? "Free Trial Active" : "Choose Plan"}
-              icon={<FaFileInvoiceDollar />}
-              colorClass="bg-pink-100 text-pink-600"
-              onClick={() =>
-                handleCardClick(`/service-fee?shop_id=${activeShop.id}`)
-              }
-            />
-          ) : (
-            <DashCard
-              title="Service Fee"
-              subtitle="KYC Required"
-              icon={<FaLock />}
-              isLocked={true}
-              onClick={() =>
-                notify({
-                  type: "error",
-                  title: "Approval required",
-                  message:
-                    "You cannot subscribe to a service plan until your shop passes KYC approval.",
-                })
-              }
-            />
-          )}
         </div>
       </main>
       </div>
@@ -724,22 +744,47 @@ function VendorsPanel() {
   )
 }
 
-function DashCard({ title, subtitle, icon, colorClass, badge, isLocked, onClick }) {
+function DashCard({
+  title,
+  subtitle,
+  icon,
+  colorClass,
+  badge,
+  isLocked,
+  onClick,
+  featured = false,
+}) {
+  const outerClass = featured ? "col-span-2 sm:col-span-2" : ""
+  const lockedHeightClass = featured ? "min-h-[148px] sm:min-h-[156px]" : "min-h-[125px] sm:min-h-[140px]"
+  const activeHeightClass = featured ? "min-h-[148px] sm:min-h-[156px]" : "min-h-[125px] sm:min-h-[140px]"
+  const activeIconClass = featured
+    ? "mb-4 h-[52px] w-[52px] text-[1.45rem] sm:h-[58px] sm:w-[58px] sm:text-[1.55rem]"
+    : "mb-3 h-[42px] w-[42px] text-[1.2rem] sm:h-[50px] sm:w-[50px] sm:text-[1.4rem]"
+  const lockedIconClass = featured
+    ? "mb-4 h-[52px] w-[52px] text-[1.45rem] sm:h-[58px] sm:w-[58px] sm:text-[1.55rem]"
+    : "mb-3 h-[42px] w-[42px] text-[1.2rem] sm:h-[50px] sm:w-[50px] sm:text-[1.4rem]"
+  const titleClass = featured
+    ? "text-[0.95rem] font-extrabold sm:text-[1.05rem]"
+    : "text-[0.85rem] font-extrabold sm:text-[0.95rem]"
+  const subtitleClass = featured
+    ? "mt-1.5 text-[0.78rem] font-semibold sm:text-[0.82rem]"
+    : "mt-1 text-[0.7rem] font-semibold sm:text-[0.75rem]"
+
   if (isLocked) {
     return (
       <div
         onClick={onClick}
-        className="cursor-not-allowed rounded-[22px] bg-slate-200 p-1 transition-all"
+        className={`${outerClass} cursor-not-allowed rounded-[22px] bg-slate-200 p-1 transition-all`}
       >
-        <div className="relative flex h-full min-h-[125px] flex-col items-center justify-center rounded-[18px] border border-slate-200 bg-[#F7F7F7] p-4 text-center text-[#565959] sm:min-h-[140px]">
-          <div className="mb-3 flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[#E2E8F0] text-[1.2rem] text-[#888C8C] sm:h-[50px] sm:w-[50px] sm:text-[1.4rem]">
+        <div className={`relative flex h-full flex-col items-center justify-center rounded-[18px] border border-slate-200 bg-[#F7F7F7] p-4 text-center text-[#565959] ${lockedHeightClass}`}>
+          <div className={`flex items-center justify-center rounded-full bg-[#E2E8F0] text-[#888C8C] ${lockedIconClass}`}>
             {icon}
           </div>
-          <div className="text-[0.85rem] font-extrabold sm:text-[0.95rem]">
+          <div className={titleClass}>
             {title}
           </div>
           {subtitle && (
-            <div className="mt-1 text-[0.7rem] font-semibold sm:text-[0.75rem]">
+            <div className={subtitleClass}>
               {subtitle}
             </div>
           )}
@@ -751,9 +796,9 @@ function DashCard({ title, subtitle, icon, colorClass, badge, isLocked, onClick 
   return (
     <div
       onClick={onClick}
-      className="cursor-pointer rounded-[22px] bg-pink-200 p-1 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:bg-pink-300 hover:shadow-[0_8px_16px_rgba(219,39,119,0.15)]"
+      className={`${outerClass} cursor-pointer rounded-[22px] bg-pink-200 p-1 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:bg-pink-300 hover:shadow-[0_8px_16px_rgba(219,39,119,0.15)]`}
     >
-      <div className="relative flex h-full min-h-[125px] flex-col items-center justify-center rounded-[18px] border border-pink-100 bg-white p-4 text-center sm:min-h-[140px]">
+      <div className={`relative flex h-full flex-col items-center justify-center rounded-[18px] border border-pink-100 bg-white p-4 text-center ${activeHeightClass}`}>
         {badge > 0 && (
           <div className="absolute right-3 top-3 flex h-6 min-w-[24px] animate-[popIn_0.4s_cubic-bezier(0.175,0.885,0.32,1.275)_forwards] items-center justify-center rounded-full border-2 border-white bg-[#DC2626] px-1.5 text-[0.75rem] font-extrabold text-white shadow-[0_2px_6px_rgba(220,38,38,0.5)]">
             {badge}
@@ -761,17 +806,17 @@ function DashCard({ title, subtitle, icon, colorClass, badge, isLocked, onClick 
         )}
 
         <div
-          className={`mb-3 flex h-[42px] w-[42px] items-center justify-center rounded-full text-[1.2rem] sm:h-[50px] sm:w-[50px] sm:text-[1.4rem] ${colorClass}`}
+          className={`flex items-center justify-center rounded-full ${activeIconClass} ${colorClass}`}
         >
           {icon}
         </div>
 
-        <div className="text-[0.85rem] font-extrabold text-[#0F1111] sm:text-[0.95rem]">
+        <div className={`${titleClass} text-[#0F1111]`}>
           {title}
         </div>
 
         {subtitle && (
-          <div className="mt-1 text-[0.7rem] font-semibold text-[#565959] sm:text-[0.75rem]">
+          <div className={`${subtitleClass} text-[#565959]`}>
             {subtitle}
           </div>
         )}
