@@ -224,6 +224,43 @@ export async function fetchStaffDiscoveries() {
 const DASHBOARD_BASE_TTL = 1000 * 60 * 60 * 24 // 24 hours for categories, etc.
 const DASHBOARD_DYNAMIC_TTL = 1000 * 60 * 15 // 15 mins for shops/products
 
+function normalizeNotificationMinute(value) {
+  if (!value) return ""
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return String(value).slice(0, 16)
+  }
+
+  date.setSeconds(0, 0)
+  return date.toISOString()
+}
+
+export function dedupeDashboardNotifications(items = []) {
+  const safeItems = Array.isArray(items) ? items : []
+  const seen = new Set()
+  const result = []
+
+  for (const item of safeItems) {
+    if (!item) continue
+
+    const dedupeKey = [
+      item.user_id || "",
+      item.kind || "system",
+      item.title || "",
+      item.message || "",
+      item.action_path || "",
+      normalizeNotificationMinute(item.created_at),
+    ].join("::")
+
+    if (seen.has(dedupeKey)) continue
+    seen.add(dedupeKey)
+    result.push(item)
+  }
+
+  return result
+}
+
 export function buildDashboardBaseCacheKey(cityId) {
   return `dashboard_base_${cityId || "none"}`
 }
@@ -257,6 +294,8 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
     throw error
   }
 
+  const notifications = dedupeDashboardNotifications(data.notifications || [])
+
   // The RPC returns exactly what we need in one object, but we map snake_case to camelCase
   // to maintain compatibility with the existing frontend state.
   return {
@@ -265,9 +304,9 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
     staffDiscoveries: data.staff_discoveries || [],
     fairlyUsedProducts: data.fairly_used_products || [],
     shops: data.shops || [],
-    notifications: data.notifications || [],
+    notifications,
     wishlistCount: data.wishlist_count || 0,
-    unread: data.unread_notifications || 0,
+    unread: notifications.filter((item) => !item.is_read).length,
     products: data.products || []
   }
 }

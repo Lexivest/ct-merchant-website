@@ -17,6 +17,7 @@ import { signOutUser } from "../lib/auth"
 import {
   buildDashboardBaseCacheKey,
   buildDashboardDynamicCacheKey,
+  dedupeDashboardNotifications,
   fetchDashboardBaseData,
   fetchDashboardDynamicData,
 } from "../lib/dashboardData"
@@ -300,6 +301,7 @@ function UserDashboard() {
       dependencies: [cityId],
       ttl: 1000 * 60 * 60 * 24, // 24 hours for stable data
       persist: "session",
+      revalidateOnMount: true,
       skip: !profileLoaded
     }
   )
@@ -318,22 +320,31 @@ function UserDashboard() {
       dependencies: [user?.id, cityId],
       ttl: 1000 * 60 * 15, // 15 mins for dynamic data
       persist: "session",
+      revalidateOnMount: true,
       skip: !profileLoaded
     }
   )
 
   const [localData, setLocalData] = useState(() => {
-    if (prefetchedDashboardData) return prefetchedDashboardData
+    if (prefetchedDashboardData) {
+      return {
+        ...prefetchedDashboardData,
+        notifications: dedupeDashboardNotifications(prefetchedDashboardData.notifications || []),
+        unread: dedupeDashboardNotifications(prefetchedDashboardData.notifications || []).filter((item) => !item.is_read).length,
+      }
+    }
     
     // Attempt to merge from separate caches if present
     const b = readCachedFetchStore(baseCacheKey)?.data
     const d = readCachedFetchStore(dynamicCacheKey)?.data
     if (b && d) {
+      const nextNotifications = dedupeDashboardNotifications(d.notifications || [])
       return { 
         ...EMPTY_DASHBOARD_DATA, 
         ...b, 
-        ...d, 
-        unread: (d.notifications || []).filter(n => !n.is_read).length 
+        ...d,
+        notifications: nextNotifications,
+        unread: nextNotifications.filter((item) => !item.is_read).length,
       }
     }
     return EMPTY_DASHBOARD_DATA
@@ -354,7 +365,7 @@ function UserDashboard() {
     if (baseData || dynamicData) {
       setLocalData((prev) => {
         const isNotificationsTab = activeTab === "notifications"
-        const nextNotifications = dynamicData?.notifications || prev.notifications
+        const nextNotifications = dedupeDashboardNotifications(dynamicData?.notifications || prev.notifications)
         const nextUnread = isNotificationsTab ? 0 : (nextNotifications || []).filter((item) => !item.is_read).length
 
         return {
@@ -362,6 +373,7 @@ function UserDashboard() {
           profile: profile || prev.profile,
           ...(baseData || {}),
           ...(dynamicData || {}),
+          notifications: nextNotifications,
           unread: nextUnread,
         }
       })
@@ -548,13 +560,13 @@ function UserDashboard() {
     // Sync to cache to prevent stale reload
     if (dynamicCacheKey) {
       const currentCache = readCachedFetchStore(dynamicCacheKey)
-      if (currentCache?.data) {
-        primeCachedFetchStore(dynamicCacheKey, {
-          ...currentCache.data,
-          notifications: nextNotifications,
-        })
+        if (currentCache?.data) {
+          primeCachedFetchStore(dynamicCacheKey, {
+            ...currentCache.data,
+            notifications: dedupeDashboardNotifications(nextNotifications),
+          })
+        }
       }
-    }
 
     await supabase
       .from("notifications")
@@ -815,6 +827,7 @@ function UserDashboard() {
               } else if (payload.eventType === 'DELETE') {
                 nextNotifications = nextNotifications.filter(n => n.id !== payload.old.id)
               }
+              nextNotifications = dedupeDashboardNotifications(nextNotifications)
               
               return {
                 ...prev,

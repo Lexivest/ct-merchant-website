@@ -274,6 +274,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
     persist = null,
     skip = false,
     keepPreviousData = false,
+    revalidateOnMount = false,
   } = options
 
   // Combined state object for atomic updates and consistent renders
@@ -319,6 +320,8 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       const cachedEntry = getCacheEntry(queryKey)
       const isExpired = cachedEntry && (Date.now() - cachedEntry.timestamp > ttl)
       const offline = isNetworkOffline()
+      const shouldRevalidateCachedEntry =
+        !force && revalidateOnMount && cachedEntry && !isExpired && !offline
 
       // 1. Skip if data is fresh and not forced
       if (!force && cachedEntry && !isExpired) {
@@ -334,10 +337,13 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
             loading: false, 
             error: null, 
             isOffline: offline,
-            isRevalidating: false,
+            isRevalidating: shouldRevalidateCachedEntry,
           }))
         }
-        return
+
+        if (!shouldRevalidateCachedEntry) {
+          return
+        }
       }
 
       // 2. Handle Offline
@@ -414,7 +420,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       window.removeEventListener("online", handleOnline)
       activeFetchers.delete(queryKey)
     }
-  }, [dependencySignal, keepPreviousData, persistMode, queryKey, skip, ttl])
+  }, [dependencySignal, keepPreviousData, persistMode, queryKey, revalidateOnMount, skip, ttl])
 
   const mutate = useCallback(() => {
     const fetcher = activeFetchers.get(queryKey)
