@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react"
-import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom"
+import { Routes, Route, Link, Navigate, useLocation, useNavigate } from "react-router-dom"
 
 import useAuthSession, { primeAuthSessionState } from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
@@ -15,6 +15,7 @@ import Home from "./pages/Home"
 import { forceFreshAppReload, isChunkLoadFailure } from "./lib/runtimeRecovery"
 import { buildStaffAuthProfile, resolveStaffAccess } from "./lib/staffAuth"
 import { useNetworkStatus } from "./lib/networkStatus"
+import PageSeo from "./components/common/PageSeo"
 
 function ChunkRouteFallback({ pageLabel = "this page" }) {
   const { isOffline } = useNetworkStatus()
@@ -288,19 +289,26 @@ function RouteLoadingScreen({
 
 function NotFoundPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6 text-center">
-      <h1 className="mb-4 text-6xl font-black text-pink-600">404</h1>
-      <h2 className="mb-2 text-2xl font-bold text-slate-900">Page Not Found</h2>
-      <p className="mb-8 max-w-md text-slate-500">
-        The page you are looking for does not exist or may have moved.
-      </p>
-      <Link
-        to="/"
-        className="rounded-xl bg-pink-600 px-6 py-3 font-bold text-white transition hover:bg-pink-700"
-      >
-        Return Home
-      </Link>
-    </div>
+    <>
+      <PageSeo
+        title="Page Not Found | CTMerchant"
+        description="The page you requested could not be found on CTMerchant."
+        noindex={true}
+      />
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6 text-center">
+        <h1 className="mb-4 text-6xl font-black text-pink-600">404</h1>
+        <h2 className="mb-2 text-2xl font-bold text-slate-900">Page Not Found</h2>
+        <p className="mb-8 max-w-md text-slate-500">
+          The page you are looking for does not exist or may have moved.
+        </p>
+        <Link
+          to="/"
+          className="rounded-xl bg-pink-600 px-6 py-3 font-bold text-white transition hover:bg-pink-700"
+        >
+          Return Home
+        </Link>
+      </div>
+    </>
   )
 }
 
@@ -332,6 +340,191 @@ function SuspendedAccountGate({ onLogout }) {
         </div>
       </div>
     </div>
+  )
+}
+
+function getRouteMeta(pathname) {
+  const routeMeta = {
+    "/staff-portal": {
+      title: "Staff Portal | CTMerchant",
+      description: "Secure staff access portal for CTMerchant operations.",
+      noindex: true,
+    },
+    "/staff-dashboard": {
+      title: "Staff Dashboard | CTMerchant",
+      description: "Monitor CTMerchant marketplace operations, reviews, payments, and moderation activity.",
+      noindex: true,
+    },
+    "/staff-traffic": {
+      title: "Staff Traffic Monitor | CTMerchant",
+      description: "Review traffic, market performance, and operational trends across CTMerchant.",
+      noindex: true,
+    },
+    "/staff-users": {
+      title: "Staff User Control | CTMerchant",
+      description: "Manage merchant accounts, user status, and platform access controls.",
+      noindex: true,
+    },
+    "/staff-community": {
+      title: "Staff Community Moderation | CTMerchant",
+      description: "Review community discussions, moderation actions, and merchant interactions.",
+      noindex: true,
+    },
+    "/staff-verifications": {
+      title: "Staff Verifications | CTMerchant",
+      description: "Handle shop applications, KYC reviews, and merchant approval workflows.",
+      noindex: true,
+    },
+    "/staff-payments": {
+      title: "Staff Payments | CTMerchant",
+      description: "Manage merchant payment proofs, subscription renewals, and verification fee reviews.",
+      noindex: true,
+    },
+    "/staff-city-banners": {
+      title: "Featured City Banners Studio | CTMerchant",
+      description: "Create and manage featured city banners for the CTMerchant marketplace.",
+      noindex: true,
+    },
+    "/staff-sponsored-products": {
+      title: "Sponsored Products Studio | CTMerchant",
+      description: "Control sponsored product visibility and campaign placements in CTMerchant.",
+      noindex: true,
+    },
+    "/staff-discoveries": {
+      title: "Market Discoveries Control | CTMerchant",
+      description: "Manage merchant discovery content and featured marketplace stories.",
+      noindex: true,
+    },
+    "/staff-issue-id": {
+      title: "ID Generator | CTMerchant",
+      description: "Generate marketplace identity materials for CTMerchant staff operations.",
+      noindex: true,
+    },
+    "/staff-studio": {
+      title: "Staff Studio | CTMerchant",
+      description: "Prepare marketplace media assets and visuals for CTMerchant operations.",
+      noindex: true,
+    },
+    "/staff-inbox": {
+      title: "Staff Inbox | CTMerchant",
+      description: "Track marketplace messages, escalations, and operational follow-ups.",
+      noindex: true,
+    },
+    "/staff-security-radar": {
+      title: "Security Radar | CTMerchant",
+      description: "Watch login threats, account risk, and platform security signals.",
+      noindex: true,
+    },
+    "/staff-products": {
+      title: "Product Moderation | CTMerchant",
+      description: "Review marketplace products and moderation decisions across CTMerchant.",
+      noindex: true,
+    },
+    "/staff-shop-content": {
+      title: "Shop Content Moderation | CTMerchant",
+      description: "Moderate banners, shop content, and merchant-facing marketplace assets.",
+      noindex: true,
+    },
+    "/staff-announcements": {
+      title: "City Announcements | CTMerchant",
+      description: "Manage marketplace announcements and city-level merchant messages.",
+      noindex: true,
+    },
+    "/staff-notifications": {
+      title: "Targeted Notifications | CTMerchant",
+      description: "Compose and send targeted operational notifications to merchants and users.",
+      noindex: true,
+    },
+    "/user-dashboard": {
+      title: "Your Dashboard | CTMerchant",
+      description: "Manage your account, notifications, wishlist, and marketplace activity on CTMerchant.",
+      noindex: true,
+    },
+    "/vendor-panel": {
+      title: "Merchant Dashboard | CTMerchant",
+      description: "Manage your shop, products, verification, banners, and merchant tools on CTMerchant.",
+      noindex: true,
+    },
+    "/shop-registration": {
+      title: "Shop Registration | CTMerchant",
+      description: "Submit and manage your merchant application to join the CTMerchant marketplace.",
+      noindex: true,
+    },
+    "/remita": {
+      title: "Physical Verification Fee | CTMerchant",
+      description: "Upload verification payment proof and continue your merchant verification journey.",
+      noindex: true,
+    },
+    "/merchant-video-kyc": {
+      title: "Video KYC | CTMerchant",
+      description: "Complete merchant video verification securely inside CTMerchant.",
+      noindex: true,
+    },
+    "/merchant-promo-banner": {
+      title: "Promo Banner Studio | CTMerchant",
+      description: "Create approved promotional banner assets for your CTMerchant shop.",
+      noindex: true,
+    },
+    "/merchant-settings": {
+      title: "Shop Settings | CTMerchant",
+      description: "Update your shop profile, contact details, and merchant preferences.",
+      noindex: true,
+    },
+    "/merchant-banner": {
+      title: "Shop Banner Studio | CTMerchant",
+      description: "Generate and manage your approved shop banner for CTMerchant.",
+      noindex: true,
+    },
+    "/merchant-products": {
+      title: "Merchant Products | CTMerchant",
+      description: "Review and manage the products listed in your CTMerchant shop.",
+      noindex: true,
+    },
+    "/merchant-edit-product": {
+      title: "Edit Product | CTMerchant",
+      description: "Update your product details, price, images, and availability.",
+      noindex: true,
+    },
+    "/merchant-add-product": {
+      title: "Add Product | CTMerchant",
+      description: "Add a new product to your CTMerchant shop with images and pricing details.",
+      noindex: true,
+    },
+    "/service-fee": {
+      title: "Service Fee Portal | CTMerchant",
+      description: "Manage your service fee payment, subscription plan, and renewal proof.",
+      noindex: true,
+    },
+    "/merchant-analytics": {
+      title: "Merchant Analytics | CTMerchant",
+      description: "Track shop performance, visibility, and marketplace activity for your business.",
+      noindex: true,
+    },
+    "/merchant-news": {
+      title: "Shop News Studio | CTMerchant",
+      description: "Publish shop updates and marketplace news for your customers on CTMerchant.",
+      noindex: true,
+    },
+  }
+
+  return routeMeta[pathname] || null
+}
+
+function RouteMetaFallback() {
+  const location = useLocation()
+  const routeMeta = getRouteMeta(location.pathname)
+
+  if (!routeMeta) {
+    return null
+  }
+
+  return (
+    <PageSeo
+      title={routeMeta.title}
+      description={routeMeta.description}
+      canonicalPath={location.pathname + location.search}
+      noindex={routeMeta.noindex}
+    />
   )
 }
 
@@ -507,6 +700,7 @@ function AppShell() {
       }
     >
       <SiteVisitTracker />
+      <RouteMetaFallback />
       <Routes>
         {/* PUBLIC ROUTES */}
         <Route path="/" element={<Home />} />

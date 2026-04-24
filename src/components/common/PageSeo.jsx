@@ -1,5 +1,12 @@
 import { useEffect } from "react"
 
+const SITE_NAME = "CTMerchant"
+const SITE_ORIGIN = "https://www.ctmerchant.com.ng"
+const DEFAULT_TITLE = "CTMerchant | Repository of Shops, Products and Services"
+const DEFAULT_DESCRIPTION =
+  "CTMerchant is a trusted repository of verified physical shops, products, and services. Discover local merchants, browse city directories, and manage your storefront."
+const DEFAULT_IMAGE = "/ctm-logo.jpg"
+
 function setMeta(selector, attributes = {}) {
   if (typeof document === "undefined") return
 
@@ -42,11 +49,24 @@ function resolveCanonical(canonicalPath) {
   }
 }
 
+function resolveAbsoluteUrl(value, fallback = "") {
+  if (!value) return fallback
+
+  try {
+    if (typeof window !== "undefined") {
+      return new URL(value, window.location.origin).toString()
+    }
+    return new URL(value, SITE_ORIGIN).toString()
+  } catch {
+    return fallback
+  }
+}
+
 function PageSeo({
   title,
   description,
   canonicalPath,
-  image = "/ctm-logo.jpg",
+  image = DEFAULT_IMAGE,
   noindex = false,
   type = "website",
   structuredData,
@@ -54,13 +74,26 @@ function PageSeo({
   useEffect(() => {
     if (typeof document === "undefined") return undefined
 
-    if (title) document.title = title
-
+    const resolvedTitle = title || DEFAULT_TITLE
+    const resolvedDescription = description || DEFAULT_DESCRIPTION
     const canonicalUrl = resolveCanonical(canonicalPath)
+    const resolvedImage = resolveAbsoluteUrl(image || DEFAULT_IMAGE, `${SITE_ORIGIN}${DEFAULT_IMAGE}`)
     const robots = noindex ? "noindex, nofollow" : "index, follow"
 
-    setMeta('meta[name="description"]', { name: "description", content: description })
+    document.title = resolvedTitle
+
+    setMeta('meta[name="description"]', { name: "description", content: resolvedDescription })
     setMeta('meta[name="robots"]', { name: "robots", content: robots })
+    setMeta('meta[property="og:title"]', { property: "og:title", content: resolvedTitle })
+    setMeta('meta[property="og:description"]', { property: "og:description", content: resolvedDescription })
+    setMeta('meta[property="og:type"]', { property: "og:type", content: type || "website" })
+    setMeta('meta[property="og:url"]', { property: "og:url", content: canonicalUrl })
+    setMeta('meta[property="og:image"]', { property: "og:image", content: resolvedImage })
+    setMeta('meta[property="og:site_name"]', { property: "og:site_name", content: SITE_NAME })
+    setMeta('meta[name="twitter:card"]', { name: "twitter:card", content: "summary_large_image" })
+    setMeta('meta[name="twitter:title"]', { name: "twitter:title", content: resolvedTitle })
+    setMeta('meta[name="twitter:description"]', { name: "twitter:description", content: resolvedDescription })
+    setMeta('meta[name="twitter:image"]', { name: "twitter:image", content: resolvedImage })
     setLink('link[rel="canonical"]', { rel: "canonical", href: canonicalUrl })
 
     // Structured Data (JSON-LD)
