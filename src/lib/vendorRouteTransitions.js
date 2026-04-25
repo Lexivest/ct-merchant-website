@@ -393,10 +393,10 @@ async function prepareMerchantSettingsData({ userId, shopId }) {
 
 async function prepareMerchantNewsData({ userId, shopId }) {
   await fetchProfileSuspension(userId)
-  const shop = await fetchOwnedShop(userId, shopId, "id, subscription_end_date")
+  const shop = await fetchOwnedShop(userId, shopId, "id, status")
 
-  if (!isFutureDate(shop.subscription_end_date)) {
-    throw new Error("Activate your service plan before opening your shop news tools.")
+  if (shop.status !== "approved") {
+    throw new Error("Your shop must be approved before opening your shop news tools.")
   }
 
   const { data: newsData, error } = await supabase

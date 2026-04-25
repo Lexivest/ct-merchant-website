@@ -874,14 +874,19 @@ function VendorsPanel() {
             title="Post News"
             icon={<FaBullhorn />}
             colorClass="bg-[#FEE2E2] text-[#DC2626]"
-            isLocked={!isSubscriptionActive}
+            isLocked={!isApplicationApproved || isSuspended}
             onClick={
-              isSubscriptionActive
+              isApplicationApproved && !isSuspended
                 ? () => handleCardClick(`/merchant-news?shop_id=${activeShop.id}`)
                 : () =>
-                    showSubscriptionRequired(
-                      "An active service plan is required before you can publish shop news."
-                    )
+                    notify({
+                      type: "error",
+                      title: isSuspended ? "Shop restricted" : "Approval required",
+                      message:
+                        isSuspended
+                          ? "Your shop access has been restricted by administration."
+                          : "Your shop must be approved before you can publish shop news.",
+                    })
             }
           />
 
