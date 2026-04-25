@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useLocation, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   FaArrowDown,
   FaArrowRight,
@@ -1368,13 +1368,13 @@ function Home() {
 
                         <p className="px-2 text-center text-[0.75rem] leading-relaxed text-slate-500">
                           By continuing with Google, you agree to CTMerchant's{' '}
-                          <a href="/terms" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">
+                          <Link to="/terms" className="font-semibold text-slate-600 underline transition hover:text-pink-600">
                             Terms of Use
-                          </a>{' '}
+                          </Link>{' '}
                           and{' '}
-                          <a href="/privacy" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">
+                          <Link to="/privacy" className="font-semibold text-slate-600 underline transition hover:text-pink-600">
                             Privacy Policy
-                          </a>
+                          </Link>
                           .
                         </p>
 

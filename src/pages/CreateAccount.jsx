@@ -538,7 +538,7 @@ function CreateAccount() {
                 
                 <p className="mt-1 px-2 text-center text-[0.75rem] leading-relaxed text-slate-500">
                   By continuing with Google, you agree to CTMerchant's <br className="hidden sm:block"/>
-                  <a href="/terms" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Terms of Use</a> and <a href="/privacy" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Privacy Policy</a>.
+                  <Link to="/terms" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Terms of Use</Link> and <Link to="/privacy" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Privacy Policy</Link>.
                 </p>
               </div>
 
@@ -627,7 +627,7 @@ function CreateAccount() {
                   </AuthButton>
                   <p className="mt-3 text-center text-[0.75rem] leading-relaxed text-slate-500">
                     By clicking Create Account, you agree to our <br className="hidden sm:block"/>
-                    <a href="/terms" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Terms of Use</a> and <a href="/privacy" target="_blank" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Privacy Policy</a>.
+                    <Link to="/terms" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Terms of Use</Link> and <Link to="/privacy" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Privacy Policy</Link>.
                   </p>
                 </div>
               </form>
