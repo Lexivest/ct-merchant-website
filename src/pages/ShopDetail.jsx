@@ -86,6 +86,111 @@ function ShopSectionFallback({ title, body }) {
   )
 }
 
+function formatPrice(value) {
+  if (value === null || value === undefined || value === "") return ""
+  return `₦${Number(value).toLocaleString()}`
+}
+
+function ShopDetailProductCard({ product, onOpenProduct }) {
+  const hasDiscount = product.discount_price && Number(product.discount_price) < Number(product.price)
+  const percent = hasDiscount
+    ? Math.round(((Number(product.price) - Number(product.discount_price)) / Number(product.price)) * 100)
+    : 0
+  const priceClass = hasDiscount ? "prod-price flash-price" : "prod-price"
+  const images = useMemo(
+    () => [product.image_url, product.image_url_2, product.image_url_3].filter(Boolean),
+    [product.image_url, product.image_url_2, product.image_url_3]
+  )
+  const shouldRotate = hasDiscount && images.length > 1
+  const [activeImageIndex, setActiveImageIndex] = useState(0)
+
+  useEffect(() => {
+    if (!shouldRotate) return undefined
+
+    const intervalId = window.setInterval(() => {
+      setActiveImageIndex((current) => (current + 1) % images.length)
+    }, 3000)
+
+    return () => window.clearInterval(intervalId)
+  }, [images.length, shouldRotate])
+
+  return (
+    <div
+      className="product-card relative flex cursor-pointer flex-col transition hover:-translate-y-1 hover:opacity-90"
+      onClick={() => onOpenProduct(product.id)}
+    >
+      <div className="prod-img-wrap relative aspect-square w-full overflow-hidden bg-white">
+        {images.length ? (
+          images.map((imageUrl, index) => (
+            <div
+              key={`${product.id}-${imageUrl}-${index}`}
+              className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+                index === activeImageIndex || !shouldRotate
+                  ? "opacity-100 scale-100"
+                  : "pointer-events-none opacity-0 scale-110"
+              }`}
+            >
+              <StableImage
+                src={imageUrl}
+                alt={product.name}
+                containerClassName="h-full w-full bg-white"
+                className="prod-img h-full w-full object-contain transition duration-300 hover:scale-105"
+              />
+            </div>
+          ))
+        ) : (
+          <StableImage
+            src={product.image_url}
+            alt={product.name}
+            containerClassName="h-full w-full bg-white"
+            className="prod-img h-full w-full object-contain transition duration-300 hover:scale-105"
+          />
+        )}
+        {hasDiscount ? (
+          <span className="badge badge-discount flash-offer absolute left-1 top-1 z-[2] rounded bg-red-600 px-2 py-1 text-[0.65rem] font-extrabold text-white">
+            -{percent}%
+          </span>
+        ) : null}
+        {product.condition === "Fairly Used" ? (
+          <span className="badge badge-used absolute right-1 top-1 z-[2] rounded bg-orange-600 px-2 py-1 text-[0.65rem] font-extrabold text-white">
+            Fairly Used
+          </span>
+        ) : null}
+        {shouldRotate ? (
+          <div className="absolute bottom-2 left-0 right-0 z-[2] flex justify-center gap-1">
+            {images.map((_, index) => (
+              <span
+                key={`${product.id}-dot-${index}`}
+                className={`h-1 rounded-full transition-all duration-500 ${
+                  index === activeImageIndex ? "w-4 bg-slate-800/80" : "w-1 bg-slate-300/90"
+                }`}
+              />
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="prod-info flex flex-1 flex-col px-1 pt-3">
+        <div className="prod-name mb-1 line-clamp-2 text-[0.85rem] font-bold leading-[1.3] text-[#0F1111]" title={product.name}>
+          {product.name}
+        </div>
+        <div className={`${priceClass} mt-auto text-[1.05rem] font-extrabold text-pink-600`}>
+          {hasDiscount ? (
+            <>
+              <span className="prod-old-price mr-1 text-[0.75rem] font-medium text-slate-400 line-through">
+                {formatPrice(product.price)}
+              </span>
+              {formatPrice(product.discount_price)}
+            </>
+          ) : (
+            formatPrice(product.price)
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ShopDetail() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -478,7 +583,7 @@ function ShopDetail() {
     window.open(formattedUrl, "_blank", "noopener,noreferrer")
   }
 
-  function formatPrice(value) {
+  function _formatPrice(value) {
     if (value === null || value === undefined || value === "") return ""
     return `₦${Number(value).toLocaleString()}`
   }
@@ -566,55 +671,12 @@ function ShopDetail() {
   }
 
   function renderProductCard(product) {
-    const hasDiscount = product.discount_price && Number(product.discount_price) < Number(product.price)
-    const percent = hasDiscount
-      ? Math.round(((Number(product.price) - Number(product.discount_price)) / Number(product.price)) * 100)
-      : 0
-    const priceClass = hasDiscount ? "prod-price flash-price" : "prod-price"
-
     return (
-      <div
+      <ShopDetailProductCard
         key={product.id}
-        className="product-card relative flex cursor-pointer flex-col transition hover:-translate-y-1 hover:opacity-90"
-        onClick={() => openProductWithTransition(product.id)}
-      >
-        <div className="prod-img-wrap relative aspect-square w-full overflow-hidden bg-white">
-          <StableImage
-            src={product.image_url}
-            alt={product.name}
-            containerClassName="h-full w-full bg-white"
-            className="prod-img h-full w-full object-contain transition duration-300 hover:scale-105"
-          />
-          {hasDiscount ? (
-            <span className="badge badge-discount flash-offer absolute left-1 top-1 z-[2] rounded bg-red-600 px-2 py-1 text-[0.65rem] font-extrabold text-white">
-              -{percent}%
-            </span>
-          ) : null}
-          {product.condition === "Fairly Used" ? (
-            <span className="badge badge-used absolute right-1 top-1 z-[2] rounded bg-orange-600 px-2 py-1 text-[0.65rem] font-extrabold text-white">
-              Fairly Used
-            </span>
-          ) : null}
-        </div>
-
-        <div className="prod-info flex flex-1 flex-col px-1 pt-3">
-          <div className="prod-name mb-1 line-clamp-2 text-[0.85rem] font-bold leading-[1.3] text-[#0F1111]" title={product.name}>
-            {product.name}
-          </div>
-          <div className={`${priceClass} mt-auto text-[1.05rem] font-extrabold text-pink-600`}>
-            {hasDiscount ? (
-              <>
-                <span className="prod-old-price mr-1 text-[0.75rem] font-medium text-slate-400 line-through">
-                  {formatPrice(product.price)}
-                </span>
-                {formatPrice(product.discount_price)}
-              </>
-            ) : (
-              formatPrice(product.price)
-            )}
-          </div>
-        </div>
-      </div>
+        product={product}
+        onOpenProduct={openProductWithTransition}
+      />
     )
   }
 
