@@ -528,17 +528,20 @@ async function prepareMerchantVideoKYCData({ userId }) {
     throw new Error("Your shop must be digitally approved before you can submit video KYC.")
   }
 
+  if (shop.kyc_status === "submitted") {
+    throw new Error("Your video KYC is already under review.")
+  }
+
   const verificationAccess = await fetchVerificationAccessStatus({
     userId,
     shopId: shop.id,
     shopCreatedAt: shop.created_at,
   })
-  const hasVerificationAccess =
+  const canRecordVideoKyc =
     verificationAccess.paymentConfirmed ||
-    shop.kyc_status === "submitted" ||
     shop.kyc_status === "rejected"
 
-  if (!hasVerificationAccess) {
+  if (!canRecordVideoKyc) {
     throw new Error("Complete your physical verification payment step before recording video KYC.")
   }
 

@@ -104,6 +104,41 @@ function normalizePositiveId(value) {
   return String(parsed)
 }
 
+function inferDashboardNotificationKind(item) {
+  const explicitKind = String(item?.kind || "").trim().toLowerCase()
+  if (explicitKind) return explicitKind
+
+  const title = String(item?.title || "").toLowerCase()
+  const message = String(item?.message || "").toLowerCase()
+  const combined = `${title} ${message}`
+
+  if (combined.includes("service fee")) {
+    return combined.includes("needs attention") || combined.includes("could not confirm")
+      ? "service_fee_rejected"
+      : "service_fee_confirmed"
+  }
+
+  if (combined.includes("verification fee") || combined.includes("verification payment") || combined.includes("promo code")) {
+    return combined.includes("needs attention") || combined.includes("could not confirm")
+      ? "verification_payment_rejected"
+      : "verification_payment_confirmed"
+  }
+
+  if (combined.includes("video kyc")) {
+    return combined.includes("needs attention") || combined.includes("not approved")
+      ? "kyc_rejected"
+      : "kyc_approved"
+  }
+
+  if (combined.includes("shop application")) {
+    return combined.includes("approved") ? "shop_approved" : "shop_rejected"
+  }
+
+  if (combined.includes("verified")) return "kyc_approved"
+
+  return "system"
+}
+
 function DashboardSectionFallback({ label = "Loading section..." }) {
   return (
     <div className="screen active">
@@ -1235,6 +1270,20 @@ function UserDashboard() {
   function openNotificationAction(item) {
     const actionPath = String(item?.action_path || "").trim()
     if (!actionPath) return
+
+    if (actionPath.startsWith("/merchant-video-kyc")) {
+      const notificationKind = inferDashboardNotificationKind(item)
+      const currentKycStatus = String(shopData?.kyc_status || "").trim().toLowerCase()
+      const alreadyClosedKycFlow =
+        Boolean(shopData?.is_verified) ||
+        currentKycStatus === "submitted" ||
+        currentKycStatus === "approved"
+
+      if (notificationKind === "kyc_approved" || alreadyClosedKycFlow) {
+        void openDashboardRouteWithTransition("/vendor-panel")
+        return
+      }
+    }
 
     const isVendorFlow =
       actionPath === "/vendor-panel" ||

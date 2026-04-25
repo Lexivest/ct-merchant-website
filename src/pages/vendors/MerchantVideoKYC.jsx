@@ -323,11 +323,6 @@ export default function MerchantVideoKYC() {
           shopCreatedAt: shop.created_at,
         });
 
-        const hasVerificationAccess =
-          verificationAccess.paymentConfirmed ||
-          shop.kyc_status === "submitted" ||
-          shop.kyc_status === "rejected";
-
         if (shop.is_verified) {
           notify({ kind: "toast", type: "info", title: "Already approved", message: "Your shop has already completed this verification step." });
           navigate("/vendor-panel", { replace: true });
@@ -345,7 +340,22 @@ export default function MerchantVideoKYC() {
           return;
         }
 
-        if (!hasVerificationAccess) {
+        if (shop.kyc_status === "submitted") {
+          notify({
+            kind: "toast",
+            type: "info",
+            title: "KYC in review",
+            message: "Your video KYC is already under review. We will notify you once approved.",
+          });
+          navigate("/vendor-panel", { replace: true });
+          return;
+        }
+
+        const canRecordVideoKyc =
+          verificationAccess.paymentConfirmed ||
+          shop.kyc_status === "rejected";
+
+        if (!canRecordVideoKyc) {
           notify({
             kind: "toast",
             type: "info",
