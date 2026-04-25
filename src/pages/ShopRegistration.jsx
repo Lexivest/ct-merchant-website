@@ -587,6 +587,41 @@ function ShopRegistration() {
     () => buildCameraProfile(cameraCapture.ratio),
     [cameraCapture.ratio],
   )
+  const onboardingSteps = useMemo(
+    () => [
+      {
+        step: "01",
+        title: "Submit Application",
+        desc: "Fill in your shop details, location, and verification documents.",
+        icon: <FaFileContract />,
+      },
+      {
+        step: "02",
+        title: "Approval & Product Catalog",
+        desc: "Once approved, upload at least 5 products to activate your storefront.",
+        icon: <FaBoxOpen />,
+      },
+      {
+        step: "03",
+        title: "Verification Payment",
+        desc: "Pay â‚¦5,000 verification fee or redeem a promo code for your badge.",
+        icon: <FaShieldHalved />,
+      },
+      {
+        step: "04",
+        title: "Video Verification",
+        desc: "Submit a 1-minute video showing your shop signboard, interior, and products.",
+        icon: <FaCamera />,
+      },
+      {
+        step: "05",
+        title: "Final Activation",
+        desc: "Get verified and start reaching thousands of customers in your city.",
+        icon: <FaCheck />,
+      },
+    ],
+    [],
+  )
 
   useEffect(() => {
     if (!data || hasHydrated || !shopDraftKey) return
@@ -1296,44 +1331,48 @@ function ShopRegistration() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-black uppercase tracking-[0.22em] text-pink-600">
-                Profile Identity
+                {hasUploadedProfileAvatar ? "Profile Picture" : "Profile Picture Required"}
               </p>
-              <h2 className="mt-1 text-lg font-black text-slate-900">
-                {hasUploadedProfileAvatar ? "Your current avatar is ready for review" : "Add a clear profile avatar before submission"}
-              </h2>
-              <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
-                Staff use this photo to match your merchant identity during approval and verification.
-              </p>
+              <div className="mt-1 flex items-center gap-2">
+                <h2 className="text-lg font-black text-slate-900">
+                  {hasUploadedProfileAvatar ? "Ready" : "Required"}
+                </h2>
+                {hasUploadedProfileAvatar ? (
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                    <FaCheck className="text-xs" />
+                  </span>
+                ) : null}
+              </div>
             </div>
             <button
               type="button"
               onClick={() => navigate("/user-dashboard?tab=profile")}
               className="shrink-0 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
             >
-              Update
+              {hasUploadedProfileAvatar ? "Update" : "Add"}
             </button>
           </div>
 
           <div className="space-y-4">
-            {[
-              { 
-                step: "01", 
-                title: "Upload Profile Picture", 
-                desc: "Provide a clear photo of yourself for your merchant profile.",
-                icon: <FaCamera />
-              },
-              { 
-                step: "02", 
-                title: "Submit Application", 
-                desc: "Fill in your shop details, location, and verification documents.",
-                icon: <FaFileContract />
-              },
-              { 
-                step: "03", 
-                title: "Approval & Product Catalog", 
-                desc: "Once approved, upload at least 5 products to activate your storefront.",
-                icon: <FaBoxOpen />
-              },
+            {onboardingSteps.map((item) => (
+              <div
+                key={item.step}
+                className="group relative flex items-start gap-5 rounded-[32px] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.07)] transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_24px_60px_rgba(15,23,42,0.1)]"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-xl text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                  {item.icon}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 group-hover:text-indigo-700">Step {item.step}</span>
+                    <div className="h-1 w-1 rounded-full bg-slate-300" />
+                    <h3 className="text-lg font-extrabold text-slate-900">{item.title}</h3>
+                  </div>
+                  <p className="mt-1 text-[15px] font-medium leading-relaxed text-slate-500">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+            {/*
               { 
                 step: "04", 
                 title: "Verification Payment", 
@@ -1392,7 +1431,7 @@ function ShopRegistration() {
                   </div>
                 ) : null}
               </div>
-            ))}
+            */}
           </div>
 
           <div className="mt-12 space-y-4">
@@ -1401,7 +1440,7 @@ function ShopRegistration() {
               onClick={startRegistrationFlow}
               className="flex h-16 w-full items-center justify-center gap-3 rounded-[24px] bg-[linear-gradient(135deg,#111827_0%,#4f46e5_100%)] text-lg font-black text-white shadow-[0_24px_60px_rgba(79,70,229,0.24)] transition-all hover:brightness-[1.03] active:scale-[0.98]"
             >
-              Accept & Start Registration
+              Start Registration
               <FaArrowRight className="text-sm" />
             </button>
             <button
