@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaAddressBook,
@@ -70,6 +70,13 @@ const ADDR_MAX_WORDS = 50
 const DEFAULT_CAMERA_RATIO = 3 / 4
 const SHOP_DRAFT_SAVE_DELAY = 700
 const SHOP_FILE_KEYS = ["storefront", "idCard", "cac", "logo"]
+const REGISTRATION_VIEW_KEY = "view"
+const FORM_SECTION_CLASS =
+  "rounded-[32px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.98)_100%)] p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] md:p-8"
+const FORM_CONTROL_CLASS =
+  "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-medium text-slate-800 shadow-[0_1px_0_rgba(255,255,255,0.9),0_12px_30px_rgba(15,23,42,0.06)] outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-500 disabled:shadow-none disabled:opacity-70"
+const FORM_CONTROL_WITH_ICON_CLASS =
+  "w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-12 pr-4 text-sm font-medium text-slate-800 shadow-[0_1px_0_rgba(255,255,255,0.9),0_12px_30px_rgba(15,23,42,0.06)] outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-500 disabled:shadow-none disabled:opacity-70"
 const EMPTY_SHOP_FORM = {
   name: "",
   businessType: "Individual/Enterprise",
@@ -191,7 +198,7 @@ function NigeriaPhoneInput({ value, onChange, placeholder, disabled = false }) {
         }}
         placeholder={placeholder}
         disabled={disabled}
-        className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 py-3.5 pl-[104px] pr-4 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all disabled:opacity-60"
+        className={`${FORM_CONTROL_CLASS} pl-[104px]`}
       />
     </div>
   )
@@ -335,7 +342,7 @@ const STEPS = [
 
 function ShopRegistration() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const shopId = searchParams.get("id")
   const isEdit = Boolean(shopId)
   const { notify } = useGlobalFeedback()
@@ -407,7 +414,11 @@ function ShopRegistration() {
   const [reviewOpen, setReviewOpen] = useState(false)
   const [submissionLocked, setSubmissionLocked] = useState(false)
   const [hasHydrated, setHasHydrated] = useState(false)
-  const [showOnboarding, setShowOnboarding] = useState(!isEdit)
+  const registrationView = searchParams.get(REGISTRATION_VIEW_KEY)
+  const hasExplicitRegistrationView = searchParams.has(REGISTRATION_VIEW_KEY)
+  const [showOnboarding, setShowOnboarding] = useState(
+    !isEdit && registrationView !== "form"
+  )
 
   const [categories, setCategories] = useState([])
   const [areas, setAreas] = useState([])
@@ -500,6 +511,67 @@ function ShopRegistration() {
   const logoRuleLabel = getRuleLabel(LOGO_RULE)
   const idRuleLabel = getRuleLabel(ID_DOCUMENT_RULE)
   const cacRuleLabel = getRuleLabel(CAC_DOCUMENT_RULE)
+  const onboardingAvatarUrl =
+    profile?.avatar_url ||
+    `https://api.dicebear.com/7.x/initials/png?seed=${encodeURIComponent(
+      profile?.full_name || "Merchant",
+    )}`
+  const hasUploadedProfileAvatar = Boolean(profile?.avatar_url)
+
+  const updateRegistrationView = useCallback((nextView, { replace = false } = {}) => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set(REGISTRATION_VIEW_KEY, nextView)
+    setSearchParams(nextParams, { replace })
+  }, [searchParams, setSearchParams])
+
+  function openOnboardingScreen() {
+    setShowOnboarding(true)
+    setCurrentStep(0)
+    if (!isEdit) {
+      updateRegistrationView("onboarding")
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  function startRegistrationFlow() {
+    setShowOnboarding(false)
+    if (!isEdit) {
+      updateRegistrationView("form")
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  function handleRegistrationBack() {
+    if (currentStep > 0) {
+      prevStep()
+      return
+    }
+
+    if (!isEdit) {
+      openOnboardingScreen()
+      return
+    }
+
+    navigate("/vendor-panel")
+  }
+
+  useEffect(() => {
+    if (isEdit) return
+    if (searchParams.has(REGISTRATION_VIEW_KEY)) return
+    updateRegistrationView("onboarding", { replace: true })
+  }, [isEdit, searchParams, updateRegistrationView])
+
+  useEffect(() => {
+    if (isEdit) return
+    if (!hasExplicitRegistrationView) return
+
+    const shouldShowOnboarding = registrationView !== "form"
+    setShowOnboarding(shouldShowOnboarding)
+
+    if (shouldShowOnboarding) {
+      setCurrentStep(0)
+    }
+  }, [hasExplicitRegistrationView, isEdit, registrationView])
 
   function getRuleForTargetId(targetId) {
     if (targetId === "storefront") return STOREFRONT_RULE
@@ -1202,14 +1274,44 @@ function ShopRegistration() {
 
   if (showOnboarding) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="mx-auto max-w-3xl px-4 py-12">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,#eef2ff_0%,#f8fafc_34%,#fff7fb_100%)]">
+        <div className="mx-auto max-w-4xl px-4 py-10 md:py-14">
           <div className="mb-10 text-center">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-indigo-600 text-3xl text-white shadow-xl shadow-indigo-100">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-[linear-gradient(135deg,#4f46e5_0%,#db2777_100%)] text-3xl text-white shadow-[0_24px_60px_rgba(79,70,229,0.28)]">
               <FaBriefcase />
             </div>
             <h1 className="text-3xl font-black tracking-tight text-slate-900">Merchant Onboarding</h1>
-            <p className="mt-2 text-lg font-medium text-slate-500">Your journey to a professional digital presence starts here.</p>
+            <p className="mt-2 text-lg font-medium text-slate-600">
+              Your journey to a professional digital presence starts here.
+            </p>
+          </div>
+
+          <div className="mb-6 flex items-center gap-4 rounded-[32px] border border-white/80 bg-white/90 p-5 shadow-[0_20px_55px_rgba(15,23,42,0.09)] backdrop-blur md:p-6">
+            <div className="rounded-[28px] border border-indigo-100 bg-[linear-gradient(180deg,#eef2ff_0%,#ffffff_100%)] p-1.5 shadow-sm">
+              <img
+                src={onboardingAvatarUrl}
+                alt="Profile avatar"
+                className="h-16 w-16 rounded-[22px] object-cover md:h-20 md:w-20"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-pink-600">
+                Profile Identity
+              </p>
+              <h2 className="mt-1 text-lg font-black text-slate-900">
+                {hasUploadedProfileAvatar ? "Your current avatar is ready for review" : "Add a clear profile avatar before submission"}
+              </h2>
+              <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
+                Staff use this photo to match your merchant identity during approval and verification.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/user-dashboard?tab=profile")}
+              className="shrink-0 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
+            >
+              Update
+            </button>
           </div>
 
           <div className="space-y-4">
@@ -1256,7 +1358,7 @@ function ShopRegistration() {
                 onClick={() => {
                   if (idx === 0) navigate("/user-dashboard?tab=profile")
                 }}
-                className={`group relative flex items-start gap-5 rounded-[32px] border border-slate-200 bg-white p-6 transition-all hover:border-indigo-200 hover:shadow-md ${idx === 0 ? "cursor-pointer active:scale-[0.98]" : ""}`}
+                className={`group relative flex items-start gap-5 rounded-[32px] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.07)] transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_24px_60px_rgba(15,23,42,0.1)] ${idx === 0 ? "cursor-pointer active:scale-[0.98]" : ""}`}
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-xl text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
                   {item.icon}
@@ -1272,21 +1374,40 @@ function ShopRegistration() {
                   </div>
                   <p className="mt-1 text-[15px] font-medium leading-relaxed text-slate-500">{item.desc}</p>
                 </div>
+                {idx === 0 ? (
+                  <div className="hidden shrink-0 items-center gap-3 rounded-[24px] border border-slate-200 bg-slate-50 px-3 py-2 md:flex">
+                    <img
+                      src={onboardingAvatarUrl}
+                      alt="Current profile avatar"
+                      className="h-12 w-12 rounded-2xl object-cover"
+                    />
+                    <div className="text-right">
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-indigo-600">
+                        {hasUploadedProfileAvatar ? "Avatar Ready" : "Needs Update"}
+                      </p>
+                      <p className="text-xs font-bold text-slate-500">
+                        {hasUploadedProfileAvatar ? "Shown on your profile" : "Tap to add photo"}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
 
           <div className="mt-12 space-y-4">
             <button
-              onClick={() => setShowOnboarding(false)}
-              className="flex h-16 w-full items-center justify-center gap-3 rounded-[24px] bg-slate-900 text-lg font-black text-white shadow-xl shadow-slate-200 transition-all hover:bg-slate-800 active:scale-[0.98]"
+              type="button"
+              onClick={startRegistrationFlow}
+              className="flex h-16 w-full items-center justify-center gap-3 rounded-[24px] bg-[linear-gradient(135deg,#111827_0%,#4f46e5_100%)] text-lg font-black text-white shadow-[0_24px_60px_rgba(79,70,229,0.24)] transition-all hover:brightness-[1.03] active:scale-[0.98]"
             >
               Accept & Start Registration
               <FaArrowRight className="text-sm" />
             </button>
             <button
+              type="button"
               onClick={() => navigate("/user-dashboard?tab=services")}
-              className="h-14 w-full text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors"
+              className="h-14 w-full rounded-[22px] border border-white/80 bg-white/80 text-sm font-bold text-slate-500 shadow-sm transition-colors hover:text-slate-700"
             >
               Maybe later, go back to dashboard
             </button>
@@ -1297,18 +1418,19 @@ function ShopRegistration() {
   }
 
   return (
-    <div className="relative min-h-screen bg-slate-50 pb-20">
+    <div className="relative min-h-screen bg-[radial-gradient(circle_at_top,#eef2ff_0%,#f8fafc_38%,#fff7fb_100%)] pb-20">
       
       <input ref={hiddenInputRef} type="file" className="hidden" onChange={handleHiddenFileChange} />
 
       {/* Modern Header with Navigation */}
-      <div className="sticky top-0 z-[10] border-b border-slate-200 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto max-w-3xl px-4 py-4">
+      <div className="sticky top-0 z-[10] border-b border-white/70 bg-white/90 shadow-[0_12px_35px_rgba(15,23,42,0.06)] backdrop-blur-md">
+        <div className="mx-auto max-w-4xl px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button 
-                onClick={() => navigate(isEdit ? "/vendor-panel" : "/user-dashboard?tab=services")} 
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+                type="button"
+                onClick={handleRegistrationBack}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
               >
                 <FaArrowLeft />
               </button>
@@ -1341,7 +1463,7 @@ function ShopRegistration() {
       </div>
 
       <section className="px-4 py-6">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-4xl">
           {isOffline && (
             <div className="mb-6 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
               <i className="fa-solid fa-wifi-slash"></i> Offline Mode: View only.
@@ -1363,7 +1485,7 @@ function ShopRegistration() {
               
               {/* Step 1: Basics */}
               {currentStep === 0 && (
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+                <div className={FORM_SECTION_CLASS}>
                   <SectionHeader icon={<FaStore />} title="Business Basics" subtitle="Tell us the core details of your shop." />
                   
                   <div className="space-y-6">
@@ -1373,14 +1495,14 @@ function ShopRegistration() {
 
                     <div className="grid gap-6 md:grid-cols-2">
                       <FieldBlock label="Business Structure">
-                        <select value={form.businessType} onChange={(e) => setForm((prev) => ({ ...prev, businessType: e.target.value }))} className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+                        <select value={form.businessType} onChange={(e) => setForm((prev) => ({ ...prev, businessType: e.target.value }))} className={FORM_CONTROL_CLASS}>
                           <option>Individual/Enterprise</option>
                           <option>Limited Liability (Ltd)</option>
                         </select>
                       </FieldBlock>
 
                       <FieldBlock label="Primary Category">
-                        <select value={form.category} onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))} className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+                        <select value={form.category} onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))} className={FORM_CONTROL_CLASS}>
                           <option value="">Select...</option>
                           {categories.map((item) => (<option key={item.name} value={item.name}>{item.name}</option>))}
                         </select>
@@ -1403,12 +1525,12 @@ function ShopRegistration() {
 
               {/* Step 2: Profile */}
               {currentStep === 1 && (
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+                <div className={FORM_SECTION_CLASS}>
                   <SectionHeader icon={<FaLocationDot />} title="Location & Description" subtitle="Where are you located and what do you do?" />
 
                   <div className="space-y-6">
                     <FieldBlock label="Business Description">
-                      <textarea value={form.desc} onChange={(e) => setForm((prev) => ({ ...prev, desc: e.target.value }))} placeholder="Explain your services and products..." className="min-h-[140px] w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                      <textarea value={form.desc} onChange={(e) => setForm((prev) => ({ ...prev, desc: e.target.value }))} placeholder="Explain your services and products..." className={`${FORM_CONTROL_CLASS} min-h-[140px] py-4`} />
                       <WordCounter count={descWords} min={DESC_MIN_WORDS} max={DESC_MAX_WORDS} />
                     </FieldBlock>
 
@@ -1418,7 +1540,7 @@ function ShopRegistration() {
                       </FieldBlock>
 
                       <FieldBlock label="Business Area">
-                        <select value={form.areaId} onChange={(e) => setForm((prev) => ({ ...prev, areaId: e.target.value }))} className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+                        <select value={form.areaId} onChange={(e) => setForm((prev) => ({ ...prev, areaId: e.target.value }))} className={FORM_CONTROL_CLASS}>
                           <option value="">Select Area...</option>
                           {areas.map((area) => (<option key={area.id} value={area.id}>{area.name}</option>))}
                         </select>
@@ -1432,10 +1554,10 @@ function ShopRegistration() {
 
                     <div className="grid gap-6 md:grid-cols-2">
                       <FieldBlock label="Latitude (Optional)">
-                        <input type="number" step="any" value={form.lat} onChange={(e) => setForm((prev) => ({ ...prev, lat: e.target.value }))} placeholder="9.08" className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                        <input type="number" step="any" value={form.lat} onChange={(e) => setForm((prev) => ({ ...prev, lat: e.target.value }))} placeholder="9.08" className={FORM_CONTROL_CLASS} />
                       </FieldBlock>
                       <FieldBlock label="Longitude (Optional)">
-                        <input type="number" step="any" value={form.lng} onChange={(e) => setForm((prev) => ({ ...prev, lng: e.target.value }))} placeholder="7.49" className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                        <input type="number" step="any" value={form.lng} onChange={(e) => setForm((prev) => ({ ...prev, lng: e.target.value }))} placeholder="7.49" className={FORM_CONTROL_CLASS} />
                       </FieldBlock>
                     </div>
                   </div>
@@ -1444,13 +1566,13 @@ function ShopRegistration() {
 
               {/* Step 3: Legal */}
               {currentStep === 2 && (
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+                <div className={FORM_SECTION_CLASS}>
                   <SectionHeader icon={<FaShieldHalved />} title="Verification" subtitle="Verify your identity and business status." />
 
                   <div className="space-y-8">
                     <div className="grid gap-6 md:grid-cols-2">
                       <FieldBlock label="Identification Type">
-                        <select value={form.idType} onChange={(e) => setForm((prev) => ({ ...prev, idType: e.target.value }))} className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all">
+                        <select value={form.idType} onChange={(e) => setForm((prev) => ({ ...prev, idType: e.target.value }))} className={FORM_CONTROL_CLASS}>
                           <option>National ID Card</option>
                           <option>Voters Card</option>
                           <option>Drivers License</option>
@@ -1458,7 +1580,7 @@ function ShopRegistration() {
                         </select>
                       </FieldBlock>
                       <FieldBlock label="ID Document Number">
-                        <input value={form.idNumber} onChange={(e) => setForm((prev) => ({ ...prev, idNumber: e.target.value }))} placeholder="Enter number..." className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                        <input value={form.idNumber} onChange={(e) => setForm((prev) => ({ ...prev, idNumber: e.target.value }))} placeholder="Enter number..." className={FORM_CONTROL_CLASS} />
                       </FieldBlock>
                     </div>
 
@@ -1504,7 +1626,7 @@ function ShopRegistration() {
 
               {/* Step 4: Presence */}
               {currentStep === 3 && (
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+                <div className={FORM_SECTION_CLASS}>
                   <SectionHeader icon={<FaAddressBook />} title="Digital Presence" subtitle="How can customers find you online?" />
 
                   <div className="mb-8 rounded-2xl bg-indigo-50 p-4 text-xs font-bold text-indigo-700 leading-relaxed">
@@ -1530,19 +1652,19 @@ function ShopRegistration() {
 
                     <div className="grid gap-6 md:grid-cols-2">
                       <FieldBlock label="Facebook Page">
-                        <input value={form.facebook} onChange={(e) => setForm((prev) => ({ ...prev, facebook: e.target.value }))} onBlur={handleUrlBlur("facebook")} placeholder="facebook.com/..." className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                        <input value={form.facebook} onChange={(e) => setForm((prev) => ({ ...prev, facebook: e.target.value }))} onBlur={handleUrlBlur("facebook")} placeholder="facebook.com/..." className={FORM_CONTROL_CLASS} />
                       </FieldBlock>
                       <FieldBlock label="Instagram Profile">
-                        <input value={form.instagram} onChange={(e) => setForm((prev) => ({ ...prev, instagram: e.target.value }))} onBlur={handleUrlBlur("instagram")} placeholder="instagram.com/..." className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                        <input value={form.instagram} onChange={(e) => setForm((prev) => ({ ...prev, instagram: e.target.value }))} onBlur={handleUrlBlur("instagram")} placeholder="instagram.com/..." className={FORM_CONTROL_CLASS} />
                       </FieldBlock>
                     </div>
 
                     <div className="grid gap-6 md:grid-cols-2">
                       <FieldBlock label="X (Twitter)">
-                        <input value={form.twitter} onChange={(e) => setForm((prev) => ({ ...prev, twitter: e.target.value }))} onBlur={handleUrlBlur("twitter")} placeholder="x.com/..." className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                        <input value={form.twitter} onChange={(e) => setForm((prev) => ({ ...prev, twitter: e.target.value }))} onBlur={handleUrlBlur("twitter")} placeholder="x.com/..." className={FORM_CONTROL_CLASS} />
                       </FieldBlock>
                       <FieldBlock label="TikTok Channel">
-                        <input value={form.tiktok} onChange={(e) => setForm((prev) => ({ ...prev, tiktok: e.target.value }))} onBlur={handleUrlBlur("tiktok")} placeholder="tiktok.com/@..." className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all" />
+                        <input value={form.tiktok} onChange={(e) => setForm((prev) => ({ ...prev, tiktok: e.target.value }))} onBlur={handleUrlBlur("tiktok")} placeholder="tiktok.com/@..." className={FORM_CONTROL_CLASS} />
                       </FieldBlock>
                     </div>
                   </div>
@@ -1552,11 +1674,11 @@ function ShopRegistration() {
               {/* Navigation Buttons */}
               <div className="flex items-center justify-between gap-4 pt-4">
                 <button 
+                  type="button"
                   onClick={() => {
-                    if (currentStep > 0) prevStep()
-                    else navigate(isEdit ? "/vendor-panel" : "/user-dashboard?tab=services")
+                    handleRegistrationBack()
                   }} 
-                  className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-8 text-sm font-bold text-slate-600 transition-all hover:bg-slate-50"
+                  className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-8 text-sm font-bold text-slate-600 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50"
                 >
                   <FaArrowLeft className="text-xs" />
                   <span>Back</span>
@@ -1608,13 +1730,13 @@ function ShopRegistration() {
 
 function SectionHeader({ icon, title, subtitle }) {
   return (
-    <div className="mb-8 flex items-start gap-4">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-xl text-indigo-600">
+    <div className="mb-8 flex items-start gap-4 border-b border-slate-200/80 pb-5">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(180deg,#eef2ff_0%,#fdf2f8_100%)] text-xl text-indigo-600 shadow-sm">
         {icon}
       </div>
       <div>
         <h2 className="text-lg font-extrabold text-slate-900">{title}</h2>
-        <p className="text-sm font-medium text-slate-500 leading-tight">{subtitle}</p>
+        <p className="text-sm font-medium leading-tight text-slate-500">{subtitle}</p>
       </div>
     </div>
   )
@@ -1622,8 +1744,8 @@ function SectionHeader({ icon, title, subtitle }) {
 
 function FieldBlock({ label, children }) {
   return (
-    <div className="flex flex-col gap-2.5">
-      <label className="text-[13px] font-extrabold uppercase tracking-wider text-slate-500">{label}</label>
+    <div className="flex flex-col gap-2.5 rounded-[24px] border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-4 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
+      <label className="text-[12px] font-extrabold uppercase tracking-[0.16em] text-slate-600">{label}</label>
       {children}
     </div>
   )
@@ -1633,7 +1755,7 @@ function InputWithIcon({ icon, value, onChange, onBlur, placeholder, disabled = 
   return (
     <div className="relative">
       <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">{icon}</span>
-      <input value={value} onChange={onChange} onBlur={onBlur} placeholder={placeholder} disabled={disabled} className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 py-3.5 pl-12 pr-4 text-sm font-medium text-slate-800 outline-none focus:border-indigo-600 focus:bg-white transition-all disabled:opacity-60" />
+      <input value={value} onChange={onChange} onBlur={onBlur} placeholder={placeholder} disabled={disabled} className={FORM_CONTROL_WITH_ICON_CLASS} />
     </div>
   )
 }
@@ -1654,33 +1776,35 @@ function UploadCard({
   isSquare,
 }) {
   return (
-    <div className="flex flex-col items-center">
-      <div className={`relative overflow-hidden rounded-[32px] border-4 border-white bg-slate-100 shadow-lg shadow-slate-200 ${isPortrait ? 'aspect-[3/4] w-full max-w-[340px]' : isSquare ? 'aspect-square w-40' : 'aspect-video w-full'}`}>
-        {preview ? (
-          <div className="h-full w-full">{preview}</div>
-        ) : (
-          <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-slate-300">
-              <FaCamera className="text-xl" />
+    <div className="rounded-[28px] border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+      <div className="flex flex-col items-center">
+        <div className={`relative overflow-hidden rounded-[32px] border-2 border-slate-200 bg-white shadow-lg shadow-slate-200/50 ${isPortrait ? 'aspect-[3/4] w-full max-w-[340px]' : isSquare ? 'aspect-square w-40' : 'aspect-video w-full'}`}>
+          {preview ? (
+            <div className="h-full w-full">{preview}</div>
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-300">
+                <FaCamera className="text-xl" />
+              </div>
             </div>
-          </div>
-        )}
+          )}
         
-        {preview && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity hover:opacity-100">
-             <p className="text-[10px] font-bold uppercase tracking-widest text-white text-center px-2">Tap below to change</p>
-          </div>
-        )}
-      </div>
+          {preview && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity hover:opacity-100">
+               <p className="px-2 text-center text-[10px] font-bold uppercase tracking-widest text-white">Tap below to change</p>
+            </div>
+          )}
+        </div>
 
-      <div className="mt-4 text-center">
-        <h4 className="text-sm font-bold text-slate-900">{title}</h4>
-        <p className="text-[11px] font-medium text-slate-500">{subtitle}</p>
+        <div className="mt-4 text-center">
+          <h4 className="text-sm font-bold text-slate-900">{title}</h4>
+          <p className="text-[11px] font-medium text-slate-500">{subtitle}</p>
         
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-          <UploadAction icon={<FaImage />} label="File" onClick={onFileClick} />
-          <UploadAction icon={<FaCamera />} label="Camera" onClick={onCameraClick} primary />
-          {onPdfClick && <UploadAction icon={<FaFilePdf />} label="PDF" onClick={onPdfClick} tone="red" />}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            <UploadAction icon={<FaImage />} label="File" onClick={onFileClick} />
+            <UploadAction icon={<FaCamera />} label="Camera" onClick={onCameraClick} primary />
+            {onPdfClick && <UploadAction icon={<FaFilePdf />} label="PDF" onClick={onPdfClick} tone="red" />}
+          </div>
         </div>
       </div>
     </div>
