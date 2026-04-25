@@ -9,18 +9,21 @@ import {
   buildShopDetailPrefetchFromRepoSearch,
   getRepoSearchCooldownMessage,
   invokeRepoSearch,
+  normalizeRepoSearchId,
+  REPO_SEARCH_INVALID_MESSAGE,
 } from "../lib/repoSearch"
 import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
 
 function MerchantDiscovery() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const merchantId = searchParams.get("merchantId")?.trim() || ""
+  const rawMerchantId = searchParams.get("merchantId")?.trim() || ""
+  const merchantId = normalizeRepoSearchId(rawMerchantId)
 
   // 1. Data Fetching Logic for Edge Function
   const fetchMerchant = async () => {
     if (!merchantId) {
-      throw new Error("No Merchant ID provided.")
+      throw new Error(REPO_SEARCH_INVALID_MESSAGE)
     }
 
     const { data, error } = await invokeRepoSearch(merchantId)

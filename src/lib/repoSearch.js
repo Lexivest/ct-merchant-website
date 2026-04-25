@@ -1,5 +1,40 @@
 import { supabase } from "./supabase"
 
+export const REPO_SEARCH_PREFIX = "CT-"
+export const REPO_SEARCH_INVALID_MESSAGE =
+  "Enter a valid repository ID like CT-205368 or just 205368."
+
+export function extractRepoSearchDigits(value) {
+  const raw = String(value || "").trim().toUpperCase()
+  if (!raw) return ""
+
+  return raw
+    .replace(/^CT-?/, "")
+    .replace(/\D/g, "")
+    .slice(0, 32)
+}
+
+export function normalizeRepoSearchId(value) {
+  const raw = String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "")
+
+  if (!raw) return ""
+
+  const directIdMatch = raw.match(/^CT-?(\d{2,32})$/)
+  if (directIdMatch) {
+    return `${REPO_SEARCH_PREFIX}${directIdMatch[1]}`
+  }
+
+  const plainDigitsMatch = raw.match(/^(\d{2,32})$/)
+  if (plainDigitsMatch) {
+    return `${REPO_SEARCH_PREFIX}${plainDigitsMatch[1]}`
+  }
+
+  return ""
+}
+
 async function readFunctionErrorPayload(error) {
   const response = error?.context
   if (!response || typeof response.clone !== "function") return null
@@ -24,8 +59,9 @@ export function getRepoSearchCooldownMessage(payload) {
 }
 
 export async function invokeRepoSearch(merchantId, skipRateLimit = false) {
+  const normalizedMerchantId = normalizeRepoSearchId(merchantId)
   const result = await supabase.functions.invoke("repo-search", {
-    body: { merchantId, skipRateLimit },
+    body: { merchantId: normalizedMerchantId || merchantId, skipRateLimit },
   })
 
   if (!result.error) return result

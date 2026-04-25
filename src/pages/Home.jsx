@@ -51,9 +51,12 @@ import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import {
   buildRepoSearchQuerySuffix,
   buildShopDetailPrefetchFromRepoSearch,
+  extractRepoSearchDigits,
   fetchPublicRepoShopDetail,
   getRepoSearchCooldownMessage,
   invokeRepoSearch,
+  normalizeRepoSearchId,
+  REPO_SEARCH_INVALID_MESSAGE,
 } from "../lib/repoSearch"
 import {
   fetchHomeHighlights,
@@ -923,8 +926,21 @@ function Home() {
   }
 
   async function handleRepoSearch() {
-    const value = repoSearchValue.trim()
-    if (!value || value.length < 2 || repoSearchLoading) return
+    const normalizedRepoId = normalizeRepoSearchId(repoSearchValue)
+    if (repoSearchLoading) return
+
+    if (!normalizedRepoId) {
+      if (repoSearchValue.trim()) {
+        notify({
+          type: "info",
+          title: "Enter repository ID",
+          message: REPO_SEARCH_INVALID_MESSAGE,
+        })
+      }
+      return
+    }
+
+    const value = normalizedRepoId
     const retryAction = () => handleRepoSearch()
 
     if (isOffline) {
@@ -1050,20 +1066,26 @@ function Home() {
             <div className="mx-auto mb-4 w-full max-w-7xl lg:hidden">
               <div className="overflow-hidden rounded-[22px] border border-pink-100 bg-white p-2 shadow-sm">
                 <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-transparent bg-pink-50 transition focus-within:border-pink-600">
+                  <div className="flex items-center border-r border-pink-100 bg-white/70 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-pink-600">
+                    CT-
+                  </div>
                   <input
                     type="text"
                     value={repoSearchValue}
-                    onChange={(e) => setRepoSearchValue(e.target.value)}
+                    onChange={(e) => setRepoSearchValue(extractRepoSearchDigits(e.target.value))}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleRepoSearch()
                     }}
-                    placeholder="Enter ID to view online stores"
-                    className="min-w-0 flex-1 border-none bg-transparent px-4 text-base font-medium text-[#0F1111] outline-none placeholder:text-slate-500"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={32}
+                    placeholder="Enter shop number"
+                    className="min-w-0 flex-1 border-none bg-transparent px-3 text-base font-medium text-[#0F1111] outline-none placeholder:text-slate-500"
                   />
                   <button
                     type="button"
                     onClick={handleRepoSearch}
-                    disabled={repoSearchLoading}
+                    disabled={repoSearchLoading || !repoSearchValue.trim()}
                     className="flex w-[56px] items-center justify-center bg-pink-600 text-white transition hover:bg-pink-700"
                     aria-label="Search repository"
                   >
@@ -1106,20 +1128,26 @@ function Home() {
                   <div className="hidden rounded-[22px] bg-pink-200 p-1 lg:block">
                     <div className="rounded-[18px] border border-pink-100 bg-slate-50 p-4">
                       <div className="flex h-[42px] overflow-hidden rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
+                        <div className="flex items-center border-r border-pink-100 bg-white pl-4 pr-2 text-sm font-black tracking-[0.12em] text-pink-600">
+                          CT-
+                        </div>
                         <input
                           type="text"
                           value={repoSearchValue}
-                          onChange={(e) => setRepoSearchValue(e.target.value)}
+                          onChange={(e) => setRepoSearchValue(extractRepoSearchDigits(e.target.value))}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") handleRepoSearch()
                           }}
-                          placeholder="Enter ID to view online stores"
-                          className="min-w-0 flex-1 border-none px-4 text-base text-[#0F1111] outline-none placeholder:text-slate-500"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={32}
+                          placeholder="Enter shop number"
+                          className="min-w-0 flex-1 border-none px-3 text-base text-[#0F1111] outline-none placeholder:text-slate-500"
                         />
                         <button
                           type="button"
                           onClick={handleRepoSearch}
-                          disabled={repoSearchLoading}
+                          disabled={repoSearchLoading || !repoSearchValue.trim()}
                           className="flex w-[52px] items-center justify-center bg-pink-600 text-white transition hover:bg-pink-700"
                           aria-label="Search repository"
                         >
