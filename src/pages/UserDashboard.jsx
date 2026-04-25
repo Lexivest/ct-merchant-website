@@ -927,6 +927,19 @@ function UserDashboard() {
         shops: shopsByArea.get(area.id) || [],
       }))
       .filter((group) => group.shops.length > 0)
+      .concat(
+        sortedAreas.length === 0 && (localData.shops || []).length > 0
+          ? [
+              {
+                area: {
+                  id: null,
+                  name: "Around your city",
+                },
+                shops: (localData.shops || []).slice(0, 24),
+              },
+            ]
+          : []
+      )
   }, [sortedAreas, localData.shops])
 
   const announcementSignature = useMemo(() => {

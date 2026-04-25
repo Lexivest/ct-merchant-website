@@ -86,6 +86,15 @@ function SponsoredProductPreview({ product }) {
   )
 }
 
+function invalidateMarketplaceDashboardCaches() {
+  clearCachedFetchStore(
+    (key) =>
+      key.startsWith("dashboard_cache_") ||
+      key.startsWith("dashboard_base_") ||
+      key.startsWith("dashboard_dynamic_"),
+  )
+}
+
 export default function StaffSponsoredProducts() {
   const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const { notify, confirm } = useGlobalFeedback()
@@ -206,10 +215,26 @@ export default function StaffSponsoredProducts() {
       return
     }
 
+    const resolvedCityId = Number(
+      selectedCityId ||
+      selectedProduct?.shops?.city_id ||
+      staffCityId ||
+      0
+    )
+
+    if (!Number.isFinite(resolvedCityId) || resolvedCityId <= 0) {
+      notify({
+        type: "error",
+        title: "City required",
+        message: "Please select a city before sponsoring a product.",
+      })
+      return
+    }
+
     try {
       setSaving(true)
       const { error } = await supabase.from("sponsored_products").insert({
-        city_id: selectedCityId ? Number(selectedCityId) : null,
+        city_id: resolvedCityId,
         shop_id: selectedProduct.shop_id,
         title: selectedProduct.name,
         subtitle: `Sponsored from ${selectedProduct.shops.name}`,
@@ -222,7 +247,7 @@ export default function StaffSponsoredProducts() {
       if (error) throw error
 
       // Invalidate dashboard caches so changes reflect immediately for all users
-      clearCachedFetchStore((key) => key.startsWith("dashboard_cache_"))
+      invalidateMarketplaceDashboardCaches()
 
       notify({ type: "success", title: "Product Sponsored", message: "The product is now featured in the marketplace." })
       setSelectedProduct(null)
@@ -239,7 +264,7 @@ export default function StaffSponsoredProducts() {
       const { error } = await supabase.from("sponsored_products").update({ status }).eq("id", banner.id)
       if (error) throw error
       
-      clearCachedFetchStore((key) => key.startsWith("dashboard_cache_"))
+      invalidateMarketplaceDashboardCaches()
       await loadInitialData()
     } catch (error) {
       notify({ type: "error", title: "Update failed", message: getFriendlyErrorMessage(error) })
@@ -253,7 +278,7 @@ export default function StaffSponsoredProducts() {
       const { error } = await supabase.from("sponsored_products").delete().eq("id", banner.id)
       if (error) throw error
 
-      clearCachedFetchStore((key) => key.startsWith("dashboard_cache_"))
+      invalidateMarketplaceDashboardCaches()
       await loadInitialData()
     } catch (error) {
       notify({ type: "error", title: "Delete failed", message: getFriendlyErrorMessage(error) })

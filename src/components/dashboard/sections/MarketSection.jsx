@@ -479,7 +479,7 @@ function MarketSection({
           <div className="area-block-wrap bg-white">
             <div className="flex items-center justify-between px-4 pb-0 pt-2">
               <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap text-[1.25rem] font-extrabold text-[#0F1111] !p-0">
-                {area.id === dashboardData.profile?.area_id ? (
+                {area.id && area.id === dashboardData.profile?.area_id ? (
                   <>
                     Top stores in {area.name}
                   </>
@@ -487,16 +487,18 @@ function MarketSection({
                   <>{area.name}</>
                 )}
               </h2>
-              <button
-                onClick={() => {
-                  if (typeof onOpenArea === "function") {
-                    onOpenArea(area.id)
-                  }
-                }}
-                className="text-[0.85rem] font-bold text-[#007185] hover:text-pink-600 active:scale-95 transition-all shrink-0"
-              >
-                See All
-              </button>
+              {area.id ? (
+                <button
+                  onClick={() => {
+                    if (typeof onOpenArea === "function") {
+                      onOpenArea(area.id)
+                    }
+                  }}
+                  className="text-[0.85rem] font-bold text-[#007185] hover:text-pink-600 active:scale-95 transition-all shrink-0"
+                >
+                  See All
+                </button>
+              ) : null}
             </div>
 
             <div className="h-scroll flex gap-4 overflow-x-auto pl-4 pb-3 pt-1">
