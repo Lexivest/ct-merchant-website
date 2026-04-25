@@ -769,10 +769,10 @@ function Home() {
 
     notify({
       type: "info",
-      title: isAppleMobile ? "Install from Safari menu" : "Install unavailable right now",
+      title: isAppleMobile ? "Install from Safari menu" : "Install from browser menu",
       message: isAppleMobile
         ? "Open the Share menu in Safari and choose Add to Home Screen."
-        : "This browser has not exposed an install prompt for CTMerchant yet.",
+        : "Open your browser menu and choose Install app or Add to Home Screen when available.",
     })
   }
 
@@ -1188,7 +1188,9 @@ function Home() {
                               <p className="mt-1 text-sm font-semibold leading-5 text-slate-700">
                                 {canPromptInstall
                                   ? "Open CTMerchant faster from your home screen with a cleaner full-screen launch."
-                                  : "Save CTMerchant to your iPhone home screen for faster access and a cleaner web app experience."}
+                                  : isAppleMobile
+                                    ? "Save CTMerchant to your iPhone home screen for faster access and a cleaner web app experience."
+                                    : "Use your browser menu to install CTMerchant or add it to your home screen."}
                               </p>
                             </div>
                           </div>
