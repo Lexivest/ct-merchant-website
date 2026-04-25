@@ -541,6 +541,15 @@ function ShopRegistration() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
+  function returnToRegistrationOrigin() {
+    if (isEdit) {
+      navigate("/user-dashboard?tab=services", { replace: true })
+      return
+    }
+
+    navigate("/user-dashboard?tab=services", { replace: true })
+  }
+
   function handleRegistrationBack() {
     if (currentStep > 0) {
       prevStep()
@@ -552,7 +561,7 @@ function ShopRegistration() {
       return
     }
 
-    navigate("/vendor-panel")
+    returnToRegistrationOrigin()
   }
 
   useEffect(() => {
@@ -1291,7 +1300,7 @@ function ShopRegistration() {
         error={dataError}
         message={getFriendlyErrorMessage(dataError, "Please retry or go back.")}
         onRetry={() => window.location.reload()}
-        onBack={() => navigate("/vendor-panel")}
+        onBack={returnToRegistrationOrigin}
       />
     )
   }
