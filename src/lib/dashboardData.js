@@ -239,68 +239,6 @@ export async function fetchStaffDiscoveries() {
   return data || []
 }
 
-async function fetchMarketShops(cityId) {
-  const resolvedCityId = normalizePositiveId(cityId)
-  if (!resolvedCityId) return []
-
-  const nowIso = new Date().toISOString()
-  const { data, error } = await supabase
-    .from("shops")
-    .select("*")
-    .eq("city_id", resolvedCityId)
-    .eq("status", "approved")
-    .eq("is_verified", true)
-    .eq("is_open", true)
-    .gt("subscription_end_date", nowIso)
-    .order("is_featured", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(100)
-
-  if (error) {
-    console.warn("Market shops fallback fetch failed:", error.message)
-    return []
-  }
-
-  return data || []
-}
-
-async function fetchMarketProducts(cityId) {
-  const resolvedCityId = normalizePositiveId(cityId)
-  if (!resolvedCityId) return []
-
-  const nowIso = new Date().toISOString()
-  const { data, error } = await supabase
-    .from("products")
-    .select(`
-      *,
-      shops!inner (
-        id,
-        name,
-        city_id,
-        status,
-        is_verified,
-        is_open,
-        subscription_end_date
-      )
-    `)
-    .eq("shops.city_id", resolvedCityId)
-    .eq("is_approved", true)
-    .eq("is_available", true)
-    .eq("shops.status", "approved")
-    .eq("shops.is_verified", true)
-    .eq("shops.is_open", true)
-    .gt("shops.subscription_end_date", nowIso)
-    .order("created_at", { ascending: false })
-    .limit(400)
-
-  if (error) {
-    console.warn("Market products fallback fetch failed:", error.message)
-    return []
-  }
-
-  return data || []
-}
-
 const DASHBOARD_BASE_TTL = 1000 * 60 * 60 * 24 // 24 hours for categories, etc.
 const DASHBOARD_DYNAMIC_TTL = 1000 * 60 * 15 // 15 mins for shops/products
 
@@ -408,29 +346,36 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
     ? data.fairly_used_products
     : []
 
-  const [
-    fallbackFeaturedCityBanners,
-    fallbackSponsoredProducts,
-    fallbackShops,
-    fallbackProducts,
-  ] = await Promise.all([
-    rawFeaturedCityBanners.length > 0 ? Promise.resolve([]) : fetchFeaturedCityBanners(resolvedCityId),
-    rawSponsoredProducts.length > 0 ? Promise.resolve([]) : fetchSponsoredProducts(resolvedCityId),
-    rawShops.length > 0 ? Promise.resolve([]) : fetchMarketShops(resolvedCityId),
-    rawProducts.length > 0 ? Promise.resolve([]) : fetchMarketProducts(resolvedCityId),
-  ])
+  if (!Array.isArray(data.shops) || !Array.isArray(data.products)) {
+    console.warn("[dashboard-rpc:market-shape]", {
+      cityId: resolvedCityId,
+      keys: Object.keys(data || {}),
+      shopsType: typeof data?.shops,
+      productsType: typeof data?.products,
+    })
+  }
+
+  if (rawShops.length === 0 || rawProducts.length === 0) {
+    console.info("[dashboard-rpc:market-empty]", {
+      cityId: resolvedCityId,
+      shops: rawShops.length,
+      products: rawProducts.length,
+      featuredBanners: Array.isArray(rawFeaturedCityBanners) ? rawFeaturedCityBanners.length : 0,
+      sponsoredProducts: Array.isArray(rawSponsoredProducts) ? rawSponsoredProducts.length : 0,
+    })
+  }
 
   const featuredCityBanners = (
     Array.isArray(rawFeaturedCityBanners) && rawFeaturedCityBanners.length > 0
       ? rawFeaturedCityBanners
-      : fallbackFeaturedCityBanners
+      : []
   )
     .filter(Boolean)
 
   const sponsoredProducts = (
     Array.isArray(rawSponsoredProducts) && rawSponsoredProducts.length > 0
       ? rawSponsoredProducts
-      : fallbackSponsoredProducts
+      : []
   )
     .map((item) => {
       if (!item) return null
@@ -464,11 +409,11 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
     sponsoredProducts,
     staffDiscoveries: data.staff_discoveries || [],
     fairlyUsedProducts: rawFairlyUsedProducts,
-    shops: rawShops.length > 0 ? rawShops : fallbackShops,
+    shops: rawShops,
     notifications,
     wishlistCount: data.wishlist_count || 0,
     unread: notifications.filter((item) => !item.is_read).length,
-    products: rawProducts.length > 0 ? rawProducts : fallbackProducts,
+    products: rawProducts,
   }
 }
 export async function fetchDashboardData({ userId, profile = null }) {

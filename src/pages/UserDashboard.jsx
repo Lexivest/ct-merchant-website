@@ -899,11 +899,14 @@ function UserDashboard() {
     const areas = [...(localData.areas || [])].filter(
       (area) => normalizePositiveId(area?.id) !== null
     )
-    const userAreaId = currentProfile?.area_id
+    const userAreaId = normalizePositiveId(currentProfile?.area_id)
 
     return areas.sort((a, b) => {
-      if (a.id === userAreaId) return -1
-      if (b.id === userAreaId) return 1
+      const normalizedAreaIdA = normalizePositiveId(a?.id)
+      const normalizedAreaIdB = normalizePositiveId(b?.id)
+
+      if (normalizedAreaIdA && normalizedAreaIdA === userAreaId) return -1
+      if (normalizedAreaIdB && normalizedAreaIdB === userAreaId) return 1
       return a.name.localeCompare(b.name)
     })
   }, [localData.areas, currentProfile?.area_id])
@@ -924,23 +927,29 @@ function UserDashboard() {
     return sortedAreas
       .map((area) => ({
         area,
-        shops: shopsByArea.get(area.id) || [],
+        shops: shopsByArea.get(normalizePositiveId(area?.id)) || [],
       }))
       .filter((group) => group.shops.length > 0)
-      .concat(
-        sortedAreas.length === 0 && (localData.shops || []).length > 0
-          ? [
-              {
-                area: {
-                  id: null,
-                  name: "Around your city",
-                },
-                shops: (localData.shops || []).slice(0, 24),
-              },
-            ]
-          : []
-      )
   }, [sortedAreas, localData.shops])
+
+  useEffect(() => {
+    const safeShops = Array.isArray(localData.shops) ? localData.shops : []
+    if (!safeShops.length || groupedShopsByArea.length > 0) return
+
+    console.warn("[market-grouping-debug]", {
+      shopCount: safeShops.length,
+      areaCount: sortedAreas.length,
+      sampleShopAreaIds: [...new Set(
+        safeShops
+          .map((shop) => normalizePositiveId(shop?.area_id))
+          .filter(Boolean)
+      )].slice(0, 12),
+      sampleAreaIds: sortedAreas
+        .map((area) => normalizePositiveId(area?.id))
+        .filter(Boolean)
+        .slice(0, 12),
+    })
+  }, [groupedShopsByArea.length, localData.shops, sortedAreas])
 
   const announcementSignature = useMemo(() => {
     const announcements = localData.announcements || []
