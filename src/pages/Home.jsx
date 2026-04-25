@@ -730,8 +730,6 @@ function Home() {
     [phraseIndex, charIndex]
   )
   const {
-    canPromptInstall,
-    dismissInstallCard,
     installingApp,
     isAppleMobile,
     promptInstall,
@@ -768,11 +766,11 @@ function Home() {
     }
 
     notify({
-      type: "info",
-      title: isAppleMobile ? "Install from Safari menu" : "Install from browser menu",
+      type: isAppleMobile ? "info" : "error",
+      title: isAppleMobile ? "Install from Safari menu" : "Unsupported browser",
       message: isAppleMobile
         ? "Open the Share menu in Safari and choose Add to Home Screen."
-        : "Open your browser menu and choose Install app or Add to Home Screen when available.",
+        : "Direct install is not supported in this browser. Use Chrome or Edge on Android to install CTMerchant.",
     })
   }
 
@@ -1222,33 +1220,14 @@ function Home() {
                   {showInstallCard ? (
                     <div className="mt-2 rounded-[22px] bg-pink-200 p-0.5">
                       <div className="rounded-[20px] border border-pink-200 bg-[linear-gradient(135deg,#fff7fb_0%,#fff1f2_48%,#fdf2f8_100%)] p-3 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex min-w-0 items-start gap-3">
-                            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-pink-600 text-white shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-pink-600 text-white shadow-sm">
                               <FaMobileScreenButton className="text-lg" />
                             </div>
-                            <div className="min-w-0">
-                              <p className="text-[12px] font-black uppercase tracking-[0.16em] text-pink-700">
-                                Install CTMerchant
-                              </p>
-                              <p className="mt-1 text-sm font-semibold leading-5 text-slate-700">
-                                {canPromptInstall
-                                  ? "Open CTMerchant faster from your home screen with a cleaner full-screen launch."
-                                  : "Save CTMerchant to your iPhone home screen for faster access and a cleaner web app experience."}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => dismissInstallCard()}
-                            className="shrink-0 rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 transition hover:bg-white hover:text-slate-600"
-                          >
-                            Later
-                          </button>
-                        </div>
-                        <div className="mt-3 flex items-center justify-between gap-3">
-                          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                            {canPromptInstall ? "Fast launch • Home screen access" : "Safari share menu • Add to Home Screen"}
+                            <p className="min-w-0 text-sm font-semibold leading-5 text-slate-700">
+                              Install on your phone and launch from home screen
+                            </p>
                           </div>
                           <button
                             type="button"
@@ -1256,7 +1235,7 @@ function Home() {
                             disabled={installingApp}
                             className="rounded-2xl bg-pink-600 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:bg-pink-700 disabled:cursor-wait disabled:opacity-70"
                           >
-                            {installingApp ? "Opening..." : canPromptInstall ? "Install now" : "How to install"}
+                            {installingApp ? "Opening..." : "Install"}
                           </button>
                         </div>
                       </div>
