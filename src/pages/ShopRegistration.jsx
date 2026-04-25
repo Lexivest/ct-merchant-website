@@ -284,7 +284,17 @@ function ShopRegistrationShimmer() {
   )
 }
 
-function ShopSubmissionLockedScreen({ isEdit, onBack }) {
+function ShopSubmissionLockedScreen({ onBack, lockState }) {
+  const eyebrow = lockState?.eyebrow || "Under Review"
+  const title = lockState?.title || "Shop Application Submitted"
+  const heading = lockState?.heading || "Your form is locked for review"
+  const message =
+    lockState?.message ||
+    "We have received your submission. You cannot edit this form while staff review is in progress."
+  const iconClass = lockState?.iconClass || "bg-pink-50 text-pink-600"
+  const Icon = lockState?.icon || FaShieldHalved
+  const buttonLabel = lockState?.buttonLabel || "Back to User Dashboard"
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -299,10 +309,10 @@ function ShopSubmissionLockedScreen({ isEdit, onBack }) {
           </button>
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-pink-600">
-              Under Review
+              {eyebrow}
             </p>
             <h1 className="text-lg font-black text-slate-950">
-              {isEdit ? "Correction Submitted" : "Shop Application Submitted"}
+              {title}
             </h1>
           </div>
         </div>
@@ -310,14 +320,14 @@ function ShopSubmissionLockedScreen({ isEdit, onBack }) {
 
       <main className="mx-auto flex max-w-3xl px-4 py-12">
         <div className="w-full rounded-[32px] border border-slate-200 bg-white p-8 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[28px] bg-pink-50 text-3xl text-pink-600">
-            <FaShieldHalved />
+          <div className={`mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[28px] text-3xl ${iconClass}`}>
+            <Icon />
           </div>
           <h2 className="text-2xl font-black tracking-tight text-slate-950">
-            Your form is locked for review
+            {heading}
           </h2>
           <p className="mx-auto mt-3 max-w-md text-sm font-semibold leading-6 text-slate-500">
-            We have received your submission. You cannot edit this form while staff review is in progress.
+            {message}
           </p>
           <button
             type="button"
@@ -325,7 +335,7 @@ function ShopSubmissionLockedScreen({ isEdit, onBack }) {
             className="mt-8 inline-flex h-12 items-center justify-center gap-3 rounded-2xl bg-slate-950 px-6 text-sm font-black text-white shadow-xl shadow-slate-200 transition hover:bg-slate-800 active:scale-[0.98]"
           >
             <FaArrowLeft className="text-xs" />
-            Back to User Dashboard
+            {buttonLabel}
           </button>
         </div>
       </main>
@@ -440,6 +450,53 @@ function ShopRegistration() {
 
   // Signed URLs for existing private assets
   const [signedPreviews, setSignedPreviews] = useState(EMPTY_SIGNED_PREVIEWS)
+
+  const registrationLockState = useMemo(() => {
+    if (submissionLocked) {
+      return {
+        eyebrow: "Under Review",
+        title: isEdit ? "Correction Submitted" : "Shop Application Submitted",
+        heading: "Your form is locked for review",
+        message:
+          "We have received your submission. You cannot edit this form while staff review is in progress.",
+        icon: FaShieldHalved,
+        iconClass: "bg-pink-50 text-pink-600",
+        buttonLabel: "Back to User Dashboard",
+      }
+    }
+
+    if (!isEdit || !existingShop) return null
+
+    const status = String(existingShop.status || "").toLowerCase()
+
+    if (status === "pending") {
+      return {
+        eyebrow: "Under Review",
+        title: "Correction Submitted",
+        heading: "This application is still under review",
+        message:
+          "Staff are reviewing your latest correction. The form is locked until the review is complete.",
+        icon: FaShieldHalved,
+        iconClass: "bg-pink-50 text-pink-600",
+        buttonLabel: "Back to User Dashboard",
+      }
+    }
+
+    if (status === "approved") {
+      return {
+        eyebrow: "Application Approved",
+        title: "Shop Application Approved",
+        heading: "This application has already been approved",
+        message:
+          "Your shop application is already approved, so this form is locked to prevent duplicate submissions. Continue from your dashboard.",
+        icon: FaCheck,
+        iconClass: "bg-emerald-50 text-emerald-600",
+        buttonLabel: "Back to User Dashboard",
+      }
+    }
+
+    return null
+  }, [existingShop, isEdit, submissionLocked])
 
   useEffect(() => {
     let isCancelled = false
@@ -1307,11 +1364,11 @@ function ShopRegistration() {
 
   if (!user || !profile) return null
 
-  if (submissionLocked) {
+  if (registrationLockState) {
     return (
       <ShopSubmissionLockedScreen
-        isEdit={isEdit}
-        onBack={() => navigate("/user-dashboard?tab=services", { replace: true })}
+        lockState={registrationLockState}
+        onBack={returnToRegistrationOrigin}
       />
     )
   }
