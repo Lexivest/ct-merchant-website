@@ -3,12 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   FaArrowLeft,
   FaCamera,
-  FaCircleCheck,
   FaCloudArrowUp,
   FaLocationDot,
   FaMicrophone,
   FaRotateRight,
-  FaShieldHalved,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
 import useAuthSession from "../../hooks/useAuthSession";
@@ -85,58 +83,94 @@ async function resolveBrowserLocationLabel(lat, lng, fallback = "") {
 function getSetupCopy(setupState) {
   if (setupState === SETUP_STATES.REQUESTING) {
     return {
-      title: "Waiting for permissions",
-      message:
-        "Please complete the browser permission prompt. We will only start the KYC camera after location is active.",
+      title: "Allow access to continue",
+      message: "Approve the browser prompt so CTMerchant can prepare your verification studio.",
     };
   }
 
   if (setupState === SETUP_STATES.WAITING_LOCATION) {
     return {
-      title: "Activating location",
-      message:
-        "Hold on while CTMerchant locks your GPS position. The camera preview will start immediately after location is ready.",
+      title: "Getting location",
+      message: "We are waiting for your phone location to turn active before the preview opens.",
     };
   }
 
   if (setupState === SETUP_STATES.STARTING_CAMERA) {
     return {
-      title: "Starting camera preview",
-      message:
-        "Location is active. We are now preparing the camera and microphone for your stamped verification video.",
+      title: "Opening camera",
+      message: "Location is ready. We are now starting your camera and microphone.",
     };
   }
 
   return {
-    title: "Enable camera and location",
-    message:
-      "Turn on the required permissions to start your KYC video. The live preview will wait for location before it opens.",
+    title: "Start video KYC",
+    message: "Tap continue and we will request location, camera, and microphone, then open your preview.",
   };
 }
 
-function getSetupStepState(setupState, hasLocation) {
-  return {
-    location:
-      setupState === SETUP_STATES.READY ||
-      setupState === SETUP_STATES.STARTING_CAMERA ||
-      Boolean(hasLocation)
-        ? "done"
-        : setupState === SETUP_STATES.WAITING_LOCATION || setupState === SETUP_STATES.REQUESTING
-          ? "active"
-          : "idle",
-    camera:
-      setupState === SETUP_STATES.READY
-        ? "done"
-        : setupState === SETUP_STATES.STARTING_CAMERA
-          ? "active"
-          : "idle",
-    microphone:
-      setupState === SETUP_STATES.READY
-        ? "done"
-        : setupState === SETUP_STATES.STARTING_CAMERA
-          ? "active"
-          : "idle",
-  };
+function getCurrentPositionOnce(options) {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, options);
+  });
+}
+
+async function requestLocationWithFallback() {
+  try {
+    return await getCurrentPositionOnce({
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
+    });
+  } catch (error) {
+    if (error?.code === 1) {
+      throw error;
+    }
+
+    return getCurrentPositionOnce({
+      enableHighAccuracy: false,
+      timeout: 20000,
+      maximumAge: 120000,
+    });
+  }
+}
+
+async function requestCameraStreamWithFallback() {
+  const attempts = [
+    {
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+      },
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 640, max: 854 },
+        height: { ideal: 480, max: 480 },
+        frameRate: { ideal: TARGET_KYC_FRAME_RATE, max: TARGET_KYC_FRAME_RATE },
+      },
+    },
+    {
+      audio: true,
+      video: {
+        facingMode: { ideal: "environment" },
+      },
+    },
+    {
+      audio: true,
+      video: true,
+    },
+  ];
+
+  let lastError = null;
+
+  for (const constraints of attempts) {
+    try {
+      return await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Could not start camera and microphone.");
 }
 
 export default function MerchantVideoKYC() {
@@ -160,7 +194,6 @@ export default function MerchantVideoKYC() {
   const [location, setLocation] = useState(null); // { lat, lng }
   const [setupState, setSetupState] = useState(SETUP_STATES.IDLE);
   const [setupError, setSetupError] = useState("");
-  const [hasAutoStartedSetup, setHasAutoStartedSetup] = useState(false);
 
   // Recording State
   const [recordingState, setRecordingState] = useState("ready"); // 'ready' | 'recording' | 'recorded' | 'uploading'
@@ -472,9 +505,7 @@ export default function MerchantVideoKYC() {
       // Step A: Request GPS Location
       if (!navigator.geolocation) throw new Error("Geolocation is not supported by your browser.");
       setSetupState(SETUP_STATES.WAITING_LOCATION);
-      const pos = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 });
-      });
+      const pos = await requestLocationWithFallback();
       
       const lat = pos.coords.latitude.toFixed(6);
       const lng = pos.coords.longitude.toFixed(6);
@@ -491,16 +522,7 @@ export default function MerchantVideoKYC() {
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error("Camera and microphone are not supported by this browser.");
       }
-      const constraints = {
-        audio: true,
-        video: {
-          facingMode: "environment",
-          width: { ideal: 640, max: 854 },
-          height: { ideal: 480, max: 480 },
-          frameRate: { ideal: TARGET_KYC_FRAME_RATE, max: TARGET_KYC_FRAME_RATE },
-        }
-      };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const stream = await requestCameraStreamWithFallback();
       streamRef.current = stream;
       
       if (rawVideoRef.current) {
@@ -521,21 +543,21 @@ export default function MerchantVideoKYC() {
       setSetupState(SETUP_STATES.FAILED);
       if (failedPhase === "location") {
         if (err?.code === 1 || err?.message?.includes("User denied Geolocation")) {
-          setSetupError("Please allow location access and retry.");
+          setSetupError("Please allow location access, then try again.");
         } else {
-          setSetupError("Turn on your phone location service, wait for GPS to lock, then retry.");
+          setSetupError("Turn on your phone location service and wait a moment for GPS to lock.");
         }
+      } else if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+        setSetupError("Please allow camera and microphone access to continue.");
+      } else if (err?.name === "NotFoundError") {
+        setSetupError("This phone could not find a working camera or microphone.");
+      } else if (err?.name === "NotReadableError") {
+        setSetupError("Your camera may be busy in another app. Close other camera apps and retry.");
       } else {
-        setSetupError("Please allow camera and microphone access and retry.");
+        setSetupError("We could not start the camera right now. Please try again.");
       }
     }
   }, [cityName, shopData?.cities?.name, startCanvasLoop, stopActiveMedia]);
-
-  useEffect(() => {
-    if (loading || pageError || !shopData || isOffline || hasAutoStartedSetup) return;
-    setHasAutoStartedSetup(true);
-    requestPermissionsAndStart();
-  }, [loading, pageError, shopData, isOffline, hasAutoStartedSetup, requestPermissionsAndStart]);
 
   const handleRecordToggle = () => {
     if (recordingState === "recording") stopRecording();
@@ -765,7 +787,10 @@ export default function MerchantVideoKYC() {
     Boolean(location) &&
     Boolean(streamRef.current);
   const setupCopy = getSetupCopy(setupState);
-  const setupSteps = getSetupStepState(setupState, location);
+  const setupBusy =
+    setupState === SETUP_STATES.REQUESTING ||
+    setupState === SETUP_STATES.WAITING_LOCATION ||
+    setupState === SETUP_STATES.STARTING_CAMERA;
 
 
   // --- UI RENDERING ---
@@ -773,8 +798,8 @@ export default function MerchantVideoKYC() {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-[#0F172A]">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#db2777]/30 border-t-[#db2777]"></div>
-        <p className="mt-4 font-semibold text-white">Acquiring GPS and Camera access...</p>
-        <p className="mt-2 text-xs text-[#94A3B8]">Please accept the permissions prompt.</p>
+        <p className="mt-4 font-semibold text-white">Loading video KYC...</p>
+        <p className="mt-2 text-xs text-[#94A3B8]">Preparing your verification studio.</p>
       </div>
     );
   }
@@ -815,9 +840,7 @@ export default function MerchantVideoKYC() {
 
           <div className="min-w-0 flex-1">
             <div className="truncate text-[1rem] font-extrabold text-[#F9A8D4]">Hello, {profileName}</div>
-            <div className="text-[0.74rem] font-semibold text-[#FBBF24]">
-              shop/store verification
-            </div>
+            <div className="text-[0.74rem] font-semibold uppercase tracking-[0.14em] text-[#FBBF24]">Video KYC</div>
             {shopData?.name ? (
               <div className="truncate text-[0.8rem] text-[#CBD5E1]">{shopData.name}</div>
             ) : null}
@@ -865,68 +888,45 @@ export default function MerchantVideoKYC() {
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/65 p-5 text-center backdrop-blur-sm">
               <div className="w-full max-w-[340px] rounded-3xl border border-white/10 bg-[#10192B]/95 p-5 shadow-xl">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#1F2937] text-[#FBBF24]">
-                  {setupState === SETUP_STATES.READY ? (
-                    <FaCircleCheck className="text-2xl text-emerald-400" />
-                  ) : setupState === SETUP_STATES.REQUESTING ||
-                    setupState === SETUP_STATES.WAITING_LOCATION ||
-                    setupState === SETUP_STATES.STARTING_CAMERA ? (
+                  {setupBusy ? (
                     <FaRotateRight className="animate-spin text-2xl" />
                   ) : (
-                    <FaShieldHalved className="text-2xl" />
+                    <FaCamera className="text-2xl" />
                   )}
                 </div>
                 <h3 className="mb-2 text-[1.05rem] font-extrabold text-white">{setupCopy.title}</h3>
                 <p className="text-[0.9rem] leading-relaxed text-[#CBD5E1]">{setupCopy.message}</p>
-                <div className="mt-4 space-y-2 rounded-2xl border border-white/10 bg-white/5 p-3 text-left text-[0.8rem] font-semibold text-[#CBD5E1]">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="inline-flex items-center gap-2"><FaLocationDot /> GPS Location</span>
-                    <span className={`${setupSteps.location === "done" ? "text-emerald-400" : setupSteps.location === "active" ? "text-[#FBBF24]" : "text-[#64748B]"}`}>
-                      {setupSteps.location === "done" ? "Ready" : setupSteps.location === "active" ? "Activating" : "Waiting"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="inline-flex items-center gap-2"><FaCamera /> Camera</span>
-                    <span className={`${setupSteps.camera === "done" ? "text-emerald-400" : setupSteps.camera === "active" ? "text-[#FBBF24]" : "text-[#64748B]"}`}>
-                      {setupSteps.camera === "done" ? "Ready" : setupSteps.camera === "active" ? "Starting" : "Waiting"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="inline-flex items-center gap-2"><FaMicrophone /> Microphone</span>
-                    <span className={`${setupSteps.microphone === "done" ? "text-emerald-400" : setupSteps.microphone === "active" ? "text-[#FBBF24]" : "text-[#64748B]"}`}>
-                      {setupSteps.microphone === "done" ? "Ready" : setupSteps.microphone === "active" ? "Starting" : "Waiting"}
-                    </span>
-                  </div>
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-[0.78rem] font-semibold text-[#CBD5E1]">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+                    <FaLocationDot /> Location
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+                    <FaCamera /> Camera
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+                    <FaMicrophone /> Mic
+                  </span>
                 </div>
                 <div className="mt-5 grid grid-cols-1 gap-3">
                   <button
                     type="button"
                     onClick={requestPermissionsAndStart}
-                    disabled={
-                      setupState === SETUP_STATES.REQUESTING ||
-                      setupState === SETUP_STATES.WAITING_LOCATION ||
-                      setupState === SETUP_STATES.STARTING_CAMERA
-                    }
+                    disabled={setupBusy}
                     className="flex items-center justify-center gap-2 rounded-xl bg-[#db2777] px-4 py-3 font-bold text-white transition hover:bg-[#be185d] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <FaCamera />
-                    {setupState === SETUP_STATES.REQUESTING ||
-                    setupState === SETUP_STATES.WAITING_LOCATION ||
-                    setupState === SETUP_STATES.STARTING_CAMERA
-                      ? "Preparing Studio..."
-                      : "Enable Camera and Location"}
+                    {setupBusy ? "Preparing..." : setupState === SETUP_STATES.FAILED ? "Try Again" : "Continue"}
                   </button>
                   {setupError ? (
                     <InlineErrorState
-                      title="Permissions still needed"
+                      title="Could not start yet"
                       message={setupError}
                       surface="dark"
                       compact
                     />
                   ) : null}
-                  <div className="flex items-center justify-center gap-4 text-[0.78rem] font-semibold text-[#94A3B8]">
-                    <span className="inline-flex items-center gap-1"><FaLocationDot /> GPS</span>
-                    <span className="inline-flex items-center gap-1"><FaCamera /> Camera</span>
-                    <span className="inline-flex items-center gap-1"><FaMicrophone /> Mic</span>
+                  <div className="text-center text-[0.78rem] font-semibold text-[#94A3B8]">
+                    We wait for location first, then open the live preview.
                   </div>
                 </div>
               </div>
@@ -971,7 +971,9 @@ export default function MerchantVideoKYC() {
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-center text-[0.82rem] font-semibold text-[#CBD5E1]">
               {setupState === SETUP_STATES.WAITING_LOCATION
                 ? "Waiting for location to turn active before the video preview starts."
-                : "Complete setup first. CTMerchant will only enable recording after location, camera, and microphone are ready."}
+                : setupBusy
+                  ? "Preparing your studio..."
+                  : "Tap Continue above to start camera, microphone, and location setup."}
             </div>
           ) : null}
 
