@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 
+const RECENT_INSTALL_SESSION_KEY = "ctm_pwa_recent_install"
+
 function detectStandalone() {
   if (typeof window === "undefined") return false
   return (
@@ -9,11 +11,39 @@ function detectStandalone() {
   )
 }
 
+function readSessionFlag(key) {
+  if (typeof window === "undefined") return false
+
+  try {
+    return window.sessionStorage.getItem(key) === "1"
+  } catch {
+    return false
+  }
+}
+
+function writeSessionFlag(key, enabled) {
+  if (typeof window === "undefined") return
+
+  try {
+    if (enabled) {
+      window.sessionStorage.setItem(key, "1")
+      return
+    }
+
+    window.sessionStorage.removeItem(key)
+  } catch {
+    // Best effort only.
+  }
+}
+
 export default function usePwaInstall() {
   const [installPromptEvent, setInstallPromptEvent] = useState(null)
   const [installingApp, setInstallingApp] = useState(false)
   const [isStandaloneMode, setIsStandaloneMode] = useState(() =>
     typeof window === "undefined" ? false : detectStandalone()
+  )
+  const [recentlyInstalled, setRecentlyInstalled] = useState(() =>
+    readSessionFlag(RECENT_INSTALL_SESSION_KEY)
   )
 
   const isPhoneDevice = useMemo(() => {
@@ -26,6 +56,15 @@ export default function usePwaInstall() {
     if (typeof navigator === "undefined") return false
     const userAgent = navigator.userAgent || ""
     return /iphone|ipad|ipod/i.test(userAgent)
+  }, [])
+
+  const isSupportedAndroidInstallBrowser = useMemo(() => {
+    if (typeof navigator === "undefined") return false
+    const userAgent = navigator.userAgent || ""
+
+    if (!/android/i.test(userAgent)) return false
+
+    return /(chrome\/|crmo\/|edga\/|samsungbrowser\/)/i.test(userAgent)
   }, [])
 
   const canPromptInstall = Boolean(installPromptEvent) && !isStandaloneMode
@@ -51,6 +90,8 @@ export default function usePwaInstall() {
         const choice = await promptEvent.userChoice
 
         if (choice?.outcome === "accepted") {
+          setRecentlyInstalled(true)
+          writeSessionFlag(RECENT_INSTALL_SESSION_KEY, true)
           clearPromptState()
           return { status: "accepted" }
         }
@@ -67,8 +108,23 @@ export default function usePwaInstall() {
       return { status: "ios-instructions" }
     }
 
+    if (recentlyInstalled) {
+      return { status: "already-installed" }
+    }
+
+    if (isSupportedAndroidInstallBrowser) {
+      return { status: "browser-menu" }
+    }
+
     return { status: "unsupported" }
-  }, [clearPromptState, installPromptEvent, isAppleMobile, isStandaloneMode])
+  }, [
+    clearPromptState,
+    installPromptEvent,
+    isAppleMobile,
+    isStandaloneMode,
+    isSupportedAndroidInstallBrowser,
+    recentlyInstalled,
+  ])
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined
@@ -81,6 +137,8 @@ export default function usePwaInstall() {
     }
 
     function handleAppInstalled() {
+      setRecentlyInstalled(true)
+      writeSessionFlag(RECENT_INSTALL_SESSION_KEY, true)
       clearPromptState()
     }
 
@@ -92,6 +150,7 @@ export default function usePwaInstall() {
     function handleVisibilityChange() {
       if (document.visibilityState === "visible") {
         setIsStandaloneMode(detectStandalone())
+        setRecentlyInstalled(readSessionFlag(RECENT_INSTALL_SESSION_KEY))
       }
     }
 
@@ -114,7 +173,9 @@ export default function usePwaInstall() {
     isAppleMobile,
     isPhoneDevice,
     isStandaloneMode,
+    isSupportedAndroidInstallBrowser,
     promptInstall,
+    recentlyInstalled,
     showInstallPrompt,
   }
 }

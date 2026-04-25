@@ -9,7 +9,9 @@ function PwaAddToHomePrompt() {
   const {
     installingApp,
     isAppleMobile,
+    isSupportedAndroidInstallBrowser,
     promptInstall,
+    recentlyInstalled,
     showInstallPrompt,
   } = usePwaInstall()
   const [visible, setVisible] = useState(false)
@@ -40,7 +42,7 @@ function PwaAddToHomePrompt() {
       notify({
         type: "info",
         title: "Already on home screen",
-        message: "CTMerchant is already available from your home screen.",
+        message: "CTMerchant is already available from your home screen. Open it directly from there.",
       })
       return
     }
@@ -50,6 +52,15 @@ function PwaAddToHomePrompt() {
         type: "error",
         title: "Add to Home Screen failed",
         message: "CTMerchant could not open the home screen prompt right now. Please try again.",
+      })
+      return
+    }
+
+    if (result?.status === "browser-menu") {
+      notify({
+        type: "info",
+        title: "Add to Home Screen",
+        message: "This browser supports Add to Home Screen. If the install sheet does not open automatically, open the browser menu and tap Add to Home Screen.",
       })
       return
     }
@@ -67,6 +78,14 @@ function PwaAddToHomePrompt() {
     return null
   }
 
+  const helperText = isAppleMobile
+    ? "Tap Add, or use Safari Share menu."
+    : recentlyInstalled
+      ? "Already added? Open CTMerchant from home screen."
+      : isSupportedAndroidInstallBrowser
+        ? "Tap Add. If needed, use your browser menu."
+        : "Use Chrome or Edge on Android for best results."
+
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[12000] flex justify-center px-3">
       <div className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-[24px] border border-pink-200/90 bg-white/95 p-3 shadow-[0_24px_60px_rgba(15,23,42,0.18)] backdrop-blur">
@@ -80,6 +99,9 @@ function PwaAddToHomePrompt() {
           </p>
           <p className="mt-0.5 text-sm font-semibold leading-5 text-slate-700">
             Keep CTMerchant one tap away on your phone.
+          </p>
+          <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500">
+            {helperText}
           </p>
         </div>
 
