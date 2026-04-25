@@ -15,7 +15,6 @@ import {
   FaHashtag,
   FaLock,
   FaMagnifyingGlass,
-  FaMobileScreenButton,
   FaNewspaper,
   FaPhone,
   FaTelegram,
@@ -47,7 +46,6 @@ import {
 } from "../lib/validators"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch from "../hooks/useCachedFetch"
-import usePwaInstall from "../hooks/usePwaInstall"
 import StableImage from "../components/common/StableImage"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import {
@@ -729,12 +727,6 @@ function Home() {
     () => phrases[phraseIndex].slice(0, charIndex),
     [phraseIndex, charIndex]
   )
-  const {
-    installingApp,
-    isAppleMobile,
-    promptInstall,
-    showInstallCard,
-  } = usePwaInstall()
   const homeStructuredData = useMemo(() => {
     return {
       "@context": "https://schema.org",
@@ -748,31 +740,6 @@ function Home() {
       },
     }
   }, [])
-
-  async function handleInstallApp() {
-    const result = await promptInstall()
-
-    if (result?.status === "accepted" || result?.status === "dismissed") {
-      return
-    }
-
-    if (result?.status === "error") {
-      notify({
-        type: "error",
-        title: "Install prompt failed",
-        message: "CTMerchant could not open the install prompt right now. Please try again.",
-      })
-      return
-    }
-
-    notify({
-      type: isAppleMobile ? "info" : "error",
-      title: isAppleMobile ? "Install from Safari menu" : "Unsupported browser",
-      message: isAppleMobile
-        ? "Open the Share menu in Safari and choose Add to Home Screen."
-        : "Direct install is not supported in this browser. Use Chrome or Edge on Android to install CTMerchant.",
-    })
-  }
 
   function validateLogin() {
     const errors = {}
@@ -1217,31 +1184,6 @@ function Home() {
                       </div>
                     </div>
                   */}
-                  {showInstallCard ? (
-                    <div className="mt-2 rounded-[22px] bg-pink-200 p-0.5">
-                      <div className="rounded-[20px] border border-pink-200 bg-[linear-gradient(135deg,#fff7fb_0%,#fff1f2_48%,#fdf2f8_100%)] p-3 shadow-sm">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-pink-600 text-white shadow-sm">
-                              <FaMobileScreenButton className="text-lg" />
-                            </div>
-                            <p className="min-w-0 text-sm font-semibold leading-5 text-slate-700">
-                              Install on your phone and launch from home screen
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handleInstallApp}
-                            disabled={installingApp}
-                            className="rounded-2xl bg-pink-600 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:bg-pink-700 disabled:cursor-wait disabled:opacity-70"
-                          >
-                            {installingApp ? "Opening..." : "Install"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-
                   <div className="mt-4 rounded-[22px] bg-pink-200 p-1">
                     <div className="rounded-[18px] border border-pink-200 bg-pink-50 p-6">
                       <h2 className="flex items-center gap-2 text-xl font-extrabold text-slate-900">

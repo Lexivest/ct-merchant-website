@@ -1,30 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-const DISMISS_STORAGE_KEY = "ctm_pwa_install_dismiss_until"
-const DEFAULT_DISMISS_MS = 1000 * 60 * 60 * 24 * 3
-
-function readStorageNumber(key) {
-  if (typeof window === "undefined") return 0
-
-  try {
-    const value = window.localStorage.getItem(key)
-    const parsed = Number.parseInt(value || "", 10)
-    return Number.isFinite(parsed) ? parsed : 0
-  } catch {
-    return 0
-  }
-}
-
-function writeStorageValue(key, value) {
-  if (typeof window === "undefined") return
-
-  try {
-    window.localStorage.setItem(key, String(value))
-  } catch {
-    // Best effort only.
-  }
-}
-
 function detectStandalone() {
   if (typeof window === "undefined") return false
   return (
@@ -37,10 +12,6 @@ function detectStandalone() {
 export default function usePwaInstall() {
   const [installPromptEvent, setInstallPromptEvent] = useState(null)
   const [installingApp, setInstallingApp] = useState(false)
-  const [dismissedUntil, setDismissedUntil] = useState(() => readStorageNumber(DISMISS_STORAGE_KEY))
-  const [installClock, setInstallClock] = useState(() =>
-    typeof window === "undefined" ? 0 : Date.now()
-  )
   const [isStandaloneMode, setIsStandaloneMode] = useState(() =>
     typeof window === "undefined" ? false : detectStandalone()
   )
@@ -57,14 +28,8 @@ export default function usePwaInstall() {
     return /iphone|ipad|ipod/i.test(userAgent)
   }, [])
 
-  const canPromptInstall = Boolean(installPromptEvent)
-  const showInstallCard = isPhoneDevice && !isStandaloneMode && installClock > dismissedUntil
-
-  const dismissInstallCard = useCallback((durationMs = DEFAULT_DISMISS_MS) => {
-    const nextDismissTime = Date.now() + durationMs
-    setDismissedUntil(nextDismissTime)
-    writeStorageValue(DISMISS_STORAGE_KEY, nextDismissTime)
-  }, [])
+  const canPromptInstall = Boolean(installPromptEvent) && !isStandaloneMode
+  const showInstallPrompt = isPhoneDevice
 
   const clearPromptState = useCallback(() => {
     setInstallPromptEvent(null)
@@ -72,6 +37,10 @@ export default function usePwaInstall() {
   }, [])
 
   const promptInstall = useCallback(async () => {
+    if (isStandaloneMode) {
+      return { status: "already-installed" }
+    }
+
     if (installPromptEvent) {
       const promptEvent = installPromptEvent
       setInstallingApp(true)
@@ -87,7 +56,6 @@ export default function usePwaInstall() {
         }
 
         setInstallingApp(false)
-        dismissInstallCard(1000 * 60 * 60 * 24 * 3)
         return { status: "dismissed" }
       } catch (error) {
         setInstallingApp(false)
@@ -100,14 +68,10 @@ export default function usePwaInstall() {
     }
 
     return { status: "unsupported" }
-  }, [clearPromptState, dismissInstallCard, installPromptEvent, isAppleMobile])
+  }, [clearPromptState, installPromptEvent, isAppleMobile, isStandaloneMode])
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined
-
-    const syncInstallClock = () => {
-      setInstallClock(Date.now())
-    }
 
     const standaloneQuery = window.matchMedia?.("(display-mode: standalone)")
 
@@ -127,8 +91,6 @@ export default function usePwaInstall() {
 
     function handleVisibilityChange() {
       if (document.visibilityState === "visible") {
-        syncInstallClock()
-        setDismissedUntil(readStorageNumber(DISMISS_STORAGE_KEY))
         setIsStandaloneMode(detectStandalone())
       }
     }
@@ -153,7 +115,6 @@ export default function usePwaInstall() {
     isPhoneDevice,
     isStandaloneMode,
     promptInstall,
-    showInstallCard,
-    dismissInstallCard,
+    showInstallPrompt,
   }
 }
