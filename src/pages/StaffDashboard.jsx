@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
+  FaArrowTrendUp,
   FaChartLine,
   FaCircleNotch,
   FaComments,
@@ -217,6 +218,13 @@ export default function StaffDashboard() {
               onClick={() => void openStaffRouteWithTransition("/staff-traffic")}
             />
             <HomeCard
+              icon={<FaArrowTrendUp />}
+              title="Shop Analytics"
+              subtitle="Rank shops by visits, repo-search visibility, and real buyer contact actions."
+              tone="pink"
+              onClick={() => void openStaffRouteWithTransition("/staff-shop-analytics")}
+            />
+            <HomeCard
               icon={<FaUsers />}
               title="User Activity"
               subtitle="Inspect city-level user activity, inactivity risk, and shop ownership patterns."
@@ -310,17 +318,15 @@ export default function StaffDashboard() {
               onClick={() => void openStaffRouteWithTransition("/staff-city-banners")}
             />
 
-            {isSuperAdmin && (
-              <HomeCard
-                icon={<FaTowerBroadcast />}
-                title="Security Intelligence"
-                subtitle="Detect multi-account clusters and suspicious merchant footprints."
-                metric={counts.radar}
-                metricLabel="Alerts"
-                tone="amber"
-                onClick={() => void openStaffRouteWithTransition("/staff-security-radar")}
-              />
-            )}
+            <HomeCard
+              icon={<FaTowerBroadcast />}
+              title="Security Intelligence"
+              subtitle="Detect suspicious contact behavior, spam pressure, and deeper account clusters."
+              metric={counts.radar}
+              metricLabel="Alerts"
+              tone="amber"
+              onClick={() => void openStaffRouteWithTransition("/staff-security-radar")}
+            />
           </div>
 
           <SectionHeading

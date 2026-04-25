@@ -43,6 +43,7 @@ import {
   prepareDashboardTransition,
 } from "../lib/dashboardData"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
+import { logShopAnalyticsEvent } from "../lib/shopAnalytics"
 import { buildShopDetailCacheKey, fetchShopDetailData } from "../lib/shopDetailData"
 import {
   buildProductDetailCacheKey,
@@ -302,21 +303,22 @@ function ShopDetail() {
   }, [shopId])
 
   useEffect(() => {
-    if (!user?.id || !currentShop?.id || viewTrackedRef.current) return
-    if (user.id === currentShop.owner_id) return
+    if (!currentShop?.id || viewTrackedRef.current) return
+    if (user?.id && user.id === currentShop.owner_id) return
 
     viewTrackedRef.current = true
 
-    void (async () => {
-      const { error } = await supabase
-        .from("shop_views")
-        .insert({ shop_id: currentShop.id, viewer_id: user.id })
-
-      if (error) {
-        console.error("Failed to record shop view", error)
-      }
-    })()
-  }, [currentShop?.id, currentShop?.owner_id, user?.id])
+    void logShopAnalyticsEvent({
+      shopId: currentShop.id,
+      eventType: "shop_view",
+      eventSource: isRepoSearchEntry ? "repo_search" : "shop_detail",
+      repoRef: isRepoSearchEntry ? repoRef : null,
+      metadata: {
+        screen: "shop-detail",
+        repo_public: usePublicRepoMode,
+      },
+    })
+  }, [currentShop?.id, currentShop?.owner_id, isRepoSearchEntry, repoRef, usePublicRepoMode, user?.id])
 
   useEffect(() => {
     if (shouldLoadCommunity) return undefined
@@ -583,6 +585,24 @@ function ShopDetail() {
     window.open(formattedUrl, "_blank", "noopener,noreferrer")
   }
 
+  function handlePhoneContact() {
+    if (!currentShop?.phone) return
+
+    void logShopAnalyticsEvent({
+      shopId: currentShop.id,
+      eventType: "contact_phone",
+      eventSource: isRepoSearchEntry ? "repo_search" : "shop_detail",
+      contactStatus: "opened",
+      repoRef: isRepoSearchEntry ? repoRef : null,
+      metadata: {
+        screen: "shop-detail",
+        contact_channel: "phone",
+      },
+    })
+
+    window.location.href = `tel:${currentShop.phone}`
+  }
+
   function _formatPrice(value) {
     if (value === null || value === undefined || value === "") return ""
     return `₦${Number(value).toLocaleString()}`
@@ -590,7 +610,7 @@ function ShopDetail() {
 
   async function openProductWithTransition(productId) {
     if (!productId) return
-    const repoSuffix = usePublicRepoMode ? buildRepoSearchQuerySuffix(repoRef) : ""
+    const repoSuffix = isRepoSearchEntry && repoRef ? buildRepoSearchQuerySuffix(repoRef) : ""
 
     const cacheKey = buildProductDetailCacheKey(productId, user?.id || null)
     const cachedEntry = readCachedFetchStore(cacheKey)
@@ -779,9 +799,13 @@ function ShopDetail() {
             {/* Social Row */}
             <div className="mt-4 flex flex-wrap gap-2.5">
               {currentShop?.phone && (
-                <a href={`tel:${currentShop.phone}`} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#3B82F6] text-white transition hover:opacity-90">
+                <button
+                  type="button"
+                  onClick={handlePhoneContact}
+                  className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#3B82F6] text-white transition hover:opacity-90"
+                >
                   <FaPhone className="text-lg" />
-                </a>
+                </button>
               )}
               {currentShop?.website_url && (
                 <button type="button" onClick={() => openExternalUrl(currentShop.website_url)} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#4F46E5] text-white transition hover:opacity-90">

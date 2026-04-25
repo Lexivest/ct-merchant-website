@@ -165,6 +165,7 @@ const loadTerms = () => import("./pages/Terms")
 const loadCreateAccount = () => import("./pages/CreateAccount")
 const loadStaffDashboard = () => import("./pages/StaffDashboard")
 const loadStaffTraffic = () => import("./pages/staff/StaffTraffic")
+const loadStaffShopAnalytics = () => import("./pages/staff/StaffShopAnalytics")
 const loadStaffUsers = () => import("./pages/staff/StaffUsers")
 const loadStaffCommunity = () => import("./pages/staff/StaffCommunity")
 const loadStaffVerifications = () => import("./pages/staff/StaffVerifications")
@@ -214,6 +215,7 @@ const Terms = resilientLazy(loadTerms, { pageLabel: "terms" })
 const CreateAccount = resilientLazy(loadCreateAccount, { pageLabel: "create account" })
 const StaffDashboard = resilientLazy(loadStaffDashboard, { pageLabel: "staff dashboard" })
 const StaffTraffic = resilientLazy(loadStaffTraffic, { pageLabel: "staff traffic" })
+const StaffShopAnalytics = resilientLazy(loadStaffShopAnalytics, { pageLabel: "staff shop analytics" })
 const StaffUsers = resilientLazy(loadStaffUsers, { pageLabel: "staff users" })
 const StaffCommunity = resilientLazy(loadStaffCommunity, { pageLabel: "staff community" })
 const StaffVerifications = resilientLazy(loadStaffVerifications, { pageLabel: "staff verifications" })
@@ -361,6 +363,11 @@ function getRouteMeta(pathname) {
       description: "Review traffic, market performance, and operational trends across CTMerchant.",
       noindex: true,
     },
+    "/staff-shop-analytics": {
+      title: "Staff Shop Analytics | CTMerchant",
+      description: "Review top ranking shops, contact conversion, and repo-search performance across CTMerchant.",
+      noindex: true,
+    },
     "/staff-users": {
       title: "Staff User Control | CTMerchant",
       description: "Manage merchant accounts, user status, and platform access controls.",
@@ -413,7 +420,7 @@ function getRouteMeta(pathname) {
     },
     "/staff-security-radar": {
       title: "Security Radar | CTMerchant",
-      description: "Watch login threats, account risk, and platform security signals.",
+      description: "Watch contact abuse, suspicious actors, and deeper account-risk signals across CTMerchant.",
       noindex: true,
     },
     "/staff-products": {
@@ -716,6 +723,7 @@ function AppShell() {
         <Route path="/staff-portal" element={<StaffPortal />} />
         <Route path="/staff-dashboard" element={<ProtectedStaffRoute><StaffDashboard /></ProtectedStaffRoute>} />
         <Route path="/staff-traffic" element={<ProtectedStaffRoute><StaffTraffic /></ProtectedStaffRoute>} />
+        <Route path="/staff-shop-analytics" element={<ProtectedStaffRoute><StaffShopAnalytics /></ProtectedStaffRoute>} />
         <Route path="/staff-users" element={<ProtectedStaffRoute><StaffUsers /></ProtectedStaffRoute>} />
         <Route path="/staff-community" element={<ProtectedStaffRoute><StaffCommunity /></ProtectedStaffRoute>} />
         <Route path="/staff-verifications" element={<ProtectedStaffRoute><StaffVerifications /></ProtectedStaffRoute>} />

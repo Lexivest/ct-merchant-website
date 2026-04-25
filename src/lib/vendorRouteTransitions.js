@@ -2,6 +2,7 @@ import { primeCachedFetchStore } from "../hooks/useCachedFetch"
 import { getProfileDisplayName } from "./featuredBannerEngine"
 import { fetchLatestPaymentProof, fetchVerificationAccessStatus } from "./offlinePayments"
 import { loadProductCategoryRows } from "./productCategories"
+import { fetchMerchantShopAnalytics } from "./shopAnalytics"
 import { supabase } from "./supabase"
 
 const VENDOR_TRANSITION_TIMEOUT = 12000
@@ -420,42 +421,23 @@ async function prepareMerchantNewsData({ userId, shopId }) {
 
 async function prepareMerchantAnalyticsData({ userId, shopId }) {
   await fetchProfileSuspension(userId)
-  const shop = await fetchOwnedShop(userId, shopId, "id, subscription_end_date")
+  const shop = await fetchOwnedShop(userId, shopId, "id, subscription_end_date, name, unique_id")
 
   if (!isFutureDate(shop.subscription_end_date)) {
     throw new Error("Activate your service plan before opening analytics.")
   }
 
-  const safeCountFetch = async (table) => {
-    try {
-      const { count, error } = await supabase
-        .from(table)
-        .select("*", { count: "exact", head: true })
-        .eq("shop_id", shop.id)
-
-      if (error) throw error
-      return count || 0
-    } catch (error) {
-      console.warn(`Failed to fetch ${table} count during preload:`, error)
-      return 0
-    }
-  }
-
-  const [views, clicks, likes] = await Promise.all([
-    safeCountFetch("shop_views"),
-    safeCountFetch("whatsapp_clicks"),
-    safeCountFetch("shop_likes"),
-  ])
+  const analytics = await fetchMerchantShopAnalytics({
+    shopId: shop.id,
+    days: 30,
+  })
 
   return {
     kind: "merchant-analytics",
     shopId: String(shop.id),
-    stats: {
-      views,
-      clicks,
-      likes,
-      conversion: views > 0 ? `${((clicks / views) * 100).toFixed(1)}%` : "0.0%",
-    },
+    shopName: shop.name,
+    summary: analytics,
+    days: 30,
   }
 }
 

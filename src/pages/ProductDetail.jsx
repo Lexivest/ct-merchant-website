@@ -47,6 +47,7 @@ import {
   buildRepoSearchQuerySuffix,
   fetchPublicRepoProductDetail,
 } from "../lib/repoSearch"
+import { logShopAnalyticsEvent } from "../lib/shopAnalytics"
 
 function ProductDetail() {
   const navigate = useNavigate()
@@ -62,6 +63,10 @@ function ProductDetail() {
     location.state?.prefetchedProductData?.shop?.unique_id ||
     ""
   const repoRef = repoRefFromUrl || repoRefFromState
+  const isRepoSearchEntry =
+    searchParams.get("repo_public") === "1" ||
+    location.state?.fromRepoSearch === true ||
+    Boolean(repoRef)
   const routePrefetchedProductData =
     location.state?.prefetchedProductData?.product &&
     String(location.state.prefetchedProductData.product.id) === String(productId)
@@ -72,7 +77,7 @@ function ProductDetail() {
 
   // 1. Unified Auth State
   const { user, loading: authLoading } = useAuthSession()
-  const isPublicRepoMode = searchParams.get("repo_public") === "1" && !user?.id && Boolean(repoRef)
+  const isPublicRepoMode = isRepoSearchEntry && !user?.id && Boolean(repoRef)
 
   // 2. Extracted Data Fetching Logic for Hook
   const fetchProductData = async () =>
@@ -196,7 +201,7 @@ function ProductDetail() {
   }, [currentProduct])
 
   async function goBack() {
-    const repoSuffix = isPublicRepoMode ? buildRepoSearchQuerySuffix(repoRef) : ""
+    const repoSuffix = isRepoSearchEntry && repoRef ? buildRepoSearchQuerySuffix(repoRef) : ""
     if (shopSrc) {
       navigate(`/shop-detail?id=${shopSrc}${repoSuffix}`, { replace: true })
       return
@@ -325,19 +330,20 @@ function ProductDetail() {
       return
     }
 
-    if (user && currentShop) {
-      supabase
-        .from("call_clicks")
-        .insert({
-          clicker_id: user.id,
-          shop_id: currentShop.id,
-          product_id: parseInt(productId, 10),
-        })
-        .then(() => {})
-        .catch(() => {})
-    }
+    void logShopAnalyticsEvent({
+      shopId: currentShop.id,
+      productId,
+      eventType: "contact_phone",
+      eventSource: isRepoSearchEntry ? "repo_search" : "product_detail",
+      contactStatus: "opened",
+      repoRef: isRepoSearchEntry ? repoRef : null,
+      metadata: {
+        screen: "product-detail",
+        contact_channel: "phone",
+      },
+    })
 
-    window.open(`tel:${currentShop.phone}`, "_self")
+    window.location.href = `tel:${currentShop.phone}`
   }
 
   function showSecurityModal() {
@@ -378,17 +384,18 @@ function ProductDetail() {
     }
 
     if (currentShop?.id) {
-      void (async () => {
-        const { error } = await supabase.from("whatsapp_clicks").insert({
-          shop_id: currentShop.id,
-          clicker_id: user ? user.id : null,
-          product_id: parseInt(productId, 10),
-        })
-
-        if (error) {
-          console.error("Failed to record WhatsApp click", error)
-        }
-      })()
+      void logShopAnalyticsEvent({
+        shopId: currentShop.id,
+        productId,
+        eventType: "contact_whatsapp",
+        eventSource: isRepoSearchEntry ? "repo_search" : "product_detail",
+        contactStatus: "opened",
+        repoRef: isRepoSearchEntry ? repoRef : null,
+        metadata: {
+          screen: "product-detail",
+          contact_channel: "whatsapp",
+        },
+      })
     }
 
     if (!isDirectHandoff) {
@@ -459,7 +466,7 @@ function ProductDetail() {
 
   async function openProductWithTransition(nextProductId) {
     if (!nextProductId) return
-    const repoSuffix = isPublicRepoMode ? buildRepoSearchQuerySuffix(repoRef) : ""
+    const repoSuffix = isRepoSearchEntry && repoRef ? buildRepoSearchQuerySuffix(repoRef) : ""
 
     const nextCacheKey = isPublicRepoMode
       ? `repo_public_product_${repoRef || "unknown"}_${nextProductId || "unknown"}`

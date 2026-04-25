@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
+  FaArrowTrendUp,
   FaArrowRightFromBracket,
   FaChartLine,
   FaCircleNotch,
@@ -416,6 +417,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
       pendingPaymentsResult,
       visitsTodayResult,
       cityReporterIdsResult,
+      radarResult,
     ] = await Promise.allSettled([
       buildScopedShopQuery(
         supabase.from("shops").select("id", { count: "exact", head: true })
@@ -452,6 +454,10 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
             .select("id")
             .eq("city_id", cityId)
         : Promise.resolve({ data: null, error: null }),
+      supabase.rpc("ctm_get_contact_security_radar", {
+        p_days: 30,
+        p_city_id: shouldFilterByCity ? cityId : null,
+      }),
     ])
 
     const readCount = (result) =>
@@ -460,6 +466,12 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
     const visitsToday =
       visitsTodayResult.status === "fulfilled" && !visitsTodayResult.value.error
         ? Number(visitsTodayResult.value.data?.total_visits) || 0
+        : 0
+    const radarCount =
+      radarResult.status === "fulfilled" && !radarResult.value.error
+        ? Array.isArray(radarResult.value.data)
+          ? radarResult.value.data.length
+          : 0
         : 0
 
     let pendingAbuseCount = 0
@@ -495,7 +507,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
       community: readCount(pendingCommunityResult),
       content: readCount(pendingContentResult),
       inbox: readCount(unreadContactResult) + pendingAbuseCount,
-      radar: 0,
+      radar: radarCount,
     })
 
     setSummary({
@@ -507,15 +519,31 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
 
   const fetchCounts = useCallback(async () => {
     try {
-      const { data, error } = await supabase.rpc("get_staff_dashboard_payload", {
-        p_is_super_admin: isSuperAdmin,
-        p_city_id: staffCityId ? Number(staffCityId) : null,
-      })
+      const [payloadResult, radarResult] = await Promise.all([
+        supabase.rpc("get_staff_dashboard_payload", {
+          p_is_super_admin: isSuperAdmin,
+          p_city_id: staffCityId ? Number(staffCityId) : null,
+        }),
+        supabase.rpc("ctm_get_contact_security_radar", {
+          p_days: 30,
+          p_city_id: staffCityId ? Number(staffCityId) : null,
+        }),
+      ])
+
+      const { data, error } = payloadResult
 
       if (error) throw error
 
       if (data) {
-        setCounts(data.counts)
+        const radarCount =
+          radarResult.error || !Array.isArray(radarResult.data)
+            ? Number(data.counts?.radar || 0)
+            : radarResult.data.length
+
+        setCounts({
+          ...data.counts,
+          radar: radarCount,
+        })
         setSummary({
           shopCount: data.summary.shop_count,
           inactiveUsers: data.summary.inactive_users_count,
@@ -595,6 +623,7 @@ export function StaffPortalShell({
   const allNavItems = [
     { key: "home", label: "Home", to: "/staff-dashboard", icon: <FaShieldHalved /> },
     { key: "traffic", label: "Traffic", to: "/staff-traffic", icon: <FaChartLine /> },
+    { key: "shop-analytics", label: "Shop Analytics", to: "/staff-shop-analytics", icon: <FaArrowTrendUp /> },
     { key: "users", label: "Users", to: "/staff-users", icon: <FaUsers /> },
     { key: "products", label: "Products", to: "/staff-products", icon: <FaWandMagicSparkles />, count: counts.products },
     { key: "shop-content", label: "Shop Content", to: "/staff-shop-content", icon: <FaPanorama />, count: counts.content },
@@ -608,7 +637,7 @@ export function StaffPortalShell({
     { key: "city-banners", label: "City Banners", to: "/staff-city-banners", icon: <FaImages /> },
     { key: "inbox", label: "Inbox", to: "/staff-inbox", icon: <FaEnvelope />, count: counts.inbox },
     { key: "studio", label: "CT Studio", to: "/staff-studio", icon: <FaWandMagicSparkles /> },
-    { key: "security-radar", label: "Security Radar", to: "/staff-security-radar", icon: <FaTowerBroadcast />, count: counts.radar, superOnly: true },
+    { key: "security-radar", label: "Security Radar", to: "/staff-security-radar", icon: <FaTowerBroadcast />, count: counts.radar },
   ]
 
   const navItems = allNavItems.filter(item => !item.superOnly || isSuperAdmin)

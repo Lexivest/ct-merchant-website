@@ -1,4 +1,5 @@
 import { getStaffCommentThreads } from "../pages/staff/StaffPortalShared"
+import { fetchContactSecurityRadar, fetchStaffShopAnalytics } from "./shopAnalytics"
 import { fetchStaffPaymentsOverview } from "./staffPaymentsData"
 import { supabase } from "./supabase"
 
@@ -14,6 +15,7 @@ const staffRouteLoaders = {
   "/staff-announcements": () => import("../pages/staff/StaffAnnouncements"),
   "/staff-notifications": () => import("../pages/staff/StaffNotifications"),
   "/staff-payments": () => import("../pages/staff/StaffPayments"),
+  "/staff-shop-analytics": () => import("../pages/staff/StaffShopAnalytics"),
   "/staff-city-banners": () => import("../pages/staff/StaffFeaturedCityBanners"),
   "/staff-sponsored-products": () => import("../pages/staff/StaffSponsoredProducts"),
   "/staff-inbox": () => import("../pages/staff/StaffInbox"),
@@ -201,6 +203,27 @@ async function prepareStaffPaymentsData() {
   }
 }
 
+async function prepareStaffShopAnalyticsData() {
+  const [rows, citiesResult] = await Promise.all([
+    fetchStaffShopAnalytics({
+      days: 30,
+      cityId: null,
+      limit: 100,
+    }),
+    supabase.from("cities").select("id, name, state").order("state").order("name"),
+  ])
+
+  if (citiesResult.error) throw citiesResult.error
+
+  return {
+    kind: "staff-shop-analytics",
+    rows: rows || [],
+    days: 30,
+    selectedCityId: "all",
+    cityOptions: citiesResult.data || [],
+  }
+}
+
 async function prepareStaffFeaturedCityBannersData() {
   const [citiesResult, bannersResult] = await Promise.all([
     supabase.from("cities").select("id, name, state").order("state").order("name"),
@@ -250,12 +273,24 @@ async function prepareStaffSponsoredProductsData() {
 }
 
 async function prepareStaffSecurityRadarData() {
-  const { data, error } = await supabase.rpc("ctm_get_security_radar_insights")
-  if (error) throw error
+  const [contactRadar, legacyResult, citiesResult] = await Promise.all([
+    fetchContactSecurityRadar({
+      days: 30,
+      cityId: null,
+    }),
+    supabase.rpc("ctm_get_security_radar_insights"),
+    supabase.from("cities").select("id, name, state").order("state").order("name"),
+  ])
+  if (legacyResult.error) throw legacyResult.error
+  if (citiesResult.error) throw citiesResult.error
 
   return {
     kind: "staff-security-radar",
-    insights: data || [],
+    contactRadar: contactRadar || [],
+    insights: legacyResult.data || [],
+    days: 30,
+    selectedCityId: "all",
+    cityOptions: citiesResult.data || [],
   }
 }
 
@@ -372,6 +407,7 @@ const staffPreparers = {
   "/staff-announcements": prepareStaffAnnouncementsData,
   "/staff-notifications": prepareStaffNotificationsData,
   "/staff-payments": prepareStaffPaymentsData,
+  "/staff-shop-analytics": prepareStaffShopAnalyticsData,
   "/staff-city-banners": prepareStaffFeaturedCityBannersData,
   "/staff-sponsored-products": prepareStaffSponsoredProductsData,
   "/staff-inbox": prepareStaffInboxData,
