@@ -310,7 +310,6 @@ export default function MerchantAnalytics() {
 
   const totals = useMemo(() => analytics?.totals || {}, [analytics])
   const timeline = useMemo(() => analytics?.timeline || [], [analytics])
-  const suspiciousContacts = useMemo(() => analytics?.suspicious_contacts || [], [analytics])
   const recentContacts = useMemo(() => analytics?.recent_contacts || [], [analytics])
 
   const summaryCards = useMemo(
@@ -452,17 +451,17 @@ export default function MerchantAnalytics() {
           <AnalyticsTimelineChart data={timeline} />
         </div>
 
-        <div className="mt-8 grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="mt-8">
           <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-black text-slate-900">Recent Contact Feed</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Name, email, channel, and timestamp for recent successful contact actions.
+                  Latest successful contact activity by identified buyer.
                 </p>
               </div>
               <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
-                {recentContacts.length} events
+                {recentContacts.length} people
               </div>
             </div>
 
@@ -502,72 +501,7 @@ export default function MerchantAnalytics() {
                       <div className="text-right text-xs font-bold text-slate-500">
                         <div>{formatDateTime(contact.created_at)}</div>
                         <div className="mt-1 text-[10px] uppercase tracking-wide text-slate-400">
-                          {contact.actor_contact_count || 0} contact{Number(contact.actor_contact_count || 0) === 1 ? "" : "s"} in window
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-black text-slate-900">Suspicious Contact Frequency</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  People who contact too often are surfaced here for closer review.
-                </p>
-              </div>
-              <div className="rounded-full bg-rose-100 px-3 py-1 text-xs font-black text-rose-700">
-                {suspiciousContacts.length} flagged
-              </div>
-            </div>
-
-            {suspiciousContacts.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center text-sm font-semibold text-slate-500">
-                No suspicious contact clusters detected in this window.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {suspiciousContacts.map((contact) => (
-                  <div
-                    key={contact.actor_key}
-                    className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="text-sm font-black text-slate-900">
-                            {contact.actor_name || "Guest visitor"}
-                          </div>
-                          <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${getRiskTone(contact.risk_level)}`}>
-                            {contact.risk_level || "low"}
-                          </span>
-                        </div>
-                        <div className="mt-2 text-xs font-semibold text-slate-500">
-                          {contact.actor_email || "No email captured"}
-                        </div>
-                        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                          <div className="rounded-2xl bg-white px-3 py-3">
-                            <div className="text-lg font-black text-slate-900">{contact.total_contacts}</div>
-                            <div className="text-[10px] font-black uppercase tracking-wide text-slate-400">Total</div>
-                          </div>
-                          <div className="rounded-2xl bg-white px-3 py-3">
-                            <div className="text-lg font-black text-emerald-700">{contact.whatsapp_contacts}</div>
-                            <div className="text-[10px] font-black uppercase tracking-wide text-slate-400">WhatsApp</div>
-                          </div>
-                          <div className="rounded-2xl bg-white px-3 py-3">
-                            <div className="text-lg font-black text-sky-700">{contact.phone_contacts}</div>
-                            <div className="text-[10px] font-black uppercase tracking-wide text-slate-400">Phone</div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right text-xs font-bold text-slate-500">
-                        <div>Last seen</div>
-                        <div className="mt-1 max-w-[120px] text-[11px] text-slate-700">
-                          {formatDateTime(contact.latest_contact_at)}
+                          {contact.actor_contact_count || 0} total contact{Number(contact.actor_contact_count || 0) === 1 ? "" : "s"} in window
                         </div>
                       </div>
                     </div>
@@ -586,7 +520,7 @@ export default function MerchantAnalytics() {
             <div>
               <div className="font-black">How to read this page</div>
               <div className="mt-1 leading-6">
-                Conversion rate is based on successful phone and WhatsApp launches divided by recorded shop visits. Suspicious contact cards flag unusually high contact frequency so you can identify potential spammers early.
+                Conversion rate is based on successful phone and WhatsApp launches divided by recorded shop visits. The contact feed shows the latest recorded activity for each identified person so you can quickly see who has reached out to your shop.
               </div>
             </div>
           </div>
