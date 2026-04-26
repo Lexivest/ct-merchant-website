@@ -28,6 +28,7 @@ import AuthInput from "../components/auth/AuthInput"
 import AuthButton from "../components/auth/AuthButton"
 import PageSeo from "../components/common/PageSeo"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
+import PwaAddToHomePrompt from "../components/common/PwaAddToHomePrompt"
 import HeaderMarquee from "../components/common/HeaderMarquee"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
@@ -1062,6 +1063,7 @@ function Home() {
             canonicalPath="/"
             structuredData={homeStructuredData}
           />
+          <PwaAddToHomePrompt />
           <section className="overflow-x-hidden bg-pink-50 px-4 py-3 md:py-6">
             <div className="mx-auto mb-4 w-full max-w-7xl lg:hidden">
               <div className="overflow-hidden rounded-[22px] border border-pink-100 bg-white p-2 shadow-sm">

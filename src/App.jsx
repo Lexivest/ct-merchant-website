@@ -8,7 +8,6 @@ import SiteVisitTracker from "./components/common/SiteVisitTracker"
 import AppErrorBoundary from "./components/common/AppErrorBoundary"
 import GlobalErrorScreen from "./components/common/GlobalErrorScreen"
 import NetworkStatusScreen from "./components/common/NetworkStatusScreen"
-import PwaAddToHomePrompt from "./components/common/PwaAddToHomePrompt"
 import { PageLoadingScreen } from "./components/common/PageStatusScreen"
 import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
@@ -709,7 +708,6 @@ function AppShell() {
     >
       <SiteVisitTracker />
       <RouteMetaFallback />
-      <PwaAddToHomePrompt />
       <Routes>
         {/* PUBLIC ROUTES */}
         <Route path="/" element={<Home />} />
