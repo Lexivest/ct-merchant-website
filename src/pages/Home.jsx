@@ -1066,6 +1066,7 @@ function Home() {
           <PwaAddToHomePrompt />
           <section className="overflow-x-hidden bg-pink-50 px-4 py-3 md:py-6">
             <div className="mx-auto mb-4 w-full max-w-7xl lg:hidden">
+              <p className="mb-1.5 ml-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">view shops/store in your city/area</p>
               <div className="overflow-hidden rounded-[22px] border border-pink-100 bg-white p-2 shadow-sm">
                 <div className="flex h-[48px] w-full overflow-hidden rounded-[16px] border-[3px] border-transparent bg-pink-50 transition focus-within:border-pink-600">
                   <div className="flex items-center border-r border-pink-100 bg-white/70 pl-4 pr-2 text-sm font-black tracking-[0.12em] text-pink-600">
@@ -1081,7 +1082,7 @@ function Home() {
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={32}
-                    placeholder="Enter shop number"
+                    placeholder="Enter Store ID"
                     className="min-w-0 flex-1 border-none bg-transparent px-3 text-base font-medium text-[#0F1111] outline-none placeholder:text-slate-500"
                   />
                   <button
@@ -1129,6 +1130,7 @@ function Home() {
                   <div className="flex h-full flex-col rounded-[24px] border border-pink-100 bg-white p-5 md:p-8">
                   <div className="hidden rounded-[22px] bg-pink-200 p-1 lg:block">
                     <div className="rounded-[18px] border border-pink-100 bg-slate-50 p-4">
+                      <p className="mb-2 ml-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">view shops/store in your city/area</p>
                       <div className="flex h-[42px] overflow-hidden rounded-md border-[3px] border-transparent bg-white transition focus-within:border-pink-600">
                         <div className="flex items-center border-r border-pink-100 bg-white pl-4 pr-2 text-sm font-black tracking-[0.12em] text-pink-600">
                           CT-
@@ -1143,7 +1145,7 @@ function Home() {
                           inputMode="numeric"
                           pattern="[0-9]*"
                           maxLength={32}
-                          placeholder="Enter shop number"
+                          placeholder="Enter Store ID"
                           className="min-w-0 flex-1 border-none px-3 text-base text-[#0F1111] outline-none placeholder:text-slate-500"
                         />
                         <button
