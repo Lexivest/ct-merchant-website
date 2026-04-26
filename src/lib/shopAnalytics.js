@@ -73,3 +73,12 @@ export async function fetchContactSecurityRadar({ days = 30, cityId = null }) {
   if (error) throw error
   return data || []
 }
+
+export async function purgeOldShopAnalyticsData({ keepDays = 365 } = {}) {
+  const { data, error } = await supabase.rpc("ctm_purge_old_shop_analytics_data", {
+    p_keep_days: Number(keepDays) || 365,
+  })
+
+  if (error) throw error
+  return data || null
+}

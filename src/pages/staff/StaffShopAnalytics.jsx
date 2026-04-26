@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   FaArrowTrendUp,
   FaCircleNotch,
+  FaClockRotateLeft,
   FaEye,
   FaPhone,
   FaRotateRight,
@@ -11,8 +12,9 @@ import {
 import { FaWhatsapp } from "react-icons/fa"
 import { useLocation } from "react-router-dom"
 import InlineErrorState from "../../components/common/InlineErrorState"
+import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
-import { fetchStaffShopAnalytics } from "../../lib/shopAnalytics"
+import { fetchStaffShopAnalytics, purgeOldShopAnalyticsData } from "../../lib/shopAnalytics"
 import { supabase } from "../../lib/supabase"
 import {
   QuickActionButton,
@@ -102,6 +104,7 @@ function TopShopCard({ rank, shop }) {
 
 export default function StaffShopAnalytics() {
   const location = useLocation()
+  const { confirm, notify } = useGlobalFeedback()
   const { isSuperAdmin, staffCityId } = useStaffPortalSession()
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-shop-analytics"
@@ -117,6 +120,7 @@ export default function StaffShopAnalytics() {
   const [rows, setRows] = useState(() => prefetchedData?.rows || [])
   const [loading, setLoading] = useState(() => !prefetchedData)
   const [refreshing, setRefreshing] = useState(false)
+  const [cleaning, setCleaning] = useState(false)
   const [error, setError] = useState("")
   const initialLoadRef = useRef(Boolean(prefetchedData))
 
@@ -223,6 +227,47 @@ export default function StaffShopAnalytics() {
 
   const topShops = rows.slice(0, 3)
 
+  const handleCleanupOldAnalytics = useCallback(async () => {
+    if (cleaning) return
+
+    const approved = await confirm({
+      type: "error",
+      title: "Purge analytics older than 1 year?",
+      message:
+        "This will permanently delete shop analytics records older than 365 days, including legacy shop views and WhatsApp click logs. Recent analytics will remain untouched.",
+      confirmText: "Purge old data",
+      cancelText: "Cancel",
+    })
+
+    if (!approved) return
+
+    try {
+      setCleaning(true)
+      const result = await purgeOldShopAnalyticsData({ keepDays: 365 })
+      notify({
+        type: "success",
+        title: "Analytics cleanup completed",
+        message: `Deleted ${Number(result?.total_deleted || 0).toLocaleString()} old analytics rows.`,
+      })
+      await fetchPageData({
+        days: windowDays,
+        cityId: effectiveCityId,
+        isRefresh: true,
+      })
+    } catch (cleanupError) {
+      notify({
+        type: "error",
+        title: "Cleanup failed",
+        message: getFriendlyErrorMessage(
+          cleanupError,
+          "Old analytics data could not be cleaned right now."
+        ),
+      })
+    } finally {
+      setCleaning(false)
+    }
+  }, [cleaning, confirm, effectiveCityId, fetchPageData, notify, windowDays])
+
   const metrics = useMemo(
     () => [
       {
@@ -277,18 +322,28 @@ export default function StaffShopAnalytics() {
       title="Shop Analytics"
       description="Review the strongest-performing shops, repo-search visibility, and contact conversion signals across the market."
       headerActions={
-        <QuickActionButton
-          icon={refreshing ? <FaCircleNotch className="animate-spin" /> : <FaRotateRight />}
-          label="Refresh Analytics"
-          tone="white"
-          onClick={() =>
-            void fetchPageData({
-              days: windowDays,
-              cityId: effectiveCityId,
-              isRefresh: true,
-            })
-          }
-        />
+        <>
+          <QuickActionButton
+            icon={refreshing ? <FaCircleNotch className="animate-spin" /> : <FaRotateRight />}
+            label="Refresh Analytics"
+            tone="white"
+            onClick={() =>
+              void fetchPageData({
+                days: windowDays,
+                cityId: effectiveCityId,
+                isRefresh: true,
+              })
+            }
+          />
+          {isSuperAdmin ? (
+            <QuickActionButton
+              icon={cleaning ? <FaCircleNotch className="animate-spin" /> : <FaClockRotateLeft />}
+              label={cleaning ? "Cleaning..." : "Clean 1y+ Data"}
+              tone="pink"
+              onClick={() => void handleCleanupOldAnalytics()}
+            />
+          ) : null}
+        </>
       }
     >
       <SectionHeading
@@ -375,11 +430,14 @@ export default function StaffShopAnalytics() {
           </div>
 
           <div className="grid gap-6 xl:grid-cols-3">
-            <div className="rounded-[26px] border border-slate-200 bg-[linear-gradient(135deg,#2E1065_0%,#4c1d95_45%,#DB2777_100%)] p-6 text-white shadow-sm xl:col-span-1">
-              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-pink-200">
-                Risk Briefing
-              </div>
-              <div className="mt-4 space-y-3">
+          <div className="rounded-[26px] border border-slate-200 bg-[linear-gradient(135deg,#2E1065_0%,#4c1d95_45%,#DB2777_100%)] p-6 text-white shadow-sm xl:col-span-1">
+            <div className="text-[11px] font-black uppercase tracking-[0.22em] text-pink-200">
+              Risk Briefing
+            </div>
+            <div className="mt-2 text-xs leading-5 text-white/70">
+              Retention policy keeps the latest 365 days. Older analytics can be purged manually by super admin from the header.
+            </div>
+            <div className="mt-4 space-y-3">
                 <div className="rounded-2xl bg-white/10 px-4 py-3">
                   <div className="text-2xl font-black">{summary.suspiciousActors}</div>
                   <div className="text-xs font-semibold text-white/80">Suspicious actor clusters</div>
