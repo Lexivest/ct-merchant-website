@@ -33,7 +33,6 @@ export default function StaffDiscoveries() {
     image_url: "",
     contact_phone: "",
     sort_order: "0",
-    city_id: isSuperAdmin ? "" : (staffCityId || "")
   })
 
   const loadDiscoveries = useCallback(async () => {
@@ -45,10 +44,6 @@ export default function StaffDiscoveries() {
         .from("staff_discoveries")
         .select("*")
       
-      if (!isSuperAdmin && staffCityId) {
-        query = query.eq("city_id", staffCityId)
-      }
-
       const { data, error } = await query
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false })

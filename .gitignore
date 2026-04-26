@@ -36,3 +36,6 @@ mobile_app/
 
 # Supabase server artifacts are applied manually, not deployed with Cloudflare
 supabase/
+
+# Backup folder
+Prod V1/
