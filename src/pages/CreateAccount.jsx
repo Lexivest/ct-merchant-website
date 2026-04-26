@@ -614,8 +614,46 @@ function CreateAccount() {
                   {errors.areaId && <p className="text-xs font-semibold text-red-600">{errors.areaId}</p>}
                 </div>
 
-                <AuthInput id="signup-password" label="Password" type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))} placeholder="At least 6 characters" error={errors.password} required icon={<FaLock />} autoComplete="new-password" minLength={6} rightElement={<button type="button" onClick={() => setShowPassword((prev) => !prev)} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600">{showPassword ? <FaEyeSlash /> : <FaEye />}</button>} />
-                <AuthInput id="signup-confirm-password" label="Confirm Password" type={showConfirmPassword ? "text" : "password"} value={form.confirmPassword} onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))} placeholder="Re-enter password" error={errors.confirmPassword} required icon={<FaLock />} autoComplete="new-password" minLength={6} rightElement={<button type="button" onClick={() => setShowConfirmPassword((prev) => !prev)} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600">{showConfirmPassword ? <FaEyeSlash /> : <FaEye />}</button>} />
+                <div className="flex flex-col gap-1">
+                  <AuthInput 
+                    id="signup-password" 
+                    label="Password" 
+                    type={showPassword ? "text" : "password"} 
+                    value={form.password} 
+                    onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))} 
+                    placeholder="8+ characters, mixed case, symbols" 
+                    error={errors.password} 
+                    required 
+                    icon={<FaLock />} 
+                    autoComplete="new-password" 
+                    minLength={8} 
+                    rightElement={
+                      <button type="button" onClick={() => setShowPassword((prev) => !prev)} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600">
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    } 
+                  />
+                  {form.password && (
+                    <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 px-1">
+                      {[
+                        { label: "8+ characters", met: form.password.length >= 8 },
+                        { label: "Lower case", met: /[a-z]/.test(form.password) },
+                        { label: "Upper case", met: /[A-Z]/.test(form.password) },
+                        { label: "Number", met: /[0-9]/.test(form.password) },
+                        { label: "Symbol", met: /[^a-zA-Z0-9]/.test(form.password) },
+                      ].map((req, i) => (
+                        <div key={i} className="flex items-center gap-1.5">
+                          <div className={`h-1 w-1 rounded-full transition-colors ${req.met ? 'bg-green-500' : 'bg-slate-300'}`} />
+                          <span className={`text-[10px] font-bold transition-colors ${req.met ? 'text-green-600' : 'text-slate-400'}`}>
+                            {req.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <AuthInput id="signup-confirm-password" label="Confirm Password" type={showConfirmPassword ? "text" : "password"} value={form.confirmPassword} onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))} placeholder="Re-enter password" error={errors.confirmPassword} required icon={<FaLock />} autoComplete="new-password" minLength={8} rightElement={<button type="button" onClick={() => setShowConfirmPassword((prev) => !prev)} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600">{showConfirmPassword ? <FaEyeSlash /> : <FaEye />}</button>} />
 
                 <div className="pt-2">
                   <AuthButton

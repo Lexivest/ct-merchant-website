@@ -28,7 +28,14 @@ export function isValidNigerianPhone(value) {
 }
 
 export function isStrongEnoughPassword(value) {
-  return String(value || "").length >= 6
+  const pwd = String(value || "")
+  return (
+    pwd.length >= 8 &&
+    /[a-z]/.test(pwd) &&
+    /[A-Z]/.test(pwd) &&
+    /[0-9]/.test(pwd) &&
+    /[^a-zA-Z0-9]/.test(pwd)
+  )
 }
 
 export function isValidUrl(value) {
@@ -100,7 +107,7 @@ export function validateSignupForm(values) {
   if (!values.password) {
     errors.password = "Password is required."
   } else if (!isStrongEnoughPassword(values.password)) {
-    errors.password = "Password must be at least 6 characters."
+    errors.password = "Password must be at least 8 characters and include upper/lower case, a digit, and a symbol."
   }
 
   if (!values.confirmPassword) {
@@ -156,7 +163,7 @@ export function validateResetPasswordForm(values) {
   if (!values.newPassword) {
     errors.newPassword = "New password is required."
   } else if (!isStrongEnoughPassword(values.newPassword)) {
-    errors.newPassword = "Password must be at least 6 characters."
+    errors.newPassword = "Password must be at least 8 characters and include upper/lower case, a digit, and a symbol."
   }
 
   if (!values.confirmPassword) {

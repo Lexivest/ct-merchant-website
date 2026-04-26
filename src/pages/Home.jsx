@@ -1444,22 +1444,51 @@ function Home() {
                   maxLength={6}
                 />
 
-                <AuthInput
-                  id="reset-new-password"
-                  label="New password"
-                  type="password"
-                  value={resetPasswordForm.newPassword}
-                  onChange={(e) =>
-                    setResetPasswordForm((prev) => ({
-                      ...prev,
-                      newPassword: e.target.value,
-                    }))
-                  }
-                  placeholder="Enter new password"
-                  error={resetPasswordErrors.newPassword}
-                  required
-                  icon={<FaLock />}
-                />
+                <div className="flex flex-col gap-1">
+                  <AuthInput
+                    id="reset-new-password"
+                    label="New password"
+                    type={showPassword ? "text" : "password"}
+                    value={resetPasswordForm.newPassword}
+                    onChange={(e) =>
+                      setResetPasswordForm((prev) => ({
+                        ...prev,
+                        newPassword: e.target.value,
+                      }))
+                    }
+                    placeholder="8+ chars, mixed case, symbols"
+                    error={resetPasswordErrors.newPassword}
+                    required
+                    icon={<FaLock />}
+                    rightElement={
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-pink-600"
+                      >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    }
+                  />
+                  {resetPasswordForm.newPassword && (
+                    <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 px-1">
+                      {[
+                        { label: "8+ characters", met: resetPasswordForm.newPassword.length >= 8 },
+                        { label: "Lower case", met: /[a-z]/.test(resetPasswordForm.newPassword) },
+                        { label: "Upper case", met: /[A-Z]/.test(resetPasswordForm.newPassword) },
+                        { label: "Number", met: /[0-9]/.test(resetPasswordForm.newPassword) },
+                        { label: "Symbol", met: /[^a-zA-Z0-9]/.test(resetPasswordForm.newPassword) },
+                      ].map((req, i) => (
+                        <div key={i} className="flex items-center gap-1.5">
+                          <div className={`h-1 w-1 rounded-full transition-colors ${req.met ? 'bg-green-500' : 'bg-slate-300'}`} />
+                          <span className={`text-[10px] font-bold transition-colors ${req.met ? 'text-green-600' : 'text-slate-400'}`}>
+                            {req.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 <AuthInput
                   id="reset-confirm-password"
