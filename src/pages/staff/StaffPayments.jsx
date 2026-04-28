@@ -30,6 +30,7 @@ import {
   SectionHeading,
   StaffPortalShell,
   formatDateTime,
+  useStaffPortalSession,
 } from "./StaffPortalShared"
 
 const PROOF_STATUS_FILTERS = [
@@ -515,6 +516,7 @@ function ReceiptModal({ proof, onClose, onSendWhatsApp }) {
 
 export default function StaffPayments() {
   const location = useLocation()
+  const { isSuperAdmin, fetchingStaff } = useStaffPortalSession()
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-payments"
       ? location.state.prefetchedData
@@ -522,7 +524,7 @@ export default function StaffPayments() {
   const { confirm, notify, prompt } = useGlobalFeedback()
   const [proofs, setProofs] = useState(() => prefetchedData?.proofs || [])
   const [shopRows, setShopRows] = useState(() => prefetchedData?.shopRows || [])
-  const [loading, setLoading] = useState(() => !prefetchedData)
+  const [loading, setLoading] = useState(() => !prefetchedData && isSuperAdmin)
   const [pageError, setPageError] = useState("")
   const [activeStatus, setActiveStatus] = useState("pending")
   const [activeControlFilter, setActiveControlFilter] = useState("attention")
@@ -567,6 +569,14 @@ export default function StaffPayments() {
   }, [])
 
   const fetchOverview = useCallback(async () => {
+    if (!isSuperAdmin) {
+      setProofs([])
+      setShopRows([])
+      setPageError("")
+      setLoading(false)
+      return null
+    }
+
     if (prefetchedReady && prefetchedData) {
       setPageError("")
       const result = await applyOverviewPayload(prefetchedData)
@@ -587,13 +597,16 @@ export default function StaffPayments() {
     } finally {
       setLoading(false)
     }
-  }, [applyOverviewPayload, prefetchedData, prefetchedReady])
+  }, [applyOverviewPayload, isSuperAdmin, prefetchedData, prefetchedReady])
 
   useEffect(() => {
+    if (fetchingStaff) return
     void fetchOverview()
-  }, [fetchOverview])
+  }, [fetchOverview, fetchingStaff])
 
   useEffect(() => {
+    if (!isSuperAdmin) return undefined
+
     const scheduleRefresh = () => {
       if (realtimeTimerRef.current) {
         window.clearTimeout(realtimeTimerRef.current)
@@ -633,7 +646,7 @@ export default function StaffPayments() {
       }
       supabase.removeChannel(channel)
     }
-  }, [fetchOverview])
+  }, [fetchOverview, isSuperAdmin])
 
   const filteredProofs = useMemo(() => {
     if (activeStatus === "all") return proofs
@@ -843,7 +856,7 @@ export default function StaffPayments() {
         activeKey="payments"
         title="Payments Control"
         description="Review uploaded receipts, record manual bank confirmations, and keep a clear watch on verification and subscription timelines across all shops."
-        headerActions={[
+        headerActions={isSuperAdmin ? [
           <QuickActionButton
             key="refresh"
             icon={<FaCircleNotch className={loading ? "animate-spin" : ""} />}
@@ -851,9 +864,19 @@ export default function StaffPayments() {
             tone="white"
             onClick={fetchOverview}
           />,
-        ]}
+        ] : null}
       >
-        {pageError && hasAnyData ? (
+        {!isSuperAdmin ? (
+          <div className="rounded-[28px] border border-rose-200 bg-rose-50 p-8 text-center shadow-sm">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl text-rose-600 shadow-sm">
+              <FaReceipt />
+            </div>
+            <h3 className="text-xl font-black text-slate-900">Super admin access required</h3>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-rose-900">
+              Offline payment review and manual bank confirmations are restricted to super admins.
+            </p>
+          </div>
+        ) : pageError && hasAnyData ? (
           <div className="mb-6 rounded-3xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-800">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>{pageError}</div>
@@ -868,7 +891,7 @@ export default function StaffPayments() {
           </div>
         ) : null}
 
-        {!loading && pageError && !hasAnyData ? (
+        {isSuperAdmin && (!loading && pageError && !hasAnyData ? (
           <InlineErrorState
             title="Payments control unavailable"
             message={pageError}
@@ -1316,7 +1339,7 @@ export default function StaffPayments() {
               </div>
             </div>
           </>
-        )}
+        ))}
       </StaffPortalShell>
       <ReceiptModal
         proof={selectedReceiptProof}

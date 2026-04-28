@@ -113,7 +113,7 @@ function StatusBadge({ status, type = "shop" }) {
 
 export default function StaffVerifications() {
   const location = useLocation()
-  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
+  const { isSuperAdmin, hasAdminRole, staffCityId, fetchingStaff } = useStaffPortalSession()
   const navigate = useNavigate()
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-verifications"
@@ -123,7 +123,7 @@ export default function StaffVerifications() {
 
   // --- STATE ---
   const [shops, setShops] = useState(() => prefetchedData?.shops || [])
-  const [loadingShops, setLoadingShops] = useState(() => !prefetchedData && !fetchingStaff)
+  const [loadingShops, setLoadingShops] = useState(() => !prefetchedData && !fetchingStaff && hasAdminRole)
   const [selectedShop, setSelectedShop] = useState(null)
   const [reviewTab, setReviewTab] = useState("application") // 'application' | 'kyc'
   const [processing, setProcessing] = useState(false)
@@ -207,6 +207,12 @@ export default function StaffVerifications() {
   }, [selectedShop, isSuperAdmin])
 
   const fetchShops = useCallback(async () => {
+    if (!hasAdminRole) {
+      setShops([])
+      setLoadingShops(false)
+      return
+    }
+
     if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
 
     setLoadingShops(true)
@@ -271,7 +277,7 @@ export default function StaffVerifications() {
     } finally {
       setLoadingShops(false)
     }
-  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
+  }, [hasAdminRole, notify, isSuperAdmin, staffCityId, fetchingStaff])
 
   useEffect(() => {
     if (!fetchingStaff) {
@@ -330,6 +336,15 @@ export default function StaffVerifications() {
     if (!selectedShop || processing) return
     
     const isKyc = type === "kyc"
+    if (isKyc && !isSuperAdmin) {
+      notify({
+        type: "error",
+        title: "Super admin required",
+        message: "Only super admins can approve video KYC submissions.",
+      })
+      return
+    }
+
     const confirmMsg = isKyc 
       ? `Are you sure you want to approve the KYC video for "${selectedShop.name}"?`
       : `Are you sure you want to approve the shop application for "${selectedShop.name}"?`
@@ -415,6 +430,10 @@ export default function StaffVerifications() {
     setProcessing(true)
     try {
       const isKyc = type === "kyc"
+      if (isKyc && !isSuperAdmin) {
+        throw new Error("Only super admins can reject video KYC submissions.")
+      }
+
       const updateData = isKyc
         ? { kyc_status: "rejected", rejection_reason: rejectionNote.trim(), is_verified: false }
         : { status: "rejected", rejection_reason: rejectionNote.trim() }
@@ -452,6 +471,26 @@ export default function StaffVerifications() {
   }, [shops, filterStatus])
 
   const selectedKycMeta = selectedShop?.kyc_submission_meta || {}
+
+  if (!hasAdminRole) {
+    return (
+      <StaffPortalShell
+        activeKey="verifications"
+        title="Merchant Verifications"
+        description="A focused workspace for reviewing shop applications, KYC videos, and official ID issuance."
+      >
+        <div className="rounded-[28px] border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl text-amber-600 shadow-sm">
+            <FaStore />
+          </div>
+          <h3 className="text-xl font-black text-slate-900">Admin operation role required</h3>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-amber-900">
+            Shop verification is available to super admins and city admins only. Video KYC review remains super-admin-only.
+          </p>
+        </div>
+      </StaffPortalShell>
+    )
+  }
 
   return (
     <StaffPortalShell

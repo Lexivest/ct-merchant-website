@@ -596,20 +596,33 @@ function ProtectedDashboardRoute({ children }) {
   )
 }
 
-function ProtectedStaffRoute({ children }) {
+function staffRouteAllowsAdminRole(adminRole, { adminOnly = false, superOnly = false } = {}) {
+  if (superOnly) return adminRole === "super_admin"
+  if (adminOnly) return Boolean(adminRole)
+  return true
+}
+
+function ProtectedStaffRoute({ children, adminOnly = false, superOnly = false }) {
   const { loading, session, user, profile, profileLoaded } = useAuthSession()
   const [staffFallback, setStaffFallback] = useState({
     userId: "",
     checking: false,
     authorized: false,
+    portalAccess: false,
   })
 
-  const authorizedRoles = ["super_admin", "city_admin", "staff", "director"]
-  const hasAuthorizedProfile = Boolean(profile?.role && authorizedRoles.includes(profile.role))
+  const hasAuthorizedProfile = Boolean(profile?.staff_portal_access === true)
+  const profileAdminRole = profile?.admin_role || null
+  const profileRouteAllowed =
+    hasAuthorizedProfile &&
+    staffRouteAllowsAdminRole(profileAdminRole, { adminOnly, superOnly })
+  const needsStaffFallback =
+    Boolean(user?.id && profileLoaded) &&
+    (!hasAuthorizedProfile || !profileRouteAllowed)
 
   useEffect(() => {
     if (loading || !user?.id || (user && !profileLoaded)) return undefined
-    if (hasAuthorizedProfile) {
+    if (!needsStaffFallback) {
       return undefined
     }
 
@@ -620,6 +633,7 @@ function ProtectedStaffRoute({ children }) {
           userId: user.id,
           checking: true,
           authorized: false,
+          portalAccess: false,
         })
       }
     }, 0)
@@ -632,10 +646,12 @@ function ProtectedStaffRoute({ children }) {
             userId: user.id,
             checking: false,
             authorized: false,
+            portalAccess: false,
           })
           return
         }
 
+        const routeAuthorized = staffRouteAllowsAdminRole(staffAccess.admin_role, { adminOnly, superOnly })
         const staffProfile = buildStaffAuthProfile(user, staffAccess)
         primeAuthSessionState({
           session,
@@ -647,7 +663,8 @@ function ProtectedStaffRoute({ children }) {
         setStaffFallback({
           userId: user.id,
           checking: false,
-          authorized: true,
+          authorized: routeAuthorized,
+          portalAccess: true,
         })
       })
       .catch((error) => {
@@ -657,6 +674,7 @@ function ProtectedStaffRoute({ children }) {
             userId: user.id,
             checking: false,
             authorized: false,
+            portalAccess: false,
           })
         }
       })
@@ -665,18 +683,27 @@ function ProtectedStaffRoute({ children }) {
       cancelled = true
       window.clearTimeout(checkingTimer)
     }
-  }, [hasAuthorizedProfile, loading, profileLoaded, session, user])
+  }, [adminOnly, hasAuthorizedProfile, loading, needsStaffFallback, profileLoaded, session, superOnly, user])
 
   if (
     loading ||
     (user && !profileLoaded) ||
+    (needsStaffFallback && staffFallback.userId !== user?.id) ||
     (staffFallback.checking && staffFallback.userId === user?.id)
   ) {
     return <RouteLoadingScreen title="Accessing staff portal" message="Verifying credentials..." />
   }
 
-  if (!user || (!hasAuthorizedProfile && !(staffFallback.authorized && staffFallback.userId === user.id))) {
+  const fallbackForUser = staffFallback.userId === user?.id ? staffFallback : null
+  const hasPortalAccess = hasAuthorizedProfile || Boolean(fallbackForUser?.portalAccess)
+  const routeAuthorized = profileRouteAllowed || Boolean(fallbackForUser?.authorized)
+
+  if (!user || !hasPortalAccess) {
     return <Navigate to="/staff-portal" replace />
+  }
+
+  if (!routeAuthorized) {
+    return <Navigate to="/staff-dashboard" replace />
   }
 
   return children
@@ -720,23 +747,23 @@ function AppShell() {
         {/* --- STAFF ROUTES --- */}
         <Route path="/staff-portal" element={<StaffPortal />} />
         <Route path="/staff-dashboard" element={<ProtectedStaffRoute><StaffDashboard /></ProtectedStaffRoute>} />
-        <Route path="/staff-traffic" element={<ProtectedStaffRoute><StaffTraffic /></ProtectedStaffRoute>} />
-        <Route path="/staff-shop-analytics" element={<ProtectedStaffRoute><StaffShopAnalytics /></ProtectedStaffRoute>} />
-        <Route path="/staff-users" element={<ProtectedStaffRoute><StaffUsers /></ProtectedStaffRoute>} />
-        <Route path="/staff-community" element={<ProtectedStaffRoute><StaffCommunity /></ProtectedStaffRoute>} />
-        <Route path="/staff-verifications" element={<ProtectedStaffRoute><StaffVerifications /></ProtectedStaffRoute>} />
-        <Route path="/staff-payments" element={<ProtectedStaffRoute><StaffPayments /></ProtectedStaffRoute>} />
-        <Route path="/staff-city-banners" element={<ProtectedStaffRoute><StaffFeaturedCityBanners /></ProtectedStaffRoute>} />
-        <Route path="/staff-sponsored-products" element={<ProtectedStaffRoute><StaffSponsoredProducts /></ProtectedStaffRoute>} />
-        <Route path="/staff-discoveries" element={<ProtectedStaffRoute><StaffDiscoveries /></ProtectedStaffRoute>} />
-        <Route path="/staff-issue-id" element={<ProtectedStaffRoute><StaffIDGenerator /></ProtectedStaffRoute>} />
-        <Route path="/staff-studio" element={<ProtectedStaffRoute><ImageOptimizer /></ProtectedStaffRoute>} />
-        <Route path="/staff-inbox" element={<ProtectedStaffRoute><StaffInbox /></ProtectedStaffRoute>} />
-        <Route path="/staff-security-radar" element={<ProtectedStaffRoute><StaffSecurityRadar /></ProtectedStaffRoute>} />
-        <Route path="/staff-products" element={<ProtectedStaffRoute><StaffProducts /></ProtectedStaffRoute>} />
-        <Route path="/staff-shop-content" element={<ProtectedStaffRoute><StaffShopContent /></ProtectedStaffRoute>} />
-        <Route path="/staff-announcements" element={<ProtectedStaffRoute><StaffAnnouncements /></ProtectedStaffRoute>} />
-        <Route path="/staff-notifications" element={<ProtectedStaffRoute><StaffNotifications /></ProtectedStaffRoute>} />
+        <Route path="/staff-traffic" element={<ProtectedStaffRoute adminOnly><StaffTraffic /></ProtectedStaffRoute>} />
+        <Route path="/staff-shop-analytics" element={<ProtectedStaffRoute adminOnly><StaffShopAnalytics /></ProtectedStaffRoute>} />
+        <Route path="/staff-users" element={<ProtectedStaffRoute adminOnly><StaffUsers /></ProtectedStaffRoute>} />
+        <Route path="/staff-community" element={<ProtectedStaffRoute adminOnly><StaffCommunity /></ProtectedStaffRoute>} />
+        <Route path="/staff-verifications" element={<ProtectedStaffRoute adminOnly><StaffVerifications /></ProtectedStaffRoute>} />
+        <Route path="/staff-payments" element={<ProtectedStaffRoute superOnly><StaffPayments /></ProtectedStaffRoute>} />
+        <Route path="/staff-city-banners" element={<ProtectedStaffRoute adminOnly><StaffFeaturedCityBanners /></ProtectedStaffRoute>} />
+        <Route path="/staff-sponsored-products" element={<ProtectedStaffRoute adminOnly><StaffSponsoredProducts /></ProtectedStaffRoute>} />
+        <Route path="/staff-discoveries" element={<ProtectedStaffRoute adminOnly><StaffDiscoveries /></ProtectedStaffRoute>} />
+        <Route path="/staff-issue-id" element={<ProtectedStaffRoute adminOnly><StaffIDGenerator /></ProtectedStaffRoute>} />
+        <Route path="/staff-studio" element={<ProtectedStaffRoute adminOnly><ImageOptimizer /></ProtectedStaffRoute>} />
+        <Route path="/staff-inbox" element={<ProtectedStaffRoute adminOnly><StaffInbox /></ProtectedStaffRoute>} />
+        <Route path="/staff-security-radar" element={<ProtectedStaffRoute superOnly><StaffSecurityRadar /></ProtectedStaffRoute>} />
+        <Route path="/staff-products" element={<ProtectedStaffRoute adminOnly><StaffProducts /></ProtectedStaffRoute>} />
+        <Route path="/staff-shop-content" element={<ProtectedStaffRoute adminOnly><StaffShopContent /></ProtectedStaffRoute>} />
+        <Route path="/staff-announcements" element={<ProtectedStaffRoute adminOnly><StaffAnnouncements /></ProtectedStaffRoute>} />
+        <Route path="/staff-notifications" element={<ProtectedStaffRoute adminOnly><StaffNotifications /></ProtectedStaffRoute>} />
 
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />

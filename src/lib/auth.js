@@ -405,33 +405,29 @@ export async function fetchProfileByUserId(userId) {
   const [adminResult, staffResult] = await Promise.allSettled([
     supabase
       .from("admins")
-      .select("role")
+      .select("role, city_id")
       .eq("id", userId)
       .maybeSingle(),
     supabase
       .from("staff_profiles")
-      .select("role")
+      .select("role, city_id")
       .eq("id", userId)
       .maybeSingle(),
   ])
 
-  const adminRole =
+  const adminRow =
     adminResult.status === "fulfilled" && !adminResult.value.error
-      ? adminResult.value.data?.role || null
+      ? adminResult.value.data
       : null
 
-  const staffRole =
+  const staffRow =
     staffResult.status === "fulfilled" && !staffResult.value.error
-      ? staffResult.value.data?.role || null
+      ? staffResult.value.data
       : null
 
-  const resolvedRole = adminRole
-    ? String(adminRole)
-    : staffRole === "director"
-      ? "super_admin"
-      : staffRole
-        ? "staff"
-        : "user"
+  const hasStaffProfile = Boolean(staffRow)
+  const adminRole = hasStaffProfile ? adminRow?.role || null : null
+  const staffRole = hasStaffProfile ? staffRow?.role || "staff" : null
 
   return {
     id: baseProfile.id,
@@ -443,7 +439,13 @@ export async function fetchProfileByUserId(userId) {
     city_name: baseProfile.cities?.name || "",
     area_id: baseProfile.area_id,
     area_name: baseProfile.areas?.name || "",
-    role: resolvedRole,
+    role: hasStaffProfile ? "staff" : "user",
+    staff_role: staffRole,
+    admin_role: adminRole,
+    staff_city_id: staffRow?.city_id || null,
+    admin_city_id: adminRole ? adminRow?.city_id || null : null,
+    has_admin_role: Boolean(adminRole),
+    staff_portal_access: hasStaffProfile,
     created_at: baseProfile.created_at,
   }
 }

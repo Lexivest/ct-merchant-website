@@ -25,7 +25,7 @@ import InlineErrorState from "../../components/common/InlineErrorState"
 
 export default function StaffUsers() {
   const location = useLocation()
-  const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
+  const { isSuperAdmin, hasAdminRole, staffCityId, fetchingStaff } = useStaffPortalSession()
   const { confirm, prompt, notify } = useGlobalFeedback()
 
   const prefetchedData =
@@ -34,7 +34,9 @@ export default function StaffUsers() {
       : null
   
   // If city admin, force city selection
-  const initialCityId = isSuperAdmin ? (prefetchedData?.selectedCityId || "all") : (staffCityId || "all")
+  const initialCityId = hasAdminRole
+    ? (isSuperAdmin ? (prefetchedData?.selectedCityId || "all") : (staffCityId || "all"))
+    : "all"
 
   const [cityOptions, setCityOptions] = useState(() => prefetchedData?.cityOptions || [])
   const [selectedCityId, setSelectedCityId] = useState(initialCityId)
@@ -42,12 +44,17 @@ export default function StaffUsers() {
   const [inactiveOnly, setInactiveOnly] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [userActivity, setUserActivity] = useState(() => prefetchedData?.userActivity || [])
-  const [loadingUserActivity, setLoadingUserActivity] = useState(() => !prefetchedData && !fetchingStaff)
+  const [loadingUserActivity, setLoadingUserActivity] = useState(() => !prefetchedData && !fetchingStaff && hasAdminRole)
   const [userActivityError, setUserActivityError] = useState("")
   const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
   const [updatingUserId, setUpdatingUserId] = useState(null)
 
   const fetchCities = useCallback(async () => {
+    if (!hasAdminRole) {
+      setCityOptions([])
+      return
+    }
+
     if (prefetchedData?.cityOptions?.length) {
       setCityOptions(prefetchedData.cityOptions)
       return
@@ -59,9 +66,16 @@ export default function StaffUsers() {
       .order("state", { ascending: true })
       .order("name", { ascending: true })
     setCityOptions(data || [])
-  }, [prefetchedData?.cityOptions])
+  }, [hasAdminRole, prefetchedData?.cityOptions])
 
   const fetchUserActivity = useCallback(async ({ cityId, threshold }) => {
+    if (!hasAdminRole) {
+      setUserActivity([])
+      setUserActivityError("")
+      setLoadingUserActivity(false)
+      return
+    }
+
     // Determine effective city ID for filtering
     const effectiveCityId = isSuperAdmin ? cityId : staffCityId
 
@@ -99,19 +113,19 @@ export default function StaffUsers() {
     } finally {
       setLoadingUserActivity(false)
     }
-  }, [prefetchedData, prefetchedReady, isSuperAdmin, staffCityId])
+  }, [hasAdminRole, prefetchedData, prefetchedReady, isSuperAdmin, staffCityId])
 
   useEffect(() => {
-    if (!fetchingStaff) {
+    if (!fetchingStaff && hasAdminRole) {
       fetchCities()
     }
-  }, [fetchCities, fetchingStaff])
+  }, [fetchCities, fetchingStaff, hasAdminRole])
 
   useEffect(() => {
-    if (!fetchingStaff) {
+    if (!fetchingStaff && hasAdminRole) {
       fetchUserActivity({ cityId: selectedCityId, threshold: inactiveDays })
     }
-  }, [fetchUserActivity, inactiveDays, selectedCityId, fetchingStaff])
+  }, [fetchUserActivity, inactiveDays, selectedCityId, fetchingStaff, hasAdminRole])
 
   const handleToggleSuspension = useCallback(async (user) => {
     const isSuspending = !user.is_suspended
@@ -191,6 +205,26 @@ export default function StaffUsers() {
   })
 
   const totalInactiveUsers = userActivity.filter((item) => item.is_inactive).length
+
+  if (!hasAdminRole) {
+    return (
+      <StaffPortalShell
+        activeKey="users"
+        title="User Activity"
+        description="A dedicated operations page for user health, inactivity monitoring, city distribution, and shop linkage."
+      >
+        <div className="rounded-[28px] border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl text-amber-600 shadow-sm">
+            <FaUserSlash />
+          </div>
+          <h3 className="text-xl font-black text-slate-900">Admin operation role required</h3>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-amber-900">
+            User management is available to super admins and city admins only. Staff membership alone only unlocks the staff portal.
+          </p>
+        </div>
+      </StaffPortalShell>
+    )
+  }
 
   return (
     <StaffPortalShell

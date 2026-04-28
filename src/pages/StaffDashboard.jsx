@@ -76,10 +76,11 @@ export default function StaffDashboard() {
 
   const { 
     isSuperAdmin, 
+    hasAdminRole,
     staffCityId
   } = useStaffPortalSession()
 
-  const { counts, summary, loading, refresh: refreshCounts } = useStaffCounts(isSuperAdmin, staffCityId)
+  const { counts, summary, loading, refresh: refreshCounts } = useStaffCounts(isSuperAdmin, staffCityId, hasAdminRole)
 
   const [routeTransition, setRouteTransition] = useState({
     pending: false,
@@ -145,8 +146,8 @@ export default function StaffDashboard() {
     return runStaffRouteTransition(path, retryAction)
   }, [runStaffRouteTransition])
 
-  const headerActions = useMemo(
-    () => [
+  const headerActions = useMemo(() => {
+    const actions = [
       <QuickActionButton
         key="refresh"
         icon={<FaCircleNotch className={loading ? "animate-spin" : ""} />}
@@ -154,6 +155,12 @@ export default function StaffDashboard() {
         tone="white"
         onClick={handleRefresh}
       />,
+    ]
+
+    if (!hasAdminRole) return actions
+
+    return [
+      ...actions,
       <QuickActionButton
         key="inbox"
         icon={<FaEnvelope />}
@@ -174,9 +181,8 @@ export default function StaffDashboard() {
         tone="pink"
         onClick={() => void openStaffRouteWithTransition("/staff-city-banners")}
       />,
-    ],
-    [handleRefresh, loading, openStaffRouteWithTransition]
-  )
+    ]
+  }, [handleRefresh, hasAdminRole, loading, openStaffRouteWithTransition])
 
   return (
     <>
@@ -202,11 +208,23 @@ export default function StaffDashboard() {
           description="Move through moderation, analytics, user operations, and merchant controls from one clean command center."
           headerActions={headerActions}
         >
-          <SectionHeading
-            eyebrow="Home"
-            title="Operations Areas"
-            description="Each card opens a dedicated working page so the staff portal behaves like a proper internal product, not one long stacked screen."
-          />
+          {!hasAdminRole ? (
+            <div className="rounded-[28px] border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl text-amber-600 shadow-sm">
+                <FaShieldHalved />
+              </div>
+              <h3 className="text-xl font-black text-slate-900">Staff access confirmed</h3>
+              <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-amber-900">
+                Your staff profile can enter the portal, but no admin operation role is assigned yet. Ask a super admin to add an admin role before using city or platform management tools.
+              </p>
+            </div>
+          ) : (
+            <>
+              <SectionHeading
+                eyebrow="Home"
+                title="Operations Areas"
+                description="Each card opens a dedicated working page so the staff portal behaves like a proper internal product, not one long stacked screen."
+              />
 
           <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-6">
             <HomeCard
@@ -318,15 +336,17 @@ export default function StaffDashboard() {
               onClick={() => void openStaffRouteWithTransition("/staff-city-banners")}
             />
 
-            <HomeCard
-              icon={<FaTowerBroadcast />}
-              title="Security Intelligence"
-              subtitle="Detect suspicious contact behavior, spam pressure, and deeper account clusters."
-              metric={counts.radar}
-              metricLabel="Alerts"
-              tone="amber"
-              onClick={() => void openStaffRouteWithTransition("/staff-security-radar")}
-            />
+            {isSuperAdmin && (
+              <HomeCard
+                icon={<FaTowerBroadcast />}
+                title="Security Intelligence"
+                subtitle="Detect suspicious contact behavior, spam pressure, and deeper account clusters."
+                metric={counts.radar}
+                metricLabel="Alerts"
+                tone="amber"
+                onClick={() => void openStaffRouteWithTransition("/staff-security-radar")}
+              />
+            )}
           </div>
 
           <SectionHeading
@@ -381,6 +401,8 @@ export default function StaffDashboard() {
               </button>
             </div>
           </div>
+            </>
+          )}
         </StaffPortalShell>
       </div>
     </>

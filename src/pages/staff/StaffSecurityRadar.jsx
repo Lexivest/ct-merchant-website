@@ -112,7 +112,7 @@ function ClusterRow({ item }) {
 
 export default function StaffSecurityRadar() {
   const location = useLocation()
-  const { isSuperAdmin, staffCityId } = useStaffPortalSession()
+  const { isSuperAdmin, fetchingStaff } = useStaffPortalSession()
   const prefetchedData =
     location.state?.prefetchedData?.kind === "staff-security-radar"
       ? location.state.prefetchedData
@@ -120,24 +120,31 @@ export default function StaffSecurityRadar() {
 
   const [windowDays, setWindowDays] = useState(() => prefetchedData?.days || 30)
   const [selectedCityId, setSelectedCityId] = useState(() => {
-    if (!isSuperAdmin && staffCityId) return String(staffCityId)
     return prefetchedData?.selectedCityId || "all"
   })
   const [cityOptions, setCityOptions] = useState(() => prefetchedData?.cityOptions || [])
   const [contactRadar, setContactRadar] = useState(() => prefetchedData?.contactRadar || [])
   const [legacyInsights, setLegacyInsights] = useState(() => prefetchedData?.insights || [])
-  const [loading, setLoading] = useState(() => !prefetchedData)
+  const [loading, setLoading] = useState(() => !prefetchedData && isSuperAdmin)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState("")
   const initialLoadRef = useRef(Boolean(prefetchedData))
 
   const effectiveCityId = useMemo(() => {
-    if (!isSuperAdmin) return staffCityId ? Number(staffCityId) : null
+    if (!isSuperAdmin) return null
     return selectedCityId && selectedCityId !== "all" ? Number(selectedCityId) : null
-  }, [isSuperAdmin, selectedCityId, staffCityId])
+  }, [isSuperAdmin, selectedCityId])
 
   const fetchInsights = useCallback(
     async ({ days = windowDays, cityId = effectiveCityId, isRefresh = false } = {}) => {
+      if (!isSuperAdmin) {
+        setContactRadar([])
+        setLegacyInsights([])
+        setLoading(false)
+        setRefreshing(false)
+        return
+      }
+
       try {
         if (isRefresh) setRefreshing(true)
         else setLoading(true)
@@ -148,9 +155,7 @@ export default function StaffSecurityRadar() {
             cityId,
           }),
           supabase.rpc("ctm_get_security_radar_insights"),
-          isSuperAdmin
-            ? supabase.from("cities").select("id, name, state").order("state").order("name")
-            : Promise.resolve({ data: [], error: null }),
+          supabase.from("cities").select("id, name, state").order("state").order("name"),
         ])
 
         if (legacyResult.error) throw legacyResult.error
@@ -158,9 +163,7 @@ export default function StaffSecurityRadar() {
 
         setContactRadar(Array.isArray(contactResult) ? contactResult : [])
         setLegacyInsights(Array.isArray(legacyResult.data) ? legacyResult.data : [])
-        if (isSuperAdmin) {
-          setCityOptions(citiesResult.data || [])
-        }
+        setCityOptions(citiesResult.data || [])
         setWindowDays(days)
         setError("")
       } catch (err) {
@@ -176,7 +179,7 @@ export default function StaffSecurityRadar() {
 
   useEffect(() => {
     if (initialLoadRef.current) return
-    if (!isSuperAdmin && !staffCityId) return
+    if (fetchingStaff || !isSuperAdmin) return
     initialLoadRef.current = true
 
     void fetchInsights({
@@ -184,9 +187,11 @@ export default function StaffSecurityRadar() {
       cityId: effectiveCityId,
       isRefresh: false,
     })
-  }, [effectiveCityId, fetchInsights, isSuperAdmin, staffCityId, windowDays])
+  }, [effectiveCityId, fetchingStaff, fetchInsights, isSuperAdmin, windowDays])
 
   useEffect(() => {
+    if (!isSuperAdmin) return undefined
+
     const channel = supabase
       .channel(`staff-security-radar-${windowDays}-${effectiveCityId || "all"}`)
       .on(
@@ -205,7 +210,7 @@ export default function StaffSecurityRadar() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [effectiveCityId, fetchInsights, windowDays])
+  }, [effectiveCityId, fetchInsights, isSuperAdmin, windowDays])
 
   const ipClusters = legacyInsights.filter((i) => i.fingerprint_type === "IP Address")
   const deviceClusters = legacyInsights.filter((i) => i.fingerprint_type === "Device Signature")
@@ -258,6 +263,26 @@ export default function StaffSecurityRadar() {
       toneClass: "bg-rose-100 text-rose-700",
     },
   ]
+
+  if (!isSuperAdmin) {
+    return (
+      <StaffPortalShell
+        activeKey="security-radar"
+        title="Security Radar"
+        description="Monitor contact abuse, suspicious buyer behavior, and deeper registration fingerprint clusters from one intelligence console."
+      >
+        <div className="rounded-[28px] border border-rose-200 bg-rose-50 p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl text-rose-600 shadow-sm">
+            <FaTowerBroadcast />
+          </div>
+          <h3 className="text-xl font-black text-slate-900">Super admin access required</h3>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-rose-900">
+            Security Radar contains platform-wide abuse intelligence and is restricted to super admins.
+          </p>
+        </div>
+      </StaffPortalShell>
+    )
+  }
 
   return (
     <StaffPortalShell

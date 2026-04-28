@@ -18,22 +18,35 @@ export function withStaffAuthTimeout(
   ])
 }
 
-function normalizeRole(role, source) {
+function normalizeStaffRole(role) {
   const rawRole = String(role || "").trim()
-  if (rawRole === "director") return "super_admin"
-  if (rawRole) return rawRole
-  return source === "staff_profiles" ? "staff" : "city_admin"
+  return rawRole || "staff"
 }
 
-function normalizeStaffRow(row, source) {
-  if (!row) return null
+function normalizeAdminRole(role) {
+  const rawRole = String(role || "").trim()
+  return rawRole || null
+}
+
+function normalizeStaffAccess(staffRow, adminRow) {
+  if (!staffRow) return null
+
+  const staffCityId = staffRow.city_id || null
+  const adminCityId = adminRow?.city_id || null
+  const adminRole = normalizeAdminRole(adminRow?.role)
 
   return {
-    id: row.id || null,
-    role: normalizeRole(row.role, source),
-    city_id: row.city_id || null,
-    full_name: row.full_name || "",
-    source,
+    id: staffRow.id || null,
+    role: "staff",
+    staff_role: normalizeStaffRole(staffRow.role),
+    admin_role: adminRole,
+    city_id: adminCityId || staffCityId,
+    staff_city_id: staffCityId,
+    admin_city_id: adminCityId,
+    full_name: staffRow.full_name || adminRow?.full_name || "",
+    source: "staff_profiles",
+    has_admin_role: Boolean(adminRole),
+    staff_portal_access: true,
   }
 }
 
@@ -67,12 +80,8 @@ export async function resolveStaffAccess(userId) {
   const adminResponse = getSettledResponse(adminResult)
   const staffResponse = getSettledResponse(staffResult)
 
-  if (adminResponse.data) {
-    return normalizeStaffRow(adminResponse.data, "admins")
-  }
-
   if (staffResponse.data) {
-    return normalizeStaffRow(staffResponse.data, "staff_profiles")
+    return normalizeStaffAccess(staffResponse.data, adminResponse.data)
   }
 
   if (adminResponse.error && staffResponse.error) {
@@ -96,8 +105,14 @@ export function buildStaffAuthProfile(user, staffAccess) {
     avatar_url: user.user_metadata?.avatar_url || "",
     is_suspended: false,
     city_id: staffAccess.city_id || null,
+    staff_city_id: staffAccess.staff_city_id || null,
+    admin_city_id: staffAccess.admin_city_id || null,
     area_id: null,
-    role: staffAccess.role,
+    role: "staff",
+    staff_role: staffAccess.staff_role || "staff",
+    admin_role: staffAccess.admin_role || null,
+    has_admin_role: Boolean(staffAccess.admin_role),
+    staff_portal_access: true,
     created_at: user.created_at || null,
   }
 }

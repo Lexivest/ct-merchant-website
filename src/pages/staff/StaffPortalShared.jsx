@@ -273,9 +273,12 @@ export function useStaffPortalSession() {
   const [staffError, setStaffError] = useState("")
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
-  const isSuperAdmin = staffData?.role === "super_admin"
-  const isAdmin = !!staffData?.role
-  const staffCityId = staffData?.city_id
+  const adminRole = staffData?.admin_role || null
+  const hasAdminRole = Boolean(adminRole)
+  const isSuperAdmin = adminRole === "super_admin"
+  const isCityAdmin = adminRole === "city_admin"
+  const isAdmin = hasAdminRole
+  const staffCityId = staffData?.admin_city_id || null
 
   useEffect(() => {
     if (staffPortalMemory.isResolved) return undefined
@@ -343,7 +346,10 @@ export function useStaffPortalSession() {
   return {
     authUser,
     staffData,
+    adminRole,
+    hasAdminRole,
     isSuperAdmin,
+    isCityAdmin,
     isAdmin,
     staffCityId,
     fetchingStaff,
@@ -353,7 +359,7 @@ export function useStaffPortalSession() {
   }
 }
 
-export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
+export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdminRole = true) {
   const [counts, setCounts] = useState({
     verifications: 0,
     products: 0,
@@ -371,6 +377,24 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
   const [loading, setLoading] = useState(true)
 
   const fetchCountsFallback = useCallback(async () => {
+    if (!hasAdminRole) {
+      setCounts({
+        verifications: 0,
+        products: 0,
+        payments: 0,
+        community: 0,
+        content: 0,
+        inbox: 0,
+        radar: 0,
+      })
+      setSummary({
+        shopCount: 0,
+        inactiveUsers: 0,
+        visitsToday: 0,
+      })
+      return
+    }
+
     const cityId = staffCityId ? Number(staffCityId) : null
     const shouldFilterByCity = !isSuperAdmin && cityId != null
     const lagosToday = formatLagosDateKey(new Date())
@@ -425,9 +449,11 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
       buildScopedShopQuery(
         supabase.from("shops").select("id", { count: "exact", head: true }).eq("status", "pending")
       ),
-      buildScopedShopQuery(
-        supabase.from("shops").select("id", { count: "exact", head: true }).eq("kyc_status", "submitted")
-      ),
+      isSuperAdmin
+        ? buildScopedShopQuery(
+            supabase.from("shops").select("id", { count: "exact", head: true }).eq("kyc_status", "submitted")
+          )
+        : Promise.resolve({ count: 0, error: null }),
       buildScopedProductsQuery(),
       buildScopedCommentsQuery(),
       buildScopedContentQuery(),
@@ -454,10 +480,12 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
             .select("id")
             .eq("city_id", cityId)
         : Promise.resolve({ data: null, error: null }),
-      supabase.rpc("ctm_get_contact_security_radar", {
-        p_days: 30,
-        p_city_id: shouldFilterByCity ? cityId : null,
-      }),
+      isSuperAdmin
+        ? supabase.rpc("ctm_get_contact_security_radar", {
+            p_days: 30,
+            p_city_id: null,
+          })
+        : Promise.resolve({ data: [], error: null }),
     ])
 
     const readCount = (result) =>
@@ -515,19 +543,40 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
       inactiveUsers: 0,
       visitsToday,
     })
-  }, [isSuperAdmin, staffCityId])
+  }, [hasAdminRole, isSuperAdmin, staffCityId])
 
   const fetchCounts = useCallback(async () => {
+    if (!hasAdminRole) {
+      setCounts({
+        verifications: 0,
+        products: 0,
+        payments: 0,
+        community: 0,
+        content: 0,
+        inbox: 0,
+        radar: 0,
+      })
+      setSummary({
+        shopCount: 0,
+        inactiveUsers: 0,
+        visitsToday: 0,
+      })
+      setLoading(false)
+      return
+    }
+
     try {
       const [payloadResult, radarResult] = await Promise.all([
         supabase.rpc("get_staff_dashboard_payload", {
           p_is_super_admin: isSuperAdmin,
           p_city_id: staffCityId ? Number(staffCityId) : null,
         }),
-        supabase.rpc("ctm_get_contact_security_radar", {
-          p_days: 30,
-          p_city_id: staffCityId ? Number(staffCityId) : null,
-        }),
+        isSuperAdmin
+          ? supabase.rpc("ctm_get_contact_security_radar", {
+              p_days: 30,
+              p_city_id: null,
+            })
+          : Promise.resolve({ data: [], error: null }),
       ])
 
       const { data, error } = payloadResult
@@ -556,7 +605,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null) {
     } finally {
       setLoading(false)
     }
-  }, [fetchCountsFallback, isSuperAdmin, staffCityId])
+  }, [fetchCountsFallback, hasAdminRole, isSuperAdmin, staffCityId])
 
   useEffect(() => {
     fetchCounts()
@@ -583,6 +632,7 @@ export function StaffPortalShell({
   const { 
     authUser, 
     staffData, 
+    hasAdminRole,
     isSuperAdmin, 
     staffCityId, 
     fetchingStaff, 
@@ -591,7 +641,7 @@ export function StaffPortalShell({
     handleLogout 
   } = useStaffPortalSession()
   
-  const { counts } = useStaffCounts(isSuperAdmin, staffCityId)
+  const { counts } = useStaffCounts(isSuperAdmin, staffCityId, hasAdminRole)
 
   if (fetchingStaff) {
     return (
@@ -622,25 +672,27 @@ export function StaffPortalShell({
 
   const allNavItems = [
     { key: "home", label: "Home", to: "/staff-dashboard", icon: <FaShieldHalved /> },
-    { key: "traffic", label: "Traffic", to: "/staff-traffic", icon: <FaChartLine /> },
-    { key: "shop-analytics", label: "Shop Analytics", to: "/staff-shop-analytics", icon: <FaArrowTrendUp /> },
-    { key: "users", label: "Users", to: "/staff-users", icon: <FaUsers /> },
-    { key: "products", label: "Products", to: "/staff-products", icon: <FaWandMagicSparkles />, count: counts.products },
-    { key: "shop-content", label: "Shop Content", to: "/staff-shop-content", icon: <FaPanorama />, count: counts.content },
-    { key: "announcements", label: "Announcements", to: "/staff-announcements", icon: <FaBullhorn /> },
-    { key: "notifications", label: "Notifications", to: "/staff-notifications", icon: <FaEnvelope /> },
-    { key: "community", label: "Community", to: "/staff-community", icon: <FaComments />, count: counts.community },
-    { key: "verifications", label: "Verifications", to: "/staff-verifications", icon: <FaStore />, count: counts.verifications },
-    { key: "payments", label: "Payments", to: "/staff-payments", icon: <FaReceipt />, count: counts.payments, superOnly: true },
-    { key: "sponsored-products", label: "Sponsored Products", to: "/staff-sponsored-products", icon: <FaImages /> },
-    { key: "discoveries", label: "Discoveries", to: "/staff-discoveries", icon: <FaPanorama /> },
-    { key: "city-banners", label: "City Banners", to: "/staff-city-banners", icon: <FaImages /> },
-    { key: "inbox", label: "Inbox", to: "/staff-inbox", icon: <FaEnvelope />, count: counts.inbox },
-    { key: "studio", label: "CT Studio", to: "/staff-studio", icon: <FaWandMagicSparkles /> },
-    { key: "security-radar", label: "Security Radar", to: "/staff-security-radar", icon: <FaTowerBroadcast />, count: counts.radar },
+    { key: "traffic", label: "Traffic", to: "/staff-traffic", icon: <FaChartLine />, adminOnly: true },
+    { key: "shop-analytics", label: "Shop Analytics", to: "/staff-shop-analytics", icon: <FaArrowTrendUp />, adminOnly: true },
+    { key: "users", label: "Users", to: "/staff-users", icon: <FaUsers />, adminOnly: true },
+    { key: "products", label: "Products", to: "/staff-products", icon: <FaWandMagicSparkles />, count: counts.products, adminOnly: true },
+    { key: "shop-content", label: "Shop Content", to: "/staff-shop-content", icon: <FaPanorama />, count: counts.content, adminOnly: true },
+    { key: "announcements", label: "Announcements", to: "/staff-announcements", icon: <FaBullhorn />, adminOnly: true },
+    { key: "notifications", label: "Notifications", to: "/staff-notifications", icon: <FaEnvelope />, adminOnly: true },
+    { key: "community", label: "Community", to: "/staff-community", icon: <FaComments />, count: counts.community, adminOnly: true },
+    { key: "verifications", label: "Verifications", to: "/staff-verifications", icon: <FaStore />, count: counts.verifications, adminOnly: true },
+    { key: "payments", label: "Payments", to: "/staff-payments", icon: <FaReceipt />, count: counts.payments, adminOnly: true, superOnly: true },
+    { key: "sponsored-products", label: "Sponsored Products", to: "/staff-sponsored-products", icon: <FaImages />, adminOnly: true },
+    { key: "discoveries", label: "Discoveries", to: "/staff-discoveries", icon: <FaPanorama />, adminOnly: true },
+    { key: "city-banners", label: "City Banners", to: "/staff-city-banners", icon: <FaImages />, adminOnly: true },
+    { key: "inbox", label: "Inbox", to: "/staff-inbox", icon: <FaEnvelope />, count: counts.inbox, adminOnly: true },
+    { key: "studio", label: "CT Studio", to: "/staff-studio", icon: <FaWandMagicSparkles />, adminOnly: true },
+    { key: "security-radar", label: "Security Radar", to: "/staff-security-radar", icon: <FaTowerBroadcast />, count: counts.radar, adminOnly: true, superOnly: true },
   ]
 
-  const navItems = allNavItems.filter(item => !item.superOnly || isSuperAdmin)
+  const navItems = allNavItems.filter((item) =>
+    (!item.adminOnly || hasAdminRole) && (!item.superOnly || isSuperAdmin)
+  )
 
   return (
     <div
