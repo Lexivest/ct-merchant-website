@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   FaArrowRightFromBracket,
@@ -29,6 +29,8 @@ import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import { prepareStaffRouteTransition } from "../lib/staffRouteTransitions"
+import { buildStaffAuthProfile } from "../lib/staffAuth"
+import { primeAuthSessionState } from "../hooks/useAuthSession"
 import { useStaffCounts, useStaffPortalSession } from "./staff/StaffPortalShared"
 
 function formatStaffDate(value) {
@@ -182,18 +184,34 @@ export default function StaffDashboard() {
     })
   }, [])
 
+  const primeStaffRouteAuth = useCallback(() => {
+    const staffProfile = buildStaffAuthProfile(authUser, staffData)
+    if (!authUser?.id || !staffProfile) return
+
+    primeAuthSessionState({
+      user: authUser,
+      profile: staffProfile,
+      suspended: false,
+      profileLoaded: true,
+    })
+  }, [authUser, staffData])
+
   const runStaffRouteTransition = useCallback(async (path, retryAction) => {
     if (!path) return
 
     beginRouteTransition(retryAction)
 
     try {
+      primeStaffRouteAuth()
       const prefetchedData = await prepareStaffRouteTransition({ path })
-      navigate(path, {
-        state: {
-          fromStaffTransition: true,
-          prefetchedData,
-        },
+      primeStaffRouteAuth()
+      startTransition(() => {
+        navigate(path, {
+          state: {
+            fromStaffTransition: true,
+            prefetchedData,
+          },
+        })
       })
     } catch (error) {
       failRouteTransition(
@@ -204,7 +222,7 @@ export default function StaffDashboard() {
         retryAction
       )
     }
-  }, [beginRouteTransition, failRouteTransition, navigate])
+  }, [beginRouteTransition, failRouteTransition, navigate, primeStaffRouteAuth])
 
   const openStaffRouteWithTransition = useCallback((path) => {
     if (!path) return undefined
