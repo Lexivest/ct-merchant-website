@@ -1,28 +1,10 @@
 import { getStaffCommentThreads } from "../pages/staff/StaffPortalShared"
 import { fetchContactSecurityRadar, fetchStaffShopAnalytics } from "./shopAnalytics"
 import { fetchStaffPaymentsOverview } from "./staffPaymentsData"
+import { hasStaffRouteComponent, normalizeStaffRoutePath, preloadStaffRouteComponent } from "./staffRouteRegistry"
 import { supabase } from "./supabase"
 
 const STAFF_ROUTE_TIMEOUT = 12000
-
-const staffRouteLoaders = {
-  "/staff-traffic": () => import("../pages/staff/StaffTraffic"),
-  "/staff-users": () => import("../pages/staff/StaffUsers"),
-  "/staff-community": () => import("../pages/staff/StaffCommunity"),
-  "/staff-verifications": () => import("../pages/staff/StaffVerifications"),
-  "/staff-products": () => import("../pages/staff/StaffProducts"),
-  "/staff-shop-content": () => import("../pages/staff/StaffShopContent"),
-  "/staff-announcements": () => import("../pages/staff/StaffAnnouncements"),
-  "/staff-notifications": () => import("../pages/staff/StaffNotifications"),
-  "/staff-payments": () => import("../pages/staff/StaffPayments"),
-  "/staff-shop-analytics": () => import("../pages/staff/StaffShopAnalytics"),
-  "/staff-city-banners": () => import("../pages/staff/StaffFeaturedCityBanners"),
-  "/staff-sponsored-products": () => import("../pages/staff/StaffSponsoredProducts"),
-  "/staff-inbox": () => import("../pages/staff/StaffInbox"),
-  "/staff-security-radar": () => import("../pages/staff/StaffSecurityRadar"),
-  "/staff-studio": () => import("../pages/vendors/ImageOptimizer"),
-  "/staff-issue-id": () => import("../pages/staff/StaffIDGenerator"),
-}
 
 function runTimedPreload(task, timeoutMessage, timeoutMs = STAFF_ROUTE_TIMEOUT) {
   return new Promise((resolve, reject) => {
@@ -417,21 +399,20 @@ const staffPreparers = {
 }
 
 export async function prepareStaffRouteTransition({ path, timeoutMs = STAFF_ROUTE_TIMEOUT }) {
-  const [pathname] = String(path || "").split("?")
-  const routeLoader = staffRouteLoaders[pathname]
-  if (!routeLoader) return null
+  const pathname = normalizeStaffRoutePath(path)
+  if (!hasStaffRouteComponent(pathname)) return null
 
   return runTimedPreload(
     async () => {
       const routePreparer = staffPreparers[pathname]
       if (!routePreparer) {
-        await routeLoader()
+        await preloadStaffRouteComponent(pathname)
         return null
       }
 
       const [prefetchedData] = await Promise.all([
         routePreparer(),
-        routeLoader(),
+        preloadStaffRouteComponent(pathname),
       ])
 
       return prefetchedData
