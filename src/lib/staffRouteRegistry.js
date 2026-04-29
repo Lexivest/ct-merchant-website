@@ -13,6 +13,7 @@ const staffRouteLoaders = {
   "/staff-shop-analytics": () => import("../pages/staff/StaffShopAnalytics"),
   "/staff-city-banners": () => import("../pages/staff/StaffFeaturedCityBanners"),
   "/staff-sponsored-products": () => import("../pages/staff/StaffSponsoredProducts"),
+  "/staff-discoveries": () => import("../pages/staff/StaffDiscoveries"),
   "/staff-inbox": () => import("../pages/staff/StaffInbox"),
   "/staff-security-radar": () => import("../pages/staff/StaffSecurityRadar"),
   "/staff-studio": () => import("../pages/vendors/ImageOptimizer"),
@@ -34,7 +35,9 @@ export function hasStaffRouteComponent(path) {
 export function preloadStaffRouteComponent(path) {
   const pathname = normalizeStaffRoutePath(path)
   const loader = staffRouteLoaders[pathname]
-  if (!loader) return Promise.resolve(null)
+  if (!loader) {
+    return Promise.reject(new Error(`Staff route module is not registered: ${pathname || "unknown route"}`))
+  }
 
   const cachedModule = staffRouteModuleCache.get(pathname)
   if (cachedModule) return Promise.resolve(cachedModule)

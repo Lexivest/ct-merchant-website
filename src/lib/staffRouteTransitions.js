@@ -400,7 +400,9 @@ const staffPreparers = {
 
 export async function prepareStaffRouteTransition({ path, timeoutMs = STAFF_ROUTE_TIMEOUT }) {
   const pathname = normalizeStaffRoutePath(path)
-  if (!hasStaffRouteComponent(pathname)) return null
+  if (!hasStaffRouteComponent(pathname)) {
+    throw new Error(`Staff route is not registered: ${pathname || "unknown route"}`)
+  }
 
   return runTimedPreload(
     async () => {
