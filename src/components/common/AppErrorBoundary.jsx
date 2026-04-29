@@ -78,18 +78,14 @@ class AppErrorBoundary extends Component {
   handleWindowError = (event) => {
     if (isCriticalAssetLoadFailure(event)) {
       const error = new Error("Critical application asset failed to load.")
-      if (!this.recoverFromChunkFailure(error)) {
-        this.setState({ error, retryArmed: false, busy: false })
-      }
+      this.recoverFromChunkFailure(error)
       return
     }
 
     const error = event?.error
     if (!isChunkLoadFailure(error)) return
 
-    if (!this.recoverFromChunkFailure(error)) {
-      this.setState({ error, retryArmed: false, busy: false })
-    }
+    this.recoverFromChunkFailure(error)
   }
 
   handleUnhandledRejection = (event) => {
@@ -97,18 +93,14 @@ class AppErrorBoundary extends Component {
     if (!isChunkLoadFailure(error)) return
 
     event.preventDefault?.()
-    if (!this.recoverFromChunkFailure(error)) {
-      this.setState({ error, retryArmed: false, busy: false })
-    }
+    this.recoverFromChunkFailure(error)
   }
 
   handleVitePreloadError = (event) => {
     event.preventDefault?.()
     const error = event?.payload || new Error("vite:preloadError")
 
-    if (!this.recoverFromChunkFailure(error)) {
-      this.setState({ error, retryArmed: false, busy: false })
-    }
+    this.recoverFromChunkFailure(error)
   }
 
   handleReconnectRetry = () => {

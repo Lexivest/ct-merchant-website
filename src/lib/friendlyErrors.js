@@ -25,7 +25,7 @@ export const ErrorCode = {
   DATABASE_SAVE_FAILED: "CTM-009",
   REQUEST_TIMEOUT: "CTM-010",
   RATE_LIMITED: "CTM-011",
-  INTERNAL_SERVER_ERROR: "CTM-500",
+  INTERNAL_SERVER_ERROR: "",
 }
 
 export function isNetworkError(error) {
