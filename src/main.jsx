@@ -10,12 +10,23 @@ import './styles/globals.css'
 // --- GLOBAL CRASH CAPTURE FOR FIREFOX DIAGNOSTICS ---
 if (typeof window !== "undefined") {
   window.__CTM_CRASH_LOG__ = []
+  const escapeHtml = (value) =>
+    String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;")
+
   const capture = (type, err) => {
+    const errorName = err?.name || "Error"
+    const errorMessage = err?.message || String(err)
+
     window.__CTM_CRASH_LOG__.push({
       type,
       time: new Date().toISOString(),
-      name: err?.name || "Error",
-      message: err?.message || String(err),
+      name: errorName,
+      message: errorMessage,
       stack: err?.stack || "unavailable",
       url: window.location.href
     })
@@ -28,7 +39,7 @@ if (typeof window !== "undefined") {
           <h1 style="color: #db2777;">CTMerchant Error</h1>
           <p>The application encountered a critical startup error.</p>
           <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; font-family: monospace; text-align: left; font-size: 12px; margin-top: 20px; border: 1px solid #e2e8f0; overflow: auto;">
-            <strong>${err?.name || 'Error'}:</strong> ${err?.message || String(err)}
+            <strong>${escapeHtml(errorName)}:</strong> ${escapeHtml(errorMessage)}
           </div>
           <button onclick="window.location.reload()" style="margin-top: 24px; background: #131921; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer;">
             Retry Startup
@@ -76,7 +87,7 @@ if (typeof window !== "undefined") {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter future={{ v7_startTransition: true }}>
-      <AppErrorBoundary resetKey={window.location.pathname}>
+      <AppErrorBoundary resetKey={window.location.pathname} captureGlobal={false}>
         <GlobalFeedbackProvider>
           <AppFrame>
             <App />

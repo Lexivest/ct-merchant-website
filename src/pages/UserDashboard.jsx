@@ -786,19 +786,47 @@ function UserDashboard() {
   }
 
   const currentProfile = localData.profile || profile
+  const marketShopIds = useMemo(() => {
+    return new Set(
+      (localData.shops || [])
+        .map((shop) => normalizePositiveId(shop?.id))
+        .filter(Boolean)
+    )
+  }, [localData.shops])
+  const marketShopIdsRef = useRef(marketShopIds)
+
+  useEffect(() => {
+    marketShopIdsRef.current = marketShopIds
+  }, [marketShopIds])
+
   useEffect(() => {
     const cityId = currentProfile?.city_id
     if (!user?.id || !cityId) return undefined
 
     let refreshTimerId = null
+    const pendingSegments = new Set()
 
     // Helper to refresh specific dashboard segments via mutate
-    function scheduleRefresh(segment) {
+    function scheduleRefresh(segment = "dynamic") {
+      pendingSegments.add(segment)
+
       if (refreshTimerId) window.clearTimeout(refreshTimerId)
       refreshTimerId = window.setTimeout(() => {
-        if (segment === "base") mutateBase()
-        else mutateDynamic()
+        const shouldRefreshBase = pendingSegments.has("base")
+        const shouldRefreshDynamic = pendingSegments.has("dynamic")
+        pendingSegments.clear()
+
+        if (shouldRefreshBase) mutateBase()
+        if (shouldRefreshDynamic) mutateDynamic()
       }, 400)
+    }
+
+    function shouldRefreshForProduct(payload) {
+      const changedShopId = normalizePositiveId(payload.new?.shop_id || payload.old?.shop_id)
+      const visibleShopIds = marketShopIdsRef.current
+
+      if (!changedShopId || !visibleShopIds?.size) return true
+      return visibleShopIds.has(changedShopId)
     }
 
     const channel = supabase
@@ -825,8 +853,13 @@ function UserDashboard() {
         { event: "*", schema: "public", table: "shop_likes", filter: `user_id=eq.${user.id}` },
         () => scheduleRefresh("dynamic")
       )
-      // 3. Notifications Changes
-
+      // 3. Market changes. Keep broad tables scoped in the handler so unrelated
+      // city/product updates do not churn the user's dashboard cache.
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shops", filter: `city_id=eq.${cityId}` },
+        () => scheduleRefresh("dynamic")
+      )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "featured_city_banners" },
@@ -850,6 +883,15 @@ function UserDashboard() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "products" },
+        (payload) => {
+          if (shouldRefreshForProduct(payload)) {
+            scheduleRefresh("dynamic")
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "staff_discoveries" },
         () => scheduleRefresh("dynamic")
       )
       // 4. Notifications (Direct state update remains for speed, but dynamic mutate ensures sync)

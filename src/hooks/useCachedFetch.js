@@ -124,7 +124,7 @@ function runSharedFetch(queryKey, fetcher) {
 
 function refreshAllActiveFetches() {
   for (const fetcher of activeFetchers.values()) {
-    fetcher({ force: true })
+    fetcher({ source: "resume" })
   }
 }
 
@@ -275,6 +275,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
     skip = false,
     keepPreviousData = false,
     revalidateOnMount = false,
+    revalidateOnFocus = false,
   } = options
 
   // Combined state object for atomic updates and consistent renders
@@ -316,12 +317,16 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
     
     let isMounted = true
 
-    const fetchData = async ({ force = false } = {}) => {
+    const fetchData = async ({ force = false, source = "mount" } = {}) => {
       const cachedEntry = getCacheEntry(queryKey)
       const isExpired = cachedEntry && (Date.now() - cachedEntry.timestamp > ttl)
       const offline = isNetworkOffline()
       const shouldRevalidateCachedEntry =
-        !force && revalidateOnMount && cachedEntry && !isExpired && !offline
+        !force &&
+        cachedEntry &&
+        !isExpired &&
+        !offline &&
+        (source === "resume" ? revalidateOnFocus : revalidateOnMount)
 
       // 1. Skip if data is fresh and not forced
       if (!force && cachedEntry && !isExpired) {
@@ -420,7 +425,7 @@ export default function useCachedFetch(queryKey, fetchPromise, options = {}) {
       window.removeEventListener("online", handleOnline)
       activeFetchers.delete(queryKey)
     }
-  }, [dependencySignal, keepPreviousData, persistMode, queryKey, revalidateOnMount, skip, ttl])
+  }, [dependencySignal, keepPreviousData, persistMode, queryKey, revalidateOnFocus, revalidateOnMount, skip, ttl])
 
   const mutate = useCallback(() => {
     const fetcher = activeFetchers.get(queryKey)

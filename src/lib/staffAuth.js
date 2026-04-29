@@ -44,6 +44,8 @@ function normalizeStaffAccess(staffRow, adminRow) {
     staff_city_id: staffCityId,
     admin_city_id: adminCityId,
     full_name: staffRow.full_name || adminRow?.full_name || "",
+    department: staffRow.department || "",
+    employment_date: staffRow.created_at || adminRow?.created_at || null,
     source: "staff_profiles",
     has_admin_role: Boolean(adminRole),
     staff_portal_access: true,
@@ -62,7 +64,7 @@ export async function resolveStaffAccess(userId) {
     withStaffAuthTimeout(
       supabase
         .from("admins")
-        .select("id, role, city_id, full_name")
+        .select("id, role, city_id, full_name, created_at")
         .eq("id", userId)
         .maybeSingle(),
       "Admin verification is taking too long. Please retry."
@@ -70,7 +72,7 @@ export async function resolveStaffAccess(userId) {
     withStaffAuthTimeout(
       supabase
         .from("staff_profiles")
-        .select("id, role, city_id, full_name")
+        .select("id, role, city_id, full_name, department, created_at")
         .eq("id", userId)
         .maybeSingle(),
       "Staff verification is taking too long. Please retry."
@@ -111,6 +113,8 @@ export function buildStaffAuthProfile(user, staffAccess) {
     role: "staff",
     staff_role: staffAccess.staff_role || "staff",
     admin_role: staffAccess.admin_role || null,
+    department: staffAccess.department || "",
+    employment_date: staffAccess.employment_date || null,
     has_admin_role: Boolean(staffAccess.admin_role),
     staff_portal_access: true,
     created_at: user.created_at || null,

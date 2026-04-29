@@ -685,13 +685,14 @@ export default function MerchantVideoKYC() {
       setUploadStatus("Uploading burned video to secure vault...");
 
       const ext = recordedBlobRef.current.type.includes('mp4') ? 'mp4' : 'webm';
+      const contentType = ext === 'mp4' ? 'video/mp4' : 'video/webm';
       const fileName = `kyc_video_${Date.now()}.${ext}`;
       const filePath = `${user.id}/${fileName}`;
 
       // A. Upload to Storage
       const { error: uploadErr } = await supabase.storage
         .from(KYC_VIDEO_BUCKET)
-        .upload(filePath, recordedBlobRef.current, { cacheControl: '3600', upsert: false });
+        .upload(filePath, recordedBlobRef.current, { cacheControl: '3600', contentType, upsert: false });
 
       if (uploadErr) throw new Error(`Storage Error: ${uploadErr.message}`);
       uploadedPath = filePath;

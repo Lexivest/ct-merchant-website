@@ -21,6 +21,7 @@ const staffRouteLoaders = {
   "/staff-inbox": () => import("../pages/staff/StaffInbox"),
   "/staff-security-radar": () => import("../pages/staff/StaffSecurityRadar"),
   "/staff-studio": () => import("../pages/vendors/ImageOptimizer"),
+  "/staff-issue-id": () => import("../pages/staff/StaffIDGenerator"),
 }
 
 function runTimedPreload(task, timeoutMessage, timeoutMs = STAFF_ROUTE_TIMEOUT) {

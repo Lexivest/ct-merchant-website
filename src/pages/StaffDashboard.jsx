@@ -1,99 +1,194 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
+  FaArrowRight,
+  FaArrowRightFromBracket,
   FaArrowTrendUp,
+  FaBell,
+  FaBriefcase,
+  FaBuildingUser,
+  FaBullhorn,
   FaChartLine,
   FaCircleNotch,
+  FaClipboardCheck,
   FaComments,
   FaEnvelope,
+  FaFileContract,
+  FaFolderOpen,
+  FaIdBadge,
   FaImages,
+  FaMoneyCheckDollar,
+  FaPanorama,
   FaReceipt,
   FaShieldHalved,
   FaStore,
   FaTowerBroadcast,
   FaUsers,
-  FaPanorama,
-  FaBullhorn,
   FaWandMagicSparkles,
 } from "react-icons/fa6"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
+import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import { prepareStaffRouteTransition } from "../lib/staffRouteTransitions"
-import {
-  QuickActionButton,
-  SectionHeading,
-  StaffPortalShell,
-  useStaffCounts,
-  useStaffPortalSession,
-} from "./staff/StaffPortalShared"
+import { useStaffCounts, useStaffPortalSession } from "./staff/StaffPortalShared"
 
-function HomeCard({ icon, title, subtitle, metric, metricLabel = "Live", onClick, tone = "pink" }) {
+function formatStaffDate(value) {
+  if (!value) return "Pending HR upload"
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return "Pending HR upload"
+  return date.toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })
+}
+
+function formatRoleLabel(value) {
+  return String(value || "staff")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function getInitials(value) {
+  const parts = String(value || "CT Staff")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+
+  return parts.map((part) => part[0]?.toUpperCase() || "").join("") || "CT"
+}
+
+function StaffHomeCard({
+  icon,
+  title,
+  subtitle,
+  metric,
+  metricLabel,
+  tone = "rose",
+  locked = false,
+  badge = "",
+  onClick,
+}) {
   const toneClass =
-    tone === "purple"
-      ? "from-[#ede9fe] to-white text-[#5B21B6]"
-      : tone === "blue"
-        ? "from-[#dbeafe] to-white text-[#1d4ed8]"
+    tone === "indigo"
+      ? "from-indigo-50 via-white to-white text-indigo-700"
+      : tone === "emerald"
+        ? "from-emerald-50 via-white to-white text-emerald-700"
         : tone === "amber"
-          ? "from-[#fef3c7] to-white text-[#b45309]"
-          : "from-[#fce7f3] to-white text-[#DB2777]"
+          ? "from-amber-50 via-white to-white text-amber-700"
+          : tone === "slate"
+            ? "from-slate-100 via-white to-white text-slate-700"
+            : "from-rose-50 via-white to-white text-rose-700"
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group relative rounded-[28px] border border-slate-200 bg-gradient-to-br ${toneClass} p-1 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)]`}
+      aria-disabled={locked}
+      className={`group relative flex min-h-[230px] flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-gradient-to-br ${toneClass} p-6 text-left shadow-sm transition ${
+        locked
+          ? "cursor-not-allowed opacity-65"
+          : "hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_60px_rgba(15,23,42,0.10)]"
+      }`}
     >
-      <div className="rounded-[24px] bg-white p-6">
-        <div className="mb-4 flex items-center justify-between gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-current/10 text-2xl">
-            {icon}
-          </div>
-          {metric !== undefined ? (
-            <div className="text-right">
-              <div className={`text-[11px] font-black uppercase tracking-[0.18em] ${metric > 0 && metricLabel === "Pending" ? "text-pink-600" : "text-slate-400"}`}>
-                {metricLabel}
-              </div>
-              <div className="mt-1 text-3xl font-black text-slate-900">{metric}</div>
+      <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-current/10 blur-sm" />
+
+      <div className="relative flex items-start justify-between gap-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-current/10 text-2xl">
+          {icon}
+        </div>
+        {metric !== undefined ? (
+          <div className="rounded-2xl bg-white/80 px-3 py-2 text-right shadow-sm">
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+              {metricLabel || "Live"}
             </div>
+            <div className="mt-0.5 text-2xl font-black text-slate-950">{metric}</div>
+          </div>
+        ) : badge ? (
+          <span className="rounded-full bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 shadow-sm">
+            {badge}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="relative mt-auto">
+        <h3 className="text-xl font-black tracking-tight text-slate-950">{title}</h3>
+        <p className="mt-2 text-sm font-medium leading-6 text-slate-500">{subtitle}</p>
+        <div className="mt-5 inline-flex items-center gap-2 text-sm font-black text-slate-900">
+          {locked ? "Access restricted" : "Open workspace"}
+          {!locked ? (
+            <FaArrowRight className="transition group-hover:translate-x-1" />
           ) : null}
         </div>
-        <div className="text-lg font-black text-slate-900">{title}</div>
-        <div className="mt-2 text-sm leading-6 text-slate-500">{subtitle}</div>
       </div>
-      {metric > 0 && metricLabel === "Pending" && (
-        <div className="absolute -right-2 -top-2 flex h-8 min-w-[32px] items-center justify-center rounded-full bg-[#DB2777] px-2 text-xs font-black text-white shadow-lg ring-4 ring-white">
-          {metric > 99 ? "99+" : metric}
+    </button>
+  )
+}
+
+function ResourceTile({ icon, label, value, action = "Coming soon", tone = "slate", onClick }) {
+  const toneClass =
+    tone === "green"
+      ? "bg-emerald-50 text-emerald-700"
+      : tone === "amber"
+        ? "bg-amber-50 text-amber-700"
+        : tone === "rose"
+          ? "bg-rose-50 text-rose-700"
+          : "bg-slate-100 text-slate-700"
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex min-h-[132px] flex-col rounded-[24px] border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+    >
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${toneClass}`}>
+          {icon}
         </div>
-      )}
+        <span className="rounded-full bg-slate-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+          {action}
+        </span>
+      </div>
+      <div className="text-sm font-black text-slate-950">{label}</div>
+      <div className="mt-1 text-sm font-semibold leading-5 text-slate-500">{value}</div>
     </button>
   )
 }
 
 export default function StaffDashboard() {
   const navigate = useNavigate()
-  const isMounted = useRef(true)
   const retryRouteTransitionRef = useRef(null)
-
-  const { 
-    isSuperAdmin, 
+  const {
+    authUser,
+    staffData,
+    adminRole,
     hasAdminRole,
-    staffCityId
+    isSuperAdmin,
+    staffCityId,
+    fetchingStaff,
+    staffError,
+    isLoggingOut,
+    handleLogout,
   } = useStaffPortalSession()
 
-  const { counts, summary, loading, refresh: refreshCounts } = useStaffCounts(isSuperAdmin, staffCityId, hasAdminRole)
+  const { counts, summary, loading, refresh: refreshCounts } = useStaffCounts(
+    isSuperAdmin,
+    staffCityId,
+    hasAdminRole
+  )
 
   const [routeTransition, setRouteTransition] = useState({
     pending: false,
     error: "",
   })
+  const [notice, setNotice] = useState("")
 
   useEffect(() => {
-    return () => { isMounted.current = false }
-  }, [])
-
-  const handleRefresh = useCallback(() => {
-    refreshCounts()
-  }, [refreshCounts])
+    if (!notice) return undefined
+    const timerId = window.setTimeout(() => setNotice(""), 4200)
+    return () => window.clearTimeout(timerId)
+  }, [notice])
 
   const beginRouteTransition = useCallback((retryAction = null) => {
     retryRouteTransitionRef.current = retryAction
@@ -146,43 +241,221 @@ export default function StaffDashboard() {
     return runStaffRouteTransition(path, retryAction)
   }, [runStaffRouteTransition])
 
-  const headerActions = useMemo(() => {
-    const actions = [
-      <QuickActionButton
-        key="refresh"
-        icon={<FaCircleNotch className={loading ? "animate-spin" : ""} />}
-        label="Refresh Overview"
-        tone="white"
-        onClick={handleRefresh}
-      />,
-    ]
+  const openLockedCard = useCallback((message) => {
+    setNotice(message || "This workspace requires an admin operation role.")
+  }, [])
 
-    if (!hasAdminRole) return actions
+  const staffName =
+    staffData?.full_name ||
+    authUser?.user_metadata?.full_name ||
+    authUser?.email ||
+    "CTMerchant Staff"
+  const avatarUrl = authUser?.user_metadata?.avatar_url || ""
+  const staffInitials = getInitials(staffName)
+  const staffRoleLabel = formatRoleLabel(staffData?.staff_role || "staff")
+  const adminRoleLabel = adminRole ? formatRoleLabel(adminRole) : "Portal Access Only"
+  const department = staffData?.department || "Pending HR assignment"
+  const employmentDate = formatStaffDate(staffData?.employment_date || authUser?.created_at)
+  const cityScope = isSuperAdmin
+    ? "All cities"
+    : staffCityId
+      ? `City ${staffCityId}`
+      : "Pending city scope"
+
+  const operations = useMemo(() => {
+    const adminLocked = !hasAdminRole
+    const superLocked = !isSuperAdmin
 
     return [
-      ...actions,
-      <QuickActionButton
-        key="inbox"
-        icon={<FaEnvelope />}
-        label="Open Support Inbox"
-        onClick={() => void openStaffRouteWithTransition("/staff-inbox")}
-      />,
-      <QuickActionButton
-        key="sponsored-products"
-        icon={<FaImages />}
-        label="Sponsored Products"
-        tone="pink"
-        onClick={() => void openStaffRouteWithTransition("/staff-sponsored-products")}
-      />,
-      <QuickActionButton
-        key="city-banners"
-        icon={<FaImages />}
-        label="City Banners"
-        tone="pink"
-        onClick={() => void openStaffRouteWithTransition("/staff-city-banners")}
-      />,
+      {
+        title: "Traffic Intelligence",
+        subtitle: "Daily visits, route movement, and marketplace demand signals.",
+        icon: <FaChartLine />,
+        metric: summary.visitsToday,
+        metricLabel: "Today",
+        tone: "indigo",
+        path: "/staff-traffic",
+        locked: adminLocked,
+      },
+      {
+        title: "Shop Analytics",
+        subtitle: "Rank shops by views, repo-search exposure, and contact conversion.",
+        icon: <FaArrowTrendUp />,
+        badge: "Market",
+        tone: "rose",
+        path: "/staff-shop-analytics",
+        locked: adminLocked,
+      },
+      {
+        title: "User Activity",
+        subtitle: "Review inactive users, account health, and city ownership patterns.",
+        icon: <FaUsers />,
+        metric: summary.inactiveUsers,
+        metricLabel: "Inactive",
+        tone: "amber",
+        path: "/staff-users",
+        locked: adminLocked,
+      },
+      {
+        title: "Community Moderation",
+        subtitle: "Approve, hide, or reject shop comment threads and replies.",
+        icon: <FaComments />,
+        metric: counts.community,
+        metricLabel: "Pending",
+        tone: "rose",
+        path: "/staff-community",
+        locked: adminLocked,
+      },
+      {
+        title: "Merchant Verifications",
+        subtitle: "Review shop applications, storefront checks, and KYC submissions.",
+        icon: <FaStore />,
+        metric: counts.verifications,
+        metricLabel: "Queue",
+        tone: "emerald",
+        path: "/staff-verifications",
+        locked: adminLocked,
+      },
+      {
+        title: "Product Moderation",
+        subtitle: "Approve product listings and keep marketplace quality consistent.",
+        icon: <FaWandMagicSparkles />,
+        metric: counts.products,
+        metricLabel: "Pending",
+        tone: "indigo",
+        path: "/staff-products",
+        locked: adminLocked,
+      },
+      {
+        title: "Shop Content",
+        subtitle: "Moderate shop banners and merchant news before they go public.",
+        icon: <FaPanorama />,
+        metric: counts.content,
+        metricLabel: "Pending",
+        tone: "rose",
+        path: "/staff-shop-content",
+        locked: adminLocked,
+      },
+      {
+        title: "Announcements",
+        subtitle: "Publish city announcements and important marketplace notices.",
+        icon: <FaBullhorn />,
+        badge: "Comms",
+        tone: "amber",
+        path: "/staff-announcements",
+        locked: adminLocked,
+      },
+      {
+        title: "Targeted Notifications",
+        subtitle: "Send direct operational alerts to selected merchants or users.",
+        icon: <FaEnvelope />,
+        badge: "Comms",
+        tone: "indigo",
+        path: "/staff-notifications",
+        locked: adminLocked,
+      },
+      {
+        title: "Payments Control",
+        subtitle: "Approve offline receipts, subscription renewals, and fee records.",
+        icon: <FaReceipt />,
+        metric: counts.payments,
+        metricLabel: "Pending",
+        tone: "emerald",
+        path: "/staff-payments",
+        locked: superLocked,
+        lockedMessage: "Payments control is reserved for super admins.",
+      },
+      {
+        title: "Sponsored Products",
+        subtitle: "Feature marketplace products and manage premium placements.",
+        icon: <FaImages />,
+        badge: "Studio",
+        tone: "rose",
+        path: "/staff-sponsored-products",
+        locked: adminLocked,
+      },
+      {
+        title: "City Banners",
+        subtitle: "Build and publish featured city carousel visuals.",
+        icon: <FaImages />,
+        badge: "Studio",
+        tone: "indigo",
+        path: "/staff-city-banners",
+        locked: adminLocked,
+      },
+      {
+        title: "Market Discoveries",
+        subtitle: "Curate portrait-style marketplace discovery stories.",
+        icon: <FaPanorama />,
+        badge: "Editorial",
+        tone: "rose",
+        path: "/staff-discoveries",
+        locked: adminLocked,
+      },
+      {
+        title: "Support Inbox",
+        subtitle: "Review contact messages, support notes, and abuse reports.",
+        icon: <FaEnvelope />,
+        metric: counts.inbox,
+        metricLabel: "Unread",
+        tone: "slate",
+        path: "/staff-inbox",
+        locked: adminLocked,
+      },
+      {
+        title: "Staff Studio",
+        subtitle: "Prepare image assets and internal marketplace materials.",
+        icon: <FaWandMagicSparkles />,
+        badge: "Tools",
+        tone: "emerald",
+        path: "/staff-studio",
+        locked: adminLocked,
+      },
+      {
+        title: "Issue Staff ID",
+        subtitle: "Generate identity cards and staff-facing credentials.",
+        icon: <FaIdBadge />,
+        badge: "Identity",
+        tone: "indigo",
+        path: "/staff-issue-id",
+        locked: adminLocked,
+      },
+      {
+        title: "Security Radar",
+        subtitle: "Watch suspicious contact behavior and account-risk clusters.",
+        icon: <FaTowerBroadcast />,
+        metric: counts.radar,
+        metricLabel: "Alerts",
+        tone: "amber",
+        path: "/staff-security-radar",
+        locked: superLocked,
+        lockedMessage: "Security radar is reserved for super admins.",
+      },
     ]
-  }, [handleRefresh, hasAdminRole, loading, openStaffRouteWithTransition])
+  }, [counts, hasAdminRole, isSuperAdmin, summary])
+
+  if (fetchingStaff) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0f172a] text-white">
+        <FaCircleNotch className="mb-4 animate-spin text-5xl text-rose-400" />
+        <p className="text-lg font-black">Opening staff workspace...</p>
+      </div>
+    )
+  }
+
+  if (staffError) {
+    return (
+      <GlobalErrorScreen
+        title="Staff access could not be verified"
+        message={staffError}
+        onRetry={() => navigate("/staff-portal", { replace: true })}
+        retryLabel="Return to staff login"
+        onBack={false}
+      />
+    )
+  }
+
+  if (!staffData || !authUser) return null
 
   return (
     <>
@@ -201,209 +474,262 @@ export default function StaffDashboard() {
           })
         }
       />
-      <div className={routeTransition.pending ? "pointer-events-none select-none" : ""}>
-        <StaffPortalShell
-          activeKey="home"
-          title="Staff Portal Home"
-          description="Move through moderation, analytics, user operations, and merchant controls from one clean command center."
-          headerActions={headerActions}
-        >
-          {!hasAdminRole ? (
-            <div className="rounded-[28px] border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl text-amber-600 shadow-sm">
+
+      <div className={`min-h-screen bg-[#eef2f7] text-slate-950 ${routeTransition.pending ? "pointer-events-none select-none" : ""}`}>
+        <header className="sticky top-0 z-[100] border-b border-white/10 bg-[#0f172a]/95 px-4 py-3 text-white shadow-xl shadow-slate-900/10 backdrop-blur-xl sm:px-6">
+          <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-rose-300">
                 <FaShieldHalved />
               </div>
-              <h3 className="text-xl font-black text-slate-900">Staff access confirmed</h3>
-              <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-amber-900">
-                Your staff profile can enter the portal, but no admin operation role is assigned yet. Ask a super admin to add an admin role before using city or platform management tools.
-              </p>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-black uppercase tracking-[0.18em] text-white/50">
+                  CTMerchant Staff
+                </div>
+                <div className="truncate text-lg font-black">Operations Home</div>
+              </div>
             </div>
-          ) : (
-            <>
-              <SectionHeading
-                eyebrow="Home"
-                title="Operations Areas"
-                description="Each card opens a dedicated working page so the staff portal behaves like a proper internal product, not one long stacked screen."
-              />
 
-          <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-6">
-            <HomeCard
-              icon={<FaChartLine />}
-              title="Traffic Intelligence"
-              subtitle="Review page visits, route performance, and daily traffic movement."
-              metric={summary.visitsToday}
-              tone="blue"
-              onClick={() => void openStaffRouteWithTransition("/staff-traffic")}
-            />
-            <HomeCard
-              icon={<FaArrowTrendUp />}
-              title="Shop Analytics"
-              subtitle="Rank shops by visits, repo-search visibility, and real buyer contact actions."
-              tone="pink"
-              onClick={() => void openStaffRouteWithTransition("/staff-shop-analytics")}
-            />
-            <HomeCard
-              icon={<FaUsers />}
-              title="User Activity"
-              subtitle="Inspect city-level user activity, inactivity risk, and shop ownership patterns."
-              metric={summary.inactiveUsers}
-              metricLabel="Inactive"
-              tone="amber"
-              onClick={() => void openStaffRouteWithTransition("/staff-users")}
-            />
-            <HomeCard
-              icon={<FaComments />}
-              title="Community Moderation"
-              subtitle="Approve, hide, or reject shop discussion threads and keep conversations professional."
-              metric={counts.community}
-              metricLabel="Pending"
-              tone="pink"
-              onClick={() => void openStaffRouteWithTransition("/staff-community")}
-            />
-            <HomeCard
-              icon={<FaStore />}
-              title="Merchant Verifications"
-              subtitle="Review applications, KYC videos, and supervise approval workflows."
-              metric={counts.verifications}
-              metricLabel="Pending"
-              tone="purple"
-              onClick={() => void openStaffRouteWithTransition("/staff-verifications")}
-            />
-            <HomeCard
-              icon={<FaPanorama />}
-              title="Shop Content"
-              subtitle="Moderate shop display banners and news updates for high-quality visuals."
-              metric={counts.content}
-              metricLabel="Pending"
-              tone="blue"
-              onClick={() => void openStaffRouteWithTransition("/staff-shop-content")}
-            />
-            <HomeCard
-              icon={<FaBullhorn />}
-              title="City Announcements"
-              subtitle="Broadcast important messages and alerts to users in specific cities."
-              tone="amber"
-              onClick={() => void openStaffRouteWithTransition("/staff-announcements")}
-            />
-            <HomeCard
-              icon={<FaEnvelope />}
-              title="Individual Alerts"
-              subtitle="Send targeted, private notifications directly to specific merchant accounts."
-              tone="blue"
-              onClick={() => void openStaffRouteWithTransition("/staff-notifications")}
-            />
-            <HomeCard
-              icon={<FaWandMagicSparkles />}
-              title="Product Moderation"
-              subtitle="Approve or reject new product listings from merchants to keep marketplace clean."
-              metric={counts.products}
-              metricLabel="Pending"
-              tone="purple"
-              onClick={() => void openStaffRouteWithTransition("/staff-products")}
-            />
-
-            {isSuperAdmin && (
-              <HomeCard
-                icon={<FaReceipt />}
-                title="Offline Payments"
-                subtitle="Approve bank transfer receipts and activate shop subscriptions."
-                metric={counts.payments}
-                metricLabel="Pending"
-                tone="blue"
-                onClick={() => void openStaffRouteWithTransition("/staff-payments")}
-              />
-            )}
-
-            <HomeCard
-              icon={<FaImages />}
-              title="Sponsored Products"
-              subtitle="Select and publish products to feature in the marketplace."
-              tone="pink"
-              onClick={() => void openStaffRouteWithTransition("/staff-sponsored-products")}
-            />
-            <HomeCard
-              icon={<FaPanorama />}
-              title="Market Discoveries"
-              subtitle="Post portrait-style direct fashion and lifestyle shots."
-              tone="blue"
-              onClick={() => void openStaffRouteWithTransition("/staff-discoveries")}
-            />
-            <HomeCard
-              icon={<FaImages />}
-              title="City Banners"
-              subtitle="Generate and publish featured shop banners for the marketplace carousel."
-              tone="pink"
-              onClick={() => void openStaffRouteWithTransition("/staff-city-banners")}
-            />
-
-            {isSuperAdmin && (
-              <HomeCard
-                icon={<FaTowerBroadcast />}
-                title="Security Intelligence"
-                subtitle="Detect suspicious contact behavior, spam pressure, and deeper account clusters."
-                metric={counts.radar}
-                metricLabel="Alerts"
-                tone="amber"
-                onClick={() => void openStaffRouteWithTransition("/staff-security-radar")}
-              />
-            )}
-          </div>
-
-          <SectionHeading
-            eyebrow="Quick Status"
-            title="Today At A Glance"
-            description="A compact briefing for what needs attention before you drill into the detailed operational pages."
-          />
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">Community Queue</div>
-              <div className="mt-3 text-4xl font-black text-slate-900">{counts.community}</div>
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                Pending shop comments awaiting approval or moderation action.
-              </p>
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => void openStaffRouteWithTransition("/staff-community")}
-                className="mt-5 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+                onClick={refreshCounts}
+                className="hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-4 py-2.5 text-sm font-black transition hover:bg-white/15 sm:inline-flex"
               >
-                Open Community Page
+                <FaCircleNotch className={loading ? "animate-spin" : ""} />
+                Refresh
               </button>
-            </div>
-
-            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">Merchant Verifications</div>
-              <div className="mt-3 text-4xl font-black text-slate-900">{counts.verifications}</div>
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                Pending shop applications and identity submissions awaiting review.
-              </p>
               <button
                 type="button"
-                onClick={() => void openStaffRouteWithTransition("/staff-verifications")}
-                className="mt-5 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-4 py-2.5 text-sm font-black transition hover:bg-rose-500 disabled:opacity-70"
               >
-                Open Verification Page
-              </button>
-            </div>
-
-            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DB2777]">User Activity</div>
-              <div className="mt-3 text-4xl font-black text-slate-900">{summary.inactiveUsers}</div>
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                Inactive accounts flagged for follow-up and city-level analysis.
-              </p>
-              <button
-                type="button"
-                onClick={() => void openStaffRouteWithTransition("/staff-users")}
-                className="mt-5 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
-              >
-                Open User Activity Page
+                {isLoggingOut ? <FaCircleNotch className="animate-spin" /> : <FaArrowRightFromBracket />}
+                {isLoggingOut ? "Signing out" : "Logout"}
               </button>
             </div>
           </div>
-            </>
-          )}
-        </StaffPortalShell>
+        </header>
+
+        {notice ? (
+          <div className="fixed left-1/2 top-20 z-[200] w-[min(92vw,520px)] -translate-x-1/2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-bold text-amber-900 shadow-2xl">
+            {notice}
+          </div>
+        ) : null}
+
+        <main className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:py-8">
+          <section className="relative overflow-hidden rounded-[38px] bg-[#111827] text-white shadow-[0_28px_90px_rgba(15,23,42,0.25)]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(244,63,94,0.40),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(14,165,233,0.26),transparent_30%),linear-gradient(135deg,#111827_0%,#1e1b4b_55%,#881337_100%)]" />
+            <div className="absolute -bottom-24 right-4 h-64 w-64 rounded-full border border-white/10" />
+            <div className="relative grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
+              <div className="flex flex-col justify-between gap-10">
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-white/70">
+                    <FaBuildingUser />
+                    Standalone Staff Workspace
+                  </div>
+                  <h1 className="mt-6 max-w-3xl text-4xl font-black tracking-[-0.04em] sm:text-5xl lg:text-6xl">
+                    Welcome back, {staffName.split(" ")[0] || "Staff"}.
+                  </h1>
+                  <p className="mt-5 max-w-2xl text-base font-medium leading-8 text-white/72">
+                    A focused home for CTMerchant staff operations, resources, marketplace controls, and administrative workspaces.
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
+                    <div className="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">Shops</div>
+                    <div className="mt-2 text-3xl font-black">{summary.shopCount}</div>
+                  </div>
+                  <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
+                    <div className="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">Pending</div>
+                    <div className="mt-2 text-3xl font-black">
+                      {counts.verifications + counts.products + counts.community + counts.content + counts.payments}
+                    </div>
+                  </div>
+                  <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
+                    <div className="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">Scope</div>
+                    <div className="mt-2 truncate text-2xl font-black">{cityScope}</div>
+                  </div>
+                </div>
+              </div>
+
+              <aside className="rounded-[32px] border border-white/10 bg-white/12 p-6 backdrop-blur-xl">
+                <div className="flex items-start gap-4">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={staffName}
+                      className="h-20 w-20 rounded-3xl border border-white/20 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl border border-white/20 bg-white/10 text-2xl font-black">
+                      {staffInitials}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="truncate text-2xl font-black">{staffName}</div>
+                    <div className="mt-1 text-sm font-bold text-white/60">{authUser.email}</div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-slate-900">
+                        {staffRoleLabel}
+                      </span>
+                      <span className="rounded-full bg-rose-500 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-white">
+                        {adminRoleLabel}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-3">
+                  {[
+                    ["Department", department],
+                    ["Employment Date", employmentDate],
+                    ["Grade Level", "Pending HR assignment"],
+                    ["File No.", "Pending HR assignment"],
+                  ].map(([label, value]) => (
+                    <div key={label} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/10 px-4 py-3">
+                      <span className="text-xs font-black uppercase tracking-[0.18em] text-white/42">{label}</span>
+                      <span className="truncate text-sm font-black text-white">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          {!hasAdminRole ? (
+            <section className="mt-6 rounded-[32px] border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-2xl text-amber-600 shadow-sm">
+                <FaShieldHalved />
+              </div>
+              <h2 className="text-2xl font-black text-slate-950">Staff portal access confirmed</h2>
+              <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-7 text-amber-900">
+                Your profile can enter the staff home, but no admin operation role is assigned yet. The resource section remains visible while a super admin configures your operational permissions.
+              </p>
+            </section>
+          ) : null}
+
+          <section className="mt-8">
+            <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-rose-600">Dashboard Cards</div>
+                <h2 className="mt-2 text-3xl font-black tracking-[-0.03em] text-slate-950">Operations workspaces</h2>
+                <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-500">
+                  Every card opens a dedicated page, so staff can move from home into focused tools without digging through a crowded dashboard.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={refreshCounts}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white transition hover:bg-slate-800 sm:hidden"
+              >
+                <FaCircleNotch className={loading ? "animate-spin" : ""} />
+                Refresh overview
+              </button>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+              {operations.map((item) => (
+                <StaffHomeCard
+                  key={item.title}
+                  {...item}
+                  onClick={() => {
+                    if (item.locked) {
+                      openLockedCard(item.lockedMessage)
+                      return
+                    }
+                    void openStaffRouteWithTransition(item.path)
+                  }}
+                />
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-10 grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
+            <div className="rounded-[34px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-700">
+                  <FaIdBadge />
+                </div>
+                <div>
+                  <div className="text-[11px] font-black uppercase tracking-[0.2em] text-rose-600">Staff Resource</div>
+                  <h2 className="text-2xl font-black text-slate-950">Personnel profile</h2>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  ["Bio", "Short staff biography and work summary will appear here."],
+                  ["Department", department],
+                  ["Employment Date", employmentDate],
+                  ["Grade Level", "Pending HR assignment"],
+                  ["File No.", "Pending HR assignment"],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{label}</div>
+                    <div className="mt-1 text-sm font-bold text-slate-800">{value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[34px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <div className="text-[11px] font-black uppercase tracking-[0.2em] text-rose-600">Resource Library</div>
+                  <h2 className="text-2xl font-black text-slate-950">Documents and staff services</h2>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+                    Placeholder cards for the HR and internal-resource features we can wire into real tables/storage next.
+                  </p>
+                </div>
+                <span className="rounded-full bg-slate-100 px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">
+                  Phase 1 UI
+                </span>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <ResourceTile
+                  icon={<FaFileContract />}
+                  label="Employment Letter"
+                  value="Official appointment letter and contract document."
+                  tone="rose"
+                />
+                <ResourceTile
+                  icon={<FaMoneyCheckDollar />}
+                  label="Payment Slip"
+                  value="Monthly payslip records will be available here."
+                  tone="green"
+                />
+                <ResourceTile
+                  icon={<FaBell />}
+                  label="Notifications"
+                  value="Internal HR, policy, and operations notices."
+                  tone="amber"
+                  action={hasAdminRole ? "Open" : "Coming soon"}
+                  onClick={hasAdminRole ? () => void openStaffRouteWithTransition("/staff-notifications") : undefined}
+                />
+                <ResourceTile
+                  icon={<FaFolderOpen />}
+                  label="Staff File"
+                  value="File number, grade level, department, and archive documents."
+                />
+                <ResourceTile
+                  icon={<FaBriefcase />}
+                  label="Department Memo"
+                  value="Team updates, policies, and resource links."
+                />
+                <ResourceTile
+                  icon={<FaClipboardCheck />}
+                  label="Performance Notes"
+                  value="Review notes and work history placeholders."
+                  tone="green"
+                />
+              </div>
+            </div>
+          </section>
+        </main>
       </div>
     </>
   )

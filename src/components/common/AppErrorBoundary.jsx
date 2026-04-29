@@ -19,7 +19,7 @@ class AppErrorBoundary extends Component {
   }
 
   componentDidMount() {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && this.props.captureGlobal !== false) {
       window.addEventListener("online", this.handleReconnectRetry)
       window.addEventListener("error", this.handleWindowError, true)
       window.addEventListener("unhandledrejection", this.handleUnhandledRejection)
@@ -28,7 +28,7 @@ class AppErrorBoundary extends Component {
   }
 
   componentWillUnmount() {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && this.props.captureGlobal !== false) {
       window.removeEventListener("online", this.handleReconnectRetry)
       window.removeEventListener("error", this.handleWindowError, true)
       window.removeEventListener("unhandledrejection", this.handleUnhandledRejection)

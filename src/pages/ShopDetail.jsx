@@ -26,6 +26,7 @@ import useCachedFetch, {
   primeCachedFetchStore,
   readCachedFetchStore,
   clearCachedFetchStore,
+  invalidateCachedFetchStore,
 } from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
@@ -319,6 +320,70 @@ function ShopDetail() {
       },
     })
   }, [currentShop?.id, currentShop?.owner_id, isRepoSearchEntry, repoRef, usePublicRepoMode, user?.id])
+
+  useEffect(() => {
+    if (!shopId || usePublicRepoMode) return undefined
+
+    let refreshTimerId = null
+
+    const scheduleRefresh = () => {
+      if (refreshTimerId) {
+        window.clearTimeout(refreshTimerId)
+      }
+
+      refreshTimerId = window.setTimeout(() => {
+        refreshTimerId = null
+        mutate()
+      }, 500)
+    }
+
+    const invalidateChangedProduct = (payload) => {
+      const changedProductId = payload.new?.id || payload.old?.id
+      if (!changedProductId) return
+
+      invalidateCachedFetchStore((key) =>
+        key.startsWith(`prod_detail_${changedProductId}_`)
+      )
+    }
+
+    const channel = supabase
+      .channel(`shop-detail-live-${shopId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "shops", filter: `id=eq.${shopId}` },
+        scheduleRefresh
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products", filter: `shop_id=eq.${shopId}` },
+        (payload) => {
+          invalidateChangedProduct(payload)
+          scheduleRefresh()
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shop_banners_news", filter: `shop_id=eq.${shopId}` },
+        scheduleRefresh
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shop_likes", filter: `shop_id=eq.${shopId}` },
+        scheduleRefresh
+      )
+      .subscribe((status) => {
+        if (status === "TIMED_OUT" || status === "CHANNEL_ERROR") {
+          scheduleRefresh()
+        }
+      })
+
+    return () => {
+      if (refreshTimerId) {
+        window.clearTimeout(refreshTimerId)
+      }
+      supabase.removeChannel(channel)
+    }
+  }, [mutate, shopId, usePublicRepoMode])
 
   useEffect(() => {
     if (shouldLoadCommunity) return undefined

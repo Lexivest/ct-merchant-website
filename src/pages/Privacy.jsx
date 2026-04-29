@@ -1,6 +1,7 @@
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 import PageSeo from "../components/common/PageSeo"
+import { resetPrivacyConsent } from "../lib/privacyConsent"
 
 function Privacy() {
   const navigate = useNavigate()
@@ -13,6 +14,10 @@ function Privacy() {
     }
 
     navigate("/", { replace: true })
+  }
+
+  const handleCookiePreferences = () => {
+    resetPrivacyConsent()
   }
 
   return (
@@ -248,6 +253,14 @@ function Privacy() {
                     enhance platform operation and do not track your activity
                     across other websites.
                   </p>
+
+                  <button
+                    type="button"
+                    onClick={handleCookiePreferences}
+                    className="mt-5 inline-flex rounded-xl bg-slate-950 px-5 py-3 text-sm font-extrabold text-white shadow-[0_8px_24px_rgba(15,23,42,0.16)] transition hover:bg-pink-600"
+                  >
+                    Review cookie preferences
+                  </button>
                 </PolicyCard>
 
                 <PolicyCard

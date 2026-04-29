@@ -34,7 +34,7 @@ import { ProtectedImage, ProtectedVideo } from "../../components/common/Protecte
 import { UPLOAD_RULES } from "../../lib/uploadRules"
 
 const KYC_VIDEO_BUCKETS = Array.from(
-  new Set([UPLOAD_RULES.kycVideos.bucket, "kyc-videos"])
+  new Set([UPLOAD_RULES.kycVideos.bucket, "kyc_videos"])
 )
 
 function getStoragePathFromUrl(url, bucket) {

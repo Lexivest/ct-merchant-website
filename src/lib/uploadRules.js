@@ -3,9 +3,9 @@ const MB = 1024 * 1024
 
 export const UPLOAD_RULES = Object.freeze({
   kycVideos: Object.freeze({
-    bucket: "kyc_videos",
+    bucket: "kyc-videos",
     maxBytes: 10 * MB,
-    allowedMime: [],
+    allowedMime: ["video/mp4", "video/webm"],
   }),
   brandAssets: Object.freeze({
     bucket: "brand-assets",
@@ -35,22 +35,22 @@ export const UPLOAD_RULES = Object.freeze({
   cacDocuments: Object.freeze({
     bucket: "cac-documents",
     maxBytes: 500 * KB,
-    allowedMime: [],
+    allowedMime: ["image/jpeg", "image/png", "application/pdf"],
   }),
   idDocuments: Object.freeze({
     bucket: "id-documents",
     maxBytes: 500 * KB,
-    allowedMime: [],
+    allowedMime: ["image/jpeg", "image/png", "application/pdf"],
   }),
   shopBanners: Object.freeze({
     bucket: "shops-banner-storage",
     maxBytes: 200 * KB,
-    allowedMime: [],
+    allowedMime: ["image/jpeg", "image/png"],
   }),
   products: Object.freeze({
     bucket: "products",
     maxBytes: 100 * KB,
-    allowedMime: [],
+    allowedMime: ["image/jpeg", "image/png", "image/webp"],
   }),
   paymentReceipts: Object.freeze({
     bucket: "payment-receipts",

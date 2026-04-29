@@ -46,7 +46,6 @@ import { buildShopRegistrationCacheKey } from "../lib/vendorRouteTransitions"
 import {
   UPLOAD_RULES,
   formatBytes,
-  getAcceptValue,
   getRuleLabel,
 } from "../lib/uploadRules"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
@@ -932,10 +931,12 @@ function ShopRegistration() {
     const input = hiddenInputRef.current
     if (!input) return
     const targetRule = getRuleForTargetId(targetId)
+    const imageAccept =
+      targetRule?.allowedMime?.filter((mime) => mime.startsWith("image/")).join(",") || "image/*"
 
     pickerContextRef.current = { targetId, ratio }
     input.value = ""
-    input.setAttribute("accept", getAcceptValue(targetRule, "image/*"))
+    input.setAttribute("accept", imageAccept)
     input.removeAttribute("capture")
     input.click()
   }
