@@ -61,11 +61,8 @@ function getInitials(value) {
 function StaffHomeCard({
   icon,
   title,
-  metric,
-  metricLabel,
   tone = "rose",
   locked = false,
-  badge = "",
   onClick,
 }) {
   const toneClass =
@@ -84,7 +81,7 @@ function StaffHomeCard({
       type="button"
       onClick={onClick}
       aria-disabled={locked}
-      className={`group relative flex min-h-[118px] flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-gradient-to-br ${toneClass} p-4 text-left shadow-sm transition ${
+      className={`group relative flex min-h-[92px] flex-col justify-between overflow-hidden rounded-[18px] border border-slate-200 bg-gradient-to-br ${toneClass} p-3.5 text-left shadow-sm transition ${
         locked
           ? "cursor-not-allowed opacity-65"
           : "hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.09)]"
@@ -93,30 +90,13 @@ function StaffHomeCard({
       <div className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-current/10 blur-sm" />
 
       <div className="relative flex items-start justify-between gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-current/10 text-xl">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-current/10 text-lg">
           {icon}
         </div>
-        {metric !== undefined ? (
-          <div className="rounded-xl bg-white/80 px-2.5 py-1.5 text-right shadow-sm">
-            <div className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
-              {metricLabel || "Live"}
-            </div>
-            <div className="text-lg font-black leading-none text-slate-950">{metric}</div>
-          </div>
-        ) : badge ? (
-          <span className="rounded-full bg-white/80 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-slate-500 shadow-sm">
-            {badge}
-          </span>
-        ) : null}
       </div>
 
-      <div className="relative mt-4">
-        <h3 className="text-base font-black tracking-tight text-slate-950">{title}</h3>
-        {locked ? (
-          <div className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
-            Restricted
-          </div>
-        ) : null}
+      <div className="relative mt-3">
+        <h3 className="text-sm font-black tracking-tight text-slate-950">{title}</h3>
       </div>
     </button>
   )
@@ -264,8 +244,7 @@ export default function StaffDashboard() {
 
     return [
       {
-        title: "Traffic Intelligence",
-        subtitle: "Daily visits, route movement, and marketplace demand signals.",
+        title: "Traffic",
         icon: <FaChartLine />,
         metric: summary.visitsToday,
         metricLabel: "Today",
@@ -275,7 +254,6 @@ export default function StaffDashboard() {
       },
       {
         title: "Shop Analytics",
-        subtitle: "Rank shops by views, repo-search exposure, and contact conversion.",
         icon: <FaArrowTrendUp />,
         badge: "Market",
         tone: "rose",
@@ -283,8 +261,7 @@ export default function StaffDashboard() {
         locked: adminLocked,
       },
       {
-        title: "User Activity",
-        subtitle: "Review inactive users, account health, and city ownership patterns.",
+        title: "Users",
         icon: <FaUsers />,
         metric: summary.inactiveUsers,
         metricLabel: "Inactive",
@@ -293,8 +270,7 @@ export default function StaffDashboard() {
         locked: adminLocked,
       },
       {
-        title: "Community Moderation",
-        subtitle: "Approve, hide, or reject shop comment threads and replies.",
+        title: "Community",
         icon: <FaComments />,
         metric: counts.community,
         metricLabel: "Pending",
@@ -303,8 +279,7 @@ export default function StaffDashboard() {
         locked: adminLocked,
       },
       {
-        title: "Merchant Verifications",
-        subtitle: "Review shop applications, storefront checks, and KYC submissions.",
+        title: "Verifications",
         icon: <FaStore />,
         metric: counts.verifications,
         metricLabel: "Queue",
@@ -313,8 +288,7 @@ export default function StaffDashboard() {
         locked: adminLocked,
       },
       {
-        title: "Product Moderation",
-        subtitle: "Approve product listings and keep marketplace quality consistent.",
+        title: "Products",
         icon: <FaWandMagicSparkles />,
         metric: counts.products,
         metricLabel: "Pending",
@@ -324,7 +298,6 @@ export default function StaffDashboard() {
       },
       {
         title: "Shop Content",
-        subtitle: "Moderate shop banners and merchant news before they go public.",
         icon: <FaPanorama />,
         metric: counts.content,
         metricLabel: "Pending",
@@ -334,7 +307,6 @@ export default function StaffDashboard() {
       },
       {
         title: "Announcements",
-        subtitle: "Publish city announcements and important marketplace notices.",
         icon: <FaBullhorn />,
         badge: "Comms",
         tone: "amber",
@@ -342,8 +314,7 @@ export default function StaffDashboard() {
         locked: adminLocked,
       },
       {
-        title: "Targeted Notifications",
-        subtitle: "Send direct operational alerts to selected merchants or users.",
+        title: "Notifications",
         icon: <FaEnvelope />,
         badge: "Comms",
         tone: "indigo",
@@ -351,8 +322,7 @@ export default function StaffDashboard() {
         locked: adminLocked,
       },
       {
-        title: "Payments Control",
-        subtitle: "Approve offline receipts, subscription renewals, and fee records.",
+        title: "Payments",
         icon: <FaReceipt />,
         metric: counts.payments,
         metricLabel: "Pending",
@@ -363,7 +333,6 @@ export default function StaffDashboard() {
       },
       {
         title: "Sponsored Products",
-        subtitle: "Feature marketplace products and manage premium placements.",
         icon: <FaImages />,
         badge: "Studio",
         tone: "rose",
@@ -372,7 +341,6 @@ export default function StaffDashboard() {
       },
       {
         title: "City Banners",
-        subtitle: "Build and publish featured city carousel visuals.",
         icon: <FaImages />,
         badge: "Studio",
         tone: "indigo",
@@ -380,8 +348,7 @@ export default function StaffDashboard() {
         locked: adminLocked,
       },
       {
-        title: "Market Discoveries",
-        subtitle: "Curate portrait-style marketplace discovery stories.",
+        title: "Discoveries",
         icon: <FaPanorama />,
         badge: "Editorial",
         tone: "rose",
@@ -389,8 +356,7 @@ export default function StaffDashboard() {
         locked: adminLocked,
       },
       {
-        title: "Support Inbox",
-        subtitle: "Review contact messages, support notes, and abuse reports.",
+        title: "Inbox",
         icon: <FaEnvelope />,
         metric: counts.inbox,
         metricLabel: "Unread",
@@ -399,8 +365,7 @@ export default function StaffDashboard() {
         locked: adminLocked,
       },
       {
-        title: "Staff Studio",
-        subtitle: "Prepare image assets and internal marketplace materials.",
+        title: "CT Studio",
         icon: <FaWandMagicSparkles />,
         badge: "Tools",
         tone: "emerald",
@@ -409,7 +374,6 @@ export default function StaffDashboard() {
       },
       {
         title: "Issue Staff ID",
-        subtitle: "Generate identity cards and staff-facing credentials.",
         icon: <FaIdBadge />,
         badge: "Identity",
         tone: "indigo",
@@ -418,7 +382,6 @@ export default function StaffDashboard() {
       },
       {
         title: "Security Radar",
-        subtitle: "Watch suspicious contact behavior and account-risk clusters.",
         icon: <FaTowerBroadcast />,
         metric: counts.radar,
         metricLabel: "Alerts",
@@ -626,7 +589,7 @@ export default function StaffDashboard() {
               </button>
             </div>
 
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
               {operations.map((item) => (
                 <StaffHomeCard
                   key={item.title}

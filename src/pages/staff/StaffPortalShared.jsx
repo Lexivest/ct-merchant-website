@@ -1,22 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useCallback, useEffect, useState } from "react"
-import { Link, useLocation, useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import {
-  FaArrowTrendUp,
   FaArrowRightFromBracket,
-  FaChartLine,
   FaCircleNotch,
-  FaComments,
-  FaEnvelope,
-  FaImages,
-  FaReceipt,
+  FaHouse,
   FaShieldHalved,
-  FaStore,
-  FaTowerBroadcast,
-  FaUsers,
-  FaWandMagicSparkles,
-  FaPanorama,
-  FaBullhorn,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen"
@@ -621,7 +610,6 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
 }
 
 export function StaffPortalShell({
-  activeKey = "home",
   title,
   description,
   children,
@@ -632,16 +620,11 @@ export function StaffPortalShell({
   const { 
     authUser, 
     staffData, 
-    hasAdminRole,
-    isSuperAdmin, 
-    staffCityId, 
     fetchingStaff, 
     staffError,
     isLoggingOut, 
     handleLogout 
   } = useStaffPortalSession()
-  
-  const { counts } = useStaffCounts(isSuperAdmin, staffCityId, hasAdminRole)
 
   if (fetchingStaff) {
     return (
@@ -670,30 +653,6 @@ export function StaffPortalShell({
     authUser.user_metadata?.avatar_url ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(staffData.full_name || "Admin")}&background=2E1065&color=fff&size=150&font-size=0.4`
 
-  const allNavItems = [
-    { key: "home", label: "Home", to: "/staff-dashboard", icon: <FaShieldHalved /> },
-    { key: "traffic", label: "Traffic", to: "/staff-traffic", icon: <FaChartLine />, adminOnly: true },
-    { key: "shop-analytics", label: "Shop Analytics", to: "/staff-shop-analytics", icon: <FaArrowTrendUp />, adminOnly: true },
-    { key: "users", label: "Users", to: "/staff-users", icon: <FaUsers />, adminOnly: true },
-    { key: "products", label: "Products", to: "/staff-products", icon: <FaWandMagicSparkles />, count: counts.products, adminOnly: true },
-    { key: "shop-content", label: "Shop Content", to: "/staff-shop-content", icon: <FaPanorama />, count: counts.content, adminOnly: true },
-    { key: "announcements", label: "Announcements", to: "/staff-announcements", icon: <FaBullhorn />, adminOnly: true },
-    { key: "notifications", label: "Notifications", to: "/staff-notifications", icon: <FaEnvelope />, adminOnly: true },
-    { key: "community", label: "Community", to: "/staff-community", icon: <FaComments />, count: counts.community, adminOnly: true },
-    { key: "verifications", label: "Verifications", to: "/staff-verifications", icon: <FaStore />, count: counts.verifications, adminOnly: true },
-    { key: "payments", label: "Payments", to: "/staff-payments", icon: <FaReceipt />, count: counts.payments, adminOnly: true, superOnly: true },
-    { key: "sponsored-products", label: "Sponsored Products", to: "/staff-sponsored-products", icon: <FaImages />, adminOnly: true },
-    { key: "discoveries", label: "Discoveries", to: "/staff-discoveries", icon: <FaPanorama />, adminOnly: true },
-    { key: "city-banners", label: "City Banners", to: "/staff-city-banners", icon: <FaImages />, adminOnly: true },
-    { key: "inbox", label: "Inbox", to: "/staff-inbox", icon: <FaEnvelope />, count: counts.inbox, adminOnly: true },
-    { key: "studio", label: "CT Studio", to: "/staff-studio", icon: <FaWandMagicSparkles />, adminOnly: true },
-    { key: "security-radar", label: "Security Radar", to: "/staff-security-radar", icon: <FaTowerBroadcast />, count: counts.radar, adminOnly: true, superOnly: true },
-  ]
-
-  const navItems = allNavItems.filter((item) =>
-    (!item.adminOnly || hasAdminRole) && (!item.superOnly || isSuperAdmin)
-  )
-
   return (
     <div
       className={`min-h-screen bg-[radial-gradient(circle_at_top,#fdf2f8_0,#f8fafc_26%,#f8fafc_100%)] pb-12 font-sans ${
@@ -707,14 +666,25 @@ export function StaffPortalShell({
             CTMerchant <span className="text-[#DB2777]">Staff</span>
           </h1>
         </div>
-        <button
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="flex items-center gap-2 rounded-lg bg-[#DB2777] px-5 py-2 font-bold transition-colors hover:bg-pink-600 disabled:opacity-70"
-        >
-          {isLoggingOut ? <FaCircleNotch className="animate-spin" /> : <FaArrowRightFromBracket />}
-          {isLoggingOut ? "Logging out..." : "Logout"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate("/staff-dashboard")}
+            className="flex items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-4 py-2 font-bold transition-colors hover:bg-white/15"
+          >
+            <FaHouse />
+            Home
+          </button>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex items-center gap-2 rounded-lg bg-[#DB2777] px-5 py-2 font-bold transition-colors hover:bg-pink-600 disabled:opacity-70"
+          >
+            {isLoggingOut ? <FaCircleNotch className="animate-spin" /> : <FaArrowRightFromBracket />}
+            {isLoggingOut ? "Logging out..." : "Logout"}
+          </button>
+        </div>
       </nav>
 
       <div className="mx-auto mt-8 max-w-[1280px] px-4 sm:px-6">
@@ -742,28 +712,15 @@ export function StaffPortalShell({
             </div>
           </div>
 
-          <div className="border-t border-slate-100 bg-slate-50 px-5 py-4">
-            <div className="flex flex-wrap gap-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.key}
-                  to={item.to}
-                  className={`relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${
-                    activeKey === item.key
-                      ? "bg-[#2E1065] text-white"
-                      : "bg-white text-slate-600 shadow-sm hover:bg-slate-100"
-                  }`}
-                >
-                  {item.icon}
-                  {item.label}
-                  {item.count > 0 && (
-                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#DB2777] px-1 text-[10px] font-black text-white shadow-sm ring-2 ring-white">
-                      {item.count > 99 ? "99+" : item.count}
-                    </span>
-                  )}
-                </Link>
-              ))}
-            </div>
+          <div className="border-t border-slate-100 bg-slate-50 px-5 py-3">
+            <button
+              type="button"
+              onClick={() => navigate("/staff-dashboard")}
+              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-black text-slate-600 shadow-sm transition hover:bg-slate-100"
+            >
+              <FaHouse />
+              Back to staff home
+            </button>
           </div>
         </div>
 
