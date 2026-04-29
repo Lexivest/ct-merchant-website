@@ -5,6 +5,7 @@ import {
   fetchProfileByUserId,
   getSession,
   isProfileSuspended,
+  stampProfileFootprint,
 } from "../lib/auth"
 import { clearCachedFetchStore } from "./useCachedFetch"
 
@@ -22,6 +23,17 @@ let globalAuthMemory = {
   profile: null,
   suspended: false,
   profileLoaded: false,
+}
+
+const footprintStampedUsers = new Set()
+
+function stampSessionFootprintOnce(userId) {
+  if (!userId || footprintStampedUsers.has(userId)) return
+
+  footprintStampedUsers.add(userId)
+  void stampProfileFootprint(userId).then((success) => {
+    if (!success) footprintStampedUsers.delete(userId)
+  })
 }
 
 function getIsOffline() {
@@ -334,6 +346,7 @@ function useAuthSession() {
         })
 
         if (isOfflineNow && !forceNetwork) return
+        stampSessionFootprintOnce(user.id)
 
         try {
           let profile = await fetchProfileByUserId(user.id)

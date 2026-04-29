@@ -21,20 +21,15 @@ import GlobalErrorScreen from "../../components/common/GlobalErrorScreen"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { CTM_BANK_ACCOUNT, SERVICE_FEE_PLANS } from "../../lib/paymentConfig"
 import {
+  assertCanSubmitPaymentProof,
   createPaymentProof,
   fetchLatestPaymentProof,
   formatNaira,
   getPaymentReceiptRuleLabel,
   getProofStatusCopy,
+  isFutureDate,
   uploadPaymentReceipt,
 } from "../../lib/offlinePayments"
-
-function isFutureDate(value) {
-  if (!value) return false
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return false
-  return parsed.getTime() > Date.now()
-}
 
 function formatFileSize(bytes) {
   const size = Number(bytes || 0)
@@ -235,14 +230,29 @@ export default function MerchantServiceFee() {
 
     setPaymentProof(null)
 
-    fetchLatestPaymentProof({
-      userId: user.id,
-      shopId: shopData.id,
-      paymentKind: "service_fee",
-      plan: selectedPlan,
-      shopCreatedAt: shopData.created_at,
-    })
-      .then(setPaymentProof)
+    Promise.all([
+      fetchLatestPaymentProof({
+        userId: user.id,
+        shopId: shopData.id,
+        paymentKind: "service_fee",
+        shopCreatedAt: shopData.created_at,
+      }),
+      fetchLatestPaymentProof({
+        userId: user.id,
+        shopId: shopData.id,
+        paymentKind: "service_fee",
+        plan: selectedPlan,
+        shopCreatedAt: shopData.created_at,
+      }),
+    ])
+      .then(([latestAnyServiceProof, latestSelectedPlanProof]) => {
+        if (latestAnyServiceProof?.status === "pending") {
+          setPaymentProof(latestAnyServiceProof)
+          return
+        }
+
+        setPaymentProof(latestSelectedPlanProof)
+      })
       .catch((proofError) => console.warn("Could not load service payment proof", proofError))
   }, [selectedPlan, shopData?.created_at, shopData?.id, user?.id])
 
@@ -293,6 +303,16 @@ export default function MerchantServiceFee() {
 
     try {
       setSubmittingProof(true)
+
+      const proofGate = await assertCanSubmitPaymentProof({
+        userId: user.id,
+        shopId: shopData.id,
+        paymentKind: "service_fee",
+        plan: selectedPlan,
+      })
+
+      setShopData((current) => (current ? { ...current, ...proofGate.shop } : proofGate.shop))
+      setPaymentProof(proofGate.latestProof || null)
 
       const uploadedReceipt = await uploadPaymentReceipt({
         file: receiptFile,

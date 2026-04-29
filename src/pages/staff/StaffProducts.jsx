@@ -68,7 +68,8 @@ export default function StaffProducts() {
             image_url_3,
             is_approved,
             rejection_reason,
-            created_at
+            created_at,
+            updated_at
           )
         `)
       
@@ -101,6 +102,41 @@ export default function StaffProducts() {
   }, [fetchProducts, fetchingStaff])
 
   // --- ACTIONS ---
+  const updateProductInState = useCallback((nextProduct) => {
+    if (!nextProduct?.id) return
+
+    setShops((prev) => prev.map((shop) => ({
+      ...shop,
+      products: shop.products.map((product) =>
+        product.id === nextProduct.id ? { ...product, ...nextProduct } : product
+      ),
+    })))
+
+    setSelectedShop((prev) =>
+      prev
+        ? {
+            ...prev,
+            products: prev.products.map((product) =>
+              product.id === nextProduct.id ? { ...product, ...nextProduct } : product
+            ),
+          }
+        : prev
+    )
+  }, [])
+
+  const reviewProduct = useCallback(async (product, action, note = "") => {
+    const { data, error } = await supabase.rpc("review_product_submission", {
+      p_product_id: product.id,
+      p_expected_updated_at: product.updated_at,
+      p_action: action,
+      p_rejection_reason: note || null,
+    })
+
+    if (error) throw error
+    if (data?.product) updateProductInState(data.product)
+    return data
+  }, [updateProductInState])
+
   const handleApprove = async (product) => {
     if (processingId) return
     
@@ -115,26 +151,7 @@ export default function StaffProducts() {
 
     setProcessingId(product.id)
     try {
-      const { error } = await supabase
-        .from("products")
-        .update({ is_approved: true, rejection_reason: null })
-        .eq("id", product.id)
-
-      if (error) throw error
-
-      // Update local state
-      setShops(prev => prev.map(s => ({
-        ...s,
-        products: s.products.map(p => p.id === product.id ? { ...p, is_approved: true, rejection_reason: null } : p)
-      })))
-      
-      // Update selected shop products if open
-      if (selectedShop) {
-        setSelectedShop(prev => ({
-          ...prev,
-          products: prev.products.map(p => p.id === product.id ? { ...p, is_approved: true, rejection_reason: null } : p)
-        }))
-      }
+      await reviewProduct(product, "approve")
 
       notify({ type: "success", title: "Product Approved", message: "Item is now live." })
     } catch (err) {
@@ -149,25 +166,7 @@ export default function StaffProducts() {
 
     setProcessingId(product.id)
     try {
-      const { error } = await supabase
-        .from("products")
-        .update({ is_approved: false, rejection_reason: rejectionNote.trim() })
-        .eq("id", product.id)
-
-      if (error) throw error
-
-      // Update local state
-      setShops(prev => prev.map(s => ({
-        ...s,
-        products: s.products.map(p => p.id === product.id ? { ...p, is_approved: false, rejection_reason: rejectionNote.trim() } : p)
-      })))
-      
-      if (selectedShop) {
-        setSelectedShop(prev => ({
-          ...prev,
-          products: prev.products.map(p => p.id === product.id ? { ...p, is_approved: false, rejection_reason: rejectionNote.trim() } : p)
-        }))
-      }
+      await reviewProduct(product, "reject", rejectionNote.trim())
 
       notify({ type: "info", title: "Product Rejected", message: "Merchant will be notified." })
       setRejectingProductId(null)

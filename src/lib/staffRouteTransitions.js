@@ -316,7 +316,8 @@ async function prepareStaffProductsData() {
         image_url_3,
         is_approved,
         rejection_reason,
-        created_at
+        created_at,
+        updated_at
       )
     `)
     .order("created_at", { ascending: false })

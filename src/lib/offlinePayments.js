@@ -58,6 +58,31 @@ function belongsToCurrentShopLifecycle(record, shopCreatedAt) {
   return recordDate.getTime() >= shopDate.getTime()
 }
 
+export function isFutureDate(value) {
+  const parsed = parseDateValue(value)
+  return Boolean(parsed && parsed.getTime() > Date.now())
+}
+
+async function fetchOwnedPaymentShop({ userId, shopId }) {
+  if (!userId) throw new Error("Session unavailable. Please sign in again.")
+  if (!shopId) throw new Error("Shop ID is missing.")
+
+  const { data, error } = await supabase
+    .from("shops")
+    .select("id, owner_id, name, status, is_verified, kyc_status, created_at, subscription_end_date, subscription_plan")
+    .eq("id", shopId)
+    .eq("owner_id", userId)
+    .maybeSingle()
+
+  if (error) {
+    console.error("Fetch payment shop failed:", error)
+    throw new Error("Could not confirm this shop payment status.")
+  }
+
+  if (!data) throw new Error("Shop not found or access denied.")
+  return data
+}
+
 export async function uploadPaymentReceipt({ file, userId, shopId, paymentKind }) {
   if (!file) throw new Error("Please select a receipt image or PDF.")
   if (!userId) throw new Error("Session unavailable. Please sign in again.")
@@ -196,6 +221,113 @@ export async function fetchVerificationAccessStatus({
   }
 }
 
+export async function assertCanSubmitPaymentProof({
+  userId,
+  shopId,
+  paymentKind,
+  plan = null,
+}) {
+  const shop = await fetchOwnedPaymentShop({ userId, shopId })
+
+  if (paymentKind === "physical_verification") {
+    if (shop.status !== "approved") {
+      throw new Error("Your shop must be digitally approved before physical verification payment.")
+    }
+
+    if (shop.is_verified || shop.kyc_status === "approved") {
+      throw new Error("This shop has already completed physical verification.")
+    }
+
+    const verificationAccess = await fetchVerificationAccessStatus({
+      userId,
+      shopId,
+      shopCreatedAt: shop.created_at,
+    })
+
+    if (verificationAccess.paymentConfirmed) {
+      throw new Error("Your verification payment is already confirmed. Continue to video KYC.")
+    }
+
+    if (verificationAccess.latestProof?.status === "pending") {
+      throw new Error("A verification receipt is already awaiting staff review.")
+    }
+
+    return {
+      shop,
+      latestProof: verificationAccess.latestProof,
+      verificationAccess,
+    }
+  }
+
+  if (paymentKind === "service_fee") {
+    if (!(shop.is_verified || shop.kyc_status === "approved")) {
+      throw new Error("Your shop must be physically verified before service fee payment.")
+    }
+
+    if (isFutureDate(shop.subscription_end_date)) {
+      throw new Error("This shop already has an active subscription.")
+    }
+
+    const [latestAnyServiceProof, latestSelectedPlanProof] = await Promise.all([
+      fetchLatestPaymentProof({
+        userId,
+        shopId,
+        paymentKind: "service_fee",
+        shopCreatedAt: shop.created_at,
+      }),
+      plan
+        ? fetchLatestPaymentProof({
+            userId,
+            shopId,
+            paymentKind: "service_fee",
+            plan,
+            shopCreatedAt: shop.created_at,
+          })
+        : Promise.resolve(null),
+    ])
+
+    if (latestAnyServiceProof?.status === "pending") {
+      throw new Error("A service fee receipt is already awaiting staff review.")
+    }
+
+    return {
+      shop,
+      latestProof: latestSelectedPlanProof || latestAnyServiceProof,
+    }
+  }
+
+  throw new Error("Unsupported payment type.")
+}
+
+function getPaymentProofInsertMessage(error) {
+  const message = String(error?.message || "")
+  const code = String(error?.code || "")
+
+  if (
+    code === "23505" ||
+    message.includes("idx_offline_payment_proofs_one_pending") ||
+    message.includes("offline_payment_proofs_one_pending_service_shop_uidx")
+  ) {
+    return "A payment receipt is already awaiting staff review."
+  }
+
+  const safeMessages = [
+    "Payment proof merchant mismatch.",
+    "Payment proof does not belong to the shop owner.",
+    "Shop must be digitally approved before physical verification payment proof can be submitted.",
+    "Shop must be physically verified before service fee payment proof can be submitted.",
+    "Verification payment is already confirmed for this merchant.",
+    "This shop has already completed physical verification.",
+    "This shop already has an active subscription.",
+    "A payment receipt is already awaiting staff review.",
+    "Invalid service fee plan.",
+    "Payment amount must match the selected payment type.",
+    "Payment receipt file not found.",
+  ]
+
+  return safeMessages.find((safeMessage) => message.includes(safeMessage)) || ""
+}
+
 export async function createPaymentProof({
   user,
   shopId,
@@ -234,6 +366,12 @@ export async function createPaymentProof({
       .single()
 
     if (!error) return data
+    const insertMessage = getPaymentProofInsertMessage(error)
+    if (insertMessage) {
+      console.error("Create payment proof rejected:", error)
+      throw new Error(insertMessage)
+    }
+
     insertError = error
     if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt))
   }

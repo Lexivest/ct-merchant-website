@@ -65,6 +65,23 @@ export async function getSession() {
   }
 }
 
+export async function stampProfileFootprint(userId, { silent = true } = {}) {
+  if (!userId) return false
+
+  try {
+    const { error } = await supabase.rpc("stamp_profile_footprint", {
+      p_target_user_id: userId,
+    })
+
+    if (error) throw error
+    return true
+  } catch (error) {
+    if (!silent) throw error
+    console.warn("Footprint RPC failed:", error)
+    return false
+  }
+}
+
 // Upgraded to act as the Global Logout & Cache Cleaner
 export async function signOutUser() {
   let signOutError = null
@@ -258,11 +275,7 @@ export async function signInWithPassword({ email, password }) {
     }
 
     // Keep last-seen profile metadata fresh without blocking login.
-    try {
-      await supabase.rpc("stamp_profile_footprint", { p_target_user_id: user.id })
-    } catch (rpcError) {
-      console.warn("Footprint RPC failed:", rpcError)
-    }
+    await stampProfileFootprint(user.id)
   }
 
   return { auth: data }
@@ -293,11 +306,7 @@ export async function signInWithGoogleIdToken(idToken) {
 
     if (signedInUser?.id) {
       // Keep last-seen profile metadata fresh without blocking login.
-      try {
-        await supabase.rpc("stamp_profile_footprint", { p_target_user_id: signedInUser.id })
-      } catch (rpcError) {
-        console.warn("Footprint RPC failed:", rpcError)
-      }
+      await stampProfileFootprint(signedInUser.id)
     }
   }
 
@@ -337,12 +346,7 @@ export async function signUpWithEmail({
   }
 
   // Keep signup profile metadata fresh without blocking account creation.
-  try {
-    const { error: rpcError } = await supabase.rpc("stamp_profile_footprint", { p_target_user_id: authData.user.id })
-    if (rpcError) console.warn("Footprint RPC failed:", rpcError)
-  } catch (rpcError) {
-    console.warn("Footprint RPC failed:", rpcError)
-  }
+  await stampProfileFootprint(authData.user.id)
 
   return {
     auth: authData,
@@ -458,6 +462,35 @@ export function isProfileSuspended(profile) {
   return Boolean(profile?.is_suspended === true)
 }
 
+async function fetchProfileSetupRow(userId) {
+  return fetchProfileByUserId(userId)
+}
+
+async function fetchCompletedProfileSnapshot(userId, fallbackProfile = null) {
+  try {
+    return (await fetchProfileByUserId(userId)) || fallbackProfile
+  } catch (error) {
+    console.warn("Could not refresh completed profile snapshot:", error)
+    return fallbackProfile
+  }
+}
+
+function parseProfileSetupLocation({ cityId, areaId }) {
+  const nextCityId = Number(cityId)
+  const nextAreaId = Number(areaId)
+
+  if (
+    !Number.isInteger(nextCityId) ||
+    nextCityId <= 0 ||
+    !Number.isInteger(nextAreaId) ||
+    nextAreaId <= 0
+  ) {
+    throw new Error("Please select a valid city and area.")
+  }
+
+  return { cityId: nextCityId, areaId: nextAreaId }
+}
+
 export async function completeProfileSetup({
   userId,
   fullName,
@@ -465,17 +498,91 @@ export async function completeProfileSetup({
   cityId,
   areaId,
 }) {
-  const { error } = await supabase.from("profiles").upsert({
-    id: userId,
-    full_name: fullName?.trim() || "",
-    phone: normalizePhone(phone),
-    city_id: Number(cityId),
-    area_id: Number(areaId)
+  if (!userId) throw new Error("Profile owner is missing.")
+
+  const { cityId: nextCityId, areaId: nextAreaId } = parseProfileSetupLocation({
+    cityId,
+    areaId,
   })
+  const normalizedPhone = normalizePhone(phone)
+  const trimmedName = fullName?.trim() || ""
+  const existingProfile = await fetchProfileSetupRow(userId)
 
-  if (error) throw error
+  if (isProfileComplete(existingProfile)) {
+    await stampProfileFootprint(userId)
+    return fetchCompletedProfileSnapshot(userId, existingProfile)
+  }
 
-  return { success: true }
+  if (existingProfile) {
+    const updatePayload = {
+      phone: normalizedPhone,
+      city_id: nextCityId,
+      area_id: nextAreaId,
+    }
+
+    if (!String(existingProfile.full_name || "").trim() && trimmedName) {
+      updatePayload.full_name = trimmedName
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update(updatePayload)
+      .eq("id", userId)
+
+    if (error) throw error
+
+    await stampProfileFootprint(userId)
+    return fetchCompletedProfileSnapshot(userId, { ...existingProfile, ...updatePayload })
+  }
+
+  const insertPayload = {
+    id: userId,
+    full_name: trimmedName,
+    phone: normalizedPhone,
+    city_id: nextCityId,
+    area_id: nextAreaId,
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .insert(insertPayload)
+
+  if (error) {
+    const duplicateProfile = String(error?.code || "") === "23505"
+    if (!duplicateProfile) throw error
+
+    const latestProfile = await fetchProfileSetupRow(userId)
+    if (isProfileComplete(latestProfile)) {
+      await stampProfileFootprint(userId)
+      return fetchCompletedProfileSnapshot(userId, latestProfile)
+    }
+
+    const updatePayload = {
+      phone: normalizedPhone,
+      city_id: nextCityId,
+      area_id: nextAreaId,
+    }
+
+    if (!String(latestProfile?.full_name || "").trim() && trimmedName) {
+      updatePayload.full_name = trimmedName
+    }
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update(updatePayload)
+      .eq("id", userId)
+
+    if (updateError) throw updateError
+
+    await stampProfileFootprint(userId)
+    return fetchCompletedProfileSnapshot(
+      userId,
+      { ...(latestProfile || { id: userId }), ...updatePayload }
+    )
+  }
+
+  await stampProfileFootprint(userId)
+  return fetchCompletedProfileSnapshot(userId, insertPayload)
 }
 
 export async function sendPasswordResetCode(email) {

@@ -299,7 +299,7 @@ function CreateAccount() {
         profile: currentProfile.data || null,
         suspended: false,
         profileLoaded: true,
-      })
+      }, { replace: true })
 
       if (!didOpenDashboard) {
         setGoogleLoading(false)
@@ -459,7 +459,7 @@ function CreateAccount() {
         profile: hydratedProfile,
         suspended: false,
         profileLoaded: true,
-      })
+      }, { replace: true })
 
       if (!didOpenDashboard) {
         setSubmitting(false)

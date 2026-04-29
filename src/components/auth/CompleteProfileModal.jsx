@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { FaCity, FaMapPin, FaPhone, FaTimes } from "react-icons/fa"
 import AuthInput from "./AuthInput"
 import AuthButton from "./AuthButton"
@@ -8,6 +8,8 @@ import {
   fetchOpenCities,
   fetchAreasByCity,
   completeProfileSetup,
+  fetchProfileByUserId,
+  isProfileComplete,
 } from "../../lib/auth"
 import { validateCompleteProfileForm } from "../../lib/validators"
 
@@ -67,6 +69,7 @@ function CompleteProfileModal({
   const [errors, setErrors] = useState({})
   const [cities, setCities] = useState([])
   const [areas, setAreas] = useState([])
+  const [checkingProfile, setCheckingProfile] = useState(false)
   const [loadingCities, setLoadingCities] = useState(false)
   const [loadingAreas, setLoadingAreas] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -76,30 +79,56 @@ function CompleteProfileModal({
     title: "",
     message: "",
   })
+  const onCompletedRef = useRef(onCompleted)
 
   useEffect(() => {
-    if (!open) return
+    onCompletedRef.current = onCompleted
+  }, [onCompleted])
 
-    async function loadCities() {
+  useEffect(() => {
+    if (!open || !userId) return undefined
+
+    let cancelled = false
+
+    async function prepareProfileSetup() {
       try {
-        setLoadingCities(true)
+        setCheckingProfile(true)
         setNotice({ visible: false, type: "info", title: "", message: "" })
+
+        const existingProfile = await fetchProfileByUserId(userId)
+        if (cancelled) return
+
+        if (isProfileComplete(existingProfile)) {
+          onCompletedRef.current?.(existingProfile)
+          return
+        }
+
+        setLoadingCities(true)
         const data = await fetchOpenCities()
+        if (cancelled) return
         setCities(data)
       } catch (error) {
+        if (cancelled) return
         setNotice({
           visible: true,
           type: "error",
-          title: "Could not load cities",
+          title: "Could not prepare setup",
           message: getFriendlyErrorMessage(error, "Please try again."),
         })
       } finally {
-        setLoadingCities(false)
+        if (!cancelled) {
+          setCheckingProfile(false)
+          setLoadingCities(false)
+        }
       }
     }
 
-    loadCities()
-  }, [open])
+    prepareProfileSetup()
+
+    return () => {
+      cancelled = true
+    }
+  }, [open, userId])
 
   async function handleCityChange(event) {
     const cityId = event.target.value
@@ -131,12 +160,18 @@ function CompleteProfileModal({
   }
 
   async function handleSubmit() {
-    const nextErrors = handleSubmitErrorMap()
-    if (Object.keys(nextErrors).length > 0) return
-
     try {
       setSaving(true)
       setNotice({ visible: false, type: "info", title: "", message: "" })
+
+      const existingProfile = await fetchProfileByUserId(userId)
+      if (isProfileComplete(existingProfile)) {
+        onCompletedRef.current?.(existingProfile)
+        return
+      }
+
+      const nextErrors = handleSubmitErrorMap()
+      if (Object.keys(nextErrors).length > 0) return
 
       const rawPhone = form.phone.trim().replace(/\s+/g, "")
       let finalPhone = rawPhone
@@ -145,12 +180,12 @@ function CompleteProfileModal({
         finalPhone = `+234${stripped}`
       }
 
-      await completeProfileSetup({
+      const completedProfile = await completeProfileSetup({
         userId,
         fullName,
         phone: finalPhone,
         cityId: form.cityId,
-        area_id: Number(form.areaId), // areaId should be passed correctly
+        areaId: form.areaId,
       })
 
       setNotice({
@@ -160,7 +195,7 @@ function CompleteProfileModal({
         message: "Your account setup is complete.",
       })
 
-      if (onCompleted) onCompleted()
+      onCompletedRef.current?.(completedProfile)
     } catch (error) {
       setNotice({
         visible: true,
@@ -206,7 +241,7 @@ function CompleteProfileModal({
             }
             placeholder="801 234 5678"
             error={errors.phone}
-            disabled={saving}
+            disabled={saving || checkingProfile}
           />
 
           <div className="flex flex-col gap-2">
@@ -226,11 +261,15 @@ function CompleteProfileModal({
                 id="complete-city"
                 value={form.cityId}
                 onChange={handleCityChange}
-                disabled={loadingCities}
+                disabled={checkingProfile || loadingCities}
                 className="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-pink-500 focus:ring-4 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-slate-100"
               >
                 <option value="">
-                  {loadingCities ? "Loading cities..." : "Select city"}
+                  {checkingProfile
+                    ? "Checking profile..."
+                    : loadingCities
+                    ? "Loading cities..."
+                    : "Select city"}
                 </option>
                 {cities.map((city) => (
                   <option key={city.id} value={city.id}>
@@ -266,7 +305,7 @@ function CompleteProfileModal({
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, areaId: e.target.value }))
                 }
-                disabled={!form.cityId || loadingAreas}
+                disabled={checkingProfile || !form.cityId || loadingAreas}
                 className="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-pink-500 focus:ring-4 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-slate-100"
               >
                 <option value="">
@@ -301,7 +340,7 @@ function CompleteProfileModal({
           <div className="pt-2">
             <AuthButton 
               onClick={handleSubmit} 
-              loading={saving}
+              loading={saving || checkingProfile}
             >
               Finish Setup
             </AuthButton>

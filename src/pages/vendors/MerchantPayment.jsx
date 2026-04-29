@@ -20,6 +20,7 @@ import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvide
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { CTM_BANK_ACCOUNT, PHYSICAL_VERIFICATION_FEE, normalizePromoCode } from "../../lib/paymentConfig"
 import {
+  assertCanSubmitPaymentProof,
   createPaymentProof,
   fetchVerificationAccessStatus,
   formatNaira,
@@ -307,6 +308,15 @@ export default function MerchantPayment() {
     try {
       setSubmittingProof(true)
       setStatusError(false)
+      setStatusMsg("Checking latest payment status...")
+
+      const proofGate = await assertCanSubmitPaymentProof({
+        userId: user.id,
+        shopId: parsedShopId,
+        paymentKind: "physical_verification",
+      })
+
+      setPaymentProof(proofGate.latestProof || null)
       setStatusMsg("Uploading your receipt...")
 
       const uploadedReceipt = await uploadPaymentReceipt({

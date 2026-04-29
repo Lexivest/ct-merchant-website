@@ -537,7 +537,7 @@ function RouteMetaFallback() {
 function ProtectedDashboardRoute({ children }) {
   const navigate = useNavigate()
   const [completedProfileUserId, setCompletedProfileUserId] = useState(null)
-  const { loading, user, profile, suspended, isOffline, profileLoaded } = useAuthSession()
+  const { loading, session, user, profile, suspended, isOffline, profileLoaded } = useAuthSession()
 
   if (!loading && !user) {
     return <Navigate to="/" replace />
@@ -581,7 +581,16 @@ function ProtectedDashboardRoute({ children }) {
               await signOutUser()
               navigate("/", { replace: true })
             }}
-            onCompleted={() => {
+            onCompleted={(completedProfile) => {
+              if (completedProfile) {
+                primeAuthSessionState({
+                  session,
+                  user,
+                  profile: completedProfile,
+                  suspended: false,
+                  profileLoaded: true,
+                })
+              }
               setCompletedProfileUserId(user.id)
             }}
           />

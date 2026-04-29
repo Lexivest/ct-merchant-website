@@ -4,7 +4,6 @@ import AppErrorBoundary from "./AppErrorBoundary"
 import { removeRecoverySearchParam } from "../../lib/runtimeRecovery"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import useRouteWarmup from "../../hooks/useRouteWarmup"
-import CookieConsentBanner from "./CookieConsentBanner"
 
 function forceScrollTop() {
   if (typeof window === "undefined") return
@@ -87,7 +86,6 @@ function AppFrame({ children }) {
     >
       <RouteFeedback />
       {children}
-      <CookieConsentBanner />
     </AppErrorBoundary>
   )
 }

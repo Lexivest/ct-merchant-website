@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
-  FaArrowRight,
   FaArrowRightFromBracket,
   FaArrowTrendUp,
   FaBell,
@@ -62,7 +61,6 @@ function getInitials(value) {
 function StaffHomeCard({
   icon,
   title,
-  subtitle,
   metric,
   metricLabel,
   tone = "rose",
@@ -86,41 +84,39 @@ function StaffHomeCard({
       type="button"
       onClick={onClick}
       aria-disabled={locked}
-      className={`group relative flex min-h-[230px] flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-gradient-to-br ${toneClass} p-6 text-left shadow-sm transition ${
+      className={`group relative flex min-h-[118px] flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-gradient-to-br ${toneClass} p-4 text-left shadow-sm transition ${
         locked
           ? "cursor-not-allowed opacity-65"
-          : "hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_60px_rgba(15,23,42,0.10)]"
+          : "hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.09)]"
       }`}
     >
-      <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-current/10 blur-sm" />
+      <div className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-current/10 blur-sm" />
 
-      <div className="relative flex items-start justify-between gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-current/10 text-2xl">
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-current/10 text-xl">
           {icon}
         </div>
         {metric !== undefined ? (
-          <div className="rounded-2xl bg-white/80 px-3 py-2 text-right shadow-sm">
-            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+          <div className="rounded-xl bg-white/80 px-2.5 py-1.5 text-right shadow-sm">
+            <div className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
               {metricLabel || "Live"}
             </div>
-            <div className="mt-0.5 text-2xl font-black text-slate-950">{metric}</div>
+            <div className="text-lg font-black leading-none text-slate-950">{metric}</div>
           </div>
         ) : badge ? (
-          <span className="rounded-full bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 shadow-sm">
+          <span className="rounded-full bg-white/80 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-slate-500 shadow-sm">
             {badge}
           </span>
         ) : null}
       </div>
 
-      <div className="relative mt-auto">
-        <h3 className="text-xl font-black tracking-tight text-slate-950">{title}</h3>
-        <p className="mt-2 text-sm font-medium leading-6 text-slate-500">{subtitle}</p>
-        <div className="mt-5 inline-flex items-center gap-2 text-sm font-black text-slate-900">
-          {locked ? "Access restricted" : "Open workspace"}
-          {!locked ? (
-            <FaArrowRight className="transition group-hover:translate-x-1" />
-          ) : null}
-        </div>
+      <div className="relative mt-4">
+        <h3 className="text-base font-black tracking-tight text-slate-950">{title}</h3>
+        {locked ? (
+          <div className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+            Restricted
+          </div>
+        ) : null}
       </div>
     </button>
   )

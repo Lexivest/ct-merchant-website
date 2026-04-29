@@ -1,21 +1,30 @@
-﻿import { useEffect } from "react"
+﻿import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import {
   FaBriefcase,
   FaBuilding,
   FaCamera,
+  FaChartLine,
   FaCircleExclamation,
   FaCircleQuestion,
+  FaCookieBite,
   FaCropSimple,
   FaHeadset,
   FaHeart,
   FaHourglassHalf,
   FaLayerGroup,
   FaLock,
+  FaShieldHalved,
   FaStore,
   FaTriangleExclamation,
 } from "react-icons/fa6"
 import { Suspense, lazy } from "react"
 import { UPLOAD_RULES, getAcceptValue, getRuleLabel } from "../../../lib/uploadRules";
+import {
+  readPrivacyConsent,
+  subscribePrivacyConsent,
+  writePrivacyConsent,
+} from "../../../lib/privacyConsent"
 
 const AboutDashboardView = lazy(() => import("../../../features/dashboard/views/AboutDashboardView"))
 const ServicesDashboardView = lazy(() => import("../../../features/dashboard/views/ServicesDashboardView"))
@@ -66,6 +75,91 @@ function ServiceViewFallback({ label = "Loading..." }) {
 
 function LazyServiceView({ children, label }) {
   return <Suspense fallback={<ServiceViewFallback label={label} />}>{children}</Suspense>
+}
+
+function PrivacyPreferenceCard() {
+  const [consent, setConsent] = useState(() => readPrivacyConsent())
+
+  useEffect(() => subscribePrivacyConsent(setConsent), [])
+
+  const acceptAnalytics = () => {
+    setConsent(writePrivacyConsent({ analytics: true, choice: "accepted" }))
+  }
+
+  const rejectAnalytics = () => {
+    setConsent(writePrivacyConsent({ analytics: false, choice: "rejected" }))
+  }
+
+  return (
+    <div className="mx-auto mb-8 max-w-[600px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <div className="bg-slate-950 px-5 py-4 text-white">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-lg">
+            <FaCookieBite />
+          </div>
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-pink-200">
+              Privacy settings
+            </p>
+            <h3 className="text-xl font-black tracking-tight">Cookies & analytics</h3>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4 p-5">
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+          <div className="flex items-center gap-2 text-sm font-black text-emerald-800">
+            <FaShieldHalved />
+            Essential storage
+          </div>
+          <p className="mt-1 text-sm font-semibold leading-6 text-emerald-900/75">
+            Always on for login, security checks, saved drafts, route recovery, and dashboard caching.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-pink-100 bg-pink-50 p-4">
+          <div className="flex items-center gap-2 text-sm font-black text-pink-800">
+            <FaChartLine />
+            Optional analytics
+          </div>
+          <p className="mt-1 text-sm font-semibold leading-6 text-pink-900/75">
+            {consent.analytics
+              ? "Enabled. We can count visits to improve reliability and marketplace performance."
+              : "Disabled. CTMerchant still works normally without optional analytics."}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={acceptAnalytics}
+            className="btn-brand flex-1"
+          >
+            Accept analytics
+          </button>
+          <button
+            type="button"
+            onClick={rejectAnalytics}
+            className="btn-brand-alt flex-1"
+          >
+            Reject analytics
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+            Current choice: {consent.decided ? consent.choice : "not set"}
+          </p>
+          <Link
+            to="/privacy"
+            className="text-xs font-black uppercase tracking-[0.16em] text-pink-600 underline decoration-pink-200 underline-offset-4"
+          >
+            Read privacy policy
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function renderShopMetaIcon(status) {
@@ -413,6 +507,8 @@ function ServicesProfileSection({
             </div>
           </div>
         )}
+
+        <PrivacyPreferenceCard />
       </div>
 
       {cropModalOpen ? (

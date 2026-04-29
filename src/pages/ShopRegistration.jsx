@@ -119,6 +119,36 @@ const EMPTY_FILE_META = {
   logo: null,
 }
 
+const SHOP_REGISTRATION_LOCK_COPY = {
+  pending: {
+    eyebrow: "Under Review",
+    title: "Shop Application Submitted",
+    heading: "Your shop application is already under review",
+    message:
+      "We already have your shop application. To prevent accidental overwrites, this registration form is locked while staff review it.",
+    iconClass: "bg-pink-50 text-pink-600",
+    buttonLabel: "Back to User Dashboard",
+  },
+  approved: {
+    eyebrow: "Application Approved",
+    title: "Shop Already Registered",
+    heading: "Your shop has already been approved",
+    message:
+      "This registration flow is locked because your shop already exists. Use merchant settings for allowed profile updates.",
+    iconClass: "bg-emerald-50 text-emerald-600",
+    buttonLabel: "Back to User Dashboard",
+  },
+  rejected: {
+    eyebrow: "Correction Required",
+    title: "Shop Correction Needed",
+    heading: "Open the correction form instead",
+    message:
+      "Your shop already exists and needs corrections. We will open the correction form so the existing row is updated deliberately.",
+    iconClass: "bg-amber-50 text-amber-600",
+    buttonLabel: "Open Correction Form",
+  },
+}
+
 function countWords(value) {
   return String(value || "")
     .trim()
@@ -342,6 +372,23 @@ function ShopSubmissionLockedScreen({ onBack, lockState }) {
   )
 }
 
+async function fetchOwnedShopSnapshot({ userId, shopId = null, select = "*" }) {
+  if (!userId) throw new Error("Authentication required.")
+
+  let query = supabase
+    .from("shops")
+    .select(select)
+    .eq("owner_id", userId)
+
+  if (shopId) {
+    query = query.eq("id", shopId)
+  }
+
+  const { data, error } = await query.maybeSingle()
+  if (error) throw error
+  return data || null
+}
+
 const STEPS = [
   { id: "basics", label: "Basics", icon: <FaStore /> },
   { id: "profile", label: "Profile", icon: <FaLocationDot /> },
@@ -381,6 +428,14 @@ function ShopRegistration() {
           .eq("owner_id", user.id)
           .maybeSingle()
       )
+    } else {
+      tasks.push(
+        supabase
+          .from("shops")
+          .select("*")
+          .eq("owner_id", user.id)
+          .maybeSingle()
+      )
     }
 
     const results = await Promise.all(tasks)
@@ -393,6 +448,9 @@ function ShopRegistration() {
       if (results[3].error) throw results[3].error
       existingData = results[3].data
       if (!existingData) throw new Error("Shop not found or access denied.")
+    } else {
+      if (results[3].error) throw results[3].error
+      existingData = results[3].data || null
     }
 
     return {
@@ -464,9 +522,20 @@ function ShopRegistration() {
       }
     }
 
-    if (!isEdit || !existingShop) return null
+    if (!existingShop) return null
 
     const status = String(existingShop.status || "").toLowerCase()
+
+    if (!isEdit) {
+      const lockCopy =
+        SHOP_REGISTRATION_LOCK_COPY[status] ||
+        SHOP_REGISTRATION_LOCK_COPY.pending
+
+      return {
+        ...lockCopy,
+        icon: status === "approved" ? FaCheck : FaShieldHalved,
+      }
+    }
 
     if (status === "pending") {
       return {
@@ -553,6 +622,24 @@ function ShopRegistration() {
   const previewsRef = useRef(previews)
   const skipNextDraftSaveRef = useRef(false)
 
+  useEffect(() => {
+    setHasHydrated(false)
+    setExistingShop(null)
+    setReviewOpen(false)
+    setSubmissionLocked(false)
+  }, [cacheKey])
+
+  useEffect(() => {
+    if (isEdit || !existingShop?.id) return
+
+    const status = String(existingShop.status || "").toLowerCase()
+    if (status !== "rejected") return
+
+    navigate(`/shop-registration?id=${encodeURIComponent(existingShop.id)}&${REGISTRATION_VIEW_KEY}=form`, {
+      replace: true,
+    })
+  }, [existingShop, isEdit, navigate])
+
   // --- CT STUDIO UPLOAD & CROP STATE ---
   const hiddenInputRef = useRef(null)
   const pickerContextRef = useRef({ targetId: null, ratio: null })
@@ -604,6 +691,20 @@ function ShopRegistration() {
     }
 
     navigate("/user-dashboard?tab=services", { replace: true })
+  }
+
+  function handleLockedShopAction() {
+    if (!isEdit && existingShop?.id) {
+      const status = String(existingShop.status || "").toLowerCase()
+      if (status === "rejected") {
+        navigate(`/shop-registration?id=${encodeURIComponent(existingShop.id)}&${REGISTRATION_VIEW_KEY}=form`, {
+          replace: true,
+        })
+        return
+      }
+    }
+
+    returnToRegistrationOrigin()
   }
 
   function handleRegistrationBack() {
@@ -740,7 +841,7 @@ function ShopRegistration() {
           setNotice({ visible: true, type: "warning", title: "Correction required", message: s.rejection_reason })
         }
       } else {
-        setExistingShop(null)
+        setExistingShop(data.shop || null)
       }
 
       const draft = await loadPersistentDraft(shopDraftKey)
@@ -1193,14 +1294,60 @@ function ShopRegistration() {
 
     try {
       setSubmitting(true)
+      let activeExistingShop = existingShop
 
-      const storefrontUpload = await uploadFile(files.storefront, STOREFRONT_BUCKET, "covers", existingShop?.storefront_url, "storefront")
+      if (isEdit) {
+        activeExistingShop = await fetchOwnedShopSnapshot({
+          userId: user.id,
+          shopId,
+        })
+
+        if (!activeExistingShop) {
+          throw new Error("Shop not found or access denied.")
+        }
+
+        setExistingShop(activeExistingShop)
+
+        if (String(activeExistingShop.status || "").toLowerCase() !== "rejected") {
+          setReviewOpen(false)
+          window.scrollTo({ top: 0, behavior: "smooth" })
+          return
+        }
+      } else {
+        activeExistingShop = await fetchOwnedShopSnapshot({
+          userId: user.id,
+        })
+
+        if (activeExistingShop) {
+          setExistingShop(activeExistingShop)
+          setReviewOpen(false)
+
+          try {
+            skipNextDraftSaveRef.current = true
+            await clearPersistentDraft(shopDraftKey)
+          } catch (draftError) {
+            console.warn("Could not clear stale shop registration draft:", draftError)
+          }
+
+          if (String(activeExistingShop.status || "").toLowerCase() === "rejected") {
+            navigate(`/shop-registration?id=${encodeURIComponent(activeExistingShop.id)}&${REGISTRATION_VIEW_KEY}=form`, {
+              replace: true,
+            })
+          } else {
+            window.scrollTo({ top: 0, behavior: "smooth" })
+          }
+
+          return
+        }
+      }
+
+      const storefrontUpload = await uploadFile(files.storefront, STOREFRONT_BUCKET, "covers", activeExistingShop?.storefront_url, "storefront")
       uploadedFiles.push(storefrontUpload)
-      const idCardUpload = await uploadFile(files.idCard, ID_DOCUMENT_BUCKET, "ids", existingShop?.id_card_url, "id-card")
+      const idCardUpload = await uploadFile(files.idCard, ID_DOCUMENT_BUCKET, "ids", activeExistingShop?.id_card_url, "id-card")
       uploadedFiles.push(idCardUpload)
-      const cacUpload = await uploadFile(files.cac, CAC_DOCUMENT_BUCKET, "cac", existingShop?.cac_certificate_url, "cac")
+      const cacUpload = await uploadFile(files.cac, CAC_DOCUMENT_BUCKET, "cac", activeExistingShop?.cac_certificate_url, "cac")
       uploadedFiles.push(cacUpload)
-      const logoUpload = await uploadFile(files.logo, LOGO_BUCKET, "logos", existingShop?.image_url, "logo")
+      const logoUpload = await uploadFile(files.logo, LOGO_BUCKET, "logos", activeExistingShop?.image_url, "logo")
       uploadedFiles.push(logoUpload)
 
       const { data: rpcRes, error: rpcErr } = await supabase.rpc("register_or_update_shop", {
@@ -1228,6 +1375,7 @@ function ShopRegistration() {
         p_twitter_url: form.twitter ? formatUrl(form.twitter) : null,
         p_tiktok_url: form.tiktok ? formatUrl(form.tiktok) : null,
         p_website_url: form.website ? formatUrl(form.website) : null,
+        p_shop_id: isEdit ? Number(activeExistingShop?.id || shopId) : null,
       })
 
       if (rpcErr) throw rpcErr
@@ -1270,12 +1418,12 @@ function ShopRegistration() {
           path: item.oldPath,
         }))
 
-      if (cleanupAssets.length && existingShop?.id) {
+      if (cleanupAssets.length && activeExistingShop?.id) {
         try {
           const { data: cleanupData, error: cleanupError } = await invokeEdgeFunctionAuthed(
             "cleanup-shop-registration-assets",
             {
-              shopId: existingShop.id,
+              shopId: activeExistingShop.id,
               assets: cleanupAssets,
             },
           )
@@ -1369,7 +1517,7 @@ function ShopRegistration() {
     return (
       <ShopSubmissionLockedScreen
         lockState={registrationLockState}
-        onBack={returnToRegistrationOrigin}
+        onBack={handleLockedShopAction}
       />
     )
   }
