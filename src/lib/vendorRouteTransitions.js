@@ -384,9 +384,8 @@ async function prepareMerchantSettingsData({ userId, shopId }) {
       whatsapp: shop.whatsapp || "",
       website: shop.website_url || "",
       facebook: shop.facebook_url || "",
-      instagram: shop.instagram_url || "",
       twitter: shop.twitter_url || "",
-      tiktok: shop.tiktok_url || "",
+      telegram: shop.telegram_url || "",
     },
     isLocked: shop.status === "approved",
   }

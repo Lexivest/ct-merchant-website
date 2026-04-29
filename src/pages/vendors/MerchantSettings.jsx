@@ -10,14 +10,13 @@ import {
   FaCircleNotch,
   FaFacebookF,
   FaGlobe,
-  FaInstagram,
   FaLocationDot,
   FaLock,
   FaPhone,
   FaShareNodes,
   FaShieldHalved,
   FaStore,
-  FaTiktok,
+  FaTelegram,
   FaXTwitter,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
@@ -68,16 +67,18 @@ export default function MerchantSettings() {
     whatsapp: prefetchedData?.form?.whatsapp || "",
     website: prefetchedData?.form?.website || "",
     facebook: prefetchedData?.form?.facebook || "",
-    instagram: prefetchedData?.form?.instagram || "",
     twitter: prefetchedData?.form?.twitter || "",
-    tiktok: prefetchedData?.form?.tiktok || "",
+    telegram: prefetchedData?.form?.telegram || "",
   });
 
   // Initialization & Fetch
   useEffect(() => {
     if (prefetchedData) {
       setShopId(prefetchedData.shopId || urlShopId);
-      setForm(prefetchedData.form);
+      setForm({
+        ...prefetchedData.form,
+        telegram: prefetchedData.form?.telegram || "",
+      });
       setIsLocked(prefetchedData.isLocked || false);
       setError(null);
       setLoading(false);
@@ -122,9 +123,8 @@ export default function MerchantSettings() {
           whatsapp: shopData.whatsapp || "",
           website: shopData.website_url || "",
           facebook: shopData.facebook_url || "",
-          instagram: shopData.instagram_url || "",
           twitter: shopData.twitter_url || "",
-          tiktok: shopData.tiktok_url || "",
+          telegram: shopData.telegram_url || "",
         });
 
         // Apply Security Lockdown if Approved
@@ -155,7 +155,10 @@ export default function MerchantSettings() {
     try {
       setSaving(true);
       
-      const cleanVal = (val) => val.trim() === "" ? null : val.trim();
+      const cleanVal = (val) => {
+        const trimmed = String(val || "").trim();
+        return trimmed === "" ? null : trimmed;
+      };
 
       const updates = {
         name: form.name.trim(),
@@ -165,9 +168,10 @@ export default function MerchantSettings() {
         whatsapp: cleanVal(form.whatsapp),
         website_url: cleanVal(form.website),
         facebook_url: cleanVal(form.facebook),
-        instagram_url: cleanVal(form.instagram),
         twitter_url: cleanVal(form.twitter),
-        tiktok_url: cleanVal(form.tiktok),
+        telegram_url: cleanVal(form.telegram),
+        instagram_url: null,
+        tiktok_url: null,
       };
 
       const { error: updateError } = await supabase
@@ -308,16 +312,12 @@ export default function MerchantSettings() {
             <input type="url" id="facebook" value={form.facebook} onChange={handleInputChange} placeholder="e.g. https://facebook.com/myshop" className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
           </div>
           <div className="mb-5">
-            <label className="mb-2 flex items-center text-[0.9rem] font-bold"><FaInstagram className="mr-2 text-[#E1306C]" /> Instagram Profile</label>
-            <input type="url" id="instagram" value={form.instagram} onChange={handleInputChange} placeholder="e.g. https://instagram.com/myshop" className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
+            <label className="mb-2 flex items-center text-[0.9rem] font-bold"><FaTelegram className="mr-2 text-[#229ED9]" /> Telegram Channel</label>
+            <input type="url" id="telegram" value={form.telegram} onChange={handleInputChange} placeholder="e.g. https://t.me/myshop" className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
           </div>
           <div className="mb-5">
             <label className="mb-2 flex items-center text-[0.9rem] font-bold"><FaXTwitter className="mr-2 text-black" /> X (Twitter) Profile</label>
             <input type="url" id="twitter" value={form.twitter} onChange={handleInputChange} placeholder="e.g. https://x.com/myshop" className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
-          </div>
-          <div className="mb-5">
-            <label className="mb-2 flex items-center text-[0.9rem] font-bold"><FaTiktok className="mr-2 text-black" /> TikTok Profile</label>
-            <input type="url" id="tiktok" value={form.tiktok} onChange={handleInputChange} placeholder="e.g. https://tiktok.com/@myshop" className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
           </div>
 
         </form>

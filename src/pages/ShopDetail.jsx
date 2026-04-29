@@ -15,9 +15,8 @@ import {
   FaPhone,
   FaGlobe,
   FaFacebook,
-  FaInstagram,
+  FaTelegram,
   FaXTwitter,
-  FaTiktok,
 } from "react-icons/fa6"
 import "leaflet/dist/leaflet.css"
 import { supabase } from "../lib/supabase"
@@ -882,19 +881,14 @@ function ShopDetail() {
                   <FaFacebook className="text-xl" />
                 </button>
               )}
-              {currentShop?.instagram_url && (
-                <button type="button" onClick={() => openExternalUrl(currentShop.instagram_url)} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#C13584] text-white transition hover:opacity-90">
-                  <FaInstagram className="text-xl" />
+              {currentShop?.telegram_url && (
+                <button type="button" onClick={() => openExternalUrl(currentShop.telegram_url)} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#229ED9] text-white transition hover:opacity-90">
+                  <FaTelegram className="text-xl" />
                 </button>
               )}
               {currentShop?.twitter_url && (
                 <button type="button" onClick={() => openExternalUrl(currentShop.twitter_url)} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#111111] text-white transition hover:opacity-90">
                   <FaXTwitter className="text-lg" />
-                </button>
-              )}
-              {currentShop?.tiktok_url && (
-                <button type="button" onClick={() => openExternalUrl(currentShop.tiktok_url)} className="flex h-[44px] w-[44px] items-center justify-center rounded-xl bg-[#111111] text-white transition hover:opacity-90">
-                  <FaTiktok className="text-lg" />
                 </button>
               )}
             </div>

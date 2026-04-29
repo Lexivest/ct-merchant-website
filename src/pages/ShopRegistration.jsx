@@ -92,9 +92,8 @@ const EMPTY_SHOP_FORM = {
   phone: "",
   whatsapp: "",
   facebook: "",
-  instagram: "",
   twitter: "",
-  tiktok: "",
+  telegram: "",
 }
 const EMPTY_SHOP_FILES = {
   storefront: null,
@@ -825,9 +824,8 @@ function ShopRegistration() {
           phone: s.phone || "",
           whatsapp: s.whatsapp || "",
           facebook: s.facebook_url || "",
-          instagram: s.instagram_url || "",
           twitter: s.twitter_url || "",
-          tiktok: s.tiktok_url || "",
+          telegram: s.telegram_url || "",
         }
 
         nextPreviews = {
@@ -990,9 +988,8 @@ function ShopRegistration() {
         if (form.whatsapp && !validPhone(form.whatsapp)) return "Enter a valid WhatsApp number."
         if (!validUrl(form.website)) return "Enter a valid website URL."
         if (!validUrl(form.facebook)) return "Enter a valid Facebook URL."
-        if (!validUrl(form.instagram)) return "Enter a valid Instagram URL."
         if (!validUrl(form.twitter)) return "Enter a valid X or Twitter URL."
-        if (!validUrl(form.tiktok)) return "Enter a valid TikTok URL."
+        if (!validUrl(form.telegram)) return "Enter a valid Telegram URL."
         return ""
       default:
         return ""
@@ -1371,11 +1368,12 @@ function ShopRegistration() {
         p_cac_certificate_url: cacUpload.url,
         p_kyc_video_url: null, // Handled separately or in a future step
         p_facebook_url: form.facebook ? formatUrl(form.facebook) : null,
-        p_instagram_url: form.instagram ? formatUrl(form.instagram) : null,
+        p_instagram_url: null,
         p_twitter_url: form.twitter ? formatUrl(form.twitter) : null,
-        p_tiktok_url: form.tiktok ? formatUrl(form.tiktok) : null,
+        p_tiktok_url: null,
         p_website_url: form.website ? formatUrl(form.website) : null,
         p_shop_id: isEdit ? Number(activeExistingShop?.id || shopId) : null,
+        p_telegram_url: form.telegram ? formatUrl(form.telegram) : null,
       })
 
       if (rpcErr) throw rpcErr
@@ -1908,17 +1906,14 @@ function ShopRegistration() {
                       <FieldBlock label="Facebook Page">
                         <input value={form.facebook} onChange={(e) => setForm((prev) => ({ ...prev, facebook: e.target.value }))} onBlur={handleUrlBlur("facebook")} placeholder="facebook.com/..." className={FORM_CONTROL_CLASS} />
                       </FieldBlock>
-                      <FieldBlock label="Instagram Profile">
-                        <input value={form.instagram} onChange={(e) => setForm((prev) => ({ ...prev, instagram: e.target.value }))} onBlur={handleUrlBlur("instagram")} placeholder="instagram.com/..." className={FORM_CONTROL_CLASS} />
+                      <FieldBlock label="Telegram Channel">
+                        <input value={form.telegram} onChange={(e) => setForm((prev) => ({ ...prev, telegram: e.target.value }))} onBlur={handleUrlBlur("telegram")} placeholder="t.me/..." className={FORM_CONTROL_CLASS} />
                       </FieldBlock>
                     </div>
 
                     <div className="grid gap-6 md:grid-cols-2">
                       <FieldBlock label="X (Twitter)">
                         <input value={form.twitter} onChange={(e) => setForm((prev) => ({ ...prev, twitter: e.target.value }))} onBlur={handleUrlBlur("twitter")} placeholder="x.com/..." className={FORM_CONTROL_CLASS} />
-                      </FieldBlock>
-                      <FieldBlock label="TikTok Channel">
-                        <input value={form.tiktok} onChange={(e) => setForm((prev) => ({ ...prev, tiktok: e.target.value }))} onBlur={handleUrlBlur("tiktok")} placeholder="tiktok.com/@..." className={FORM_CONTROL_CLASS} />
                       </FieldBlock>
                     </div>
                   </div>
@@ -2154,9 +2149,8 @@ function ReviewModal({ form, cityName, areaName, logoPreview, storefrontPreview,
           {form.website && <DetailRow label="Website" value={formatUrl(form.website)} />}
           
           {form.facebook && <DetailRow label="Facebook" value={form.facebook} />}
-          {form.instagram && <DetailRow label="Instagram" value={form.instagram} />}
           {form.twitter && <DetailRow label="Twitter/X" value={form.twitter} />}
-          {form.tiktok && <DetailRow label="TikTok" value={form.tiktok} />}
+          {form.telegram && <DetailRow label="Telegram" value={form.telegram} />}
 
           <div className="my-2 h-px bg-slate-200" />
           

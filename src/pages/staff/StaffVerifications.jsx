@@ -243,9 +243,8 @@ export default function StaffVerifications() {
           longitude,
           website_url,
           facebook_url,
-          instagram_url,
           twitter_url,
-          tiktok_url,
+          telegram_url,
           kyc_status,
           kyc_video_url,
           kyc_submission_meta,
@@ -742,11 +741,11 @@ export default function StaffVerifications() {
                           </span>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-black uppercase text-slate-400">Instagram</span>
+                          <span className="text-[10px] font-black uppercase text-slate-400">Telegram</span>
                           <span className="truncate text-sm font-bold text-slate-900">
-                            {selectedShop.instagram_url ? (
-                              <a href={selectedShop.instagram_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
-                                @{selectedShop.instagram_url.split("/").filter(Boolean).pop()}
+                            {selectedShop.telegram_url ? (
+                              <a href={selectedShop.telegram_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
+                                View Telegram
                               </a>
                             ) : "Not provided"}
                           </span>
@@ -757,16 +756,6 @@ export default function StaffVerifications() {
                             {selectedShop.twitter_url ? (
                               <a href={selectedShop.twitter_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
                                 View X
-                              </a>
-                            ) : "Not provided"}
-                          </span>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-black uppercase text-slate-400">TikTok</span>
-                          <span className="truncate text-sm font-bold text-slate-900">
-                            {selectedShop.tiktok_url ? (
-                              <a href={selectedShop.tiktok_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
-                                View TikTok
                               </a>
                             ) : "Not provided"}
                           </span>
