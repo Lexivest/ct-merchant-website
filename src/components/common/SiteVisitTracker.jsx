@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useLocation } from "react-router-dom"
 import { supabase } from "../../lib/supabase"
 import { isNetworkOffline } from "../../lib/networkStatus"
-import { hasAnalyticsConsent, subscribePrivacyConsent } from "../../lib/privacyConsent"
 
 const SESSION_STORAGE_KEY = "ctm_visit_session_key_v1"
 
@@ -35,18 +34,9 @@ function shouldSkipTracking(pathname) {
 
 export default function SiteVisitTracker() {
   const location = useLocation()
-  const [analyticsAllowed, setAnalyticsAllowed] = useState(() => hasAnalyticsConsent())
-
-  useEffect(() => subscribePrivacyConsent((consent) => {
-    setAnalyticsAllowed(consent.analytics === true)
-  }), [])
 
   useEffect(() => {
     const currentPath = location.pathname || "/"
-
-    if (!analyticsAllowed) {
-      return
-    }
 
     if (isNetworkOffline()) {
       return
@@ -84,7 +74,7 @@ export default function SiteVisitTracker() {
     return () => {
       cancelled = true
     }
-  }, [analyticsAllowed, location.pathname])
+  }, [location.pathname])
 
   return null
 }

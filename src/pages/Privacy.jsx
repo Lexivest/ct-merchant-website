@@ -1,7 +1,6 @@
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 import PageSeo from "../components/common/PageSeo"
-import { resetPrivacyConsent } from "../lib/privacyConsent"
 
 function Privacy() {
   const navigate = useNavigate()
@@ -14,10 +13,6 @@ function Privacy() {
     }
 
     navigate("/", { replace: true })
-  }
-
-  const handleCookiePreferences = () => {
-    resetPrivacyConsent()
   }
 
   return (
@@ -177,7 +172,11 @@ function Privacy() {
                     />
                     <ListItem
                       title="Technical Data"
-                      text="IP addresses, device types, and usage information used strictly for security profiling, abuse prevention, and platform reliability."
+                      text="IP addresses, device types, browser signals, and usage information used strictly for security profiling, abuse prevention, platform reliability, and operational analytics."
+                    />
+                    <ListItem
+                      title="Operational Analytics"
+                      text="Page visits, shop and product views, search or discovery referrals, contact actions, device signatures, user agent information, and related event metadata used to understand marketplace activity, detect suspicious behavior, and help merchants review legitimate customer interest."
                     />
                     <ListItem
                       title="AI Interactions"
@@ -214,6 +213,7 @@ function Privacy() {
                     <SimpleItem text="Provide, secure, and maintain the digital repository." />
                     <SimpleItem text="Display accurate shop listings, product information, and map locations." />
                     <SimpleItem text="Enable direct communication between users and listed businesses through external channels such as WhatsApp or phone." />
+                    <SimpleItem text="Measure page visits, shop traffic, product interest, search referrals, and contact actions so we can improve reliability, market visibility, merchant analytics, and abuse detection." />
                     <SimpleItem text="Enforce community rules, detect abuse, and block malicious access." />
                   </ul>
 
@@ -253,14 +253,15 @@ function Privacy() {
                     enhance platform operation and do not track your activity
                     across other websites.
                   </p>
-
-                  <button
-                    type="button"
-                    onClick={handleCookiePreferences}
-                    className="mt-5 inline-flex rounded-xl bg-slate-950 px-5 py-3 text-sm font-extrabold text-white shadow-[0_8px_24px_rgba(15,23,42,0.16)] transition hover:bg-pink-600"
-                  >
-                    Review cookie preferences
-                  </button>
+                  <p className="mt-4 text-sm leading-7 text-slate-600 md:text-[15px]">
+                    We also record limited first-party operational analytics,
+                    such as visit counts, shop or product interaction events,
+                    contact actions, device signatures, and user agent details.
+                    These records are used for platform security, performance
+                    monitoring, merchant analytics, fraud prevention, and
+                    service improvement. They are not used to track you across
+                    other websites.
+                  </p>
                 </PolicyCard>
 
                 <PolicyCard

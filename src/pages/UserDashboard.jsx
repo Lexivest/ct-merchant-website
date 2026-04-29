@@ -4,7 +4,6 @@ import { createPortal } from "react-dom"
 import { FaBullhorn, FaGift, FaTicket, FaXmark } from "react-icons/fa6"
 
 import AuthNotification from "../components/auth/AuthNotification"
-import CookieConsentBanner from "../components/common/CookieConsentBanner"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
@@ -2257,7 +2256,6 @@ function UserDashboard() {
         open={announcementsOpen}
         onClose={() => markAnnouncementsSeen()}
       />
-      <CookieConsentBanner enabled={Boolean(user && profileLoaded)} />
     </div>
   )
 }
