@@ -272,6 +272,29 @@ function RouteLoadingScreen({
   return <PageLoadingScreen title={title} message={message} />
 }
 
+function isStaffCardTransition(location) {
+  return Boolean(
+    location?.state?.fromStaffTransition &&
+      typeof location?.pathname === "string" &&
+      location.pathname.startsWith("/staff-"),
+  )
+}
+
+function RouteSuspenseFallback() {
+  const location = useLocation()
+
+  if (isStaffCardTransition(location)) {
+    return null
+  }
+
+  return (
+    <RouteLoadingScreen
+      title="Loading page"
+      message="Please wait while we prepare this screen."
+    />
+  )
+}
+
 function NotFoundPage() {
   return (
     <>
@@ -717,14 +740,7 @@ function AppShell() {
   )
 
   return (
-    <Suspense
-      fallback={
-        <RouteLoadingScreen
-          title="Loading page"
-          message="Please wait while we prepare this screen."
-        />
-      }
-    >
+    <Suspense fallback={<RouteSuspenseFallback />}>
       <SiteVisitTracker />
       <RouteMetaFallback />
       <Routes>

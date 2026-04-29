@@ -63,10 +63,15 @@ function getInitials(value) {
 function StaffHomeCard({
   icon,
   title,
+  metric,
+  metricLabel = "New",
   tone = "rose",
   locked = false,
   onClick,
 }) {
+  const hasMetric = metric !== undefined && metric !== null && metric !== ""
+  const metricValue = hasMetric ? Number(metric) || 0 : 0
+  const metricDisplay = metricValue > 99 ? "99+" : metricValue.toLocaleString()
   const toneClass =
     tone === "indigo"
       ? "from-indigo-50 via-white to-white text-indigo-700"
@@ -95,6 +100,19 @@ function StaffHomeCard({
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-current/10 text-lg">
           {icon}
         </div>
+        {hasMetric ? (
+          <div
+            className={`flex min-w-9 items-center justify-center rounded-full px-2.5 py-1 text-xs font-black shadow-sm ${
+              metricValue > 0
+                ? "bg-rose-600 text-white ring-2 ring-white"
+                : "bg-white/80 text-slate-400 ring-1 ring-slate-200"
+            }`}
+            title={`${metricDisplay} ${metricLabel}`}
+            aria-label={`${title}: ${metricDisplay} ${metricLabel}`}
+          >
+            {metricDisplay}
+          </div>
+        ) : null}
       </div>
 
       <div className="relative mt-3">
@@ -205,6 +223,10 @@ export default function StaffDashboard() {
       primeStaffRouteAuth()
       const prefetchedData = await prepareStaffRouteTransition({ path })
       primeStaffRouteAuth()
+      setRouteTransition({
+        pending: false,
+        error: "",
+      })
       startTransition(() => {
         navigate(path, {
           state: {
