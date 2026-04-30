@@ -22,6 +22,7 @@ import logoImage from "../../assets/images/logo.jpg";
 
 const KYC_VIDEO_RULE = UPLOAD_RULES.kycVideos;
 const KYC_VIDEO_BUCKET = KYC_VIDEO_RULE.bucket;
+const KYC_VIDEO_BUCKETS = Array.from(new Set([KYC_VIDEO_BUCKET, "kyc_videos"]));
 const KYC_VIDEO_MAX_BYTES = KYC_VIDEO_RULE.maxBytes;
 const KYC_VIDEO_RULE_LABEL = getRuleLabel(KYC_VIDEO_RULE);
 const MAX_KYC_SECONDS = 60;
@@ -78,6 +79,45 @@ async function resolveBrowserLocationLabel(lat, lng, fallback = "") {
   } catch {
     return fallback || "";
   }
+}
+
+function isBucketNotFoundError(error) {
+  const combined = [
+    error?.message,
+    error?.error,
+    error?.statusCode,
+    error?.status,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    combined.includes("bucket not found") ||
+    combined.includes("bucket_not_found") ||
+    combined.includes("not found")
+  );
+}
+
+async function uploadKycVideoToAvailableBucket(filePath, blob, options) {
+  let lastError = null;
+
+  for (const bucket of KYC_VIDEO_BUCKETS) {
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, blob, options);
+
+    if (!error) {
+      return { bucket };
+    }
+
+    lastError = error;
+    if (!isBucketNotFoundError(error)) {
+      break;
+    }
+  }
+
+  throw lastError || new Error("KYC video bucket was not found.");
 }
 
 function getSetupCopy(setupState) {
@@ -678,6 +718,7 @@ export default function MerchantVideoKYC() {
     }
 
     let uploadedPath = null;
+    let uploadedBucket = KYC_VIDEO_BUCKET;
 
     try {
       uploadInFlightRef.current = true;
@@ -689,15 +730,17 @@ export default function MerchantVideoKYC() {
       const fileName = `kyc_video_${Date.now()}.${ext}`;
       const filePath = `${user.id}/${fileName}`;
 
-      // A. Upload to Storage
-      const { error: uploadErr } = await supabase.storage
-        .from(KYC_VIDEO_BUCKET)
-        .upload(filePath, recordedBlobRef.current, { cacheControl: '3600', contentType, upsert: false });
-
-      if (uploadErr) throw new Error(`Storage Error: ${uploadErr.message}`);
+      // A. Upload to Storage. Some production projects still have the legacy
+      // kyc_videos bucket, so fall back only when the preferred bucket is absent.
+      const uploadResult = await uploadKycVideoToAvailableBucket(filePath, recordedBlobRef.current, {
+        cacheControl: '3600',
+        contentType,
+        upsert: false,
+      });
+      uploadedBucket = uploadResult.bucket;
       uploadedPath = filePath;
 
-      const { data: { publicUrl } } = supabase.storage.from(KYC_VIDEO_BUCKET).getPublicUrl(filePath);
+      const { data: { publicUrl } } = supabase.storage.from(uploadedBucket).getPublicUrl(filePath);
 
       // B. Update Shop KYC Status
       setUploadStatus("Finalizing submission...");
@@ -728,11 +771,13 @@ export default function MerchantVideoKYC() {
       if (dbErr) throw new Error(`Database Error: ${dbErr.message}`);
       if (!updatedShop || updatedShop.length === 0) throw new Error("Security Blocked Update. Contact Support.");
 
-      const oldVideoPath = getStoragePathFromUrl(shopData?.kyc_video_url, KYC_VIDEO_BUCKET);
-      if (oldVideoPath && oldVideoPath !== filePath) {
+      const oldVideoTarget = KYC_VIDEO_BUCKETS
+        .map((bucket) => ({ bucket, path: getStoragePathFromUrl(shopData?.kyc_video_url, bucket) }))
+        .find((target) => Boolean(target.path));
+      if (oldVideoTarget?.path && oldVideoTarget.path !== filePath) {
         const { error: cleanupError } = await supabase.storage
-          .from(KYC_VIDEO_BUCKET)
-          .remove([oldVideoPath]);
+          .from(oldVideoTarget.bucket)
+          .remove([oldVideoTarget.path]);
         if (cleanupError) {
           console.warn("Old KYC video cleanup failed:", cleanupError);
         }
@@ -781,7 +826,7 @@ export default function MerchantVideoKYC() {
     } catch (err) {
       if (uploadedPath) {
         try {
-          await supabase.storage.from(KYC_VIDEO_BUCKET).remove([uploadedPath]);
+          await supabase.storage.from(uploadedBucket).remove([uploadedPath]);
         } catch (cleanupErr) {
           console.warn("Rollback cleanup failed for KYC upload:", cleanupErr);
         }
