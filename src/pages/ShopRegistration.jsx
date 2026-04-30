@@ -620,6 +620,7 @@ function ShopRegistration() {
   }, [isEdit, shopId, user?.id])
   const previewsRef = useRef(previews)
   const skipNextDraftSaveRef = useRef(false)
+  const submitInFlightRef = useRef(false)
 
   useEffect(() => {
     setHasHydrated(false)
@@ -1239,6 +1240,29 @@ function ShopRegistration() {
     }
   }
 
+  async function getUploadFingerprint(fileOrBlob) {
+    try {
+      if (
+        globalThis.crypto?.subtle &&
+        typeof fileOrBlob?.arrayBuffer === "function"
+      ) {
+        const digest = await globalThis.crypto.subtle.digest(
+          "SHA-256",
+          await fileOrBlob.arrayBuffer()
+        )
+
+        return Array.from(new Uint8Array(digest))
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("")
+          .slice(0, 20)
+      }
+    } catch {
+      // Fall back below if the browser blocks Web Crypto for any reason.
+    }
+
+    return `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+  }
+
   async function uploadFile(fileOrBlob, bucket, folder, oldUrl = "", slotKey = folder) {
     if (!fileOrBlob) {
       return {
@@ -1251,12 +1275,13 @@ function ShopRegistration() {
 
     const oldPath = getStoragePathFromUrl(oldUrl, bucket)
     const extension = fileOrBlob.name?.split(".").pop() || "jpg"
-    const path = `${folder}/${user.id}_${Date.now()}_${slotKey}.${extension}`
+    const fingerprint = await getUploadFingerprint(fileOrBlob)
+    const path = `${folder}/${user.id}_${slotKey}_${fingerprint}.${extension}`
 
     const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(path, fileOrBlob, {
-        upsert: false,
+        upsert: true,
         contentType: fileOrBlob.type || "image/jpeg",
         cacheControl: "31536000",
       })
@@ -1279,7 +1304,7 @@ function ShopRegistration() {
   }
 
   async function submitApplication() {
-    if (submitting) return
+    if (submitting || submitInFlightRef.current) return
     if (isOffline) {
       setNotice({ visible: true, type: "error", title: "Network Offline", message: "You cannot submit an application while offline." })
       setReviewOpen(false)
@@ -1290,6 +1315,7 @@ function ShopRegistration() {
     const uploadedFiles = []
 
     try {
+      submitInFlightRef.current = true
       setSubmitting(true)
       let activeExistingShop = existingShop
 
@@ -1492,6 +1518,7 @@ function ShopRegistration() {
       setReviewOpen(false)
       window.scrollTo({ top: 0, behavior: "smooth" })
     } finally {
+      submitInFlightRef.current = false
       setSubmitting(false)
     }
   }

@@ -212,6 +212,7 @@ export default function EditProduct() {
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
   const [isFitting, setIsFitting] = useState(false);
+  const mutationInFlightRef = useRef(false);
   const cropperRef = useRef(null);
   const fileInputRefs = { 1: useRef(null), 2: useRef(null), 3: useRef(null) };
 
@@ -520,10 +521,73 @@ export default function EditProduct() {
     setPreviews((prev) => ({ ...prev, [slot]: "" }));
   };
 
+  function getProductStoragePathFromUrl(url) {
+    if (!url) return null;
+
+    const rawUrl = String(url).trim();
+    if (!rawUrl) return null;
+
+    if (!rawUrl.startsWith("http")) {
+      const cleanPath = rawUrl.replace(/^\/+/, "");
+      return cleanPath.startsWith(`${PRODUCT_BUCKET}/`)
+        ? cleanPath.slice(PRODUCT_BUCKET.length + 1)
+        : cleanPath;
+    }
+
+    try {
+      const cleanUrl = rawUrl.split("?")[0];
+      const escapedBucket = PRODUCT_BUCKET.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+      const regex = new RegExp(`/storage/v1/object/(?:public|authenticated|sign)/${escapedBucket}/(.+)$`, "i");
+      const match = cleanUrl.match(regex);
+      return match?.[1] ? decodeURIComponent(match[1]) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function collectProductImagePaths(urls) {
+    return [
+      ...new Set(
+        urls
+          .map(getProductStoragePathFromUrl)
+          .filter(Boolean)
+      ),
+    ];
+  }
+
+  async function removeProductImagePaths(paths, context = "Product image cleanup failed") {
+    const uniquePaths = [...new Set(paths)].filter(Boolean);
+    if (!uniquePaths.length) return;
+
+    const { error } = await supabase.storage
+      .from(PRODUCT_BUCKET)
+      .remove(uniquePaths);
+
+    if (error) {
+      throw new Error(`${context}: ${error.message}`);
+    }
+  }
+
+  async function getUploadFingerprint(blob) {
+    try {
+      if (globalThis.crypto?.subtle && typeof blob?.arrayBuffer === "function") {
+        const digest = await globalThis.crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
+        return Array.from(new Uint8Array(digest))
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("")
+          .slice(0, 20);
+      }
+    } catch {
+      // Fall back below if Web Crypto is unavailable.
+    }
+
+    return `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+
   // --- SUBMIT ---
   const handleUpdate = async (e) => {
     e.preventDefault();
-    if (submitting || deleting) return;
+    if (submitting || deleting || mutationInFlightRef.current) return;
     if (isOffline) {
       notify({ type: "error", title: "Network unavailable", message: "You must be online to update a product." });
       return;
@@ -557,7 +621,11 @@ export default function EditProduct() {
       return;
     }
 
+    const uploadedImagePaths = [];
+    let dbUpdateSucceeded = false;
+
     try {
+      mutationInFlightRef.current = true;
       setSubmitting(true);
       const priceVal = parseFloat(form.price);
       let discountPrice = null;
@@ -575,21 +643,26 @@ export default function EditProduct() {
       // Upload new blobs
       const uploadPromises = [1, 2, 3].map(async (idx) => {
         if (!blobs[idx]) return null;
-        const fName = `${user.id}_${Date.now()}_img${idx}.jpg`;
+        const fingerprint = await getUploadFingerprint(blobs[idx]);
+        const fName = `${user.id}_img${idx}_${fingerprint}.jpg`;
         const { error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], {
           contentType: "image/jpeg",
-          upsert: false,
+          upsert: true,
           cacheControl: "31536000",
         });
         if (upErr) throw upErr;
-        return supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl;
+        uploadedImagePaths.push(fName);
+        return {
+          path: fName,
+          url: supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl,
+        };
       });
 
-      const [url1, url2, url3] = await Promise.all(uploadPromises);
+      const [upload1, upload2, upload3] = await Promise.all(uploadPromises);
 
-      const finalUrl1 = url1 || (deletedSlots[1] ? null : existingUrls[1]);
-      const finalUrl2 = url2 || (deletedSlots[2] ? null : existingUrls[2]);
-      const finalUrl3 = url3 || (deletedSlots[3] ? null : existingUrls[3]);
+      const finalUrl1 = upload1?.url || (deletedSlots[1] ? null : existingUrls[1]);
+      const finalUrl2 = upload2?.url || (deletedSlots[2] ? null : existingUrls[2]);
+      const finalUrl3 = upload3?.url || (deletedSlots[3] ? null : existingUrls[3]);
 
       // Update DB
       const { error: rpcErr } = await supabase.rpc("manage_product", {
@@ -609,22 +682,15 @@ export default function EditProduct() {
       })
 
       if (rpcErr) throw rpcErr
+      dbUpdateSucceeded = true;
 
       // Garbage collect deleted original images
-      const pathsToDelete = [];
-      [1, 2, 3].forEach(i => {
-        if (existingUrls[i] && (deletedSlots[i] || blobs[i])) {
-          try {
-            const fileName = decodeURIComponent(new URL(existingUrls[i]).pathname.split('/').pop());
-            if (fileName) pathsToDelete.push(fileName);
-          } catch {
-            // Ignore malformed legacy URLs during cleanup.
-          }
-        }
-      });
-      if (pathsToDelete.length > 0) {
-        await supabase.storage.from(PRODUCT_BUCKET).remove(pathsToDelete);
-      }
+      const pathsToDelete = collectProductImagePaths(
+        [1, 2, 3]
+          .filter((slot) => existingUrls[slot] && (deletedSlots[slot] || blobs[slot]))
+          .map((slot) => existingUrls[slot])
+      );
+      await removeProductImagePaths(pathsToDelete, "Old product image cleanup failed");
 
       notify({
         type: "success",
@@ -649,14 +715,22 @@ export default function EditProduct() {
       window.scrollTo({ top: 0, behavior: "smooth" });
 
     } catch (err) {
+      if (!dbUpdateSucceeded) {
+        try {
+          await removeProductImagePaths(uploadedImagePaths, "New product image rollback failed");
+        } catch (cleanupErr) {
+          console.warn("Rollback cleanup failed for new product images:", cleanupErr);
+        }
+      }
       notify({ type: "error", title: "Update failed", message: getFriendlyErrorMessage(err, "Update failed.") });
     } finally {
+      mutationInFlightRef.current = false;
       setSubmitting(false);
     }
   };
 
   const deleteProduct = async () => {
-    if (submitting || deleting) return;
+    if (submitting || deleting || mutationInFlightRef.current) return;
     if (isOffline) {
       notify({ type: "error", title: "Network unavailable", message: "You must be online to delete a product." });
       return;
@@ -671,23 +745,24 @@ export default function EditProduct() {
     if (!approved) return;
     
     try {
+      mutationInFlightRef.current = true;
       setDeleting(true);
+
+      const { data: latestProduct, error: latestProductError } = await supabase
+        .from("products")
+        .select("image_url, image_url_2, image_url_3")
+        .eq("id", productId)
+        .maybeSingle();
+
+      if (latestProductError) throw latestProductError;
+      if (!latestProduct) throw new Error("Product not found or already deleted.");
       
-      const pathsToDelete = [];
-      [productData.image_url, productData.image_url_2, productData.image_url_3].forEach(url => {
-        if(url && url.includes(`/${PRODUCT_BUCKET}/`)) {
-          try {
-            const fileName = decodeURIComponent(new URL(url).pathname.split('/').pop());
-            if(fileName) pathsToDelete.push(fileName);
-          } catch {
-            // Ignore malformed legacy URLs during cleanup.
-          }
-        }
-      });
-      
-      if(pathsToDelete.length > 0) {
-        await supabase.storage.from(PRODUCT_BUCKET).remove(pathsToDelete);
-      }
+      const pathsToDelete = collectProductImagePaths([
+        latestProduct.image_url,
+        latestProduct.image_url_2,
+        latestProduct.image_url_3,
+      ]);
+      await removeProductImagePaths(pathsToDelete, "Product image cleanup failed");
       
       const { error } = await supabase.from('products').delete().eq('id', productId);
       if (error) throw error;
@@ -699,6 +774,8 @@ export default function EditProduct() {
     } catch (err) {
       notify({ type: "error", title: "Delete failed", message: getFriendlyErrorMessage(err, "Failed to delete product.") });
       setDeleting(false);
+    } finally {
+      mutationInFlightRef.current = false;
     }
   };
 
