@@ -57,6 +57,21 @@ const MAX_PRODUCTS_LIMIT = 30;
 const MAX_SPECIAL_OFFERS = 2;
 const PRODUCT_DRAFT_SAVE_DELAY = 700;
 const PRODUCT_IMAGE_SLOTS = [1, 2, 3];
+const PRODUCT_TEXT_LIMITS = {
+  name: 20,
+  key_features: 200,
+  desc: 400,
+  box_content: 300,
+  warranty: 20,
+};
+const PRODUCT_TEXT_LABELS = {
+  name: "Product Name / Title",
+  key_features: "Key Features",
+  desc: "Full Description",
+  box_content: "What's in the Box",
+  warranty: "Warranty",
+};
+const PRODUCT_ATTRIBUTE_TEXT_LIMIT = 60;
 const EMPTY_PRODUCT_FORM = {
   name: "",
   price: "",
@@ -139,6 +154,43 @@ function CustomSelect({ value, onChange, options, placeholder, className }) {
   );
 }
 
+function clampProductTextField(id, value) {
+  const limit = PRODUCT_TEXT_LIMITS[id];
+  if (!limit || typeof value !== "string") return value;
+  return value.slice(0, limit);
+}
+
+function getProductTextLimitError(form, dynamicAttrs) {
+  const limitedField = Object.entries(PRODUCT_TEXT_LIMITS).find(([field, limit]) => {
+    return String(form[field] || "").length > limit;
+  });
+
+  if (limitedField) {
+    const [field, limit] = limitedField;
+    return `${PRODUCT_TEXT_LABELS[field]} must be ${limit} characters or less.`;
+  }
+
+  const oversizedAttr = Object.entries(dynamicAttrs || {}).find(([, value]) => {
+    return typeof value === "string" && value.length > PRODUCT_ATTRIBUTE_TEXT_LIMIT;
+  });
+
+  if (oversizedAttr) {
+    return `${oversizedAttr[0]} must be ${PRODUCT_ATTRIBUTE_TEXT_LIMIT} characters or less.`;
+  }
+
+  return "";
+}
+
+function CharacterCounter({ value, limit }) {
+  const length = String(value || "").length;
+  const isNearLimit = length >= Math.floor(limit * 0.9);
+
+  return (
+    <span className={`text-[0.72rem] font-bold ${isNearLimit ? "text-pink-600" : "text-slate-400"}`}>
+      {length}/{limit}
+    </span>
+  );
+}
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -349,11 +401,17 @@ export default function AddProduct() {
   // --- HANDLERS ---
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;
-    setForm((prev) => ({ ...prev, [id]: type === "checkbox" ? checked : value }));
+    setForm((prev) => ({
+      ...prev,
+      [id]: type === "checkbox" ? checked : clampProductTextField(id, value),
+    }));
   };
 
   const handleAttrChange = (key, value) => {
-    setDynamicAttrs((prev) => ({ ...prev, [key]: value }));
+    setDynamicAttrs((prev) => ({
+      ...prev,
+      [key]: typeof value === "string" ? value.slice(0, PRODUCT_ATTRIBUTE_TEXT_LIMIT) : value,
+    }));
   };
 
   const handleCategoryChange = (val) => {
@@ -564,6 +622,11 @@ export default function AddProduct() {
     }
     if (!form.category) {
       notify({ type: "error", title: "Category required", message: "Please select a category before continuing." });
+      return;
+    }
+    const textLimitError = getProductTextLimitError(form, dynamicAttrs);
+    if (textLimitError) {
+      notify({ type: "error", title: "Text too long", message: textLimitError });
       return;
     }
     if (!blobs[1]) {
@@ -941,8 +1004,11 @@ export default function AddProduct() {
 
           {/* CORE INFO */}
           <div className="mb-5">
-            <label className="mb-1.5 block text-[0.9rem] font-bold">Product Name / Title</label>
-            <input type="text" id="name" value={form.name} onChange={handleInputChange} required className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <label className="block text-[0.9rem] font-bold">Product Name / Title</label>
+              <CharacterCounter value={form.name} limit={PRODUCT_TEXT_LIMITS.name} />
+            </div>
+            <input type="text" id="name" value={form.name} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.name} required className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
           </div>
 
           <div className="mb-5 grid grid-cols-2 gap-4">
@@ -999,18 +1065,36 @@ export default function AddProduct() {
             </div>
             
             <div className="mb-4">
-              <label className="mb-1.5 block text-[0.85rem] font-bold">Key Features</label>
-              <textarea id="key_features" value={form.key_features} onChange={handleInputChange} rows="2" placeholder="e.g. 5G Network, 120Hz Display" className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none resize-y"></textarea>
+              <div className="mb-1.5 flex items-center justify-between gap-3">
+                <label className="block text-[0.85rem] font-bold">Key Features</label>
+                <CharacterCounter value={form.key_features} limit={PRODUCT_TEXT_LIMITS.key_features} />
+              </div>
+              <textarea id="key_features" value={form.key_features} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.key_features} rows="2" placeholder="e.g. 5G Network, 120Hz Display" className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none resize-y"></textarea>
             </div>
 
             <div className="mb-4">
-              <label className="mb-1.5 block text-[0.85rem] font-bold">Full Description <span className="text-[#db2777]">*</span></label>
-              <textarea id="desc" value={form.desc} onChange={handleInputChange} rows="4" required placeholder="Enter full detailed product description..." className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none resize-y"></textarea>
+              <div className="mb-1.5 flex items-center justify-between gap-3">
+                <label className="block text-[0.85rem] font-bold">Full Description <span className="text-[#db2777]">*</span></label>
+                <CharacterCounter value={form.desc} limit={PRODUCT_TEXT_LIMITS.desc} />
+              </div>
+              <textarea id="desc" value={form.desc} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.desc} rows="4" required placeholder="Enter full detailed product description..." className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none resize-y"></textarea>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div><label className="mb-1.5 block text-[0.85rem] font-bold">What's in the Box</label><textarea id="box_content" value={form.box_content} onChange={handleInputChange} rows="2" placeholder="1x Phone, Charger" className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none"></textarea></div>
-              <div><label className="mb-1.5 block text-[0.85rem] font-bold">Warranty</label><textarea id="warranty" value={form.warranty} onChange={handleInputChange} rows="2" placeholder="1 Year Mfg Warranty" className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none"></textarea></div>
+              <div>
+                <div className="mb-1.5 flex items-center justify-between gap-3">
+                  <label className="block text-[0.85rem] font-bold">What's in the Box</label>
+                  <CharacterCounter value={form.box_content} limit={PRODUCT_TEXT_LIMITS.box_content} />
+                </div>
+                <textarea id="box_content" value={form.box_content} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.box_content} rows="2" placeholder="1x Phone, Charger" className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none"></textarea>
+              </div>
+              <div>
+                <div className="mb-1.5 flex items-center justify-between gap-3">
+                  <label className="block text-[0.85rem] font-bold">Warranty</label>
+                  <CharacterCounter value={form.warranty} limit={PRODUCT_TEXT_LIMITS.warranty} />
+                </div>
+                <textarea id="warranty" value={form.warranty} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.warranty} rows="2" placeholder="1 Year Mfg Warranty" className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none"></textarea>
+              </div>
             </div>
           </div>
 

@@ -59,6 +59,8 @@ import {
   normalizeRepoSearchId,
   REPO_SEARCH_INVALID_MESSAGE,
 } from "../lib/repoSearch"
+import { clampWords, getWordLimitError } from "../lib/textLimits"
+import WordLimitCounter from "../components/common/WordLimitCounter"
 import {
   fetchHomeHighlights,
 } from "../lib/dashboardData"
@@ -76,6 +78,8 @@ const phrases = [
   "Digital Convenience",
   "Physical Reality",
 ]
+
+const CONTACT_MESSAGE_WORD_LIMIT = 300
 
 const socialLinks = [
   {
@@ -200,13 +204,23 @@ function HomeFeedbackSection() {
   })
 
   const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "message" ? clampWords(value, CONTACT_MESSAGE_WORD_LIMIT) : value,
+    }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formData.fullName.trim() || !formData.email.trim() || !formData.message.trim()) {
       notify({ type: "error", title: "Missing Fields", message: "Please fill in all required details." })
+      return
+    }
+
+    const messageLimitError = getWordLimitError("Message", formData.message, CONTACT_MESSAGE_WORD_LIMIT)
+    if (messageLimitError) {
+      notify({ type: "error", title: "Message too long", message: messageLimitError })
       return
     }
 
@@ -284,7 +298,10 @@ function HomeFeedbackSection() {
         </div>
 
         <div>
-          <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500">Message</label>
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500">Message</label>
+            <WordLimitCounter value={formData.message} limit={CONTACT_MESSAGE_WORD_LIMIT} />
+          </div>
           <textarea
             name="message"
             rows="4"
@@ -1081,7 +1098,6 @@ function Home() {
                     }}
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    maxLength={32}
                     placeholder="Enter Store ID"
                     className="min-w-0 flex-1 border-none bg-transparent px-3 text-base font-medium text-[#0F1111] outline-none placeholder:text-slate-500"
                   />
@@ -1144,7 +1160,6 @@ function Home() {
                           }}
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          maxLength={32}
                           placeholder="Enter Store ID"
                           className="min-w-0 flex-1 border-none px-3 text-base text-[#0F1111] outline-none placeholder:text-slate-500"
                         />

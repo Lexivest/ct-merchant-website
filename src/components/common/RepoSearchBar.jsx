@@ -40,7 +40,6 @@ function RepoSearchBar() {
             disabled={isSearching}
             inputMode="numeric"
             pattern="[0-9]*"
-            maxLength={32}
             onChange={(e) => setMerchantId(extractRepoSearchDigits(e.target.value))}
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSearch()

@@ -1,8 +1,9 @@
 import { supabase } from "./supabase"
 
 export const REPO_SEARCH_PREFIX = "CT-"
+export const REPO_SEARCH_DIGIT_LIMIT = 6
 export const REPO_SEARCH_INVALID_MESSAGE =
-  "Enter a valid repository ID like CT-205368 or just 205368."
+  `Enter a valid repository ID like CT-205368 or just 205368. Maximum ${REPO_SEARCH_DIGIT_LIMIT} digits.`
 
 export function extractRepoSearchDigits(value) {
   const raw = String(value || "").trim().toUpperCase()
@@ -11,7 +12,7 @@ export function extractRepoSearchDigits(value) {
   return raw
     .replace(/^CT-?/, "")
     .replace(/\D/g, "")
-    .slice(0, 32)
+    .slice(0, REPO_SEARCH_DIGIT_LIMIT)
 }
 
 export function normalizeRepoSearchId(value) {
@@ -22,12 +23,12 @@ export function normalizeRepoSearchId(value) {
 
   if (!raw) return ""
 
-  const directIdMatch = raw.match(/^CT-?(\d{2,32})$/)
+  const directIdMatch = raw.match(new RegExp(`^CT-?(\\d{2,${REPO_SEARCH_DIGIT_LIMIT}})$`))
   if (directIdMatch) {
     return `${REPO_SEARCH_PREFIX}${directIdMatch[1]}`
   }
 
-  const plainDigitsMatch = raw.match(/^(\d{2,32})$/)
+  const plainDigitsMatch = raw.match(new RegExp(`^(\\d{2,${REPO_SEARCH_DIGIT_LIMIT}})$`))
   if (plainDigitsMatch) {
     return `${REPO_SEARCH_PREFIX}${plainDigitsMatch[1]}`
   }

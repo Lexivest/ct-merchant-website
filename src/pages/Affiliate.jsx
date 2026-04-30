@@ -10,6 +10,20 @@ import { FaEnvelope, FaUser, FaPhone, FaCircleInfo, FaGlobe, FaBullhorn, FaCircl
 import { supabase } from "../lib/supabase"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import { clampWords, getWordLimitError } from "../lib/textLimits"
+import WordLimitCounter from "../components/common/WordLimitCounter"
+
+const AFFILIATE_WORD_LIMITS = {
+  bio: 300,
+  marketingExperience: 300,
+  promotionPlan: 300,
+  preferredRegion: 20,
+}
+const AFFILIATE_FIELD_LIMITS = {
+  fullName: 80,
+  phone: 30,
+  socialMediaLinks: 500,
+}
 
 function Affiliate() {
   const navigate = useNavigate()
@@ -57,10 +71,22 @@ function Affiliate() {
       const qKey = name.replace("q_", "")
       setFormData(prev => ({
         ...prev,
-        questionnaire: { ...prev.questionnaire, [qKey]: value }
+        questionnaire: {
+          ...prev.questionnaire,
+          [qKey]: qKey === "preferredRegion"
+            ? clampWords(value, AFFILIATE_WORD_LIMITS.preferredRegion)
+            : value,
+        }
       }))
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }))
+      const wordLimit = AFFILIATE_WORD_LIMITS[name]
+      const charLimit = AFFILIATE_FIELD_LIMITS[name]
+      const nextValue = wordLimit
+        ? clampWords(value, wordLimit)
+        : charLimit
+        ? value.slice(0, charLimit)
+        : value
+      setFormData(prev => ({ ...prev, [name]: nextValue }))
     }
   }
 
@@ -70,6 +96,14 @@ function Affiliate() {
     if (!formData.email.trim()) newErrors.email = "Email is required"
     if (!formData.bio.trim()) newErrors.bio = "Bio is required"
     if (!formData.promotionPlan.trim()) newErrors.promotionPlan = "Promotion plan is required"
+    const bioLimitError = getWordLimitError("Bio", formData.bio, AFFILIATE_WORD_LIMITS.bio)
+    if (bioLimitError) newErrors.bio = bioLimitError
+    const experienceLimitError = getWordLimitError("Marketing experience", formData.marketingExperience, AFFILIATE_WORD_LIMITS.marketingExperience)
+    if (experienceLimitError) newErrors.marketingExperience = experienceLimitError
+    const planLimitError = getWordLimitError("Promotion plan", formData.promotionPlan, AFFILIATE_WORD_LIMITS.promotionPlan)
+    if (planLimitError) newErrors.promotionPlan = planLimitError
+    const regionLimitError = getWordLimitError("Preferred region", formData.questionnaire.preferredRegion, AFFILIATE_WORD_LIMITS.preferredRegion)
+    if (regionLimitError) newErrors.preferredRegion = regionLimitError
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -203,6 +237,7 @@ function Affiliate() {
                         onChange={handleChange}
                         placeholder="John Doe"
                         error={errors.fullName}
+                        maxLength={AFFILIATE_FIELD_LIMITS.fullName}
                         required
                         icon={<FaUser />}
                       />
@@ -227,6 +262,7 @@ function Affiliate() {
                       value={formData.phone}
                       onChange={handleChange}
                       placeholder="+234..."
+                      maxLength={AFFILIATE_FIELD_LIMITS.phone}
                       icon={<FaPhone />}
                     />
                   </div>
@@ -238,7 +274,10 @@ function Affiliate() {
                       Professional Bio
                     </h3>
                     <div>
-                      <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500">Tell us about yourself</label>
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500">Tell us about yourself</label>
+                        <WordLimitCounter value={formData.bio} limit={AFFILIATE_WORD_LIMITS.bio} />
+                      </div>
                       <textarea
                         name="bio"
                         rows="4"
@@ -258,15 +297,19 @@ function Affiliate() {
                       Experience & Reach
                     </h3>
                     <div>
-                      <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500">Marketing Experience</label>
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500">Marketing Experience</label>
+                        <WordLimitCounter value={formData.marketingExperience} limit={AFFILIATE_WORD_LIMITS.marketingExperience} />
+                      </div>
                       <textarea
                         name="marketingExperience"
                         rows="3"
                         value={formData.marketingExperience}
                         onChange={handleChange}
                         placeholder="Describe your previous experience in marketing or affiliate programs..."
-                        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-pink-500 focus:bg-white"
+                        className={`w-full rounded-2xl border bg-slate-50 px-5 py-4 text-sm font-bold text-slate-900 outline-none transition focus:border-pink-500 focus:bg-white ${errors.marketingExperience ? 'border-red-500' : 'border-slate-200'}`}
                       />
+                      {errors.marketingExperience && <p className="mt-1 text-xs font-bold text-red-500">{errors.marketingExperience}</p>}
                     </div>
                     <AuthInput
                       id="socialMediaLinks"
@@ -275,6 +318,7 @@ function Affiliate() {
                       value={formData.socialMediaLinks}
                       onChange={handleChange}
                       placeholder="Instagram, Twitter, LinkedIn profiles..."
+                      maxLength={AFFILIATE_FIELD_LIMITS.socialMediaLinks}
                       icon={<FaGlobe />}
                     />
                   </div>
@@ -286,7 +330,10 @@ function Affiliate() {
                       Promotion Strategy
                     </h3>
                     <div>
-                      <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500">How do you plan to promote CTMerchant?</label>
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500">How do you plan to promote CTMerchant?</label>
+                        <WordLimitCounter value={formData.promotionPlan} limit={AFFILIATE_WORD_LIMITS.promotionPlan} />
+                      </div>
                       <textarea
                         name="promotionPlan"
                         rows="4"
@@ -352,8 +399,12 @@ function Affiliate() {
                         value={formData.questionnaire.preferredRegion}
                         onChange={handleChange}
                         placeholder="E.g. Jos, Kaduna, Abuja..."
+                        error={errors.preferredRegion}
                         icon={<FaGlobe />}
                       />
+                      <div className="mt-1 flex justify-end">
+                        <WordLimitCounter value={formData.questionnaire.preferredRegion} limit={AFFILIATE_WORD_LIMITS.preferredRegion} />
+                      </div>
                     </div>
                   </div>
 

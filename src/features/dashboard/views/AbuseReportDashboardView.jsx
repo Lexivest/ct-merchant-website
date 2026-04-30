@@ -2,6 +2,11 @@ import React, { useState } from "react";
 import { supabase } from "../../../lib/supabase";
 import { FaArrowLeft, FaShieldHalved, FaCircleNotch, FaTriangleExclamation } from "react-icons/fa6";
 import { useGlobalFeedback } from "../../../components/common/GlobalFeedbackProvider";
+import { clampWords, getWordLimitError } from "../../../lib/textLimits";
+import WordLimitCounter from "../../../components/common/WordLimitCounter";
+
+const ABUSE_TARGET_WORD_LIMIT = 20;
+const ABUSE_DETAILS_WORD_LIMIT = 300;
 
 export default function AbuseReportDashboardView({ onBack, user }) {
   const [targetName, setTargetName] = useState("");
@@ -18,6 +23,10 @@ export default function AbuseReportDashboardView({ onBack, user }) {
 
     if (!category) return setSubmitError("Please select a violation category.");
     if (!details.trim()) return setSubmitError("Please provide details about the abuse.");
+    const targetLimitError = getWordLimitError("Target name", targetName, ABUSE_TARGET_WORD_LIMIT);
+    if (targetLimitError) return setSubmitError(targetLimitError);
+    const detailsLimitError = getWordLimitError("Detailed description", details, ABUSE_DETAILS_WORD_LIMIT);
+    if (detailsLimitError) return setSubmitError(detailsLimitError);
 
     setIsSubmitting(true);
 
@@ -84,8 +93,11 @@ export default function AbuseReportDashboardView({ onBack, user }) {
               placeholder="e.g. 'Abuja Electronics' or 'Fake iPhone 14'"
               className="form-input w-full rounded border border-[#888C8C] px-[14px] py-[10px] text-base shadow-[inset_0_1px_2px_rgba(15,17,17,.15)] focus:border-[#007185] focus:outline-none"
               value={targetName}
-              onChange={(e) => setTargetName(e.target.value)}
+              onChange={(e) => setTargetName(clampWords(e.target.value, ABUSE_TARGET_WORD_LIMIT))}
             />
+            <div className="mt-1 flex justify-end">
+              <WordLimitCounter value={targetName} limit={ABUSE_TARGET_WORD_LIMIT} />
+            </div>
           </div>
 
           <div className="form-group text-left">
@@ -111,13 +123,16 @@ export default function AbuseReportDashboardView({ onBack, user }) {
             <label className="form-label mb-[6px] block text-[0.9rem] font-bold text-[#0F1111]">
               Detailed Description <span className="text-[#C40000]">*</span>
             </label>
-            <p className="text-[0.75rem] text-[#565959] mb-1.5">Provide as much evidence and detail as possible.</p>
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <p className="text-[0.75rem] text-[#565959]">Provide as much evidence and detail as possible.</p>
+              <WordLimitCounter value={details} limit={ABUSE_DETAILS_WORD_LIMIT} />
+            </div>
             <textarea
               rows="5"
               placeholder="Describe the issue clearly..."
               className="form-input w-full rounded border border-[#888C8C] px-[14px] py-[10px] text-base shadow-[inset_0_1px_2px_rgba(15,17,17,.15)] focus:border-[#007185] focus:outline-none resize-y"
               value={details}
-              onChange={(e) => setDetails(e.target.value)}
+              onChange={(e) => setDetails(clampWords(e.target.value, ABUSE_DETAILS_WORD_LIMIT))}
               required
             ></textarea>
           </div>

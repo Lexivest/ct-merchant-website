@@ -3,6 +3,10 @@ import { FaHeadset, FaEnvelope } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { useGlobalFeedback } from "./GlobalFeedbackProvider"
+import { clampWords, getWordLimitError } from "../../lib/textLimits"
+import WordLimitCounter from "./WordLimitCounter"
+
+const CONTACT_MESSAGE_WORD_LIMIT = 300
 
 function FloatingContact() {
   const [isOpen, setIsOpen] = useState(false)
@@ -23,7 +27,7 @@ function FloatingContact() {
     const { name, value } = event.target
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: name === "message" ? clampWords(value, CONTACT_MESSAGE_WORD_LIMIT) : value,
     }))
   }
 
@@ -59,6 +63,16 @@ function FloatingContact() {
         type: "error",
         title: "Invalid Email",
         message: "Please enter a valid email address.",
+      })
+      return
+    }
+
+    const messageLimitError = getWordLimitError("Message", formData.message, CONTACT_MESSAGE_WORD_LIMIT)
+    if (messageLimitError) {
+      notify({
+        type: "error",
+        title: "Message too long",
+        message: messageLimitError,
       })
       return
     }
@@ -180,9 +194,12 @@ function FloatingContact() {
           </div>
 
           <div>
-            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
-              Message
-            </label>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <label className="block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                Message
+              </label>
+              <WordLimitCounter value={formData.message} limit={CONTACT_MESSAGE_WORD_LIMIT} className="text-[9px]" />
+            </div>
             <textarea
               name="message"
               rows="3"

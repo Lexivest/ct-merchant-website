@@ -5,6 +5,10 @@ import PageSeo from "../components/common/PageSeo"
 import { supabase } from "../lib/supabase"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import useAuthSession from "../hooks/useAuthSession"
+import { clampWords, getWordLimitError } from "../lib/textLimits"
+import WordLimitCounter from "../components/common/WordLimitCounter"
+
+const CONTACT_MESSAGE_WORD_LIMIT = 300
 
 function Contact() {
   const navigate = useNavigate()
@@ -34,7 +38,7 @@ function Contact() {
     const { name, value } = event.target
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: name === "message" ? clampWords(value, CONTACT_MESSAGE_WORD_LIMIT) : value,
     }))
   }
 
@@ -57,6 +61,15 @@ function Contact() {
         type: "error",
         message:
           "Invalid Email: Please enter a valid email address (e.g., name@example.com).",
+      })
+      return
+    }
+
+    const messageLimitError = getWordLimitError("Message", formData.message, CONTACT_MESSAGE_WORD_LIMIT)
+    if (messageLimitError) {
+      setStatus({
+        type: "error",
+        message: messageLimitError,
       })
       return
     }
@@ -265,9 +278,12 @@ function Contact() {
                         </div>
 
                         <div>
-                          <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">
-                            Message
-                          </label>
+                          <div className="mb-2 flex items-center justify-between gap-3">
+                            <label className="block text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">
+                              Message
+                            </label>
+                            <WordLimitCounter value={formData.message} limit={CONTACT_MESSAGE_WORD_LIMIT} />
+                          </div>
                           <textarea
                             name="message"
                             value={formData.message}

@@ -9,8 +9,11 @@ import {
   writeAnonymousAiUsage,
 } from "../../lib/deviceFingerprint"
 import useAuthSession from "../../hooks/useAuthSession"
+import { clampWords, getWordLimitError } from "../../lib/textLimits"
+import WordLimitCounter from "./WordLimitCounter"
 
 const DAILY_LIMIT = 15
+const AI_PROMPT_WORD_LIMIT = 300
 
 function AiAssistantWidget({ mode = "ambassador", shopData = null, productData = null, isRepoSearch = false }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -129,6 +132,17 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
   const handleSend = async (textOverride = null) => {
     const trimmed = (textOverride || input).trim()
     if (!trimmed || isSending) return
+    const promptLimitError = getWordLimitError("CT-AI prompt", trimmed, AI_PROMPT_WORD_LIMIT)
+    if (promptLimitError) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "error",
+          content: promptLimitError,
+        },
+      ])
+      return
+    }
     const isAnonymous = !user
 
     if (isNetworkOffline()) {
@@ -373,7 +387,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
             <input
               type="text"
               value={input}
-              onChange={(event) => setInput(event.target.value)}
+              onChange={(event) => setInput(clampWords(event.target.value, AI_PROMPT_WORD_LIMIT))}
               onKeyDown={handleKeyDown}
               placeholder="Ask anything..."
               className="flex-1 rounded-full border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-pink-500 focus:bg-white"
@@ -387,6 +401,12 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
             >
               <FaPaperPlane />
             </button>
+          </div>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <WordLimitCounter value={input} limit={AI_PROMPT_WORD_LIMIT} />
+            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+              CT-AI prompt
+            </span>
           </div>
           {!user ? (
             <div className="mt-2 text-center text-[9px] font-bold text-slate-400">
