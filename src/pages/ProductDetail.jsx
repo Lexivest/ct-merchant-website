@@ -13,6 +13,7 @@ import {
   FaShareNodes,
   FaShieldHalved,
   FaStar,
+  FaStore,
   FaTriangleExclamation,
   FaXmark,
 } from "react-icons/fa6"
@@ -116,6 +117,7 @@ function ProductDetail() {
 
   // 4. Local Optimistic States
   const [selectedImage, setSelectedImage] = useState("")
+  const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [isInWishlist, setIsInWishlist] = useState(false)
   const [securityModalOpen, setSecurityModalOpen] = useState(false)
   const [openingWhatsApp, setOpeningWhatsApp] = useState(false)
@@ -228,17 +230,40 @@ function ProductDetail() {
     }
   }, [currentShop?.id, isPublicRepoMode, mutate, productId, user?.id])
 
-  useEffect(() => {
-    if (!currentProduct) return
-
-    const nextImage = productImages[0] || ""
-
-    setSelectedImage(nextImage)
-  }, [currentProduct, productImages])
-
   const galleryImages = useMemo(() => {
     return [...new Set(productImages)]
   }, [productImages])
+
+  const activeDisplayImage =
+    galleryImages[activeImageIndex] ||
+    galleryImages[0] ||
+    selectedImage ||
+    currentProduct?.image_url ||
+    ""
+
+  useEffect(() => {
+    if (!currentProduct) return
+
+    setActiveImageIndex(0)
+    setSelectedImage(productImages[0] || "")
+  }, [currentProduct, productImages])
+
+  useEffect(() => {
+    if (galleryImages.length <= 1) return undefined
+
+    const intervalId = window.setInterval(() => {
+      setActiveImageIndex((current) => (current + 1) % galleryImages.length)
+    }, 3400)
+
+    return () => window.clearInterval(intervalId)
+  }, [currentProduct?.id, galleryImages.length])
+
+  useEffect(() => {
+    const nextImage = galleryImages[activeImageIndex] || galleryImages[0] || ""
+    if (nextImage) {
+      setSelectedImage(nextImage)
+    }
+  }, [activeImageIndex, galleryImages])
 
   const hasDiscount = useMemo(() => {
     if (!currentProduct) return false
@@ -384,15 +409,12 @@ function ProductDetail() {
   function handleSelectedImageError() {
     if (!galleryImages.length) return
 
-    const selectedIndex = galleryImages.indexOf(selectedImage)
-    const fallbackImage =
-      selectedIndex >= 0
-        ? galleryImages.slice(selectedIndex + 1).find(Boolean)
-        : galleryImages[0]
-
-    if (fallbackImage && fallbackImage !== selectedImage) {
-      setSelectedImage(fallbackImage)
+    if (galleryImages.length === 1) {
+      setSelectedImage("")
+      return
     }
+
+    setActiveImageIndex((current) => (current + 1) % galleryImages.length)
   }
 
   // --- EARLY RETURNS (Loading, Errors) ---
@@ -719,7 +741,7 @@ function ProductDetail() {
           "View product details, prices, availability, and merchant contact options on CTMerchant."
         }
         canonicalPath={`/product-detail${productId ? `?id=${encodeURIComponent(productId)}` : ""}`}
-        image={selectedImage || currentProduct?.image_url || "/ctm-logo.jpg"}
+        image={activeDisplayImage || currentProduct?.image_url || "/ctm-logo.jpg"}
         structuredData={productStructuredData}
       />
       <div
@@ -785,67 +807,122 @@ function ProductDetail() {
           <div className="left-col lg:flex-1">
             <section className="content-block mb-2 overflow-hidden bg-white !p-0 lg:mb-6 lg:rounded-lg lg:border lg:border-slate-300 lg:shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
               <div className="image-container flex w-full flex-col items-center bg-white">
-                <div className="main-img-wrapper relative flex aspect-square w-full items-center justify-center bg-[#F7F7F7] lg:max-h-[500px]">
+                <div className="main-img-wrapper relative flex aspect-square w-full items-center justify-center overflow-hidden bg-[#F7F7F7] lg:max-h-[500px]">
                   {hasDiscount ? (
                     <div className="flash-offer absolute left-4 top-4 z-10 rounded-md bg-red-600 px-2.5 py-1 text-[0.85rem] font-extrabold text-white shadow-[0_4px_10px_rgba(220,38,38,0.3)] lg:left-5 lg:top-5 lg:px-3 lg:py-1.5 lg:text-[0.95rem]">
                       -{discountPercent}% OFF
                     </div>
                   ) : null}
 
-                  <StableImage
-                    src={selectedImage}
-                    alt={currentProduct?.name || "Product"}
-                    containerClassName="h-full w-full bg-[#F7F7F7]"
-                    className="block h-full w-full object-contain mix-blend-multiply"
-                    onError={handleSelectedImageError}
-                  />
-                </div>
-
-                {galleryImages.length > 0 || (currentShop && isLoggedIn) ? (
-                  <div className="flex w-full gap-3 overflow-x-auto p-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    {galleryImages.map((image) => (
-                      <button
-                        type="button"
+                  {galleryImages.length ? (
+                    galleryImages.map((image, index) => (
+                      <div
                         key={image}
-                        onClick={() => setSelectedImage(image)}
-                        className={`h-[60px] w-[60px] shrink-0 overflow-hidden rounded-md transition ${
-                          selectedImage === image
-                            ? "border-2 border-pink-600 shadow-[0_2px_8px_rgba(219,39,119,0.2)]"
-                            : "border-2 border-transparent"
+                        className={`absolute inset-0 transition-all duration-700 ease-out ${
+                          index === activeImageIndex
+                            ? "scale-100 opacity-100"
+                            : "pointer-events-none scale-[1.035] opacity-0"
                         }`}
                       >
                         <StableImage
                           src={image}
-                          alt="Thumbnail"
-                          containerClassName="h-full w-full bg-white"
-                          className="h-full w-full object-cover"
+                          alt={currentProduct?.name || "Product"}
+                          containerClassName="h-full w-full bg-[#F7F7F7]"
+                          className="block h-full w-full object-contain mix-blend-multiply"
+                          loading={index === 0 ? "eager" : "lazy"}
+                          fetchPriority={index === 0 ? "high" : undefined}
+                          onError={index === activeImageIndex ? handleSelectedImageError : undefined}
                         />
+                      </div>
+                    ))
+                  ) : (
+                    <StableImage
+                      src={activeDisplayImage}
+                      alt={currentProduct?.name || "Product"}
+                      containerClassName="h-full w-full bg-[#F7F7F7]"
+                      className="block h-full w-full object-contain mix-blend-multiply"
+                      onError={handleSelectedImageError}
+                    />
+                  )}
+
+                  {galleryImages.length > 1 ? (
+                    <div className="absolute bottom-4 left-0 right-0 z-10 flex items-center justify-center gap-2">
+                      {galleryImages.map((image, index) => (
+                        <span
+                          key={`${image}-indicator`}
+                          className={`h-1.5 rounded-full transition-all duration-500 ${
+                            index === activeImageIndex
+                              ? "w-8 bg-pink-600 shadow-[0_0_12px_rgba(219,39,119,0.45)]"
+                              : "w-2 bg-slate-300/90"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+
+                {currentShop ? (
+                  <div className="w-full border-t border-slate-100 bg-white p-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={showSecurityModal}
+                        disabled={!isLoggedIn || !currentShop.whatsapp || stockCount <= 0}
+                        title={stockCount > 0 ? "Contact seller on WhatsApp" : "Out of stock"}
+                        className="group relative min-h-[86px] overflow-hidden rounded-[24px] bg-gradient-to-br from-[#18A84C] via-[#25D366] to-[#0F8F3A] px-3 py-4 text-center text-white shadow-[0_16px_30px_rgba(37,211,102,0.26)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_38px_rgba(37,211,102,0.35)] disabled:cursor-not-allowed disabled:from-slate-300 disabled:via-slate-300 disabled:to-slate-400 disabled:shadow-none"
+                      >
+                        <span className="absolute -right-4 -top-5 h-20 w-20 rounded-full bg-white/20 blur-xl transition group-hover:scale-125" />
+                        <span className="absolute left-4 top-4 h-2.5 w-2.5 rounded-full bg-white/70 animate-ping" />
+                        <span className="relative flex items-center justify-center gap-2 text-[1.05rem] font-black">
+                          <FaWhatsapp className="text-[1.45rem]" />
+                          WhatsApp
+                        </span>
+                        <span className="relative mt-1 block text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-white/85">
+                          WhatsApp seller
+                        </span>
                       </button>
-                    ))}
 
-                    {currentShop && isLoggedIn ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={showSecurityModal}
-                          disabled={!currentShop.whatsapp || stockCount <= 0}
-                          title={stockCount > 0 ? "Contact seller on WhatsApp" : "Out of stock"}
-                          className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-md bg-[#25D366] text-[1.4rem] text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-                        >
-                          <FaWhatsapp />
-                        </button>
+                      <button
+                        type="button"
+                        onClick={callMerchant}
+                        disabled={!isLoggedIn || !currentShop.phone || stockCount <= 0}
+                        title={stockCount > 0 ? "Call seller" : "Out of stock"}
+                        className="group relative min-h-[86px] overflow-hidden rounded-[24px] bg-gradient-to-br from-[#0F7285] via-[#007185] to-[#083344] px-3 py-4 text-center text-white shadow-[0_16px_30px_rgba(0,113,133,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_38px_rgba(0,113,133,0.32)] disabled:cursor-not-allowed disabled:from-slate-300 disabled:via-slate-300 disabled:to-slate-400 disabled:shadow-none"
+                      >
+                        <span className="absolute right-4 top-4 flex gap-1">
+                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/85" />
+                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/75 [animation-delay:120ms]" />
+                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/65 [animation-delay:240ms]" />
+                        </span>
+                        <span className="absolute -left-5 bottom-0 h-20 w-20 rounded-full bg-white/10 blur-xl transition group-hover:scale-125" />
+                        <span className="relative flex items-center justify-center gap-2 text-[1.05rem] font-black">
+                          <FaPhone className="text-[1.2rem]" />
+                          Call
+                        </span>
+                        <span className="relative mt-1 block text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-white/85">
+                          Call seller now
+                        </span>
+                      </button>
+                    </div>
 
-                        <button
-                          type="button"
-                          onClick={callMerchant}
-                          disabled={!currentShop.phone || stockCount <= 0}
-                          title={stockCount > 0 ? "Call seller" : "Out of stock"}
-                          className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-md bg-[#007185] text-[1.2rem] text-white transition hover:bg-[#005A6A] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-                        >
-                          <FaPhone />
-                        </button>
-                      </>
-                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!currentShop?.id) return
+                        const repoSuffix = isPublicRepoMode ? buildRepoSearchQuerySuffix(repoRef) : ""
+                        navigate(`/shop-detail?id=${currentShop.id}${repoSuffix}`)
+                      }}
+                      className="mt-3 w-full rounded-[24px] border border-pink-100 bg-gradient-to-br from-white via-pink-50/70 to-orange-50 px-4 py-4 text-left shadow-[0_12px_28px_rgba(15,23,42,0.07)] transition hover:-translate-y-0.5 hover:border-pink-200 hover:shadow-[0_16px_34px_rgba(219,39,119,0.12)]"
+                    >
+                      <span className="flex items-center gap-2 text-[1rem] font-black text-pink-700">
+                        <FaStore />
+                        Visit shop
+                      </span>
+                      <span className="mt-1 flex items-start gap-2 text-[0.82rem] font-semibold leading-5 text-slate-600">
+                        <FaLocationDot className="mt-1 shrink-0 text-pink-500" />
+                        {currentShop.address || "Address not provided."}
+                      </span>
+                    </button>
                   </div>
                 ) : null}
               </div>
