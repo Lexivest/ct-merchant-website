@@ -9,6 +9,42 @@ if (isMissingConfig) {
   console.error("Critical Error: Supabase environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) are missing.")
 }
 
+const memoryAuthStorage = new Map()
+
+const perWindowAuthStorage = {
+  getItem(key) {
+    try {
+      if (typeof window !== "undefined" && window.sessionStorage) {
+        return window.sessionStorage.getItem(key)
+      }
+    } catch {
+      // Some privacy modes can block Web Storage; use memory for this window.
+    }
+    return memoryAuthStorage.get(key) || null
+  },
+  setItem(key, value) {
+    try {
+      if (typeof window !== "undefined" && window.sessionStorage) {
+        window.sessionStorage.setItem(key, value)
+        return
+      }
+    } catch {
+      // Some privacy modes can block Web Storage; use memory for this window.
+    }
+    memoryAuthStorage.set(key, value)
+  },
+  removeItem(key) {
+    try {
+      if (typeof window !== "undefined" && window.sessionStorage) {
+        window.sessionStorage.removeItem(key)
+      }
+    } catch {
+      // Some privacy modes can block Web Storage; use memory for this window.
+    }
+    memoryAuthStorage.delete(key)
+  },
+}
+
 // Create a proxy that throws a helpful error if any property is accessed 
 // when the configuration is missing. This prevents the top-level crash.
 const createMockSupabase = () => {
@@ -41,5 +77,6 @@ export const supabase = isMissingConfig
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        storage: perWindowAuthStorage,
       },
     })

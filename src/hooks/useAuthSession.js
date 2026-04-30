@@ -60,6 +60,17 @@ function readCachedProfile(userId) {
   return null
 }
 
+function getWindowSessionStorage() {
+  try {
+    if (typeof window !== "undefined" && window.sessionStorage) {
+      return window.sessionStorage
+    }
+  } catch {
+    // Session storage may be blocked by strict privacy settings.
+  }
+  return null
+}
+
 function writeCachedProfile(userId, profile) {
   if (!userId || !profile) return
   try {
@@ -67,11 +78,16 @@ function writeCachedProfile(userId, profile) {
       const storage = window.localStorage
       if (storage) {
         storage.setItem(getProfileCacheKey(userId), JSON.stringify(profile))
-        storage.setItem(PROFILE_CACHE_ACTIVE_USER_KEY, userId)
       }
     }
   } catch (error) {
     console.warn("Storage write blocked:", error.message)
+  }
+
+  try {
+    getWindowSessionStorage()?.setItem(PROFILE_CACHE_ACTIVE_USER_KEY, userId)
+  } catch (error) {
+    console.warn("Session storage write blocked:", error.message)
   }
 }
 
@@ -82,40 +98,46 @@ function clearCachedProfile(userId) {
       if (storage) {
         if (userId) {
           storage.removeItem(getProfileCacheKey(userId))
-          const activeUserId = storage.getItem(PROFILE_CACHE_ACTIVE_USER_KEY)
-          if (activeUserId === userId) {
-            storage.removeItem(PROFILE_CACHE_ACTIVE_USER_KEY)
-          }
-          return
         }
 
-        const keysToRemove = []
-        for (let i = 0; i < storage.length; i++) {
-          const key = storage.key(i)
-          if (key && key.startsWith(PROFILE_CACHE_KEY_PREFIX)) {
-            keysToRemove.push(key)
+        if (!userId) {
+          const keysToRemove = []
+          for (let i = 0; i < storage.length; i++) {
+            const key = storage.key(i)
+            if (key && key.startsWith(PROFILE_CACHE_KEY_PREFIX)) {
+              keysToRemove.push(key)
+            }
           }
+          keysToRemove.forEach((key) => storage.removeItem(key))
         }
-        keysToRemove.forEach((key) => storage.removeItem(key))
-        storage.removeItem(PROFILE_CACHE_ACTIVE_USER_KEY)
       }
     }
   } catch (error) {
     console.warn("Storage clear blocked:", error.message)
   }
+
+  try {
+    const sessionStorage = getWindowSessionStorage()
+    if (sessionStorage) {
+      const activeUserId = sessionStorage.getItem(PROFILE_CACHE_ACTIVE_USER_KEY)
+      if (!userId || activeUserId === userId) {
+        sessionStorage.removeItem(PROFILE_CACHE_ACTIVE_USER_KEY)
+      }
+    }
+  } catch (error) {
+    console.warn("Session storage clear blocked:", error.message)
+  }
 }
 
 function readAuthSnapshot() {
   try {
-    if (typeof window !== "undefined") {
-      const storage = window.localStorage
-      if (storage) {
-        const raw = storage.getItem(AUTH_SNAPSHOT_KEY)
-        if (!raw) return null
-        const parsed = JSON.parse(raw)
-        if (!parsed || !parsed.user?.id) return null
-        return parsed
-      }
+    const storage = getWindowSessionStorage()
+    if (storage) {
+      const raw = storage.getItem(AUTH_SNAPSHOT_KEY)
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      if (!parsed || !parsed.user?.id) return null
+      return parsed
     }
   } catch (error) {
     console.warn("Auth snapshot read blocked:", error.message)
@@ -126,18 +148,16 @@ function readAuthSnapshot() {
 function writeAuthSnapshot(snapshot) {
   if (!snapshot?.user?.id) return
   try {
-    if (typeof window !== "undefined") {
-      const storage = window.localStorage
-      if (storage) {
-        const payload = {
-          session: snapshot.session || null,
-          user: snapshot.user,
-          profile: snapshot.profile || null,
-          suspended: Boolean(snapshot.suspended),
-          updatedAt: Date.now(),
-        }
-        storage.setItem(AUTH_SNAPSHOT_KEY, JSON.stringify(payload))
+    const storage = getWindowSessionStorage()
+    if (storage) {
+      const payload = {
+        session: snapshot.session || null,
+        user: snapshot.user,
+        profile: snapshot.profile || null,
+        suspended: Boolean(snapshot.suspended),
+        updatedAt: Date.now(),
       }
+      storage.setItem(AUTH_SNAPSHOT_KEY, JSON.stringify(payload))
     }
   } catch (error) {
     console.warn("Auth snapshot write blocked:", error.message)
@@ -146,11 +166,9 @@ function writeAuthSnapshot(snapshot) {
 
 function clearAuthSnapshot() {
   try {
-    if (typeof window !== "undefined") {
-      const storage = window.localStorage
-      if (storage) {
-        storage.removeItem(AUTH_SNAPSHOT_KEY)
-      }
+    const storage = getWindowSessionStorage()
+    if (storage) {
+      storage.removeItem(AUTH_SNAPSHOT_KEY)
     }
   } catch (error) {
     console.warn("Auth snapshot clear blocked:", error.message)
@@ -220,9 +238,7 @@ function useAuthSession() {
     let activeCachedUserId = authSnapshot?.user?.id || null
     if (!activeCachedUserId) {
       try {
-        if (typeof localStorage !== "undefined") {
-          activeCachedUserId = localStorage.getItem(PROFILE_CACHE_ACTIVE_USER_KEY)
-        }
+        activeCachedUserId = getWindowSessionStorage()?.getItem(PROFILE_CACHE_ACTIVE_USER_KEY) || null
       } catch {
         // ignore
       }
