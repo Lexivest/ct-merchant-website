@@ -5,7 +5,6 @@ import "cropperjs/dist/cropper.css";
 import {
   FaArrowLeft,
   FaCamera,
-  FaCheck,
   FaChevronDown,
   FaCircleNotch,
   FaExpand,
@@ -41,6 +40,7 @@ import {
   optimizeImageForEditor,
   padImageToAspectDataUrl,
 } from "../../lib/imagePipeline";
+import { prepareVendorRouteTransition } from "../../lib/vendorRouteTransitions";
 
 const PRODUCT_RULE = UPLOAD_RULES.products;
 const PRODUCT_PROFILE = IMAGE_PROFILES.product;
@@ -183,9 +183,6 @@ export default function EditProduct() {
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMode, setSuccessMode] = useState("update"); // 'update' | 'delete'
-
   const [productData, setProductData] = useState(() => prefetchedData?.productData || null);
   const [activeOffersCount, setActiveOffersCount] = useState(() => prefetchedData?.activeOffersCount || 0);
   const [categoryRows, setCategoryRows] = useState(() => prefetchedData?.categoryRows || []);
@@ -750,7 +747,7 @@ export default function EditProduct() {
 
       const { data: latestProduct, error: latestProductError } = await supabase
         .from("products")
-        .select("image_url, image_url_2, image_url_3")
+        .select("shop_id, image_url, image_url_2, image_url_3")
         .eq("id", productId)
         .maybeSingle();
 
@@ -766,10 +763,34 @@ export default function EditProduct() {
       
       const { error } = await supabase.from('products').delete().eq('id', productId);
       if (error) throw error;
+
+      const nextPath = `/merchant-add-product?shop_id=${encodeURIComponent(latestProduct.shop_id)}`;
+      let prefetchedAddProductData = null;
+
+      try {
+        prefetchedAddProductData = await prepareVendorRouteTransition({
+          path: nextPath,
+          userId: user.id,
+          shopId: latestProduct.shop_id,
+        });
+      } catch (transitionError) {
+        console.warn("Add product prefetch after delete failed:", transitionError);
+      }
       
-      setSuccessMode("delete");
-      setShowSuccess(true);
-      setTimeout(() => navigate("/vendor-panel"), 2500);
+      notify({
+        type: "success",
+        title: "Product deleted",
+        message: "The product and its images have been removed. You can add a new product now.",
+      });
+
+      navigate(nextPath, {
+        replace: true,
+        state: {
+          fromVendorTransition: true,
+          prefetchedData: prefetchedAddProductData,
+          verifiedSubscriptionActive: true,
+        },
+      });
 
     } catch (err) {
       notify({ type: "error", title: "Delete failed", message: getFriendlyErrorMessage(err, "Failed to delete product.") });
@@ -1187,25 +1208,6 @@ export default function EditProduct() {
         onCapture={handleCameraCapture}
       />
 
-      {/* SUCCESS MODAL (Handles both Update and Delete States) */}
-      {showSuccess && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-[rgba(15,23,42,0.95)] backdrop-blur-sm">
-          <div className="w-[90%] max-w-[420px] animate-[scaleUp_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] rounded-[28px] bg-white p-10 text-center shadow-2xl">
-            <div className={`mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full ${successMode === 'delete' ? 'bg-[#FEE2E2]' : 'bg-[#D1FAE5]'}`}>
-              {successMode === 'delete' ? <FaTrashCan className="text-4xl text-[#DC2626]" /> : <FaCheck className="text-4xl text-[#10B981]" />}
-            </div>
-            <h2 className={`mb-2 text-[1.6rem] font-extrabold ${successMode === 'delete' ? 'text-[#991B1B]' : 'text-[#1F2937]'}`}>
-              {successMode === 'delete' ? 'Product Deleted' : 'Update Successful!'}
-            </h2>
-            <p className="mb-6 font-medium text-[#6B7280]">
-              {successMode === 'delete' ? 'This product has been permanently removed from your shop.' : 'Your product has been updated and resubmitted for approval.'}
-            </p>
-            <div className={`mx-auto h-7 w-7 animate-spin rounded-full border-4 ${successMode === 'delete' ? 'border-[#DC2626]/30 border-t-[#DC2626]' : 'border-[#db2777]/30 border-t-[#db2777]'}`}></div>
-            <p className={`mt-4 text-[0.8rem] font-bold ${successMode === 'delete' ? 'text-[#565959]' : 'text-[#db2777]'}`}>Redirecting to dashboard...</p>
-          </div>
-          <style dangerouslySetInnerHTML={{ __html: "@keyframes scaleUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }" }} />
-        </div>
-      )}
     </div>
   );
 }
