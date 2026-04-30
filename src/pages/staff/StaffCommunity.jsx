@@ -488,7 +488,7 @@ export default function StaffCommunity() {
 
       {selectedCommentThread ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4">
-          <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
+          <div className="max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
               <div>
                 <h3 className="text-lg font-bold text-slate-900">Community Thread Review</h3>
@@ -505,7 +505,7 @@ export default function StaffCommunity() {
               </button>
             </div>
 
-            <div className="grid gap-6 p-6 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="grid gap-6 p-4 sm:p-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
               <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
                 {selectedCommentThread.comments.map((comment) => (
                   <div
@@ -560,21 +560,21 @@ export default function StaffCommunity() {
                         className="min-h-[84px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 outline-none transition focus:border-pink-300 focus:ring-4 focus:ring-pink-100"
                       />
 
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button type="button" onClick={() => moderateComment(comment, "approved")} disabled={moderatingCommentId === comment.id} className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-green-700 disabled:opacity-60">
+                      <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+                        <button type="button" onClick={() => moderateComment(comment, "approved")} disabled={moderatingCommentId === comment.id} className="inline-flex h-10 min-w-[96px] items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-green-700 disabled:opacity-60">
                           {moderatingCommentId === comment.id ? <FaCircleNotch className="animate-spin" /> : <FaCircleCheck />} Approve
                         </button>
-                        <button type="button" onClick={() => moderateComment(comment, "hidden")} disabled={moderatingCommentId === comment.id} className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-900 disabled:opacity-60">
+                        <button type="button" onClick={() => moderateComment(comment, "hidden")} disabled={moderatingCommentId === comment.id} className="inline-flex h-10 min-w-[96px] items-center justify-center rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-900 disabled:opacity-60">
                           Hide
                         </button>
-                        <button type="button" onClick={() => moderateComment(comment, "rejected")} disabled={moderatingCommentId === comment.id} className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-rose-700 disabled:opacity-60">
+                        <button type="button" onClick={() => moderateComment(comment, "rejected")} disabled={moderatingCommentId === comment.id} className="inline-flex h-10 min-w-[96px] items-center justify-center rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-rose-700 disabled:opacity-60">
                           Reject
                         </button>
                         <button
                           type="button"
                           onClick={() => deleteComment(comment, selectedCommentThread)}
                           disabled={deletingCommentId === comment.id}
-                          className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-50 disabled:opacity-60"
+                          className="inline-flex h-10 min-w-[96px] items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-50 disabled:opacity-60"
                         >
                           {deletingCommentId === comment.id ? <FaCircleNotch className="animate-spin" /> : <FaTrashCan />}
                           Delete
