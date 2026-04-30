@@ -3,8 +3,10 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
   FaChevronRight,
+  FaCircleCheck,
   FaStoreSlash,
   FaLayerGroup,
+  FaLocationDot,
 } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
@@ -56,7 +58,7 @@ function Cat() {
     const resolvedCityId = normalizePositiveId(profile?.city_id)
 
     if (!user || !catName || !resolvedCityId) {
-      return { shops: [], products: [] }
+      return { shops: [] }
     }
 
     const { data: shopsData, error: shopsError } = await supabase
@@ -70,21 +72,7 @@ function Cat() {
 
     if (shopsError) throw shopsError
 
-    let productsData = []
-    if ((shopsData || []).length > 0) {
-      const shopIds = shopsData.map((shop) => shop.id)
-      const { data: prods, error: productsError } = await supabase
-        .from("products")
-        .select("*")
-        .in("shop_id", shopIds)
-        .eq("is_available", true)
-        .limit(300)
-
-      if (productsError) throw productsError
-      productsData = prods || []
-    }
-
-    return { shops: shopsData || [], products: productsData }
+    return { shops: shopsData || [] }
   }
 
   // 3. Smart Caching Hook
@@ -108,76 +96,17 @@ function Cat() {
   )
 
   const shops = data?.shops || []
-  const products = data?.products || []
 
-  function buildShopGrid(shop) {
-    const p = products
-      .filter((x) => x.shop_id === shop.id && x.image_url && x.condition !== "Fairly Used")
-      .slice(0, 4)
+  function getDisplayImage(shop) {
+    if (shop?.image_url) return shop.image_url
+    if (shop?.store_front_url) return shop.store_front_url
+    if (Array.isArray(shop?.banners) && shop.banners.length > 0) return shop.banners[0]
+    return ""
+  }
 
-    const items = []
-
-    for (let i = 0; i < 4; i += 1) {
-      if (i < p.length) {
-        const item = p[i]
-        const prodName = item.name || item.product_name || item.title || "Product"
-        const price = item.price || item.product_price
-        const discount = item.discount_price
-        const hasDiscount = discount && discount < price
-        const percent = hasDiscount ? Math.round(((price - discount) / price) * 100) : 0
-
-        items.push(
-          <div key={`${shop.id}-${i}`} className="flex w-full flex-col gap-1 overflow-hidden">
-            <div className="relative block aspect-square overflow-hidden rounded bg-[#F7F7F7]">
-              <StableImage
-                src={item.image_url}
-                alt={prodName}
-                containerClassName="h-full w-full bg-[#F7F7F7]"
-                className="h-full w-full object-cover"
-              />
-              {hasDiscount ? (
-                <div className="absolute left-1 top-1 rounded bg-[#DC2626] px-1 py-[2px] text-[0.65rem] font-extrabold text-white">
-                  -{percent}%
-                </div>
-              ) : null}
-            </div>
-            <div className="flex flex-col">
-              <div className="truncate text-[0.75rem] font-medium text-[#0F1111]" title={prodName}>
-                {prodName}
-              </div>
-              <div className="truncate text-[0.8rem] font-extrabold text-pink-600">
-                {hasDiscount ? (
-                  <>
-                    <span className="mr-1 text-[0.65rem] font-medium text-[#888C8C] line-through">
-                      ₦{Number(price).toLocaleString()}
-                    </span>
-                    ₦{Number(discount).toLocaleString()}
-                  </>
-                ) : price ? (
-                  `₦${Number(price).toLocaleString()}`
-                ) : (
-                  ""
-                )}
-              </div>
-            </div>
-          </div>
-        )
-      } else {
-        items.push(
-          <div key={`${shop.id}-empty-${i}`} className="flex w-full flex-col gap-1 overflow-hidden">
-            <div className="flex aspect-square items-center justify-center rounded border border-dashed border-[#D5D9D9] bg-[#F7F7F7]">
-              <span className="text-[1.2rem] text-[#E5E7EB]">🖼</span>
-            </div>
-            <div className="select-none text-transparent">
-              <div className="text-[0.75rem]">-</div>
-              <div className="text-[0.8rem]">-</div>
-            </div>
-          </div>
-        )
-      }
-    }
-
-    return items
+  function getDisplayId(shop) {
+    const rawId = String(shop?.unique_id || "N/A")
+    return rawId.includes("-") ? rawId.split("-").pop() : rawId
   }
 
   async function openShopWithTransition(shopId) {
@@ -232,7 +161,7 @@ function Cat() {
         }
       />
       <div
-        className={`min-h-screen bg-[#F3F4F6] text-[#0F1111] ${
+        className={`flex h-screen flex-col bg-[#F3F4F6] text-[#0F1111] ${
           transitionState.pending ? "pointer-events-none select-none" : ""
         }`}
       >
@@ -252,7 +181,7 @@ function Cat() {
         noindex
       />
       <header className="sticky top-0 z-50 bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
-        <div className="mx-auto flex w-full max-w-[1200px] items-center gap-4 px-4 py-3">
+        <div className="mx-auto flex w-full max-w-[800px] items-center gap-4 px-4 py-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
@@ -267,7 +196,7 @@ function Cat() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[1200px] flex-1 px-5 py-6">
+      <main className="mx-auto w-full max-w-[800px] flex-1 overflow-y-auto px-4 py-5">
         {isRevalidating ? (
           <div className="mb-4 inline-flex rounded-full bg-slate-900 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.16em] text-white">
             Updating category...
@@ -317,31 +246,60 @@ function Cat() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
-                {shops.map((shop) => (
-                  <div key={shop.id} className="flex flex-col">
-                    <div
-                      onClick={() => openShopWithTransition(shop.id)}
-                      className="flex h-full cursor-pointer flex-col rounded-lg border border-[#D5D9D9] bg-white px-5 py-6 transition hover:translate-y-[-2px] hover:border-[#B0B5B5] hover:bg-[#Fcfcfc] hover:shadow-[0_8px_16px_rgba(0,0,0,0.08)]"
-                    >
-                      <div className="mb-4 line-clamp-2 text-[1.15rem] font-extrabold leading-[1.2] text-[#0F1111]">
-                        {shop.name}
-                        <span className="ml-1 text-[0.9rem] text-[#007185]" title="Verified">
-                          ✓
+              shops.map((shop) => {
+                const imageUrl = getDisplayImage(shop)
+                const displayId = getDisplayId(shop)
+
+                return (
+                  <div
+                    key={shop.id}
+                    onClick={() => openShopWithTransition(shop.id)}
+                    className="mb-3 flex cursor-pointer items-center gap-4 rounded-lg border border-[#D5D9D9] bg-white p-4 shadow-[0_2px_4px_rgba(0,0,0,0.02)] transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-[0_4px_10px_rgba(0,0,0,0.08)] active:scale-[0.98]"
+                  >
+                    {imageUrl ? (
+                      <StableImage
+                        src={imageUrl}
+                        alt={shop.name}
+                        containerClassName="h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white"
+                        className="h-full w-full object-contain p-1"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-pink-200 bg-pink-50 text-[1.4rem] font-extrabold text-pink-600">
+                        {String(shop?.name || "S").charAt(0).toUpperCase()}
+                      </div>
+                    )}
+
+                    <div className="min-w-0 flex-1 overflow-hidden">
+                      <div className="mb-1.5 flex items-center gap-1.5">
+                        <span className="truncate text-[1.05rem] font-extrabold text-[#0F1111]">
+                          {shop.name}
                         </span>
+                        {shop.is_verified ? (
+                          <FaCircleCheck className="shrink-0 text-[0.9rem] text-[#007185]" title="Verified" />
+                        ) : null}
                       </div>
 
-                      <div className="mb-5 grid grid-cols-2 gap-3">
-                        {buildShopGrid(shop)}
+                      <div className="mb-1.5 flex items-center gap-2">
+                        <span className="rounded bg-pink-50 px-2 py-1 text-[0.7rem] font-bold text-pink-600">
+                          {shop.category || "Uncategorized"}
+                        </span>
+                        {shop.is_verified ? (
+                          <span className="text-[0.75rem] font-semibold text-slate-500">
+                            ID: {displayId}
+                          </span>
+                        ) : null}
                       </div>
 
-                      <div className="mt-auto inline-flex items-center gap-1 text-[0.85rem] font-semibold text-[#007185]">
-                        Visit shop <FaChevronRight className="text-[0.75rem]" />
+                      <div className="truncate text-[0.85rem] font-medium text-slate-500">
+                        <FaLocationDot className="mr-1 inline text-slate-400" />
+                        {shop.address || "No address"}
                       </div>
                     </div>
+
+                    <FaChevronRight className="shrink-0 text-[1.1rem] text-slate-300" />
                   </div>
-                ))}
-              </div>
+                )
+              })
             )}
           </>
         )}
