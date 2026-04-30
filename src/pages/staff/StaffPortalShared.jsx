@@ -8,6 +8,7 @@ import {
   FaShieldHalved,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
+import { signOutUser } from "../../lib/auth"
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen"
 import { resolveStaffAccess, withStaffAuthTimeout } from "../../lib/staffAuth"
 
@@ -293,7 +294,7 @@ export function useStaffPortalSession() {
         const staffAccess = await resolveStaffAccess(session.user.id)
 
         if (!staffAccess) {
-          await supabase.auth.signOut()
+          await signOutUser()
           navigate("/staff-portal", { replace: true })
           return
         }
@@ -328,7 +329,7 @@ export function useStaffPortalSession() {
       authUser: null,
       staffData: null,
     }
-    await supabase.auth.signOut()
+    await signOutUser()
     navigate("/staff-portal", { replace: true })
   }
 

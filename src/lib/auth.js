@@ -82,13 +82,13 @@ export async function stampProfileFootprint(userId, { silent = true } = {}) {
   }
 }
 
-// Upgraded to act as the Global Logout & Cache Cleaner
+// Current-window logout and cache cleaner.
 export async function signOutUser() {
   let signOutError = null
 
   try {
-    // 1. Invalidate session on the server
-    await supabase.auth.signOut()
+    // 1. Remove only this browser window's Supabase session.
+    await supabase.auth.signOut({ scope: "local" })
   } catch (error) {
     signOutError = error
     console.error("Error during logout:", error)

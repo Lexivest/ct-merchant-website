@@ -10,6 +10,42 @@ if (isMissingConfig) {
 }
 
 const memoryAuthStorage = new Map()
+const AUTH_WINDOW_ID_KEY = "ctmerchant_auth_window_id"
+
+function createWindowAuthId() {
+  try {
+    if (globalThis.crypto?.randomUUID) {
+      return globalThis.crypto.randomUUID()
+    }
+  } catch {
+    // Fall back below when Web Crypto is unavailable.
+  }
+  return `${Date.now()}_${Math.random().toString(36).slice(2, 12)}`
+}
+
+function getWindowAuthStorageKey() {
+  const fallbackKey = "ctmerchant-auth-memory"
+
+  try {
+    if (typeof window !== "undefined" && window.sessionStorage) {
+      let windowId = window.sessionStorage.getItem(AUTH_WINDOW_ID_KEY)
+      if (!windowId) {
+        windowId = createWindowAuthId()
+        window.sessionStorage.setItem(AUTH_WINDOW_ID_KEY, windowId)
+      }
+      return `ctmerchant-auth-${windowId}`
+    }
+  } catch {
+    // Some privacy modes can block Web Storage; use memory for this window.
+  }
+
+  if (!memoryAuthStorage.has(AUTH_WINDOW_ID_KEY)) {
+    memoryAuthStorage.set(AUTH_WINDOW_ID_KEY, createWindowAuthId())
+  }
+  return `ctmerchant-auth-${memoryAuthStorage.get(AUTH_WINDOW_ID_KEY) || fallbackKey}`
+}
+
+const authStorageKey = getWindowAuthStorageKey()
 
 const perWindowAuthStorage = {
   getItem(key) {
@@ -77,6 +113,7 @@ export const supabase = isMissingConfig
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        storageKey: authStorageKey,
         storage: perWindowAuthStorage,
       },
     })
