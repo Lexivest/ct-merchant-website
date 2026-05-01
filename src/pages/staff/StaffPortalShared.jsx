@@ -9,6 +9,7 @@ import {
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { signOutUser } from "../../lib/auth"
+import BrandText from "../../components/common/BrandText"
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen"
 import { resolveStaffAccess, withStaffAuthTimeout } from "../../lib/staffAuth"
 
@@ -664,7 +665,7 @@ export function StaffPortalShell({
         <div className="flex items-center gap-3">
           <FaShieldHalved className="text-2xl text-[#DB2777]" />
           <h1 className="text-lg font-bold tracking-wide">
-            CTMerchant <span className="text-[#DB2777]">Staff</span>
+            <BrandText /> <span className="text-[#DB2777]">Staff</span>
           </h1>
         </div>
         <div className="flex items-center gap-2">

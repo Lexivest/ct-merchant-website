@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
+import BrandText, { renderBrandedText } from "../components/common/BrandText"
 import PageSeo from "../components/common/PageSeo"
 
 const jobs = [
@@ -158,7 +159,7 @@ function Careers() {
                       Careers
                     </p>
                     <h1 className="text-xl font-extrabold md:text-2xl">
-                      Join CTMerchant
+                      Join <BrandText />
                     </h1>
                   </div>
                 </div>
@@ -194,7 +195,7 @@ function Careers() {
                         Build Digital Infrastructure
                       </h2>
                       <p className="mt-2 text-sm leading-7 text-slate-600 md:text-[15px]">
-                        At CTMerchant, we are building a trusted digital
+                        At <BrandText />, we are building a trusted digital
                         repository of real physical businesses within cities.
                         Join a team focused on mapping, structuring, and
                         maintaining accurate commercial data.
@@ -240,7 +241,7 @@ function Careers() {
                       <div className="flex flex-col gap-5 rounded-[22px] border border-pink-100 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex flex-col gap-3">
                           <h3 className="text-lg font-extrabold text-slate-900">
-                            {job.title}
+                            {renderBrandedText(job.title)}
                           </h3>
 
                           <div className="flex flex-wrap gap-3 text-sm font-semibold text-slate-600">
@@ -318,13 +319,13 @@ function Careers() {
 
           <p className="mt-2 text-center text-sm font-bold text-slate-700">
             Role:{" "}
-            <span className="text-pink-600">
-              {selectedJob}
+            <span className="text-slate-900">
+              {renderBrandedText(selectedJob)}
             </span>
           </p>
 
           <p className="mt-4 text-center text-sm leading-7 text-slate-600">
-            Thank you for your interest in joining CTMerchant. We have reached
+            Thank you for your interest in joining <BrandText />. We have reached
             our current intake capacity for this position. Please check back
             soon or follow our updates for future opportunities.
           </p>

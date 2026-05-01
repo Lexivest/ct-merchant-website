@@ -10,6 +10,7 @@ import { FaEnvelope, FaUser, FaPhone, FaCircleInfo, FaGlobe, FaBullhorn, FaCircl
 import { supabase } from "../lib/supabase"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
+import BrandText from "../components/common/BrandText"
 import { clampWords, getWordLimitError } from "../lib/textLimits"
 import WordLimitCounter from "../components/common/WordLimitCounter"
 
@@ -159,7 +160,7 @@ function Affiliate() {
             </div>
             <h1 className="text-3xl font-black text-slate-900 md:text-4xl">Submission Successful!</h1>
             <p className="mt-4 text-lg font-medium leading-relaxed text-slate-600">
-              Thank you for applying to the CTMerchant Affiliate Program. Our team will review your application and you will be contacted via email when shortlisted.
+              Thank you for applying to the <BrandText /> Affiliate Program. Our team will review your application and you will be contacted via email when shortlisted.
             </p>
             <div className="mt-10">
               <button
@@ -217,7 +218,7 @@ function Affiliate() {
                 <div className="mb-8">
                   <h2 className="text-lg font-black text-slate-900">Affiliate Application Form</h2>
                   <p className="mt-1 text-sm font-medium text-slate-500">
-                    Tell us about yourself and how you plan to help grow the CTMerchant ecosystem.
+                    Tell us about yourself and how you plan to help grow the <BrandText /> ecosystem.
                   </p>
                 </div>
 
@@ -331,7 +332,7 @@ function Affiliate() {
                     </h3>
                     <div>
                       <div className="mb-2 flex items-center justify-between gap-3">
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500">How do you plan to promote CTMerchant?</label>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500">How do you plan to promote <BrandText />?</label>
                         <WordLimitCounter value={formData.promotionPlan} limit={AFFILIATE_WORD_LIMITS.promotionPlan} />
                       </div>
                       <textarea

@@ -10,6 +10,7 @@ import {
 } from "react"
 import { FaXmark } from "react-icons/fa6"
 import ctmLogo from "../../assets/images/logo.jpg"
+import BrandText, { renderBrandedText } from "./BrandText"
 import StableImage from "./StableImage"
 
 const GlobalFeedbackContext = createContext(null)
@@ -126,7 +127,9 @@ function GlobalFeedbackModal({ item, onClose }) {
                   : "bg-sky-400"
             }`}
           />
-          <p className="flex-1 text-[13px] font-black leading-tight">{item.message}</p>
+          <p className="flex-1 text-[13px] font-black leading-tight">
+            {renderBrandedText(item.message)}
+          </p>
           <button
             type="button"
             onClick={() => onClose(true)}
@@ -170,8 +173,12 @@ function GlobalFeedbackModal({ item, onClose }) {
             loading="eager"
           />
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.13em] text-slate-500">CTMerchant</p>
-            <h3 className="text-lg font-black text-slate-900">{item.title}</h3>
+            <p className="text-xs font-bold uppercase tracking-[0.13em] text-slate-500">
+              <BrandText />
+            </p>
+            <h3 className="text-lg font-black text-slate-900">
+              {renderBrandedText(item.title)}
+            </h3>
           </div>
         </div>
 
@@ -180,7 +187,7 @@ function GlobalFeedbackModal({ item, onClose }) {
         </div>
 
         <p className="mb-6 whitespace-pre-line text-sm leading-6 text-slate-700">
-          {item.message || "Operation completed."}
+          {renderBrandedText(item.message || "Operation completed.")}
         </p>
 
         {isPrompt ? (

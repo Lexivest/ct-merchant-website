@@ -34,6 +34,7 @@ import {
 } from "../../lib/persistentDrafts";
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 import { IMAGE_PROFILES } from "../../lib/imageProfiles";
+import { drawBrandedCanvasText } from "../../lib/brandCanvas";
 import {
   loadProductCategoryRows,
   resolveProductCategoryGroup,
@@ -573,7 +574,9 @@ export default function AddProduct() {
     ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    ctx.fillText("CTMerchant", PRODUCT_PROFILE.targetWidth - 20, PRODUCT_PROFILE.targetHeight - 20);
+    drawBrandedCanvasText(ctx, "CTMerchant", PRODUCT_PROFILE.targetWidth - 20, PRODUCT_PROFILE.targetHeight - 20, {
+      baseColor: "rgba(255, 255, 255, 0.45)",
+    });
 
     try {
       const blob = await canvasToBlobWithMaxBytes(finalCanvas, {

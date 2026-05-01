@@ -36,7 +36,7 @@ if (typeof window !== "undefined") {
     if (root && !root.hasChildNodes()) {
       root.innerHTML = `
         <div style="padding: 24px; font-family: sans-serif; text-align: center; color: #333;">
-          <h1 style="color: #db2777;">CTMerchant Error</h1>
+          <h1><span style="color: #db2777;">C</span><span style="color: #4c1d95;">T</span><span style="color: #2563eb;">M</span>erchant Error</h1>
           <p>The application encountered a critical startup error.</p>
           <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; font-family: monospace; text-align: left; font-size: 12px; margin-top: 20px; border: 1px solid #e2e8f0; overflow: auto;">
             <strong>${escapeHtml(errorName)}:</strong> ${escapeHtml(errorMessage)}

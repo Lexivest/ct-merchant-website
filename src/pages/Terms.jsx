@@ -1,5 +1,6 @@
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
+import BrandText from "../components/common/BrandText"
 import PageSeo from "../components/common/PageSeo"
 
 function Terms() {
@@ -91,7 +92,7 @@ function Terms() {
                         Legal Agreement
                       </h2>
                       <p className="mt-2 text-sm leading-7 text-slate-600 md:text-[15px]">
-                        These terms govern access to and use of the CTMerchant
+                        These terms govern access to and use of the <BrandText />
                         digital repository platform. By accessing or using the
                         platform, you agree to these Terms of Use.
                       </p>
@@ -122,7 +123,7 @@ function Terms() {
                   }
                 >
                   <p className="text-sm leading-7 text-slate-600 md:text-[15px]">
-                    CTMerchant (“we”, “our”, or “us”) operates a digital
+                    <BrandText /> (“we”, “our”, or “us”) operates a digital
                     repository that lists physical shops, their products, and
                     their locations within a city for discovery and
                     informational purposes only.
@@ -130,11 +131,11 @@ function Terms() {
 
                   <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <p className="text-sm font-extrabold leading-7 text-slate-900">
-                      CTMerchant is not an online marketplace, agent, broker,
+                      <BrandText /> is not an online marketplace, agent, broker,
                       or seller. We do not facilitate payments, deliveries,
                       escrow services, or commercial transactions. All
                       interactions and transactions between users and shops
-                      occur independently of CTMerchant.
+                      occur independently of <BrandText />.
                     </p>
                   </div>
                 </TermCard>
@@ -195,14 +196,14 @@ function Terms() {
                   }
                 >
                   <p className="text-sm leading-7 text-slate-600 md:text-[15px]">
-                    Listings provided on CTMerchant are informational only and
+                    Listings provided on <BrandText /> are informational only and
                     may change at any time without notice. Any request, inquiry,
                     or intent to purchase communicated through the platform or
                     through external apps such as WhatsApp is non-binding.
                   </p>
 
                   <p className="mt-4 text-sm leading-7 text-slate-600 md:text-[15px]">
-                    CTMerchant does not guarantee seller response times,
+                    <BrandText /> does not guarantee seller response times,
                     product availability, or fulfillment of any inquiries made.
                   </p>
                 </TermCard>
@@ -231,7 +232,7 @@ function Terms() {
                       <span className="font-extrabold text-slate-900">
                         Physical Verification:
                       </span>{" "}
-                      CTMerchant performs basic physical verification of a
+                      <BrandText /> performs basic physical verification of a
                       merchant’s existence and location accuracy to support the
                       integrity of the repository. This is intended only to
                       confirm that a listed shop is an active physical entity at
@@ -242,7 +243,7 @@ function Terms() {
                       <span className="font-extrabold text-slate-900">
                         Limitation of Verification:
                       </span>{" "}
-                      While we verify physical existence, CTMerchant does not
+                      While we verify physical existence, <BrandText /> does not
                       audit, certify, or guarantee the quality, safety,
                       authenticity, or legality of any products offered by a
                       merchant. A “Verified” status on the platform relates
@@ -254,7 +255,7 @@ function Terms() {
                       <span className="font-extrabold text-slate-900">
                         Independent Entity:
                       </span>{" "}
-                      CTMerchant is an independent private technology company
+                      <BrandText /> is an independent private technology company
                       and is not affiliated with government or regulatory
                       agencies.
                     </p>
@@ -297,7 +298,7 @@ function Terms() {
                     </div>
 
                     <p className="mt-4 text-sm leading-7 text-slate-600 md:text-[15px]">
-                      To the maximum extent permitted by law, CTMerchant and its
+                      To the maximum extent permitted by law, <BrandText /> and its
                       affiliates shall not be liable for any direct, indirect,
                       incidental, consequential, or punitive damages arising
                       from your use of the platform. Because we do not

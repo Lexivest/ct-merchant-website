@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { FaMobileScreenButton, FaXmark } from "react-icons/fa6"
 
 import usePwaInstall from "../../hooks/usePwaInstall"
+import { renderBrandedText } from "./BrandText"
 import { useGlobalFeedback } from "./GlobalFeedbackProvider"
 
 function PwaAddToHomePrompt() {
@@ -98,10 +99,10 @@ function PwaAddToHomePrompt() {
             Add to Home Screen
           </p>
           <p className="mt-0.5 text-sm font-semibold leading-5 text-slate-700">
-            Keep CTMerchant one tap away on your phone.
+            {renderBrandedText("Keep CTMerchant one tap away on your phone.")}
           </p>
           <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500">
-            {helperText}
+            {renderBrandedText(helperText)}
           </p>
         </div>
 

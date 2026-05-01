@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
+import { renderBrandedText } from "../../components/common/BrandText"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import StableImage from "../../components/common/StableImage"
 import {
@@ -443,7 +444,7 @@ export default function StaffCommunity() {
                         <div className="mt-1 text-xs font-mono text-slate-500">{thread.root.shop_unique_id || "No ID"}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-900">{thread.root.author_name}</div>
+                        <div className="font-semibold text-slate-900">{renderBrandedText(thread.root.author_name)}</div>
                         <div className="mt-1 text-xs text-slate-500">{formatDateTime(thread.root.created_at)}</div>
                       </td>
                       <td className="px-6 py-4">
@@ -529,7 +530,7 @@ export default function StaffCommunity() {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <div className="text-[0.92rem] font-extrabold text-slate-900">{comment.author_name}</div>
+                          <div className="text-[0.92rem] font-extrabold text-slate-900">{renderBrandedText(comment.author_name)}</div>
                           {comment.is_owner_comment ? <span className="rounded-full bg-pink-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-pink-600">Shop Owner</span> : null}
                           <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getCommentStatusBadge(comment.status)}`}>{comment.status}</span>
                           {comment.parent_id ? <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500"><FaReply /> Comment</span> : null}

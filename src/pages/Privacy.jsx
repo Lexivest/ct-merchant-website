@@ -1,5 +1,6 @@
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
+import BrandText from "../components/common/BrandText"
 import PageSeo from "../components/common/PageSeo"
 
 function Privacy() {
@@ -86,7 +87,7 @@ function Privacy() {
                         Data Protection Commitment
                       </h2>
                       <p className="mt-2 text-sm leading-7 text-slate-600 md:text-[15px]">
-                        This policy explains how CTMerchant collects, uses, and
+                        This policy explains how <BrandText /> collects, uses, and
                         protects personal information in compliance with the
                         Nigeria Data Protection Regulation (NDPR) and relevant
                         platform requirements.
@@ -123,7 +124,7 @@ function Privacy() {
                   }
                 >
                   <p className="text-sm leading-7 text-slate-600 md:text-[15px]">
-                    CTMerchant (“we”, “our”, or “us”) operates a digital
+                    <BrandText /> (“we”, “our”, or “us”) operates a digital
                     repository that lists physical shops, products, and
                     locations for discovery and informational purposes only.
                     This Privacy Policy describes how personal data is handled
@@ -219,7 +220,7 @@ function Privacy() {
 
                   <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <p className="text-sm font-extrabold leading-7 text-slate-900">
-                      Important: CTMerchant does not use personal data for
+                      Important: <BrandText /> does not use personal data for
                       payment processing, credit decisions, or direct financial
                       transactions.
                     </p>
@@ -246,7 +247,7 @@ function Privacy() {
                   }
                 >
                   <p className="text-sm leading-7 text-slate-600 md:text-[15px]">
-                    CTMerchant uses local storage and related browser-based
+                    <BrandText /> uses local storage and related browser-based
                     technologies to improve performance, reduce repeated data
                     loads, and support limited usage controls for certain
                     features such as the AI Assistant. These tools are used to
@@ -294,7 +295,7 @@ function Privacy() {
                   }
                 >
                   <p className="text-sm leading-7 text-slate-600 md:text-[15px]">
-                    CTMerchant does not sell your personal data. Information may
+                    <BrandText /> does not sell your personal data. Information may
                     be shared only in the following limited situations:
                   </p>
 

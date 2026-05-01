@@ -28,6 +28,7 @@ import {
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
+import BrandText, { renderBrandedText } from "../components/common/BrandText"
 import { prepareStaffRouteTransition } from "../lib/staffRouteTransitions"
 import { buildStaffAuthProfile } from "../lib/staffAuth"
 import { primeAuthSessionState } from "../hooks/useAuthSession"
@@ -483,7 +484,7 @@ export default function StaffDashboard() {
               </div>
               <div className="min-w-0">
                 <div className="truncate text-sm font-black uppercase tracking-[0.18em] text-white/50">
-                  CTMerchant Staff
+                  <BrandText /> Staff
                 </div>
                 <div className="truncate text-lg font-black">Operations Home</div>
               </div>
@@ -529,10 +530,10 @@ export default function StaffDashboard() {
                     Standalone Staff Workspace
                   </div>
                   <h1 className="mt-6 max-w-3xl text-4xl font-black tracking-[-0.04em] sm:text-5xl lg:text-6xl">
-                    Welcome back, {staffName.split(" ")[0] || "Staff"}.
+                    Welcome back, {renderBrandedText(staffName.split(" ")[0] || "Staff")}.
                   </h1>
                   <p className="mt-5 max-w-2xl text-base font-medium leading-8 text-white/72">
-                    A focused home for CTMerchant staff operations, resources, marketplace controls, and administrative workspaces.
+                    A focused home for <BrandText /> staff operations, resources, marketplace controls, and administrative workspaces.
                   </p>
                 </div>
 

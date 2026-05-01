@@ -16,6 +16,7 @@ import {
 } from "react-icons/fa6"
 import { Suspense, lazy } from "react"
 import { UPLOAD_RULES, getAcceptValue, getRuleLabel } from "../../../lib/uploadRules";
+import { renderBrandedText } from "../../common/BrandText"
 
 const AboutDashboardView = lazy(() => import("../../../features/dashboard/views/AboutDashboardView"))
 const ServicesDashboardView = lazy(() => import("../../../features/dashboard/views/ServicesDashboardView"))
@@ -57,7 +58,7 @@ function ServiceViewFallback({ label = "Loading..." }) {
           <div className="mb-2 h-4 w-28 rounded bg-slate-100" />
           <div className="mb-4 h-8 w-56 rounded bg-slate-200" />
           <div className="h-40 rounded-[24px] border border-slate-200 bg-slate-50" />
-          <p className="mt-4 text-sm font-semibold text-slate-500">{label}</p>
+          <p className="mt-4 text-sm font-semibold text-slate-500">{renderBrandedText(label)}</p>
         </div>
       </div>
     </div>

@@ -1,3 +1,5 @@
+import BrandText from "./BrandText"
+
 function HeaderMarquee() {
   const items = [
     "Repository of shops, products and services.",
@@ -17,7 +19,7 @@ function HeaderMarquee() {
             key={index}
             className="flex shrink-0 items-center gap-2 pr-12 text-[11px] font-extrabold uppercase tracking-wide text-amber-600"
           >
-            <span className="normal-case text-slate-900">CTMerchant</span>
+            <BrandText className="normal-case text-slate-900" />
 
             <div className="flex h-[9px] w-[13px] flex-col overflow-hidden rounded-[1px]">
               <div className="flex-1 bg-green-600"></div>

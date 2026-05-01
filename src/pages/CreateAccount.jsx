@@ -15,6 +15,7 @@ import AuthButton from "../components/auth/AuthButton"
 import AuthInput from "../components/auth/AuthInput"
 import AuthNotification from "../components/auth/AuthNotification"
 import MainLayout from "../layouts/MainLayout"
+import BrandText from "../components/common/BrandText"
 import PageSeo from "../components/common/PageSeo"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import {
@@ -537,7 +538,7 @@ function CreateAccount() {
                 </div>
                 
                 <p className="mt-1 px-2 text-center text-[0.75rem] leading-relaxed text-slate-500">
-                  By continuing with Google, you agree to CTMerchant's <br className="hidden sm:block"/>
+                  By continuing with Google, you agree to <BrandText />'s <br className="hidden sm:block"/>
                   <Link to="/terms" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Terms of Use</Link> and <Link to="/privacy" className="font-semibold text-slate-600 underline transition hover:text-pink-600">Privacy Policy</Link>.
                 </p>
               </div>

@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
+import BrandText from "../components/common/BrandText"
 import PageSeo from "../components/common/PageSeo"
 
 const services = [
@@ -248,7 +249,7 @@ function Services() {
                     </h2>
 
                     <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600 md:text-[15px]">
-                      CTMerchant operates as a neutral discovery layer—
+                      <BrandText /> operates as a neutral discovery layer—
                       connecting people to real places without intermediating
                       commerce.
                     </p>

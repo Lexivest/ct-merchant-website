@@ -31,6 +31,7 @@ import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import PwaAddToHomePrompt from "../components/common/PwaAddToHomePrompt"
 import HeaderMarquee from "../components/common/HeaderMarquee"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
+import BrandText from "../components/common/BrandText"
 import { useGlobalFeedback } from "../components/common/GlobalFeedbackProvider"
 import {
   sendPasswordResetCode,
@@ -366,7 +367,7 @@ function NewsletterSection() {
         <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
           <div>
             <div className="inline-flex rounded-full bg-pink-600/20 px-4 py-2 text-xs font-black uppercase tracking-widest text-pink-400 ring-1 ring-pink-500/30">
-              CTMerchant Insider
+              <BrandText /> Insider
             </div>
             <h2 className="mt-4 text-4xl font-black tracking-tight md:text-5xl">
               Stay Ahead of the <br />
@@ -1195,14 +1196,14 @@ function Home() {
                             </div>
                             <div className="min-w-0">
                               <p className="text-[12px] font-black uppercase tracking-[0.16em] text-pink-700">
-                                Install CTMerchant
+                                Install <BrandText />
                               </p>
                               <p className="mt-1 text-sm font-semibold leading-5 text-slate-700">
-                                {canPromptInstall
+                                {renderBrandedText(canPromptInstall
                                   ? "Open CTMerchant faster from your home screen with a cleaner full-screen launch."
                                   : isAppleMobile
                                     ? "Save CTMerchant to your iPhone home screen for faster access and a cleaner web app experience."
-                                    : "Use your browser menu to install CTMerchant or add it to your home screen."}
+                                    : "Use your browser menu to install CTMerchant or add it to your home screen.")}
                               </p>
                             </div>
                           </div>
@@ -1303,7 +1304,7 @@ function Home() {
 
                       <div className="my-3 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
                         <div className="h-px flex-1 bg-pink-200" />
-                        <span>New to CTMerchant?</span>
+                        <span>New to <BrandText />?</span>
                         <div className="h-px flex-1 bg-pink-200" />
                       </div>
 
@@ -1337,7 +1338,7 @@ function Home() {
                         </div>
 
                         <p className="px-2 text-center text-[0.75rem] leading-relaxed text-slate-500">
-                          By continuing with Google, you agree to CTMerchant's{' '}
+                          By continuing with Google, you agree to <BrandText />'s{' '}
                           <Link to="/terms" className="font-semibold text-slate-600 underline transition hover:text-pink-600">
                             Terms of Use
                           </Link>{' '}

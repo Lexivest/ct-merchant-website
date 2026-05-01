@@ -6,6 +6,7 @@ import { supabase } from "../../lib/supabase"
 import StableImage from "../common/StableImage"
 import { ShimmerBlock } from "../common/Shimmers"
 import { useGlobalFeedback } from "../common/GlobalFeedbackProvider"
+import { renderBrandedText } from "../common/BrandText"
 import InlineErrorState from "../common/InlineErrorState"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { isNetworkOffline } from "../../lib/networkStatus"
@@ -654,7 +655,7 @@ export default function ShopCommunitySection({
                   <CommentAvatar author={author} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <div className="text-[0.84rem] font-extrabold text-[#0F1111]">{author.displayName}</div>
+                      <div className="text-[0.84rem] font-extrabold text-[#0F1111]">{renderBrandedText(author.displayName)}</div>
                       {author.isOwner ? (
                         <span className="rounded-full bg-[#FCE7F3] px-2 py-0.5 text-[0.62rem] font-extrabold uppercase tracking-[0.12em] text-pink-600">
                           Shop Owner
@@ -722,7 +723,7 @@ export default function ShopCommunitySection({
                                 <CommentAvatar author={replyAuthor} />
                                 <div className="min-w-0 flex-1">
                                   <div className="text-[0.82rem] font-extrabold text-[#0F1111]">
-                                    {replyAuthor.displayName}
+                                    {renderBrandedText(replyAuthor.displayName)}
                                   </div>
                                   <div className="mt-0.5 text-[0.71rem] font-semibold text-slate-400">
                                     {formatCommentTimestamp(reply.created_at)}

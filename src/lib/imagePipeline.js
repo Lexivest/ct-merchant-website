@@ -1,3 +1,5 @@
+import { drawBrandedCanvasText } from "./brandCanvas"
+
 export function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     if (!file) {
@@ -204,7 +206,9 @@ export async function autoProcessImage(file, options = {}) {
     ctx.font = 'bold 20px sans-serif'
     ctx.textAlign = "right"
     ctx.textBaseline = "bottom"
-    ctx.fillText(watermark, targetWidth - 20, targetHeight - 20)
+    drawBrandedCanvasText(ctx, watermark, targetWidth - 20, targetHeight - 20, {
+      baseColor: "rgba(255, 255, 255, 0.45)",
+    })
 
     // 4. Compress
     const blob = await canvasToBlobWithMaxBytes(canvas, {

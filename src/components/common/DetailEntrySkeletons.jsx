@@ -1,3 +1,4 @@
+import BrandText from "./BrandText"
 import CTMLoader from "./CTMLoader"
 import { ShimmerBlock } from "./Shimmers"
 
@@ -7,7 +8,7 @@ function LoaderBadge({ text }) {
       <CTMLoader size="sm" className="scale-[0.78]" />
       <div className="min-w-0">
         <div className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-pink-600">
-          CTMerchant
+          <BrandText />
         </div>
         <div className="text-[0.72rem] font-bold text-slate-600">{text}</div>
       </div>

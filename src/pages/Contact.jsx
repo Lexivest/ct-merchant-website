@@ -5,6 +5,7 @@ import PageSeo from "../components/common/PageSeo"
 import { supabase } from "../lib/supabase"
 import { getFriendlyErrorMessage } from "../lib/friendlyErrors"
 import useAuthSession from "../hooks/useAuthSession"
+import BrandText from "../components/common/BrandText"
 import { clampWords, getWordLimitError } from "../lib/textLimits"
 import WordLimitCounter from "../components/common/WordLimitCounter"
 
@@ -426,7 +427,7 @@ function Contact() {
                               Online Marketplace
                             </h3>
                             <p className="mt-2 text-sm leading-7 text-slate-600">
-                              CTMerchant is a digital repository of verified physical shops. 
+                              <BrandText /> is a digital repository of verified physical shops. 
                               For physical inquiries, please visit the specific shop address 
                               listed on their profile.
                             </p>

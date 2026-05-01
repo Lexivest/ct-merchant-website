@@ -9,6 +9,7 @@ import {
 import { ErrorCategory, getFriendlyError, isNetworkError } from "../../lib/friendlyErrors"
 import { useNetworkStatus } from "../../lib/networkStatus"
 import { isChunkLoadFailure } from "../../lib/runtimeRecovery"
+import { renderBrandedText } from "./BrandText"
 
 function resolveErrorCopy(error, explicitTitle, explicitMessage, isOffline) {
   const network = isOffline || isNetworkError(error)
@@ -108,14 +109,14 @@ function GlobalErrorScreen({
           </div>
           <div className="min-w-0">
             <h1 className="text-lg font-black tracking-tight text-slate-950">
-              {copy.title}
+              {renderBrandedText(copy.title)}
             </h1>
             <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-              {busy ? "Preparing a clean recovery..." : copy.message}
+              {renderBrandedText(busy ? "Preparing a clean recovery..." : copy.message)}
             </p>
             {copy.action ? (
               <p className="mt-2 text-xs font-medium leading-5 text-slate-500">
-                {copy.action}
+                {renderBrandedText(copy.action)}
               </p>
             ) : null}
           </div>

@@ -13,6 +13,7 @@ import { supabase } from "../../lib/supabase";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh";
 import ctmLogo from "../../assets/images/logo.jpg";
+import BrandText from "../../components/common/BrandText";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 
 function wrapTextLines(input, maxCharsPerLine, maxLines) {
@@ -383,7 +384,7 @@ export default function StaffIDGenerator() {
                 />
                 <div className="text-center leading-none">
                   <p className="text-[0.85rem] font-black uppercase tracking-[0.15em] text-white">
-                    CTMerchant <span className="text-[#fbcfe8]">{cityName}</span> Branch
+                    <BrandText /> <span className="text-[#fbcfe8]">{cityName}</span> Branch
                   </p>
                   <p className="mt-1 text-[0.55rem] font-extrabold uppercase tracking-[0.25em] text-white">
                     Business ID Card
@@ -462,7 +463,7 @@ export default function StaffIDGenerator() {
 
               <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 px-3 py-1.5">
                 <p className="text-center text-[0.45rem] font-bold leading-tight text-slate-600">
-                  Disclaimer: CTMerchant is not liable for transactions or disputes arising from dealings by the holder of this card.
+                  Disclaimer: <BrandText /> is not liable for transactions or disputes arising from dealings by the holder of this card.
                 </p>
               </div>
             </div>
@@ -502,8 +503,8 @@ export default function StaffIDGenerator() {
               crossOrigin="anonymous"
             />
             <div className="text-center leading-none">
-              <p className="bg-gradient-to-r from-pink-200 via-fuchsia-200 to-indigo-200 bg-clip-text text-[0.85rem] font-black uppercase tracking-[0.15em] text-transparent drop-shadow-sm">
-                CTMerchant <span className="text-pink-300">{cityName}</span> Branch
+              <p className="text-[0.85rem] font-black uppercase tracking-[0.15em] text-white drop-shadow-sm">
+                <BrandText /> <span className="text-pink-300">{cityName}</span> Branch
               </p>
               <p className="mt-1 text-[0.55rem] font-extrabold uppercase tracking-[0.25em] text-white/90">
                 Business ID Card
@@ -556,7 +557,7 @@ export default function StaffIDGenerator() {
 
           <div className="absolute bottom-0 left-0 right-0 border-t border-white/40 bg-white/40 backdrop-blur-md px-3 py-1.5 shadow-inner">
             <p className="text-center text-[0.45rem] font-bold leading-tight text-indigo-950/70">
-              Disclaimer: CTMerchant is not liable for transactions or disputes arising from dealings by the holder of this card.
+              Disclaimer: <BrandText /> is not liable for transactions or disputes arising from dealings by the holder of this card.
             </p>
           </div>
           </div>

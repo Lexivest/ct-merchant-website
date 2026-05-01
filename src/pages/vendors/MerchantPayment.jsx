@@ -16,6 +16,7 @@ import {
 import { supabase } from "../../lib/supabase"
 import useAuthSession from "../../hooks/useAuthSession"
 import { clearCachedFetchStore } from "../../hooks/useCachedFetch"
+import BrandText from "../../components/common/BrandText"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { CTM_BANK_ACCOUNT, PHYSICAL_VERIFICATION_FEE, normalizePromoCode } from "../../lib/paymentConfig"
@@ -386,7 +387,7 @@ export default function MerchantPayment() {
             </div>
             <h2 className="mb-2 text-[1.45rem] font-extrabold text-[#2E1065]">Verification Fee</h2>
             <p className="mb-5 text-[0.95rem] leading-relaxed text-[#64748B]">
-              Pay the one-time verification fee into CTMerchant account, upload your receipt, then our staff confirms it within 48 hours.
+              Pay the one-time verification fee into <BrandText /> account, upload your receipt, then our staff confirms it within 48 hours.
             </p>
 
             <div className="mb-5 rounded-2xl bg-[#F1F5F9] p-5">

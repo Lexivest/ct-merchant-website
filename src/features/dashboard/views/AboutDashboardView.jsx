@@ -1,4 +1,5 @@
 import { FaArrowLeft } from "react-icons/fa6"
+import BrandText from "../../../components/common/BrandText"
 
 function AboutDashboardView({ onBack }) {
   return (
@@ -23,7 +24,7 @@ function AboutDashboardView({ onBack }) {
                       Corporate Profile
                     </p>
                     <h1 className="text-xl font-extrabold md:text-2xl">
-                      About CTMerchant
+                      About <BrandText />
                     </h1>
                   </div>
                 </div>
@@ -159,7 +160,7 @@ function AboutDashboardView({ onBack }) {
 
                     <div className="mt-5 space-y-4 text-sm leading-7 text-slate-600 md:text-[15px]">
                       <p>
-                        CTMerchant is a specialized information technology firm
+                        <BrandText /> is a specialized information technology firm
                         providing critical data infrastructure for Nigeria’s
                         local trade ecosystems. We facilitate the digital
                         translation of physical inventory and merchant
@@ -181,7 +182,7 @@ function AboutDashboardView({ onBack }) {
                       </p>
 
                       <p>
-                        CTMerchant operates strictly as a neutral information
+                        <BrandText /> operates strictly as a neutral information
                         repository. We remain independent of financial
                         settlements and logistics to maintain data integrity and
                         search excellence.

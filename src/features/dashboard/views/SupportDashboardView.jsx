@@ -3,6 +3,7 @@ import { createPortal } from "react-dom"
 import { FaArrowLeft, FaCircleCheck } from "react-icons/fa6"
 import { supabase } from "../../../lib/supabase"
 import { getFriendlyErrorMessage } from "../../../lib/friendlyErrors"
+import BrandText, { renderBrandedText } from "../../../components/common/BrandText"
 import { clampWords, getWordLimitError } from "../../../lib/textLimits"
 import WordLimitCounter from "../../../components/common/WordLimitCounter"
 
@@ -428,7 +429,7 @@ function SupportDashboardView({ onBack, onOpenServices, mode = "support" }) {
                                 Online Marketplace
                               </h3>
                               <p className="mt-2 text-sm leading-7 text-slate-600">
-                                CTMerchant is a digital repository of verified physical shops. 
+                                <BrandText /> is a digital repository of verified physical shops. 
                                 For physical inquiries, please visit the specific shop address 
                                 listed on their profile.
                               </p>
@@ -484,7 +485,7 @@ function SupportDashboardView({ onBack, onOpenServices, mode = "support" }) {
                   {currentMeta.successTitle}
                 </div>
                 <div className="mb-6 text-sm leading-6 text-slate-500">
-                  {currentMeta.successDesc}
+                  {renderBrandedText(currentMeta.successDesc)}
                 </div>
                 <button
                   type="button"

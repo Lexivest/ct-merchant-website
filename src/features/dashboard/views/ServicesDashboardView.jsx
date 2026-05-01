@@ -1,4 +1,5 @@
 import { FaArrowLeft } from "react-icons/fa6"
+import BrandText from "../../../components/common/BrandText"
 
 const services = [
   {
@@ -215,7 +216,7 @@ function ServicesDashboardView({ onBack, onOpenSupport }) {
                     </h2>
 
                     <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600 md:text-[15px]">
-                      CTMerchant operates as a neutral discovery layer—
+                      <BrandText /> operates as a neutral discovery layer—
                       connecting people to real places without intermediating
                       commerce.
                     </p>

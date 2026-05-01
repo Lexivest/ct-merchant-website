@@ -14,6 +14,8 @@ import WordLimitCounter from "./WordLimitCounter"
 
 const DAILY_LIMIT = 15
 const AI_PROMPT_WORD_LIMIT = 300
+const BRAND_HTML =
+  '<span><span class="text-pink-600">C</span><span class="text-purple-900">T</span><span class="text-blue-600">M</span>erchant</span>'
 
 function AiAssistantWidget({ mode = "ambassador", shopData = null, productData = null, isRepoSearch = false }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -34,7 +36,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
     if (mode === "shopping" && shopData) {
       return `${greeting} I'm CT-AI, your Shopping Assistant for ${shopData.name}. 🛍️ I can help you find similar shops in this category, locate shops in your area, or tell you more about this shop. How can I help?`
     }
-    return `${greeting} I am CT-AI, the CTMerchant System Ambassador. We are a digital collection of shops and their locations in a city to enhance discovery and mitigate fake online sales claims. How can I assist you today?`
+    return `${greeting} I am CT-AI, the ${BRAND_HTML} System Ambassador. We are a digital collection of shops and their locations in a city to enhance discovery and mitigate fake online sales claims. How can I assist you today?`
   }
 
   const getSuggestions = () => {

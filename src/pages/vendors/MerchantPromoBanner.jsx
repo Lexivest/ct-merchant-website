@@ -14,6 +14,7 @@ import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
+import { drawBrandedCanvasText } from "../../lib/brandCanvas";
 
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
@@ -383,7 +384,9 @@ async function generatePromoBannerCanvasBlob({
   setCanvasFont(context, 800, 12);
   context.fillStyle = "#93C5FD";
   context.textAlign = "center";
-  context.fillText("CTMerchant is not liable for transactions or disputes with this shop.", width / 2, footerY + 62);
+  drawBrandedCanvasText(context, "CTMerchant is not liable for transactions or disputes with this shop.", width / 2, footerY + 62, {
+    baseColor: "#93C5FD",
+  });
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {

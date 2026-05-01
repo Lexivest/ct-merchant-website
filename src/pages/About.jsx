@@ -1,5 +1,6 @@
 import { useNavigate, useSearchParams } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
+import BrandText from "../components/common/BrandText"
 import PageSeo from "../components/common/PageSeo"
 
 function About() {
@@ -55,7 +56,7 @@ function About() {
                       Corporate Profile
                     </p>
                     <h1 className="text-xl font-extrabold md:text-2xl">
-                      About CTMerchant
+                      About <BrandText />
                     </h1>
                   </div>
                 </div>
@@ -191,7 +192,7 @@ function About() {
 
                     <div className="mt-5 space-y-4 text-sm leading-7 text-slate-600 md:text-[15px]">
                       <p>
-                        CTMerchant is a specialized information technology firm
+                        <BrandText /> is a specialized information technology firm
                         providing critical data infrastructure for Nigeria’s
                         local trade ecosystems. We facilitate the digital
                         translation of physical inventory and merchant
@@ -213,7 +214,7 @@ function About() {
                       </p>
 
                       <p>
-                        CTMerchant operates strictly as a neutral information
+                        <BrandText /> operates strictly as a neutral information
                         repository. We remain independent of financial
                         settlements and logistics to maintain data integrity and
                         search excellence.

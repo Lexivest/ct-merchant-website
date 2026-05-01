@@ -17,6 +17,7 @@ import {
   FaXmark,
 } from "react-icons/fa6"
 import InlineErrorState from "../../components/common/InlineErrorState"
+import BrandText from "../../components/common/BrandText"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import ctmLogo from "../../assets/images/logo.jpg"
 import { invokeEdgeFunctionAuthed } from "../../lib/edgeFunctions"
@@ -154,6 +155,8 @@ function openPrintableReceipt(proof) {
   const paymentLabel = getPaymentKindLabel(proof)
   const shopName = proof.shop_name || `Shop #${proof.shop_id}`
   const merchantName = proof.merchant_name || "Merchant"
+  const brandReceiptHtml =
+    '<span><span style="color:#db2777;">C</span><span style="color:#4c1d95;">T</span><span style="color:#2563eb;">M</span>erchant</span>'
 
   printWindow.document.write(`
     <!doctype html>
@@ -295,7 +298,7 @@ function openPrintableReceipt(proof) {
             </div>
           </section>
           <section class="foot">
-            This receipt confirms payment recorded by CTMerchant staff. For finance support, contact ${escapeHtml(COMPANY_DETAILS.email)}.
+            This receipt confirms payment recorded by ${brandReceiptHtml} staff. For finance support, contact ${escapeHtml(COMPANY_DETAILS.email)}.
           </section>
         </main>
         <script>
@@ -416,7 +419,7 @@ function ReceiptModal({ proof, onClose, onSendWhatsApp }) {
       <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[28px] bg-white shadow-2xl">
         <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div>
-            <div className="text-lg font-black text-slate-950">CTMerchant Receipt</div>
+            <div className="text-lg font-black text-slate-950"><BrandText /> Receipt</div>
             <div className="text-xs font-bold text-slate-500">{getReceiptNumber(proof)}</div>
           </div>
           <button

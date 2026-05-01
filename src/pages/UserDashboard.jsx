@@ -4,6 +4,7 @@ import { createPortal } from "react-dom"
 import { FaBullhorn, FaGift, FaTicket, FaXmark } from "react-icons/fa6"
 
 import AuthNotification from "../components/auth/AuthNotification"
+import BrandText from "../components/common/BrandText"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
@@ -196,7 +197,7 @@ function DashboardAnnouncementsModal({ announcements, open, onClose }) {
             <div>
               <div className="text-2xl font-black tracking-tight">Announcements</div>
               <div className="mt-0.5 text-sm font-semibold text-white/75">
-                Important CTMerchant updates for you.
+                Important <BrandText /> updates for you.
               </div>
             </div>
           </div>
