@@ -6,13 +6,11 @@ import {
   FaArrowLeft,
   FaBoxesPacking,
   FaCamera,
-  FaCheck,
-  FaChevronDown,
   FaCircleNotch,
+  FaChevronDown,
   FaExpand,
   FaImage,
   FaListUl,
-  FaLock,
   FaMicrochip,
   FaRegEye,
   FaTrashCan,
@@ -222,7 +220,6 @@ export default function AddProduct() {
 
   // Form State
   const [form, setForm] = useState(EMPTY_PRODUCT_FORM);
-
   const [dynamicAttrs, setDynamicAttrs] = useState({});
 
   // Image State
@@ -654,6 +651,9 @@ export default function AddProduct() {
       return;
     }
 
+    // Array to track paths for automatic rollback if something fails
+    let successfullyUploadedPaths = []; 
+
     try {
       setSubmitting(true);
 
@@ -670,25 +670,54 @@ export default function AddProduct() {
       if (form.box_content.trim()) finalAttrs["What's in the Box"] = form.box_content.trim();
       if (form.warranty.trim()) finalAttrs["Warranty"] = form.warranty.trim();
 
+      // ==========================================
+      // 1. UPLOAD IMAGES IN PARALLEL
+      // ==========================================
       const uploadPromises = PRODUCT_IMAGE_SLOTS.map(async (idx) => {
-        if (!blobs[idx]) return null;
+        if (!blobs[idx]) return { slot: idx, url: null, path: null };
+        
         const fName = `${user.id}_${Date.now()}_img${idx}.jpg`;
-        try {
-          const { error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], {
-            contentType: "image/jpeg",
-            upsert: false,
-            cacheControl: "31536000",
-          });
-          if (upErr) throw upErr;
-          return supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl;
-        } catch (uploadErr) {
-          console.error(`Image ${idx} upload failed:`, uploadErr);
-          throw new Error(`Failed to upload image ${idx}. Please check your connection.`);
-        }
+        const { data, error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], {
+          contentType: "image/jpeg",
+          upsert: false,
+          cacheControl: "31536000",
+        });
+        
+        if (upErr) throw upErr; 
+        
+        const url = supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl;
+        return { slot: idx, url, path: data.path }; 
       });
 
-      const [url1, url2, url3] = await Promise.all(uploadPromises);
+      // allSettled ensures we don't lose track of successful uploads if one fails
+      const uploadResults = await Promise.allSettled(uploadPromises);
+      
+      // ==========================================
+      // 2. CHECK FOR UPLOAD FAILURES & TRACK SUCCESSES
+      // ==========================================
+      let hasUploadError = false;
+      let finalUrls = { 1: null, 2: null, 3: null };
 
+      for (const result of uploadResults) {
+        if (result.status === "fulfilled") {
+          if (result.value.path) {
+            // Track successful paths for potential rollback
+            successfullyUploadedPaths.push(result.value.path); 
+          }
+          finalUrls[result.value.slot] = result.value.url;
+        } else {
+          hasUploadError = true;
+          console.error("Image upload failed:", result.reason);
+        }
+      }
+
+      if (hasUploadError) {
+        throw new Error("One or more images failed to upload. Aborting product creation.");
+      }
+
+      // ==========================================
+      // 3. INSERT INTO DATABASE
+      // ==========================================
       const { error: rpcErr } = await supabase.rpc("manage_product", {
         p_shop_id: parseInt(shopId),
         p_name: form.name.trim(),
@@ -697,15 +726,15 @@ export default function AddProduct() {
         p_discount_price: discountPrice,
         p_condition: form.condition,
         p_category: form.category,
-        p_image_url: url1,
-        p_image_url_2: url2,
-        p_image_url_3: url3,
+        p_image_url: finalUrls[1],
+        p_image_url_2: finalUrls[2],
+        p_image_url_3: finalUrls[3],
         p_stock_count: parseInt(form.stock),
         p_attributes: finalAttrs,
         p_is_available: parseInt(form.stock) > 0,
-      })
+      });
 
-      if (rpcErr) throw rpcErr
+      if (rpcErr) throw rpcErr;
 
       notify({
         type: "success",
@@ -738,11 +767,27 @@ export default function AddProduct() {
       setBlobs(EMPTY_PRODUCT_BLOBS);
       setPreviews(EMPTY_PRODUCT_PREVIEWS);
       
-      // Reset scroll for next entry
       window.scrollTo({ top: 0, behavior: "smooth" });
 
     } catch (err) {
-      notify({ type: "error", title: "Upload failed", message: getFriendlyErrorMessage(err, "Upload failed.") });
+      console.error("Product submission failed:", err);
+      
+      // ==========================================
+      // 4. THE ROLLBACK CLEANUP
+      // ==========================================
+      if (successfullyUploadedPaths.length > 0) {
+        console.log("Rolling back... Deleting orphaned images:", successfullyUploadedPaths);
+        
+        const { error: cleanupError } = await supabase.storage
+          .from(PRODUCT_BUCKET)
+          .remove(successfullyUploadedPaths);
+          
+        if (cleanupError) {
+          console.error("CRITICAL: Failed to clean up orphaned images during rollback:", cleanupError);
+        }
+      }
+
+      notify({ type: "error", title: "Upload failed", message: getFriendlyErrorMessage(err, "Upload failed. Please check your connection and try again.") });
     } finally {
       setSubmitting(false);
     }
@@ -757,7 +802,6 @@ export default function AddProduct() {
     () => resolveProductCategoryGroup(form.category, categoryRows),
     [form.category, categoryRows],
   );
-
 
   if (authLoading || loading) {
     return <AddProductShimmer />;
