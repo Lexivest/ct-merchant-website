@@ -38,17 +38,18 @@ import {
   toProductCategoryOptions,
 } from "../../lib/productCategories";
 
-// Only importing the Editor utilities; the compression utilities are built-in below to prevent OOM crashes.
+// Only importing the Editor utilities; the compression utilities are built-in below to prevent OOM crashes and enforce 100KB limits.
 import {
   optimizeImageForEditor,
   padImageToAspectDataUrl,
 } from "../../lib/imagePipeline";
 
+
 // =========================================================================
 // INLINED MEMORY-SAFE IMAGE PIPELINE (Bypasses external file OOM crashes)
 // =========================================================================
 const safeCanvasToBlob = (canvas, options) => {
-  const { maxBytes, mimeType = "image/jpeg", qualityStart = 0.9, qualityStep = 0.1, qualityFloor = 0.5 } = options;
+  const { maxBytes, mimeType = "image/jpeg", qualityStart = 0.9, qualityStep = 0.1, qualityFloor = 0.1 } = options;
   return new Promise((resolve, reject) => {
     let currentQuality = qualityStart;
     const attemptCompression = () => {
@@ -58,6 +59,9 @@ const safeCanvasToBlob = (canvas, options) => {
           return reject(new Error("Browser memory exhausted. The image is too large for this device to process."));
         }
         if (blob.size <= maxBytes || currentQuality <= qualityFloor) {
+          if (blob.size > maxBytes) {
+             return reject(new Error(`Compression failed. Image exceeds ${formatBytes(maxBytes)} even at lowest quality.`));
+          }
           resolve(blob);
         } else {
           currentQuality -= qualityStep;
@@ -78,7 +82,7 @@ const safeProcessImage = async (file, options) => {
     img.onload = async () => {
       URL.revokeObjectURL(objectUrl); // Free memory instantly
       try {
-        // Capping dimensions to 1920px prevents the Canvas from crashing the browser's RAM
+        // 1. Capping dimensions to 1920px prevents the Canvas from crashing the browser's RAM
         const MAX_SAFE_DIMENSION = 1920; 
         let drawWidth = img.width;
         let drawHeight = img.height;
@@ -96,21 +100,27 @@ const safeProcessImage = async (file, options) => {
         if (!safeCtx) throw new Error("Could not initialize safe 2D context.");
         safeCtx.drawImage(img, 0, 0, drawWidth, drawHeight);
 
+        // 2. NATURAL SCALING FIX: Scale image to fit *within* the target width/height without cropping it
+        let finalWidth = drawWidth;
+        let finalHeight = drawHeight;
+
+        if (drawWidth > targetWidth || drawHeight > targetHeight) {
+          const scale = Math.min(targetWidth / drawWidth, targetHeight / drawHeight);
+          finalWidth = Math.round(drawWidth * scale);
+          finalHeight = Math.round(drawHeight * scale);
+        }
+
         const finalCanvas = document.createElement("canvas");
-        finalCanvas.width = targetWidth;
-        finalCanvas.height = targetHeight;
+        finalCanvas.width = finalWidth;
+        finalCanvas.height = finalHeight;
         const finalCtx = finalCanvas.getContext("2d");
 
+        // Fill background with white in case of transparent PNGs
         finalCtx.fillStyle = "#FFFFFF";
-        finalCtx.fillRect(0, 0, targetWidth, targetHeight);
+        finalCtx.fillRect(0, 0, finalWidth, finalHeight);
 
-        const scale = Math.max(targetWidth / drawWidth, targetHeight / drawHeight);
-        const scaledWidth = drawWidth * scale;
-        const scaledHeight = drawHeight * scale;
-        const offsetX = (targetWidth - scaledWidth) / 2;
-        const offsetY = (targetHeight - scaledHeight) / 2;
-
-        finalCtx.drawImage(safeCanvas, 0, 0, drawWidth, drawHeight, offsetX, offsetY, scaledWidth, scaledHeight);
+        // Draw the image cleanly preserving all edges
+        finalCtx.drawImage(safeCanvas, 0, 0, drawWidth, drawHeight, 0, 0, finalWidth, finalHeight);
 
         const blob = await safeCanvasToBlob(finalCanvas, { maxBytes, mimeType: "image/jpeg", qualityStart, qualityStep, qualityFloor });
         resolve({ blob, previewUrl: URL.createObjectURL(blob) });
@@ -354,21 +364,22 @@ export default function AddProduct() {
 
     setProcessingSlots((prev) => ({ ...prev, [slot]: true }));
     try {
-      // Using the local safeProcessImage function
+      console.log(`[CT Studio API] Processing slot ${slot}. Original Size: ${file.size}`);
+      
       const result = await safeProcessImage(file, {
-        aspectRatio: PRODUCT_PROFILE.aspectRatio,
         targetWidth: PRODUCT_PROFILE.targetWidth,
         targetHeight: PRODUCT_PROFILE.targetHeight,
-        maxBytes: PRODUCT_MAX_BYTES,
+        maxBytes: PRODUCT_MAX_BYTES, // Will dynamically squeeze under 100KB
         qualityStart: 0.9,
         qualityStep: 0.1,
-        qualityFloor: 0.1, // <-- THE FIX: Let it aggressively compress until it fits under 100KB
+        qualityFloor: 0.1, // THE FIX: Allow aggressive compression to hit the target
       });
 
       if (previews[slot] && previews[slot].startsWith("blob:")) URL.revokeObjectURL(previews[slot]);
       setBlobs((prev) => ({ ...prev, [slot]: result.blob }));
       setPreviews((prev) => ({ ...prev, [slot]: result.previewUrl }));
     } catch (err) {
+      console.error(`[CT Studio API] Failed slot ${slot}:`, err);
       notify({ type: "error", title: "Processing failed", message: err.message || "Unknown error during processing." });
     } finally {
       setProcessingSlots((prev) => ({ ...prev, [slot]: false }));
@@ -465,13 +476,13 @@ export default function AddProduct() {
     drawBrandedCanvasText(ctx, "CTMerchant", PRODUCT_PROFILE.targetWidth - 20, PRODUCT_PROFILE.targetHeight - 20, { baseColor: "rgba(255, 255, 255, 0.45)" });
 
     try {
-      // Using the local safeCanvasToBlob function
+      // THE FIX: Allow aggressive compression to hit the target during manual edits
       const blob = await safeCanvasToBlob(finalCanvas, {
         maxBytes: PRODUCT_MAX_BYTES,
         mimeType: PRODUCT_PROFILE.outputMimeType,
-        qualityStart: PRODUCT_PROFILE.qualityStart,
-        qualityFloor: PRODUCT_PROFILE.qualityFloor,
-        qualityStep: PRODUCT_PROFILE.qualityStep,
+        qualityStart: 0.9,
+        qualityStep: 0.1,
+        qualityFloor: 0.1, 
       });
 
       if (!blob) throw new Error("Compression failed. The browser may have run out of memory.");
