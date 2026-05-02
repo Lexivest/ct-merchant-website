@@ -360,9 +360,9 @@ export default function AddProduct() {
         targetWidth: PRODUCT_PROFILE.targetWidth,
         targetHeight: PRODUCT_PROFILE.targetHeight,
         maxBytes: PRODUCT_MAX_BYTES,
-        qualityStart: PRODUCT_PROFILE.qualityStart,
-        qualityFloor: PRODUCT_PROFILE.qualityFloor,
-        qualityStep: PRODUCT_PROFILE.qualityStep,
+        qualityStart: 0.9,
+        qualityStep: 0.1,
+        qualityFloor: 0.1, // <-- THE FIX: Let it aggressively compress until it fits under 100KB
       });
 
       if (previews[slot] && previews[slot].startsWith("blob:")) URL.revokeObjectURL(previews[slot]);
