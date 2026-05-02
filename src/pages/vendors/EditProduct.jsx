@@ -35,13 +35,108 @@ import {
   resolveProductCategoryGroup,
   toProductCategoryOptions,
 } from "../../lib/productCategories";
+import { prepareVendorRouteTransition } from "../../lib/vendorRouteTransitions";
+
+// Only importing the Editor utilities; the compression utilities are built-in below to prevent OOM crashes and enforce 100KB limits.
 import {
-  autoProcessImage,
-  canvasToBlobWithMaxBytes,
   optimizeImageForEditor,
   padImageToAspectDataUrl,
 } from "../../lib/imagePipeline";
-import { prepareVendorRouteTransition } from "../../lib/vendorRouteTransitions";
+
+
+// =========================================================================
+// INLINED MEMORY-SAFE IMAGE PIPELINE (Bypasses external file OOM crashes)
+// =========================================================================
+const safeCanvasToBlob = (canvas, options) => {
+  const { maxBytes, mimeType = "image/jpeg", qualityStart = 0.9, qualityStep = 0.1, qualityFloor = 0.1 } = options;
+  return new Promise((resolve, reject) => {
+    let currentQuality = qualityStart;
+    const attemptCompression = () => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          // The silent killer: If blob is null, the browser ran out of RAM
+          return reject(new Error("Browser memory exhausted. The image is too large for this device to process."));
+        }
+        if (blob.size <= maxBytes || currentQuality <= qualityFloor) {
+          if (blob.size > maxBytes) {
+             return reject(new Error(`Compression failed. Image exceeds ${formatBytes(maxBytes)} even at lowest quality.`));
+          }
+          resolve(blob);
+        } else {
+          currentQuality -= qualityStep;
+          attemptCompression(); 
+        }
+      }, mimeType, currentQuality);
+    };
+    attemptCompression();
+  });
+};
+
+const safeProcessImage = async (file, options) => {
+  const { targetWidth, targetHeight, maxBytes, qualityStart, qualityFloor, qualityStep } = options;
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = async () => {
+      URL.revokeObjectURL(objectUrl); // Free memory instantly
+      try {
+        // 1. Capping dimensions to 1920px prevents the Canvas from crashing the browser's RAM
+        const MAX_SAFE_DIMENSION = 1920; 
+        let drawWidth = img.width;
+        let drawHeight = img.height;
+
+        if (drawWidth > MAX_SAFE_DIMENSION || drawHeight > MAX_SAFE_DIMENSION) {
+          const ratio = Math.min(MAX_SAFE_DIMENSION / drawWidth, MAX_SAFE_DIMENSION / drawHeight);
+          drawWidth = Math.round(drawWidth * ratio);
+          drawHeight = Math.round(drawHeight * ratio);
+        }
+
+        const safeCanvas = document.createElement("canvas");
+        safeCanvas.width = drawWidth;
+        safeCanvas.height = drawHeight;
+        const safeCtx = safeCanvas.getContext("2d");
+        if (!safeCtx) throw new Error("Could not initialize safe 2D context.");
+        safeCtx.drawImage(img, 0, 0, drawWidth, drawHeight);
+
+        // 2. NATURAL SCALING FIX: Scale image to fit *within* the target width/height without cropping it
+        let finalWidth = drawWidth;
+        let finalHeight = drawHeight;
+
+        if (drawWidth > targetWidth || drawHeight > targetHeight) {
+          const scale = Math.min(targetWidth / drawWidth, targetHeight / drawHeight);
+          finalWidth = Math.round(drawWidth * scale);
+          finalHeight = Math.round(drawHeight * scale);
+        }
+
+        const finalCanvas = document.createElement("canvas");
+        finalCanvas.width = finalWidth;
+        finalCanvas.height = finalHeight;
+        const finalCtx = finalCanvas.getContext("2d");
+
+        // Fill background with white in case of transparent PNGs
+        finalCtx.fillStyle = "#FFFFFF";
+        finalCtx.fillRect(0, 0, finalWidth, finalHeight);
+
+        // Draw the image cleanly preserving all edges
+        finalCtx.drawImage(safeCanvas, 0, 0, drawWidth, drawHeight, 0, 0, finalWidth, finalHeight);
+
+        const blob = await safeCanvasToBlob(finalCanvas, { maxBytes, mimeType: "image/jpeg", qualityStart, qualityStep, qualityFloor });
+        resolve({ blob, previewUrl: URL.createObjectURL(blob) });
+      } catch (err) {
+        reject(err);
+      }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Failed to decode the image file. It might be corrupted."));
+    };
+
+    img.src = objectUrl;
+  });
+};
+// =========================================================================
 
 const PRODUCT_RULE = UPLOAD_RULES.products;
 const PRODUCT_PROFILE = IMAGE_PROFILES.product;
@@ -68,17 +163,7 @@ const PRODUCT_TEXT_LABELS = {
 const PRODUCT_ATTRIBUTE_TEXT_LIMIT = 60;
 
 const DEFAULT_FORM = {
-  name: "",
-  price: "",
-  stock: "1",
-  condition: "New",
-  category: "",
-  desc: "",
-  key_features: "",
-  box_content: "",
-  warranty: "",
-  isDiscount: false,
-  discountPercent: "",
+  name: "", price: "", stock: "1", condition: "New", category: "", desc: "", key_features: "", box_content: "", warranty: "", isDiscount: false, discountPercent: "",
 };
 
 function buildProductEditorState(product) {
@@ -97,28 +182,15 @@ function buildProductEditorState(product) {
   delete attrs["Warranty"];
 
   const isSpecial = product.discount_price && product.discount_price < product.price;
-  const discountPerc = isSpecial
-    ? Math.round(((product.price - product.discount_price) / product.price) * 100)
-    : "";
-  const urls = {
-    1: product.image_url || null,
-    2: product.image_url_2 || null,
-    3: product.image_url_3 || null,
-  };
+  const discountPerc = isSpecial ? Math.round(((product.price - product.discount_price) / product.price) * 100) : "";
+  const urls = { 1: product.image_url || null, 2: product.image_url_2 || null, 3: product.image_url_3 || null };
 
   return {
     form: {
-      name: product.name || "",
-      price: product.price || "",
-      stock: product.stock_count || 0,
-      condition: product.condition || "New",
-      category: product.category || "",
-      desc: product.description || "",
-      key_features: product.attributes?.["Key Features"] || "",
-      box_content: product.attributes?.["What's in the Box"] || "",
-      warranty: product.attributes?.["Warranty"] || "",
-      isDiscount: isSpecial,
-      discountPercent: discountPerc,
+      name: product.name || "", price: product.price || "", stock: product.stock_count || 0, condition: product.condition || "New",
+      category: product.category || "", desc: product.description || "", key_features: product.attributes?.["Key Features"] || "",
+      box_content: product.attributes?.["What's in the Box"] || "", warranty: product.attributes?.["Warranty"] || "",
+      isDiscount: isSpecial, discountPercent: discountPerc,
     },
     dynamicAttrs: attrs,
     existingUrls: urls,
@@ -126,17 +198,10 @@ function buildProductEditorState(product) {
   };
 }
 
-// --- SHIMMER COMPONENT ---
 function EditProductShimmer() {
-  return (
-    <PageLoadingScreen
-      title="Opening edit product"
-      message="Please wait while we prepare the product editor."
-    />
-  );
+  return <PageLoadingScreen title="Opening edit product" message="Please wait while we prepare the product editor." />;
 }
 
-// --- CUSTOM DROPDOWN ---
 function CustomSelect({ value, onChange, options, placeholder, className, disabled }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -151,21 +216,14 @@ function CustomSelect({ value, onChange, options, placeholder, className, disabl
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
-      <div
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`flex items-center justify-between bg-white transition-all ${className} ${disabled ? 'cursor-not-allowed opacity-70 bg-slate-50' : 'cursor-pointer'} ${isOpen ? "border-[#db2777] ring-2 ring-[#db2777]/20" : ""}`}
-      >
+      <div onClick={() => !disabled && setIsOpen(!isOpen)} className={`flex items-center justify-between bg-white transition-all ${className} ${disabled ? 'cursor-not-allowed opacity-70 bg-slate-50' : 'cursor-pointer'} ${isOpen ? "border-[#db2777] ring-2 ring-[#db2777]/20" : ""}`}>
         <span className={value ? "text-[#0F1111]" : "text-[#888C8C]"}>{value || placeholder}</span>
         <FaChevronDown className={`text-xs text-[#888C8C] transition-transform duration-200 ${isOpen ? "rotate-180 text-[#db2777]" : ""}`} />
       </div>
       {isOpen && !disabled && (
         <ul className="absolute left-0 top-full z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-[#D5D9D9] bg-white py-1 shadow-xl animate-[slideDown_0.2s_ease]">
           {options.map((opt) => (
-            <li
-              key={opt.value}
-              onClick={() => { onChange(opt.value); setIsOpen(false); }}
-              className={`cursor-pointer px-4 py-3 text-[0.95rem] transition-colors hover:bg-pink-50 ${value === opt.value ? "bg-pink-50 font-extrabold text-[#db2777]" : "font-medium text-[#0F1111]"}`}
-            >
+            <li key={opt.value} onClick={() => { onChange(opt.value); setIsOpen(false); }} className={`cursor-pointer px-4 py-3 text-[0.95rem] transition-colors hover:bg-pink-50 ${value === opt.value ? "bg-pink-50 font-extrabold text-[#db2777]" : "font-medium text-[#0F1111]"}`}>
               {opt.label}
             </li>
           ))}
@@ -182,35 +240,17 @@ function clampProductTextField(id, value) {
 }
 
 function getProductTextLimitError(form, dynamicAttrs) {
-  const limitedField = Object.entries(PRODUCT_TEXT_LIMITS).find(([field, limit]) => {
-    return String(form[field] || "").length > limit;
-  });
-
-  if (limitedField) {
-    const [field, limit] = limitedField;
-    return `${PRODUCT_TEXT_LABELS[field]} must be ${limit} characters or less.`;
-  }
-
-  const oversizedAttr = Object.entries(dynamicAttrs || {}).find(([, value]) => {
-    return typeof value === "string" && value.length > PRODUCT_ATTRIBUTE_TEXT_LIMIT;
-  });
-
-  if (oversizedAttr) {
-    return `${oversizedAttr[0]} must be ${PRODUCT_ATTRIBUTE_TEXT_LIMIT} characters or less.`;
-  }
-
+  const limitedField = Object.entries(PRODUCT_TEXT_LIMITS).find(([field, limit]) => String(form[field] || "").length > limit);
+  if (limitedField) return `${PRODUCT_TEXT_LABELS[limitedField[0]]} must be ${limitedField[1]} characters or less.`;
+  const oversizedAttr = Object.entries(dynamicAttrs || {}).find(([, value]) => typeof value === "string" && value.length > PRODUCT_ATTRIBUTE_TEXT_LIMIT);
+  if (oversizedAttr) return `${oversizedAttr[0]} must be ${PRODUCT_ATTRIBUTE_TEXT_LIMIT} characters or less.`;
   return "";
 }
 
 function CharacterCounter({ value, limit }) {
   const length = String(value || "").length;
   const isNearLimit = length >= Math.floor(limit * 0.9);
-
-  return (
-    <span className={`text-[0.72rem] font-bold ${isNearLimit ? "text-pink-600" : "text-slate-400"}`}>
-      {length}/{limit}
-    </span>
-  );
+  return <span className={`text-[0.72rem] font-bold ${isNearLimit ? "text-pink-600" : "text-slate-400"}`}>{length}/{limit}</span>;
 }
 
 export default function EditProduct() {
@@ -220,15 +260,8 @@ export default function EditProduct() {
   const { notify, confirm } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const productId = searchParams.get("id");
-  const prefetchedData =
-    location.state?.prefetchedData?.kind === "merchant-edit-product" &&
-    (!productId || String(location.state.prefetchedData.productId) === String(productId))
-      ? location.state.prefetchedData
-      : null;
-  const initialEditorState = useMemo(
-    () => buildProductEditorState(prefetchedData?.productData),
-    [prefetchedData]
-  );
+  const prefetchedData = location.state?.prefetchedData?.kind === "merchant-edit-product" && (!productId || String(location.state.prefetchedData.productId) === String(productId)) ? location.state.prefetchedData : null;
+  const initialEditorState = useMemo(() => buildProductEditorState(prefetchedData?.productData), [prefetchedData]);
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
@@ -241,18 +274,15 @@ export default function EditProduct() {
   const [activeOffersCount, setActiveOffersCount] = useState(() => prefetchedData?.activeOffersCount || 0);
   const [categoryRows, setCategoryRows] = useState(() => prefetchedData?.categoryRows || []);
 
-  // Form State
   const [form, setForm] = useState(() => initialEditorState.form);
   const [dynamicAttrs, setDynamicAttrs] = useState(() => initialEditorState.dynamicAttrs);
 
-  // Image State (Mixed existing URLs and new Blobs)
   const [existingUrls, setExistingUrls] = useState(() => initialEditorState.existingUrls);
   const [blobs, setBlobs] = useState({ 1: null, 2: null, 3: null });
   const [previews, setPreviews] = useState(() => initialEditorState.previews);
   const [deletedSlots, setDeletedSlots] = useState({ 1: false, 2: false, 3: false });
   const [processingSlots, setProcessingSlots] = useState({ 1: false, 2: false, 3: false });
 
-  // Studio State
   const [studioOpen, setStudioOpen] = useState(false);
   const [cameraSlot, setCameraSlot] = useState(null);
   const cameraSlotRef = useRef(null);
@@ -266,15 +296,11 @@ export default function EditProduct() {
   const cropperRef = useRef(null);
   const fileInputRefs = { 1: useRef(null), 2: useRef(null), 3: useRef(null) };
 
-  useEffect(() => {
-    cameraSlotRef.current = cameraSlot;
-  }, [cameraSlot]);
+  useEffect(() => { cameraSlotRef.current = cameraSlot; }, [cameraSlot]);
 
-  // --- INITIALIZATION ---
   useEffect(() => {
     function applyProductState(product, loadedCategoryRows, offerCount) {
       const nextEditorState = buildProductEditorState(product);
-
       setProductData(product || null);
       setCategoryRows(loadedCategoryRows || []);
       setActiveOffersCount(offerCount || 0);
@@ -287,11 +313,7 @@ export default function EditProduct() {
     }
 
     if (prefetchedData) {
-      applyProductState(
-        prefetchedData.productData,
-        prefetchedData.categoryRows,
-        prefetchedData.activeOffersCount
-      );
+      applyProductState(prefetchedData.productData, prefetchedData.categoryRows, prefetchedData.activeOffersCount);
       setError(null);
       setLoading(false);
       return;
@@ -299,19 +321,14 @@ export default function EditProduct() {
 
     async function fetchProduct() {
       if (!user) return;
-      if (!productId) {
-        navigate("/vendor-panel", { replace: true });
-        return;
-      }
+      if (!productId) return navigate("/vendor-panel", { replace: true });
       if (isOffline) {
         setError("Network offline. Please connect to the internet to edit products.");
-        setLoading(false);
-        return;
+        return setLoading(false);
       }
 
       try {
         setLoading(true);
-
         const { data: profile } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).maybeSingle();
         if (profile?.is_suspended) throw new Error("Account restricted.");
 
@@ -326,16 +343,10 @@ export default function EditProduct() {
         if (!shop) throw new Error("Access denied to this product's shop.");
         if (shop.is_open === false) throw new Error("Shop is suspended.");
 
-        // Check Special Offer Limits for this Shop (Excluding THIS product)
-        const { count } = await supabase
-          .from('products')
-          .select('id', { count: 'exact', head: true })
-          .eq('shop_id', prod.shop_id)
-          .not('discount_price', 'is', null)
-          .neq('id', productId);
+        const { count } = await supabase.from('products').select('id', { count: 'exact', head: true })
+          .eq('shop_id', prod.shop_id).not('discount_price', 'is', null).neq('id', productId);
 
         applyProductState(prod, loadedCategoryRows, count || 0);
-
       } catch (err) {
         setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
       } finally {
@@ -345,83 +356,45 @@ export default function EditProduct() {
     if (!authLoading) fetchProduct();
   }, [user, authLoading, productId, isOffline, navigate, prefetchedData]);
 
-
-  // --- HANDLERS ---
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [id]: type === "checkbox" ? checked : clampProductTextField(id, value),
-    }));
+    setForm((prev) => ({ ...prev, [id]: type === "checkbox" ? checked : clampProductTextField(id, value) }));
   };
 
-  const handleAttrChange = (key, value) => {
-    setDynamicAttrs((prev) => ({
-      ...prev,
-      [key]: typeof value === "string" ? value.slice(0, PRODUCT_ATTRIBUTE_TEXT_LIMIT) : value,
-    }));
-  };
-
-  const handleCategoryChange = (val) => {
-    setForm((prev) => ({ ...prev, category: val }));
-    setDynamicAttrs({});
-  };
-
+  const handleAttrChange = (key, value) => setDynamicAttrs((prev) => ({ ...prev, [key]: typeof value === "string" ? value.slice(0, PRODUCT_ATTRIBUTE_TEXT_LIMIT) : value }));
+  const handleCategoryChange = (val) => { setForm((prev) => ({ ...prev, category: val })); setDynamicAttrs({}); };
   const handleConditionChange = (val) => {
     setForm((prev) => {
       const next = { ...prev, condition: val };
-      if (val === "Fairly Used") {
-        next.isDiscount = false;
-        next.discountPercent = "";
-      }
+      if (val === "Fairly Used") { next.isDiscount = false; next.discountPercent = ""; }
       return next;
     });
   };
 
-  // --- BACKGROUND PROCESSING PIPELINE ---
+  // --- MEMORY SAFE BACKGROUND PROCESSING ---
   const processImageInSlot = async (file, slot) => {
     if (!file || !slot) return;
-
-    if (!file.type.startsWith("image/")) {
-      notify({ type: "error", title: "Invalid image", message: "Please upload a valid image file." });
-      return;
-    }
-
-    if (file.size > PRODUCT_INPUT_MAX_BYTES) {
-      notify({
-        type: "error",
-        title: "Image too large",
-        message: `Maximum input size for products is ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}.`,
-      });
-      return;
-    }
+    if (!file.type.startsWith("image/")) return notify({ type: "error", title: "Invalid image", message: "Please upload a valid image file." });
+    if (file.size > PRODUCT_INPUT_MAX_BYTES) return notify({ type: "error", title: "Image too large", message: `Maximum input size is ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}.` });
 
     setProcessingSlots((prev) => ({ ...prev, [slot]: true }));
     try {
-      const result = await autoProcessImage(file, {
-        aspectRatio: PRODUCT_PROFILE.aspectRatio,
+      const result = await safeProcessImage(file, {
         targetWidth: PRODUCT_PROFILE.targetWidth,
         targetHeight: PRODUCT_PROFILE.targetHeight,
         maxBytes: PRODUCT_MAX_BYTES,
-        qualityStart: PRODUCT_PROFILE.qualityStart,
-        qualityFloor: PRODUCT_PROFILE.qualityFloor,
-        qualityStep: PRODUCT_PROFILE.qualityStep,
+        qualityStart: 0.9,
+        qualityStep: 0.1,
+        qualityFloor: 0.1, // THE FIX: Allow aggressive compression to hit target
       });
 
-      if (previews[slot] && previews[slot].startsWith("blob:")) {
-        URL.revokeObjectURL(previews[slot]);
-      }
+      if (previews[slot] && previews[slot].startsWith("blob:")) URL.revokeObjectURL(previews[slot]);
 
       setBlobs((prev) => ({ ...prev, [slot]: result.blob }));
       setDeletedSlots((prev) => ({ ...prev, [slot]: false }));
       setPreviews((prev) => ({ ...prev, [slot]: result.previewUrl }));
-
     } catch (err) {
-      notify({
-        type: "error",
-        title: "Processing failed",
-        message: getFriendlyErrorMessage(err, "Could not process this image. Please try another one."),
-      });
+      notify({ type: "error", title: "Processing failed", message: err.message || "Unknown error during processing." });
     } finally {
       setProcessingSlots((prev) => ({ ...prev, [slot]: false }));
     }
@@ -442,7 +415,6 @@ export default function EditProduct() {
     await processImageInSlot(file, targetSlot);
   };
 
-  // --- STUDIO LOGIC ---
   const openStudioForSlot = async (slot) => {
     const currentPreview = previews[slot];
     if (!currentPreview) return;
@@ -450,8 +422,6 @@ export default function EditProduct() {
     setPreparingStudio(true);
     try {
       let sourceBlob = blobs[slot];
-      
-      // If it's an existing URL, we must fetch it first
       if (!sourceBlob && existingUrls[slot]) {
         const response = await fetch(existingUrls[slot]);
         sourceBlob = await response.blob();
@@ -459,32 +429,23 @@ export default function EditProduct() {
 
       if (!sourceBlob) throw new Error("Could not find image data.");
 
-      const preparedImage = await optimizeImageForEditor(sourceBlob, {
-        maxDimension: 1800,
-        mimeType: "image/jpeg",
-        quality: 0.9,
-      });
-
-      if (tempImage && tempImage.startsWith("blob:")) {
-        URL.revokeObjectURL(tempImage);
-      }
+      const preparedImage = await optimizeImageForEditor(sourceBlob, { maxDimension: 1800, mimeType: "image/jpeg", quality: 0.9 });
+      if (tempImage && tempImage.startsWith("blob:")) URL.revokeObjectURL(tempImage);
 
       setActiveSlot(slot);
       setTempImage(preparedImage.src);
       setBrightness(100);
       setContrast(100);
       setStudioOpen(true);
-    } catch {
-      notify({ type: "error", title: "Editor failed", message: "Could not open the image editor." });
+    } catch (err) {
+      notify({ type: "error", title: "Editor failed", message: err.message || "Could not open the image editor." });
     } finally {
       setPreparingStudio(false);
     }
   };
 
   const closeStudio = () => {
-    if (tempImage && tempImage.startsWith("blob:")) {
-      URL.revokeObjectURL(tempImage);
-    }
+    if (tempImage && tempImage.startsWith("blob:")) URL.revokeObjectURL(tempImage);
     setStudioOpen(false);
     setTempImage("");
     setActiveSlot(null);
@@ -497,11 +458,9 @@ export default function EditProduct() {
       const fitted = await padImageToAspectDataUrl(tempImage, PRODUCT_PROFILE.aspectRatio);
       if (tempImage.startsWith("blob:")) URL.revokeObjectURL(tempImage);
       setTempImage(fitted);
-      if (cropperRef.current?.cropper) {
-        cropperRef.current.cropper.replace(fitted);
-      }
+      if (cropperRef.current?.cropper) cropperRef.current.cropper.replace(fitted);
     } catch (error) {
-      notify({ type: "error", title: "Auto-fit failed", message: getFriendlyErrorMessage(error, "Could not auto-fit the image.") });
+      notify({ type: "error", title: "Auto-fit failed", message: error.message || "Could not auto-fit the image." });
     } finally {
       setIsFitting(false);
     }
@@ -519,14 +478,10 @@ export default function EditProduct() {
     const finalCanvas = document.createElement("canvas");
     finalCanvas.width = PRODUCT_PROFILE.targetWidth; finalCanvas.height = PRODUCT_PROFILE.targetHeight;
     const ctx = finalCanvas.getContext("2d");
-    if (!ctx) {
-      notify({ type: "error", title: "Editor unavailable", message: "Could not initialize the image editor canvas." });
-      return;
-    }
+    if (!ctx) return notify({ type: "error", title: "Editor unavailable", message: "Could not initialize the canvas." });
 
     ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
     ctx.drawImage(croppedCanvas, 0, 0);
-
     ctx.filter = "none";
     ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
     ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
@@ -536,118 +491,92 @@ export default function EditProduct() {
     ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    drawBrandedCanvasText(ctx, "CTMerchant", PRODUCT_PROFILE.targetWidth - 20, PRODUCT_PROFILE.targetHeight - 20, {
-      baseColor: "rgba(255, 255, 255, 0.45)",
-    });
+    drawBrandedCanvasText(ctx, "CTMerchant", PRODUCT_PROFILE.targetWidth - 20, PRODUCT_PROFILE.targetHeight - 20, { baseColor: "rgba(255, 255, 255, 0.45)" });
 
     try {
-      const blob = await canvasToBlobWithMaxBytes(finalCanvas, {
+      const blob = await safeCanvasToBlob(finalCanvas, {
         maxBytes: PRODUCT_MAX_BYTES,
         mimeType: PRODUCT_PROFILE.outputMimeType,
-        qualityStart: PRODUCT_PROFILE.qualityStart,
-        qualityFloor: PRODUCT_PROFILE.qualityFloor,
-        qualityStep: PRODUCT_PROFILE.qualityStep,
+        qualityStart: 0.9,
+        qualityStep: 0.1,
+        qualityFloor: 0.1,
       });
 
-      if (!blob) throw new Error("Compression failed.");
-
-      if (previews[activeSlot] && previews[activeSlot].startsWith("blob:")) {
-        URL.revokeObjectURL(previews[activeSlot]);
-      }
+      if (!blob) throw new Error("Compression failed. The browser may have run out of memory.");
+      if (previews[activeSlot] && previews[activeSlot].startsWith("blob:")) URL.revokeObjectURL(previews[activeSlot]);
 
       setBlobs((prev) => ({ ...prev, [activeSlot]: blob }));
       setDeletedSlots((prev) => ({ ...prev, [activeSlot]: false }));
       setPreviews((prev) => ({ ...prev, [activeSlot]: URL.createObjectURL(blob) }));
-      
       closeStudio();
     } catch (err) {
-      notify({
-        type: "error",
-        title: "Crop failed",
-        message: getFriendlyErrorMessage(err, "Could not save cropped image."),
-      });
+      notify({ type: "error", title: "Crop failed", message: err.message || "Could not save cropped image." });
     }
   };
 
   const removeImage = (e, slot) => {
     e.stopPropagation();
-    if (previews[slot] && previews[slot].startsWith("blob:")) {
-      URL.revokeObjectURL(previews[slot]);
-    }
+    if (previews[slot] && previews[slot].startsWith("blob:")) URL.revokeObjectURL(previews[slot]);
     setDeletedSlots((prev) => ({ ...prev, [slot]: true }));
     setBlobs((prev) => ({ ...prev, [slot]: null }));
     setPreviews((prev) => ({ ...prev, [slot]: "" }));
   };
 
+  function getProductStoragePathFromUrl(url) {
+    if (!url) return null;
+    const rawUrl = String(url).trim();
+    if (!rawUrl) return null;
+    if (!rawUrl.startsWith("http")) {
+      const cleanPath = rawUrl.replace(/^\/+/, "");
+      return cleanPath.startsWith(`${PRODUCT_BUCKET}/`) ? cleanPath.slice(PRODUCT_BUCKET.length + 1) : cleanPath;
+    }
+    try {
+      const cleanUrl = rawUrl.split("?")[0];
+      const escapedBucket = PRODUCT_BUCKET.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+      const regex = new RegExp(`/storage/v1/object/(?:public|authenticated|sign)/${escapedBucket}/(.+)$`, "i");
+      const match = cleanUrl.match(regex);
+      return match?.[1] ? decodeURIComponent(match[1]) : null;
+    } catch { return null; }
+  }
+
+  function collectProductImagePaths(urls) {
+    return [...new Set(urls.map(getProductStoragePathFromUrl).filter(Boolean))];
+  }
+
   async function removeProductImagePaths(paths, context = "Product image cleanup failed") {
     const uniquePaths = [...new Set(paths)].filter(Boolean);
     if (!uniquePaths.length) return;
-
-    const { error } = await supabase.storage
-      .from(PRODUCT_BUCKET)
-      .remove(uniquePaths);
-
-    if (error) {
-      throw new Error(`${context}: ${error.message}`);
-    }
+    const { error } = await supabase.storage.from(PRODUCT_BUCKET).remove(uniquePaths);
+    if (error) throw new Error(`${context}: ${error.message}`);
   }
 
   async function getUploadFingerprint(blob) {
     try {
       if (globalThis.crypto?.subtle && typeof blob?.arrayBuffer === "function") {
         const digest = await globalThis.crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
-        return Array.from(new Uint8Array(digest))
-          .map((byte) => byte.toString(16).padStart(2, "0"))
-          .join("")
-          .slice(0, 20);
+        return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, 20);
       }
-    } catch {
-      // Fall back below if Web Crypto is unavailable.
-    }
-
+    } catch {}
     return `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
   }
 
-  // --- SUBMIT ---
+  // --- SUBMIT UPDATE (WITH ROLLBACK) ---
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (submitting || deleting || mutationInFlightRef.current) return;
-    if (isOffline) {
-      notify({ type: "error", title: "Network unavailable", message: "You must be online to update a product." });
-      return;
-    }
-    if (!form.category) {
-      notify({ type: "error", title: "Category required", message: "Please select a category before continuing." });
-      return;
-    }
+    if (isOffline) return notify({ type: "error", title: "Network unavailable", message: "You must be online to update a product." });
+    if (!form.category) return notify({ type: "error", title: "Category required", message: "Please select a category before continuing." });
     const textLimitError = getProductTextLimitError(form, dynamicAttrs);
-    if (textLimitError) {
-      notify({ type: "error", title: "Text too long", message: textLimitError });
-      return;
-    }
+    if (textLimitError) return notify({ type: "error", title: "Text too long", message: textLimitError });
     
     const hasMainImage = (existingUrls[1] && !deletedSlots[1]) || blobs[1];
-    if (!hasMainImage) {
-      notify({ type: "error", title: "Main image required", message: "The main image in Box 1 is required before you can save this product." });
-      return;
-    }
+    if (!hasMainImage) return notify({ type: "error", title: "Main image required", message: "The main image in Box 1 is required before you can save this product." });
+    
     const oversizedSlot = [1, 2, 3].find((slot) => blobs[slot] && blobs[slot].size > PRODUCT_MAX_BYTES);
-    if (oversizedSlot) {
-      notify({
-        type: "error",
-        title: "Image too large",
-        message: `Image ${oversizedSlot} exceeds ${formatBytes(PRODUCT_MAX_BYTES)} after processing. Please re-crop it.`,
-      });
-      return;
-    }
+    if (oversizedSlot) return notify({ type: "error", title: "Image too large", message: `Image ${oversizedSlot} exceeds ${formatBytes(PRODUCT_MAX_BYTES)} after processing. Please re-crop it.` });
     
     if (form.isDiscount && activeOffersCount >= MAX_SPECIAL_OFFERS && (!productData.discount_price || productData.discount_price >= productData.price)) {
-      notify({
-        type: "error",
-        title: "Offer limit reached",
-        message: "You already have the maximum of 2 special offers active.",
-      });
-      return;
+      return notify({ type: "error", title: "Offer limit reached", message: "You already have the maximum of 2 special offers active." });
     }
 
     const uploadedImagePaths = [];
@@ -669,36 +598,24 @@ export default function EditProduct() {
       if (form.box_content.trim()) finalAttrs["What's in the Box"] = form.box_content.trim();
       if (form.warranty.trim()) finalAttrs["Warranty"] = form.warranty.trim();
 
-      // ==========================================
-      // 1. UPLOAD NEW IMAGES (Promise.allSettled)
-      // ==========================================
+      // Upload new blobs
       const uploadPromises = [1, 2, 3].map(async (idx) => {
         if (!blobs[idx]) return { slot: idx, url: null, path: null };
-        
         const fingerprint = await getUploadFingerprint(blobs[idx]);
         const fName = `${user.id}_img${idx}_${fingerprint}.jpg`;
-        const { error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], {
-          contentType: "image/jpeg",
-          upsert: true,
-          cacheControl: "31536000",
-        });
-        
+        const { error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], { contentType: "image/jpeg", upsert: true, cacheControl: "31536000" });
         if (upErr) throw upErr;
-        
         const url = supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl;
         return { slot: idx, path: fName, url: url };
       });
 
       const uploadResults = await Promise.allSettled(uploadPromises);
-      
       let hasUploadError = false;
       let newUrls = { 1: null, 2: null, 3: null };
 
       for (const result of uploadResults) {
         if (result.status === "fulfilled") {
-          if (result.value.path) {
-            uploadedImagePaths.push(result.value.path); // Track for rollback
-          }
+          if (result.value.path) uploadedImagePaths.push(result.value.path); 
           newUrls[result.value.slot] = result.value.url;
         } else {
           hasUploadError = true;
@@ -706,64 +623,36 @@ export default function EditProduct() {
         }
       }
 
-      if (hasUploadError) {
-        throw new Error("One or more images failed to upload. Aborting update.");
-      }
+      if (hasUploadError) throw new Error("One or more images failed to upload. Aborting update.");
 
       const finalUrl1 = newUrls[1] || (deletedSlots[1] ? null : existingUrls[1]);
       const finalUrl2 = newUrls[2] || (deletedSlots[2] ? null : existingUrls[2]);
       const finalUrl3 = newUrls[3] || (deletedSlots[3] ? null : existingUrls[3]);
 
-      // ==========================================
-      // 2. UPDATE DATABASE 
-      // (Postgres Trigger will auto-delete replaced images!)
-      // ==========================================
+      // Update DB (Postgres trigger handles deleting old images replaced in this update)
       const { error: rpcErr } = await supabase.rpc("manage_product", {
-        p_product_id: parseInt(productId),
-        p_name: form.name.trim(),
-        p_description: form.desc.trim(),
-        p_price: priceVal,
-        p_discount_price: discountPrice,
-        p_condition: form.condition,
-        p_category: form.category,
-        p_image_url: finalUrl1,
-        p_image_url_2: finalUrl2,
-        p_image_url_3: finalUrl3,
-        p_stock_count: parseInt(form.stock),
-        p_attributes: finalAttrs,
-        p_is_available: parseInt(form.stock) > 0,
-      })
-
-      if (rpcErr) throw rpcErr
-      dbUpdateSucceeded = true;
-
-      notify({
-        type: "success",
-        title: "Update Successful",
-        message: "Your product has been updated and resubmitted for approval. You can continue editing or go back.",
+        p_product_id: parseInt(productId), p_name: form.name.trim(), p_description: form.desc.trim(), p_price: priceVal, p_discount_price: discountPrice,
+        p_condition: form.condition, p_category: form.category, p_image_url: finalUrl1, p_image_url_2: finalUrl2, p_image_url_3: finalUrl3,
+        p_stock_count: parseInt(form.stock), p_attributes: finalAttrs, p_is_available: parseInt(form.stock) > 0,
       });
 
-      // Update local state
+      if (rpcErr) throw rpcErr;
+      dbUpdateSucceeded = true;
+
+      notify({ type: "success", title: "Update Successful", message: "Your product has been updated and resubmitted for approval. You can continue editing or go back." });
+
       setExistingUrls({ 1: finalUrl1, 2: finalUrl2, 3: finalUrl3 });
       setBlobs({ 1: null, 2: null, 3: null });
       setDeletedSlots({ 1: false, 2: false, 3: false });
       setProductData(prev => ({ ...prev, is_approved: false, rejection_reason: null }));
-
       window.scrollTo({ top: 0, behavior: "smooth" });
 
     } catch (err) {
-      // ==========================================
-      // 3. ROLLBACK NEW UPLOADS IF DB FAILED
-      // ==========================================
       if (!dbUpdateSucceeded && uploadedImagePaths.length > 0) {
-        try {
-          console.log("Rolling back... Deleting newly uploaded images:", uploadedImagePaths);
-          await removeProductImagePaths(uploadedImagePaths, "New product image rollback failed");
-        } catch (cleanupErr) {
-          console.warn("Rollback cleanup failed:", cleanupErr);
-        }
+        try { await removeProductImagePaths(uploadedImagePaths, "New product image rollback failed"); } 
+        catch (cleanupErr) { console.warn("Rollback cleanup failed:", cleanupErr); }
       }
-      notify({ type: "error", title: "Update failed", message: getFriendlyErrorMessage(err, "Update failed.") });
+      notify({ type: "error", title: "Update failed", message: err.message || "Update failed." });
     } finally {
       mutationInFlightRef.current = false;
       setSubmitting(false);
@@ -772,67 +661,32 @@ export default function EditProduct() {
 
   const deleteProduct = async () => {
     if (submitting || deleting || mutationInFlightRef.current) return;
-    if (isOffline) {
-      notify({ type: "error", title: "Network unavailable", message: "You must be online to delete a product." });
-      return;
-    }
-    const approved = await confirm({
-      type: "error",
-      title: "Delete product?",
-      message: "Are you sure you want to permanently delete this product? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Keep product",
-    });
+    if (isOffline) return notify({ type: "error", title: "Network unavailable", message: "You must be online to delete a product." });
+    
+    const approved = await confirm({ type: "error", title: "Delete product?", message: "Are you sure you want to permanently delete this product? This action cannot be undone.", confirmText: "Delete", cancelText: "Keep product" });
     if (!approved) return;
     
     try {
       mutationInFlightRef.current = true;
       setDeleting(true);
 
-      const { data: latestProduct, error: latestProductError } = await supabase
-        .from("products")
-        .select("shop_id")
-        .eq("id", productId)
-        .maybeSingle();
-
+      const { data: latestProduct, error: latestProductError } = await supabase.from("products").select("shop_id").eq("id", productId).maybeSingle();
       if (latestProductError) throw latestProductError;
       if (!latestProduct) throw new Error("Product not found or already deleted.");
       
-      // ==========================================
-      // DATABASE DELETE ONLY
-      // (Postgres Trigger auto-deletes the bucket files!)
-      // ==========================================
+      // Delete from DB. Your Postgres trigger `cleanup_orphaned_product_images` will handle the actual file deletion.
       const { error } = await supabase.from('products').delete().eq('id', productId);
       if (error) throw error;
 
       const nextPath = `/merchant-add-product?shop_id=${encodeURIComponent(latestProduct.shop_id)}`;
       let prefetchedAddProductData = null;
-
       try {
-        prefetchedAddProductData = await prepareVendorRouteTransition({
-          path: nextPath,
-          userId: user.id,
-          shopId: latestProduct.shop_id,
-        });
-      } catch (transitionError) {
-        console.warn("Add product prefetch after delete failed:", transitionError);
-      }
+        prefetchedAddProductData = await prepareVendorRouteTransition({ path: nextPath, userId: user.id, shopId: latestProduct.shop_id });
+      } catch (transitionError) { console.warn("Add product prefetch after delete failed:", transitionError); }
       
-      notify({
-        type: "success",
-        title: "Product deleted",
-        message: "The product and its images have been removed. You can add a new product now.",
-      });
+      notify({ type: "success", title: "Product deleted", message: "The product and its images have been removed. You can add a new product now." });
 
-      navigate(nextPath, {
-        replace: true,
-        state: {
-          fromVendorTransition: true,
-          prefetchedData: prefetchedAddProductData,
-          verifiedSubscriptionActive: true,
-        },
-      });
-
+      navigate(nextPath, { replace: true, state: { fromVendorTransition: true, prefetchedData: prefetchedAddProductData, verifiedSubscriptionActive: true } });
     } catch (err) {
       notify({ type: "error", title: "Delete failed", message: getFriendlyErrorMessage(err, "Failed to delete product.") });
       setDeleting(false);
@@ -841,39 +695,18 @@ export default function EditProduct() {
     }
   };
 
-  // --- LIVE CALCS ---
   const livePrice = parseFloat(form.price) || 0;
   const liveDiscPerc = parseFloat(form.discountPercent) || 0;
   const isLiveDiscValid = form.isDiscount && form.condition !== "Fairly Used" && liveDiscPerc > 0 && liveDiscPerc <= 20;
   const liveFinalPrice = isLiveDiscValid ? livePrice - livePrice * (liveDiscPerc / 100) : livePrice;
-  const categoryOptions = useMemo(
-    () => toProductCategoryOptions(categoryRows, form.category),
-    [categoryRows, form.category],
-  );
-  const categoryGroup = useMemo(
-    () => resolveProductCategoryGroup(form.category, categoryRows),
-    [form.category, categoryRows],
-  );
+  const categoryOptions = useMemo(() => toProductCategoryOptions(categoryRows, form.category), [categoryRows, form.category]);
+  const categoryGroup = useMemo(() => resolveProductCategoryGroup(form.category, categoryRows), [form.category, categoryRows]);
 
   if (authLoading || loading) return <EditProductShimmer />;
-
-  if (error) {
-    return (
-      <GlobalErrorScreen
-        error={error}
-        message={error}
-        onRetry={() => window.location.reload()}
-        onBack={() => navigate("/vendor-panel")}
-      />
-    );
-  }
+  if (error) return <GlobalErrorScreen error={error} message={error} onRetry={() => window.location.reload()} onBack={() => navigate("/vendor-panel")} />;
 
   return (
-    <div
-      className={`flex min-h-screen flex-col bg-[#F3F4F6] pb-12 text-[#0F1111] ${
-        location.state?.fromVendorTransition ? "ctm-page-enter" : ""
-      }`}
-    >
+    <div className={`flex min-h-screen flex-col bg-[#F3F4F6] pb-12 text-[#0F1111] ${location.state?.fromVendorTransition ? "ctm-page-enter" : ""}`}>
       <header className="sticky top-0 z-40 flex items-center gap-4 bg-[#131921] px-4 py-3 text-white shadow-sm">
         <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]"><FaArrowLeft /></button>
         <div className="text-[1.15rem] font-bold">Edit Product</div>
@@ -902,7 +735,6 @@ export default function EditProduct() {
         </div>
 
         <form onSubmit={handleUpdate} className="rounded-xl border border-[#D5D9D9] bg-white p-6 shadow-sm">
-          
           {/* IMAGE GRID */}
           <div className="mb-6 grid grid-cols-3 gap-3">
             {[1, 2, 3].map((slot) => (
@@ -923,30 +755,9 @@ export default function EditProduct() {
                   <>
                     <img src={previews[slot]} className="absolute inset-0 h-full w-full object-contain bg-white z-10" alt={`Slot ${slot}`} />
                     <div className="absolute left-1 top-1 z-20 flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRefs[slot].current?.click()}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#0F172A] shadow-md transition hover:scale-110"
-                        title="Pick from files"
-                      >
-                        <FaImage size={11} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCameraSlot(slot)}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0F172A] text-white shadow-md transition hover:scale-110 hover:bg-[#1E293B]"
-                        title="Capture from camera"
-                      >
-                        <FaCamera size={11} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openStudioForSlot(slot)}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#db2777] text-white shadow-md transition hover:scale-110 hover:bg-[#be185d]"
-                        title="Edit in CT Studio"
-                      >
-                        <FaWandMagicSparkles size={11} />
-                      </button>
+                      <button type="button" onClick={() => fileInputRefs[slot].current?.click()} className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#0F172A] shadow-md transition hover:scale-110" title="Pick from files"><FaImage size={11} /></button>
+                      <button type="button" onClick={() => setCameraSlot(slot)} className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0F172A] text-white shadow-md transition hover:scale-110 hover:bg-[#1E293B]" title="Capture from camera"><FaCamera size={11} /></button>
+                      <button type="button" onClick={() => openStudioForSlot(slot)} className="flex h-7 w-7 items-center justify-center rounded-full bg-[#db2777] text-white shadow-md transition hover:scale-110 hover:bg-[#be185d]" title="Edit in CT Studio"><FaWandMagicSparkles size={11} /></button>
                     </div>
                     <button type="button" onClick={(e) => removeImage(e, slot)} className="absolute right-1 top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-md transition hover:scale-110 hover:bg-red-700">
                       <FaTrashCan size={12} />
@@ -959,20 +770,8 @@ export default function EditProduct() {
                       {slot === 1 ? "Main Image\n(Required)" : slot === 2 ? "Extra Angle\n(Optional)" : "Label/Box\n(Optional)"}
                     </span>
                     <div className="mt-2 flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRefs[slot].current?.click()}
-                        className="rounded-md border border-[#334155] bg-white px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-[#0F172A] transition hover:bg-slate-50"
-                      >
-                        File
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCameraSlot(slot)}
-                        className="rounded-md border border-[#334155] bg-[#0F172A] px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1E293B]"
-                      >
-                        Camera
-                      </button>
+                      <button type="button" onClick={() => fileInputRefs[slot].current?.click()} className="rounded-md border border-[#334155] bg-white px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-[#0F172A] transition hover:bg-slate-50">File</button>
+                      <button type="button" onClick={() => setCameraSlot(slot)} className="rounded-md border border-[#334155] bg-[#0F172A] px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1E293B]">Camera</button>
                     </div>
                   </>
                 )}
@@ -985,32 +784,15 @@ export default function EditProduct() {
             <h4 className="mb-3 text-[0.95rem] font-extrabold"><FaRegEye className="inline mr-1" /> Marketplace Preview</h4>
             <div className="w-[140px] overflow-hidden rounded-md border border-[#E5E7EB] bg-white p-2 shadow-md">
               <div className="relative mb-1 flex aspect-square items-center justify-center overflow-hidden rounded border border-dashed border-[#D5D9D9] bg-[#F7F7F7]">
-                {previews[1] ? (
-                  <img src={previews[1]} className="h-full w-full object-contain bg-white" alt="Preview" />
-                ) : (
-                  <FaImage className="text-3xl text-[#D5D9D9]" />
-                )}
-                {isLiveDiscValid && (
-                  <div className="absolute left-1 top-1 z-10 rounded bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-white">
-                    -{form.discountPercent}%
-                  </div>
-                )}
-                {form.condition === "Fairly Used" && (
-                  <div className="absolute right-1 top-1 z-10 rounded bg-amber-500 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-white">
-                    Used
-                  </div>
-                )}
+                {previews[1] ? <img src={previews[1]} className="h-full w-full object-contain bg-white" alt="Preview" /> : <FaImage className="text-3xl text-[#D5D9D9]" />}
+                {isLiveDiscValid && <div className="absolute left-1 top-1 z-10 rounded bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-white">-{form.discountPercent}%</div>}
+                {form.condition === "Fairly Used" && <div className="absolute right-1 top-1 z-10 rounded bg-amber-500 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-white">Used</div>}
               </div>
               <div className="truncate text-[0.75rem] font-medium text-[#0F1111]">{form.name || "Product Title"}</div>
               <div className="truncate text-[0.8rem] font-extrabold text-[#db2777]">
                 {isLiveDiscValid && livePrice > 0 ? (
-                  <>
-                    <span className="mr-1 text-[0.65rem] font-medium text-[#888C8C] line-through">₦{livePrice.toLocaleString()}</span>
-                    ₦{liveFinalPrice.toLocaleString()}
-                  </>
-                ) : (
-                  `₦${livePrice ? livePrice.toLocaleString() : "0"}`
-                )}
+                  <><span className="mr-1 text-[0.65rem] font-medium text-[#888C8C] line-through">₦{livePrice.toLocaleString()}</span>₦{liveFinalPrice.toLocaleString()}</>
+                ) : (`₦${livePrice ? livePrice.toLocaleString() : "0"}`)}
               </div>
             </div>
           </div>
@@ -1019,10 +801,7 @@ export default function EditProduct() {
           <div className="mb-5">
             <label className="mb-1.5 block text-[0.9rem] font-bold">Category</label>
             <CustomSelect
-              value={form.category}
-              onChange={handleCategoryChange}
-              options={categoryOptions}
-              placeholder="Select a Category..."
+              value={form.category} onChange={handleCategoryChange} options={categoryOptions} placeholder="Select a Category..."
               className="rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]"
             />
           </div>
@@ -1047,13 +826,7 @@ export default function EditProduct() {
                 <div><label className="mb-1 block text-[0.85rem] font-bold">Size</label><input type="text" value={dynamicAttrs['Size'] || ''} className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Size', e.target.value)} /></div>
                 <div className="col-span-2">
                   <label className="mb-1 block text-[0.85rem] font-bold">Target Audience (Gender)</label>
-                  <CustomSelect
-                    value={dynamicAttrs['Gender'] || ""}
-                    onChange={(val) => handleAttrChange('Gender', val)}
-                    options={[{ value: "Unisex", label: "Unisex" }, { value: "Men", label: "Men" }, { value: "Women", label: "Women" }, { value: "Kids", label: "Kids" }]}
-                    placeholder="Select Target..."
-                    className="rounded border border-[#888C8C] p-2 text-[0.95rem]"
-                  />
+                  <CustomSelect value={dynamicAttrs['Gender'] || ""} onChange={(val) => handleAttrChange('Gender', val)} options={[{ value: "Unisex", label: "Unisex" }, { value: "Men", label: "Men" }, { value: "Women", label: "Women" }, { value: "Kids", label: "Kids" }]} placeholder="Select Target..." className="rounded border border-[#888C8C] p-2 text-[0.95rem]" />
                 </div>
               </div>
             </div>
@@ -1075,13 +848,7 @@ export default function EditProduct() {
                 <div><label className="mb-1 block text-[0.85rem] font-bold">Property Type</label><input type="text" value={dynamicAttrs['Property Type'] || ''} className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="e.g. 2 Bed Flat" onChange={e => handleAttrChange('Property Type', e.target.value)} /></div>
                 <div>
                   <label className="mb-1 block text-[0.85rem] font-bold">Payment Cycle</label>
-                  <CustomSelect
-                    value={dynamicAttrs['Payment Cycle'] || ""}
-                    onChange={(val) => handleAttrChange('Payment Cycle', val)}
-                    options={[{ value: "Per Year", label: "Per Year" }, { value: "Per Month", label: "Per Month" }, { value: "Per Night", label: "Per Night (Hotels)" }]}
-                    placeholder="Select Cycle..."
-                    className="rounded border border-[#888C8C] p-2 text-[0.95rem]"
-                  />
+                  <CustomSelect value={dynamicAttrs['Payment Cycle'] || ""} onChange={(val) => handleAttrChange('Payment Cycle', val)} options={[{ value: "Per Year", label: "Per Year" }, { value: "Per Month", label: "Per Month" }, { value: "Per Night", label: "Per Night (Hotels)" }]} placeholder="Select Cycle..." className="rounded border border-[#888C8C] p-2 text-[0.95rem]" />
                 </div>
               </div>
             </div>
@@ -1110,12 +877,7 @@ export default function EditProduct() {
           {/* CONDITION (CUSTOM DROPDOWN) */}
           <div className="mb-5">
             <label className="mb-1.5 block text-[0.9rem] font-bold">Condition</label>
-            <CustomSelect
-              value={form.condition}
-              onChange={handleConditionChange}
-              options={[{ value: "New", label: "New" }, { value: "Fairly Used", label: "Fairly Used" }]}
-              className="rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]"
-            />
+            <CustomSelect value={form.condition} onChange={handleConditionChange} options={[{ value: "New", label: "New" }, { value: "Fairly Used", label: "Fairly Used" }]} className="rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]" />
           </div>
 
           {/* DISCOUNT SECTION */}
