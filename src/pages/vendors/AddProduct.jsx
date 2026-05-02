@@ -37,12 +37,97 @@ import {
   resolveProductCategoryGroup,
   toProductCategoryOptions,
 } from "../../lib/productCategories";
+
+// Only importing the Editor utilities; the compression utilities are built-in below to prevent OOM crashes.
 import {
-  autoProcessImage,
-  canvasToBlobWithMaxBytes,
   optimizeImageForEditor,
   padImageToAspectDataUrl,
 } from "../../lib/imagePipeline";
+
+// =========================================================================
+// INLINED MEMORY-SAFE IMAGE PIPELINE (Bypasses external file OOM crashes)
+// =========================================================================
+const safeCanvasToBlob = (canvas, options) => {
+  const { maxBytes, mimeType = "image/jpeg", qualityStart = 0.9, qualityStep = 0.1, qualityFloor = 0.5 } = options;
+  return new Promise((resolve, reject) => {
+    let currentQuality = qualityStart;
+    const attemptCompression = () => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          // The silent killer: If blob is null, the browser ran out of RAM
+          return reject(new Error("Browser memory exhausted. The image is too large for this device to process."));
+        }
+        if (blob.size <= maxBytes || currentQuality <= qualityFloor) {
+          resolve(blob);
+        } else {
+          currentQuality -= qualityStep;
+          attemptCompression(); 
+        }
+      }, mimeType, currentQuality);
+    };
+    attemptCompression();
+  });
+};
+
+const safeProcessImage = async (file, options) => {
+  const { targetWidth, targetHeight, maxBytes, qualityStart, qualityFloor, qualityStep } = options;
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = async () => {
+      URL.revokeObjectURL(objectUrl); // Free memory instantly
+      try {
+        // Capping dimensions to 1920px prevents the Canvas from crashing the browser's RAM
+        const MAX_SAFE_DIMENSION = 1920; 
+        let drawWidth = img.width;
+        let drawHeight = img.height;
+
+        if (drawWidth > MAX_SAFE_DIMENSION || drawHeight > MAX_SAFE_DIMENSION) {
+          const ratio = Math.min(MAX_SAFE_DIMENSION / drawWidth, MAX_SAFE_DIMENSION / drawHeight);
+          drawWidth = Math.round(drawWidth * ratio);
+          drawHeight = Math.round(drawHeight * ratio);
+        }
+
+        const safeCanvas = document.createElement("canvas");
+        safeCanvas.width = drawWidth;
+        safeCanvas.height = drawHeight;
+        const safeCtx = safeCanvas.getContext("2d");
+        if (!safeCtx) throw new Error("Could not initialize safe 2D context.");
+        safeCtx.drawImage(img, 0, 0, drawWidth, drawHeight);
+
+        const finalCanvas = document.createElement("canvas");
+        finalCanvas.width = targetWidth;
+        finalCanvas.height = targetHeight;
+        const finalCtx = finalCanvas.getContext("2d");
+
+        finalCtx.fillStyle = "#FFFFFF";
+        finalCtx.fillRect(0, 0, targetWidth, targetHeight);
+
+        const scale = Math.max(targetWidth / drawWidth, targetHeight / drawHeight);
+        const scaledWidth = drawWidth * scale;
+        const scaledHeight = drawHeight * scale;
+        const offsetX = (targetWidth - scaledWidth) / 2;
+        const offsetY = (targetHeight - scaledHeight) / 2;
+
+        finalCtx.drawImage(safeCanvas, 0, 0, drawWidth, drawHeight, offsetX, offsetY, scaledWidth, scaledHeight);
+
+        const blob = await safeCanvasToBlob(finalCanvas, { maxBytes, mimeType: "image/jpeg", qualityStart, qualityStep, qualityFloor });
+        resolve({ blob, previewUrl: URL.createObjectURL(blob) });
+      } catch (err) {
+        reject(err);
+      }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Failed to decode the image file. It might be corrupted."));
+    };
+
+    img.src = objectUrl;
+  });
+};
+// =========================================================================
 
 const PRODUCT_RULE = UPLOAD_RULES.products;
 const PRODUCT_PROFILE = IMAGE_PROFILES.product;
@@ -55,48 +140,17 @@ const MAX_PRODUCTS_LIMIT = 30;
 const MAX_SPECIAL_OFFERS = 2;
 const PRODUCT_DRAFT_SAVE_DELAY = 700;
 const PRODUCT_IMAGE_SLOTS = [1, 2, 3];
-const PRODUCT_TEXT_LIMITS = {
-  name: 20,
-  key_features: 200,
-  desc: 400,
-  box_content: 300,
-  warranty: 20,
-};
-const PRODUCT_TEXT_LABELS = {
-  name: "Product Name / Title",
-  key_features: "Key Features",
-  desc: "Full Description",
-  box_content: "What's in the Box",
-  warranty: "Warranty",
-};
+const PRODUCT_TEXT_LIMITS = { name: 20, key_features: 200, desc: 400, box_content: 300, warranty: 20 };
+const PRODUCT_TEXT_LABELS = { name: "Product Name / Title", key_features: "Key Features", desc: "Full Description", box_content: "What's in the Box", warranty: "Warranty" };
 const PRODUCT_ATTRIBUTE_TEXT_LIMIT = 60;
-const EMPTY_PRODUCT_FORM = {
-  name: "",
-  price: "",
-  stock: "1",
-  condition: "New",
-  category: "",
-  desc: "",
-  key_features: "",
-  box_content: "",
-  warranty: "",
-  isDiscount: false,
-  discountPercent: "",
-};
+const EMPTY_PRODUCT_FORM = { name: "", price: "", stock: "1", condition: "New", category: "", desc: "", key_features: "", box_content: "", warranty: "", isDiscount: false, discountPercent: "" };
 const EMPTY_PRODUCT_BLOBS = { 1: null, 2: null, 3: null };
 const EMPTY_PRODUCT_PREVIEWS = { 1: "", 2: "", 3: "" };
 
-// --- PROFESSIONAL SHIMMER COMPONENT ---
 function AddProductShimmer() {
-  return (
-    <PageLoadingScreen
-      title="Opening add product"
-      message="Please wait while we prepare the product editor."
-    />
-  );
+  return <PageLoadingScreen title="Opening add product" message="Please wait while we prepare the product editor." />;
 }
 
-// --- CUSTOM DROPDOWN COMPONENT ---
 function CustomSelect({ value, onChange, options, placeholder, className }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -113,36 +167,14 @@ function CustomSelect({ value, onChange, options, placeholder, className }) {
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
-      <div
-        onClick={() => setIsOpen(!isOpen)}
-        className={`flex cursor-pointer items-center justify-between bg-white transition-all ${className} ${
-          isOpen ? "border-[#db2777] ring-2 ring-[#db2777]/20" : ""
-        }`}
-      >
-        <span className={value ? "text-[#0F1111]" : "text-[#888C8C]"}>
-          {value || placeholder}
-        </span>
-        <FaChevronDown
-          className={`text-xs text-[#888C8C] transition-transform duration-200 ${
-            isOpen ? "rotate-180 text-[#db2777]" : ""
-          }`}
-        />
+      <div onClick={() => setIsOpen(!isOpen)} className={`flex cursor-pointer items-center justify-between bg-white transition-all ${className} ${isOpen ? "border-[#db2777] ring-2 ring-[#db2777]/20" : ""}`}>
+        <span className={value ? "text-[#0F1111]" : "text-[#888C8C]"}>{value || placeholder}</span>
+        <FaChevronDown className={`text-xs text-[#888C8C] transition-transform duration-200 ${isOpen ? "rotate-180 text-[#db2777]" : ""}`} />
       </div>
       {isOpen && (
         <ul className="absolute left-0 top-full z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-[#D5D9D9] bg-white py-1 shadow-xl animate-[slideDown_0.2s_ease]">
           {options.map((opt) => (
-            <li
-              key={opt.value}
-              onClick={() => {
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
-              className={`cursor-pointer px-4 py-3 text-[0.95rem] transition-colors hover:bg-pink-50 ${
-                value === opt.value
-                  ? "bg-pink-50 font-extrabold text-[#db2777]"
-                  : "font-medium text-[#0F1111]"
-              }`}
-            >
+            <li key={opt.value} onClick={() => { onChange(opt.value); setIsOpen(false); }} className={`cursor-pointer px-4 py-3 text-[0.95rem] transition-colors hover:bg-pink-50 ${value === opt.value ? "bg-pink-50 font-extrabold text-[#db2777]" : "font-medium text-[#0F1111]"}`}>
               {opt.label}
             </li>
           ))}
@@ -159,35 +191,17 @@ function clampProductTextField(id, value) {
 }
 
 function getProductTextLimitError(form, dynamicAttrs) {
-  const limitedField = Object.entries(PRODUCT_TEXT_LIMITS).find(([field, limit]) => {
-    return String(form[field] || "").length > limit;
-  });
-
-  if (limitedField) {
-    const [field, limit] = limitedField;
-    return `${PRODUCT_TEXT_LABELS[field]} must be ${limit} characters or less.`;
-  }
-
-  const oversizedAttr = Object.entries(dynamicAttrs || {}).find(([, value]) => {
-    return typeof value === "string" && value.length > PRODUCT_ATTRIBUTE_TEXT_LIMIT;
-  });
-
-  if (oversizedAttr) {
-    return `${oversizedAttr[0]} must be ${PRODUCT_ATTRIBUTE_TEXT_LIMIT} characters or less.`;
-  }
-
+  const limitedField = Object.entries(PRODUCT_TEXT_LIMITS).find(([field, limit]) => String(form[field] || "").length > limit);
+  if (limitedField) return `${PRODUCT_TEXT_LABELS[limitedField[0]]} must be ${limitedField[1]} characters or less.`;
+  const oversizedAttr = Object.entries(dynamicAttrs || {}).find(([, value]) => typeof value === "string" && value.length > PRODUCT_ATTRIBUTE_TEXT_LIMIT);
+  if (oversizedAttr) return `${oversizedAttr[0]} must be ${PRODUCT_ATTRIBUTE_TEXT_LIMIT} characters or less.`;
   return "";
 }
 
 function CharacterCounter({ value, limit }) {
   const length = String(value || "").length;
   const isNearLimit = length >= Math.floor(limit * 0.9);
-
-  return (
-    <span className={`text-[0.72rem] font-bold ${isNearLimit ? "text-pink-600" : "text-slate-400"}`}>
-      {length}/{limit}
-    </span>
-  );
+  return <span className={`text-[0.72rem] font-bold ${isNearLimit ? "text-pink-600" : "text-slate-400"}`}>{length}/{limit}</span>;
 }
 
 export default function AddProduct() {
@@ -197,12 +211,7 @@ export default function AddProduct() {
   const { notify } = useGlobalFeedback();
   const [searchParams] = useSearchParams();
   const shopId = searchParams.get("shop_id");
-  const prefetchedData =
-    location.state?.prefetchedData?.kind === "merchant-add-product" &&
-    (!shopId || String(location.state.prefetchedData.shopId) === String(shopId))
-      ? location.state.prefetchedData
-      : null
-
+  const prefetchedData = location.state?.prefetchedData?.kind === "merchant-add-product" && (!shopId || String(location.state.prefetchedData.shopId) === String(shopId)) ? location.state.prefetchedData : null;
   const { user, loading: authLoading, isOffline } = useAuthSession();
 
   const [loading, setLoading] = useState(() => !prefetchedData);
@@ -211,22 +220,15 @@ export default function AddProduct() {
   const [activeOffersCount, setActiveOffersCount] = useState(() => prefetchedData?.activeOffersCount || 0);
   const [submitting, setSubmitting] = useState(false);
   const [categoryRows, setCategoryRows] = useState(() => prefetchedData?.categoryRows || []);
-  const productDraftKey = useMemo(() => {
-    if (!user?.id || !shopId) return "";
-    return `add-product:${user.id}:${shopId}`;
-  }, [shopId, user?.id]);
+  const productDraftKey = useMemo(() => (!user?.id || !shopId) ? "" : `add-product:${user.id}:${shopId}`, [shopId, user?.id]);
   const [draftHydrated, setDraftHydrated] = useState(false);
 
-  // Form State
   const [form, setForm] = useState(EMPTY_PRODUCT_FORM);
   const [dynamicAttrs, setDynamicAttrs] = useState({});
-
-  // Image State
   const [blobs, setBlobs] = useState(EMPTY_PRODUCT_BLOBS);
   const [previews, setPreviews] = useState(EMPTY_PRODUCT_PREVIEWS);
   const [processingSlots, setProcessingSlots] = useState({ 1: false, 2: false, 3: false });
 
-  // Studio State
   const [studioOpen, setStudioOpen] = useState(false);
   const [cameraSlot, setCameraSlot] = useState(null);
   const cameraSlotRef = useRef(null);
@@ -240,40 +242,21 @@ export default function AddProduct() {
   const previewsRef = useRef(previews);
   const tempImageRef = useRef(tempImage);
   const skipNextDraftSaveRef = useRef(false);
-  const fileInputRefs = {
-    1: useRef(null),
-    2: useRef(null),
-    3: useRef(null),
-  };
+  const fileInputRefs = { 1: useRef(null), 2: useRef(null), 3: useRef(null) };
 
-  useEffect(() => {
-    cameraSlotRef.current = cameraSlot;
-  }, [cameraSlot]);
-
-  useEffect(() => {
-    previewsRef.current = previews;
-  }, [previews]);
-
-  useEffect(() => {
-    tempImageRef.current = tempImage;
-  }, [tempImage]);
-
+  useEffect(() => { cameraSlotRef.current = cameraSlot; }, [cameraSlot]);
+  useEffect(() => { previewsRef.current = previews; }, [previews]);
+  useEffect(() => { tempImageRef.current = tempImage; }, [tempImage]);
   useEffect(() => {
     return () => {
       Object.values(previewsRef.current).forEach((value) => {
-        if (typeof value === "string" && value.startsWith("blob:")) {
-          URL.revokeObjectURL(value);
-        }
+        if (typeof value === "string" && value.startsWith("blob:")) URL.revokeObjectURL(value);
       });
-
       const editorPreview = tempImageRef.current;
-      if (typeof editorPreview === "string" && editorPreview.startsWith("blob:")) {
-        URL.revokeObjectURL(editorPreview);
-      }
+      if (typeof editorPreview === "string" && editorPreview.startsWith("blob:")) URL.revokeObjectURL(editorPreview);
     };
   }, []);
 
-  // Initialization & Security Checks
   useEffect(() => {
     if (prefetchedData) {
       setLimitReached(prefetchedData.limitReached || false);
@@ -283,25 +266,17 @@ export default function AddProduct() {
       setLoading(false);
       return;
     }
-
     async function init() {
       if (!user) return;
-      if (!shopId) {
-        navigate("/vendor-panel", { replace: true });
-        return;
-      }
+      if (!shopId) return navigate("/vendor-panel", { replace: true });
       if (isOffline) {
         setError("Network offline. Please connect to the internet to add products.");
-        setLoading(false);
-        return;
+        return setLoading(false);
       }
-
       try {
         setLoading(true);
-
         const { data: profile } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).maybeSingle();
         if (profile?.is_suspended) throw new Error("Account restricted.");
-
         const { data: shop } = await supabase.from("shops").select("id, is_open").eq("id", shopId).eq("owner_id", user.id).maybeSingle();
         if (!shop) throw new Error("Shop not found or access denied.");
         if (shop.is_open === false) throw new Error("Shop is suspended.");
@@ -311,11 +286,9 @@ export default function AddProduct() {
           supabase.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shopId).not("discount_price", "is", null),
           loadProductCategoryRows(supabase),
         ]);
-
         if (prodRes.count >= MAX_PRODUCTS_LIMIT) setLimitReached(true);
         setActiveOffersCount(discountRes.count || 0);
         setCategoryRows(loadedCategoryRows);
-
       } catch (err) {
         setError(err.message || "Could not load this page. Retry.");
       } finally {
@@ -333,7 +306,6 @@ export default function AddProduct() {
       if (isCancelled) return;
       if (draft?.data?.form) setForm((prev) => ({ ...prev, ...draft.data.form }));
       if (draft?.data?.dynamicAttrs) setDynamicAttrs(draft.data.dynamicAttrs);
-
       if (draft?.files) {
         const nextBlobs = { ...EMPTY_PRODUCT_BLOBS };
         const nextPreviews = { ...EMPTY_PRODUCT_PREVIEWS };
@@ -355,12 +327,8 @@ export default function AddProduct() {
   useEffect(() => {
     if ((authLoading || loading || error) && !draftHydrated) return;
     if (!productDraftKey || !draftHydrated) return;
-
     const timeoutId = window.setTimeout(() => {
-      if (skipNextDraftSaveRef.current) {
-        skipNextDraftSaveRef.current = false;
-        return;
-      }
+      if (skipNextDraftSaveRef.current) { skipNextDraftSaveRef.current = false; return; }
       const persistentFiles = Object.fromEntries(
         PRODUCT_IMAGE_SLOTS.filter((slot) => Boolean(blobs[slot])).map((slot) => [slot, blobs[slot]])
       );
@@ -369,44 +337,25 @@ export default function AddProduct() {
     return () => window.clearTimeout(timeoutId);
   }, [authLoading, blobs, draftHydrated, dynamicAttrs, error, form, loading, productDraftKey]);
 
-
-  // --- HANDLERS ---
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;
     setForm((prev) => ({ ...prev, [id]: type === "checkbox" ? checked : clampProductTextField(id, value) }));
   };
 
-  const handleAttrChange = (key, value) => {
-    setDynamicAttrs((prev) => ({ ...prev, [key]: typeof value === "string" ? value.slice(0, PRODUCT_ATTRIBUTE_TEXT_LIMIT) : value }));
-  };
+  const handleAttrChange = (key, value) => setDynamicAttrs((prev) => ({ ...prev, [key]: typeof value === "string" ? value.slice(0, PRODUCT_ATTRIBUTE_TEXT_LIMIT) : value }));
+  const handleCategoryChange = (val) => { setForm((prev) => ({ ...prev, category: val })); setDynamicAttrs({}); };
+  const handleConditionChange = (val) => setForm((prev) => ({ ...prev, condition: val }));
 
-  const handleCategoryChange = (val) => {
-    setForm((prev) => ({ ...prev, category: val }));
-    setDynamicAttrs({}); 
-  };
-
-  const handleConditionChange = (val) => {
-    setForm((prev) => ({ ...prev, condition: val }));
-  };
-
-  // --- BACKGROUND PROCESSING PIPELINE (WITH DEBUG LOGS) ---
+  // --- MEMORY SAFE BACKGROUND PROCESSING ---
   const processImageInSlot = async (file, slot) => {
     if (!file || !slot) return;
-    console.log(`[CT Studio API] Initiating pipeline for slot ${slot}. Original File: ${file.size} bytes, Type: ${file.type}`);
-
-    if (!file.type.startsWith("image/")) {
-      notify({ type: "error", title: "Invalid image", message: "Please upload a valid image file." });
-      return;
-    }
-    if (file.size > PRODUCT_INPUT_MAX_BYTES) {
-      notify({ type: "error", title: "Image too large", message: `Maximum input size is ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}.` });
-      return;
-    }
+    if (!file.type.startsWith("image/")) return notify({ type: "error", title: "Invalid image", message: "Please upload a valid image file." });
+    if (file.size > PRODUCT_INPUT_MAX_BYTES) return notify({ type: "error", title: "Image too large", message: `Maximum input size is ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}.` });
 
     setProcessingSlots((prev) => ({ ...prev, [slot]: true }));
     try {
-      console.log(`[CT Studio API] Sending to autoProcessImage...`);
-      const result = await autoProcessImage(file, {
+      // Using the local safeProcessImage function
+      const result = await safeProcessImage(file, {
         aspectRatio: PRODUCT_PROFILE.aspectRatio,
         targetWidth: PRODUCT_PROFILE.targetWidth,
         targetHeight: PRODUCT_PROFILE.targetHeight,
@@ -416,19 +365,11 @@ export default function AddProduct() {
         qualityStep: PRODUCT_PROFILE.qualityStep,
       });
 
-      console.log(`[CT Studio API] Processing SUCCESS. Final blob size: ${result.blob.size} bytes`);
       if (previews[slot] && previews[slot].startsWith("blob:")) URL.revokeObjectURL(previews[slot]);
-      
       setBlobs((prev) => ({ ...prev, [slot]: result.blob }));
       setPreviews((prev) => ({ ...prev, [slot]: result.previewUrl }));
     } catch (err) {
-      console.error(`[CT Studio API] FATAL ERROR processing slot ${slot}:`, err);
-      notify({
-        type: "error",
-        title: "Processing failed",
-        // Spit out the RAW error message here so you can read it on the screen
-        message: err.message || "Unknown error during processing.",
-      });
+      notify({ type: "error", title: "Processing failed", message: err.message || "Unknown error during processing." });
     } finally {
       setProcessingSlots((prev) => ({ ...prev, [slot]: false }));
     }
@@ -436,7 +377,7 @@ export default function AddProduct() {
 
   const handleFileSelect = async (e, slot) => {
     const file = e.target.files?.[0];
-    e.target.value = ""; // Reset
+    e.target.value = ""; 
     if (!file) return;
     await processImageInSlot(file, slot);
   };
@@ -449,12 +390,10 @@ export default function AddProduct() {
     await processImageInSlot(file, targetSlot);
   };
 
-  // --- STUDIO LOGIC (WITH DEBUG LOGS) ---
   const openStudioForSlot = async (slot) => {
     const existingBlob = blobs[slot];
     if (!existingBlob) return;
     
-    console.log(`[CT Studio Editor] Opening editor for slot ${slot}...`);
     setPreparingStudio(true);
     try {
       const preparedImage = await optimizeImageForEditor(existingBlob, { maxDimension: 1800, mimeType: "image/jpeg", quality: 0.9 });
@@ -465,9 +404,7 @@ export default function AddProduct() {
       setBrightness(100);
       setContrast(100);
       setStudioOpen(true);
-      console.log(`[CT Studio Editor] Editor successfully prepared.`);
     } catch (err) {
-      console.error(`[CT Studio Editor] Failed to prepare editor:`, err);
       notify({ type: "error", title: "Editor failed", message: err.message || "Could not open the image editor." });
     } finally {
       setPreparingStudio(false);
@@ -490,7 +427,6 @@ export default function AddProduct() {
       setTempImage(fitted);
       if (cropperRef.current?.cropper) cropperRef.current.cropper.replace(fitted);
     } catch (error) {
-      console.error(`[CT Studio Editor] Auto-fit failed:`, error);
       notify({ type: "error", title: "Auto-fit failed", message: error.message || "Could not auto-fit the image." });
     } finally {
       setIsFitting(false);
@@ -499,7 +435,6 @@ export default function AddProduct() {
 
   const applyCrop = async () => {
     if (!cropperRef.current?.cropper) return;
-    console.log(`[CT Studio Editor] Committing crop and generating final canvas...`);
     const cropper = cropperRef.current.cropper;
 
     const croppedCanvas = cropper.getCroppedCanvas({
@@ -514,10 +449,7 @@ export default function AddProduct() {
     finalCanvas.width = PRODUCT_PROFILE.targetWidth;
     finalCanvas.height = PRODUCT_PROFILE.targetHeight;
     const ctx = finalCanvas.getContext("2d");
-    if (!ctx) {
-      notify({ type: "error", title: "Editor unavailable", message: "Could not initialize the canvas." });
-      return;
-    }
+    if (!ctx) return notify({ type: "error", title: "Editor unavailable", message: "Could not initialize the canvas." });
 
     ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
     ctx.drawImage(croppedCanvas, 0, 0);
@@ -530,13 +462,11 @@ export default function AddProduct() {
     ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    drawBrandedCanvasText(ctx, "CTMerchant", PRODUCT_PROFILE.targetWidth - 20, PRODUCT_PROFILE.targetHeight - 20, {
-      baseColor: "rgba(255, 255, 255, 0.45)",
-    });
+    drawBrandedCanvasText(ctx, "CTMerchant", PRODUCT_PROFILE.targetWidth - 20, PRODUCT_PROFILE.targetHeight - 20, { baseColor: "rgba(255, 255, 255, 0.45)" });
 
     try {
-      console.log(`[CT Studio Editor] Sending canvas to blob compression...`);
-      const blob = await canvasToBlobWithMaxBytes(finalCanvas, {
+      // Using the local safeCanvasToBlob function
+      const blob = await safeCanvasToBlob(finalCanvas, {
         maxBytes: PRODUCT_MAX_BYTES,
         mimeType: PRODUCT_PROFILE.outputMimeType,
         qualityStart: PRODUCT_PROFILE.qualityStart,
@@ -545,79 +475,40 @@ export default function AddProduct() {
       });
 
       if (!blob) throw new Error("Compression failed. The browser may have run out of memory.");
-
-      console.log(`[CT Studio Editor] Final cropped blob generated successfully: ${blob.size} bytes.`);
-      if (previews[activeSlot] && previews[activeSlot].startsWith("blob:")) {
-        URL.revokeObjectURL(previews[activeSlot]);
-      }
+      if (previews[activeSlot] && previews[activeSlot].startsWith("blob:")) URL.revokeObjectURL(previews[activeSlot]);
 
       setBlobs((prev) => ({ ...prev, [activeSlot]: blob }));
       setPreviews((prev) => ({ ...prev, [activeSlot]: URL.createObjectURL(blob) }));
       closeStudio();
     } catch (err) {
-      console.error(`[CT Studio Editor] Crop / blob extraction failed:`, err);
-      notify({
-        type: "error",
-        title: "Crop failed",
-        message: err.message || "Could not save cropped image.",
-      });
+      notify({ type: "error", title: "Crop failed", message: err.message || "Could not save cropped image." });
     }
   };
 
   const removeImage = (e, slot) => {
     e.stopPropagation();
-    if (previews[slot] && previews[slot].startsWith("blob:")) {
-      URL.revokeObjectURL(previews[slot]);
-    }
+    if (previews[slot] && previews[slot].startsWith("blob:")) URL.revokeObjectURL(previews[slot]);
     setBlobs((prev) => ({ ...prev, [slot]: null }));
     setPreviews((prev) => ({ ...prev, [slot]: "" }));
   };
 
-  // --- SUBMIT (WITH ROLLBACK & LOGS) ---
+  // --- SUBMIT TRANSACTION WITH ROLLBACK ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
-    if (isOffline) {
-      notify({ type: "error", title: "Network unavailable", message: "You must be online to upload a product." });
-      return;
-    }
-    if (!form.category) {
-      notify({ type: "error", title: "Category required", message: "Please select a category before continuing." });
-      return;
-    }
+    if (isOffline) return notify({ type: "error", title: "Network unavailable", message: "You must be online to upload a product." });
+    if (!form.category) return notify({ type: "error", title: "Category required", message: "Please select a category before continuing." });
     const textLimitError = getProductTextLimitError(form, dynamicAttrs);
-    if (textLimitError) {
-      notify({ type: "error", title: "Text too long", message: textLimitError });
-      return;
-    }
-    if (!blobs[1]) {
-      notify({ type: "error", title: "Main image required", message: "The main image is required before you can submit this product." });
-      return;
-    }
+    if (textLimitError) return notify({ type: "error", title: "Text too long", message: textLimitError });
+    if (!blobs[1]) return notify({ type: "error", title: "Main image required", message: "The main image is required before you can submit this product." });
     const oversizedSlot = [1, 2, 3].find((slot) => blobs[slot] && blobs[slot].size > PRODUCT_MAX_BYTES);
-    if (oversizedSlot) {
-      notify({
-        type: "error",
-        title: "Image too large",
-        message: `Image ${oversizedSlot} exceeds ${formatBytes(PRODUCT_MAX_BYTES)} after processing. Please re-crop it.`,
-      });
-      return;
-    }
-    if (form.isDiscount && activeOffersCount >= MAX_SPECIAL_OFFERS) {
-      notify({
-        type: "error",
-        title: "Offer limit reached",
-        message: "You already have the maximum of 2 special offers active.",
-      });
-      return;
-    }
+    if (oversizedSlot) return notify({ type: "error", title: "Image too large", message: `Image ${oversizedSlot} exceeds ${formatBytes(PRODUCT_MAX_BYTES)} after processing. Please re-crop it.` });
+    if (form.isDiscount && activeOffersCount >= MAX_SPECIAL_OFFERS) return notify({ type: "error", title: "Offer limit reached", message: "You already have the maximum of 2 special offers active." });
 
-    console.log(`[Upload Pipeline] Starting transaction for new product...`);
     let successfullyUploadedPaths = []; 
 
     try {
       setSubmitting(true);
-
       const priceVal = parseFloat(form.price);
       let discountPrice = null;
       if (form.isDiscount && form.condition !== "Fairly Used") {
@@ -631,121 +522,58 @@ export default function AddProduct() {
       if (form.box_content.trim()) finalAttrs["What's in the Box"] = form.box_content.trim();
       if (form.warranty.trim()) finalAttrs["Warranty"] = form.warranty.trim();
 
-      // ==========================================
-      // 1. UPLOAD IMAGES IN PARALLEL
-      // ==========================================
       const uploadPromises = PRODUCT_IMAGE_SLOTS.map(async (idx) => {
         if (!blobs[idx]) return { slot: idx, url: null, path: null };
-        
         const fName = `${user.id}_${Date.now()}_img${idx}.jpg`;
-        console.log(`[Upload Pipeline] Pushing Slot ${idx} to Supabase Storage -> ${fName}`);
-        
-        const { data, error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], {
-          contentType: "image/jpeg",
-          upsert: false,
-          cacheControl: "31536000",
-        });
-        
+        const { data, error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], { contentType: "image/jpeg", upsert: false, cacheControl: "31536000" });
         if (upErr) throw upErr; 
-        
         const url = supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl;
         return { slot: idx, url, path: data.path }; 
       });
 
       const uploadResults = await Promise.allSettled(uploadPromises);
-      
-      // ==========================================
-      // 2. CHECK FOR UPLOAD FAILURES & TRACK SUCCESSES
-      // ==========================================
       let hasUploadError = false;
       let finalUrls = { 1: null, 2: null, 3: null };
 
       for (const result of uploadResults) {
         if (result.status === "fulfilled") {
-          if (result.value.path) {
-            console.log(`[Upload Pipeline] Slot ${result.value.slot} Success. Logged path for rollback: ${result.value.path}`);
-            successfullyUploadedPaths.push(result.value.path); 
-          }
+          if (result.value.path) successfullyUploadedPaths.push(result.value.path); 
           finalUrls[result.value.slot] = result.value.url;
         } else {
           hasUploadError = true;
-          console.error(`[Upload Pipeline] FAILED UPLOAD detected:`, result.reason);
+          console.error("[Upload Pipeline] FAILED UPLOAD detected:", result.reason);
         }
       }
 
-      if (hasUploadError) {
-        throw new Error("One or more images failed to upload to the server. Aborting product creation.");
-      }
+      if (hasUploadError) throw new Error("One or more images failed to upload to the server. Aborting product creation.");
 
-      // ==========================================
-      // 3. INSERT INTO DATABASE
-      // ==========================================
-      console.log(`[Upload Pipeline] All images uploaded successfully. Initiating Postgres RPC...`);
       const { error: rpcErr } = await supabase.rpc("manage_product", {
-        p_shop_id: parseInt(shopId),
-        p_name: form.name.trim(),
-        p_description: form.desc.trim(),
-        p_price: priceVal,
-        p_discount_price: discountPrice,
-        p_condition: form.condition,
-        p_category: form.category,
-        p_image_url: finalUrls[1],
-        p_image_url_2: finalUrls[2],
-        p_image_url_3: finalUrls[3],
-        p_stock_count: parseInt(form.stock),
-        p_attributes: finalAttrs,
-        p_is_available: parseInt(form.stock) > 0,
+        p_shop_id: parseInt(shopId), p_name: form.name.trim(), p_description: form.desc.trim(), p_price: priceVal, p_discount_price: discountPrice,
+        p_condition: form.condition, p_category: form.category, p_image_url: finalUrls[1], p_image_url_2: finalUrls[2], p_image_url_3: finalUrls[3],
+        p_stock_count: parseInt(form.stock), p_attributes: finalAttrs, p_is_available: parseInt(form.stock) > 0,
       });
 
       if (rpcErr) throw rpcErr;
-      console.log(`[Upload Pipeline] Transaction complete! Product added.`);
 
-      notify({
-        type: "success",
-        title: "Product Added",
-        message: "Your product has been successfully added to the marketplace. You can now add another item.",
-      });
+      notify({ type: "success", title: "Product Added", message: "Your product has been successfully added to the marketplace. You can now add another item." });
 
       try {
         skipNextDraftSaveRef.current = true;
         await clearPersistentDraft(productDraftKey);
-      } catch (draftError) {
-        console.warn("Could not clear add product draft:", draftError);
-      }
+      } catch (draftError) { console.warn("Could not clear draft:", draftError); }
 
-      setForm({
-        name: "", price: "", stock: "1", condition: "New", category: form.category, desc: "", key_features: "", box_content: "", warranty: "", isDiscount: false, discountPercent: "",
-      });
+      setForm({ name: "", price: "", stock: "1", condition: "New", category: form.category, desc: "", key_features: "", box_content: "", warranty: "", isDiscount: false, discountPercent: "" });
       setDynamicAttrs({});
       setBlobs(EMPTY_PRODUCT_BLOBS);
       setPreviews(EMPTY_PRODUCT_PREVIEWS);
       window.scrollTo({ top: 0, behavior: "smooth" });
 
     } catch (err) {
-      console.error("[Upload Pipeline] CRITICAL FAILURE triggered catch block:", err);
-      
-      // ==========================================
-      // 4. THE ROLLBACK CLEANUP
-      // ==========================================
       if (successfullyUploadedPaths.length > 0) {
-        console.warn(`[Upload Rollback] Initiating automated cleanup of orphaned images:`, successfullyUploadedPaths);
-        
-        const { error: cleanupError } = await supabase.storage
-          .from(PRODUCT_BUCKET)
-          .remove(successfullyUploadedPaths);
-          
-        if (cleanupError) {
-          console.error("[Upload Rollback] FATAL: Failed to clean up orphaned images during rollback:", cleanupError);
-        } else {
-          console.log("[Upload Rollback] Cleanup successful. Orphaned files destroyed.");
-        }
+        const { error: cleanupError } = await supabase.storage.from(PRODUCT_BUCKET).remove(successfullyUploadedPaths);
+        if (cleanupError) console.error("[Upload Rollback] FATAL: Failed to clean up orphaned images:", cleanupError);
       }
-
-      notify({ 
-        type: "error", 
-        title: "Upload failed", 
-        message: err.message || "Upload failed. Please check your connection and try again." 
-      });
+      notify({ type: "error", title: "Upload failed", message: err.message || "Upload failed. Please check your connection and try again." });
     } finally {
       setSubmitting(false);
     }
@@ -759,18 +587,7 @@ export default function AddProduct() {
   const categoryGroup = useMemo(() => resolveProductCategoryGroup(form.category, categoryRows), [form.category, categoryRows]);
 
   if (authLoading || loading) return <AddProductShimmer />;
-
-  if (error) {
-    return (
-      <GlobalErrorScreen
-        error={error}
-        message={error}
-        onRetry={() => window.location.reload()}
-        onBack={() => navigate("/vendor-panel")}
-      />
-    );
-  }
-
+  if (error) return <GlobalErrorScreen error={error} message={error} onRetry={() => window.location.reload()} onBack={() => navigate("/vendor-panel")} />;
   if (limitReached) {
     return (
       <div className="flex h-screen flex-col bg-[#F3F4F6]">
