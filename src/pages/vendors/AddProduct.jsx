@@ -24,7 +24,6 @@ import CameraCaptureModal from "../../components/common/CameraCaptureModal";
 import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
-import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import {
   clearPersistentDraft,
   loadPersistentDraft,
@@ -97,7 +96,7 @@ function AddProductShimmer() {
   );
 }
 
-// --- CUSTOM DROPDOWN COMPONENT (Bypasses Mobile OS Native Fullscreen Menus) ---
+// --- CUSTOM DROPDOWN COMPONENT ---
 function CustomSelect({ value, onChange, options, placeholder, className }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -307,7 +306,6 @@ export default function AddProduct() {
         if (!shop) throw new Error("Shop not found or access denied.");
         if (shop.is_open === false) throw new Error("Shop is suspended.");
 
-        // Check Limits
         const [prodRes, discountRes, loadedCategoryRows] = await Promise.all([
           supabase.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shopId),
           supabase.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shopId).not("discount_price", "is", null),
@@ -319,7 +317,7 @@ export default function AddProduct() {
         setCategoryRows(loadedCategoryRows);
 
       } catch (err) {
-        setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
+        setError(err.message || "Could not load this page. Retry.");
       } finally {
         setLoading(false);
       }
@@ -329,45 +327,30 @@ export default function AddProduct() {
 
   useEffect(() => {
     if (authLoading || loading || error || !productDraftKey) return;
-
     let isCancelled = false;
-
     async function restoreDraft() {
       const draft = await loadPersistentDraft(productDraftKey);
       if (isCancelled) return;
-
-      if (draft?.data?.form) {
-        setForm((prev) => ({ ...prev, ...draft.data.form }));
-      }
-
-      if (draft?.data?.dynamicAttrs) {
-        setDynamicAttrs(draft.data.dynamicAttrs);
-      }
+      if (draft?.data?.form) setForm((prev) => ({ ...prev, ...draft.data.form }));
+      if (draft?.data?.dynamicAttrs) setDynamicAttrs(draft.data.dynamicAttrs);
 
       if (draft?.files) {
         const nextBlobs = { ...EMPTY_PRODUCT_BLOBS };
         const nextPreviews = { ...EMPTY_PRODUCT_PREVIEWS };
-
         PRODUCT_IMAGE_SLOTS.forEach((slot) => {
           const savedBlob = draft.files[slot] || draft.files[String(slot)];
           if (!savedBlob) return;
           nextBlobs[slot] = savedBlob;
           nextPreviews[slot] = URL.createObjectURL(savedBlob);
         });
-
         setBlobs(nextBlobs);
         setPreviews(nextPreviews);
       }
-
       setDraftHydrated(true);
     }
-
     restoreDraft();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [authLoading, error, loading, notify, productDraftKey]);
+    return () => { isCancelled = true; };
+  }, [authLoading, error, loading, productDraftKey]);
 
   useEffect(() => {
     if ((authLoading || loading || error) && !draftHydrated) return;
@@ -378,20 +361,11 @@ export default function AddProduct() {
         skipNextDraftSaveRef.current = false;
         return;
       }
-
       const persistentFiles = Object.fromEntries(
         PRODUCT_IMAGE_SLOTS.filter((slot) => Boolean(blobs[slot])).map((slot) => [slot, blobs[slot]])
       );
-
-      savePersistentDraft(productDraftKey, {
-        data: {
-          form,
-          dynamicAttrs,
-        },
-        files: persistentFiles,
-      });
+      savePersistentDraft(productDraftKey, { data: { form, dynamicAttrs }, files: persistentFiles });
     }, PRODUCT_DRAFT_SAVE_DELAY);
-
     return () => window.clearTimeout(timeoutId);
   }, [authLoading, blobs, draftHydrated, dynamicAttrs, error, form, loading, productDraftKey]);
 
@@ -399,17 +373,11 @@ export default function AddProduct() {
   // --- HANDLERS ---
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [id]: type === "checkbox" ? checked : clampProductTextField(id, value),
-    }));
+    setForm((prev) => ({ ...prev, [id]: type === "checkbox" ? checked : clampProductTextField(id, value) }));
   };
 
   const handleAttrChange = (key, value) => {
-    setDynamicAttrs((prev) => ({
-      ...prev,
-      [key]: typeof value === "string" ? value.slice(0, PRODUCT_ATTRIBUTE_TEXT_LIMIT) : value,
-    }));
+    setDynamicAttrs((prev) => ({ ...prev, [key]: typeof value === "string" ? value.slice(0, PRODUCT_ATTRIBUTE_TEXT_LIMIT) : value }));
   };
 
   const handleCategoryChange = (val) => {
@@ -421,26 +389,23 @@ export default function AddProduct() {
     setForm((prev) => ({ ...prev, condition: val }));
   };
 
-  // --- BACKGROUND PROCESSING PIPELINE ---
+  // --- BACKGROUND PROCESSING PIPELINE (WITH DEBUG LOGS) ---
   const processImageInSlot = async (file, slot) => {
     if (!file || !slot) return;
+    console.log(`[CT Studio API] Initiating pipeline for slot ${slot}. Original File: ${file.size} bytes, Type: ${file.type}`);
 
     if (!file.type.startsWith("image/")) {
       notify({ type: "error", title: "Invalid image", message: "Please upload a valid image file." });
       return;
     }
-
     if (file.size > PRODUCT_INPUT_MAX_BYTES) {
-      notify({
-        type: "error",
-        title: "Image too large",
-        message: `Maximum input size for products is ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}.`,
-      });
+      notify({ type: "error", title: "Image too large", message: `Maximum input size is ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}.` });
       return;
     }
 
     setProcessingSlots((prev) => ({ ...prev, [slot]: true }));
     try {
+      console.log(`[CT Studio API] Sending to autoProcessImage...`);
       const result = await autoProcessImage(file, {
         aspectRatio: PRODUCT_PROFILE.aspectRatio,
         targetWidth: PRODUCT_PROFILE.targetWidth,
@@ -451,17 +416,18 @@ export default function AddProduct() {
         qualityStep: PRODUCT_PROFILE.qualityStep,
       });
 
-      if (previews[slot] && previews[slot].startsWith("blob:")) {
-        URL.revokeObjectURL(previews[slot]);
-      }
-
+      console.log(`[CT Studio API] Processing SUCCESS. Final blob size: ${result.blob.size} bytes`);
+      if (previews[slot] && previews[slot].startsWith("blob:")) URL.revokeObjectURL(previews[slot]);
+      
       setBlobs((prev) => ({ ...prev, [slot]: result.blob }));
       setPreviews((prev) => ({ ...prev, [slot]: result.previewUrl }));
     } catch (err) {
+      console.error(`[CT Studio API] FATAL ERROR processing slot ${slot}:`, err);
       notify({
         type: "error",
         title: "Processing failed",
-        message: getFriendlyErrorMessage(err, "Could not process this image. Please try another one."),
+        // Spit out the RAW error message here so you can read it on the screen
+        message: err.message || "Unknown error during processing.",
       });
     } finally {
       setProcessingSlots((prev) => ({ ...prev, [slot]: false }));
@@ -483,39 +449,33 @@ export default function AddProduct() {
     await processImageInSlot(file, targetSlot);
   };
 
-  // --- STUDIO LOGIC (NOW OPTIONAL) ---
+  // --- STUDIO LOGIC (WITH DEBUG LOGS) ---
   const openStudioForSlot = async (slot) => {
     const existingBlob = blobs[slot];
     if (!existingBlob) return;
-
+    
+    console.log(`[CT Studio Editor] Opening editor for slot ${slot}...`);
     setPreparingStudio(true);
     try {
-      const preparedImage = await optimizeImageForEditor(existingBlob, {
-        maxDimension: 1800,
-        mimeType: "image/jpeg",
-        quality: 0.9,
-      });
-
-      if (tempImage && tempImage.startsWith("blob:")) {
-        URL.revokeObjectURL(tempImage);
-      }
+      const preparedImage = await optimizeImageForEditor(existingBlob, { maxDimension: 1800, mimeType: "image/jpeg", quality: 0.9 });
+      if (tempImage && tempImage.startsWith("blob:")) URL.revokeObjectURL(tempImage);
 
       setActiveSlot(slot);
       setTempImage(preparedImage.src);
       setBrightness(100);
       setContrast(100);
       setStudioOpen(true);
-    } catch {
-      notify({ type: "error", title: "Editor failed", message: "Could not open the image editor." });
+      console.log(`[CT Studio Editor] Editor successfully prepared.`);
+    } catch (err) {
+      console.error(`[CT Studio Editor] Failed to prepare editor:`, err);
+      notify({ type: "error", title: "Editor failed", message: err.message || "Could not open the image editor." });
     } finally {
       setPreparingStudio(false);
     }
   };
 
   const closeStudio = () => {
-    if (tempImage && tempImage.startsWith("blob:")) {
-      URL.revokeObjectURL(tempImage);
-    }
+    if (tempImage && tempImage.startsWith("blob:")) URL.revokeObjectURL(tempImage);
     setStudioOpen(false);
     setTempImage("");
     setActiveSlot(null);
@@ -528,11 +488,10 @@ export default function AddProduct() {
       const fitted = await padImageToAspectDataUrl(tempImage, PRODUCT_PROFILE.aspectRatio);
       if (tempImage.startsWith("blob:")) URL.revokeObjectURL(tempImage);
       setTempImage(fitted);
-      if (cropperRef.current?.cropper) {
-        cropperRef.current.cropper.replace(fitted);
-      }
+      if (cropperRef.current?.cropper) cropperRef.current.cropper.replace(fitted);
     } catch (error) {
-      notify({ type: "error", title: "Auto-fit failed", message: getFriendlyErrorMessage(error, "Could not auto-fit the image.") });
+      console.error(`[CT Studio Editor] Auto-fit failed:`, error);
+      notify({ type: "error", title: "Auto-fit failed", message: error.message || "Could not auto-fit the image." });
     } finally {
       setIsFitting(false);
     }
@@ -540,6 +499,7 @@ export default function AddProduct() {
 
   const applyCrop = async () => {
     if (!cropperRef.current?.cropper) return;
+    console.log(`[CT Studio Editor] Committing crop and generating final canvas...`);
     const cropper = cropperRef.current.cropper;
 
     const croppedCanvas = cropper.getCroppedCanvas({
@@ -555,13 +515,12 @@ export default function AddProduct() {
     finalCanvas.height = PRODUCT_PROFILE.targetHeight;
     const ctx = finalCanvas.getContext("2d");
     if (!ctx) {
-      notify({ type: "error", title: "Editor unavailable", message: "Could not initialize the image editor canvas." });
+      notify({ type: "error", title: "Editor unavailable", message: "Could not initialize the canvas." });
       return;
     }
 
     ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
     ctx.drawImage(croppedCanvas, 0, 0);
-
     ctx.filter = "none";
     ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
     ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
@@ -576,6 +535,7 @@ export default function AddProduct() {
     });
 
     try {
+      console.log(`[CT Studio Editor] Sending canvas to blob compression...`);
       const blob = await canvasToBlobWithMaxBytes(finalCanvas, {
         maxBytes: PRODUCT_MAX_BYTES,
         mimeType: PRODUCT_PROFILE.outputMimeType,
@@ -584,21 +544,22 @@ export default function AddProduct() {
         qualityStep: PRODUCT_PROFILE.qualityStep,
       });
 
-      if (!blob) throw new Error("Compression failed.");
+      if (!blob) throw new Error("Compression failed. The browser may have run out of memory.");
 
+      console.log(`[CT Studio Editor] Final cropped blob generated successfully: ${blob.size} bytes.`);
       if (previews[activeSlot] && previews[activeSlot].startsWith("blob:")) {
         URL.revokeObjectURL(previews[activeSlot]);
       }
 
       setBlobs((prev) => ({ ...prev, [activeSlot]: blob }));
       setPreviews((prev) => ({ ...prev, [activeSlot]: URL.createObjectURL(blob) }));
-
       closeStudio();
     } catch (err) {
+      console.error(`[CT Studio Editor] Crop / blob extraction failed:`, err);
       notify({
         type: "error",
         title: "Crop failed",
-        message: getFriendlyErrorMessage(err, "Could not save cropped image."),
+        message: err.message || "Could not save cropped image.",
       });
     }
   };
@@ -612,7 +573,7 @@ export default function AddProduct() {
     setPreviews((prev) => ({ ...prev, [slot]: "" }));
   };
 
-  // --- SUBMIT ---
+  // --- SUBMIT (WITH ROLLBACK & LOGS) ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
@@ -651,7 +612,7 @@ export default function AddProduct() {
       return;
     }
 
-    // Array to track paths for automatic rollback if something fails
+    console.log(`[Upload Pipeline] Starting transaction for new product...`);
     let successfullyUploadedPaths = []; 
 
     try {
@@ -677,6 +638,8 @@ export default function AddProduct() {
         if (!blobs[idx]) return { slot: idx, url: null, path: null };
         
         const fName = `${user.id}_${Date.now()}_img${idx}.jpg`;
+        console.log(`[Upload Pipeline] Pushing Slot ${idx} to Supabase Storage -> ${fName}`);
+        
         const { data, error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], {
           contentType: "image/jpeg",
           upsert: false,
@@ -689,7 +652,6 @@ export default function AddProduct() {
         return { slot: idx, url, path: data.path }; 
       });
 
-      // allSettled ensures we don't lose track of successful uploads if one fails
       const uploadResults = await Promise.allSettled(uploadPromises);
       
       // ==========================================
@@ -701,23 +663,24 @@ export default function AddProduct() {
       for (const result of uploadResults) {
         if (result.status === "fulfilled") {
           if (result.value.path) {
-            // Track successful paths for potential rollback
+            console.log(`[Upload Pipeline] Slot ${result.value.slot} Success. Logged path for rollback: ${result.value.path}`);
             successfullyUploadedPaths.push(result.value.path); 
           }
           finalUrls[result.value.slot] = result.value.url;
         } else {
           hasUploadError = true;
-          console.error("Image upload failed:", result.reason);
+          console.error(`[Upload Pipeline] FAILED UPLOAD detected:`, result.reason);
         }
       }
 
       if (hasUploadError) {
-        throw new Error("One or more images failed to upload. Aborting product creation.");
+        throw new Error("One or more images failed to upload to the server. Aborting product creation.");
       }
 
       // ==========================================
       // 3. INSERT INTO DATABASE
       // ==========================================
+      console.log(`[Upload Pipeline] All images uploaded successfully. Initiating Postgres RPC...`);
       const { error: rpcErr } = await supabase.rpc("manage_product", {
         p_shop_id: parseInt(shopId),
         p_name: form.name.trim(),
@@ -735,6 +698,7 @@ export default function AddProduct() {
       });
 
       if (rpcErr) throw rpcErr;
+      console.log(`[Upload Pipeline] Transaction complete! Product added.`);
 
       notify({
         type: "success",
@@ -749,45 +713,39 @@ export default function AddProduct() {
         console.warn("Could not clear add product draft:", draftError);
       }
 
-      // Reset form but keep category for convenience
       setForm({
-        name: "",
-        price: "",
-        stock: "1",
-        condition: "New",
-        category: form.category,
-        desc: "",
-        key_features: "",
-        box_content: "",
-        warranty: "",
-        isDiscount: false,
-        discountPercent: "",
+        name: "", price: "", stock: "1", condition: "New", category: form.category, desc: "", key_features: "", box_content: "", warranty: "", isDiscount: false, discountPercent: "",
       });
       setDynamicAttrs({});
       setBlobs(EMPTY_PRODUCT_BLOBS);
       setPreviews(EMPTY_PRODUCT_PREVIEWS);
-      
       window.scrollTo({ top: 0, behavior: "smooth" });
 
     } catch (err) {
-      console.error("Product submission failed:", err);
+      console.error("[Upload Pipeline] CRITICAL FAILURE triggered catch block:", err);
       
       // ==========================================
       // 4. THE ROLLBACK CLEANUP
       // ==========================================
       if (successfullyUploadedPaths.length > 0) {
-        console.log("Rolling back... Deleting orphaned images:", successfullyUploadedPaths);
+        console.warn(`[Upload Rollback] Initiating automated cleanup of orphaned images:`, successfullyUploadedPaths);
         
         const { error: cleanupError } = await supabase.storage
           .from(PRODUCT_BUCKET)
           .remove(successfullyUploadedPaths);
           
         if (cleanupError) {
-          console.error("CRITICAL: Failed to clean up orphaned images during rollback:", cleanupError);
+          console.error("[Upload Rollback] FATAL: Failed to clean up orphaned images during rollback:", cleanupError);
+        } else {
+          console.log("[Upload Rollback] Cleanup successful. Orphaned files destroyed.");
         }
       }
 
-      notify({ type: "error", title: "Upload failed", message: getFriendlyErrorMessage(err, "Upload failed. Please check your connection and try again.") });
+      notify({ 
+        type: "error", 
+        title: "Upload failed", 
+        message: err.message || "Upload failed. Please check your connection and try again." 
+      });
     } finally {
       setSubmitting(false);
     }
@@ -798,14 +756,9 @@ export default function AddProduct() {
   const isLiveDiscValid = form.isDiscount && form.condition !== "Fairly Used" && liveDiscPerc > 0 && liveDiscPerc <= 20;
   const liveFinalPrice = isLiveDiscValid ? livePrice - livePrice * (liveDiscPerc / 100) : livePrice;
   const categoryOptions = useMemo(() => toProductCategoryOptions(categoryRows), [categoryRows]);
-  const categoryGroup = useMemo(
-    () => resolveProductCategoryGroup(form.category, categoryRows),
-    [form.category, categoryRows],
-  );
+  const categoryGroup = useMemo(() => resolveProductCategoryGroup(form.category, categoryRows), [form.category, categoryRows]);
 
-  if (authLoading || loading) {
-    return <AddProductShimmer />;
-  }
+  if (authLoading || loading) return <AddProductShimmer />;
 
   if (error) {
     return (
@@ -835,18 +788,13 @@ export default function AddProduct() {
   }
 
   return (
-    <div
-      className={`flex min-h-screen flex-col bg-[#F3F4F6] pb-12 text-[#0F1111] ${
-        location.state?.fromVendorTransition ? "ctm-page-enter" : ""
-      }`}
-    >
+    <div className={`flex min-h-screen flex-col bg-[#F3F4F6] pb-12 text-[#0F1111] ${location.state?.fromVendorTransition ? "ctm-page-enter" : ""}`}>
       <header className="sticky top-0 z-40 flex items-center gap-4 bg-[#131921] px-4 py-3 text-white shadow-sm">
         <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]"><FaArrowLeft /></button>
         <div className="text-[1.15rem] font-bold">Add Product</div>
       </header>
 
       <main className="mx-auto w-full max-w-[680px] p-5">
-        
         <div className="mb-6 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-4">
           <h4 className="mb-2 flex items-center gap-2 text-[0.95rem] font-extrabold"><FaWandMagicSparkles className="text-[#db2777]" /> Powered by CT Studio</h4>
           <p className="text-[0.85rem] text-[#475569] leading-relaxed">
@@ -855,7 +803,6 @@ export default function AddProduct() {
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-xl border border-[#D5D9D9] bg-white p-6 shadow-sm">
-          
           {/* IMAGE GRID */}
           <div className="mb-6 grid grid-cols-3 gap-3">
             {[1, 2, 3].map((slot) => (
@@ -876,30 +823,9 @@ export default function AddProduct() {
                   <>
                     <img src={previews[slot]} className="absolute inset-0 h-full w-full object-contain bg-white z-10" alt={`Slot ${slot}`} />
                     <div className="absolute left-1 top-1 z-20 flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRefs[slot].current?.click()}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#0F172A] shadow-md transition hover:scale-110"
-                        title="Pick from files"
-                      >
-                        <FaImage size={11} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCameraSlot(slot)}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0F172A] text-white shadow-md transition hover:scale-110 hover:bg-[#1E293B]"
-                        title="Capture from camera"
-                      >
-                        <FaCamera size={11} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openStudioForSlot(slot)}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#db2777] text-white shadow-md transition hover:scale-110 hover:bg-[#be185d]"
-                        title="Edit in CT Studio"
-                      >
-                        <FaWandMagicSparkles size={11} />
-                      </button>
+                      <button type="button" onClick={() => fileInputRefs[slot].current?.click()} className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#0F172A] shadow-md transition hover:scale-110" title="Pick from files"><FaImage size={11} /></button>
+                      <button type="button" onClick={() => setCameraSlot(slot)} className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0F172A] text-white shadow-md transition hover:scale-110 hover:bg-[#1E293B]" title="Capture from camera"><FaCamera size={11} /></button>
+                      <button type="button" onClick={() => openStudioForSlot(slot)} className="flex h-7 w-7 items-center justify-center rounded-full bg-[#db2777] text-white shadow-md transition hover:scale-110 hover:bg-[#be185d]" title="Edit in CT Studio"><FaWandMagicSparkles size={11} /></button>
                     </div>
                     <button type="button" onClick={(e) => removeImage(e, slot)} className="absolute right-1 top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-md transition hover:scale-110 hover:bg-red-700">
                       <FaTrashCan size={12} />
@@ -912,20 +838,8 @@ export default function AddProduct() {
                       {slot === 1 ? "Main Image\n(Required)" : slot === 2 ? "Extra Angle\n(Optional)" : "Label/Box\n(Optional)"}
                     </span>
                     <div className="mt-2 flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRefs[slot].current?.click()}
-                        className="rounded-md border border-[#334155] bg-white px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-[#0F172A] transition hover:bg-slate-50"
-                      >
-                        File
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCameraSlot(slot)}
-                        className="rounded-md border border-[#334155] bg-[#0F172A] px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1E293B]"
-                      >
-                        Camera
-                      </button>
+                      <button type="button" onClick={() => fileInputRefs[slot].current?.click()} className="rounded-md border border-[#334155] bg-white px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-[#0F172A] transition hover:bg-slate-50">File</button>
+                      <button type="button" onClick={() => setCameraSlot(slot)} className="rounded-md border border-[#334155] bg-[#0F172A] px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#1E293B]">Camera</button>
                     </div>
                   </>
                 )}
@@ -938,32 +852,15 @@ export default function AddProduct() {
             <h4 className="mb-3 text-[0.95rem] font-extrabold"><FaRegEye className="inline mr-1" /> Marketplace Preview</h4>
             <div className="w-[140px] overflow-hidden rounded-md border border-[#E5E7EB] bg-white p-2 shadow-md">
               <div className="relative mb-1 flex aspect-square items-center justify-center overflow-hidden rounded border border-dashed border-[#D5D9D9] bg-[#F7F7F7]">
-                {previews[1] ? (
-                  <img src={previews[1]} className="h-full w-full object-contain bg-white" alt="Preview" />
-                ) : (
-                  <FaImage className="text-3xl text-[#D5D9D9]" />
-                )}
-                {isLiveDiscValid && (
-                  <div className="absolute left-1 top-1 z-10 rounded bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-white">
-                    -{form.discountPercent}%
-                  </div>
-                )}
-                {form.condition === "Fairly Used" && (
-                  <div className="absolute right-1 top-1 z-10 rounded bg-amber-500 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-white">
-                    Used
-                  </div>
-                )}
+                {previews[1] ? <img src={previews[1]} className="h-full w-full object-contain bg-white" alt="Preview" /> : <FaImage className="text-3xl text-[#D5D9D9]" />}
+                {isLiveDiscValid && <div className="absolute left-1 top-1 z-10 rounded bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-white">-{form.discountPercent}%</div>}
+                {form.condition === "Fairly Used" && <div className="absolute right-1 top-1 z-10 rounded bg-amber-500 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-white">Used</div>}
               </div>
               <div className="truncate text-[0.75rem] font-medium text-[#0F1111]">{form.name || "Product Title"}</div>
               <div className="truncate text-[0.8rem] font-extrabold text-[#db2777]">
                 {isLiveDiscValid && livePrice > 0 ? (
-                  <>
-                    <span className="mr-1 text-[0.65rem] font-medium text-[#888C8C] line-through">₦{livePrice.toLocaleString()}</span>
-                    ₦{liveFinalPrice.toLocaleString()}
-                  </>
-                ) : (
-                  `₦${livePrice ? livePrice.toLocaleString() : "0"}`
-                )}
+                  <><span className="mr-1 text-[0.65rem] font-medium text-[#888C8C] line-through">₦{livePrice.toLocaleString()}</span>₦{liveFinalPrice.toLocaleString()}</>
+                ) : (`₦${livePrice ? livePrice.toLocaleString() : "0"}`)}
               </div>
             </div>
           </div>
@@ -972,10 +869,7 @@ export default function AddProduct() {
           <div className="mb-5">
             <label className="mb-1.5 block text-[0.9rem] font-bold">Category</label>
             <CustomSelect
-              value={form.category}
-              onChange={handleCategoryChange}
-              options={categoryOptions}
-              placeholder="Select a Category..."
+              value={form.category} onChange={handleCategoryChange} options={categoryOptions} placeholder="Select a Category..."
               className="rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]"
             />
           </div>
@@ -1000,18 +894,7 @@ export default function AddProduct() {
                 <div><label className="mb-1 block text-[0.85rem] font-bold">Size</label><input type="text" value={dynamicAttrs["Size"] || ""} className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" onChange={e => handleAttrChange('Size', e.target.value)} /></div>
                 <div className="col-span-2">
                   <label className="mb-1 block text-[0.85rem] font-bold">Target Audience (Gender)</label>
-                  <CustomSelect
-                    value={dynamicAttrs['Gender'] || ""}
-                    onChange={(val) => handleAttrChange('Gender', val)}
-                    options={[
-                      { value: "Unisex", label: "Unisex" },
-                      { value: "Men", label: "Men" },
-                      { value: "Women", label: "Women" },
-                      { value: "Kids", label: "Kids" }
-                    ]}
-                    placeholder="Select Target..."
-                    className="rounded border border-[#888C8C] p-2 text-[0.95rem]"
-                  />
+                  <CustomSelect value={dynamicAttrs['Gender'] || ""} onChange={(val) => handleAttrChange('Gender', val)} options={[{ value: "Unisex", label: "Unisex" }, { value: "Men", label: "Men" }, { value: "Women", label: "Women" }, { value: "Kids", label: "Kids" }]} placeholder="Select Target..." className="rounded border border-[#888C8C] p-2 text-[0.95rem]" />
                 </div>
               </div>
             </div>
@@ -1033,17 +916,7 @@ export default function AddProduct() {
                 <div><label className="mb-1 block text-[0.85rem] font-bold">Property Type</label><input type="text" value={dynamicAttrs["Property Type"] || ""} className="w-full rounded border border-[#888C8C] p-2 text-[0.95rem]" placeholder="e.g. 2 Bed Flat" onChange={e => handleAttrChange('Property Type', e.target.value)} /></div>
                 <div>
                   <label className="mb-1 block text-[0.85rem] font-bold">Payment Cycle</label>
-                  <CustomSelect
-                    value={dynamicAttrs['Payment Cycle'] || ""}
-                    onChange={(val) => handleAttrChange('Payment Cycle', val)}
-                    options={[
-                      { value: "Per Year", label: "Per Year" },
-                      { value: "Per Month", label: "Per Month" },
-                      { value: "Per Night", label: "Per Night (Hotels)" }
-                    ]}
-                    placeholder="Select Cycle..."
-                    className="rounded border border-[#888C8C] p-2 text-[0.95rem]"
-                  />
+                  <CustomSelect value={dynamicAttrs['Payment Cycle'] || ""} onChange={(val) => handleAttrChange('Payment Cycle', val)} options={[{ value: "Per Year", label: "Per Year" }, { value: "Per Month", label: "Per Month" }, { value: "Per Night", label: "Per Night (Hotels)" }]} placeholder="Select Cycle..." className="rounded border border-[#888C8C] p-2 text-[0.95rem]" />
                 </div>
               </div>
             </div>
@@ -1072,21 +945,12 @@ export default function AddProduct() {
           {/* CONDITION (CUSTOM DROPDOWN) */}
           <div className="mb-5">
             <label className="mb-1.5 block text-[0.9rem] font-bold">Condition</label>
-            <CustomSelect
-              value={form.condition}
-              onChange={handleConditionChange}
-              options={[
-                { value: "New", label: "New" },
-                { value: "Fairly Used", label: "Fairly Used" }
-              ]}
-              className="rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]"
-            />
+            <CustomSelect value={form.condition} onChange={handleConditionChange} options={[{ value: "New", label: "New" }, { value: "Fairly Used", label: "Fairly Used" }]} className="rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]" />
           </div>
 
           {/* DISCOUNT SECTION */}
           {form.condition !== "Fairly Used" && (
             <div className="mb-6 rounded-lg border border-[#D5D9D9] bg-[#F7F7F7] p-4 transition-all">
-              {activeOffersCount >= MAX_SPECIAL_OFFERS}
               <div className={`flex items-center justify-between ${activeOffersCount >= MAX_SPECIAL_OFFERS ? 'opacity-50' : ''}`}>
                 <div>
                   <div className="font-bold text-[#0F1111]">Special Offer?</div>
