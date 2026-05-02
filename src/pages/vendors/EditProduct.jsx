@@ -243,7 +243,6 @@ export default function EditProduct() {
 
   // Form State
   const [form, setForm] = useState(() => initialEditorState.form);
-
   const [dynamicAttrs, setDynamicAttrs] = useState(() => initialEditorState.dynamicAttrs);
 
   // Image State (Mixed existing URLs and new Blobs)
@@ -443,7 +442,7 @@ export default function EditProduct() {
     await processImageInSlot(file, targetSlot);
   };
 
-  // --- STUDIO LOGIC (NOW OPTIONAL) ---
+  // --- STUDIO LOGIC ---
   const openStudioForSlot = async (slot) => {
     const currentPreview = previews[slot];
     if (!currentPreview) return;
@@ -580,40 +579,6 @@ export default function EditProduct() {
     setPreviews((prev) => ({ ...prev, [slot]: "" }));
   };
 
-  function getProductStoragePathFromUrl(url) {
-    if (!url) return null;
-
-    const rawUrl = String(url).trim();
-    if (!rawUrl) return null;
-
-    if (!rawUrl.startsWith("http")) {
-      const cleanPath = rawUrl.replace(/^\/+/, "");
-      return cleanPath.startsWith(`${PRODUCT_BUCKET}/`)
-        ? cleanPath.slice(PRODUCT_BUCKET.length + 1)
-        : cleanPath;
-    }
-
-    try {
-      const cleanUrl = rawUrl.split("?")[0];
-      const escapedBucket = PRODUCT_BUCKET.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
-      const regex = new RegExp(`/storage/v1/object/(?:public|authenticated|sign)/${escapedBucket}/(.+)$`, "i");
-      const match = cleanUrl.match(regex);
-      return match?.[1] ? decodeURIComponent(match[1]) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  function collectProductImagePaths(urls) {
-    return [
-      ...new Set(
-        urls
-          .map(getProductStoragePathFromUrl)
-          .filter(Boolean)
-      ),
-    ];
-  }
-
   async function removeProductImagePaths(paths, context = "Product image cleanup failed") {
     const uniquePaths = [...new Set(paths)].filter(Boolean);
     if (!uniquePaths.length) return;
@@ -704,9 +669,12 @@ export default function EditProduct() {
       if (form.box_content.trim()) finalAttrs["What's in the Box"] = form.box_content.trim();
       if (form.warranty.trim()) finalAttrs["Warranty"] = form.warranty.trim();
 
-      // Upload new blobs
+      // ==========================================
+      // 1. UPLOAD NEW IMAGES (Promise.allSettled)
+      // ==========================================
       const uploadPromises = [1, 2, 3].map(async (idx) => {
-        if (!blobs[idx]) return null;
+        if (!blobs[idx]) return { slot: idx, url: null, path: null };
+        
         const fingerprint = await getUploadFingerprint(blobs[idx]);
         const fName = `${user.id}_img${idx}_${fingerprint}.jpg`;
         const { error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], {
@@ -714,21 +682,42 @@ export default function EditProduct() {
           upsert: true,
           cacheControl: "31536000",
         });
+        
         if (upErr) throw upErr;
-        uploadedImagePaths.push(fName);
-        return {
-          path: fName,
-          url: supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl,
-        };
+        
+        const url = supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl;
+        return { slot: idx, path: fName, url: url };
       });
 
-      const [upload1, upload2, upload3] = await Promise.all(uploadPromises);
+      const uploadResults = await Promise.allSettled(uploadPromises);
+      
+      let hasUploadError = false;
+      let newUrls = { 1: null, 2: null, 3: null };
 
-      const finalUrl1 = upload1?.url || (deletedSlots[1] ? null : existingUrls[1]);
-      const finalUrl2 = upload2?.url || (deletedSlots[2] ? null : existingUrls[2]);
-      const finalUrl3 = upload3?.url || (deletedSlots[3] ? null : existingUrls[3]);
+      for (const result of uploadResults) {
+        if (result.status === "fulfilled") {
+          if (result.value.path) {
+            uploadedImagePaths.push(result.value.path); // Track for rollback
+          }
+          newUrls[result.value.slot] = result.value.url;
+        } else {
+          hasUploadError = true;
+          console.error("Image upload failed:", result.reason);
+        }
+      }
 
-      // Update DB
+      if (hasUploadError) {
+        throw new Error("One or more images failed to upload. Aborting update.");
+      }
+
+      const finalUrl1 = newUrls[1] || (deletedSlots[1] ? null : existingUrls[1]);
+      const finalUrl2 = newUrls[2] || (deletedSlots[2] ? null : existingUrls[2]);
+      const finalUrl3 = newUrls[3] || (deletedSlots[3] ? null : existingUrls[3]);
+
+      // ==========================================
+      // 2. UPDATE DATABASE 
+      // (Postgres Trigger will auto-delete replaced images!)
+      // ==========================================
       const { error: rpcErr } = await supabase.rpc("manage_product", {
         p_product_id: parseInt(productId),
         p_name: form.name.trim(),
@@ -748,42 +737,30 @@ export default function EditProduct() {
       if (rpcErr) throw rpcErr
       dbUpdateSucceeded = true;
 
-      // Garbage collect deleted original images
-      const pathsToDelete = collectProductImagePaths(
-        [1, 2, 3]
-          .filter((slot) => existingUrls[slot] && (deletedSlots[slot] || blobs[slot]))
-          .map((slot) => existingUrls[slot])
-      );
-      await removeProductImagePaths(pathsToDelete, "Old product image cleanup failed");
-
       notify({
         type: "success",
         title: "Update Successful",
         message: "Your product has been updated and resubmitted for approval. You can continue editing or go back.",
       });
 
-      // Update local state to reflect the new saved state
-      setExistingUrls({
-        1: finalUrl1,
-        2: finalUrl2,
-        3: finalUrl3,
-      });
+      // Update local state
+      setExistingUrls({ 1: finalUrl1, 2: finalUrl2, 3: finalUrl3 });
       setBlobs({ 1: null, 2: null, 3: null });
       setDeletedSlots({ 1: false, 2: false, 3: false });
-      setProductData(prev => ({
-        ...prev,
-        is_approved: false,
-        rejection_reason: null
-      }));
+      setProductData(prev => ({ ...prev, is_approved: false, rejection_reason: null }));
 
       window.scrollTo({ top: 0, behavior: "smooth" });
 
     } catch (err) {
-      if (!dbUpdateSucceeded) {
+      // ==========================================
+      // 3. ROLLBACK NEW UPLOADS IF DB FAILED
+      // ==========================================
+      if (!dbUpdateSucceeded && uploadedImagePaths.length > 0) {
         try {
+          console.log("Rolling back... Deleting newly uploaded images:", uploadedImagePaths);
           await removeProductImagePaths(uploadedImagePaths, "New product image rollback failed");
         } catch (cleanupErr) {
-          console.warn("Rollback cleanup failed for new product images:", cleanupErr);
+          console.warn("Rollback cleanup failed:", cleanupErr);
         }
       }
       notify({ type: "error", title: "Update failed", message: getFriendlyErrorMessage(err, "Update failed.") });
@@ -814,20 +791,17 @@ export default function EditProduct() {
 
       const { data: latestProduct, error: latestProductError } = await supabase
         .from("products")
-        .select("shop_id, image_url, image_url_2, image_url_3")
+        .select("shop_id")
         .eq("id", productId)
         .maybeSingle();
 
       if (latestProductError) throw latestProductError;
       if (!latestProduct) throw new Error("Product not found or already deleted.");
       
-      const pathsToDelete = collectProductImagePaths([
-        latestProduct.image_url,
-        latestProduct.image_url_2,
-        latestProduct.image_url_3,
-      ]);
-      await removeProductImagePaths(pathsToDelete, "Product image cleanup failed");
-      
+      // ==========================================
+      // DATABASE DELETE ONLY
+      // (Postgres Trigger auto-deletes the bucket files!)
+      // ==========================================
       const { error } = await supabase.from('products').delete().eq('id', productId);
       if (error) throw error;
 
@@ -880,7 +854,6 @@ export default function EditProduct() {
     () => resolveProductCategoryGroup(form.category, categoryRows),
     [form.category, categoryRows],
   );
-
 
   if (authLoading || loading) return <EditProductShimmer />;
 
