@@ -30,6 +30,7 @@ import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 import { IMAGE_PROFILES } from "../../lib/imageProfiles";
 import { drawBrandedCanvasText } from "../../lib/brandCanvas";
+import { clampWords, countWords } from "../../lib/textLimits";
 import {
   loadProductCategoryRows,
   resolveProductCategoryGroup,
@@ -153,6 +154,7 @@ const PRODUCT_TEXT_LIMITS = {
   box_content: 300,
   warranty: 20,
 };
+const PRODUCT_TEXT_LIMIT_UNITS = { name: "words" };
 const PRODUCT_TEXT_LABELS = {
   name: "Product Name / Title",
   key_features: "Key Features",
@@ -236,21 +238,31 @@ function CustomSelect({ value, onChange, options, placeholder, className, disabl
 function clampProductTextField(id, value) {
   const limit = PRODUCT_TEXT_LIMITS[id];
   if (!limit || typeof value !== "string") return value;
+  if (PRODUCT_TEXT_LIMIT_UNITS[id] === "words") return clampWords(value, limit);
   return value.slice(0, limit);
 }
 
 function getProductTextLimitError(form, dynamicAttrs) {
-  const limitedField = Object.entries(PRODUCT_TEXT_LIMITS).find(([field, limit]) => String(form[field] || "").length > limit);
-  if (limitedField) return `${PRODUCT_TEXT_LABELS[limitedField[0]]} must be ${limitedField[1]} characters or less.`;
+  const limitedField = Object.entries(PRODUCT_TEXT_LIMITS).find(([field, limit]) => {
+    if (PRODUCT_TEXT_LIMIT_UNITS[field] === "words") {
+      return countWords(form[field]) > limit;
+    }
+    return String(form[field] || "").length > limit;
+  });
+  if (limitedField) {
+    const unit = PRODUCT_TEXT_LIMIT_UNITS[limitedField[0]] || "characters";
+    return `${PRODUCT_TEXT_LABELS[limitedField[0]]} must be ${limitedField[1]} ${unit} or less.`;
+  }
   const oversizedAttr = Object.entries(dynamicAttrs || {}).find(([, value]) => typeof value === "string" && value.length > PRODUCT_ATTRIBUTE_TEXT_LIMIT);
   if (oversizedAttr) return `${oversizedAttr[0]} must be ${PRODUCT_ATTRIBUTE_TEXT_LIMIT} characters or less.`;
   return "";
 }
 
-function CharacterCounter({ value, limit }) {
-  const length = String(value || "").length;
+function CharacterCounter({ value, limit, unit = "characters" }) {
+  const length = unit === "words" ? countWords(value) : String(value || "").length;
   const isNearLimit = length >= Math.floor(limit * 0.9);
-  return <span className={`text-[0.72rem] font-bold ${isNearLimit ? "text-pink-600" : "text-slate-400"}`}>{length}/{limit}</span>;
+  const label = unit === "words" ? " words" : "";
+  return <span className={`text-[0.72rem] font-bold ${isNearLimit ? "text-pink-600" : "text-slate-400"}`}>{length}/{limit}{label}</span>;
 }
 
 export default function EditProduct() {
@@ -522,27 +534,6 @@ export default function EditProduct() {
     setPreviews((prev) => ({ ...prev, [slot]: "" }));
   };
 
-  function getProductStoragePathFromUrl(url) {
-    if (!url) return null;
-    const rawUrl = String(url).trim();
-    if (!rawUrl) return null;
-    if (!rawUrl.startsWith("http")) {
-      const cleanPath = rawUrl.replace(/^\/+/, "");
-      return cleanPath.startsWith(`${PRODUCT_BUCKET}/`) ? cleanPath.slice(PRODUCT_BUCKET.length + 1) : cleanPath;
-    }
-    try {
-      const cleanUrl = rawUrl.split("?")[0];
-      const escapedBucket = PRODUCT_BUCKET.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
-      const regex = new RegExp(`/storage/v1/object/(?:public|authenticated|sign)/${escapedBucket}/(.+)$`, "i");
-      const match = cleanUrl.match(regex);
-      return match?.[1] ? decodeURIComponent(match[1]) : null;
-    } catch { return null; }
-  }
-
-  function collectProductImagePaths(urls) {
-    return [...new Set(urls.map(getProductStoragePathFromUrl).filter(Boolean))];
-  }
-
   async function removeProductImagePaths(paths, context = "Product image cleanup failed") {
     const uniquePaths = [...new Set(paths)].filter(Boolean);
     if (!uniquePaths.length) return;
@@ -556,7 +547,9 @@ export default function EditProduct() {
         const digest = await globalThis.crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
         return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, 20);
       }
-    } catch {}
+    } catch {
+      // Fall back to a timestamp fingerprint when the browser blocks hashing.
+    }
     return `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
   }
 
@@ -858,9 +851,9 @@ export default function EditProduct() {
           <div className="mb-5">
             <div className="mb-1.5 flex items-center justify-between gap-3">
               <label className="block text-[0.9rem] font-bold">Product Name / Title</label>
-              <CharacterCounter value={form.name} limit={PRODUCT_TEXT_LIMITS.name} />
+              <CharacterCounter value={form.name} limit={PRODUCT_TEXT_LIMITS.name} unit={PRODUCT_TEXT_LIMIT_UNITS.name} />
             </div>
-            <input type="text" id="name" value={form.name} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.name} required className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
+            <input type="text" id="name" value={form.name} onChange={handleInputChange} required className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
           </div>
 
           <div className="mb-5 grid grid-cols-2 gap-4">

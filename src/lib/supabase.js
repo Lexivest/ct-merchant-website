@@ -11,6 +11,8 @@ if (isMissingConfig) {
 
 const memoryAuthStorage = new Map()
 const AUTH_WINDOW_ID_KEY = "ctmerchant_auth_window_id"
+const AUTH_WINDOW_NAME_PREFIX = "ctmerchant-auth-window:"
+const AUTH_STORAGE_KEY_PREFIX = "ctmerchant-auth-"
 
 function createWindowAuthId() {
   try {
@@ -23,6 +25,27 @@ function createWindowAuthId() {
   return `${Date.now()}_${Math.random().toString(36).slice(2, 12)}`
 }
 
+function readWindowNameAuthId() {
+  try {
+    if (typeof window === "undefined") return ""
+    const value = String(window.name || "")
+    if (!value.startsWith(AUTH_WINDOW_NAME_PREFIX)) return ""
+    return value.slice(AUTH_WINDOW_NAME_PREFIX.length)
+  } catch {
+    return ""
+  }
+}
+
+function writeWindowNameAuthId(windowId) {
+  try {
+    if (typeof window !== "undefined" && windowId) {
+      window.name = `${AUTH_WINDOW_NAME_PREFIX}${windowId}`
+    }
+  } catch {
+    // Ignore window.name failures.
+  }
+}
+
 function getWindowAuthStorageKey() {
   const fallbackKey = "ctmerchant-auth-memory"
 
@@ -30,28 +53,42 @@ function getWindowAuthStorageKey() {
     if (typeof window !== "undefined" && window.sessionStorage) {
       let windowId = window.sessionStorage.getItem(AUTH_WINDOW_ID_KEY)
       if (!windowId) {
-        windowId = createWindowAuthId()
+        windowId = readWindowNameAuthId() || createWindowAuthId()
         window.sessionStorage.setItem(AUTH_WINDOW_ID_KEY, windowId)
       }
-      return `ctmerchant-auth-${windowId}`
+      writeWindowNameAuthId(windowId)
+      return `${AUTH_STORAGE_KEY_PREFIX}${windowId}`
     }
   } catch {
     // Some privacy modes can block Web Storage; use memory for this window.
   }
 
   if (!memoryAuthStorage.has(AUTH_WINDOW_ID_KEY)) {
-    memoryAuthStorage.set(AUTH_WINDOW_ID_KEY, createWindowAuthId())
+    memoryAuthStorage.set(
+      AUTH_WINDOW_ID_KEY,
+      readWindowNameAuthId() || createWindowAuthId()
+    )
   }
-  return `ctmerchant-auth-${memoryAuthStorage.get(AUTH_WINDOW_ID_KEY) || fallbackKey}`
+  const windowId = memoryAuthStorage.get(AUTH_WINDOW_ID_KEY) || fallbackKey
+  writeWindowNameAuthId(windowId)
+  return `${AUTH_STORAGE_KEY_PREFIX}${windowId}`
 }
 
 const authStorageKey = getWindowAuthStorageKey()
+export const currentAuthStorageKey = authStorageKey
 
 const perWindowAuthStorage = {
   getItem(key) {
     try {
-      if (typeof window !== "undefined" && window.sessionStorage) {
-        return window.sessionStorage.getItem(key)
+      if (typeof window !== "undefined" && window.localStorage) {
+        const persistedValue = window.localStorage.getItem(key)
+        if (persistedValue !== null) return persistedValue
+
+        const sessionValue = window.sessionStorage?.getItem(key)
+        if (sessionValue !== null && sessionValue !== undefined) {
+          window.localStorage.setItem(key, sessionValue)
+          return sessionValue
+        }
       }
     } catch {
       // Some privacy modes can block Web Storage; use memory for this window.
@@ -60,8 +97,9 @@ const perWindowAuthStorage = {
   },
   setItem(key, value) {
     try {
-      if (typeof window !== "undefined" && window.sessionStorage) {
-        window.sessionStorage.setItem(key, value)
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem(key, value)
+        window.sessionStorage?.setItem(key, value)
         return
       }
     } catch {
@@ -71,8 +109,9 @@ const perWindowAuthStorage = {
   },
   removeItem(key) {
     try {
-      if (typeof window !== "undefined" && window.sessionStorage) {
-        window.sessionStorage.removeItem(key)
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.removeItem(key)
+        window.sessionStorage?.removeItem(key)
       }
     } catch {
       // Some privacy modes can block Web Storage; use memory for this window.

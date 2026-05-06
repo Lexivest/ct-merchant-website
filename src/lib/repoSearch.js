@@ -1,9 +1,9 @@
 import { supabase } from "./supabase"
 
 export const REPO_SEARCH_PREFIX = "CT-"
-export const REPO_SEARCH_DIGIT_LIMIT = 6
+export const REPO_SEARCH_DIGIT_LIMIT = 7
 export const REPO_SEARCH_INVALID_MESSAGE =
-  `Enter a valid repository ID like CT-205368 or just 205368. Maximum ${REPO_SEARCH_DIGIT_LIMIT} digits.`
+  `Enter a valid repository ID like CT-2053684 or just 2053684. Maximum ${REPO_SEARCH_DIGIT_LIMIT} digits.`
 
 export function extractRepoSearchDigits(value) {
   const raw = String(value || "").trim().toUpperCase()

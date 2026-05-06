@@ -1,4 +1,4 @@
-import { supabase } from "./supabase"
+import { currentAuthStorageKey, supabase } from "./supabase"
 import {
   normalizeEmail,
   normalizePhone,
@@ -105,6 +105,7 @@ export async function signOutUser() {
           if (
             key &&
             (
+              key === currentAuthStorageKey ||
               key.startsWith("sb-") ||
               key.startsWith("vendor_panel_") ||
               key.startsWith("shop_detail_") ||

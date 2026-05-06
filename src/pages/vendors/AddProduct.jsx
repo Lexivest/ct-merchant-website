@@ -32,6 +32,7 @@ import {
 import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 import { IMAGE_PROFILES } from "../../lib/imageProfiles";
 import { drawBrandedCanvasText } from "../../lib/brandCanvas";
+import { clampWords, countWords } from "../../lib/textLimits";
 import {
   loadProductCategoryRows,
   resolveProductCategoryGroup,
@@ -151,6 +152,7 @@ const MAX_SPECIAL_OFFERS = 2;
 const PRODUCT_DRAFT_SAVE_DELAY = 700;
 const PRODUCT_IMAGE_SLOTS = [1, 2, 3];
 const PRODUCT_TEXT_LIMITS = { name: 20, key_features: 200, desc: 400, box_content: 300, warranty: 20 };
+const PRODUCT_TEXT_LIMIT_UNITS = { name: "words" };
 const PRODUCT_TEXT_LABELS = { name: "Product Name / Title", key_features: "Key Features", desc: "Full Description", box_content: "What's in the Box", warranty: "Warranty" };
 const PRODUCT_ATTRIBUTE_TEXT_LIMIT = 60;
 const EMPTY_PRODUCT_FORM = { name: "", price: "", stock: "1", condition: "New", category: "", desc: "", key_features: "", box_content: "", warranty: "", isDiscount: false, discountPercent: "" };
@@ -197,21 +199,31 @@ function CustomSelect({ value, onChange, options, placeholder, className }) {
 function clampProductTextField(id, value) {
   const limit = PRODUCT_TEXT_LIMITS[id];
   if (!limit || typeof value !== "string") return value;
+  if (PRODUCT_TEXT_LIMIT_UNITS[id] === "words") return clampWords(value, limit);
   return value.slice(0, limit);
 }
 
 function getProductTextLimitError(form, dynamicAttrs) {
-  const limitedField = Object.entries(PRODUCT_TEXT_LIMITS).find(([field, limit]) => String(form[field] || "").length > limit);
-  if (limitedField) return `${PRODUCT_TEXT_LABELS[limitedField[0]]} must be ${limitedField[1]} characters or less.`;
+  const limitedField = Object.entries(PRODUCT_TEXT_LIMITS).find(([field, limit]) => {
+    if (PRODUCT_TEXT_LIMIT_UNITS[field] === "words") {
+      return countWords(form[field]) > limit;
+    }
+    return String(form[field] || "").length > limit;
+  });
+  if (limitedField) {
+    const unit = PRODUCT_TEXT_LIMIT_UNITS[limitedField[0]] || "characters";
+    return `${PRODUCT_TEXT_LABELS[limitedField[0]]} must be ${limitedField[1]} ${unit} or less.`;
+  }
   const oversizedAttr = Object.entries(dynamicAttrs || {}).find(([, value]) => typeof value === "string" && value.length > PRODUCT_ATTRIBUTE_TEXT_LIMIT);
   if (oversizedAttr) return `${oversizedAttr[0]} must be ${PRODUCT_ATTRIBUTE_TEXT_LIMIT} characters or less.`;
   return "";
 }
 
-function CharacterCounter({ value, limit }) {
-  const length = String(value || "").length;
+function CharacterCounter({ value, limit, unit = "characters" }) {
+  const length = unit === "words" ? countWords(value) : String(value || "").length;
   const isNearLimit = length >= Math.floor(limit * 0.9);
-  return <span className={`text-[0.72rem] font-bold ${isNearLimit ? "text-pink-600" : "text-slate-400"}`}>{length}/{limit}</span>;
+  const label = unit === "words" ? " words" : "";
+  return <span className={`text-[0.72rem] font-bold ${isNearLimit ? "text-pink-600" : "text-slate-400"}`}>{length}/{limit}{label}</span>;
 }
 
 export default function AddProduct() {
@@ -754,9 +766,9 @@ export default function AddProduct() {
           <div className="mb-5">
             <div className="mb-1.5 flex items-center justify-between gap-3">
               <label className="block text-[0.9rem] font-bold">Product Name / Title</label>
-              <CharacterCounter value={form.name} limit={PRODUCT_TEXT_LIMITS.name} />
+              <CharacterCounter value={form.name} limit={PRODUCT_TEXT_LIMITS.name} unit={PRODUCT_TEXT_LIMIT_UNITS.name} />
             </div>
-            <input type="text" id="name" value={form.name} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.name} required className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
+            <input type="text" id="name" value={form.name} onChange={handleInputChange} required className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
           </div>
 
           <div className="mb-5 grid grid-cols-2 gap-4">
