@@ -17,6 +17,34 @@ import { createPreloadableStaffRoute } from "./lib/staffRouteRegistry"
 import { useNetworkStatus } from "./lib/networkStatus"
 import PageSeo from "./components/common/PageSeo"
 
+const CHUNK_ROUTE_RETRY_TTL = 1000 * 60 * 2
+
+function hasRecentChunkRouteRetry(retryKey) {
+  if (!retryKey) return true
+
+  try {
+    const attemptedAt = Number(window.sessionStorage.getItem(retryKey) || 0)
+    if (!attemptedAt || Date.now() - attemptedAt > CHUNK_ROUTE_RETRY_TTL) {
+      window.sessionStorage.removeItem(retryKey)
+      return false
+    }
+    return true
+  } catch (error) {
+    console.warn("Could not read chunk retry key", error)
+    return false
+  }
+}
+
+function markChunkRouteRetry(retryKey) {
+  if (!retryKey) return
+
+  try {
+    window.sessionStorage.setItem(retryKey, String(Date.now()))
+  } catch (error) {
+    console.warn("Could not write chunk retry key", error)
+  }
+}
+
 function ChunkRouteFallback({ pageLabel = "this page" }) {
   const { isOffline } = useNetworkStatus()
   const retryKey =
@@ -33,33 +61,22 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
         console.warn("Could not clear chunk retry key", error)
       }
     }
-    forceFreshAppReload({ reason: "chunk", manual: forceManual })
+    forceFreshAppReload({ reason: "route-chunk", manual: forceManual })
   }, [retryKey])
 
   useEffect(() => {
     if (typeof window === "undefined" || isOffline || !retryKey) return
 
-    let alreadyRetried = false
-    try {
-      alreadyRetried = window.sessionStorage.getItem(retryKey) === "1"
-    } catch (error) {
-      console.warn("Could not read chunk retry key", error)
-    }
+    if (hasRecentChunkRouteRetry(retryKey)) return
 
-    if (alreadyRetried) return
-
-    try {
-      window.sessionStorage.setItem(retryKey, "1")
-    } catch (error) {
-      console.warn("Could not write chunk retry key", error)
-    }
+    markChunkRouteRetry(retryKey)
 
     const timer = window.setTimeout(() => {
-      forceFreshAppReload({ reason: "chunk", manual: false })
-    }, 700)
+      forceFreshAppReload({ reason: "route-chunk", manual: false })
+    }, 250)
 
     return () => window.clearTimeout(timer)
-  }, [isOffline, retryKey, retryPage])
+  }, [isOffline, retryKey])
 
   if (isOffline) {
     return (
@@ -80,11 +97,16 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
     )
   }
 
+  if (!hasRecentChunkRouteRetry(retryKey)) {
+    return null
+  }
+
   return (
     <GlobalErrorScreen
       error={new Error(`Failed to load ${pageLabel}`)}
-      title="Website update in progress"
-      message="A fresh version of CTMerchant is available. Retry will safely reload the latest files."
+      title="Connection issue"
+      message={`CTMerchant could not finish opening ${pageLabel}. Please retry when your connection is stable.`}
+      retryLabel="Refresh"
       onRetry={() => retryPage(true)}
       onBack={() => {
         if (typeof window === "undefined") return

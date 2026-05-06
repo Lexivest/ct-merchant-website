@@ -43,9 +43,9 @@ function resolveErrorCopy(error, explicitTitle, explicitMessage, isOffline) {
       network,
       chunk,
       category: ErrorCategory.SERVER,
-      title: "Website update in progress",
-      message: "A fresh version of CTMerchant is ready. Please retry to load the latest files.",
-      action: "Retry to continue with the latest website version.",
+      title: "Connection issue",
+      message: "CTMerchant could not finish loading this screen. Please check your connection and try again.",
+      action: "If the problem continues, refresh the page once.",
     }
   }
 

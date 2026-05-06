@@ -2,6 +2,7 @@ const CHUNK_LOAD_PATTERN =
   /(error loading dynamically imported module|failed to fetch dynamically imported module|importing a module script failed|failed to load module script|chunkloaderror|loading chunk|unable to preload css|vite:preloaderror)/i
 
 const RECOVERY_PARAM = "ctm_reload"
+const RECOVERY_ATTEMPT_TTL = 1000 * 60 * 2
 
 export function isChunkLoadFailure(error) {
   const message = String(error?.message || error?.reason || error || "").toLowerCase()
@@ -53,7 +54,14 @@ export function hasAttemptedFreshReload(reason = "app") {
 
   try {
     const key = `ctm_fresh_reload_${reason}_${window.location.pathname}`
-    return window.sessionStorage.getItem(key) === "1"
+    const attemptedAt = Number(window.sessionStorage.getItem(key) || 0)
+
+    if (!attemptedAt || Date.now() - attemptedAt > RECOVERY_ATTEMPT_TTL) {
+      window.sessionStorage.removeItem(key)
+      return false
+    }
+
+    return true
   } catch {
     return false
   }
@@ -64,7 +72,7 @@ function markFreshReloadAttempt(reason = "app") {
 
   try {
     const key = `ctm_fresh_reload_${reason}_${window.location.pathname}`
-    window.sessionStorage.setItem(key, "1")
+    window.sessionStorage.setItem(key, String(Date.now()))
   } catch {
     // Best effort only.
   }

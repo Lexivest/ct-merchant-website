@@ -73,7 +73,7 @@ function RouteFeedback() {
 
 function AppFrame({ children }) {
   const location = useLocation()
-  useVersionCheck({ pathname: location.pathname }) // Monitor for app updates in the background
+  useVersionCheck() // Warm app updates in the background without interrupting users.
   useRouteWarmup({ pathname: location.pathname })
 
   useEffect(() => {
