@@ -207,7 +207,7 @@ function DashboardHeader({
           type="button"
           className={`amz-nav-item ${
             activeTab === "market" ? "active" : ""
-          } flex h-[32px] items-center gap-[6px] rounded border border-transparent px-2 text-[0.9rem] font-bold text-white transition hover:border-white sm:px-3`}
+          } flex h-[30px] w-[30px] items-center justify-center gap-[6px] rounded border border-transparent px-0 text-[0.9rem] font-bold text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-3`}
           onClick={() => switchScreen("market")}
           title="Repository"
         >
@@ -219,7 +219,7 @@ function DashboardHeader({
           type="button"
           className={`amz-nav-item ${
             activeTab === "services" ? "active" : ""
-          } flex h-[32px] items-center gap-[6px] rounded border border-transparent px-2 text-[0.9rem] font-bold text-white transition hover:border-white sm:px-3`}
+          } flex h-[30px] w-[30px] items-center justify-center gap-[6px] rounded border border-transparent px-0 text-[0.9rem] font-bold text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-3`}
           onClick={() => switchScreen("services")}
           title="Dashboard"
         >
@@ -231,7 +231,7 @@ function DashboardHeader({
           type="button"
           className={`amz-nav-item ${
             activeTab === "notifications" ? "active" : ""
-          } relative flex h-[36px] items-center gap-[8px] rounded-[14px] border px-2.5 text-[0.9rem] font-bold text-white transition sm:px-3 ${
+          } relative flex h-[32px] w-[34px] items-center justify-center gap-[8px] rounded-[12px] border px-0 text-[0.9rem] font-bold text-white transition sm:h-[36px] sm:w-auto sm:px-3 ${
             unread > 0
               ? "border-white/20 bg-white/10 shadow-[0_8px_20px_rgba(0,0,0,0.18)]"
               : "border-transparent"
@@ -257,7 +257,7 @@ function DashboardHeader({
           type="button"
           className={`amz-nav-item ${
             activeTab === "profile" ? "active" : ""
-          } flex h-[32px] items-center rounded border border-transparent px-1.5 text-white transition hover:border-white sm:px-2`}
+          } flex h-[30px] w-[32px] items-center justify-center rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2`}
           onClick={() => switchScreen("profile")}
           title="Profile"
         >
@@ -274,7 +274,7 @@ function DashboardHeader({
 
         <button
           type="button"
-          className="amz-nav-item flex h-[32px] items-center rounded border border-transparent px-2 text-white transition hover:border-white sm:px-2.5"
+          className="amz-nav-item flex h-[30px] w-[30px] items-center justify-center rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2.5"
           onClick={onShopIndex}
           title="Shop Index"
         >
@@ -565,11 +565,11 @@ function DashboardHeader({
         ) : null}
       </div>
 
-      <div className="amz-sub-header flex h-[42px] items-center gap-2 bg-[#232F3E] px-0 py-0 text-[0.9rem] font-semibold text-white">
+      <div className="amz-sub-header flex h-[42px] items-center gap-1 bg-[#232F3E] px-0 py-0 text-[0.9rem] font-semibold text-white sm:gap-2">
         <div ref={categoryRef} className="relative shrink-0 self-stretch">
           <button
             type="button"
-            className="flex h-full max-w-[142px] items-center gap-2 border-r border-r-white/15 bg-[#232F3E] px-2 text-[0.85rem] font-semibold text-white transition hover:bg-[#1B2735] sm:max-w-[190px] sm:px-3"
+            className="flex h-full max-w-[106px] items-center gap-1.5 border-r border-r-white/15 bg-[#232F3E] px-2 text-[0.82rem] font-semibold text-white transition hover:bg-[#1B2735] min-[390px]:max-w-[118px] sm:max-w-[190px] sm:gap-2 sm:px-3 sm:text-[0.85rem]"
             onClick={() => {
               setCategoryOpen((prev) => !prev)
               setDesktopAreaOpen(false)
@@ -632,7 +632,7 @@ function DashboardHeader({
 
         <button
           type="button"
-          className="relative flex h-[32px] items-center rounded border border-transparent px-2 text-white transition hover:border-white"
+          className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2"
           onClick={onOpenAnnouncements}
           title="Announcements"
           aria-label="Open announcements"
