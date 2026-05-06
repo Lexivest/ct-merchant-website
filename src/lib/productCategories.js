@@ -1,3 +1,5 @@
+import { SERVICE_CATEGORY_ROWS, mergeServiceCategoryRows } from "./serviceCategories";
+
 const PRODUCT_CATEGORY_SEED = [
   { name: "Mobile Phones & Accessories", groupKey: "tech", sortOrder: 10 },
   { name: "Computers & IT Services", groupKey: "tech", sortOrder: 20 },
@@ -32,7 +34,7 @@ const CATEGORY_GROUPS = {
 };
 
 const FALLBACK_GROUP_BY_NAME = new Map(
-  PRODUCT_CATEGORY_SEED.map((row) => [row.name.trim().toLowerCase(), row.groupKey]),
+  [...PRODUCT_CATEGORY_SEED, ...SERVICE_CATEGORY_ROWS].map((row) => [row.name.trim().toLowerCase(), row.groupKey]),
 );
 
 function normalizeName(value) {
@@ -68,7 +70,9 @@ export function normalizeProductCategoryRows(rows = []) {
   });
 }
 
-export const fallbackProductCategoryRows = normalizeProductCategoryRows(PRODUCT_CATEGORY_SEED);
+export const fallbackProductCategoryRows = normalizeProductCategoryRows(
+  mergeServiceCategoryRows(PRODUCT_CATEGORY_SEED),
+);
 
 export async function loadProductCategoryRows(supabaseClient) {
   const primary = await supabaseClient
@@ -79,12 +83,12 @@ export async function loadProductCategoryRows(supabaseClient) {
     .order("name", { ascending: true });
 
   if (!primary.error && primary.data?.length) {
-    return normalizeProductCategoryRows(primary.data);
+    return normalizeProductCategoryRows(mergeServiceCategoryRows(primary.data));
   }
 
   const legacy = await supabaseClient.from("categories").select("name").order("name", { ascending: true });
   if (!legacy.error && legacy.data?.length) {
-    return normalizeProductCategoryRows(legacy.data);
+    return normalizeProductCategoryRows(mergeServiceCategoryRows(legacy.data));
   }
 
   return fallbackProductCategoryRows;

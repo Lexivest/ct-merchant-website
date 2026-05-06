@@ -43,6 +43,7 @@ import {
   savePersistentDraft,
 } from "../lib/persistentDrafts"
 import { buildShopRegistrationCacheKey } from "../lib/vendorRouteTransitions"
+import { mergeServiceCategoriesForSelect } from "../lib/serviceCategories"
 import {
   UPLOAD_RULES,
   formatBytes,
@@ -795,7 +796,7 @@ function ShopRegistration() {
     let isCancelled = false
 
     async function hydrateRegistrationForm() {
-      setCategories(data.categories)
+      setCategories(mergeServiceCategoriesForSelect(data.categories))
       setAreas(data.areas)
       setCityData(data.cityData)
 

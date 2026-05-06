@@ -195,6 +195,8 @@ const loadUserDashboard = () => import("./pages/UserDashboard")
 const loadShopRegistration = () => import("./pages/ShopRegistration")
 const loadArea = () => import("./pages/Area")
 const loadCat = () => import("./pages/Cat")
+const loadServiceCategory = () => import("./pages/ServiceCategory")
+const loadServiceProvider = () => import("./pages/ServiceProvider")
 const loadSearch = () => import("./pages/Search")
 const loadDiscoveryDetail = () => import("./pages/DiscoveryDetail")
 const loadShopDetail = () => import("./pages/ShopDetail")
@@ -247,6 +249,8 @@ const UserDashboard = resilientLazy(loadUserDashboard, { pageLabel: "user dashbo
 const ShopRegistration = resilientLazy(loadShopRegistration, { pageLabel: "shop registration" })
 const Area = resilientLazy(loadArea, { pageLabel: "area view" })
 const Cat = resilientLazy(loadCat, { pageLabel: "category view" })
+const ServiceCategory = resilientLazy(loadServiceCategory, { pageLabel: "service category" })
+const ServiceProvider = resilientLazy(loadServiceProvider, { pageLabel: "service provider" })
 const Search = resilientLazy(loadSearch, { pageLabel: "search" })
 const DiscoveryDetail = resilientLazy(loadDiscoveryDetail, { pageLabel: "discovery detail" })
 const ShopDetail = resilientLazy(loadShopDetail, { pageLabel: "shop view" })
@@ -978,6 +982,16 @@ function AppShell() {
         <Route
           path="/cat"
           element={withProtectedRoute(<Cat />)}
+        />
+
+        <Route
+          path="/service-category"
+          element={withProtectedRoute(<ServiceCategory />)}
+        />
+
+        <Route
+          path="/service-provider"
+          element={withProtectedRoute(<ServiceProvider />)}
         />
 
         <Route

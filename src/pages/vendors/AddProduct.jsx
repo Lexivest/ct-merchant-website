@@ -38,6 +38,7 @@ import {
   resolveProductCategoryGroup,
   toProductCategoryOptions,
 } from "../../lib/productCategories";
+import { isServiceCategory } from "../../lib/serviceCategories";
 
 // Only importing the Editor utilities; the compression utilities are built-in below to prevent OOM crashes and enforce 100KB limits.
 import {
@@ -365,7 +366,17 @@ export default function AddProduct() {
   };
 
   const handleAttrChange = (key, value) => setDynamicAttrs((prev) => ({ ...prev, [key]: typeof value === "string" ? value.slice(0, PRODUCT_ATTRIBUTE_TEXT_LIMIT) : value }));
-  const handleCategoryChange = (val) => { setForm((prev) => ({ ...prev, category: val })); setDynamicAttrs({}); };
+  const handleCategoryChange = (val) => {
+    const nextIsService = isServiceCategory(val);
+    setForm((prev) => ({
+      ...prev,
+      category: val,
+      ...(nextIsService
+        ? { stock: "1", condition: "New", isDiscount: false, discountPercent: "" }
+        : {}),
+    }));
+    setDynamicAttrs({});
+  };
   const handleConditionChange = (val) => setForm((prev) => ({ ...prev, condition: val }));
 
   // --- MEMORY SAFE BACKGROUND PROCESSING ---
@@ -526,7 +537,8 @@ export default function AddProduct() {
     if (!blobs[1]) return notify({ type: "error", title: "Main image required", message: "The main image is required before you can submit this product." });
     const oversizedSlot = [1, 2, 3].find((slot) => blobs[slot] && blobs[slot].size > PRODUCT_MAX_BYTES);
     if (oversizedSlot) return notify({ type: "error", title: "Image too large", message: `Image ${oversizedSlot} exceeds ${formatBytes(PRODUCT_MAX_BYTES)} after processing. Please re-crop it.` });
-    if (form.isDiscount && activeOffersCount >= MAX_SPECIAL_OFFERS) return notify({ type: "error", title: "Offer limit reached", message: "You already have the maximum of 2 special offers active." });
+    const isSubmittingService = isServiceCategory(form.category);
+    if (!isSubmittingService && form.isDiscount && activeOffersCount >= MAX_SPECIAL_OFFERS) return notify({ type: "error", title: "Offer limit reached", message: "You already have the maximum of 2 special offers active." });
 
     let successfullyUploadedPaths = []; 
 
@@ -534,7 +546,7 @@ export default function AddProduct() {
       setSubmitting(true);
       const priceVal = parseFloat(form.price);
       let discountPrice = null;
-      if (form.isDiscount && form.condition !== "Fairly Used") {
+      if (!isSubmittingService && form.isDiscount && form.condition !== "Fairly Used") {
         const perc = parseFloat(form.discountPercent);
         if (!perc || perc <= 0 || perc > 20) throw new Error("Discount must be between 1% and 20%");
         discountPrice = priceVal - priceVal * (perc / 100);
@@ -572,13 +584,19 @@ export default function AddProduct() {
 
       const { error: rpcErr } = await supabase.rpc("manage_product", {
         p_shop_id: parseInt(shopId), p_name: form.name.trim(), p_description: form.desc.trim(), p_price: priceVal, p_discount_price: discountPrice,
-        p_condition: form.condition, p_category: form.category, p_image_url: finalUrls[1], p_image_url_2: finalUrls[2], p_image_url_3: finalUrls[3],
-        p_stock_count: parseInt(form.stock), p_attributes: finalAttrs, p_is_available: parseInt(form.stock) > 0,
+        p_condition: isSubmittingService ? "New" : form.condition, p_category: form.category, p_image_url: finalUrls[1], p_image_url_2: finalUrls[2], p_image_url_3: finalUrls[3],
+        p_stock_count: isSubmittingService ? 1 : parseInt(form.stock), p_attributes: finalAttrs, p_is_available: isSubmittingService ? true : parseInt(form.stock) > 0,
       });
 
       if (rpcErr) throw rpcErr;
 
-      notify({ type: "success", title: "Product Added", message: "Your product has been successfully added to the marketplace. You can now add another item." });
+      notify({
+        type: "success",
+        title: isSubmittingService ? "Service Added" : "Product Added",
+        message: isSubmittingService
+          ? "Your service listing has been added to your provider page."
+          : "Your product has been successfully added to the marketplace. You can now add another item.",
+      });
 
       try {
         skipNextDraftSaveRef.current = true;
@@ -608,6 +626,44 @@ export default function AddProduct() {
   const liveFinalPrice = isLiveDiscValid ? livePrice - livePrice * (liveDiscPerc / 100) : livePrice;
   const categoryOptions = useMemo(() => toProductCategoryOptions(categoryRows), [categoryRows]);
   const categoryGroup = useMemo(() => resolveProductCategoryGroup(form.category, categoryRows), [form.category, categoryRows]);
+  const isServiceListing = categoryGroup === "services" || isServiceCategory(form.category);
+  const editorCopy = isServiceListing
+    ? {
+        header: "Add Service",
+        previewTitle: "Service Page Preview",
+        previewName: "Service Title",
+        nameLabel: "Service Title",
+        priceLabel: "Starting Price (N)",
+        detailsTitle: "Service Presentation Details",
+        keyFeaturesLabel: "What You Offer",
+        keyFeaturesPlaceholder: "e.g. Emergency repairs, installation, routine maintenance",
+        descLabel: "Service Details",
+        descPlaceholder: "Explain the service, coverage, turnaround time, and what customers should expect...",
+        boxLabel: "What Is Included",
+        boxPlaceholder: "Inspection, labour, installation materials...",
+        warrantyLabel: "After-Service Support",
+        warrantyPlaceholder: "e.g. 7 days support",
+        submitLabel: "Publish Service Listing",
+        cameraTitle: "Capture Service Photo",
+      }
+    : {
+        header: "Add Product",
+        previewTitle: "Marketplace Preview",
+        previewName: "Product Title",
+        nameLabel: "Product Name / Title",
+        priceLabel: "Price (N)",
+        detailsTitle: "Product Presentation Details",
+        keyFeaturesLabel: "Key Features",
+        keyFeaturesPlaceholder: "e.g. 5G Network, 120Hz Display",
+        descLabel: "Full Description",
+        descPlaceholder: "Enter full detailed product description...",
+        boxLabel: "What's in the Box",
+        boxPlaceholder: "1x Phone, Charger",
+        warrantyLabel: "Warranty",
+        warrantyPlaceholder: "1 Year Mfg Warranty",
+        submitLabel: "Upload to Marketplace",
+        cameraTitle: "Capture Product Photo",
+      };
 
   if (authLoading || loading) return <AddProductShimmer />;
   if (error) return <GlobalErrorScreen error={error} message={error} onRetry={() => window.location.reload()} onBack={() => navigate("/vendor-panel")} />;
@@ -631,7 +687,7 @@ export default function AddProduct() {
     <div className={`flex min-h-screen flex-col bg-[#F3F4F6] pb-12 text-[#0F1111] ${location.state?.fromVendorTransition ? "ctm-page-enter" : ""}`}>
       <header className="sticky top-0 z-40 flex items-center gap-4 bg-[#131921] px-4 py-3 text-white shadow-sm">
         <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]"><FaArrowLeft /></button>
-        <div className="text-[1.15rem] font-bold">Add Product</div>
+        <div className="text-[1.15rem] font-bold">{editorCopy.header}</div>
       </header>
 
       <main className="mx-auto w-full max-w-[680px] p-5">
@@ -675,7 +731,17 @@ export default function AddProduct() {
                   <>
                     {slot === 1 ? <FaImage className="mb-2 text-3xl text-[#db2777]" /> : <FaCamera className="mb-2 text-3xl text-[#888C8C]" />}
                     <span className={`text-center text-[0.7rem] font-bold leading-tight ${slot === 1 ? "text-[#db2777]" : "text-[#565959]"}`}>
-                      {slot === 1 ? "Main Image\n(Required)" : slot === 2 ? "Extra Angle\n(Optional)" : "Label/Box\n(Optional)"}
+                      {isServiceListing
+                        ? slot === 1
+                          ? "Service Photo\n(Required)"
+                          : slot === 2
+                            ? "Work Sample\n(Optional)"
+                            : "Flyer/Proof\n(Optional)"
+                        : slot === 1
+                          ? "Main Image\n(Required)"
+                          : slot === 2
+                            ? "Extra Angle\n(Optional)"
+                            : "Label/Box\n(Optional)"}
                     </span>
                     <div className="mt-2 flex items-center gap-1">
                       <button type="button" onClick={() => fileInputRefs[slot].current?.click()} className="rounded-md border border-[#334155] bg-white px-2 py-1 text-[0.58rem] font-extrabold uppercase tracking-wide text-[#0F172A] transition hover:bg-slate-50">File</button>
@@ -689,14 +755,14 @@ export default function AddProduct() {
 
           {/* LIVE PREVIEW */}
           <div className="mb-6 flex flex-col items-center rounded-lg border border-[#D5D9D9] bg-[#F3F4F6] p-5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
-            <h4 className="mb-3 text-[0.95rem] font-extrabold"><FaRegEye className="inline mr-1" /> Marketplace Preview</h4>
+            <h4 className="mb-3 text-[0.95rem] font-extrabold"><FaRegEye className="inline mr-1" /> {editorCopy.previewTitle}</h4>
             <div className="w-[140px] overflow-hidden rounded-md border border-[#E5E7EB] bg-white p-2 shadow-md">
               <div className="relative mb-1 flex aspect-square items-center justify-center overflow-hidden rounded border border-dashed border-[#D5D9D9] bg-[#F7F7F7]">
                 {previews[1] ? <img src={previews[1]} className="h-full w-full object-contain bg-white" alt="Preview" /> : <FaImage className="text-3xl text-[#D5D9D9]" />}
                 {isLiveDiscValid && <div className="absolute left-1 top-1 z-10 rounded bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-white">-{form.discountPercent}%</div>}
                 {form.condition === "Fairly Used" && <div className="absolute right-1 top-1 z-10 rounded bg-amber-500 px-1.5 py-0.5 text-[0.65rem] font-extrabold text-white">Used</div>}
               </div>
-              <div className="truncate text-[0.75rem] font-medium text-[#0F1111]">{form.name || "Product Title"}</div>
+              <div className="truncate text-[0.75rem] font-medium text-[#0F1111]">{form.name || editorCopy.previewName}</div>
               <div className="truncate text-[0.8rem] font-extrabold text-[#db2777]">
                 {isLiveDiscValid && livePrice > 0 ? (
                   <><span className="mr-1 text-[0.65rem] font-medium text-[#888C8C] line-through">₦{livePrice.toLocaleString()}</span>₦{liveFinalPrice.toLocaleString()}</>
@@ -765,31 +831,36 @@ export default function AddProduct() {
           {/* CORE INFO */}
           <div className="mb-5">
             <div className="mb-1.5 flex items-center justify-between gap-3">
-              <label className="block text-[0.9rem] font-bold">Product Name / Title</label>
+              <label className="block text-[0.9rem] font-bold">{editorCopy.nameLabel}</label>
               <CharacterCounter value={form.name} limit={PRODUCT_TEXT_LIMITS.name} unit={PRODUCT_TEXT_LIMIT_UNITS.name} />
             </div>
             <input type="text" id="name" value={form.name} onChange={handleInputChange} required className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
           </div>
 
-          <div className="mb-5 grid grid-cols-2 gap-4">
+          <div className={`mb-5 grid gap-4 ${isServiceListing ? "grid-cols-1" : "grid-cols-2"}`}>
             <div>
               <label className="mb-1.5 block text-[0.9rem] font-bold">Price (₦)</label>
               <input type="number" id="price" value={form.price} onChange={handleInputChange} required min="0" className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none" />
+              {isServiceListing && (
+                <p className="mt-1.5 text-[0.72rem] font-bold text-slate-500">
+                  Starting price for this service. Use 0 if customers should request a quote.
+                </p>
+              )}
             </div>
-            <div>
+            {!isServiceListing && <div>
               <label className="mb-1.5 block text-[0.9rem] font-bold">Stock Count</label>
               <input type="number" id="stock" value={form.stock} onChange={handleInputChange} required min="1" className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none" />
-            </div>
+            </div>}
           </div>
 
           {/* CONDITION (CUSTOM DROPDOWN) */}
-          <div className="mb-5">
+          {!isServiceListing && <div className="mb-5">
             <label className="mb-1.5 block text-[0.9rem] font-bold">Condition</label>
             <CustomSelect value={form.condition} onChange={handleConditionChange} options={[{ value: "New", label: "New" }, { value: "Fairly Used", label: "Fairly Used" }]} className="rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]" />
-          </div>
+          </div>}
 
           {/* DISCOUNT SECTION */}
-          {form.condition !== "Fairly Used" && (
+          {!isServiceListing && form.condition !== "Fairly Used" && (
             <div className="mb-6 rounded-lg border border-[#D5D9D9] bg-[#F7F7F7] p-4 transition-all">
               <div className={`flex items-center justify-between ${activeOffersCount >= MAX_SPECIAL_OFFERS ? 'opacity-50' : ''}`}>
                 <div>
@@ -812,45 +883,45 @@ export default function AddProduct() {
           {/* DESCRIPTIONS */}
           <div className="mb-6 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-5">
             <div className="mb-4 flex items-center gap-2 border-b border-[#E2E8F0] pb-2 text-[1rem] font-extrabold">
-              <FaListUl className="text-[#db2777]" /> Product Presentation Details
+              <FaListUl className="text-[#db2777]" /> {editorCopy.detailsTitle}
             </div>
             
             <div className="mb-4">
               <div className="mb-1.5 flex items-center justify-between gap-3">
-                <label className="block text-[0.85rem] font-bold">Key Features</label>
+                <label className="block text-[0.85rem] font-bold">{editorCopy.keyFeaturesLabel}</label>
                 <CharacterCounter value={form.key_features} limit={PRODUCT_TEXT_LIMITS.key_features} />
               </div>
-              <textarea id="key_features" value={form.key_features} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.key_features} rows="2" placeholder="e.g. 5G Network, 120Hz Display" className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none resize-y"></textarea>
+              <textarea id="key_features" value={form.key_features} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.key_features} rows="2" placeholder={editorCopy.keyFeaturesPlaceholder} className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none resize-y"></textarea>
             </div>
 
             <div className="mb-4">
               <div className="mb-1.5 flex items-center justify-between gap-3">
-                <label className="block text-[0.85rem] font-bold">Full Description <span className="text-[#db2777]">*</span></label>
+                <label className="block text-[0.85rem] font-bold">{editorCopy.descLabel} <span className="text-[#db2777]">*</span></label>
                 <CharacterCounter value={form.desc} limit={PRODUCT_TEXT_LIMITS.desc} />
               </div>
-              <textarea id="desc" value={form.desc} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.desc} rows="4" required placeholder="Enter full detailed product description..." className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none resize-y"></textarea>
+              <textarea id="desc" value={form.desc} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.desc} rows="4" required placeholder={editorCopy.descPlaceholder} className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none resize-y"></textarea>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <div className="mb-1.5 flex items-center justify-between gap-3">
-                  <label className="block text-[0.85rem] font-bold">What's in the Box</label>
+                  <label className="block text-[0.85rem] font-bold">{editorCopy.boxLabel}</label>
                   <CharacterCounter value={form.box_content} limit={PRODUCT_TEXT_LIMITS.box_content} />
                 </div>
-                <textarea id="box_content" value={form.box_content} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.box_content} rows="2" placeholder="1x Phone, Charger" className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none"></textarea>
+                <textarea id="box_content" value={form.box_content} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.box_content} rows="2" placeholder={editorCopy.boxPlaceholder} className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none"></textarea>
               </div>
               <div>
                 <div className="mb-1.5 flex items-center justify-between gap-3">
-                  <label className="block text-[0.85rem] font-bold">Warranty</label>
+                  <label className="block text-[0.85rem] font-bold">{editorCopy.warrantyLabel}</label>
                   <CharacterCounter value={form.warranty} limit={PRODUCT_TEXT_LIMITS.warranty} />
                 </div>
-                <textarea id="warranty" value={form.warranty} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.warranty} rows="2" placeholder="1 Year Mfg Warranty" className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none"></textarea>
+                <textarea id="warranty" value={form.warranty} onChange={handleInputChange} maxLength={PRODUCT_TEXT_LIMITS.warranty} rows="2" placeholder={editorCopy.warrantyPlaceholder} className="w-full rounded border border-[#888C8C] p-3 text-[0.9rem] focus:border-[#db2777] focus:outline-none"></textarea>
               </div>
             </div>
           </div>
 
           <button type="submit" disabled={submitting} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#db2777] p-4 text-[1.05rem] font-bold text-white shadow-[0_4px_10px_rgba(219,39,119,0.3)] transition hover:bg-[#be185d] disabled:cursor-not-allowed disabled:bg-[#E3E6E6] disabled:text-[#888C8C] disabled:shadow-none">
-            {submitting ? <><FaCircleNotch className="animate-spin" /> Processing...</> : "Upload to Marketplace"}
+            {submitting ? <><FaCircleNotch className="animate-spin" /> Processing...</> : editorCopy.submitLabel}
           </button>
         </form>
       </main>
@@ -925,7 +996,7 @@ export default function AddProduct() {
 
       <CameraCaptureModal
         open={cameraSlot !== null}
-        title="Capture Product Photo"
+        title={editorCopy.cameraTitle}
         profile={PRODUCT_PROFILE}
         onClose={() => setCameraSlot(null)}
         onCapture={handleCameraCapture}

@@ -1,10 +1,20 @@
 import { memo, useEffect, useMemo, useState } from "react"
-import { FaImage, FaArrowRight, FaBolt } from "react-icons/fa6"
+import {
+  FaArrowRight,
+  FaBolt,
+  FaBriefcase,
+  FaChevronRight,
+  FaImage,
+  FaMagnifyingGlass,
+  FaScrewdriverWrench,
+  FaXmark,
+} from "react-icons/fa6"
 // IMPORT OUR NEW SHIMMERS
 import { ShimmerBlock } from "../../common/Shimmers"
 import StableImage from "../../common/StableImage"
 import RetryingNotice, { getRetryingMessage } from "../../common/RetryingNotice"
 import { PROMO_EXTENDED_COLORS } from "../../../lib/promoBannerEngine"
+import { SERVICE_CATEGORY_GROUPS } from "../../../lib/serviceCategories"
 
 function SponsoredProductCard({ sponsored, onOpenProduct }) {
   const product = useMemo(() => {
@@ -102,6 +112,7 @@ function SponsoredProductCard({ sponsored, onOpenProduct }) {
 
 const EMPTY_PRODUCTS = []
 let shopDetailPrefetchPromise = null
+let serviceCategoryPrefetchPromise = null
 
 function getCategoryImageUrl(category) {
   return (
@@ -120,6 +131,112 @@ function prefetchShopDetailPage() {
   }
 
   return shopDetailPrefetchPromise
+}
+
+function prefetchServiceCategoryPage() {
+  if (!serviceCategoryPrefetchPromise) {
+    serviceCategoryPrefetchPromise = import("../../../pages/ServiceCategory")
+  }
+
+  return serviceCategoryPrefetchPromise
+}
+
+function ServiceCategoryPicker({ open, onClose, onOpenServiceCategory }) {
+  const [query, setQuery] = useState("")
+  const normalizedQuery = query.trim().toLowerCase()
+
+  const visibleGroups = useMemo(() => {
+    if (!normalizedQuery) return SERVICE_CATEGORY_GROUPS
+
+    return SERVICE_CATEGORY_GROUPS.map((group) => ({
+      ...group,
+      categories: group.categories.filter((category) =>
+        category.toLowerCase().includes(normalizedQuery) ||
+        group.title.toLowerCase().includes(normalizedQuery),
+      ),
+    })).filter((group) => group.categories.length > 0)
+  }, [normalizedQuery])
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[950] flex items-end justify-start bg-slate-950/30 px-3 pb-4 pt-20 backdrop-blur-[2px]">
+      <div className="w-full max-w-[520px] overflow-hidden rounded-[30px] border border-white/70 bg-white shadow-2xl">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-[linear-gradient(135deg,#fff7fb_0%,#eef8ff_100%)] px-4 py-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-[0.7rem] font-black uppercase tracking-[0.16em] text-pink-700">
+              <FaScrewdriverWrench /> Local Services
+            </div>
+            <h3 className="mt-0.5 truncate text-xl font-black text-slate-950">
+              What service do you need?
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm transition hover:bg-slate-100"
+            aria-label="Close services"
+          >
+            <FaXmark />
+          </button>
+        </div>
+
+        <div className="border-b border-slate-100 px-4 py-3">
+          <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-500">
+            <FaMagnifyingGlass className="text-slate-400" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search plumbing, AC, catering..."
+              className="min-w-0 flex-1 bg-transparent text-slate-900 outline-none placeholder:text-slate-400"
+            />
+          </label>
+        </div>
+
+        <div className="max-h-[62vh] overflow-y-auto px-4 py-3">
+          {visibleGroups.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+              <p className="text-sm font-bold text-slate-500">
+                No service matched that search.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {visibleGroups.map((group) => (
+                <section key={group.key}>
+                  <div className="mb-2">
+                    <h4 className="text-sm font-black text-slate-950">{group.title}</h4>
+                    <p className="text-[0.72rem] font-semibold leading-5 text-slate-500">
+                      {group.description}
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    {group.categories.map((category) => (
+                      <button
+                        type="button"
+                        key={category}
+                        onClick={() => {
+                          onClose()
+                          onOpenServiceCategory?.(category)
+                        }}
+                        onMouseEnter={prefetchServiceCategoryPage}
+                        onFocus={prefetchServiceCategoryPage}
+                        onPointerDown={prefetchServiceCategoryPage}
+                        className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-3 py-3 text-left text-sm font-black text-slate-800 shadow-sm transition hover:border-pink-200 hover:bg-pink-50 active:scale-[0.99]"
+                      >
+                        <span className="min-w-0 flex-1 truncate">{category}</span>
+                        <FaChevronRight className="shrink-0 text-xs text-pink-600" />
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function FeaturedCitySlider({ banners, onOpenShop }) {
@@ -356,10 +473,12 @@ function MarketSection({
   onOpenProduct,
   onOpenArea,
   onOpenDiscovery,
+  onOpenServiceCategory,
   loading,
   error,
   onRetry,
 }) {
+  const [servicePickerOpen, setServicePickerOpen] = useState(false)
   const dashboardShellEmpty =
     !dashboardData ||
     (!dashboardData.profile &&
@@ -451,6 +570,27 @@ function MarketSection({
   // 3. ACTUAL RENDER
   return (
     <div className="screen active bg-slate-50">
+      <ServiceCategoryPicker
+        open={servicePickerOpen}
+        onClose={() => setServicePickerOpen(false)}
+        onOpenServiceCategory={onOpenServiceCategory}
+      />
+
+      <button
+        type="button"
+        onClick={() => setServicePickerOpen(true)}
+        onMouseEnter={prefetchServiceCategoryPage}
+        onFocus={prefetchServiceCategoryPage}
+        onPointerDown={prefetchServiceCategoryPage}
+        className="fixed bottom-5 left-4 z-[880] flex items-center gap-2 rounded-full bg-slate-950 px-4 py-3 text-sm font-black text-white shadow-[0_18px_45px_rgba(15,23,42,0.28)] transition hover:-translate-y-0.5 hover:bg-pink-700 active:scale-[0.98]"
+        aria-label="Open local services"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-600 text-white">
+          <FaBriefcase />
+        </span>
+        Services
+      </button>
+
       {dashboardData.featuredCityBanners?.length > 0 ? (
         <FeaturedCitySlider
           banners={dashboardData.featuredCityBanners}

@@ -29,6 +29,7 @@ import { supabase } from "../lib/supabase"
 import { UPLOAD_RULES, formatBytes } from "../lib/uploadRules"
 import { prepareVendorDashboardEntryTransition } from "../lib/vendorRouteTransitions"
 import { buildWishlistCacheKey, fetchWishlistData } from "../lib/wishlistData"
+import { isActiveMarketplaceShop, isServiceCategory } from "../lib/serviceCategories"
 
 import DashboardHeader from "../components/dashboard/layout/DashboardHeader"
 import MarketSection from "../components/dashboard/sections/MarketSection"
@@ -40,6 +41,7 @@ const loadShopDetailPage = () => import("./ShopDetail")
 const loadSearchPage = () => import("./Search")
 const loadAreaPage = () => import("./Area")
 const loadCatPage = () => import("./Cat")
+const loadServiceCategoryPage = () => import("./ServiceCategory")
 const loadShopIndexPage = () => import("./ShopIndex")
 const loadDiscoveryDetailPage = () => import("./DiscoveryDetail")
 const loadWishlistDashboardView = () =>
@@ -1263,6 +1265,51 @@ function UserDashboard() {
     }
   }
 
+  async function openServiceCategoryWithTransition(name) {
+    if (!name || !isServiceCategory(name)) return
+
+    const retryAction = () => openServiceCategoryWithTransition(name)
+    beginRouteTransition(retryAction)
+
+    try {
+      const now = new Date()
+      const activeCityShops = (localData.shops || [])
+        .filter((shop) => isActiveMarketplaceShop(shop, profile?.city_id, now))
+        .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+
+      const serviceProducts = (localData.products || [])
+        .filter(
+          (product) =>
+            product.category === name &&
+            product.is_available === true &&
+            product.is_approved !== false
+        )
+        .slice(0, 250)
+
+      const productShopIds = new Set(serviceProducts.map((product) => product.shop_id))
+      const providers = activeCityShops
+        .filter((shop) => shop.category === name || productShopIds.has(shop.id))
+        .map((shop) => ({
+          shop,
+          products: serviceProducts.filter((product) => product.shop_id === shop.id),
+        }))
+
+      primeCachedFetchStore(`service_category_${name}_city_${profile?.city_id || "none"}`, {
+        providers,
+      })
+      await loadServiceCategoryPage()
+      navigate(`/service-category?name=${encodeURIComponent(name)}`)
+    } catch (error) {
+      failRouteTransition(
+        getFriendlyErrorMessage(
+          error,
+          "We could not open this service category right now. Please try again."
+        ),
+        retryAction
+      )
+    }
+  }
+
   async function openDiscoveryWithTransition(id) {
     if (!id) return
 
@@ -2164,6 +2211,7 @@ function UserDashboard() {
             onOpenProduct={openProductWithTransition}
             onOpenArea={openAreaWithTransition}
             onOpenDiscovery={openDiscoveryWithTransition}
+            onOpenServiceCategory={openServiceCategoryWithTransition}
             loading={dynamicLoading && !localData?.shops?.length}
             error={dataError}
             onRetry={mutateDynamic}
