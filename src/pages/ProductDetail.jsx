@@ -135,6 +135,7 @@ function ProductDetail() {
   const [productTransition, setProductTransition] = useState({
     pending: false,
     productId: "",
+    shopId: "",
     error: "",
   })
 
@@ -142,6 +143,7 @@ function ProductDetail() {
     setProductTransition({
       pending: false,
       productId: "",
+      shopId: "",
       error: "",
     })
     setDescriptionModalOpen(false)
@@ -150,13 +152,45 @@ function ProductDetail() {
   // Computed Values from Cache
   const currentProduct = data?.product
   const currentShop = data?.shop
-  const recommendations = data?.recommendations || []
   const isLoggedIn = Boolean(user?.id)
   const productCityHubTitle = currentShop?.cities?.name
     ? `${currentShop.cities.name} Biz Hub`
     : "City Biz Hub"
   const productDescription =
     currentProduct?.description?.trim() || "No description provided by the merchant."
+  const recommendations = useMemo(() => {
+    const rawRecommendations = Array.isArray(data?.recommendations)
+      ? data.recommendations
+      : []
+    const seen = new Set()
+
+    return rawRecommendations
+      .map((item) => {
+        if (!item?.id) return null
+
+        const productKey = String(item.id)
+        const price = Number(item.price)
+        const discountPrice = Number(item.discount_price)
+
+        return {
+          ...item,
+          id: item.id,
+          shop_id: item.shop_id || item.shop?.id || currentShop?.id || null,
+          name: String(item.name || "Product").trim() || "Product",
+          price: Number.isFinite(price) ? price : 0,
+          discount_price: Number.isFinite(discountPrice) ? discountPrice : null,
+          image_url: typeof item.image_url === "string" ? item.image_url.trim() : "",
+          __key: productKey,
+        }
+      })
+      .filter((item) => {
+        if (!item || seen.has(item.__key)) return false
+        if (String(item.id) === String(currentProduct?.id)) return false
+        seen.add(item.__key)
+        return true
+      })
+      .slice(0, 10)
+  }, [currentProduct?.id, currentShop?.id, data?.recommendations])
 
   const productImages = useMemo(() => {
     return [
@@ -583,9 +617,10 @@ function ProductDetail() {
     return `₦${Number(value || 0).toLocaleString()}`
   }
 
-  async function openProductWithTransition(nextProductId) {
+  async function openProductWithTransition(nextProductId, nextShopId = null) {
     if (!nextProductId) return
     const repoSuffix = isRepoSearchEntry && repoRef ? buildRepoSearchQuerySuffix(repoRef, repoSearchIntent) : ""
+    const destinationShopId = nextShopId || currentShop?.id || shopSrc || ""
 
     const nextCacheKey = isPublicRepoMode
       ? `repo_public_product_${repoRef || "unknown"}_${nextProductId || "unknown"}`
@@ -597,6 +632,7 @@ function ProductDetail() {
     setProductTransition({
       pending: true,
       productId: nextProductId,
+      shopId: destinationShopId,
       error: "",
     })
 
@@ -613,7 +649,7 @@ function ProductDetail() {
             ? fetchPublicRepoProductDetail({
                 repoRef,
                 productId: nextProductId,
-                shopId: currentShop?.id || shopSrc,
+                shopId: destinationShopId,
               })
             : fetchProductDetailData({
                 productId: nextProductId,
@@ -638,7 +674,7 @@ function ProductDetail() {
       }
 
       navigate(
-        `/product-detail?id=${nextProductId}${currentShop?.id ? `&shop_src=${currentShop.id}` : ""}${repoSuffix}`,
+        `/product-detail?id=${nextProductId}${destinationShopId ? `&shop_src=${destinationShopId}` : ""}${repoSuffix}`,
         {
           state: {
             fromProductTransition: true,
@@ -660,6 +696,7 @@ function ProductDetail() {
       setProductTransition({
         pending: false,
         productId: nextProductId,
+        shopId: destinationShopId,
         error: safeMessage,
       })
     }
@@ -672,10 +709,11 @@ function ProductDetail() {
       : 0
 
     return (
-      <div
+      <button
+        type="button"
         key={product.id}
-        className="mini-card flex w-[150px] shrink-0 cursor-pointer flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition hover:border-pink-600 hover:shadow-[0_4px_8px_rgba(0,0,0,0.05)]"
-        onClick={() => openProductWithTransition(product.id)}
+        className="mini-card flex w-[150px] shrink-0 cursor-pointer flex-col overflow-hidden rounded-lg border border-slate-200 bg-white text-left transition hover:border-pink-600 hover:shadow-[0_4px_8px_rgba(0,0,0,0.05)] focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+        onClick={() => openProductWithTransition(product.id, product.shop_id)}
       >
         <div className="mini-img-wrap relative aspect-square w-full bg-white">
           {itemHasDiscount ? (
@@ -709,7 +747,7 @@ function ProductDetail() {
             )}
           </div>
         </div>
-      </div>
+      </button>
     )
   }
 
@@ -746,13 +784,14 @@ function ProductDetail() {
         error={productTransition.error}
         onRetry={() => {
           if (productTransition.productId) {
-            void openProductWithTransition(productTransition.productId)
+            void openProductWithTransition(productTransition.productId, productTransition.shopId)
           }
         }}
         onDismiss={() =>
           setProductTransition({
             pending: false,
             productId: "",
+            shopId: "",
             error: "",
           })
         }

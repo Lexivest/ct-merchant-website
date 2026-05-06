@@ -161,6 +161,7 @@ export function buildProductDetailPrefetchFromRepoPayload(payload, productId) {
     .slice(0, 10)
     .map((item) => ({
       id: item.id,
+      shop_id: item.shop_id || shop?.id || null,
       name: item.name,
       price: item.price,
       discount_price: item.discount_price,

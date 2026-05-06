@@ -51,15 +51,36 @@ async function fetchProductDetailDataDirect({ productId, userId = null }) {
   }
 
   const shop = Array.isArray(product.shops) ? product.shops[0] || null : product.shops || null
+  const nowIso = new Date().toISOString()
 
   const [recommendationsResult, wishlistResult] = await Promise.allSettled([
     product.category
       ? supabase
           .from("products")
-          .select("id, name, price, discount_price, image_url")
+          .select(`
+            id,
+            shop_id,
+            name,
+            price,
+            discount_price,
+            image_url,
+            shops!inner (
+              id,
+              status,
+              is_verified,
+              is_open,
+              subscription_end_date
+            )
+          `)
           .eq("category", product.category)
           .neq("id", normalizedProductId)
           .eq("is_available", true)
+          .eq("is_approved", true)
+          .eq("shops.status", "approved")
+          .eq("shops.is_verified", true)
+          .eq("shops.is_open", true)
+          .gt("shops.subscription_end_date", nowIso)
+          .order("created_at", { ascending: false })
           .limit(10)
       : Promise.resolve({ data: [], error: null }),
     userId
@@ -74,7 +95,11 @@ async function fetchProductDetailDataDirect({ productId, userId = null }) {
 
   const recommendations =
     recommendationsResult.status === "fulfilled" && !recommendationsResult.value.error
-      ? recommendationsResult.value.data || []
+      ? (recommendationsResult.value.data || []).map((item) => {
+          const cleanItem = { ...item }
+          delete cleanItem.shops
+          return cleanItem
+        })
       : []
 
   const initialWishlist =
