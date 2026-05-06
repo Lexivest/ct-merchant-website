@@ -569,7 +569,7 @@ function DashboardHeader({
         <div ref={categoryRef} className="relative shrink-0 self-stretch">
           <button
             type="button"
-            className="flex h-full w-[148px] items-center gap-1.5 border-r border-r-white/15 bg-[#232F3E] px-3 text-[0.82rem] font-semibold text-white transition hover:bg-[#1B2735] min-[390px]:w-[156px] sm:w-auto sm:max-w-[190px] sm:gap-2 sm:px-3 sm:text-[0.85rem]"
+            className="flex h-full w-[138px] items-center gap-1 border-r border-r-white/15 bg-[#232F3E] px-2.5 text-[0.82rem] font-semibold text-white transition hover:bg-[#1B2735] min-[390px]:w-[146px] sm:w-auto sm:max-w-[190px] sm:gap-2 sm:px-3 sm:text-[0.85rem]"
             onClick={() => {
               setCategoryOpen((prev) => !prev)
               setDesktopAreaOpen(false)
