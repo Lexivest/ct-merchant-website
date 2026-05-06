@@ -111,6 +111,94 @@ function AdminNames({ admins }) {
   )
 }
 
+function formatPlanLabel(plan) {
+  if (plan === "1_Year") return "1 Year"
+  if (plan === "6_Months") return "6 Months"
+  return "Not applicable"
+}
+
+function PaymentBreakdown({ payments }) {
+  const safePayments = Array.isArray(payments) ? payments : []
+
+  return (
+    <div className="mt-5 rounded-[26px] border border-slate-200 bg-white">
+      <div className="flex flex-col gap-2 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+            Eligible payments
+          </div>
+          <div className="mt-1 text-sm font-black text-slate-900">
+            Merchant-by-merchant proof for this month’s commission math.
+          </div>
+        </div>
+        <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-black text-white">
+          {safePayments.length.toLocaleString()} payment{safePayments.length === 1 ? "" : "s"}
+        </span>
+      </div>
+
+      {safePayments.length === 0 ? (
+        <div className="p-5 text-sm font-semibold text-slate-500">
+          No eligible merchant payments were found for this city and month.
+        </div>
+      ) : (
+        <div className="max-h-[360px] overflow-auto">
+          <table className="min-w-[820px] w-full text-left text-sm">
+            <thead className="sticky top-0 z-10 bg-slate-50 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
+              <tr>
+                <th className="px-4 py-3">Merchant</th>
+                <th className="px-4 py-3">Shop</th>
+                <th className="px-4 py-3">Fee type</th>
+                <th className="px-4 py-3">Subscription</th>
+                <th className="px-4 py-3 text-right">Amount</th>
+                <th className="px-4 py-3">Paid date</th>
+                <th className="px-4 py-3">Reference</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {safePayments.map((payment) => (
+                <tr key={payment.id} className="align-top">
+                  <td className="px-4 py-3 font-black text-slate-900">
+                    {payment.merchant_name || "Merchant"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="font-black text-slate-800">
+                      {payment.shop_name || `Shop #${payment.shop_id || "unknown"}`}
+                    </div>
+                    <div className="mt-0.5 text-xs font-semibold text-slate-400">
+                      {payment.shop_id ? `Shop ID ${payment.shop_id}` : "No shop id"}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${
+                      payment.fee_type === "subscription"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-pink-50 text-pink-700"
+                    }`}>
+                      {payment.fee_label || "Payment"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 font-bold text-slate-600">
+                    {formatPlanLabel(payment.subscription_plan)}
+                  </td>
+                  <td className="px-4 py-3 text-right font-black text-slate-950">
+                    {formatNaira(payment.amount)}
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-slate-500">
+                    {formatDateTime(payment.paid_at)}
+                  </td>
+                  <td className="max-w-[180px] truncate px-4 py-3 font-mono text-xs font-bold text-slate-500">
+                    {payment.payment_ref || "No reference"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function CommissionRow({
   row,
   isClosed,
@@ -176,6 +264,8 @@ function CommissionRow({
             Promo-code verification is excluded because it is not real cash inflow.
           </p>
         </div>
+
+        <PaymentBreakdown payments={row.payments} />
 
         <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
