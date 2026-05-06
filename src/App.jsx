@@ -233,6 +233,7 @@ const StaffInbox = createPreloadableStaffRoute("/staff-inbox")
 const StaffSecurityRadar = createPreloadableStaffRoute("/staff-security-radar")
 const StaffProducts = createPreloadableStaffRoute("/staff-products")
 const StaffShopContent = createPreloadableStaffRoute("/staff-shop-content")
+const StaffShopIdentity = createPreloadableStaffRoute("/staff-shop-identity")
 const StaffAnnouncements = createPreloadableStaffRoute("/staff-announcements")
 const StaffNotifications = createPreloadableStaffRoute("/staff-notifications")
 const UserDashboard = resilientLazy(loadUserDashboard, { pageLabel: "user dashboard" })
@@ -458,6 +459,11 @@ function getRouteMeta(pathname) {
     "/staff-shop-content": {
       title: "Shop Content Moderation | CTMerchant",
       description: "Moderate banners, shop content, and merchant-facing marketplace assets.",
+      noindex: true,
+    },
+    "/staff-shop-identity": {
+      title: "Shop Identity Updates | CTMerchant",
+      description: "Super-admin controls for locked shop business name, phone, and WhatsApp updates.",
       noindex: true,
     },
     "/staff-announcements": {
@@ -792,6 +798,7 @@ function AppShell() {
         <Route path="/staff-security-radar" element={<ProtectedStaffRoute superOnly><StaffSecurityRadar /></ProtectedStaffRoute>} />
         <Route path="/staff-products" element={<ProtectedStaffRoute adminOnly><StaffProducts /></ProtectedStaffRoute>} />
         <Route path="/staff-shop-content" element={<ProtectedStaffRoute adminOnly><StaffShopContent /></ProtectedStaffRoute>} />
+        <Route path="/staff-shop-identity" element={<ProtectedStaffRoute superOnly><StaffShopIdentity /></ProtectedStaffRoute>} />
         <Route path="/staff-announcements" element={<ProtectedStaffRoute adminOnly><StaffAnnouncements /></ProtectedStaffRoute>} />
         <Route path="/staff-notifications" element={<ProtectedStaffRoute adminOnly><StaffNotifications /></ProtectedStaffRoute>} />
 

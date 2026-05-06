@@ -342,6 +342,37 @@ async function prepareStaffShopContentData() {
   }
 }
 
+async function prepareStaffShopIdentityData() {
+  const { data, error } = await supabase
+    .from("shops")
+    .select(`
+      id,
+      name,
+      unique_id,
+      owner_id,
+      city_id,
+      status,
+      is_verified,
+      is_open,
+      phone,
+      whatsapp,
+      address,
+      created_at,
+      subscription_end_date,
+      profiles ( full_name, phone ),
+      cities ( name, state )
+    `)
+    .order("created_at", { ascending: false })
+    .limit(60)
+
+  if (error) throw error
+
+  return {
+    kind: "staff-shop-identity",
+    shops: data || [],
+  }
+}
+
 async function prepareStaffAnnouncementsData() {
   const [citiesRes, announcementsRes] = await Promise.all([
     supabase.from("cities").select("id, name, state").order("name"),
@@ -388,6 +419,7 @@ const staffPreparers = {
   "/staff-verifications": prepareStaffVerificationsData,
   "/staff-products": prepareStaffProductsData,
   "/staff-shop-content": prepareStaffShopContentData,
+  "/staff-shop-identity": prepareStaffShopIdentityData,
   "/staff-announcements": prepareStaffAnnouncementsData,
   "/staff-notifications": prepareStaffNotificationsData,
   "/staff-payments": prepareStaffPaymentsData,

@@ -7,6 +7,7 @@ const staffRouteLoaders = {
   "/staff-verifications": () => import("../pages/staff/StaffVerifications"),
   "/staff-products": () => import("../pages/staff/StaffProducts"),
   "/staff-shop-content": () => import("../pages/staff/StaffShopContent"),
+  "/staff-shop-identity": () => import("../pages/staff/StaffShopIdentity"),
   "/staff-announcements": () => import("../pages/staff/StaffAnnouncements"),
   "/staff-notifications": () => import("../pages/staff/StaffNotifications"),
   "/staff-payments": () => import("../pages/staff/StaffPayments"),
