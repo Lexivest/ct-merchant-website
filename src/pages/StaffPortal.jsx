@@ -1,8 +1,9 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabase"
 import { signInWithPassword, signOutUser } from "../lib/auth"
 import { buildStaffAuthProfile, resolveStaffAccess, withStaffAuthTimeout } from "../lib/staffAuth"
+import { primeStaffPortalMemory, startStaffSession } from "../lib/staffSession"
 import { primeAuthSessionState } from "../hooks/useAuthSession"
 
 // --- LOCAL ASSET IMPORT ---
@@ -10,6 +11,8 @@ import ctmLogo from "../assets/images/logo.jpg"
 
 function StaffPortal() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const sessionExpired = new URLSearchParams(location.search).get("expired") === "1"
 
   const [formData, setFormData] = useState({
     email: "",
@@ -62,6 +65,8 @@ function StaffPortal() {
       }
 
       const staffProfile = buildStaffAuthProfile(authUser, staffAccess)
+      startStaffSession(authUser.id)
+      primeStaffPortalMemory(authUser, staffAccess)
       primeAuthSessionState({
         session,
         user: authUser,
@@ -127,8 +132,15 @@ function StaffPortal() {
                 onChange={handleChange}
                 required
                 placeholder="Password"
-                className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-pink-500 focus:bg-white"
+                autoComplete="current-password"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                className="staff-secure-password w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 font-mono text-sm tracking-[0.28em] text-slate-900 outline-none transition placeholder:font-sans placeholder:tracking-normal placeholder:text-slate-400 focus:border-pink-500 focus:bg-white"
               />
+              <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+                For staff security, password characters stay masked while typing and are never displayed back on screen.
+              </p>
             </div>
 
             <button
@@ -143,6 +155,12 @@ function StaffPortal() {
           {errorMessage ? (
             <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
               {errorMessage}
+            </div>
+          ) : null}
+
+          {!errorMessage && sessionExpired ? (
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+              Your staff session expired after 20 minutes of inactivity. Please sign in again.
             </div>
           ) : null}
 

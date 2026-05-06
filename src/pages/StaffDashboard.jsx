@@ -31,6 +31,7 @@ import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import BrandText, { renderBrandedText } from "../components/common/BrandText"
 import { prepareStaffRouteTransition } from "../lib/staffRouteTransitions"
 import { buildStaffAuthProfile } from "../lib/staffAuth"
+import { primeStaffPortalMemory } from "../lib/staffSession"
 import { primeAuthSessionState } from "../hooks/useAuthSession"
 import { useStaffCounts, useStaffPortalSession } from "./staff/StaffPortalShared"
 
@@ -178,6 +179,7 @@ export default function StaffDashboard() {
   const [routeTransition, setRouteTransition] = useState({
     pending: false,
     error: "",
+    label: "",
   })
   const [notice, setNotice] = useState("")
 
@@ -187,11 +189,12 @@ export default function StaffDashboard() {
     return () => window.clearTimeout(timerId)
   }, [notice])
 
-  const beginRouteTransition = useCallback((retryAction = null) => {
+  const beginRouteTransition = useCallback((retryAction = null, label = "") => {
     retryRouteTransitionRef.current = retryAction
     setRouteTransition({
       pending: true,
       error: "",
+      label,
     })
   }, [])
 
@@ -200,6 +203,7 @@ export default function StaffDashboard() {
     setRouteTransition({
       pending: false,
       error: message,
+      label: "",
     })
   }, [])
 
@@ -213,12 +217,13 @@ export default function StaffDashboard() {
       suspended: false,
       profileLoaded: true,
     })
+    primeStaffPortalMemory(authUser, staffData)
   }, [authUser, staffData])
 
-  const runStaffRouteTransition = useCallback(async (path, retryAction) => {
+  const runStaffRouteTransition = useCallback(async (path, retryAction, label = "") => {
     if (!path) return
 
-    beginRouteTransition(retryAction)
+    beginRouteTransition(retryAction, label)
 
     try {
       primeStaffRouteAuth()
@@ -227,6 +232,7 @@ export default function StaffDashboard() {
       setRouteTransition({
         pending: false,
         error: "",
+        label: "",
       })
       startTransition(() => {
         navigate(path, {
@@ -247,15 +253,15 @@ export default function StaffDashboard() {
     }
   }, [beginRouteTransition, failRouteTransition, navigate, primeStaffRouteAuth])
 
-  const openStaffRouteWithTransition = useCallback((path) => {
+  const openStaffRouteWithTransition = useCallback((path, label = "") => {
     if (!path) return undefined
 
     let retryAction = null
     retryAction = () => {
-      void runStaffRouteTransition(path, retryAction)
+      void runStaffRouteTransition(path, retryAction, label)
     }
 
-    return runStaffRouteTransition(path, retryAction)
+    return runStaffRouteTransition(path, retryAction, label)
   }, [runStaffRouteTransition])
 
   const openLockedCard = useCallback((message) => {
@@ -477,7 +483,7 @@ export default function StaffDashboard() {
   return (
     <>
       <PageTransitionOverlay
-        visible={routeTransition.pending}
+        visible={false}
         error={routeTransition.error}
         onRetry={() => {
           if (typeof retryRouteTransitionRef.current === "function") {
@@ -488,6 +494,7 @@ export default function StaffDashboard() {
           setRouteTransition({
             pending: false,
             error: "",
+            label: "",
           })
         }
       />
@@ -532,6 +539,15 @@ export default function StaffDashboard() {
         {notice ? (
           <div className="fixed left-1/2 top-20 z-[200] w-[min(92vw,520px)] -translate-x-1/2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-bold text-amber-900 shadow-2xl">
             {notice}
+          </div>
+        ) : null}
+
+        {routeTransition.pending ? (
+          <div className="fixed left-1/2 top-20 z-[200] w-[min(92vw,440px)] -translate-x-1/2 overflow-hidden rounded-2xl border border-white/80 bg-white/95 px-5 py-3 text-center text-sm font-black text-slate-800 shadow-2xl shadow-slate-900/15 backdrop-blur">
+            Opening {routeTransition.label || "staff page"}...
+            <div className="absolute inset-x-0 bottom-0 h-1 bg-slate-100">
+              <div className="ctm-transition-progress h-full w-full" />
+            </div>
           </div>
         ) : null}
 
@@ -657,7 +673,7 @@ export default function StaffDashboard() {
                       openLockedCard(item.lockedMessage)
                       return
                     }
-                    void openStaffRouteWithTransition(item.path)
+                    void openStaffRouteWithTransition(item.path, item.title)
                   }}
                 />
               ))}
@@ -725,7 +741,7 @@ export default function StaffDashboard() {
                   value="Internal HR, policy, and operations notices."
                   tone="amber"
                   action={hasAdminRole ? "Open" : "Coming soon"}
-                  onClick={hasAdminRole ? () => void openStaffRouteWithTransition("/staff-notifications") : undefined}
+                  onClick={hasAdminRole ? () => void openStaffRouteWithTransition("/staff-notifications", "Notifications") : undefined}
                 />
                 <ResourceTile
                   icon={<FaFolderOpen />}

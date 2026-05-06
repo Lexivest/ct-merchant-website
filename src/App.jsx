@@ -13,6 +13,7 @@ import SubscriptionGuard from "./components/auth/SubscriptionGuard"
 import Home from "./pages/Home"
 import { forceFreshAppReload, isChunkLoadFailure } from "./lib/runtimeRecovery"
 import { buildStaffAuthProfile, resolveStaffAccess } from "./lib/staffAuth"
+import { clearStaffSessionState, hasActiveStaffSession, primeStaffPortalMemory } from "./lib/staffSession"
 import { createPreloadableStaffRoute } from "./lib/staffRouteRegistry"
 import { useNetworkStatus } from "./lib/networkStatus"
 import PageSeo from "./components/common/PageSeo"
@@ -653,6 +654,7 @@ function staffRouteAllowsAdminRole(adminRole, { adminOnly = false, superOnly = f
 
 function ProtectedStaffRoute({ children, adminOnly = false, superOnly = false }) {
   const { loading, session, user, profile, profileLoaded } = useAuthSession()
+  const staffSessionActive = Boolean(user?.id && hasActiveStaffSession(user.id))
   const [staffFallback, setStaffFallback] = useState({
     userId: "",
     checking: false,
@@ -670,7 +672,15 @@ function ProtectedStaffRoute({ children, adminOnly = false, superOnly = false })
     (!hasAuthorizedProfile || !profileRouteAllowed)
 
   useEffect(() => {
-    if (loading || !user?.id || (user && !profileLoaded)) return undefined
+    if (loading || !user?.id) return
+    if (staffSessionActive) return
+
+    clearStaffSessionState()
+    void signOutUser()
+  }, [loading, staffSessionActive, user?.id])
+
+  useEffect(() => {
+    if (loading || !user?.id || !staffSessionActive || (user && !profileLoaded)) return undefined
     if (!needsStaffFallback) {
       return undefined
     }
@@ -702,6 +712,7 @@ function ProtectedStaffRoute({ children, adminOnly = false, superOnly = false })
 
         const routeAuthorized = staffRouteAllowsAdminRole(staffAccess.admin_role, { adminOnly, superOnly })
         const staffProfile = buildStaffAuthProfile(user, staffAccess)
+        primeStaffPortalMemory(user, staffAccess)
         primeAuthSessionState({
           session,
           user,
@@ -732,7 +743,30 @@ function ProtectedStaffRoute({ children, adminOnly = false, superOnly = false })
       cancelled = true
       window.clearTimeout(checkingTimer)
     }
-  }, [adminOnly, hasAuthorizedProfile, loading, needsStaffFallback, profileLoaded, session, superOnly, user])
+  }, [adminOnly, hasAuthorizedProfile, loading, needsStaffFallback, profileLoaded, session, staffSessionActive, superOnly, user])
+
+  useEffect(() => {
+    if (!loading && user?.id && staffSessionActive && hasAuthorizedProfile && profileRouteAllowed) {
+      primeStaffPortalMemory(user, {
+        id: user.id,
+        role: "staff",
+        staff_role: profile.staff_role || "staff",
+        admin_role: profile.admin_role || null,
+        city_id: profile.admin_city_id || profile.staff_city_id || profile.city_id || null,
+        staff_city_id: profile.staff_city_id || null,
+        admin_city_id: profile.admin_city_id || null,
+        full_name: profile.full_name || user.email || "Staff",
+        department: profile.department || "",
+        employment_date: profile.employment_date || profile.created_at || user.created_at || null,
+        has_admin_role: Boolean(profile.admin_role),
+        staff_portal_access: true,
+      })
+    }
+  }, [hasAuthorizedProfile, loading, profile, profileRouteAllowed, staffSessionActive, user])
+
+  if (user?.id && !staffSessionActive) {
+    return <Navigate to="/staff-portal?expired=1" replace />
+  }
 
   if (
     loading ||

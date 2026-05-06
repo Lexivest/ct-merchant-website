@@ -499,6 +499,11 @@ img {
   animation: ctmPageEnter 220ms ease-out both;
 }
 
+.staff-secure-password::-ms-reveal,
+.staff-secure-password::-ms-clear {
+  display: none;
+}
+
 /* MARKET EFFECTS: FLASH AND GLOW */
 @keyframes market-glow {
   0%, 100% { text-shadow: 0 0 10px rgba(219, 39, 119, 0.6); opacity: 1; }

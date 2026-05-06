@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import {
   FaArrowRightFromBracket,
@@ -12,12 +12,16 @@ import { signOutUser } from "../../lib/auth"
 import BrandText from "../../components/common/BrandText"
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen"
 import { resolveStaffAccess, withStaffAuthTimeout } from "../../lib/staffAuth"
+import {
+  clearStaffSessionState,
+  getStaffSessionRemainingMs,
+  hasActiveStaffSession,
+  primeStaffPortalMemory,
+  readStaffPortalMemory,
+  refreshStaffSessionActivity,
+} from "../../lib/staffSession"
 
-let staffPortalMemory = {
-  isResolved: false,
-  authUser: null,
-  staffData: null,
-}
+let staffCountsCache = null
 
 export function formatDateTime(value) {
   if (!value) return "Never"
@@ -258,9 +262,11 @@ export function QuickActionButton({ icon, label, tone = "dark", onClick }) {
 
 export function useStaffPortalSession() {
   const navigate = useNavigate()
-  const [authUser, setAuthUser] = useState(() => staffPortalMemory.authUser)
-  const [staffData, setStaffData] = useState(() => staffPortalMemory.staffData)
-  const [fetchingStaff, setFetchingStaff] = useState(() => !staffPortalMemory.isResolved)
+  const initialMemoryRef = useRef(readStaffPortalMemory())
+  const expiryLogoutStartedRef = useRef(false)
+  const [authUser, setAuthUser] = useState(() => initialMemoryRef.current.authUser)
+  const [staffData, setStaffData] = useState(() => initialMemoryRef.current.staffData)
+  const [fetchingStaff, setFetchingStaff] = useState(() => !initialMemoryRef.current.isResolved)
   const [staffError, setStaffError] = useState("")
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
@@ -271,8 +277,25 @@ export function useStaffPortalSession() {
   const isAdmin = hasAdminRole
   const staffCityId = staffData?.admin_city_id || null
 
+  const expireStaffSession = useCallback(async () => {
+    if (expiryLogoutStartedRef.current) return
+    expiryLogoutStartedRef.current = true
+    setIsLoggingOut(true)
+    clearStaffSessionState()
+    setAuthUser(null)
+    setStaffData(null)
+    await signOutUser()
+    navigate("/staff-portal?expired=1", { replace: true })
+  }, [navigate])
+
   useEffect(() => {
-    if (staffPortalMemory.isResolved) return undefined
+    const memory = readStaffPortalMemory()
+    if (memory.isResolved) {
+      setAuthUser(memory.authUser)
+      setStaffData(memory.staffData)
+      setFetchingStaff(false)
+      return undefined
+    }
 
     async function initDashboard() {
       try {
@@ -284,9 +307,13 @@ export function useStaffPortalSession() {
           "Could not confirm your staff session. Please retry."
         )
 
-        if (!session) {
-          // No session at all, definitely need to login
-          navigate("/staff-portal", { replace: true })
+        if (!session || !hasActiveStaffSession(session.user?.id)) {
+          const redirectPath = session?.user ? "/staff-portal?expired=1" : "/staff-portal"
+          clearStaffSessionState()
+          if (session?.user) {
+            await signOutUser()
+          }
+          navigate(redirectPath, { replace: true })
           return
         }
 
@@ -295,26 +322,18 @@ export function useStaffPortalSession() {
         const staffAccess = await resolveStaffAccess(session.user.id)
 
         if (!staffAccess) {
+          clearStaffSessionState()
           await signOutUser()
           navigate("/staff-portal", { replace: true })
           return
         }
 
-        staffPortalMemory = {
-          isResolved: true,
-          authUser: session.user,
-          staffData: staffAccess,
-        }
+        refreshStaffSessionActivity(session.user.id)
+        primeStaffPortalMemory(session.user, staffAccess)
         setStaffData(staffAccess)
       } catch (err) {
         console.error("Staff session error:", err)
         setStaffError(err.message || "Staff session could not be verified.")
-        // Only reset memory on actual error, don't redirect yet to avoid loops
-        staffPortalMemory = {
-          isResolved: false,
-          authUser: null,
-          staffData: null,
-        }
       } finally {
         setFetchingStaff(false)
       }
@@ -323,13 +342,55 @@ export function useStaffPortalSession() {
     initDashboard()
   }, [navigate])
 
+  useEffect(() => {
+    if (!authUser?.id || !staffData) return undefined
+
+    let expiryTimer = null
+    let activityTimer = null
+    const activityEvents = ["pointerdown", "keydown", "touchstart", "scroll"]
+
+    const scheduleExpiry = () => {
+      if (expiryTimer) {
+        window.clearTimeout(expiryTimer)
+      }
+
+      const remainingMs = getStaffSessionRemainingMs(authUser.id)
+      expiryTimer = window.setTimeout(() => {
+        void expireStaffSession()
+      }, Math.max(remainingMs, 0) + 250)
+    }
+
+    const markActivity = () => {
+      if (activityTimer) return
+
+      activityTimer = window.setTimeout(() => {
+        activityTimer = null
+        const refreshed = refreshStaffSessionActivity(authUser.id)
+        if (!refreshed) {
+          void expireStaffSession()
+          return
+        }
+        scheduleExpiry()
+      }, 350)
+    }
+
+    scheduleExpiry()
+    activityEvents.forEach((eventName) => {
+      window.addEventListener(eventName, markActivity, { passive: true })
+    })
+
+    return () => {
+      if (expiryTimer) window.clearTimeout(expiryTimer)
+      if (activityTimer) window.clearTimeout(activityTimer)
+      activityEvents.forEach((eventName) => {
+        window.removeEventListener(eventName, markActivity)
+      })
+    }
+  }, [authUser?.id, expireStaffSession, staffData])
+
   const handleLogout = async () => {
     setIsLoggingOut(true)
-    staffPortalMemory = {
-      isResolved: false,
-      authUser: null,
-      staffData: null,
-    }
+    clearStaffSessionState()
     await signOutUser()
     navigate("/staff-portal", { replace: true })
   }
@@ -351,25 +412,28 @@ export function useStaffPortalSession() {
 }
 
 export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdminRole = true) {
+  const cacheKey = `${isSuperAdmin ? "super" : "city"}:${staffCityId || "none"}:${hasAdminRole ? "admin" : "staff"}`
+  const cachedCounts = staffCountsCache?.key === cacheKey ? staffCountsCache : null
+  const hasCachedCounts = Boolean(cachedCounts)
   const [counts, setCounts] = useState({
-    verifications: 0,
-    products: 0,
-    payments: 0,
-    community: 0,
-    content: 0,
-    inbox: 0,
-    radar: 0,
+    verifications: cachedCounts?.counts?.verifications || 0,
+    products: cachedCounts?.counts?.products || 0,
+    payments: cachedCounts?.counts?.payments || 0,
+    community: cachedCounts?.counts?.community || 0,
+    content: cachedCounts?.counts?.content || 0,
+    inbox: cachedCounts?.counts?.inbox || 0,
+    radar: cachedCounts?.counts?.radar || 0,
   })
   const [summary, setSummary] = useState({
-    shopCount: 0,
-    inactiveUsers: 0,
-    visitsToday: 0,
+    shopCount: cachedCounts?.summary?.shopCount || 0,
+    inactiveUsers: cachedCounts?.summary?.inactiveUsers || 0,
+    visitsToday: cachedCounts?.summary?.visitsToday || 0,
   })
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => !hasCachedCounts)
 
   const fetchCountsFallback = useCallback(async () => {
     if (!hasAdminRole) {
-      setCounts({
+      const nextCounts = {
         verifications: 0,
         products: 0,
         payments: 0,
@@ -377,12 +441,15 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
         content: 0,
         inbox: 0,
         radar: 0,
-      })
-      setSummary({
+      }
+      const nextSummary = {
         shopCount: 0,
         inactiveUsers: 0,
         visitsToday: 0,
-      })
+      }
+      staffCountsCache = { key: cacheKey, counts: nextCounts, summary: nextSummary, updatedAt: Date.now() }
+      setCounts(nextCounts)
+      setSummary(nextSummary)
       return
     }
 
@@ -519,7 +586,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
       }
     }
 
-    setCounts({
+    const nextCounts = {
       verifications: readCount(pendingShopResult) + readCount(submittedKycResult),
       products: readCount(pendingProductsResult),
       payments: readCount(pendingPaymentsResult),
@@ -527,18 +594,21 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
       content: readCount(pendingContentResult),
       inbox: readCount(unreadContactResult) + pendingAbuseCount,
       radar: radarCount,
-    })
+    }
 
-    setSummary({
+    const nextSummary = {
       shopCount: readCount(shopCountResult),
       inactiveUsers: 0,
       visitsToday,
-    })
-  }, [hasAdminRole, isSuperAdmin, staffCityId])
+    }
+    staffCountsCache = { key: cacheKey, counts: nextCounts, summary: nextSummary, updatedAt: Date.now() }
+    setCounts(nextCounts)
+    setSummary(nextSummary)
+  }, [cacheKey, hasAdminRole, isSuperAdmin, staffCityId])
 
   const fetchCounts = useCallback(async () => {
     if (!hasAdminRole) {
-      setCounts({
+      const nextCounts = {
         verifications: 0,
         products: 0,
         payments: 0,
@@ -546,17 +616,21 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
         content: 0,
         inbox: 0,
         radar: 0,
-      })
-      setSummary({
+      }
+      const nextSummary = {
         shopCount: 0,
         inactiveUsers: 0,
         visitsToday: 0,
-      })
+      }
+      staffCountsCache = { key: cacheKey, counts: nextCounts, summary: nextSummary, updatedAt: Date.now() }
+      setCounts(nextCounts)
+      setSummary(nextSummary)
       setLoading(false)
       return
     }
 
     try {
+      setLoading((previous) => previous && !hasCachedCounts)
       const [payloadResult, radarResult] = await Promise.all([
         supabase.rpc("get_staff_dashboard_payload", {
           p_is_super_admin: isSuperAdmin,
@@ -580,15 +654,18 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
             ? Number(data.counts?.radar || 0)
             : radarResult.data.length
 
-        setCounts({
+        const nextCounts = {
           ...data.counts,
           radar: radarCount,
-        })
-        setSummary({
+        }
+        const nextSummary = {
           shopCount: data.summary.shop_count,
           inactiveUsers: data.summary.inactive_users_count,
           visitsToday: data.summary.visits_today,
-        })
+        }
+        staffCountsCache = { key: cacheKey, counts: nextCounts, summary: nextSummary, updatedAt: Date.now() }
+        setCounts(nextCounts)
+        setSummary(nextSummary)
       }
     } catch (err) {
       console.error("Error fetching staff dashboard payload:", err)
@@ -596,7 +673,7 @@ export function useStaffCounts(isSuperAdmin = true, staffCityId = null, hasAdmin
     } finally {
       setLoading(false)
     }
-  }, [fetchCountsFallback, hasAdminRole, isSuperAdmin, staffCityId])
+  }, [cacheKey, fetchCountsFallback, hasAdminRole, hasCachedCounts, isSuperAdmin, staffCityId])
 
   useEffect(() => {
     fetchCounts()
