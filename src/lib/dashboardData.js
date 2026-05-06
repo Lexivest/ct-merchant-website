@@ -16,6 +16,36 @@ function normalizePositiveId(value) {
   return parsed
 }
 
+function normalizeIdKey(value) {
+  const normalized = normalizePositiveId(value)
+  return normalized ? String(normalized) : null
+}
+
+function filterFairlyUsedProductsToDashboardCity(products = [], shops = [], cityProducts = [], cityId) {
+  const currentCityId = normalizeIdKey(cityId)
+  const cityShopIds = new Set()
+
+  ;(Array.isArray(shops) ? shops : []).forEach((shop) => {
+    const shopId = normalizeIdKey(shop?.id)
+    if (shopId) cityShopIds.add(shopId)
+  })
+
+  ;(Array.isArray(cityProducts) ? cityProducts : []).forEach((product) => {
+    const shopId = normalizeIdKey(product?.shop_id ?? product?.shops?.id)
+    if (shopId) cityShopIds.add(shopId)
+  })
+
+  if (!currentCityId && cityShopIds.size === 0) return []
+
+  return (Array.isArray(products) ? products : []).filter((product) => {
+    const productCityId = normalizeIdKey(product?.shop_city_id ?? product?.shops?.city_id)
+    if (productCityId) return Boolean(currentCityId && productCityId === currentCityId)
+
+    const shopId = normalizeIdKey(product?.shop_id ?? product?.shops?.id)
+    return Boolean(shopId && cityShopIds.has(shopId))
+  })
+}
+
 function unwrapSupabaseResult(result) {
   if (result?.error) {
     console.warn("Dashboard fetch failed/blocked. Defaulting to empty:", result.error.message)
@@ -345,6 +375,12 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
   const rawFairlyUsedProducts = Array.isArray(data.fairly_used_products)
     ? data.fairly_used_products
     : []
+  const fairlyUsedProducts = filterFairlyUsedProductsToDashboardCity(
+    rawFairlyUsedProducts,
+    rawShops,
+    rawProducts,
+    resolvedCityId
+  )
 
   if (!Array.isArray(data.shops) || !Array.isArray(data.products)) {
     console.warn("[dashboard-rpc:market-shape]", {
@@ -408,7 +444,7 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
     featuredCityBanners,
     sponsoredProducts,
     staffDiscoveries: data.staff_discoveries || [],
-    fairlyUsedProducts: rawFairlyUsedProducts,
+    fairlyUsedProducts,
     shops: rawShops,
     notifications,
     wishlistCount: data.wishlist_count || 0,
@@ -453,14 +489,24 @@ export async function prepareDashboardTransition({
   // If we have ANY cache (even if stale), return it immediately so the next page 
   // can render instantly while useCachedFetch handles the background sync.
   if (cachedBase?.data && cachedDynamic?.data) {
+    const safeCachedDynamic = {
+      ...cachedDynamic.data,
+      fairlyUsedProducts: filterFairlyUsedProductsToDashboardCity(
+        cachedDynamic.data.fairlyUsedProducts,
+        cachedDynamic.data.shops,
+        cachedDynamic.data.products,
+        resolvedProfile.city_id
+      ),
+    }
+
     // Start preloading the code without blocking
     void loadUserDashboardPage()
     
     return {
       profile: resolvedProfile,
       ...cachedBase.data,
-      ...cachedDynamic.data,
-      unread: (cachedDynamic.data.notifications || []).filter((item) => !item.is_read).length,
+      ...safeCachedDynamic,
+      unread: (safeCachedDynamic.notifications || []).filter((item) => !item.is_read).length,
     }
   }
 
