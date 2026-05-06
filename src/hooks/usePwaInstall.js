@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-const RECENT_INSTALL_SESSION_KEY = "ctm_pwa_recent_install"
+const KNOWN_INSTALL_STORAGE_KEY = "ctm_pwa_known_installed"
 
 function detectStandalone() {
   if (typeof window === "undefined") return false
@@ -11,25 +11,28 @@ function detectStandalone() {
   )
 }
 
-function readSessionFlag(key) {
+function readStorageFlag(key) {
   if (typeof window === "undefined") return false
 
   try {
+    if (window.localStorage.getItem(key) === "1") return true
     return window.sessionStorage.getItem(key) === "1"
   } catch {
     return false
   }
 }
 
-function writeSessionFlag(key, enabled) {
+function writeStorageFlag(key, enabled) {
   if (typeof window === "undefined") return
 
   try {
     if (enabled) {
+      window.localStorage.setItem(key, "1")
       window.sessionStorage.setItem(key, "1")
       return
     }
 
+    window.localStorage.removeItem(key)
     window.sessionStorage.removeItem(key)
   } catch {
     // Best effort only.
@@ -43,8 +46,9 @@ export default function usePwaInstall() {
     typeof window === "undefined" ? false : detectStandalone()
   )
   const [recentlyInstalled, setRecentlyInstalled] = useState(() =>
-    readSessionFlag(RECENT_INSTALL_SESSION_KEY)
+    readStorageFlag(KNOWN_INSTALL_STORAGE_KEY)
   )
+  const [hasInstalledRelatedApp, setHasInstalledRelatedApp] = useState(false)
 
   const isPhoneDevice = useMemo(() => {
     if (typeof navigator === "undefined") return false
@@ -67,8 +71,13 @@ export default function usePwaInstall() {
     return /(chrome\/|crmo\/|edga\/|samsungbrowser\/)/i.test(userAgent)
   }, [])
 
-  const canPromptInstall = Boolean(installPromptEvent) && !isStandaloneMode
-  const showInstallPrompt = isPhoneDevice
+  const isKnownInstalled =
+    isStandaloneMode || recentlyInstalled || hasInstalledRelatedApp
+  const canPromptInstall = Boolean(installPromptEvent) && !isKnownInstalled
+  const showInstallPrompt =
+    isPhoneDevice &&
+    !isKnownInstalled &&
+    (Boolean(installPromptEvent) || isAppleMobile || isSupportedAndroidInstallBrowser)
 
   const clearPromptState = useCallback(() => {
     setInstallPromptEvent(null)
@@ -76,7 +85,7 @@ export default function usePwaInstall() {
   }, [])
 
   const promptInstall = useCallback(async () => {
-    if (isStandaloneMode) {
+    if (isKnownInstalled) {
       return { status: "already-installed" }
     }
 
@@ -91,7 +100,7 @@ export default function usePwaInstall() {
 
         if (choice?.outcome === "accepted") {
           setRecentlyInstalled(true)
-          writeSessionFlag(RECENT_INSTALL_SESSION_KEY, true)
+          writeStorageFlag(KNOWN_INSTALL_STORAGE_KEY, true)
           clearPromptState()
           return { status: "accepted" }
         }
@@ -108,10 +117,6 @@ export default function usePwaInstall() {
       return { status: "ios-instructions" }
     }
 
-    if (recentlyInstalled) {
-      return { status: "already-installed" }
-    }
-
     if (isSupportedAndroidInstallBrowser) {
       return { status: "browser-menu" }
     }
@@ -119,26 +124,48 @@ export default function usePwaInstall() {
     return { status: "unsupported" }
   }, [
     clearPromptState,
+    isKnownInstalled,
     installPromptEvent,
     isAppleMobile,
-    isStandaloneMode,
     isSupportedAndroidInstallBrowser,
-    recentlyInstalled,
   ])
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined
 
     const standaloneQuery = window.matchMedia?.("(display-mode: standalone)")
+    let cancelled = false
+
+    async function refreshInstalledRelatedApps() {
+      if (typeof navigator?.getInstalledRelatedApps !== "function") {
+        setHasInstalledRelatedApp(false)
+        return
+      }
+
+      try {
+        const relatedApps = await navigator.getInstalledRelatedApps()
+        if (!cancelled) {
+          setHasInstalledRelatedApp(Array.isArray(relatedApps) && relatedApps.length > 0)
+        }
+      } catch {
+        if (!cancelled) setHasInstalledRelatedApp(false)
+      }
+    }
 
     function handleInstallPrompt(event) {
       event.preventDefault()
+
+      if (detectStandalone() || readStorageFlag(KNOWN_INSTALL_STORAGE_KEY)) {
+        setInstallPromptEvent(null)
+        return
+      }
+
       setInstallPromptEvent(event)
     }
 
     function handleAppInstalled() {
       setRecentlyInstalled(true)
-      writeSessionFlag(RECENT_INSTALL_SESSION_KEY, true)
+      writeStorageFlag(KNOWN_INSTALL_STORAGE_KEY, true)
       clearPromptState()
     }
 
@@ -150,9 +177,12 @@ export default function usePwaInstall() {
     function handleVisibilityChange() {
       if (document.visibilityState === "visible") {
         setIsStandaloneMode(detectStandalone())
-        setRecentlyInstalled(readSessionFlag(RECENT_INSTALL_SESSION_KEY))
+        setRecentlyInstalled(readStorageFlag(KNOWN_INSTALL_STORAGE_KEY))
+        void refreshInstalledRelatedApps()
       }
     }
+
+    void refreshInstalledRelatedApps()
 
     window.addEventListener("beforeinstallprompt", handleInstallPrompt)
     window.addEventListener("appinstalled", handleAppInstalled)
@@ -160,6 +190,7 @@ export default function usePwaInstall() {
     standaloneQuery?.addEventListener?.("change", handleStandaloneChange)
 
     return () => {
+      cancelled = true
       window.removeEventListener("beforeinstallprompt", handleInstallPrompt)
       window.removeEventListener("appinstalled", handleAppInstalled)
       window.removeEventListener("visibilitychange", handleVisibilityChange)
@@ -171,6 +202,7 @@ export default function usePwaInstall() {
     canPromptInstall,
     installingApp,
     isAppleMobile,
+    isKnownInstalled,
     isPhoneDevice,
     isStandaloneMode,
     isSupportedAndroidInstallBrowser,
