@@ -705,6 +705,10 @@ export function StaffPortalShell({
     handleLogout 
   } = useStaffPortalSession()
 
+  if (fetchingStaff && routeLocation.state?.fromStaffTransition) {
+    return null
+  }
+
   if (fetchingStaff) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#2E1065] via-[#5B21B6] to-[#DB2777] font-sans">

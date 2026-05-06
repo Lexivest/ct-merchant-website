@@ -41,8 +41,16 @@ export default function StaffProducts() {
   const [rejectionNote, setRejectionReason] = useState("")
   const [rejectingProductId, setRejectingProductId] = useState(null)
   const [filterStatus, setFilterStatus] = useState("pending") // 'all' | 'pending'
+  const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
   const fetchProducts = useCallback(async () => {
+    if (prefetchedReady && prefetchedData) {
+      setShops(prefetchedData.shops || [])
+      setLoading(false)
+      setPrefetchedReady(false)
+      return
+    }
+
     if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
 
     setLoading(true)
@@ -93,7 +101,7 @@ export default function StaffProducts() {
     } finally {
       setLoading(false)
     }
-  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
+  }, [notify, isSuperAdmin, prefetchedData, prefetchedReady, staffCityId, fetchingStaff])
 
   useEffect(() => {
     if (!fetchingStaff) {

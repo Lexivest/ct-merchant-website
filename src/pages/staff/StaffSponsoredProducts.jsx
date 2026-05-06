@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { useLocation } from "react-router-dom"
 import {
   FaArrowRight,
   FaBolt,
@@ -96,22 +97,39 @@ function invalidateMarketplaceDashboardCaches() {
 }
 
 export default function StaffSponsoredProducts() {
+  const location = useLocation()
   const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "staff-sponsored-products"
+      ? location.state.prefetchedData
+      : null
   const { notify, confirm } = useGlobalFeedback()
-  const [loading, setLoading] = useState(() => !fetchingStaff)
+  const [loading, setLoading] = useState(() => !prefetchedData && !fetchingStaff)
   const [saving, setSaving] = useState(false)
   const [fetchingProducts, setFetchingProducts] = useState(false)
   
-  const [cities, setCities] = useState([])
-  const [banners, setBanners] = useState([])
-  const [availableProducts, setAvailableProducts] = useState([])
+  const [cities, setCities] = useState(() => prefetchedData?.cities || prefetchedData?.cityOptions || [])
+  const [banners, setBanners] = useState(() => prefetchedData?.banners || [])
+  const [availableProducts, setAvailableProducts] = useState(() => prefetchedData?.availableProducts || [])
   
-  const [selectedCityId, setSelectedCityId] = useState(isSuperAdmin ? "" : (staffCityId || ""))
+  const [selectedCityId, setSelectedCityId] = useState(() =>
+    prefetchedData?.selectedCityId ?? (isSuperAdmin ? "" : (staffCityId || ""))
+  )
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [sortOrder, setSortOrder] = useState(0)
+  const [prefetchedInitialReady, setPrefetchedInitialReady] = useState(() => Boolean(prefetchedData))
+  const [prefetchedProductsReady, setPrefetchedProductsReady] = useState(() => Boolean(prefetchedData?.availableProducts))
 
   const loadInitialData = useCallback(async () => {
+    if (prefetchedInitialReady && prefetchedData) {
+      setCities(prefetchedData.cities || prefetchedData.cityOptions || [])
+      setBanners(prefetchedData.banners || [])
+      setLoading(false)
+      setPrefetchedInitialReady(false)
+      return
+    }
+
     if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
 
     setLoading(true)
@@ -148,10 +166,22 @@ export default function StaffSponsoredProducts() {
     } finally {
       setLoading(false)
     }
-  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
+  }, [notify, isSuperAdmin, prefetchedData, prefetchedInitialReady, staffCityId, fetchingStaff])
 
   const loadProducts = useCallback(async () => {
     if (fetchingStaff) return
+
+    if (
+      prefetchedProductsReady &&
+      prefetchedData &&
+      !searchQuery.trim() &&
+      String(selectedCityId || "") === String(prefetchedData.selectedCityId || "")
+    ) {
+      setAvailableProducts(prefetchedData.availableProducts || [])
+      setFetchingProducts(false)
+      setPrefetchedProductsReady(false)
+      return
+    }
 
     const cityToUse = isSuperAdmin ? selectedCityId : staffCityId
     if (!cityToUse && !isSuperAdmin) return
@@ -192,7 +222,7 @@ export default function StaffSponsoredProducts() {
     } finally {
       setFetchingProducts(false)
     }
-  }, [selectedCityId, staffCityId, isSuperAdmin, searchQuery, fetchingStaff])
+  }, [selectedCityId, staffCityId, isSuperAdmin, searchQuery, fetchingStaff, prefetchedData, prefetchedProductsReady])
 
   useEffect(() => { 
     if (!fetchingStaff) {

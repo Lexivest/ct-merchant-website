@@ -131,6 +131,7 @@ export default function StaffVerifications() {
   const [rejectionNote, setRejectionReason] = useState("")
   const [showRejectionInput, setShowRejectionInput] = useState(false)
   const [filterStatus, setFilterStatus] = useState("all") // 'all' | 'pending' | 'kyc_submitted'
+  const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
   // Signed URLs for private assets
   const [signedUrls, setSignedUrls] = useState({ id: null, cac: null, video: null, logo: null, storefront: null })
@@ -207,6 +208,13 @@ export default function StaffVerifications() {
   }, [selectedShop, isSuperAdmin])
 
   const fetchShops = useCallback(async () => {
+    if (prefetchedReady && prefetchedData) {
+      setShops(prefetchedData.shops || [])
+      setLoadingShops(false)
+      setPrefetchedReady(false)
+      return
+    }
+
     if (!hasAdminRole) {
       setShops([])
       setLoadingShops(false)
@@ -276,7 +284,7 @@ export default function StaffVerifications() {
     } finally {
       setLoadingShops(false)
     }
-  }, [hasAdminRole, notify, isSuperAdmin, staffCityId, fetchingStaff])
+  }, [hasAdminRole, notify, isSuperAdmin, prefetchedData, prefetchedReady, staffCityId, fetchingStaff])
 
   useEffect(() => {
     if (!fetchingStaff) {

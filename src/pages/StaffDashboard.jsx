@@ -227,7 +227,15 @@ export default function StaffDashboard() {
 
     try {
       primeStaffRouteAuth()
-      const prefetchedData = await prepareStaffRouteTransition({ path })
+      const prefetchedData = await prepareStaffRouteTransition({
+        path,
+        staffContext: {
+          isSuperAdmin,
+          staffCityId,
+          hasAdminRole,
+          adminRole,
+        },
+      })
       primeStaffRouteAuth()
       setRouteTransition({
         pending: false,
@@ -251,7 +259,7 @@ export default function StaffDashboard() {
         retryAction
       )
     }
-  }, [beginRouteTransition, failRouteTransition, navigate, primeStaffRouteAuth])
+  }, [adminRole, beginRouteTransition, failRouteTransition, hasAdminRole, isSuperAdmin, navigate, primeStaffRouteAuth, staffCityId])
 
   const openStaffRouteWithTransition = useCallback((path, label = "") => {
     if (!path) return undefined

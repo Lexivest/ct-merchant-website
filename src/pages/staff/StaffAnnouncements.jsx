@@ -36,6 +36,7 @@ export default function StaffAnnouncements() {
   const [loading, setLoading] = useState(() => !prefetchedData && !fetchingStaff)
   const [saving, setSaving] = useState(false)
   const [processingId, setProcessingId] = useState(null)
+  const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
   // Form State
   const [form, setForm] = useState({
@@ -45,6 +46,14 @@ export default function StaffAnnouncements() {
   })
 
   const fetchData = useCallback(async () => {
+    if (prefetchedReady && prefetchedData) {
+      setCities(prefetchedData.cities || [])
+      setAnnouncements(prefetchedData.announcements || [])
+      setLoading(false)
+      setPrefetchedReady(false)
+      return
+    }
+
     if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
 
     setLoading(true)
@@ -75,7 +84,7 @@ export default function StaffAnnouncements() {
     } finally {
       setLoading(false)
     }
-  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
+  }, [notify, isSuperAdmin, prefetchedData, prefetchedReady, staffCityId, fetchingStaff])
 
   useEffect(() => {
     if (!fetchingStaff) {

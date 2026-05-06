@@ -37,8 +37,16 @@ export default function StaffShopContent() {
   const [processingId, setProcessingId] = useState(null)
   const [filterStatus, setFilterStatus] = useState("pending") // 'all' | 'pending'
   const [previewItem, setPreviewItem] = useState(null)
+  const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
   const fetchContent = useCallback(async () => {
+    if (prefetchedReady && prefetchedData) {
+      setItems(prefetchedData.items || [])
+      setLoading(false)
+      setPrefetchedReady(false)
+      return
+    }
+
     if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
 
     setLoading(true)
@@ -82,7 +90,7 @@ export default function StaffShopContent() {
     } finally {
       setLoading(false)
     }
-  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
+  }, [notify, isSuperAdmin, prefetchedData, prefetchedReady, staffCityId, fetchingStaff])
 
   useEffect(() => {
     if (!fetchingStaff) {

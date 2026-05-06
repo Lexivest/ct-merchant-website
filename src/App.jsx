@@ -13,7 +13,12 @@ import SubscriptionGuard from "./components/auth/SubscriptionGuard"
 import Home from "./pages/Home"
 import { forceFreshAppReload, isChunkLoadFailure } from "./lib/runtimeRecovery"
 import { buildStaffAuthProfile, resolveStaffAccess } from "./lib/staffAuth"
-import { clearStaffSessionState, hasActiveStaffSession, primeStaffPortalMemory } from "./lib/staffSession"
+import {
+  clearStaffSessionState,
+  hasActiveStaffSession,
+  primeStaffPortalMemory,
+  readStaffPortalMemory,
+} from "./lib/staffSession"
 import { createPreloadableStaffRoute } from "./lib/staffRouteRegistry"
 import { useNetworkStatus } from "./lib/networkStatus"
 import PageSeo from "./components/common/PageSeo"
@@ -653,7 +658,14 @@ function staffRouteAllowsAdminRole(adminRole, { adminOnly = false, superOnly = f
 }
 
 function ProtectedStaffRoute({ children, adminOnly = false, superOnly = false }) {
+  const location = useLocation()
   const { loading, session, user, profile, profileLoaded } = useAuthSession()
+  const isCardTransition = isStaffCardTransition(location)
+  const transitionStaffMemory = isCardTransition ? readStaffPortalMemory() : null
+  const transitionStaffData = transitionStaffMemory?.isResolved ? transitionStaffMemory.staffData : null
+  const transitionRouteAllowed = transitionStaffData
+    ? staffRouteAllowsAdminRole(transitionStaffData.admin_role || null, { adminOnly, superOnly })
+    : false
   const staffSessionActive = Boolean(user?.id && hasActiveStaffSession(user.id))
   const [staffFallback, setStaffFallback] = useState({
     userId: "",
@@ -764,6 +776,14 @@ function ProtectedStaffRoute({ children, adminOnly = false, superOnly = false })
     }
   }, [hasAuthorizedProfile, loading, profile, profileRouteAllowed, staffSessionActive, user])
 
+  if (isCardTransition && transitionStaffData) {
+    if (!transitionRouteAllowed) {
+      return <Navigate to="/staff-dashboard" replace />
+    }
+
+    return children
+  }
+
   if (user?.id && !staffSessionActive) {
     return <Navigate to="/staff-portal?expired=1" replace />
   }
@@ -774,6 +794,10 @@ function ProtectedStaffRoute({ children, adminOnly = false, superOnly = false })
     (needsStaffFallback && staffFallback.userId !== user?.id) ||
     (staffFallback.checking && staffFallback.userId === user?.id)
   ) {
+    if (isCardTransition) {
+      return null
+    }
+
     return <RouteLoadingScreen title="Accessing staff portal" message="Verifying credentials..." />
   }
 

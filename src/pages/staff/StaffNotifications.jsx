@@ -38,6 +38,7 @@ export default function StaffNotifications() {
   const [saving, setSaving] = useState(false)
   const [processingId, setProcessingId] = useState(null)
   const [userSearch, setUserSearch] = useState("")
+  const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
   // Form State
   const [form, setForm] = useState({
@@ -47,6 +48,14 @@ export default function StaffNotifications() {
   })
 
   const fetchData = useCallback(async () => {
+    if (prefetchedReady && prefetchedData) {
+      setProfiles(prefetchedData.profiles || [])
+      setNotifications(prefetchedData.notifications || [])
+      setLoading(false)
+      setPrefetchedReady(false)
+      return
+    }
+
     if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
 
     setLoading(true)
@@ -79,7 +88,7 @@ export default function StaffNotifications() {
     } finally {
       setLoading(false)
     }
-  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
+  }, [notify, isSuperAdmin, prefetchedData, prefetchedReady, staffCityId, fetchingStaff])
 
   useEffect(() => {
     if (!fetchingStaff) {

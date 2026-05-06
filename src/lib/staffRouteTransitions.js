@@ -7,6 +7,20 @@ import { supabase } from "./supabase"
 
 const STAFF_ROUTE_TIMEOUT = 12000
 
+function getStaffRouteScope(staffContext = {}) {
+  const cityId = Number(staffContext.staffCityId)
+
+  return {
+    isSuperAdmin: staffContext.isSuperAdmin === true,
+    staffCityId: Number.isFinite(cityId) && cityId > 0 ? cityId : null,
+  }
+}
+
+function scopeByStaffCity(query, staffContext = {}, column = "city_id") {
+  const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
+  return !isSuperAdmin && staffCityId ? query.eq(column, staffCityId) : query
+}
+
 function runTimedPreload(task, timeoutMessage, timeoutMs = STAFF_ROUTE_TIMEOUT) {
   return new Promise((resolve, reject) => {
     const timeoutId = window.setTimeout(() => {
@@ -42,7 +56,8 @@ async function prepareStaffTrafficData() {
   }
 }
 
-async function prepareStaffUsersData() {
+async function prepareStaffUsersData(staffContext = {}) {
+  const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
   const [citiesResult, usersResult] = await Promise.all([
     supabase
       .from("cities")
@@ -51,7 +66,7 @@ async function prepareStaffUsersData() {
       .order("name", { ascending: true }),
     supabase.rpc("staff_user_activity_summary", {
       p_inactive_days: 180,
-      p_city_id: null,
+      p_city_id: isSuperAdmin ? null : staffCityId,
     }),
   ])
 
@@ -61,13 +76,14 @@ async function prepareStaffUsersData() {
   return {
     kind: "staff-users",
     cityOptions: citiesResult.data || [],
-    selectedCityId: "all",
+    selectedCityId: isSuperAdmin ? "all" : staffCityId ? String(staffCityId) : "all",
     inactiveDays: 180,
     userActivity: usersResult.data || [],
   }
 }
 
-async function prepareStaffCommunityData() {
+async function prepareStaffCommunityData(staffContext = {}) {
+  const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
   const { data: commentRows, error: commentError } = await supabase
     .from("shop_comments")
     .select("id, shop_id, product_id, user_id, parent_id, body, status, moderation_reason, created_at, updated_at")
@@ -78,13 +94,26 @@ async function prepareStaffCommunityData() {
 
   const comments = commentRows || []
   const shopIds = Array.from(new Set(comments.map((item) => item.shop_id).filter(Boolean)))
-  const productIds = Array.from(new Set(comments.map((item) => item.product_id).filter(Boolean)))
-  const userIds = Array.from(new Set(comments.map((item) => item.user_id).filter(Boolean)))
+  let shopsQuery = shopIds.length
+    ? supabase.from("shops").select("id, name, unique_id, owner_id, city_id").in("id", shopIds)
+    : null
 
-  const [shopsResult, productsResult, profilesResult] = await Promise.allSettled([
-    shopIds.length
-      ? supabase.from("shops").select("id, name, unique_id, owner_id").in("id", shopIds)
-      : Promise.resolve({ data: [] }),
+  if (shopsQuery && !isSuperAdmin && staffCityId) {
+    shopsQuery = shopsQuery.eq("city_id", staffCityId)
+  }
+
+  const shopsResult = shopsQuery
+    ? await shopsQuery
+    : { data: [], error: null }
+
+  if (shopsResult.error) throw shopsResult.error
+
+  const validShopIds = new Set((shopsResult.data || []).map((shop) => shop.id))
+  const visibleComments = comments.filter((comment) => validShopIds.has(comment.shop_id))
+  const productIds = Array.from(new Set(visibleComments.map((item) => item.product_id).filter(Boolean)))
+  const userIds = Array.from(new Set(visibleComments.map((item) => item.user_id).filter(Boolean)))
+
+  const [productsResult, profilesResult] = await Promise.allSettled([
     productIds.length
       ? supabase.from("products").select("id, name, image_url").in("id", productIds)
       : Promise.resolve({ data: [] }),
@@ -93,10 +122,7 @@ async function prepareStaffCommunityData() {
       : Promise.resolve({ data: [] }),
   ])
 
-  const shopsMap =
-    shopsResult.status === "fulfilled" && !shopsResult.value.error
-      ? Object.fromEntries((shopsResult.value.data || []).map((shop) => [String(shop.id), shop]))
-      : {}
+  const shopsMap = Object.fromEntries((shopsResult.data || []).map((shop) => [String(shop.id), shop]))
   const productsMap =
     productsResult.status === "fulfilled" && !productsResult.value.error
       ? Object.fromEntries((productsResult.value.data || []).map((product) => [String(product.id), product]))
@@ -106,7 +132,7 @@ async function prepareStaffCommunityData() {
       ? Object.fromEntries((profilesResult.value.data || []).map((profile) => [profile.id, profile]))
       : {}
 
-  const enrichedComments = comments.map((comment) => {
+  const enrichedComments = visibleComments.map((comment) => {
     const shop = shopsMap[String(comment.shop_id)] || null
     const product = comment.product_id ? productsMap[String(comment.product_id)] || null : null
     const profile = profilesMap[comment.user_id] || null
@@ -138,8 +164,8 @@ async function prepareStaffCommunityData() {
   }
 }
 
-async function prepareStaffVerificationsData() {
-  const { data, error } = await supabase
+async function prepareStaffVerificationsData(staffContext = {}) {
+  let query = supabase
     .from("shops")
     .select(`
       id,
@@ -168,6 +194,10 @@ async function prepareStaffVerificationsData() {
       profiles ( full_name, avatar_url, phone ),
       cities ( name, state )
     `)
+
+  query = scopeByStaffCity(query, staffContext)
+
+  const { data, error } = await query
     .order("created_at", { ascending: false })
     .limit(100)
 
@@ -195,11 +225,12 @@ async function prepareStaffCommissionsData() {
   }
 }
 
-async function prepareStaffShopAnalyticsData() {
+async function prepareStaffShopAnalyticsData(staffContext = {}) {
+  const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
   const [rows, citiesResult] = await Promise.all([
     fetchStaffShopAnalytics({
       days: 30,
-      cityId: null,
+      cityId: isSuperAdmin ? null : staffCityId,
       limit: 100,
     }),
     supabase.from("cities").select("id, name, state").order("state").order("name"),
@@ -211,28 +242,117 @@ async function prepareStaffShopAnalyticsData() {
     kind: "staff-shop-analytics",
     rows: rows || [],
     days: 30,
-    selectedCityId: "all",
+    selectedCityId: isSuperAdmin ? "all" : staffCityId ? String(staffCityId) : "all",
     cityOptions: citiesResult.data || [],
   }
 }
 
-async function prepareStaffFeaturedCityBannersData() {
-  const [citiesResult, bannersResult] = await Promise.all([
-    supabase.from("cities").select("id, name, state").order("state").order("name"),
-    supabase
-      .from("featured_city_banners")
-      .select("id, title, status, created_at")
-      .order("created_at", { ascending: false })
-      .limit(20),
-  ])
+async function loadFeaturedCityBannerPayload(staffContext = {}) {
+  const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
+  const selectedCityId = isSuperAdmin ? "" : staffCityId ? String(staffCityId) : ""
+  let bannersQuery = supabase
+    .from("featured_city_banners")
+    .select("*, cities(name, state), shops(name, category, address, image_url)")
+
+  if (!isSuperAdmin && staffCityId) {
+    bannersQuery = bannersQuery.eq("city_id", staffCityId)
+  }
+
+  const citiesResult = await supabase
+    .from("cities")
+    .select("id, name, state")
+    .order("state")
+    .order("name")
 
   if (citiesResult.error) throw citiesResult.error
-  if (bannersResult.error) throw bannersResult.error
+
+  const { data: bannerRows, error: bannerError } = await bannersQuery
+    .order("created_at", { ascending: false })
+    .limit(100)
+
+  if (bannerError) throw bannerError
+
+  const safeCities = citiesResult.data || []
+  const effectiveCityId =
+    selectedCityId || (safeCities[0]?.id ? String(safeCities[0].id) : "")
+
+  let shops = []
+  let productsByShopId = {}
+  let profilesById = {}
+
+  if (effectiveCityId) {
+    const { data: shopRows, error: shopsError } = await supabase
+      .from("shops")
+      .select("id, owner_id, name, category, address, image_url, is_open, status, subscription_end_date")
+      .eq("city_id", Number(effectiveCityId))
+      .order("name", { ascending: true })
+      .limit(120)
+
+    if (shopsError) throw shopsError
+
+    shops = shopRows || []
+    const shopIds = shops.map((shop) => shop.id)
+    const ownerIds = Array.from(new Set(shops.map((shop) => shop.owner_id).filter(Boolean)))
+    const [productsResult, profilesResult] = await Promise.all([
+      shopIds.length
+        ? supabase
+            .from("products")
+            .select("id, shop_id, image_url, is_available")
+            .in("shop_id", shopIds)
+            .eq("is_available", true)
+            .not("image_url", "is", null)
+            .order("id", { ascending: true })
+            .limit(600)
+        : Promise.resolve({ data: [], error: null }),
+      ownerIds.length
+        ? supabase.rpc("get_public_profiles", { profile_ids: ownerIds })
+        : Promise.resolve({ data: [], error: null }),
+    ])
+
+    if (productsResult.error) throw productsResult.error
+    if (profilesResult.error) throw profilesResult.error
+
+    ;(productsResult.data || []).forEach((product) => {
+      if (!product.shop_id || !product.image_url) return
+      const key = String(product.shop_id)
+      if (!productsByShopId[key]) productsByShopId[key] = []
+      if (productsByShopId[key].length < 5) productsByShopId[key].push(product)
+    })
+
+    ;(profilesResult.data || []).forEach((profile) => {
+      profilesById[profile.id] = profile
+    })
+  }
 
   return {
     kind: "staff-city-banners",
-    cityCount: (citiesResult.data || []).length,
-    bannerCount: (bannersResult.data || []).length,
+    cities: safeCities,
+    banners: bannerRows || [],
+    shops,
+    productsByShopId,
+    profilesById,
+    selectedCityId: effectiveCityId,
+    selectedShopId: shops[0]?.id ? String(shops[0].id) : "",
+  }
+}
+
+async function prepareStaffFeaturedCityBannersData(staffContext = {}) {
+  return loadFeaturedCityBannerPayload(staffContext)
+}
+
+async function prepareStaffDiscoveriesData() {
+  const { data, error } = await supabase
+    .from("staff_discoveries")
+    .select("*")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(100)
+
+  if (error) throw error
+
+  return {
+    kind: "staff-discoveries",
+    discoveries: data || [],
   }
 }
 
@@ -251,26 +371,71 @@ async function prepareStaffInboxData() {
   }
 }
 
-async function prepareStaffSponsoredProductsData() {
-  const [citiesResult] = await Promise.all([
+async function prepareStaffSponsoredProductsData(staffContext = {}) {
+  const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
+  const selectedCityId = isSuperAdmin ? "" : staffCityId ? String(staffCityId) : ""
+  let bannersQuery = supabase.from("sponsored_products").select("*, cities(name), shops(name)")
+  let productsQuery = supabase
+    .from("products")
+    .select(`
+      id,
+      name,
+      price,
+      image_url,
+      image_url_2,
+      image_url_3,
+      shop_id,
+      shops!inner(id, name, status, city_id)
+    `)
+    .eq("shops.status", "approved")
+    .eq("is_available", true)
+    .order("created_at", { ascending: false })
+    .limit(50)
+
+  if (!isSuperAdmin && staffCityId) {
+    bannersQuery = bannersQuery.eq("city_id", staffCityId)
+    productsQuery = productsQuery.eq("shops.city_id", staffCityId)
+  }
+
+  const [citiesResult, bannersResult, productsResult] = await Promise.all([
     supabase.from("cities").select("id, name, state").order("name"),
+    bannersQuery.order("sort_order", { ascending: true }).order("created_at", { ascending: false }),
+    productsQuery,
   ])
 
   if (citiesResult.error) throw citiesResult.error
+  if (bannersResult.error) throw bannersResult.error
+  if (productsResult.error) throw productsResult.error
+
+  const enrichedBanners = await Promise.all((bannersResult.data || []).map(async (banner) => {
+    if (!banner.template_key) return banner
+    const { data: product } = await supabase
+      .from("products")
+      .select("id, name, price, image_url, image_url_2, image_url_3, shops(name)")
+      .eq("id", banner.template_key)
+      .maybeSingle()
+    return { ...banner, product }
+  }))
 
   return {
     kind: "staff-sponsored-products",
     cityOptions: citiesResult.data || [],
+    cities: citiesResult.data || [],
+    banners: enrichedBanners,
+    availableProducts: productsResult.data || [],
+    selectedCityId,
   }
 }
 
-async function prepareStaffSecurityRadarData() {
+async function prepareStaffSecurityRadarData(staffContext = {}) {
+  const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
+  const cityId = isSuperAdmin ? null : staffCityId
   const [contactRadar, legacyResult, citiesResult] = await Promise.all([
     fetchContactSecurityRadar({
       days: 30,
-      cityId: null,
+      cityId,
     }),
-    supabase.rpc("ctm_get_security_radar_insights"),
+    isSuperAdmin ? supabase.rpc("ctm_get_security_radar_insights") : Promise.resolve({ data: [], error: null }),
     supabase.from("cities").select("id, name, state").order("state").order("name"),
   ])
   if (legacyResult.error) throw legacyResult.error
@@ -281,19 +446,20 @@ async function prepareStaffSecurityRadarData() {
     contactRadar: contactRadar || [],
     insights: legacyResult.data || [],
     days: 30,
-    selectedCityId: "all",
+    selectedCityId: isSuperAdmin ? "all" : staffCityId ? String(staffCityId) : "all",
     cityOptions: citiesResult.data || [],
   }
 }
 
-async function prepareStaffProductsData() {
-  const { data, error } = await supabase
+async function prepareStaffProductsData(staffContext = {}) {
+  let query = supabase
     .from("shops")
     .select(`
       id,
       name,
       unique_id,
       owner_id,
+      city_id,
       profiles ( full_name ),
       products (
         id,
@@ -311,8 +477,12 @@ async function prepareStaffProductsData() {
         updated_at
       )
     `)
+
+  query = scopeByStaffCity(query, staffContext)
+
+  const { data, error } = await query
     .order("created_at", { ascending: false })
-    .limit(50)
+    .limit(100)
 
   if (error) throw error
 
@@ -322,8 +492,8 @@ async function prepareStaffProductsData() {
   }
 }
 
-async function prepareStaffShopContentData() {
-  const { data, error } = await supabase
+async function prepareStaffShopContentData(staffContext = {}) {
+  let query = supabase
     .from("shop_banners_news")
     .select(`
       id,
@@ -332,14 +502,22 @@ async function prepareStaffShopContentData() {
       content_data,
       status,
       created_at,
-      shops (
+      shops!inner (
         id,
         name,
         unique_id,
         owner_id,
+        city_id,
         profiles ( full_name )
       )
     `)
+
+  const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
+  if (!isSuperAdmin && staffCityId) {
+    query = query.eq("shops.city_id", staffCityId)
+  }
+
+  const { data, error } = await query
     .order("created_at", { ascending: false })
     .limit(100)
 
@@ -382,10 +560,16 @@ async function prepareStaffShopIdentityData() {
   }
 }
 
-async function prepareStaffAnnouncementsData() {
+async function prepareStaffAnnouncementsData(staffContext = {}) {
+  const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
+  let announcementsQuery = supabase.from("announcements").select("*").order("created_at", { ascending: false })
+  if (!isSuperAdmin && staffCityId) {
+    announcementsQuery = announcementsQuery.eq("city_id", staffCityId)
+  }
+
   const [citiesRes, announcementsRes] = await Promise.all([
     supabase.from("cities").select("id, name, state").order("name"),
-    supabase.from("announcements").select("*").order("created_at", { ascending: false })
+    announcementsQuery
   ])
 
   if (citiesRes.error) throw citiesRes.error
@@ -398,17 +582,26 @@ async function prepareStaffAnnouncementsData() {
   }
 }
 
-async function prepareStaffNotificationsData() {
+async function prepareStaffNotificationsData(staffContext = {}) {
+  const { isSuperAdmin, staffCityId } = getStaffRouteScope(staffContext)
+  let profilesQuery = supabase.from("profiles").select("id, full_name, phone, city_id").order("full_name")
+  let notificationsQuery = supabase
+    .from("notifications")
+    .select(`
+      *,
+      profiles!inner ( full_name, city_id )
+    `)
+    .order("created_at", { ascending: false })
+    .limit(100)
+
+  if (!isSuperAdmin && staffCityId) {
+    profilesQuery = profilesQuery.eq("city_id", staffCityId)
+    notificationsQuery = notificationsQuery.eq("profiles.city_id", staffCityId)
+  }
+
   const [profilesRes, notificationsRes] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, phone").order("full_name"),
-    supabase
-      .from("notifications")
-      .select(`
-        *,
-        profiles ( full_name )
-      `)
-      .order("created_at", { ascending: false })
-      .limit(100)
+    profilesQuery,
+    notificationsQuery
   ])
 
   if (profilesRes.error) throw profilesRes.error
@@ -436,11 +629,16 @@ const staffPreparers = {
   "/staff-shop-analytics": prepareStaffShopAnalyticsData,
   "/staff-city-banners": prepareStaffFeaturedCityBannersData,
   "/staff-sponsored-products": prepareStaffSponsoredProductsData,
+  "/staff-discoveries": prepareStaffDiscoveriesData,
   "/staff-inbox": prepareStaffInboxData,
   "/staff-security-radar": prepareStaffSecurityRadarData,
 }
 
-export async function prepareStaffRouteTransition({ path, timeoutMs = STAFF_ROUTE_TIMEOUT }) {
+export async function prepareStaffRouteTransition({
+  path,
+  timeoutMs = STAFF_ROUTE_TIMEOUT,
+  staffContext = {},
+}) {
   const pathname = normalizeStaffRoutePath(path)
   if (!hasStaffRouteComponent(pathname)) {
     throw new Error(`Staff route is not registered: ${pathname || "unknown route"}`)
@@ -455,7 +653,7 @@ export async function prepareStaffRouteTransition({ path, timeoutMs = STAFF_ROUT
       }
 
       const [prefetchedData] = await Promise.all([
-        routePreparer(),
+        routePreparer(staffContext),
         preloadStaffRouteComponent(pathname),
       ])
 

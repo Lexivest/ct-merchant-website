@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { useLocation } from "react-router-dom"
 import {
   FaCircleNotch,
   FaCloudArrowUp,
@@ -369,22 +370,28 @@ function FeaturedBannerArtwork({
 }
 
 export default function StaffFeaturedCityBanners() {
+  const location = useLocation()
   const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
   const { notify, confirm } = useGlobalFeedback()
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "staff-city-banners"
+      ? location.state.prefetchedData
+      : null
   const normalizedStaffCityId = normalizePositiveId(staffCityId)
-  const [loading, setLoading] = useState(() => !fetchingStaff)
+  const [loading, setLoading] = useState(() => !prefetchedData && !fetchingStaff)
   const [saving, setSaving] = useState(false)
-  const [cities, setCities] = useState([])
-  const [shops, setShops] = useState([])
-  const [productsByShopId, setProductsByShopId] = useState({})
-  const [profilesById, setProfilesById] = useState({})
-  const [banners, setBanners] = useState([])
+  const [cities, setCities] = useState(() => prefetchedData?.cities || [])
+  const [shops, setShops] = useState(() => prefetchedData?.shops || [])
+  const [productsByShopId, setProductsByShopId] = useState(() => prefetchedData?.productsByShopId || {})
+  const [profilesById, setProfilesById] = useState(() => prefetchedData?.profilesById || {})
+  const [banners, setBanners] = useState(() => prefetchedData?.banners || [])
   const [selectedCityId, setSelectedCityId] = useState(
-    isSuperAdmin ? "" : normalizedStaffCityId
+    prefetchedData?.selectedCityId ?? (isSuperAdmin ? "" : normalizedStaffCityId)
   )
-  const [selectedShopId, setSelectedShopId] = useState("")
+  const [selectedShopId, setSelectedShopId] = useState(() => prefetchedData?.selectedShopId || "")
   const [backgroundKey, setBackgroundKey] = useState(BACKGROUND_OPTIONS[0].key)
   const [sortOrder, setSortOrder] = useState(0)
+  const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
 
   const selectedShop = useMemo(() => shops.find((shop) => String(shop.id) === String(selectedShopId)) || null, [shops, selectedShopId])
   const selectedProducts = selectedShop ? productsByShopId[String(selectedShop.id)] || [] : []
@@ -392,6 +399,19 @@ export default function StaffFeaturedCityBanners() {
   const proprietorName = getProfileDisplayName(selectedProfile)
 
   const loadInitialData = useCallback(async () => {
+    if (prefetchedReady && prefetchedData) {
+      setCities(prefetchedData.cities || [])
+      setBanners(prefetchedData.banners || [])
+      setShops(prefetchedData.shops || [])
+      setProductsByShopId(prefetchedData.productsByShopId || {})
+      setProfilesById(prefetchedData.profilesById || {})
+      setSelectedCityId(prefetchedData.selectedCityId || "")
+      setSelectedShopId(prefetchedData.selectedShopId || "")
+      setLoading(false)
+      setPrefetchedReady(false)
+      return
+    }
+
     if (!fetchingStaff && !normalizedStaffCityId && !isSuperAdmin) return
 
     setLoading(true)
@@ -432,7 +452,7 @@ export default function StaffFeaturedCityBanners() {
     } finally {
       setLoading(false)
     }
-  }, [notify, isSuperAdmin, normalizedStaffCityId, fetchingStaff])
+  }, [notify, isSuperAdmin, normalizedStaffCityId, fetchingStaff, prefetchedData, prefetchedReady])
 
   const loadCityShops = useCallback(async (cityId) => {
     const normalizedCityId = normalizePositiveId(cityId)

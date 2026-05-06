@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { useLocation } from "react-router-dom"
 import {
   FaCircleNotch,
   FaImage,
@@ -20,11 +21,17 @@ import { UPLOAD_RULES, formatBytes } from "../../lib/uploadRules"
 const DISCOVERY_RULE = UPLOAD_RULES.sponsoredProducts;
 
 export default function StaffDiscoveries() {
+  const location = useLocation()
   const { isSuperAdmin, staffCityId, fetchingStaff } = useStaffPortalSession()
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "staff-discoveries"
+      ? location.state.prefetchedData
+      : null
   const { notify, confirm } = useGlobalFeedback()
-  const [loading, setLoading] = useState(() => !fetchingStaff)
+  const [loading, setLoading] = useState(() => !prefetchedData && !fetchingStaff)
   const [saving, setSaving] = useState(false)
-  const [discoveries, setDiscoveries] = useState([])
+  const [discoveries, setDiscoveries] = useState(() => prefetchedData?.discoveries || [])
+  const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
   
   const [form, setForm] = useState({
     title: "",
@@ -36,6 +43,13 @@ export default function StaffDiscoveries() {
   })
 
   const loadDiscoveries = useCallback(async () => {
+    if (prefetchedReady && prefetchedData) {
+      setDiscoveries(prefetchedData.discoveries || [])
+      setLoading(false)
+      setPrefetchedReady(false)
+      return
+    }
+
     if (!fetchingStaff && !staffCityId && !isSuperAdmin) return
 
     setLoading(true)
@@ -55,7 +69,7 @@ export default function StaffDiscoveries() {
     } finally {
       setLoading(false)
     }
-  }, [notify, isSuperAdmin, staffCityId, fetchingStaff])
+  }, [notify, isSuperAdmin, prefetchedData, prefetchedReady, staffCityId, fetchingStaff])
 
   useEffect(() => { 
     if (!fetchingStaff) {
