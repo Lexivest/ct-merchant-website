@@ -55,6 +55,7 @@ import {
   fetchPublicRepoProductDetail,
   fetchPublicRepoShopDetail,
 } from "../lib/repoSearch"
+import { hasValidRepoSearchIntent } from "../lib/routeIntents"
 
 const EMPTY_PRODUCTS = []
 const EMPTY_NEWS = []
@@ -157,9 +158,19 @@ function ShopDetail() {
     location.state?.prefetchedShopData?.shop?.unique_id ||
     ""
   const repoRef = repoRefFromUrl || repoRefFromState
+  const repoSearchIntent =
+    searchParams.get("repo_intent")?.trim() ||
+    location.state?.repoSearchIntent ||
+    ""
+  const hasRepoSearchIntent =
+    hasValidRepoSearchIntent(repoSearchIntent, repoRef) ||
+    (location.state?.fromRepoSearch === true &&
+      location.state?.repoSearchConfirmed === true)
   const isRepoSearchEntry =
-    searchParams.get("repo_public") === "1" ||
-    location.state?.fromRepoSearch === true
+    Boolean(repoRef) &&
+    hasRepoSearchIntent &&
+    (searchParams.get("repo_public") === "1" ||
+      location.state?.fromRepoSearch === true)
   const routePrefetchedShopData =
     location.state?.prefetchedShopData?.shop &&
     String(location.state.prefetchedShopData.shop.id) === String(shopId)
@@ -626,7 +637,7 @@ function ShopDetail() {
 
   async function openProductWithTransition(productId) {
     if (!productId) return
-    const repoSuffix = isRepoSearchEntry && repoRef ? buildRepoSearchQuerySuffix(repoRef) : ""
+    const repoSuffix = isRepoSearchEntry && repoRef ? buildRepoSearchQuerySuffix(repoRef, repoSearchIntent) : ""
 
     const cacheKey = buildProductDetailCacheKey(productId, user?.id || null)
     const cachedEntry = readCachedFetchStore(cacheKey)
@@ -650,6 +661,9 @@ function ShopDetail() {
         navigate(`/product-detail?id=${productId}${shopId ? `&shop_src=${shopId}` : ""}${repoSuffix}`, {
           state: {
             fromProductTransition: true,
+            fromRepoSearch: isRepoSearchEntry,
+            repoSearchConfirmed: isRepoSearchEntry,
+            repoSearchIntent,
             prefetchedProductData,
           },
         })
@@ -686,6 +700,9 @@ function ShopDetail() {
       navigate(`/product-detail?id=${productId}${shopId ? `&shop_src=${shopId}` : ""}${repoSuffix}`, {
         state: {
           fromProductTransition: true,
+          fromRepoSearch: isRepoSearchEntry,
+          repoSearchConfirmed: isRepoSearchEntry,
+          repoSearchIntent,
           prefetchedProductData,
         },
       })

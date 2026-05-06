@@ -4,8 +4,10 @@ import { FaMagnifyingGlass, FaCircleInfo } from "react-icons/fa6"
 import {
   extractRepoSearchDigits,
   normalizeRepoSearchId,
+  REPO_SEARCH_INTENT_PARAM,
   REPO_SEARCH_INVALID_MESSAGE,
 } from "../../lib/repoSearch"
+import { createRepoSearchIntent } from "../../lib/routeIntents"
 
 function RepoSearchBar() {
   const navigate = useNavigate()
@@ -17,10 +19,20 @@ function RepoSearchBar() {
 
     const value = normalizeRepoSearchId(merchantId)
     if (!value) return
+    const repoSearchIntent = createRepoSearchIntent(value)
     
     setIsSearching(true)
 
-    navigate(`/reposearch?merchantId=${encodeURIComponent(value)}`)
+    navigate(
+      `/reposearch?merchantId=${encodeURIComponent(value)}${repoSearchIntent ? `&${REPO_SEARCH_INTENT_PARAM}=${encodeURIComponent(repoSearchIntent)}` : ""}`,
+      {
+        state: {
+          fromRepoSearch: true,
+          repoSearchConfirmed: true,
+          repoSearchIntent,
+        },
+      }
+    )
   }
 
   return (

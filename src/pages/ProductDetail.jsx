@@ -49,6 +49,7 @@ import {
   buildRepoSearchQuerySuffix,
   fetchPublicRepoProductDetail,
 } from "../lib/repoSearch"
+import { hasValidRepoSearchIntent } from "../lib/routeIntents"
 import { logShopAnalyticsEvent } from "../lib/shopAnalytics"
 
 function ProductDetail() {
@@ -65,10 +66,19 @@ function ProductDetail() {
     location.state?.prefetchedProductData?.shop?.unique_id ||
     ""
   const repoRef = repoRefFromUrl || repoRefFromState
+  const repoSearchIntent =
+    searchParams.get("repo_intent")?.trim() ||
+    location.state?.repoSearchIntent ||
+    ""
+  const hasRepoSearchIntent =
+    hasValidRepoSearchIntent(repoSearchIntent, repoRef) ||
+    (location.state?.fromRepoSearch === true &&
+      location.state?.repoSearchConfirmed === true)
   const isRepoSearchEntry =
-    searchParams.get("repo_public") === "1" ||
-    location.state?.fromRepoSearch === true ||
-    Boolean(repoRef)
+    Boolean(repoRef) &&
+    hasRepoSearchIntent &&
+    (searchParams.get("repo_public") === "1" ||
+      location.state?.fromRepoSearch === true)
   const routePrefetchedProductData =
     location.state?.prefetchedProductData?.product &&
     String(location.state.prefetchedProductData.product.id) === String(productId)
@@ -299,9 +309,16 @@ function ProductDetail() {
   }, [currentProduct])
 
   async function goBack() {
-    const repoSuffix = isRepoSearchEntry && repoRef ? buildRepoSearchQuerySuffix(repoRef) : ""
+    const repoSuffix = isRepoSearchEntry && repoRef ? buildRepoSearchQuerySuffix(repoRef, repoSearchIntent) : ""
     if (shopSrc) {
-      navigate(`/shop-detail?id=${shopSrc}${repoSuffix}`, { replace: true })
+      navigate(`/shop-detail?id=${shopSrc}${repoSuffix}`, {
+        replace: true,
+        state: {
+          fromRepoSearch: isRepoSearchEntry,
+          repoSearchConfirmed: isRepoSearchEntry,
+          repoSearchIntent,
+        },
+      })
       return
     }
 
@@ -561,7 +578,7 @@ function ProductDetail() {
 
   async function openProductWithTransition(nextProductId) {
     if (!nextProductId) return
-    const repoSuffix = isRepoSearchEntry && repoRef ? buildRepoSearchQuerySuffix(repoRef) : ""
+    const repoSuffix = isRepoSearchEntry && repoRef ? buildRepoSearchQuerySuffix(repoRef, repoSearchIntent) : ""
 
     const nextCacheKey = isPublicRepoMode
       ? `repo_public_product_${repoRef || "unknown"}_${nextProductId || "unknown"}`
@@ -618,6 +635,9 @@ function ProductDetail() {
         {
           state: {
             fromProductTransition: true,
+            fromRepoSearch: isRepoSearchEntry,
+            repoSearchConfirmed: isRepoSearchEntry,
+            repoSearchIntent,
             prefetchedProductData,
           },
         }
@@ -909,8 +929,14 @@ function ProductDetail() {
                       type="button"
                       onClick={() => {
                         if (!currentShop?.id) return
-                        const repoSuffix = isPublicRepoMode ? buildRepoSearchQuerySuffix(repoRef) : ""
-                        navigate(`/shop-detail?id=${currentShop.id}${repoSuffix}`)
+                        const repoSuffix = isPublicRepoMode ? buildRepoSearchQuerySuffix(repoRef, repoSearchIntent) : ""
+                        navigate(`/shop-detail?id=${currentShop.id}${repoSuffix}`, {
+                          state: {
+                            fromRepoSearch: isRepoSearchEntry,
+                            repoSearchConfirmed: isRepoSearchEntry,
+                            repoSearchIntent,
+                          },
+                        })
                       }}
                       className="mt-3 w-full rounded-[24px] border border-pink-100 bg-gradient-to-br from-white via-pink-50/70 to-orange-50 px-4 py-4 text-left shadow-[0_12px_28px_rgba(15,23,42,0.07)] transition hover:-translate-y-0.5 hover:border-pink-200 hover:shadow-[0_16px_34px_rgba(219,39,119,0.12)]"
                     >
@@ -1087,8 +1113,14 @@ function ProductDetail() {
                 type="button"
                 onClick={() => {
                   if (!currentShop?.id) return
-                  const repoSuffix = isPublicRepoMode ? buildRepoSearchQuerySuffix(repoRef) : ""
-                  navigate(`/shop-detail?id=${currentShop.id}${repoSuffix}`)
+                  const repoSuffix = isPublicRepoMode ? buildRepoSearchQuerySuffix(repoRef, repoSearchIntent) : ""
+                  navigate(`/shop-detail?id=${currentShop.id}${repoSuffix}`, {
+                    state: {
+                      fromRepoSearch: isRepoSearchEntry,
+                      repoSearchConfirmed: isRepoSearchEntry,
+                      repoSearchIntent,
+                    },
+                  })
                 }}
                 className="mt-3 w-full rounded-lg border border-slate-300 bg-transparent px-4 py-3 font-bold text-[#0F1111] transition hover:border-slate-400 hover:bg-white"
               >

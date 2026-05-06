@@ -2,6 +2,7 @@ import { supabase } from "./supabase"
 
 export const REPO_SEARCH_PREFIX = "CT-"
 export const REPO_SEARCH_DIGIT_LIMIT = 7
+export const REPO_SEARCH_INTENT_PARAM = "repo_intent"
 export const REPO_SEARCH_INVALID_MESSAGE =
   `Enter a valid repository ID like CT-2053684 or just 2053684. Maximum ${REPO_SEARCH_DIGIT_LIMIT} digits.`
 
@@ -91,9 +92,12 @@ export async function invokeRepoSearch(merchantId, skipRateLimit = false) {
   return result
 }
 
-export function buildRepoSearchQuerySuffix(repoRef) {
+export function buildRepoSearchQuerySuffix(repoRef, repoSearchIntent = "") {
   if (!repoRef) return ""
-  return `&repo_public=1&repo_ref=${encodeURIComponent(repoRef)}`
+  const intentSuffix = repoSearchIntent
+    ? `&${REPO_SEARCH_INTENT_PARAM}=${encodeURIComponent(repoSearchIntent)}`
+    : ""
+  return `&repo_public=1&repo_ref=${encodeURIComponent(repoRef)}${intentSuffix}`
 }
 
 export function buildShopDetailPrefetchFromRepoSearch(result) {

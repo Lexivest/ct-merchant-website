@@ -1,6 +1,6 @@
 import { useEffect } from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
-import { FaArrowLeft } from "react-icons/fa6"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { FaArrowLeft, FaMagnifyingGlass, FaShieldHalved } from "react-icons/fa6"
 import useCachedFetch from "../hooks/useCachedFetch"
 import PageSeo from "../components/common/PageSeo"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
@@ -10,15 +10,104 @@ import {
   getRepoSearchCooldownMessage,
   invokeRepoSearch,
   normalizeRepoSearchId,
+  REPO_SEARCH_INTENT_PARAM,
   REPO_SEARCH_INVALID_MESSAGE,
 } from "../lib/repoSearch"
 import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
+import {
+  createRepoSearchIntent,
+  hasValidRepoSearchIntent,
+} from "../lib/routeIntents"
 
-function MerchantDiscovery() {
+function buildRepoSearchPath(merchantId, repoSearchIntent = "") {
+  const params = new URLSearchParams({ merchantId })
+  if (repoSearchIntent) params.set(REPO_SEARCH_INTENT_PARAM, repoSearchIntent)
+  return `/reposearch?${params.toString()}`
+}
+
+function RepoSearchResumeScreen({ merchantId }) {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const rawMerchantId = searchParams.get("merchantId")?.trim() || ""
-  const merchantId = normalizeRepoSearchId(rawMerchantId)
+
+  function confirmSearch() {
+    const repoSearchIntent = createRepoSearchIntent(merchantId)
+    navigate(buildRepoSearchPath(merchantId, repoSearchIntent), {
+      replace: true,
+      state: {
+        fromRepoSearch: true,
+        repoSearchConfirmed: true,
+        repoSearchIntent,
+      },
+    })
+  }
+
+  const hasMerchantId = Boolean(merchantId)
+
+  return (
+    <div className="min-h-screen bg-[#F3F4F6]">
+      <PageSeo
+        title="Confirm Repository Search | CTMerchant"
+        description="Confirm before opening a CTMerchant repository result."
+        canonicalPath={hasMerchantId ? `/reposearch?merchantId=${encodeURIComponent(merchantId)}` : "/reposearch"}
+        noindex
+      />
+
+      <header className="sticky top-0 z-[100] w-full bg-[#131921] text-white shadow">
+        <div className="mx-auto flex w-full max-w-[600px] items-center gap-4 px-4 py-3">
+          <button
+            type="button"
+            onClick={() => navigate("/", { replace: true })}
+            className="text-[1.2rem] transition hover:text-pink-500"
+            aria-label="Return home"
+          >
+            <FaArrowLeft />
+          </button>
+          <span className="text-[1.15rem] font-bold tracking-[0.5px]">
+            Repository Search
+          </span>
+        </div>
+      </header>
+
+      <main className="flex min-h-[70vh] items-center justify-center px-5 py-10">
+        <div className="w-full max-w-md rounded-[30px] border border-slate-200 bg-white p-7 text-center shadow-xl">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-pink-50 text-pink-600">
+            <FaShieldHalved className="text-2xl" />
+          </div>
+          <h1 className="mt-5 text-2xl font-black text-slate-950">
+            Confirm this repository search
+          </h1>
+          <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+            We paused this route so CTMerchant will not open a shop from an old browser history entry, failed login refresh, or stale cached route.
+          </p>
+          <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-black text-slate-900">
+            {hasMerchantId ? merchantId : REPO_SEARCH_INVALID_MESSAGE}
+          </div>
+          <div className="mt-6 flex flex-col gap-3">
+            {hasMerchantId ? (
+              <button
+                type="button"
+                onClick={confirmSearch}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-pink-600 px-5 text-sm font-black text-white transition hover:bg-pink-700"
+              >
+                <FaMagnifyingGlass />
+                Open store
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => navigate("/", { replace: true })}
+              className="h-12 rounded-2xl bg-slate-100 px-5 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
+            >
+              Back to home
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+function MerchantDiscoveryRunner({ merchantId, repoSearchIntent }) {
+  const navigate = useNavigate()
 
   // 1. Data Fetching Logic for Edge Function
   const fetchMerchant = async () => {
@@ -70,21 +159,25 @@ function MerchantDiscovery() {
 
         if (cancelled) return
 
-        navigate(`/shop-detail?id=${shop.id}${buildRepoSearchQuerySuffix(repoRef)}`, {
+        navigate(`/shop-detail?id=${shop.id}${buildRepoSearchQuerySuffix(repoRef, repoSearchIntent)}`, {
           replace: true,
           state: {
             fromDiscoveryTransition: true,
             fromRepoSearch: true,
+            repoSearchConfirmed: true,
+            repoSearchIntent,
             prefetchedShopData,
           },
         })
       } catch {
         if (cancelled) return
-        navigate(`/shop-detail?id=${shop.id}${buildRepoSearchQuerySuffix(repoRef)}`, {
+        navigate(`/shop-detail?id=${shop.id}${buildRepoSearchQuerySuffix(repoRef, repoSearchIntent)}`, {
           replace: true,
           state: {
             fromDiscoveryTransition: true,
             fromRepoSearch: true,
+            repoSearchConfirmed: true,
+            repoSearchIntent,
           },
         })
       }
@@ -97,7 +190,7 @@ function MerchantDiscovery() {
     return () => {
       cancelled = true
     }
-  }, [data, merchantId, navigate, shop?.id, shop?.unique_id])
+  }, [data, merchantId, navigate, repoSearchIntent, shop?.id, shop?.unique_id])
 
   function handleBack() {
     navigate("/")
@@ -148,6 +241,32 @@ function MerchantDiscovery() {
          )}
       </main>
     </div>
+  )
+}
+
+function MerchantDiscovery() {
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const rawMerchantId = searchParams.get("merchantId")?.trim() || ""
+  const merchantId = normalizeRepoSearchId(rawMerchantId)
+  const repoSearchIntent =
+    searchParams.get(REPO_SEARCH_INTENT_PARAM)?.trim() ||
+    location.state?.repoSearchIntent ||
+    ""
+  const hasRouteIntent =
+    hasValidRepoSearchIntent(repoSearchIntent, merchantId) ||
+    (location.state?.fromRepoSearch === true &&
+      location.state?.repoSearchConfirmed === true)
+
+  if (!merchantId || !hasRouteIntent) {
+    return <RepoSearchResumeScreen merchantId={merchantId} />
+  }
+
+  return (
+    <MerchantDiscoveryRunner
+      merchantId={merchantId}
+      repoSearchIntent={repoSearchIntent}
+    />
   )
 }
 

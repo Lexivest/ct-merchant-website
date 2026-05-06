@@ -58,6 +58,7 @@ import {
   getRepoSearchCooldownMessage,
   invokeRepoSearch,
   normalizeRepoSearchId,
+  REPO_SEARCH_INTENT_PARAM,
   REPO_SEARCH_INVALID_MESSAGE,
 } from "../lib/repoSearch"
 import { clampWords, getWordLimitError } from "../lib/textLimits"
@@ -70,6 +71,7 @@ import {
   preloadCreateAccountScreen,
   preloadDashboardScreen,
 } from "../lib/authScreenTransitions"
+import { createRepoSearchIntent } from "../lib/routeIntents"
 
 // --- LOCAL ASSET IMPORT ---
 import banner from "../assets/images/banner.jpg"
@@ -960,6 +962,7 @@ function Home() {
     }
 
     const value = normalizedRepoId
+    const repoSearchIntent = createRepoSearchIntent(value)
     const retryAction = () => handleRepoSearch()
 
     if (isOffline) {
@@ -1007,10 +1010,12 @@ function Home() {
           }
         }
 
-        navigate(`/shop-detail?id=${shopId}${buildRepoSearchQuerySuffix(repoRef)}`, {
+        navigate(`/shop-detail?id=${shopId}${buildRepoSearchQuerySuffix(repoRef, repoSearchIntent)}`, {
           state: {
             fromDiscoveryTransition: true,
             fromRepoSearch: true,
+            repoSearchConfirmed: true,
+            repoSearchIntent,
             ...(prefetchedShopData ? { prefetchedShopData } : {}),
           },
         })
@@ -1027,7 +1032,16 @@ function Home() {
         return
       }
 
-      navigate(`/reposearch?merchantId=${encodeURIComponent(value)}`)
+      navigate(
+        `/reposearch?merchantId=${encodeURIComponent(value)}${repoSearchIntent ? `&${REPO_SEARCH_INTENT_PARAM}=${encodeURIComponent(repoSearchIntent)}` : ""}`,
+        {
+          state: {
+            fromRepoSearch: true,
+            repoSearchConfirmed: true,
+            repoSearchIntent,
+          },
+        }
+      )
     } catch (error) {
       notify({
         type: "error",
