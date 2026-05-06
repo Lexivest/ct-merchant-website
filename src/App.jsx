@@ -290,7 +290,7 @@ function RouteLoadingScreen({
   }
 
   if (isHardReloadNavigation()) {
-    return null
+    return <PageLoadingScreen />
   }
 
   return <PageLoadingScreen title={title} message={message} />

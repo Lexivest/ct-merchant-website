@@ -1,6 +1,7 @@
-const SHELL_CACHE = "ctm-shell-v4";
-const STATIC_CACHE = "ctm-static-v4";
-const ASSET_CACHE = "ctm-assets-v4";
+const SHELL_CACHE = "ctm-shell-v5";
+const STATIC_CACHE = "ctm-static-v5";
+const ASSET_CACHE = "ctm-assets-v5";
+const NETWORK_FIRST_TIMEOUT_MS = 2500;
 const PRECACHE_URLS = [
   "/",
   "/index.html",
@@ -23,6 +24,32 @@ function isCacheableResponse(response) {
   return Boolean(response && response.ok && response.type !== "error");
 }
 
+function withTimeout(promise, timeoutMs) {
+  let timerId = null;
+
+  const timeoutPromise = new Promise((_, reject) => {
+    timerId = setTimeout(() => reject(new Error("Network request timed out")), timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timerId) clearTimeout(timerId);
+  });
+}
+
+async function fetchWithTimeout(request, timeoutMs = NETWORK_FIRST_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timerId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(request, {
+      signal: controller.signal,
+      cache: "no-store",
+    });
+  } finally {
+    clearTimeout(timerId);
+  }
+}
+
 async function putInCache(cacheName, request, response) {
   if (!isCacheableResponse(response)) return response;
   const cache = await caches.open(cacheName);
@@ -33,14 +60,14 @@ async function putInCache(cacheName, request, response) {
 async function networkFirst(request, cacheName, fallbackUrls = [], preloadResponsePromise = null) {
   try {
     if (preloadResponsePromise) {
-      const preloadResponse = await preloadResponsePromise;
+      const preloadResponse = await withTimeout(preloadResponsePromise, NETWORK_FIRST_TIMEOUT_MS);
       if (isCacheableResponse(preloadResponse)) {
         await putInCache(cacheName, request, preloadResponse);
         return preloadResponse;
       }
     }
 
-    const networkResponse = await fetch(request);
+    const networkResponse = await fetchWithTimeout(request);
     await putInCache(cacheName, request, networkResponse);
     return networkResponse;
   } catch (error) {
@@ -55,6 +82,76 @@ async function networkFirst(request, cacheName, fallbackUrls = [], preloadRespon
 
     throw error;
   }
+}
+
+async function cacheIndexAssetsFromResponse(indexResponse) {
+  let html = "";
+
+  try {
+    html = await indexResponse.clone().text();
+  } catch {
+    html = "";
+  }
+
+  const assetUrls = Array.from(html.matchAll(INDEX_ASSET_PATTERN))
+    .map((match) => match[1])
+    .filter(Boolean);
+
+  if (!assetUrls.length) return;
+
+  const assetCache = await caches.open(ASSET_CACHE);
+
+  await Promise.all(
+    assetUrls.map(async (assetUrl) => {
+      try {
+        const response = await fetch(assetUrl, { cache: "no-store" });
+        if (!isCacheableResponse(response)) return;
+        await assetCache.put(assetUrl, response.clone());
+      } catch {
+        // Ignore missing assets during refresh; the cached shell remains usable.
+      }
+    })
+  );
+}
+
+async function refreshNavigationShell(request, preloadResponsePromise = null) {
+  try {
+    let response = null;
+
+    if (preloadResponsePromise) {
+      response = await withTimeout(preloadResponsePromise, NETWORK_FIRST_TIMEOUT_MS);
+    }
+
+    if (!isCacheableResponse(response)) {
+      response = await fetchWithTimeout(request);
+    }
+
+    if (!isCacheableResponse(response)) return null;
+
+    const shellCache = await caches.open(SHELL_CACHE);
+    await shellCache.put(request, response.clone());
+    await shellCache.put("/index.html", response.clone());
+    await cacheIndexAssetsFromResponse(response.clone());
+    return response;
+  } catch {
+    return null;
+  }
+}
+
+async function appShellFirst(request, preloadResponsePromise = null) {
+  const cachedResponse =
+    (await caches.match(request)) ||
+    (await caches.match("/index.html"));
+
+  if (cachedResponse) return cachedResponse;
+
+  const networkResponse = await refreshNavigationShell(request, preloadResponsePromise);
+  if (networkResponse) return networkResponse;
+
+  const offlineResponse = await caches.match("/offline.html");
+  if (offlineResponse) return offlineResponse;
+
+  return networkFirst(request, SHELL_CACHE, ["/index.html", "/offline.html"], preloadResponsePromise);
 }
 
 async function staleWhileRevalidate(request, cacheName) {
@@ -87,32 +184,7 @@ async function precacheShellAssets() {
   const shellCache = await caches.open(SHELL_CACHE);
   await shellCache.put("/index.html", indexResponse.clone());
 
-  let html = "";
-  try {
-    html = await indexResponse.clone().text();
-  } catch {
-    html = "";
-  }
-
-  const assetUrls = Array.from(html.matchAll(INDEX_ASSET_PATTERN))
-    .map((match) => match[1])
-    .filter(Boolean);
-
-  if (!assetUrls.length) return;
-
-  const assetCache = await caches.open(ASSET_CACHE);
-
-  await Promise.all(
-    assetUrls.map(async (assetUrl) => {
-      try {
-        const response = await fetch(assetUrl, { cache: "no-store" });
-        if (!isCacheableResponse(response)) return;
-        await assetCache.put(assetUrl, response.clone());
-      } catch {
-        // Ignore missing assets during install; the cached shell is still usable.
-      }
-    })
-  );
+  await cacheIndexAssetsFromResponse(indexResponse);
 }
 
 self.addEventListener("install", (event) => {
@@ -163,14 +235,25 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (event.request.mode === "navigate") {
-    event.respondWith(
-      networkFirst(event.request, SHELL_CACHE, ["/index.html", "/offline.html"], event.preloadResponse)
+    const cachedResponsePromise =
+      caches.match(event.request).then((cachedResponse) =>
+        cachedResponse || caches.match("/index.html")
+      );
+
+    event.waitUntil(
+      cachedResponsePromise.then((cachedResponse) => {
+        if (!cachedResponse) return null;
+        return refreshNavigationShell(event.request, event.preloadResponse);
+      })
     );
+
+    event.respondWith(appShellFirst(event.request, event.preloadResponse));
     return;
   }
 
   if (url.pathname === "/index.html") {
-    event.respondWith(networkFirst(event.request, SHELL_CACHE, ["/index.html", "/offline.html"]));
+    event.waitUntil(refreshNavigationShell(event.request));
+    event.respondWith(appShellFirst(event.request));
     return;
   }
 

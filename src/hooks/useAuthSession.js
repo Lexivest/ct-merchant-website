@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react"
 import { supabase } from "../lib/supabase"
-import { isNetworkOffline } from "../lib/networkStatus"
+import {
+  getNetworkStatusSnapshot,
+  isNetworkOffline,
+  subscribeNetworkStatus,
+} from "../lib/networkStatus"
 import {
   fetchProfileByUserId,
   getSession,
@@ -480,25 +484,23 @@ function useAuthSession() {
       load({ forceNetwork: true })
     })
 
-    const handleOnline = () => {
+    const handleNetworkStatusChange = () => {
       if (!mounted) return
-      syncState({ isOffline: false })
-      load({ forceNetwork: true })
+
+      const { isOffline } = getNetworkStatusSnapshot()
+      syncState({ isOffline })
+
+      if (!isOffline) {
+        load({ forceNetwork: true })
+      }
     }
 
-    const handleOffline = () => {
-      if (!mounted) return
-      syncState({ isOffline: true })
-    }
-
-    window.addEventListener("online", handleOnline)
-    window.addEventListener("offline", handleOffline)
+    const unsubscribeNetworkStatus = subscribeNetworkStatus(handleNetworkStatusChange)
 
     return () => {
       mounted = false
       subscription.unsubscribe()
-      window.removeEventListener("online", handleOnline)
-      window.removeEventListener("offline", handleOffline)
+      unsubscribeNetworkStatus()
     }
   }, [])
 
