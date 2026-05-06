@@ -46,7 +46,8 @@ export default function usePwaInstall() {
     typeof window === "undefined" ? false : detectStandalone()
   )
   const [recentlyInstalled, setRecentlyInstalled] = useState(() =>
-    readStorageFlag(KNOWN_INSTALL_STORAGE_KEY)
+    readStorageFlag(KNOWN_INSTALL_STORAGE_KEY) ||
+    (typeof window === "undefined" ? false : detectStandalone())
   )
   const [hasInstalledRelatedApp, setHasInstalledRelatedApp] = useState(false)
 
@@ -136,6 +137,10 @@ export default function usePwaInstall() {
     const standaloneQuery = window.matchMedia?.("(display-mode: standalone)")
     let cancelled = false
 
+    if (detectStandalone()) {
+      writeStorageFlag(KNOWN_INSTALL_STORAGE_KEY, true)
+    }
+
     async function refreshInstalledRelatedApps() {
       if (typeof navigator?.getInstalledRelatedApps !== "function") {
         setHasInstalledRelatedApp(false)
@@ -145,7 +150,9 @@ export default function usePwaInstall() {
       try {
         const relatedApps = await navigator.getInstalledRelatedApps()
         if (!cancelled) {
-          setHasInstalledRelatedApp(Array.isArray(relatedApps) && relatedApps.length > 0)
+          const installed = Array.isArray(relatedApps) && relatedApps.length > 0
+          setHasInstalledRelatedApp(installed)
+          if (installed) writeStorageFlag(KNOWN_INSTALL_STORAGE_KEY, true)
         }
       } catch {
         if (!cancelled) setHasInstalledRelatedApp(false)
@@ -171,12 +178,18 @@ export default function usePwaInstall() {
 
     function handleStandaloneChange(event) {
       setIsStandaloneMode(Boolean(event.matches))
-      if (event.matches) clearPromptState()
+      if (event.matches) {
+        setRecentlyInstalled(true)
+        writeStorageFlag(KNOWN_INSTALL_STORAGE_KEY, true)
+        clearPromptState()
+      }
     }
 
     function handleVisibilityChange() {
       if (document.visibilityState === "visible") {
-        setIsStandaloneMode(detectStandalone())
+        const isStandalone = detectStandalone()
+        if (isStandalone) writeStorageFlag(KNOWN_INSTALL_STORAGE_KEY, true)
+        setIsStandaloneMode(isStandalone)
         setRecentlyInstalled(readStorageFlag(KNOWN_INSTALL_STORAGE_KEY))
         void refreshInstalledRelatedApps()
       }
