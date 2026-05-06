@@ -1,5 +1,6 @@
 import { getStaffCommentThreads } from "../pages/staff/StaffPortalShared"
 import { fetchContactSecurityRadar, fetchStaffShopAnalytics } from "./shopAnalytics"
+import { fetchStaffCommissionsOverview } from "./staffCommissionsData"
 import { fetchStaffPaymentsOverview } from "./staffPaymentsData"
 import { hasStaffRouteComponent, normalizeStaffRoutePath, preloadStaffRouteComponent } from "./staffRouteRegistry"
 import { supabase } from "./supabase"
@@ -182,6 +183,14 @@ async function prepareStaffPaymentsData() {
   const overview = await fetchStaffPaymentsOverview()
   return {
     kind: "staff-payments",
+    ...overview,
+  }
+}
+
+async function prepareStaffCommissionsData() {
+  const overview = await fetchStaffCommissionsOverview()
+  return {
+    kind: "staff-commissions",
     ...overview,
   }
 }
@@ -420,6 +429,7 @@ const staffPreparers = {
   "/staff-products": prepareStaffProductsData,
   "/staff-shop-content": prepareStaffShopContentData,
   "/staff-shop-identity": prepareStaffShopIdentityData,
+  "/staff-commissions": prepareStaffCommissionsData,
   "/staff-announcements": prepareStaffAnnouncementsData,
   "/staff-notifications": prepareStaffNotificationsData,
   "/staff-payments": prepareStaffPaymentsData,

@@ -224,6 +224,7 @@ const StaffUsers = createPreloadableStaffRoute("/staff-users")
 const StaffCommunity = createPreloadableStaffRoute("/staff-community")
 const StaffVerifications = createPreloadableStaffRoute("/staff-verifications")
 const StaffPayments = createPreloadableStaffRoute("/staff-payments")
+const StaffCommissions = createPreloadableStaffRoute("/staff-commissions")
 const StaffFeaturedCityBanners = createPreloadableStaffRoute("/staff-city-banners")
 const StaffSponsoredProducts = createPreloadableStaffRoute("/staff-sponsored-products")
 const StaffDiscoveries = createPreloadableStaffRoute("/staff-discoveries")
@@ -414,6 +415,11 @@ function getRouteMeta(pathname) {
     "/staff-payments": {
       title: "Staff Payments | CTMerchant",
       description: "Manage merchant payment proofs, subscription renewals, and verification fee reviews.",
+      noindex: true,
+    },
+    "/staff-commissions": {
+      title: "Commission Payments | CTMerchant",
+      description: "Track monthly city-admin commission earnings, payout receipts, and payment status.",
       noindex: true,
     },
     "/staff-city-banners": {
@@ -789,6 +795,7 @@ function AppShell() {
         <Route path="/staff-community" element={<ProtectedStaffRoute adminOnly><StaffCommunity /></ProtectedStaffRoute>} />
         <Route path="/staff-verifications" element={<ProtectedStaffRoute adminOnly><StaffVerifications /></ProtectedStaffRoute>} />
         <Route path="/staff-payments" element={<ProtectedStaffRoute superOnly><StaffPayments /></ProtectedStaffRoute>} />
+        <Route path="/staff-commissions" element={<ProtectedStaffRoute adminOnly><StaffCommissions /></ProtectedStaffRoute>} />
         <Route path="/staff-city-banners" element={<ProtectedStaffRoute adminOnly><StaffFeaturedCityBanners /></ProtectedStaffRoute>} />
         <Route path="/staff-sponsored-products" element={<ProtectedStaffRoute adminOnly><StaffSponsoredProducts /></ProtectedStaffRoute>} />
         <Route path="/staff-discoveries" element={<ProtectedStaffRoute adminOnly><StaffDiscoveries /></ProtectedStaffRoute>} />

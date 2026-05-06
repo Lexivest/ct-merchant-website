@@ -382,6 +382,14 @@ export default function StaffDashboard() {
         lockedMessage: "Payments control is reserved for super admins.",
       },
       {
+        title: "Commissions",
+        icon: <FaMoneyCheckDollar />,
+        badge: "Finance",
+        tone: "emerald",
+        path: "/staff-commissions",
+        locked: adminLocked,
+      },
+      {
         title: "Sponsored Products",
         icon: <FaImages />,
         badge: "Studio",
