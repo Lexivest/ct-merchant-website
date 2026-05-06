@@ -16,6 +16,67 @@ const DAILY_LIMIT = 15
 const AI_PROMPT_WORD_LIMIT = 300
 const BRAND_HTML =
   '<span><span class="text-pink-600">C</span><span class="text-purple-900">T</span><span class="text-blue-600">M</span>erchant</span>'
+const MARKETPLACE_LINK_PATHS = new Set(["/shop-detail", "/product-detail"])
+const TRUSTED_MARKETPLACE_ORIGINS = new Set([
+  "https://ctmerchant.com.ng",
+  "https://www.ctmerchant.com.ng",
+])
+
+function getMarketplaceHref(rawHref = "") {
+  if (!rawHref) return ""
+
+  try {
+    const baseUrl =
+      typeof window !== "undefined" && window.location?.origin
+        ? window.location.origin
+        : "https://www.ctmerchant.com.ng"
+    const url = new URL(rawHref, baseUrl)
+    const isTrustedOrigin = url.origin === baseUrl || TRUSTED_MARKETPLACE_ORIGINS.has(url.origin)
+    const itemId = url.searchParams.get("id")
+
+    if (!isTrustedOrigin || !MARKETPLACE_LINK_PATHS.has(url.pathname) || !/^\d+$/.test(itemId || "")) {
+      return ""
+    }
+
+    return `${url.pathname}${url.search}`
+  } catch {
+    return ""
+  }
+}
+
+function sanitizeAssistantHtml(content = "") {
+  if (typeof document === "undefined") return String(content || "")
+
+  const template = document.createElement("template")
+  template.innerHTML = String(content || "")
+
+  template.content.querySelectorAll("script, style, iframe, object, embed").forEach((node) => {
+    node.remove()
+  })
+
+  template.content.querySelectorAll("*").forEach((node) => {
+    Array.from(node.attributes).forEach((attr) => {
+      const attrName = attr.name.toLowerCase()
+      if (attrName.startsWith("on") || attrName === "style") {
+        node.removeAttribute(attr.name)
+      }
+    })
+  })
+
+  template.content.querySelectorAll("a").forEach((anchor) => {
+    const safeHref = getMarketplaceHref(anchor.getAttribute("href") || "")
+    if (!safeHref) {
+      anchor.replaceWith(document.createTextNode(anchor.textContent || ""))
+      return
+    }
+
+    Array.from(anchor.attributes).forEach((attr) => anchor.removeAttribute(attr.name))
+    anchor.setAttribute("href", safeHref)
+    anchor.setAttribute("class", "font-bold text-pink-600 underline")
+  })
+
+  return template.innerHTML
+}
 
 function AiAssistantWidget({ mode = "ambassador", shopData = null, productData = null, isRepoSearch = false }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -27,7 +88,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
     const greeting = firstName ? `Hello ${firstName}! 👋` : "Hello! 👋"
 
     if (isRepoSearch && !profile) {
-      return `${greeting} I'm CT-AI. 🛍️ Please <a href="/" style="color:#db2777; font-weight:bold; text-decoration:underline;">login to your account</a> to use the AI Shopping Assistant for similar products, price comparison, and more.`
+      return `${greeting} I'm CT-AI. Please login to your account to use the AI Shopping Assistant for similar products, price comparison, and more.`
     }
 
     if (productData) {
@@ -41,9 +102,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
 
   const getSuggestions = () => {
     if (isRepoSearch && !profile) {
-      return [
-        "Login to my account"
-      ]
+      return []
     }
 
     if (productData) {
@@ -354,7 +413,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
               }`}
             >
               {message.role === "assistant" ? (
-                <div dangerouslySetInnerHTML={{ __html: message.content }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizeAssistantHtml(message.content) }} />
               ) : (
                 message.content
               )}

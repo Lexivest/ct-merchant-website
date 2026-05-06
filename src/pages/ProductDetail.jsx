@@ -130,6 +130,7 @@ function ProductDetail() {
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [isInWishlist, setIsInWishlist] = useState(false)
   const [securityModalOpen, setSecurityModalOpen] = useState(false)
+  const [descriptionModalOpen, setDescriptionModalOpen] = useState(false)
   const [openingWhatsApp, setOpeningWhatsApp] = useState(false)
   const [productTransition, setProductTransition] = useState({
     pending: false,
@@ -143,6 +144,7 @@ function ProductDetail() {
       productId: "",
       error: "",
     })
+    setDescriptionModalOpen(false)
   }, [productId])
 
   // Computed Values from Cache
@@ -150,6 +152,11 @@ function ProductDetail() {
   const currentShop = data?.shop
   const recommendations = data?.recommendations || []
   const isLoggedIn = Boolean(user?.id)
+  const productCityHubTitle = currentShop?.cities?.name
+    ? `${currentShop.cities.name} Biz Hub`
+    : "City Biz Hub"
+  const productDescription =
+    currentProduct?.description?.trim() || "No description provided by the merchant."
 
   const productImages = useMemo(() => {
     return [
@@ -772,17 +779,14 @@ function ProductDetail() {
         } ${productTransition.pending ? "pointer-events-none select-none" : ""}`}
       >
         <header className="sticky top-0 z-[100] flex items-center justify-between bg-[#131921] px-4 py-3 text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <button type="button" onClick={goBack} className="shrink-0 text-[1.2rem] transition hover:text-pink-500">
-              <FaArrowLeft />
-            </button>
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate text-[1.05rem] font-bold">Product Details</span>
-              <span className="flex items-center gap-1 text-[0.75rem] font-semibold text-slate-300">
-                <FaLocationDot />
-                {currentShop?.areas?.name || "Loading..."}
-              </span>
-            </div>
+          <button type="button" onClick={goBack} className="shrink-0 text-[1.2rem] transition hover:text-pink-500">
+            <FaArrowLeft />
+          </button>
+
+          <div className="pointer-events-none absolute left-1/2 max-w-[60vw] -translate-x-1/2 text-center">
+            <span className="block truncate text-[1.05rem] font-black tracking-tight">
+              {productCityHubTitle}
+            </span>
           </div>
 
           <div className="flex shrink-0 items-center gap-4">
@@ -1052,9 +1056,18 @@ function ProductDetail() {
                   <div className="mb-2 border-b-2 border-slate-100 pb-1.5 text-[1.05rem] font-extrabold text-[#0F1111]">
                     Full Description
                   </div>
-                  <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-slate-600">
-                    {currentProduct?.description || "No description provided by the merchant."}
+                  <p className="line-clamp-2 whitespace-pre-wrap text-[0.95rem] leading-7 text-slate-600">
+                    {productDescription}
                   </p>
+                  {currentProduct?.description?.trim() ? (
+                    <button
+                      type="button"
+                      onClick={() => setDescriptionModalOpen(true)}
+                      className="mt-2 text-[0.85rem] font-black text-pink-600 transition hover:text-pink-700 hover:underline"
+                    >
+                      View all
+                    </button>
+                  ) : null}
                 </div>
 
                 {Object.keys(technicalAttributes).length > 0 ? (
@@ -1182,6 +1195,37 @@ function ProductDetail() {
               >
                 {openingWhatsApp ? "Opening WhatsApp..." : "Continue to Chat"}
               </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {descriptionModalOpen ? (
+        <div className="fixed inset-0 z-[5000] flex items-end justify-center bg-[rgba(15,23,42,0.72)] px-3 pb-3 backdrop-blur-[2px] sm:items-center sm:p-4">
+          <div className="max-h-[82vh] w-full max-w-[560px] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.35)]">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div className="min-w-0">
+                <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-pink-600">
+                  Product Details
+                </p>
+                <h3 className="truncate text-[1.05rem] font-black text-slate-950">
+                  Full Description
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDescriptionModalOpen(false)}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                aria-label="Close full description"
+              >
+                <FaXmark />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto px-5 py-5">
+              <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-slate-700">
+                {productDescription}
+              </p>
             </div>
           </div>
         </div>
