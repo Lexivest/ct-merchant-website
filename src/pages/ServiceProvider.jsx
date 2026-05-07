@@ -110,7 +110,7 @@ function ServiceOfferCard({ product }) {
           <div className="rounded-[18px] border border-slate-100 bg-slate-50 p-4">
             <div className="mb-2 flex items-center gap-2 text-[0.82rem] font-black uppercase tracking-[0.08em] text-slate-700">
               <FaStar className="text-pink-600" />
-              What You Offer
+              What We Offer
             </div>
             <p className="whitespace-pre-wrap text-[0.9rem] leading-6 text-slate-600">{features}</p>
           </div>
@@ -205,6 +205,7 @@ export default function ServiceProvider() {
 
   const currentShop = data?.shop
   const products = data?.products || EMPTY_PRODUCTS
+  const ownerProfile = data?.ownerProfile || data?.owner_profile || null
   const approvedNews = data?.approvedNews || []
   const shopBanner = data?.shopBanner || ""
   const serviceProducts = useMemo(
@@ -222,8 +223,17 @@ export default function ServiceProvider() {
     `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
       currentShop?.name || "Service",
     )}`
-  const ownerInitials = getNameInitials(currentShop?.name || "CT Service")
-  const cityName = currentShop?.cities?.name || "Local"
+  const ownerAvatarUrl = ownerProfile?.avatar_url || ""
+  const ownerInitials = getNameInitials(
+    ownerProfile?.full_name || currentShop?.name || "CT Service",
+  )
+  const cityName =
+    currentShop?.cities?.name ||
+    currentShop?.city_name ||
+    currentShop?.city?.name ||
+    "Local"
+  const isLoggedIn = Boolean(user?.id)
+  const mustLoginToContact = isRepoSearchEntry && !isLoggedIn
   const tickerText = approvedNews.join(" • ")
   const isValidServiceProvider =
     !currentShop || isServiceShop(currentShop) || isServiceCategory(currentShop.category)
@@ -266,6 +276,7 @@ export default function ServiceProvider() {
   }
 
   function openWhatsapp() {
+    if (mustLoginToContact) return
     const phone = normalizePhoneForWhatsapp(currentShop?.whatsapp || currentShop?.phone)
     if (!phone || !currentShop?.id) return
 
@@ -288,6 +299,7 @@ export default function ServiceProvider() {
   }
 
   function callProvider() {
+    if (mustLoginToContact) return
     if (!currentShop?.phone || !currentShop?.id) return
 
     void logShopAnalyticsEvent({
@@ -420,8 +432,18 @@ export default function ServiceProvider() {
             </span>
           </div>
 
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-[0.76rem] font-black text-white">
-            {ownerInitials}
+          <div className="flex items-center justify-end">
+            {ownerAvatarUrl ? (
+              <img
+                src={ownerAvatarUrl}
+                alt={ownerProfile?.full_name || currentShop?.name || "Service owner"}
+                className="h-9 w-9 rounded-full border border-white/20 object-cover"
+              />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-[0.76rem] font-black text-white">
+                {ownerInitials}
+              </div>
+            )}
           </div>
         </div>
 
@@ -476,6 +498,21 @@ export default function ServiceProvider() {
               </div>
 
               <div className="w-full border-t border-slate-100 bg-white p-4">
+                {mustLoginToContact ? (
+                  <div className="mb-4 flex flex-col gap-3 rounded-[22px] border border-blue-200 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-[0.88rem] font-semibold leading-5 text-blue-900">
+                      Login to contact this service provider.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/")}
+                      className="inline-flex items-center justify-center rounded-2xl bg-pink-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-pink-700"
+                    >
+                      Login
+                    </button>
+                  </div>
+                ) : null}
+
                 <div className="mb-4 flex items-center gap-3">
                   <StableImage
                     src={logoImage}
@@ -501,9 +538,9 @@ export default function ServiceProvider() {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    onClick={openWhatsapp}
-                    disabled={!currentShop?.whatsapp && !currentShop?.phone}
-                    title="Contact provider on WhatsApp"
+                    onClick={mustLoginToContact ? undefined : openWhatsapp}
+                    disabled={mustLoginToContact || (!currentShop?.whatsapp && !currentShop?.phone)}
+                    title={mustLoginToContact ? "Login to contact provider" : "Contact provider on WhatsApp"}
                     className="group relative min-h-[86px] overflow-hidden rounded-[24px] bg-gradient-to-br from-[#18A84C] via-[#25D366] to-[#0F8F3A] px-3 py-4 text-center text-white shadow-[0_16px_30px_rgba(37,211,102,0.26)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_38px_rgba(37,211,102,0.35)] disabled:cursor-not-allowed disabled:from-slate-300 disabled:via-slate-300 disabled:to-slate-400 disabled:shadow-none"
                   >
                     <span className="absolute -right-4 -top-5 h-20 w-20 rounded-full bg-white/20 blur-xl transition group-hover:scale-125" />
@@ -519,9 +556,9 @@ export default function ServiceProvider() {
 
                   <button
                     type="button"
-                    onClick={callProvider}
-                    disabled={!currentShop?.phone}
-                    title="Call provider"
+                    onClick={mustLoginToContact ? undefined : callProvider}
+                    disabled={mustLoginToContact || !currentShop?.phone}
+                    title={mustLoginToContact ? "Login to call provider" : "Call provider"}
                     className="group relative min-h-[86px] overflow-hidden rounded-[24px] bg-gradient-to-br from-[#0F7285] via-[#007185] to-[#083344] px-3 py-4 text-center text-white shadow-[0_16px_30px_rgba(0,113,133,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_38px_rgba(0,113,133,0.32)] disabled:cursor-not-allowed disabled:from-slate-300 disabled:via-slate-300 disabled:to-slate-400 disabled:shadow-none"
                   >
                     <span className="absolute right-4 top-4 flex gap-1">
