@@ -991,7 +991,7 @@ function AppShell() {
 
         <Route
           path="/service-provider"
-          element={withProtectedRoute(<ServiceProvider />)}
+          element={<ServiceProvider />}
         />
 
         <Route

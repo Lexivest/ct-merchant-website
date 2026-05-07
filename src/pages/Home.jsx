@@ -72,6 +72,7 @@ import {
   preloadDashboardScreen,
 } from "../lib/authScreenTransitions"
 import { createRepoSearchIntent } from "../lib/routeIntents"
+import { isServiceCategory, isServiceShop } from "../lib/serviceCategories"
 
 // --- LOCAL ASSET IMPORT ---
 import banner from "../assets/images/banner.jpg"
@@ -1010,13 +1011,25 @@ function Home() {
           }
         }
 
-        navigate(`/shop-detail?id=${shopId}${buildRepoSearchQuerySuffix(repoRef, repoSearchIntent)}`, {
+        const repoShop = prefetchedShopData?.shop || data.shop
+        const isServiceResult =
+          isServiceShop(repoShop) ||
+          isServiceCategory(repoShop?.category)
+        const targetPath = isServiceResult
+          ? `/service-provider?id=${shopId}&service=${encodeURIComponent(repoShop?.category || "")}${buildRepoSearchQuerySuffix(repoRef, repoSearchIntent)}`
+          : `/shop-detail?id=${shopId}${buildRepoSearchQuerySuffix(repoRef, repoSearchIntent)}`
+
+        navigate(targetPath, {
           state: {
             fromDiscoveryTransition: true,
             fromRepoSearch: true,
             repoSearchConfirmed: true,
             repoSearchIntent,
-            ...(prefetchedShopData ? { prefetchedShopData } : {}),
+            ...(prefetchedShopData
+              ? isServiceResult
+                ? { prefetchedServiceProviderData: prefetchedShopData }
+                : { prefetchedShopData }
+              : {}),
           },
         })
         return

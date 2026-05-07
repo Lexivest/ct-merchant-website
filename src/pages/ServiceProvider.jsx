@@ -6,7 +6,6 @@ import {
   FaBullhorn,
   FaCircleCheck,
   FaLocationDot,
-  FaMapPin,
   FaPhone,
   FaShieldHalved,
   FaStar,
@@ -28,6 +27,8 @@ import useCachedFetch, {
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { fetchShopDetailData } from "../lib/shopDetailData"
 import { logShopAnalyticsEvent } from "../lib/shopAnalytics"
+import { fetchPublicRepoShopDetail, REPO_SEARCH_INTENT_PARAM } from "../lib/repoSearch"
+import { hasValidRepoSearchIntent } from "../lib/routeIntents"
 import {
   getServiceProviderImage,
   isServiceCategory,
@@ -62,19 +63,12 @@ function getNameInitials(value) {
   return parts.map((part) => part[0]?.toUpperCase() || "").join("")
 }
 
-function getServiceImages(product) {
-  return [product?.image_url, product?.image_url_2, product?.image_url_3]
-    .map((value) => String(value || "").trim())
-    .filter(Boolean)
-}
-
 function getServiceAttribute(product, key) {
   return String(product?.attributes?.[key] || "").trim()
 }
 
 function ServiceOfferCard({ product }) {
-  const images = getServiceImages(product)
-  const mainImage = images[0] || ""
+  const mainImage = String(product?.image_url || "").trim()
   const features = getServiceAttribute(product, "Key Features")
   const included = getServiceAttribute(product, "What's in the Box")
   const support = getServiceAttribute(product, "Warranty")
@@ -94,25 +88,7 @@ function ServiceOfferCard({ product }) {
             <FaBoxOpen />
           </div>
         )}
-
-        <div className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-[0.72rem] font-black uppercase tracking-[0.12em] text-pink-700 shadow-sm">
-          {product.category || "Service"}
-        </div>
       </div>
-
-      {images.length > 1 ? (
-        <div className="flex gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3">
-          {images.slice(1).map((imageUrl) => (
-            <StableImage
-              key={imageUrl}
-              src={imageUrl}
-              alt={`${product.name || "Service"} preview`}
-              containerClassName="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white bg-white shadow-sm"
-              className="h-full w-full object-cover"
-            />
-          ))}
-        </div>
-      ) : null}
 
       <div className="space-y-4 p-5">
         <div>
@@ -170,18 +146,38 @@ export default function ServiceProvider() {
   const [searchParams] = useSearchParams()
   const shopId = searchParams.get("id")
   const selectedService = searchParams.get("service") || ""
+  const repoRefFromUrl = searchParams.get("repo_ref")?.trim() || ""
+  const repoRefFromState =
+    location.state?.prefetchedServiceProviderData?.__repoRef ||
+    location.state?.prefetchedShopData?.__repoRef ||
+    ""
+  const repoRef = repoRefFromUrl || repoRefFromState
+  const repoSearchIntent =
+    searchParams.get(REPO_SEARCH_INTENT_PARAM)?.trim() ||
+    location.state?.repoSearchIntent ||
+    ""
+  const isRepoSearchEntry =
+    Boolean(repoRef) &&
+    hasValidRepoSearchIntent(repoSearchIntent, repoRef) &&
+    (searchParams.get("repo_public") === "1" ||
+      location.state?.fromRepoSearch === true)
   const { user, loading: authLoading } = useAuthSession()
   const viewTrackedRef = useRef(false)
 
   usePreventPullToRefresh()
 
   const routePrefetchedData =
-    location.state?.prefetchedServiceProviderData?.shop &&
-    String(location.state.prefetchedServiceProviderData.shop.id) === String(shopId)
-      ? location.state.prefetchedServiceProviderData
-      : null
+    [
+      location.state?.prefetchedServiceProviderData,
+      location.state?.prefetchedShopData,
+    ].find((candidate) =>
+      candidate?.shop &&
+      String(candidate.shop.id) === String(shopId)
+    ) || null
 
-  const cacheKey = `service_provider_${shopId || "unknown"}_${user?.id || "anon"}`
+  const cacheKey = isRepoSearchEntry
+    ? `repo_public_service_${repoRef || "unknown"}_${shopId || "unknown"}`
+    : `service_provider_${shopId || "unknown"}_${user?.id || "anon"}`
 
   useEffect(() => {
     if (!routePrefetchedData || readCachedFetchStore(cacheKey)) return
@@ -195,12 +191,15 @@ export default function ServiceProvider() {
     mutate,
   } = useCachedFetch(
     cacheKey,
-    () => fetchShopDetailData({ shopId, userId: user?.id || null }),
+    () =>
+      isRepoSearchEntry
+        ? fetchPublicRepoShopDetail({ repoRef, shopId })
+        : fetchShopDetailData({ shopId, userId: user?.id || null }),
     {
-      dependencies: [shopId, user?.id],
+      dependencies: [isRepoSearchEntry, repoRef, shopId, user?.id],
       ttl: 1000 * 60 * 5,
       persist: "session",
-      skip: !shopId,
+      skip: !shopId || (!isRepoSearchEntry && !user?.id),
     },
   )
 
@@ -230,10 +229,10 @@ export default function ServiceProvider() {
     !currentShop || isServiceShop(currentShop) || isServiceCategory(currentShop.category)
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !user && !isRepoSearchEntry) {
       navigate("/", { replace: true })
     }
-  }, [authLoading, navigate, user])
+  }, [authLoading, isRepoSearchEntry, navigate, user])
 
   useEffect(() => {
     viewTrackedRef.current = false
@@ -248,13 +247,15 @@ export default function ServiceProvider() {
     void logShopAnalyticsEvent({
       shopId: currentShop.id,
       eventType: "shop_view",
-      eventSource: "service_provider",
+      eventSource: isRepoSearchEntry ? "repo_search" : "service_provider",
+      repoRef: isRepoSearchEntry ? repoRef : null,
       metadata: {
         screen: "service-provider",
         service_category: serviceCategory,
+        repo_public: isRepoSearchEntry,
       },
     })
-  }, [currentShop?.id, currentShop?.owner_id, serviceCategory, user?.id])
+  }, [currentShop?.id, currentShop?.owner_id, isRepoSearchEntry, repoRef, serviceCategory, user?.id])
 
   function goBackSafe() {
     if (window.history.length > 1) {
@@ -271,8 +272,9 @@ export default function ServiceProvider() {
     void logShopAnalyticsEvent({
       shopId: currentShop.id,
       eventType: "contact_whatsapp",
-      eventSource: "service_provider",
+      eventSource: isRepoSearchEntry ? "repo_search" : "service_provider",
       contactStatus: "opened",
+      repoRef: isRepoSearchEntry ? repoRef : null,
       metadata: {
         screen: "service-provider",
         service_category: serviceCategory,
@@ -291,8 +293,9 @@ export default function ServiceProvider() {
     void logShopAnalyticsEvent({
       shopId: currentShop.id,
       eventType: "contact_phone",
-      eventSource: "service_provider",
+      eventSource: isRepoSearchEntry ? "repo_search" : "service_provider",
       contactStatus: "opened",
+      repoRef: isRepoSearchEntry ? repoRef : null,
       metadata: {
         screen: "service-provider",
         service_category: serviceCategory,
@@ -561,22 +564,6 @@ export default function ServiceProvider() {
             <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-slate-600">
               {currentShop?.description || "Service details not provided yet."}
             </p>
-          </section>
-
-          <section className="content-block mb-2 bg-white px-5 py-6 lg:mb-6 lg:rounded-lg lg:border lg:border-slate-300 lg:shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-            <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-[0.5px] text-pink-600">
-              Provider Information
-            </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
-              <div className="mb-2 flex items-center font-extrabold text-[#0F1111]">
-                <FaMapPin className="mr-2 text-pink-600" />
-                <span>{currentShop?.name || "Service Provider"}</span>
-              </div>
-              <div className="flex items-start text-[0.9rem] text-slate-600">
-                <FaLocationDot className="mr-2 mt-1 shrink-0 text-slate-400" />
-                <span>{currentShop?.address || "Address not provided."}</span>
-              </div>
-            </div>
           </section>
         </div>
       </main>

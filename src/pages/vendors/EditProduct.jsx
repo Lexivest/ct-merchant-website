@@ -149,6 +149,7 @@ const PRODUCT_INPUT_MAX_BYTES = PRODUCT_PROFILE.maxInputBytes;
 const PRODUCT_ACCEPT = getAcceptValue(PRODUCT_RULE, "image/*");
 const PRODUCT_RULE_LABEL = getRuleLabel(PRODUCT_RULE);
 const MAX_SPECIAL_OFFERS = 2;
+const PRODUCT_IMAGE_SLOTS = [1, 2, 3];
 const PRODUCT_TEXT_LIMITS = {
   name: 20,
   key_features: 200,
@@ -391,6 +392,14 @@ export default function EditProduct() {
   const handleAttrChange = (key, value) => setDynamicAttrs((prev) => ({ ...prev, [key]: typeof value === "string" ? value.slice(0, PRODUCT_ATTRIBUTE_TEXT_LIMIT) : value }));
   const handleCategoryChange = (val) => {
     const nextIsService = isServiceCategory(val);
+    if (nextIsService) {
+      [2, 3].forEach((slot) => {
+        if (previews[slot] && previews[slot].startsWith("blob:")) URL.revokeObjectURL(previews[slot]);
+      });
+      setDeletedSlots((prev) => ({ ...prev, 2: true, 3: true }));
+      setBlobs((prev) => ({ ...prev, 2: null, 3: null }));
+      setPreviews((prev) => ({ ...prev, 2: "", 3: "" }));
+    }
     setForm((prev) => ({
       ...prev,
       category: val,
@@ -618,7 +627,8 @@ export default function EditProduct() {
       if (form.warranty.trim()) finalAttrs["Warranty"] = form.warranty.trim();
 
       // Upload new blobs
-      const uploadPromises = [1, 2, 3].map(async (idx) => {
+      const uploadSlots = isUpdatingService ? [1] : PRODUCT_IMAGE_SLOTS;
+      const uploadPromises = uploadSlots.map(async (idx) => {
         if (!blobs[idx]) return { slot: idx, url: null, path: null };
         const fingerprint = await getUploadFingerprint(blobs[idx]);
         const fName = `${user.id}_img${idx}_${fingerprint}.jpg`;
@@ -645,8 +655,8 @@ export default function EditProduct() {
       if (hasUploadError) throw new Error("One or more images failed to upload. Aborting update.");
 
       const finalUrl1 = newUrls[1] || (deletedSlots[1] ? null : existingUrls[1]);
-      const finalUrl2 = newUrls[2] || (deletedSlots[2] ? null : existingUrls[2]);
-      const finalUrl3 = newUrls[3] || (deletedSlots[3] ? null : existingUrls[3]);
+      const finalUrl2 = isUpdatingService ? null : newUrls[2] || (deletedSlots[2] ? null : existingUrls[2]);
+      const finalUrl3 = isUpdatingService ? null : newUrls[3] || (deletedSlots[3] ? null : existingUrls[3]);
 
       // Update DB (Postgres trigger handles deleting old images replaced in this update)
       const { error: rpcErr } = await supabase.rpc("manage_product", {
@@ -786,14 +796,16 @@ export default function EditProduct() {
         <div className="mb-6 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-4">
           <h4 className="mb-2 flex items-center gap-2 text-[0.95rem] font-extrabold"><FaWandMagicSparkles className="text-[#db2777]" /> Powered by CT Studio</h4>
           <p className="text-[0.85rem] text-[#475569] leading-relaxed">
-            {`Use Gallery or Camera for each slot. Camera includes zoom support where available. Max input ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}; final upload ${PRODUCT_RULE_LABEL}.`}
+            {isServiceListing
+              ? `Use Gallery or Camera for one clear service image. Camera includes zoom support where available. Max input ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}; final upload ${PRODUCT_RULE_LABEL}.`
+              : `Use Gallery or Camera for each slot. Camera includes zoom support where available. Max input ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}; final upload ${PRODUCT_RULE_LABEL}.`}
           </p>
         </div>
 
         <form onSubmit={handleUpdate} className="rounded-xl border border-[#D5D9D9] bg-white p-6 shadow-sm">
           {/* IMAGE GRID */}
-          <div className="mb-6 grid grid-cols-3 gap-3">
-            {[1, 2, 3].map((slot) => (
+          <div className={`mb-6 grid gap-3 ${isServiceListing ? "grid-cols-1" : "grid-cols-3"}`}>
+            {(isServiceListing ? [1] : PRODUCT_IMAGE_SLOTS).map((slot) => (
               <div
                 key={slot}
                 className={`relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed transition-colors ${slot === 1 ? (previews[1] ? "border-[#db2777] bg-white" : "border-[#db2777] bg-[#fdf2f8]") : (previews[slot] ? "border-slate-300 bg-white" : "border-[#888C8C] bg-[#F7F7F7]")}`}

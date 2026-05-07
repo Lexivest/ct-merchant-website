@@ -383,6 +383,13 @@ export default function AddProduct() {
   const handleAttrChange = (key, value) => setDynamicAttrs((prev) => ({ ...prev, [key]: typeof value === "string" ? value.slice(0, PRODUCT_ATTRIBUTE_TEXT_LIMIT) : value }));
   const handleCategoryChange = (val) => {
     const nextIsService = isServiceCategory(val);
+    if (nextIsService) {
+      [2, 3].forEach((slot) => {
+        if (previews[slot] && previews[slot].startsWith("blob:")) URL.revokeObjectURL(previews[slot]);
+      });
+      setBlobs((prev) => ({ ...prev, 2: null, 3: null }));
+      setPreviews((prev) => ({ ...prev, 2: "", 3: "" }));
+    }
     setForm((prev) => ({
       ...prev,
       category: val,
@@ -572,7 +579,8 @@ export default function AddProduct() {
       if (form.box_content.trim()) finalAttrs["What's in the Box"] = form.box_content.trim();
       if (form.warranty.trim()) finalAttrs["Warranty"] = form.warranty.trim();
 
-      const uploadPromises = PRODUCT_IMAGE_SLOTS.map(async (idx) => {
+      const uploadSlots = isSubmittingService ? [1] : PRODUCT_IMAGE_SLOTS;
+      const uploadPromises = uploadSlots.map(async (idx) => {
         if (!blobs[idx]) return { slot: idx, url: null, path: null };
         const fName = `${user.id}_${Date.now()}_img${idx}.jpg`;
         const { data, error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], { contentType: "image/jpeg", upsert: false, cacheControl: "31536000" });
@@ -599,7 +607,7 @@ export default function AddProduct() {
 
       const { error: rpcErr } = await supabase.rpc("manage_product", {
         p_shop_id: parseInt(shopId), p_name: form.name.trim(), p_description: form.desc.trim(), p_price: priceVal, p_discount_price: discountPrice,
-        p_condition: isSubmittingService ? "New" : form.condition, p_category: form.category, p_image_url: finalUrls[1], p_image_url_2: finalUrls[2], p_image_url_3: finalUrls[3],
+        p_condition: isSubmittingService ? "New" : form.condition, p_category: form.category, p_image_url: finalUrls[1], p_image_url_2: isSubmittingService ? null : finalUrls[2], p_image_url_3: isSubmittingService ? null : finalUrls[3],
         p_stock_count: isSubmittingService ? 1 : parseInt(form.stock), p_attributes: finalAttrs, p_is_available: isSubmittingService ? true : parseInt(form.stock) > 0,
       });
 
@@ -712,14 +720,16 @@ export default function AddProduct() {
         <div className="mb-6 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-4">
           <h4 className="mb-2 flex items-center gap-2 text-[0.95rem] font-extrabold"><FaWandMagicSparkles className="text-[#db2777]" /> Powered by CT Studio</h4>
           <p className="text-[0.85rem] text-[#475569] leading-relaxed">
-            {`Use Gallery or Camera for each slot. Camera includes zoom support where available. Max input ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}; final upload ${PRODUCT_RULE_LABEL}.`}
+            {isServiceListing
+              ? `Use Gallery or Camera for one clear service image. Camera includes zoom support where available. Max input ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}; final upload ${PRODUCT_RULE_LABEL}.`
+              : `Use Gallery or Camera for each slot. Camera includes zoom support where available. Max input ${formatBytes(PRODUCT_INPUT_MAX_BYTES)}; final upload ${PRODUCT_RULE_LABEL}.`}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-xl border border-[#D5D9D9] bg-white p-6 shadow-sm">
           {/* IMAGE GRID */}
-          <div className="mb-6 grid grid-cols-3 gap-3">
-            {[1, 2, 3].map((slot) => (
+          <div className={`mb-6 grid gap-3 ${isServiceListing ? "grid-cols-1" : "grid-cols-3"}`}>
+            {(isServiceListing ? [1] : PRODUCT_IMAGE_SLOTS).map((slot) => (
               <div
                 key={slot}
                 className={`relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed transition-colors ${slot === 1 ? (previews[1] ? "border-[#db2777] bg-white" : "border-[#db2777] bg-[#fdf2f8]") : (previews[slot] ? "border-slate-300 bg-white" : "border-[#888C8C] bg-[#F7F7F7]")}`}

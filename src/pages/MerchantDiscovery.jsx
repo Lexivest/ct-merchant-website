@@ -18,6 +18,7 @@ import {
   createRepoSearchIntent,
   hasValidRepoSearchIntent,
 } from "../lib/routeIntents"
+import { isServiceCategory, isServiceShop } from "../lib/serviceCategories"
 
 function buildRepoSearchPath(merchantId, repoSearchIntent = "") {
   const params = new URLSearchParams({ merchantId })
@@ -159,19 +160,36 @@ function MerchantDiscoveryRunner({ merchantId, repoSearchIntent }) {
 
         if (cancelled) return
 
-        navigate(`/shop-detail?id=${shop.id}${buildRepoSearchQuerySuffix(repoRef, repoSearchIntent)}`, {
+        const repoShop = prefetchedShopData?.shop || shop
+        const isServiceResult =
+          isServiceShop(repoShop) ||
+          isServiceCategory(repoShop?.category)
+        const targetPath = isServiceResult
+          ? `/service-provider?id=${shop.id}&service=${encodeURIComponent(repoShop?.category || "")}${buildRepoSearchQuerySuffix(repoRef, repoSearchIntent)}`
+          : `/shop-detail?id=${shop.id}${buildRepoSearchQuerySuffix(repoRef, repoSearchIntent)}`
+
+        navigate(targetPath, {
           replace: true,
           state: {
             fromDiscoveryTransition: true,
             fromRepoSearch: true,
             repoSearchConfirmed: true,
             repoSearchIntent,
-            prefetchedShopData,
+            ...(isServiceResult
+              ? { prefetchedServiceProviderData: prefetchedShopData }
+              : { prefetchedShopData }),
           },
         })
       } catch {
         if (cancelled) return
-        navigate(`/shop-detail?id=${shop.id}${buildRepoSearchQuerySuffix(repoRef, repoSearchIntent)}`, {
+        const isServiceResult =
+          isServiceShop(shop) ||
+          isServiceCategory(shop?.category)
+        const targetPath = isServiceResult
+          ? `/service-provider?id=${shop.id}&service=${encodeURIComponent(shop?.category || "")}${buildRepoSearchQuerySuffix(repoRef, repoSearchIntent)}`
+          : `/shop-detail?id=${shop.id}${buildRepoSearchQuerySuffix(repoRef, repoSearchIntent)}`
+
+        navigate(targetPath, {
           replace: true,
           state: {
             fromDiscoveryTransition: true,
@@ -190,7 +208,7 @@ function MerchantDiscoveryRunner({ merchantId, repoSearchIntent }) {
     return () => {
       cancelled = true
     }
-  }, [data, merchantId, navigate, repoSearchIntent, shop?.id, shop?.unique_id])
+  }, [data, merchantId, navigate, repoSearchIntent, shop])
 
   function handleBack() {
     navigate("/")
