@@ -215,6 +215,7 @@ export async function fetchStaffPaymentsOverview() {
         kyc_status,
         subscription_end_date,
         subscription_plan,
+        is_service,
         phone,
         whatsapp,
         created_at,
@@ -277,6 +278,7 @@ export async function fetchStaffPaymentsOverview() {
       shop_whatsapp: shop?.whatsapp || "",
       subscription_end_date: shop?.subscription_end_date || null,
       subscription_plan_current: shop?.subscription_plan || "",
+      is_service: shop?.is_service === true,
     }
   })
 

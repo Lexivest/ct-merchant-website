@@ -102,6 +102,34 @@ function getPlanLabel(plan) {
   return "6 Months"
 }
 
+function getReceiptBusinessNoun(proof) {
+  return proof?.is_service ? "service" : "shop"
+}
+
+function isSubscriptionReceipt(proof) {
+  return proof?.payment_kind === "service_fee"
+}
+
+function getReceiptSubscriptionPlan(proof) {
+  const plan = proof?.plan || proof?.subscription_plan_current || proof?.subscription_plan || ""
+  if (plan === "1_Year") return "1 Year Plan"
+  if (plan === "6_Months") return "6 Months Plan"
+  return plan ? String(plan).replace(/_/g, " ") : "Subscription Plan"
+}
+
+function getReceiptSubscriptionExpiry(proof) {
+  return proof?.subscription_end_date || proof?.subscriptionEndDate || null
+}
+
+function getReceiptSubscriptionExpiryLabel(proof) {
+  const expiry = getReceiptSubscriptionExpiry(proof)
+  return expiry ? formatDateTime(expiry) : "Updated after approval"
+}
+
+function getReceiptRenewalNote(proof) {
+  return `Please renew before the expiry date to keep your ${getReceiptBusinessNoun(proof)} active in the CTMerchant market.`
+}
+
 function getReceiptNumber(proof) {
   return proof?.approval_payment_ref || proof?.transfer_reference || `OFFLINE_${proof?.id || "PENDING"}`
 }
@@ -125,12 +153,17 @@ function buildReceiptMessage(proof) {
     `Shop: ${proof.shop_name || `Shop #${proof.shop_id}`}`,
     `Amount: ${formatNaira(proof.amount)}`,
     `Date: ${formatDateTime(getReceiptDate(proof))}`,
-    "",
-    COMPANY_DETAILS.name,
-    COMPANY_DETAILS.website,
-    COMPANY_DETAILS.rcNumber,
-    COMPANY_DETAILS.email,
   ]
+
+  if (isSubscriptionReceipt(proof)) {
+    lines.push(
+      `Subscription Plan: ${getReceiptSubscriptionPlan(proof)}`,
+      `Subscription Expiry: ${getReceiptSubscriptionExpiryLabel(proof)}`,
+      getReceiptRenewalNote(proof)
+    )
+  }
+
+  lines.push("", COMPANY_DETAILS.name, COMPANY_DETAILS.website, COMPANY_DETAILS.rcNumber, COMPANY_DETAILS.email)
 
   return lines.join("\n")
 }
@@ -155,6 +188,10 @@ function openPrintableReceipt(proof) {
   const paymentLabel = getPaymentKindLabel(proof)
   const shopName = proof.shop_name || `Shop #${proof.shop_id}`
   const merchantName = proof.merchant_name || "Merchant"
+  const hasSubscriptionDetails = isSubscriptionReceipt(proof)
+  const subscriptionPlan = getReceiptSubscriptionPlan(proof)
+  const subscriptionExpiry = getReceiptSubscriptionExpiryLabel(proof)
+  const renewalNote = getReceiptRenewalNote(proof)
   const brandReceiptHtml =
     '<span><span style="color:#db2777;">C</span><span style="color:#4c1d95;">T</span><span style="color:#2563eb;">M</span>erchant</span>'
 
@@ -233,6 +270,28 @@ function openPrintableReceipt(proof) {
             gap: 20px;
           }
           .amount .value { color: white; font-size: 36px; margin: 0; }
+          .subscription {
+            margin-top: 24px;
+            border: 1px solid #bfdbfe;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #eff6ff, #fdf2f8);
+            padding: 22px;
+          }
+          .subscription-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+          }
+          .renewal-note {
+            margin-top: 16px;
+            border-radius: 18px;
+            background: white;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.7;
+            padding: 14px 16px;
+          }
           .foot {
             padding: 22px 34px 32px;
             color: #64748b;
@@ -290,6 +349,25 @@ function openPrintableReceipt(proof) {
                 <div class="value">${escapeHtml(proof.transfer_reference || receiptNumber)}</div>
               </div>
             </div>
+            ${
+              hasSubscriptionDetails
+                ? `
+                  <div class="subscription">
+                    <div class="subscription-grid">
+                      <div>
+                        <div class="label">Subscription Plan</div>
+                        <div class="value">${escapeHtml(subscriptionPlan)}</div>
+                      </div>
+                      <div>
+                        <div class="label">Subscription Expiry</div>
+                        <div class="value">${escapeHtml(subscriptionExpiry)}</div>
+                      </div>
+                    </div>
+                    <div class="renewal-note">${escapeHtml(renewalNote)}</div>
+                  </div>
+                `
+                : ""
+            }
             <div class="amount">
               <div>
                 <div class="label" style="color:#cbd5e1;">Amount Paid</div>
@@ -382,6 +460,9 @@ function buildManualReceipt(row, result, paymentKind, planKey, paymentRef) {
     merchant_phone: row.merchantPhone,
     payment_kind: paymentKind,
     plan: result?.plan || planKey || null,
+    subscription_plan_current: result?.plan || planKey || row.shop.subscription_plan || null,
+    subscription_end_date: result?.subscriptionEndDate || row.shop.subscription_end_date || null,
+    is_service: row.shop.is_service === true,
     amount: Number(result?.amount || fallbackAmount),
     transfer_reference: result?.paymentRef || paymentRef,
     approval_payment_ref: result?.paymentRef || paymentRef,
@@ -413,6 +494,10 @@ function ReceiptModal({ proof, onClose, onSendWhatsApp }) {
 
   const recipientPhone = getReceiptRecipientPhone(proof)
   const normalizedPhone = normalizeWhatsAppPhone(recipientPhone)
+  const hasSubscriptionDetails = isSubscriptionReceipt(proof)
+  const subscriptionPlan = getReceiptSubscriptionPlan(proof)
+  const subscriptionExpiry = getReceiptSubscriptionExpiryLabel(proof)
+  const renewalNote = getReceiptRenewalNote(proof)
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
@@ -484,6 +569,24 @@ function ReceiptModal({ proof, onClose, onSendWhatsApp }) {
                   <div className="mt-2 font-black text-slate-950">{proof.transfer_reference || getReceiptNumber(proof)}</div>
                 </div>
               </div>
+
+              {hasSubscriptionDetails ? (
+                <div className="mt-5 rounded-3xl border border-blue-200 bg-gradient-to-br from-blue-50 to-pink-50 p-5">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <div className="text-xs font-black uppercase tracking-widest text-slate-400">Subscription Plan</div>
+                      <div className="mt-2 text-lg font-black text-slate-950">{subscriptionPlan}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-black uppercase tracking-widest text-slate-400">Subscription Expiry</div>
+                      <div className="mt-2 text-lg font-black text-slate-950">{subscriptionExpiry}</div>
+                    </div>
+                  </div>
+                  <div className="mt-4 rounded-2xl bg-white p-4 text-sm font-bold leading-6 text-slate-600">
+                    {renewalNote}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="mt-5 flex flex-col gap-3 rounded-3xl bg-slate-950 p-5 text-white sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -744,6 +847,9 @@ export default function StaffPayments() {
             status: "approved",
             reviewed_at: new Date().toISOString(),
             approval_payment_ref: data?.paymentRef || proof.approval_payment_ref,
+            plan: data?.plan || proof.plan,
+            subscription_plan_current: data?.plan || proof.subscription_plan_current,
+            subscription_end_date: data?.subscriptionEndDate || proof.subscription_end_date,
           }
         setSelectedReceiptProof(approvedProof)
       }
