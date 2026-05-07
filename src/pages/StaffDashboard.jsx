@@ -507,22 +507,22 @@ export default function StaffDashboard() {
         }
       />
 
-      <div className={`min-h-screen bg-[#eef2f7] text-slate-950 ${routeTransition.pending ? "pointer-events-none select-none" : ""}`}>
-        <header className="sticky top-0 z-[100] border-b border-white/10 bg-[#0f172a]/95 px-4 py-3 text-white shadow-xl shadow-slate-900/10 backdrop-blur-xl sm:px-6">
-          <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4">
+      <div className={`min-h-[100dvh] overflow-x-hidden bg-[#eef2f7] pb-[calc(2.5rem+env(safe-area-inset-bottom))] text-slate-950 ${routeTransition.pending ? "pointer-events-none select-none" : ""}`}>
+        <header className="sticky top-0 z-[100] border-b border-white/10 bg-[#0f172a]/95 px-3 py-3 text-white shadow-xl shadow-slate-900/10 backdrop-blur-xl sm:px-6">
+          <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-rose-300">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-rose-300 sm:h-11 sm:w-11">
                 <FaShieldHalved />
               </div>
               <div className="min-w-0">
-                <div className="truncate text-sm font-black uppercase tracking-[0.18em] text-white/50">
+                <div className="truncate text-[11px] font-black tracking-[0.16em] text-white/50 sm:text-sm">
                   <BrandText /> Staff
                 </div>
-                <div className="truncate text-lg font-black">Operations Home</div>
+                <div className="truncate text-base font-black sm:text-lg">Operations Home</div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
                 onClick={refreshCounts}
@@ -535,10 +535,12 @@ export default function StaffDashboard() {
                 type="button"
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-4 py-2.5 text-sm font-black transition hover:bg-rose-500 disabled:opacity-70"
+                className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-3 py-2.5 text-sm font-black transition hover:bg-rose-500 disabled:opacity-70 sm:px-4"
               >
                 {isLoggingOut ? <FaCircleNotch className="animate-spin" /> : <FaArrowRightFromBracket />}
-                {isLoggingOut ? "Signing out" : "Logout"}
+                <span className="hidden min-[370px]:inline">
+                  {isLoggingOut ? "Signing out" : "Logout"}
+                </span>
               </button>
             </div>
           </div>
@@ -559,18 +561,18 @@ export default function StaffDashboard() {
           </div>
         ) : null}
 
-        <main className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:py-8">
-          <section className="relative overflow-hidden rounded-[38px] bg-[#111827] text-white shadow-[0_28px_90px_rgba(15,23,42,0.25)]">
+        <main className="mx-auto w-full max-w-[1500px] px-3 py-5 sm:px-6 sm:py-6 lg:py-8">
+          <section className="relative overflow-hidden rounded-[28px] bg-[#111827] text-white shadow-[0_28px_90px_rgba(15,23,42,0.25)] sm:rounded-[38px]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(244,63,94,0.40),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(14,165,233,0.26),transparent_30%),linear-gradient(135deg,#111827_0%,#1e1b4b_55%,#881337_100%)]" />
             <div className="absolute -bottom-24 right-4 h-64 w-64 rounded-full border border-white/10" />
-            <div className="relative grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
+            <div className="relative grid min-w-0 gap-7 p-5 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
               <div className="flex flex-col justify-between gap-10">
-                <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-white/70">
+                <div className="min-w-0">
+                  <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-white/70 sm:px-4 sm:text-[11px] sm:tracking-[0.22em]">
                     <FaBuildingUser />
-                    Standalone Staff Workspace
+                    <span className="truncate">Standalone Staff Workspace</span>
                   </div>
-                  <h1 className="mt-6 max-w-3xl text-4xl font-black tracking-[-0.04em] sm:text-5xl lg:text-6xl">
+                  <h1 className="mt-5 max-w-3xl break-words text-[clamp(2.2rem,11vw,3.8rem)] font-black leading-[0.98] tracking-[-0.05em] sm:mt-6 lg:text-6xl">
                     Welcome back, {renderBrandedText(staffName.split(" ")[0] || "Staff")}.
                   </h1>
                   <p className="mt-5 max-w-2xl text-base font-medium leading-8 text-white/72">
@@ -578,25 +580,25 @@ export default function StaffDashboard() {
                   </p>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
+                <div className="grid min-w-0 gap-3 sm:grid-cols-3">
+                  <div className="min-w-0 rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
                     <div className="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">Shops</div>
                     <div className="mt-2 text-3xl font-black">{summary.shopCount}</div>
                   </div>
-                  <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
+                  <div className="min-w-0 rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
                     <div className="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">Pending</div>
                     <div className="mt-2 text-3xl font-black">
                       {counts.verifications + counts.products + counts.community + counts.content + counts.payments}
                     </div>
                   </div>
-                  <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
+                  <div className="min-w-0 rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
                     <div className="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">Scope</div>
                     <div className="mt-2 truncate text-2xl font-black">{cityScope}</div>
                   </div>
                 </div>
               </div>
 
-              <aside className="rounded-[32px] border border-white/10 bg-white/12 p-6 backdrop-blur-xl">
+              <aside className="min-w-0 rounded-[28px] border border-white/10 bg-white/12 p-5 backdrop-blur-xl sm:rounded-[32px] sm:p-6">
                 <div className="flex items-start gap-4">
                   {avatarUrl ? (
                     <img
@@ -630,9 +632,9 @@ export default function StaffDashboard() {
                     ["Grade Level", "Pending HR assignment"],
                     ["File No.", "Pending HR assignment"],
                   ].map(([label, value]) => (
-                    <div key={label} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/10 px-4 py-3">
-                      <span className="text-xs font-black uppercase tracking-[0.18em] text-white/42">{label}</span>
-                      <span className="truncate text-sm font-black text-white">{value}</span>
+                    <div key={label} className="flex min-w-0 items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/10 px-4 py-3">
+                      <span className="shrink-0 text-xs font-black uppercase tracking-[0.18em] text-white/42">{label}</span>
+                      <span className="min-w-0 truncate text-sm font-black text-white">{value}</span>
                     </div>
                   ))}
                 </div>

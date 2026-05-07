@@ -738,22 +738,22 @@ export function StaffPortalShell({
 
   return (
     <div
-      className={`min-h-screen bg-[radial-gradient(circle_at_top,#fdf2f8_0,#f8fafc_26%,#f8fafc_100%)] pb-12 font-sans ${
+      className={`min-h-[100dvh] overflow-x-hidden bg-[radial-gradient(circle_at_top,#fdf2f8_0,#f8fafc_26%,#f8fafc_100%)] pb-[calc(3rem+env(safe-area-inset-bottom))] font-sans ${
         routeLocation.state?.fromStaffTransition ? "ctm-page-enter" : ""
       }`}
     >
-      <nav className="flex items-center justify-between bg-[#2E1065] px-6 py-4 text-white shadow-md">
-        <div className="flex items-center gap-3">
-          <FaShieldHalved className="text-2xl text-[#DB2777]" />
-          <h1 className="text-lg font-bold tracking-wide">
+      <nav className="flex min-w-0 items-center justify-between gap-3 bg-[#2E1065] px-3 py-4 text-white shadow-md sm:px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <FaShieldHalved className="shrink-0 text-2xl text-[#DB2777]" />
+          <h1 className="min-w-0 text-base font-bold tracking-wide sm:text-lg">
             <BrandText /> <span className="text-[#DB2777]">Staff</span>
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => navigate("/staff-dashboard")}
-            className="flex items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-4 py-2 font-bold transition-colors hover:bg-white/15"
+            className="flex items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm font-bold transition-colors hover:bg-white/15 sm:px-4 sm:text-base"
           >
             <FaHouse />
             Home
@@ -762,29 +762,31 @@ export function StaffPortalShell({
             type="button"
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="flex items-center gap-2 rounded-lg bg-[#DB2777] px-5 py-2 font-bold transition-colors hover:bg-pink-600 disabled:opacity-70"
+            className="flex items-center gap-2 rounded-lg bg-[#DB2777] px-3 py-2 text-sm font-bold transition-colors hover:bg-pink-600 disabled:opacity-70 sm:px-5 sm:text-base"
           >
             {isLoggingOut ? <FaCircleNotch className="animate-spin" /> : <FaArrowRightFromBracket />}
-            {isLoggingOut ? "Logging out..." : "Logout"}
+            <span className="hidden min-[370px]:inline">
+              {isLoggingOut ? "Logging out..." : "Logout"}
+            </span>
           </button>
         </div>
       </nav>
 
-      <div className="mx-auto mt-8 max-w-[1280px] px-4 sm:px-6">
+      <div className="mx-auto mt-6 w-full max-w-[1280px] px-3 sm:mt-8 sm:px-6">
         <div className="mb-8 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-          <div className="bg-[linear-gradient(135deg,#2E1065_0%,#4c1d95_45%,#DB2777_100%)] px-8 py-8 text-white">
+          <div className="bg-[linear-gradient(135deg,#2E1065_0%,#4c1d95_45%,#DB2777_100%)] px-5 py-7 text-white sm:px-8 sm:py-8">
             <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex flex-col items-center gap-8 sm:flex-row sm:items-start">
+              <div className="flex min-w-0 flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
                 <img
                   src={avatarUrl}
                   alt="Staff Avatar"
-                  className="h-24 w-24 rounded-full border-4 border-white/20 object-cover shadow-sm"
+                  className="h-20 w-20 rounded-full border-4 border-white/20 object-cover shadow-sm sm:h-24 sm:w-24"
                 />
-                <div className="text-center sm:text-left">
+                <div className="min-w-0 text-center sm:text-left">
                   <div className="text-[11px] font-black uppercase tracking-[0.24em] text-pink-200">
                     Staff Operations Console
                   </div>
-                  <h2 className="mt-3 text-3xl font-black text-white">{title || staffData.full_name}</h2>
+                  <h2 className="mt-3 break-words text-2xl font-black text-white sm:text-3xl">{title || staffData.full_name}</h2>
                   <p className="mt-2 max-w-[640px] text-sm leading-6 text-white/80">
                     {description || "Navigate through staff operations, moderation, intelligence, and merchant controls."}
                   </p>
