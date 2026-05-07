@@ -296,10 +296,18 @@ function isStaffCardTransition(location) {
   )
 }
 
+function isMarketServiceTransition(location) {
+  return Boolean(
+    location?.state?.fromMarketServiceModal &&
+      typeof location?.pathname === "string" &&
+      location.pathname === "/service-category",
+  )
+}
+
 function RouteSuspenseFallback() {
   const location = useLocation()
 
-  if (isStaffCardTransition(location)) {
+  if (isStaffCardTransition(location) || isMarketServiceTransition(location)) {
     return null
   }
 

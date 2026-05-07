@@ -1328,15 +1328,19 @@ function UserDashboard() {
     }
   }
 
-  async function openServiceCategoryWithTransition(name) {
+  function openServiceCategoryWithTransition(name) {
     if (!name || !isServiceCategory(name)) return
 
     const retryAction = () => openServiceCategoryWithTransition(name)
-    beginRouteTransition(retryAction)
 
     try {
       const now = new Date()
-      const activeCityShops = (localData.shops || [])
+      const serviceShopCandidates =
+        (localData.serviceShops || []).length > 0
+          ? localData.serviceShops || []
+          : localData.shops || []
+
+      const activeCityShops = serviceShopCandidates
         .filter((shop) => isServiceShop(shop) && isActiveMarketplaceShop(shop, profile?.city_id, now))
         .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
 
@@ -1357,13 +1361,29 @@ function UserDashboard() {
           products: serviceProducts.filter((product) => product.shop_id === shop.id),
         }))
 
-      if (providers.length > 0) {
-        primeCachedFetchStore(`service_category_${name}_city_${profile?.city_id || "none"}`, {
-          providers,
-        })
+      const hasDashboardServiceSnapshot =
+        (localData.serviceShops || []).length > 0 ||
+        (localData.shops || []).length > 0 ||
+        (localData.serviceProducts || []).length > 0
+
+      if (providers.length > 0 || hasDashboardServiceSnapshot) {
+        primeCachedFetchStore(
+          `service_category_${name}_city_${profile?.city_id || "none"}`,
+          {
+            providers,
+          },
+          Date.now(),
+          { persist: "session" },
+        )
       }
-      await loadServiceCategoryPage()
-      navigate(`/service-category?name=${encodeURIComponent(name)}`)
+
+      void loadServiceCategoryPage().catch((error) => {
+        console.warn("Service category warmup failed:", error)
+      })
+
+      navigate(`/service-category?name=${encodeURIComponent(name)}`, {
+        state: { fromMarketServiceModal: true },
+      })
     } catch (error) {
       failRouteTransition(
         getFriendlyErrorMessage(
