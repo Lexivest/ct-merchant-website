@@ -5,7 +5,6 @@ import useAuthSession, { primeAuthSessionState } from "./hooks/useAuthSession"
 import CompleteProfileModal from "./components/auth/CompleteProfileModal"
 import OnlineRouteGuard from "./components/common/OnlineRouteGuard"
 import SiteVisitTracker from "./components/common/SiteVisitTracker"
-import GlobalErrorScreen from "./components/common/GlobalErrorScreen"
 import NetworkStatusScreen from "./components/common/NetworkStatusScreen"
 import { PageLoadingScreen } from "./components/common/PageStatusScreen"
 import { isProfileComplete, signOutUser } from "./lib/auth"
@@ -24,6 +23,7 @@ import { useNetworkStatus } from "./lib/networkStatus"
 import PageSeo from "./components/common/PageSeo"
 
 const CHUNK_ROUTE_RETRY_TTL = 1000 * 60 * 2
+const CHUNK_ROUTE_RECOVERY_DELAY_MS = 180
 
 function hasRecentChunkRouteRetry(retryKey) {
   if (!retryKey) return true
@@ -73,13 +73,15 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
   useEffect(() => {
     if (typeof window === "undefined" || isOffline || !retryKey) return
 
-    if (hasRecentChunkRouteRetry(retryKey)) return
+    const recoveryReason = hasRecentChunkRouteRetry(retryKey)
+      ? "route-chunk-repeat"
+      : "route-chunk"
 
     markChunkRouteRetry(retryKey)
 
     const timer = window.setTimeout(() => {
-      forceFreshAppReload({ reason: "route-chunk", manual: false })
-    }, 250)
+      forceFreshAppReload({ reason: recoveryReason, manual: false })
+    }, CHUNK_ROUTE_RECOVERY_DELAY_MS)
 
     return () => window.clearTimeout(timer)
   }, [isOffline, retryKey])
@@ -103,27 +105,7 @@ function ChunkRouteFallback({ pageLabel = "this page" }) {
     )
   }
 
-  if (!hasRecentChunkRouteRetry(retryKey)) {
-    return null
-  }
-
-  return (
-    <GlobalErrorScreen
-      error={new Error(`Failed to load ${pageLabel}`)}
-      title="Connection issue"
-      message={`CTMerchant could not finish opening ${pageLabel}. Please retry when your connection is stable.`}
-      retryLabel="Refresh"
-      onRetry={() => retryPage(true)}
-      onBack={() => {
-        if (typeof window === "undefined") return
-        if (window.history.length > 1) {
-          window.history.back()
-          return
-        }
-        window.location.assign("/")
-      }}
-    />
-  )
+  return <PageLoadingScreen />
 }
 
 function isHardReloadNavigation() {
