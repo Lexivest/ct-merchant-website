@@ -14,7 +14,11 @@ import { ShimmerBlock } from "../../common/Shimmers"
 import StableImage from "../../common/StableImage"
 import RetryingNotice, { getRetryingMessage } from "../../common/RetryingNotice"
 import { PROMO_EXTENDED_COLORS } from "../../../lib/promoBannerEngine"
-import { SERVICE_CATEGORY_GROUPS, isServiceCategory } from "../../../lib/serviceCategories"
+import {
+  SERVICE_CATEGORY_GROUPS,
+  getServiceProviderImage,
+  isServiceCategory,
+} from "../../../lib/serviceCategories"
 
 function SponsoredProductCard({ sponsored, onOpenProduct }) {
   const product = useMemo(() => {
@@ -113,6 +117,7 @@ function SponsoredProductCard({ sponsored, onOpenProduct }) {
 const EMPTY_PRODUCTS = []
 let shopDetailPrefetchPromise = null
 let serviceCategoryPrefetchPromise = null
+let serviceProviderPrefetchPromise = null
 
 function getCategoryImageUrl(category) {
   return (
@@ -139,6 +144,20 @@ function prefetchServiceCategoryPage() {
   }
 
   return serviceCategoryPrefetchPromise
+}
+
+function prefetchServiceProviderPage() {
+  if (!serviceProviderPrefetchPromise) {
+    serviceProviderPrefetchPromise = import("../../../pages/ServiceProvider")
+  }
+
+  return serviceProviderPrefetchPromise
+}
+
+function formatServicePrice(value) {
+  const amount = Number(value || 0)
+  if (!Number.isFinite(amount) || amount <= 0) return "Request quote"
+  return `From N${amount.toLocaleString()}`
 }
 
 function ServiceCategoryPicker({ open, onClose, onOpenServiceCategory }) {
@@ -392,6 +411,101 @@ const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
   )
 })
 
+const ServiceMarketCard = memo(function ServiceMarketCard({ provider, onOpenServiceProvider }) {
+  const shop = provider?.shop || {}
+  const serviceProducts = provider?.products || EMPTY_PRODUCTS
+  const heroImage = getServiceProviderImage(shop, serviceProducts)
+  const pricedProducts = serviceProducts
+    .map((product) => Number(product?.price))
+    .filter((price) => Number.isFinite(price) && price > 0)
+    .sort((a, b) => a - b)
+  const minPrice = pricedProducts[0]
+  const cells = Array.from({ length: 4 }).map((_, index) => {
+    const item = serviceProducts[index]
+
+    if (!item && index === 0 && heroImage) {
+      return (
+        <div key={`${shop.id}-service-hero`} className="shop-grid-item-wrap">
+          <div className="shop-grid-item">
+            <StableImage
+              src={heroImage}
+              alt={shop.name || "Service provider"}
+              width={300}
+              height={300}
+              aspectRatio={1}
+              containerClassName="h-full w-full bg-[#F8FAFC]"
+              className="h-full w-full object-cover"
+            />
+            <div className="grid-badge bg-pink-600 text-white">Service</div>
+          </div>
+          <div className="shop-grid-caption">
+            <div className="sg-name">{shop.category || "Local Service"}</div>
+            <div className="sg-price">{formatServicePrice(minPrice)}</div>
+          </div>
+        </div>
+      )
+    }
+
+    if (!item) {
+      return (
+        <div key={`${shop.id}-service-empty-${index}`} className="shop-grid-item-wrap">
+          <div className="shop-grid-item empty">
+            <FaBriefcase className="text-[1.2rem] text-pink-200" />
+          </div>
+          <div className="shop-grid-caption select-none text-transparent">
+            <div className="sg-name">-</div>
+            <div className="sg-price">-</div>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div key={`${shop.id}-${item.id}-${index}`} className="shop-grid-item-wrap">
+        <div className="shop-grid-item">
+          <StableImage
+            src={item.image_url || heroImage}
+            alt={item.name || shop.name || "Service"}
+            width={300}
+            height={300}
+            aspectRatio={1}
+            containerClassName="h-full w-full bg-[#F8FAFC]"
+            className="h-full w-full object-cover"
+          />
+          {index === 0 ? <div className="grid-badge bg-pink-600 text-white">Service</div> : null}
+        </div>
+
+        <div className="shop-grid-caption">
+          <div className="sg-name" title={item.name || shop.category || "Service"}>
+            {item.name || shop.category || "Service"}
+          </div>
+          <div className="sg-price">{formatServicePrice(item.price)}</div>
+        </div>
+      </div>
+    )
+  })
+
+  return (
+    <div className="premium-shop-card-wrap min-w-[280px] w-[85vw] max-w-[340px] shrink-0">
+      <div
+        className="premium-shop-card"
+        onClick={() => onOpenServiceProvider?.(shop.id, shop.category || "")}
+        onMouseEnter={prefetchServiceProviderPage}
+        onFocus={prefetchServiceProviderPage}
+        onPointerDown={prefetchServiceProviderPage}
+      >
+        <div className="shop-card-title">
+          <span className="mr-2 rounded-full bg-pink-100 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-wide text-pink-700">
+            Service
+          </span>
+          {shop.name}
+        </div>
+        <div className="shop-image-grid">{cells}</div>
+      </div>
+    </div>
+  )
+})
+
 function DiscoveryCard({ item, onOpenDiscovery }) {
   const handleClick = () => {
     if (typeof onOpenDiscovery === "function") {
@@ -470,6 +584,7 @@ function MarketSection({
   groupedShopsByArea = [],
   navigateCategory,
   onOpenShop,
+  onOpenServiceProvider,
   onOpenProduct,
   onOpenArea,
   onOpenDiscovery,
@@ -626,18 +741,22 @@ function MarketSection({
       )}
 
 
-      {groupedShopsByArea.map(({ area, shops }, index) => (
+      {groupedShopsByArea.map(({ area, shops, entries }, index) => {
+        const areaEntries = entries || shops.map((shop) => ({ type: "shop", shop }))
+        const hasOnlyServices =
+          areaEntries.length > 0 && areaEntries.every((entry) => entry.type === "service")
+        const areaTitle = hasOnlyServices
+          ? `Services in ${area.name}`
+          : area.id && area.id === dashboardData.profile?.area_id
+            ? `Top stores in ${area.name}`
+            : area.name
+
+        return (
         <div key={area.id}>
           <div className="area-block-wrap bg-white">
             <div className="flex items-center justify-between px-4 pb-0 pt-2">
               <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap text-[1.25rem] font-extrabold text-[#0F1111] !p-0">
-                {area.id && area.id === dashboardData.profile?.area_id ? (
-                  <>
-                    Top stores in {area.name}
-                  </>
-                ) : (
-                  <>{area.name}</>
-                )}
+                {areaTitle}
               </h2>
               {area.id ? (
                 <button
@@ -654,14 +773,30 @@ function MarketSection({
             </div>
 
             <div className="h-scroll flex gap-4 overflow-x-auto pl-4 pb-3 pt-1">
-              {shops.map((shop) => (
-                <ShopCard
-                  key={shop.id}
-                  shop={shop}
-                  products={productsByShopId.get(shop.id)}
-                  onOpenShop={openShop}
-                />
-              ))}
+              {areaEntries.map((entry) => {
+                if (entry.type === "service") {
+                  const serviceShop = entry.provider?.shop
+
+                  return (
+                    <ServiceMarketCard
+                      key={`service-${serviceShop?.id}`}
+                      provider={entry.provider}
+                      onOpenServiceProvider={onOpenServiceProvider}
+                    />
+                  )
+                }
+
+                const shop = entry.shop
+
+                return (
+                  <ShopCard
+                    key={`shop-${shop.id}`}
+                    shop={shop}
+                    products={productsByShopId.get(shop.id)}
+                    onOpenShop={openShop}
+                  />
+                )
+              })}
               <div className="w-4 shrink-0" aria-hidden="true" />
             </div>
           </div>
@@ -684,7 +819,8 @@ function MarketSection({
             </div>
           )}
         </div>
-      ))}
+        )
+      })}
 
       {groupedShopsByArea.length < 3 && dashboardData.staffDiscoveries?.length > 0 && (
         <div className="discoveries-section-wrap bg-white py-2 mb-1">

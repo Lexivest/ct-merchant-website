@@ -42,6 +42,7 @@ const loadSearchPage = () => import("./Search")
 const loadAreaPage = () => import("./Area")
 const loadCatPage = () => import("./Cat")
 const loadServiceCategoryPage = () => import("./ServiceCategory")
+const loadServiceProviderPage = () => import("./ServiceProvider")
 const loadShopIndexPage = () => import("./ShopIndex")
 const loadDiscoveryDetailPage = () => import("./DiscoveryDetail")
 const loadWishlistDashboardView = () =>
@@ -77,7 +78,9 @@ const EMPTY_DASHBOARD_DATA = {
   categories: [],
   areas: [],
   shops: [],
+  serviceShops: [],
   products: [],
+  serviceProducts: [],
   notifications: [],
   wishlistCount: 0,
   unread: 0,
@@ -961,6 +964,16 @@ function UserDashboard() {
 
   const groupedShopsByArea = useMemo(() => {
     const shopsByArea = new Map()
+    const servicesByArea = new Map()
+    const serviceProductsByShopId = new Map()
+
+    ;(localData.serviceProducts || []).forEach((product) => {
+      const shopId = normalizePositiveId(product?.shop_id)
+      if (!shopId) return
+      const current = serviceProductsByShopId.get(shopId) || []
+      current.push(product)
+      serviceProductsByShopId.set(shopId, current)
+    })
 
     ;(localData.shops || []).forEach((shop) => {
       if (isServiceShop(shop)) return
@@ -973,13 +986,47 @@ function UserDashboard() {
       shopsByArea.get(areaId).push(shop)
     })
 
+    ;(localData.serviceShops || []).forEach((shop) => {
+      const areaId = normalizePositiveId(shop?.area_id)
+      if (!areaId) return
+
+      if (!servicesByArea.has(areaId)) {
+        servicesByArea.set(areaId, [])
+      }
+
+      servicesByArea.get(areaId).push({
+        shop,
+        products: serviceProductsByShopId.get(normalizePositiveId(shop?.id)) || [],
+      })
+    })
+
+    const interleaveEntries = (shops = [], services = []) => {
+      const entries = []
+      const maxLength = Math.max(shops.length, services.length)
+
+      for (let index = 0; index < maxLength; index += 1) {
+        if (shops[index]) entries.push({ type: "shop", shop: shops[index] })
+        if (services[index]) entries.push({ type: "service", provider: services[index] })
+      }
+
+      return entries
+    }
+
     return sortedAreas
-      .map((area) => ({
-        area,
-        shops: shopsByArea.get(normalizePositiveId(area?.id)) || [],
-      }))
-      .filter((group) => group.shops.length > 0)
-  }, [sortedAreas, localData.shops])
+      .map((area) => {
+        const areaId = normalizePositiveId(area?.id)
+        const shops = shopsByArea.get(areaId) || []
+        const services = servicesByArea.get(areaId) || []
+
+        return {
+          area,
+          shops,
+          services,
+          entries: interleaveEntries(shops, services),
+        }
+      })
+      .filter((group) => group.entries.length > 0)
+  }, [sortedAreas, localData.shops, localData.serviceShops, localData.serviceProducts])
 
   useEffect(() => {
     const safeShops = Array.isArray(localData.shops) ? localData.shops : []
@@ -1215,10 +1262,19 @@ function UserDashboard() {
       const areaShops = (localData.shops || [])
         .filter((shop) => String(shop.area_id) === String(resolvedAreaId))
         .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+      const areaServices = (localData.serviceShops || [])
+        .filter((shop) => String(shop.area_id) === String(resolvedAreaId))
+        .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+      const areaServiceIds = new Set(areaServices.map((shop) => String(shop.id)))
+      const areaServiceProducts = (localData.serviceProducts || [])
+        .filter((product) => areaServiceIds.has(String(product.shop_id)))
+        .slice(0, 300)
 
       primeCachedFetchStore(`area_shops_${resolvedAreaId}_q_`, {
         areaName,
         shops: areaShops,
+        services: areaServices,
+        serviceProducts: areaServiceProducts,
       })
       await loadAreaPage()
       navigate(`/area?id=${encodeURIComponent(resolvedAreaId)}`)
@@ -1284,7 +1340,7 @@ function UserDashboard() {
         .filter((shop) => isServiceShop(shop) && isActiveMarketplaceShop(shop, profile?.city_id, now))
         .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
 
-      const serviceProducts = (localData.products || [])
+      const serviceProducts = (localData.serviceProducts || [])
         .filter(
           (product) =>
             product.category === name &&
@@ -1510,6 +1566,70 @@ function UserDashboard() {
         : getFriendlyErrorMessage(
             error,
             "We could not open this shop right now. Please try again."
+          )
+
+      failRouteTransition(safeMessage, retryAction)
+    }
+  }
+
+  async function openServiceProviderWithTransition(shopId, serviceName = "") {
+    if (!shopId) return
+
+    const retryAction = () => openServiceProviderWithTransition(shopId, serviceName)
+    const cacheKey = `service_provider_${shopId}_${user?.id || "anon"}`
+    const cachedEntry = readCachedFetchStore(cacheKey)
+    const hasFreshCache =
+      cachedEntry && Date.now() - cachedEntry.timestamp <= 1000 * 60 * 5
+
+    beginRouteTransition(retryAction)
+
+    try {
+      if (hasFreshCache) {
+        await loadServiceProviderPage()
+        navigate(`/service-provider?id=${encodeURIComponent(shopId)}&service=${encodeURIComponent(serviceName || "")}`, {
+          state: { fromMarketTransition: true },
+        })
+        return
+      }
+
+      const serviceProviderData = await new Promise((resolve, reject) => {
+        const timeoutId = window.setTimeout(() => {
+          reject(new Error("Timed out while opening the service."))
+        }, 10000)
+
+        Promise.all([
+          fetchShopDetailData({
+            shopId,
+            userId: user?.id || null,
+            recordView: false,
+          }),
+          loadServiceProviderPage(),
+        ])
+          .then(([shopDetailData]) => {
+            window.clearTimeout(timeoutId)
+            resolve(shopDetailData)
+          })
+          .catch((error) => {
+            window.clearTimeout(timeoutId)
+            reject(error)
+          })
+      })
+
+      primeCachedFetchStore(cacheKey, serviceProviderData, undefined, { persist: "session" })
+
+      navigate(`/service-provider?id=${encodeURIComponent(shopId)}&service=${encodeURIComponent(serviceName || "")}`, {
+        state: {
+          fromMarketTransition: true,
+          prefetchedServiceProviderData: serviceProviderData,
+        },
+      })
+    } catch (error) {
+      console.error("Failed to open service provider", error)
+      const safeMessage = isNetworkError(error)
+        ? "We could not open this service right now. Please try again."
+        : getFriendlyErrorMessage(
+            error,
+            "We could not open this service right now. Please try again."
           )
 
       failRouteTransition(safeMessage, retryAction)
@@ -2220,6 +2340,7 @@ function UserDashboard() {
             groupedShopsByArea={groupedShopsByArea}
             navigateCategory={navigateCategory}
             onOpenShop={openShopWithTransition}
+            onOpenServiceProvider={openServiceProviderWithTransition}
             onOpenProduct={openProductWithTransition}
             onOpenArea={openAreaWithTransition}
             onOpenDiscovery={openDiscoveryWithTransition}

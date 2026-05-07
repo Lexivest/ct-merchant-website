@@ -350,10 +350,12 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
       staffDiscoveries: [],
       fairlyUsedProducts: [],
       shops: [],
+      serviceShops: [],
       notifications: [],
       wishlistCount: 0,
       unread: 0,
       products: [],
+      serviceProducts: [],
     }
   }
 
@@ -371,11 +373,21 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
   const rawFeaturedCityBanners =
     data.featured_city_banners || data.featured_banners || []
   const rawSponsoredProducts = data.sponsored_products || []
-  const rawShops = Array.isArray(data.shops) ? data.shops.filter((shop) => !isServiceShop(shop)) : []
+  const allReturnedShops = Array.isArray(data.shops) ? data.shops : []
+  const rawShops = allReturnedShops.filter((shop) => !isServiceShop(shop))
+  const rawServiceShops = Array.isArray(data.service_shops)
+    ? data.service_shops
+    : allReturnedShops.filter((shop) => isServiceShop(shop))
   const normalShopIds = new Set(rawShops.map((shop) => String(shop.id)))
+  const serviceShopIds = new Set(rawServiceShops.map((shop) => String(shop.id)))
   const rawProducts = Array.isArray(data.products)
     ? data.products.filter((product) => normalShopIds.has(String(product.shop_id)))
     : []
+  const rawServiceProducts = Array.isArray(data.service_products)
+    ? data.service_products.filter((product) => serviceShopIds.has(String(product.shop_id)))
+    : Array.isArray(data.products)
+      ? data.products.filter((product) => serviceShopIds.has(String(product.shop_id)))
+      : []
   const rawFairlyUsedProducts = Array.isArray(data.fairly_used_products)
     ? data.fairly_used_products
     : []
@@ -399,7 +411,9 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
     console.info("[dashboard-rpc:market-empty]", {
       cityId: resolvedCityId,
       shops: rawShops.length,
+      serviceShops: rawServiceShops.length,
       products: rawProducts.length,
+      serviceProducts: rawServiceProducts.length,
       featuredBanners: Array.isArray(rawFeaturedCityBanners) ? rawFeaturedCityBanners.length : 0,
       sponsoredProducts: Array.isArray(rawSponsoredProducts) ? rawSponsoredProducts.length : 0,
     })
@@ -450,10 +464,12 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
     staffDiscoveries: data.staff_discoveries || [],
     fairlyUsedProducts,
     shops: rawShops,
+    serviceShops: rawServiceShops,
     notifications,
     wishlistCount: data.wishlist_count || 0,
     unread: notifications.filter((item) => !item.is_read).length,
     products: rawProducts,
+    serviceProducts: rawServiceProducts,
   }
 }
 export async function fetchDashboardData({ userId, profile = null }) {
@@ -529,9 +545,9 @@ export async function prepareDashboardTransition({
   )
 
   // Split and prime
-  const { profile: cachedProfile, notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, fairlyUsedProducts, shops, products, ...basePart } = data
+  const { profile: cachedProfile, notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, fairlyUsedProducts, shops, products, serviceShops, serviceProducts, ...basePart } = data
   void cachedProfile
-  const dynamicPart = { notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, fairlyUsedProducts, shops, products }
+  const dynamicPart = { notifications, wishlistCount, featuredCityBanners, sponsoredProducts, staffDiscoveries, fairlyUsedProducts, shops, products, serviceShops, serviceProducts }
 
   primeCachedFetchStore(baseKey, basePart, Date.now(), { persist: "session" })
   primeCachedFetchStore(dynamicKey, dynamicPart, Date.now(), { persist: "session" })

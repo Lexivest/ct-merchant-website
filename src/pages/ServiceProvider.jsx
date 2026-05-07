@@ -384,7 +384,11 @@ export default function ServiceProvider() {
   return (
     <div
       className={`mx-auto flex min-h-screen max-w-[1200px] flex-col bg-[#E3E6E6] pb-[90px] ${
-        location.state?.fromServiceCategory ? "ctm-page-enter" : ""
+        location.state?.fromServiceCategory ||
+        location.state?.fromAreaTransition ||
+        location.state?.fromMarketTransition
+          ? "ctm-page-enter"
+          : ""
       }`}
     >
       <PageSeo
