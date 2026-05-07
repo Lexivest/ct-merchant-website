@@ -33,7 +33,7 @@ function BannerShimmer() {
   return (
     <PageLoadingScreen
       title="Opening banner"
-      message="Please wait while we prepare your generated shop banner."
+      message="Please wait while we prepare your generated banner."
     />
   );
 }
@@ -82,6 +82,10 @@ export default function MerchantBanner() {
   const [generatedPreviewUrl, setGeneratedPreviewUrl] = useState("");
 
   const shopId = shopData?.id || prefetchedData?.shopId || urlShopId;
+  const isServiceMode = shopData?.is_service === true;
+  const entityName = isServiceMode ? "service" : "shop";
+  const entityTitle = isServiceMode ? "Service" : "Shop";
+  const itemPlural = isServiceMode ? "services" : "products";
   const selectedBackground = useMemo(
     () => FEATURED_BANNER_BACKGROUNDS.find((background) => background.key === backgroundKey) || FEATURED_BANNER_BACKGROUNDS[0],
     [backgroundKey]
@@ -135,13 +139,16 @@ export default function MerchantBanner() {
 
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
-          .select("id, owner_id, name, category, address, image_url, status, cities(name)")
+          .select("id, owner_id, name, category, address, image_url, status, is_service, cities(name)")
           .eq("id", currentShopId)
           .eq("owner_id", user.id)
           .maybeSingle();
 
         if (shopErr || !shop) throw new Error("Shop not found or access denied.");
-        if (shop.status !== "approved") throw new Error("Your shop must be digitally approved before you can manage your banner.");
+        if (shop.status !== "approved") {
+          const modeEntity = shop.is_service ? "service" : "shop";
+          throw new Error(`Your ${modeEntity} must be digitally approved before you can manage your banner.`);
+        }
 
         const [bannerResult, productResult, profileResult] = await Promise.all([
           supabase
@@ -217,7 +224,7 @@ export default function MerchantBanner() {
           return objectUrl;
         });
       } catch (renderError) {
-        console.warn("Could not render generated shop banner:", renderError);
+        console.warn("Could not render generated banner:", renderError);
         if (!cancelled) {
           setGeneratedBlob(null);
           setGeneratedPreviewUrl("");
@@ -301,7 +308,7 @@ export default function MerchantBanner() {
       const goBack = await confirm({
         type: "success",
         title: "Banner submitted",
-        message: "Your generated shop banner has been sent for staff approval.",
+        message: `Your generated ${entityName} banner has been sent for staff approval.`,
         confirmText: "Back to dashboard",
         cancelText: "Stay here",
       });
@@ -341,7 +348,7 @@ export default function MerchantBanner() {
           <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]">
             <FaArrowLeft />
           </button>
-          <div className="text-[1.15rem] font-bold">Shop Banner</div>
+          <div className="text-[1.15rem] font-bold">{entityTitle} Banner</div>
         </div>
         <button
           onClick={handleSubmit}
@@ -359,8 +366,8 @@ export default function MerchantBanner() {
               <FaWandMagicSparkles />
             </div>
             <div>
-              <h3 className="text-base font-black text-slate-950">Generated shop banner</h3>
-              <p className="text-sm font-semibold text-slate-500">Choose a background. CT Studio generates the banner from your shop profile and products.</p>
+              <h3 className="text-base font-black text-slate-950">Generated {entityName} banner</h3>
+              <p className="text-sm font-semibold text-slate-500">Choose a background. CT Studio generates the banner from your {entityName} profile and {itemPlural}.</p>
             </div>
           </div>
           <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs font-bold text-slate-500">
@@ -412,7 +419,7 @@ export default function MerchantBanner() {
           </div>
           <div className="sponsored-product-slider relative aspect-[8/3] w-full overflow-hidden rounded-[18px] bg-white">
             {generatedPreviewUrl ? (
-              <img src={generatedPreviewUrl} alt={`${shopData?.name || "Shop"} generated banner`} className="absolute inset-0 block h-full w-full bg-white object-contain object-center" />
+              <img src={generatedPreviewUrl} alt={`${shopData?.name || entityTitle} generated banner`} className="absolute inset-0 block h-full w-full bg-white object-contain object-center" />
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
                 {rendering ? <FaCircleNotch className="mb-3 animate-spin text-3xl text-pink-600" /> : <FaImage className="mb-3 text-4xl" />}

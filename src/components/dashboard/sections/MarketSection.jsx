@@ -548,30 +548,8 @@ function MarketSection({
     })
   }, [dashboardData?.categories])
 
-  // 1. PROFESSIONAL ERROR STATE (Only shows if no cache is available)
-  if (error && dashboardShellEmpty) {
-    return (
-      <RetryingNotice
-        fullScreen={false}
-        message={getRetryingMessage(error)}
-        onRetry={onRetry}
-      />
-    )
-  }
-
-  // 2. PROFESSIONAL SHIMMER STATE (Mirrors the actual layout)
-  if (loading || (!dashboardData && !error)) {
-    return (
-      <div className="screen active w-full pb-8 bg-slate-50">
-        {/* Featured City Banner Skeleton */}
-        <ShimmerBlock className="mb-4 aspect-video w-full max-h-[400px] rounded-none" />
-      </div>
-    )
-  }
-
-  // 3. ACTUAL RENDER
-  return (
-    <div className="screen active bg-slate-50">
+  const serviceLauncher = (
+    <>
       <ServiceCategoryPicker
         open={servicePickerOpen}
         onClose={() => setServicePickerOpen(false)}
@@ -584,14 +562,46 @@ function MarketSection({
         onMouseEnter={prefetchServiceCategoryPage}
         onFocus={prefetchServiceCategoryPage}
         onPointerDown={prefetchServiceCategoryPage}
-        className="fixed bottom-5 left-4 z-[880] flex items-center gap-2 rounded-full bg-slate-950 px-4 py-3 text-sm font-black text-white shadow-[0_18px_45px_rgba(15,23,42,0.28)] transition hover:-translate-y-0.5 hover:bg-pink-700 active:scale-[0.98]"
+        className="fixed bottom-4 left-3 z-[880] flex items-center gap-1.5 rounded-full bg-slate-950 px-2.5 py-2 text-[0.78rem] font-black text-white shadow-[0_14px_34px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-pink-700 active:scale-[0.98]"
         aria-label="Open local services"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-600 text-white">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-pink-600 text-[0.8rem] text-white">
           <FaBriefcase />
         </span>
         Services
       </button>
+    </>
+  )
+
+  // 1. PROFESSIONAL ERROR STATE (Only shows if no cache is available)
+  if (error && dashboardShellEmpty) {
+    return (
+      <>
+        {serviceLauncher}
+        <RetryingNotice
+          fullScreen={false}
+          message={getRetryingMessage(error)}
+          onRetry={onRetry}
+        />
+      </>
+    )
+  }
+
+  // 2. PROFESSIONAL SHIMMER STATE (Mirrors the actual layout)
+  if (loading || (!dashboardData && !error)) {
+    return (
+      <div className="screen active w-full pb-8 bg-slate-50">
+        {serviceLauncher}
+        {/* Featured City Banner Skeleton */}
+        <ShimmerBlock className="mb-4 aspect-video w-full max-h-[400px] rounded-none" />
+      </div>
+    )
+  }
+
+  // 3. ACTUAL RENDER
+  return (
+    <div className="screen active bg-slate-50">
+      {serviceLauncher}
 
       {dashboardData.featuredCityBanners?.length > 0 ? (
         <FeaturedCitySlider

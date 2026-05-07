@@ -19,7 +19,7 @@ import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
 function NewsShimmer() {
   return (
     <PageLoadingScreen
-      title="Opening shop news"
+      title="Opening updates"
       message="Please wait while we prepare your news composer."
     />
   );
@@ -45,6 +45,7 @@ export default function MerchantNews() {
   const [submitting, setSubmitting] = useState(false);
   
   const [shopId, setShopId] = useState(() => prefetchedData?.shopId || urlShopId);
+  const [isServiceMode, setIsServiceMode] = useState(() => prefetchedData?.isService === true);
   const [newsText, setNewsText] = useState(() => prefetchedData?.newsText || "");
   const [status, setStatus] = useState(() => prefetchedData?.status || ""); // 'pending' | 'approved' | 'rejected' | ''
 
@@ -52,6 +53,7 @@ export default function MerchantNews() {
   useEffect(() => {
     if (prefetchedData) {
       setShopId(prefetchedData.shopId || urlShopId);
+      setIsServiceMode(prefetchedData.isService === true);
       setNewsText(prefetchedData.newsText || "");
       setStatus(prefetchedData.status || "");
       setError(null);
@@ -83,16 +85,18 @@ export default function MerchantNews() {
 
         const { data: shopAccess, error: shopAccessErr } = await supabase
           .from("shops")
-          .select("id, status")
+          .select("id, status, is_service")
           .eq("id", currentShopId)
           .eq("owner_id", user.id)
           .maybeSingle();
 
         if (shopAccessErr || !shopAccess) throw new Error("Shop not found or access denied.");
-        if (shopAccess.status !== "approved") throw new Error("Your shop must be approved before opening your shop news tools.");
+        const modeEntity = shopAccess.is_service ? "service" : "shop";
+        if (shopAccess.status !== "approved") throw new Error(`Your ${modeEntity} must be approved before opening your ${modeEntity} news tools.`);
         if (String(shopId) !== String(shopAccess.id || currentShopId)) {
           setShopId(String(shopAccess.id));
         }
+        setIsServiceMode(shopAccess.is_service === true);
 
         const { data: newsData, error: newsErr } = await supabase
           .from("shop_banners_news")
@@ -128,6 +132,9 @@ export default function MerchantNews() {
     }
   };
 
+  const entityName = isServiceMode ? "service" : "shop";
+  const entityTitle = isServiceMode ? "Service" : "Shop";
+
   const handleSave = async (e) => {
     e.preventDefault();
     if (submitting) return;
@@ -150,7 +157,7 @@ export default function MerchantNews() {
 
       // 2. Insert new (if not empty)
       if (text.length === 0) {
-        notify({ type: "success", title: "News removed", message: "Your shop news has been removed successfully." });
+        notify({ type: "success", title: "News removed", message: `Your ${entityName} news has been removed successfully.` });
       } else {
         const { error: insertError } = await supabase.from("shop_banners_news").insert({
           shop_id: shopId,
@@ -161,7 +168,7 @@ export default function MerchantNews() {
         });
 
         if (insertError) throw insertError;
-        notify({ type: "success", title: "News submitted", message: "Your shop news was submitted for admin approval." });
+        notify({ type: "success", title: "News submitted", message: `Your ${entityName} news was submitted for admin approval.` });
       }
 
       navigate("/vendor-panel");
@@ -198,7 +205,7 @@ export default function MerchantNews() {
           <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]">
             <FaArrowLeft />
           </button>
-          <div className="text-[1.15rem] font-bold">Post Shop News</div>
+          <div className="text-[1.15rem] font-bold">Post {entityTitle} News</div>
         </div>
       </header>
 
@@ -221,7 +228,7 @@ export default function MerchantNews() {
           </div>
 
           <p className="mb-6 text-[0.95rem] leading-relaxed text-[#565959]">
-            Write a short update for your customers. It will be reviewed by an admin before appearing on your shop page and the main repository ticker.
+            Write a short update for your customers. It will be reviewed by an admin before appearing on your {entityName} page and the main repository ticker.
           </p>
 
           <form onSubmit={handleSave}>

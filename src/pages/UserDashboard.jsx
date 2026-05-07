@@ -733,6 +733,9 @@ function UserDashboard() {
 
   // Updated purely to rely on our new isolated shopData hook
   function handleShopClick() {
+    const entityName = shopData?.is_service ? "service" : "shop"
+    const entityTitle = shopData?.is_service ? "Service" : "Shop"
+
     if (!shopData) {
       if (!canRegisterShop || shopLoading || shopMeta.status === "locked") {
         setNotice({
@@ -751,8 +754,8 @@ function UserDashboard() {
       setNotice({
         visible: true,
         type: "error",
-        title: "Shop access restricted",
-        message: "Your shop access has been restricted. Please contact support.",
+        title: `${entityTitle} access restricted`,
+        message: `Your ${entityName} access has been restricted. Please contact support.`,
       })
       return
     }
@@ -762,7 +765,7 @@ function UserDashboard() {
         visible: true,
         type: "warning",
         title: "Application under review",
-        message: "Your shop application is under review. We will notify you once staff completes the check.",
+        message: `Your ${entityName} application is under review. We will notify you once staff completes the check.`,
       })
       return
     }

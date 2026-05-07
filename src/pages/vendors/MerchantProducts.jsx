@@ -25,8 +25,8 @@ import { prepareVendorRouteTransition } from "../../lib/vendorRouteTransitions";
 function MerchantProductsShimmer() {
   return (
     <PageLoadingScreen
-      title="Opening products"
-      message="Please wait while we prepare your product list."
+      title="Opening listings"
+      message="Please wait while we prepare your listings."
     />
   );
 }
@@ -38,9 +38,15 @@ export default function MerchantProducts() {
   usePreventPullToRefresh();
   const [searchParams] = useSearchParams();
   const urlShopId = searchParams.get("shop_id");
+  const prefetchedData =
+    location.state?.prefetchedData?.kind === "merchant-products" &&
+    (!urlShopId || String(location.state.prefetchedData.shopId) === String(urlShopId))
+      ? location.state.prefetchedData
+      : null;
 
   const { user, loading: authLoading, isOffline } = useAuthSession();
-  const [activeShopId, setActiveShopId] = useState(urlShopId);
+  const [activeShopId, setActiveShopId] = useState(prefetchedData?.shopId || urlShopId);
+  const [isServiceMode, setIsServiceMode] = useState(() => prefetchedData?.shopData?.is_service === true);
   const [transitionState, setTransitionState] = useState({
     pending: false,
     path: "",
@@ -57,18 +63,19 @@ export default function MerchantProducts() {
     if (!shopIdToUse) {
       const { data: shop, error: shopErr } = await supabase
         .from("shops")
-        .select("id")
+        .select("id, is_service")
         .eq("owner_id", user.id)
         .maybeSingle();
 
       if (shopErr || !shop) throw new Error("SHOP_NOT_FOUND");
       shopIdToUse = shop.id;
       setActiveShopId(shop.id);
+      setIsServiceMode(shop.is_service === true);
     }
 
     const { data: shopAccess, error: accessErr } = await supabase
       .from("shops")
-      .select("id")
+      .select("id, is_service")
       .eq("id", shopIdToUse)
       .eq("owner_id", user.id)
       .maybeSingle();
@@ -77,6 +84,7 @@ export default function MerchantProducts() {
     if (String(activeShopId || "") !== String(shopAccess.id)) {
       setActiveShopId(String(shopAccess.id));
     }
+    setIsServiceMode(shopAccess.is_service === true);
 
     const { data: products, error } = await supabase
       .from("products")
@@ -93,6 +101,13 @@ export default function MerchantProducts() {
     fetchProductsList,
     { dependencies: [activeShopId, user?.id, isOffline], ttl: 1000 * 60 * 5 }
   );
+
+  const entityName = isServiceMode ? "service" : "shop";
+  const entityTitle = isServiceMode ? "Service" : "Shop";
+  const itemName = isServiceMode ? "service" : "product";
+  const itemPlural = isServiceMode ? "services" : "products";
+  const itemTitle = isServiceMode ? "Service" : "Product";
+  const itemPluralTitle = itemPlural.charAt(0).toUpperCase() + itemPlural.slice(1);
 
   // 2. Auth & Routing Checks
   useEffect(() => {
@@ -153,15 +168,15 @@ export default function MerchantProducts() {
     if (!activeShopId) {
       notify({
         type: "error",
-        title: "Shop unavailable",
-        message: "Shop details are not ready yet. Please retry.",
+        title: `${entityTitle} unavailable`,
+        message: `${entityTitle} details are not ready yet. Please retry.`,
       });
       return;
     }
 
     void openVendorTool(
       `/merchant-add-product?shop_id=${activeShopId}`,
-      "We could not open the add product page right now. Please try again."
+      `We could not open the add ${itemName} page right now. Please try again.`
     );
   };
 
@@ -170,7 +185,7 @@ export default function MerchantProducts() {
 
     void openVendorTool(
       `/merchant-edit-product?id=${id}`,
-      "We could not open this product editor right now. Please try again."
+      `We could not open this ${itemName} editor right now. Please try again.`
     );
   };
 
@@ -201,8 +216,8 @@ export default function MerchantProducts() {
             void openVendorTool(
               transitionState.path,
               transitionState.path.startsWith("/merchant-add-product")
-                ? "We could not open the add product page right now. Please try again."
-                : "We could not open this product editor right now. Please try again."
+                ? `We could not open the add ${itemName} page right now. Please try again.`
+                : `We could not open this ${itemName} editor right now. Please try again.`
             );
           }
         }}
@@ -226,7 +241,7 @@ export default function MerchantProducts() {
           <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]">
             <FaArrowLeft />
           </button>
-          <div className="text-[1.15rem] font-bold">Manage Products</div>
+          <div className="text-[1.15rem] font-bold">Manage {itemPluralTitle}</div>
         </div>
         <button 
           onClick={goToAdd} 
@@ -242,8 +257,8 @@ export default function MerchantProducts() {
         {!products || products.length === 0 ? (
           <div className="rounded-lg border border-[#D5D9D9] bg-white p-12 text-center text-[#565959] shadow-sm mt-4">
             <FaBoxOpen className="mx-auto mb-4 text-5xl text-[#888C8C]" />
-            <h3 className="mb-1 text-lg font-extrabold text-[#0F1111]">No products found</h3>
-            <p>You haven't uploaded any products to your shop yet.</p>
+            <h3 className="mb-1 text-lg font-extrabold text-[#0F1111]">No {itemPlural} found</h3>
+            <p>You haven't uploaded any {itemPlural} to your {entityName} page yet.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -282,7 +297,7 @@ export default function MerchantProducts() {
                     
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                       <div className="inline-flex items-center gap-1 rounded bg-[#F3F4F6] px-2 py-1 text-[0.7rem] font-extrabold uppercase tracking-wide text-[#565959] border border-[#E3E6E6]">
-                        {p.condition}
+                        {isServiceMode ? "Service" : p.condition}
                       </div>
                       
                       {p.is_approved ? (
@@ -305,7 +320,7 @@ export default function MerchantProducts() {
                     <button 
                       type="button"
                       className="flex h-9 w-9 items-center justify-center rounded-md border border-[#D5D9D9] bg-white text-[1rem] text-[#0F1111] shadow-[0_2px_4px_rgba(0,0,0,0.02)] transition-colors hover:border-[#B0B5B5] hover:bg-[#F7FAFA]"
-                      title="Edit Product"
+                      title={`Edit ${itemTitle}`}
                     >
                       <FaPen />
                     </button>

@@ -59,10 +59,11 @@ function formatContactChannel(eventType) {
   return "Contact"
 }
 
-function formatEventSourceLabel(value) {
+function formatEventSourceLabel(value, isServiceMode = false) {
   if (value === "repo_search") return "Repo Search"
   if (value === "product_detail") return "Product Detail"
-  if (value === "shop_detail") return "Shop Detail"
+  if (value === "shop_detail") return isServiceMode ? "Service Page" : "Shop Detail"
+  if (value === "service_provider") return "Service Page"
   return "Marketplace"
 }
 
@@ -77,7 +78,7 @@ function AnalyticsShimmer() {
   return (
     <PageLoadingScreen
       title="Opening analytics"
-      message="Please wait while we prepare your shop analytics."
+      message="Please wait while we prepare your analytics."
     />
   )
 }
@@ -187,6 +188,7 @@ export default function MerchantAnalytics() {
   const [shopId, setShopId] = useState(() => prefetchedData?.shopId || urlShopId)
   const [windowDays, setWindowDays] = useState(() => prefetchedData?.days || 30)
   const [analytics, setAnalytics] = useState(() => prefetchedData?.summary || null)
+  const [isServiceMode, setIsServiceMode] = useState(() => prefetchedData?.isService === true)
   const [loading, setLoading] = useState(() => !prefetchedData)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState("")
@@ -199,6 +201,7 @@ export default function MerchantAnalytics() {
       if (prefetchedData && !isRefresh && nextDays === Number(prefetchedData.days || 30)) {
         setShopId(prefetchedData.shopId || urlShopId)
         setAnalytics(prefetchedData.summary || null)
+        setIsServiceMode(prefetchedData.isService === true)
         setWindowDays(nextDays)
         setError("")
         setLoading(false)
@@ -223,7 +226,7 @@ export default function MerchantAnalytics() {
         if (!currentShopId) {
           const { data: shopLookup, error: lookupError } = await supabase
             .from("shops")
-            .select("id, subscription_end_date")
+            .select("id, subscription_end_date, is_service")
             .eq("owner_id", user.id)
             .maybeSingle()
 
@@ -237,10 +240,11 @@ export default function MerchantAnalytics() {
 
           currentShopId = String(shopLookup.id)
           setShopId(currentShopId)
+          setIsServiceMode(shopLookup.is_service === true)
         } else {
           const { data: shopAccess, error: shopAccessError } = await supabase
             .from("shops")
-            .select("id, subscription_end_date")
+            .select("id, subscription_end_date, is_service")
             .eq("id", currentShopId)
             .eq("owner_id", user.id)
             .maybeSingle()
@@ -252,6 +256,7 @@ export default function MerchantAnalytics() {
           if (!isFutureDate(shopAccess.subscription_end_date)) {
             throw new Error("Activate your service plan before opening analytics.")
           }
+          setIsServiceMode(shopAccess.is_service === true)
         }
 
         const summary = await fetchMerchantShopAnalytics({
@@ -311,11 +316,14 @@ export default function MerchantAnalytics() {
   const totals = useMemo(() => analytics?.totals || {}, [analytics])
   const timeline = useMemo(() => analytics?.timeline || [], [analytics])
   const recentContacts = useMemo(() => analytics?.recent_contacts || [], [analytics])
+  const entityName = isServiceMode ? "service" : "shop"
+  const entityTitle = isServiceMode ? "Service" : "Shop"
+  const itemTitle = isServiceMode ? "Service" : "Product"
 
   const summaryCards = useMemo(
     () => [
       {
-        title: "Shop Visits",
+        title: `${entityTitle} Visits`,
         value: formatCompactNumber(totals.views),
         note: "All recorded visits in this window",
         icon: <FaEye />,
@@ -357,7 +365,7 @@ export default function MerchantAnalytics() {
         toneClass: "bg-violet-100 text-violet-700",
       },
     ],
-    [totals]
+    [entityTitle, totals]
   )
 
   if (authLoading || loading) {
@@ -391,7 +399,7 @@ export default function MerchantAnalytics() {
             <FaArrowLeft />
           </button>
           <div>
-            <div className="text-[1.15rem] font-bold">Shop Analytics</div>
+            <div className="text-[1.15rem] font-bold">{entityTitle} Analytics</div>
             <div className="text-[0.78rem] font-semibold text-white/65">
               {analytics?.shop?.name || "Merchant Intelligence"}
             </div>
@@ -416,10 +424,10 @@ export default function MerchantAnalytics() {
                 Merchant Intelligence
               </div>
               <h1 className="mt-3 text-3xl font-black">
-                {analytics?.shop?.name || "Shop Analytics"}
+                {analytics?.shop?.name || `${entityTitle} Analytics`}
               </h1>
               <p className="mt-2 max-w-[720px] text-sm leading-6 text-white/80">
-                Review shop visits, successful customer contacts, repo-search traffic, and suspicious contact activity from one clean analytics surface.
+                Review {entityName} visits, successful customer contacts, repo-search traffic, and suspicious contact activity from one clean analytics surface.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -489,13 +497,13 @@ export default function MerchantAnalytics() {
                             {formatContactChannel(contact.event_type)}
                           </span>
                           <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-slate-500">
-                            {formatEventSourceLabel(contact.event_source)}
+                            {formatEventSourceLabel(contact.event_source, isServiceMode)}
                           </span>
                         </div>
                         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-slate-500">
                           <span>{contact.actor_email || "No email captured"}</span>
                           {contact.actor_phone ? <span>{contact.actor_phone}</span> : null}
-                          {contact.product_name ? <span>Product: {contact.product_name}</span> : null}
+                          {contact.product_name ? <span>{itemTitle}: {contact.product_name}</span> : null}
                         </div>
                       </div>
                       <div className="text-right text-xs font-bold text-slate-500">
@@ -520,7 +528,7 @@ export default function MerchantAnalytics() {
             <div>
               <div className="font-black">How to read this page</div>
               <div className="mt-1 leading-6">
-                Conversion rate is based on successful phone and WhatsApp launches divided by recorded shop visits. The contact feed shows the latest recorded activity for each identified person so you can quickly see who has reached out to your shop.
+                Conversion rate is based on successful phone and WhatsApp launches divided by recorded {entityName} visits. The contact feed shows the latest recorded activity for each identified person so you can quickly see who has reached out to your {entityName}.
               </div>
             </div>
           </div>

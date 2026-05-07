@@ -49,6 +49,7 @@ const loadVendorRoutes = {
   "/remita": () => import("./vendors/MerchantPayment"),
   "/service-fee": () => import("./vendors/MerchantServiceFee"),
   "/shop-registration": () => import("./ShopRegistration"),
+  "/service-provider": () => import("./ServiceProvider"),
 }
 
 function isFutureDate(value) {
@@ -117,8 +118,9 @@ function VendorsPanel() {
     }
 
     if (shopData.status === "rejected" && shopData.kyc_status !== "rejected") {
+      const rejectedEntity = shopData.is_service ? "service" : "shop"
       throw new Error(
-        "Your shop application was rejected. Please contact support.",
+        `Your ${rejectedEntity} application was rejected. Please contact support.`,
       )
     }
 
@@ -313,6 +315,16 @@ function VendorsPanel() {
   const activeShop = realtimeShop || data.shop
   const activeRejectedCount = data.rejectedProductCount
 
+  const isServiceMode = activeShop.is_service === true
+  const entityName = isServiceMode ? "service" : "shop"
+  const entityTitle = isServiceMode ? "Service" : "Shop"
+  const itemNamePlural = isServiceMode ? "services" : "products"
+  const itemTitle = isServiceMode ? "Service" : "Product"
+  const dashboardTitle = isServiceMode ? "Service Dashboard" : "Merchant Dashboard"
+  const viewRoute = isServiceMode
+    ? `/service-provider?id=${activeShop.id}&service=${encodeURIComponent(activeShop.category || "")}`
+    : `/shop-detail?id=${activeShop.id}`
+
   const isApplicationApproved = activeShop.status === "approved"
   const isVerified = Boolean(activeShop.is_verified)
   const verificationProofStatus =
@@ -364,7 +376,7 @@ function VendorsPanel() {
     try {
       const { data: latestShop, error: latestShopError } = await supabase
         .from("shops")
-        .select("id, owner_id, created_at, status, is_verified, kyc_status, rejection_reason, subscription_end_date, is_open, name")
+        .select("id, owner_id, created_at, status, is_verified, kyc_status, rejection_reason, subscription_end_date, is_open, name, is_service, category")
         .eq("id", activeShop.id)
         .eq("owner_id", user.id)
         .maybeSingle()
@@ -408,7 +420,7 @@ function VendorsPanel() {
           type: "info",
           title: "Application pending",
           message:
-            "Your shop must be digitally approved before you can continue to physical verification.",
+            `Your ${entityName} must be digitally approved before you can continue to physical verification.`,
         })
         return
       }
@@ -485,7 +497,13 @@ function VendorsPanel() {
     beginRouteTransition(retryAction)
 
     try {
-      if (path.startsWith("/shop-detail")) {
+      if (path.startsWith("/service-provider")) {
+        const [pathname] = path.split("?")
+        const loader = loadVendorRoutes[pathname]
+        if (loader) {
+          await loader()
+        }
+      } else if (path.startsWith("/shop-detail")) {
         await prepareShopDetailTransition({
           shopId: activeShop.id,
           userId: user?.id || null,
@@ -593,7 +611,7 @@ function VendorsPanel() {
             <FaArrowLeft />
           </button>
           <div className="truncate text-[1.15rem] font-bold tracking-[0.5px]">
-            Merchant Dashboard
+            {dashboardTitle}
           </div>
         </div>
       </header>
@@ -609,7 +627,7 @@ function VendorsPanel() {
           {activeShop.status === "pending" && (
             <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-[#FDE68A] border-l-4 border-l-[#D97706] bg-[#FEF3C7] px-4 py-3 text-[0.9rem] font-semibold leading-[1.4] text-[#92400E]">
               <FaTriangleExclamation className="shrink-0 text-[1.2rem]" />
-              <span>Your shop application is pending digital approval.</span>
+              <span>Your {entityName} application is pending digital approval.</span>
             </div>
           )}
 
@@ -629,7 +647,7 @@ function VendorsPanel() {
             <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-[#FECACA] border-l-4 border-l-[#DC2626] bg-[#FEE2E2] px-4 py-3 text-[0.9rem] font-semibold leading-[1.4] text-[#991B1B]">
               <FaLock className="shrink-0 text-[1.2rem]" />
               <span>
-                Your shop has been locked by administration. It is no longer
+                Your {entityName} has been locked by administration. It is no longer
                 visible to the public. Please contact support.
               </span>
             </div>
@@ -649,13 +667,13 @@ function VendorsPanel() {
                   type: "info",
                   title: "Application under review",
                   message:
-                    "Your shop application is waiting for digital approval from CTMerchant staff.",
+                    `Your ${entityName} application is waiting for digital approval from CTMerchant staff.`,
                 })
               }
             />
           ) : isVerified ? (
             <DashCard
-              title="Verified Shop"
+              title={`Verified ${entityTitle}`}
               subtitle="Verification Complete"
               icon={<FaCheckDouble />}
               colorClass="bg-[#DCFCE7] text-[#16A34A]"
@@ -664,8 +682,8 @@ function VendorsPanel() {
                 handleCardClick(null, () =>
                   notify({
                     type: "success",
-                    title: "Shop verified",
-                    message: "Your shop has completed physical verification and your free trial is active.",
+                    title: `${entityTitle} verified`,
+                    message: `Your ${entityName} has completed physical verification and your free trial is active.`,
                   }),
                 )
               }
@@ -748,7 +766,7 @@ function VendorsPanel() {
                   type: "error",
                   title: "Approval required",
                   message:
-                    "You cannot subscribe to a service plan until your shop passes KYC approval.",
+                    `You cannot subscribe to a service plan until your ${entityName} passes KYC approval.`,
                 })
               }
             />
@@ -786,7 +804,7 @@ function VendorsPanel() {
           )}
 
           <DashCard
-            title="Add Product"
+            title={`Add ${itemTitle}`}
             icon={<FaRegSquarePlus />}
             colorClass="bg-[#DCFCE7] text-[#16A34A]"
             isLocked={!isApplicationApproved || isSuspended}
@@ -799,17 +817,17 @@ function VendorsPanel() {
                 : () =>
                     notify({
                       type: "error",
-                      title: isSuspended ? "Shop restricted" : "Approval required",
+                      title: isSuspended ? `${entityTitle} restricted` : "Approval required",
                       message:
                         isSuspended
-                          ? "Your shop access has been restricted by administration."
-                          : "Your shop must be approved before you can add products.",
+                          ? `Your ${entityName} access has been restricted by administration.`
+                          : `Your ${entityName} must be approved before you can add ${itemNamePlural}.`,
                     })
             }
           />
 
           <DashCard
-            title="Edit Products"
+            title={`Edit ${itemNamePlural.charAt(0).toUpperCase()}${itemNamePlural.slice(1)}`}
             icon={<FaPenToSquare />}
             colorClass="bg-[#DBEAFE] text-[#2563EB]"
             badge={activeRejectedCount}
@@ -821,17 +839,17 @@ function VendorsPanel() {
                 : () =>
                     notify({
                       type: "error",
-                      title: isSuspended ? "Shop restricted" : "Approval required",
+                      title: isSuspended ? `${entityTitle} restricted` : "Approval required",
                       message:
                         isSuspended
-                          ? "Your shop access has been restricted by administration."
-                          : "Your shop must be approved before you can edit products.",
+                          ? `Your ${entityName} access has been restricted by administration.`
+                          : `Your ${entityName} must be approved before you can edit ${itemNamePlural}.`,
                     })
             }
           />
 
           <DashCard
-            title="Shop Banner"
+            title={`${entityTitle} Banner`}
             icon={<FaCamera />}
             colorClass="bg-[#F3E8FF] text-[#9333EA]"
             isLocked={!isApplicationApproved || isSuspended}
@@ -841,17 +859,17 @@ function VendorsPanel() {
                 : () =>
                     notify({
                       type: "error",
-                      title: isSuspended ? "Shop restricted" : "Approval required",
+                      title: isSuspended ? `${entityTitle} restricted` : "Approval required",
                       message:
                         isSuspended
-                          ? "Your shop access has been restricted by administration."
-                          : "Your shop must be approved before you can manage your banner.",
+                          ? `Your ${entityName} access has been restricted by administration.`
+                          : `Your ${entityName} must be approved before you can manage your banner.`,
                     })
             }
           />
 
           <DashCard
-            title="Shop Settings"
+            title={`${entityTitle} Settings`}
             icon={<FaGear />}
             colorClass="bg-[#FFEDD5] text-[#EA580C]"
             isLocked={!isApplicationApproved || isSuspended}
@@ -861,17 +879,17 @@ function VendorsPanel() {
                 : () =>
                     notify({
                       type: "error",
-                      title: isSuspended ? "Shop restricted" : "Approval required",
+                      title: isSuspended ? `${entityTitle} restricted` : "Approval required",
                       message:
                         isSuspended
-                          ? "Your shop access has been restricted by administration."
-                          : "Your shop must be approved before you can update shop settings.",
+                          ? `Your ${entityName} access has been restricted by administration.`
+                          : `Your ${entityName} must be approved before you can update ${entityName} settings.`,
                     })
             }
           />
 
           <DashCard
-            title="Post News"
+            title={isServiceMode ? "Service News" : "Post News"}
             icon={<FaBullhorn />}
             colorClass="bg-[#FEE2E2] text-[#DC2626]"
             isLocked={!isApplicationApproved || isSuspended}
@@ -881,36 +899,36 @@ function VendorsPanel() {
                 : () =>
                     notify({
                       type: "error",
-                      title: isSuspended ? "Shop restricted" : "Approval required",
+                      title: isSuspended ? `${entityTitle} restricted` : "Approval required",
                       message:
                         isSuspended
-                          ? "Your shop access has been restricted by administration."
-                          : "Your shop must be approved before you can publish shop news.",
+                          ? `Your ${entityName} access has been restricted by administration.`
+                          : `Your ${entityName} must be approved before you can publish ${entityName} news.`,
                     })
             }
           />
 
           {isSuspended ? (
             <DashCard
-              title="View Shop"
+              title={`View ${entityTitle}`}
               subtitle="Suspended"
               icon={<FaStoreSlash />}
               isLocked={true}
               onClick={() =>
                 notify({
                   type: "error",
-                  title: "Shop restricted",
+                  title: `${entityTitle} restricted`,
                   message:
-                    "Your shop access has been restricted by administration.",
+                    `Your ${entityName} access has been restricted by administration.`,
                 })
               }
             />
           ) : (
             <DashCard
-              title="View Shop"
+              title={`View ${entityTitle}`}
               icon={<FaEye />}
               colorClass="bg-[#E0E7FF] text-[#4F46E5]"
-              onClick={() => handleCardClick(`/shop-detail?id=${activeShop.id}`)}
+              onClick={() => handleCardClick(viewRoute)}
             />
           )}
 

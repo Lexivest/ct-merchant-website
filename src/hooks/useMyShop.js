@@ -44,11 +44,12 @@ function clearCachedShop(userId) {
 }
 
 function buildMetaFromShop(shopData) {
-  if (!shopData) return { title: "Register Shop", status: "default" }
-  if (shopData.is_open === false) return { title: "Locked", status: "locked" }
+  if (!shopData) return { title: "Register Shop/Service", status: "default" }
+  const entityTitle = shopData.is_service ? "Service" : "Shop"
+  if (shopData.is_open === false) return { title: `${entityTitle} Locked`, status: "locked" }
   if (shopData.status === "pending") return { title: "Pending", status: "pending" }
   if (shopData.status === "rejected") return { title: "Rejected", status: "rejected" }
-  return { title: "My Shop", status: "approved" }
+  return { title: `My ${entityTitle}`, status: "approved" }
 }
 
 export default function useMyShop() {
@@ -86,7 +87,7 @@ export default function useMyShop() {
       setDataError(false)
       const { data, error } = await supabase
         .from("shops")
-        .select("id, status, rejection_reason, is_open, is_verified, kyc_status, kyc_video_url")
+        .select("id, status, rejection_reason, is_open, is_verified, kyc_status, kyc_video_url, is_service")
         .eq("owner_id", user.id)
         .maybeSingle()
 
@@ -164,7 +165,7 @@ export default function useMyShop() {
     // 1. Completely offline
     if (isOffline) {
       setShopMeta({ 
-        title: shopData ? resolvedMeta.title : "Shop Status", 
+        title: shopData ? resolvedMeta.title : "Shop/Service Status",
         status: shopData ? resolvedMeta.status : "locked",
         subtitle: shopData ? "Offline (cached status)" : "Offline Mode" 
       })
@@ -174,7 +175,7 @@ export default function useMyShop() {
     // 2. Online, but Supabase fetch failed (and we have no cached shop)
     if (dataError && !shopData) {
       setShopMeta({ 
-        title: "Shop Status", 
+        title: "Shop/Service Status",
         status: "locked",
         subtitle: "Connection Error" 
       })
@@ -189,13 +190,13 @@ export default function useMyShop() {
 
     // 4. No confirmed result yet: stay neutral (prevents wrong "Register Shop" on weak network)
     if (!shopData && !hasResolvedOnline) {
-      setShopMeta({ title: "Shop Status", status: "locked", subtitle: "Checking status..." })
+      setShopMeta({ title: "Shop/Service Status", status: "locked", subtitle: "Checking status..." })
       return
     }
 
     // 5. Confirmed no shop
     if (!shopData && hasResolvedOnline) {
-      setShopMeta({ title: "Register Shop", status: "default" })
+      setShopMeta({ title: "Register Shop/Service", status: "default" })
       return
     }
 

@@ -109,10 +109,10 @@ async function fetchOwnedShop(userId, shopId, select) {
 
 async function prepareMerchantProductsData({ userId, shopId }) {
   await fetchProfileSuspension(userId)
-  const shop = await fetchOwnedShop(userId, shopId, "id, is_open")
+  const shop = await fetchOwnedShop(userId, shopId, "id, is_open, is_service")
 
   if (shop.is_open === false) {
-    throw new Error("Shop is suspended.")
+    throw new Error(`${shop.is_service ? "Service" : "Shop"} is suspended.`)
   }
 
   const { data: products, error } = await supabase
@@ -129,6 +129,7 @@ async function prepareMerchantProductsData({ userId, shopId }) {
   return {
     kind: "merchant-products",
     shopId: String(shop.id),
+    shopData: shop,
   }
 }
 
@@ -147,8 +148,9 @@ async function prepareVendorPanelData({ userId }) {
   }
 
   if (shopData.status === "rejected" && shopData.kyc_status !== "rejected") {
+    const rejectedEntity = shopData.is_service ? "service" : "shop"
     throw new Error(
-      "Your shop application was rejected. Please contact support."
+      `Your ${rejectedEntity} application was rejected. Please contact support.`
     )
   }
 
@@ -243,7 +245,7 @@ async function prepareAddProductData({ userId, shopId }) {
   const shop = await fetchOwnedShop(userId, shopId, "id, is_open, is_service")
 
   if (shop.is_open === false) {
-    throw new Error("Shop is suspended.")
+    throw new Error(`${shop.is_service ? "Service" : "Shop"} is suspended.`)
   }
 
   const [productCountResult, discountCountResult, categoryRows] = await Promise.all([
@@ -300,7 +302,7 @@ async function prepareEditProductData({ userId, shopId, search = "" }) {
     throw new Error("Access denied to this product's shop.")
   }
   if (shop.is_open === false) {
-    throw new Error("Shop is suspended.")
+    throw new Error(`${shop.is_service ? "Service" : "Shop"} is suspended.`)
   }
 
   const { count, error: offerCountError } = await supabase
@@ -328,11 +330,11 @@ async function prepareMerchantBannerData({ userId, shopId }) {
   const shop = await fetchOwnedShop(
     userId,
     shopId,
-    "id, owner_id, name, category, address, image_url, status, cities(name)"
+    "id, owner_id, name, category, address, image_url, status, is_service, cities(name)"
   )
 
   if (shop.status !== "approved") {
-    throw new Error("Your shop must be digitally approved before you can manage your banner.")
+    throw new Error(`Your ${shop.is_service ? "service" : "shop"} must be digitally approved before you can manage your banner.`)
   }
 
   const [bannerResult, productResult, profileResult] = await Promise.all([
@@ -378,6 +380,7 @@ async function prepareMerchantSettingsData({ userId, shopId }) {
   return {
     kind: "merchant-settings",
     shopId: String(shop.id),
+    isService: shop.is_service === true,
     form: {
       name: shop.name || "",
       desc: shop.description || "",
@@ -395,10 +398,11 @@ async function prepareMerchantSettingsData({ userId, shopId }) {
 
 async function prepareMerchantNewsData({ userId, shopId }) {
   await fetchProfileSuspension(userId)
-  const shop = await fetchOwnedShop(userId, shopId, "id, status")
+  const shop = await fetchOwnedShop(userId, shopId, "id, status, is_service")
+  const entityName = shop.is_service ? "service" : "shop"
 
   if (shop.status !== "approved") {
-    throw new Error("Your shop must be approved before opening your shop news tools.")
+    throw new Error(`Your ${entityName} must be approved before opening your ${entityName} news tools.`)
   }
 
   const { data: newsData, error } = await supabase
@@ -415,6 +419,7 @@ async function prepareMerchantNewsData({ userId, shopId }) {
   return {
     kind: "merchant-news",
     shopId: String(shop.id),
+    isService: shop.is_service === true,
     newsText: newsData?.content_data || "",
     status: newsData?.status || "",
   }
@@ -422,7 +427,7 @@ async function prepareMerchantNewsData({ userId, shopId }) {
 
 async function prepareMerchantAnalyticsData({ userId, shopId }) {
   await fetchProfileSuspension(userId)
-  const shop = await fetchOwnedShop(userId, shopId, "id, subscription_end_date, name, unique_id")
+  const shop = await fetchOwnedShop(userId, shopId, "id, subscription_end_date, name, unique_id, is_service")
 
   if (!isFutureDate(shop.subscription_end_date)) {
     throw new Error("Activate your service plan before opening analytics.")
@@ -437,6 +442,7 @@ async function prepareMerchantAnalyticsData({ userId, shopId }) {
     kind: "merchant-analytics",
     shopId: String(shop.id),
     shopName: shop.name,
+    isService: shop.is_service === true,
     summary: analytics,
     days: 30,
   }

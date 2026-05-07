@@ -32,7 +32,7 @@ function SettingsShimmer() {
   return (
     <PageLoadingScreen
       title="Opening settings"
-      message="Please wait while we prepare your shop settings."
+      message="Please wait while we prepare your settings."
     />
   );
 }
@@ -57,6 +57,7 @@ export default function MerchantSettings() {
   const [saving, setSaving] = useState(false);
   const [shopId, setShopId] = useState(() => prefetchedData?.shopId || urlShopId);
   const [isLocked, setIsLocked] = useState(() => prefetchedData?.isLocked || false);
+  const [isServiceMode, setIsServiceMode] = useState(() => prefetchedData?.isService === true);
 
   // Form State
   const [form, setForm] = useState({
@@ -80,6 +81,7 @@ export default function MerchantSettings() {
         telegram: prefetchedData.form?.telegram || "",
       });
       setIsLocked(prefetchedData.isLocked || false);
+      setIsServiceMode(prefetchedData.isService === true);
       setError(null);
       setLoading(false);
       return;
@@ -129,6 +131,7 @@ export default function MerchantSettings() {
 
         // Apply Security Lockdown if Approved
         setIsLocked(shopData.status === "approved");
+        setIsServiceMode(shopData.is_service === true);
 
       } catch (err) {
         setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
@@ -144,6 +147,13 @@ export default function MerchantSettings() {
     const { id, value } = e.target;
     setForm((prev) => ({ ...prev, [id]: value }));
   };
+
+  const entityName = isServiceMode ? "service" : "shop";
+  const entityTitle = isServiceMode ? "Service" : "Shop";
+  const profileLabel = isServiceMode ? "Service" : "Business";
+  const nameLabel = isServiceMode ? "Service Name" : "Business Name";
+  const addressLabel = isServiceMode ? "Office or Service Address" : "Physical Address";
+  const socialHandleExample = isServiceMode ? "myservice" : "myshop";
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -219,7 +229,7 @@ export default function MerchantSettings() {
           <button onClick={() => navigate("/vendor-panel")} className="text-xl transition hover:text-[#db2777]">
             <FaArrowLeft />
           </button>
-          <div className="text-[1.15rem] font-bold">Shop Settings</div>
+          <div className="text-[1.15rem] font-bold">{entityTitle} Settings</div>
         </div>
         <button 
           onClick={handleSave} 
@@ -238,7 +248,7 @@ export default function MerchantSettings() {
             <FaShieldHalved className="mt-0.5 shrink-0 text-2xl text-[#3B82F6]" />
             <div>
               <h4 className="mb-1 text-[0.95rem] font-extrabold text-[#1E3A8A]">Security Lockdown Active</h4>
-              <p className="text-[0.85rem] leading-relaxed text-[#1E40AF]">Because your shop is fully Approved, critical details (Name & Phone) are locked to protect your account from hijacking. Contact Support if you need to update these.</p>
+              <p className="text-[0.85rem] leading-relaxed text-[#1E40AF]">Because your {entityName} is fully approved, critical details (Name & Phone) are locked to protect your account from hijacking. Contact Support if you need to update these.</p>
             </div>
           </div>
         )}
@@ -247,12 +257,12 @@ export default function MerchantSettings() {
           
           {/* BASIC INFO */}
           <div className="mb-5 mt-2 flex items-center gap-2 border-b-2 border-[#F3F4F6] pb-2 text-[1.15rem] font-extrabold">
-            <FaBuilding className="text-[#db2777]" /> Basic Information
+            <FaBuilding className="text-[#db2777]" /> {profileLabel} Information
           </div>
 
           <div className="mb-5">
             <label className="mb-2 flex items-center text-[0.9rem] font-bold">
-              <FaStore className="mr-2 text-[#db2777]" /> Business Name
+              <FaStore className="mr-2 text-[#db2777]" /> {nameLabel}
               {isLocked && <span className="ml-auto flex items-center gap-1 rounded-full border border-[#E5E7EB] bg-[#F3F4F6] px-2 py-0.5 text-[0.7rem] font-extrabold text-[#6B7280]"><FaLock /> Locked</span>}
             </label>
             <input type="text" id="name" value={form.name} onChange={handleInputChange} required disabled={isLocked} className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20 disabled:cursor-not-allowed disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF] disabled:shadow-none" />
@@ -262,12 +272,12 @@ export default function MerchantSettings() {
             <label className="mb-2 flex items-center text-[0.9rem] font-bold">
               <FaAlignLeft className="mr-2 text-[#db2777]" /> Description
             </label>
-            <textarea id="desc" value={form.desc} onChange={handleInputChange} required placeholder="Tell customers what your shop is all about..." className="min-h-[120px] w-full resize-y rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
+            <textarea id="desc" value={form.desc} onChange={handleInputChange} required placeholder={`Tell customers what your ${entityName} is all about...`} className="min-h-[120px] w-full resize-y rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
           </div>
 
           <div className="mb-8">
             <label className="mb-2 flex items-center text-[0.9rem] font-bold">
-              <FaLocationDot className="mr-2 text-[#db2777]" /> Physical Address
+              <FaLocationDot className="mr-2 text-[#db2777]" /> {addressLabel}
             </label>
             <input type="text" id="address" value={form.address} onChange={handleInputChange} required className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
           </div>
@@ -309,15 +319,15 @@ export default function MerchantSettings() {
           </div>
           <div className="mb-5">
             <label className="mb-2 flex items-center text-[0.9rem] font-bold"><FaFacebookF className="mr-2 text-[#1877F2]" /> Facebook Page</label>
-            <input type="url" id="facebook" value={form.facebook} onChange={handleInputChange} placeholder="e.g. https://facebook.com/myshop" className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
+            <input type="url" id="facebook" value={form.facebook} onChange={handleInputChange} placeholder={`e.g. https://facebook.com/${socialHandleExample}`} className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
           </div>
           <div className="mb-5">
             <label className="mb-2 flex items-center text-[0.9rem] font-bold"><FaTelegram className="mr-2 text-[#229ED9]" /> Telegram Channel</label>
-            <input type="url" id="telegram" value={form.telegram} onChange={handleInputChange} placeholder="e.g. https://t.me/myshop" className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
+            <input type="url" id="telegram" value={form.telegram} onChange={handleInputChange} placeholder={`e.g. https://t.me/${socialHandleExample}`} className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
           </div>
           <div className="mb-5">
             <label className="mb-2 flex items-center text-[0.9rem] font-bold"><FaXTwitter className="mr-2 text-black" /> X (Twitter) Profile</label>
-            <input type="url" id="twitter" value={form.twitter} onChange={handleInputChange} placeholder="e.g. https://x.com/myshop" className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
+            <input type="url" id="twitter" value={form.twitter} onChange={handleInputChange} placeholder={`e.g. https://x.com/${socialHandleExample}`} className="w-full rounded border border-[#888C8C] p-3 text-[1rem] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] focus:border-[#db2777] focus:outline-none focus:ring-2 focus:ring-[#db2777]/20" />
           </div>
 
         </form>
