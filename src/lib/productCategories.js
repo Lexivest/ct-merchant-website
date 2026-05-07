@@ -1,4 +1,4 @@
-import { SERVICE_CATEGORY_ROWS, mergeServiceCategoryRows } from "./serviceCategories";
+import { SERVICE_CATEGORY_ROWS, filterShopCategoriesForSelect, isServiceCategory } from "./serviceCategories";
 
 const PRODUCT_CATEGORY_SEED = [
   { name: "Mobile Phones & Accessories", groupKey: "tech", sortOrder: 10 },
@@ -71,7 +71,7 @@ export function normalizeProductCategoryRows(rows = []) {
 }
 
 export const fallbackProductCategoryRows = normalizeProductCategoryRows(
-  mergeServiceCategoryRows(PRODUCT_CATEGORY_SEED),
+  PRODUCT_CATEGORY_SEED,
 );
 
 export async function loadProductCategoryRows(supabaseClient) {
@@ -83,12 +83,12 @@ export async function loadProductCategoryRows(supabaseClient) {
     .order("name", { ascending: true });
 
   if (!primary.error && primary.data?.length) {
-    return normalizeProductCategoryRows(mergeServiceCategoryRows(primary.data));
+    return normalizeProductCategoryRows(filterShopCategoriesForSelect(primary.data));
   }
 
   const legacy = await supabaseClient.from("categories").select("name").order("name", { ascending: true });
   if (!legacy.error && legacy.data?.length) {
-    return normalizeProductCategoryRows(mergeServiceCategoryRows(legacy.data));
+    return normalizeProductCategoryRows(filterShopCategoriesForSelect(legacy.data));
   }
 
   return fallbackProductCategoryRows;
@@ -104,8 +104,19 @@ export function toProductCategoryOptions(rows = [], currentCategory = "") {
   }
 
   return values
-    .filter((value) => value.toLowerCase() !== "other")
+    .filter((value) => value.toLowerCase() !== "other" && !isServiceCategory(value))
     .map((value) => ({ value, label: value }));
+}
+
+export function toServiceCategoryOptions(currentCategory = "") {
+  const values = SERVICE_CATEGORY_ROWS.map((row) => row.name);
+  const current = normalizeName(currentCategory);
+
+  if (current && isServiceCategory(current) && !values.some((value) => value.toLowerCase() === current.toLowerCase())) {
+    values.push(current);
+  }
+
+  return values.map((value) => ({ value, label: value }));
 }
 
 export function resolveProductCategoryGroup(category, rows = []) {

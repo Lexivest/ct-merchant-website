@@ -34,6 +34,7 @@ import { clampWords, countWords } from "../../lib/textLimits";
 import {
   loadProductCategoryRows,
   resolveProductCategoryGroup,
+  toServiceCategoryOptions,
   toProductCategoryOptions,
 } from "../../lib/productCategories";
 import { isServiceCategory } from "../../lib/serviceCategories";
@@ -286,6 +287,7 @@ export default function EditProduct() {
   const [productData, setProductData] = useState(() => prefetchedData?.productData || null);
   const [activeOffersCount, setActiveOffersCount] = useState(() => prefetchedData?.activeOffersCount || 0);
   const [categoryRows, setCategoryRows] = useState(() => prefetchedData?.categoryRows || []);
+  const [shopData, setShopData] = useState(() => prefetchedData?.shopData || null);
 
   const [form, setForm] = useState(() => initialEditorState.form);
   const [dynamicAttrs, setDynamicAttrs] = useState(() => initialEditorState.dynamicAttrs);
@@ -312,11 +314,12 @@ export default function EditProduct() {
   useEffect(() => { cameraSlotRef.current = cameraSlot; }, [cameraSlot]);
 
   useEffect(() => {
-    function applyProductState(product, loadedCategoryRows, offerCount) {
+    function applyProductState(product, loadedCategoryRows, offerCount, shop = null) {
       const nextEditorState = buildProductEditorState(product);
       setProductData(product || null);
       setCategoryRows(loadedCategoryRows || []);
       setActiveOffersCount(offerCount || 0);
+      setShopData(shop || null);
       setForm(nextEditorState.form);
       setDynamicAttrs(nextEditorState.dynamicAttrs);
       setExistingUrls(nextEditorState.existingUrls);
@@ -326,7 +329,7 @@ export default function EditProduct() {
     }
 
     if (prefetchedData) {
-      applyProductState(prefetchedData.productData, prefetchedData.categoryRows, prefetchedData.activeOffersCount);
+      applyProductState(prefetchedData.productData, prefetchedData.categoryRows, prefetchedData.activeOffersCount, prefetchedData.shopData || null);
       setError(null);
       setLoading(false);
       return;
@@ -352,14 +355,14 @@ export default function EditProduct() {
 
         if (prodErr || !prod) throw new Error("Product not found.");
 
-        const { data: shop } = await supabase.from("shops").select("id, is_open").eq("id", prod.shop_id).eq("owner_id", user.id).maybeSingle();
+        const { data: shop } = await supabase.from("shops").select("id, is_open, is_service").eq("id", prod.shop_id).eq("owner_id", user.id).maybeSingle();
         if (!shop) throw new Error("Access denied to this product's shop.");
         if (shop.is_open === false) throw new Error("Shop is suspended.");
 
         const { count } = await supabase.from('products').select('id', { count: 'exact', head: true })
           .eq('shop_id', prod.shop_id).not('discount_price', 'is', null).neq('id', productId);
 
-        applyProductState(prod, loadedCategoryRows, count || 0);
+        applyProductState(prod, loadedCategoryRows, count || 0, shop);
       } catch (err) {
         setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
       } finally {
@@ -368,6 +371,17 @@ export default function EditProduct() {
     }
     if (!authLoading) fetchProduct();
   }, [user, authLoading, productId, isOffline, navigate, prefetchedData]);
+
+  useEffect(() => {
+    if (!shopData || !form.category) return;
+    if (shopData.is_service && !isServiceCategory(form.category)) {
+      setForm((prev) => ({ ...prev, category: "" }));
+      return;
+    }
+    if (!shopData.is_service && isServiceCategory(form.category)) {
+      setForm((prev) => ({ ...prev, category: "" }));
+    }
+  }, [form.category, shopData]);
 
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;
@@ -710,9 +724,12 @@ export default function EditProduct() {
   const liveDiscPerc = parseFloat(form.discountPercent) || 0;
   const isLiveDiscValid = form.isDiscount && form.condition !== "Fairly Used" && liveDiscPerc > 0 && liveDiscPerc <= 20;
   const liveFinalPrice = isLiveDiscValid ? livePrice - livePrice * (liveDiscPerc / 100) : livePrice;
-  const categoryOptions = useMemo(() => toProductCategoryOptions(categoryRows, form.category), [categoryRows, form.category]);
+  const categoryOptions = useMemo(
+    () => shopData?.is_service ? toServiceCategoryOptions(form.category) : toProductCategoryOptions(categoryRows, form.category),
+    [categoryRows, form.category, shopData?.is_service],
+  );
   const categoryGroup = useMemo(() => resolveProductCategoryGroup(form.category, categoryRows), [form.category, categoryRows]);
-  const isServiceListing = categoryGroup === "services" || isServiceCategory(form.category);
+  const isServiceListing = shopData?.is_service === true || categoryGroup === "services" || isServiceCategory(form.category);
   const editorCopy = isServiceListing
     ? {
         header: "Edit Service",

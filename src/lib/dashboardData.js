@@ -1,5 +1,6 @@
 import { primeCachedFetchStore, readCachedFetchStore } from "../hooks/useCachedFetch"
 import { supabase } from "./supabase"
+import { isServiceShop } from "./serviceCategories"
 
 const DASHBOARD_CACHE_TTL = 1000 * 60 * 15
 const DASHBOARD_TRANSITION_TIMEOUT = 12000
@@ -370,8 +371,11 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
   const rawFeaturedCityBanners =
     data.featured_city_banners || data.featured_banners || []
   const rawSponsoredProducts = data.sponsored_products || []
-  const rawShops = Array.isArray(data.shops) ? data.shops : []
-  const rawProducts = Array.isArray(data.products) ? data.products : []
+  const rawShops = Array.isArray(data.shops) ? data.shops.filter((shop) => !isServiceShop(shop)) : []
+  const normalShopIds = new Set(rawShops.map((shop) => String(shop.id)))
+  const rawProducts = Array.isArray(data.products)
+    ? data.products.filter((product) => normalShopIds.has(String(product.shop_id)))
+    : []
   const rawFairlyUsedProducts = Array.isArray(data.fairly_used_products)
     ? data.fairly_used_products
     : []

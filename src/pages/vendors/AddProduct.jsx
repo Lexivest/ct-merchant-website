@@ -36,6 +36,7 @@ import { clampWords, countWords } from "../../lib/textLimits";
 import {
   loadProductCategoryRows,
   resolveProductCategoryGroup,
+  toServiceCategoryOptions,
   toProductCategoryOptions,
 } from "../../lib/productCategories";
 import { isServiceCategory } from "../../lib/serviceCategories";
@@ -243,6 +244,7 @@ export default function AddProduct() {
   const [activeOffersCount, setActiveOffersCount] = useState(() => prefetchedData?.activeOffersCount || 0);
   const [submitting, setSubmitting] = useState(false);
   const [categoryRows, setCategoryRows] = useState(() => prefetchedData?.categoryRows || []);
+  const [shopData, setShopData] = useState(() => prefetchedData?.shopData || null);
   const productDraftKey = useMemo(() => (!user?.id || !shopId) ? "" : `add-product:${user.id}:${shopId}`, [shopId, user?.id]);
   const [draftHydrated, setDraftHydrated] = useState(false);
 
@@ -285,6 +287,7 @@ export default function AddProduct() {
       setLimitReached(prefetchedData.limitReached || false);
       setActiveOffersCount(prefetchedData.activeOffersCount || 0);
       setCategoryRows(prefetchedData.categoryRows || []);
+      setShopData(prefetchedData.shopData || null);
       setError(null);
       setLoading(false);
       return;
@@ -300,9 +303,10 @@ export default function AddProduct() {
         setLoading(true);
         const { data: profile } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).maybeSingle();
         if (profile?.is_suspended) throw new Error("Account restricted.");
-        const { data: shop } = await supabase.from("shops").select("id, is_open").eq("id", shopId).eq("owner_id", user.id).maybeSingle();
+        const { data: shop } = await supabase.from("shops").select("id, is_open, is_service").eq("id", shopId).eq("owner_id", user.id).maybeSingle();
         if (!shop) throw new Error("Shop not found or access denied.");
         if (shop.is_open === false) throw new Error("Shop is suspended.");
+        setShopData(shop);
 
         const [prodRes, discountRes, loadedCategoryRows] = await Promise.all([
           supabase.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shopId),
@@ -359,6 +363,17 @@ export default function AddProduct() {
     }, PRODUCT_DRAFT_SAVE_DELAY);
     return () => window.clearTimeout(timeoutId);
   }, [authLoading, blobs, draftHydrated, dynamicAttrs, error, form, loading, productDraftKey]);
+
+  useEffect(() => {
+    if (!shopData || !form.category) return;
+    if (shopData.is_service && !isServiceCategory(form.category)) {
+      setForm((prev) => ({ ...prev, category: "" }));
+      return;
+    }
+    if (!shopData.is_service && isServiceCategory(form.category)) {
+      setForm((prev) => ({ ...prev, category: "" }));
+    }
+  }, [form.category, shopData]);
 
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;
@@ -624,9 +639,12 @@ export default function AddProduct() {
   const liveDiscPerc = parseFloat(form.discountPercent) || 0;
   const isLiveDiscValid = form.isDiscount && form.condition !== "Fairly Used" && liveDiscPerc > 0 && liveDiscPerc <= 20;
   const liveFinalPrice = isLiveDiscValid ? livePrice - livePrice * (liveDiscPerc / 100) : livePrice;
-  const categoryOptions = useMemo(() => toProductCategoryOptions(categoryRows), [categoryRows]);
+  const categoryOptions = useMemo(
+    () => shopData?.is_service ? toServiceCategoryOptions(form.category) : toProductCategoryOptions(categoryRows, form.category),
+    [categoryRows, form.category, shopData?.is_service],
+  );
   const categoryGroup = useMemo(() => resolveProductCategoryGroup(form.category, categoryRows), [form.category, categoryRows]);
-  const isServiceListing = categoryGroup === "services" || isServiceCategory(form.category);
+  const isServiceListing = shopData?.is_service === true || categoryGroup === "services" || isServiceCategory(form.category);
   const editorCopy = isServiceListing
     ? {
         header: "Add Service",

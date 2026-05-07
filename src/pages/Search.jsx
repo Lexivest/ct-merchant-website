@@ -69,6 +69,7 @@ function Search() {
         .from("shops")
         .select("*")
         .eq("city_id", resolvedCityId)
+        .eq("is_service", false)
         .order("name", { ascending: true })
         .limit(30)
 
@@ -83,6 +84,7 @@ function Search() {
       .from("shops")
       .select("id")
       .eq("city_id", resolvedCityId)
+      .eq("is_service", false)
 
     if (cityShopsError) throw cityShopsError
     const cityShopIds = (cityShops || []).map((s) => s.id)
@@ -92,6 +94,7 @@ function Search() {
       .from("shops")
       .select("*")
       .eq("city_id", resolvedCityId)
+      .eq("is_service", false)
       .or(`name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},description.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},address.ilike.${ilikeQuery}`)
       .limit(50)
 

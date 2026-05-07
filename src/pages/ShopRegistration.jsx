@@ -18,6 +18,7 @@ import {
   FaLocationDot,
   FaMapPin,
   FaPhone,
+  FaScrewdriverWrench,
   FaShieldHalved,
   FaShop,
   FaStore,
@@ -43,7 +44,11 @@ import {
   savePersistentDraft,
 } from "../lib/persistentDrafts"
 import { buildShopRegistrationCacheKey } from "../lib/vendorRouteTransitions"
-import { mergeServiceCategoriesForSelect } from "../lib/serviceCategories"
+import {
+  filterShopCategoriesForSelect,
+  getAllServiceCategoryNames,
+  isServiceCategory,
+} from "../lib/serviceCategories"
 import {
   UPLOAD_RULES,
   formatBytes,
@@ -78,6 +83,7 @@ const FORM_CONTROL_CLASS =
 const FORM_CONTROL_WITH_ICON_CLASS =
   "w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-12 pr-4 text-sm font-medium text-slate-800 shadow-[0_1px_0_rgba(255,255,255,0.9),0_12px_30px_rgba(15,23,42,0.06)] outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-500 disabled:shadow-none disabled:opacity-70"
 const EMPTY_SHOP_FORM = {
+  listingMode: "shop",
   name: "",
   businessType: "Individual/Enterprise",
   category: "",
@@ -500,6 +506,9 @@ function ShopRegistration() {
   })
 
   const [form, setForm] = useState(EMPTY_SHOP_FORM)
+  const isServiceMode = form.listingMode === "service"
+  const registrationNoun = isServiceMode ? "service" : "shop"
+  const registrationTitle = isServiceMode ? "Service Registration" : "Shop Registration"
 
   const [files, setFiles] = useState(EMPTY_SHOP_FILES)
 
@@ -677,7 +686,20 @@ function ShopRegistration() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  function startRegistrationFlow() {
+  function handleRegistrationTypeChange(nextMode) {
+    const safeMode = nextMode === "service" ? "service" : "shop"
+    setForm((prev) => ({
+      ...prev,
+      listingMode: safeMode,
+      category:
+        safeMode === "service"
+          ? (isServiceCategory(prev.category) ? prev.category : "")
+          : (isServiceCategory(prev.category) ? "" : prev.category),
+    }))
+  }
+
+  function startRegistrationFlow(nextMode = form.listingMode) {
+    handleRegistrationTypeChange(nextMode)
     setShowOnboarding(false)
     if (!isEdit) {
       updateRegistrationView("form")
@@ -750,6 +772,13 @@ function ShopRegistration() {
 
   const descWords = useMemo(() => countWords(form.desc), [form.desc])
   const addressWords = useMemo(() => countWords(form.address), [form.address])
+  const categoryOptions = useMemo(() => {
+    if (isServiceMode) {
+      return getAllServiceCategoryNames().map((name) => ({ name }))
+    }
+
+    return categories
+  }, [categories, isServiceMode])
   const activeCameraProfile = useMemo(
     () => buildCameraProfile(cameraCapture.ratio),
     [cameraCapture.ratio],
@@ -759,13 +788,15 @@ function ShopRegistration() {
       {
         step: "01",
         title: "Submit Application",
-        desc: "Fill in your shop details, location, and verification documents.",
+        desc: `Fill in your ${registrationNoun} details, location, and verification documents.`,
         icon: <FaFileContract />,
       },
       {
         step: "02",
-        title: "Approval & Product Catalog",
-        desc: "Once approved, upload at least 5 products to activate your storefront.",
+        title: isServiceMode ? "Approval & Service Listings" : "Approval & Product Catalog",
+        desc: isServiceMode
+          ? "Once approved, add service offers or work samples to activate your service page."
+          : "Once approved, upload at least 5 products to activate your storefront.",
         icon: <FaBoxOpen />,
       },
       {
@@ -787,7 +818,7 @@ function ShopRegistration() {
         icon: <FaCheck />,
       },
     ],
-    [],
+    [isServiceMode, registrationNoun],
   )
 
   useEffect(() => {
@@ -796,7 +827,7 @@ function ShopRegistration() {
     let isCancelled = false
 
     async function hydrateRegistrationForm() {
-      setCategories(mergeServiceCategoriesForSelect(data.categories))
+      setCategories(filterShopCategoriesForSelect(data.categories))
       setAreas(data.areas)
       setCityData(data.cityData)
 
@@ -811,6 +842,7 @@ function ShopRegistration() {
         const s = data.shop
         setExistingShop(s)
         nextForm = {
+          listingMode: s.is_service ? "service" : "shop",
           name: s.name || "",
           businessType: s.business_type || "Individual/Enterprise",
           category: s.category || "",
@@ -849,6 +881,22 @@ function ShopRegistration() {
 
       if (draft?.data?.form) {
         nextForm = { ...nextForm, ...draft.data.form }
+      }
+
+      if (
+        nextForm.listingMode === "service" &&
+        nextForm.category &&
+        !isServiceCategory(nextForm.category)
+      ) {
+        nextForm.category = ""
+      }
+
+      if (
+        nextForm.listingMode !== "service" &&
+        nextForm.category &&
+        isServiceCategory(nextForm.category)
+      ) {
+        nextForm.category = ""
       }
 
       if (draft?.data?.previews) {
@@ -969,11 +1017,11 @@ function ShopRegistration() {
     switch (stepIndex) {
       case 0: // Basics
         if (!form.name.trim() || form.name.trim().length < 3) return "Business name must be at least 3 characters."
-        if (!form.category) return "Please select a business category."
-        if (!previews.storefront && !files.storefront) return "Store front image is required."
+        if (!form.category) return `Please select a ${isServiceMode ? "service" : "business"} category.`
+        if (!previews.storefront && !files.storefront) return `${isServiceMode ? "Service cover photo" : "Store front image"} is required.`
         return ""
       case 1: // Profile
-        if (descWords < DESC_MIN_WORDS || descWords > DESC_MAX_WORDS) return `Business description must be between ${DESC_MIN_WORDS} and ${DESC_MAX_WORDS} words.`
+        if (descWords < DESC_MIN_WORDS || descWords > DESC_MAX_WORDS) return `${isServiceMode ? "Service" : "Business"} description must be between ${DESC_MIN_WORDS} and ${DESC_MAX_WORDS} words.`
         if (!form.areaId) return "Please select an area."
         if (addressWords < ADDR_MIN_WORDS || addressWords > ADDR_MAX_WORDS) return `Street address must be between ${ADDR_MIN_WORDS} and ${ADDR_MAX_WORDS} words.`
         return ""
@@ -1401,6 +1449,7 @@ function ShopRegistration() {
         p_website_url: form.website ? formatUrl(form.website) : null,
         p_shop_id: isEdit ? Number(activeExistingShop?.id || shopId) : null,
         p_telegram_url: form.telegram ? formatUrl(form.telegram) : null,
+        p_is_service: isServiceMode,
       })
 
       if (rpcErr) throw rpcErr
@@ -1429,6 +1478,7 @@ function ShopRegistration() {
               is_verified: false,
               kyc_status: "unsubmitted",
               kyc_video_url: null,
+              is_service: isServiceMode,
             })
           )
         }
@@ -1554,11 +1604,11 @@ function ShopRegistration() {
         <div className="mx-auto max-w-4xl px-4 py-10 md:py-14">
           <div className="mb-10 text-center">
             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-[linear-gradient(135deg,#4f46e5_0%,#db2777_100%)] text-3xl text-white shadow-[0_24px_60px_rgba(79,70,229,0.28)]">
-              <FaBriefcase />
+              {isServiceMode ? <FaScrewdriverWrench /> : <FaBriefcase />}
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900">Merchant Onboarding</h1>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900">{registrationTitle}</h1>
             <p className="mt-2 text-lg font-medium text-slate-600">
-              Your journey to a professional digital presence starts here.
+              Choose the right business type before you continue.
             </p>
           </div>
 
@@ -1591,6 +1641,44 @@ function ShopRegistration() {
               className="shrink-0 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
             >
               {hasUploadedProfileAvatar ? "Update" : "Add"}
+            </button>
+          </div>
+
+          <div className="mb-6 grid gap-3 md:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => handleRegistrationTypeChange("shop")}
+              className={`rounded-[28px] border p-5 text-left shadow-sm transition active:scale-[0.99] ${
+                !isServiceMode
+                  ? "border-indigo-300 bg-indigo-50 text-indigo-950 ring-4 ring-indigo-100"
+                  : "border-white/80 bg-white/85 text-slate-700 hover:border-indigo-200"
+              }`}
+            >
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl text-indigo-600 shadow-sm">
+                <FaStore />
+              </div>
+              <h2 className="text-lg font-black">Register a Shop</h2>
+              <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+                For stores that sell physical products in the marketplace.
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleRegistrationTypeChange("service")}
+              className={`rounded-[28px] border p-5 text-left shadow-sm transition active:scale-[0.99] ${
+                isServiceMode
+                  ? "border-pink-300 bg-pink-50 text-pink-950 ring-4 ring-pink-100"
+                  : "border-white/80 bg-white/85 text-slate-700 hover:border-pink-200"
+              }`}
+            >
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl text-pink-600 shadow-sm">
+                <FaScrewdriverWrench />
+              </div>
+              <h2 className="text-lg font-black">Register a Service</h2>
+              <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+                For technicians, professionals, clinics, tutors, food spots, and local service providers.
+              </p>
             </button>
           </div>
 
@@ -1678,10 +1766,10 @@ function ShopRegistration() {
           <div className="mt-12 space-y-4">
             <button
               type="button"
-              onClick={startRegistrationFlow}
+              onClick={() => startRegistrationFlow(form.listingMode)}
               className="flex h-16 w-full items-center justify-center gap-3 rounded-[24px] bg-[linear-gradient(135deg,#111827_0%,#4f46e5_100%)] text-lg font-black text-white shadow-[0_24px_60px_rgba(79,70,229,0.24)] transition-all hover:brightness-[1.03] active:scale-[0.98]"
             >
-              Start Registration
+              Start {isServiceMode ? "Service" : "Shop"} Registration
               <FaArrowRight className="text-sm" />
             </button>
             <button
@@ -1715,7 +1803,7 @@ function ShopRegistration() {
                 <FaArrowLeft />
               </button>
               <div>
-                <h1 className="text-lg font-bold text-slate-900">{isEdit ? "Correction" : "New Registration"}</h1>
+                <h1 className="text-lg font-bold text-slate-900">{isEdit ? "Correction" : registrationTitle}</h1>
                 <p className="text-xs font-medium text-slate-500">Step {currentStep + 1} of {STEPS.length}</p>
               </div>
             </div>
@@ -1766,11 +1854,44 @@ function ShopRegistration() {
               {/* Step 1: Basics */}
               {currentStep === 0 && (
                 <div className={FORM_SECTION_CLASS}>
-                  <SectionHeader icon={<FaStore />} title="Business Basics" subtitle="Tell us the core details of your shop." />
+                  <SectionHeader
+                    icon={isServiceMode ? <FaScrewdriverWrench /> : <FaStore />}
+                    title={isServiceMode ? "Service Basics" : "Shop Basics"}
+                    subtitle={isServiceMode ? "Tell us the core details of your service." : "Tell us the core details of your shop."}
+                  />
                   
                   <div className="space-y-6">
-                    <FieldBlock label="What is your business name?">
-                      <InputWithIcon icon={<FaShop />} value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="e.g. Ade & Sons Enterprise" />
+                    {!isEdit ? (
+                      <FieldBlock label="Registration Type">
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            onClick={() => handleRegistrationTypeChange("shop")}
+                            className={`rounded-2xl border px-4 py-3 text-left text-sm font-black transition ${
+                              !isServiceMode
+                                ? "border-indigo-300 bg-indigo-50 text-indigo-800"
+                                : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200"
+                            }`}
+                          >
+                            <FaStore className="mb-2" /> Shop Registration
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRegistrationTypeChange("service")}
+                            className={`rounded-2xl border px-4 py-3 text-left text-sm font-black transition ${
+                              isServiceMode
+                                ? "border-pink-300 bg-pink-50 text-pink-800"
+                                : "border-slate-200 bg-white text-slate-600 hover:border-pink-200"
+                            }`}
+                          >
+                            <FaScrewdriverWrench className="mb-2" /> Service Registration
+                          </button>
+                        </div>
+                      </FieldBlock>
+                    ) : null}
+
+                    <FieldBlock label={isServiceMode ? "What is your service/business name?" : "What is your business name?"}>
+                      <InputWithIcon icon={<FaShop />} value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder={isServiceMode ? "e.g. Musa Plumbing Services" : "e.g. Ade & Sons Enterprise"} />
                     </FieldBlock>
 
                     <div className="grid gap-6 md:grid-cols-2">
@@ -1781,18 +1902,18 @@ function ShopRegistration() {
                         </select>
                       </FieldBlock>
 
-                      <FieldBlock label="Primary Category">
+                      <FieldBlock label={isServiceMode ? "Service Category" : "Primary Category"}>
                         <select value={form.category} onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))} className={FORM_CONTROL_CLASS}>
                           <option value="">Select...</option>
-                          {categories.map((item) => (<option key={item.name} value={item.name}>{item.name}</option>))}
+                          {categoryOptions.map((item) => (<option key={item.name} value={item.name}>{item.name}</option>))}
                         </select>
                       </FieldBlock>
                     </div>
 
                     <div className="pt-4">
                       <UploadCard
-                        title="Store Front Photo"
-                        subtitle={`Clear photo of shop exterior | ${storefrontRuleLabel}`}
+                        title={isServiceMode ? "Service Cover Photo" : "Store Front Photo"}
+                        subtitle={`${isServiceMode ? "Clear photo of your work, office, or service brand" : "Clear photo of shop exterior"} | ${storefrontRuleLabel}`}
                         onFileClick={() => openImagePicker("storefront", 3 / 4)}
                         onCameraClick={() => openCustomCamera("storefront", 3 / 4)}
                         preview={renderPreview("storefront")}
@@ -1806,11 +1927,11 @@ function ShopRegistration() {
               {/* Step 2: Profile */}
               {currentStep === 1 && (
                 <div className={FORM_SECTION_CLASS}>
-                  <SectionHeader icon={<FaLocationDot />} title="Location & Description" subtitle="Where are you located and what do you do?" />
+                  <SectionHeader icon={<FaLocationDot />} title="Location & Description" subtitle={isServiceMode ? "Where do you operate and what service do you provide?" : "Where are you located and what do you do?"} />
 
                   <div className="space-y-6">
-                    <FieldBlock label="Business Description">
-                      <textarea value={form.desc} onChange={(e) => setForm((prev) => ({ ...prev, desc: e.target.value }))} placeholder="Explain your services and products..." className={`${FORM_CONTROL_CLASS} min-h-[140px] py-4`} />
+                    <FieldBlock label={isServiceMode ? "Service Description" : "Business Description"}>
+                      <textarea value={form.desc} onChange={(e) => setForm((prev) => ({ ...prev, desc: e.target.value }))} placeholder={isServiceMode ? "Describe the service you provide, coverage, and what customers should expect..." : "Explain your services and products..."} className={`${FORM_CONTROL_CLASS} min-h-[140px] py-4`} />
                       <WordCounter count={descWords} min={DESC_MIN_WORDS} max={DESC_MAX_WORDS} />
                     </FieldBlock>
 
@@ -1827,8 +1948,8 @@ function ShopRegistration() {
                       </FieldBlock>
                     </div>
 
-                    <FieldBlock label="Detailed Street Address">
-                      <InputWithIcon icon={<FaMapPin />} value={form.address} onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))} placeholder="e.g. Suite 5, Sky Plaza, Wuse 2" />
+                    <FieldBlock label={isServiceMode ? "Office or Service Address" : "Detailed Street Address"}>
+                      <InputWithIcon icon={<FaMapPin />} value={form.address} onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))} placeholder={isServiceMode ? "e.g. Workshop 12, Central Market, Kaduna" : "e.g. Suite 5, Sky Plaza, Wuse 2"} />
                       <WordCounter count={addressWords} min={ADDR_MIN_WORDS} max={ADDR_MAX_WORDS} />
                     </FieldBlock>
 
@@ -1997,6 +2118,7 @@ function ShopRegistration() {
           onConfirm={submitApplication}
           loading={submitting}
           isEdit={isEdit}
+          isServiceMode={isServiceMode}
         />
       )}
     </div>
@@ -2148,22 +2270,23 @@ function CropModal({ config, onClose, onCrop }) {
   )
 }
 
-function ReviewModal({ form, cityName, areaName, logoPreview, storefrontPreview, idPreview, cacPreview, showCac, onClose, onConfirm, loading, isEdit }) {
+function ReviewModal({ form, cityName, areaName, logoPreview, storefrontPreview, idPreview, cacPreview, showCac, onClose, onConfirm, loading, isEdit, isServiceMode }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/60 px-4 backdrop-blur-sm">
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-t-[32px] border border-white/60 bg-white p-6 shadow-2xl animate-slide-up">
-        <h2 className="text-2xl font-extrabold text-slate-900">Review Application</h2>
+        <h2 className="text-2xl font-extrabold text-slate-900">Review {isServiceMode ? "Service" : "Shop"} Application</h2>
         <p className="mt-1 text-sm font-medium text-slate-500">Please ensure all details are correct before submitting.</p>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <ReviewThumb label="Shop Logo" content={logoPreview} />
-          <ReviewThumb label="Store Front" content={storefrontPreview} />
+          <ReviewThumb label={isServiceMode ? "Service Logo" : "Shop Logo"} content={logoPreview} />
+          <ReviewThumb label={isServiceMode ? "Service Cover" : "Store Front"} content={storefrontPreview} />
           <ReviewThumb label="ID Document" content={idPreview} />
           {showCac && <ReviewThumb label="CAC Certificate" content={cacPreview} />}
         </div>
 
         <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <DetailRow label="Business Name" value={form.name} />
+          <DetailRow label="Registration Type" value={isServiceMode ? "Service" : "Shop"} />
           <DetailRow label="Type" value={form.businessType} />
           <DetailRow label="Category" value={form.category} />
           <DetailRow label="Address" value={form.address} />

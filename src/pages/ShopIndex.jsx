@@ -52,6 +52,7 @@ function ShopIndex() {
       .from("shops")
       .select("*")
       .eq("city_id", profile.city_id)
+      .eq("is_service", false)
       .order("name", { ascending: true })
       .limit(100)
 

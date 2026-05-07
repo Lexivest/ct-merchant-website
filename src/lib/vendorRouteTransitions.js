@@ -240,7 +240,7 @@ async function prepareShopRegistrationData({ userId, cityId, shopId = null }) {
 
 async function prepareAddProductData({ userId, shopId }) {
   await fetchProfileSuspension(userId)
-  const shop = await fetchOwnedShop(userId, shopId, "id, is_open")
+  const shop = await fetchOwnedShop(userId, shopId, "id, is_open, is_service")
 
   if (shop.is_open === false) {
     throw new Error("Shop is suspended.")
@@ -268,6 +268,7 @@ async function prepareAddProductData({ userId, shopId }) {
     limitReached: (productCountResult.count || 0) >= MAX_PRODUCTS_LIMIT,
     activeOffersCount: discountCountResult.count || 0,
     categoryRows,
+    shopData: shop,
   }
 }
 
@@ -294,7 +295,7 @@ async function prepareEditProductData({ userId, shopId, search = "" }) {
     throw new Error("Product not found.")
   }
 
-  const shop = await fetchOwnedShop(userId, product.shop_id, "id, is_open")
+  const shop = await fetchOwnedShop(userId, product.shop_id, "id, is_open, is_service")
   if (shopId && String(shop.id) !== String(shopId)) {
     throw new Error("Access denied to this product's shop.")
   }
@@ -318,6 +319,7 @@ async function prepareEditProductData({ userId, shopId, search = "" }) {
     productData: product,
     activeOffersCount: count || 0,
     categoryRows,
+    shopData: shop,
   }
 }
 

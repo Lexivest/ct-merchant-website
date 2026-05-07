@@ -66,6 +66,7 @@ function Cat() {
       .select("*")
       .eq("city_id", resolvedCityId)
       .eq("category", catName)
+      .eq("is_service", false)
       .eq("is_verified", true)
       .order("name", { ascending: true })
       .limit(100)

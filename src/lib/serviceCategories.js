@@ -118,6 +118,8 @@ export const SERVICE_CATEGORY_ROWS = SERVICE_CATEGORY_GROUPS.flatMap((group, gro
   })),
 )
 
+export const SERVICE_CATEGORY_NAMES = SERVICE_CATEGORY_ROWS.map((row) => row.name)
+
 const SERVICE_CATEGORY_MAP = new Map(
   SERVICE_CATEGORY_ROWS.map((row) => [row.name.trim().toLowerCase(), row]),
 )
@@ -135,7 +137,15 @@ export function getServiceCategoryMeta(value) {
 }
 
 export function getAllServiceCategoryNames() {
-  return SERVICE_CATEGORY_ROWS.map((row) => row.name)
+  return SERVICE_CATEGORY_NAMES
+}
+
+export function getServiceCategoryRows() {
+  return SERVICE_CATEGORY_ROWS
+}
+
+export function isServiceShop(shop) {
+  return shop?.is_service === true
 }
 
 export function mergeServiceCategoryRows(rows = []) {
@@ -181,6 +191,12 @@ export function mergeServiceCategoryRows(rows = []) {
 
 export function mergeServiceCategoriesForSelect(rows = []) {
   return mergeServiceCategoryRows(rows).map((row) => ({ name: row.name }))
+}
+
+export function filterShopCategoriesForSelect(rows = []) {
+  return (Array.isArray(rows) ? rows : [])
+    .map((row) => ({ ...row, name: normalizeServiceCategoryName(row?.name) }))
+    .filter((row) => row.name && !isServiceCategory(row.name))
 }
 
 export function isActiveMarketplaceShop(shop, cityId = null, now = new Date()) {

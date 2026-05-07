@@ -2,25 +2,22 @@ import { useEffect, useMemo, useRef } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
-  FaBriefcase,
+  FaBoxOpen,
+  FaBullhorn,
   FaCircleCheck,
-  FaFacebook,
-  FaGlobe,
-  FaImage,
   FaLocationDot,
-  FaMapLocationDot,
+  FaMapPin,
   FaPhone,
-  FaShield,
   FaStore,
-  FaTelegram,
-  FaXTwitter,
 } from "react-icons/fa6"
+import { FaWhatsapp } from "react-icons/fa"
 
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import PageSeo from "../components/common/PageSeo"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import StableImage from "../components/common/StableImage"
 import { getRetryingMessage } from "../components/common/RetryingNotice"
+import ScrollingTicker from "../components/common/ScrollingTicker"
 import useAuthSession from "../hooks/useAuthSession"
 import useCachedFetch, {
   primeCachedFetchStore,
@@ -30,9 +27,9 @@ import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { fetchShopDetailData } from "../lib/shopDetailData"
 import { logShopAnalyticsEvent } from "../lib/shopAnalytics"
 import {
-  getServiceCategoryMeta,
   getServiceProviderImage,
   isServiceCategory,
+  isServiceShop,
 } from "../lib/serviceCategories"
 
 const EMPTY_PRODUCTS = []
@@ -44,6 +41,14 @@ function formatPrice(value) {
   return `From N${amount.toLocaleString()}`
 }
 
+function normalizePhoneForWhatsapp(value) {
+  const digits = String(value || "").replace(/[^\d+]/g, "")
+  if (!digits) return ""
+  if (digits.startsWith("+")) return digits.slice(1)
+  if (digits.startsWith("0")) return `234${digits.slice(1)}`
+  return digits
+}
+
 function getNameInitials(value) {
   const parts = String(value || "")
     .trim()
@@ -53,83 +58,6 @@ function getNameInitials(value) {
 
   if (!parts.length) return "CT"
   return parts.map((part) => part[0]?.toUpperCase() || "").join("")
-}
-
-function normalizePhoneForWhatsapp(value) {
-  const digits = String(value || "").replace(/[^\d+]/g, "")
-  if (!digits) return ""
-  if (digits.startsWith("+")) return digits.slice(1)
-  if (digits.startsWith("0")) return `234${digits.slice(1)}`
-  return digits
-}
-
-function getProductImages(products = []) {
-  const images = []
-
-  products.forEach((product) => {
-    ;[product.image_url, product.image_url_2, product.image_url_3]
-      .filter(Boolean)
-      .forEach((imageUrl) => {
-        if (!images.includes(imageUrl)) images.push(imageUrl)
-      })
-  })
-
-  return images.slice(0, 12)
-}
-
-function ServicePackageCard({ product }) {
-  const keyFeatures = product?.attributes?.["Key Features"] || ""
-  const support = product?.attributes?.["Warranty"] || ""
-
-  return (
-    <article className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-      <div className="grid gap-4 p-4 sm:grid-cols-[150px_minmax(0,1fr)]">
-        <div className="overflow-hidden rounded-[22px] border border-slate-100 bg-slate-50">
-          {product.image_url ? (
-            <StableImage
-              src={product.image_url}
-              alt={product.name}
-              width={340}
-              height={260}
-              aspectRatio={1.2}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex aspect-[1.2] items-center justify-center text-3xl text-slate-300">
-              <FaImage />
-            </div>
-          )}
-        </div>
-
-        <div className="min-w-0">
-          <div className="mb-2 inline-flex rounded-full bg-pink-50 px-3 py-1 text-[0.68rem] font-black uppercase tracking-widest text-pink-700">
-            Service offer
-          </div>
-          <h3 className="text-xl font-black leading-tight text-slate-950">
-            {product.name}
-          </h3>
-          <p className="mt-2 whitespace-pre-wrap text-sm font-semibold leading-6 text-slate-600">
-            {product.description || "Contact this provider for full service details and availability."}
-          </p>
-          {keyFeatures ? (
-            <p className="mt-3 rounded-2xl bg-slate-50 p-3 text-sm font-bold leading-6 text-slate-700">
-              {keyFeatures}
-            </p>
-          ) : null}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="rounded-2xl bg-slate-950 px-4 py-2 text-sm font-black text-white">
-              {formatPrice(product.price)}
-            </span>
-            {support ? (
-              <span className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
-                {support}
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    </article>
-  )
 }
 
 export default function ServiceProvider() {
@@ -174,18 +102,28 @@ export default function ServiceProvider() {
 
   const currentShop = data?.shop
   const products = data?.products || EMPTY_PRODUCTS
+  const approvedNews = data?.approvedNews || []
+  const serviceProducts = useMemo(
+    () => products.filter((product) => product?.is_available !== false && product?.is_approved !== false),
+    [products],
+  )
   const serviceCategory = isServiceCategory(selectedService)
     ? selectedService
-    : currentShop?.category || "Service Provider"
-  const serviceMeta = getServiceCategoryMeta(serviceCategory)
-  const heroImage = data?.shopBanner || getServiceProviderImage(currentShop, products)
+    : currentShop?.category || "Service"
+  const heroImage =
+    data?.shopBanner ||
+    currentShop?.storefront_url ||
+    getServiceProviderImage(currentShop, serviceProducts)
   const logoImage =
     currentShop?.image_url ||
     `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
       currentShop?.name || "Service",
     )}`
-  const portfolioImages = useMemo(() => getProductImages(products), [products])
   const ownerInitials = getNameInitials(currentShop?.name || "CT Service")
+  const cityName = currentShop?.cities?.name || "Local"
+  const tickerText = approvedNews.join(" • ")
+  const isValidServiceProvider =
+    !currentShop || isServiceShop(currentShop) || isServiceCategory(currentShop.category)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -224,7 +162,7 @@ export default function ServiceProvider() {
 
   function openWhatsapp() {
     const phone = normalizePhoneForWhatsapp(currentShop?.whatsapp || currentShop?.phone)
-    if (!phone) return
+    if (!phone || !currentShop?.id) return
 
     void logShopAnalyticsEvent({
       shopId: currentShop.id,
@@ -244,7 +182,7 @@ export default function ServiceProvider() {
   }
 
   function callProvider() {
-    if (!currentShop?.phone) return
+    if (!currentShop?.phone || !currentShop?.id) return
 
     void logShopAnalyticsEvent({
       shopId: currentShop.id,
@@ -278,12 +216,6 @@ export default function ServiceProvider() {
     )
   }
 
-  function openExternalUrl(url) {
-    if (!url) return
-    const formattedUrl = url.startsWith("http") ? url : `https://${url}`
-    window.open(formattedUrl, "_blank", "noopener,noreferrer")
-  }
-
   if (!shopId) {
     return (
       <GlobalErrorScreen
@@ -314,6 +246,16 @@ export default function ServiceProvider() {
     )
   }
 
+  if (!isValidServiceProvider) {
+    return (
+      <GlobalErrorScreen
+        title="Service unavailable"
+        message="This provider is not registered as a service provider."
+        onBack={goBackSafe}
+      />
+    )
+  }
+
   const serviceStructuredData = currentShop
     ? {
         "@context": "https://schema.org",
@@ -324,7 +266,7 @@ export default function ServiceProvider() {
         address: {
           "@type": "PostalAddress",
           streetAddress: currentShop.address,
-          addressLocality: currentShop.cities?.name,
+          addressLocality: cityName,
           addressCountry: "NG",
         },
         telephone: currentShop.phone,
@@ -334,7 +276,7 @@ export default function ServiceProvider() {
 
   return (
     <div
-      className={`min-h-screen bg-[#f3f6fb] text-slate-950 ${
+      className={`mx-auto flex min-h-screen max-w-[1200px] flex-col bg-[#E3E6E6] pb-[90px] ${
         location.state?.fromServiceCategory ? "ctm-page-enter" : ""
       }`}
     >
@@ -342,7 +284,7 @@ export default function ServiceProvider() {
         title={currentShop?.name ? `${currentShop.name} | CTMerchant Services` : "Service Provider | CTMerchant"}
         description={
           currentShop?.description ||
-          "View a verified CTMerchant service provider profile, contact options, address, and service offers."
+          "View service details, address, and contact options on CTMerchant."
         }
         canonicalPath={`/service-provider${shopId ? `?id=${encodeURIComponent(shopId)}` : ""}`}
         image={heroImage || logoImage}
@@ -350,278 +292,214 @@ export default function ServiceProvider() {
         noindex
       />
 
-      <header className="sticky top-0 z-50 bg-[#101827] text-white shadow-lg">
-        <div className="mx-auto grid w-full max-w-[1120px] grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2 px-4 py-3">
+      <header className="sticky top-0 z-[100] flex flex-col bg-[#131921] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
+        <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center px-4 py-3">
           <button
             type="button"
             onClick={goBackSafe}
-            className="rounded-full p-2 transition hover:bg-white/10"
+            className="shrink-0 text-[1.2rem] transition hover:text-pink-500"
             aria-label="Go back"
           >
             <FaArrowLeft />
           </button>
-          <div className="min-w-0 text-center">
-            <span className="block truncate text-[1.05rem] font-black">
-              {currentShop?.cities?.name || "Local"} Service Page
+
+          <div className="pointer-events-none min-w-0 text-center">
+            <span className="block truncate text-[1.05rem] font-black tracking-tight">
+              {cityName} Service Hub
             </span>
           </div>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-[0.72rem] font-black">
+
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-[0.76rem] font-black text-white">
             {ownerInitials}
           </div>
         </div>
+
+        {approvedNews.length > 0 ? (
+          <div className="bg-[#232F3E] px-4 py-2 text-white">
+            <div className="relative flex items-center gap-3 overflow-hidden">
+              <FaBullhorn className="shrink-0 text-pink-500" />
+              <ScrollingTicker
+                text={tickerText}
+                className="flex-1"
+                textClassName="text-white"
+                minDuration={28}
+                speedFactor={0.22}
+              />
+            </div>
+          </div>
+        ) : null}
       </header>
 
-      <main className="mx-auto w-full max-w-[1120px] px-4 pb-12 pt-5">
-        <section className="overflow-hidden rounded-[38px] bg-white shadow-sm">
-          <div className="relative min-h-[300px] overflow-hidden bg-slate-900">
-            {heroImage ? (
-              <StableImage
-                src={heroImage}
-                alt={currentShop?.name || "Service provider"}
-                containerClassName="absolute inset-0 h-full w-full bg-slate-900"
-                className="h-full w-full object-cover opacity-60"
-                loading="eager"
-                fetchPriority="high"
-              />
-            ) : null}
-            <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(15,23,42,0.96)_0%,rgba(15,23,42,0.72)_48%,rgba(219,39,119,0.45)_100%)]" />
-
-            <div className="relative z-[1] flex min-h-[300px] flex-col justify-end p-5 sm:p-8">
-              <div className="mb-5 flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-[0.72rem] font-black uppercase tracking-widest text-pink-700">
-                  <FaBriefcase /> {serviceMeta?.serviceGroupTitle || serviceCategory}
-                </span>
-                {currentShop?.is_verified ? (
-                  <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/95 px-3 py-1.5 text-[0.72rem] font-black uppercase tracking-widest text-emerald-950">
-                    <FaCircleCheck /> Verified Provider
-                  </span>
-                ) : null}
+      <main className="main-layout flex w-full flex-col lg:flex-row lg:gap-6 lg:bg-transparent lg:p-10">
+        <div className="left-col lg:flex-1">
+          <section className="content-block mb-2 overflow-hidden bg-white !p-0 lg:mb-6 lg:rounded-lg lg:border lg:border-slate-300 lg:shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <div className="image-container flex w-full flex-col items-center bg-white">
+              <div className="main-img-wrapper relative flex aspect-square w-full items-center justify-center overflow-hidden bg-[#F7F7F7] lg:max-h-[560px]">
+                {heroImage ? (
+                  <StableImage
+                    src={heroImage}
+                    alt={currentShop?.name || "Service provider"}
+                    containerClassName="h-full w-full bg-[#F7F7F7]"
+                    className="block h-full w-full object-contain"
+                    loading="eager"
+                    fetchPriority="high"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-white text-5xl font-black text-pink-600">
+                    {ownerInitials}
+                  </div>
+                )}
               </div>
 
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-                <div className="min-w-0">
-                  <div className="mb-4 flex items-center gap-4">
-                    <StableImage
-                      src={logoImage}
-                      alt={currentShop?.name || "Service logo"}
-                      containerClassName="h-20 w-20 shrink-0 rounded-[24px] border border-white/30 bg-white"
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="min-w-0">
-                      <h1 className="text-3xl font-black leading-tight text-white sm:text-5xl">
+              <div className="w-full border-t border-slate-100 bg-white p-4">
+                <div className="mb-4 flex items-center gap-3">
+                  <StableImage
+                    src={logoImage}
+                    alt={currentShop?.name || "Service logo"}
+                    containerClassName="h-14 w-14 shrink-0 rounded-2xl border border-slate-200 bg-white"
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h1 className="truncate text-[1.2rem] font-black text-[#0F1111]">
                         {currentShop?.name}
                       </h1>
-                      <p className="mt-2 flex items-center gap-2 text-sm font-bold text-white/75">
-                        <FaLocationDot className="text-pink-300" />
-                        <span className="truncate">
-                          {currentShop?.areas?.name || currentShop?.cities?.name || "Service area"}
-                        </span>
-                      </p>
+                      {currentShop?.is_verified ? (
+                        <FaCircleCheck className="shrink-0 text-[#007185]" />
+                      ) : null}
                     </div>
+                    <p className="truncate text-[0.85rem] font-bold text-slate-500">
+                      {serviceCategory}
+                    </p>
                   </div>
-
-                  <p className="max-w-3xl whitespace-pre-wrap text-sm font-semibold leading-7 text-white/82 sm:text-base">
-                    {currentShop?.description || "Professional service provider available through CTMerchant."}
-                  </p>
                 </div>
 
-                <div className="grid min-w-[250px] gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={openWhatsapp}
                     disabled={!currentShop?.whatsapp && !currentShop?.phone}
-                    className="rounded-2xl bg-[#25D366] px-5 py-3 text-sm font-black text-white shadow-lg transition hover:brightness-105 disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/50"
+                    title="Contact provider on WhatsApp"
+                    className="group relative min-h-[86px] overflow-hidden rounded-[24px] bg-gradient-to-br from-[#18A84C] via-[#25D366] to-[#0F8F3A] px-3 py-4 text-center text-white shadow-[0_16px_30px_rgba(37,211,102,0.26)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_38px_rgba(37,211,102,0.35)] disabled:cursor-not-allowed disabled:from-slate-300 disabled:via-slate-300 disabled:to-slate-400 disabled:shadow-none"
                   >
-                    WhatsApp service provider
+                    <span className="absolute -right-4 -top-5 h-20 w-20 rounded-full bg-white/20 blur-xl transition group-hover:scale-125" />
+                    <span className="absolute left-4 top-4 h-2.5 w-2.5 animate-ping rounded-full bg-white/70" />
+                    <span className="relative flex items-center justify-center gap-2 text-[1.05rem] font-black">
+                      <FaWhatsapp className="text-[1.45rem]" />
+                      WhatsApp
+                    </span>
+                    <span className="relative mt-1 block text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-white/85">
+                      WhatsApp provider
+                    </span>
                   </button>
+
                   <button
                     type="button"
                     onClick={callProvider}
                     disabled={!currentShop?.phone}
-                    className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-slate-950 shadow-lg transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/50"
+                    title="Call provider"
+                    className="group relative min-h-[86px] overflow-hidden rounded-[24px] bg-gradient-to-br from-[#0F7285] via-[#007185] to-[#083344] px-3 py-4 text-center text-white shadow-[0_16px_30px_rgba(0,113,133,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_38px_rgba(0,113,133,0.32)] disabled:cursor-not-allowed disabled:from-slate-300 disabled:via-slate-300 disabled:to-slate-400 disabled:shadow-none"
                   >
-                    Call provider now
+                    <span className="absolute right-4 top-4 flex gap-1">
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/85" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/75 [animation-delay:120ms]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/65 [animation-delay:240ms]" />
+                    </span>
+                    <span className="absolute -left-5 bottom-0 h-20 w-20 rounded-full bg-white/10 blur-xl transition group-hover:scale-125" />
+                    <span className="relative flex items-center justify-center gap-2 text-[1.05rem] font-black">
+                      <FaPhone className="text-[1.2rem]" />
+                      Call
+                    </span>
+                    <span className="relative mt-1 block text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-white/85">
+                      Call provider now
+                    </span>
                   </button>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          <div className="grid gap-3 border-t border-slate-100 p-4 sm:grid-cols-3">
-            <div className="rounded-3xl bg-slate-50 p-4">
-              <div className="mb-1 flex items-center gap-2 text-[0.72rem] font-black uppercase tracking-widest text-slate-400">
-                <FaShield /> Trust
-              </div>
-              <div className="font-black text-slate-950">
-                CTMerchant approval and KYC flow
-              </div>
-            </div>
-            <div className="rounded-3xl bg-slate-50 p-4">
-              <div className="mb-1 flex items-center gap-2 text-[0.72rem] font-black uppercase tracking-widest text-slate-400">
-                <FaStore /> Category
-              </div>
-              <div className="font-black text-slate-950">{serviceCategory}</div>
-            </div>
-            <button
-              type="button"
-              onClick={openMaps}
-              disabled={!currentShop?.address && !currentShop?.latitude}
-              className="rounded-3xl bg-slate-950 p-4 text-left text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
-            >
-              <div className="mb-1 flex items-center gap-2 text-[0.72rem] font-black uppercase tracking-widest text-white/55">
-                <FaMapLocationDot /> Location
-              </div>
-              <div className="line-clamp-2 font-black">
-                {currentShop?.address || "Address not provided"}
-              </div>
-            </button>
-          </div>
-        </section>
-
-        <section className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="space-y-5">
-            <div className="rounded-[34px] bg-white p-5 shadow-sm sm:p-7">
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-pink-600">
-                    Services offered
-                  </div>
-                  <h2 className="mt-1 text-2xl font-black text-slate-950">
-                    Packages, portfolio and service details
-                  </h2>
-                </div>
-              </div>
-
-              {products.length > 0 ? (
-                <div className="grid gap-4">
-                  {products.map((product) => (
-                    <ServicePackageCard key={product.id} product={product} />
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-[26px] border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
-                  <FaBriefcase className="mx-auto mb-3 text-4xl text-slate-300" />
-                  <h3 className="text-lg font-black text-slate-950">Service details coming soon</h3>
-                  <p className="mx-auto mt-2 max-w-md text-sm font-semibold leading-6 text-slate-500">
-                    This provider has not added service packages yet. You can still contact them directly from the buttons above.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {portfolioImages.length > 0 ? (
-              <div className="rounded-[34px] bg-white p-5 shadow-sm sm:p-7">
-                <div className="mb-4">
-                  <div className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-blue-600">
-                    Work gallery
-                  </div>
-                  <h2 className="mt-1 text-2xl font-black text-slate-950">
-                    Photos from this service provider
-                  </h2>
-                </div>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {portfolioImages.map((imageUrl, index) => (
-                    <StableImage
-                      key={`${imageUrl}-${index}`}
-                      src={imageUrl}
-                      alt={`${currentShop?.name || "Service"} gallery ${index + 1}`}
-                      width={360}
-                      height={360}
-                      aspectRatio={1}
-                      containerClassName="overflow-hidden rounded-[24px] border border-slate-100 bg-slate-50"
-                      className="h-full w-full object-cover transition duration-700 hover:scale-105"
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <aside className="space-y-5">
-            <div className="rounded-[34px] bg-white p-5 shadow-sm">
-              <h2 className="text-xl font-black text-slate-950">Contact & business info</h2>
-              <div className="mt-4 space-y-3">
-                <button
-                  type="button"
-                  onClick={openWhatsapp}
-                  disabled={!currentShop?.whatsapp && !currentShop?.phone}
-                  className="w-full rounded-2xl bg-[#25D366] px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                >
-                  WhatsApp provider
-                </button>
-                <button
-                  type="button"
-                  onClick={callProvider}
-                  disabled={!currentShop?.phone}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                >
-                  <FaPhone /> Call provider
-                </button>
                 <button
                   type="button"
                   onClick={openMaps}
                   disabled={!currentShop?.address && !currentShop?.latitude}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                  className="mt-3 w-full rounded-[24px] border border-pink-100 bg-gradient-to-br from-white via-pink-50/70 to-orange-50 px-4 py-4 text-left shadow-[0_12px_28px_rgba(15,23,42,0.07)] transition hover:-translate-y-0.5 hover:border-pink-200 hover:shadow-[0_16px_34px_rgba(219,39,119,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <FaLocationDot /> Visit address
+                  <span className="flex items-center gap-2 text-[1rem] font-black text-pink-700">
+                    <FaStore />
+                    Visit address
+                  </span>
+                  <span className="mt-1 flex items-start gap-2 text-[0.82rem] font-semibold leading-5 text-slate-600">
+                    <FaLocationDot className="mt-1 shrink-0 text-pink-500" />
+                    {currentShop?.address || "Address not provided."}
+                  </span>
                 </button>
               </div>
+            </div>
+          </section>
+        </div>
 
-              <div className="mt-5 space-y-4 text-sm">
-                <div>
-                  <div className="text-[0.7rem] font-black uppercase tracking-widest text-slate-400">
-                    Address
-                  </div>
-                  <p className="mt-1 font-bold leading-6 text-slate-700">
-                    {currentShop?.address || "Not provided"}
-                  </p>
-                </div>
-                <div>
-                  <div className="text-[0.7rem] font-black uppercase tracking-widest text-slate-400">
-                    City
-                  </div>
-                  <p className="mt-1 font-bold text-slate-700">
-                    {currentShop?.cities?.name || "Not provided"}
-                  </p>
-                </div>
+        <div className="right-col flex flex-col lg:w-[420px] lg:shrink-0">
+          <section className="content-block mb-2 bg-white px-5 py-6 lg:mb-6 lg:rounded-lg lg:border lg:border-slate-300 lg:shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <div className="mb-2 border-b-2 border-slate-100 pb-1.5 text-[1.05rem] font-extrabold text-[#0F1111]">
+              Service Description
+            </div>
+            <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-slate-600">
+              {currentShop?.description || "Service details not provided yet."}
+            </p>
+          </section>
+
+          <section className="content-block mb-2 bg-white px-5 py-6 lg:mb-6 lg:rounded-lg lg:border lg:border-slate-300 lg:shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <div className="mb-3 text-[0.85rem] font-extrabold uppercase tracking-[0.5px] text-pink-600">
+              Provider Information
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+              <div className="mb-2 flex items-center font-extrabold text-[#0F1111]">
+                <FaMapPin className="mr-2 text-pink-600" />
+                <span>{currentShop?.name || "Service Provider"}</span>
+              </div>
+              <div className="flex items-start text-[0.9rem] text-slate-600">
+                <FaLocationDot className="mr-2 mt-1 shrink-0 text-slate-400" />
+                <span>{currentShop?.address || "Address not provided."}</span>
               </div>
             </div>
+          </section>
 
-            <div className="rounded-[34px] bg-white p-5 shadow-sm">
-              <h2 className="text-xl font-black text-slate-950">Online presence</h2>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                {currentShop?.website_url ? (
-                  <button type="button" onClick={() => openExternalUrl(currentShop.website_url)} className="rounded-2xl bg-indigo-50 px-4 py-3 text-sm font-black text-indigo-700">
-                    <FaGlobe className="mr-2 inline" /> Website
-                  </button>
-                ) : null}
-                {currentShop?.facebook_url ? (
-                  <button type="button" onClick={() => openExternalUrl(currentShop.facebook_url)} className="rounded-2xl bg-blue-50 px-4 py-3 text-sm font-black text-blue-700">
-                    <FaFacebook className="mr-2 inline" /> Facebook
-                  </button>
-                ) : null}
-                {currentShop?.telegram_url ? (
-                  <button type="button" onClick={() => openExternalUrl(currentShop.telegram_url)} className="rounded-2xl bg-sky-50 px-4 py-3 text-sm font-black text-sky-700">
-                    <FaTelegram className="mr-2 inline" /> Telegram
-                  </button>
-                ) : null}
-                {currentShop?.twitter_url ? (
-                  <button type="button" onClick={() => openExternalUrl(currentShop.twitter_url)} className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-black text-slate-900">
-                    <FaXTwitter className="mr-2 inline" /> X
-                  </button>
-                ) : null}
+          {serviceProducts.length > 0 ? (
+            <section className="content-block bg-white px-5 py-6 lg:rounded-lg lg:border lg:border-slate-300 lg:shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+              <h2 className="mb-4 flex items-center gap-3 text-[1.15rem] font-extrabold text-[#0F1111]">
+                <span className="inline-block h-[20px] w-[6px] rounded bg-pink-600" />
+                Services Offered
+              </h2>
+              <div className="space-y-3">
+                {serviceProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className="flex gap-3 rounded-lg border border-slate-200 bg-white p-3"
+                  >
+                    {product.image_url ? (
+                      <StableImage
+                        src={product.image_url}
+                        alt={product.name}
+                        containerClassName="h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+                        <FaBoxOpen />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="line-clamp-2 text-[0.9rem] font-extrabold text-[#0F1111]">
+                        {product.name}
+                      </div>
+                      <div className="mt-1 text-[0.85rem] font-black text-pink-600">
+                        {formatPrice(product.price)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              {!currentShop?.website_url &&
-              !currentShop?.facebook_url &&
-              !currentShop?.telegram_url &&
-              !currentShop?.twitter_url ? (
-                <p className="mt-3 rounded-2xl bg-slate-50 p-4 text-sm font-semibold leading-6 text-slate-500">
-                  No external business links were provided.
-                </p>
-              ) : null}
-            </div>
-          </aside>
-        </section>
+            </section>
+          ) : null}
+        </div>
       </main>
     </div>
   )

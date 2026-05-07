@@ -74,6 +74,7 @@ function Area() {
       .from("shops")
       .select("*")
       .eq("area_id", areaId)
+      .eq("is_service", false)
       .order("name", { ascending: true })
       .limit(100)
 

@@ -29,7 +29,7 @@ import { supabase } from "../lib/supabase"
 import { UPLOAD_RULES, formatBytes } from "../lib/uploadRules"
 import { prepareVendorDashboardEntryTransition } from "../lib/vendorRouteTransitions"
 import { buildWishlistCacheKey, fetchWishlistData } from "../lib/wishlistData"
-import { isActiveMarketplaceShop, isServiceCategory } from "../lib/serviceCategories"
+import { isActiveMarketplaceShop, isServiceCategory, isServiceShop } from "../lib/serviceCategories"
 
 import DashboardHeader from "../components/dashboard/layout/DashboardHeader"
 import MarketSection from "../components/dashboard/sections/MarketSection"
@@ -960,6 +960,7 @@ function UserDashboard() {
     const shopsByArea = new Map()
 
     ;(localData.shops || []).forEach((shop) => {
+      if (isServiceShop(shop)) return
       const areaId = normalizePositiveId(shop?.area_id)
       if (!areaId) return
 
@@ -1076,6 +1077,7 @@ function UserDashboard() {
     const suggestions = []
 
     ;(localData.shops || []).forEach((shop) => {
+      if (isServiceShop(shop)) return
       if (shop.name?.toLowerCase().includes(q)) {
         suggestions.push({
           text: shop.name,
@@ -1122,7 +1124,7 @@ function UserDashboard() {
     const trimmed = String(value || "").trim()
     if (!trimmed) {
       return {
-        shops: (localData.shops || []).slice(0, 30),
+        shops: (localData.shops || []).filter((shop) => !isServiceShop(shop)).slice(0, 30),
         allProducts: [],
         matchedProducts: [],
       }
@@ -1130,6 +1132,7 @@ function UserDashboard() {
 
     const q = trimmed.toLowerCase()
     const matchedShops = (localData.shops || [])
+      .filter((shop) => !isServiceShop(shop))
       .filter((shop) =>
         [
           shop.name,
@@ -1237,6 +1240,7 @@ function UserDashboard() {
       const categoryShops = (localData.shops || [])
         .filter(
           (shop) =>
+            !isServiceShop(shop) &&
             shop.category === name &&
             shop.is_verified &&
             String(shop.city_id) === String(profile?.city_id)
@@ -1274,7 +1278,7 @@ function UserDashboard() {
     try {
       const now = new Date()
       const activeCityShops = (localData.shops || [])
-        .filter((shop) => isActiveMarketplaceShop(shop, profile?.city_id, now))
+        .filter((shop) => isServiceShop(shop) && isActiveMarketplaceShop(shop, profile?.city_id, now))
         .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
 
       const serviceProducts = (localData.products || [])
@@ -1294,9 +1298,11 @@ function UserDashboard() {
           products: serviceProducts.filter((product) => product.shop_id === shop.id),
         }))
 
-      primeCachedFetchStore(`service_category_${name}_city_${profile?.city_id || "none"}`, {
-        providers,
-      })
+      if (providers.length > 0) {
+        primeCachedFetchStore(`service_category_${name}_city_${profile?.city_id || "none"}`, {
+          providers,
+        })
+      }
       await loadServiceCategoryPage()
       navigate(`/service-category?name=${encodeURIComponent(name)}`)
     } catch (error) {
@@ -1340,7 +1346,10 @@ function UserDashboard() {
     beginRouteTransition(retryAction)
 
     try {
-      primeCachedFetchStore(`dir_city_${profile?.city_id || "none"}_q_`, localData.shops || [])
+      primeCachedFetchStore(
+        `dir_city_${profile?.city_id || "none"}_q_`,
+        (localData.shops || []).filter((shop) => !isServiceShop(shop))
+      )
       await loadShopIndexPage()
       navigate("/shop-index")
     } catch (error) {

@@ -14,7 +14,7 @@ import { ShimmerBlock } from "../../common/Shimmers"
 import StableImage from "../../common/StableImage"
 import RetryingNotice, { getRetryingMessage } from "../../common/RetryingNotice"
 import { PROMO_EXTENDED_COLORS } from "../../../lib/promoBannerEngine"
-import { SERVICE_CATEGORY_GROUPS } from "../../../lib/serviceCategories"
+import { SERVICE_CATEGORY_GROUPS, isServiceCategory } from "../../../lib/serviceCategories"
 
 function SponsoredProductCard({ sponsored, onOpenProduct }) {
   const product = useMemo(() => {
@@ -534,7 +534,9 @@ function MarketSection({
   }, [dashboardData?.products, dashboardData?.shops])
 
   const sortedCategories = useMemo(() => {
-    return [...(dashboardData?.categories || [])].sort((a, b) => {
+    return [...(dashboardData?.categories || [])]
+      .filter((category) => !isServiceCategory(category?.name))
+      .sort((a, b) => {
       const aHasCategoryImage = Boolean(getCategoryImageUrl(a))
       const bHasCategoryImage = Boolean(getCategoryImageUrl(b))
 
