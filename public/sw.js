@@ -1,6 +1,6 @@
-const SHELL_CACHE = "ctm-shell-v5";
-const STATIC_CACHE = "ctm-static-v5";
-const ASSET_CACHE = "ctm-assets-v5";
+const SHELL_CACHE = "ctm-shell-v6";
+const STATIC_CACHE = "ctm-static-v6";
+const ASSET_CACHE = "ctm-assets-v6";
 const NETWORK_FIRST_TIMEOUT_MS = 2500;
 const PRECACHE_URLS = [
   "/",

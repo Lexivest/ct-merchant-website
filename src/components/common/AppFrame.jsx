@@ -4,6 +4,7 @@ import AppErrorBoundary from "./AppErrorBoundary"
 import { removeRecoverySearchParam } from "../../lib/runtimeRecovery"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import useRouteWarmup from "../../hooks/useRouteWarmup"
+import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh"
 
 function forceScrollTop() {
   if (typeof window === "undefined") return
@@ -73,6 +74,7 @@ function RouteFeedback() {
 
 function AppFrame({ children }) {
   const location = useLocation()
+  usePreventPullToRefresh()
   useVersionCheck() // Warm app updates in the background without interrupting users.
   useRouteWarmup({ pathname: location.pathname })
 

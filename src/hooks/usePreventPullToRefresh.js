@@ -2,14 +2,18 @@ import { useEffect } from "react"
 
 export default function usePreventPullToRefresh() {
   useEffect(() => {
-    // Prevent native pull-to-refresh by setting overscroll-behavior to contain on the root element.
-    // This stops the browser from triggering a hard reload when pulling down at the top.
-    document.documentElement.style.overscrollBehaviorY = "contain"
-    document.body.style.overscrollBehaviorY = "contain"
+    const root = document.documentElement
+    const body = document.body
+    const previousRootOverscroll = root.style.overscrollBehaviorY
+    const previousBodyOverscroll = body.style.overscrollBehaviorY
+
+    // Prevent native pull-to-refresh from forcing a hard reload on mobile browsers.
+    root.style.overscrollBehaviorY = "none"
+    body.style.overscrollBehaviorY = "none"
 
     return () => {
-      document.documentElement.style.overscrollBehaviorY = ""
-      document.body.style.overscrollBehaviorY = ""
+      root.style.overscrollBehaviorY = previousRootOverscroll
+      body.style.overscrollBehaviorY = previousBodyOverscroll
     }
   }, [])
 }

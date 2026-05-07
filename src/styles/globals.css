@@ -159,11 +159,20 @@
 
 html {
   scroll-behavior: smooth;
+  overscroll-behavior-y: none;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  background: #f8fafc;
 }
 
 body {
   margin: 0;
   min-width: 320px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
   font-family: "Plus Jakarta Sans", sans-serif;
   background: #f8fafc;
   color: #1e293b;
@@ -172,6 +181,8 @@ body {
 
 #root {
   min-height: 100vh;
+  background: #f8fafc;
+  overscroll-behavior-y: none;
 }
 
 @layer base {

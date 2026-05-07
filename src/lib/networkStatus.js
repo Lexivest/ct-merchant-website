@@ -3,8 +3,10 @@ import { useSyncExternalStore } from "react"
 let listeners = new Set()
 let listenersAttached = false
 let offlineConfirmationTimer = null
+let offlineRecheckTimer = null
 
-const OFFLINE_CONFIRMATION_MS = 2500
+const OFFLINE_CONFIRMATION_MS = 8500
+const OFFLINE_RECHECK_MS = 1500
 
 let snapshot = {
   isOnline: true,
@@ -36,6 +38,10 @@ function emitSnapshot(nextOnlineState) {
     window.clearTimeout(offlineConfirmationTimer)
     offlineConfirmationTimer = null
   }
+  if (offlineRecheckTimer && nextOnlineState) {
+    window.clearTimeout(offlineRecheckTimer)
+    offlineRecheckTimer = null
+  }
 
   const hasChanged = snapshot.isOnline !== nextOnlineState
 
@@ -64,12 +70,21 @@ function confirmOfflineAfterGracePeriod() {
   if (offlineConfirmationTimer) {
     window.clearTimeout(offlineConfirmationTimer)
   }
+  if (offlineRecheckTimer) {
+    window.clearTimeout(offlineRecheckTimer)
+    offlineRecheckTimer = null
+  }
 
   offlineConfirmationTimer = window.setTimeout(() => {
     offlineConfirmationTimer = null
 
     if (!readNavigatorOnline()) {
-      emitSnapshot(false)
+      offlineRecheckTimer = window.setTimeout(() => {
+        offlineRecheckTimer = null
+        if (!readNavigatorOnline()) {
+          emitSnapshot(false)
+        }
+      }, OFFLINE_RECHECK_MS)
     }
   }, OFFLINE_CONFIRMATION_MS)
 }
