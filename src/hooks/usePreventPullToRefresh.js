@@ -2,18 +2,8 @@ import { useEffect } from "react"
 
 export default function usePreventPullToRefresh() {
   useEffect(() => {
-    const root = document.documentElement
-    const body = document.body
-    const previousRootOverscroll = root.style.overscrollBehaviorY
-    const previousBodyOverscroll = body.style.overscrollBehaviorY
-
-    // Prevent native pull-to-refresh from forcing a hard reload on mobile browsers.
-    root.style.overscrollBehaviorY = "none"
-    body.style.overscrollBehaviorY = "none"
-
-    return () => {
-      root.style.overscrollBehaviorY = previousRootOverscroll
-      body.style.overscrollBehaviorY = previousBodyOverscroll
-    }
+    // Keep this hook as a safe no-op for pages that already import it.
+    // Aggressive overscroll blocking froze normal scrolling on some Android browsers.
+    return undefined
   }, [])
 }
