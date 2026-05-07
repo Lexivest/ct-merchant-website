@@ -723,7 +723,7 @@ export default function MerchantVideoKYC() {
     try {
       uploadInFlightRef.current = true;
       setRecordingState("uploading");
-      setUploadStatus("Uploading burned video to secure vault...");
+      setUploadStatus("Uploading your KYC video to secure vault...");
 
       const ext = recordedBlobRef.current.type.includes('mp4') ? 'mp4' : 'webm';
       const contentType = ext === 'mp4' ? 'video/mp4' : 'video/webm';
