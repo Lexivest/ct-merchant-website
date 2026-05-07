@@ -603,7 +603,11 @@ export default function EditProduct() {
     if (oversizedSlot) return notify({ type: "error", title: "Image too large", message: `Image ${oversizedSlot} exceeds ${formatBytes(PRODUCT_MAX_BYTES)} after processing. Please re-crop it.` });
     
     const isUpdatingService = isServiceCategory(form.category);
-    if (!isUpdatingService && form.isDiscount && activeOffersCount >= MAX_SPECIAL_OFFERS && (!productData.discount_price || productData.discount_price >= productData.price)) {
+    const currentProductHadDiscount =
+      Number(productData?.discount_price || 0) > 0 &&
+      Number(productData?.discount_price || 0) < Number(productData?.price || 0);
+
+    if (!isUpdatingService && form.isDiscount && activeOffersCount >= MAX_SPECIAL_OFFERS && !currentProductHadDiscount) {
       return notify({ type: "error", title: "Offer limit reached", message: "You already have the maximum of 2 special offers active." });
     }
 
@@ -679,7 +683,7 @@ export default function EditProduct() {
       setExistingUrls({ 1: finalUrl1, 2: finalUrl2, 3: finalUrl3 });
       setBlobs({ 1: null, 2: null, 3: null });
       setDeletedSlots({ 1: false, 2: false, 3: false });
-      setProductData(prev => ({ ...prev, is_approved: false, rejection_reason: null }));
+      setProductData(prev => prev ? ({ ...prev, is_approved: false, rejection_reason: null }) : prev);
       window.scrollTo({ top: 0, behavior: "smooth" });
 
     } catch (err) {
@@ -740,6 +744,7 @@ export default function EditProduct() {
   );
   const categoryGroup = useMemo(() => resolveProductCategoryGroup(form.category, categoryRows), [form.category, categoryRows]);
   const isServiceListing = shopData?.is_service === true || categoryGroup === "services" || isServiceCategory(form.category);
+  const isRejectedProduct = productData?.is_approved === false && Boolean(productData?.rejection_reason);
   const editorCopy = isServiceListing
     ? {
         header: "Edit Service",
@@ -751,7 +756,7 @@ export default function EditProduct() {
         descLabel: "Service Details",
         boxLabel: "What Is Included",
         warrantyLabel: "After-Service Support",
-        submitLabel: productData.is_approved === false && productData.rejection_reason ? "Resubmit Service" : "Update Service",
+        submitLabel: isRejectedProduct ? "Resubmit Service" : "Update Service",
         cameraTitle: "Capture Service Photo",
       }
     : {
@@ -764,12 +769,22 @@ export default function EditProduct() {
         descLabel: "Full Description",
         boxLabel: "What's in the Box",
         warrantyLabel: "Warranty",
-        submitLabel: productData.is_approved === false && productData.rejection_reason ? "Resubmit Update" : "Update Product",
+        submitLabel: isRejectedProduct ? "Resubmit Update" : "Update Product",
         cameraTitle: "Capture Product Photo",
       };
 
   if (authLoading || loading) return <EditProductShimmer />;
   if (error) return <GlobalErrorScreen error={error} message={error} onRetry={() => window.location.reload()} onBack={() => navigate("/vendor-panel")} />;
+  if (!productData) {
+    return (
+      <GlobalErrorScreen
+        error="Product not found"
+        message="This product could not be loaded. Please go back to your listings and open it again."
+        onRetry={() => window.location.reload()}
+        onBack={() => navigate("/merchant-products", { replace: true })}
+      />
+    );
+  }
 
   return (
     <div className={`flex min-h-screen flex-col bg-[#F3F4F6] pb-12 text-[#0F1111] ${location.state?.fromVendorTransition ? "ctm-page-enter" : ""}`}>
@@ -780,7 +795,7 @@ export default function EditProduct() {
 
       <main className={`mx-auto w-full max-w-[680px] p-5 transition-opacity ${deleting ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
         
-        {productData.is_approved === false && productData.rejection_reason && (
+        {isRejectedProduct && (
           <div className="mb-6 flex items-start gap-3 rounded-lg border border-[#FECACA] bg-[#FEF2F2] p-4 animate-[slideDown_0.3s_ease]">
             <FaTriangleExclamation className="mt-0.5 shrink-0 text-xl text-[#DC2626]" />
             <div>
