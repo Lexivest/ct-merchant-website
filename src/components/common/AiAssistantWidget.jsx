@@ -15,7 +15,10 @@ import WordLimitCounter from "./WordLimitCounter"
 const DAILY_LIMIT = 15
 const AI_PROMPT_WORD_LIMIT = 300
 const BRAND_HTML =
-  '<span><span class="text-pink-600">C</span><span class="text-purple-900">T</span><span class="text-blue-600">M</span>erchant</span>'
+  '<span data-ctm-brand="true"><span class="text-pink-600">C</span><span class="text-[#FFD400]">T</span><span class="text-blue-600">M</span>erchant</span>'
+const BRAND_TEXT_PATTERN = /(CTMerchant|CTMERCHANT|CT Merchant)/g
+const BRAND_TEXT_DETECT_PATTERN = /(CTMerchant|CTMERCHANT|CT Merchant)/
+const BRAND_TEXT_EXACT_PATTERN = /^(CTMerchant|CTMERCHANT|CT Merchant)$/
 const MARKETPLACE_LINK_PATHS = new Set(["/shop-detail", "/product-detail"])
 const TRUSTED_MARKETPLACE_ORIGINS = new Set([
   "https://ctmerchant.com.ng",
@@ -75,7 +78,59 @@ function sanitizeAssistantHtml(content = "") {
     anchor.setAttribute("class", "font-bold text-pink-600 underline")
   })
 
+  colorizeBrandText(template.content)
+
   return template.innerHTML
+}
+
+function appendBrandHtml(fragment, doc) {
+  const brandTemplate = doc.createElement("template")
+  brandTemplate.innerHTML = BRAND_HTML
+  fragment.append(brandTemplate.content.cloneNode(true))
+}
+
+function colorizeBrandText(root) {
+  const doc = root.ownerDocument || document
+  const nodeFilter = doc.defaultView?.NodeFilter
+  if (!nodeFilter) return
+
+  const textNodes = []
+  const walker = doc.createTreeWalker(root, nodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      if (!BRAND_TEXT_DETECT_PATTERN.test(node.nodeValue || "")) {
+        return nodeFilter.FILTER_REJECT
+      }
+
+      if (node.parentElement?.closest("[data-ctm-brand]")) {
+        return nodeFilter.FILTER_REJECT
+      }
+
+      return nodeFilter.FILTER_ACCEPT
+    },
+  })
+
+  while (walker.nextNode()) {
+    textNodes.push(walker.currentNode)
+  }
+
+  textNodes.forEach((node) => {
+    const fragment = doc.createDocumentFragment()
+
+    String(node.nodeValue || "")
+      .split(BRAND_TEXT_PATTERN)
+      .forEach((part) => {
+        if (!part) return
+
+        if (BRAND_TEXT_EXACT_PATTERN.test(part)) {
+          appendBrandHtml(fragment, doc)
+          return
+        }
+
+        fragment.append(doc.createTextNode(part))
+      })
+
+    node.replaceWith(fragment)
+  })
 }
 
 function AiAssistantWidget({ mode = "ambassador", shopData = null, productData = null, isRepoSearch = false }) {

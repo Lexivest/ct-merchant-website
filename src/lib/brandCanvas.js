@@ -1,8 +1,12 @@
 const BRAND_TOKEN_COLORS = {
   C: "#DB2777",
-  T: "#4C1D95",
+  T: "#FFD400",
   M: "#2563EB",
 }
+
+const BRAND_PATTERN = /(CTMerchant|CTMERCHANT|CT Merchant)/g
+const BRAND_DETECT_PATTERN = /(CTMerchant|CTMERCHANT|CT Merchant)/
+const BRAND_EXACT_PATTERN = /^(CTMerchant|CTMERCHANT|CT Merchant)$/
 
 function getTextStartX(ctx, tokens, x) {
   const totalWidth = tokens.reduce(
@@ -17,7 +21,7 @@ function getTextStartX(ctx, tokens, x) {
 
 export function drawBrandedCanvasText(ctx, text, x, y, options = {}) {
   const value = String(text || "")
-  if (!value.includes("CTMerchant")) {
+  if (!BRAND_DETECT_PATTERN.test(value)) {
     ctx.fillText(value, x, y)
     return
   }
@@ -30,10 +34,10 @@ export function drawBrandedCanvasText(ctx, text, x, y, options = {}) {
   }
 
   const tokens = value
-    .split(/(CTMerchant)/g)
+    .split(BRAND_PATTERN)
     .flatMap((part) => {
       if (!part) return []
-      if (part !== "CTMerchant") return [{ text: part, color: baseColor }]
+      if (!BRAND_EXACT_PATTERN.test(part)) return [{ text: part, color: baseColor }]
 
       return [
         { text: "C", color: brandColors.C },

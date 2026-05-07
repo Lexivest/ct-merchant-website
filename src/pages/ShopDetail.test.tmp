@@ -685,7 +685,7 @@ function ShopDetail() {
     )}`
   const ownerAvatarUrl = data?.ownerProfile?.avatar_url || ""
   const ownerAvatarInitials = getNameInitials(
-    data?.ownerProfile?.full_name || currentShop?.name || "CT Merchant"
+    data?.ownerProfile?.full_name || currentShop?.name || "CTMerchant"
   )
   const isVerified = Boolean(currentShop?.is_verified)
   const isLoggedIn = Boolean(user?.id)

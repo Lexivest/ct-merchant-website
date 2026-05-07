@@ -58,7 +58,7 @@ const SERVICE_PLAN_OPTIONS = [
 ]
 
 const COMPANY_DETAILS = {
-  name: "CT Merchant LTD",
+  name: "CTMerchant Ltd",
   website: "www.ctmerchant.com.ng",
   rcNumber: "RC: 8879163",
   email: "finance@ctmerchant.com.ng",
@@ -219,7 +219,7 @@ function openPrintableReceipt(proof) {
   const subscriptionExpiry = getReceiptSubscriptionExpiryLabel(proof)
   const renewalNote = getReceiptRenewalNote(proof)
   const brandReceiptHtml =
-    '<span><span style="color:#db2777;">C</span><span style="color:#4c1d95;">T</span><span style="color:#2563eb;">M</span>erchant</span>'
+    '<span><span style="color:#db2777;">C</span><span style="color:#FFD400;">T</span><span style="color:#2563eb;">M</span>erchant</span>'
 
   printWindow.document.write(`
     <!doctype html>
@@ -1250,7 +1250,7 @@ export default function StaffPayments() {
                               onClick={() => setSelectedReceiptProof(proof)}
                               className="flex items-center justify-center gap-2 rounded-xl bg-[#2E1065] px-4 py-3 text-sm font-black text-white transition hover:bg-[#4C1D95]"
                             >
-                              <FaReceipt /> View CTM Receipt
+                              <FaReceipt /> View <BrandText /> Receipt
                             </button>
                             <button
                               type="button"
