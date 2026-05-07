@@ -33,7 +33,10 @@ import CameraCaptureModal from "../components/common/CameraCaptureModal"
 import CTMLoader from "../components/common/CTMLoader"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import useAuthSession from "../hooks/useAuthSession"
-import useCachedFetch from "../hooks/useCachedFetch"
+import useCachedFetch, {
+  clearCachedFetchStore,
+  primeCachedFetchStore,
+} from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import { supabase } from "../lib/supabase"
 import { invokeEdgeFunctionAuthed } from "../lib/edgeFunctions"
@@ -125,34 +128,43 @@ const EMPTY_FILE_META = {
   logo: null,
 }
 
-const SHOP_REGISTRATION_LOCK_COPY = {
-  pending: {
+function buildRegistrationLockCopy(status, isService = false) {
+  const entityName = isService ? "service" : "shop"
+  const entityTitle = isService ? "Service" : "Shop"
+
+  if (status === "approved") {
+    return {
+      eyebrow: "Application Approved",
+      title: `${entityTitle} Already Registered`,
+      heading: `Your ${entityName} has already been approved`,
+      message:
+        `This registration flow is locked because your ${entityName} already exists. Use ${entityName} settings for allowed profile updates.`,
+      iconClass: "bg-emerald-50 text-emerald-600",
+      buttonLabel: "Back to User Dashboard",
+    }
+  }
+
+  if (status === "rejected") {
+    return {
+      eyebrow: "Correction Required",
+      title: `${entityTitle} Correction Needed`,
+      heading: "Open the correction form instead",
+      message:
+        `Your ${entityName} already exists and needs corrections. We will open the correction form so the existing row is updated deliberately.`,
+      iconClass: "bg-amber-50 text-amber-600",
+      buttonLabel: "Open Correction Form",
+    }
+  }
+
+  return {
     eyebrow: "Under Review",
-    title: "Shop Application Submitted",
-    heading: "Your shop application is already under review",
+    title: `${entityTitle} Application Submitted`,
+    heading: `Your ${entityName} application is already under review`,
     message:
-      "We already have your shop application. To prevent accidental overwrites, this registration form is locked while staff review it.",
+      `We already have your ${entityName} application. To prevent accidental overwrites, this registration form is locked while staff review it.`,
     iconClass: "bg-pink-50 text-pink-600",
     buttonLabel: "Back to User Dashboard",
-  },
-  approved: {
-    eyebrow: "Application Approved",
-    title: "Shop Already Registered",
-    heading: "Your shop has already been approved",
-    message:
-      "This registration flow is locked because your shop already exists. Use merchant settings for allowed profile updates.",
-    iconClass: "bg-emerald-50 text-emerald-600",
-    buttonLabel: "Back to User Dashboard",
-  },
-  rejected: {
-    eyebrow: "Correction Required",
-    title: "Shop Correction Needed",
-    heading: "Open the correction form instead",
-    message:
-      "Your shop already exists and needs corrections. We will open the correction form so the existing row is updated deliberately.",
-    iconClass: "bg-amber-50 text-amber-600",
-    buttonLabel: "Open Correction Form",
-  },
+  }
 }
 
 function countWords(value) {
@@ -518,13 +530,19 @@ function ShopRegistration() {
   const [signedPreviews, setSignedPreviews] = useState(EMPTY_SIGNED_PREVIEWS)
 
   const registrationLockState = useMemo(() => {
+    const lockedIsService = submissionLocked
+      ? isServiceMode
+      : existingShop?.is_service === true
+    const lockedEntityName = lockedIsService ? "service" : "shop"
+    const lockedEntityTitle = lockedIsService ? "Service" : "Shop"
+
     if (submissionLocked) {
       return {
         eyebrow: "Under Review",
-        title: isEdit ? "Correction Submitted" : "Shop Application Submitted",
+        title: isEdit ? "Correction Submitted" : `${lockedEntityTitle} Application Submitted`,
         heading: "Your form is locked for review",
         message:
-          "We have received your submission. You cannot edit this form while staff review is in progress.",
+          `We have received your ${lockedEntityName} submission. You cannot edit this form while staff review is in progress.`,
         icon: FaShieldHalved,
         iconClass: "bg-pink-50 text-pink-600",
         buttonLabel: "Back to User Dashboard",
@@ -536,9 +554,7 @@ function ShopRegistration() {
     const status = String(existingShop.status || "").toLowerCase()
 
     if (!isEdit) {
-      const lockCopy =
-        SHOP_REGISTRATION_LOCK_COPY[status] ||
-        SHOP_REGISTRATION_LOCK_COPY.pending
+      const lockCopy = buildRegistrationLockCopy(status, lockedIsService)
 
       return {
         ...lockCopy,
@@ -562,10 +578,10 @@ function ShopRegistration() {
     if (status === "approved") {
       return {
         eyebrow: "Application Approved",
-        title: "Shop Application Approved",
+        title: `${lockedEntityTitle} Application Approved`,
         heading: "This application has already been approved",
         message:
-          "Your shop application is already approved, so this form is locked to prevent duplicate submissions. Continue from your dashboard.",
+          `Your ${lockedEntityName} application is already approved, so this form is locked to prevent duplicate submissions. Continue from your dashboard.`,
         icon: FaCheck,
         iconClass: "bg-emerald-50 text-emerald-600",
         buttonLabel: "Back to User Dashboard",
@@ -573,7 +589,7 @@ function ShopRegistration() {
     }
 
     return null
-  }, [existingShop, isEdit, submissionLocked])
+  }, [existingShop, isEdit, isServiceMode, submissionLocked])
 
   useEffect(() => {
     let isCancelled = false
@@ -1466,24 +1482,83 @@ function ShopRegistration() {
         return
       }
 
+      const submittedAt = new Date().toISOString()
+      const submittedShopSnapshot = {
+        ...(activeExistingShop || {}),
+        id: rpcRes.shop_id,
+        owner_id: user.id,
+        name: form.name.trim(),
+        description: form.desc.trim(),
+        address: form.address.trim(),
+        phone: form.phone.trim(),
+        whatsapp: form.whatsapp.trim() || null,
+        city_id: profile.city_id,
+        area_id: Number(form.areaId),
+        category: form.category,
+        business_type: form.businessType,
+        latitude: form.lat ? Number(form.lat) : null,
+        longitude: form.lng ? Number(form.lng) : null,
+        image_url: logoUpload.url,
+        storefront_url: storefrontUpload.url,
+        id_card_url: idCardUpload.url,
+        cac_certificate_url: cacUpload.url,
+        telegram_url: form.telegram ? formatUrl(form.telegram) : null,
+        website_url: form.website ? formatUrl(form.website) : null,
+        status: "pending",
+        rejection_reason: null,
+        is_open: true,
+        is_verified: false,
+        kyc_status: "unsubmitted",
+        kyc_video_url: null,
+        is_service: isServiceMode,
+        created_at: activeExistingShop?.created_at || submittedAt,
+        updated_at: submittedAt,
+      }
+
+      setExistingShop(submittedShopSnapshot)
+
       try {
         if (user?.id && rpcRes?.shop_id) {
           localStorage.setItem(
             `ctm_my_shop_${user.id}`,
-            JSON.stringify({
-              id: rpcRes.shop_id,
-              status: "pending",
-              rejection_reason: null,
-              is_open: true,
-              is_verified: false,
-              kyc_status: "unsubmitted",
-              kyc_video_url: null,
-              is_service: isServiceMode,
-            })
+            JSON.stringify(submittedShopSnapshot)
           )
         }
       } catch {
         // Dashboard status will still refresh from Supabase when local storage is unavailable.
+      }
+
+      try {
+        clearCachedFetchStore(
+          (key) =>
+            key === `vendor_panel_${user.id}` ||
+            key.startsWith("dashboard_cache_")
+        )
+        primeCachedFetchStore(
+          cacheKey,
+          {
+            ...(data || {}),
+            shop: submittedShopSnapshot,
+          },
+          Date.now(),
+          { persist: "session" }
+        )
+        primeCachedFetchStore(
+          `vendor_panel_${user.id}`,
+          {
+            shop: submittedShopSnapshot,
+            rejectedProductCount: 0,
+            hasVerificationAccess: false,
+            verificationProofStatus: null,
+            paymentConfirmed: false,
+            serviceFeeProofStatus: null,
+            serviceFeeProofPlan: null,
+          },
+          Date.now(),
+          { persist: "session" }
+        )
+      } catch (cacheError) {
+        console.warn("Could not prime submitted registration cache:", cacheError)
       }
 
       const cleanupAssets = uploadedFiles
