@@ -8,6 +8,8 @@ import {
   FaLocationDot,
   FaMapPin,
   FaPhone,
+  FaShieldHalved,
+  FaStar,
   FaStore,
 } from "react-icons/fa6"
 import { FaWhatsapp } from "react-icons/fa"
@@ -60,6 +62,108 @@ function getNameInitials(value) {
   return parts.map((part) => part[0]?.toUpperCase() || "").join("")
 }
 
+function getServiceImages(product) {
+  return [product?.image_url, product?.image_url_2, product?.image_url_3]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+}
+
+function getServiceAttribute(product, key) {
+  return String(product?.attributes?.[key] || "").trim()
+}
+
+function ServiceOfferCard({ product }) {
+  const images = getServiceImages(product)
+  const mainImage = images[0] || ""
+  const features = getServiceAttribute(product, "Key Features")
+  const included = getServiceAttribute(product, "What's in the Box")
+  const support = getServiceAttribute(product, "Warranty")
+
+  return (
+    <article className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
+      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-slate-100 via-white to-pink-50">
+        {mainImage ? (
+          <StableImage
+            src={mainImage}
+            alt={product.name || "Service offered"}
+            containerClassName="h-full w-full"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-5xl text-slate-300">
+            <FaBoxOpen />
+          </div>
+        )}
+
+        <div className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-[0.72rem] font-black uppercase tracking-[0.12em] text-pink-700 shadow-sm">
+          {product.category || "Service"}
+        </div>
+      </div>
+
+      {images.length > 1 ? (
+        <div className="flex gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3">
+          {images.slice(1).map((imageUrl) => (
+            <StableImage
+              key={imageUrl}
+              src={imageUrl}
+              alt={`${product.name || "Service"} preview`}
+              containerClassName="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white bg-white shadow-sm"
+              className="h-full w-full object-cover"
+            />
+          ))}
+        </div>
+      ) : null}
+
+      <div className="space-y-4 p-5">
+        <div>
+          <h3 className="text-[1.08rem] font-black leading-tight text-[#0F1111]">
+            {product.name || "Service package"}
+          </h3>
+          <div className="mt-2 inline-flex rounded-full bg-pink-50 px-3 py-1 text-[0.86rem] font-black text-pink-700">
+            {formatPrice(product.price)}
+          </div>
+        </div>
+
+        {product.description ? (
+          <p className="whitespace-pre-wrap text-[0.92rem] leading-6 text-slate-600">
+            {product.description}
+          </p>
+        ) : null}
+
+        {features ? (
+          <div className="rounded-[18px] border border-slate-100 bg-slate-50 p-4">
+            <div className="mb-2 flex items-center gap-2 text-[0.82rem] font-black uppercase tracking-[0.08em] text-slate-700">
+              <FaStar className="text-pink-600" />
+              What You Offer
+            </div>
+            <p className="whitespace-pre-wrap text-[0.9rem] leading-6 text-slate-600">{features}</p>
+          </div>
+        ) : null}
+
+        {included ? (
+          <div className="rounded-[18px] border border-slate-100 bg-white p-4">
+            <div className="mb-2 flex items-center gap-2 text-[0.82rem] font-black uppercase tracking-[0.08em] text-slate-700">
+              <FaBoxOpen className="text-pink-600" />
+              What Is Included
+            </div>
+            <p className="whitespace-pre-wrap text-[0.9rem] leading-6 text-slate-600">{included}</p>
+          </div>
+        ) : null}
+
+        {support ? (
+          <div className="rounded-[18px] border border-emerald-100 bg-emerald-50 p-4">
+            <div className="mb-2 flex items-center gap-2 text-[0.82rem] font-black uppercase tracking-[0.08em] text-emerald-800">
+              <FaShieldHalved />
+              After-Service Support
+            </div>
+            <p className="whitespace-pre-wrap text-[0.9rem] leading-6 text-emerald-900">{support}</p>
+          </div>
+        ) : null}
+      </div>
+    </article>
+  )
+}
+
 export default function ServiceProvider() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -103,6 +207,7 @@ export default function ServiceProvider() {
   const currentShop = data?.shop
   const products = data?.products || EMPTY_PRODUCTS
   const approvedNews = data?.approvedNews || []
+  const shopBanner = data?.shopBanner || ""
   const serviceProducts = useMemo(
     () => products.filter((product) => product?.is_available !== false && product?.is_approved !== false),
     [products],
@@ -111,7 +216,6 @@ export default function ServiceProvider() {
     ? selectedService
     : currentShop?.category || "Service"
   const heroImage =
-    data?.shopBanner ||
     currentShop?.storefront_url ||
     getServiceProviderImage(currentShop, serviceProducts)
   const logoImage =
@@ -262,7 +366,7 @@ export default function ServiceProvider() {
         "@type": "LocalBusiness",
         name: currentShop.name,
         description: currentShop.description,
-        image: heroImage || logoImage,
+        image: heroImage || shopBanner || logoImage,
         address: {
           "@type": "PostalAddress",
           streetAddress: currentShop.address,
@@ -287,7 +391,7 @@ export default function ServiceProvider() {
           "View service details, address, and contact options on CTMerchant."
         }
         canonicalPath={`/service-provider${shopId ? `?id=${encodeURIComponent(shopId)}` : ""}`}
-        image={heroImage || logoImage}
+        image={heroImage || shopBanner || logoImage}
         structuredData={serviceStructuredData}
         noindex
       />
@@ -329,6 +433,19 @@ export default function ServiceProvider() {
           </div>
         ) : null}
       </header>
+
+      {shopBanner ? (
+        <section className="relative mb-2 overflow-hidden bg-white p-[6px]">
+          <StableImage
+            src={shopBanner}
+            alt={`${currentShop?.name || "Service provider"} banner`}
+            containerClassName="sponsored-product-slider relative aspect-[8/3] w-full max-h-[420px] overflow-hidden bg-white"
+            className="absolute inset-0 block h-full w-full bg-white object-contain object-center"
+            loading="eager"
+            fetchPriority="high"
+          />
+        </section>
+      ) : null}
 
       <main className="main-layout flex w-full flex-col lg:flex-row lg:gap-6 lg:bg-transparent lg:p-10">
         <div className="left-col lg:flex-1">
@@ -461,46 +578,22 @@ export default function ServiceProvider() {
               </div>
             </div>
           </section>
-
-          {serviceProducts.length > 0 ? (
-            <section className="content-block bg-white px-5 py-6 lg:rounded-lg lg:border lg:border-slate-300 lg:shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-              <h2 className="mb-4 flex items-center gap-3 text-[1.15rem] font-extrabold text-[#0F1111]">
-                <span className="inline-block h-[20px] w-[6px] rounded bg-pink-600" />
-                Services Offered
-              </h2>
-              <div className="space-y-3">
-                {serviceProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="flex gap-3 rounded-lg border border-slate-200 bg-white p-3"
-                  >
-                    {product.image_url ? (
-                      <StableImage
-                        src={product.image_url}
-                        alt={product.name}
-                        containerClassName="h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
-                        <FaBoxOpen />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="line-clamp-2 text-[0.9rem] font-extrabold text-[#0F1111]">
-                        {product.name}
-                      </div>
-                      <div className="mt-1 text-[0.85rem] font-black text-pink-600">
-                        {formatPrice(product.price)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ) : null}
         </div>
       </main>
+
+      {serviceProducts.length > 0 ? (
+        <section className="mx-auto mb-8 w-full max-w-[1200px] bg-white px-5 py-7 lg:rounded-[28px] lg:border lg:border-slate-200 lg:px-8 lg:shadow-[0_18px_46px_rgba(15,23,42,0.08)]">
+          <h2 className="mb-5 flex items-center gap-3 text-[1.25rem] font-black text-[#0F1111]">
+            <span className="inline-block h-[22px] w-[6px] rounded bg-pink-600" />
+            Services Offered
+          </h2>
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
+            {serviceProducts.map((product) => (
+              <ServiceOfferCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   )
 }
