@@ -102,6 +102,32 @@ function getPlanLabel(plan) {
   return "6 Months"
 }
 
+function toDatetimeLocalValue(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return ""
+
+  const offsetMs = date.getTimezoneOffset() * 60 * 1000
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16)
+}
+
+function parseServicePaymentDate(value) {
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error("Please enter a valid payment date and time.")
+  }
+
+  const now = new Date()
+  if (parsed.getTime() > now.getTime() + 5 * 60 * 1000) {
+    throw new Error("Payment date cannot be in the future.")
+  }
+
+  return parsed
+}
+
+function formatPaymentEffectiveDate(value) {
+  return value ? formatDateTime(value) : formatDateTime(new Date().toISOString())
+}
+
 function getReceiptBusinessNoun(proof) {
   return proof?.is_service ? "service" : "shop"
 }
@@ -135,7 +161,7 @@ function getReceiptNumber(proof) {
 }
 
 function getReceiptDate(proof) {
-  return proof?.reviewed_at || proof?.updated_at || proof?.created_at || new Date().toISOString()
+  return proof?.payment_effective_at || proof?.reviewed_at || proof?.updated_at || proof?.created_at || new Date().toISOString()
 }
 
 function getReceiptRecipientPhone(proof) {
@@ -443,7 +469,7 @@ function createManualPaymentRef(paymentKind, shopId, planKey = null) {
   return `${prefix}_${shopId}${planSuffix}_${Date.now()}`
 }
 
-function buildManualReceipt(row, result, paymentKind, planKey, paymentRef) {
+function buildManualReceipt(row, result, paymentKind, planKey, paymentRef, paymentEffectiveAt = null) {
   const fallbackAmount =
     paymentKind === "physical_verification"
       ? 5000
@@ -462,6 +488,7 @@ function buildManualReceipt(row, result, paymentKind, planKey, paymentRef) {
     plan: result?.plan || planKey || null,
     subscription_plan_current: result?.plan || planKey || row.shop.subscription_plan || null,
     subscription_end_date: result?.subscriptionEndDate || row.shop.subscription_end_date || null,
+    payment_effective_at: result?.paymentEffectiveAt || paymentEffectiveAt || null,
     is_service: row.shop.is_service === true,
     amount: Number(result?.amount || fallbackAmount),
     transfer_reference: result?.paymentRef || paymentRef,
@@ -819,12 +846,43 @@ export default function StaffPayments() {
       return
     }
 
+    let paymentEffectiveAt = null
+    if (action === "approve" && proof.payment_kind === "service_fee") {
+      const defaultPaymentDate = toDatetimeLocalValue()
+      const enteredDate = await prompt({
+        title: "Subscription payment date",
+        type: "info",
+        message:
+          "Use the current date/time or adjust it to the actual bank payment time. The subscription expiry and payment record will be calculated from this date, unless an existing active subscription ends later.",
+        inputLabel: "Payment date and time",
+        inputType: "datetime-local",
+        defaultValue: defaultPaymentDate,
+        placeholder: defaultPaymentDate,
+        confirmText: "Use This Date",
+        cancelText: "Cancel",
+      })
+
+      if (enteredDate === null) return
+
+      try {
+        paymentEffectiveAt = parseServicePaymentDate(enteredDate).toISOString()
+      } catch (error) {
+        notify({
+          type: "error",
+          title: "Invalid payment date",
+          message: getFriendlyErrorMessage(error, "Please enter a valid payment date and time."),
+        })
+        return
+      }
+    }
+
     try {
       setReviewingId(proof.id)
       const { data, error } = await invokeEdgeFunctionAuthed("review-offline-payment-proof", {
         proofId: proof.id,
         action,
         note,
+        effectiveAt: paymentEffectiveAt,
       })
 
       if (error) {
@@ -850,6 +908,7 @@ export default function StaffPayments() {
             plan: data?.plan || proof.plan,
             subscription_plan_current: data?.plan || proof.subscription_plan_current,
             subscription_end_date: data?.subscriptionEndDate || proof.subscription_end_date,
+            payment_effective_at: data?.paymentEffectiveAt || paymentEffectiveAt || proof.payment_effective_at,
           }
         setSelectedReceiptProof(approvedProof)
       }
@@ -863,7 +922,7 @@ export default function StaffPayments() {
     } finally {
       setReviewingId(null)
     }
-  }, [fetchOverview, notify, reviewDrafts])
+  }, [fetchOverview, notify, prompt, reviewDrafts])
 
   const recordManualPayment = useCallback(
     async (row, paymentKind, planKey = null) => {
@@ -885,10 +944,42 @@ export default function StaffPayments() {
 
       if (paymentRef === null) return
 
+      let paymentEffectiveAt = null
+      if (paymentKind === "service_fee") {
+        const defaultPaymentDate = toDatetimeLocalValue()
+        const enteredDate = await prompt({
+          title: "Service payment date",
+          type: "info",
+          message:
+            "Use the current date/time or enter the actual bank payment time. The subscription expiry and receipt date will follow this payment date, unless the shop already has an active plan ending later.",
+          inputLabel: "Payment date and time",
+          inputType: "datetime-local",
+          defaultValue: defaultPaymentDate,
+          placeholder: defaultPaymentDate,
+          confirmText: "Continue",
+          cancelText: "Cancel",
+        })
+
+        if (enteredDate === null) return
+
+        try {
+          paymentEffectiveAt = parseServicePaymentDate(enteredDate).toISOString()
+        } catch (error) {
+          notify({
+            type: "error",
+            title: "Invalid payment date",
+            message: getFriendlyErrorMessage(error, "Please enter a valid payment date and time."),
+          })
+          return
+        }
+      }
+
       const isConfirmed = await confirm({
         title: "Record manual bank payment",
         type: "info",
-        message: `This will record ${paymentLabel} for ${row.shop.name} and update merchant access immediately.`,
+        message:
+          `This will record ${paymentLabel} for ${row.shop.name} and update merchant access immediately.` +
+          (paymentEffectiveAt ? `\n\nPayment date: ${formatPaymentEffectiveDate(paymentEffectiveAt)}` : ""),
         confirmText: "Record Payment",
         cancelText: "Cancel",
       })
@@ -904,6 +995,7 @@ export default function StaffPayments() {
           paymentKind,
           planKey,
           paymentRef,
+          effectiveAt: paymentEffectiveAt,
         })
 
         if (error) {
@@ -918,7 +1010,7 @@ export default function StaffPayments() {
           message: data?.message || "Bank payment recorded successfully.",
         })
 
-        setSelectedReceiptProof(buildManualReceipt(row, data, paymentKind, planKey, paymentRef))
+        setSelectedReceiptProof(buildManualReceipt(row, data, paymentKind, planKey, paymentRef, paymentEffectiveAt))
         await fetchOverview()
       } catch (error) {
         console.error("Manual staff payment failed:", error)

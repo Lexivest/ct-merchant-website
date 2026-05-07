@@ -254,6 +254,11 @@ export async function fetchStaffPaymentsOverview() {
     servicePayments.filter((payment) => payment.status === "success"),
     (payment) => String(payment.shop_id)
   )
+  const servicePaymentsByRef = new Map(
+    servicePayments
+      .filter((payment) => payment.status === "success" && payment.payment_ref)
+      .map((payment) => [payment.payment_ref, payment])
+  )
   const latestPhysicalProofsByShop = getLatestBy(
     proofs.filter((proof) => proof.payment_kind === "physical_verification"),
     (proof) => String(proof.shop_id)
@@ -268,6 +273,11 @@ export async function fetchStaffPaymentsOverview() {
       shopsById.get(proof.shop_id) ||
       shopsByMerchantId.get(proof.merchant_id) ||
       null
+    const paymentRef = proof.approval_payment_ref || proof.transfer_reference || ""
+    const matchingServicePayment =
+      proof.payment_kind === "service_fee"
+        ? servicePaymentsByRef.get(paymentRef) || latestServicePaymentsByShop.get(String(proof.shop_id)) || null
+        : null
 
     return {
       ...proof,
@@ -278,6 +288,7 @@ export async function fetchStaffPaymentsOverview() {
       shop_whatsapp: shop?.whatsapp || "",
       subscription_end_date: shop?.subscription_end_date || null,
       subscription_plan_current: shop?.subscription_plan || "",
+      payment_effective_at: matchingServicePayment?.created_at || null,
       is_service: shop?.is_service === true,
     }
   })

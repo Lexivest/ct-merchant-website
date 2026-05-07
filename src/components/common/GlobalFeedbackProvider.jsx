@@ -45,6 +45,7 @@ function normalizePayload(payload) {
       placeholder: payload.placeholder || "",
       defaultValue: payload.defaultValue || "",
       inputLabel: payload.inputLabel || "",
+      inputType: payload.inputType || "text",
       multiline: Boolean(payload.multiline),
       autoCloseMs:
         Number(payload.autoCloseMs) > 0
@@ -69,6 +70,7 @@ function normalizePayload(payload) {
     placeholder: "",
     defaultValue: "",
     inputLabel: "",
+    inputType: "text",
     multiline: false,
     autoCloseMs: null,
     onClose: null,
@@ -207,6 +209,7 @@ function GlobalFeedbackModal({ item, onClose }) {
               />
             ) : (
               <input
+                type={item.inputType}
                 value={promptValue}
                 onChange={(event) => setPromptValue(event.target.value)}
                 placeholder={item.placeholder}
