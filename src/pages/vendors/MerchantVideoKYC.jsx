@@ -4,8 +4,6 @@ import {
   FaArrowLeft,
   FaCamera,
   FaCloudArrowUp,
-  FaLocationDot,
-  FaMicrophone,
   FaRotateRight,
 } from "react-icons/fa6";
 import { supabase } from "../../lib/supabase";
@@ -118,34 +116,6 @@ async function uploadKycVideoToAvailableBucket(filePath, blob, options) {
   }
 
   throw lastError || new Error("KYC video bucket was not found.");
-}
-
-function getSetupCopy(setupState) {
-  if (setupState === SETUP_STATES.REQUESTING) {
-    return {
-      title: "Allow access to continue",
-      message: "Approve the browser prompt so CTMerchant can prepare your verification studio.",
-    };
-  }
-
-  if (setupState === SETUP_STATES.WAITING_LOCATION) {
-    return {
-      title: "Getting location",
-      message: "We are waiting for your phone location to turn active before the preview opens.",
-    };
-  }
-
-  if (setupState === SETUP_STATES.STARTING_CAMERA) {
-    return {
-      title: "Opening camera",
-      message: "Location is ready. We are now starting your camera and microphone.",
-    };
-  }
-
-  return {
-    title: "Start video KYC",
-    message: "Tap continue and we will request location, camera, and microphone, then open your preview.",
-  };
 }
 
 function getCurrentPositionOnce(options) {
@@ -842,7 +812,6 @@ export default function MerchantVideoKYC() {
     setupState === SETUP_STATES.READY &&
     Boolean(location) &&
     Boolean(streamRef.current);
-  const setupCopy = getSetupCopy(setupState);
   const setupBusy =
     setupState === SETUP_STATES.REQUESTING ||
     setupState === SETUP_STATES.WAITING_LOCATION ||
@@ -950,19 +919,6 @@ export default function MerchantVideoKYC() {
                     <FaCamera className="text-2xl" />
                   )}
                 </div>
-                <h3 className="mb-2 text-[1.05rem] font-extrabold text-white">{setupCopy.title}</h3>
-                <p className="text-[0.9rem] leading-relaxed text-[#CBD5E1]">{setupCopy.message}</p>
-                <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-[0.78rem] font-semibold text-[#CBD5E1]">
-                  <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
-                    <FaLocationDot /> Location
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
-                    <FaCamera /> Camera
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
-                    <FaMicrophone /> Mic
-                  </span>
-                </div>
                 <div className="mt-5 grid grid-cols-1 gap-3">
                   <button
                     type="button"
@@ -981,9 +937,6 @@ export default function MerchantVideoKYC() {
                       compact
                     />
                   ) : null}
-                  <div className="text-center text-[0.78rem] font-semibold text-[#94A3B8]">
-                    We wait for location first, then open the live preview.
-                  </div>
                 </div>
               </div>
             </div>
