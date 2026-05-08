@@ -12,7 +12,6 @@ import {
   FaTicket,
   FaTriangleExclamation,
   FaBuildingCircleCheck,
-  FaXmark,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import useAuthSession from "../../hooks/useAuthSession"
@@ -78,43 +77,23 @@ function BankDetailCopyRow({ label, value, onCopy }) {
   )
 }
 
-function OfflineBankDetailsModal({ open, amountLabel, onClose, onCopy }) {
+function OfflineBankDetailsPanel({ open, amountLabel, onCopy }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[1200] flex items-center justify-center overflow-y-auto overscroll-contain bg-slate-950/55 px-3 py-4 backdrop-blur-sm sm:py-6">
-      <div className="w-full max-w-[520px] max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-[28px] border border-white/70 bg-[#F8FAFC] p-4 shadow-[0_24px_80px_rgba(15,23,42,0.35)] sm:max-h-[calc(100dvh-3rem)] sm:p-6">
-        <div className="mb-4 flex items-start justify-between gap-4 sm:mb-5">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#FEF3C7] px-3 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-[#92400E]">
-              <FaBuildingColumns /> Offline Payment
-            </div>
-            <h3 className="mt-3 text-2xl font-black text-[#0F172A]">Bank transfer details</h3>
-            <p className="mt-1 text-sm font-semibold text-slate-500">Tap any detail to copy. Pay exactly {amountLabel}.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full bg-white p-3 text-slate-500 shadow-sm transition hover:bg-slate-900 hover:text-white"
-            aria-label="Close bank details"
-          >
-            <FaXmark />
-          </button>
+    <div className="mb-5 rounded-[24px] border border-[#FBBF24]/60 bg-[#FFFBEB] p-4 shadow-sm sm:p-5">
+      <div className="mb-4">
+        <div className="inline-flex items-center gap-2 rounded-full bg-[#FEF3C7] px-3 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-[#92400E]">
+          <FaBuildingColumns /> Offline Payment
         </div>
+        <h3 className="mt-3 text-xl font-black text-[#0F172A]">Bank transfer details</h3>
+        <p className="mt-1 text-sm font-semibold text-slate-600">Tap any detail to copy. Pay exactly {amountLabel}.</p>
+      </div>
 
-        <div className="grid gap-3">
-          <BankDetailCopyRow label="Bank Name" value={CTM_BANK_ACCOUNT.bankName} onCopy={onCopy} />
-          <BankDetailCopyRow label="Account Name" value={CTM_BANK_ACCOUNT.accountName} onCopy={onCopy} />
-          <BankDetailCopyRow label="Account Number" value={CTM_BANK_ACCOUNT.accountNumber} onCopy={onCopy} />
-        </div>
-
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-5 w-full rounded-2xl bg-[#2E1065] px-5 py-3.5 text-sm font-black text-white transition hover:bg-[#4C1D95]"
-        >
-          I have copied the details
-        </button>
+      <div className="grid gap-3">
+        <BankDetailCopyRow label="Bank Name" value={CTM_BANK_ACCOUNT.bankName} onCopy={onCopy} />
+        <BankDetailCopyRow label="Account Name" value={CTM_BANK_ACCOUNT.accountName} onCopy={onCopy} />
+        <BankDetailCopyRow label="Account Number" value={CTM_BANK_ACCOUNT.accountNumber} onCopy={onCopy} />
       </div>
     </div>
   )
@@ -476,13 +455,6 @@ export default function MerchantPayment() {
         location.state?.fromVendorTransition ? "ctm-page-enter" : ""
       }`}
     >
-      <OfflineBankDetailsModal
-        open={bankDetailsOpen}
-        amountLabel={formatNaira(PHYSICAL_VERIFICATION_FEE)}
-        onClose={() => setBankDetailsOpen(false)}
-        onCopy={handleCopyBankDetail}
-      />
-
       <div className="relative w-full max-w-[760px] min-w-0 overflow-hidden rounded-[24px] border border-[#E2E8F0] bg-white p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:rounded-[28px] sm:p-8">
         <div className="absolute left-0 right-0 top-0 h-1.5 bg-[#D97706]"></div>
 
@@ -517,15 +489,16 @@ export default function MerchantPayment() {
             <div className="mb-5 grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                onClick={() => setBankDetailsOpen(true)}
+                onClick={() => setBankDetailsOpen((isOpen) => !isOpen)}
                 disabled={submittingProof || processingPromo}
+                aria-expanded={bankDetailsOpen}
                 className="rounded-2xl bg-[#0F172A] p-4 text-left text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white/12 text-lg">
                   <FaBuildingColumns />
                 </div>
                 <div className="text-lg font-black">Pay offline</div>
-                <div className="mt-1 text-xs font-bold text-slate-300">View bank details</div>
+                <div className="mt-1 text-xs font-bold text-slate-300">{bankDetailsOpen ? "Hide bank details" : "View bank details"}</div>
               </button>
               <button
                 type="button"
@@ -539,6 +512,12 @@ export default function MerchantPayment() {
                 <div className="mt-1 text-xs font-bold">Online payment not available</div>
               </button>
             </div>
+
+            <OfflineBankDetailsPanel
+              open={bankDetailsOpen}
+              amountLabel={formatNaira(PHYSICAL_VERIFICATION_FEE)}
+              onCopy={handleCopyBankDetail}
+            />
 
             {paymentProof?.status !== "pending" ? (
               <div className="mb-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 text-left shadow-sm">

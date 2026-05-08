@@ -12,7 +12,6 @@ import {
   FaCopy,
   FaReceipt,
   FaTriangleExclamation,
-  FaXmark,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import useAuthSession from "../../hooks/useAuthSession"
@@ -98,45 +97,25 @@ function BankDetailCopyRow({ label, value, onCopy }) {
   )
 }
 
-function OfflineBankDetailsModal({ open, amountLabel, planLabel, onClose, onCopy }) {
+function OfflineBankDetailsPanel({ open, amountLabel, planLabel, onCopy }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[1200] flex items-center justify-center overflow-y-auto overscroll-contain bg-slate-950/55 px-3 py-4 backdrop-blur-sm sm:py-6">
-      <div className="w-full max-w-[520px] max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-[28px] border border-white/70 bg-[#F8FAFC] p-4 shadow-[0_24px_80px_rgba(15,23,42,0.35)] sm:max-h-[calc(100dvh-3rem)] sm:p-6">
-        <div className="mb-4 flex items-start justify-between gap-4 sm:mb-5">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#FEF3C7] px-3 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-[#92400E]">
-              <FaBuildingColumns /> Offline Payment
-            </div>
-            <h3 className="mt-3 text-2xl font-black text-[#0F172A]">Bank transfer details</h3>
-            <p className="mt-1 text-sm font-semibold text-slate-500">
-              {planLabel} payment: {amountLabel}. Tap any detail to copy.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full bg-white p-3 text-slate-500 shadow-sm transition hover:bg-slate-900 hover:text-white"
-            aria-label="Close bank details"
-          >
-            <FaXmark />
-          </button>
+    <div className="mt-5 rounded-[24px] border border-[#FBBF24]/60 bg-[#FFFBEB] p-4 shadow-sm sm:p-5">
+      <div className="mb-4">
+        <div className="inline-flex items-center gap-2 rounded-full bg-[#FEF3C7] px-3 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-[#92400E]">
+          <FaBuildingColumns /> Offline Payment
         </div>
+        <h3 className="mt-3 text-xl font-black text-[#0F172A]">Bank transfer details</h3>
+        <p className="mt-1 text-sm font-semibold text-slate-600">
+          {planLabel} payment: {amountLabel}. Tap any detail to copy.
+        </p>
+      </div>
 
-        <div className="grid gap-3">
-          <BankDetailCopyRow label="Bank Name" value={CTM_BANK_ACCOUNT.bankName} onCopy={onCopy} />
-          <BankDetailCopyRow label="Account Name" value={CTM_BANK_ACCOUNT.accountName} onCopy={onCopy} />
-          <BankDetailCopyRow label="Account Number" value={CTM_BANK_ACCOUNT.accountNumber} onCopy={onCopy} />
-        </div>
-
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-5 w-full rounded-2xl bg-[#2E1065] px-5 py-3.5 text-sm font-black text-white transition hover:bg-[#4C1D95]"
-        >
-          I have copied the details
-        </button>
+      <div className="grid gap-3">
+        <BankDetailCopyRow label="Bank Name" value={CTM_BANK_ACCOUNT.bankName} onCopy={onCopy} />
+        <BankDetailCopyRow label="Account Name" value={CTM_BANK_ACCOUNT.accountName} onCopy={onCopy} />
+        <BankDetailCopyRow label="Account Number" value={CTM_BANK_ACCOUNT.accountNumber} onCopy={onCopy} />
       </div>
     </div>
   )
@@ -508,14 +487,6 @@ export default function MerchantServiceFee() {
         location.state?.fromVendorTransition ? "ctm-page-enter" : ""
       }`}
     >
-      <OfflineBankDetailsModal
-        open={bankDetailsOpen}
-        amountLabel={selectedPlanData ? formatNaira(selectedPlanData.amount) : "the selected amount"}
-        planLabel={selectedPlanData?.label || "Selected plan"}
-        onClose={() => setBankDetailsOpen(false)}
-        onCopy={handleCopyBankDetail}
-      />
-
       <div className="mx-auto w-full max-w-[980px] min-w-0">
         <div className="mb-6 flex items-center gap-4 rounded-2xl bg-[#2E1065] p-4 text-white shadow-sm">
           <button onClick={() => navigate("/vendor-panel")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-[1.1rem] transition hover:bg-white/30">
@@ -636,16 +607,17 @@ export default function MerchantServiceFee() {
                         })
                         return
                       }
-                      setBankDetailsOpen(true)
+                      setBankDetailsOpen((isOpen) => !isOpen)
                     }}
                     disabled={submittingProof}
+                    aria-expanded={bankDetailsOpen}
                     className="rounded-2xl bg-[#0F172A] p-4 text-left text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white/12 text-lg">
                       <FaBuildingColumns />
                     </div>
                     <div className="text-lg font-black">Pay offline</div>
-                    <div className="mt-1 text-xs font-bold text-slate-300">View bank details</div>
+                    <div className="mt-1 text-xs font-bold text-slate-300">{bankDetailsOpen ? "Hide bank details" : "View bank details"}</div>
                   </button>
                   <button
                     type="button"
@@ -660,6 +632,13 @@ export default function MerchantServiceFee() {
                   </button>
                 </div>
               ) : null}
+
+              <OfflineBankDetailsPanel
+                open={Boolean(bankDetailsOpen && selectedPlanData && !isActive && isVerified)}
+                amountLabel={selectedPlanData ? formatNaira(selectedPlanData.amount) : "the selected amount"}
+                planLabel={selectedPlanData?.label || "Selected plan"}
+                onCopy={handleCopyBankDetail}
+              />
 
               {!selectedPlanData && !isActive && isVerified ? (
                 <div className="mt-5 rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-5 text-center">
