@@ -9,8 +9,10 @@ import {
   FaCircleNotch,
   FaCircleXmark,
   FaClock,
+  FaCopy,
   FaReceipt,
   FaTriangleExclamation,
+  FaXmark,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import useAuthSession from "../../hooks/useAuthSession"
@@ -64,6 +66,82 @@ function StatusCard({ proof }) {
   )
 }
 
+const PREMIUM_FEATURES = Object.freeze([
+  "Unlimited promo banner generation",
+  "CT Studio powered product uploads",
+  "Shop news",
+  "Shop banner",
+  "CT-AI",
+  "Fairly used product uploads",
+  "Special offers",
+])
+
+function BankDetailCopyRow({ label, value, onCopy }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onCopy(label, value)}
+      className="group w-full rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-[#D97706] hover:bg-[#FFFBEB]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-slate-400">{label}</div>
+          <div className={`mt-1 break-words font-black text-[#0F172A] ${label === "Account Number" ? "font-mono text-2xl tracking-wide" : "text-base"}`}>
+            {value}
+          </div>
+        </div>
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-black text-slate-600 transition group-hover:bg-[#FEF3C7] group-hover:text-[#92400E]">
+          <FaCopy /> Tap to copy
+        </span>
+      </div>
+    </button>
+  )
+}
+
+function OfflineBankDetailsModal({ open, amountLabel, planLabel, onClose, onCopy }) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-slate-950/55 px-3 py-4 backdrop-blur-sm sm:items-center">
+      <div className="w-full max-w-[520px] rounded-[28px] border border-white/70 bg-[#F8FAFC] p-4 shadow-[0_24px_80px_rgba(15,23,42,0.35)] sm:p-6">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#FEF3C7] px-3 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-[#92400E]">
+              <FaBuildingColumns /> Offline Payment
+            </div>
+            <h3 className="mt-3 text-2xl font-black text-[#0F172A]">Bank transfer details</h3>
+            <p className="mt-1 text-sm font-semibold text-slate-500">
+              {planLabel} payment: {amountLabel}. Tap any detail to copy.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full bg-white p-3 text-slate-500 shadow-sm transition hover:bg-slate-900 hover:text-white"
+            aria-label="Close bank details"
+          >
+            <FaXmark />
+          </button>
+        </div>
+
+        <div className="grid gap-3">
+          <BankDetailCopyRow label="Bank Name" value={CTM_BANK_ACCOUNT.bankName} onCopy={onCopy} />
+          <BankDetailCopyRow label="Account Name" value={CTM_BANK_ACCOUNT.accountName} onCopy={onCopy} />
+          <BankDetailCopyRow label="Account Number" value={CTM_BANK_ACCOUNT.accountNumber} onCopy={onCopy} />
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-5 w-full rounded-2xl bg-[#2E1065] px-5 py-3.5 text-sm font-black text-white transition hover:bg-[#4C1D95]"
+        >
+          I have copied the details
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function MerchantServiceFee() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -91,9 +169,11 @@ export default function MerchantServiceFee() {
   const [depositorName, setDepositorName] = useState("")
   const [transferReference, setTransferReference] = useState("")
   const [prefetchedReady, setPrefetchedReady] = useState(() => Boolean(prefetchedData))
+  const [bankDetailsOpen, setBankDetailsOpen] = useState(false)
 
   const selectedPlanData = SERVICE_FEE_PLANS[selectedPlan]
   const currentPlan = shopData?.subscription_plan || "No Active Plan"
+  const currentPlanLabel = SERVICE_FEE_PLANS[currentPlan]?.label || currentPlan.replace("_", " ")
   const isFreeTrial = currentPlan === "Free Trial"
   const isActive = isFutureDate(shopData?.subscription_end_date)
   const isVerified = Boolean(shopData?.is_verified)
@@ -110,6 +190,40 @@ export default function MerchantServiceFee() {
     if (!user?.id) return
     clearCachedFetchStore((key) => key === `vendor_panel_${user.id}`)
   }, [user?.id])
+
+  const handleCopyBankDetail = useCallback(async (label, value) => {
+    const text = String(value || "")
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+      } else {
+        const textarea = document.createElement("textarea")
+        textarea.value = text
+        textarea.setAttribute("readonly", "")
+        textarea.style.position = "fixed"
+        textarea.style.opacity = "0"
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand("copy")
+        textarea.remove()
+      }
+
+      notify({
+        kind: "toast",
+        type: "success",
+        title: "Copied",
+        message: `${label} copied.`,
+      })
+    } catch {
+      notify({
+        kind: "toast",
+        type: "error",
+        title: "Copy failed",
+        message: "Please copy the payment detail manually.",
+      })
+    }
+  }, [notify])
 
   useEffect(() => {
     if (!receiptFile || !receiptFile.type?.startsWith("image/")) {
@@ -344,7 +458,7 @@ export default function MerchantServiceFee() {
       notify({
         type: "success",
         title: "Receipt submitted",
-        message: "Your subscription proof has been sent to CTMerchant staff for confirmation.",
+        message: "Your subscription proof has been sent to CTMerchant staff for review.",
       })
     } catch (submitError) {
       console.error(submitError)
@@ -394,6 +508,14 @@ export default function MerchantServiceFee() {
         location.state?.fromVendorTransition ? "ctm-page-enter" : ""
       }`}
     >
+      <OfflineBankDetailsModal
+        open={bankDetailsOpen}
+        amountLabel={selectedPlanData ? formatNaira(selectedPlanData.amount) : "the selected amount"}
+        planLabel={selectedPlanData?.label || "Selected plan"}
+        onClose={() => setBankDetailsOpen(false)}
+        onCopy={handleCopyBankDetail}
+      />
+
       <div className="mx-auto w-full max-w-[980px] min-w-0">
         <div className="mb-6 flex items-center gap-4 rounded-2xl bg-[#2E1065] p-4 text-white shadow-sm">
           <button onClick={() => navigate("/vendor-panel")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-[1.1rem] transition hover:bg-white/30">
@@ -401,14 +523,14 @@ export default function MerchantServiceFee() {
           </button>
           <div>
             <div className="text-[1.25rem] font-bold">Service Fee Portal</div>
-            <div className="mt-0.5 text-sm font-semibold text-white/70">Offline transfer and receipt confirmation</div>
+            <div className="mt-0.5 text-sm font-semibold text-white/70">Premium marketplace subscription</div>
           </div>
         </div>
 
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-5 shadow-sm sm:flex-nowrap sm:p-6">
           <div>
             <h3 className="mb-1 text-[0.95rem] font-semibold text-[#64748B] sm:text-[1rem]">Current Plan</h3>
-            <h2 className="mb-3 text-[1.45rem] font-black leading-[1.05] text-[#2E1065] sm:text-[1.65rem]">{currentPlan.replace("_", " ")}</h2>
+            <h2 className="mb-3 text-[1.45rem] font-black leading-[1.05] text-[#2E1065] sm:text-[1.65rem]">{currentPlanLabel}</h2>
             <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.78rem] font-bold sm:px-4 sm:py-2 sm:text-[0.85rem] ${isActive ? "bg-[#DCFCE7] text-[#16A34A]" : "bg-[#FEE2E2] text-[#DC2626]"}`}>
               {isActive ? <><FaCircleCheck /> {isFreeTrial ? "ACTIVE TRIAL" : "ACTIVE"}</> : <><FaCircleXmark /> EXPIRED</>}
             </div>
@@ -419,7 +541,7 @@ export default function MerchantServiceFee() {
               {!isActive ? "Locked" : "Active"}
             </div>
             <div className="mt-1 text-[0.8rem] font-semibold leading-[1.35] text-[#64748B] sm:text-[0.88rem]">
-              {!isActive ? "Choose a plan, transfer, then upload receipt." : `Valid Until: ${formattedExpiry}`}
+              {!isActive ? "Choose a premium plan to continue." : `Valid Until: ${formattedExpiry}`}
             </div>
           </div>
         </div>
@@ -433,7 +555,7 @@ export default function MerchantServiceFee() {
         <div className="grid gap-6 lg:grid-cols-[1fr_0.95fr]">
           <div className="min-w-0">
             <h2 className="mb-5 text-center text-[1.5rem] font-black text-[#0F172A]">Subscription Plans</h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {Object.entries(SERVICE_FEE_PLANS).map(([planKey, plan]) => {
                 const isCurrentPlan = currentPlan === planKey
                 const isSelected = selectedPlan === planKey
@@ -445,32 +567,15 @@ export default function MerchantServiceFee() {
                     key={planKey}
                     disabled={isDisabled}
                     onClick={() => setSelectedPlan(planKey)}
-                    className={`relative overflow-hidden rounded-[20px] border-2 bg-white p-8 text-center transition-transform hover:-translate-y-1 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70 ${
+                    className={`relative overflow-hidden rounded-[20px] border-2 bg-white p-6 text-left transition-transform hover:-translate-y-1 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70 ${
                       isSelected ? "border-[#2E1065] shadow-lg" : isCurrentPlan && isActive ? "border-[#16A34A]" : "border-[#E2E8F0]"
                     }`}
                   >
-                    {planKey === "1_Year" ? (
-                      <div className="absolute right-[-30px] top-[12px] rotate-45 bg-[#E11D48] px-8 py-1 text-[0.75rem] font-black tracking-widest text-white">BEST VALUE</div>
-                    ) : null}
-                    <div className={`mb-3 text-[1.2rem] font-bold ${planKey === "1_Year" ? "text-[#2E1065]" : "text-[#64748B]"}`}>{plan.tier}</div>
-                    {plan.originalAmount ? (
-                      <div className="mb-2 flex flex-col items-center gap-1">
-                        <div className="text-[1rem] font-black text-slate-400 line-through decoration-2">{formatNaira(plan.originalAmount)}</div>
-                        <div className="flex items-center justify-center gap-2">
-                          <span className="rounded-full bg-[#DCFCE7] px-3 py-1 text-[0.68rem] font-black uppercase tracking-wide text-[#15803D]">Promo Price</span>
-                          <span className="text-[2.5rem] font-black leading-none text-[#0F172A]">{formatNaira(plan.amount)}</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mb-2 text-[2.5rem] font-black leading-none text-[#0F172A]">{formatNaira(plan.amount)}</div>
-                    )}
-                    <div className="mb-6 text-[0.9rem] font-bold text-[#16A34A]">{plan.hint}</div>
-
-                    <ul className="mb-6 flex flex-col gap-3 text-left text-[0.95rem] text-[#64748B]">
-                      <li><FaCheck className="mr-2 inline text-[#16A34A]" /> Continuous AI Indexing</li>
-                      <li><FaCheck className="mr-2 inline text-[#16A34A]" /> Unlimited Product Updates</li>
-                      <li><FaCheck className="mr-2 inline text-[#16A34A]" /> {plan.label} Validity</li>
-                    </ul>
+                    <div className="mb-2 text-[0.72rem] font-black uppercase tracking-[0.16em] text-[#DB2777]">{plan.tier}</div>
+                    <div className="text-2xl font-black text-[#0F172A]">{plan.label}</div>
+                    <div className="mt-1 text-sm font-bold uppercase tracking-wide text-[#64748B]">{plan.duration}</div>
+                    <div className="mt-5 text-[2.35rem] font-black leading-none text-[#2E1065]">{formatNaira(plan.amount)}</div>
+                    <div className="mt-2 text-[0.9rem] font-bold text-[#16A34A]">{plan.hint}</div>
 
                     <div className={`w-full rounded-xl p-3.5 text-[1rem] font-extrabold ${
                       isSelected ? "bg-[#2E1065] text-white" : "bg-[#F1F5F9] text-[#1E293B]"
@@ -481,61 +586,85 @@ export default function MerchantServiceFee() {
                 )
               })}
             </div>
+
+            <div className="mt-5 rounded-[22px] border border-[#E2E8F0] bg-white p-5 shadow-sm">
+              <div className="mb-4 text-xs font-black uppercase tracking-[0.16em] text-[#DB2777]">All premium plans include</div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {PREMIUM_FEATURES.map((feature) => (
+                  <div key={feature} className="flex items-start gap-2 rounded-xl bg-[#F8FAFC] px-3 py-2.5 text-sm font-bold text-[#334155]">
+                    <FaCheck className="mt-0.5 shrink-0 text-[#16A34A]" />
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="min-w-0 space-y-5">
-            <div className="rounded-[22px] border border-[#DBEAFE] bg-[#EFF6FF] p-5">
-              <div className="mb-4 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-[#1D4ED8]">
-                <FaBuildingColumns /> Bank Transfer Details
-              </div>
-              <div className="grid gap-3 text-sm">
-                <div className="rounded-xl bg-white p-3">
-                  <div className="text-xs font-bold uppercase text-[#64748B]">Bank Name</div>
-                  <div className="mt-1 font-black text-[#0F172A]">{CTM_BANK_ACCOUNT.bankName}</div>
-                </div>
-                <div className="rounded-xl bg-white p-3">
-                  <div className="text-xs font-bold uppercase text-[#64748B]">Account Name</div>
-                  <div className="mt-1 font-black text-[#0F172A]">{CTM_BANK_ACCOUNT.accountName}</div>
-                </div>
-                <div className="rounded-xl bg-white p-3">
-                  <div className="text-xs font-bold uppercase text-[#64748B]">Account Number</div>
-                  <div className="mt-1 font-mono text-2xl font-black tracking-wide text-[#0F172A]">{CTM_BANK_ACCOUNT.accountNumber}</div>
-                </div>
-              </div>
-            </div>
-
             <div className="rounded-[22px] border border-[#E2E8F0] bg-white p-5 shadow-sm">
               <div className="mb-4">
                 <div className="text-xs font-black uppercase tracking-widest text-[#DB2777]">Selected Plan</div>
                 {selectedPlanData ? (
                   <div className="mt-1">
                     <div className="text-2xl font-black text-[#0F172A]">{selectedPlanData.label}</div>
-                    {selectedPlanData.originalAmount ? (
-                      <div className="mt-2 flex flex-wrap items-end gap-2">
-                        <span className="text-sm font-black text-slate-400 line-through decoration-2">{formatNaira(selectedPlanData.originalAmount)}</span>
-                        <span className="rounded-full bg-[#DCFCE7] px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-wide text-[#15803D]">Promo</span>
-                        <span className="text-2xl font-black text-[#DB2777]">{formatNaira(selectedPlanData.amount)}</span>
-                      </div>
-                    ) : (
-                      <div className="mt-1 text-2xl font-black text-[#0F172A]">{formatNaira(selectedPlanData.amount)}</div>
-                    )}
+                    <div className="mt-1 text-sm font-bold uppercase tracking-wide text-[#64748B]">{selectedPlanData.duration}</div>
+                    <div className="mt-2 text-2xl font-black text-[#DB2777]">{formatNaira(selectedPlanData.amount)}</div>
                   </div>
                 ) : (
-                  <div className="mt-1 text-2xl font-black text-[#0F172A]">Choose a payment type</div>
+                  <div className="mt-1 text-2xl font-black text-[#0F172A]">Choose a premium plan</div>
                 )}
                 <p className="mt-2 text-sm font-semibold leading-6 text-[#64748B]">
                   {selectedPlanData
-                    ? "Transfer the exact amount, then upload your receipt. Confirmation can take up to 48 hours."
-                    : "Select either 6 months or 1 year before uploading a payment receipt."}
+                    ? "Use a payment option below, then upload your receipt for staff review."
+                    : "Select Premium-6 or Premium-12 before uploading a payment receipt."}
                 </p>
               </div>
 
               <StatusCard proof={paymentProof} />
 
+              {!isActive && isVerified ? (
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!selectedPlanData) {
+                        notify({
+                          kind: "toast",
+                          type: "info",
+                          title: "Select a plan",
+                          message: "Choose Premium-6 or Premium-12 first.",
+                        })
+                        return
+                      }
+                      setBankDetailsOpen(true)
+                    }}
+                    disabled={submittingProof}
+                    className="rounded-2xl bg-[#0F172A] p-4 text-left text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white/12 text-lg">
+                      <FaBuildingColumns />
+                    </div>
+                    <div className="text-lg font-black">Pay offline</div>
+                    <div className="mt-1 text-xs font-bold text-slate-300">View bank details</div>
+                  </button>
+                  <button
+                    type="button"
+                    disabled
+                    className="rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4 text-left text-[#64748B]"
+                  >
+                    <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-lg text-[#CBD5E1]">
+                      <FaBuildingColumns />
+                    </div>
+                    <div className="text-lg font-black">Pay online</div>
+                    <div className="mt-1 text-xs font-bold">Online payment not available</div>
+                  </button>
+                </div>
+              ) : null}
+
               {!selectedPlanData && !isActive && isVerified ? (
                 <div className="mt-5 rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-5 text-center">
                   <FaReceipt className="mx-auto mb-3 text-2xl text-[#94A3B8]" />
-                  <div className="font-black text-[#0F172A]">No payment type selected</div>
+                  <div className="font-black text-[#0F172A]">No premium plan selected</div>
                   <p className="mt-1 text-sm font-semibold leading-6 text-[#64748B]">
                     Choose a subscription plan first, then the receipt upload window will open here.
                   </p>
@@ -591,7 +720,7 @@ export default function MerchantServiceFee() {
                         <div className="min-w-0 flex-1">
                           <div className="break-all font-black text-[#0F172A]">{receiptFile.name}</div>
                           <div className="text-xs font-bold text-[#64748B]">
-                            {receiptFile.type || "Receipt file"} · {formatFileSize(receiptFile.size)}
+                            {receiptFile.type || "Receipt file"} - {formatFileSize(receiptFile.size)}
                           </div>
                         </div>
                         <button

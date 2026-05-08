@@ -18,17 +18,18 @@ export const PHYSICAL_VERIFICATION_FEE = 5000
 
 export const SERVICE_FEE_PLANS = Object.freeze({
   "6_Months": Object.freeze({
-    label: "6 Months",
+    label: "Premium-6",
     amount: 6000,
-    tier: "Standard Tier",
-    hint: "Works out to N1,000 / month",
+    tier: "Premium Subscription",
+    duration: "6 months",
+    hint: "Six months marketplace access",
   }),
   "1_Year": Object.freeze({
-    label: "1 Year",
+    label: "Premium-12",
     amount: 10000,
-    originalAmount: 15000,
-    tier: "Professional Tier",
-    hint: "Promo: save N5,000 on the annual plan",
+    tier: "Premium Subscription",
+    duration: "12 months",
+    hint: "Twelve months marketplace access",
   }),
 })
 
