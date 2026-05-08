@@ -239,14 +239,20 @@ export default function MerchantServiceFee() {
 
       let currentShopId = urlShopId
       if (!currentShopId) {
-        const { data: shopLookup } = await supabase.from("shops").select("id").eq("owner_id", user.id).maybeSingle()
+        const { data: shopRows } = await supabase
+          .from("shops")
+          .select("id")
+          .eq("owner_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+        const shopLookup = shopRows?.[0] || null
         if (!shopLookup) throw new Error("Shop not found.")
         currentShopId = shopLookup.id
       }
 
       const { data: shop, error: shopErr } = await supabase
         .from("shops")
-        .select("id, name, created_at, subscription_end_date, subscription_plan, is_verified, kyc_status")
+        .select("id, name, created_at, subscription_end_date, subscription_plan, is_verified, is_service, kyc_status")
         .eq("id", currentShopId)
         .eq("owner_id", user.id)
         .maybeSingle()
@@ -519,7 +525,7 @@ export default function MerchantServiceFee() {
 
         {!isVerified ? (
           <div className="mb-8 rounded-2xl border border-[#FECACA] bg-[#FEF2F2] p-5 text-[0.95rem] font-semibold text-[#991B1B]">
-            Your shop must pass physical verification before you can activate a service fee plan.
+            Your {shopData?.is_service ? "service" : "shop"} must pass physical verification before you can activate a service fee plan.
           </div>
         ) : null}
 

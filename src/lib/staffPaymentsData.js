@@ -47,7 +47,7 @@ function buildPhysicalState(shop, latestPhysicalPayment, latestPhysicalProof) {
     return {
       key: "application_pending",
       label: "Application Pending",
-      detail: "Waiting for digital approval.",
+      detail: "Waiting for application review.",
       tone: "muted",
     }
   }

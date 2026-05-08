@@ -108,6 +108,18 @@ export function getFriendlyError(error, fallback = "We encountered an unexpected
     return result
   }
 
+  if (lower.includes("digitally approved") || lower.includes("digital approval")) {
+    result.message = rawMessage
+      .replace(/digitally approved/gi, "approved")
+      .replace(/digital approval/gi, "application review")
+      .replace(/^Shop must be approved/i, "Business application must be approved")
+      .replace(/^Your shop must be approved/i, "Your business application must be approved")
+    result.category = ErrorCategory.VALIDATION
+    result.retryable = false
+    result.action = "Wait for staff approval, then try this step again."
+    return result
+  }
+
   // --- CONFLICT / DUPLICATE ERRORS ---
   if (lower.includes("idx_shops_owner_id_unique")) {
     result.message = "A shop is already registered to this account."

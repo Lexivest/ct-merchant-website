@@ -127,6 +127,32 @@ function StatusBadge({ status, type = "shop" }) {
   )
 }
 
+function getBusinessEntityCopy(shop) {
+  const isService = shop?.is_service === true
+  return {
+    entityName: isService ? "service" : "shop",
+    entityTitle: isService ? "Service" : "Shop",
+    applicationTitle: isService ? "Service Application" : "Shop Application",
+  }
+}
+
+function hasSubmittedKyc(shop) {
+  return shop?.kyc_status === "submitted"
+}
+
+function getInitialReviewTab(shop, isSuperAdmin) {
+  if (!shop || !isSuperAdmin) return "application"
+  if (shop.status !== "approved") return "application"
+  return hasSubmittedKyc(shop) ? "kyc" : "application"
+}
+
+function canApproveReviewTab(shop, reviewTab, isSuperAdmin) {
+  if (!shop) return false
+  if (reviewTab === "application") return shop.status === "pending"
+  if (reviewTab === "kyc") return isSuperAdmin && hasSubmittedKyc(shop)
+  return false
+}
+
 export default function StaffVerifications() {
   const location = useLocation()
   const { isSuperAdmin, hasAdminRole, staffCityId, fetchingStaff } = useStaffPortalSession()
@@ -274,6 +300,7 @@ export default function StaffVerifications() {
           kyc_submission_meta,
           id_issued,
           is_verified,
+          is_service,
           created_at,
           owner_id,
           profiles ( full_name, avatar_url, phone ),
@@ -359,11 +386,30 @@ export default function StaffVerifications() {
     if (!selectedShop || processing) return
     
     const isKyc = type === "kyc"
+    const { entityName, entityTitle } = getBusinessEntityCopy(selectedShop)
     if (isKyc && !isSuperAdmin) {
       notify({
         type: "error",
         title: "Super admin required",
         message: "Only super admins can approve video KYC submissions.",
+      })
+      return
+    }
+
+    if (!isKyc && selectedShop.status !== "pending") {
+      notify({
+        type: "info",
+        title: `${entityTitle} already reviewed`,
+        message: `This ${entityName} application is no longer pending, so application approval was not changed.`,
+      })
+      return
+    }
+
+    if (isKyc && !hasSubmittedKyc(selectedShop)) {
+      notify({
+        type: "info",
+        title: "No video KYC awaiting approval",
+        message: `This ${entityName} does not have a submitted video KYC awaiting super admin approval.`,
       })
       return
     }
@@ -383,10 +429,10 @@ export default function StaffVerifications() {
 
     const confirmMsg = isKyc 
       ? `Are you sure you want to approve the KYC video for "${selectedShop.name}"?`
-      : `Are you sure you want to approve the shop application for "${selectedShop.name}"?`
+      : `Are you sure you want to approve the ${entityName} application for "${selectedShop.name}"?`
 
     const isConfirmed = await confirm({
-      title: isKyc ? "Approve KYC" : "Approve Shop",
+      title: isKyc ? "Approve KYC" : `Approve ${entityTitle}`,
       message: confirmMsg,
       confirmLabel: "Yes, Approve",
       tone: "emerald"
@@ -428,14 +474,16 @@ export default function StaffVerifications() {
       } else {
         updateData = { status: "approved" }
 
-        const { error } = await supabase
+        const { data: approvedShop, error } = await supabase
           .from("shops")
           .update(updateData)
           .eq("id", selectedShop.id)
+          .select("id, status, is_verified, is_service, kyc_status, rejection_reason")
+          .maybeSingle()
 
         if (error) throw error
 
-        nextShopData = { ...selectedShop, ...updateData }
+        nextShopData = { ...selectedShop, ...(approvedShop || updateData) }
       }
 
       if (isKyc && selectedShop.kyc_video_url) {
@@ -475,7 +523,7 @@ export default function StaffVerifications() {
       
       notify({
         type: "success",
-        title: isKyc ? "KYC Approved" : "Shop Approved",
+        title: isKyc ? "KYC Approved" : `${entityTitle} Approved`,
         message: `${selectedShop.name} has been updated successfully.`
       })
     } catch (err) {
@@ -495,8 +543,15 @@ export default function StaffVerifications() {
     setProcessing(true)
     try {
       const isKyc = type === "kyc"
+      const { entityName, entityTitle } = getBusinessEntityCopy(selectedShop)
       if (isKyc && !isSuperAdmin) {
         throw new Error("Only super admins can reject video KYC submissions.")
+      }
+      if (!isKyc && selectedShop.status !== "pending") {
+        throw new Error(`This ${entityName} application is no longer pending.`)
+      }
+      if (isKyc && !hasSubmittedKyc(selectedShop)) {
+        throw new Error(`This ${entityName} does not have a submitted video KYC awaiting review.`)
       }
 
       const updateData = isKyc
@@ -515,7 +570,7 @@ export default function StaffVerifications() {
       
       notify({
         type: "info",
-        title: isKyc ? "KYC Rejected" : "Shop Rejected",
+        title: isKyc ? "KYC Rejected" : `${entityTitle} Rejected`,
         message: `Notification sent to merchant with reason.`
       })
       
@@ -536,13 +591,26 @@ export default function StaffVerifications() {
   }, [shops, filterStatus])
 
   const selectedKycMeta = selectedShop?.kyc_submission_meta || {}
+  const selectedEntityCopy = getBusinessEntityCopy(selectedShop)
+  const canApproveSelectedReview = canApproveReviewTab(selectedShop, reviewTab, isSuperAdmin)
+
+  useEffect(() => {
+    if (!selectedShop) return
+    if (reviewTab === "kyc" && !isSuperAdmin) {
+      setReviewTab("application")
+      return
+    }
+    if (reviewTab === "kyc" && !hasSubmittedKyc(selectedShop)) {
+      setReviewTab(getInitialReviewTab(selectedShop, isSuperAdmin))
+    }
+  }, [selectedShop, selectedShop?.id, selectedShop?.status, selectedShop?.kyc_status, isSuperAdmin, reviewTab])
 
   if (!hasAdminRole) {
     return (
       <StaffPortalShell
         activeKey="verifications"
-        title="Merchant Verifications"
-        description="A focused workspace for reviewing shop applications, KYC videos, and official ID issuance."
+        title="Business Verifications"
+        description="A focused workspace for reviewing business applications, KYC videos, and official ID issuance."
       >
         <div className="rounded-[28px] border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl text-amber-600 shadow-sm">
@@ -550,7 +618,7 @@ export default function StaffVerifications() {
           </div>
           <h3 className="text-xl font-black text-slate-900">Admin operation role required</h3>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-amber-900">
-            Shop verification is available to super admins and city admins only. Video KYC review remains super-admin-only.
+            Business verification is available to super admins and city admins only. Video KYC review remains super-admin-only.
           </p>
         </div>
       </StaffPortalShell>
@@ -560,8 +628,8 @@ export default function StaffVerifications() {
   return (
     <StaffPortalShell
       activeKey="verifications"
-      title="Merchant Verifications"
-      description="A focused workspace for reviewing shop applications, KYC videos, and official ID issuance."
+      title="Business Verifications"
+      description="A focused workspace for reviewing business applications, KYC videos, and official ID issuance."
       headerActions={[
         <QuickActionButton key="refresh" icon={<FaCircleNotch className={loadingShops ? "animate-spin" : ""} />} label="Refresh List" tone="white" onClick={fetchShops} />,
         <QuickActionButton key="issue" icon={<FaIdBadge />} label="Issue ID" onClick={() => navigate("/staff-issue-id")} />,
@@ -600,7 +668,7 @@ export default function StaffVerifications() {
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="border-b border-slate-200 bg-white text-xs uppercase text-slate-500">
               <tr>
-                <th className="px-6 py-4 font-bold">Shop & Proprietor</th>
+                <th className="px-6 py-4 font-bold">Business & Proprietor</th>
                 <th className="px-6 py-4 font-bold">App Status</th>
                 <th className="px-6 py-4 font-bold">KYC Status</th>
                 <th className="px-6 py-4 font-bold text-right">Actions</th>
@@ -633,11 +701,9 @@ export default function StaffVerifications() {
                         <button
                           onClick={() => {
                             setSelectedShop(shop)
-                            // If not super admin, always show application tab.
-                            // Otherwise, default to pending application OR kyc if application is already approved
-                            setReviewTab(
-                              (!isSuperAdmin || shop.status === 'pending') ? 'application' : 'kyc'
-                            )
+                            setReviewTab(getInitialReviewTab(shop, isSuperAdmin))
+                            setShowRejectionInput(false)
+                            setRejectionReason("")
                           }}
                           className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold text-white transition shadow-sm ${
                             shop.status === 'pending' || (shop.kyc_status === 'submitted' && isSuperAdmin)
@@ -683,7 +749,7 @@ export default function StaffVerifications() {
                 <div>
                   <h3 className="text-xl font-black text-slate-900">{selectedShop.name}</h3>
                   <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
-                    <span>{selectedShop.business_type || "Standard Shop"}</span>
+                    <span>{selectedShop.business_type || (selectedShop.is_service ? "Service Provider" : "Standard Shop")}</span>
                     <span className="h-1 w-1 rounded-full bg-slate-300" />
                     <span>{selectedShop.cities?.name}, {selectedShop.cities?.state}</span>
                   </div>
@@ -704,7 +770,7 @@ export default function StaffVerifications() {
             {/* Modal Tabs */}
             <div className="flex border-b border-slate-100 px-8">
               {[
-                { id: "application", label: "Shop Application", icon: <FaFileContract /> },
+                { id: "application", label: selectedEntityCopy.applicationTitle, icon: <FaFileContract /> },
                 { id: "kyc", label: "KYC Verification", icon: <FaVideo />, superOnly: true },
               ].filter(t => !t.superOnly || isSuperAdmin).map((tab) => (
                 <button
@@ -734,7 +800,7 @@ export default function StaffVerifications() {
                 <div className="grid gap-8 lg:grid-cols-2">
                   <div className="space-y-6">
                     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                      <h4 className="mb-6 text-xs font-black uppercase tracking-widest text-slate-400">Shop Profile & Location</h4>
+                      <h4 className="mb-6 text-xs font-black uppercase tracking-widest text-slate-400">Business Profile & Location</h4>
                       <div className="space-y-4">
                         <DetailRow label="Official Name" value={selectedShop.name} />
                         <DetailRow label="Category" value={selectedShop.category} badge />
@@ -835,14 +901,14 @@ export default function StaffVerifications() {
                       <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Brand Assets</h4>
                       <div className="grid gap-6 sm:grid-cols-[180px_minmax(0,1fr)]">
                         <MediaPreviewCard
-                          title="Shop Logo"
+                          title="Business Logo"
                           imageUrl={signedUrls.logo}
                           aspectClass="aspect-square"
                           icon={<FaImage />}
                           emptyLabel="No logo uploaded"
                         />
                         <MediaPreviewCard
-                          title="Storefront Photo"
+                          title={selectedShop.is_service ? "Service Location Photo" : "Storefront Photo"}
                           imageUrl={signedUrls.storefront}
                           aspectClass="aspect-[4/3]"
                           icon={<FaStore />}
@@ -983,7 +1049,7 @@ export default function StaffVerifications() {
                       <ul className="space-y-3">
                         {[
                           "Face matches ID card photo",
-                          "Official store signage visible",
+                          selectedShop.is_service ? "Service location or workspace is visible" : "Official store signage visible",
                           "Real-time location matches address",
                           "Valid business surroundings",
                         ].map((item, i) => (
@@ -1044,7 +1110,7 @@ export default function StaffVerifications() {
                     {(reviewTab === 'application' || isSuperAdmin) && (
                       <button
                         onClick={() => setShowRejectionInput(true)}
-                        disabled={processing || (reviewTab === 'application' && selectedShop.status === 'approved') || (reviewTab === 'kyc' && selectedShop.kyc_status === 'approved')}
+                        disabled={processing || !canApproveSelectedReview}
                         className="flex items-center gap-2 rounded-2xl border-2 border-rose-100 bg-white px-6 py-3 text-sm font-black text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
                       >
                         <FaXmark /> Reject
@@ -1054,7 +1120,7 @@ export default function StaffVerifications() {
                     {(reviewTab === 'application' || isSuperAdmin) && (
                       <button
                         onClick={() => handleApprove(reviewTab)}
-                        disabled={processing || (reviewTab === 'application' && selectedShop.status === 'approved') || (reviewTab === 'kyc' && selectedShop.kyc_status === 'approved')}
+                        disabled={processing || !canApproveSelectedReview}
                         className="flex items-center gap-2 rounded-2xl bg-emerald-600 px-8 py-3 text-sm font-black text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700 active:scale-95 disabled:opacity-50"
                       >
                         {processing ? <FaCircleNotch className="animate-spin" /> : <><FaCheck /> Approve</>}

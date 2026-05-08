@@ -52,6 +52,10 @@ function buildMetaFromShop(shopData) {
   return { title: `My ${entityTitle}`, status: "approved" }
 }
 
+function pickPrimaryBusiness(rows = []) {
+  return rows[0] || null
+}
+
 export default function useMyShop() {
   const { user, isOffline } = useAuthSession()
   const [shopData, setShopData] = useState(() => readCachedShop(user?.id))
@@ -89,14 +93,17 @@ export default function useMyShop() {
         .from("shops")
         .select("id, status, rejection_reason, is_open, is_verified, kyc_status, kyc_video_url, is_service")
         .eq("owner_id", user.id)
-        .maybeSingle()
+        .order("created_at", { ascending: false })
+        .limit(1)
 
       if (error) throw error
 
-      setShopData(data)
+      const nextShopData = pickPrimaryBusiness(data || [])
+
+      setShopData(nextShopData)
       setHasResolvedOnline(true)
-      if (data) {
-        writeCachedShop(user.id, data)
+      if (nextShopData) {
+        writeCachedShop(user.id, nextShopData)
       } else {
         clearCachedShop(user.id)
       }
@@ -130,10 +137,20 @@ export default function useMyShop() {
         },
         (payload) => {
           if (payload.eventType === "DELETE") {
+            if (payload.old?.id && shopData?.id && payload.old.id !== shopData.id) {
+              fetchShop()
+              return
+            }
+
             setShopData(null)
             clearCachedShop(user.id)
           } else {
             const nextShop = payload.new || null
+            if (nextShop?.id && shopData?.id && nextShop.id !== shopData.id) {
+              fetchShop()
+              return
+            }
+
             setShopData(nextShop)
             if (nextShop) {
               writeCachedShop(user.id, nextShop)
@@ -156,7 +173,7 @@ export default function useMyShop() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user?.id, isOffline, fetchShop])
+  }, [user?.id, shopData?.id, isOffline, fetchShop])
 
   // ROBUST STATE INTERCEPTION (Handles Offline & Network Errors)
   useEffect(() => {
@@ -190,6 +207,14 @@ export default function useMyShop() {
 
     // 4. No confirmed result yet: stay neutral (prevents wrong "Register Shop" on weak network)
     if (!shopData && !hasResolvedOnline) {
+      setShopMeta({ title: "Shop/Service Status", status: "locked", subtitle: "Checking status..." })
+      return
+    }
+
+    // Cached rows are useful offline, but while online they can be stale after
+    // a shop/service partition change. Keep the card neutral until Supabase
+    // confirms the current business type.
+    if (shopData && !hasResolvedOnline) {
       setShopMeta({ title: "Shop/Service Status", status: "locked", subtitle: "Checking status..." })
       return
     }

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaArrowLeft,
   FaCamera,
@@ -186,13 +186,17 @@ async function requestCameraStreamWithFallback() {
 export default function MerchantVideoKYC() {
   const navigate = useNavigate();
   const routeLocation = useLocation();
+  const [searchParams] = useSearchParams();
   usePreventPullToRefresh();
   const { notify } = useGlobalFeedback();
   const { user, loading: authLoading, isOffline } = useAuthSession();
+  const urlShopId = searchParams.get("shop_id");
   const prefetchedData =
-    routeLocation.state?.prefetchedData?.kind === "merchant-video-kyc"
+    routeLocation.state?.prefetchedData?.kind === "merchant-video-kyc" &&
+    (!urlShopId || String(routeLocation.state.prefetchedData.shopData?.id) === String(urlShopId))
       ? routeLocation.state.prefetchedData
       : null
+  const effectiveShopId = urlShopId || prefetchedData?.shopData?.id || null
 
   // Data State
   const [loading, setLoading] = useState(() => !prefetchedData);
@@ -305,6 +309,11 @@ export default function MerchantVideoKYC() {
         setLoading(false);
         return;
       }
+      if (!effectiveShopId) {
+        setPageError("Verification record is missing. Please reopen this step from your vendor panel.");
+        setLoading(false);
+        return;
+      }
 
       try {
         setLoading(true);
@@ -321,11 +330,13 @@ export default function MerchantVideoKYC() {
 
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
-          .select("id, name, unique_id, address, city_id, created_at, status, is_verified, kyc_status, kyc_video_url, rejection_reason, cities(name)")
+          .select("id, name, unique_id, address, city_id, created_at, status, is_verified, is_service, kyc_status, kyc_video_url, rejection_reason, cities(name)")
+          .eq("id", effectiveShopId)
           .eq("owner_id", user.id)
           .maybeSingle();
 
         if (shopErr || !shop) throw new Error("Shop not found.");
+        const entityName = shop.is_service ? "service" : "shop";
 
         const verificationAccess = await fetchVerificationAccessStatus({
           userId: user.id,
@@ -334,7 +345,7 @@ export default function MerchantVideoKYC() {
         });
 
         if (shop.is_verified) {
-          notify({ kind: "toast", type: "info", title: "Already approved", message: "Your shop has already completed this verification step." });
+          notify({ kind: "toast", type: "info", title: "Already approved", message: `Your ${entityName} has already completed this verification step.` });
           navigate("/vendor-panel", { replace: true });
           return;
         }
@@ -344,7 +355,7 @@ export default function MerchantVideoKYC() {
             kind: "toast",
             type: "info",
             title: "Application pending",
-            message: "Your shop must be digitally approved before you can submit video KYC.",
+            message: `Your ${entityName} application must be approved before you can submit video KYC.`,
           });
           navigate("/vendor-panel", { replace: true });
           return;
@@ -413,7 +424,7 @@ export default function MerchantVideoKYC() {
       clearPlaybackUrl();
       if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);
     };
-  }, [user, authLoading, isOffline, navigate, notify, stopActiveMedia, clearPlaybackUrl, prefetchedData]);
+  }, [user, authLoading, isOffline, navigate, notify, stopActiveMedia, clearPlaybackUrl, prefetchedData, effectiveShopId]);
 
   useEffect(() => {
     if (!user?.id || !shopData?.id || isOffline) return undefined;
@@ -440,11 +451,12 @@ export default function MerchantVideoKYC() {
           setShopData((prev) => ({ ...(prev || {}), ...nextShop }));
 
           if (nextShop.is_verified) {
+            const entityName = nextShop.is_service ? "service" : "shop";
             notify({
               kind: "toast",
               type: "success",
               title: "KYC approved",
-              message: "Your shop verification has been approved.",
+              message: `Your ${entityName} verification has been approved.`,
             });
             navigate("/vendor-panel", { replace: true });
           }

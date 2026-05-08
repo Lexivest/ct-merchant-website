@@ -69,7 +69,7 @@ async function fetchOwnedPaymentShop({ userId, shopId }) {
 
   const { data, error } = await supabase
     .from("shops")
-    .select("id, owner_id, name, status, is_verified, kyc_status, created_at, subscription_end_date, subscription_plan")
+    .select("id, owner_id, name, status, is_verified, is_service, kyc_status, created_at, subscription_end_date, subscription_plan")
     .eq("id", shopId)
     .eq("owner_id", userId)
     .maybeSingle()
@@ -228,14 +228,15 @@ export async function assertCanSubmitPaymentProof({
   plan = null,
 }) {
   const shop = await fetchOwnedPaymentShop({ userId, shopId })
+  const entityName = shop.is_service ? "service" : "shop"
 
   if (paymentKind === "physical_verification") {
     if (shop.status !== "approved") {
-      throw new Error("Your shop must be digitally approved before physical verification payment.")
+      throw new Error(`Your ${entityName} application must be approved before physical verification payment.`)
     }
 
     if (shop.is_verified || shop.kyc_status === "approved") {
-      throw new Error("This shop has already completed physical verification.")
+      throw new Error(`This ${entityName} has already completed physical verification.`)
     }
 
     const verificationAccess = await fetchVerificationAccessStatus({
@@ -261,11 +262,11 @@ export async function assertCanSubmitPaymentProof({
 
   if (paymentKind === "service_fee") {
     if (!(shop.is_verified || shop.kyc_status === "approved")) {
-      throw new Error("Your shop must be physically verified before service fee payment.")
+      throw new Error(`Your ${entityName} must be physically verified before service fee payment.`)
     }
 
     if (isFutureDate(shop.subscription_end_date)) {
-      throw new Error("This shop already has an active subscription.")
+      throw new Error(`This ${entityName} already has an active subscription.`)
     }
 
     const [latestAnyServiceProof, latestSelectedPlanProof] = await Promise.all([
@@ -311,14 +312,27 @@ function getPaymentProofInsertMessage(error) {
     return "A payment receipt is already awaiting staff review."
   }
 
+  if (message.includes("Shop must be digitally approved before physical verification payment proof can be submitted.")) {
+    return "Business application must be approved before physical verification payment proof can be submitted."
+  }
+  if (message.includes("Shop must be physically verified before service fee payment proof can be submitted.")) {
+    return "Business must be physically verified before service fee payment proof can be submitted."
+  }
+  if (message.includes("This shop has already completed physical verification.")) {
+    return "This business has already completed physical verification."
+  }
+  if (message.includes("This shop already has an active subscription.")) {
+    return "This business already has an active subscription."
+  }
+
   const safeMessages = [
     "Payment proof merchant mismatch.",
     "Payment proof does not belong to the shop owner.",
-    "Shop must be digitally approved before physical verification payment proof can be submitted.",
-    "Shop must be physically verified before service fee payment proof can be submitted.",
+    "Business application must be approved before physical verification payment proof can be submitted.",
+    "Business must be physically verified before service fee payment proof can be submitted.",
     "Verification payment is already confirmed for this merchant.",
-    "This shop has already completed physical verification.",
-    "This shop already has an active subscription.",
+    "This business has already completed physical verification.",
+    "This business already has an active subscription.",
     "A payment receipt is already awaiting staff review.",
     "Invalid service fee plan.",
     "Payment amount must match the selected payment type.",

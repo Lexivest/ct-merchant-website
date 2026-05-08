@@ -213,6 +213,7 @@ export default function MerchantPayment() {
       const shop = shopRes.data
       if (shopRes.error || !shop) throw new Error("Shop not found or access denied")
       if (profileRes.error || !profileRes.data) throw new Error("Profile not found")
+      const entityName = shop.is_service ? "service" : "shop"
 
       const verificationAccess = await fetchVerificationAccessStatus({
         userId: user.id,
@@ -225,7 +226,7 @@ export default function MerchantPayment() {
           kind: "toast",
           type: "info",
           title: "Already approved",
-          message: "Your shop has already completed this verification step.",
+          message: `Your ${entityName} has already completed this verification step.`,
         })
         navigate("/vendor-panel", { replace: true })
         return
@@ -237,7 +238,7 @@ export default function MerchantPayment() {
           type: "info",
           title: "Application pending",
           message:
-            "Your shop must be digitally approved before you can continue to physical verification payment.",
+            `Your ${entityName} application must be approved before you can continue to physical verification payment.`,
         })
         navigate("/vendor-panel", { replace: true })
         return

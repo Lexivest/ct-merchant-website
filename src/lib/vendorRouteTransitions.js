@@ -77,12 +77,14 @@ async function fetchProfileSuspension(userId) {
 async function resolveOwnedShopId(userId, shopId = null) {
   if (shopId) return String(shopId)
 
-  const { data: shop, error } = await supabase
+  const { data: shops, error } = await supabase
     .from("shops")
     .select("id")
     .eq("owner_id", userId)
-    .maybeSingle()
+    .order("created_at", { ascending: false })
+    .limit(1)
 
+  const shop = shops?.[0] || null
   if (error || !shop?.id) {
     throw new Error("Shop not found.")
   }
@@ -136,13 +138,15 @@ async function prepareMerchantProductsData({ userId, shopId }) {
 async function prepareVendorPanelData({ userId }) {
   await fetchProfileSuspension(userId)
 
-  const { data: shopData, error: shopError } = await supabase
+  const { data: shopRows, error: shopError } = await supabase
     .from("shops")
     .select("*, subscription_end_date")
     .eq("owner_id", userId)
-    .maybeSingle()
+    .order("created_at", { ascending: false })
+    .limit(1)
 
   if (shopError) throw shopError
+  const shopData = shopRows?.[0] || null
   if (!shopData) {
     throw new Error("SHOP_NOT_FOUND")
   }
@@ -334,7 +338,7 @@ async function prepareMerchantBannerData({ userId, shopId }) {
   )
 
   if (shop.status !== "approved") {
-    throw new Error(`Your ${shop.is_service ? "service" : "shop"} must be digitally approved before you can manage your banner.`)
+    throw new Error(`Your ${shop.is_service ? "service" : "shop"} application must be approved before you can manage your banner.`)
   }
 
   const [bannerResult, productResult, profileResult] = await Promise.all([
@@ -491,7 +495,7 @@ async function prepareMerchantPromoBannerData({ userId, shopId }) {
   }
 }
 
-async function prepareMerchantVideoKYCData({ userId }) {
+async function prepareMerchantVideoKYCData({ userId, shopId, search = "" }) {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("full_name, avatar_url, is_suspended, city_id")
@@ -503,18 +507,20 @@ async function prepareMerchantVideoKYCData({ userId }) {
     throw new Error("Account restricted.")
   }
 
+  const resolvedShopId = shopId || new URLSearchParams(search).get("shop_id")
   const shop = await fetchOwnedShop(
     userId,
-    null,
-    "id, name, unique_id, address, city_id, created_at, status, is_verified, kyc_status, kyc_video_url, rejection_reason, cities(name)"
+    resolvedShopId,
+    "id, name, unique_id, address, city_id, created_at, status, is_verified, is_service, kyc_status, kyc_video_url, rejection_reason, cities(name)"
   )
+  const entityName = shop.is_service ? "service" : "shop"
 
   if (shop.is_verified) {
-    throw new Error("Your shop has already completed this verification step.")
+    throw new Error(`Your ${entityName} has already completed this verification step.`)
   }
 
   if (shop.status !== "approved") {
-    throw new Error("Your shop must be digitally approved before you can submit video KYC.")
+    throw new Error(`Your ${entityName} application must be approved before you can submit video KYC.`)
   }
 
   if (shop.kyc_status === "submitted") {
@@ -584,7 +590,7 @@ async function prepareMerchantServiceFeeData({ userId, shopId }) {
   const shop = await fetchOwnedShop(
     userId,
     shopId,
-    "id, name, subscription_end_date, subscription_plan, is_verified, kyc_status"
+    "id, name, subscription_end_date, subscription_plan, is_verified, is_service, kyc_status"
   )
 
   return {

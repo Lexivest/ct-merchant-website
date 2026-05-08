@@ -132,7 +132,13 @@ export default function MerchantBanner() {
 
         let currentShopId = urlShopId;
         if (!currentShopId) {
-          const { data: shopLookup } = await supabase.from("shops").select("id").eq("owner_id", user.id).maybeSingle();
+          const { data: shopRows } = await supabase
+            .from("shops")
+            .select("id")
+            .eq("owner_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(1);
+          const shopLookup = shopRows?.[0] || null;
           if (!shopLookup) throw new Error("Shop not found.");
           currentShopId = shopLookup.id;
         }
@@ -147,7 +153,7 @@ export default function MerchantBanner() {
         if (shopErr || !shop) throw new Error("Shop not found or access denied.");
         if (shop.status !== "approved") {
           const modeEntity = shop.is_service ? "service" : "shop";
-          throw new Error(`Your ${modeEntity} must be digitally approved before you can manage your banner.`);
+          throw new Error(`Your ${modeEntity} application must be approved before you can manage your banner.`);
         }
 
         const [bannerResult, productResult, profileResult] = await Promise.all([

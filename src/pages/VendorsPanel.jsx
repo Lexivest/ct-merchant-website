@@ -75,6 +75,10 @@ function VendorsPanelShimmer() {
   )
 }
 
+function pickPrimaryBusiness(rows = []) {
+  return rows[0] || null
+}
+
 function VendorsPanel() {
   const navigate = useNavigate()
   const { notify } = useGlobalFeedback()
@@ -106,13 +110,15 @@ function VendorsPanel() {
       )
     }
 
-    const { data: shopData, error: shopErr } = await supabase
+    const { data: shopRows, error: shopErr } = await supabase
       .from("shops")
       .select("*, subscription_end_date")
       .eq("owner_id", user.id)
-      .maybeSingle()
+      .order("created_at", { ascending: false })
+      .limit(1)
 
     if (shopErr) throw shopErr
+    const shopData = pickPrimaryBusiness(shopRows || [])
     if (!shopData) {
       throw new Error("SHOP_NOT_FOUND")
     }
@@ -163,6 +169,10 @@ function VendorsPanel() {
     fetchMerchantData,
     { dependencies: [user?.id], ttl: 1000 * 60 * 5 },
   )
+
+  useEffect(() => {
+    setRealtimeShop(null)
+  }, [data?.shop?.id, data?.shop?.is_service])
 
   useEffect(() => {
     setVerificationAccessOverride(
@@ -420,7 +430,7 @@ function VendorsPanel() {
           type: "info",
           title: "Application pending",
           message:
-            `Your ${entityName} must be digitally approved before you can continue to physical verification.`,
+            `Your ${entityName} application must be approved before you can continue to physical verification.`,
         })
         return
       }
@@ -627,7 +637,7 @@ function VendorsPanel() {
           {activeShop.status === "pending" && (
             <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-[#FDE68A] border-l-4 border-l-[#D97706] bg-[#FEF3C7] px-4 py-3 text-[0.9rem] font-semibold leading-[1.4] text-[#92400E]">
               <FaTriangleExclamation className="shrink-0 text-[1.2rem]" />
-              <span>Your {entityName} application is pending digital approval.</span>
+              <span>Your {entityName} application is pending staff review.</span>
             </div>
           )}
 
@@ -667,7 +677,7 @@ function VendorsPanel() {
                   type: "info",
                   title: "Application under review",
                   message:
-                    `Your ${entityName} application is waiting for digital approval from CTMerchant staff.`,
+                    `Your ${entityName} application is waiting for CTMerchant staff approval.`,
                 })
               }
             />
