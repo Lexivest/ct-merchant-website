@@ -6,17 +6,17 @@ import {
   FaCircleCheck,
   FaCircleNotch,
   FaClock,
+  FaCopy,
   FaLocationDot,
   FaReceipt,
   FaTicket,
   FaTriangleExclamation,
-  FaVideo,
   FaBuildingCircleCheck,
+  FaXmark,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import useAuthSession from "../../hooks/useAuthSession"
 import { clearCachedFetchStore } from "../../hooks/useCachedFetch"
-import BrandText from "../../components/common/BrandText"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
 import { CTM_BANK_ACCOUNT, PHYSICAL_VERIFICATION_FEE, normalizePromoCode } from "../../lib/paymentConfig"
@@ -56,6 +56,70 @@ function StatusCard({ proof }) {
   )
 }
 
+function BankDetailCopyRow({ label, value, onCopy }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onCopy(label, value)}
+      className="group w-full rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-[#D97706] hover:bg-[#FFFBEB]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-slate-400">{label}</div>
+          <div className={`mt-1 break-words font-black text-[#0F172A] ${label === "Account Number" ? "font-mono text-2xl tracking-wide" : "text-base"}`}>
+            {value}
+          </div>
+        </div>
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-black text-slate-600 transition group-hover:bg-[#FEF3C7] group-hover:text-[#92400E]">
+          <FaCopy /> Tap to copy
+        </span>
+      </div>
+    </button>
+  )
+}
+
+function OfflineBankDetailsModal({ open, amountLabel, onClose, onCopy }) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-slate-950/55 px-3 py-4 backdrop-blur-sm sm:items-center">
+      <div className="w-full max-w-[520px] rounded-[28px] border border-white/70 bg-[#F8FAFC] p-4 shadow-[0_24px_80px_rgba(15,23,42,0.35)] sm:p-6">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#FEF3C7] px-3 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-[#92400E]">
+              <FaBuildingColumns /> Offline Payment
+            </div>
+            <h3 className="mt-3 text-2xl font-black text-[#0F172A]">Bank transfer details</h3>
+            <p className="mt-1 text-sm font-semibold text-slate-500">Tap any detail to copy. Pay exactly {amountLabel}.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full bg-white p-3 text-slate-500 shadow-sm transition hover:bg-slate-900 hover:text-white"
+            aria-label="Close bank details"
+          >
+            <FaXmark />
+          </button>
+        </div>
+
+        <div className="grid gap-3">
+          <BankDetailCopyRow label="Bank Name" value={CTM_BANK_ACCOUNT.bankName} onCopy={onCopy} />
+          <BankDetailCopyRow label="Account Name" value={CTM_BANK_ACCOUNT.accountName} onCopy={onCopy} />
+          <BankDetailCopyRow label="Account Number" value={CTM_BANK_ACCOUNT.accountNumber} onCopy={onCopy} />
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-5 w-full rounded-2xl bg-[#2E1065] px-5 py-3.5 text-sm font-black text-white transition hover:bg-[#4C1D95]"
+        >
+          I have copied the details
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function MerchantPayment() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -79,6 +143,7 @@ export default function MerchantPayment() {
   const [transferReference, setTransferReference] = useState("")
   const [shopDetails, setShopDetails] = useState(() => prefetchedData?.shopDetails || null)
   const [paymentProof, setPaymentProof] = useState(null)
+  const [bankDetailsOpen, setBankDetailsOpen] = useState(false)
 
   const parsedShopId = useMemo(() => {
     const value = Number(urlShopId)
@@ -87,6 +152,40 @@ export default function MerchantPayment() {
 
   const canApplyPromo = normalizePromoCode(promoCode).length === 6 && !processingPromo && !submittingProof
   const canUploadProof = receiptFile && !submittingProof && !processingPromo && paymentProof?.status !== "pending"
+
+  const handleCopyBankDetail = useCallback(async (label, value) => {
+    const text = String(value || "")
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+      } else {
+        const textarea = document.createElement("textarea")
+        textarea.value = text
+        textarea.setAttribute("readonly", "")
+        textarea.style.position = "fixed"
+        textarea.style.opacity = "0"
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand("copy")
+        textarea.remove()
+      }
+
+      notify({
+        kind: "toast",
+        type: "success",
+        title: "Copied",
+        message: `${label} copied.`,
+      })
+    } catch {
+      notify({
+        kind: "toast",
+        type: "error",
+        title: "Copy failed",
+        message: "Please copy the payment detail manually.",
+      })
+    }
+  }, [notify])
 
   const openVideoKyc = useCallback((shopId) => {
     if (!shopId) return
@@ -345,11 +444,11 @@ export default function MerchantPayment() {
       setReceiptFile(null)
       setDepositorName("")
       setTransferReference("")
-      setStatusMsg("Receipt submitted. Confirmation can take up to 48 hours.")
+      setStatusMsg("Receipt submitted for staff review.")
       notify({
         type: "success",
         title: "Receipt submitted",
-        message: "Your proof of payment has been sent to CTMerchant staff for confirmation.",
+        message: "Your proof of payment has been sent to CTMerchant staff for review.",
       })
     } catch (error) {
       console.error(error)
@@ -377,6 +476,13 @@ export default function MerchantPayment() {
         location.state?.fromVendorTransition ? "ctm-page-enter" : ""
       }`}
     >
+      <OfflineBankDetailsModal
+        open={bankDetailsOpen}
+        amountLabel={formatNaira(PHYSICAL_VERIFICATION_FEE)}
+        onClose={() => setBankDetailsOpen(false)}
+        onCopy={handleCopyBankDetail}
+      />
+
       <div className="relative w-full max-w-[760px] min-w-0 overflow-hidden rounded-[24px] border border-[#E2E8F0] bg-white p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:rounded-[28px] sm:p-8">
         <div className="absolute left-0 right-0 top-0 h-1.5 bg-[#D97706]"></div>
 
@@ -386,48 +492,52 @@ export default function MerchantPayment() {
               <FaBuildingCircleCheck />
             </div>
             <h2 className="mb-2 text-[1.45rem] font-extrabold text-[#2E1065]">Verification Fee</h2>
-            <p className="mb-5 text-[0.95rem] leading-relaxed text-[#64748B]">
-              Pay the one-time verification fee into <BrandText /> account, upload your receipt, then our staff confirms it within 48 hours.
-            </p>
 
             <div className="mb-5 rounded-2xl bg-[#F1F5F9] p-5">
               <div className="mb-1 text-[0.78rem] font-bold uppercase tracking-widest text-[#64748B]">Amount to Pay</div>
               <div className="text-3xl font-extrabold text-[#0F172A] sm:text-4xl">{formatNaira(PHYSICAL_VERIFICATION_FEE)}</div>
             </div>
 
-            <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-4 text-left text-[0.85rem] leading-relaxed text-[#991B1B]">
-              <strong><FaVideo className="mr-1 inline" /> Next Step: Video KYC</strong>
-              <br />
-              After staff confirms payment, you will record a short 60-second video inside your physical shop at:
-              <div className="my-3 flex items-start gap-2 rounded-lg border border-dashed border-[#FCA5A5] bg-white p-3 font-semibold text-[#7F1D1D]">
+            <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4 text-left shadow-sm">
+              <div className="mb-3 text-[0.72rem] font-black uppercase tracking-[0.16em] text-[#DB2777]">Business Profile</div>
+              <div className="mb-3 rounded-xl bg-[#F8FAFC] p-3">
+                <div className="text-xs font-bold uppercase text-[#64748B]">Shop Name</div>
+                <div className="mt-1 break-words font-black text-[#0F172A]">{shopDetails.shopName}</div>
+              </div>
+              <div className="flex items-start gap-2 rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-3 font-semibold text-[#334155]">
                 <FaLocationDot className="mt-[3px] shrink-0" />
                 <span className="min-w-0 break-words">{shopDetails.shopAddress}</span>
               </div>
-              This fee is strictly non-refundable. If you do not have a physical shop, please contact support before paying.
             </div>
           </div>
 
           <div className="min-w-0">
             <StatusCard proof={paymentProof} />
 
-            <div className="mb-5 rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] p-5 text-left">
-              <div className="mb-4 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-[#1D4ED8]">
-                <FaBuildingColumns /> Bank Transfer Details
-              </div>
-              <div className="grid gap-3 text-sm">
-                <div className="rounded-xl bg-white p-3">
-                  <div className="text-xs font-bold uppercase text-[#64748B]">Bank Name</div>
-                  <div className="mt-1 break-words font-black text-[#0F172A]">{CTM_BANK_ACCOUNT.bankName}</div>
+            <div className="mb-5 grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setBankDetailsOpen(true)}
+                disabled={submittingProof || processingPromo}
+                className="rounded-2xl bg-[#0F172A] p-4 text-left text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white/12 text-lg">
+                  <FaBuildingColumns />
                 </div>
-                <div className="rounded-xl bg-white p-3">
-                  <div className="text-xs font-bold uppercase text-[#64748B]">Account Name</div>
-                  <div className="mt-1 break-words font-black text-[#0F172A]">{CTM_BANK_ACCOUNT.accountName}</div>
+                <div className="text-lg font-black">Pay offline</div>
+                <div className="mt-1 text-xs font-bold text-slate-300">View bank details</div>
+              </button>
+              <button
+                type="button"
+                disabled
+                className="rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4 text-left text-[#64748B]"
+              >
+                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-lg text-[#CBD5E1]">
+                  <FaBuildingColumns />
                 </div>
-                <div className="rounded-xl bg-white p-3">
-                  <div className="text-xs font-bold uppercase text-[#64748B]">Account Number</div>
-                  <div className="mt-1 break-all font-mono text-xl font-black tracking-wide text-[#0F172A] sm:text-2xl">{CTM_BANK_ACCOUNT.accountNumber}</div>
-                </div>
-              </div>
+                <div className="text-lg font-black">Pay online</div>
+                <div className="mt-1 text-xs font-bold">Online payment not available</div>
+              </button>
             </div>
 
             {paymentProof?.status !== "pending" ? (
