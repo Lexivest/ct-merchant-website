@@ -818,7 +818,7 @@ function ShopRegistration() {
       {
         step: "03",
         title: "Verification Payment",
-        desc: "Pay â‚¦5,000 verification fee or redeem a promo code for your badge.",
+        desc: "Pay ₦5,000 verification fee or redeem a promo code if available.",
         icon: <FaShieldHalved />,
       },
       {
@@ -1780,7 +1780,7 @@ function ShopRegistration() {
               { 
                 step: "04", 
                 title: "Verification Payment", 
-                desc: "Pay ₦5,000 verification fee or redeem a promo code for your badge.",
+                desc: "Pay ₦5,000 verification fee or redeem a promo code if available.",
                 icon: <FaShieldHalved />
               },
               { 
