@@ -37,6 +37,22 @@ const KYC_VIDEO_BUCKETS = Array.from(
   new Set([UPLOAD_RULES.kycVideos.bucket, "kyc_videos"])
 )
 
+function normalizeKycCoordinate(value) {
+  const parsed = typeof value === "number" ? value : Number(String(value ?? "").trim())
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function hasValidKycCoordinates(latitude, longitude) {
+  return (
+    latitude !== null &&
+    longitude !== null &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180
+  )
+}
+
 function getStoragePathFromUrl(url, bucket) {
   if (!url) return null
   if (!String(url).startsWith("http")) return String(url).replace(/^\/+/, "")
@@ -352,6 +368,19 @@ export default function StaffVerifications() {
       return
     }
 
+    const kycMeta = selectedShop.kyc_submission_meta || {}
+    const kycLatitude = normalizeKycCoordinate(kycMeta.latitude)
+    const kycLongitude = normalizeKycCoordinate(kycMeta.longitude)
+
+    if (isKyc && !hasValidKycCoordinates(kycLatitude, kycLongitude)) {
+      notify({
+        type: "error",
+        title: "KYC GPS required",
+        message: "This KYC video does not contain valid live GPS coordinates. Ask the merchant to resubmit the video with location enabled.",
+      })
+      return
+    }
+
     const confirmMsg = isKyc 
       ? `Are you sure you want to approve the KYC video for "${selectedShop.name}"?`
       : `Are you sure you want to approve the shop application for "${selectedShop.name}"?`
@@ -367,18 +396,47 @@ export default function StaffVerifications() {
 
     setProcessing(true)
     try {
-      const updateData = isKyc
-        ? { kyc_status: "approved", is_verified: true, rejection_reason: null }
-        : { status: "approved" }
+      let updateData
+      let nextShopData
 
-      const { error } = await supabase
-        .from("shops")
-        .update(updateData)
-        .eq("id", selectedShop.id)
+      if (isKyc) {
+        const { data, error } = await supabase.rpc("update_shop_coordinate", {
+          p_shop_id: selectedShop.id,
+          p_latitude: kycLatitude,
+          p_longitude: kycLongitude,
+          p_location_label: kycMeta.location_label || null,
+          p_recorded_at: kycMeta.recorded_at || null,
+        })
 
-      if (error) throw error
+        if (error) throw error
 
-      let nextShopData = { ...selectedShop, ...updateData }
+        const updatedShop = data?.shop || {}
+        updateData = {
+          kyc_status: updatedShop.kyc_status || "approved",
+          is_verified: updatedShop.is_verified ?? true,
+          rejection_reason: updatedShop.rejection_reason ?? null,
+          latitude: updatedShop.latitude ?? kycLatitude,
+          longitude: updatedShop.longitude ?? kycLongitude,
+          kyc_submission_meta: updatedShop.kyc_submission_meta || {
+            ...kycMeta,
+            latitude: kycLatitude,
+            longitude: kycLongitude,
+            coordinate_source: "video_kyc_recording",
+          },
+        }
+        nextShopData = { ...selectedShop, ...updateData }
+      } else {
+        updateData = { status: "approved" }
+
+        const { error } = await supabase
+          .from("shops")
+          .update(updateData)
+          .eq("id", selectedShop.id)
+
+        if (error) throw error
+
+        nextShopData = { ...selectedShop, ...updateData }
+      }
 
       if (isKyc && selectedShop.kyc_video_url) {
         const videoTarget = resolveKycVideoStorageTarget(selectedShop.kyc_video_url)
