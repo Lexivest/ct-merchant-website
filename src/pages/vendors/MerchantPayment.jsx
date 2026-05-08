@@ -61,12 +61,12 @@ function BankDetailCopyRow({ label, value, onCopy }) {
     <button
       type="button"
       onClick={() => onCopy(label, value)}
-      className="group w-full rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-[#D97706] hover:bg-[#FFFBEB]"
+      className="group w-full rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-[#D97706] hover:bg-[#FFFBEB] sm:p-4"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-slate-400">{label}</div>
-          <div className={`mt-1 break-words font-black text-[#0F172A] ${label === "Account Number" ? "font-mono text-2xl tracking-wide" : "text-base"}`}>
+          <div className={`mt-1 break-words font-black text-[#0F172A] ${label === "Account Number" ? "font-mono text-xl tracking-wide sm:text-2xl" : "text-base"}`}>
             {value}
           </div>
         </div>
@@ -82,9 +82,9 @@ function OfflineBankDetailsModal({ open, amountLabel, onClose, onCopy }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-slate-950/55 px-3 py-4 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-[520px] rounded-[28px] border border-white/70 bg-[#F8FAFC] p-4 shadow-[0_24px_80px_rgba(15,23,42,0.35)] sm:p-6">
-        <div className="mb-5 flex items-start justify-between gap-4">
+    <div className="fixed inset-0 z-[1200] flex items-start justify-center overflow-y-auto overscroll-contain bg-slate-950/55 px-3 py-3 backdrop-blur-sm sm:items-center sm:py-6">
+      <div className="w-full max-w-[520px] max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-[28px] border border-white/70 bg-[#F8FAFC] p-4 shadow-[0_24px_80px_rgba(15,23,42,0.35)] sm:max-h-[calc(100dvh-3rem)] sm:p-6">
+        <div className="mb-4 flex items-start justify-between gap-4 sm:mb-5">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-[#FEF3C7] px-3 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-[#92400E]">
               <FaBuildingColumns /> Offline Payment
