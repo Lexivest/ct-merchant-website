@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   FaArrowLeft,
+  FaBriefcase,
   FaChevronRight,
   FaCircleCheck,
   FaLocationDot,
@@ -10,7 +11,7 @@ import {
 } from "react-icons/fa6"
 import { supabase } from "../lib/supabase"
 import useAuthSession from "../hooks/useAuthSession"
-import useCachedFetch from "../hooks/useCachedFetch"
+import useCachedFetch, { primeCachedFetchStore } from "../hooks/useCachedFetch"
 import usePreventPullToRefresh from "../hooks/usePreventPullToRefresh"
 import StableImage from "../components/common/StableImage"
 import PageSeo from "../components/common/PageSeo"
@@ -20,6 +21,10 @@ import { PageLoadingScreen } from "../components/common/PageStatusScreen"
 import { getRetryingMessage } from "../components/common/RetryingNotice"
 import { getFriendlyErrorMessage, isNetworkError } from "../lib/friendlyErrors"
 import { prepareShopDetailTransition } from "../lib/detailPageTransitions"
+import { fetchShopDetailData } from "../lib/shopDetailData"
+import { getServiceProviderImage } from "../lib/serviceCategories"
+
+const loadServiceProviderPage = () => import("./ServiceProvider")
 
 function ShopIndex() {
   const navigate = useNavigate()
@@ -33,6 +38,7 @@ function ShopIndex() {
   const [transitionState, setTransitionState] = useState({
     pending: false,
     shopId: "",
+    type: "shop",
     error: "",
   })
 
@@ -48,11 +54,29 @@ function ShopIndex() {
       throw new Error("City data not found. Please complete your profile.")
     }
 
+    const nowIso = new Date().toISOString()
+
     let query = supabase
       .from("shops")
       .select("*")
       .eq("city_id", profile.city_id)
       .eq("is_service", false)
+      .eq("status", "approved")
+      .eq("is_verified", true)
+      .eq("is_open", true)
+      .gt("subscription_end_date", nowIso)
+      .order("name", { ascending: true })
+      .limit(100)
+
+    let serviceQuery = supabase
+      .from("shops")
+      .select("*, areas(name), cities(name)")
+      .eq("city_id", profile.city_id)
+      .eq("is_service", true)
+      .eq("status", "approved")
+      .eq("is_verified", true)
+      .eq("is_open", true)
+      .gt("subscription_end_date", nowIso)
       .order("name", { ascending: true })
       .limit(100)
 
@@ -60,30 +84,56 @@ function ShopIndex() {
       const q = debouncedSearch.trim().replace(/,/g, "")
       const ilikeQuery = `%${q}%`
       query = query.or(`name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},address.ilike.${ilikeQuery}`)
+      serviceQuery = serviceQuery.or(`name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},address.ilike.${ilikeQuery},description.ilike.${ilikeQuery}`)
     }
 
-    const { data: shops, error: shopsError } = await query
+    const [{ data: shops, error: shopsError }, { data: services, error: servicesError }] =
+      await Promise.all([query, serviceQuery])
 
     if (shopsError) throw shopsError
+    if (servicesError) throw servicesError
 
-    return shops || []
+    const serviceIds = (services || []).map((service) => service.id).filter(Boolean)
+    let serviceProducts = []
+
+    if (serviceIds.length > 0) {
+      const { data: products, error: productsError } = await supabase
+        .from("products")
+        .select("id, shop_id, name, description, price, image_url, category, is_available, is_approved")
+        .in("shop_id", serviceIds)
+        .eq("is_available", true)
+        .eq("is_approved", true)
+        .order("id", { ascending: false })
+        .limit(300)
+
+      if (productsError) throw productsError
+      serviceProducts = products || []
+    }
+
+    return {
+      shops: shops || [],
+      services: services || [],
+      serviceProducts,
+    }
   }
 
   // 3. Smart Caching Hook
   const cacheKey = `dir_city_${profile?.city_id || 'none'}_q_${debouncedSearch}`
-  const { data: allShops, loading: dataLoading, error: dataError, mutate } = useCachedFetch(
+  const { data: directoryData, loading: dataLoading, error: dataError, mutate } = useCachedFetch(
     cacheKey,
     fetchDirectory,
-    { dependencies: [profile?.city_id, debouncedSearch], ttl: 1000 * 60 * 15 } 
+    { dependencies: [profile?.city_id, debouncedSearch], ttl: 1000 * 60 * 15, persist: "session" }
   )
 
-  const headerTitle = profile?.cities?.name ? `${profile.cities.name} Directory` : "Shop Directory"
+  const headerTitle = profile?.cities?.name
+    ? `${profile.cities.name} Shops & Services Directory`
+    : "Shops & Services Directory"
   const directoryStructuredData = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     "name": `${headerTitle} | CTMerchant`,
     "url": "https://www.ctmerchant.com.ng/shop-index",
-    "description": "Browse verified shops in your city on the CTMerchant directory.",
+    "description": "Browse verified shops and service providers in your city on the CTMerchant directory.",
     "isPartOf": {
       "@type": "WebSite",
       "name": "CTMerchant",
@@ -92,10 +142,32 @@ function ShopIndex() {
   }
 
   // 4. Server-side Search Results
-  const filteredShops = allShops || []
+  const normalizedDirectory = Array.isArray(directoryData)
+    ? {
+        shops: directoryData,
+        services: [],
+        serviceProducts: [],
+      }
+    : {
+        shops: directoryData?.shops || [],
+        services: directoryData?.services || [],
+        serviceProducts: directoryData?.serviceProducts || [],
+      }
+  const serviceProductsByShopId = normalizedDirectory.serviceProducts.reduce((map, product) => {
+    const key = String(product?.shop_id || "")
+    if (!key) return map
+    if (!map.has(key)) map.set(key, [])
+    map.get(key).push(product)
+    return map
+  }, new Map())
+  const directoryEntries = [
+    ...normalizedDirectory.shops.map((shop) => ({ type: "shop", shop })),
+    ...normalizedDirectory.services.map((shop) => ({ type: "service", shop })),
+  ].sort((a, b) => String(a.shop?.name || "").localeCompare(String(b.shop?.name || "")))
 
   function getDisplayImage(shop) {
     if (shop?.image_url) return shop.image_url
+    if (shop?.storefront_url) return shop.storefront_url
     if (shop?.store_front_url) return shop.store_front_url
     if (Array.isArray(shop?.banners) && shop.banners.length > 0) {
       return shop.banners[0]
@@ -108,12 +180,19 @@ function ShopIndex() {
     return rawId.includes("-") ? rawId.split("-").pop() : rawId
   }
 
+  function formatServicePrice(value) {
+    const amount = Number(value || 0)
+    if (!Number.isFinite(amount) || amount <= 0) return "Request quote"
+    return `From N${amount.toLocaleString()}`
+  }
+
   async function openShopWithTransition(shopId) {
     if (!shopId) return
 
     setTransitionState({
       pending: true,
       shopId,
+      type: "shop",
       error: "",
     })
 
@@ -136,6 +215,56 @@ function ShopIndex() {
       setTransitionState({
         pending: false,
         shopId,
+        type: "shop",
+        error: safeMessage,
+      })
+    }
+  }
+
+  async function openServiceWithTransition(service) {
+    if (!service?.id) return
+
+    setTransitionState({
+      pending: true,
+      shopId: service.id,
+      type: "service",
+      error: "",
+    })
+
+    try {
+      const [serviceProviderData] = await Promise.all([
+        fetchShopDetailData({
+          shopId: service.id,
+          userId: user?.id || null,
+        }),
+        loadServiceProviderPage(),
+      ])
+
+      primeCachedFetchStore(
+        `service_provider_${service.id}_${user?.id || "anon"}`,
+        serviceProviderData,
+        undefined,
+        { persist: "session" },
+      )
+
+      navigate(`/service-provider?id=${encodeURIComponent(service.id)}&service=${encodeURIComponent(service.category || "")}`, {
+        state: {
+          fromMarketTransition: true,
+          prefetchedServiceProviderData: serviceProviderData,
+        },
+      })
+    } catch (error) {
+      const safeMessage = isNetworkError(error)
+        ? "We could not open this service right now. Please try again."
+        : getFriendlyErrorMessage(
+            error,
+            "We could not open this service right now. Please try again."
+          )
+
+      setTransitionState({
+        pending: false,
+        shopId: service.id,
+        type: "service",
         error: safeMessage,
       })
     }
@@ -154,7 +283,14 @@ function ShopIndex() {
         error={transitionState.error}
         onRetry={() => {
           if (transitionState.shopId) {
-            void openShopWithTransition(transitionState.shopId)
+            if (transitionState.type === "service") {
+              const service = normalizedDirectory.services.find(
+                (item) => String(item.id) === String(transitionState.shopId)
+              )
+              void openServiceWithTransition(service)
+            } else {
+              void openShopWithTransition(transitionState.shopId)
+            }
           }
         }}
         onDismiss={() =>
@@ -172,7 +308,7 @@ function ShopIndex() {
       >
       <PageSeo
         title={`${headerTitle} | CTMerchant`}
-        description="Browse verified shops in your city on the CTMerchant directory."
+        description="Browse verified shops and service providers in your city on the CTMerchant directory."
         canonicalPath="/shop-index"
         noindex
         structuredData={directoryStructuredData}
@@ -198,7 +334,7 @@ function ShopIndex() {
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search by Name, ID, or Category..."
+              placeholder="Search shops, services, ID, or category..."
               className="flex-1 border-none px-4 text-base text-[#0F1111] outline-none"
             />
             <button
@@ -213,38 +349,55 @@ function ShopIndex() {
       </div>
 
       <div className="mx-auto w-full max-w-[800px] flex-1 overflow-y-auto px-4 py-5">
-        {authLoading || (dataLoading && !allShops) ? (
+        {authLoading || (dataLoading && !directoryData) ? (
           <PageLoadingScreen
             fullScreen={false}
-            title="Loading shops"
-            message="Please wait while we prepare the shop directory."
+            title="Loading directory"
+            message="Please wait while we prepare shops and services."
           />
-        ) : dataError && !allShops ? (
+        ) : dataError && !directoryData ? (
           <GlobalErrorScreen
             fullScreen={false}
             error={dataError}
             message={getRetryingMessage(dataError)}
             onRetry={mutate}
           />
-        ) : filteredShops.length === 0 ? (
+        ) : directoryEntries.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center px-5 text-center text-slate-400">
             <FaStoreSlash className="mb-4 text-5xl opacity-30" />
             <span className="font-semibold text-[#0F1111]">
-              No matching shops found.
+              No matching shops or services found.
             </span>
             <span className="mt-1 text-[0.85rem]">
               Try adjusting your search criteria.
             </span>
           </div>
         ) : (
-          filteredShops.map((shop) => {
-            const imageUrl = getDisplayImage(shop)
+          directoryEntries.map((entry) => {
+            const { shop, type } = entry
+            const isService = type === "service"
+            const serviceItems = isService
+              ? serviceProductsByShopId.get(String(shop.id)) || []
+              : []
+            const imageUrl = isService
+              ? getServiceProviderImage(shop, serviceItems) || getDisplayImage(shop)
+              : getDisplayImage(shop)
             const displayId = getDisplayId(shop)
+            const minServicePrice = serviceItems
+              .map((product) => Number(product?.price))
+              .filter((price) => Number.isFinite(price) && price > 0)
+              .sort((a, b) => a - b)[0]
 
             return (
               <div
-                key={shop.id}
-                onClick={() => openShopWithTransition(shop.id)}
+                key={`${type}-${shop.id}`}
+                onClick={() => {
+                  if (isService) {
+                    void openServiceWithTransition(shop)
+                  } else {
+                    void openShopWithTransition(shop.id)
+                  }
+                }}
                 className="mb-3 flex cursor-pointer items-center gap-4 rounded-lg border border-[#D5D9D9] bg-white p-4 shadow-[0_2px_4px_rgba(0,0,0,0.02)] transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-[0_4px_10px_rgba(0,0,0,0.08)] active:scale-[0.98]"
               >
                 {imageUrl ? (
@@ -275,6 +428,15 @@ function ShopIndex() {
                   </div>
 
                   <div className="mb-1.5 flex items-center gap-2">
+                    <span className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[0.68rem] font-black ${
+                      isService
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "bg-emerald-50 text-emerald-700"
+                    }`}>
+                      {isService ? <FaBriefcase /> : null}
+                      {isService ? "Service" : "Shop"}
+                    </span>
+
                     <span className="rounded bg-pink-50 px-2 py-1 text-[0.7rem] font-bold text-pink-600">
                       {shop.category || "Uncategorized"}
                     </span>
@@ -290,6 +452,12 @@ function ShopIndex() {
                     <FaLocationDot className="mr-1 inline text-slate-400" />
                     {shop.address || "No address"}
                   </div>
+
+                  {isService ? (
+                    <div className="mt-1 text-[0.85rem] font-extrabold text-slate-900">
+                      {formatServicePrice(minServicePrice)}
+                    </div>
+                  ) : null}
                 </div>
 
                 <FaChevronRight className="shrink-0 text-[1.1rem] text-slate-300" />

@@ -276,7 +276,7 @@ function DashboardHeader({
           type="button"
           className="amz-nav-item flex h-[30px] w-[30px] items-center justify-center rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2.5"
           onClick={onShopIndex}
-          title="Shop Index"
+          title="Shops & Services Directory"
         >
           <FaArrowDownAZ className="text-[1.05rem]" />
         </button>

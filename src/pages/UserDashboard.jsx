@@ -1427,7 +1427,13 @@ function UserDashboard() {
     try {
       primeCachedFetchStore(
         `dir_city_${profile?.city_id || "none"}_q_`,
-        (localData.shops || []).filter((shop) => !isServiceShop(shop))
+        {
+          shops: (localData.shops || []).filter((shop) => !isServiceShop(shop)),
+          services: localData.serviceShops || [],
+          serviceProducts: localData.serviceProducts || [],
+        },
+        Date.now(),
+        { persist: "session" },
       )
       await loadShopIndexPage()
       navigate("/shop-index")
