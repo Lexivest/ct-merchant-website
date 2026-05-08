@@ -27,7 +27,7 @@ import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
-import { UPLOAD_RULES, buildOwnedShopStoragePath, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
+import { UPLOAD_RULES, buildOwnedShopStoragePath, formatBytes, getAcceptValue, getRuleLabel, storagePathFromUrl } from "../../lib/uploadRules";
 import { IMAGE_PROFILES } from "../../lib/imageProfiles";
 import { drawBrandedCanvasText } from "../../lib/brandCanvas";
 import { clampWords, countWords } from "../../lib/textLimits";
@@ -714,13 +714,28 @@ export default function EditProduct() {
       mutationInFlightRef.current = true;
       setDeleting(true);
 
-      const { data: latestProduct, error: latestProductError } = await supabase.from("products").select("shop_id").eq("id", productId).maybeSingle();
+      const { data: latestProduct, error: latestProductError } = await supabase
+        .from("products")
+        .select("shop_id, image_url, image_url_2, image_url_3")
+        .eq("id", productId)
+        .maybeSingle();
       if (latestProductError) throw latestProductError;
       if (!latestProduct) throw new Error("Product not found or already deleted.");
+      const imagePathsToDelete = [
+        latestProduct.image_url,
+        latestProduct.image_url_2,
+        latestProduct.image_url_3,
+      ].map((url) => storagePathFromUrl(url, PRODUCT_BUCKET)).filter(Boolean);
       
-      // Delete from DB. Your Postgres trigger `cleanup_orphaned_product_images` will handle the actual file deletion.
+      // The database trigger performs the primary cleanup; this fallback covers
+      // already-deployed clients if a storage object survives the row delete.
       const { error } = await supabase.from('products').delete().eq('id', productId);
       if (error) throw error;
+      try {
+        await removeProductImagePaths(imagePathsToDelete, "Product image fallback cleanup failed");
+      } catch (cleanupError) {
+        console.warn("Product image fallback cleanup failed:", cleanupError);
+      }
 
       const nextPath = `/merchant-add-product?shop_id=${encodeURIComponent(latestProduct.shop_id)}`;
       let prefetchedAddProductData = null;

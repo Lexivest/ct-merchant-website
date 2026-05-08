@@ -113,6 +113,25 @@ export function buildOwnedShopStoragePath({
   return parts.join("/")
 }
 
+export function storagePathFromUrl(value, bucketId) {
+  const raw = String(value || "").trim()
+  if (!raw) return ""
+
+  const clean = raw.split("?")[0]
+  if (!/^https?:\/\//i.test(clean)) return clean.replace(/^\/+/, "")
+
+  const prefixes = [
+    `/storage/v1/object/public/${bucketId}/`,
+    `/storage/v1/object/authenticated/${bucketId}/`,
+    `/storage/v1/object/sign/${bucketId}/`,
+  ]
+
+  const prefix = prefixes.find((item) => clean.includes(item))
+  if (!prefix) return ""
+
+  return clean.slice(clean.indexOf(prefix) + prefix.length)
+}
+
 export function isMimeAllowed(rule, mime) {
   if (!rule || !Array.isArray(rule.allowedMime) || rule.allowedMime.length === 0) {
     return true
