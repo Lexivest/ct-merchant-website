@@ -3,9 +3,18 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import {
   FaArrowRightFromBracket,
+  FaBars,
+  FaBell,
+  FaBriefcase,
+  FaBuildingUser,
   FaCircleNotch,
+  FaFileContract,
+  FaFolderOpen,
   FaHouse,
+  FaIdBadge,
+  FaMoneyCheckDollar,
   FaShieldHalved,
+  FaXmark,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { signOutUser } from "../../lib/auth"
@@ -257,6 +266,179 @@ export function QuickActionButton({ icon, label, tone = "dark", onClick }) {
       {icon}
       {label}
     </button>
+  )
+}
+
+function formatStaffProfileDate(value) {
+  if (!value) return "Pending HR upload"
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return "Pending HR upload"
+  return date.toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })
+}
+
+function formatStaffRoleLabel(value) {
+  return String(value || "staff")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function getStaffInitials(value) {
+  const parts = String(value || "CT Staff")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+
+  return parts.map((part) => part[0]?.toUpperCase() || "").join("") || "CT"
+}
+
+export function StaffInfoDrawer({ open, onClose, authUser, staffData, counts = null, summary = null }) {
+  if (!open || !authUser || !staffData) return null
+
+  const staffName =
+    staffData.full_name ||
+    authUser.user_metadata?.full_name ||
+    authUser.email ||
+    "CTMerchant Staff"
+  const avatarUrl = authUser.user_metadata?.avatar_url || ""
+  const adminRole = staffData.admin_role || null
+  const adminRoleLabel = adminRole ? formatStaffRoleLabel(adminRole) : "Portal Access Only"
+  const staffRoleLabel = formatStaffRoleLabel(staffData.staff_role || "staff")
+  const cityScope =
+    adminRole === "super_admin"
+      ? "All cities"
+      : staffData.admin_city_id
+        ? `City ${staffData.admin_city_id}`
+        : "Pending city scope"
+  const department = staffData.department || "Pending HR assignment"
+  const employmentDate = formatStaffProfileDate(staffData.employment_date || authUser.created_at)
+
+  const profileRows = [
+    ["Bio", "Short staff biography and work summary will appear here."],
+    ["Department", department],
+    ["Employment Date", employmentDate],
+    ["Grade Level", staffData.grade_level || "Pending HR assignment"],
+    ["File No.", staffData.file_no || staffData.file_number || "Pending HR assignment"],
+    ["City Scope", cityScope],
+  ]
+
+  const resourceRows = [
+    { icon: <FaFileContract />, label: "Employment Letter", value: "Pending HR upload" },
+    { icon: <FaMoneyCheckDollar />, label: "Payment Slip", value: "Pending payroll upload" },
+    { icon: <FaBell />, label: "Notifications", value: "Internal notices and policy updates" },
+    { icon: <FaFolderOpen />, label: "Staff File", value: "Documents and archive placeholder" },
+    { icon: <FaBriefcase />, label: "Department Memo", value: "Team resources placeholder" },
+  ]
+
+  return (
+    <>
+      <button
+        type="button"
+        className="fixed inset-0 z-[480] cursor-default bg-slate-950/45 backdrop-blur-[2px]"
+        onClick={onClose}
+        aria-label="Close staff information"
+      />
+      <aside className="fixed right-0 top-0 z-[490] flex h-[100dvh] w-[min(92vw,400px)] flex-col overflow-hidden bg-white shadow-2xl">
+        <div className="bg-[linear-gradient(135deg,#2E1065_0%,#4c1d95_48%,#DB2777_100%)] px-5 py-5 text-white">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={staffName}
+                  className="h-14 w-14 shrink-0 rounded-2xl border border-white/20 object-cover"
+                />
+              ) : (
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-lg font-black">
+                  {getStaffInitials(staffName)}
+                </div>
+              )}
+              <div className="min-w-0">
+                <div className="truncate text-lg font-black">{staffName}</div>
+                <div className="mt-1 truncate text-xs font-bold text-white/65">{authUser.email}</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white transition hover:bg-white/20"
+              aria-label="Close staff information"
+            >
+              <FaXmark />
+            </button>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            <span className="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-950">
+              {staffRoleLabel}
+            </span>
+            <span className="rounded-full bg-rose-500 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white">
+              {adminRoleLabel}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 py-5">
+          {summary || counts ? (
+            <div className="mb-5 grid grid-cols-3 gap-2">
+              <div className="rounded-2xl bg-slate-50 px-3 py-3">
+                <div className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Shops</div>
+                <div className="mt-1 text-xl font-black text-slate-950">{summary?.shopCount || 0}</div>
+              </div>
+              <div className="rounded-2xl bg-slate-50 px-3 py-3">
+                <div className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Pending</div>
+                <div className="mt-1 text-xl font-black text-slate-950">
+                  {(counts?.verifications || 0) + (counts?.products || 0) + (counts?.community || 0) + (counts?.content || 0) + (counts?.payments || 0)}
+                </div>
+              </div>
+              <div className="rounded-2xl bg-slate-50 px-3 py-3">
+                <div className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Visits</div>
+                <div className="mt-1 text-xl font-black text-slate-950">{summary?.visitsToday || 0}</div>
+              </div>
+            </div>
+          ) : null}
+
+          <section>
+            <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-600">
+              <FaIdBadge />
+              Staff Bio
+            </div>
+            <div className="space-y-2">
+              {profileRows.map(([label, value]) => (
+                <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+                  <div className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{label}</div>
+                  <div className="mt-1 text-sm font-bold leading-5 text-slate-800">{value}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-6">
+            <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-600">
+              <FaBuildingUser />
+              Staff Resources
+            </div>
+            <div className="grid gap-2">
+              {resourceRows.map((item) => (
+                <div key={item.label} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-rose-50 text-rose-700">
+                    {item.icon}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-black text-slate-950">{item.label}</div>
+                    <div className="truncate text-xs font-semibold text-slate-500">{item.value}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </aside>
+    </>
   )
 }
 
@@ -704,6 +886,7 @@ export function StaffPortalShell({
     isLoggingOut, 
     handleLogout 
   } = useStaffPortalSession()
+  const [staffInfoOpen, setStaffInfoOpen] = useState(false)
 
   if (fetchingStaff && routeLocation.state?.fromStaffTransition) {
     return null
@@ -732,17 +915,20 @@ export function StaffPortalShell({
 
   if (!staffData || !authUser) return null
 
-  const avatarUrl =
-    authUser.user_metadata?.avatar_url ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(staffData.full_name || "Admin")}&background=2E1065&color=fff&size=150&font-size=0.4`
-
   return (
     <div
       className={`min-h-[100dvh] overflow-x-hidden bg-[radial-gradient(circle_at_top,#fdf2f8_0,#f8fafc_26%,#f8fafc_100%)] pb-[calc(3rem+env(safe-area-inset-bottom))] font-sans ${
         routeLocation.state?.fromStaffTransition ? "ctm-page-enter" : ""
       }`}
     >
-      <nav className="flex min-w-0 items-center justify-between gap-3 bg-[#2E1065] px-3 py-4 text-white shadow-md sm:px-6">
+      <StaffInfoDrawer
+        open={staffInfoOpen}
+        onClose={() => setStaffInfoOpen(false)}
+        authUser={authUser}
+        staffData={staffData}
+      />
+
+      <nav className="sticky top-0 z-[120] flex min-w-0 items-center justify-between gap-3 bg-[#2E1065] px-3 py-3 text-white shadow-md sm:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <FaShieldHalved className="shrink-0 text-2xl text-[#DB2777]" />
           <h1 className="min-w-0 text-base font-bold tracking-wide sm:text-lg">
@@ -752,11 +938,19 @@ export function StaffPortalShell({
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
+            onClick={() => setStaffInfoOpen(true)}
+            className="flex items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm font-bold transition-colors hover:bg-white/15 sm:px-4 sm:text-base"
+          >
+            <FaBars />
+            <span className="hidden min-[420px]:inline">Info</span>
+          </button>
+          <button
+            type="button"
             onClick={() => navigate("/staff-dashboard")}
             className="flex items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm font-bold transition-colors hover:bg-white/15 sm:px-4 sm:text-base"
           >
             <FaHouse />
-            Home
+            <span className="hidden min-[370px]:inline">Home</span>
           </button>
           <button
             type="button"
@@ -772,39 +966,29 @@ export function StaffPortalShell({
         </div>
       </nav>
 
-      <div className="mx-auto mt-6 w-full max-w-[1280px] px-3 sm:mt-8 sm:px-6">
-        <div className="mb-8 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-          <div className="bg-[linear-gradient(135deg,#2E1065_0%,#4c1d95_45%,#DB2777_100%)] px-5 py-7 text-white sm:px-8 sm:py-8">
-            <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex min-w-0 flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
-                <img
-                  src={avatarUrl}
-                  alt="Staff Avatar"
-                  className="h-20 w-20 rounded-full border-4 border-white/20 object-cover shadow-sm sm:h-24 sm:w-24"
-                />
-                <div className="min-w-0 text-center sm:text-left">
-                  <div className="text-[11px] font-black uppercase tracking-[0.24em] text-pink-200">
-                    Staff Operations Console
-                  </div>
-                  <h2 className="mt-3 break-words text-2xl font-black text-white sm:text-3xl">{title || staffData.full_name}</h2>
-                  <p className="mt-2 max-w-[640px] text-sm leading-6 text-white/80">
-                    {description || "Navigate through staff operations, moderation, intelligence, and merchant controls."}
-                  </p>
-                </div>
-              </div>
-
-              {headerActions ? <div className="flex flex-wrap gap-3">{headerActions}</div> : null}
+      <div className="mx-auto w-full max-w-[1280px] px-3 py-3 sm:px-6 sm:py-4">
+        <div className="mb-4 flex min-w-0 flex-col gap-3 rounded-[22px] border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-[#DB2777]">
+              Staff workspace
             </div>
+            <h2 className="mt-1 truncate text-xl font-black text-slate-950">{title || staffData.full_name}</h2>
+            {description ? (
+              <p className="mt-1 hidden max-w-[760px] text-sm font-semibold leading-6 text-slate-500 sm:block">
+                {description}
+              </p>
+            ) : null}
           </div>
 
-          <div className="border-t border-slate-100 bg-slate-50 px-5 py-3">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {headerActions}
             <button
               type="button"
               onClick={() => navigate("/staff-dashboard")}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-black text-slate-600 shadow-sm transition hover:bg-slate-100"
+              className="inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-4 py-2.5 text-sm font-black text-slate-700 transition hover:bg-slate-200"
             >
               <FaHouse />
-              Back to staff home
+              Staff home
             </button>
           </div>
         </div>

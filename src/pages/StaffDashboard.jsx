@@ -33,7 +33,7 @@ import { prepareStaffRouteTransition } from "../lib/staffRouteTransitions"
 import { buildStaffAuthProfile } from "../lib/staffAuth"
 import { primeStaffPortalMemory } from "../lib/staffSession"
 import { primeAuthSessionState } from "../hooks/useAuthSession"
-import { useStaffCounts, useStaffPortalSession } from "./staff/StaffPortalShared"
+import { StaffInfoDrawer, useStaffCounts, useStaffPortalSession } from "./staff/StaffPortalShared"
 
 function formatStaffDate(value) {
   if (!value) return "Pending HR upload"
@@ -90,7 +90,7 @@ function StaffHomeCard({
       type="button"
       onClick={onClick}
       aria-disabled={locked}
-      className={`group relative flex min-h-[92px] flex-col justify-between overflow-hidden rounded-[18px] border border-slate-200 bg-gradient-to-br ${toneClass} p-3.5 text-left shadow-sm transition ${
+      className={`group relative flex min-h-[82px] flex-col justify-between overflow-hidden rounded-[16px] border border-slate-200 bg-gradient-to-br ${toneClass} p-2.5 text-left shadow-sm transition sm:min-h-[92px] sm:p-3.5 ${
         locked
           ? "cursor-not-allowed opacity-65"
           : "hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.09)]"
@@ -99,12 +99,12 @@ function StaffHomeCard({
       <div className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-current/10 blur-sm" />
 
       <div className="relative flex items-start justify-between gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-current/10 text-lg">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-current/10 text-base sm:h-10 sm:w-10 sm:rounded-2xl sm:text-lg">
           {icon}
         </div>
         {hasMetric ? (
           <div
-            className={`flex min-w-9 items-center justify-center rounded-full px-2.5 py-1 text-xs font-black shadow-sm ${
+            className={`flex min-w-7 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black shadow-sm sm:min-w-9 sm:px-2.5 sm:py-1 sm:text-xs ${
               metricValue > 0
                 ? "bg-rose-600 text-white ring-2 ring-white"
                 : "bg-white/80 text-slate-400 ring-1 ring-slate-200"
@@ -117,8 +117,8 @@ function StaffHomeCard({
         ) : null}
       </div>
 
-      <div className="relative mt-3">
-        <h3 className="text-sm font-black tracking-tight text-slate-950">{title}</h3>
+      <div className="relative mt-2 sm:mt-3">
+        <h3 className="text-[0.72rem] font-black leading-tight tracking-tight text-slate-950 sm:text-sm">{title}</h3>
       </div>
     </button>
   )
@@ -182,6 +182,7 @@ export default function StaffDashboard() {
     label: "",
   })
   const [notice, setNotice] = useState("")
+  const [staffInfoOpen, setStaffInfoOpen] = useState(false)
 
   useEffect(() => {
     if (!notice) return undefined
@@ -507,6 +508,15 @@ export default function StaffDashboard() {
         }
       />
 
+      <StaffInfoDrawer
+        open={staffInfoOpen}
+        onClose={() => setStaffInfoOpen(false)}
+        authUser={authUser}
+        staffData={staffData}
+        counts={counts}
+        summary={summary}
+      />
+
       <div className={`min-h-[100dvh] overflow-x-hidden bg-[#eef2f7] pb-[calc(2.5rem+env(safe-area-inset-bottom))] text-slate-950 ${routeTransition.pending ? "pointer-events-none select-none" : ""}`}>
         <header className="sticky top-0 z-[100] border-b border-white/10 bg-[#0f172a]/95 px-3 py-3 text-white shadow-xl shadow-slate-900/10 backdrop-blur-xl sm:px-6">
           <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-3">
@@ -523,6 +533,14 @@ export default function StaffDashboard() {
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setStaffInfoOpen(true)}
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-3 py-2.5 text-sm font-black transition hover:bg-white/15 sm:px-4"
+              >
+                <FaIdBadge />
+                <span className="hidden min-[420px]:inline">Info</span>
+              </button>
               <button
                 type="button"
                 onClick={refreshCounts}
@@ -561,8 +579,44 @@ export default function StaffDashboard() {
           </div>
         ) : null}
 
-        <main className="mx-auto w-full max-w-[1500px] px-3 py-5 sm:px-6 sm:py-6 lg:py-8">
-          <section className="relative overflow-hidden rounded-[28px] bg-[#111827] text-white shadow-[0_28px_90px_rgba(15,23,42,0.25)] sm:rounded-[38px]">
+        <main className="mx-auto w-full max-w-[1500px] px-3 py-4 sm:px-6 sm:py-5">
+          <section className="mb-3 rounded-[22px] border border-slate-200 bg-white px-3 py-3 shadow-sm sm:px-5">
+            <div className="flex min-w-0 items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-600">Staff operations</div>
+                <h1 className="mt-1 truncate text-xl font-black text-slate-950 sm:text-2xl">
+                  Welcome, {staffName.split(" ")[0] || "Staff"}
+                </h1>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStaffInfoOpen(true)}
+                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-slate-950 px-3 py-2.5 text-xs font-black text-white transition hover:bg-slate-800 sm:px-4 sm:text-sm"
+              >
+                <FaIdBadge />
+                Staff info
+              </button>
+            </div>
+
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="rounded-2xl bg-slate-50 px-3 py-2.5">
+                <div className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Shops</div>
+                <div className="mt-1 text-lg font-black text-slate-950">{summary.shopCount}</div>
+              </div>
+              <div className="rounded-2xl bg-slate-50 px-3 py-2.5">
+                <div className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Pending</div>
+                <div className="mt-1 text-lg font-black text-slate-950">
+                  {counts.verifications + counts.products + counts.community + counts.content + counts.payments}
+                </div>
+              </div>
+              <div className="rounded-2xl bg-slate-50 px-3 py-2.5">
+                <div className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Scope</div>
+                <div className="mt-1 truncate text-sm font-black text-slate-950 sm:text-lg">{cityScope}</div>
+              </div>
+            </div>
+          </section>
+
+          <section className="hidden relative overflow-hidden rounded-[28px] bg-[#111827] text-white shadow-[0_28px_90px_rgba(15,23,42,0.25)] sm:rounded-[38px]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(244,63,94,0.40),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(14,165,233,0.26),transparent_30%),linear-gradient(135deg,#111827_0%,#1e1b4b_55%,#881337_100%)]" />
             <div className="absolute -bottom-24 right-4 h-64 w-64 rounded-full border border-white/10" />
             <div className="relative grid min-w-0 gap-7 p-5 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
@@ -643,37 +697,31 @@ export default function StaffDashboard() {
           </section>
 
           {!hasAdminRole ? (
-            <section className="mt-6 rounded-[32px] border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-2xl text-amber-600 shadow-sm">
-                <FaShieldHalved />
-              </div>
-              <h2 className="text-2xl font-black text-slate-950">Staff portal access confirmed</h2>
-              <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-7 text-amber-900">
-                Your profile can enter the staff home, but no admin operation role is assigned yet. The resource section remains visible while a super admin configures your operational permissions.
+            <section className="mb-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm">
+              <h2 className="text-sm font-black text-slate-950">Staff portal access confirmed</h2>
+              <p className="mt-1 text-xs font-semibold leading-5 text-amber-900">
+                No admin operation role is assigned yet. Use Staff info for profile/resources while a super admin configures permissions.
               </p>
             </section>
           ) : null}
 
-          <section className="mt-8">
-            <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <section className="mt-3">
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-rose-600">Dashboard Cards</div>
-                <h2 className="mt-2 text-3xl font-black tracking-[-0.03em] text-slate-950">Operations workspaces</h2>
-                <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-500">
-                  Every card opens a dedicated page, so staff can move from home into focused tools without digging through a crowded dashboard.
-                </p>
+                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-600">Action cards</div>
+                <h2 className="mt-1 text-xl font-black tracking-[-0.03em] text-slate-950">Operations workspaces</h2>
               </div>
               <button
                 type="button"
                 onClick={refreshCounts}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white transition hover:bg-slate-800 sm:hidden"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-2.5 text-xs font-black text-white transition hover:bg-slate-800 sm:hidden"
               >
                 <FaCircleNotch className={loading ? "animate-spin" : ""} />
-                Refresh overview
+                Refresh
               </button>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6">
               {operations.map((item) => (
                 <StaffHomeCard
                   key={item.title}
@@ -690,7 +738,7 @@ export default function StaffDashboard() {
             </div>
           </section>
 
-          <section className="mt-10 grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
+          <section className="hidden">
             <div className="rounded-[34px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="mb-5 flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-700">
