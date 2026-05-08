@@ -735,11 +735,13 @@ export default function MerchantVideoKYC() {
           kyc_submission_meta: kycSubmissionMeta,
           rejection_reason: null
         })
+        .eq('id', shopData.id)
         .eq('owner_id', user.id)
-        .select();
+        .select('id, kyc_status, kyc_video_url, kyc_submission_meta')
+        .maybeSingle();
 
       if (dbErr) throw new Error(`Database Error: ${dbErr.message}`);
-      if (!updatedShop || updatedShop.length === 0) throw new Error("Security Blocked Update. Contact Support.");
+      if (!updatedShop) throw new Error("Security Blocked Update. Contact Support.");
 
       const oldVideoTarget = KYC_VIDEO_BUCKETS
         .map((bucket) => ({ bucket, path: getStoragePathFromUrl(shopData?.kyc_video_url, bucket) }))
