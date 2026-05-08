@@ -202,7 +202,7 @@ function DashboardHeader({
 
   function renderNavControls() {
     return (
-      <nav className="flex shrink-0 items-center gap-0 sm:gap-1" aria-label="Dashboard navigation">
+      <nav className="flex shrink-0 items-center gap-1 sm:gap-2" aria-label="Dashboard navigation">
         <button
           type="button"
           className={`amz-nav-item ${
