@@ -20,30 +20,77 @@ import {
   isServiceCategory,
 } from "../../../lib/serviceCategories"
 
-function SponsoredProductCard({ sponsored, onOpenProduct }) {
+function SponsoredProductCard({ sponsored, onOpenProduct, onOpenServiceProvider }) {
   const product = useMemo(() => {
-    if (sponsored?.product) return sponsored.product
     if (!sponsored) return null
 
+    const sourceProduct = sponsored.product || {}
+    const shopMeta =
+      sourceProduct.shops ||
+      sponsored.shops ||
+      (sponsored.shop_name ? { name: sponsored.shop_name } : null)
+
     return {
-      id: sponsored.product_id || sponsored.template_key || sponsored.id,
-      name: sponsored.product_name || sponsored.name || "Sponsored Product",
-      price: sponsored.price ?? sponsored.product_price ?? 0,
-      image_url: sponsored.image_url || "",
-      image_url_2: sponsored.image_url_2 || null,
-      image_url_3: sponsored.image_url_3 || null,
-      shops: sponsored.shop_name
-        ? { name: sponsored.shop_name }
-        : sponsored.shops || null,
+      ...sourceProduct,
+      id: sourceProduct.id || sponsored.product_id || sponsored.template_key || sponsored.id,
+      name: sourceProduct.name || sponsored.product_name || sponsored.name || "Sponsored Product",
+      price: sourceProduct.price ?? sponsored.price ?? sponsored.product_price ?? 0,
+      image_url: sourceProduct.image_url || sponsored.image_url || "",
+      image_url_2: sourceProduct.image_url_2 || sponsored.image_url_2 || null,
+      image_url_3: sourceProduct.image_url_3 || sponsored.image_url_3 || null,
+      shop_id:
+        sourceProduct.shop_id ||
+        sponsored.product_shop_id ||
+        sponsored.shop_id ||
+        shopMeta?.id ||
+        null,
+      category:
+        sourceProduct.category ||
+        sponsored.product_category ||
+        sponsored.shop_category ||
+        shopMeta?.category ||
+        "",
+      is_service:
+        sourceProduct.is_service ||
+        sponsored.shop_is_service ||
+        sponsored.is_service ||
+        shopMeta?.is_service ||
+        false,
+      shops: shopMeta,
     }
   }, [sponsored])
+
+  const shopMeta = product?.shops || sponsored?.shops || null
+  const shopId = product?.shop_id || sponsored?.product_shop_id || sponsored?.shop_id || shopMeta?.id
+  const serviceCategory =
+    sponsored?.shop_category ||
+    product?.shops?.category ||
+    product?.category ||
+    ""
+  const isServiceSponsor = Boolean(
+    product?.is_service ||
+      sponsored?.shop_is_service ||
+      sponsored?.is_service ||
+      shopMeta?.is_service ||
+      isServiceCategory(serviceCategory),
+  )
 
   // Image rotation logic
   const [imgIndex, setImgIndex] = useState(0)
   const images = useMemo(() => {
     if (!product) return []
-    return [product.image_url, product.image_url_2, product.image_url_3].filter(Boolean)
-  }, [product])
+    return Array.from(
+      new Set(
+        [
+          product.image_url,
+          product.image_url_2,
+          product.image_url_3,
+          sponsored?.shop_image_url,
+          sponsored?.shop_storefront_url,
+        ].filter(Boolean),
+      ),
+    )
+  }, [product, sponsored])
 
   useEffect(() => {
     if (images.length <= 1) return
@@ -54,7 +101,12 @@ function SponsoredProductCard({ sponsored, onOpenProduct }) {
   }, [images.length])
 
   const handleClick = () => {
-    if (typeof onOpenProduct === "function") {
+    if (isServiceSponsor && shopId && typeof onOpenServiceProvider === "function") {
+      onOpenServiceProvider(shopId, serviceCategory)
+      return
+    }
+
+    if (typeof onOpenProduct === "function" && product?.id) {
       onOpenProduct(product.id)
     }
   }
@@ -62,6 +114,10 @@ function SponsoredProductCard({ sponsored, onOpenProduct }) {
   if (!product) return null
 
   const activeImageIndex = images.length ? imgIndex % images.length : 0
+  const priceLabel = isServiceSponsor
+    ? formatServicePrice(product.price)
+    : `N${Number(product.price || 0).toLocaleString()}`
+  const providerName = shopMeta?.name || sponsored?.shop_name || ""
 
   return (
     <div 
@@ -70,26 +126,32 @@ function SponsoredProductCard({ sponsored, onOpenProduct }) {
     >
       <div className="absolute top-3 left-3 z-10">
         <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-pink-600 text-white text-[9px] font-black uppercase tracking-tighter shadow-xl">
-          <FaBolt className="text-[8px] animate-pulse" /> Sponsored
+          <FaBolt className="text-[8px] animate-pulse" /> {isServiceSponsor ? "Service" : "Sponsored"}
         </span>
       </div>
       
       <div className="relative aspect-square w-full rounded-[20px] overflow-hidden bg-slate-50 mb-4">
-        {images.map((img, idx) => (
-          <div 
-            key={`${img}-${idx}`}
-            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === activeImageIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110 pointer-events-none'}`}
-          >
-            <StableImage 
-              src={img} 
-              alt={product.name} 
-              width={400}
-              height={400}
-              aspectRatio={1}
-              className="h-full w-full object-cover" 
-            />
+        {images.length > 0 ? (
+          images.map((img, idx) => (
+            <div
+              key={`${img}-${idx}`}
+              className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === activeImageIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110 pointer-events-none'}`}
+            >
+              <StableImage
+                src={img}
+                alt={product.name}
+                width={400}
+                height={400}
+                aspectRatio={1}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ))
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-pink-50 text-3xl text-pink-300">
+            <FaBriefcase />
           </div>
-        ))}
+        )}
         
         {/* Pagination Dots for images */}
         {images.length > 1 && (
@@ -103,9 +165,9 @@ function SponsoredProductCard({ sponsored, onOpenProduct }) {
 
       <div className="space-y-1.5">
         <div className="text-xs md:text-sm font-black text-slate-900 truncate leading-tight">{product.name}</div>
-        <div className="text-xs font-black text-pink-600">₦{Number(product.price).toLocaleString()}</div>
+        <div className="text-xs font-black text-pink-600">{priceLabel}</div>
         <div className="pt-2 border-t border-slate-50 flex items-center justify-between mt-1">
-           <span className="text-[9px] md:text-[10px] font-black text-blue-800 uppercase tracking-tight truncate max-w-[70%]">{product.shops?.name}</span>
+           <span className="text-[9px] md:text-[10px] font-black text-blue-800 uppercase tracking-tight truncate max-w-[70%]">{providerName}</span>
            <FaArrowRight className="text-[9px] text-slate-300 group-hover:text-pink-500 transition-colors" />
         </div>
       </div>
@@ -733,6 +795,7 @@ function MarketSection({
                  key={sponsored.id} 
                  sponsored={sponsored} 
                  onOpenProduct={onOpenProduct}
+                 onOpenServiceProvider={onOpenServiceProvider}
                />
              ))}
              <div className="w-4 shrink-0" aria-hidden="true" />

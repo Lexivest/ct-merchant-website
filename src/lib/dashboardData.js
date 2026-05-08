@@ -1,6 +1,6 @@
 import { primeCachedFetchStore, readCachedFetchStore } from "../hooks/useCachedFetch"
 import { supabase } from "./supabase"
-import { isServiceShop } from "./serviceCategories"
+import { isServiceCategory, isServiceShop } from "./serviceCategories"
 
 const DASHBOARD_CACHE_TTL = 1000 * 60 * 15
 const DASHBOARD_TRANSITION_TIMEOUT = 12000
@@ -182,7 +182,7 @@ export async function fetchSponsoredProducts(cityId) {
       sort_order,
       status,
       city_id,
-      shops(id, name)
+      shops(id, name, is_service, category, image_url, storefront_url)
     `)
     .eq("status", "published")
     .eq("layout", "product") // Filter for the new product layout
@@ -210,7 +210,7 @@ export async function fetchSponsoredProducts(cityId) {
 
   const { data: products, error: pError } = await supabase
     .from("products")
-    .select("*, shops(id, name)")
+    .select("*, shops(id, name, is_service, category, image_url, storefront_url)")
     .in("id", productIds)
     .eq("is_available", true)
 
@@ -226,7 +226,14 @@ export async function fetchSponsoredProducts(cityId) {
       if (!product) return null
       return {
         ...banner,
-        product
+        is_service: Boolean(product.shops?.is_service || banner.shops?.is_service),
+        shop_category: product.shops?.category || banner.shops?.category || "",
+        shop_image_url: product.shops?.image_url || banner.shops?.image_url || "",
+        shop_storefront_url: product.shops?.storefront_url || banner.shops?.storefront_url || "",
+        product: {
+          ...product,
+          is_service: Boolean(product.shops?.is_service || banner.shops?.is_service),
+        }
       }
     })
     .filter(Boolean)
@@ -440,9 +447,43 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
         item.shops?.name ||
         item.product?.shops?.name ||
         ""
+      const shopMeta = item.shops || (shopName ? { name: shopName } : null)
+      const shopId =
+        item.product_shop_id ||
+        item.shop_id ||
+        item.product?.shop_id ||
+        shopMeta?.id ||
+        null
+      const shopCategory =
+        item.shop_category ||
+        item.product?.shops?.category ||
+        item.product?.category ||
+        shopMeta?.category ||
+        ""
+      const isServiceSponsor = Boolean(
+        item.shop_is_service ||
+          item.is_service ||
+          item.product?.is_service ||
+          shopMeta?.is_service ||
+          isServiceCategory(shopCategory),
+      )
+      const normalizedShopMeta = shopMeta
+        ? {
+            ...shopMeta,
+            id: shopId || shopMeta.id,
+            name: shopName || shopMeta.name,
+            category: shopCategory || shopMeta.category,
+            is_service: isServiceSponsor,
+            image_url: item.shop_image_url || shopMeta.image_url,
+            storefront_url: item.shop_storefront_url || shopMeta.storefront_url,
+          }
+        : null
 
       return {
         ...item,
+        shop_id: shopId || item.shop_id,
+        shop_category: shopCategory || item.shop_category,
+        is_service: isServiceSponsor,
         product: {
           id: item.product_id || item.template_key || item.id,
           name: item.product_name || item.name || "Sponsored Product",
@@ -450,7 +491,10 @@ export async function fetchDashboardDynamicData({ userId, cityId }) {
           image_url: item.image_url || "",
           image_url_2: item.image_url_2 || null,
           image_url_3: item.image_url_3 || null,
-          shops: shopName ? { name: shopName } : item.shops || null,
+          shop_id: shopId,
+          category: item.product_category || shopCategory,
+          is_service: isServiceSponsor,
+          shops: normalizedShopMeta,
         },
       }
     })

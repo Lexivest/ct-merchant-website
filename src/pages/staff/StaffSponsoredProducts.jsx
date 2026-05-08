@@ -153,7 +153,7 @@ export default function StaffSponsoredProducts() {
         if (!b.template_key) return b
         const { data: p } = await supabase
           .from("products")
-          .select("id, name, price, image_url, image_url_2, image_url_3, shops(name)")
+          .select("id, name, price, image_url, image_url_2, image_url_3, shops(name, is_service, category)")
           .eq("id", b.template_key)
           .single()
         return { ...b, product: p }
@@ -198,10 +198,12 @@ export default function StaffSponsoredProducts() {
           image_url_2,
           image_url_3, 
           shop_id,
-          shops!inner(id, name, status, city_id)
+          is_approved,
+          shops!inner(id, name, status, city_id, is_service, category)
         `)
         .eq("shops.status", "approved")
         .eq("is_available", true)
+        .eq("is_approved", true)
         .order("created_at", { ascending: false })
         .limit(50)
 
