@@ -29,7 +29,7 @@ import {
   loadPersistentDraft,
   savePersistentDraft,
 } from "../../lib/persistentDrafts";
-import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
+import { UPLOAD_RULES, buildOwnedShopStoragePath, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 import { IMAGE_PROFILES } from "../../lib/imageProfiles";
 import { drawBrandedCanvasText } from "../../lib/brandCanvas";
 import { clampWords, countWords } from "../../lib/textLimits";
@@ -582,7 +582,13 @@ export default function AddProduct() {
       const uploadSlots = isSubmittingService ? [1] : PRODUCT_IMAGE_SLOTS;
       const uploadPromises = uploadSlots.map(async (idx) => {
         if (!blobs[idx]) return { slot: idx, url: null, path: null };
-        const fName = `${user.id}_${Date.now()}_img${idx}.jpg`;
+        const uploadToken = globalThis.crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+        const fName = buildOwnedShopStoragePath({
+          userId: user.id,
+          shopId,
+          folder: "products",
+          fileName: `new_img${idx}_${uploadToken}.jpg`,
+        });
         const { data, error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], { contentType: "image/jpeg", upsert: false, cacheControl: "31536000" });
         if (upErr) throw upErr; 
         const url = supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl;

@@ -83,6 +83,36 @@ export function getRuleLabel(rule) {
   return `Max ${formatBytes(rule.maxBytes)} | ${getMimeLabelList(rule.allowedMime)}`
 }
 
+export function sanitizeStoragePathSegment(value, fallback = "upload") {
+  const cleaned = String(value || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+
+  return cleaned || fallback
+}
+
+export function buildOwnedShopStoragePath({
+  userId,
+  shopId,
+  folder = "",
+  fileName = "upload.jpg",
+}) {
+  const safeUserId = sanitizeStoragePathSegment(userId, "")
+  const safeShopId = String(shopId || "").trim().replace(/[^0-9]/g, "")
+
+  if (!safeUserId) throw new Error("User session is unavailable for this upload.")
+  if (!safeShopId) throw new Error("Shop ID is missing for this upload.")
+
+  const parts = [safeUserId, safeShopId]
+  const safeFolder = sanitizeStoragePathSegment(folder, "")
+  if (safeFolder) parts.push(safeFolder)
+  parts.push(sanitizeStoragePathSegment(fileName, "upload.jpg"))
+
+  return parts.join("/")
+}
+
 export function isMimeAllowed(rule, mime) {
   if (!rule || !Array.isArray(rule.allowedMime) || rule.allowedMime.length === 0) {
     return true

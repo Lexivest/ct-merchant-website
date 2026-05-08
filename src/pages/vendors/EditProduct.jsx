@@ -27,7 +27,7 @@ import { PageLoadingScreen } from "../../components/common/PageStatusScreen";
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen";
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider";
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors";
-import { UPLOAD_RULES, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
+import { UPLOAD_RULES, buildOwnedShopStoragePath, formatBytes, getAcceptValue, getRuleLabel } from "../../lib/uploadRules";
 import { IMAGE_PROFILES } from "../../lib/imageProfiles";
 import { drawBrandedCanvasText } from "../../lib/brandCanvas";
 import { clampWords, countWords } from "../../lib/textLimits";
@@ -635,7 +635,12 @@ export default function EditProduct() {
       const uploadPromises = uploadSlots.map(async (idx) => {
         if (!blobs[idx]) return { slot: idx, url: null, path: null };
         const fingerprint = await getUploadFingerprint(blobs[idx]);
-        const fName = `${user.id}_img${idx}_${fingerprint}.jpg`;
+        const fName = buildOwnedShopStoragePath({
+          userId: user.id,
+          shopId: productData.shop_id,
+          folder: "products",
+          fileName: `product_${productId}_img${idx}_${fingerprint}.jpg`,
+        });
         const { error: upErr } = await supabase.storage.from(PRODUCT_BUCKET).upload(fName, blobs[idx], { contentType: "image/jpeg", upsert: true, cacheControl: "31536000" });
         if (upErr) throw upErr;
         const url = supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(fName).data.publicUrl;
