@@ -82,7 +82,7 @@ function OfflineBankDetailsModal({ open, amountLabel, onClose, onCopy }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[1200] flex items-start justify-center overflow-y-auto overscroll-contain bg-slate-950/55 px-3 py-3 backdrop-blur-sm sm:items-center sm:py-6">
+    <div className="fixed inset-0 z-[1200] flex items-center justify-center overflow-y-auto overscroll-contain bg-slate-950/55 px-3 py-4 backdrop-blur-sm sm:py-6">
       <div className="w-full max-w-[520px] max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-[28px] border border-white/70 bg-[#F8FAFC] p-4 shadow-[0_24px_80px_rgba(15,23,42,0.35)] sm:max-h-[calc(100dvh-3rem)] sm:p-6">
         <div className="mb-4 flex items-start justify-between gap-4 sm:mb-5">
           <div>
