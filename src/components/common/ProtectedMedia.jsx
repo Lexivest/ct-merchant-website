@@ -1,5 +1,6 @@
 import { useSignedUrl } from "../../hooks/useSignedUrl"
-import { FaCircleNotch, FaTriangleExclamation } from "react-icons/fa6"
+import { FaTriangleExclamation } from "react-icons/fa6"
+import CTMLoader from "./CTMLoader"
 
 export function ProtectedImage({ src, bucket, alt, className, containerClassName }) {
   const { signedUrl, loading, error } = useSignedUrl(src, bucket)
@@ -7,7 +8,7 @@ export function ProtectedImage({ src, bucket, alt, className, containerClassName
   if (loading) {
     return (
       <div className={`flex items-center justify-center bg-slate-100 ${containerClassName || className}`}>
-        <FaCircleNotch className="animate-spin text-slate-400" />
+        <CTMLoader size="sm" />
       </div>
     )
   }
@@ -30,7 +31,7 @@ export function ProtectedVideo({ src, bucket, className, controls = true, ...pro
   if (loading) {
     return (
       <div className={`flex aspect-video items-center justify-center bg-slate-900 ${className}`}>
-        <FaCircleNotch className="animate-spin text-white/30" />
+        <CTMLoader size="sm" />
       </div>
     )
   }

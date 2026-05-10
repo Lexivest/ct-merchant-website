@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Navigate, useLocation } from "react-router-dom"
 import useAuthSession from "../../hooks/useAuthSession"
 import { supabase } from "../../lib/supabase"
+import { PageLoadingScreen } from "../common/PageStatusScreen"
 
 const SUBSCRIPTION_CACHE_KEY = "ctmerchant_subscription_guard_v1"
 
@@ -113,12 +114,7 @@ export default function SubscriptionGuard({ children }) {
   }, [user, loading, isOffline, routeVerifiedActive])
 
   if (loading || checking) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center bg-slate-50">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-pink-600/20 border-t-pink-600"></div>
-        <p className="mt-4 font-semibold text-slate-500">Verifying access...</p>
-      </div>
-    )
+    return <PageLoadingScreen />
   }
 
   if (!isActive) {
