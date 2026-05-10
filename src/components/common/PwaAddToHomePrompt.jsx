@@ -2,69 +2,86 @@ import { useEffect, useState } from "react"
 import { FaMobileScreenButton, FaXmark } from "react-icons/fa6"
 
 import usePwaInstall from "../../hooks/usePwaInstall"
+import IosInstallSheet from "./IosInstallSheet"
 import BrandText from "./BrandText"
-import { useGlobalFeedback } from "./GlobalFeedbackProvider"
 
-const DISMISSED_UNTIL_STORAGE_KEY = "ctm_pwa_install_prompt_dismissed_until"
-const DISMISS_DURATION_MS = 3 * 24 * 60 * 60 * 1000
+// ─── Snooze storage ───────────────────────────────────────────────────────────
+// Escalating schedule: 1st dismiss → 7 days, 2nd → 30 days, 3rd+ → permanent.
+const SNOOZE_KEY = "ctm_pwa_snooze_v2"
 
-function isPromptDismissed() {
+const SNOOZE_DURATIONS_MS = [
+  7  * 24 * 60 * 60 * 1000,   // 1st dismiss: 7 days
+  30 * 24 * 60 * 60 * 1000,   // 2nd dismiss: 30 days
+  // 3rd+: treated as permanent below
+]
+const PERMANENT_MS = 10 * 365 * 24 * 60 * 60 * 1000 // ~10 years
+
+function readSnooze() {
+  try {
+    const raw = window.localStorage.getItem(SNOOZE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function isPromptSnoozed() {
   if (typeof window === "undefined") return false
-
-  try {
-    const dismissedUntil = Number(
-      window.localStorage.getItem(DISMISSED_UNTIL_STORAGE_KEY) || 0
-    )
-    return Number.isFinite(dismissedUntil) && dismissedUntil > Date.now()
-  } catch {
-    return false
-  }
+  const s = readSnooze()
+  return Boolean(s?.until > Date.now())
 }
 
-function snoozePrompt() {
+function recordDismiss() {
   if (typeof window === "undefined") return
-
   try {
+    const s     = readSnooze()
+    const count = (s?.count ?? 0) + 1
+    const ms    = SNOOZE_DURATIONS_MS[count - 1] ?? PERMANENT_MS
     window.localStorage.setItem(
-      DISMISSED_UNTIL_STORAGE_KEY,
-      String(Date.now() + DISMISS_DURATION_MS)
+      SNOOZE_KEY,
+      JSON.stringify({ until: Date.now() + ms, count }),
     )
   } catch {
-    // Best effort only.
+    // Best effort — private mode / storage full.
   }
 }
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 function PwaAddToHomePrompt() {
-  const { notify } = useGlobalFeedback()
   const {
     canPromptInstall,
     installingApp,
-    isAppleMobile,
+    isIosSafari,
     promptInstall,
     showInstallPrompt,
   } = usePwaInstall()
-  const [dismissed, setDismissed] = useState(() => isPromptDismissed())
-  const [visible, setVisible] = useState(() => false)
 
+  const [snoozed,         setSnoozed]         = useState(() => isPromptSnoozed())
+  const [visible,         setVisible]          = useState(false)
+  const [showIosSheet,    setShowIosSheet]     = useState(false)
+
+  // Slide in 1.5 s after engagement conditions are met.
   useEffect(() => {
-    if (!showInstallPrompt || dismissed || visible) {
-      return undefined
-    }
+    if (!showInstallPrompt || snoozed || visible) return undefined
+    const t = window.setTimeout(() => setVisible(true), 1500)
+    return () => window.clearTimeout(t)
+  }, [showInstallPrompt, snoozed, visible])
 
-    const timer = window.setTimeout(() => {
-      setVisible(true)
-    }, 900)
-
-    return () => window.clearTimeout(timer)
-  }, [dismissed, showInstallPrompt, visible])
-
-  function dismissPrompt() {
-    snoozePrompt()
-    setDismissed(true)
+  function dismiss() {
+    recordDismiss()
+    setSnoozed(true)
     setVisible(false)
+    setShowIosSheet(false)
   }
 
-  async function handleAddToHomeScreen() {
+  async function handleInstall() {
+    if (isIosSafari) {
+      // No native prompt on iOS — show the step-by-step instruction sheet.
+      setShowIosSheet(true)
+      return
+    }
+
     const result = await promptInstall()
 
     if (result?.status === "accepted") {
@@ -72,84 +89,68 @@ function PwaAddToHomePrompt() {
       return
     }
 
+    // User dismissed the native dialog — snooze the pill too.
     if (result?.status === "dismissed") {
-      dismissPrompt()
-      return
+      dismiss()
     }
-
-    if (result?.status === "already-installed") {
-      setVisible(false)
-      notify({
-        type: "info",
-        title: "Already on home screen",
-        message: "CTMerchant is already available from your home screen. Open it directly from there.",
-      })
-      return
-    }
-
-    if (result?.status === "error") {
-      notify({
-        type: "error",
-        title: "Add to Home Screen failed",
-        message: "CTMerchant could not open the home screen prompt right now. Please try again.",
-      })
-      return
-    }
-
-    if (result?.status === "browser-menu") {
-      notify({
-        type: "info",
-        title: "Add to Home Screen",
-        message: "This browser supports Add to Home Screen. If the install sheet does not open automatically, open the browser menu and tap Add to Home Screen.",
-      })
-      dismissPrompt()
-      return
-    }
-
-    notify({
-      type: isAppleMobile ? "info" : "error",
-      title: isAppleMobile ? "Add to Home Screen" : "Unsupported browser",
-      message: isAppleMobile
-        ? "Open Safari Share menu and tap Add to Home Screen."
-        : "Direct Add to Home Screen is not supported in this browser. Use Chrome or Edge on Android.",
-    })
-    dismissPrompt()
   }
 
-  if (!showInstallPrompt || !visible) {
-    return null
-  }
+  if (!showInstallPrompt || !visible) return null
 
-  const actionLabel = installingApp ? "Opening..." : canPromptInstall ? "Add" : "How"
+  const label = installingApp
+    ? "Opening…"
+    : canPromptInstall
+      ? "Install"
+      : "How to"
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-3 z-[12000] flex justify-center px-3">
-      <div className="pointer-events-auto flex min-h-11 w-full max-w-[420px] items-center gap-2 rounded-full border border-pink-200/90 bg-white/95 px-3 py-2 shadow-[0_14px_36px_rgba(15,23,42,0.16)] backdrop-blur">
-        <FaMobileScreenButton className="h-4 w-4 shrink-0 text-pink-600" />
+    <>
+      {/* ── Install pill ───────────────────────────────────────────────── */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[12000] flex justify-center px-4">
+        <div className="pointer-events-auto flex w-full max-w-[400px] animate-[ctmTransitionAppear_280ms_ease-out_both] items-center gap-3 rounded-full border border-pink-100 bg-white py-2 pl-3 pr-2 shadow-[0_12px_40px_rgba(15,23,42,0.14)]">
 
-        <p className="min-w-0 flex-1 truncate text-xs font-black text-slate-800">
-          Add <BrandText /> to home screen
-        </p>
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={handleAddToHomeScreen}
-            disabled={installingApp}
-            className="rounded-full bg-pink-600 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-white transition hover:bg-pink-700 disabled:cursor-wait disabled:opacity-70"
-          >
-            {actionLabel}
-          </button>
-          <button
-            type="button"
-            onClick={dismissPrompt}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-            aria-label="Close Add to Home Screen prompt"
-          >
-            <FaXmark className="h-3 w-3" />
-          </button>
+          {/* Icon */}
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-pink-600 text-white">
+            <FaMobileScreenButton className="h-3.5 w-3.5" />
+          </span>
+
+          {/* Label */}
+          <p className="min-w-0 flex-1 truncate text-xs font-black text-slate-800">
+            Add <BrandText /> to home screen
+          </p>
+
+          {/* Action */}
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleInstall}
+              disabled={installingApp}
+              className="rounded-full bg-pink-600 px-4 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-white transition hover:bg-pink-700 active:scale-[0.97] disabled:cursor-wait disabled:opacity-60"
+            >
+              {label}
+            </button>
+            <button
+              type="button"
+              onClick={dismiss}
+              aria-label="Dismiss install prompt"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            >
+              <FaXmark className="h-3 w-3" />
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* ── iOS instruction sheet ──────────────────────────────────────── */}
+      {showIosSheet && (
+        <IosInstallSheet
+          onDismiss={() => {
+            setShowIosSheet(false)
+            dismiss()
+          }}
+        />
+      )}
+    </>
   )
 }
 
