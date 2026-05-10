@@ -1,7 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-const KNOWN_INSTALL_STORAGE_KEY = "ctm_pwa_known_installed"
+// ─── Storage keys ─────────────────────────────────────────────────────────────
+const KNOWN_INSTALL_KEY = "ctm_pwa_known_installed"
+const VISIT_COUNT_KEY   = "ctm_pwa_visit_count"
+const SESSION_INIT_KEY  = "ctm_pwa_session_init"
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function safeLocalGet(key) {
+  try { return window.localStorage.getItem(key) } catch { return null }
+}
+function safeLocalSet(key, value) {
+  try { window.localStorage.setItem(key, value) } catch { /* quota / private */ }
+}
+function safeLocalRemove(key) {
+  try { window.localStorage.removeItem(key) } catch { /* best effort */ }
+}
+function safeSessionGet(key) {
+  try { return window.sessionStorage.getItem(key) } catch { return null }
+}
+function safeSessionSet(key, value) {
+  try { window.sessionStorage.setItem(key, value) } catch { /* best effort */ }
+}
+
+// Returns true when the app is running in standalone (installed) mode.
 function detectStandalone() {
   if (typeof window === "undefined") return false
   return (
@@ -11,84 +33,105 @@ function detectStandalone() {
   )
 }
 
-function readStorageFlag(key) {
+// Reads / increments the persistent visit counter.
+// Only counts once per browser session so tab-duplicates don't inflate it.
+function initAndReadVisitCount() {
+  if (typeof window === "undefined") return 1
+  if (safeSessionGet(SESSION_INIT_KEY)) {
+    return parseInt(safeLocalGet(VISIT_COUNT_KEY) || "1", 10)
+  }
+  safeSessionSet(SESSION_INIT_KEY, "1")
+  const prev = parseInt(safeLocalGet(VISIT_COUNT_KEY) || "0", 10)
+  const next  = prev + 1
+  safeLocalSet(VISIT_COUNT_KEY, String(next))
+  return next
+}
+
+function readKnownInstalled() {
   if (typeof window === "undefined") return false
-
-  try {
-    if (window.localStorage.getItem(key) === "1") return true
-    return window.sessionStorage.getItem(key) === "1"
-  } catch {
-    return false
-  }
+  return (
+    safeLocalGet(KNOWN_INSTALL_KEY) === "1" ||
+    safeSessionGet(KNOWN_INSTALL_KEY) === "1"
+  )
 }
 
-function writeStorageFlag(key, enabled) {
-  if (typeof window === "undefined") return
-
-  try {
-    if (enabled) {
-      window.localStorage.setItem(key, "1")
-      window.sessionStorage.setItem(key, "1")
-      return
-    }
-
-    window.localStorage.removeItem(key)
-    window.sessionStorage.removeItem(key)
-  } catch {
-    // Best effort only.
-  }
+function writeKnownInstalled() {
+  safeLocalSet(KNOWN_INSTALL_KEY, "1")
+  safeSessionSet(KNOWN_INSTALL_KEY, "1")
 }
+
+function clearKnownInstalled() {
+  safeLocalRemove(KNOWN_INSTALL_KEY)
+}
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export default function usePwaInstall() {
   const [installPromptEvent, setInstallPromptEvent] = useState(null)
-  const [installingApp, setInstallingApp] = useState(false)
-  const [isStandaloneMode, setIsStandaloneMode] = useState(() =>
+  const [installingApp, setInstallingApp]           = useState(false)
+  const [isStandaloneMode, setIsStandaloneMode]     = useState(() =>
     typeof window === "undefined" ? false : detectStandalone()
   )
   const [recentlyInstalled, setRecentlyInstalled] = useState(() =>
-    readStorageFlag(KNOWN_INSTALL_STORAGE_KEY) ||
-    (typeof window === "undefined" ? false : detectStandalone())
+    readKnownInstalled() || (typeof window === "undefined" ? false : detectStandalone())
   )
   const [hasInstalledRelatedApp, setHasInstalledRelatedApp] = useState(false)
 
+  // User-engagement gate: true from visit 2 onwards, OR after 30 s on first visit.
+  const [isEngaged, setIsEngaged] = useState(() => {
+    const count = initAndReadVisitCount()
+    return count >= 2
+  })
+
+  // ── Device / browser detection ───────────────────────────────────────────
+
   const isPhoneDevice = useMemo(() => {
     if (typeof navigator === "undefined") return false
-    const userAgent = navigator.userAgent || ""
-    return /android.*mobile|iphone|ipod/i.test(userAgent)
+    return /android.*mobile|iphone|ipod/i.test(navigator.userAgent)
   }, [])
 
-  const isAppleMobile = useMemo(() => {
-    if (typeof navigator === "undefined") return false
-    const userAgent = navigator.userAgent || ""
-    return /iphone|ipad|ipod/i.test(userAgent)
+  // iOS Safari is the ONLY iOS browser that can add to home screen.
+  // Detected by: iOS UA + `navigator.standalone` being defined (Mobile Safari only).
+  const isIosSafari = useMemo(() => {
+    if (typeof navigator === "undefined" || typeof window === "undefined") return false
+    return (
+      /iphone|ipad|ipod/i.test(navigator.userAgent) &&
+      "standalone" in navigator
+    )
   }, [])
 
-  const isSupportedAndroidInstallBrowser = useMemo(() => {
-    if (typeof navigator === "undefined") return false
-    const userAgent = navigator.userAgent || ""
+  // Kept for consumers that already use this name.
+  const isAppleMobile = isIosSafari
 
-    if (!/android/i.test(userAgent)) return false
-
-    return /(chrome\/|crmo\/|edga\/|samsungbrowser\/)/i.test(userAgent)
-  }, [])
+  // ── Derived state ────────────────────────────────────────────────────────
 
   const isKnownInstalled =
     isStandaloneMode || recentlyInstalled || hasInstalledRelatedApp
+
   const canPromptInstall = Boolean(installPromptEvent) && !isKnownInstalled
+
+  // Show the install UI only when:
+  //  • on a phone
+  //  • not already installed
+  //  • user has had some engagement (2nd visit or 30s on site)
+  //  • EITHER the native prompt is ready (Android) OR it's iOS Safari (manual steps)
   const showInstallPrompt =
     isPhoneDevice &&
     !isKnownInstalled &&
-    (Boolean(installPromptEvent) || isAppleMobile || isSupportedAndroidInstallBrowser)
+    isEngaged &&
+    (Boolean(installPromptEvent) || isIosSafari)
+
+  // ── Internal helpers ─────────────────────────────────────────────────────
 
   const clearPromptState = useCallback(() => {
     setInstallPromptEvent(null)
     setInstallingApp(false)
   }, [])
 
+  // ── Public API ───────────────────────────────────────────────────────────
+
   const promptInstall = useCallback(async () => {
-    if (isKnownInstalled) {
-      return { status: "already-installed" }
-    }
+    if (isKnownInstalled) return { status: "already-installed" }
 
     if (installPromptEvent) {
       const promptEvent = installPromptEvent
@@ -101,7 +144,7 @@ export default function usePwaInstall() {
 
         if (choice?.outcome === "accepted") {
           setRecentlyInstalled(true)
-          writeStorageFlag(KNOWN_INSTALL_STORAGE_KEY, true)
+          writeKnownInstalled()
           clearPromptState()
           return { status: "accepted" }
         }
@@ -114,22 +157,19 @@ export default function usePwaInstall() {
       }
     }
 
-    if (isAppleMobile) {
-      return { status: "ios-instructions" }
-    }
-
-    if (isSupportedAndroidInstallBrowser) {
-      return { status: "browser-menu" }
-    }
+    if (isIosSafari) return { status: "ios-instructions" }
 
     return { status: "unsupported" }
-  }, [
-    clearPromptState,
-    isKnownInstalled,
-    installPromptEvent,
-    isAppleMobile,
-    isSupportedAndroidInstallBrowser,
-  ])
+  }, [clearPromptState, isKnownInstalled, installPromptEvent, isIosSafari])
+
+  // ── Effects ───────────────────────────────────────────────────────────────
+
+  // 30-second engagement timer for first-visit users.
+  useEffect(() => {
+    if (isEngaged) return undefined
+    const timer = window.setTimeout(() => setIsEngaged(true), 30_000)
+    return () => window.clearTimeout(timer)
+  }, [isEngaged])
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined
@@ -137,22 +177,19 @@ export default function usePwaInstall() {
     const standaloneQuery = window.matchMedia?.("(display-mode: standalone)")
     let cancelled = false
 
-    if (detectStandalone()) {
-      writeStorageFlag(KNOWN_INSTALL_STORAGE_KEY, true)
-    }
+    if (detectStandalone()) writeKnownInstalled()
 
     async function refreshInstalledRelatedApps() {
       if (typeof navigator?.getInstalledRelatedApps !== "function") {
         setHasInstalledRelatedApp(false)
         return
       }
-
       try {
-        const relatedApps = await navigator.getInstalledRelatedApps()
+        const apps = await navigator.getInstalledRelatedApps()
         if (!cancelled) {
-          const installed = Array.isArray(relatedApps) && relatedApps.length > 0
+          const installed = Array.isArray(apps) && apps.length > 0
           setHasInstalledRelatedApp(installed)
-          if (installed) writeStorageFlag(KNOWN_INSTALL_STORAGE_KEY, true)
+          if (installed) writeKnownInstalled()
         }
       } catch {
         if (!cancelled) setHasInstalledRelatedApp(false)
@@ -161,18 +198,16 @@ export default function usePwaInstall() {
 
     function handleInstallPrompt(event) {
       event.preventDefault()
-
-      if (detectStandalone() || readStorageFlag(KNOWN_INSTALL_STORAGE_KEY)) {
+      if (detectStandalone() || readKnownInstalled()) {
         setInstallPromptEvent(null)
         return
       }
-
       setInstallPromptEvent(event)
     }
 
     function handleAppInstalled() {
       setRecentlyInstalled(true)
-      writeStorageFlag(KNOWN_INSTALL_STORAGE_KEY, true)
+      writeKnownInstalled()
       clearPromptState()
     }
 
@@ -180,19 +215,18 @@ export default function usePwaInstall() {
       setIsStandaloneMode(Boolean(event.matches))
       if (event.matches) {
         setRecentlyInstalled(true)
-        writeStorageFlag(KNOWN_INSTALL_STORAGE_KEY, true)
+        writeKnownInstalled()
         clearPromptState()
       }
     }
 
     function handleVisibilityChange() {
-      if (document.visibilityState === "visible") {
-        const isStandalone = detectStandalone()
-        if (isStandalone) writeStorageFlag(KNOWN_INSTALL_STORAGE_KEY, true)
-        setIsStandaloneMode(isStandalone)
-        setRecentlyInstalled(readStorageFlag(KNOWN_INSTALL_STORAGE_KEY))
-        void refreshInstalledRelatedApps()
-      }
+      if (document.visibilityState !== "visible") return
+      const standalone = detectStandalone()
+      if (standalone) writeKnownInstalled()
+      setIsStandaloneMode(standalone)
+      setRecentlyInstalled(readKnownInstalled())
+      void refreshInstalledRelatedApps()
     }
 
     void refreshInstalledRelatedApps()
@@ -215,10 +249,10 @@ export default function usePwaInstall() {
     canPromptInstall,
     installingApp,
     isAppleMobile,
+    isIosSafari,
     isKnownInstalled,
     isPhoneDevice,
     isStandaloneMode,
-    isSupportedAndroidInstallBrowser,
     promptInstall,
     recentlyInstalled,
     showInstallPrompt,
