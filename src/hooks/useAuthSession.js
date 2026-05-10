@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { supabase } from "../lib/supabase"
 import {
   getNetworkStatusSnapshot,
@@ -10,8 +10,34 @@ import {
   getSession,
   isProfileSuspended,
   stampProfileFootprint,
+  LOGOUT_SIGNAL_KEY,
 } from "../lib/auth"
 import { clearCachedFetchStore } from "./useCachedFetch"
+
+function isQuotaError(error) {
+  const name = String(error?.name || "")
+  return (
+    name === "QuotaExceededError" ||
+    name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+    String(error?.code || "") === "22"
+  )
+}
+
+// Evicts session query-cache entries from localStorage to recover quota space.
+function evictQueryCacheFromLocalStorage() {
+  try {
+    const storage = window.localStorage
+    if (!storage) return
+    const toRemove = []
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i)
+      if (key && key.startsWith("ctm_cached_fetch:")) toRemove.push(key)
+    }
+    toRemove.forEach((key) => storage.removeItem(key))
+  } catch {
+    // Best effort
+  }
+}
 
 const PROFILE_CACHE_KEY_PREFIX = "ctmerchant_profile_cache_"
 const PROFILE_CACHE_ACTIVE_USER_KEY = "ctmerchant_profile_cache_active_user"
@@ -85,7 +111,17 @@ function writeCachedProfile(userId, profile) {
       }
     }
   } catch (error) {
-    console.warn("Storage write blocked:", error.message)
+    if (isQuotaError(error)) {
+      // Free up query-cache space and try once more before giving up.
+      evictQueryCacheFromLocalStorage()
+      try {
+        window.localStorage?.setItem(getProfileCacheKey(userId), JSON.stringify(profile))
+      } catch {
+        // In-memory state is still intact — degrade silently.
+      }
+    } else {
+      console.warn("Storage write blocked:", error.message)
+    }
   }
 
   try {
@@ -164,7 +200,10 @@ function writeAuthSnapshot(snapshot) {
       storage.setItem(AUTH_SNAPSHOT_KEY, JSON.stringify(payload))
     }
   } catch (error) {
-    console.warn("Auth snapshot write blocked:", error.message)
+    if (!isQuotaError(error)) {
+      console.warn("Auth snapshot write blocked:", error.message)
+    }
+    // Session storage quota errors are non-critical — in-memory state is intact.
   }
 }
 
@@ -220,7 +259,10 @@ export function primeAuthSessionState({
   }
 }
 
+const SUSPENSION_RECHECK_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
+
 function useAuthSession() {
+  const lastNetworkFetchAt = useRef(0)
   const [state, setState] = useState(() => {
     // 2. SYNCHRONOUS MEMORY READ
     // If the memory is warm (user is navigating back), return it instantly to bypass all loaders.
@@ -370,13 +412,15 @@ function useAuthSession() {
 
         try {
           let profile = await fetchProfileByUserId(user.id)
-          
+
           if (!profile) {
             await new Promise((resolve) => setTimeout(resolve, 500))
             profile = await fetchProfileByUserId(user.id)
           }
 
           if (!mounted) return
+
+          lastNetworkFetchAt.current = Date.now()
 
           if (profile) {
             writeCachedProfile(user.id, profile)
@@ -495,12 +539,53 @@ function useAuthSession() {
       }
     }
 
+    // Suspension re-check: when the user returns to this tab after being away
+    // for SUSPENSION_RECHECK_INTERVAL_MS or longer, re-fetch the profile to
+    // catch suspension changes that happened while the tab was in the background.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible" || !mounted) return
+      if (Date.now() - lastNetworkFetchAt.current < SUSPENSION_RECHECK_INTERVAL_MS) return
+      load({ forceNetwork: true })
+    }
+
+    // Cross-tab logout: when another tab calls signOutUser() it writes the
+    // LOGOUT_SIGNAL_KEY to localStorage, which fires this storage event here.
+    const handleStorageLogout = (event) => {
+      if (event.key !== LOGOUT_SIGNAL_KEY || !event.newValue) return
+      if (!mounted) return
+
+      clearCachedProfile()
+      clearCachedFetchStore()
+      clearAuthSnapshot()
+      globalAuthMemory = {
+        isResolved: true,
+        session: null,
+        user: null,
+        profile: null,
+        suspended: false,
+        profileLoaded: false,
+      }
+      syncState({
+        loading: false,
+        session: null,
+        user: null,
+        profile: null,
+        suspended: false,
+        profileLoaded: false,
+        error: "",
+      })
+    }
+
     const unsubscribeNetworkStatus = subscribeNetworkStatus(handleNetworkStatusChange)
+    window.addEventListener("storage", handleStorageLogout)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
 
     return () => {
       mounted = false
       subscription.unsubscribe()
       unsubscribeNetworkStatus()
+      window.removeEventListener("storage", handleStorageLogout)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
   }, [])
 

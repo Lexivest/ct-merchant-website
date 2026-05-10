@@ -11,6 +11,7 @@ import { isProfileComplete, signOutUser } from "./lib/auth"
 import SubscriptionGuard from "./components/auth/SubscriptionGuard" 
 import Home from "./pages/Home"
 import { forceFreshAppReload, isChunkLoadFailure } from "./lib/runtimeRecovery"
+import AppErrorBoundary from "./components/common/AppErrorBoundary"
 import { buildStaffAuthProfile, resolveStaffAccess } from "./lib/staffAuth"
 import {
   clearStaffSessionState,
@@ -127,18 +128,17 @@ function isHardReloadNavigation() {
   return legacyNavigation?.type === 1
 }
 
-// --- NEW HELPER: Transparently retries the import ---
+// Retries a dynamic import up to `retries` times with exponential back-off.
+// Delays: 1 s → 2 s → 4 s — giving the network time to recover between attempts.
 const retryImport = async (importer, retries = 3, interval = 1000) => {
   try {
     return await importer()
   } catch (error) {
-    // If we are out of retries, or it's not a chunk error, throw it up the chain
     if (retries === 0 || !isChunkLoadFailure(error)) {
       throw error
     }
-    // Wait for the interval (1 second), then recursively try again
     await new Promise((res) => setTimeout(res, interval))
-    return retryImport(importer, retries - 1, interval)
+    return retryImport(importer, retries - 1, interval * 2)
   }
 }
 
@@ -311,6 +311,14 @@ function RouteSuspenseFallback() {
     return null
   }
 
+  // On hard reloads (F5, direct URL entry) show the full branded loading screen.
+  // On SPA navigations the slim route-progress bar rendered by RouteFeedback
+  // (outside this Suspense boundary) is already visible — return a plain
+  // background placeholder so the spinner doesn't flash during fast transitions.
+  if (!isHardReloadNavigation()) {
+    return <div className="min-h-screen bg-[#E3E6E6]" />
+  }
+
   return (
     <RouteLoadingScreen
       title="Loading page"
@@ -372,6 +380,17 @@ function SuspendedAccountGate({ onLogout }) {
         </div>
       </div>
     </div>
+  )
+}
+
+// Catches render errors inside individual vendor/merchant pages so a crash in
+// one section (e.g. AddProduct) doesn't take down the entire app shell.
+function VendorSectionBoundary({ children }) {
+  const location = useLocation()
+  return (
+    <AppErrorBoundary captureGlobal={false} resetKey={location.pathname}>
+      {children}
+    </AppErrorBoundary>
   )
 }
 
@@ -825,6 +844,16 @@ function AppShell() {
     <ProtectedDashboardRoute>{element}</ProtectedDashboardRoute>
   )
 
+  // Like withProtectedOnlineGuard but also wraps the page in a local error
+  // boundary so crashes stay contained to the individual vendor page.
+  const withVendorOnlineGuard = (element, options = {}) => (
+    <ProtectedDashboardRoute>
+      <VendorSectionBoundary>
+        {withOnlineGuard(element, options)}
+      </VendorSectionBoundary>
+    </ProtectedDashboardRoute>
+  )
+
   return (
     <Suspense fallback={<RouteSuspenseFallback />}>
       <SiteVisitTracker />
@@ -894,18 +923,18 @@ function AppShell() {
 
         <Route
           path="/remita"
-          element={withProtectedOnlineGuard(<MerchantPayment />)}
+          element={withVendorOnlineGuard(<MerchantPayment />)}
         />
 
         <Route
           path="/merchant-video-kyc"
-          element={withProtectedOnlineGuard(<MerchantVideoKYC />)}
+          element={withVendorOnlineGuard(<MerchantVideoKYC />)}
         />
 
         {/* --- LOCKED PREMIUM ROUTES START HERE --- */}
         <Route
           path="/merchant-promo-banner"
-          element={withProtectedOnlineGuard(
+          element={withVendorOnlineGuard(
             <SubscriptionGuard>
               <MerchantPromoBanner />
             </SubscriptionGuard>
@@ -914,44 +943,44 @@ function AppShell() {
 
         <Route
           path="/merchant-settings"
-          element={withProtectedOnlineGuard(<MerchantSettings />)}
+          element={withVendorOnlineGuard(<MerchantSettings />)}
         />
 
         <Route
           path="/merchant-banner"
-          element={withProtectedOnlineGuard(<MerchantBanner />)}
+          element={withVendorOnlineGuard(<MerchantBanner />)}
         />
 
         <Route
           path="/merchant-products"
-          element={withProtectedOnlineGuard(<MerchantProducts />)}
+          element={withVendorOnlineGuard(<MerchantProducts />)}
         />
 
         <Route
           path="/merchant-edit-product"
-          element={withProtectedOnlineGuard(<EditProduct />)}
+          element={withVendorOnlineGuard(<EditProduct />)}
         />
 
         <Route
           path="/merchant-add-product"
-          element={withProtectedOnlineGuard(<AddProduct />)}
+          element={withVendorOnlineGuard(<AddProduct />)}
         />
         {/* --- LOCKED PREMIUM ROUTES END HERE --- */}
 
         {/* --- UNLOCKED / FREE ROUTES --- */}
         <Route
           path="/service-fee"
-          element={withProtectedOnlineGuard(<MerchantServiceFee />)}
+          element={withVendorOnlineGuard(<MerchantServiceFee />)}
         />
 
         <Route
           path="/merchant-analytics"
-          element={withProtectedOnlineGuard(<MerchantAnalytics />)}
+          element={withVendorOnlineGuard(<MerchantAnalytics />)}
         />
 
         <Route
           path="/merchant-news"
-          element={withProtectedOnlineGuard(<MerchantNews />)}
+          element={withVendorOnlineGuard(<MerchantNews />)}
         />
 
         <Route
