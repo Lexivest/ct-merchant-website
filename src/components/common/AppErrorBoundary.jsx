@@ -17,7 +17,10 @@ class AppErrorBoundary extends Component {
   }
 
   static getDerivedStateFromError(error) {
-    return { error, retryArmed: false, busy: false }
+    // Pre-set busy for chunk failures so the error widget never flashes —
+    // componentDidCatch will kick off the reload immediately after.
+    const busyNow = isChunkLoadFailure(error) && !isNetworkOffline()
+    return { error, retryArmed: false, busy: busyNow }
   }
 
   componentDidMount() {
@@ -58,7 +61,12 @@ class AppErrorBoundary extends Component {
 
   recoverFromChunkFailure(error) {
     if (!isChunkLoadFailure(error)) return false
-    if (isNetworkOffline()) return false
+
+    if (isNetworkOffline()) {
+      // Can't reload — show the error widget with retry armed for when we come back online.
+      this.setState({ error, retryArmed: true, busy: false })
+      return false
+    }
 
     const started = forceFreshAppReload({ reason: "chunk", manual: false })
     this.setState({ error, retryArmed: false, busy: started })
