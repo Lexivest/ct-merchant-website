@@ -1,7 +1,9 @@
 import { Component } from "react"
 import { isNetworkError } from "../../lib/friendlyErrors"
 import { isNetworkOffline } from "../../lib/networkStatus"
+import { logError } from "../../lib/errorLogger"
 import GlobalErrorScreen from "./GlobalErrorScreen"
+import { PageLoadingScreen } from "./PageStatusScreen"
 import {
   forceFreshAppReload,
   isChunkLoadFailure,
@@ -37,23 +39,11 @@ class AppErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Amazon-style Telemetry: Capture structured error data
-    const errorData = {
-      name: error?.name || "ReactError",
-      message: error?.message || String(error),
-      stack: error?.stack,
-      componentStack: errorInfo?.componentStack,
-      url: window.location.href,
-      timestamp: new Date().toISOString(),
-    }
-
-    console.error("Critical Application Error Caught:", errorData)
-
-    if (typeof window !== "undefined") {
-      if (!window.__CTM_CRASH_LOG__) window.__CTM_CRASH_LOG__ = []
-      window.__CTM_CRASH_LOG__.push({ type: "react_boundary", ...errorData })
-    }
-
+    console.error("Critical Application Error Caught:", error)
+    logError(error, {
+      type: "react_boundary",
+      componentStack: (errorInfo?.componentStack || "").slice(0, 800),
+    })
     this.recoverFromChunkFailure(error)
   }
 
@@ -131,13 +121,20 @@ class AppErrorBoundary extends Component {
   }
 
   render() {
+    // A recovery reload is already in flight — show a clean loading screen
+    // so the user never sees the "Connection issue" widget while the page
+    // is resetting itself after a post-deployment stale-chunk error.
+    if (this.state.busy) {
+      return <PageLoadingScreen />
+    }
+
     if (this.state.error) {
       return (
         <GlobalErrorScreen
           error={this.state.error}
           onRetry={this.handleRetry}
           onBack={this.handleBack}
-          busy={this.state.busy}
+          busy={false}
           retryLabel="Try again"
           message={
             this.state.retryArmed

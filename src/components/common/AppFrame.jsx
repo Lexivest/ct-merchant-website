@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect } from "react"
+import { useEffect, useLayoutEffect, useState } from "react"
 import { useLocation, useNavigationType } from "react-router-dom"
 import AppErrorBoundary from "./AppErrorBoundary"
-import { removeRecoverySearchParam } from "../../lib/runtimeRecovery"
+import UpdateBanner from "./UpdateBanner"
+import { forceFreshAppReload, removeRecoverySearchParam } from "../../lib/runtimeRecovery"
 import { useVersionCheck } from "../../hooks/useVersionCheck"
 import useRouteWarmup from "../../hooks/useRouteWarmup"
 
@@ -33,7 +34,9 @@ function RouteFeedback() {
     }
 
     const previousScrollRestoration = window.history.scrollRestoration
-    window.history.scrollRestoration = "manual"
+    // "auto" lets the browser restore scroll position on back/forward (POP).
+    // We still scroll to top on PUSH/REPLACE navigations via the layout effect.
+    window.history.scrollRestoration = "auto"
 
     return () => {
       window.history.scrollRestoration = previousScrollRestoration
@@ -42,6 +45,9 @@ function RouteFeedback() {
 
   useLayoutEffect(() => {
     if (location.hash || typeof window === "undefined") return undefined
+    // Skip scrolling to top when the user pressed back/forward — the browser's
+    // native scroll restoration already handles the correct position.
+    if (navigationType === "POP") return undefined
 
     forceScrollTop()
 
@@ -73,17 +79,29 @@ function RouteFeedback() {
 
 function AppFrame({ children }) {
   const location = useLocation()
-  useVersionCheck() // Warm app updates in the background without interrupting users.
+  const { hasUpdate } = useVersionCheck()
+  const [bannerDismissed, setBannerDismissed] = useState(false)
   useRouteWarmup({ pathname: location.pathname })
 
   useEffect(() => {
     removeRecoverySearchParam()
   }, [])
 
+  // Reset dismissal when a different (newer) update arrives
+  useEffect(() => {
+    if (hasUpdate) setBannerDismissed(false)
+  }, [hasUpdate])
+
   return (
     <AppErrorBoundary
       resetKey={`${location.pathname}${location.search}${location.hash}`}
     >
+      {hasUpdate && !bannerDismissed && (
+        <UpdateBanner
+          onUpdate={() => forceFreshAppReload({ reason: "version-update", manual: true })}
+          onDismiss={() => setBannerDismissed(true)}
+        />
+      )}
       <RouteFeedback />
       {children}
     </AppErrorBoundary>

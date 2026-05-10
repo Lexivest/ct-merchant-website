@@ -170,6 +170,40 @@ async function staleWhileRevalidate(request, cacheName) {
   return fetch(request);
 }
 
+// Specialised staleWhileRevalidate for Vite-bundled chunks (/assets/*).
+// If the chunk no longer exists on the server (404), the cached index.html
+// is referencing an old build. In that case, notify all open clients so they
+// can trigger a clean reload before the dynamic import failure reaches React.
+async function staleWhileRevalidateAsset(request, cacheName) {
+  const cachedResponse = await caches.match(request);
+
+  const networkPromise = fetch(request)
+    .then(async (response) => {
+      if (response.status === 404) {
+        try {
+          const allClients = await self.clients.matchAll({ includeUncontrolled: true });
+          allClients.forEach((client) =>
+            client.postMessage({ type: "STALE_CHUNK_DETECTED" })
+          );
+        } catch {
+          // Best effort — the error boundary will still catch and recover.
+        }
+        return null;
+      }
+      return putInCache(cacheName, request, response);
+    })
+    .catch(() => null);
+
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  const networkResponse = await networkPromise;
+  if (networkResponse) return networkResponse;
+
+  return fetch(request);
+}
+
 async function precacheShellAssets() {
   let indexResponse = null;
 
@@ -268,7 +302,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (url.pathname.startsWith("/assets/")) {
-    event.respondWith(staleWhileRevalidate(event.request, ASSET_CACHE));
+    event.respondWith(staleWhileRevalidateAsset(event.request, ASSET_CACHE));
     return;
   }
 

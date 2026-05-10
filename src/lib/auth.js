@@ -4,6 +4,11 @@ import {
   normalizePhone,
 } from "./validators"
 import { clearCachedFetchStore } from "../hooks/useCachedFetch"
+import { clearStaffSessionState } from "./staffSession"
+
+// Written to localStorage during logout so other open tabs detect the change
+// via the native `storage` event and clear their own auth state.
+export const LOGOUT_SIGNAL_KEY = "ctmerchant_logout_signal"
 
 const LOCATION_QUERY_TIMEOUT_MS = 8000
 
@@ -95,8 +100,20 @@ export async function signOutUser() {
   }
 
   try {
-    // 2. Wipe Local Storage safely (only our app's keys)
+    // 2. Clear staff portal session memory and storage
+    clearStaffSessionState()
+
+    // 3. Wipe Local Storage safely (only our app's keys)
     if (typeof window !== "undefined") {
+      // Write the logout signal BEFORE the cleanup sweep so other open tabs
+      // receive the `storage` event and clear their own auth state.
+      // The signal key starts with "ctmerchant_" and will be removed below.
+      try {
+        window.localStorage.setItem(LOGOUT_SIGNAL_KEY, String(Date.now()))
+      } catch {
+        // Best effort — tab-sync is non-critical
+      }
+
       const storage = window.localStorage
       if (storage) {
         const keysToRemove = []
@@ -122,7 +139,7 @@ export async function signOutUser() {
       }
     }
 
-    // 3. Clear session storage safely
+    // 4. Clear session storage safely
     if (typeof window !== "undefined") {
       const sess = window.sessionStorage
       if (sess) {
@@ -130,7 +147,7 @@ export async function signOutUser() {
       }
     }
 
-    // 4. Clear in-memory query cache used by useCachedFetch
+    // 5. Clear in-memory query cache used by useCachedFetch
     clearCachedFetchStore()
   } catch (error) {
     console.error("Error during client cleanup:", error)

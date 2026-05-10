@@ -5,6 +5,8 @@ import App from './App.jsx'
 import AppErrorBoundary from './components/common/AppErrorBoundary.jsx'
 import AppFrame from './components/common/AppFrame.jsx'
 import GlobalFeedbackProvider from './components/common/GlobalFeedbackProvider.jsx'
+import { logError } from './lib/errorLogger.js'
+import { forceFreshAppReload } from './lib/runtimeRecovery.js'
 import './styles/globals.css'
 
 // --- GLOBAL CRASH CAPTURE FOR FIREFOX DIAGNOSTICS ---
@@ -30,6 +32,9 @@ if (typeof window !== "undefined") {
       stack: err?.stack || "unavailable",
       url: window.location.href
     })
+
+    const asError = err instanceof Error ? err : Object.assign(new Error(errorMessage), { name: errorName, stack: err?.stack })
+    logError(asError, { type })
     
     // If the error happens before React can mount, try to show a minimal UI
     const root = document.getElementById('root')
@@ -53,8 +58,18 @@ if (typeof window !== "undefined") {
   window.addEventListener("error", (e) => capture("window_error", e.error || e.message))
   window.addEventListener("unhandledrejection", (e) => capture("promise_rejection", e.reason))
 
-  // --- SERVICE WORKER REGISTRATION ---
+  // --- SERVICE WORKER REGISTRATION & MESSAGING ---
   if ("serviceWorker" in navigator) {
+    // Listen for the service worker's stale-chunk signal. When the SW intercepts
+    // a /assets/* request that returns 404, it means the cached index.html
+    // references an old build's chunk that no longer exists on the CDN. Reload
+    // immediately so the user gets fresh files without ever seeing an error.
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data?.type === "STALE_CHUNK_DETECTED") {
+        forceFreshAppReload({ reason: "stale-chunk", manual: false })
+      }
+    })
+
     if (import.meta.env.PROD) {
       window.addEventListener("load", () => {
         navigator.serviceWorker
