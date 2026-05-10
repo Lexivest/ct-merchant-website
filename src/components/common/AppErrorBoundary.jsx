@@ -6,6 +6,7 @@ import GlobalErrorScreen from "./GlobalErrorScreen"
 import { PageLoadingScreen } from "./PageStatusScreen"
 import {
   forceFreshAppReload,
+  hasAttemptedFreshReload,
   isChunkLoadFailure,
   isCriticalAssetLoadFailure,
 } from "../../lib/runtimeRecovery"
@@ -17,9 +18,13 @@ class AppErrorBoundary extends Component {
   }
 
   static getDerivedStateFromError(error) {
-    // Pre-set busy for chunk failures so the error widget never flashes —
-    // componentDidCatch will kick off the reload immediately after.
-    const busyNow = isChunkLoadFailure(error) && !isNetworkOffline()
+    // Network errors reaching the boundary are almost always failed module
+    // imports (real API errors are caught in components before propagating up).
+    const looksLikeModuleFailure = isChunkLoadFailure(error) || isNetworkError(error)
+    // Only pre-set busy if this is the FIRST automatic recovery attempt.
+    // If a reload already happened and the error persists, show the widget
+    // so the user can act — don't spin forever.
+    const busyNow = looksLikeModuleFailure && !isNetworkOffline() && !hasAttemptedFreshReload("chunk")
     return { error, retryArmed: false, busy: busyNow }
   }
 
@@ -60,7 +65,9 @@ class AppErrorBoundary extends Component {
   }
 
   recoverFromChunkFailure(error) {
-    if (!isChunkLoadFailure(error)) return false
+    // Also handle network errors: at the boundary level they almost always
+    // mean a failed module import (e.g. Safari "Load failed" on a 404'd chunk).
+    if (!isChunkLoadFailure(error) && !isNetworkError(error)) return false
 
     if (isNetworkOffline()) {
       // Can't reload — show the error widget with retry armed for when we come back online.
@@ -69,7 +76,12 @@ class AppErrorBoundary extends Component {
     }
 
     const started = forceFreshAppReload({ reason: "chunk", manual: false })
-    this.setState({ error, retryArmed: false, busy: started })
+    // If the reload already happened this session (started=false), don't
+    // overwrite the busy state — getDerivedStateFromError already set busy:false
+    // for the repeat case, which is correct (auto-recovery gave up, show widget).
+    if (started) {
+      this.setState({ error, retryArmed: false, busy: true })
+    }
     return started
   }
 
