@@ -39,3 +39,6 @@ supabase/
 
 # Backup folder
 Prod V1/
+
+# Claude Code worktrees and session data
+.claude/
