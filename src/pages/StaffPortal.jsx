@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabase"
 import { signInWithPassword, signOutUser } from "../lib/auth"
@@ -12,7 +12,22 @@ import ctmLogo from "../assets/images/logo.jpg"
 function StaffPortal() {
   const navigate = useNavigate()
   const location = useLocation()
-  const sessionExpired = new URLSearchParams(location.search).get("expired") === "1"
+
+  // Read the flag once into local state so the notice is owned by React,
+  // not re-derived from the URL on every render.
+  const [showExpiredNotice, setShowExpiredNotice] = useState(
+    () => new URLSearchParams(location.search).get("expired") === "1"
+  )
+
+  // Strip ?expired=1 from the URL immediately on mount so browser back
+  // navigation doesn't re-surface the notice after the user has dismissed it
+  // or successfully logged in and returned.
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get("expired") === "1") {
+      navigate("/staff-portal", { replace: true })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [formData, setFormData] = useState({
     email: "",
@@ -28,6 +43,9 @@ function StaffPortal() {
       ...prev,
       [name]: value,
     }))
+    // Dismiss the expired notice the moment the user starts typing —
+    // they've acknowledged it and are already acting on it.
+    if (showExpiredNotice) setShowExpiredNotice(false)
   }
 
   const handleSubmit = async (event) => {
@@ -163,7 +181,7 @@ function StaffPortal() {
             </div>
           ) : null}
 
-          {!errorMessage && sessionExpired ? (
+          {!errorMessage && showExpiredNotice ? (
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
               Your staff session expired after 20 minutes of inactivity. Please sign in again.
             </div>
