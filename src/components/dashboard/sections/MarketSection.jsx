@@ -710,6 +710,31 @@ function MarketSection({
     return previews
   }, [dashboardData?.products, dashboardData?.shops])
 
+  const productsByAreaId = useMemo(() => {
+    const shopAreaMap = new Map(
+      (dashboardData?.shops || []).map((shop) => [shop.id, shop.area_id])
+    )
+    const grouped = new Map()
+
+    ;(dashboardData?.products || []).forEach((product) => {
+      if (!product?.shop_id || !product.image_url || product.condition === "Fairly Used") return
+
+      const areaId = shopAreaMap.get(product.shop_id)
+      if (!areaId) return
+
+      const existing = grouped.get(areaId)
+      if (existing && existing.length >= 4) return
+
+      if (existing) {
+        existing.push(product)
+      } else {
+        grouped.set(areaId, [product])
+      }
+    })
+
+    return grouped
+  }, [dashboardData?.products, dashboardData?.shops])
+
   const sortedCategories = useMemo(() => {
     return [...(dashboardData?.categories || [])]
       .filter((category) => !isServiceCategory(category?.name))
@@ -760,39 +785,66 @@ function MarketSection({
       ) : null}
 
       {(dashboardData.areas || []).length > 0 && (
-        <div className="area-cards-row bg-white pb-3 pt-2 border-b border-slate-100">
-          <h2 className="px-4 pb-1.5 text-[0.72rem] font-black uppercase tracking-[0.16em] text-slate-400">
+        <div className="area-cards-row bg-white pb-4 pt-3 border-b border-slate-100">
+          <h2 className="px-4 pb-2 text-[0.72rem] font-black uppercase tracking-[0.16em] text-slate-400">
             Explore Areas
           </h2>
           <div className="flex gap-3 overflow-x-auto px-4 no-scrollbar">
-            {(dashboardData.areas || []).map((area) => (
-              <button
-                key={area.id}
-                type="button"
-                onClick={() => typeof onOpenArea === "function" && onOpenArea(area.id)}
-                className="flex shrink-0 flex-col items-center gap-1.5 focus:outline-none active:scale-95 transition-transform"
-              >
-                <div className="h-[62px] w-[62px] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 shadow-sm">
-                  {area.image_url ? (
-                    <StableImage
-                      src={area.image_url}
-                      alt={area.name}
-                      width={124}
-                      height={124}
-                      aspectRatio={1}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-50 to-slate-100">
-                      <FaLocationDot className="text-[1.1rem] text-pink-400" />
-                    </div>
-                  )}
-                </div>
-                <span className="max-w-[68px] truncate text-center text-[0.65rem] font-bold text-slate-700">
-                  {area.name}
-                </span>
-              </button>
-            ))}
+            {(dashboardData.areas || []).map((area) => {
+              const areaProducts = productsByAreaId.get(area.id) || []
+              return (
+                <button
+                  key={area.id}
+                  type="button"
+                  onClick={() => typeof onOpenArea === "function" && onOpenArea(area.id)}
+                  className="group flex shrink-0 w-[152px] flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md active:scale-[0.97] focus:outline-none"
+                >
+                  {/* 2×2 product image grid */}
+                  <div className="grid grid-cols-2 gap-[2px] bg-slate-100 p-[2px]">
+                    {Array.from({ length: 4 }).map((_, idx) => {
+                      const product = areaProducts[idx]
+                      return (
+                        <div
+                          key={idx}
+                          className="aspect-square overflow-hidden bg-slate-50"
+                        >
+                          {product?.image_url ? (
+                            <StableImage
+                              src={product.image_url}
+                              alt={product.name || area.name}
+                              width={150}
+                              height={150}
+                              aspectRatio={1}
+                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          ) : area.image_url && idx === 0 ? (
+                            <StableImage
+                              src={area.image_url}
+                              alt={area.name}
+                              width={150}
+                              height={150}
+                              aspectRatio={1}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-50 to-slate-100">
+                              <FaLocationDot className="text-[0.9rem] text-pink-300" />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {/* Area name footer */}
+                  <div className="flex items-center gap-1.5 px-2.5 py-2">
+                    <FaLocationDot className="shrink-0 text-[0.6rem] text-pink-500" />
+                    <span className="truncate text-[0.72rem] font-bold text-slate-800">
+                      {area.name}
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
             <div className="w-2 shrink-0" aria-hidden="true" />
           </div>
         </div>
