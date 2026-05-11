@@ -1,16 +1,28 @@
-const BRAND_TOKEN_COLORS = {
-  C: "#DB2777",
-  T: "#FFD400",
-  M: "#2563EB",
-}
-
 const BRAND_PATTERN = /(CTMerchant|CTMERCHANT|CT Merchant)/g
 const BRAND_DETECT_PATTERN = /(CTMerchant|CTMERCHANT|CT Merchant)/
 const BRAND_EXACT_PATTERN = /^(CTMerchant|CTMERCHANT|CT Merchant)$/
 
-function getTextStartX(ctx, tokens, x) {
+// Inject "bold" weight into an existing CSS font string while preserving
+// size and family. Handles: "12px Arial", "normal 14px sans-serif", etc.
+function toBoldFont(font) {
+  const withoutWeight = font
+    .replace(/\b(normal|bold|bolder|lighter|[1-9]00)\b\s*/g, "")
+    .trim()
+  return `bold ${withoutWeight}`
+}
+
+// Measure a token's width using the correct font weight.
+function measureTokenWidth(ctx, token, baseFont) {
+  if (!token.bold) return ctx.measureText(token.text).width
+  ctx.font = toBoldFont(baseFont)
+  const w = ctx.measureText(token.text).width
+  ctx.font = baseFont
+  return w
+}
+
+function getTextStartX(ctx, tokens, x, baseFont) {
   const totalWidth = tokens.reduce(
-    (sum, token) => sum + ctx.measureText(token.text).width,
+    (sum, token) => sum + measureTokenWidth(ctx, token, baseFont),
     0
   )
 
@@ -27,34 +39,31 @@ export function drawBrandedCanvasText(ctx, text, x, y, options = {}) {
   }
 
   const baseColor = options.baseColor || ctx.fillStyle
-  const brandColors = {
-    C: options.cColor || BRAND_TOKEN_COLORS.C,
-    T: options.tColor || BRAND_TOKEN_COLORS.T,
-    M: options.mColor || BRAND_TOKEN_COLORS.M,
-  }
 
+  // "CTM" is bold; "erchant" and all surrounding text are normal weight.
   const tokens = value
     .split(BRAND_PATTERN)
     .flatMap((part) => {
       if (!part) return []
-      if (!BRAND_EXACT_PATTERN.test(part)) return [{ text: part, color: baseColor }]
+      if (!BRAND_EXACT_PATTERN.test(part)) return [{ text: part, bold: false }]
 
       return [
-        { text: "C", color: brandColors.C },
-        { text: "T", color: brandColors.T },
-        { text: "M", color: brandColors.M },
-        { text: "erchant", color: baseColor },
+        { text: "CTM", bold: true },
+        { text: "erchant", bold: false },
       ]
     })
 
   ctx.save()
-  const startX = getTextStartX(ctx, tokens, x)
+  const baseFont = ctx.font
+  const startX = getTextStartX(ctx, tokens, x, baseFont)
   ctx.textAlign = "left"
+  ctx.fillStyle = baseColor
 
   tokens.reduce((cursor, token) => {
-    ctx.fillStyle = token.color
+    ctx.font = token.bold ? toBoldFont(baseFont) : baseFont
     ctx.fillText(token.text, cursor, y)
-    return cursor + ctx.measureText(token.text).width
+    const w = ctx.measureText(token.text).width
+    return cursor + w
   }, startX)
 
   ctx.restore()

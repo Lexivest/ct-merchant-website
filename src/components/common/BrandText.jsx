@@ -8,10 +8,7 @@ const BRAND_EXACT_PATTERN = /^(CTMerchant|CTMERCHANT|CT Merchant)$/
 function BrandText({ className = "" }) {
   return (
     <span className={className}>
-      <span className="text-pink-600">C</span>
-      <span className="text-[#FFD400]">T</span>
-      <span className="text-blue-600">M</span>
-      erchant
+      <span className="font-bold">CTM</span>erchant
     </span>
   )
 }

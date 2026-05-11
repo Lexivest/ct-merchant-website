@@ -15,7 +15,7 @@ import WordLimitCounter from "./WordLimitCounter"
 const DAILY_LIMIT = 15
 const AI_PROMPT_WORD_LIMIT = 300
 const BRAND_HTML =
-  '<span data-ctm-brand="true"><span class="text-pink-600">C</span><span class="text-[#FFD400]">T</span><span class="text-blue-600">M</span>erchant</span>'
+  '<span data-ctm-brand="true"><strong>CTM</strong>erchant</span>'
 const BRAND_TEXT_PATTERN = /(CTMerchant|CTMERCHANT|CT Merchant)/g
 const BRAND_TEXT_DETECT_PATTERN = /(CTMerchant|CTMERCHANT|CT Merchant)/
 const BRAND_TEXT_EXACT_PATTERN = /^(CTMerchant|CTMERCHANT|CT Merchant)$/
