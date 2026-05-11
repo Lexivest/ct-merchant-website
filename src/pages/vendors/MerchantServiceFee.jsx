@@ -8,10 +8,7 @@ import {
   FaCircleCheck,
   FaCircleNotch,
   FaCircleXmark,
-  FaClock,
-  FaCopy,
   FaReceipt,
-  FaTriangleExclamation,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import useAuthSession from "../../hooks/useAuthSession"
@@ -19,50 +16,29 @@ import usePreventPullToRefresh from "../../hooks/usePreventPullToRefresh"
 import { clearCachedFetchStore } from "../../hooks/useCachedFetch"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen"
+import { PageLoadingScreen } from "../../components/common/PageStatusScreen"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
-import { CTM_BANK_ACCOUNT, SERVICE_FEE_PLANS } from "../../lib/paymentConfig"
+import { SERVICE_FEE_PLANS } from "../../lib/paymentConfig"
 import {
   assertCanSubmitPaymentProof,
   createPaymentProof,
   fetchLatestPaymentProof,
   formatNaira,
   getPaymentReceiptRuleLabel,
-  getProofStatusCopy,
   isFutureDate,
   uploadPaymentReceipt,
 } from "../../lib/offlinePayments"
+import {
+  OfflineBankDetailsPanel,
+  PaymentStatusCard,
+  useCopyToClipboard,
+} from "../../components/payments/OfflinePaymentPanels"
 
 function formatFileSize(bytes) {
   const size = Number(bytes || 0)
   if (!Number.isFinite(size) || size <= 0) return "Unknown size"
   if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`
   return `${(size / (1024 * 1024)).toFixed(1)} MB`
-}
-
-function StatusCard({ proof }) {
-  if (!proof) return null
-
-  const copy = getProofStatusCopy(proof.status)
-  const toneClass =
-    copy.tone === "success"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-      : copy.tone === "danger"
-        ? "border-red-200 bg-red-50 text-red-800"
-        : "border-amber-200 bg-amber-50 text-amber-800"
-  const Icon = copy.tone === "success" ? FaCircleCheck : copy.tone === "danger" ? FaTriangleExclamation : FaClock
-
-  return (
-    <div className={`rounded-2xl border p-4 ${toneClass}`}>
-      <div className="flex items-start gap-3">
-        <Icon className="mt-1 shrink-0 text-lg" />
-        <div>
-          <div className="font-black">{copy.title}</div>
-          <p className="mt-1 text-sm font-semibold leading-6">{copy.message}</p>
-          {proof.review_note ? <p className="mt-2 rounded-xl bg-white/70 p-3 text-sm font-semibold">Staff note: {proof.review_note}</p> : null}
-        </div>
-      </div>
-    </div>
-  )
 }
 
 const PREMIUM_FEATURES = Object.freeze([
@@ -74,52 +50,6 @@ const PREMIUM_FEATURES = Object.freeze([
   "Fairly used product uploads",
   "Special offers",
 ])
-
-function BankDetailCopyRow({ label, value, onCopy }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onCopy(label, value)}
-      className="group w-full rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-[#D97706] hover:bg-[#FFFBEB] sm:p-4"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-slate-400">{label}</div>
-          <div className={`mt-1 break-words font-black text-[#0F172A] ${label === "Account Number" ? "font-mono text-xl tracking-wide sm:text-2xl" : "text-base"}`}>
-            {value}
-          </div>
-        </div>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-black text-slate-600 transition group-hover:bg-[#FEF3C7] group-hover:text-[#92400E]">
-          <FaCopy /> Tap to copy
-        </span>
-      </div>
-    </button>
-  )
-}
-
-function OfflineBankDetailsPanel({ open, amountLabel, planLabel, onCopy }) {
-  if (!open) return null
-
-  return (
-    <div className="mt-5 rounded-[24px] border border-[#FBBF24]/60 bg-[#FFFBEB] p-4 shadow-sm sm:p-5">
-      <div className="mb-4">
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#FEF3C7] px-3 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-[#92400E]">
-          <FaBuildingColumns /> Offline Payment
-        </div>
-        <h3 className="mt-3 text-xl font-black text-[#0F172A]">Bank transfer details</h3>
-        <p className="mt-1 text-sm font-semibold text-slate-600">
-          {planLabel} payment: {amountLabel}. Tap any detail to copy.
-        </p>
-      </div>
-
-      <div className="grid gap-3">
-        <BankDetailCopyRow label="Bank Name" value={CTM_BANK_ACCOUNT.bankName} onCopy={onCopy} />
-        <BankDetailCopyRow label="Account Name" value={CTM_BANK_ACCOUNT.accountName} onCopy={onCopy} />
-        <BankDetailCopyRow label="Account Number" value={CTM_BANK_ACCOUNT.accountNumber} onCopy={onCopy} />
-      </div>
-    </div>
-  )
-}
 
 export default function MerchantServiceFee() {
   const navigate = useNavigate()
@@ -170,39 +100,7 @@ export default function MerchantServiceFee() {
     clearCachedFetchStore((key) => key === `vendor_panel_${user.id}`)
   }, [user?.id])
 
-  const handleCopyBankDetail = useCallback(async (label, value) => {
-    const text = String(value || "")
-
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text)
-      } else {
-        const textarea = document.createElement("textarea")
-        textarea.value = text
-        textarea.setAttribute("readonly", "")
-        textarea.style.position = "fixed"
-        textarea.style.opacity = "0"
-        document.body.appendChild(textarea)
-        textarea.select()
-        document.execCommand("copy")
-        textarea.remove()
-      }
-
-      notify({
-        kind: "toast",
-        type: "success",
-        title: "Copied",
-        message: `${label} copied.`,
-      })
-    } catch {
-      notify({
-        kind: "toast",
-        type: "error",
-        title: "Copy failed",
-        message: "Please copy the payment detail manually.",
-      })
-    }
-  }, [notify])
+  const handleCopyBankDetail = useCopyToClipboard()
 
   useEffect(() => {
     if (!receiptFile || !receiptFile.type?.startsWith("image/")) {
@@ -468,12 +366,7 @@ export default function MerchantServiceFee() {
   }
 
   if ((authLoading && !shopData) || loading) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center bg-[#F8FAFC]">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#2E1065]/20 border-t-[#2E1065]"></div>
-        <p className="mt-4 font-semibold text-[#64748B]">Loading subscription details...</p>
-      </div>
-    )
+    return <PageLoadingScreen />
   }
 
   if (error) {
@@ -597,7 +490,7 @@ export default function MerchantServiceFee() {
                 </p>
               </div>
 
-              <StatusCard proof={paymentProof} />
+              <PaymentStatusCard proof={paymentProof} />
 
               {!isActive && isVerified ? (
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -687,7 +580,6 @@ export default function MerchantServiceFee() {
                     disabled={submittingProof}
                     className="mb-2 block w-full max-w-full overflow-hidden rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-4 text-sm font-semibold text-[#475569]"
                   />
-                  <div className="mb-4 text-xs font-semibold text-[#64748B]">{getPaymentReceiptRuleLabel()}</div>
 
                   {receiptFile ? (
                     <div className="mb-4 overflow-hidden rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF]">
@@ -705,7 +597,7 @@ export default function MerchantServiceFee() {
                         <div className="min-w-0 flex-1">
                           <div className="break-all font-black text-[#0F172A]">{receiptFile.name}</div>
                           <div className="text-xs font-bold text-[#64748B]">
-                            {receiptFile.type || "Receipt file"} - {formatFileSize(receiptFile.size)}
+                            {receiptFile.type || "Receipt file"} · {formatFileSize(receiptFile.size)}
                           </div>
                         </div>
                         <button
@@ -721,7 +613,9 @@ export default function MerchantServiceFee() {
                         </button>
                       </div>
                     </div>
-                  ) : null}
+                  ) : (
+                    <div className="mb-4 text-xs font-semibold text-[#64748B]">{getPaymentReceiptRuleLabel()}</div>
+                  )}
 
                   <button
                     onClick={handleSubmitProof}

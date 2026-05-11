@@ -4,9 +4,19 @@ const DEFAULT_REMITA_PUBLIC_KEY =
 export const REMITA_PUBLIC_KEY =
   import.meta.env?.VITE_REMITA_PUBLIC_KEY || DEFAULT_REMITA_PUBLIC_KEY
 
-export const REMITA_SCRIPT_URL =
-  import.meta.env?.VITE_REMITA_SCRIPT_URL ||
+const REMITA_SCRIPT_URL_FALLBACK =
   "https://remitademo.net/payment/v1/remita-pay-inline.bundle.js"
+
+export const REMITA_SCRIPT_URL =
+  import.meta.env?.VITE_REMITA_SCRIPT_URL || REMITA_SCRIPT_URL_FALLBACK
+
+if (!import.meta.env?.VITE_REMITA_SCRIPT_URL) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    "[paymentConfig] VITE_REMITA_SCRIPT_URL is not set. " +
+      "Falling back to the Remita DEMO endpoint — this must NOT be used in production.",
+  )
+}
 
 export const CTM_BANK_ACCOUNT = Object.freeze({
   bankName: "United Bank For Africa (UBA)",
