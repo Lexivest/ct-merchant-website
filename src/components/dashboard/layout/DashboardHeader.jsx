@@ -596,19 +596,7 @@ function DashboardHeader({
       aria-label="Mobile navigation"
       className="fixed bottom-0 inset-x-0 z-[1000] flex h-14 items-stretch border-t border-slate-200 bg-white shadow-[0_-2px_12px_rgba(0,0,0,0.07)] lg:hidden"
     >
-      {/* Repository */}
-      <button
-        type="button"
-        onClick={() => { setMoreOpen(false); switchScreen("market") }}
-        className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition ${
-          activeTab === "market" ? "text-pink-600" : "text-slate-500 hover:text-pink-500"
-        }`}
-      >
-        <FaHouse className="text-[1.1rem]" />
-        <span className="text-[0.6rem] font-extrabold uppercase tracking-wide">Market</span>
-      </button>
-
-      {/* Hub */}
+      {/* Dashboard */}
       <button
         type="button"
         onClick={() => { setMoreOpen(false); switchScreen("services") }}
@@ -617,7 +605,7 @@ function DashboardHeader({
         }`}
       >
         <FaTableCellsLarge className="text-[1.1rem]" />
-        <span className="text-[0.6rem] font-extrabold uppercase tracking-wide">Hub</span>
+        <span className="text-[0.6rem] font-extrabold uppercase tracking-wide">Dashboard</span>
       </button>
 
       {/* Alerts */}
@@ -637,6 +625,18 @@ function DashboardHeader({
           )}
         </span>
         <span className="text-[0.6rem] font-extrabold uppercase tracking-wide">Alerts</span>
+      </button>
+
+      {/* Market — center */}
+      <button
+        type="button"
+        onClick={() => { setMoreOpen(false); switchScreen("market") }}
+        className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition ${
+          activeTab === "market" ? "text-pink-600" : "text-slate-500 hover:text-pink-500"
+        }`}
+      >
+        <FaHouse className="text-[1.1rem]" />
+        <span className="text-[0.6rem] font-extrabold uppercase tracking-wide">Market</span>
       </button>
 
       {/* Profile */}
