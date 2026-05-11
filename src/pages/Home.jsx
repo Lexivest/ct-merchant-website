@@ -1145,7 +1145,10 @@ function Home() {
             <div className="mx-auto flex flex-col gap-4 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:items-start lg:gap-6">
               <div className="w-full lg:col-start-1 lg:flex lg:flex-col lg:gap-4">
                 <div className="overflow-hidden rounded-[24px] border border-pink-100 bg-white shadow-lg">
-                  <div className="relative aspect-video w-full h-[220px] sm:h-[300px] md:h-[400px] overflow-hidden bg-slate-100">
+                  {/* bg-pink-100 is the branded fallback colour shown while the
+                      bundled banner.jpg is still downloading on slow networks.
+                      StableImage's inner shimmer layer covers it once mounted. */}
+                  <div className="relative h-[220px] w-full overflow-hidden bg-pink-100 sm:h-[300px] md:h-[400px]">
                     <StableImage
                       src={banner}
                       alt="Commerce Banner"
@@ -1153,6 +1156,7 @@ function Home() {
                       className="h-full w-full object-cover object-center"
                       loading="eager"
                       fetchPriority="high"
+                      placeholderClassName="bg-gradient-to-br from-pink-100 via-slate-100 to-pink-50"
                     />
                   </div>
                 </div>

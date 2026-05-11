@@ -100,21 +100,26 @@ function StableImageFrame({
   shouldEagerLoad,
   finalSrc,
 }) {
+  // Outer ref lives on the positioning shell (the element the observer watches).
   const rootRef = useRef(null)
   const isPreviouslyLoaded = GLOBAL_IMAGE_REGISTRY.has(finalSrc)
 
   const [isNearViewport, setIsNearViewport] = useState(() => {
     if (typeof window === "undefined") return false
-    // If it's already in the registry, we don't need to wait for the observer
     return shouldEagerLoad || isPreviouslyLoaded || !("IntersectionObserver" in window)
   })
 
   const [loaded, setLoaded] = useState(() => isPreviouslyLoaded)
   const [failed, setFailed] = useState(false)
 
+  // Only generate a low-res blur URL for Supabase-hosted images on lazy load.
+  // Local/CDN assets that getOptimizedImageUrl can't downsize would just return
+  // the same URL — a double request for the same full-size file — so skip them.
   const lowResSrc = useMemo(() => {
     if (!src || shouldEagerLoad || isPreviouslyLoaded) return null
-    return getOptimizedImageUrl(src, { width: 30, height: 30, quality: 20 })
+    const candidate = getOptimizedImageUrl(src, { width: 30, height: 30, quality: 20 })
+    // If the URL didn't change (non-Supabase asset), skip the blur placeholder.
+    return candidate !== src ? candidate : null
   }, [src, shouldEagerLoad, isPreviouslyLoaded])
 
   useEffect(() => {
@@ -150,45 +155,54 @@ function StableImageFrame({
 
   const containerStyle = aspectRatio ? { aspectRatio: String(aspectRatio) } : {}
 
+  // Two-div structure: outer shell owns `containerClassName` (the positioning /
+  // sizing contract the caller specifies), inner shell owns `relative
+  // overflow-hidden` so absolute children (shimmer, blur, image) are always
+  // clipped and positioned against a real containing block — no class-specificity
+  // race between `relative` and any `absolute` coming from containerClassName.
   return (
-    <div 
-      ref={rootRef} 
+    <div
+      ref={rootRef}
       style={containerStyle}
-      className={`relative overflow-hidden ${containerClassName} ${!loaded ? 'bg-slate-100' : ''}`}
+      className={containerClassName}
     >
-      {/* 1. Blurred placeholder - only if NOT previously loaded */}
-      {lowResSrc && !loaded && isNearViewport && (
-        <img
-          src={lowResSrc}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover blur-md scale-105 transition-opacity duration-300"
-          aria-hidden="true"
-        />
-      )}
+      <div className={`relative h-full w-full overflow-hidden ${!loaded ? 'bg-slate-200' : ''}`}>
+        {/* 1. Blurred thumbnail — lazy-loaded Supabase images only */}
+        {lowResSrc && !loaded && isNearViewport && (
+          <img
+            src={lowResSrc}
+            alt=""
+            className="absolute inset-0 h-full w-full scale-105 object-cover blur-md"
+            aria-hidden="true"
+          />
+        )}
 
-      {/* 2. Shimmer overlay - only if NO cache and NO lowres */}
-      {!loaded && !lowResSrc && (
-        <div className={`absolute inset-0 z-[1] bg-slate-100 ${placeholderClassName}`}>
-          <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.2),transparent)] animate-shimmer" />
-        </div>
-      )}
+        {/* 2. Shimmer skeleton — shown when there is no blur placeholder.
+            Uses a mid-gray base + a clearly visible sweep so it never looks
+            like an empty white box on slow connections. */}
+        {!loaded && !lowResSrc && (
+          <div className={`absolute inset-0 z-[1] bg-slate-200 ${placeholderClassName}`}>
+            <div className="absolute inset-0 animate-shimmer bg-[linear-gradient(110deg,transparent_20%,rgba(255,255,255,0.5)_50%,transparent_80%)]" />
+          </div>
+        )}
 
-      {/* 3. The main image - use opacity:0 to 1 for smoothness */}
-      {isNearViewport && (
-        <img
-          src={failed ? fallbackSrc : finalSrc}
-          alt={alt}
-          loading={loading}
-          decoding="async"
-          fetchPriority={fetchPriority}
-          onLoad={handleLoad}
-          onError={handleError}
-          width={width}
-          height={height}
-          draggable={false}
-          className={`${className} transition-opacity duration-300 ease-out ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        />
-      )}
+        {/* 3. Main image — renders once in-viewport, fades in on load */}
+        {isNearViewport && (
+          <img
+            src={failed ? fallbackSrc : finalSrc}
+            alt={alt}
+            loading={loading}
+            decoding="async"
+            fetchPriority={fetchPriority}
+            onLoad={handleLoad}
+            onError={handleError}
+            width={width}
+            height={height}
+            draggable={false}
+            className={`${className} transition-opacity duration-300 ease-out ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          />
+        )}
+      </div>
     </div>
   )
 }
