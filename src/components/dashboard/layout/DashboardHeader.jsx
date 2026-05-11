@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import {
   FaArrowDownAZ,
   FaBell,
@@ -586,6 +587,10 @@ function DashboardHeader({
       </div>
     </header>
 
+    {/* ── Mobile bottom nav + More sheet — rendered in a portal so CSS
+        transforms on ancestor elements cannot break fixed positioning ── */}
+    {typeof document !== "undefined" && createPortal(
+    <>
     {/* ── Mobile bottom navigation bar ── visible on < lg screens only ── */}
     <nav
       aria-label="Mobile navigation"
@@ -739,6 +744,8 @@ function DashboardHeader({
         </div>
       </>
     )}
+
+    </>, document.body)}
 
     </>
   )
