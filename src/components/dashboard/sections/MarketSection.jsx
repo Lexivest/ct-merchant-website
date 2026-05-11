@@ -885,6 +885,7 @@ function MarketSection({
 
         return (
         <div key={area.id}>
+          <div className="h-[2px] bg-gradient-to-r from-white via-pink-400 to-white" />
           <div className="area-block-wrap bg-white">
             <div className="flex items-center justify-between px-4 pb-0 pt-1">
               <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap text-[1.25rem] font-extrabold text-[#0F1111] !p-0">
@@ -932,6 +933,7 @@ function MarketSection({
               <div className="w-4 shrink-0" aria-hidden="true" />
             </div>
           </div>
+          <div className="h-[2px] bg-gradient-to-r from-white via-pink-400 to-white" />
 
           {index === 2 && dashboardData.staffDiscoveries?.length > 0 && (
             <div className="discoveries-section-wrap bg-white pb-2 pt-1 mb-1">
@@ -955,6 +957,8 @@ function MarketSection({
       })}
 
       {groupedShopsByArea.length < 3 && dashboardData.staffDiscoveries?.length > 0 && (
+        <>
+        <div className="h-[2px] bg-gradient-to-r from-white via-pink-400 to-white" />
         <div className="discoveries-section-wrap bg-white py-2 mb-1">
           <h2 className="sec-title px-4 pb-2 text-[1.25rem] font-extrabold text-[#0F1111]">
             Recommended for you
@@ -970,9 +974,12 @@ function MarketSection({
             <div className="w-4 shrink-0" aria-hidden="true" />
           </div>
         </div>
+        </>
       )}
 
       {fairlyUsedProducts.length > 0 && (
+        <>
+        <div className="h-[2px] bg-gradient-to-r from-white via-pink-400 to-white" />
         <div className="fairly-used-section-wrap bg-white pb-2 pt-1 mb-1">
           <h2 className="sec-title px-4 pb-1 text-[1.25rem] font-extrabold text-[#0F1111]">
             Fairly Used Items
@@ -988,9 +995,12 @@ function MarketSection({
             <div className="w-4 shrink-0" aria-hidden="true" />
           </div>
         </div>
+        </>
       )}
 
       {sortedCategories.length > 0 ? (
+        <>
+        <div className="h-[2px] bg-gradient-to-r from-white via-pink-400 to-white" />
         <div className="cat-section-wrap bg-white pb-1 pt-0">
           <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 pb-2 pt-1 text-[1.25rem] font-extrabold text-[#0F1111]">
             Browse Categories
@@ -1029,6 +1039,7 @@ function MarketSection({
             })}
           </div>
         </div>
+        </>
       ) : null}
     </div>
   )
