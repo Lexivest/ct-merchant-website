@@ -92,13 +92,18 @@ function ClusterRow({ item }) {
         </div>
       </td>
       <td className="px-5 py-4">
-        {item.occurrence_count > 5 ? (
+        {/* Use the risk_level from the RPC — thresholds: CRITICAL ≥5, HIGH ≥3, MEDIUM else */}
+        {item.risk_level === "CRITICAL" ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-800">
-            <FaSkullCrossbones /> High
+            <FaSkullCrossbones /> Critical
           </span>
-        ) : item.occurrence_count > 2 ? (
+        ) : item.risk_level === "HIGH" ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
-            <FaTriangleExclamation /> Medium
+            <FaTriangleExclamation /> High
+          </span>
+        ) : item.risk_level === "MEDIUM" ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
+            Medium
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
