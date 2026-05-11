@@ -2,6 +2,7 @@ import { memo, useEffect, useMemo, useState } from "react"
 import {
   FaArrowRight,
   FaBolt,
+  FaBriefcase,
   FaChevronRight,
   FaImage,
   FaMagnifyingGlass,
