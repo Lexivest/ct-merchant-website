@@ -5,6 +5,7 @@ import {
   FaBriefcase,
   FaChevronRight,
   FaImage,
+  FaLocationDot,
   FaMagnifyingGlass,
   FaScrewdriverWrench,
   FaXmark,
@@ -757,6 +758,45 @@ function MarketSection({
           onOpenShop={openShop}
         />
       ) : null}
+
+      {(dashboardData.areas || []).length > 0 && (
+        <div className="area-cards-row bg-white pb-3 pt-2 border-b border-slate-100">
+          <h2 className="px-4 pb-1.5 text-[0.72rem] font-black uppercase tracking-[0.16em] text-slate-400">
+            Explore Areas
+          </h2>
+          <div className="flex gap-3 overflow-x-auto px-4 no-scrollbar">
+            {(dashboardData.areas || []).map((area) => (
+              <button
+                key={area.id}
+                type="button"
+                onClick={() => typeof onOpenArea === "function" && onOpenArea(area.id)}
+                className="flex shrink-0 flex-col items-center gap-1.5 focus:outline-none active:scale-95 transition-transform"
+              >
+                <div className="h-[62px] w-[62px] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 shadow-sm">
+                  {area.image_url ? (
+                    <StableImage
+                      src={area.image_url}
+                      alt={area.name}
+                      width={124}
+                      height={124}
+                      aspectRatio={1}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-50 to-slate-100">
+                      <FaLocationDot className="text-[1.1rem] text-pink-400" />
+                    </div>
+                  )}
+                </div>
+                <span className="max-w-[68px] truncate text-center text-[0.65rem] font-bold text-slate-700">
+                  {area.name}
+                </span>
+              </button>
+            ))}
+            <div className="w-2 shrink-0" aria-hidden="true" />
+          </div>
+        </div>
+      )}
 
       {sponsoredProducts.length > 0 && (
         <div className="sponsored-wrap bg-white pt-2 pb-4 border-b border-slate-50">

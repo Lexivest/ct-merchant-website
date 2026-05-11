@@ -53,12 +53,10 @@ function DashboardHeader({
 
   const [desktopAreaOpen, setDesktopAreaOpen] = useState(false)
   const [mobileAreaOpen, setMobileAreaOpen] = useState(false)
-  const [categoryOpen, setCategoryOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
 
   const desktopAreaRef = useRef(null)
   const mobileAreaRef = useRef(null)
-  const categoryRef = useRef(null)
 
   const selectedAreaLabel = useMemo(() => {
     if (searchArea === "all") return "All Areas"
@@ -143,16 +141,12 @@ function DashboardHeader({
         setMobileAreaOpen(false)
       }
 
-      if (categoryRef.current && !categoryRef.current.contains(target)) {
-        setCategoryOpen(false)
-      }
     }
 
     function handleEscape(event) {
       if (event.key === "Escape") {
         setDesktopAreaOpen(false)
         setMobileAreaOpen(false)
-        setCategoryOpen(false)
       }
     }
 
@@ -178,7 +172,8 @@ function DashboardHeader({
 
   function selectCategory(value) {
     setCategoryFilter(value)
-    setCategoryOpen(false)
+    setDesktopAreaOpen(false)
+    setMobileAreaOpen(false)
   }
 
   function renderDropdownMarker({ imageUrl, active }) {
@@ -330,10 +325,9 @@ function DashboardHeader({
                 onClick={() => {
                   setDesktopAreaOpen((prev) => !prev)
                   setMobileAreaOpen(false)
-                  setCategoryOpen(false)
                 }}
               >
-                <span className="truncate">{selectedAreaLabel}</span>
+                <span className="truncate">{selectedCategoryLabel}</span>
                 <FaChevronDown
                   className={`shrink-0 text-[0.7rem] transition ${
                     desktopAreaOpen ? "rotate-180" : ""
@@ -352,34 +346,34 @@ function DashboardHeader({
                   <button
                     type="button"
                     className={`flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
-                      searchArea === "all"
+                      categoryFilter === "all"
                         ? "bg-pink-50 text-pink-700"
                         : "text-slate-700"
                     }`}
-                    onClick={() => selectArea("all")}
+                    onClick={() => selectCategory("all")}
                   >
-                    {renderDropdownMarker({ active: searchArea === "all" })}
-                    All Areas
+                    {renderDropdownMarker({ active: categoryFilter === "all" })}
+                    All Categories
                   </button>
 
-                  {sortedAreas.map((area) => {
-                    const isActive = String(searchArea) === String(area.id)
+                  {(categories || []).map((cat) => {
+                    const isActive = categoryFilter === cat.name
                     return (
                       <button
-                        key={area.id}
+                        key={cat.id || cat.name}
                         type="button"
                         className={`flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50 ${
                           isActive
                             ? "bg-pink-50 text-pink-700"
                             : "text-slate-700"
                         }`}
-                        onClick={() => selectArea(String(area.id))}
+                        onClick={() => selectCategory(cat.name)}
                       >
                         {renderDropdownMarker({
-                          imageUrl: dropdownImages.areaImageById.get(String(area.id)),
+                          imageUrl: dropdownImages.categoryImageByName.get(cat.name),
                           active: isActive,
                         })}
-                        <span className="truncate">{area.name}</span>
+                        <span className="truncate">{cat.name}</span>
                       </button>
                     )
                   })}
@@ -458,10 +452,9 @@ function DashboardHeader({
               onClick={() => {
                 setMobileAreaOpen((prev) => !prev)
                 setDesktopAreaOpen(false)
-                setCategoryOpen(false)
               }}
             >
-              <span className="truncate">{selectedAreaLabel}</span>
+              <span className="truncate">{selectedCategoryLabel}</span>
               <FaChevronDown
                 className={`shrink-0 text-[0.7rem] transition ${
                   mobileAreaOpen ? "rotate-180" : ""
@@ -480,34 +473,34 @@ function DashboardHeader({
                 <button
                   type="button"
                   className={`flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
-                    searchArea === "all"
+                    categoryFilter === "all"
                       ? "bg-pink-50 text-pink-700"
                       : "text-slate-700"
                   }`}
-                  onClick={() => selectArea("all")}
+                  onClick={() => selectCategory("all")}
                 >
-                  {renderDropdownMarker({ active: searchArea === "all" })}
-                  All Areas
+                  {renderDropdownMarker({ active: categoryFilter === "all" })}
+                  All Categories
                 </button>
 
-                {sortedAreas.map((area) => {
-                  const isActive = String(searchArea) === String(area.id)
+                {(categories || []).map((cat) => {
+                  const isActive = categoryFilter === cat.name
                   return (
                     <button
-                      key={area.id}
+                      key={cat.id || cat.name}
                       type="button"
                       className={`flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50 ${
                         isActive
                           ? "bg-pink-50 text-pink-700"
                           : "text-slate-700"
                       }`}
-                      onClick={() => selectArea(String(area.id))}
+                      onClick={() => selectCategory(cat.name)}
                     >
                       {renderDropdownMarker({
-                        imageUrl: dropdownImages.areaImageById.get(String(area.id)),
+                        imageUrl: dropdownImages.categoryImageByName.get(cat.name),
                         active: isActive,
                       })}
-                      <span className="truncate">{area.name}</span>
+                      <span className="truncate">{cat.name}</span>
                     </button>
                   )
                 })}
@@ -573,70 +566,6 @@ function DashboardHeader({
       </div>
 
       <div className="amz-sub-header hidden lg:flex h-[42px] items-center gap-1 bg-[#232F3E] px-0 py-0 text-[0.9rem] font-semibold text-white sm:gap-2">
-        <div ref={categoryRef} className="relative shrink-0 self-stretch">
-          <button
-            type="button"
-            className="flex h-full w-[138px] items-center gap-1 border-r border-r-white/15 bg-[#232F3E] px-2.5 text-[0.82rem] font-semibold text-white transition hover:bg-[#1B2735] min-[390px]:w-[146px] sm:w-auto sm:max-w-[190px] sm:gap-2 sm:px-3 sm:text-[0.85rem]"
-            onClick={() => {
-              setCategoryOpen((prev) => !prev)
-              setDesktopAreaOpen(false)
-              setMobileAreaOpen(false)
-            }}
-          >
-            <span className="truncate">{selectedCategoryLabel}</span>
-            <FaChevronDown
-              className={`shrink-0 text-[0.7rem] transition ${
-                categoryOpen ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          <div
-            className={`absolute left-0 top-[calc(100%+8px)] z-[3000] w-[260px] overflow-hidden rounded-r-xl border border-l-0 border-slate-200 bg-white shadow-2xl transition-all duration-200 ${
-              categoryOpen
-                ? "pointer-events-auto translate-y-0 opacity-100"
-                : "pointer-events-none -translate-y-2 opacity-0"
-            }`}
-          >
-            <div className="max-h-[280px] overflow-y-auto py-2">
-              <button
-                type="button"
-                className={`flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium transition hover:bg-slate-50 ${
-                  categoryFilter === "all"
-                    ? "bg-pink-50 text-pink-700"
-                    : "text-slate-700"
-                }`}
-                onClick={() => selectCategory("all")}
-              >
-                {renderDropdownMarker({ active: categoryFilter === "all" })}
-                All Categories
-              </button>
-
-              {(categories || []).map((category) => {
-                const isActive = categoryFilter === category.name
-                return (
-                  <button
-                    key={category.id || category.name}
-                    type="button"
-                    className={`flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50 ${
-                      isActive
-                        ? "bg-pink-50 text-pink-700"
-                        : "text-slate-700"
-                    }`}
-                    onClick={() => selectCategory(category.name)}
-                  >
-                    {renderDropdownMarker({
-                      imageUrl: dropdownImages.categoryImageByName.get(category.name),
-                      active: isActive,
-                    })}
-                    <span className="truncate">{category.name}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-
         <button
           type="button"
           className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2"
@@ -807,36 +736,6 @@ function DashboardHeader({
             </button>
           </div>
 
-          {/* Shop categories */}
-          {(categories || []).length > 0 && (
-            <>
-              <div className="mx-6 border-t border-slate-100" />
-              <div className="px-6 pb-1 pt-3">
-                <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-slate-400">
-                  Shop Categories
-                </p>
-              </div>
-              <div className="flex flex-col pb-4">
-                <button
-                  type="button"
-                  onClick={() => { setMoreOpen(false); setCategoryFilter("all") }}
-                  className="flex items-center gap-3 px-6 py-3 text-left text-sm font-semibold text-pink-600 transition hover:bg-slate-50 active:bg-slate-100"
-                >
-                  All Categories
-                </button>
-                {(categories || []).map((cat) => (
-                  <button
-                    key={cat.id || cat.name}
-                    type="button"
-                    onClick={() => { setMoreOpen(false); setCategoryFilter(cat.name) }}
-                    className="flex items-center gap-3 px-6 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 active:bg-slate-100"
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
         </div>
       </>
     )}
