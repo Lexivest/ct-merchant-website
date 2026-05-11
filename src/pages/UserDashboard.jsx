@@ -30,6 +30,7 @@ import { UPLOAD_RULES, formatBytes } from "../lib/uploadRules"
 import { prepareVendorDashboardEntryTransition } from "../lib/vendorRouteTransitions"
 import { buildWishlistCacheKey, fetchWishlistData } from "../lib/wishlistData"
 import { isActiveMarketplaceShop, isServiceCategory, isServiceShop } from "../lib/serviceCategories"
+import { isValidNigerianPhone, normalizePhone } from "../lib/validators"
 
 import DashboardHeader from "../components/dashboard/layout/DashboardHeader"
 import MarketSection from "../components/dashboard/sections/MarketSection"
@@ -259,7 +260,7 @@ function DashboardAnnouncementsModal({ announcements, open, onClose }) {
   )
 }
 
-function PromoAlertBanner() {
+function PromoAlertBanner({ onClaim }) {
   const [visible, setVisible] = useState(true)
   const [msgIndex, setMsgIndex] = useState(0)
   
@@ -299,8 +300,9 @@ function PromoAlertBanner() {
         </div>
 
         <div className="relative flex items-center gap-2 sm:gap-3">
-          <button 
+          <button
             type="button"
+            onClick={onClaim}
             className="whitespace-nowrap rounded-full bg-white px-4 py-1.5 text-[9px] font-black uppercase tracking-tighter text-[#BE185D] transition hover:bg-slate-50 active:scale-95 sm:px-6 sm:py-2 sm:text-[10px]"
           >
             Claim
@@ -2138,6 +2140,12 @@ function UserDashboard() {
       return
     }
 
+    const normalizedPhone = normalizePhone(profileEditForm.phone)
+    if (normalizedPhone && !isValidNigerianPhone(normalizedPhone)) {
+      setProfileEditError("Enter a valid phone number, for example 08012345678.")
+      return
+    }
+
     if (!profileEditForm.city_id || !profileEditForm.area_id) {
       setProfileEditError("Please select both city and area.")
       return
@@ -2166,7 +2174,7 @@ function UserDashboard() {
 
       const updatePayload = {
         full_name: fullName,
-        phone,
+        phone: normalizedPhone || null,
         city_id: parseInt(profileEditForm.city_id, 10),
         area_id: parseInt(profileEditForm.area_id, 10),
       }
@@ -2203,8 +2211,8 @@ function UserDashboard() {
     }
 
       const refreshedProfileRes = await supabase
-        .from("profiles")
-        .select("*, cities(name)")
+        .from("vw_user_profiles")
+        .select("*")
         .eq("id", user.id)
         .maybeSingle()
 
@@ -2213,7 +2221,7 @@ function UserDashboard() {
         {
           ...(localData.profile || {}),
           full_name: fullName,
-          phone,
+          phone: normalizedPhone || null,
           city_id: parseInt(profileEditForm.city_id, 10),
           area_id: parseInt(profileEditForm.area_id, 10),
           avatar_url: avatarUrl,
@@ -2374,7 +2382,7 @@ function UserDashboard() {
             loading={dynamicLoading && !localData?.shops?.length}
             error={dataError}
             onRetry={mutateDynamic}
-            promoBanner={<PromoAlertBanner />}
+            promoBanner={<PromoAlertBanner onClaim={openAnnouncementsModal} />}
           />
         )}
         {activeTab === "services" && (

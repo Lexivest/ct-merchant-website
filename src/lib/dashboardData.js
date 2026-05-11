@@ -79,8 +79,8 @@ async function resolveDashboardProfile({ userId, profile = null }) {
 
   if (!currentProfile?.city_id) {
     const { data, error } = await supabase
-      .from("profiles")
-      .select("*, cities(name)")
+      .from("vw_user_profiles")
+      .select("*")
       .eq("id", userId)
       .maybeSingle()
 
