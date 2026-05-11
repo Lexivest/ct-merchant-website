@@ -387,9 +387,11 @@ function FeaturedCitySlider({ banners, onOpenShop }) {
 
 const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
   const shopProducts = products || EMPTY_PRODUCTS
+  const gridProducts = shopProducts.slice(0, 4)
+  const stripProducts = shopProducts.slice(4, 11)
 
   const cells = Array.from({ length: 4 }).map((_, index) => {
-    const item = shopProducts[index]
+    const item = gridProducts[index]
 
     if (!item) {
       return (
@@ -464,6 +466,25 @@ const ShopCard = memo(function ShopCard({ shop, products, onOpenShop }) {
       >
         <div className="shop-card-title">{shop.name}</div>
         <div className="shop-image-grid">{cells}</div>
+        {stripProducts.length > 0 && (
+          <div className="flex gap-[5px] pt-2 overflow-hidden">
+            {stripProducts.map((item, idx) => (
+              <div
+                key={`${shop.id}-strip-${item.id}-${idx}`}
+                className="h-[34px] w-[34px] shrink-0 overflow-hidden rounded-lg bg-slate-50"
+              >
+                <StableImage
+                  src={item.image_url}
+                  alt=""
+                  width={68}
+                  height={68}
+                  aspectRatio={1}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -678,7 +699,7 @@ function MarketSection({
       }
 
       const existing = grouped.get(product.shop_id)
-      if (existing && existing.length >= 4) return
+      if (existing && existing.length >= 11) return
 
       if (existing) {
         existing.push(product)

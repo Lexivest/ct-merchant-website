@@ -292,9 +292,9 @@ img {
   margin-bottom: 10px;
   border-radius: 999px;
   background: #fce7f3;
-  padding: 6px 12px;
+  padding: 6px 14px;
   color: #be185d;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 800;
   line-height: 1.25;
   overflow: hidden;
@@ -352,7 +352,7 @@ img {
 }
 
 .sg-name {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: #0f1111;
   font-weight: 500;
   white-space: nowrap;
@@ -361,7 +361,7 @@ img {
 }
 
 .sg-price {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 800;
   color: #db2777;
   margin-top: 1px;
