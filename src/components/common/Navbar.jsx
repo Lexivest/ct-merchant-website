@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, NavLink } from "react-router-dom"
 import ScrollingTicker from "./ScrollingTicker"
 import StableImage from "./StableImage"
 
@@ -76,13 +76,20 @@ function Navbar() {
 
           <nav className="hidden items-center gap-5 lg:flex">
             {navLinks.map((link) => (
-              <Link
+              <NavLink
                 key={link.to}
                 to={link.to}
-                className="text-sm font-semibold text-slate-700 no-underline transition hover:text-pink-600"
+                end={link.to === "/"}
+                className={({ isActive }) =>
+                  `text-sm no-underline transition ${
+                    isActive
+                      ? "font-extrabold text-pink-600"
+                      : "font-semibold text-slate-700 hover:text-pink-600"
+                  }`
+                }
               >
                 {link.label}
-              </Link>
+              </NavLink>
             ))}
 
             <Link
@@ -145,14 +152,21 @@ function Navbar() {
             <div className="absolute inset-x-0 top-full z-50 border-t border-pink-100 bg-white px-4 py-3 shadow-xl lg:hidden">
               <nav className="flex flex-col gap-2">
                 {navLinks.map((link) => (
-                  <Link
+                  <NavLink
                     key={link.to}
                     to={link.to}
+                    end={link.to === "/"}
                     onClick={closeMenu}
-                    className="rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 no-underline transition hover:bg-pink-50 hover:text-pink-600"
+                    className={({ isActive }) =>
+                      `rounded-xl px-3 py-3 text-sm no-underline transition ${
+                        isActive
+                          ? "bg-pink-50 font-extrabold text-pink-600"
+                          : "font-semibold text-slate-700 hover:bg-pink-50 hover:text-pink-600"
+                      }`
+                    }
                   >
                     {link.label}
-                  </Link>
+                  </NavLink>
                 ))}
 
                 <Link

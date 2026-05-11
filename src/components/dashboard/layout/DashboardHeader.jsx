@@ -5,6 +5,7 @@ import {
   FaBox,
   FaBullhorn,
   FaChevronDown,
+  FaEllipsis,
   FaHouse,
   FaLocationDot,
   FaMagnifyingGlass,
@@ -51,6 +52,7 @@ function DashboardHeader({
   const [desktopAreaOpen, setDesktopAreaOpen] = useState(false)
   const [mobileAreaOpen, setMobileAreaOpen] = useState(false)
   const [categoryOpen, setCategoryOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
 
   const desktopAreaRef = useRef(null)
   const mobileAreaRef = useRef(null)
@@ -202,7 +204,7 @@ function DashboardHeader({
 
   function renderNavControls() {
     return (
-      <nav className="flex shrink-0 items-center gap-1 sm:gap-2" aria-label="Dashboard navigation">
+      <nav className="hidden lg:flex shrink-0 items-center gap-1 sm:gap-2" aria-label="Dashboard navigation">
         <button
           type="button"
           className={`amz-nav-item ${
@@ -221,10 +223,10 @@ function DashboardHeader({
             activeTab === "services" ? "active" : ""
           } flex h-[30px] w-[30px] items-center justify-center gap-[6px] rounded border border-transparent px-0 text-[0.9rem] font-bold text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-3`}
           onClick={() => switchScreen("services")}
-          title="Dashboard"
+          title="Hub"
         >
           <FaTableCellsLarge className="text-[1.05rem]" />
-          <span className="hidden min-[900px]:inline">Dashboard</span>
+          <span className="hidden min-[900px]:inline">Hub</span>
         </button>
 
         <button
@@ -257,7 +259,7 @@ function DashboardHeader({
           type="button"
           className={`amz-nav-item ${
             activeTab === "profile" ? "active" : ""
-          } flex h-[30px] w-[32px] items-center justify-center rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2`}
+          } flex h-[30px] w-[32px] items-center justify-center gap-[6px] rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2`}
           onClick={() => switchScreen("profile")}
           title="Profile"
         >
@@ -270,21 +272,24 @@ function DashboardHeader({
               event.currentTarget.src = fallbackAvatarSrc
             }}
           />
+          <span className="hidden min-[900px]:inline">Profile</span>
         </button>
 
         <button
           type="button"
-          className="amz-nav-item flex h-[30px] w-[30px] items-center justify-center rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2.5"
+          className="amz-nav-item flex h-[30px] w-[30px] items-center justify-center gap-[6px] rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2.5"
           onClick={onShopIndex}
           title="Shops & Services Directory"
         >
           <FaArrowDownAZ className="text-[1.05rem]" />
+          <span className="hidden min-[900px]:inline">Directory</span>
         </button>
       </nav>
     )
   }
 
   return (
+    <>
     <header className="amz-header sticky top-0 z-[1000] flex flex-col bg-[#131921] text-white">
       <style>
         {`
@@ -632,7 +637,7 @@ function DashboardHeader({
 
         <button
           type="button"
-          className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2"
+          className="hidden lg:flex relative h-[30px] w-[30px] shrink-0 items-center justify-center rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2"
           onClick={onOpenAnnouncements}
           title="Announcements"
           aria-label="Open announcements"
@@ -649,6 +654,145 @@ function DashboardHeader({
         <div className="min-w-0 flex-1" />
       </div>
     </header>
+
+    {/* ── Mobile bottom navigation bar ── visible on < lg screens only ── */}
+    <nav
+      aria-label="Mobile navigation"
+      className="fixed bottom-0 inset-x-0 z-[1000] flex h-14 items-stretch border-t border-slate-200 bg-white shadow-[0_-2px_12px_rgba(0,0,0,0.07)] lg:hidden"
+    >
+      {/* Repository */}
+      <button
+        type="button"
+        onClick={() => { setMoreOpen(false); switchScreen("market") }}
+        className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition ${
+          activeTab === "market" ? "text-pink-600" : "text-slate-500 hover:text-pink-500"
+        }`}
+      >
+        <FaHouse className="text-[1.1rem]" />
+        <span className="text-[0.6rem] font-extrabold uppercase tracking-wide">Market</span>
+      </button>
+
+      {/* Hub */}
+      <button
+        type="button"
+        onClick={() => { setMoreOpen(false); switchScreen("services") }}
+        className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition ${
+          activeTab === "services" ? "text-pink-600" : "text-slate-500 hover:text-pink-500"
+        }`}
+      >
+        <FaTableCellsLarge className="text-[1.1rem]" />
+        <span className="text-[0.6rem] font-extrabold uppercase tracking-wide">Hub</span>
+      </button>
+
+      {/* Alerts */}
+      <button
+        type="button"
+        onClick={() => { setMoreOpen(false); switchScreen("notifications") }}
+        className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 transition ${
+          activeTab === "notifications" ? "text-pink-600" : "text-slate-500 hover:text-pink-500"
+        }`}
+      >
+        <span className="relative">
+          <FaBell className="text-[1.1rem]" />
+          {unread > 0 && (
+            <span className="absolute -right-1.5 -top-1 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-red-500 px-[3px] text-[0.5rem] font-black text-white ring-1 ring-white">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </span>
+        <span className="text-[0.6rem] font-extrabold uppercase tracking-wide">Alerts</span>
+      </button>
+
+      {/* Profile */}
+      <button
+        type="button"
+        onClick={() => { setMoreOpen(false); switchScreen("profile") }}
+        className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition ${
+          activeTab === "profile" ? "text-pink-600" : "text-slate-500 hover:text-pink-500"
+        }`}
+      >
+        <img
+          src={avatarSrc}
+          alt="Profile"
+          className={`h-[22px] w-[22px] rounded-full object-cover ${
+            activeTab === "profile" ? "ring-2 ring-pink-500" : "ring-1 ring-slate-300"
+          }`}
+          onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = fallbackAvatarSrc }}
+        />
+        <span className="text-[0.6rem] font-extrabold uppercase tracking-wide">Profile</span>
+      </button>
+
+      {/* More */}
+      <button
+        type="button"
+        onClick={() => setMoreOpen((prev) => !prev)}
+        className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 transition ${
+          moreOpen ? "text-pink-600" : "text-slate-500 hover:text-pink-500"
+        }`}
+      >
+        <span className="relative">
+          <FaEllipsis className="text-[1.1rem]" />
+          {announcementsCount > 0 && (
+            <span className="absolute -right-1.5 -top-1 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-pink-600 px-[3px] text-[0.5rem] font-black text-white ring-1 ring-white">
+              {announcementsCount > 9 ? "9+" : announcementsCount}
+            </span>
+          )}
+        </span>
+        <span className="text-[0.6rem] font-extrabold uppercase tracking-wide">More</span>
+      </button>
+    </nav>
+
+    {/* ── "More" sheet ── slides up above the bottom nav ── */}
+    {moreOpen && (
+      <>
+        {/* Backdrop */}
+        <div
+          className="fixed inset-0 z-[999] bg-black/20 lg:hidden"
+          onClick={() => setMoreOpen(false)}
+          aria-hidden="true"
+        />
+        {/* Sheet */}
+        <div className="fixed bottom-14 inset-x-0 z-[1000] overflow-hidden rounded-t-2xl border-t border-slate-200 bg-white shadow-[0_-8px_24px_rgba(0,0,0,0.12)] lg:hidden">
+          <div className="mx-auto my-2.5 h-1 w-10 rounded-full bg-slate-300" />
+          <div className="flex flex-col pb-3">
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); onOpenAnnouncements() }}
+              className="flex items-center gap-4 px-6 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100"
+            >
+              <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-pink-50 text-pink-600">
+                <FaBullhorn className="text-base" />
+                {announcementsCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-pink-600 px-[3px] text-[0.55rem] font-black text-white">
+                    {announcementsCount > 9 ? "9+" : announcementsCount}
+                  </span>
+                )}
+              </span>
+              <div>
+                <div className="text-sm font-bold text-slate-900">Announcements</div>
+                <div className="text-xs text-slate-500">Platform updates and notices</div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); onShopIndex() }}
+              className="flex items-center gap-4 px-6 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                <FaArrowDownAZ className="text-base" />
+              </span>
+              <div>
+                <div className="text-sm font-bold text-slate-900">Shop Directory</div>
+                <div className="text-xs text-slate-500">Browse all shops and services A–Z</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </>
+    )}
+
+    </>
   )
 }
 

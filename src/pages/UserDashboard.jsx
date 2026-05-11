@@ -2369,7 +2369,7 @@ function UserDashboard() {
         onOpenAnnouncements={openAnnouncementsModal}
       />
 
-      <main className="content-body mx-auto w-full max-w-[1600px] pb-10">
+      <main className="content-body mx-auto w-full max-w-[1600px] pb-24 lg:pb-10">
         {activeTab === "market" && (
           <MarketSection
             dashboardData={localData}
