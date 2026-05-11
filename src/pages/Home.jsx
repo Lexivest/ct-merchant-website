@@ -655,7 +655,7 @@ function Home() {
       }
 
       const currentProfile = await supabase
-        .from("profiles")
+        .from("vw_user_profiles")
         .select("*")
         .eq("id", signedInUser.id)
         .maybeSingle()
@@ -683,7 +683,7 @@ function Home() {
 
     } catch (error) {
       const message = getFriendlyErrorMessage(error, "Please try again.")
-      
+
       let title = "Google sign-in failed"
       if (message.toLowerCase().includes("remaining before")) {
         title = "Warning"
@@ -809,7 +809,7 @@ function Home() {
       }
 
       const currentProfile = await supabase
-        .from("profiles")
+        .from("vw_user_profiles")
         .select("*")
         .eq("id", signedInUser.id)
         .maybeSingle()
@@ -858,6 +858,7 @@ function Home() {
     setResetEmailErrors({})
     setResetPasswordErrors({})
     setResetEmailForm({ email: loginForm.email || "" })
+    setShowPassword(false)
     setResetEmailOpen(true)
   }
 

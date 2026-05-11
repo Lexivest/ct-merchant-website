@@ -87,7 +87,7 @@ function CreateAccount() {
     loading: authLoading,
     isOffline,
   } = useAuthSession()
-  const shouldRedirectToDashboard = Boolean(user) && !suspended && !isOffline
+  const shouldRedirectToDashboard = Boolean(user) && !suspended && !isOffline && profile?.role === "user"
   const holdForExistingSession = shouldRedirectToDashboard && authLoading
   const transitionRetryRef = useRef(null)
   const cityRetryTimerRef = useRef(null)
@@ -284,20 +284,12 @@ function CreateAccount() {
 
       if (!signedInUser) throw new Error("Google sign-up did not return a valid user.")
 
-      const currentProfile = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", signedInUser.id)
-        .maybeSingle()
-
-      if (currentProfile.error) {
-        throw new Error("Could not verify your profile. Please try again.")
-      }
+      const hydratedProfile = await resolveFreshProfile(signedInUser.id, null)
 
       didOpenDashboard = await openDashboardWithTransition({
         session: result.auth?.session || null,
         user: signedInUser,
-        profile: currentProfile.data || null,
+        profile: hydratedProfile,
         suspended: false,
         profileLoaded: true,
       }, { replace: true })
@@ -373,7 +365,7 @@ function CreateAccount() {
 
     for (let attempt = 0; attempt < 4; attempt += 1) {
       const currentProfile = await supabase
-        .from("profiles")
+        .from("vw_user_profiles")
         .select("*")
         .eq("id", userId)
         .maybeSingle()
