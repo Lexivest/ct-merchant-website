@@ -786,7 +786,7 @@ function MarketSection({
           return bCount - aCount
         })
         return (
-        <div className="area-cards-row bg-white pb-4 pt-3 border-b border-slate-100">
+        <div className="area-cards-row bg-white pb-4 pt-1 border-b border-slate-100">
           <h2 className="sec-title px-4 pb-2 pt-1 text-[1.25rem] font-extrabold text-[#0F1111]">
             Explore Areas
           </h2>
@@ -853,19 +853,23 @@ function MarketSection({
       })()}
 
       {sponsoredProducts.length > 0 && (
-        <div className="sponsored-wrap bg-white pt-2 pb-4 border-b border-slate-50">
-           <div className="flex gap-4 overflow-x-auto pl-4 pb-2 no-scrollbar">
-             {sponsoredProducts.map((sponsored) => (
-               <SponsoredProductCard 
-                 key={sponsored.id} 
-                 sponsored={sponsored} 
-                 onOpenProduct={onOpenProduct}
-                 onOpenServiceProvider={onOpenServiceProvider}
-               />
-             ))}
-             <div className="w-4 shrink-0" aria-hidden="true" />
-           </div>
-        </div>
+        <>
+          <div className="h-[2px] bg-gradient-to-r from-white via-pink-400 to-white" />
+          <div className="sponsored-wrap bg-white pt-2 pb-3">
+            <div className="flex gap-3 overflow-x-auto pl-4 pb-1 no-scrollbar">
+              {sponsoredProducts.map((sponsored) => (
+                <SponsoredProductCard
+                  key={sponsored.id}
+                  sponsored={sponsored}
+                  onOpenProduct={onOpenProduct}
+                  onOpenServiceProvider={onOpenServiceProvider}
+                />
+              ))}
+              <div className="w-4 shrink-0" aria-hidden="true" />
+            </div>
+          </div>
+          <div className="h-[2px] bg-gradient-to-r from-white via-pink-400 to-white" />
+        </>
       )}
 
 
@@ -882,7 +886,7 @@ function MarketSection({
         return (
         <div key={area.id}>
           <div className="area-block-wrap bg-white">
-            <div className="flex items-center justify-between px-4 pb-0 pt-2">
+            <div className="flex items-center justify-between px-4 pb-0 pt-1">
               <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap text-[1.25rem] font-extrabold text-[#0F1111] !p-0">
                 {areaTitle}
               </h2>
@@ -930,8 +934,8 @@ function MarketSection({
           </div>
 
           {index === 2 && dashboardData.staffDiscoveries?.length > 0 && (
-            <div className="discoveries-section-wrap bg-white py-2 mb-1">
-              <h2 className="sec-title px-4 pb-2 text-[1.25rem] font-extrabold text-[#0F1111]">
+            <div className="discoveries-section-wrap bg-white pb-2 pt-1 mb-1">
+              <h2 className="sec-title px-4 pb-1 text-[1.25rem] font-extrabold text-[#0F1111]">
                 Recommended for you
               </h2>
               <div className="flex gap-4 overflow-x-auto pl-4 pb-2 no-scrollbar">
@@ -969,8 +973,8 @@ function MarketSection({
       )}
 
       {fairlyUsedProducts.length > 0 && (
-        <div className="fairly-used-section-wrap bg-white py-2 mb-1">
-          <h2 className="sec-title px-4 pb-2 text-[1.25rem] font-extrabold text-[#0F1111]">
+        <div className="fairly-used-section-wrap bg-white pb-2 pt-1 mb-1">
+          <h2 className="sec-title px-4 pb-1 text-[1.25rem] font-extrabold text-[#0F1111]">
             Fairly Used Items
           </h2>
           <div className="flex gap-4 overflow-x-auto pl-4 pb-2 no-scrollbar">
@@ -987,7 +991,7 @@ function MarketSection({
       )}
 
       {sortedCategories.length > 0 ? (
-        <div className="cat-section-wrap bg-white py-1">
+        <div className="cat-section-wrap bg-white pb-1 pt-0">
           <h2 className="sec-title flex items-center gap-[10px] overflow-x-auto whitespace-nowrap px-4 pb-2 pt-1 text-[1.25rem] font-extrabold text-[#0F1111]">
             Browse Categories
           </h2>
