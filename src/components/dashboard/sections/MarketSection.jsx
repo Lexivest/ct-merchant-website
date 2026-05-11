@@ -750,8 +750,6 @@ function MarketSection({
   // 3. ACTUAL RENDER
   return (
     <div className="screen active bg-slate-50">
-      {serviceLauncher}
-
       {dashboardData.featuredCityBanners?.length > 0 ? (
         <FeaturedCitySlider
           banners={dashboardData.featuredCityBanners}
