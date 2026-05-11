@@ -61,7 +61,6 @@ const COMPANY_DETAILS = {
   name: "CTMerchant Ltd",
   website: "www.ctmerchant.com.ng",
   rcNumber: "RC: 8879163",
-  email: "finance@ctmerchant.com.ng",
 }
 
 async function extractFunctionErrorMessage(error, fallback = "Action failed") {
@@ -552,8 +551,6 @@ function ReceiptModal({ proof, onClose, onSendWhatsApp }) {
                   <div className="text-2xl font-black tracking-tight">{COMPANY_DETAILS.name}</div>
                   <div className="mt-1 text-xs font-bold leading-5 text-white/80">
                     {COMPANY_DETAILS.website} - {COMPANY_DETAILS.rcNumber}
-                    <br />
-                    {COMPANY_DETAILS.email}
                   </div>
                 </div>
               </div>

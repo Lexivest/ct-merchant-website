@@ -326,46 +326,6 @@ function SupportDashboardView({ onBack, onOpenServices, mode = "support" }) {
                       <div className="rounded-3xl bg-pink-200 p-1 shadow-sm">
                         <div className="rounded-[22px] border border-pink-100 bg-white p-6 md:p-7">
                           <div className="flex items-start gap-3">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-pink-50 text-pink-600">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                className="h-5 w-5"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M4 6h16v12H4z"
-                                />
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M22 6l-10 7L2 6"
-                                />
-                              </svg>
-                            </div>
-
-                            <div>
-                              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">
-                                Email Support
-                              </p>
-                              <a
-                                href="mailto:support@ctmerchant.com.ng"
-                                className="mt-2 block text-base font-extrabold text-slate-900 transition hover:text-pink-600"
-                              >
-                                support@ctmerchant.com.ng
-                              </a>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="rounded-3xl bg-pink-200 p-1 shadow-sm">
-                        <div className="rounded-[22px] border border-pink-100 bg-white p-6 md:p-7">
-                          <div className="flex items-start gap-3">
                             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
