@@ -780,11 +780,10 @@ function MarketSection({
       ) : null}
 
       {(dashboardData.areas || []).length > 0 && (() => {
-        const areaShopIds = new Set((dashboardData.shops || []).map((s) => s.area_id))
         const sortedAreas = [...(dashboardData.areas || [])].sort((a, b) => {
-          const aHasShops = areaShopIds.has(a.id) ? 1 : 0
-          const bHasShops = areaShopIds.has(b.id) ? 1 : 0
-          return bHasShops - aHasShops
+          const aCount = productsByAreaId.get(a.id)?.length ?? 0
+          const bCount = productsByAreaId.get(b.id)?.length ?? 0
+          return bCount - aCount
         })
         return (
         <div className="area-cards-row bg-white pb-4 pt-3 border-b border-slate-100">
