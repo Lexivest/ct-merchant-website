@@ -89,6 +89,7 @@ function VendorsPanel() {
   const [realtimeShop, setRealtimeShop] = useState(null)
   const [verificationAccessOverride, setVerificationAccessOverride] = useState(null)
   const retryRouteTransitionRef = useRef(null)
+  const dataRef = useRef(null)
   const [routeTransition, setRouteTransition] = useState({
     pending: false,
     error: "",
@@ -98,7 +99,7 @@ function VendorsPanel() {
     if (!user) throw new Error("Authentication required")
 
     const { data: profile, error: profileErr } = await supabase
-      .from("profiles")
+      .from("vw_user_profiles")
       .select("is_suspended")
       .eq("id", user.id)
       .maybeSingle()
@@ -171,6 +172,10 @@ function VendorsPanel() {
   )
 
   useEffect(() => {
+    dataRef.current = data
+  }, [data])
+
+  useEffect(() => {
     setRealtimeShop(null)
   }, [data?.shop?.id, data?.shop?.is_service])
 
@@ -227,10 +232,11 @@ function VendorsPanel() {
           const nextShop = payload.new || null
           setRealtimeShop(nextShop)
           if (nextShop) {
+            const current = dataRef.current
             primeCachedFetchStore(vendorPanelCacheKey, {
-              ...data,
+              ...current,
               shop: {
-                ...(data?.shop || {}),
+                ...(current?.shop || {}),
                 ...nextShop,
               },
             })
@@ -304,7 +310,7 @@ function VendorsPanel() {
       supabase.removeChannel(paymentChannel)
       supabase.removeChannel(verificationProofChannel)
     }
-  }, [user, data, data?.shop?.id, isOffline, mutate])
+  }, [user, data?.shop?.id, isOffline, mutate])
 
   useEffect(() => {
     if (error === "SHOP_NOT_FOUND") {
@@ -983,6 +989,8 @@ function VendorsPanel() {
   )
 }
 
+const POP_IN_STYLE = "@keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }"
+
 function DashCard({
   title,
   subtitle,
@@ -1060,12 +1068,7 @@ function DashCard({
           </div>
         )}
 
-        <style
-          dangerouslySetInnerHTML={{
-            __html:
-              "@keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }",
-          }}
-        />
+        <style dangerouslySetInnerHTML={{ __html: POP_IN_STYLE }} />
       </div>
     </div>
   )

@@ -19,7 +19,9 @@ DECLARE
     'wishlist',
     'shop_likes',
     'announcements',
-    'categories'
+    'categories',
+    'physical_verification_payments',
+    'offline_payment_proofs'
   ];
   t text;
 BEGIN
