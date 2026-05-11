@@ -321,7 +321,7 @@ function DashboardHeader({
             >
               <button
                 type="button"
-                className="flex h-full max-w-[140px] items-center gap-2 bg-[#F3F4F6] px-3 text-[0.85rem] font-semibold text-[#555] transition hover:bg-[#DADADA] hover:text-[#0F1111]"
+                className="flex h-full max-w-[140px] items-center gap-2 bg-[#F3F4F6] px-3 text-[0.72rem] font-semibold text-[#555] transition hover:bg-[#DADADA] hover:text-[#0F1111]"
                 onClick={() => {
                   setDesktopAreaOpen((prev) => !prev)
                   setMobileAreaOpen(false)
@@ -448,7 +448,7 @@ function DashboardHeader({
           >
             <button
               type="button"
-              className="flex h-full max-w-[110px] items-center gap-2 bg-[#F3F4F6] px-2 text-[0.85rem] font-semibold text-[#555]"
+              className="flex h-full max-w-[110px] items-center gap-2 bg-[#F3F4F6] px-2 text-[0.72rem] font-semibold text-[#555]"
               onClick={() => {
                 setMobileAreaOpen((prev) => !prev)
                 setDesktopAreaOpen(false)

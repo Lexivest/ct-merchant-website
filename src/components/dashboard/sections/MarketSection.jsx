@@ -1,6 +1,5 @@
 import { memo, useEffect, useMemo, useState } from "react"
 import {
-  FaArrowRight,
   FaBolt,
   FaBriefcase,
   FaChevronRight,
@@ -121,17 +120,17 @@ function SponsoredProductCard({ sponsored, onOpenProduct, onOpenServiceProvider 
   const providerName = shopMeta?.name || sponsored?.shop_name || ""
 
   return (
-    <div 
+    <div
       onClick={handleClick}
-      className="group relative overflow-hidden rounded-[28px] cursor-pointer transition-all duration-500 hover:shadow-2xl active:scale-[0.98] bg-white border border-slate-100 flex flex-col p-4 w-[180px] md:w-[210px] shrink-0 shadow-md"
+      className="group relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-500 hover:shadow-xl active:scale-[0.98] bg-white border border-slate-100 flex flex-col p-3 w-[140px] md:w-[158px] shrink-0 shadow-sm"
     >
-      <div className="absolute top-3 left-3 z-10">
-        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-pink-600 text-white text-[9px] font-black uppercase tracking-tighter shadow-xl">
-          <FaBolt className="text-[8px] animate-pulse" /> {isServiceSponsor ? "Service" : "Sponsored"}
+      <div className="absolute top-2 left-2 z-10">
+        <span className="flex items-center gap-1 px-1.5 py-[3px] rounded-full bg-pink-600 text-white text-[7px] font-black uppercase tracking-tighter shadow-md">
+          <FaBolt className="text-[6px] animate-pulse" /> {isServiceSponsor ? "Service" : "Sponsored"}
         </span>
       </div>
-      
-      <div className="relative aspect-square w-full rounded-[20px] overflow-hidden bg-slate-50 mb-4">
+
+      <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-50 mb-2.5">
         {images.length > 0 ? (
           images.map((img, idx) => (
             <div
@@ -141,36 +140,32 @@ function SponsoredProductCard({ sponsored, onOpenProduct, onOpenServiceProvider 
               <StableImage
                 src={img}
                 alt={product.name}
-                width={400}
-                height={400}
+                width={300}
+                height={300}
                 aspectRatio={1}
                 className="h-full w-full object-cover"
               />
             </div>
           ))
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-pink-50 text-3xl text-pink-300">
+          <div className="flex h-full w-full items-center justify-center bg-pink-50 text-2xl text-pink-300">
             <FaBriefcase />
           </div>
         )}
-        
+
         {/* Pagination Dots for images */}
         {images.length > 1 && (
-          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-10">
+          <div className="absolute bottom-1.5 left-0 right-0 flex justify-center gap-1 z-10">
             {images.map((_, idx) => (
-              <div key={idx} className={`h-1 rounded-full transition-all duration-500 ${idx === activeImageIndex ? 'w-4 bg-white shadow-sm' : 'w-1 bg-white/40'}`} />
+              <div key={idx} className={`h-[3px] rounded-full transition-all duration-500 ${idx === activeImageIndex ? 'w-3 bg-white shadow-sm' : 'w-[3px] bg-white/40'}`} />
             ))}
           </div>
         )}
       </div>
 
-      <div className="space-y-1.5">
-        <div className="text-xs md:text-sm font-black text-slate-900 truncate leading-tight">{product.name}</div>
-        <div className="text-xs font-black text-pink-600">{priceLabel}</div>
-        <div className="pt-2 border-t border-slate-50 flex items-center justify-between mt-1">
-           <span className="text-[9px] md:text-[10px] font-black text-blue-800 uppercase tracking-tight truncate max-w-[70%]">{providerName}</span>
-           <FaArrowRight className="text-[9px] text-slate-300 group-hover:text-pink-500 transition-colors" />
-        </div>
+      <div className="space-y-1">
+        <div className="text-[0.72rem] font-black text-slate-900 truncate leading-tight">{product.name}</div>
+        <div className="text-[0.72rem] font-black text-pink-600">{priceLabel}</div>
       </div>
     </div>
   )
@@ -784,13 +779,20 @@ function MarketSection({
         />
       ) : null}
 
-      {(dashboardData.areas || []).length > 0 && (
+      {(dashboardData.areas || []).length > 0 && (() => {
+        const areaShopIds = new Set((dashboardData.shops || []).map((s) => s.area_id))
+        const sortedAreas = [...(dashboardData.areas || [])].sort((a, b) => {
+          const aHasShops = areaShopIds.has(a.id) ? 1 : 0
+          const bHasShops = areaShopIds.has(b.id) ? 1 : 0
+          return bHasShops - aHasShops
+        })
+        return (
         <div className="area-cards-row bg-white pb-4 pt-3 border-b border-slate-100">
-          <h2 className="px-4 pb-2 text-[0.72rem] font-black uppercase tracking-[0.16em] text-slate-400">
+          <h2 className="sec-title px-4 pb-2 pt-1 text-[1.25rem] font-extrabold text-[#0F1111]">
             Explore Areas
           </h2>
           <div className="flex gap-3 overflow-x-auto px-4 no-scrollbar">
-            {(dashboardData.areas || []).map((area) => {
+            {sortedAreas.map((area) => {
               const areaProducts = productsByAreaId.get(area.id) || []
               return (
                 <button
@@ -848,7 +850,8 @@ function MarketSection({
             <div className="w-2 shrink-0" aria-hidden="true" />
           </div>
         </div>
-      )}
+        )
+      })()}
 
       {sponsoredProducts.length > 0 && (
         <div className="sponsored-wrap bg-white pt-2 pb-4 border-b border-slate-50">
