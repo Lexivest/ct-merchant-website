@@ -499,7 +499,12 @@ img {
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    /* transform intentionally absent: keeping translate3d(0,0,0) here would
+       leave a CSS stacking context on the animated element via
+       animation-fill-mode:both, which breaks position:fixed descendants
+       (they position relative to the stacking-context ancestor instead of
+       the viewport and scroll away with content). The browser interpolates
+       the translate back to none naturally without it being in the "to" frame. */
   }
 }
 
