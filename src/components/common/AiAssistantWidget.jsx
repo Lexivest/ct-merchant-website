@@ -186,8 +186,23 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
     },
   ])
 
+  // If profile loads asynchronously after the widget mounts (e.g. first visit
+  // with no warm globalAuthMemory), the initial greeting was produced without
+  // the user's name. Refresh it once — but only while the conversation is still
+  // at the single welcome message so we never clobber an active chat session.
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length !== 1) return prev
+      const refreshed = getInitialMessage()
+      if (prev[0].content === refreshed) return prev
+      return [{ role: "assistant", content: refreshed }]
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstName])
+
   const [input, setInput] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [hasBeenOpened, setHasBeenOpened] = useState(false)
   const [anonymousSignature, setAnonymousSignature] = useState("")
   const [anonymousUsage, setAnonymousUsage] = useState(() => ({
     date: new Date().toISOString().split("T")[0],
@@ -231,7 +246,10 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
   }, [user])
 
   const toggleChat = () => {
-    setIsOpen((prev) => !prev)
+    setIsOpen((prev) => {
+      if (!prev) setHasBeenOpened(true)
+      return !prev
+    })
   }
 
   const resetChat = () => {
@@ -399,7 +417,7 @@ function AiAssistantWidget({ mode = "ambassador", shopData = null, productData =
             <FaRobot className="text-xl" />
           </button>
 
-          {!isOpen && (
+          {!isOpen && !hasBeenOpened && (
             <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-slate-900 text-[8px] font-black text-white">
               1
             </div>
