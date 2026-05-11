@@ -215,19 +215,31 @@ async function generatePromoBannerCanvasBlob({
   const gridY = headerHeight;
   const footerHeight = 88;
   const footerY = height - footerHeight;
-  const tileHeight = (footerY - gridY - gridPadding * 2 - gridGap) / 2;
-  const imageHeight = 252;
-  const safeProducts = Array.from({ length: 4 }, (_, index) => products?.[index] || {});
+
+  // Split products: first 4 for the 2×2 grid, up to 7 more for the image strip
+  const gridProducts4 = Array.from({ length: 4 }, (_, index) => products?.[index] || {});
+  const stripItems = (products || []).slice(4, 11).filter((p) => p?.image_url);
+
+  // Reserve 72px above the footer for the strip (only when there are strip images)
+  const stripHeight = stripItems.length > 0 ? 72 : 0;
+  const stripY = footerY - stripHeight;
+
+  const tileHeight = (stripY - gridY - gridPadding * 2 - gridGap) / 2;
+  // Keep image ≈ 69% of tile height to leave room for name + price text
+  const imageHeight = Math.round(tileHeight * 0.692);
+
   const qrUrl = `https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(`https://www.ctmerchant.com.ng/shop-detail?id=${shopId || ""}`)}`;
-  const [shopLogoDataUrl, qrDataUrl, productDataUrls] = await Promise.all([
+  const [shopLogoDataUrl, qrDataUrl, productDataUrls, stripDataUrls] = await Promise.all([
     imageUrlToDataUrl(shopLogoUrl),
     imageUrlToDataUrl(qrUrl),
-    Promise.all(safeProducts.map((product) => imageUrlToDataUrl(product.image_url))),
+    Promise.all(gridProducts4.map((product) => imageUrlToDataUrl(product.image_url))),
+    Promise.all(stripItems.map((product) => imageUrlToDataUrl(product.image_url))),
   ]);
-  const [shopLogo, qr, productImages] = await Promise.all([
+  const [shopLogo, qr, productImages, stripImages] = await Promise.all([
     loadImageElement(shopLogoDataUrl).catch(() => null),
     loadImageElement(qrDataUrl).catch(() => null),
     Promise.all(productDataUrls.map((dataUrl) => loadImageElement(dataUrl).catch(() => null))),
+    Promise.all(stripDataUrls.map((dataUrl) => loadImageElement(dataUrl).catch(() => null))),
   ]);
 
   const canvas = document.createElement("canvas");
@@ -237,10 +249,17 @@ async function generatePromoBannerCanvasBlob({
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Could not prepare promo banner image.");
 
+  // Background layers
   context.fillStyle = "#003B95";
   context.fillRect(0, 0, width, height);
+  // White zone covers only the product grid area (not the strip)
   context.fillStyle = "#FFFFFF";
-  context.fillRect(0, gridY, width, footerY - gridY);
+  context.fillRect(0, gridY, width, stripY - gridY);
+  // Strip zone: dark blue band between grid and footer
+  if (stripItems.length > 0) {
+    context.fillStyle = "#002D74";
+    context.fillRect(0, stripY, width, stripHeight);
+  }
   context.fillStyle = "#1E3A8A";
   context.fillRect(0, footerY, width, footerHeight);
 
@@ -262,21 +281,21 @@ async function generatePromoBannerCanvasBlob({
 
   const headerTextMaxWidth = width - logoSize * 2 - logoX * 4;
   const centerX = width / 2;
-  const shopNameLines = drawWrappedText(context, shopName, centerX, 42, headerTextMaxWidth, 28, 2, {
+  const shopNameLines = drawWrappedText(context, shopName, centerX, 42, headerTextMaxWidth, 30, 2, {
     weight: 900,
-    size: 28,
+    size: 30,
     fillStyle: "#FFFFFF",
     align: "center",
   });
-  const categoryY = 42 + shopNameLines.length * 28 + 10;
+  const categoryY = 42 + shopNameLines.length * 30 + 10;
   const categoryText = truncateMeasuredText(context, category, headerTextMaxWidth);
 
-  setCanvasFont(context, 900, 20);
+  setCanvasFont(context, 900, 22);
   context.fillStyle = "#FBBF24";
   context.textAlign = "center";
   context.textBaseline = "alphabetic";
   context.fillText(categoryText, centerX, categoryY);
-  const categoryMetrics = context.measureText(categoryText);``
+  const categoryMetrics = context.measureText(categoryText);
   const categoryUnderlineWidth = Math.min(categoryMetrics.width, headerTextMaxWidth);
   context.strokeStyle = "#FBBF24";
   context.lineWidth = 3;
@@ -285,15 +304,15 @@ async function generatePromoBannerCanvasBlob({
   context.lineTo(centerX + categoryUnderlineWidth / 2, categoryY + 8);
   context.stroke();
 
-  setCanvasFont(context, 800, 18);
+  setCanvasFont(context, 800, 20);
   context.fillStyle = "rgba(255,255,255,0.92)";
-  context.fillText(websiteText, centerX, categoryY + 34);
+  context.fillText(websiteText, centerX, categoryY + 36);
 
-  setCanvasFont(context, 900, 20);
+  setCanvasFont(context, 900, 22);
   context.fillStyle = "#93C5FD";
-  context.fillText(uniqueId, centerX, categoryY + 62);
+  context.fillText(uniqueId, centerX, categoryY + 66);
 
-  setCanvasFont(context, 800, 17);
+  setCanvasFont(context, 800, 19);
   const addressLines = wrapMeasuredText(context, address, headerTextMaxWidth - 28, 2);
   const addressStartY = categoryY + 91;
   const addressLineHeight = 22;
@@ -327,7 +346,7 @@ async function generatePromoBannerCanvasBlob({
     context.fillText("QR", qrX + logoSize / 2, headerMediaY + logoSize / 2);
   }
 
-  safeProducts.forEach((product, index) => {
+  gridProducts4.forEach((product, index) => {
     const col = index % 2;
     const row = Math.floor(index / 2);
     const x = gridPadding + col * (tileWidth + gridGap);
@@ -364,18 +383,35 @@ async function generatePromoBannerCanvasBlob({
     context.lineTo(x + tileWidth, y + imageHeight);
     context.stroke();
 
-    setCanvasFont(context, 800, 17);
+    setCanvasFont(context, 800, 19);
     context.fillStyle = "#0F1111";
     context.textAlign = "center";
-    context.fillText(truncateMeasuredText(context, product.name || "Featured Product", tileWidth - 24), x + tileWidth / 2, y + imageHeight + 40);
+    context.fillText(truncateMeasuredText(context, product.name || "Featured Product", tileWidth - 24), x + tileWidth / 2, y + imageHeight + 38);
 
     const price = formatPromoPrice(product);
     if (price) {
-      setCanvasFont(context, 900, 22);
+      setCanvasFont(context, 900, 24);
       context.fillStyle = "#EA580C";
-      context.fillText(price, x + tileWidth / 2, y + imageHeight + 78);
+      context.fillText(price, x + tileWidth / 2, y + imageHeight + 76);
     }
   });
+
+  // Draw image strip (up to 7 extra product thumbnails, no text)
+  if (stripItems.length > 0) {
+    const thumbSize = 52;
+    const thumbGap = 8;
+    const totalThumbWidth = stripImages.length * thumbSize + (stripImages.length - 1) * thumbGap;
+    const thumbStartX = Math.round((width - totalThumbWidth) / 2);
+    const thumbY = Math.round(stripY + (stripHeight - thumbSize) / 2);
+
+    stripImages.forEach((image, idx) => {
+      const tx = thumbStartX + idx * (thumbSize + thumbGap);
+      fillRoundedRect(context, tx, thumbY, thumbSize, thumbSize, 8, "#1A3A6B");
+      if (image) {
+        drawContainedImage(context, image, tx, thumbY, thumbSize, thumbSize, "#1A3A6B");
+      }
+    });
+  }
 
   setCanvasFont(context, 900, 19);
   context.fillStyle = "#FFFFFF";
@@ -620,7 +656,7 @@ export default function MerchantPromoBanner() {
           .select("id, name, price, discount_price, condition, image_url")
           .eq("shop_id", shop.id)
           .eq("is_approved", true)
-          .limit(4);
+          .limit(11);
 
         if (prodErr) throw prodErr;
 
@@ -630,13 +666,15 @@ export default function MerchantPromoBanner() {
           price: null,
           image_url: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop"
         };
-        
+
         const available = (prods || []).filter((p) => p.image_url);
-        const finalProducts = available.length
+        const gridProducts = available.length
           ? Array.from({ length: 4 }, (_, index) => available[index % available.length])
           : Array(4).fill(fallbackProduct);
+        // Strip: genuine extra products beyond first 4 (no cycling)
+        const stripProducts = available.slice(4, 11);
 
-        setProducts(finalProducts);
+        setProducts([...gridProducts, ...stripProducts]);
       } catch (err) {
         setError(getFriendlyErrorMessage(err, "Could not load this page. Retry."));
       } finally {
