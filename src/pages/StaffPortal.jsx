@@ -76,7 +76,12 @@ function StaffPortal() {
       })
 
       void import("./StaffDashboard")
-      navigate("/staff-dashboard", { replace: true })
+      // fromStaffTransition: true puts ProtectedStaffRoute into card-transition
+      // fast-path — it reads the already-primed staffPortalMemory and renders
+      // children immediately, bypassing the needsStaffFallback loading cycle
+      // that would otherwise fire when the background auth re-fetch overwrites
+      // the staffProfile with the raw DB profile (which lacks staff_portal_access).
+      navigate("/staff-dashboard", { replace: true, state: { fromStaffTransition: true } })
       
     } catch (error) {
       setErrorMessage(error.message)
