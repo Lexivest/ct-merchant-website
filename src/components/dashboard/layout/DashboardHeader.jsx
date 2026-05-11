@@ -3,6 +3,7 @@ import {
   FaArrowDownAZ,
   FaBell,
   FaBox,
+  FaBriefcase,
   FaBullhorn,
   FaChevronDown,
   FaEllipsis,
@@ -39,6 +40,7 @@ function DashboardHeader({
   onShopIndex,
   announcementsCount = 0,
   onOpenAnnouncements,
+  onOpenServices,
 }) {
   const avatarSrc =
     currentProfile?.avatar_url ||
@@ -204,7 +206,7 @@ function DashboardHeader({
 
   function renderNavControls() {
     return (
-      <nav className="hidden lg:flex shrink-0 items-center gap-1 sm:gap-2" aria-label="Dashboard navigation">
+      <nav className="flex shrink-0 items-center gap-1 sm:gap-2" aria-label="Dashboard navigation">
         <button
           type="button"
           className={`amz-nav-item ${
@@ -570,7 +572,7 @@ function DashboardHeader({
         ) : null}
       </div>
 
-      <div className="amz-sub-header flex h-[42px] items-center gap-1 bg-[#232F3E] px-0 py-0 text-[0.9rem] font-semibold text-white sm:gap-2">
+      <div className="amz-sub-header hidden lg:flex h-[42px] items-center gap-1 bg-[#232F3E] px-0 py-0 text-[0.9rem] font-semibold text-white sm:gap-2">
         <div ref={categoryRef} className="relative shrink-0 self-stretch">
           <button
             type="button"
@@ -637,7 +639,7 @@ function DashboardHeader({
 
         <button
           type="button"
-          className="hidden lg:flex relative h-[30px] w-[30px] shrink-0 items-center justify-center rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2"
+          className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded border border-transparent px-0 text-white transition hover:border-white sm:h-[32px] sm:w-auto sm:px-2"
           onClick={onOpenAnnouncements}
           title="Announcements"
           aria-label="Open announcements"
@@ -752,9 +754,25 @@ function DashboardHeader({
           aria-hidden="true"
         />
         {/* Sheet */}
-        <div className="fixed bottom-14 inset-x-0 z-[1000] overflow-hidden rounded-t-2xl border-t border-slate-200 bg-white shadow-[0_-8px_24px_rgba(0,0,0,0.12)] lg:hidden">
+        <div className="fixed bottom-14 inset-x-0 z-[1000] max-h-[70vh] overflow-y-auto rounded-t-2xl border-t border-slate-200 bg-white shadow-[0_-8px_24px_rgba(0,0,0,0.12)] lg:hidden">
           <div className="mx-auto my-2.5 h-1 w-10 rounded-full bg-slate-300" />
-          <div className="flex flex-col pb-3">
+
+          {/* Quick actions */}
+          <div className="flex flex-col">
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); onOpenServices?.() }}
+              className="flex items-center gap-4 px-6 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <FaBriefcase className="text-base" />
+              </span>
+              <div>
+                <div className="text-sm font-bold text-slate-900">Local Services</div>
+                <div className="text-xs text-slate-500">Find service providers near you</div>
+              </div>
+            </button>
+
             <button
               type="button"
               onClick={() => { setMoreOpen(false); onOpenAnnouncements() }}
@@ -788,6 +806,37 @@ function DashboardHeader({
               </div>
             </button>
           </div>
+
+          {/* Shop categories */}
+          {(categories || []).length > 0 && (
+            <>
+              <div className="mx-6 border-t border-slate-100" />
+              <div className="px-6 pb-1 pt-3">
+                <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-slate-400">
+                  Shop Categories
+                </p>
+              </div>
+              <div className="flex flex-col pb-4">
+                <button
+                  type="button"
+                  onClick={() => { setMoreOpen(false); setCategoryFilter("all") }}
+                  className="flex items-center gap-3 px-6 py-3 text-left text-sm font-semibold text-pink-600 transition hover:bg-slate-50 active:bg-slate-100"
+                >
+                  All Categories
+                </button>
+                {(categories || []).map((cat) => (
+                  <button
+                    key={cat.id || cat.name}
+                    type="button"
+                    onClick={() => { setMoreOpen(false); setCategoryFilter(cat.name) }}
+                    className="flex items-center gap-3 px-6 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 active:bg-slate-100"
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </>
     )}

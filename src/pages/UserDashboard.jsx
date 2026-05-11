@@ -32,7 +32,7 @@ import { buildWishlistCacheKey, fetchWishlistData } from "../lib/wishlistData"
 import { isActiveMarketplaceShop, isServiceCategory, isServiceShop } from "../lib/serviceCategories"
 
 import DashboardHeader from "../components/dashboard/layout/DashboardHeader"
-import MarketSection from "../components/dashboard/sections/MarketSection"
+import MarketSection, { ServiceCategoryPicker } from "../components/dashboard/sections/MarketSection"
 import NotificationsSection from "../components/dashboard/sections/NotificationsSection"
 
 const loadServicesProfileSection = () =>
@@ -408,6 +408,7 @@ function UserDashboard() {
   })
   const [prefetchedWishlistItems, setPrefetchedWishlistItems] = useState(null)
   const [announcementsOpen, setAnnouncementsOpen] = useState(false)
+  const [servicePickerOpen, setServicePickerOpen] = useState(false)
   const [hasUnreadAnnouncements, setHasUnreadAnnouncements] = useState(false)
 
   useEffect(() => {
@@ -2367,6 +2368,7 @@ function UserDashboard() {
           hasUnreadAnnouncements ? (localData.announcements || []).length : 0
         }
         onOpenAnnouncements={openAnnouncementsModal}
+        onOpenServices={() => setServicePickerOpen(true)}
       />
 
       <main className="content-body mx-auto w-full max-w-[1600px] pb-24 lg:pb-10">
@@ -2473,6 +2475,11 @@ function UserDashboard() {
         announcements={localData.announcements || []}
         open={announcementsOpen}
         onClose={() => markAnnouncementsSeen()}
+      />
+      <ServiceCategoryPicker
+        open={servicePickerOpen}
+        onClose={() => setServicePickerOpen(false)}
+        onOpenServiceCategory={openServiceCategoryWithTransition}
       />
     </div>
   )

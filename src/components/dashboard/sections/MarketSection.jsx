@@ -2,7 +2,6 @@ import { memo, useEffect, useMemo, useState } from "react"
 import {
   FaArrowRight,
   FaBolt,
-  FaBriefcase,
   FaChevronRight,
   FaImage,
   FaMagnifyingGlass,
@@ -222,7 +221,7 @@ function formatServicePrice(value) {
   return `From N${amount.toLocaleString()}`
 }
 
-function ServiceCategoryPicker({ open, onClose, onOpenServiceCategory }) {
+export function ServiceCategoryPicker({ open, onClose, onOpenServiceCategory }) {
   const [query, setQuery] = useState("")
   const normalizedQuery = query.trim().toLowerCase()
 
@@ -655,7 +654,6 @@ function MarketSection({
   error,
   onRetry,
 }) {
-  const [servicePickerOpen, setServicePickerOpen] = useState(false)
   const dashboardShellEmpty =
     !dashboardData ||
     (!dashboardData.profile &&
@@ -725,36 +723,11 @@ function MarketSection({
     })
   }, [dashboardData?.categories])
 
-  const serviceLauncher = (
-    <>
-      <ServiceCategoryPicker
-        open={servicePickerOpen}
-        onClose={() => setServicePickerOpen(false)}
-        onOpenServiceCategory={onOpenServiceCategory}
-      />
-
-      <button
-        type="button"
-        onClick={() => setServicePickerOpen(true)}
-        onMouseEnter={prefetchServiceCategoryPage}
-        onFocus={prefetchServiceCategoryPage}
-        onPointerDown={prefetchServiceCategoryPage}
-        className="fixed bottom-4 left-3 z-[880] flex items-center gap-1.5 rounded-full bg-slate-950 px-2.5 py-2 text-[0.78rem] font-black text-white shadow-[0_14px_34px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-pink-700 active:scale-[0.98]"
-        aria-label="Open local services"
-      >
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-pink-600 text-[0.8rem] text-white">
-          <FaBriefcase />
-        </span>
-        Services
-      </button>
-    </>
-  )
 
   // 1. PROFESSIONAL ERROR STATE (Only shows if no cache is available)
   if (error && dashboardShellEmpty) {
     return (
       <>
-        {serviceLauncher}
         <RetryingNotice
           fullScreen={false}
           message={getRetryingMessage(error)}
@@ -768,7 +741,6 @@ function MarketSection({
   if (loading || (!dashboardData && !error)) {
     return (
       <div className="screen active w-full pb-8 bg-slate-50">
-        {serviceLauncher}
         {/* Featured City Banner Skeleton */}
         <ShimmerBlock className="mb-4 aspect-video w-full max-h-[400px] rounded-none" />
       </div>
