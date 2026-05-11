@@ -59,7 +59,7 @@ function runTimedPreload(task, timeoutMessage, timeoutMs = VENDOR_TRANSITION_TIM
 
 async function fetchProfileSuspension(userId) {
   const { data: profile, error } = await supabase
-    .from("profiles")
+    .from("vw_user_profiles")
     .select("is_suspended")
     .eq("id", userId)
     .maybeSingle()
@@ -497,7 +497,7 @@ async function prepareMerchantPromoBannerData({ userId, shopId }) {
 
 async function prepareMerchantVideoKYCData({ userId, shopId, search = "" }) {
   const { data: profile, error: profileError } = await supabase
-    .from("profiles")
+    .from("vw_user_profiles")
     .select("full_name, avatar_url, is_suspended, city_id")
     .eq("id", userId)
     .maybeSingle()
