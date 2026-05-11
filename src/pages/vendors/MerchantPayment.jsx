@@ -3,100 +3,39 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowUpFromBracket,
   FaBuildingColumns,
-  FaCircleCheck,
   FaCircleNotch,
-  FaClock,
-  FaCopy,
   FaLocationDot,
   FaReceipt,
   FaTicket,
-  FaTriangleExclamation,
   FaBuildingCircleCheck,
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import useAuthSession from "../../hooks/useAuthSession"
 import { clearCachedFetchStore } from "../../hooks/useCachedFetch"
 import { useGlobalFeedback } from "../../components/common/GlobalFeedbackProvider"
+import { PageLoadingScreen } from "../../components/common/PageStatusScreen"
 import { getFriendlyErrorMessage } from "../../lib/friendlyErrors"
-import { CTM_BANK_ACCOUNT, PHYSICAL_VERIFICATION_FEE, normalizePromoCode } from "../../lib/paymentConfig"
+import { PHYSICAL_VERIFICATION_FEE, normalizePromoCode } from "../../lib/paymentConfig"
 import {
   assertCanSubmitPaymentProof,
   createPaymentProof,
   fetchVerificationAccessStatus,
   formatNaira,
   getPaymentReceiptRuleLabel,
-  getProofStatusCopy,
   uploadPaymentReceipt,
 } from "../../lib/offlinePayments"
+import {
+  BankDetailCopyRow,
+  OfflineBankDetailsPanel,
+  PaymentStatusCard,
+  useCopyToClipboard,
+} from "../../components/payments/OfflinePaymentPanels"
 
-function StatusCard({ proof }) {
-  if (!proof) return null
-
-  const copy = getProofStatusCopy(proof.status)
-  const toneClass =
-    copy.tone === "success"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-      : copy.tone === "danger"
-        ? "border-red-200 bg-red-50 text-red-800"
-        : "border-amber-200 bg-amber-50 text-amber-800"
-  const Icon = copy.tone === "success" ? FaCircleCheck : copy.tone === "danger" ? FaTriangleExclamation : FaClock
-
-  return (
-    <div className={`mb-6 rounded-2xl border p-4 text-left ${toneClass}`}>
-      <div className="flex items-start gap-3">
-        <Icon className="mt-1 shrink-0 text-lg" />
-        <div>
-          <div className="font-black">{copy.title}</div>
-          <p className="mt-1 text-sm font-semibold leading-6">{copy.message}</p>
-          {proof.review_note ? <p className="mt-2 rounded-xl bg-white/70 p-3 text-sm font-semibold">Staff note: {proof.review_note}</p> : null}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function BankDetailCopyRow({ label, value, onCopy }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onCopy(label, value)}
-      className="group w-full rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-[#D97706] hover:bg-[#FFFBEB] sm:p-4"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-slate-400">{label}</div>
-          <div className={`mt-1 break-words font-black text-[#0F172A] ${label === "Account Number" ? "font-mono text-xl tracking-wide sm:text-2xl" : "text-base"}`}>
-            {value}
-          </div>
-        </div>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-[0.72rem] font-black text-slate-600 transition group-hover:bg-[#FEF3C7] group-hover:text-[#92400E]">
-          <FaCopy /> Tap to copy
-        </span>
-      </div>
-    </button>
-  )
-}
-
-function OfflineBankDetailsPanel({ open, amountLabel, onCopy }) {
-  if (!open) return null
-
-  return (
-    <div className="mb-5 rounded-[24px] border border-[#FBBF24]/60 bg-[#FFFBEB] p-4 shadow-sm sm:p-5">
-      <div className="mb-4">
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#FEF3C7] px-3 py-1 text-[0.72rem] font-black uppercase tracking-[0.16em] text-[#92400E]">
-          <FaBuildingColumns /> Offline Payment
-        </div>
-        <h3 className="mt-3 text-xl font-black text-[#0F172A]">Bank transfer details</h3>
-        <p className="mt-1 text-sm font-semibold text-slate-600">Tap any detail to copy. Pay exactly {amountLabel}.</p>
-      </div>
-
-      <div className="grid gap-3">
-        <BankDetailCopyRow label="Bank Name" value={CTM_BANK_ACCOUNT.bankName} onCopy={onCopy} />
-        <BankDetailCopyRow label="Account Name" value={CTM_BANK_ACCOUNT.accountName} onCopy={onCopy} />
-        <BankDetailCopyRow label="Account Number" value={CTM_BANK_ACCOUNT.accountNumber} onCopy={onCopy} />
-      </div>
-    </div>
-  )
+function formatFileSize(bytes) {
+  const size = Number(bytes || 0)
+  if (!Number.isFinite(size) || size <= 0) return "Unknown size"
+  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`
 }
 
 export default function MerchantPayment() {
@@ -110,6 +49,7 @@ export default function MerchantPayment() {
       : null
   const { notify } = useGlobalFeedback()
   const { user, loading: authLoading, isOffline } = useAuthSession()
+  const handleCopyBankDetail = useCopyToClipboard()
 
   const [loading, setLoading] = useState(() => !prefetchedData)
   const [processingPromo, setProcessingPromo] = useState(false)
@@ -118,6 +58,8 @@ export default function MerchantPayment() {
   const [statusError, setStatusError] = useState(false)
   const [promoCode, setPromoCode] = useState("")
   const [receiptFile, setReceiptFile] = useState(null)
+  const [receiptPreviewUrl, setReceiptPreviewUrl] = useState("")
+  const [receiptInputKey, setReceiptInputKey] = useState(0)
   const [depositorName, setDepositorName] = useState("")
   const [transferReference, setTransferReference] = useState("")
   const [shopDetails, setShopDetails] = useState(() => prefetchedData?.shopDetails || null)
@@ -130,41 +72,18 @@ export default function MerchantPayment() {
   }, [urlShopId])
 
   const canApplyPromo = normalizePromoCode(promoCode).length === 6 && !processingPromo && !submittingProof
-  const canUploadProof = receiptFile && !submittingProof && !processingPromo && paymentProof?.status !== "pending"
+  const canUploadProof = Boolean(receiptFile && !submittingProof && !processingPromo && paymentProof?.status !== "pending")
 
-  const handleCopyBankDetail = useCallback(async (label, value) => {
-    const text = String(value || "")
-
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text)
-      } else {
-        const textarea = document.createElement("textarea")
-        textarea.value = text
-        textarea.setAttribute("readonly", "")
-        textarea.style.position = "fixed"
-        textarea.style.opacity = "0"
-        document.body.appendChild(textarea)
-        textarea.select()
-        document.execCommand("copy")
-        textarea.remove()
-      }
-
-      notify({
-        kind: "toast",
-        type: "success",
-        title: "Copied",
-        message: `${label} copied.`,
-      })
-    } catch {
-      notify({
-        kind: "toast",
-        type: "error",
-        title: "Copy failed",
-        message: "Please copy the payment detail manually.",
-      })
+  // Generate/revoke an object URL for the selected receipt image preview.
+  useEffect(() => {
+    if (!receiptFile || !receiptFile.type?.startsWith("image/")) {
+      setReceiptPreviewUrl("")
+      return undefined
     }
-  }, [notify])
+    const url = URL.createObjectURL(receiptFile)
+    setReceiptPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [receiptFile])
 
   const openVideoKyc = useCallback((shopId) => {
     if (!shopId) return
@@ -388,6 +307,7 @@ export default function MerchantPayment() {
     try {
       setSubmittingProof(true)
       setStatusError(false)
+      setStatusMsg("")          // clear any previous status before starting
       setStatusMsg("Checking latest payment status...")
 
       const proofGate = await assertCanSubmitPaymentProof({
@@ -422,6 +342,7 @@ export default function MerchantPayment() {
       setPaymentProof(proof)
       refreshVendorPanelState()
       setReceiptFile(null)
+      setReceiptInputKey((k) => k + 1)
       setDepositorName("")
       setTransferReference("")
       setStatusMsg("Receipt submitted for staff review.")
@@ -440,12 +361,7 @@ export default function MerchantPayment() {
   }
 
   if (authLoading || loading) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center bg-[#F8FAFC]">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#2E1065]/20 border-t-[#2E1065]"></div>
-        <p className="mt-4 font-semibold text-[#64748B]">Loading payment details...</p>
-      </div>
-    )
+    return <PageLoadingScreen />
   }
 
   if (!shopDetails) return null
@@ -485,7 +401,7 @@ export default function MerchantPayment() {
           </div>
 
           <div className="min-w-0">
-            <StatusCard proof={paymentProof} />
+            <PaymentStatusCard proof={paymentProof} />
 
             <div className="mb-5 grid gap-3 sm:grid-cols-2">
               <button
@@ -544,13 +460,46 @@ export default function MerchantPayment() {
                   <FaReceipt className="text-[#D97706]" /> Upload payment receipt
                 </label>
                 <input
+                  key={receiptInputKey}
                   type="file"
                   accept="image/jpeg,image/png,image/webp,application/pdf"
                   onChange={(event) => setReceiptFile(event.target.files?.[0] || null)}
                   disabled={submittingProof || processingPromo}
                   className="mb-2 block w-full min-w-0 max-w-full rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-3 py-4 text-sm font-semibold text-[#475569] sm:px-4"
                 />
-                <div className="mb-4 text-xs font-semibold text-[#64748B]">{getPaymentReceiptRuleLabel()}</div>
+
+                {receiptFile ? (
+                  <div className="mb-4 overflow-hidden rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF]">
+                    {receiptPreviewUrl ? (
+                      <img
+                        src={receiptPreviewUrl}
+                        alt="Selected payment receipt preview"
+                        className="max-h-[320px] w-full bg-white object-contain"
+                      />
+                    ) : null}
+                    <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#1D4ED8]">
+                        <FaReceipt />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="break-all font-black text-[#0F172A]">{receiptFile.name}</div>
+                        <div className="text-xs font-bold text-[#64748B]">
+                          {receiptFile.type || "Receipt file"} · {formatFileSize(receiptFile.size)}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setReceiptFile(null); setReceiptInputKey((k) => k + 1) }}
+                        disabled={submittingProof}
+                        className="self-start rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-xs font-black text-[#475569] transition hover:bg-[#F8FAFC] disabled:opacity-60 sm:self-auto"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-4 text-xs font-semibold text-[#64748B]">{getPaymentReceiptRuleLabel()}</div>
+                )}
 
                 <button
                   onClick={handleSubmitProof}
