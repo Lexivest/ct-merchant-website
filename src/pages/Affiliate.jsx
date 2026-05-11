@@ -332,7 +332,7 @@ function Affiliate() {
                     </h3>
                     <div>
                       <div className="mb-2 flex items-center justify-between gap-3">
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500">How do you plan to promote <BrandText />?</label>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500">How do you plan to promote <BrandText className="normal-case" />?</label>
                         <WordLimitCounter value={formData.promotionPlan} limit={AFFILIATE_WORD_LIMITS.promotionPlan} />
                       </div>
                       <textarea

@@ -1335,7 +1335,7 @@ function Home() {
 
                       <div className="my-3 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
                         <div className="h-px flex-1 bg-pink-200" />
-                        <span>New to <BrandText />?</span>
+                        <span>New to <BrandText className="normal-case" />?</span>
                         <div className="h-px flex-1 bg-pink-200" />
                       </div>
 
