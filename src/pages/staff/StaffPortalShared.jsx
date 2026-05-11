@@ -18,6 +18,7 @@ import {
 } from "react-icons/fa6"
 import { supabase } from "../../lib/supabase"
 import { signOutUser } from "../../lib/auth"
+import { clearAuthMemory } from "../../hooks/useAuthSession"
 import BrandText from "../../components/common/BrandText"
 import GlobalErrorScreen from "../../components/common/GlobalErrorScreen"
 import { resolveStaffAccess, withStaffAuthTimeout } from "../../lib/staffAuth"
@@ -459,15 +460,13 @@ export function useStaffPortalSession() {
   const isAdmin = hasAdminRole
   const staffCityId = staffData?.admin_city_id || null
 
-  const expireStaffSession = useCallback(async () => {
+  const expireStaffSession = useCallback(() => {
     if (expiryLogoutStartedRef.current) return
     expiryLogoutStartedRef.current = true
-    setIsLoggingOut(true)
     clearStaffSessionState()
-    setAuthUser(null)
-    setStaffData(null)
-    await signOutUser()
+    clearAuthMemory()
     navigate("/staff-portal?expired=1", { replace: true })
+    void signOutUser()
   }, [navigate])
 
   useEffect(() => {
@@ -570,11 +569,11 @@ export function useStaffPortalSession() {
     }
   }, [authUser?.id, expireStaffSession, staffData])
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true)
+  const handleLogout = () => {
     clearStaffSessionState()
-    await signOutUser()
+    clearAuthMemory()
     navigate("/staff-portal", { replace: true })
+    void signOutUser()
   }
 
   return {

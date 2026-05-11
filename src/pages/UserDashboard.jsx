@@ -8,7 +8,7 @@ import BrandText from "../components/common/BrandText"
 import PageTransitionOverlay from "../components/common/PageTransitionOverlay"
 import GlobalErrorScreen from "../components/common/GlobalErrorScreen"
 import { PageLoadingScreen } from "../components/common/PageStatusScreen"
-import useAuthSession from "../hooks/useAuthSession"
+import useAuthSession, { clearAuthMemory } from "../hooks/useAuthSession"
 import useCachedFetch, {
   primeCachedFetchStore,
   readCachedFetchStore,
@@ -582,16 +582,26 @@ function UserDashboard() {
     return () => window.clearTimeout(timerId)
   }, [user?.id])
 
-  async function handleLogout() {
-    try {
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith("ctm_")) localStorage.removeItem(key)
-      })
-    } catch {
-      // Local storage can be blocked by privacy settings; logout should still continue.
-    }
-    await signOutUser()
+  function handleLogout() {
+    // Wipe the in-memory auth state synchronously so the home page's
+    // useAuthSession initializer reads { loading: false, user: null }
+    // immediately — no white flash, no spinner cycle.
+    clearAuthMemory()
     navigate("/", { replace: true })
+
+    // Clean up local storage and sign out of Supabase in the background.
+    // The SIGNED_OUT event still fires, but by then we've already navigated
+    // away and there's no mounted ProtectedDashboardRoute to react to it.
+    void (async () => {
+      try {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith("ctm_")) localStorage.removeItem(key)
+        })
+      } catch {
+        // Local storage can be blocked by privacy settings; logout should still continue.
+      }
+      await signOutUser()
+    })()
   }
 
   const markNotificationsRead = useCallback(async () => {

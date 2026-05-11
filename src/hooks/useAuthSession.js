@@ -228,6 +228,17 @@ function getSnapshotWithCachedProfile() {
   }
 }
 
+export function clearAuthMemory() {
+  globalAuthMemory = {
+    isResolved: true,
+    session: null,
+    user: null,
+    profile: null,
+    suspended: false,
+    profileLoaded: false,
+  }
+}
+
 export function primeAuthSessionState({
   session = null,
   user = null,
