@@ -138,7 +138,7 @@ function MerchantDiscoveryRunner({ merchantId, repoSearchIntent }) {
   const { data, loading, error: dataError, mutate } = useCachedFetch(
     cacheKey,
     fetchMerchant,
-    { dependencies: [merchantId], ttl: 1000 * 60 * 60 } // Cache results for 1 hour
+    { dependencies: [merchantId], ttl: 1000 * 60 * 5 } // 5 min — avoids serving stale suspended/removed shops
   )
 
   const shop = data?.shop || null

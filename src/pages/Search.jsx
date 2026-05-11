@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useCallback, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   FaArrowLeft,
@@ -23,6 +23,14 @@ import {
   prepareProductDetailTransition,
   prepareShopDetailTransition,
 } from "../lib/detailPageTransitions"
+
+/**
+ * Escapes characters that have special meaning in PostgREST ILIKE patterns
+ * so user input cannot accidentally match everything or break the filter.
+ */
+function escapeIlike(value) {
+  return value.replace(/[\\%_]/g, (c) => `\\${c}`)
+}
 
 function normalizePositiveId(value) {
   const normalized = String(value ?? "").trim()
@@ -61,9 +69,11 @@ function Search() {
   // 2. Extracted Data Fetching Logic for Hook
   const fetchSearchData = async () => {
     const resolvedCityId = normalizePositiveId(profile?.city_id)
-    if (!resolvedCityId) return { shops: [], products: [] }
+    if (!resolvedCityId) return { shops: [], allProducts: [], matchedProducts: [] }
 
-    const q = initialQuery.trim().replace(/,/g, "") // Sanitize for PostgREST
+    // Sanitize: strip commas (PostgREST or() delimiter) and escape ILIKE wildcards
+    const q = escapeIlike(initialQuery.trim().replace(/,/g, ""))
+
     if (!q) {
       const { data: defaultShops, error: defaultShopsError } = await supabase
         .from("shops")
@@ -79,45 +89,49 @@ function Search() {
 
     const ilikeQuery = `%${q}%`
 
-    // 1. Fast fetch of all shop IDs in the user's city
-    const { data: cityShops, error: cityShopsError } = await supabase
-      .from("shops")
-      .select("id")
-      .eq("city_id", resolvedCityId)
-      .eq("is_service", false)
+    // 1. Shops search + product search run in parallel.
+    //    Products are scoped to the user's city via shops!inner join —
+    //    this eliminates the separate "fetch all city shop IDs" round-trip
+    //    that previously caused unbounded .in() query strings.
+    const [
+      { data: shops, error: shopsErr },
+      { data: rawProducts, error: prodErr },
+    ] = await Promise.all([
+      supabase
+        .from("shops")
+        .select("*")
+        .eq("city_id", resolvedCityId)
+        .eq("is_service", false)
+        .or(
+          `name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},` +
+          `description.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},` +
+          `address.ilike.${ilikeQuery}`
+        )
+        .limit(50),
 
-    if (cityShopsError) throw cityShopsError
-    const cityShopIds = (cityShops || []).map((s) => s.id)
-
-    // 2. Backend Search for Shops
-    const { data: shops, error: shopsErr } = await supabase
-      .from("shops")
-      .select("*")
-      .eq("city_id", resolvedCityId)
-      .eq("is_service", false)
-      .or(`name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},description.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},address.ilike.${ilikeQuery}`)
-      .limit(50)
+      // !inner join filters products to rows whose shop is in the user's city.
+      // The shops columns are stripped before returning to the caller.
+      supabase
+        .from("products")
+        .select("*, shops!inner(city_id, is_service)")
+        .eq("shops.city_id", resolvedCityId)
+        .eq("shops.is_service", false)
+        .eq("is_available", true)
+        .or(
+          `name.ilike.${ilikeQuery},description.ilike.${ilikeQuery},` +
+          `category.ilike.${ilikeQuery}`
+        )
+        .limit(50),
+    ])
 
     if (shopsErr) throw shopsErr
+    if (prodErr) throw prodErr
 
-    // 3. Backend Search for Products
-    let cleanedProducts = []
-    if (cityShopIds.length > 0) {
-      // Safely search using confirmed columns to prevent schema mismatch errors
-      const { data: products, error: prodErr } = await supabase
-        .from("products")
-        .select("*")
-        .in("shop_id", cityShopIds)
-        .eq("is_available", true)
-        .or(`name.ilike.${ilikeQuery},description.ilike.${ilikeQuery},category.ilike.${ilikeQuery}`)
-        .limit(50)
+    // Strip the joined shops columns — callers only need the product fields
+    const cleanedProducts = (rawProducts || []).map(({ shops: _s, ...p }) => p)
 
-      if (prodErr) throw prodErr
-      cleanedProducts = products || []
-    }
-
-    // 4. Fetch a few products for the matched shops so the shop preview cards aren't empty
-    const shopIds = (shops || []).map(s => s.id)
+    // 2. Fetch preview products for matched shop cards (bounded at 100 total)
+    const shopIds = (shops || []).map((s) => s.id)
     let additionalProducts = []
     if (shopIds.length > 0) {
       const { data: shopProds, error: shopProductsError } = await supabase
@@ -131,12 +145,16 @@ function Search() {
       additionalProducts = shopProds || []
     }
 
-    // Merge all products cleanly for the UI
+    // Merge: matched products take precedence over preview-only products
     const allProdsMap = new Map()
-    cleanedProducts.forEach(p => allProdsMap.set(p.id, p))
-    additionalProducts.forEach(p => allProdsMap.set(p.id, p))
+    additionalProducts.forEach((p) => allProdsMap.set(p.id, p))
+    cleanedProducts.forEach((p) => allProdsMap.set(p.id, p))
 
-    return { shops: shops || [], allProducts: Array.from(allProdsMap.values()), matchedProducts: cleanedProducts }
+    return {
+      shops: shops || [],
+      allProducts: Array.from(allProdsMap.values()),
+      matchedProducts: cleanedProducts,
+    }
   }
 
   // 3. Smart Caching Hook
@@ -167,7 +185,7 @@ function Search() {
   const allProducts = data?.allProducts || []
   const matchedProducts = data?.matchedProducts || []
 
-  async function openShopWithTransition(shopId) {
+  const openShopWithTransition = useCallback(async (shopId) => {
     if (!shopId) return
 
     setTransitionState({
@@ -200,9 +218,9 @@ function Search() {
         error: safeMessage,
       })
     }
-  }
+  }, [navigate, user?.id])
 
-  async function openProductWithTransition(productId, shopId = "") {
+  const openProductWithTransition = useCallback(async (productId, shopId = "") => {
     if (!productId) return
 
     setTransitionState({
@@ -236,7 +254,7 @@ function Search() {
         error: safeMessage,
       })
     }
-  }
+  }, [navigate, user?.id])
 
   function runSearch() {
     const trimmed = query.trim()
@@ -244,7 +262,7 @@ function Search() {
     navigate(`/search?q=${encodeURIComponent(trimmed)}`, { replace: true })
   }
 
-  function buildShopCard(shop) {
+  const buildShopCard = useCallback((shop) => {
     const shopProducts = allProducts
       .filter(
         (item) =>
@@ -340,9 +358,10 @@ function Search() {
         </div>
       </div>
     )
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allProducts, openShopWithTransition])
 
-  function buildProductCard(product) {
+  const buildProductCard = useCallback((product) => {
     const name = product.name || product.product_name || product.title || "Product"
     const price = product.price || product.product_price
     const discount = product.discount_price
@@ -404,7 +423,8 @@ function Search() {
         </div>
       </div>
     )
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openProductWithTransition])
 
   if (shouldRedirectHome) {
     return <PageLoadingScreen />
@@ -498,12 +518,18 @@ function Search() {
           />
         ) : (
           <>
-            <h2 className="mb-6 text-[1.1rem] font-semibold text-slate-600">
-              Results for{" "}
-              <span className="font-extrabold text-pink-600">
-                "{query.trim()}"
-              </span>
-            </h2>
+            <p className="mb-6 text-[1.1rem] font-semibold text-slate-600">
+              {query.trim() ? (
+                <>
+                  Results for{" "}
+                  <span className="font-extrabold text-pink-600">
+                    &ldquo;{query.trim()}&rdquo;
+                  </span>
+                </>
+              ) : (
+                "Shops near you"
+              )}
+            </p>
 
             {isRevalidating ? (
               <div className="mb-4 inline-flex rounded-full bg-slate-900 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.16em] text-white">
@@ -515,7 +541,7 @@ function Search() {
               <section className="mb-10">
                 <h2 className="sec-title mb-4 flex items-center gap-3 text-[1.35rem] font-extrabold text-[#0F1111]">
                   <span className="inline-block h-[22px] w-[6px] rounded bg-pink-600" />
-                  Shops Matching Search
+                  {query.trim() ? "Shops Matching Search" : "All Shops"}
                 </h2>
 
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
@@ -541,10 +567,12 @@ function Search() {
               <div className="state-box rounded-lg border border-[#D5D9D9] bg-white px-5 py-16 text-center">
                 <FaMagnifyingGlass className="mx-auto mb-4 text-5xl opacity-30" />
                 <span className="block text-[1.1rem] font-extrabold text-[#0F1111]">
-                  No results found
+                  {query.trim() ? "No results found" : "No shops available yet"}
                 </span>
                 <span className="mt-1 block text-[0.9rem] text-slate-500">
-                  Try adjusting your search query or check spelling.
+                  {query.trim()
+                    ? "Try adjusting your search query or check spelling."
+                    : "Check back soon — shops in your city will appear here."}
                 </span>
               </div>
             ) : null}
