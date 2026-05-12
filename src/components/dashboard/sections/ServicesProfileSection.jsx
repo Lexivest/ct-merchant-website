@@ -17,13 +17,13 @@ import {
 import { Suspense, lazy } from "react"
 import { UPLOAD_RULES, getAcceptValue, getRuleLabel } from "../../../lib/uploadRules";
 import { renderBrandedText } from "../../common/BrandText"
+import AboutDashboardView from "../../../features/dashboard/views/AboutDashboardView"
+import ServicesDashboardView from "../../../features/dashboard/views/ServicesDashboardView"
+import CareersDashboardView from "../../../features/dashboard/views/CareersDashboardView"
+import SupportDashboardView from "../../../features/dashboard/views/SupportDashboardView"
+import AbuseReportDashboardView from "../../../features/dashboard/views/AbuseReportDashboardView"
+import FaqDashboardView from "../../../features/dashboard/views/FaqDashboardView"
 
-const AboutDashboardView = lazy(() => import("../../../features/dashboard/views/AboutDashboardView"))
-const ServicesDashboardView = lazy(() => import("../../../features/dashboard/views/ServicesDashboardView"))
-const CareersDashboardView = lazy(() => import("../../../features/dashboard/views/CareersDashboardView"))
-const SupportDashboardView = lazy(() => import("../../../features/dashboard/views/SupportDashboardView"))
-const AbuseReportDashboardView = lazy(() => import("../../../features/dashboard/views/AbuseReportDashboardView"))
-const FaqDashboardView = lazy(() => import("../../../features/dashboard/views/FaqDashboardView"))
 const WishlistDashboardView = lazy(() => import("../../../features/dashboard/views/WishlistDashboardView"))
 
 const AVATAR_RULE = UPLOAD_RULES.avatars
@@ -124,63 +124,47 @@ function ServicesProfileSection({
 
   if (mode === "services") {
     if (serviceView === "about") {
-      return (
-        <LazyServiceView label="Loading About CTMerchant...">
-          <AboutDashboardView onBack={() => setServiceView("menu")} />
-        </LazyServiceView>
-      )
+      return <AboutDashboardView onBack={() => setServiceView("menu")} />
     }
 
     if (serviceView === "services-info") {
       return (
-        <LazyServiceView label="Loading service details...">
-          <ServicesDashboardView
-            onBack={() => setServiceView("menu")}
-            onOpenSupport={() => setServiceView("support")}
-          />
-        </LazyServiceView>
+        <ServicesDashboardView
+          onBack={() => setServiceView("menu")}
+          onOpenSupport={() => setServiceView("support")}
+        />
       )
     }
 
     if (serviceView === "careers") {
-      return (
-        <LazyServiceView label="Loading career opportunities...">
-          <CareersDashboardView onBack={() => setServiceView("menu")} />
-        </LazyServiceView>
-      )
+      return <CareersDashboardView onBack={() => setServiceView("menu")} />
     }
 
     if (serviceView === "support") {
       return (
-        <LazyServiceView label="Loading support tools...">
-          <SupportDashboardView
-            mode="support"
-            onBack={() => setServiceView("menu")}
-            onOpenServices={() => setServiceView("services-info")}
-          />
-        </LazyServiceView>
+        <SupportDashboardView
+          mode="support"
+          onBack={() => setServiceView("menu")}
+          onOpenServices={() => setServiceView("services-info")}
+        />
       )
     }
 
     if (serviceView === "faq") {
       return (
-        <LazyServiceView label="Loading FAQ...">
-          <FaqDashboardView
-            onBack={() => setServiceView("menu")}
-            onOpenSupport={() => setServiceView("support")}
-          />
-        </LazyServiceView>
+        <FaqDashboardView
+          onBack={() => setServiceView("menu")}
+          onOpenSupport={() => setServiceView("support")}
+        />
       )
     }
 
     if (serviceView === "report-abuse") {
       return (
-        <LazyServiceView label="Loading report tools...">
-          <AbuseReportDashboardView
-            onBack={() => setServiceView("menu")}
-            user={user}
-          />
-        </LazyServiceView>
+        <AbuseReportDashboardView
+          onBack={() => setServiceView("menu")}
+          user={user}
+        />
       )
     }
 
