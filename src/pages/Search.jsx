@@ -531,11 +531,6 @@ function Search() {
               )}
             </p>
 
-            {isRevalidating ? (
-              <div className="mb-4 inline-flex rounded-full bg-slate-900 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.16em] text-white">
-                Updating results...
-              </div>
-            ) : null}
 
             {matchedShops.length > 0 ? (
               <section className="mb-10">
