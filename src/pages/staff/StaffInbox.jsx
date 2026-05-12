@@ -6,6 +6,7 @@ import {
   FaCircleNotch,
   FaEnvelope,
   FaEnvelopeOpenText,
+  FaHandshake,
   FaReply,
   FaShieldHalved,
   FaTriangleExclamation,
@@ -75,6 +76,15 @@ export default function StaffInbox() {
         setItems((data || []).map(item => ({ ...item, _type: "newsletter" })));
       }
 
+      if (activeTab === "affiliate") {
+        const { data, error } = await supabase
+          .from("affiliate_applications")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        setItems((data || []).map(item => ({ ...item, _type: "affiliate" })));
+      }
+
       if (activeTab === "abuse") {
         const { data: reports, error: reportsErr } = await supabase
           .from("abuse_reports")
@@ -136,9 +146,10 @@ export default function StaffInbox() {
 
   const updateStatus = async (id, newStatus, type) => {
     setUpdating(true);
-    const table = 
-      type === "contact" ? "contact_messages" : 
+    const table =
+      type === "contact" ? "contact_messages" :
       type === "newsletter" ? "newsletter_subscriptions" :
+      type === "affiliate" ? "affiliate_applications" :
       "abuse_reports";
 
     try {
@@ -239,6 +250,14 @@ export default function StaffInbox() {
         >
           <FaShieldHalved /> Abuse Reports
         </button>
+        <button
+          onClick={() => setActiveTab("affiliate")}
+          className={`flex items-center gap-2 px-4 py-4 text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+            activeTab === "affiliate" ? "border-b-2 border-indigo-600 text-indigo-700" : "text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <FaHandshake /> Affiliate Applications
+        </button>
       </div>
 
       {/* MAIN SPLIT VIEW */}
@@ -266,16 +285,21 @@ export default function StaffInbox() {
                     key={item.id}
                     onClick={() => setSelectedItem(item)}
                     className={`cursor-pointer p-4 transition-all border-l-4 ${
-                      isSelected 
-                        ? (activeTab === "contact" ? "bg-blue-50 border-blue-600 hidden lg:block" : activeTab === "newsletter" ? "bg-emerald-50 border-emerald-600 hidden lg:block" : "bg-rose-50 border-rose-600 hidden lg:block") 
-                        : (activeTab === "contact" ? "hover:bg-blue-50/50 border-transparent" : activeTab === "newsletter" ? "hover:bg-emerald-50/50 border-transparent" : "hover:bg-rose-50/50 border-transparent")
+                      isSelected
+                        ? activeTab === "contact" ? "bg-blue-50 border-blue-600 hidden lg:block"
+                        : activeTab === "newsletter" ? "bg-emerald-50 border-emerald-600 hidden lg:block"
+                        : activeTab === "affiliate" ? "bg-indigo-50 border-indigo-600 hidden lg:block"
+                        : "bg-rose-50 border-rose-600 hidden lg:block"
+                        : activeTab === "contact" ? "hover:bg-blue-50/50 border-transparent"
+                        : activeTab === "newsletter" ? "hover:bg-emerald-50/50 border-transparent"
+                        : activeTab === "affiliate" ? "hover:bg-indigo-50/50 border-transparent"
+                        : "hover:bg-rose-50/50 border-transparent"
                     }`}
                   >
-                    {/* EXPLICIT TYPE BADGE */}
                     <div className="flex justify-between items-start mb-2">
-                      <span className={`flex items-center gap-1.5 text-[0.6rem] font-black uppercase tracking-widest ${activeTab === "contact" ? 'text-blue-600' : activeTab === "newsletter" ? 'text-emerald-600' : 'text-rose-600'}`}>
-                        {activeTab === "contact" ? <FaEnvelope /> : activeTab === "newsletter" ? <FaUsersViewfinder /> : <FaShieldHalved />}
-                        {activeTab === "contact" ? 'Public Inquiry' : activeTab === "newsletter" ? 'Newsletter Subscriber' : 'Abuse Report'}
+                      <span className={`flex items-center gap-1.5 text-[0.6rem] font-black uppercase tracking-widest ${activeTab === "contact" ? 'text-blue-600' : activeTab === "newsletter" ? 'text-emerald-600' : activeTab === "affiliate" ? 'text-indigo-600' : 'text-rose-600'}`}>
+                        {activeTab === "contact" ? <FaEnvelope /> : activeTab === "newsletter" ? <FaUsersViewfinder /> : activeTab === "affiliate" ? <FaHandshake /> : <FaShieldHalved />}
+                        {activeTab === "contact" ? 'Public Inquiry' : activeTab === "newsletter" ? 'Newsletter Subscriber' : activeTab === "affiliate" ? 'Affiliate Application' : 'Abuse Report'}
                       </span>
                       {renderStatusBadge(item.status)}
                     </div>
@@ -283,15 +307,15 @@ export default function StaffInbox() {
                     <h4 className="font-bold text-slate-900 line-clamp-1 pr-2 text-sm mb-1">
                       {item.full_name || item.profiles?.full_name || "Unknown Identity"}
                     </h4>
-                    
-                    <p className={`text-xs font-semibold mb-1.5 line-clamp-1 ${activeTab === "contact" ? 'text-slate-700' : activeTab === "newsletter" ? 'text-emerald-700' : 'text-rose-700'}`}>
-                      {activeTab === "contact" ? item.subject : activeTab === "newsletter" ? `Email: ${item.email}` : `Category: ${item.category}`}
+
+                    <p className={`text-xs font-semibold mb-1.5 line-clamp-1 ${activeTab === "contact" ? 'text-slate-700' : activeTab === "newsletter" ? 'text-emerald-700' : activeTab === "affiliate" ? 'text-indigo-700' : 'text-rose-700'}`}>
+                      {activeTab === "contact" ? item.subject : activeTab === "newsletter" ? `Email: ${item.email}` : activeTab === "affiliate" ? `Email: ${item.email}` : `Category: ${item.category}`}
                     </p>
-                    
+
                     <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                      {isContact ? item.message : item.details}
+                      {activeTab === "affiliate" ? item.bio : isContact ? item.message : item.details}
                     </p>
-                    
+
                     <p className="text-[0.65rem] font-bold text-slate-400 mt-2 uppercase tracking-wider">
                       {new Date(item.created_at).toLocaleDateString()} • {new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </p>
@@ -317,19 +341,21 @@ export default function StaffInbox() {
 
               {/* EXPLICIT CONTEXT BANNER */}
               <div className={`rounded-xl p-4 mb-4 sm:mb-6 shadow-sm border flex items-center gap-3 ${
-                activeTab === "contact" 
-                  ? "bg-blue-50 border-blue-200 text-blue-800" 
+                activeTab === "contact"
+                  ? "bg-blue-50 border-blue-200 text-blue-800"
                   : activeTab === "newsletter"
                   ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                  : activeTab === "affiliate"
+                  ? "bg-indigo-50 border-indigo-200 text-indigo-800"
                   : "bg-rose-50 border-rose-200 text-rose-800"
               }`}>
-                {activeTab === "contact" ? <FaEnvelope className="text-xl sm:text-2xl flex-shrink-0" /> : activeTab === "newsletter" ? <FaUsersViewfinder className="text-xl sm:text-2xl flex-shrink-0" /> : <FaShieldHalved className="text-xl sm:text-2xl flex-shrink-0" />}
+                {activeTab === "contact" ? <FaEnvelope className="text-xl sm:text-2xl flex-shrink-0" /> : activeTab === "newsletter" ? <FaUsersViewfinder className="text-xl sm:text-2xl flex-shrink-0" /> : activeTab === "affiliate" ? <FaHandshake className="text-xl sm:text-2xl flex-shrink-0" /> : <FaShieldHalved className="text-xl sm:text-2xl flex-shrink-0" />}
                 <div>
                   <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest">
-                    {activeTab === "contact" ? "Standard Public Inquiry" : activeTab === "newsletter" ? "Newsletter Subscriber" : "Critical Abuse Report"}
+                    {activeTab === "contact" ? "Standard Public Inquiry" : activeTab === "newsletter" ? "Newsletter Subscriber" : activeTab === "affiliate" ? "Affiliate Application" : "Critical Abuse Report"}
                   </h3>
                   <p className="text-[0.65rem] sm:text-xs font-medium opacity-80 mt-0.5">
-                    {activeTab === "contact" ? "Respond via email if applicable." : activeTab === "newsletter" ? "Manage email recipient list." : "Review carefully before taking moderation action."}
+                    {activeTab === "contact" ? "Respond via email if applicable." : activeTab === "newsletter" ? "Manage email recipient list." : activeTab === "affiliate" ? "Review applicant profile and approve or reject." : "Review carefully before taking moderation action."}
                   </p>
                 </div>
               </div>
@@ -340,7 +366,7 @@ export default function StaffInbox() {
                   <div className="w-full">
                     <div className="flex justify-between items-start mb-2">
                       <h2 className="text-lg sm:text-2xl font-black text-slate-900 pr-2">
-                        {activeTab === "contact" ? selectedItem.subject : activeTab === "newsletter" ? "Subscription Details" : `Violation: ${selectedItem.category}`}
+                        {activeTab === "contact" ? selectedItem.subject : activeTab === "newsletter" ? "Subscription Details" : activeTab === "affiliate" ? `Affiliate Application — ${selectedItem.full_name}` : `Violation: ${selectedItem.category}`}
                       </h2>
                       <div className="sm:hidden flex-shrink-0">{renderStatusBadge(selectedItem.status)}</div>
                     </div>
@@ -352,16 +378,23 @@ export default function StaffInbox() {
                           {selectedItem.full_name || selectedItem.profiles?.full_name || "Unknown Identity"}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
                         <span className="font-black text-slate-400 uppercase tracking-wider text-[0.65rem] sm:text-xs w-12 sm:w-16 flex-shrink-0">Email:</span>
-                        <a 
-                          href={`mailto:${activeTab === "contact" ? selectedItem.email : activeTab === "newsletter" ? selectedItem.email : selectedItem.reporter_email}`} 
+                        <a
+                          href={`mailto:${activeTab === "contact" ? selectedItem.email : activeTab === "newsletter" ? selectedItem.email : activeTab === "affiliate" ? selectedItem.email : selectedItem.reporter_email}`}
                           className="font-bold text-blue-600 hover:underline truncate"
                         >
-                          {activeTab === "contact" ? selectedItem.email : activeTab === "newsletter" ? selectedItem.email : selectedItem.reporter_email}
+                          {activeTab === "contact" ? selectedItem.email : activeTab === "newsletter" ? selectedItem.email : activeTab === "affiliate" ? selectedItem.email : selectedItem.reporter_email}
                         </a>
                       </div>
+
+                      {activeTab === "affiliate" && selectedItem.phone && (
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-slate-400 uppercase tracking-wider text-[0.65rem] sm:text-xs w-12 sm:w-16 flex-shrink-0">Phone:</span>
+                          <span className="font-bold text-slate-800">{selectedItem.phone}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="hidden sm:block flex-shrink-0">{renderStatusBadge(selectedItem.status)}</div>
@@ -378,14 +411,43 @@ export default function StaffInbox() {
                 )}
 
                 {/* The Message Body */}
-                <div className="relative mt-2">
-                  <span className="absolute -top-2.5 left-4 bg-white px-2 text-[0.6rem] sm:text-[0.65rem] font-black uppercase tracking-widest text-slate-400">
-                    {activeTab === "newsletter" ? "Subscription Info" : "Message Payload"}
-                  </span>
-                  <div className="text-sm sm:text-base text-slate-700 whitespace-pre-wrap bg-slate-50/50 p-4 sm:p-6 pt-5 rounded-xl border border-slate-200 leading-relaxed font-medium">
-                    {activeTab === "contact" ? selectedItem.message : activeTab === "newsletter" ? `Subscriber since ${new Date(selectedItem.created_at).toLocaleString()}` : selectedItem.details}
+                {activeTab === "affiliate" ? (
+                  <div className="space-y-4 mt-4">
+                    {[
+                      { label: "Bio", value: selectedItem.bio },
+                      { label: "Marketing Experience", value: selectedItem.marketing_experience },
+                      { label: "Social Media Links", value: selectedItem.social_media_links },
+                      { label: "Promotion Plan", value: selectedItem.promotion_plan },
+                    ].map(({ label, value }) => value ? (
+                      <div key={label} className="relative">
+                        <span className="absolute -top-2.5 left-4 bg-white px-2 text-[0.6rem] sm:text-[0.65rem] font-black uppercase tracking-widest text-slate-400">{label}</span>
+                        <div className="text-sm text-slate-700 whitespace-pre-wrap bg-slate-50/50 p-4 pt-5 rounded-xl border border-slate-200 leading-relaxed font-medium">{value}</div>
+                      </div>
+                    ) : null)}
+
+                    {selectedItem.questionnaire && (
+                      <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+                        <p className="mb-3 text-[0.65rem] font-black uppercase tracking-widest text-indigo-500">Questionnaire</p>
+                        <div className="space-y-1.5 text-xs font-semibold text-slate-700">
+                          <p><span className="font-black text-slate-500">Promoted before:</span> {selectedItem.questionnaire.hasPromotedBefore}</p>
+                          <p><span className="font-black text-slate-500">Availability:</span> {selectedItem.questionnaire.availability}</p>
+                          {selectedItem.questionnaire.preferredRegion && (
+                            <p><span className="font-black text-slate-500">Preferred region:</span> {selectedItem.questionnaire.preferredRegion}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                ) : (
+                  <div className="relative mt-2">
+                    <span className="absolute -top-2.5 left-4 bg-white px-2 text-[0.6rem] sm:text-[0.65rem] font-black uppercase tracking-widest text-slate-400">
+                      {activeTab === "newsletter" ? "Subscription Info" : "Message Payload"}
+                    </span>
+                    <div className="text-sm sm:text-base text-slate-700 whitespace-pre-wrap bg-slate-50/50 p-4 sm:p-6 pt-5 rounded-xl border border-slate-200 leading-relaxed font-medium">
+                      {activeTab === "contact" ? selectedItem.message : activeTab === "newsletter" ? `Subscriber since ${new Date(selectedItem.created_at).toLocaleString()}` : selectedItem.details}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Action Bar - Sticks to bottom on mobile */}
@@ -401,6 +463,30 @@ export default function StaffInbox() {
                     >
                       {selectedItem.status === "active" ? "Unsubscribe User" : "Re-activate Subscription"}
                     </button>
+                  ) : activeTab === "affiliate" ? (
+                    <>
+                      <button
+                        onClick={() => updateStatus(selectedItem.id, "reviewed", activeTab)}
+                        disabled={updating}
+                        className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-[0.65rem] sm:text-xs font-black uppercase tracking-widest transition disabled:opacity-50 text-center"
+                      >
+                        Mark Reviewed
+                      </button>
+                      <button
+                        onClick={() => updateStatus(selectedItem.id, "approved", activeTab)}
+                        disabled={updating}
+                        className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-[0.65rem] sm:text-xs font-black uppercase tracking-widest transition disabled:opacity-50 text-center"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => updateStatus(selectedItem.id, "rejected", activeTab)}
+                        disabled={updating}
+                        className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-lg text-[0.65rem] sm:text-xs font-black uppercase tracking-widest transition disabled:opacity-50 text-center"
+                      >
+                        Reject
+                      </button>
+                    </>
                   ) : (
                     <>
                       <button
@@ -423,12 +509,12 @@ export default function StaffInbox() {
 
                 <button
                   onClick={() => handleReply(
-                    activeTab === "contact" ? selectedItem.email : activeTab === "newsletter" ? selectedItem.email : selectedItem.reporter_email,
-                    activeTab === "contact" ? selectedItem.subject : activeTab === "newsletter" ? "About your CTMerchant Subscription" : `Regarding your Abuse Report`
+                    activeTab === "contact" ? selectedItem.email : activeTab === "newsletter" ? selectedItem.email : activeTab === "affiliate" ? selectedItem.email : selectedItem.reporter_email,
+                    activeTab === "contact" ? selectedItem.subject : activeTab === "newsletter" ? "About your CTMerchant Subscription" : activeTab === "affiliate" ? "Re: Your CTMerchant Affiliate Application" : "Regarding your Abuse Report"
                   )}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-[#0f172a] text-white hover:bg-[#1e293b] rounded-lg text-[0.7rem] sm:text-xs font-black uppercase tracking-widest shadow-md transition"
                 >
-                  <FaReply /> {activeTab === "newsletter" ? "Contact Subscriber" : "Reply directly"}
+                  <FaReply /> {activeTab === "newsletter" ? "Contact Subscriber" : activeTab === "affiliate" ? "Reply to Applicant" : "Reply directly"}
                 </button>
               </div>
 
