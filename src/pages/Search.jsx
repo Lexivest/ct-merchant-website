@@ -74,12 +74,26 @@ function Search() {
     // Sanitize: strip commas (PostgREST or() delimiter) and escape ILIKE wildcards
     const q = escapeIlike(initialQuery.trim().replace(/,/g, ""))
 
+    // Tight column lists — list-view rendering only reads these. Sensitive
+    // fields (kyc_video_url, id_card_url, phone, lat/lng, creation_ip, etc.)
+    // never enter the public search payload.
+    const SHOP_LIST_COLS =
+      "id, name, category, address, image_url, storefront_url, unique_id, is_verified, is_service"
+    const PRODUCT_LIST_COLS =
+      "id, shop_id, name, price, discount_price, image_url, category, condition, is_available, is_approved"
+
+    const nowIso = new Date().toISOString()
+
     if (!q) {
       const { data: defaultShops, error: defaultShopsError } = await supabase
         .from("shops")
-        .select("*")
+        .select(SHOP_LIST_COLS)
         .eq("city_id", resolvedCityId)
         .eq("is_service", false)
+        .eq("status", "approved")
+        .eq("is_verified", true)
+        .eq("is_open", true)
+        .gt("subscription_end_date", nowIso)
         .order("name", { ascending: true })
         .limit(30)
 
@@ -99,9 +113,13 @@ function Search() {
     ] = await Promise.all([
       supabase
         .from("shops")
-        .select("*")
+        .select(SHOP_LIST_COLS)
         .eq("city_id", resolvedCityId)
         .eq("is_service", false)
+        .eq("status", "approved")
+        .eq("is_verified", true)
+        .eq("is_open", true)
+        .gt("subscription_end_date", nowIso)
         .or(
           `name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},` +
           `description.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},` +
@@ -113,10 +131,11 @@ function Search() {
       // The shops columns are stripped before returning to the caller.
       supabase
         .from("products")
-        .select("*, shops!inner(city_id, is_service)")
+        .select(`${PRODUCT_LIST_COLS}, shops!inner(city_id, is_service)`)
         .eq("shops.city_id", resolvedCityId)
         .eq("shops.is_service", false)
         .eq("is_available", true)
+        .eq("is_approved", true)
         .or(
           `name.ilike.${ilikeQuery},description.ilike.${ilikeQuery},` +
           `category.ilike.${ilikeQuery}`
@@ -128,7 +147,11 @@ function Search() {
     if (prodErr) throw prodErr
 
     // Strip the joined shops columns — callers only need the product fields
-    const cleanedProducts = (rawProducts || []).map(({ shops: _s, ...p }) => p)
+    const cleanedProducts = (rawProducts || []).map((row) => {
+      const { shops: _ignored, ...rest } = row
+      void _ignored
+      return rest
+    })
 
     // 2. Fetch preview products for matched shop cards (bounded at 100 total)
     const shopIds = (shops || []).map((s) => s.id)
@@ -136,9 +159,10 @@ function Search() {
     if (shopIds.length > 0) {
       const { data: shopProds, error: shopProductsError } = await supabase
         .from("products")
-        .select("*")
+        .select(PRODUCT_LIST_COLS)
         .in("shop_id", shopIds)
         .eq("is_available", true)
+        .eq("is_approved", true)
         .limit(100)
 
       if (shopProductsError) throw shopProductsError
@@ -164,7 +188,6 @@ function Search() {
     loading: dataLoading,
     error: dataError,
     mutate,
-    isRevalidating,
   } = useCachedFetch(
     cacheKey,
     fetchSearchData,

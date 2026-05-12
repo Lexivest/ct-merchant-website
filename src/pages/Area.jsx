@@ -72,16 +72,17 @@ function Area() {
   const fetchAreaShops = async () => {
     if (!areaId) throw new Error("Area ID missing.")
 
-    const [{ data: areaData, error: areaError }] = await Promise.all([
-      supabase.from("areas").select("name").eq("id", areaId).maybeSingle()
-    ])
-    if (areaError) throw areaError
-
     const nowIso = new Date().toISOString()
+
+    // Tight column list — list-view rendering only reads these.
+    // Sensitive fields (id_card_url, cac_certificate_url, kyc_video_url,
+    // creation_ip, phone, latitude, etc.) must never reach the public listing payload.
+    const SHOP_LIST_COLS =
+      "id, name, category, address, image_url, storefront_url, unique_id, is_verified, is_service"
 
     let query = supabase
       .from("shops")
-      .select("*")
+      .select(SHOP_LIST_COLS)
       .eq("area_id", areaId)
       .eq("is_service", false)
       .eq("status", "approved")
@@ -93,7 +94,7 @@ function Area() {
 
     let serviceQuery = supabase
       .from("shops")
-      .select("*, areas(name), cities(name)")
+      .select(SHOP_LIST_COLS)
       .eq("area_id", areaId)
       .eq("is_service", true)
       .eq("status", "approved")
@@ -107,11 +108,20 @@ function Area() {
       const q = debouncedSearch.trim().replace(/,/g, "")
       const ilikeQuery = `%${q}%`
       query = query.or(`name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},address.ilike.${ilikeQuery}`)
-      serviceQuery = serviceQuery.or(`name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},address.ilike.${ilikeQuery},description.ilike.${ilikeQuery}`)
+      serviceQuery = serviceQuery.or(`name.ilike.${ilikeQuery},category.ilike.${ilikeQuery},unique_id.ilike.${ilikeQuery},address.ilike.${ilikeQuery}`)
     }
 
-    const [{ data: shops, error: shopsError }, { data: services, error: servicesError }] =
-      await Promise.all([query, serviceQuery])
+    // Area name fetched in parallel with shops/services — saves one sequential round-trip.
+    const [
+      { data: areaData, error: areaError },
+      { data: shops, error: shopsError },
+      { data: services, error: servicesError },
+    ] = await Promise.all([
+      supabase.from("areas").select("name").eq("id", areaId).maybeSingle(),
+      query,
+      serviceQuery,
+    ])
+    if (areaError) throw areaError
     if (shopsError) throw shopsError
     if (servicesError) throw servicesError
 
@@ -121,7 +131,7 @@ function Area() {
     if (serviceIds.length > 0) {
       const { data: products, error: productsError } = await supabase
         .from("products")
-        .select("id, shop_id, name, description, price, image_url, category, is_available, is_approved")
+        .select("id, shop_id, name, price, image_url, category")
         .in("shop_id", serviceIds)
         .eq("is_available", true)
         .eq("is_approved", true)
@@ -147,7 +157,6 @@ function Area() {
     loading: dataLoading,
     error: dataError,
     mutate,
-    isRevalidating,
   } = useCachedFetch(
     cacheKey,
     fetchAreaShops,

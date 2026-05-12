@@ -61,13 +61,25 @@ function Cat() {
       return { shops: [] }
     }
 
+    const nowIso = new Date().toISOString()
+
+    // Tight column list — list-view rendering only reads these. Avoids
+    // shipping sensitive fields (id_card_url, kyc_video_url, phone, lat/lng, etc.)
+    // to every browsing user.
     const { data: shopsData, error: shopsError } = await supabase
       .from("shops")
-      .select("*")
+      .select(
+        "id, name, category, address, image_url, storefront_url, unique_id, is_verified, is_service"
+      )
       .eq("city_id", resolvedCityId)
       .eq("category", catName)
       .eq("is_service", false)
+      // Full visibility filter — matches the composite index
+      // (city_id, status, is_verified, is_open, subscription_end_date)
+      .eq("status", "approved")
       .eq("is_verified", true)
+      .eq("is_open", true)
+      .gt("subscription_end_date", nowIso)
       .order("name", { ascending: true })
       .limit(100)
 
@@ -83,7 +95,6 @@ function Cat() {
     loading: dataLoading,
     error: dataError,
     mutate,
-    isRevalidating,
   } = useCachedFetch(
     cacheKey,
     fetchCategoryData,
