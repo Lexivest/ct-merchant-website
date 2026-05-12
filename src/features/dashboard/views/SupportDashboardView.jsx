@@ -327,34 +327,34 @@ function SupportDashboardView({ onBack, onOpenServices, mode = "support" }) {
                         <div className="rounded-[22px] border border-pink-100 bg-white p-6 md:p-7">
                           <div className="flex items-start gap-3">
                             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="h-5 w-5"
-                              >
-                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-7.6 8.38 8.38 0 0 1 3.8.9L21 4.5l-4.5 4.5" />
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                                <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.123 1.532 5.855L.057 23.882a.5.5 0 0 0 .613.613l6.085-1.474A11.942 11.942 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.882a9.88 9.88 0 0 1-5.031-1.373l-.36-.214-3.733.904.922-3.645-.235-.374A9.86 9.86 0 0 1 2.118 12C2.118 6.533 6.533 2.118 12 2.118S21.882 6.533 21.882 12 17.467 21.882 12 21.882z"/>
                               </svg>
                             </div>
 
-                            <div>
+                            <div className="flex-1">
                               <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">
-                                WhatsApp Support
+                                WhatsApp
                               </p>
-                              <a
-                                href="https://wa.me/2347042021230"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="mt-2 block text-base font-extrabold text-slate-900 transition hover:text-emerald-600"
-                              >
-                                +234 704 202 1230
-                              </a>
+                              <div className="mt-3 flex flex-col gap-2">
+                                <a
+                                  href="https://wa.me/2347042021230"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#1ebe5d]"
+                                >
+                                  Chat with Support
+                                </a>
+                                <a
+                                  href="https://whatsapp.com/channel/0029VbCWRCpE50Uf8EyYIl1G"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="flex items-center justify-center gap-2 rounded-xl border border-[#25D366] px-4 py-2.5 text-sm font-extrabold text-[#25D366] transition hover:bg-emerald-50"
+                                >
+                                  Follow our Channel
+                                </a>
+                              </div>
                             </div>
                           </div>
                         </div>

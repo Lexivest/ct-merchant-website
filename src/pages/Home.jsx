@@ -18,6 +18,7 @@ import {
   FaNewspaper,
   FaPhone,
   FaTelegram,
+  FaWhatsapp,
   FaXTwitter,
   FaYoutube,
 } from "react-icons/fa6"
@@ -108,6 +109,12 @@ const socialLinks = [
     href: "https://t.me/CTMerchant",
     icon: FaTelegram,
     accent: "bg-[#24A1DE]",
+  },
+  {
+    label: "WhatsApp",
+    href: "https://whatsapp.com/channel/0029VbCWRCpE50Uf8EyYIl1G",
+    icon: FaWhatsapp,
+    accent: "bg-[#25D366]",
   },
 ]
 
@@ -1355,7 +1362,7 @@ function Home() {
                           .
                         </p>
 
-                        <div className="mt-4 grid grid-cols-4 gap-1.5 sm:gap-3">
+                        <div className="mt-4 grid grid-cols-5 gap-1.5 sm:gap-3">
                           {socialLinks.map((item) => {
                             const Icon = item.icon
                             return (
