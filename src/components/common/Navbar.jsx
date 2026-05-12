@@ -33,11 +33,11 @@ function MarketPulseTicker() {
 
 const navLinks = [
   { label: "Home", to: "/" },
-  { label: "About", to: "/about" },
-  { label: "Services", to: "/services" },
-  { label: "Affiliate", to: "/affiliate" },
-  { label: "Careers", to: "/careers" },
-  { label: "Contact", to: "/contact" },
+  { label: "About", to: "/about", preload: () => import("../../pages/About") },
+  { label: "Services", to: "/services", preload: () => import("../../pages/Services") },
+  { label: "Affiliate", to: "/affiliate", preload: () => import("../../pages/Affiliate") },
+  { label: "Careers", to: "/careers", preload: () => import("../../pages/Careers") },
+  { label: "Contact", to: "/contact", preload: () => import("../../pages/Contact") },
 ]
 
 function Navbar() {
@@ -80,6 +80,7 @@ function Navbar() {
                 key={link.to}
                 to={link.to}
                 end={link.to === "/"}
+                onPointerEnter={link.preload}
                 className={({ isActive }) =>
                   `text-sm no-underline transition ${
                     isActive
@@ -157,6 +158,7 @@ function Navbar() {
                     to={link.to}
                     end={link.to === "/"}
                     onClick={closeMenu}
+                    onPointerEnter={link.preload}
                     className={({ isActive }) =>
                       `rounded-xl px-3 py-3 text-sm no-underline transition ${
                         isActive
