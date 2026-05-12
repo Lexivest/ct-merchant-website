@@ -197,12 +197,15 @@ function Cat() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[800px] flex-1 overflow-y-auto px-4 py-5">
-        {isRevalidating ? (
-          <div className="mb-4 inline-flex rounded-full bg-slate-900 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.16em] text-white">
+      {isRevalidating ? (
+        <div className="mx-auto w-full max-w-[800px] px-4 pt-2 pb-1">
+          <div className="inline-flex rounded-full bg-slate-900 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.16em] text-white">
             Updating category...
           </div>
-        ) : null}
+        </div>
+      ) : null}
+
+      <main className="mx-auto w-full max-w-[800px] flex-1 overflow-y-auto px-4 py-5">
         {authLoading || ((!user || !catName) && !authLoading) || (dataLoading && !data) ? (
           <PageLoadingScreen
             fullScreen={false}

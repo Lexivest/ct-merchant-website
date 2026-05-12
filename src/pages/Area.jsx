@@ -314,6 +314,14 @@ function Area() {
           </div>
         </div>
 
+        {isRevalidating ? (
+          <div className="mx-auto w-full max-w-[800px] px-4 pt-2 pb-1">
+            <div className="inline-flex rounded-full bg-slate-900 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.16em] text-white">
+              Updating {viewMode === "services" ? "services" : "shops"}...
+            </div>
+          </div>
+        ) : null}
+
         <div className="mx-auto w-full max-w-[800px] flex-1 overflow-y-auto px-4 py-5">
           <div className="mb-4 grid grid-cols-2 gap-2 rounded-2xl bg-white p-1 shadow-sm ring-1 ring-slate-200">
             {[
@@ -335,11 +343,6 @@ function Area() {
               </button>
             ))}
           </div>
-          {isRevalidating ? (
-            <div className="mb-3 inline-flex rounded-full bg-slate-900 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.16em] text-white">
-              Updating {viewMode === "services" ? "services" : "shops"}...
-            </div>
-          ) : null}
           {authLoading || (dataLoading && !data) ? (
             <PageLoadingScreen
               fullScreen={false}
