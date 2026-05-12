@@ -2325,7 +2325,7 @@ function UserDashboard() {
       <PageTransitionOverlay visible={baseLoading || dynamicLoading || routeTransition.pending} />
 
       {dynamicOffline && (
-        <div className="fixed top-2 left-1/2 z-[1000] -translate-x-1/2 rounded-full bg-slate-900/80 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-white backdrop-blur-md shadow-lg border border-white/10">
+        <div className="fixed bottom-16 left-1/2 z-[1100] -translate-x-1/2 rounded-full bg-slate-900/80 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-white backdrop-blur-md shadow-lg border border-white/10">
           <span className="flex items-center gap-2 text-rose-400">
             <div className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" /> Offline: Showing Cached Data
           </span>
