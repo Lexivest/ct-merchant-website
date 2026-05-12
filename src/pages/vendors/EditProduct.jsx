@@ -346,7 +346,8 @@ export default function EditProduct() {
 
       try {
         setLoading(true);
-        const { data: profile } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).maybeSingle();
+        // vw_user_profiles unifies admin-set is_suspended AND brute-force lockout.
+        const { data: profile } = await supabase.from("vw_user_profiles").select("is_suspended").eq("id", user.id).maybeSingle();
         if (profile?.is_suspended) throw new Error("Account restricted.");
 
         const [{ data: prod, error: prodErr }, loadedCategoryRows] = await Promise.all([

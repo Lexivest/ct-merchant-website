@@ -301,7 +301,8 @@ export default function AddProduct() {
       }
       try {
         setLoading(true);
-        const { data: profile } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).maybeSingle();
+        // vw_user_profiles unifies admin-set is_suspended AND brute-force lockout.
+        const { data: profile } = await supabase.from("vw_user_profiles").select("is_suspended").eq("id", user.id).maybeSingle();
         if (profile?.is_suspended) throw new Error("Account restricted.");
         const { data: shop } = await supabase.from("shops").select("id, is_open, is_service").eq("id", shopId).eq("owner_id", user.id).maybeSingle();
         if (!shop) throw new Error("Shop not found or access denied.");
