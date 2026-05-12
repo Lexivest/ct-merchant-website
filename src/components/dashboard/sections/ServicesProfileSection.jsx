@@ -339,7 +339,8 @@ function ServicesProfileSection({
                 City
               </label>
               <select
-                className="form-input w-full rounded border border-[#888C8C] bg-white px-[14px] py-[10px] text-base shadow-[inset_0_1px_2px_rgba(15,17,17,.15)]"
+                disabled
+                className="form-input w-full rounded border border-[#888C8C] bg-slate-100 px-[14px] py-[10px] text-base shadow-[inset_0_1px_2px_rgba(15,17,17,.15)] cursor-not-allowed text-slate-400"
                 value={profileEditForm.city_id}
                 onChange={(e) => handleProfileCityChange(e.target.value)}
               >
@@ -350,6 +351,9 @@ function ServicesProfileSection({
                   </option>
                 ))}
               </select>
+              <p className="mt-1.5 text-[0.78rem] font-semibold text-amber-600">
+                City change is unavailable now.
+              </p>
             </div>
 
             <div className="form-group mb-6 text-left">
