@@ -285,7 +285,7 @@ function CreateAccount() {
       if (!signedInUser) throw new Error("Google sign-up did not return a valid user.")
 
       const currentProfile = await supabase
-        .from("profiles")
+        .from("vw_user_profiles")
         .select("*")
         .eq("id", signedInUser.id)
         .maybeSingle()
@@ -371,9 +371,13 @@ function CreateAccount() {
   async function resolveFreshProfile(userId, fallbackProfile) {
     if (!userId) return fallbackProfile || null
 
-    for (let attempt = 0; attempt < 4; attempt += 1) {
+    // handle_new_user_registration is an AFTER INSERT trigger in the same
+    // transaction as the auth.users insert, so by the time signUp() returns
+    // the profile row already exists. One short retry guards against transient
+    // network blips only.
+    for (let attempt = 0; attempt < 2; attempt += 1) {
       const currentProfile = await supabase
-        .from("profiles")
+        .from("vw_user_profiles")
         .select("*")
         .eq("id", userId)
         .maybeSingle()
@@ -382,8 +386,8 @@ function CreateAccount() {
         return currentProfile.data
       }
 
-      if (attempt < 3) {
-        await new Promise((resolve) => window.setTimeout(resolve, 350 * (attempt + 1)))
+      if (attempt === 0) {
+        await new Promise((resolve) => window.setTimeout(resolve, 250))
       }
     }
 
